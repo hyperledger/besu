@@ -21,14 +21,14 @@ import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.account.TransferTransaction;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class GossipTransactionAcceptanceTest extends AcceptanceTestBase {
 
   private Node archiveNode1;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     archiveNode1 = besu.createArchiveNode("archiveNode1");
     cluster.start(archiveNode1, besu.createArchiveNode("archiveNode2"));

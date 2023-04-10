@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
@@ -25,15 +26,14 @@ import java.util.List;
 import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.TreeSet;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class MutableProtocolSchedule implements ProtocolSchedule {
 
   private final NavigableSet<ScheduledProtocolSpec> protocolSpecs =
-      new TreeSet<>(
-          Comparator.<ScheduledProtocolSpec, Long>comparing(ScheduledProtocolSpec::getBlock)
-              .reversed());
+      new TreeSet<>(Comparator.comparing(ScheduledProtocolSpec::milestone).reversed());
   private final Optional<BigInteger> chainId;
 
   public MutableProtocolSchedule(final Optional<BigInteger> chainId) {
@@ -60,12 +60,12 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
     checkArgument(
         !protocolSpecs.isEmpty(), "At least 1 milestone must be provided to the protocol schedule");
     checkArgument(
-        protocolSpecs.last().getBlock() == 0, "There must be a milestone starting from block 0");
+        protocolSpecs.last().milestone() == 0, "There must be a milestone starting from block 0");
     // protocolSpecs is sorted in descending block order, so the first one we find that's lower than
     // the requested level will be the most appropriate spec
     for (final ScheduledProtocolSpec s : protocolSpecs) {
-      if (number >= s.getBlock()) {
-        return s.getSpec();
+      if (number >= s.milestone()) {
+        return s.spec();
       }
     }
     return null;
@@ -74,22 +74,32 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
   @Override
   public String listMilestones() {
     return protocolSpecs.stream()
-        .sorted(Comparator.comparing(ScheduledProtocolSpec::getBlock))
-        .map(spec -> spec.getSpec().getName() + ": " + spec.getBlock())
+        .sorted(Comparator.comparing(ScheduledProtocolSpec::milestone))
+        .map(scheduledSpec -> scheduledSpec.spec().getName() + ": " + scheduledSpec.milestone())
         .collect(Collectors.joining(", ", "[", "]"));
   }
 
   @Override
   public Stream<Long> streamMilestoneBlocks() {
     return protocolSpecs.stream()
-        .sorted(Comparator.comparing(ScheduledProtocolSpec::getBlock))
-        .map(ScheduledProtocolSpec::getBlock);
+        .sorted(Comparator.comparing(ScheduledProtocolSpec::milestone))
+        .map(ScheduledProtocolSpec::milestone);
+  }
+
+  @Override
+  public boolean anyMatch(final Predicate<ScheduledProtocolSpec> predicate) {
+    return this.protocolSpecs.stream().anyMatch(predicate);
+  }
+
+  @Override
+  public boolean isOnMilestoneBoundary(final BlockHeader blockHeader) {
+    return this.protocolSpecs.stream().anyMatch(s -> blockHeader.getNumber() == s.milestone());
   }
 
   @Override
   public void setTransactionFilter(final TransactionFilter transactionFilter) {
     protocolSpecs.forEach(
-        spec -> spec.getSpec().getTransactionValidator().setTransactionFilter(transactionFilter));
+        spec -> spec.spec().getTransactionValidator().setTransactionFilter(transactionFilter));
   }
 
   @Override
@@ -97,7 +107,7 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
       final WorldStateArchive publicWorldStateArchive) {
     protocolSpecs.forEach(
         spec -> {
-          final BlockProcessor blockProcessor = spec.getSpec().getBlockProcessor();
+          final BlockProcessor blockProcessor = spec.spec().getBlockProcessor();
           if (PrivacyBlockProcessor.class.isAssignableFrom(blockProcessor.getClass()))
             ((PrivacyBlockProcessor) blockProcessor)
                 .setPublicWorldStateArchive(publicWorldStateArchive);
@@ -105,6 +115,6 @@ public class MutableProtocolSchedule implements ProtocolSchedule {
   }
 
   public List<ScheduledProtocolSpec> getScheduledProtocolSpecs() {
-    return protocolSpecs.stream().collect(Collectors.toUnmodifiableList());
+    return protocolSpecs.stream().toList();
   }
 }

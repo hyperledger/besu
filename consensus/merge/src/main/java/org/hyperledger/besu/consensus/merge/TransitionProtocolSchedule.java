@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -24,11 +25,13 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -209,6 +212,20 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
         transitionUtils.dispatchFunctionAccordingToMergeState(
             ProtocolSchedule::streamMilestoneBlocks);
     return Stream.concat(milestoneBlockNumbers, timestampSchedule.streamMilestoneBlocks());
+  }
+
+  @Override
+  public boolean anyMatch(final Predicate<ScheduledProtocolSpec> predicate) {
+    return timestampSchedule.anyMatch(predicate)
+        || transitionUtils.dispatchFunctionAccordingToMergeState(
+            schedule -> schedule.anyMatch(predicate));
+  }
+
+  @Override
+  public boolean isOnMilestoneBoundary(final BlockHeader blockHeader) {
+    return timestampSchedule.isOnMilestoneBoundary(blockHeader)
+        || transitionUtils.dispatchFunctionAccordingToMergeState(
+            schedule -> schedule.isOnMilestoneBoundary(blockHeader));
   }
 
   /**

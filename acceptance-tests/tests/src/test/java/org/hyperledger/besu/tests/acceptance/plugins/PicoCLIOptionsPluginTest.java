@@ -28,9 +28,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.awaitility.Awaitility;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 public class PicoCLIOptionsPluginTest extends AcceptanceTestBase {
   private BesuNode node;
@@ -38,7 +38,7 @@ public class PicoCLIOptionsPluginTest extends AcceptanceTestBase {
   // context: https://en.wikipedia.org/wiki/The_Magic_Words_are_Squeamish_Ossifrage
   private static final String MAGIC_WORDS = "Squemish Ossifrage";
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     node =
         besu.createPluginsNode(
@@ -70,7 +70,7 @@ public class PicoCLIOptionsPluginTest extends AcceptanceTestBase {
   }
 
   @Test
-  @Ignore("No way to do a graceful shutdown of Besu at the moment.")
+  @Disabled("No way to do a graceful shutdown of Besu at the moment.")
   public void shouldStop() {
     cluster.stopNode(node);
     waitForFile(node.homeDirectory().resolve("plugins/pluginLifecycle.stopped"));
