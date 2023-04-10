@@ -17,8 +17,11 @@ package org.hyperledger.besu.consensus.merge.blockcreation;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Quantity;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import java.math.BigInteger;
+import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -62,12 +65,20 @@ public class PayloadIdentifier implements Quantity {
       final Hash parentHash,
       final Long timestamp,
       final Bytes32 prevRandao,
-      final Address feeRecipient) {
+      final Address feeRecipient,
+      final Optional<List<Withdrawal>> withdrawals) {
+
     return new PayloadIdentifier(
         timestamp
             ^ ((long) parentHash.toHexString().hashCode()) << 8
             ^ ((long) prevRandao.toHexString().hashCode()) << 16
-            ^ ((long) feeRecipient.toHexString().hashCode()) << 24);
+            ^ ((long) feeRecipient.toHexString().hashCode()) << 24
+            ^ (long)
+                withdrawals
+                    .map(
+                        ws ->
+                            ws.stream().map(Withdrawal::hashCode).reduce(0, (a, b) -> a ^ (b * 31)))
+                    .orElse(0));
   }
 
   @Override
