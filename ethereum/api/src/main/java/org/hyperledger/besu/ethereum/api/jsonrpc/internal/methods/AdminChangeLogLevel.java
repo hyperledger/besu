@@ -21,13 +21,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.util.Log4j2ConfiguratorUtil;
+import org.hyperledger.besu.util.LogConfigurator;
 
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.logging.log4j.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,12 +44,11 @@ public class AdminChangeLogLevel implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     try {
-      final String rawLogLevel = requestContext.getRequiredParameter(0, String.class);
-      if (!VALID_PARAMS.contains(rawLogLevel)) {
+      final String logLevel = requestContext.getRequiredParameter(0, String.class);
+      if (!VALID_PARAMS.contains(logLevel)) {
         return new JsonRpcErrorResponse(
             requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
       }
-      final Level logLevel = Level.toLevel(rawLogLevel);
       final Optional<String[]> optionalLogFilters =
           requestContext.getOptionalParameter(1, String[].class);
       optionalLogFilters.ifPresentOrElse(
@@ -64,8 +62,8 @@ public class AdminChangeLogLevel implements JsonRpcMethod {
     }
   }
 
-  private void setLogLevel(final String logFilter, final Level logLevel) {
-    LOG.debug("Setting {} logging level to {} ", logFilter, logLevel.name());
-    Log4j2ConfiguratorUtil.setAllLevels(logFilter, logLevel);
+  private void setLogLevel(final String logFilter, final String logLevel) {
+    LOG.debug("Setting {} logging level to {} ", logFilter, logLevel);
+    LogConfigurator.setLevel(logFilter, logLevel);
   }
 }

@@ -1110,14 +1110,15 @@ public final class EthProtocolManagerTest {
       // Create a transaction pool.  This has a side effect of registering a listener for the
       // transactions message.
       TransactionPoolFactory.createTransactionPool(
-          protocolSchedule,
-          protocolContext,
-          ethManager.ethContext(),
-          TestClock.system(ZoneId.systemDefault()),
-          metricsSystem,
-          new SyncState(blockchain, ethManager.ethContext().getEthPeers()),
-          new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
-          TransactionPoolConfiguration.DEFAULT);
+              protocolSchedule,
+              protocolContext,
+              ethManager.ethContext(),
+              TestClock.system(ZoneId.systemDefault()),
+              metricsSystem,
+              new SyncState(blockchain, ethManager.ethContext().getEthPeers()),
+              new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
+              TransactionPoolConfiguration.DEFAULT)
+          .setEnabled();
 
       // Send just a transaction message.
       final PeerConnection peer = setupPeer(ethManager, (cap, msg, connection) -> {});

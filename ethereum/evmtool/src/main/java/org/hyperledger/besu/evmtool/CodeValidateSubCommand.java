@@ -20,6 +20,7 @@ import static org.hyperledger.besu.evmtool.CodeValidateSubCommand.COMMAND_NAME;
 import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.code.EOFLayout;
+import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -68,6 +69,7 @@ public class CodeValidateSubCommand implements Runnable {
 
   @Override
   public void run() {
+    LogConfigurator.setLevel("", "OFF");
     if (cliCode.isEmpty() && codeFile == null) {
       try (BufferedReader in = new BufferedReader(new InputStreamReader(input, UTF_8))) {
         checkCodeFromBufferedReader(in);

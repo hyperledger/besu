@@ -17,11 +17,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer.TraceableState;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.List;
 import java.util.Optional;
@@ -38,15 +37,10 @@ public class BlockReplay {
 
   private final ProtocolSchedule protocolSchedule;
   private final Blockchain blockchain;
-  private final WorldStateArchive worldStateArchive;
 
-  public BlockReplay(
-      final ProtocolSchedule protocolSchedule,
-      final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive) {
+  public BlockReplay(final ProtocolSchedule protocolSchedule, final Blockchain blockchain) {
     this.protocolSchedule = protocolSchedule;
     this.blockchain = blockchain;
-    this.worldStateArchive = worldStateArchive;
   }
 
   public Optional<BlockTrace> block(
@@ -54,7 +48,7 @@ public class BlockReplay {
     return performActionWithBlock(
         block.getHeader(),
         block.getBody(),
-        (body, header, blockchain, mutableWorldState, transactionProcessor, protocolSpec) -> {
+        (body, header, blockchain, transactionProcessor, protocolSpec) -> {
           final Wei dataGasPrice =
               protocolSpec
                   .getFeeMarket()
@@ -69,12 +63,7 @@ public class BlockReplay {
                   .map(
                       transaction ->
                           action.performAction(
-                              transaction,
-                              header,
-                              blockchain,
-                              mutableWorldState,
-                              transactionProcessor,
-                              dataGasPrice))
+                              transaction, header, blockchain, transactionProcessor, dataGasPrice))
                   .toList();
           return Optional.of(new BlockTrace(transactionTraces));
         });
@@ -86,10 +75,13 @@ public class BlockReplay {
   }
 
   public <T> Optional<T> beforeTransactionInBlock(
-      final Hash blockHash, final Hash transactionHash, final TransactionAction<T> action) {
+      final TraceableState mutableWorldState,
+      final Hash blockHash,
+      final Hash transactionHash,
+      final TransactionAction<T> action) {
     return performActionWithBlock(
         blockHash,
-        (body, header, blockchain, mutableWorldState, transactionProcessor, protocolSpec) -> {
+        (body, header, blockchain, transactionProcessor, protocolSpec) -> {
           final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(header, blockchain);
           final Wei dataGasPrice =
               protocolSpec
@@ -104,12 +96,7 @@ public class BlockReplay {
             if (transaction.getHash().equals(transactionHash)) {
               return Optional.of(
                   action.performAction(
-                      transaction,
-                      header,
-                      blockchain,
-                      mutableWorldState,
-                      transactionProcessor,
-                      dataGasPrice));
+                      transaction, header, blockchain, transactionProcessor, dataGasPrice));
             } else {
               transactionProcessor.processTransaction(
                   blockchain,
@@ -128,15 +115,19 @@ public class BlockReplay {
   }
 
   public <T> Optional<T> afterTransactionInBlock(
-      final Hash blockHash, final Hash transactionHash, final TransactionAction<T> action) {
+      final TraceableState mutableWorldState,
+      final Hash blockHash,
+      final Hash transactionHash,
+      final TransactionAction<T> action) {
     return beforeTransactionInBlock(
+        mutableWorldState,
         blockHash,
         transactionHash,
-        (transaction, blockHeader, blockchain, worldState, transactionProcessor, dataGasPrice) -> {
+        (transaction, blockHeader, blockchain, transactionProcessor, dataGasPrice) -> {
           final ProtocolSpec spec = protocolSchedule.getByBlockHeader(blockHeader);
           transactionProcessor.processTransaction(
               blockchain,
-              worldState.updater(),
+              mutableWorldState.updater(),
               blockHeader,
               transaction,
               spec.getMiningBeneficiaryCalculator().calculateBeneficiary(blockHeader),
@@ -145,7 +136,7 @@ public class BlockReplay {
               TransactionValidationParams.blockReplay(),
               dataGasPrice);
           return action.performAction(
-              transaction, blockHeader, blockchain, worldState, transactionProcessor, dataGasPrice);
+              transaction, blockHeader, blockchain, transactionProcessor, dataGasPrice);
         });
   }
 
@@ -168,30 +159,8 @@ public class BlockReplay {
     }
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
-    final BlockHeader previous = blockchain.getBlockHeader(header.getParentHash()).orElse(null);
-    if (previous == null) {
-      return Optional.empty();
-    }
-    try (final MutableWorldState worldState =
-        worldStateArchive
-            .getMutable(previous.getStateRoot(), previous.getBlockHash(), false)
-            .map(
-                ws -> {
-                  if (!ws.isPersistable()) {
-                    return ws.copy();
-                  }
-                  return ws;
-                })
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        "Missing worldstate for stateroot "
-                            + previous.getStateRoot().toShortHexString()))) {
-      return action.perform(
-          body, header, blockchain, worldState, transactionProcessor, protocolSpec);
-    } catch (Exception ex) {
-      return Optional.empty();
-    }
+
+    return action.perform(body, header, blockchain, transactionProcessor, protocolSpec);
   }
 
   private Optional<Block> getBlock(final Hash blockHash) {
@@ -217,7 +186,6 @@ public class BlockReplay {
         BlockBody body,
         BlockHeader blockHeader,
         Blockchain blockchain,
-        MutableWorldState worldState,
         MainnetTransactionProcessor transactionProcessor,
         ProtocolSpec protocolSpec);
   }
@@ -228,7 +196,6 @@ public class BlockReplay {
         Transaction transaction,
         BlockHeader blockHeader,
         Blockchain blockchain,
-        MutableWorldState worldState,
         MainnetTransactionProcessor transactionProcessor,
         Wei dataGasPrice);
   }

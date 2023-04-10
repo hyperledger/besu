@@ -20,6 +20,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer.TraceableState;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugStorageRangeAtResult;
@@ -29,7 +31,6 @@ import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
-import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.util.Collections;
 import java.util.NavigableMap;
@@ -85,36 +86,38 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
       return emptyResponse(requestContext);
     }
 
-    final Optional<TransactionWithMetadata> optional =
+    final Optional<TransactionWithMetadata> maybeTransactionIndex =
         blockchainQueries.get().transactionByBlockHashAndIndex(blockHash, transactionIndex);
 
-    return optional
-        .map(
-            transactionWithMetadata ->
-                (blockReplay
+    return Tracer.processTracing(
+            blockchainQueries.get(),
+            Optional.of(blockHeaderOptional.get()),
+            mutableWorldState -> {
+              if (maybeTransactionIndex.isEmpty()) {
+                return Optional.of(
+                    extractStorageAt(
+                        requestContext, accountAddress, startKey, limit, mutableWorldState));
+              } else {
+                return blockReplay
                     .get()
                     .afterTransactionInBlock(
+                        mutableWorldState,
                         blockHash,
-                        transactionWithMetadata.getTransaction().getHash(),
+                        maybeTransactionIndex.get().getTransaction().getHash(),
                         (transaction,
                             blockHeader,
                             blockchain,
-                            worldState,
                             transactionProcessor,
                             protocolSpec) ->
                             extractStorageAt(
-                                requestContext, accountAddress, startKey, limit, worldState))
-                    .orElseGet(() -> emptyResponse(requestContext))))
-        .orElseGet(
-            () ->
-                blockchainQueries
-                    .get()
-                    .getAndMapWorldState(
-                        blockHeaderOptional.get().getNumber(),
-                        worldState ->
-                            extractStorageAt(
-                                requestContext, accountAddress, startKey, limit, worldState))
-                    .orElseGet(() -> emptyResponse(requestContext)));
+                                requestContext,
+                                accountAddress,
+                                startKey,
+                                limit,
+                                mutableWorldState));
+              }
+            })
+        .orElse(emptyResponse(requestContext));
   }
 
   private Optional<Hash> hashFromParameter(final BlockParameterOrBlockHash blockParameter) {
@@ -137,7 +140,7 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
       final Address accountAddress,
       final Hash startKey,
       final int limit,
-      final WorldState worldState) {
+      final TraceableState worldState) {
     final Account account = worldState.get(accountAddress);
     final NavigableMap<Bytes32, AccountStorageEntry> entries =
         account.storageEntriesFrom(startKey, limit + 1);
