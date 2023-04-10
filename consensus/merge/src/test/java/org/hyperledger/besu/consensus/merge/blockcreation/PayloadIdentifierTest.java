@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -85,6 +86,54 @@ public class PayloadIdentifierTest {
     var idForWithdrawals2 =
         PayloadIdentifier.forPayloadParams(
             Hash.ZERO, 1337L, prevRandao, Address.fromHexString("0x42"), Optional.of(withdrawals2));
+    assertThat(idForWithdrawals1).isNotEqualTo(idForWithdrawals2);
+  }
+
+  @Test
+  public void differentOrderedWithdrawalsYieldSameHash() {
+    final List<Withdrawal> withdrawals1 =
+        List.of(
+            new Withdrawal(
+                UInt64.valueOf(100),
+                UInt64.valueOf(1000),
+                Address.fromHexString("0x1"),
+                GWei.of(1)),
+            new Withdrawal(
+                UInt64.valueOf(200),
+                UInt64.valueOf(2000),
+                Address.fromHexString("0x2"),
+                GWei.of(2)));
+    final List<Withdrawal> withdrawals2 =
+        List.of(
+            new Withdrawal(
+                UInt64.valueOf(200),
+                UInt64.valueOf(2000),
+                Address.fromHexString("0x2"),
+                GWei.of(2)),
+            new Withdrawal(
+                UInt64.valueOf(100),
+                UInt64.valueOf(1000),
+                Address.fromHexString("0x1"),
+                GWei.of(1)));
+    final Bytes32 prevRandao = Bytes32.random();
+    var idForWithdrawals1 =
+        PayloadIdentifier.forPayloadParams(
+            Hash.ZERO, 1337L, prevRandao, Address.fromHexString("0x42"), Optional.of(withdrawals1));
+    var idForWithdrawals2 =
+        PayloadIdentifier.forPayloadParams(
+            Hash.ZERO, 1337L, prevRandao, Address.fromHexString("0x42"), Optional.of(withdrawals2));
+    assertThat(idForWithdrawals1).isEqualTo(idForWithdrawals2);
+  }
+
+  @Test
+  public void emptyOptionalAndEmptyListWithdrawalsYieldDifferentHash() {
+    final Bytes32 prevRandao = Bytes32.random();
+    var idForWithdrawals1 =
+        PayloadIdentifier.forPayloadParams(
+            Hash.ZERO, 1337L, prevRandao, Address.fromHexString("0x42"), Optional.empty());
+    var idForWithdrawals2 =
+        PayloadIdentifier.forPayloadParams(
+            Hash.ZERO, 1337L, prevRandao, Address.fromHexString("0x42"), Optional.of(emptyList()));
     assertThat(idForWithdrawals1).isNotEqualTo(idForWithdrawals2);
   }
 }

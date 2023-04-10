@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Quantity;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import java.math.BigInteger;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -53,7 +54,8 @@ public class PayloadIdentifier implements Quantity {
   }
 
   /**
-   * Create payload identifier for payload params.
+   * Create payload identifier for payload params. This is a deterministic hash of all payload
+   * parameters that aims to avoid collisions
    *
    * @param parentHash the parent hash
    * @param timestamp the timestamp
@@ -78,7 +80,10 @@ public class PayloadIdentifier implements Quantity {
                 withdrawals
                     .map(
                         ws ->
-                            ws.stream().map(Withdrawal::hashCode).reduce(0, (a, b) -> a ^ (b * 31)))
+                            ws.stream()
+                                .sorted(Comparator.comparing(Withdrawal::getIndex))
+                                .map(Withdrawal::hashCode)
+                                .reduce(1, (a, b) -> a ^ (b * 31)))
                     .orElse(0));
   }
 
