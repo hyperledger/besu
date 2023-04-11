@@ -16,7 +16,6 @@ package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Quantity;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.plugin.data.Quantity;
 
