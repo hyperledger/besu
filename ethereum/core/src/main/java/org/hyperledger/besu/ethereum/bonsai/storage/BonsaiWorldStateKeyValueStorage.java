@@ -123,7 +123,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         metricsSystem.createCounter(
             BesuMetricCategory.BLOCKCHAIN,
             "get_account_missing_merkle_trie",
-            "Number of accounts not found in the flat database and in the merkle trie");
+            "Number of accounts not found (either in the flat database or the merkle trie)");
 
     getStorageValueCounter =
         metricsSystem.createCounter(
