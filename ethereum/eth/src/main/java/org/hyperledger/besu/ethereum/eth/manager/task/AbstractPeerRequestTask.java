@@ -63,8 +63,8 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
           ethContext.getScheduler().failAfterTimeout(promise, timeout);
 
           stream.then(
-              (streamClosed, message, ethPeer) ->
-                  handleMessage(promise, streamClosed, message, ethPeer));
+              (streamClosed, message, peer1) ->
+                  handleMessage(promise, streamClosed, message, peer1));
         },
         promise::completeExceptionally);
 
