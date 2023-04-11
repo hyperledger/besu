@@ -406,7 +406,7 @@ public class EthPeer implements Comparable<EthPeer> {
     final int messageCode = ethMessage.getData().getCode();
     reputation.resetTimeoutCount(messageCode);
 
-    final Optional<RequestManager> requestManager = getRequestManager(protocolName, messageCode);
+    Optional<RequestManager> requestManager = getRequestManager(protocolName, messageCode);
     requestManager.ifPresentOrElse(
         localRequestManager -> localRequestManager.dispatchResponse(ethMessage),
         () -> {
