@@ -90,7 +90,7 @@ public class EngineGetPayloadV2Test extends AbstractEngineGetPayloadTest {
               assertThat(res.getExecutionPayload().getPrevRandao())
                   .isEqualTo(mockHeader.getPrevRandao().map(Bytes32::toString).orElse(""));
             });
-    verify(engineCallListener, times(2)).executionEngineCalled();
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
