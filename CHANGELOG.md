@@ -7,6 +7,7 @@
 ### Additions and Improvements
 
 ### Bug Fixes
+- Add withdrawals to payloadId calculation to avoid collisions [#5321](https://github.com/hyperledger/besu/pull/5321)
 
 ### Download Links
 
