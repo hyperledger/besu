@@ -101,17 +101,6 @@ public class KeyValueStorageProvider implements StorageProvider {
   }
 
   @Override
-  public WorldStateStorage createPrivateWorldStateStorage() {
-    return new WorldStateKeyValueStorage(
-        getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.GOQUORUM_PRIVATE_WORLD_STATE));
-  }
-
-  @Override
-  public WorldStatePreimageStorage createPrivateWorldStatePreimageStorage() {
-    return new WorldStatePreimageKeyValueStorage(privateWorldStatePreimageStorage);
-  }
-
-  @Override
   public boolean isWorldStateIterable() {
     return isWorldStateIterable;
   }
