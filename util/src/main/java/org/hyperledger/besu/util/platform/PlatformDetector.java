@@ -104,6 +104,11 @@ public class PlatformDetector {
     return _glibc;
   }
 
+  /**
+   * The jemalloc version
+   * @return the jemalloc version
+   * @throws RuntimeException if jemalloc is not intalled.
+   */
   public static String getJemalloc() {
     if (_jemalloc == null) {
       detectJemalloc();
