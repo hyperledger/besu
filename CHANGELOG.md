@@ -3,11 +3,13 @@
 ## 23.4-RC
 
 ### Breaking Changes
-- Removed IBFT 1.0 feature (deprecated in 23.1.0-beta) [#5302](https://github.com/hyperledger/besu/pull/5302)
-- Removed GoQuorum-compatible privacy feature (deprecated in 23.1.0-beta) [#5303](https://github.com/hyperledger/besu/pull/5303)
+- Remove IBFT 1.0 feature (deprecated in 23.1.0-beta) [#5302](https://github.com/hyperledger/besu/pull/5302)
+- Remove GoQuorum-compatible privacy feature (deprecated in 23.1.0-beta) [#5303](https://github.com/hyperledger/besu/pull/5303)
 
 ### Additions and Improvements
 - Update most dependencies to latest version [#5269](https://github.com/hyperledger/besu/pull/5269)
+- If jemalloc is used, print its version in the configuration overview [#4738](https://github.com/hyperledger/besu/pull/4738)
+- Add metrics for accounts and storage reads (Flat database vs Merkle Patricia Trie) [#5315](https://github.com/hyperledger/besu/pull/5315)
 
 ### Bug Fixes
 

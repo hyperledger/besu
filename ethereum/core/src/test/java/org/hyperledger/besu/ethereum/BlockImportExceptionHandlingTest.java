@@ -81,14 +81,16 @@ public class BlockImportExceptionHandlingTest {
   private final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
 
   private final WorldStateStorage worldStateStorage =
-      new BonsaiWorldStateKeyValueStorage(storageProvider);
+      new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
 
   private CachedMerkleTrieLoader cachedMerkleTrieLoader;
 
   private final WorldStateArchive worldStateArchive =
       // contains a BonsaiWorldState which we need to spy on.
       // do we need to also test with a DefaultWorldStateArchive?
-      spy(new BonsaiWorldStateProvider(storageProvider, blockchain, cachedMerkleTrieLoader));
+      spy(
+          new BonsaiWorldStateProvider(
+              storageProvider, blockchain, cachedMerkleTrieLoader, new NoOpMetricsSystem()));
 
   private final BonsaiWorldState persisted =
       spy(

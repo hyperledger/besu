@@ -190,7 +190,6 @@ import org.hyperledger.besu.util.PermissioningConfigurationValidator;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 import org.hyperledger.besu.util.number.PositiveNumber;
-import org.hyperledger.besu.util.platform.PlatformDetector;
 
 import java.io.File;
 import java.io.IOException;
@@ -1455,8 +1454,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final int exitCode =
         parse(resultHandler, executionExceptionHandler, parameterExceptionHandler, args);
 
-    detectJemalloc();
-
     return exitCode;
   }
 
@@ -1485,6 +1482,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       instantiateSignatureAlgorithmFactory();
 
       logger.info("Starting Besu");
+
       // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
       vertx = createVertx(createVertxOptions(metricsSystem.get()));
 
@@ -1558,18 +1556,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     metricCategoryConverter.addCategories(BesuMetricCategory.class);
     metricCategoryConverter.addCategories(StandardMetricCategory.class);
     commandLine.registerConverter(MetricCategory.class, metricCategoryConverter);
-  }
-
-  private void detectJemalloc() {
-    // jemalloc is only supported on Linux at the moment
-    if (PlatformDetector.getOSType().equals("linux")) {
-      Optional.ofNullable(environment.get("BESU_USING_JEMALLOC"))
-          .ifPresentOrElse(
-              present -> logger.info("Using jemalloc"),
-              () ->
-                  logger.info(
-                      "jemalloc library not found, memory usage may be reduced by installing it"));
-    }
   }
 
   private void handleStableOptions() {
@@ -3556,7 +3542,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private String generateConfigurationOverview() {
-    final ConfigurationOverviewBuilder builder = new ConfigurationOverviewBuilder();
+    final ConfigurationOverviewBuilder builder = new ConfigurationOverviewBuilder(logger);
+
+    if (environment != null) {
+      builder.setEnvironment(environment);
+    }
 
     if (network != null) {
       builder.setNetwork(network.normalize());

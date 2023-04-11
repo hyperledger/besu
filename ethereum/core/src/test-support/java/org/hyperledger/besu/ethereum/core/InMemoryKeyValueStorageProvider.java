@@ -39,7 +39,8 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         segmentIdentifier -> new InMemoryKeyValueStorage(),
         new InMemoryKeyValueStorage(),
         SEGMENT_ISOLATION_SUPPORTED,
-        SNAPSHOT_ISOLATION_UNSUPPORTED);
+        SNAPSHOT_ISOLATION_UNSUPPORTED,
+        new NoOpMetricsSystem());
   }
 
   public static MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
@@ -69,7 +70,10 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
     final CachedMerkleTrieLoader cachedMerkleTrieLoader =
         new CachedMerkleTrieLoader(new NoOpMetricsSystem());
     return new BonsaiWorldStateProvider(
-        inMemoryKeyValueStorageProvider, blockchain, cachedMerkleTrieLoader);
+        inMemoryKeyValueStorageProvider,
+        blockchain,
+        cachedMerkleTrieLoader,
+        new NoOpMetricsSystem());
   }
 
   public static MutableWorldState createInMemoryWorldState() {

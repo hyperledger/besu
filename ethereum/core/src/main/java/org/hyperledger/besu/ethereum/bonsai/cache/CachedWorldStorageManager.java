@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.bonsai.trielog.AbstractTrieLogManager;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -41,24 +42,34 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
     implements BonsaiStorageSubscriber {
   private static final Logger LOG = LoggerFactory.getLogger(CachedWorldStorageManager.class);
   private final BonsaiWorldStateProvider archive;
+  private final ObservableMetricsSystem metricsSystem;
 
   CachedWorldStorageManager(
       final BonsaiWorldStateProvider archive,
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final long maxLayersToLoad,
-      final Map<Bytes32, CachedBonsaiWorldView> cachedWorldStatesByHash) {
+      final Map<Bytes32, CachedBonsaiWorldView> cachedWorldStatesByHash,
+      final ObservableMetricsSystem metricsSystem) {
     super(blockchain, worldStateStorage, maxLayersToLoad, cachedWorldStatesByHash);
     worldStateStorage.subscribe(this);
     this.archive = archive;
+    this.metricsSystem = metricsSystem;
   }
 
   public CachedWorldStorageManager(
       final BonsaiWorldStateProvider archive,
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final ObservableMetricsSystem metricsSystem,
       final long maxLayersToLoad) {
-    this(archive, blockchain, worldStateStorage, maxLayersToLoad, new ConcurrentHashMap<>());
+    this(
+        archive,
+        blockchain,
+        worldStateStorage,
+        maxLayersToLoad,
+        new ConcurrentHashMap<>(),
+        metricsSystem);
   }
 
   @Override
@@ -81,7 +92,8 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
         cachedBonsaiWorldView
             .get()
             .updateWorldStateStorage(
-                new BonsaiSnapshotWorldStateKeyValueStorage(forWorldState.worldStateStorage));
+                new BonsaiSnapshotWorldStateKeyValueStorage(
+                    forWorldState.worldStateStorage, metricsSystem));
       }
     } else {
       LOG.atDebug()
@@ -94,7 +106,8 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
             blockHeader.getHash(),
             new CachedBonsaiWorldView(
                 blockHeader,
-                new BonsaiSnapshotWorldStateKeyValueStorage(forWorldState.worldStateStorage)));
+                new BonsaiSnapshotWorldStateKeyValueStorage(
+                    forWorldState.worldStateStorage, metricsSystem)));
       } else {
         // otherwise, add the layer to the cache
         cachedWorldStatesByHash.put(
