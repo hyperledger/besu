@@ -12,12 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
+package org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
@@ -34,7 +35,7 @@ public class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
   final Hash accountHash;
 
-  StorageTrieNodeDataRequest(
+  public StorageTrieNodeDataRequest(
       final Hash nodeHash, final Hash accountHash, final Hash rootHash, final Bytes location) {
     super(nodeHash, rootHash, location);
     this.accountHash = accountHash;
@@ -58,7 +59,8 @@ public class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   protected SnapDataRequest createChildNodeDataRequest(final Hash childHash, final Bytes location) {
-    return createStorageTrieNodeDataRequest(childHash, getAccountHash(), getRootHash(), location);
+    return SnapDataRequest.createStorageTrieNodeDataRequest(
+        childHash, getAccountHash(), getRootHash(), location);
   }
 
   @Override

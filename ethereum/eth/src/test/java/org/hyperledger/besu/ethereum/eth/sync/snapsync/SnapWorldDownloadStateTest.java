@@ -271,7 +271,7 @@ public class SnapWorldDownloadStateTest {
     downloadState.pendingCodeRequests.add(
         BytecodeRequest.createBytecodeRequest(Bytes32.ZERO, Hash.EMPTY, Bytes32.ZERO));
     // reload the heal
-    downloadState.reloadHeal();
+    downloadState.reloadTrieHeal();
     verify(snapSyncState).setHealTrieStatus(false);
     assertThat(downloadState.pendingTrieNodeRequests.size()).isEqualTo(1);
     assertThat(downloadState.pendingCodeRequests.isEmpty()).isTrue();

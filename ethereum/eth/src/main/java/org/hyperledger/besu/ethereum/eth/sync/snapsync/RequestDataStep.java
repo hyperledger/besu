@@ -27,7 +27,9 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataR
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataRequest;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.TrieNodeDataRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.AccountFlatDatabaseHealingRangeRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.StorageFlatDatabaseHealingRangeRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -55,6 +57,8 @@ public class RequestDataStep {
   private final MetricsSystem metricsSystem;
   private final EthContext ethContext;
   private final WorldStateProofProvider worldStateProofProvider;
+
+  private long cpt = 0;
 
   public RequestDataStep(
       final EthContext ethContext,
@@ -96,42 +100,6 @@ public class RequestDataStep {
               }
               return requestTask;
             });
-  }
-
-  public CompletableFuture<Task<SnapDataRequest>> requestLocalAccount(
-      final Task<SnapDataRequest> requestTask) {
-
-    final AccountRangeDataRequest accountDataRequest =
-        (AccountRangeDataRequest) requestTask.getData();
-    final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
-
-    final TreeMap<Bytes32, Bytes> accounts =
-        (TreeMap<Bytes32, Bytes>)
-            worldStateStorage.streamFlatDatabase(accountDataRequest.getStartKeyHash(), 128);
-    final List<Bytes> leftAccountProofRelatedNodes =
-        worldStateProofProvider.getAccountProofRelatedNodes(
-            blockHeader.getStateRoot(), accounts.firstKey());
-    final List<Bytes> rightAccountProofRelatedNodes =
-        worldStateProofProvider.getAccountProofRelatedNodes(
-            blockHeader.getStateRoot(), accounts.lastKey());
-
-    System.out.println(
-        "Found keys "
-            + accounts.size()
-            + " from "
-            + accounts.firstKey()
-            + " "
-            + accounts.lastKey());
-    accountDataRequest.setRootHash(blockHeader.getStateRoot());
-    accountDataRequest.addResponse(
-        worldStateProofProvider,
-        accounts,
-        new ArrayDeque<>(
-            Stream.concat(
-                    leftAccountProofRelatedNodes.stream(), rightAccountProofRelatedNodes.stream())
-                .collect(Collectors.toList())));
-
-    return CompletableFuture.completedFuture(requestTask);
   }
 
   public CompletableFuture<List<Task<SnapDataRequest>>> requestStorage(
@@ -245,5 +213,92 @@ public class RequestDataStep {
               }
               return requestTasks;
             });
+  }
+
+  public CompletableFuture<Task<SnapDataRequest>> requestLocalAccount(
+      final Task<SnapDataRequest> requestTask) {
+
+    final AccountFlatDatabaseHealingRangeRequest accountDataRequest =
+        (AccountFlatDatabaseHealingRangeRequest) requestTask.getData();
+    final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
+
+    final TreeMap<Bytes32, Bytes> accounts =
+        (TreeMap<Bytes32, Bytes>)
+            worldStateStorage.streamAccountFlatDatabase(accountDataRequest.getStartKeyHash(), 128);
+    final List<Bytes> leftAccountProofRelatedNodes =
+        worldStateProofProvider.getAccountProofRelatedNodes(
+            blockHeader.getStateRoot(), accounts.firstKey());
+    final List<Bytes> rightAccountProofRelatedNodes =
+        worldStateProofProvider.getAccountProofRelatedNodes(
+            blockHeader.getStateRoot(), accounts.lastKey());
+
+    if (cpt == 10000) {
+      cpt = 0;
+      System.out.println(
+          "Found keys "
+              + accounts.size()
+              + " from "
+              + accounts.firstKey()
+              + " "
+              + accounts.lastKey());
+    }
+    cpt++;
+
+    accountDataRequest.setRootHash(blockHeader.getStateRoot());
+    accountDataRequest.addLocalData(
+        worldStateProofProvider,
+        accounts,
+        new ArrayDeque<>(
+            Stream.concat(
+                    leftAccountProofRelatedNodes.stream(), rightAccountProofRelatedNodes.stream())
+                .collect(Collectors.toList())));
+
+    return CompletableFuture.completedFuture(requestTask);
+  }
+
+  public CompletableFuture<Task<SnapDataRequest>> requestLocalStorage(
+      final Task<SnapDataRequest> requestTask) {
+
+    final StorageFlatDatabaseHealingRangeRequest storageDataRequest =
+        (StorageFlatDatabaseHealingRangeRequest) requestTask.getData();
+    final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
+
+    final TreeMap<Bytes32, Bytes> slots =
+        (TreeMap<Bytes32, Bytes>)
+            worldStateStorage.streamStorageFlatDatabase(
+                storageDataRequest.getAccountHash(), storageDataRequest.getStartKeyHash(), 1024);
+    final List<Bytes> leftStorageProofRelatedNodes =
+        worldStateProofProvider.getStorageProofRelatedNodes(
+            storageDataRequest.getStorageRoot(),
+            storageDataRequest.getAccountHash(),
+            slots.firstKey());
+    final List<Bytes> rightStorageProofRelatedNodes =
+        worldStateProofProvider.getStorageProofRelatedNodes(
+            storageDataRequest.getStorageRoot(),
+            storageDataRequest.getAccountHash(),
+            slots.lastKey());
+
+    if (cpt == 10000) {
+      cpt = 0;
+      System.out.println(
+          "Found storage keys "
+              + slots.size()
+              + " from "
+              + slots.firstKey()
+              + " "
+              + slots.lastKey());
+    }
+    cpt++;
+
+    storageDataRequest.setRootHash(blockHeader.getStateRoot());
+    storageDataRequest.addLocalData(
+        worldStateProofProvider,
+        slots,
+        new ArrayDeque<>(
+            Stream.concat(
+                    leftStorageProofRelatedNodes.stream(), rightStorageProofRelatedNodes.stream())
+                .collect(Collectors.toList())));
+
+    return CompletableFuture.completedFuture(requestTask);
   }
 }

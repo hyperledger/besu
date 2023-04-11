@@ -88,9 +88,16 @@ public class WorldStateProofProvider {
   }
 
   public List<Bytes> getAccountProofRelatedNodes(
-      final Hash worldStateRoot, final Bytes accountHash) {
+      final Hash worldStateRoot, final Bytes32 accountHash) {
     final Proof<Bytes> accountProof =
         newAccountStateTrie(worldStateRoot).getValueWithProof(accountHash);
+    return accountProof.getProofRelatedNodes();
+  }
+
+  public List<Bytes> getStorageProofRelatedNodes(
+      final Bytes32 storageRoot, final Bytes32 accountHash, final Bytes32 slotHash) {
+    final Proof<Bytes> accountProof =
+        newAccountStorageTrie(Hash.wrap(accountHash), storageRoot).getValueWithProof(slotHash);
     return accountProof.getProofRelatedNodes();
   }
 

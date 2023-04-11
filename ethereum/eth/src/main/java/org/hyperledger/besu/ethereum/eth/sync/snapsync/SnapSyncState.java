@@ -26,7 +26,7 @@ public class SnapSyncState extends FastSyncState {
 
   private boolean isHealTrieInProgress;
 
-  private boolean isHealFlatInProgress;
+  private boolean isHealFlatDatabaseInProgress;
   private boolean isWaitingBlockchain;
 
   public SnapSyncState(final FastSyncState fastSyncState) {
@@ -44,12 +44,12 @@ public class SnapSyncState extends FastSyncState {
     isHealTrieInProgress = healTrieStatus;
   }
 
-  public boolean isHealFlatInProgress() {
-    return isHealFlatInProgress;
+  public boolean isHealFlatDatabaseInProgress() {
+    return isHealFlatDatabaseInProgress;
   }
 
-  public void setHealFlatInProgress(final boolean healFlatInProgress) {
-    isHealFlatInProgress = healFlatInProgress;
+  public void setHealFlatDatabaseInProgress(final boolean healFlatDatabaseInProgress) {
+    isHealFlatDatabaseInProgress = healFlatDatabaseInProgress;
   }
 
   public boolean isWaitingBlockchain() {

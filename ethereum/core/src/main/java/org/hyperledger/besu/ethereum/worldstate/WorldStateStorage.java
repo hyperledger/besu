@@ -44,7 +44,12 @@ public interface WorldStateStorage {
     return getNodeData(null, hash).isPresent();
   }
 
-  default Map<Bytes32, Bytes> streamFlatDatabase(final Bytes startKeyHash, final long max) {
+  default Map<Bytes32, Bytes> streamAccountFlatDatabase(final Bytes startKeyHash, final long max) {
+    return Collections.emptyMap();
+  }
+
+  default Map<Bytes32, Bytes> streamStorageFlatDatabase(
+      final Hash accountHash, final Bytes startKeyHash, final long max) {
     return Collections.emptyMap();
   }
 

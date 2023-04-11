@@ -45,6 +45,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("unused")
 public class SnapWorldStateDownloader implements WorldStateDownloader {
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapWorldStateDownloader.class);

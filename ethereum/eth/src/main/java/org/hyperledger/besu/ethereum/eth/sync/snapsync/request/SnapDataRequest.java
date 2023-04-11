@@ -20,6 +20,11 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.AccountFlatDatabaseHealingRangeRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.AccountTrieNodeDataRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.StorageFlatDatabaseHealingRangeRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.StorageTrieNodeDataRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloaderException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
@@ -50,6 +55,21 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   public static AccountRangeDataRequest createAccountRangeDataRequest(
       final Hash rootHash, final Bytes32 startKeyHash, final Bytes32 endKeyHash) {
     return new AccountRangeDataRequest(rootHash, startKeyHash, endKeyHash);
+  }
+
+  public static AccountFlatDatabaseHealingRangeRequest createAccountFlatHealingRangeRequest(
+      final Hash rootHash, final Bytes32 startKeyHash, final Bytes32 endKeyHash) {
+    return new AccountFlatDatabaseHealingRangeRequest(rootHash, startKeyHash, endKeyHash);
+  }
+
+  public static StorageFlatDatabaseHealingRangeRequest createStorageFlatHealingRangeRequest(
+      final Hash rootHash,
+      final Bytes32 accountHash,
+      final Bytes32 storageRoot,
+      final Bytes32 startKeyHash,
+      final Bytes32 endKeyHash) {
+    return new StorageFlatDatabaseHealingRangeRequest(
+        rootHash, accountHash, storageRoot, startKeyHash, endKeyHash);
   }
 
   public static AccountRangeDataRequest createAccountDataRequest(
@@ -118,7 +138,7 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
       final WorldStateStorage worldStateStorage,
       final SnapSyncState snapSyncState);
 
-  protected void registerParent(final TrieNodeDataRequest parent) {
+  public void registerParent(final TrieNodeDataRequest parent) {
     if (this.possibleParent.isPresent()) {
       throw new WorldStateDownloaderException("Cannot set parent twice");
     }

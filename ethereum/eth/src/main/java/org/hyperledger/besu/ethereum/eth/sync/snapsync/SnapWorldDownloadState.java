@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountRangeDataRequest;
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountFlatHealingRangeRequest;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
 
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
@@ -24,6 +24,8 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataR
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.AccountFlatDatabaseHealingRangeRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.StorageFlatDatabaseHealingRangeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -64,6 +66,9 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   protected final InMemoryTasksPriorityQueues<SnapDataRequest>
       pendingAccountFlatDatabaseHealingRequests = new InMemoryTasksPriorityQueues<>();
+
+  protected final InMemoryTasksPriorityQueues<SnapDataRequest>
+      pendingStorageFlatDatabaseHealingRequests = new InMemoryTasksPriorityQueues<>();
   public HashSet<Bytes> inconsistentAccounts = new HashSet<>();
 
   private DynamicPivotBlockManager dynamicPivotBlockManager;
@@ -155,11 +160,12 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         && pendingStorageRequests.allTasksCompleted()
         && pendingBigStorageRequests.allTasksCompleted()
         && pendingTrieNodeRequests.allTasksCompleted()
-        && pendingAccountFlatDatabaseHealingRequests.allTasksCompleted()) {
+        && pendingAccountFlatDatabaseHealingRequests.allTasksCompleted()
+        && pendingStorageFlatDatabaseHealingRequests.allTasksCompleted()) {
       if (!snapSyncState.isHealTrieInProgress()) {
         startTrieHeal();
-      } else if (!snapSyncState.isHealFlatInProgress()) {
-        startFlatHeal(header);
+      } else if (!snapSyncState.isHealFlatDatabaseInProgress()) {
+        startFlatDatabaseHeal(header);
       } else if (dynamicPivotBlockManager.isBlockchainBehind()) {
         LOG.info("Pausing world state download while waiting for sync to complete");
         if (blockObserverId.isEmpty())
@@ -205,23 +211,24 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         });
   }
 
-  public synchronized void startFlatHeal(final BlockHeader header) {
-    LOG.info("Running flat database heal process");
-    snapSyncState.setHealTrieStatus(false);
-    snapSyncState.setHealFlatInProgress(true);
-    final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
-    ranges.forEach(
-        (key, value) ->
-            enqueueRequest(createAccountRangeDataRequest(header.getStateRoot(), key, value)));
-  }
-
-  public synchronized void reloadHeal() {
+  public synchronized void reloadTrieHeal() {
     worldStateStorage.clearFlatDatabase();
     worldStateStorage.clearTrieLog();
     pendingTrieNodeRequests.clear();
     pendingCodeRequests.clear();
     snapSyncState.setHealTrieStatus(false);
     checkCompletion(snapSyncState.getPivotBlockHeader().orElseThrow());
+  }
+
+  public synchronized void startFlatDatabaseHeal(final BlockHeader header) {
+    LOG.info("Running flat database heal process");
+    snapSyncState.setHealTrieStatus(false);
+    snapSyncState.setHealFlatDatabaseInProgress(true);
+    final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
+    ranges.forEach(
+        (key, value) ->
+            enqueueRequest(
+                createAccountFlatHealingRangeRequest(header.getStateRoot(), key, value)));
   }
 
   @Override
@@ -236,12 +243,11 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
           pendingStorageRequests.add(request);
         }
       } else if (request instanceof AccountRangeDataRequest) {
-        if (snapSyncState.isHealFlatInProgress()) {
-          pendingAccountFlatDatabaseHealingRequests.add(request);
-        } else {
-          pendingAccountRequests.add(request);
-        }
-
+        pendingAccountRequests.add(request);
+      } else if (request instanceof AccountFlatDatabaseHealingRangeRequest) {
+        pendingAccountFlatDatabaseHealingRequests.add(request);
+      } else if (request instanceof StorageFlatDatabaseHealingRangeRequest) {
+        pendingStorageFlatDatabaseHealingRequests.add(request);
       } else {
         pendingTrieNodeRequests.add(request);
       }
@@ -335,8 +341,20 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
             pendingAccountRequests,
             pendingStorageRequests,
             pendingBigStorageRequests,
-            pendingTrieNodeRequests),
+            pendingTrieNodeRequests,
+            pendingStorageFlatDatabaseHealingRequests),
         pendingAccountFlatDatabaseHealingRequests,
+        __ -> {});
+  }
+
+  public synchronized Task<SnapDataRequest> dequeueStorageFlatDatabaseHealingRequestBlocking() {
+    return dequeueRequestBlocking(
+        List.of(
+            pendingAccountRequests,
+            pendingStorageRequests,
+            pendingBigStorageRequests,
+            pendingTrieNodeRequests),
+        pendingStorageFlatDatabaseHealingRequests,
         __ -> {});
   }
 
@@ -365,7 +383,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         if (!snapSyncState.isWaitingBlockchain()) {
           blockObserverId.ifPresent(blockchain::removeObserver);
           blockObserverId = OptionalLong.empty();
-          reloadHeal();
+          reloadTrieHeal();
         }
       }
     };

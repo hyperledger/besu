@@ -190,9 +190,19 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   @Override
-  public Map<Bytes32, Bytes> streamFlatDatabase(final Bytes startKeyHash, final long max) {
+  public Map<Bytes32, Bytes> streamAccountFlatDatabase(final Bytes startKeyHash, final long max) {
     return accountStorage
         .streamFromKey(startKeyHash.toArrayUnsafe())
+        .limit(max)
+        .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())))
+        .collect(Collectors.toMap(Pair::getFirst, Pair::getSecond, (v1, v2) -> v1, TreeMap::new));
+  }
+
+  @Override
+  public Map<Bytes32, Bytes> streamStorageFlatDatabase(
+      final Hash accountHash, final Bytes startKeyHash, final long max) {
+    return storageStorage
+        .streamFromKey(Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe())
         .limit(max)
         .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())))
         .collect(Collectors.toMap(Pair::getFirst, Pair::getSecond, (v1, v2) -> v1, TreeMap::new));

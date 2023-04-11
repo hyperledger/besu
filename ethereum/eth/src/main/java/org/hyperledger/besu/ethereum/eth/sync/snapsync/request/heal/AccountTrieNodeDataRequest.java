@@ -12,12 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
+package org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
@@ -39,7 +40,7 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
   private final HashSet<Bytes> inconsistentAccounts;
 
-  AccountTrieNodeDataRequest(
+  public AccountTrieNodeDataRequest(
       final Hash hash,
       final Hash originalRootHash,
       final Bytes location,
@@ -70,7 +71,7 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   protected SnapDataRequest createChildNodeDataRequest(final Hash childHash, final Bytes location) {
-    return createAccountTrieNodeDataRequest(
+    return SnapDataRequest.createAccountTrieNodeDataRequest(
         childHash, getRootHash(), location, getSubLocation(location));
   }
 
@@ -108,7 +109,7 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
               stateTrieAccountValue -> {
                 // an account need a heal step
                 requests.add(
-                    createStorageTrieNodeDataRequest(
+                    SnapDataRequest.createStorageTrieNodeDataRequest(
                         stateTrieAccountValue.getStorageRoot(),
                         Hash.wrap(accountHash),
                         getRootHash(),
@@ -139,13 +140,15 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
 
     // Add code, if appropriate
     if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
-      builder.add(createBytecodeRequest(accountHash, getRootHash(), accountValue.getCodeHash()));
+      builder.add(
+          SnapDataRequest.createBytecodeRequest(
+              accountHash, getRootHash(), accountValue.getCodeHash()));
     }
     // Add storage, if appropriate
     if (!accountValue.getStorageRoot().equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
       // If we detect an account storage we fill it with snapsync before completing with a heal
       final SnapDataRequest storageTrieRequest =
-          createStorageTrieNodeDataRequest(
+          SnapDataRequest.createStorageTrieNodeDataRequest(
               accountValue.getStorageRoot(), accountHash, getRootHash(), Bytes.EMPTY);
       builder.add(storageTrieRequest);
     }

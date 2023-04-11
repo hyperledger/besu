@@ -52,8 +52,8 @@ public class AccountRangeDataRequest extends SnapDataRequest {
 
   private static final Logger LOG = LoggerFactory.getLogger(AccountRangeDataRequest.class);
 
-  protected final Bytes32 startKeyHash;
-  protected final Bytes32 endKeyHash;
+  private final Bytes32 startKeyHash;
+  private final Bytes32 endKeyHash;
   private final Optional<Bytes32> startStorageRange;
   private final Optional<Bytes32> endStorageRange;
 
