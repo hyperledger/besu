@@ -77,6 +77,11 @@ public interface DepositsValidator {
   class AllowedDeposits implements DepositsValidator {
 
     private static final Logger LOG = LoggerFactory.getLogger(AllowedDeposits.class);
+    private final Address depositContractAddress;
+
+    public AllowedDeposits(final Address depositContractAddress) {
+      this.depositContractAddress = depositContractAddress;
+    }
 
     @Override
     public boolean validateDepositParameter(final Optional<List<Deposit>> deposits) {
@@ -95,7 +100,7 @@ public interface DepositsValidator {
 
       for (TransactionReceipt receipt : receipts) {
         for (Log log : receipt.getLogsList()) {
-          if (Address.DEPOSIT_CONTRACT_ADDRESS.equals(log.getLogger())) {
+          if (depositContractAddress.equals(log.getLogger())) {
             Deposit deposit = DepositDecoder.decodeFromLog(log);
             expectedDeposits.add(deposit);
           }

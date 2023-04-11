@@ -32,6 +32,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
@@ -106,6 +107,8 @@ public abstract class AbstractEngineNewPayloadTest {
 
   private static final Vertx vertx = Vertx.vertx();
   private static final Hash mockHash = Hash.hash(Bytes32.fromHexStringLenient("0x1337deadbeef"));
+  private static final Address depositContractAddress =
+      Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
 
   @Mock private ProtocolSpec protocolSpec;
   @Mock private TimestampSchedule timestampSchedule;
@@ -514,7 +517,8 @@ public abstract class AbstractEngineNewPayloadTest {
   @Test
   public void shouldReturnInvalidIfDepositsIsNull_WhenDepositsAllowed() {
     final List<DepositParameter> deposits = null;
-    when(protocolSpec.getDepositsValidator()).thenReturn(new DepositsValidator.AllowedDeposits());
+    when(protocolSpec.getDepositsValidator())
+        .thenReturn(new DepositsValidator.AllowedDeposits(depositContractAddress));
 
     var resp =
         resp(
@@ -532,7 +536,8 @@ public abstract class AbstractEngineNewPayloadTest {
   public void shouldReturnValidIfDepositsIsNotNull_WhenDepositsAllowed() {
     final List<DepositParameter> depositsParam = List.of(DEPOSIT_PARAM_1);
     final List<Deposit> deposits = List.of(DEPOSIT_PARAM_1.toDeposit());
-    when(protocolSpec.getDepositsValidator()).thenReturn(new DepositsValidator.AllowedDeposits());
+    when(protocolSpec.getDepositsValidator())
+        .thenReturn(new DepositsValidator.AllowedDeposits(depositContractAddress));
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),

@@ -45,6 +45,7 @@ public class DepositsValidatorTest {
   private static Deposit DEPOSIT_2;
   private static Log LOG_1;
   private static Log LOG_2;
+  private static Address DEPOSIT_CONTRACT_ADDRESS;
 
   @BeforeAll
   public static void setup() {
@@ -88,6 +89,7 @@ public class DepositsValidatorTest {
             List.of(
                 LogTopic.fromHexString(
                     "0x649bbc62d0e31342afea4e5cd82d4049e7e1ee912fc0889aa790803be39038c5")));
+    DEPOSIT_CONTRACT_ADDRESS = Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
   }
 
   @Test
@@ -130,7 +132,9 @@ public class DepositsValidatorTest {
     final TransactionReceipt receipt =
         new TransactionReceipt(null, 0L, List.of(LOG_1, LOG_2), Optional.empty());
 
-    assertThat(new DepositsValidator.AllowedDeposits().validateDeposits(block, List.of(receipt)))
+    assertThat(
+            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
+                .validateDeposits(block, List.of(receipt)))
         .isTrue();
   }
 
@@ -147,7 +151,7 @@ public class DepositsValidatorTest {
         new TransactionReceipt(null, 0L, List.of(LOG_2), Optional.empty());
 
     assertThat(
-            new DepositsValidator.AllowedDeposits()
+            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
                 .validateDeposits(block, List.of(receipt1, receipt2)))
         .isTrue();
   }
@@ -159,7 +163,10 @@ public class DepositsValidatorTest {
             .setDeposits(Optional.of(Collections.emptyList()))
             .setDepositsRoot(Hash.EMPTY_TRIE_HASH);
     final Block block = blockDataGenerator.block(blockOptions);
-    assertThat(new DepositsValidator.AllowedDeposits().validateDepositsRoot(block)).isTrue();
+    assertThat(
+            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
+                .validateDepositsRoot(block))
+        .isTrue();
   }
 
   @Test
@@ -171,7 +178,9 @@ public class DepositsValidatorTest {
     final TransactionReceipt receipt1 =
         new TransactionReceipt(null, 0L, List.of(LOG_2), Optional.empty());
 
-    assertThat(new DepositsValidator.AllowedDeposits().validateDeposits(block, List.of(receipt1)))
+    assertThat(
+            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
+                .validateDeposits(block, List.of(receipt1)))
         .isFalse();
   }
 
@@ -185,7 +194,9 @@ public class DepositsValidatorTest {
     final TransactionReceipt receipt1 =
         new TransactionReceipt(null, 0L, List.of(LOG_2), Optional.empty());
 
-    assertThat(new DepositsValidator.AllowedDeposits().validateDeposits(block, List.of(receipt1)))
+    assertThat(
+            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
+                .validateDeposits(block, List.of(receipt1)))
         .isFalse();
   }
 
@@ -198,7 +209,9 @@ public class DepositsValidatorTest {
     final TransactionReceipt receipt1 =
         new TransactionReceipt(null, 0L, List.of(LOG_1, LOG_2), Optional.empty());
 
-    assertThat(new DepositsValidator.AllowedDeposits().validateDeposits(block, List.of(receipt1)))
+    assertThat(
+            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
+                .validateDeposits(block, List.of(receipt1)))
         .isFalse();
   }
 
@@ -212,7 +225,26 @@ public class DepositsValidatorTest {
     final TransactionReceipt receipt1 =
         new TransactionReceipt(null, 0L, List.of(LOG_2, LOG_1), Optional.empty());
 
-    assertThat(new DepositsValidator.AllowedDeposits().validateDeposits(block, List.of(receipt1)))
+    assertThat(
+            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
+                .validateDeposits(block, List.of(receipt1)))
+        .isFalse();
+  }
+
+  @Test
+  public void invalidateAllowedDepositsMismatchContractAddress() {
+
+    final BlockDataGenerator.BlockOptions blockOptions =
+        BlockDataGenerator.BlockOptions.create()
+            .setDeposits(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
+    final Block block = blockDataGenerator.block(blockOptions);
+
+    final TransactionReceipt receipt1 =
+        new TransactionReceipt(null, 0L, List.of(LOG_1, LOG_2), Optional.empty());
+
+    assertThat(
+            new DepositsValidator.AllowedDeposits(Address.ZERO)
+                .validateDeposits(block, List.of(receipt1)))
         .isFalse();
   }
 
@@ -223,7 +255,10 @@ public class DepositsValidatorTest {
             .setDeposits(Optional.of(Collections.emptyList()))
             .setDepositsRoot(Hash.ZERO); // this is invalid it should be empty trie hash
     final Block block = blockDataGenerator.block(blockOptions);
-    assertThat(new DepositsValidator.AllowedDeposits().validateDepositsRoot(block)).isFalse();
+    assertThat(
+            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
+                .validateDepositsRoot(block))
+        .isFalse();
   }
 
   @Test
@@ -243,18 +278,24 @@ public class DepositsValidatorTest {
   @Test
   public void validateAllowedDepositParams() {
     final Optional<List<Deposit>> deposits = Optional.of(List.of(DEPOSIT_1, DEPOSIT_2));
-    assertThat(new DepositsValidator.AllowedDeposits().validateDepositParameter(deposits))
+    assertThat(
+            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
+                .validateDepositParameter(deposits))
         .isTrue();
 
     final Optional<List<Deposit>> emptyDeposits = Optional.of(List.of());
-    assertThat(new DepositsValidator.AllowedDeposits().validateDepositParameter(emptyDeposits))
+    assertThat(
+            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
+                .validateDepositParameter(emptyDeposits))
         .isTrue();
   }
 
   @Test
   public void invalidateAllowedDepositParams() {
     final Optional<List<Deposit>> deposits = Optional.empty();
-    assertThat(new DepositsValidator.AllowedDeposits().validateDepositParameter(deposits))
+    assertThat(
+            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
+                .validateDepositParameter(deposits))
         .isFalse();
   }
 }
