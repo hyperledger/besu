@@ -104,6 +104,12 @@ public class PlatformDetector {
     return _glibc;
   }
 
+  /**
+   * Gets jemalloc version.
+   *
+   * @throws UnsatisfiedLinkError if the library cannot be found or dependent libraries are missing.
+   * @return the jemalloc version
+   */
   public static String getJemalloc() {
     if (_jemalloc == null) {
       detectJemalloc();
