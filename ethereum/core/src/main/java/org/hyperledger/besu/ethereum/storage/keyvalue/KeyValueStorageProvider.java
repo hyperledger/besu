@@ -38,7 +38,6 @@ public class KeyValueStorageProvider implements StorageProvider {
 
   protected final Function<SegmentIdentifier, KeyValueStorage> storageCreator;
   private final KeyValueStorage worldStatePreimageStorage;
-  private final KeyValueStorage privateWorldStatePreimageStorage;
   private final boolean isWorldStateIterable;
   private final boolean isWorldStateSnappable;
   protected final Map<SegmentIdentifier, KeyValueStorage> storageInstances = new HashMap<>();
@@ -49,7 +48,6 @@ public class KeyValueStorageProvider implements StorageProvider {
       final boolean segmentIsolationSupported) {
     this.storageCreator = storageCreator;
     this.worldStatePreimageStorage = worldStatePreimageStorage;
-    this.privateWorldStatePreimageStorage = null;
     this.isWorldStateIterable = segmentIsolationSupported;
     this.isWorldStateSnappable = SNAPSHOT_ISOLATION_UNSUPPORTED;
   }
@@ -57,12 +55,10 @@ public class KeyValueStorageProvider implements StorageProvider {
   public KeyValueStorageProvider(
       final Function<SegmentIdentifier, KeyValueStorage> storageCreator,
       final KeyValueStorage worldStatePreimageStorage,
-      final KeyValueStorage privateWorldStatePreimageStorage,
       final boolean segmentIsolationSupported,
       final boolean storageSnapshotIsolationSupported) {
     this.storageCreator = storageCreator;
     this.worldStatePreimageStorage = worldStatePreimageStorage;
-    this.privateWorldStatePreimageStorage = privateWorldStatePreimageStorage;
     this.isWorldStateIterable = segmentIsolationSupported;
     this.isWorldStateSnappable = storageSnapshotIsolationSupported;
   }

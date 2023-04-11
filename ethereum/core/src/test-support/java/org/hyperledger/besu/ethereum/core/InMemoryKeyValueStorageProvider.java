@@ -38,7 +38,6 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
     super(
         segmentIdentifier -> new InMemoryKeyValueStorage(),
         new InMemoryKeyValueStorage(),
-        new InMemoryKeyValueStorage(),
         SEGMENT_ISOLATION_SUPPORTED,
         SNAPSHOT_ISOLATION_UNSUPPORTED);
   }
