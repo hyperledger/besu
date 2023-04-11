@@ -38,11 +38,6 @@ import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.PooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
-import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
-import org.hyperledger.besu.ethereum.eth.messages.snap.ByteCodesMessage;
-import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV1;
-import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
-import org.hyperledger.besu.ethereum.eth.messages.snap.TrieNodesMessage;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -52,7 +47,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -68,7 +62,6 @@ import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
-import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 
 public class RespondingEthPeer {
@@ -390,33 +383,6 @@ public class RespondingEthPeer {
           break;
         case EthPV65.GET_POOLED_TRANSACTIONS:
           response = PooledTransactionsMessage.create(Collections.emptyList());
-          break;
-      }
-      return Optional.ofNullable(response);
-    };
-  }
-
-  public static Responder emptyResponderForSnap() {
-    return (cap, msg) -> {
-      MessageData response = null;
-      switch (msg.getCode()) {
-        case SnapV1.GET_ACCOUNT_RANGE:
-          response =
-              AccountRangeMessage.create(
-                  Optional.of(BigInteger.ONE), Collections.emptyMap(), Collections.emptyList());
-          break;
-        case SnapV1.GET_STORAGE_RANGE:
-          response =
-              StorageRangeMessage.create(
-                  Optional.ofNullable(BigInteger.ONE), new ArrayDeque<>(), new ArrayList<>());
-          break;
-        case SnapV1.GET_BYTECODES:
-          response =
-              ByteCodesMessage.create(Optional.ofNullable(BigInteger.ONE), Collections.emptyList());
-          break;
-        case SnapV1.GET_TRIE_NODES:
-          response =
-              TrieNodesMessage.create(Optional.ofNullable(BigInteger.ONE), Collections.emptyList());
           break;
       }
       return Optional.ofNullable(response);
