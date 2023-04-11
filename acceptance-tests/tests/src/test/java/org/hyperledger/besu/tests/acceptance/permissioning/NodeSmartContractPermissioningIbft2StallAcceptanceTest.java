@@ -24,7 +24,7 @@ import java.util.Optional;
 
 import org.junit.Test;
 
-public class NodeSmartContractPermissioningIbftStallAcceptanceTest
+public class NodeSmartContractPermissioningIbft2StallAcceptanceTest
     extends NodeSmartContractPermissioningAcceptanceTestBase {
 
   private static final String GENESIS_FILE =
