@@ -33,10 +33,13 @@ import org.hyperledger.besu.evm.operation.AndOperation;
 import org.hyperledger.besu.evm.operation.ByteOperation;
 import org.hyperledger.besu.evm.operation.DivOperation;
 import org.hyperledger.besu.evm.operation.DupOperation;
+import org.hyperledger.besu.evm.operation.ExpOperation;
 import org.hyperledger.besu.evm.operation.GtOperation;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
 import org.hyperledger.besu.evm.operation.IsZeroOperation;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
+import org.hyperledger.besu.evm.operation.JumpOperation;
+import org.hyperledger.besu.evm.operation.JumpiOperation;
 import org.hyperledger.besu.evm.operation.LtOperation;
 import org.hyperledger.besu.evm.operation.ModOperation;
 import org.hyperledger.besu.evm.operation.MulModOperation;
@@ -173,7 +176,7 @@ public class EVM {
               case 0x07 -> SModOperation.staticOperation(frame);
               case 0x08 -> AddModOperation.staticOperation(frame);
               case 0x09 -> MulModOperation.staticOperation(frame);
-                // EXP requires gasCalculator access, so it is skipped
+              case 0x0a -> ExpOperation.staticOperation(frame, gasCalculator);
               case 0x0b -> SignExtendOperation.staticOperation(frame);
               case 0x0c, 0x0d, 0x0e, 0x0f -> InvalidOperation.INVALID_RESULT;
               case 0x10 -> LtOperation.staticOperation(frame);
@@ -187,6 +190,8 @@ public class EVM {
               case 0x19 -> NotOperation.staticOperation(frame);
               case 0x1a -> ByteOperation.staticOperation(frame);
               case 0x50 -> PopOperation.staticOperation(frame);
+              case 0x56 -> JumpOperation.staticOperation(frame);
+              case 0x57 -> JumpiOperation.staticOperation(frame);
               case 0x5b -> JumpDestOperation.jumpdestSuccess;
               case 0x5f -> enableShanghai
                   ? Push0Operation.staticOperation(frame)

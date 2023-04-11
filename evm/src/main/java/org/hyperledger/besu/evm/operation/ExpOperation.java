@@ -39,12 +39,24 @@ public class ExpOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    return staticOperation(frame, gasCalculator());
+  }
+
+  /**
+   * Performs exp operation.
+   *
+   * @param frame the frame
+   * @param gasCalculator the gas calculator
+   * @return the operation result
+   */
+  public static OperationResult staticOperation(
+      final MessageFrame frame, final GasCalculator gasCalculator) {
     final Bytes number = frame.popStackItem();
     final Bytes power = frame.popStackItem();
 
     final int numBytes = (power.bitLength() + 7) / 8;
 
-    final long cost = gasCalculator().expOperationGasCost(numBytes);
+    final long cost = gasCalculator.expOperationGasCost(numBytes);
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
