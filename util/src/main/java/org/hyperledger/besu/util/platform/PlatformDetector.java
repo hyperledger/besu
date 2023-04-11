@@ -106,6 +106,7 @@ public class PlatformDetector {
 
   /**
    * The jemalloc version
+   *
    * @return the jemalloc version
    * @throws RuntimeException if jemalloc is not intalled.
    */
