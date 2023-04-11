@@ -26,6 +26,8 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.Databa
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.OptimisticRocksDBColumnarKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.PessimisticRocksDBColumnarKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented.RocksDBKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
@@ -178,18 +180,35 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
                     .filter(segmentId -> segmentId.includeInDatabaseVersion(databaseVersion))
                     .collect(Collectors.toList());
 
-            segmentedStorage =
-                new RocksDBColumnarKeyValueStorage(
-                    rocksDBConfiguration,
-                    segmentsForVersion,
-                    ignorableSegments,
-                    metricsSystem,
-                    rocksDBMetricsFactory);
+            if (commonConfiguration.isForestStorageMode()) {
+              LOG.info("FOREST mode detected, using pessimistic DB.");
+              segmentedStorage =
+                  new PessimisticRocksDBColumnarKeyValueStorage(
+                      rocksDBConfiguration,
+                      segmentsForVersion,
+                      ignorableSegments,
+                      metricsSystem,
+                      rocksDBMetricsFactory);
+            } else {
+              LOG.info("Using Optimistic DB.");
+              segmentedStorage =
+                  new OptimisticRocksDBColumnarKeyValueStorage(
+                      rocksDBConfiguration,
+                      segmentsForVersion,
+                      ignorableSegments,
+                      metricsSystem,
+                      rocksDBMetricsFactory);
+            }
           }
           final RocksDbSegmentIdentifier rocksSegment =
               segmentedStorage.getSegmentIdentifierByName(segment);
-          return new SegmentedKeyValueStorageAdapter<>(
-              segment, segmentedStorage, () -> segmentedStorage.takeSnapshot(rocksSegment));
+
+          if (commonConfiguration.isForestStorageMode()) {
+            return new SegmentedKeyValueStorageAdapter<>(segment, segmentedStorage);
+          } else {
+            return new SegmentedKeyValueStorageAdapter<>(
+                segment, segmentedStorage, () -> segmentedStorage.takeSnapshot(rocksSegment));
+          }
         }
       default:
         {

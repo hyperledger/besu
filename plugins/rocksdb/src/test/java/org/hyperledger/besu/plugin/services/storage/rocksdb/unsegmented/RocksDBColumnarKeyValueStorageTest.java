@@ -25,7 +25,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.OptimisticRocksDBColumnarKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage.Transaction;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
@@ -288,9 +288,10 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
 
   private SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore()
       throws Exception {
-    return new RocksDBColumnarKeyValueStorage(
+    return new OptimisticRocksDBColumnarKeyValueStorage(
         new RocksDBConfigurationBuilder().databaseDir(folder.newFolder().toPath()).build(),
         Arrays.asList(TestSegment.FOO, TestSegment.BAR),
+        List.of(),
         new NoOpMetricsSystem(),
         RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
   }
@@ -299,7 +300,7 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
       final Path path,
       final List<SegmentIdentifier> segments,
       final List<SegmentIdentifier> ignorableSegments) {
-    return new RocksDBColumnarKeyValueStorage(
+    return new OptimisticRocksDBColumnarKeyValueStorage(
         new RocksDBConfigurationBuilder().databaseDir(path).build(),
         segments,
         ignorableSegments,
