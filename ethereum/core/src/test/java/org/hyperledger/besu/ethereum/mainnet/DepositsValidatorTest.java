@@ -135,7 +135,7 @@ public class DepositsValidatorTest {
   }
 
   @Test
-  public void validateAllowedDeposits2() {
+  public void validateAllowedDepositsSeparateReceipts() {
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
             .setDeposits(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
@@ -176,7 +176,7 @@ public class DepositsValidatorTest {
   }
 
   @Test
-  public void invalidateAllowedDeposits2() {
+  public void invalidateAllowedDepositsMissingLogInReceipt() {
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
             .setDeposits(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
@@ -190,7 +190,7 @@ public class DepositsValidatorTest {
   }
 
   @Test
-  public void invalidateAllowedDeposits3() {
+  public void invalidateAllowedDepositsExtraLogInReceipt() {
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create().setDeposits(Optional.of(List.of(DEPOSIT_1)));
     final Block block = blockDataGenerator.block(blockOptions);
@@ -203,7 +203,7 @@ public class DepositsValidatorTest {
   }
 
   @Test
-  public void invalidateAllowedDeposits4() {
+  public void invalidateAllowedDepositsWrongOrder() {
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
             .setDeposits(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
@@ -229,32 +229,32 @@ public class DepositsValidatorTest {
   @Test
   public void validateProhibitedDepositParams() {
     final Optional<List<Deposit>> deposits = Optional.empty();
-    assertThat(new DepositsValidator.ProhibitedDeposits().validateDepositParameters(deposits))
+    assertThat(new DepositsValidator.ProhibitedDeposits().validateDepositParameter(deposits))
         .isTrue();
   }
 
   @Test
   public void invalidateProhibitedDepositParams() {
     final Optional<List<Deposit>> deposits = Optional.of(List.of(DEPOSIT_1, DEPOSIT_2));
-    assertThat(new DepositsValidator.ProhibitedDeposits().validateDepositParameters(deposits))
+    assertThat(new DepositsValidator.ProhibitedDeposits().validateDepositParameter(deposits))
         .isFalse();
   }
 
   @Test
   public void validateAllowedDepositParams() {
     final Optional<List<Deposit>> deposits = Optional.of(List.of(DEPOSIT_1, DEPOSIT_2));
-    assertThat(new DepositsValidator.AllowedDeposits().validateDepositParameters(deposits))
+    assertThat(new DepositsValidator.AllowedDeposits().validateDepositParameter(deposits))
         .isTrue();
 
     final Optional<List<Deposit>> emptyDeposits = Optional.of(List.of());
-    assertThat(new DepositsValidator.AllowedDeposits().validateDepositParameters(emptyDeposits))
+    assertThat(new DepositsValidator.AllowedDeposits().validateDepositParameter(emptyDeposits))
         .isTrue();
   }
 
   @Test
   public void invalidateAllowedDepositParams() {
     final Optional<List<Deposit>> deposits = Optional.empty();
-    assertThat(new DepositsValidator.AllowedDeposits().validateDepositParameters(deposits))
+    assertThat(new DepositsValidator.AllowedDeposits().validateDepositParameter(deposits))
         .isFalse();
   }
 }

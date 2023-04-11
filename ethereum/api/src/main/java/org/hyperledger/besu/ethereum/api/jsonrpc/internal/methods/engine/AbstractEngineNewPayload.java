@@ -119,7 +119,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             .map(ds -> ds.stream().map(DepositParameter::toDeposit).collect(toList()));
     if (!getDepositsValidator(
             timestampSchedule, blockParam.getTimestamp(), blockParam.getBlockNumber())
-        .validateDepositParameters(maybeDeposits)) {
+        .validateDepositParameter(maybeDeposits)) {
       return new JsonRpcErrorResponse(reqId, INVALID_PARAMS);
     }
 

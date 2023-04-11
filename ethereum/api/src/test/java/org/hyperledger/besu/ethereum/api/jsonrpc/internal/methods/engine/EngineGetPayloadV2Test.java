@@ -67,14 +67,17 @@ public class EngineGetPayloadV2Test extends AbstractEngineGetPayloadTest {
                   .isEqualTo(mockHeader.getPrevRandao().map(Bytes32::toString).orElse(""));
             });
     verify(engineCallListener, times(1)).executionEngineCalled();
+  }
 
+  @Test
+  public void shouldReturnBlockForKnownPayloadIdPostV6110() {
     // should return deposits for a post-V6110 block
     when(mergeContext.retrieveBlockById(mockPid))
         .thenReturn(Optional.of(mockBlockWithReceiptsAndDeposits));
 
-    final var resp2 = resp(RpcMethod.ENGINE_GET_PAYLOAD_V2.getMethodName(), mockPid);
-    assertThat(resp2).isInstanceOf(JsonRpcSuccessResponse.class);
-    Optional.of(resp2)
+    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V2.getMethodName(), mockPid);
+    assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
+    Optional.of(resp)
         .map(JsonRpcSuccessResponse.class::cast)
         .ifPresent(
             r -> {
