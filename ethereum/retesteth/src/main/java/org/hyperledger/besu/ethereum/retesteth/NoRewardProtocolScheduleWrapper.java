@@ -87,7 +87,7 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
         original.getWithdrawalsProcessor(),
         original.getDepositsValidator(),
         original.isPoS(),
-        original.getBlockMaxCalldataSize());
+        original.getCalldataLimits());
   }
 
   @Override

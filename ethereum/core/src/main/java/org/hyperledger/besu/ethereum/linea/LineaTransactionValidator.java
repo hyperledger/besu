@@ -1,8 +1,11 @@
-package org.hyperledger.besu.ethereum.mainnet;
+package org.hyperledger.besu.ethereum.linea;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -13,7 +16,6 @@ import java.util.Optional;
 import java.util.Set;
 
 public class LineaTransactionValidator extends MainnetTransactionValidator {
-
   private final int maxCalldataSize;
 
   public LineaTransactionValidator(
@@ -34,7 +36,7 @@ public class LineaTransactionValidator extends MainnetTransactionValidator {
         acceptedTransactionTypes,
         goQuorumCompatibilityMode,
         Integer.MAX_VALUE);
-    this.maxCalldataSize = maxCalldataSize;
+    this.maxCalldataSize = maxCalldataSize >= 0 ? maxCalldataSize : Integer.MAX_VALUE;
   }
 
   @Override
