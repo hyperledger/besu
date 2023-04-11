@@ -45,7 +45,6 @@ public class PeerReputation implements Comparable<PeerReputation> {
   private final Queue<Long> uselessResponseTimes = new ConcurrentLinkedQueue<>();
 
   private static final int SMALL_ADJUSTMENT = 1;
-  private static final int USELESS_ADJUSTMENT = 2;
   private static final int LARGE_ADJUSTMENT = 10;
 
   private int score;
@@ -96,7 +95,7 @@ public class PeerReputation implements Comparable<PeerReputation> {
       LOG.debug("Disconnection triggered by exceeding useless response threshold");
       return Optional.of(DisconnectReason.USELESS_PEER);
     } else {
-      score -= USELESS_ADJUSTMENT;
+      score -= SMALL_ADJUSTMENT;
       return Optional.empty();
     }
   }
