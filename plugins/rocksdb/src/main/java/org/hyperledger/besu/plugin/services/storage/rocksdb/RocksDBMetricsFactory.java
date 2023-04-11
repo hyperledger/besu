@@ -23,7 +23,7 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
 
-import org.rocksdb.OptimisticTransactionDB;
+import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.Statistics;
 import org.slf4j.Logger;
@@ -72,7 +72,7 @@ public class RocksDBMetricsFactory {
   public RocksDBMetrics create(
       final MetricsSystem metricsSystem,
       final RocksDBConfiguration rocksDbConfiguration,
-      final OptimisticTransactionDB db,
+      final RocksDB db,
       final Statistics stats) {
     final OperationTimer readLatency =
         metricsSystem
