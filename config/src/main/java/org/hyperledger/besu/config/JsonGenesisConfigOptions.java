@@ -115,8 +115,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
       return KECCAK256_CONFIG_KEY;
     } else if (isIbft2()) {
       return IBFT2_CONFIG_KEY;
-    } else if (isIbftLegacy()) {
-      return IBFT_LEGACY_CONFIG_KEY;
     } else if (isQbft()) {
       return QBFT_CONFIG_KEY;
     } else if (isClique()) {
@@ -154,13 +152,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public boolean isQbft() {
     return configRoot.has(QBFT_CONFIG_KEY);
-  }
-
-  @Override
-  public IbftLegacyConfigOptions getIbftLegacyConfigOptions() {
-    return JsonUtil.getObjectNode(configRoot, IBFT_LEGACY_CONFIG_KEY)
-        .map(IbftLegacyConfigOptions::new)
-        .orElse(IbftLegacyConfigOptions.DEFAULT);
   }
 
   @Override
@@ -512,9 +503,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     }
     if (isKeccak256()) {
       builder.put("keccak256", getKeccak256ConfigOptions().asMap());
-    }
-    if (isIbftLegacy()) {
-      builder.put("ibft", getIbftLegacyConfigOptions().asMap());
     }
     if (isIbft2()) {
       builder.put("ibft2", getBftConfigOptions().asMap());

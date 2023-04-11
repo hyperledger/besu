@@ -1,7 +1,7 @@
 {
   "config": {
     "chainId": 4,
-    "byzantiumBlock": 0,
+    "berlinBlock": 0,
     "qbft": {
       "blockperiodseconds": 1,
       "epochlength": 30000,

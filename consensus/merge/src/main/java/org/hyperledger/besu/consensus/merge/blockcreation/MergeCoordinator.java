@@ -123,6 +123,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             .getTargetGasLimit()
             // TODO: revisit default target gas limit
             .orElse(new AtomicLong(30000000L));
+    this.extraData.set(miningParams.getExtraData());
 
     this.mergeBlockCreatorFactory =
         (parentHeader, address) ->
@@ -251,7 +252,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
     final PayloadIdentifier payloadIdentifier =
         PayloadIdentifier.forPayloadParams(
-            parentHeader.getBlockHash(), timestamp, prevRandao, feeRecipient);
+            parentHeader.getBlockHash(), timestamp, prevRandao, feeRecipient, withdrawals);
 
     if (blockCreationTask.containsKey(payloadIdentifier)) {
       LOG.debug(

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,25 +12,28 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.consensus.ibftlegacy;
+package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.plugin.Unstable;
 
-/** The Ibft helpers utility class. */
-public class IbftHelpers {
-
-  /** The constant EXPECTED_MIX_HASH. */
-  public static final Hash EXPECTED_MIX_HASH =
-      Hash.fromHexString("0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365");
+/** The Trace service interface */
+@Unstable
+public interface TraceService extends BesuService {
+  /**
+   * Traces a block
+   *
+   * @param blockNumber the block number
+   * @param tracer the tracer (OperationTracer)
+   */
+  void traceBlock(long blockNumber, OperationTracer tracer);
 
   /**
-   * Calculate required validator quorum.
+   * Traces a block by hash
    *
-   * @param validatorCount the validator count
-   * @return the int
+   * @param hash the block hash
+   * @param tracer the tracer (OperationTracer)
    */
-  public static int calculateRequiredValidatorQuorum(final int validatorCount) {
-    final int F = (validatorCount - 1) / 3;
-    return (2 * F) + 1;
-  }
+  void traceBlock(Hash hash, OperationTracer tracer);
 }

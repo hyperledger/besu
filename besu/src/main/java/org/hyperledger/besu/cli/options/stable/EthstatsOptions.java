@@ -15,18 +15,20 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
-import org.hyperledger.besu.ethstats.util.NetstatsUrl;
+import org.hyperledger.besu.ethstats.util.EthStatsConnectOptions;
 
-import java.util.Arrays;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 import picocli.CommandLine;
 
 /** The Ethstats CLI options. */
-public class EthstatsOptions implements CLIOptions<NetstatsUrl> {
+public class EthstatsOptions implements CLIOptions<EthStatsConnectOptions> {
 
   private static final String ETHSTATS = "--ethstats";
   private static final String ETHSTATS_CONTACT = "--ethstats-contact";
+  private static final String ETHSTATS_CACERT_FILE = "--ethstats-cacert-file";
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @CommandLine.Option(
@@ -43,6 +45,14 @@ public class EthstatsOptions implements CLIOptions<NetstatsUrl> {
       arity = "1")
   private String ethstatsContact = "";
 
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
+  @CommandLine.Option(
+      names = {ETHSTATS_CACERT_FILE},
+      paramLabel = "<FILE>",
+      description =
+          "Specifies the path to the root CA (Certificate Authority) certificate file that has signed ethstats server certificate. This option is optional.")
+  private Path ethstatsCaCert = null;
+
   private EthstatsOptions() {}
 
   /**
@@ -55,8 +65,8 @@ public class EthstatsOptions implements CLIOptions<NetstatsUrl> {
   }
 
   @Override
-  public NetstatsUrl toDomainObject() {
-    return NetstatsUrl.fromParams(ethstatsUrl, ethstatsContact);
+  public EthStatsConnectOptions toDomainObject() {
+    return EthStatsConnectOptions.fromParams(ethstatsUrl, ethstatsContact, ethstatsCaCert);
   }
 
   /**
@@ -77,8 +87,23 @@ public class EthstatsOptions implements CLIOptions<NetstatsUrl> {
     return ethstatsContact;
   }
 
+  /**
+   * Returns path to root CA cert file.
+   *
+   * @return Path to CA file. null if no CA file to set.
+   */
+  public Path getEthstatsCaCert() {
+    return ethstatsCaCert;
+  }
+
   @Override
   public List<String> getCLIOptions() {
-    return Arrays.asList(ETHSTATS + "=" + ethstatsUrl, ETHSTATS_CONTACT + "=" + ethstatsContact);
+    final List<String> options = new ArrayList<>();
+    options.add(ETHSTATS + "=" + ethstatsUrl);
+    options.add(ETHSTATS_CONTACT + "=" + ethstatsContact);
+    if (ethstatsCaCert != null) {
+      options.add(ETHSTATS_CACERT_FILE + "=" + ethstatsCaCert);
+    }
+    return options;
   }
 }

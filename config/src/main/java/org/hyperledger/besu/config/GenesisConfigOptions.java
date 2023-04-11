@@ -45,7 +45,7 @@ public interface GenesisConfigOptions {
   boolean isKeccak256();
 
   /**
-   * Is ibft legacy boolean.
+   * Is ibft legacy boolean (NOTE this is a deprecated feature).
    *
    * @return the boolean
    */
@@ -78,7 +78,7 @@ public interface GenesisConfigOptions {
    * @return the boolean
    */
   default boolean isConsensusMigration() {
-    return (isIbft2() || isIbftLegacy()) && isQbft();
+    return isIbft2() && isQbft();
   }
 
   /**
@@ -87,13 +87,6 @@ public interface GenesisConfigOptions {
    * @return the consensus engine
    */
   String getConsensusEngine();
-
-  /**
-   * Gets ibft legacy config options.
-   *
-   * @return the ibft legacy config options
-   */
-  IbftLegacyConfigOptions getIbftLegacyConfigOptions();
 
   /**
    * Gets checkpoint options.
