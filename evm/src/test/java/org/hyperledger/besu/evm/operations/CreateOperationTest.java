@@ -141,7 +141,7 @@ class CreateOperationTest {
     final EVM evm = MainnetEVMs.london(EvmConfiguration.DEFAULT);
     operation.execute(messageFrame, evm);
 
-    assertThat(messageFrame.getStackItem(0)).isEqualTo(UInt256.ZERO);
+    assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 
   @Test
@@ -160,7 +160,7 @@ class CreateOperationTest {
     final EVM evm = MainnetEVMs.london(EvmConfiguration.DEFAULT);
     operation.execute(messageFrame, evm);
 
-    assertThat(messageFrame.getStackItem(0)).isEqualTo(UInt256.ZERO);
+    assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 
   @Test
@@ -182,7 +182,7 @@ class CreateOperationTest {
     final EVM evm = MainnetEVMs.london(EvmConfiguration.DEFAULT);
     operation.execute(messageFrame, evm);
 
-    assertThat(messageFrame.getStackItem(0)).isEqualTo(UInt256.ZERO);
+    assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 
   @Test
@@ -262,7 +262,7 @@ class CreateOperationTest {
     final EVM evm = MainnetEVMs.cancun(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
     var result = operation.execute(messageFrame, evm);
     assertThat(result.getHaltReason()).isNull();
-    assertThat(messageFrame.getStackItem(0)).isEqualTo(UInt256.ZERO);
+    assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 
   @Test
@@ -290,7 +290,7 @@ class CreateOperationTest {
     final EVM evm = MainnetEVMs.cancun(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
     var result = operation.execute(messageFrame, evm);
     assertThat(result.getHaltReason()).isNull();
-    assertThat(messageFrame.getStackItem(0)).isNotEqualTo(UInt256.ZERO);
+    assertThat(messageFrame.getState()).isEqualTo(MessageFrame.State.CODE_SUSPENDED);
   }
 
   @NotNull

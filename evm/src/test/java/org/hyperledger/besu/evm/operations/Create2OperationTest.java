@@ -325,7 +325,7 @@ public class Create2OperationTest {
     final EVM evm = MainnetEVMs.cancun(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
     var result = operation.execute(messageFrame, evm);
     assertThat(result.getHaltReason()).isNull();
-    assertThat(messageFrame.getStackItem(0)).isEqualTo(UInt256.ZERO);
+    assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 
   @Test
