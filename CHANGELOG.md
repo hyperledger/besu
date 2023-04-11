@@ -2,8 +2,13 @@
 
 ## 23.4-RC
 
+### Breaking Changes
+- Removed IBFT1 feature [#5302](https://github.com/hyperledger/besu/pull/5302)
+
 ### Additions and Improvements
 - Update most dependencies to latest version [#5269](https://github.com/hyperledger/besu/pull/5269)
+- If jemalloc is used, print its version in the configuration overview [#4738](https://github.com/hyperledger/besu/pull/4738)
+- Add metrics for accounts and storage reads (Flat database vs Merkle Patricia Trie) [#5315](https://github.com/hyperledger/besu/pull/5315)
 
 ### Bug Fixes
 
@@ -15,9 +20,8 @@
 - In `--ethstats`, if the port is not specified in the URI, it will default to 443 and 80 for ssl and non-ssl connections respectively instead of 3000. [#5301](https://github.com/hyperledger/besu/pull/5301)
 
 ### Additions and Improvements
-
-- An alternate build target for the EVM using GraalVM AOT compilaiton was added.  [#5192](https://github.com/hyperledger/besu/pull/5192)
-- To generate the binary install and use GraalVM 23.3.r17 or higher and run `./gradlew naticeCompile`.  The binary will be located in `ethereum/evmtool/build/native/nativeCompile`
+- An alternate build target for the EVM using GraalVM AOT compilation was added.  [#5192](https://github.com/hyperledger/besu/pull/5192)
+- To generate the binary install and use GraalVM 23.3.r17 or higher and run `./gradlew nativeCompile`.  The binary will be located in `ethereum/evmtool/build/native/nativeCompile`
 - Upgrade RocksDB version from 7.7.3 to 8.0.0. Besu Team [contributed](https://github.com/facebook/rocksdb/pull/11099) to this release to make disabling checksum verification work. 
 - Log an error with stacktrace when RPC responds with internal error [#5288](https://github.com/hyperledger/besu/pull/5288)
 - `--ethstats-cacert` to specify root CA of ethstats server (useful for non-production environments). [#5301](https://github.com/hyperledger/besu/pull/5301)
@@ -28,6 +32,7 @@
 - Make QBFT validator smart contract mode work with london fork [#5249](https://github.com/hyperledger/besu/issues/5249)
 - Try to connect to EthStats server by default with ssl followed by non-ssl. [#5301](https://github.com/hyperledger/besu/pull/5301)
 - Allow --miner-extra-data to be used in Proof-of-Stake block production [#5291](https://github.com/hyperledger/besu/pull/5291)
+- Add withdrawals to payloadId calculation to avoid collisions [#5321](https://github.com/hyperledger/besu/pull/5321) 
 
 ### Download Links
 

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.storage.keyvalue;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -74,14 +75,16 @@ public class KeyValueStorageProviderBuilder {
           segment -> storageFactory.create(segment, commonConfiguration, metricsSystem),
           worldStatePreImageStorage,
           privateWorldStatePreImageStorage,
-          storageFactory.isSegmentIsolationSupported());
+          storageFactory.isSegmentIsolationSupported(),
+          (ObservableMetricsSystem) metricsSystem);
     } else {
       return new KeyValueStorageProvider(
           segment -> storageFactory.create(segment, commonConfiguration, metricsSystem),
           worldStatePreImageStorage,
           privateWorldStatePreImageStorage,
           storageFactory.isSegmentIsolationSupported(),
-          storageFactory.isSnapshotIsolationSupported());
+          storageFactory.isSnapshotIsolationSupported(),
+          (ObservableMetricsSystem) metricsSystem);
     }
   }
 }
