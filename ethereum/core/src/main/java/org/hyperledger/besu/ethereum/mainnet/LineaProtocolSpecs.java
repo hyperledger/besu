@@ -59,7 +59,6 @@ public class LineaProtocolSpecs {
                         TransactionType.FRONTIER,
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559),
-                    quorumCompatibilityMode,
                     txCalldataMaxSize))
         .blockBodyValidatorBuilder(LineaBlockBodyValidator::new)
         .name("Linea");
