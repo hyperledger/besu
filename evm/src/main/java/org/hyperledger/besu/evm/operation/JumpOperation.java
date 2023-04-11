@@ -25,7 +25,8 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Jump operation. */
 public class JumpOperation extends AbstractFixedCostOperation {
 
-  private static final Operation.OperationResult invalidJumpResponse = new Operation.OperationResult(8L, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
+  private static final Operation.OperationResult invalidJumpResponse =
+      new Operation.OperationResult(8L, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
   private static final OperationResult jumpResponse = new OperationResult(8L, null, 0);
 
   /**
