@@ -24,13 +24,13 @@
           },
           {
             "index": "0x1",
-            "validatorIndex": "0x0",
+            "validatorIndex": "0x1",
             "address": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
             "amount": "0x2"
           }
         ],
         "blockNumber": "0x2",
-        "blockHash": "0x5dec96e86ccd61362959cc73a0992b033fcde6f01d7467393363538c74c5260d",
+        "blockHash": "0x4f88d512a0045bc6d447ba74a18eac0ed2ebb8d9faca325f5f55b2ca84be0705",
         "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
       }
     ],
@@ -41,7 +41,7 @@
     "id": 67,
     "result": {
       "status": "VALID",
-      "latestValidHash": "0x5dec96e86ccd61362959cc73a0992b033fcde6f01d7467393363538c74c5260d",
+      "latestValidHash": "0x4f88d512a0045bc6d447ba74a18eac0ed2ebb8d9faca325f5f55b2ca84be0705",
       "validationError": null
     }
   },

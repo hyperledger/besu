@@ -3,7 +3,7 @@
     "jsonrpc": "2.0",
     "method": "engine_getPayloadV2",
     "params": [
-      "0x0065bd329c22813b"
+      "0x0065bd329c251d59"
     ],
     "id": 67
   },
@@ -32,13 +32,13 @@
           },
           {
             "index": "0x1",
-            "validatorIndex": "0x0",
+            "validatorIndex": "0x1",
             "address": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
             "amount": "0x4"
           }
         ],
         "blockNumber": "0x2",
-        "blockHash": "0x7168549c8855e8b2c1c27686e4e31996193205f7b9bc7e6a138af02f905b2f98",
+        "blockHash": "0x4a7b0e390d320a07150daa9c3b9dddfc6b7f6ca7d7a2971ef2f53ac1f29f24dc",
         "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
       },
       "blockValue": "0x0"
