@@ -56,24 +56,8 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
-  public void shouldUseIbftLegacyWhenIbftInConfig() {
-    final GenesisConfigOptions config = fromConfigOptions(singletonMap("ibft", emptyMap()));
-    assertThat(config.isIbftLegacy()).isTrue();
-    assertThat(config.getIbftLegacyConfigOptions()).isNotSameAs(IbftLegacyConfigOptions.DEFAULT);
-    assertThat(config.getConsensusEngine()).isEqualTo("ibft");
-  }
-
-  @Test
-  public void shouldNotUseIbftLegacyIfIbftNotPresent() {
-    final GenesisConfigOptions config = fromConfigOptions(emptyMap());
-    assertThat(config.isIbftLegacy()).isFalse();
-    assertThat(config.getIbftLegacyConfigOptions()).isSameAs(IbftLegacyConfigOptions.DEFAULT);
-  }
-
-  @Test
   public void shouldUseIbft2WhenIbft2InConfig() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("ibft2", emptyMap()));
-    assertThat(config.isIbftLegacy()).isFalse();
     assertThat(config.isIbft2()).isTrue();
     assertThat(config.getConsensusEngine()).isEqualTo("ibft2");
   }
@@ -264,7 +248,6 @@ public class GenesisConfigOptionsTest {
   public void shouldSupportEmptyGenesisConfig() {
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig("{}").getConfigOptions();
     assertThat(config.isEthHash()).isFalse();
-    assertThat(config.isIbftLegacy()).isFalse();
     assertThat(config.isClique()).isFalse();
     assertThat(config.getHomesteadBlockNumber()).isEmpty();
   }
