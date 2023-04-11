@@ -65,6 +65,6 @@ public class KeyValueStorageProviderBuilder {
         worldStatePreImageStorage,
         storageFactory.isSegmentIsolationSupported(),
         storageFactory.isSnapshotIsolationSupported(),
-    (ObservableMetricsSystem) metricsSystem);
+        (ObservableMetricsSystem) metricsSystem);
   }
 }
