@@ -73,8 +73,7 @@ public class JsonRpcErrorConverterTest {
           {
             TransactionInvalidReason.TRANSACTION_REPLACEMENT_UNDERPRICED,
             JsonRpcError.ETH_SEND_TX_REPLACEMENT_UNDERPRICED
-          },
-          {TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO, JsonRpcError.GAS_PRICE_MUST_BE_ZERO}
+          }
         });
   }
 

@@ -60,8 +60,6 @@ public enum RpcMethod {
   ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1("engine_getPayloadBodiesByRangeV1"),
   ENGINE_EXCHANGE_CAPABILITIES("engine_exchangeCapabilities"),
 
-  GOQUORUM_ETH_GET_QUORUM_PAYLOAD("eth_getQuorumPayload"),
-  GOQUORUM_STORE_RAW("goquorum_storeRaw"),
   PRIV_CALL("priv_call"),
   PRIV_GET_PRIVATE_TRANSACTION("priv_getPrivateTransaction"),
   PRIV_GET_TRANSACTION_COUNT("priv_getTransactionCount"),

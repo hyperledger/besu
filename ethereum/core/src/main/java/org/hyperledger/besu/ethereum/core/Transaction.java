@@ -62,9 +62,6 @@ public class Transaction
 
   public static final BigInteger REPLAY_PROTECTED_V_BASE = BigInteger.valueOf(35);
 
-  public static final BigInteger GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN = BigInteger.valueOf(37);
-  public static final BigInteger GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX = BigInteger.valueOf(38);
-
   // The v signature parameter starts at 36 because 1 is the first valid chainId so:
   // chainId > 1 implies that 2 * chainId + V_BASE > 36.
   public static final BigInteger REPLAY_PROTECTED_V_MIN = BigInteger.valueOf(36);
