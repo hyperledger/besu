@@ -4,7 +4,7 @@
 
 ### Additions and Improvements
 - Update most dependencies to latest version [#5269](https://github.com/hyperledger/besu/pull/5269)
-- Add metrics for accounts and storage reads (Flat databasae vs Merkle Patricia Trie) [#5315](https://github.com/hyperledger/besu/pull/5315)
+- Add metrics for accounts and storage reads (Flat database vs Merkle Patricia Trie) [#5315](https://github.com/hyperledger/besu/pull/5315)
 
 ### Bug Fixes
 
