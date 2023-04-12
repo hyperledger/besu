@@ -63,23 +63,34 @@ public abstract class RocksDBColumnarKeyValueStorage
   private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
   private static final int ROCKSDB_FORMAT_VERSION = 5;
   private static final long ROCKSDB_BLOCK_SIZE = 32768;
+  /** RocksDb blockcache size when using the high spec option */
   protected static final long ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC = 1_073_741_824L;
+  /** RocksDb memtable size when using the high spec option */
   protected static final long ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC = 1_073_741_824L;
 
   static {
     RocksDbUtil.loadNativeLibrary();
   }
 
+  /** RocksDB DB options */
   protected DBOptions options;
+
+  /** RocksDb transactionDB options */
   protected TransactionDBOptions txOptions;
+
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
+  /** RocksDB metrics */
   protected RocksDBMetrics metrics;
 
+  /** Map of the columns handles by name */
   protected Map<String, RocksDbSegmentIdentifier> columnHandlesByName;
+
   private final WriteOptions tryDeleteOptions =
       new WriteOptions().setNoSlowdown(true).setIgnoreMissingColumnFamilies(true);
   private final ReadOptions readOptions = new ReadOptions().setVerifyChecksums(false);
+
+  /** RocksDb statistics */
   protected final Statistics stats = new Statistics();
   //  protected final List<ColumnFamilyDescriptor> columnDescriptors;
 
@@ -183,6 +194,12 @@ public abstract class RocksDBColumnarKeyValueStorage
     }
   }
 
+  /**
+   * Take snapshot RocksDb columnar key value snapshot.
+   *
+   * @param segment the segment
+   * @return the RocksDb columnar key value snapshot
+   */
   public abstract RocksDBColumnarKeyValueSnapshot takeSnapshot(
       final RocksDbSegmentIdentifier segment);
 

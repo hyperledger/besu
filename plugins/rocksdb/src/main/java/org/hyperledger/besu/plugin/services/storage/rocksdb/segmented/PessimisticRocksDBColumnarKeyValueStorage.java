@@ -47,10 +47,21 @@ import org.rocksdb.TransactionDB;
 import org.rocksdb.TransactionDBOptions;
 import org.rocksdb.WriteOptions;
 
+/** Pessimistic RocksDB Columnar key value storage */
 public class PessimisticRocksDBColumnarKeyValueStorage extends RocksDBColumnarKeyValueStorage {
 
   private final TransactionDB db;
 
+  /**
+   * The constructor of PessimisticRocksDBColumnarKeyValueStorage
+   *
+   * @param configuration the RocksDB configuration
+   * @param segments the segments
+   * @param ignorableSegments the ignorable segments
+   * @param metricsSystem the metrics system
+   * @param rocksDBMetricsFactory the rocksdb metrics factory
+   * @throws StorageException the storage exception
+   */
   public PessimisticRocksDBColumnarKeyValueStorage(
       final RocksDBConfiguration configuration,
       final List<SegmentIdentifier> segments,

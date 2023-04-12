@@ -48,11 +48,12 @@ import org.rocksdb.Statistics;
 import org.rocksdb.TransactionDBOptions;
 import org.rocksdb.WriteOptions;
 
+/** Optimistic RocksDB Columnar key value storage */
 public class OptimisticRocksDBColumnarKeyValueStorage extends RocksDBColumnarKeyValueStorage {
   private final OptimisticTransactionDB db;
 
   /**
-   * Instantiates a new Rocks db columnar key value storage.
+   * Instantiates a new Rocks db columnar key value optimistic storage.
    *
    * @param configuration the configuration
    * @param segments the segments
