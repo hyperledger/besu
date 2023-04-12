@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.storage.keyvalue;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
@@ -27,21 +28,24 @@ public class GoQuorumKeyValueStorageProvider extends KeyValueStorageProvider {
   public GoQuorumKeyValueStorageProvider(
       final Function<SegmentIdentifier, KeyValueStorage> storageCreator,
       final KeyValueStorage worldStatePreimageStorage,
-      final boolean segmentIsolationSupported) {
-    super(storageCreator, worldStatePreimageStorage, segmentIsolationSupported);
+      final boolean segmentIsolationSupported,
+      final ObservableMetricsSystem metricsSystem) {
+    super(storageCreator, worldStatePreimageStorage, segmentIsolationSupported, metricsSystem);
   }
 
   public GoQuorumKeyValueStorageProvider(
       final Function<SegmentIdentifier, KeyValueStorage> storageCreator,
       final KeyValueStorage worldStatePreimageStorage,
       final KeyValueStorage privateWorldStatePreimageStorage,
-      final boolean segmentIsolationSupported) {
+      final boolean segmentIsolationSupported,
+      final ObservableMetricsSystem metricsSystem) {
     super(
         storageCreator,
         worldStatePreimageStorage,
         privateWorldStatePreimageStorage,
         segmentIsolationSupported,
-        SNAPSHOT_ISOLATION_UNSUPPORTED);
+        SNAPSHOT_ISOLATION_UNSUPPORTED,
+        metricsSystem);
   }
 
   @Override
