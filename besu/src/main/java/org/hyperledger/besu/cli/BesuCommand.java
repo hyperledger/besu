@@ -145,7 +145,6 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -3487,14 +3486,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     @Override
     public int getDatabaseVersion() {
       return dataStorageOptions.toDomainObject().getDataStorageFormat().getDatabaseVersion();
-    }
-
-    @Override
-    public boolean isForestStorageMode() {
-      return dataStorageOptions
-          .toDomainObject()
-          .getDataStorageFormat()
-          .equals(DataStorageFormat.FOREST);
     }
   }
 

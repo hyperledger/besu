@@ -155,11 +155,6 @@ public abstract class AbstractIsolationTests {
                 public int getDatabaseVersion() {
                   return 2;
                 }
-
-                @Override
-                public boolean isForestStorageMode() {
-                  return false;
-                }
               })
           .withMetricsSystem(new NoOpMetricsSystem())
           .build();

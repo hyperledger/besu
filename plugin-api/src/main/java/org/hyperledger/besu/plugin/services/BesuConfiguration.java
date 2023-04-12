@@ -44,13 +44,4 @@ public interface BesuConfiguration extends BesuService {
   default int getDatabaseVersion() {
     return 1;
   }
-  /**
-   * /** Speficies if forest mode is being used, defaults to true since FOREST is default in besu.
-   *
-   * @return true if forest is the mode being used, otherwise false.
-   */
-  default boolean isForestStorageMode() {
-    return true;
-  }
-  ;
 }
