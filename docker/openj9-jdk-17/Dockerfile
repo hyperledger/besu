@@ -7,7 +7,7 @@ RUN apt-get update && \
  rm -rf /var/lib/apt/lists/*  && \
  wget --no-check-certificate https://github.com/ibmruntimes/semeru17-binaries/releases/download/jdk-17.0.5%2B8_openj9-0.35.0/ibm-semeru-open-jdk_x64_linux_17.0.5_8_openj9-0.35.0.tar.gz && \
  tar -xvf ibm-semeru-open-jdk_x64_linux_17.0.5_8_openj9-0.35.0.tar.gz && \
- mv -r jdk-17.0.5+8/ /usr/bin/ && \
+ mv jdk-17.0.5+8/ /usr/bin/ && \
  update-alternatives --install "/usr/bin/java" "java" "/usr/bin/jdk-17.0.5+8/bin/java" 1 && \
  rm -rf  ibm-semeru-open-jdk_x64_linux_17.0.5_8_openj9-0.35.0.tar.gz && \
 adduser --disabled-password --gecos "" --home /opt/besu besu && \
