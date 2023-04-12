@@ -21,19 +21,14 @@ import static com.google.common.base.Preconditions.checkState;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator.StorageSlotKey;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -51,9 +46,22 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class TrieLogLayer {
 
   protected Hash blockHash;
+
+  Map<Address, BonsaiValue<StateTrieAccountValue>> getAccounts() {
+    return accounts;
+  }
+
+  Map<Address, BonsaiValue<Bytes>> getCode() {
+    return code;
+  }
+
+  Map<Address, Map<StorageSlotKey, BonsaiValue<UInt256>>> getStorage() {
+    return storage;
+  }
+
   protected final Map<Address, BonsaiValue<StateTrieAccountValue>> accounts;
   protected final Map<Address, BonsaiValue<Bytes>> code;
-  protected final Map<Address, Map<Hash, BonsaiValue<UInt256>>> storage;
+  protected final Map<Address, Map<StorageSlotKey, BonsaiValue<UInt256>>> storage;
   protected boolean frozen = false;
 
   public TrieLogLayer() {
@@ -98,11 +106,14 @@ public class TrieLogLayer {
   }
 
   public void addStorageChange(
-      final Address address, final Hash slotHash, final UInt256 oldValue, final UInt256 newValue) {
+      final Address address,
+      final StorageSlotKey slot,
+      final UInt256 oldValue,
+      final UInt256 newValue) {
     checkState(!frozen, "Layer is Frozen");
     storage
         .computeIfAbsent(address, a -> new TreeMap<>())
-        .put(slotHash, new BonsaiValue<>(oldValue, newValue));
+        .put(slot, new BonsaiValue<>(oldValue, newValue));
   }
 
   public Stream<Map.Entry<Address, BonsaiValue<StateTrieAccountValue>>> streamAccountChanges() {
@@ -113,7 +124,8 @@ public class TrieLogLayer {
     return code.entrySet().stream();
   }
 
-  public Stream<Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>>> streamStorageChanges() {
+  public Stream<Map.Entry<Address, Map<StorageSlotKey, BonsaiValue<UInt256>>>>
+      streamStorageChanges() {
     return storage.entrySet().stream();
   }
 
@@ -121,7 +133,8 @@ public class TrieLogLayer {
     return storage.containsKey(address);
   }
 
-  public Stream<Map.Entry<Hash, BonsaiValue<UInt256>>> streamStorageChanges(final Address address) {
+  public Stream<Map.Entry<StorageSlotKey, BonsaiValue<UInt256>>> streamStorageChanges(
+      final Address address) {
     return storage.getOrDefault(address, Map.of()).entrySet().stream();
   }
 
@@ -133,15 +146,17 @@ public class TrieLogLayer {
     return Optional.ofNullable(code.get(address)).map(BonsaiValue::getUpdated);
   }
 
-  Optional<UInt256> getPriorStorageBySlotHash(final Address address, final Hash slotHash) {
+  Optional<UInt256> getPriorStorageByStorageSlotKey(
+      final Address address, final StorageSlotKey storageSlotKey) {
     return Optional.ofNullable(storage.get(address))
-        .map(i -> i.get(slotHash))
+        .map(i -> i.get(storageSlotKey))
         .map(BonsaiValue::getPrior);
   }
 
-  Optional<UInt256> getStorageBySlotHash(final Address address, final Hash slotHash) {
+  Optional<UInt256> getStorageByStorageSlotKey(
+      final Address address, final StorageSlotKey storageSlotKey) {
     return Optional.ofNullable(storage.get(address))
-        .map(i -> i.get(slotHash))
+        .map(i -> i.get(storageSlotKey))
         .map(BonsaiValue::getUpdated);
   }
 
@@ -178,9 +193,11 @@ public class TrieLogLayer {
       }
     }
     sb.append("Storage").append("\n");
-    for (final Map.Entry<Address, Map<Hash, BonsaiValue<UInt256>>> storage : storage.entrySet()) {
+    for (final Map.Entry<Address, Map<StorageSlotKey, BonsaiValue<UInt256>>> storage :
+        storage.entrySet()) {
       sb.append(" : ").append(storage.getKey()).append("\n");
-      for (final Map.Entry<Hash, BonsaiValue<UInt256>> slot : storage.getValue().entrySet()) {
+      for (final Map.Entry<StorageSlotKey, BonsaiValue<UInt256>> slot :
+          storage.getValue().entrySet()) {
         final UInt256 originalValue = slot.getValue().getPrior();
         final UInt256 updatedValue = slot.getValue().getUpdated();
         sb.append("   : ").append(slot.getKey()).append("\n");

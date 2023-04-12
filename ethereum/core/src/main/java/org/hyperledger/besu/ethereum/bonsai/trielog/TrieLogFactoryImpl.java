@@ -12,6 +12,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -23,7 +24,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class TrieLogFactoryImpl implements TrieLogFactory<TrieLogLayer> {
 
   @Override
-  public TrieLogLayer create(final BonsaiWorldStateUpdateAccumulator accumulator, final Hash blockHash) {
+  public TrieLogLayer create(
+      final BonsaiWorldStateUpdateAccumulator accumulator, final Hash blockHash) {
     TrieLogLayer layer = new TrieLogLayer();
     layer.setBlockHash(blockHash);
     for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> updatedAccount :
@@ -34,19 +36,19 @@ public class TrieLogFactoryImpl implements TrieLogFactory<TrieLogLayer> {
           oldValue == null
               ? null
               : new StateTrieAccountValue(
-              oldValue.getNonce(),
-              oldValue.getBalance(),
-              oldValue.getStorageRoot(),
-              oldValue.getCodeHash());
+                  oldValue.getNonce(),
+                  oldValue.getBalance(),
+                  oldValue.getStorageRoot(),
+                  oldValue.getCodeHash());
       final BonsaiAccount newValue = bonsaiValue.getUpdated();
       final StateTrieAccountValue newAccount =
           newValue == null
               ? null
               : new StateTrieAccountValue(
-              newValue.getNonce(),
-              newValue.getBalance(),
-              newValue.getStorageRoot(),
-              newValue.getCodeHash());
+                  newValue.getNonce(),
+                  newValue.getBalance(),
+                  newValue.getStorageRoot(),
+                  newValue.getCodeHash());
       if (oldValue == null && newValue == null) {
         // by default do not persist empty reads of accounts to the trie log
         continue;
@@ -54,7 +56,8 @@ public class TrieLogFactoryImpl implements TrieLogFactory<TrieLogLayer> {
       layer.addAccountChange(updatedAccount.getKey(), oldAccount, newAccount);
     }
 
-    for (final Map.Entry<Address, BonsaiValue<Bytes>> updatedCode : accumulator.getCodeToUpdate().entrySet()) {
+    for (final Map.Entry<Address, BonsaiValue<Bytes>> updatedCode :
+        accumulator.getCodeToUpdate().entrySet()) {
       layer.addCodeChange(
           updatedCode.getKey(),
           updatedCode.getValue().getPrior(),
@@ -62,11 +65,14 @@ public class TrieLogFactoryImpl implements TrieLogFactory<TrieLogLayer> {
           blockHash);
     }
 
-    for (final Map.Entry<Address, BonsaiWorldStateUpdateAccumulator.StorageConsumingMap<BonsaiValue<UInt256>>> updatesStorage :
-        accumulator.getStorageToUpdate().entrySet()) {
+    for (final Map.Entry<
+            Address,
+            BonsaiWorldStateUpdateAccumulator.StorageConsumingMap<
+                BonsaiWorldStateUpdateAccumulator.StorageSlotKey, BonsaiValue<UInt256>>>
+        updatesStorage : accumulator.getStorageToUpdate().entrySet()) {
       final Address address = updatesStorage.getKey();
-      for (final Map.Entry<Hash, BonsaiValue<UInt256>> slotUpdate :
-          updatesStorage.getValue().entrySet()) {
+      for (final Map.Entry<BonsaiWorldStateUpdateAccumulator.StorageSlotKey, BonsaiValue<UInt256>>
+          slotUpdate : updatesStorage.getValue().entrySet()) {
         var val = slotUpdate.getValue();
 
         if (val.getPrior() == null && val.getUpdated() == null) {
@@ -91,9 +97,9 @@ public class TrieLogFactoryImpl implements TrieLogFactory<TrieLogLayer> {
     layer.freeze();
 
     final Set<Address> addresses = new TreeSet<>();
-    addresses.addAll(layer.accounts.keySet());
-    addresses.addAll(layer.code.keySet());
-    addresses.addAll(layer.storage.keySet());
+    addresses.addAll(layer.getAccounts().keySet());
+    addresses.addAll(layer.getCode().keySet());
+    addresses.addAll(layer.getStorage().keySet());
 
     output.startList(); // container
     output.writeBytes(layer.blockHash);
@@ -116,15 +122,17 @@ public class TrieLogFactoryImpl implements TrieLogFactory<TrieLogLayer> {
         codeChange.writeRlp(output, RLPOutput::writeBytes);
       }
 
-      final Map<Hash, BonsaiValue<UInt256>> storageChanges = layer.storage.get(address);
+      final Map<BonsaiWorldStateUpdateAccumulator.StorageSlotKey, BonsaiValue<UInt256>>
+          storageChanges = layer.storage.get(address);
       if (storageChanges == null) {
         output.writeNull();
       } else {
         output.startList();
-        for (final Map.Entry<Hash, BonsaiValue<UInt256>> storageChangeEntry :
-            storageChanges.entrySet()) {
+        for (final Map.Entry<BonsaiWorldStateUpdateAccumulator.StorageSlotKey, BonsaiValue<UInt256>>
+            storageChangeEntry : storageChanges.entrySet()) {
           output.startList();
-          output.writeBytes(storageChangeEntry.getKey());
+          // do not write slotKey, it is not used in mainnet bonsai trielogs
+          output.writeBytes(storageChangeEntry.getKey().slotHash());
           storageChangeEntry.getValue().writeInnerRlp(output, RLPOutput::writeUInt256Scalar);
           output.endList();
         }
@@ -174,14 +182,17 @@ public class TrieLogFactoryImpl implements TrieLogFactory<TrieLogLayer> {
       if (input.nextIsNull()) {
         input.skipNext();
       } else {
-        final Map<Hash, BonsaiValue<UInt256>> storageChanges = new TreeMap<>();
+        final Map<BonsaiWorldStateUpdateAccumulator.StorageSlotKey, BonsaiValue<UInt256>>
+            storageChanges = new TreeMap<>();
         input.enterList();
         while (!input.isEndOfCurrentList()) {
           input.enterList();
           final Hash slotHash = Hash.wrap(input.readBytes32());
+          final BonsaiWorldStateUpdateAccumulator.StorageSlotKey storageSlotKey =
+              new BonsaiWorldStateUpdateAccumulator.StorageSlotKey(slotHash, Optional.empty());
           final UInt256 oldValue = nullOrValue(input, RLPInput::readUInt256Scalar);
           final UInt256 newValue = nullOrValue(input, RLPInput::readUInt256Scalar);
-          storageChanges.put(slotHash, new BonsaiValue<>(oldValue, newValue));
+          storageChanges.put(storageSlotKey, new BonsaiValue<>(oldValue, newValue));
           input.leaveList();
         }
         input.leaveList();
@@ -207,5 +218,4 @@ public class TrieLogFactoryImpl implements TrieLogFactory<TrieLogLayer> {
       return reader.apply(input);
     }
   }
-
 }
