@@ -16,6 +16,7 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -151,7 +152,8 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       final BesuConfiguration commonConfiguration,
       final MetricsSystem metricsSystem)
       throws StorageException {
-
+    final boolean isForestStorageFormat =
+        DataStorageFormat.FOREST.getDatabaseVersion() == commonConfiguration.getDatabaseVersion();
     if (requiresInit()) {
       init(commonConfiguration);
     }
@@ -179,8 +181,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
                 segments.stream()
                     .filter(segmentId -> segmentId.includeInDatabaseVersion(databaseVersion))
                     .collect(Collectors.toList());
-
-            if (commonConfiguration.isForestStorageMode()) {
+            if (isForestStorageFormat) {
               LOG.info("FOREST mode detected, using pessimistic DB.");
               segmentedStorage =
                   new PessimisticRocksDBColumnarKeyValueStorage(
@@ -203,7 +204,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
           final RocksDbSegmentIdentifier rocksSegment =
               segmentedStorage.getSegmentIdentifierByName(segment);
 
-          if (commonConfiguration.isForestStorageMode()) {
+          if (isForestStorageFormat) {
             return new SegmentedKeyValueStorageAdapter<>(segment, segmentedStorage);
           } else {
             return new SegmentedKeyValueStorageAdapter<>(
