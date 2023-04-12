@@ -45,8 +45,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   private final DataStorageFormat dataStorageFormat = DataStorageFormat.FOREST;
 
   @Option(
-      names = {BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD},
-      aliases = {"--bonsai-maximum-back-layers-to-load"},
+      names = {BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD, "--bonsai-maximum-back-layers-to-load"},
       paramLabel = "<LONG>",
       description =
           "Limit of back layers that can be loaded with BONSAI (default: ${DEFAULT-VALUE}).",
@@ -67,7 +66,6 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     return ImmutableDataStorageConfiguration.builder()
         .dataStorageFormat(dataStorageFormat)
         .bonsaiMaxLayersToLoad(bonsaiMaxLayersToLoad)
-        .useBonsaiSnapshots(bonsaiUseSnapshots)
         .build();
   }
 
@@ -77,7 +75,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         DATA_STORAGE_FORMAT,
         dataStorageFormat.toString(),
         BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD,
-        bonsaiMaxLayersToLoad.toString(),);
+        bonsaiMaxLayersToLoad.toString());
   }
 
   /**
