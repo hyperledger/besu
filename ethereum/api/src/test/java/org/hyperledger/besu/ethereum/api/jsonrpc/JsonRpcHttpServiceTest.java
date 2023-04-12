@@ -1059,11 +1059,11 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
 
     // Setup mocks to return a block
     final BlockDataGenerator gen = new BlockDataGenerator();
+    gen.setBlockOptionsSupplier(() -> BlockDataGenerator.BlockOptions.create().setTimestamp(0L));
     final Block block = gen.genesisBlock();
     final BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata =
         blockWithMetadata(block);
-    when(blockchainQueries.headBlockNumber()).thenReturn(0L);
-    when(blockchainQueries.headBlockHeader()).thenReturn(block.getHeader());
+    when(blockchainQueries.blockByNumber(eq(0L))).thenReturn(Optional.of(blockWithMetadata));
     WorldStateArchive state = mock(WorldStateArchive.class);
     when(state.isWorldStateAvailable(any(Hash.class), any(Hash.class))).thenReturn(true);
     when(blockchainQueries.getWorldStateArchive()).thenReturn(state);

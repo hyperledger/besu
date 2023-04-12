@@ -16,15 +16,17 @@ package org.hyperledger.besu.ethstats.util;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 
 import org.immutables.value.Value;
 import org.slf4j.LoggerFactory;
 
 @Value.Immutable
-public interface NetstatsUrl {
+public interface EthStatsConnectOptions {
 
   Pattern NETSTATS_URL_REGEX = Pattern.compile("([-\\w]+):([-\\w]+)?@([-.\\w]+)(:([\\d]+))?");
 
@@ -38,23 +40,28 @@ public interface NetstatsUrl {
 
   String getContact();
 
-  static NetstatsUrl fromParams(final String url, final String contact) {
+  @Nullable
+  Path getCaCert();
+
+  static EthStatsConnectOptions fromParams(
+      final String url, final String contact, final Path caCert) {
     try {
       checkArgument(url != null && !url.trim().isEmpty(), "Invalid empty value.");
 
       final Matcher netStatsUrl = NETSTATS_URL_REGEX.matcher(url);
       if (netStatsUrl.matches()) {
-        return ImmutableNetstatsUrl.builder()
+        return ImmutableEthStatsConnectOptions.builder()
             .nodeName(netStatsUrl.group(1))
             .secret(netStatsUrl.group(2))
             .host(netStatsUrl.group(3))
-            .port(Integer.parseInt(Optional.ofNullable(netStatsUrl.group(5)).orElse("3000")))
+            .port(Integer.parseInt(Optional.ofNullable(netStatsUrl.group(5)).orElse("-1")))
             .contact(contact)
+            .caCert(caCert)
             .build();
       }
 
     } catch (IllegalArgumentException e) {
-      LoggerFactory.getLogger(NetstatsUrl.class).error(e.getMessage());
+      LoggerFactory.getLogger(EthStatsConnectOptions.class).error(e.getMessage());
     }
     throw new IllegalArgumentException(
         "Invalid netstats URL syntax. Netstats URL should have the following format 'nodename:secret@host:port' or 'nodename:secret@host'.");

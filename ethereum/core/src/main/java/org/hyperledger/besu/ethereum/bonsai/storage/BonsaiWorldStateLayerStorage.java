@@ -16,6 +16,7 @@
 package org.hyperledger.besu.ethereum.bonsai.storage;
 
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.LayeredKeyValueStorage;
@@ -30,7 +31,8 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
         new LayeredKeyValueStorage(parent.storageStorage),
         new LayeredKeyValueStorage(parent.trieBranchStorage),
         parent.trieLogStorage,
-        parent);
+        parent,
+        parent.metricsSystem);
   }
 
   public BonsaiWorldStateLayerStorage(
@@ -39,8 +41,16 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
       final SnappedKeyValueStorage storageStorage,
       final SnappedKeyValueStorage trieBranchStorage,
       final KeyValueStorage trieLogStorage,
-      final BonsaiWorldStateKeyValueStorage parent) {
-    super(parent, accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
+      final BonsaiWorldStateKeyValueStorage parent,
+      final ObservableMetricsSystem metricsSystem) {
+    super(
+        parent,
+        accountStorage,
+        codeStorage,
+        storageStorage,
+        trieBranchStorage,
+        trieLogStorage,
+        metricsSystem);
   }
 
   @Override
@@ -51,6 +61,7 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
         ((LayeredKeyValueStorage) storageStorage).clone(),
         ((LayeredKeyValueStorage) trieBranchStorage).clone(),
         trieLogStorage,
-        parentWorldStateStorage);
+        parentWorldStateStorage,
+        metricsSystem);
   }
 }

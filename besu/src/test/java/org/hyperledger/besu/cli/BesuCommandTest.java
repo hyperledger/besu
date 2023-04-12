@@ -1855,14 +1855,16 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void ethStatsOptionIsParsedCorrectly() {
     final String url = "besu-node:secret@host:443";
     parseCommand("--ethstats", url);
-    verify(mockRunnerBuilder).ethstatsUrl(url);
+    verify(mockRunnerBuilder).ethstatsOptions(ethstatsOptionsArgumentCaptor.capture());
+    assertThat(ethstatsOptionsArgumentCaptor.getValue().getEthstatsUrl()).isEqualTo(url);
   }
 
   @Test
   public void ethStatsContactOptionIsParsedCorrectly() {
     final String contact = "contact@mail.net";
     parseCommand("--ethstats", "besu-node:secret@host:443", "--ethstats-contact", contact);
-    verify(mockRunnerBuilder).ethstatsContact(contact);
+    verify(mockRunnerBuilder).ethstatsOptions(ethstatsOptionsArgumentCaptor.capture());
+    assertThat(ethstatsOptionsArgumentCaptor.getValue().getEthstatsContact()).isEqualTo(contact);
   }
 
   @Test
@@ -5402,11 +5404,15 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void logsUsingJemallocWhenEnvVarPresent() {
+  public void logsWarningWhenFailToLoadJemalloc() {
     assumeThat(PlatformDetector.getOSType(), is("linux"));
     setEnvironmentVariable("BESU_USING_JEMALLOC", "true");
     parseCommand();
-    verify(mockLogger).info("Using jemalloc");
+    verify(mockLogger)
+        .warn(
+            eq(
+                "BESU_USING_JEMALLOC is present but we failed to load jemalloc library to get the version"),
+            any(Throwable.class));
   }
 
   @Test
