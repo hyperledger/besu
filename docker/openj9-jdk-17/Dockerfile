@@ -1,16 +1,24 @@
 FROM ubuntu:22.04
 
 ARG VERSION="dev"
+ARG TARGETPLATFORM
+
 RUN apt-get update && \
- apt-get install --no-install-recommends -q --assume-yes wget=1.21* libjemalloc-dev=5.* && \
+ apt-get install --no-install-recommends -q --assume-yes curl=7* libjemalloc-dev=5.* && \
  apt-get clean  && \
- rm -rf /var/lib/apt/lists/*  && \
- wget --no-check-certificate https://github.com/ibmruntimes/semeru17-binaries/releases/download/jdk-17.0.5%2B8_openj9-0.35.0/ibm-semeru-open-jdk_x64_linux_17.0.5_8_openj9-0.35.0.tar.gz && \
- tar -xvf ibm-semeru-open-jdk_x64_linux_17.0.5_8_openj9-0.35.0.tar.gz && \
- mv jdk-17.0.5+8/ /usr/bin/ && \
- update-alternatives --install "/usr/bin/java" "java" "/usr/bin/jdk-17.0.5+8/bin/java" 1 && \
- rm -rf  ibm-semeru-open-jdk_x64_linux_17.0.5_8_openj9-0.35.0.tar.gz && \
-adduser --disabled-password --gecos "" --home /opt/besu besu && \
+ rm -rf /var/lib/apt/lists/*
+
+RUN if [ "${TARGETPLATFORM}" = "linux/arm64" ] ; then \
+         curl -kL -o jdk-17.tar.gz https://github.com/ibmruntimes/semeru17-binaries/releases/download/jdk-17.0.5%2B8_openj9-0.35.0/ibm-semeru-open-jdk_aarch64_linux_17.0.5_8_openj9-0.35.0.tar.gz ; \
+     else \
+         curl -kL -o jdk-17.tar.gz https://github.com/ibmruntimes/semeru17-binaries/releases/download/jdk-17.0.5%2B8_openj9-0.35.0/ibm-semeru-open-jdk_x64_linux_17.0.5_8_openj9-0.35.0.tar.gz ; \
+     fi
+
+RUN tar -xzf jdk-17.tar.gz && \
+    rm jdk-17.tar.gz && \
+    mv jdk-17.0.5+8/ /usr/bin/ && \
+    update-alternatives --install "/usr/bin/java" "java" "/usr/bin/jdk-17.0.5+8/bin/java" 1 && \
+    adduser --disabled-password --gecos "" --home /opt/besu besu && \
     chown besu:besu /opt/besu && \
     chmod 0755 /opt/besu
 
