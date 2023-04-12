@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
-import static java.util.Objects.requireNonNullElse;
-
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
@@ -25,27 +23,11 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageTransactionTransitionValidatorDecorator;
 
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
-import com.google.common.collect.ImmutableMap;
-import org.apache.tuweni.bytes.Bytes;
-import org.rocksdb.ColumnFamilyDescriptor;
-import org.rocksdb.ColumnFamilyHandle;
-import org.rocksdb.ColumnFamilyOptions;
-import org.rocksdb.CompressionType;
-import org.rocksdb.DBOptions;
-import org.rocksdb.Env;
 import org.rocksdb.OptimisticTransactionDB;
-import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
-import org.rocksdb.Statistics;
-import org.rocksdb.TransactionDBOptions;
 import org.rocksdb.WriteOptions;
 
 /** Optimistic RocksDB Columnar key value storage */
@@ -70,83 +52,13 @@ public class OptimisticRocksDBColumnarKeyValueStorage extends RocksDBColumnarKey
       final RocksDBMetricsFactory rocksDBMetricsFactory)
       throws StorageException {
     super(configuration, segments, ignorableSegments, metricsSystem, rocksDBMetricsFactory);
-    try (final ColumnFamilyOptions columnFamilyOptions = new ColumnFamilyOptions()) {
-      final List<SegmentIdentifier> trimmedSegments = new ArrayList<>(segments);
-      final List<byte[]> existingColumnFamilies =
-          RocksDB.listColumnFamilies(new Options(), configuration.getDatabaseDir().toString());
-      // Only ignore if not existed currently
-      ignorableSegments.stream()
-          .filter(
-              ignorableSegment ->
-                  existingColumnFamilies.stream()
-                      .noneMatch(existed -> Arrays.equals(existed, ignorableSegment.getId())))
-          .forEach(trimmedSegments::remove);
-      final List<ColumnFamilyDescriptor> columnDescriptors =
-          trimmedSegments.stream()
-              .map(
-                  segment ->
-                      new ColumnFamilyDescriptor(
-                          segment.getId(),
-                          new ColumnFamilyOptions()
-                              .setTtl(0)
-                              .setCompressionType(CompressionType.LZ4_COMPRESSION)
-                              .setTableFormatConfig(createBlockBasedTableConfig(configuration))))
-              .collect(Collectors.toList());
-      columnDescriptors.add(
-          new ColumnFamilyDescriptor(
-              DEFAULT_COLUMN.getBytes(StandardCharsets.UTF_8),
-              columnFamilyOptions
-                  .setTtl(0)
-                  .setCompressionType(CompressionType.LZ4_COMPRESSION)
-                  .setTableFormatConfig(createBlockBasedTableConfig(configuration))));
+    try {
 
-      final Statistics stats = new Statistics();
-      if (configuration.isHighSpec()) {
-        options =
-            new DBOptions()
-                .setCreateIfMissing(true)
-                .setMaxOpenFiles(configuration.getMaxOpenFiles())
-                .setDbWriteBufferSize(ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC)
-                .setMaxBackgroundCompactions(configuration.getMaxBackgroundCompactions())
-                .setStatistics(stats)
-                .setCreateMissingColumnFamilies(true)
-                .setEnv(
-                    Env.getDefault()
-                        .setBackgroundThreads(configuration.getBackgroundThreadCount()));
-      } else {
-        options =
-            new DBOptions()
-                .setCreateIfMissing(true)
-                .setMaxOpenFiles(configuration.getMaxOpenFiles())
-                .setMaxBackgroundCompactions(configuration.getMaxBackgroundCompactions())
-                .setStatistics(stats)
-                .setCreateMissingColumnFamilies(true)
-                .setEnv(
-                    Env.getDefault()
-                        .setBackgroundThreads(configuration.getBackgroundThreadCount()));
-      }
-
-      txOptions = new TransactionDBOptions();
-      final List<ColumnFamilyHandle> columnHandles = new ArrayList<>(columnDescriptors.size());
       db =
           OptimisticTransactionDB.open(
               options, configuration.getDatabaseDir().toString(), columnDescriptors, columnHandles);
-      metrics = rocksDBMetricsFactory.create(metricsSystem, configuration, db, stats);
-      final Map<Bytes, String> segmentsById =
-          trimmedSegments.stream()
-              .collect(
-                  Collectors.toMap(
-                      segment -> Bytes.wrap(segment.getId()), SegmentIdentifier::getName));
-
-      final ImmutableMap.Builder<String, RocksDbSegmentIdentifier> builder = ImmutableMap.builder();
-
-      for (ColumnFamilyHandle columnHandle : columnHandles) {
-        final String segmentName =
-            requireNonNullElse(
-                segmentsById.get(Bytes.wrap(columnHandle.getName())), DEFAULT_COLUMN);
-        builder.put(segmentName, new RocksDbSegmentIdentifier(db, columnHandle));
-      }
-      columnHandlesByName = builder.build();
+      initMetrics();
+      initColumnHandler();
 
     } catch (final RocksDBException e) {
       throw new StorageException(e);
