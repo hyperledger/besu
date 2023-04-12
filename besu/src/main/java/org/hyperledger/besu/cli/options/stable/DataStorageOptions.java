@@ -17,7 +17,6 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_USE_SNAPSHOTS;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -35,9 +34,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   private static final String DATA_STORAGE_FORMAT = "--data-storage-format";
 
   private static final String BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD =
-      "--bonsai-maximum-back-layers-to-load";
-
-  private static final String BONSAI_STORAGE_FORMAT_USE_SNAPSHOTS = "--Xbonsai-use-snapshots";
+      "--bonsai-historical-block-limit";
 
   // Use Bonsai DB
   @Option(
@@ -49,20 +46,12 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
 
   @Option(
       names = {BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD},
+      aliases = {"--bonsai-maximum-back-layers-to-load"},
       paramLabel = "<LONG>",
       description =
           "Limit of back layers that can be loaded with BONSAI (default: ${DEFAULT-VALUE}).",
       arity = "1")
   private final Long bonsaiMaxLayersToLoad = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
-
-  @Option(
-      names = {BONSAI_STORAGE_FORMAT_USE_SNAPSHOTS},
-      paramLabel = "<BOOLEAN>",
-      hidden = true,
-      description =
-          "Use database snapshots for mutable worldstates with BONSAI (default: ${DEFAULT-VALUE}).",
-      arity = "1")
-  private final Boolean bonsaiUseSnapshots = DEFAULT_BONSAI_USE_SNAPSHOTS;
 
   /**
    * Create data storage options.
@@ -88,9 +77,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         DATA_STORAGE_FORMAT,
         dataStorageFormat.toString(),
         BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD,
-        bonsaiMaxLayersToLoad.toString(),
-        BONSAI_STORAGE_FORMAT_USE_SNAPSHOTS,
-        bonsaiUseSnapshots.toString());
+        bonsaiMaxLayersToLoad.toString(),);
   }
 
   /**
