@@ -359,8 +359,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     final Capability cap = connection.capability(getSupportedProtocol());
     final ForkId latestForkId =
         cap.getVersion() >= 64 ? forkIdManager.getForkIdForChainHead() : null;
-    // TODO: look to consolidate code below if possible
-    // making status non-final and implementing it above would be one way.
     final StatusMessage status =
         StatusMessage.create(
             cap.getVersion(),
@@ -370,7 +368,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             genesisHash,
             latestForkId);
     try {
-      LOG.debug("Sending status message to {} for connection {}.", peer.getId(), connection);
+      LOG.trace("Sending status message to {} for connection {}.", peer.getId(), connection);
       peer.send(status, getSupportedProtocol(), connection);
       peer.registerStatusSent(connection);
     } catch (final PeerNotConnected peerNotConnected) {
@@ -382,13 +380,13 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   @Override
   public boolean shouldConnect(final Peer peer, final boolean incoming) {
     if (peer.getForkId().map(forkId -> forkIdManager.peerCheck(forkId)).orElse(true)) {
-      LOG.debug("ForkId OK or not available");
+      LOG.trace("ForkId OK or not available");
       if (ethPeers.shouldConnect(peer, incoming)) {
-        LOG.debug("EthPeers should connect is TRUE");
+        LOG.trace("EthPeers should connect is TRUE");
         return true;
       }
     }
-    LOG.debug("Should connect in EthProtocolManager returns false");
+    LOG.trace("Should connect in EthProtocolManager returns false");
     return false;
   }
 

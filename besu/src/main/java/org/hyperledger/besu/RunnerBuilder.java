@@ -636,11 +636,7 @@ public class RunnerBuilder {
             .setBindPort(p2pListenPort)
             .setSupportedProtocols(subProtocols)
             .setClientId(BesuInfo.nodeName(identityString));
-    networkingConfiguration
-        .setRlpx(rlpxConfiguration)
-        .setDiscovery(
-            discoveryConfiguration); // TODO: Check whether this is OK, as we do getDiscovery in
-    // line 622 and 624 above ...
+    networkingConfiguration.setRlpx(rlpxConfiguration).setDiscovery(discoveryConfiguration);
 
     final PeerPermissionsDenylist bannedNodes = PeerPermissionsDenylist.create();
     bannedNodeIds.forEach(bannedNodes::add);

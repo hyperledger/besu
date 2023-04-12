@@ -233,7 +233,7 @@ public class RlpxAgent {
     } else {
       final String errorMsg =
           "None of the ProtocolManagers wants to connect to peer " + peer.getId();
-      LOG.debug(errorMsg);
+      LOG.trace(errorMsg);
       return CompletableFuture.failedFuture((new RuntimeException(errorMsg)));
     }
 
@@ -315,8 +315,6 @@ public class RlpxAgent {
   }
 
   private void handleIncomingConnection(final PeerConnection peerConnection) {
-    // TODO: when we get here, we are already connected and have spent the time and effort to go
-    // through the handshake (expensive). We might want to put in a check before doing the handshake
     final Peer peer = peerConnection.getPeer();
     // Deny connection if our local node isn't ready
     if (!localNode.isReady()) {
@@ -333,8 +331,7 @@ public class RlpxAgent {
       return;
     }
 
-    if (checkWhetherToConnect(
-        peer, true)) { // TODO: checkWhetherToConnect should return Optional<DisconnectReason>
+    if (checkWhetherToConnect(peer, true)) {
       dispatchConnect(peerConnection);
     } else {
       peerConnection.disconnect(DisconnectReason.UNKNOWN);

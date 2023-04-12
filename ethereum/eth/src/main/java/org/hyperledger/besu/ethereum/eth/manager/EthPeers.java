@@ -119,7 +119,7 @@ public class EthPeers {
     this.peerUpperBound = peerUpperBound;
     this.maxRemotelyInitiatedConnections = maxRemotelyInitiatedConnections;
     this.randomPeerPriority = randomPeerPriority;
-    LOG.debug(
+    LOG.trace(
         "MaxPeers: {}, Lower Bound: {}, Max Remote: {}",
         peerUpperBound,
         peerLowerBound,
@@ -376,13 +376,6 @@ public class EthPeers {
     if (!incompleteConnections.isEmpty()) {
       if (incompleteConnections.stream()
           .anyMatch(c -> !c.isDisconnected() && (!inbound || (inbound && c.inboundInitiated())))) {
-        // TODO: At the moment for outbound connections this is asked before we initialize the
-        // PeerConnection (before the handshake). For inbound connections this question is asked
-        // when the handshake has already happened.
-        // TODO: There is an issue in github to ask this question for inbound connections before the
-        // handshake. Once this has been closed we only have to check
-        // incompleteConnections.isEmpty() and whether there is a cocnnection that is not
-        // disconnected to return false
         return false;
       }
     }
@@ -474,7 +467,7 @@ public class EthPeers {
         .skip(maxRemotelyInitiatedConnections)
         .forEach(
             conn -> {
-              LOG.debug(
+              LOG.trace(
                   "Too many remotely initiated connections. Disconnect low-priority connection: {}, maxRemote={}",
                   conn,
                   maxRemotelyInitiatedConnections);
@@ -500,7 +493,7 @@ public class EthPeers {
         .filter(c -> !canExceedPeerLimits(c))
         .forEach(
             conn -> {
-              LOG.debug(
+              LOG.trace(
                   "Too many connections. Disconnect low-priority connection: {}, maxConnections={}",
                   conn,
                   peerUpperBound);
@@ -549,7 +542,7 @@ public class EthPeers {
     if (!randomPeerPriority) {
       // Disconnect if too many peers
       if (!canExceedPeerLimits(connection) && peerCount() >= peerUpperBound) {
-        LOG.debug(
+        LOG.trace(
             "Too many peers. Disconnect connection: {}, max connections {}",
             connection,
             peerUpperBound);
@@ -560,7 +553,7 @@ public class EthPeers {
       if (connection.inboundInitiated()
           && !canExceedPeerLimits(connection)
           && remoteConnectionLimitReached()) {
-        LOG.debug(
+        LOG.trace(
             "Too many remotely-initiated connections. Disconnect incoming connection: {}, maxRemote={}",
             connection,
             maxRemotelyInitiatedConnections);
@@ -569,9 +562,9 @@ public class EthPeers {
       }
       final boolean added = (completeConnections.putIfAbsent(id, peer) == null);
       if (added) {
-        LOG.debug("Added peer {} with connection {} to completeConnections", id, connection);
+        LOG.trace("Added peer {} with connection {} to completeConnections", id, connection);
       } else {
-        LOG.debug("Did not add peer {} with connection {} to completeConnections", id, connection);
+        LOG.trace("Did not add peer {} with connection {} to completeConnections", id, connection);
       }
       return added;
     } else {

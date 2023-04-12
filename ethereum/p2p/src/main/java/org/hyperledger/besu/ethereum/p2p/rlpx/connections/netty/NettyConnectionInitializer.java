@@ -220,15 +220,6 @@ public class NettyConnectionInitializer
     return new ChannelInitializer<SocketChannel>() {
       @Override
       protected void initChannel(final SocketChannel ch) throws Exception {
-        // TDOD: check whether we want to connect to this peer. If we can find this peer in the
-        // PeerTable call the "checkWhetherToConnect" method in RlpxAgent
-        // we do have access to the ip address here (from the channel) and, if forkId is enabled, we
-        // have a good chance that the peers in the PeerTable contain the IP address (as part of the
-        // NodeRecord), so we can match them
-        // If the IP address is available we have a chance that the ForkId is available for that
-        // peer as well, which means that know whether the peer is on the right chain.
-        // Doing that decission here in the inboundChannelnitializer means that we could sort out
-        // peers on a wrong chain without having to do the handshake.
         final CompletableFuture<PeerConnection> connectionFuture = new CompletableFuture<>();
         connectionFuture.thenAccept(
             connection -> connectSubscribers.forEach(c -> c.onConnect(connection)));

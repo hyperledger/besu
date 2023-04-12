@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
     <Properties>
-        <Property name="root.log.level">${env:LOG_LEVEL:-DEBUG}</Property>
-        <!--Revert this to INFO before merging into main-->
+        <Property name="root.log.level">${env:LOG_LEVEL:-INFO}</Property>
         <Property name="root.log.logger">${env:LOGGER:-Console}</Property>
         <Property name="host">${env:HOST:-${docker:containerId:-${hostName:-locahost}}}</Property>
         <Property name="splunk.url">${env:SPLUNK_URL}</Property>

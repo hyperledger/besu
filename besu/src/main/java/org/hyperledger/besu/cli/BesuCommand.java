@@ -1322,13 +1322,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Specifies the maximum number of blocks to retrieve logs from via RPC. Must be >=0. 0 specifies no limit  (default: ${DEFAULT-VALUE})")
   private final Long rpcMaxLogsRange = 5000L;
 
-  @CommandLine.Option(
-      hidden = true,
-      names = {"--p2p-peer-lower-bound"}, // TODO: do we want to make this not experimental
-      description =
-          "Lower bound on the target number of P2P connections (default: ${DEFAULT-VALUE})")
-  private final Integer peerLowerBoundConfig = DefaultCommandValues.DEFAULT_P2P_PEER_LOWER_BOUND;
-
   @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
 
   @Mixin private PkiBlockCreationOptions pkiBlockCreationOptions;
@@ -1993,10 +1986,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void ensureValidPeerBoundParams() {
     maxPeers = p2PDiscoveryOptionGroup.maxPeers;
-    peersLowerBound = peerLowerBoundConfig;
+    peersLowerBound = unstableNetworkingOptions.toDomainObject().getPeerLowerBound();
     if (peersLowerBound > maxPeers) {
       logger.warn(
-          "`--p2p-peer-lower-bound` "
+          "`--Xp2p-peer-lower-bound` "
               + peersLowerBound
               + " must not exceed --max-peers "
               + maxPeers);

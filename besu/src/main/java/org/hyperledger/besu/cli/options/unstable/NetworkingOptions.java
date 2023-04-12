@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
+import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -26,6 +27,7 @@ import picocli.CommandLine;
 
 /** The Networking Cli options. */
 public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
+  public static final String PEER_LOWER_BOUND = "--Xp2p-peer-lower-bound";
   private final String INITIATE_CONNECTIONS_FREQUENCY_FLAG =
       "--Xp2p-initiate-connections-frequency";
   private final String CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG =
@@ -76,6 +78,13 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
       description = "Whether to enable filtering of peers based on the ENR field ForkId)")
   private final Boolean filterOnEnrForkId = false;
 
+  @CommandLine.Option(
+      hidden = true,
+      names = PEER_LOWER_BOUND,
+      description =
+          "Lower bound on the target number of P2P connections (default: ${DEFAULT-VALUE})")
+  private final Integer peerLowerBoundConfig = DefaultCommandValues.DEFAULT_P2P_PEER_LOWER_BOUND;
+
   private NetworkingOptions() {}
 
   /**
@@ -112,6 +121,7 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
     config.setDnsDiscoveryServerOverride(dnsDiscoveryServerOverride);
     config.getDiscovery().setDiscoveryV5Enabled(isPeerDiscoveryV5Enabled);
     config.getDiscovery().setFilterOnEnrForkId(filterOnEnrForkId);
+    config.setPeerLowerBound(peerLowerBoundConfig);
     return config;
   }
 

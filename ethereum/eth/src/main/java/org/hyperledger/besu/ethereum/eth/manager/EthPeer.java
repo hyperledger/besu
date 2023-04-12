@@ -487,7 +487,7 @@ public class EthPeer implements Comparable<EthPeer> {
             // We have two connections that are ready for requests, figure out which connection to
             // keep
             if (compareDuplicateConnections(this.connection, newConnection) > 0) {
-              LOG.debug("Changed connection from {} to {}", this.connection, newConnection);
+              LOG.trace("Changed connection from {} to {}", this.connection, newConnection);
               this.connection = newConnection;
             }
           } else {
@@ -499,8 +499,7 @@ public class EthPeer implements Comparable<EthPeer> {
         readyForRequests.set(true);
         final Consumer<EthPeer> peerConsumer = onStatusesExchanged.getAndSet(null);
         if (peerConsumer != null) {
-          // this callback could be called multiple times
-          LOG.debug("Status message exchange successful. {}", this);
+          LOG.trace("Status message exchange successful. {}", this);
           peerConsumer.accept(this);
         }
       }
@@ -662,7 +661,7 @@ public class EthPeer implements Comparable<EthPeer> {
       }
     }
     // Otherwise, keep older connection
-    LOG.debug("comparing timestamps " + a.getInitiatedAt() + " with " + b.getInitiatedAt());
+    LOG.trace("comparing timestamps " + a.getInitiatedAt() + " with " + b.getInitiatedAt());
     return a.getInitiatedAt() < b.getInitiatedAt() ? -1 : 1;
   }
 
