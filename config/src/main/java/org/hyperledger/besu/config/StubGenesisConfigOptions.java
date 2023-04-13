@@ -122,11 +122,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   @Override
-  public IbftLegacyConfigOptions getIbftLegacyConfigOptions() {
-    return IbftLegacyConfigOptions.DEFAULT;
-  }
-
-  @Override
   public CheckpointConfigOptions getCheckpointOptions() {
     return CheckpointConfigOptions.DEFAULT;
   }
@@ -401,9 +396,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
     }
     if (isKeccak256()) {
       builder.put("keccak256", getKeccak256ConfigOptions().asMap());
-    }
-    if (isIbftLegacy()) {
-      builder.put("ibft", getIbftLegacyConfigOptions().asMap());
     }
     if (isIbft2()) {
       builder.put("ibft2", getBftConfigOptions().asMap());

@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
@@ -44,16 +45,19 @@ public class KeyValueStorageProvider implements StorageProvider {
   private final boolean isWorldStateIterable;
   private final boolean isWorldStateSnappable;
   protected final Map<SegmentIdentifier, KeyValueStorage> storageInstances = new HashMap<>();
+  private final ObservableMetricsSystem metricsSystem;
 
   public KeyValueStorageProvider(
       final Function<SegmentIdentifier, KeyValueStorage> storageCreator,
       final KeyValueStorage worldStatePreimageStorage,
-      final boolean segmentIsolationSupported) {
+      final boolean segmentIsolationSupported,
+      final ObservableMetricsSystem metricsSystem) {
     this.storageCreator = storageCreator;
     this.worldStatePreimageStorage = worldStatePreimageStorage;
     this.privateWorldStatePreimageStorage = null;
     this.isWorldStateIterable = segmentIsolationSupported;
     this.isWorldStateSnappable = SNAPSHOT_ISOLATION_UNSUPPORTED;
+    this.metricsSystem = metricsSystem;
   }
 
   public KeyValueStorageProvider(
@@ -61,12 +65,14 @@ public class KeyValueStorageProvider implements StorageProvider {
       final KeyValueStorage worldStatePreimageStorage,
       final KeyValueStorage privateWorldStatePreimageStorage,
       final boolean segmentIsolationSupported,
-      final boolean storageSnapshotIsolationSupported) {
+      final boolean storageSnapshotIsolationSupported,
+      final ObservableMetricsSystem metricsSystem) {
     this.storageCreator = storageCreator;
     this.worldStatePreimageStorage = worldStatePreimageStorage;
     this.privateWorldStatePreimageStorage = privateWorldStatePreimageStorage;
     this.isWorldStateIterable = segmentIsolationSupported;
     this.isWorldStateSnappable = storageSnapshotIsolationSupported;
+    this.metricsSystem = metricsSystem;
   }
 
   @Override
@@ -79,7 +85,7 @@ public class KeyValueStorageProvider implements StorageProvider {
   @Override
   public WorldStateStorage createWorldStateStorage(final DataStorageFormat dataStorageFormat) {
     if (dataStorageFormat.equals(DataStorageFormat.BONSAI)) {
-      return new BonsaiWorldStateKeyValueStorage(this);
+      return new BonsaiWorldStateKeyValueStorage(this, metricsSystem);
     } else {
       return new WorldStateKeyValueStorage(
           getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.WORLD_STATE));

@@ -123,7 +123,9 @@ public class LogRollingTests {
     final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
     final CachedMerkleTrieLoader cachedMerkleTrieLoader =
         new CachedMerkleTrieLoader(new NoOpMetricsSystem());
-    archive = new BonsaiWorldStateProvider(provider, blockchain, cachedMerkleTrieLoader);
+    archive =
+        new BonsaiWorldStateProvider(
+            provider, blockchain, cachedMerkleTrieLoader, new NoOpMetricsSystem());
     accountStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
@@ -145,7 +147,8 @@ public class LogRollingTests {
     final CachedMerkleTrieLoader secondOptimizedMerkleTrieLoader =
         new CachedMerkleTrieLoader(new NoOpMetricsSystem());
     secondArchive =
-        new BonsaiWorldStateProvider(secondProvider, blockchain, secondOptimizedMerkleTrieLoader);
+        new BonsaiWorldStateProvider(
+            secondProvider, blockchain, secondOptimizedMerkleTrieLoader, new NoOpMetricsSystem());
     secondAccountStorage =
         (InMemoryKeyValueStorage)
             secondProvider.getStorageBySegmentIdentifier(
@@ -174,7 +177,12 @@ public class LogRollingTests {
         new BonsaiWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                trieBranchStorage,
+                trieLogStorage,
+                new NoOpMetricsSystem()));
     final WorldUpdater updater = worldState.updater();
 
     final MutableAccount mutableAccount =
@@ -192,7 +200,8 @@ public class LogRollingTests {
                 secondCodeStorage,
                 secondStorageStorage,
                 secondTrieBranchStorage,
-                secondTrieLogStorage));
+                secondTrieLogStorage,
+                new NoOpMetricsSystem()));
     final BonsaiWorldStateUpdateAccumulator secondUpdater =
         (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
 
@@ -223,7 +232,12 @@ public class LogRollingTests {
         new BonsaiWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                trieBranchStorage,
+                trieLogStorage,
+                new NoOpMetricsSystem()));
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount =
@@ -249,7 +263,8 @@ public class LogRollingTests {
                 secondCodeStorage,
                 secondStorageStorage,
                 secondTrieBranchStorage,
-                secondTrieLogStorage));
+                secondTrieLogStorage,
+                new NoOpMetricsSystem()));
     final BonsaiWorldStateUpdateAccumulator secondUpdater =
         (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
 
@@ -281,7 +296,12 @@ public class LogRollingTests {
         new BonsaiWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                trieBranchStorage,
+                trieLogStorage,
+                new NoOpMetricsSystem()));
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount =
@@ -314,7 +334,8 @@ public class LogRollingTests {
                 secondCodeStorage,
                 secondStorageStorage,
                 secondTrieBranchStorage,
-                secondTrieLogStorage));
+                secondTrieLogStorage,
+                new NoOpMetricsSystem()));
 
     final WorldUpdater secondUpdater = secondWorldState.updater();
     final MutableAccount secondMutableAccount =
