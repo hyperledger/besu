@@ -2,7 +2,6 @@ FROM ubuntu:22.04
 
 ARG VERSION="dev"
 ARG TARGETPLATFORM
-RUN echo $TARGETPLATFORM;
 
 RUN apt-get update && \
  apt-get install --no-install-recommends -q --assume-yes curl=7* libjemalloc-dev=5.* && \
