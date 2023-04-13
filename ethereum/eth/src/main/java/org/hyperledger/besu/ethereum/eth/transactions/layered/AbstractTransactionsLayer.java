@@ -537,7 +537,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     final var senderTxs = txsBySender.get(sender);
     return name()
         + "["
-        + (Objects.isNull(txsBySender) ? "Empty" : senderTxs.keySet())
+        + (Objects.isNull(senderTxs) ? "Empty" : senderTxs.keySet())
         + "] "
         + nextLayer.logSender(sender);
   }
