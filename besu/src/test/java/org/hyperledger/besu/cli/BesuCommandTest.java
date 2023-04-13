@@ -1641,7 +1641,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand(
         "--max-peers",
         String.valueOf(maxPeers),
-        "--p2p-peer-lower-bound",
+        "--Xp2p-peer-lower-bound",
         String.valueOf(minPeers));
 
     verify(mockControllerBuilder).maxPeers(intArgumentCaptor.capture());
@@ -5591,7 +5591,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void checkP2pPeerLowerBound_isSet() {
     final int lowerBound = 13;
-    parseCommand("--p2p-peer-lower-bound", String.valueOf(lowerBound));
+    parseCommand("--Xp2p-peer-lower-bound", String.valueOf(lowerBound));
 
     verify(mockControllerBuilder).lowerBoundPeers(intArgumentCaptor.capture());
     verify(mockControllerBuilder).build();

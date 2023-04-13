@@ -1993,7 +1993,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               + peersLowerBound
               + " must not exceed --max-peers "
               + maxPeers);
-      logger.warn("setting --p2p-peer-lower-bound=" + maxPeers);
+      logger.warn("setting --Xp2p-peer-lower-bound=" + maxPeers);
       peersLowerBound = maxPeers;
     }
     final Boolean isLimitRemoteWireConnectionsEnabled =

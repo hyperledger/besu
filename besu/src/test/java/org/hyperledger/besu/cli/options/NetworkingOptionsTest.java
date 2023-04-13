@@ -176,6 +176,7 @@ public class NetworkingOptionsTest
         NetworkingConfiguration.DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC + 10);
     config.setCheckMaintainedConnectionsFrequency(
         NetworkingConfiguration.DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_SEC + 10);
+    config.setPeerLowerBound(NetworkingConfiguration.DEFAULT_PEER_LOWER_BOUND - 10);
     return config;
   }
 

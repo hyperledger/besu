@@ -27,7 +27,7 @@ import picocli.CommandLine;
 
 /** The Networking Cli options. */
 public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
-  public static final String PEER_LOWER_BOUND = "--Xp2p-peer-lower-bound";
+  public static final String PEER_LOWER_BOUND_FLAG = "--Xp2p-peer-lower-bound";
   private final String INITIATE_CONNECTIONS_FREQUENCY_FLAG =
       "--Xp2p-initiate-connections-frequency";
   private final String CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG =
@@ -80,10 +80,10 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
 
   @CommandLine.Option(
       hidden = true,
-      names = PEER_LOWER_BOUND,
+      names = PEER_LOWER_BOUND_FLAG,
       description =
           "Lower bound on the target number of P2P connections (default: ${DEFAULT-VALUE})")
-  private final Integer peerLowerBoundConfig = DefaultCommandValues.DEFAULT_P2P_PEER_LOWER_BOUND;
+  private Integer peerLowerBoundConfig = DefaultCommandValues.DEFAULT_P2P_PEER_LOWER_BOUND;
 
   private NetworkingOptions() {}
 
@@ -109,6 +109,7 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
     cliOptions.initiateConnectionsFrequencySec =
         networkingConfig.getInitiateConnectionsFrequencySec();
     cliOptions.dnsDiscoveryServerOverride = networkingConfig.getDnsDiscoveryServerOverride();
+    cliOptions.peerLowerBoundConfig = networkingConfig.getPeerLowerBound();
 
     return cliOptions;
   }
@@ -132,7 +133,9 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
             CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG,
             OptionParser.format(checkMaintainedConnectionsFrequencySec),
             INITIATE_CONNECTIONS_FREQUENCY_FLAG,
-            OptionParser.format(initiateConnectionsFrequencySec));
+            OptionParser.format(initiateConnectionsFrequencySec),
+            PEER_LOWER_BOUND_FLAG,
+            OptionParser.format((peerLowerBoundConfig)));
 
     if (dnsDiscoveryServerOverride.isPresent()) {
       retval.add(DNS_DISCOVERY_SERVER_OVERRIDE_FLAG);
