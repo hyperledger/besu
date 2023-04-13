@@ -428,30 +428,4 @@ public abstract class RocksDBColumnarKeyValueStorage
   }
 
   abstract RocksDB getDB();
-
-  void createOptions(final RocksDBConfiguration configuration) {
-
-    if (configuration.isHighSpec()) {
-      options =
-          new DBOptions()
-              .setCreateIfMissing(true)
-              .setMaxOpenFiles(configuration.getMaxOpenFiles())
-              .setDbWriteBufferSize(ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC)
-              .setMaxBackgroundCompactions(configuration.getMaxBackgroundCompactions())
-              .setStatistics(stats)
-              .setCreateMissingColumnFamilies(true)
-              .setEnv(
-                  Env.getDefault().setBackgroundThreads(configuration.getBackgroundThreadCount()));
-    } else {
-      options =
-          new DBOptions()
-              .setCreateIfMissing(true)
-              .setMaxOpenFiles(configuration.getMaxOpenFiles())
-              .setMaxBackgroundCompactions(configuration.getMaxBackgroundCompactions())
-              .setStatistics(stats)
-              .setCreateMissingColumnFamilies(true)
-              .setEnv(
-                  Env.getDefault().setBackgroundThreads(configuration.getBackgroundThreadCount()));
-    }
-  }
 }

@@ -48,7 +48,6 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.rocksdb:rocksdbjni'
   implementation project(path: ':ethereum:core')
-  implementation project(path: ':ethereum:core')
 
   testImplementation project(':testutil')
 
