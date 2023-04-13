@@ -1902,7 +1902,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void parsesInvalidBonsaiTrieLimitBackLayersOption() {
+  public void parsesInvalidBonsaiTrieBonsaiHistoricalBlockLimit() {
 
     parseCommand("--data-storage-format", "BONSAI", "--bonsai-historical-block-limit", "ten");
 
