@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.services.kvstore;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;

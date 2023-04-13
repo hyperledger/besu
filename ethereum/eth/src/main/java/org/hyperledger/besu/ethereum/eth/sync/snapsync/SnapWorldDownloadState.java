@@ -71,6 +71,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       pendingStorageFlatDatabaseHealingRequests = new InMemoryTasksPriorityQueues<>();
   public HashSet<Bytes> inconsistentAccounts = new HashSet<>();
 
+  public static HashSet<Bytes> flatHealAccounts = new HashSet<>();
+
   private DynamicPivotBlockManager dynamicPivotBlockManager;
 
   private final SnapPersistedContext snapContext;
@@ -163,6 +165,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         && pendingAccountFlatDatabaseHealingRequests.allTasksCompleted()
         && pendingStorageFlatDatabaseHealingRequests.allTasksCompleted()) {
       if (!snapSyncState.isHealTrieInProgress()) {
+        flatHealAccounts.addAll(inconsistentAccounts);
         startTrieHeal();
       } else if (!snapSyncState.isHealFlatDatabaseInProgress()) {
         startFlatDatabaseHeal(header);

@@ -423,7 +423,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
               .thenProcessAsyncOrdered(
                   "batchDownloadStorageData",
                   requestTask -> requestDataStep.requestLocalStorage(requestTask),
-                  maxOutstandingRequests)
+                  1)
               .thenProcess(
                   "batchPersistStorageData", task -> persistDataStep.healFlatDatabase(task))
               .andFinishWith("batchStorageDataDownloaded", requestsToComplete::put);

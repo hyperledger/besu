@@ -20,9 +20,11 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -53,8 +55,19 @@ public class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
-    return worldStateStorage.getAccountStorageTrieNode(
-        getAccountHash(), getLocation(), getNodeHash());
+    BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage = ((BonsaiWorldStateKeyValueStorage) worldStateStorage) ;
+    Optional<Bytes> accountStorageTrieNodeWithoutCheck = bonsaiWorldStateKeyValueStorage.getAccountStorageTrieNodeWithoutCheck(getAccountHash(), getLocation());
+    if(accountStorageTrieNodeWithoutCheck.isPresent()){
+      if(Hash.hash(accountStorageTrieNodeWithoutCheck.get()).equals(getNodeHash())){
+        return accountStorageTrieNodeWithoutCheck;
+      } else {
+        SnapWorldDownloadState.flatHealAccounts.add(getAccountHash());
+      }
+    }
+    if (getNodeHash().equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
+      return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
+    }
+    return Optional.empty();
   }
 
   @Override

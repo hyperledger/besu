@@ -96,9 +96,9 @@ public class WorldStateProofProvider {
 
   public List<Bytes> getStorageProofRelatedNodes(
       final Bytes32 storageRoot, final Bytes32 accountHash, final Bytes32 slotHash) {
-    final Proof<Bytes> accountProof =
+    final Proof<Bytes> storageProof =
         newAccountStorageTrie(Hash.wrap(accountHash), storageRoot).getValueWithProof(slotHash);
-    return accountProof.getProofRelatedNodes();
+    return storageProof.getProofRelatedNodes();
   }
 
   private MerkleTrie<Bytes, Bytes> newAccountStateTrie(final Bytes32 rootHash) {

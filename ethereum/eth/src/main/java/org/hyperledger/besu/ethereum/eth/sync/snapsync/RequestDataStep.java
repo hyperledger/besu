@@ -263,41 +263,50 @@ public class RequestDataStep {
         (StorageFlatDatabaseHealingRangeRequest) requestTask.getData();
     final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
 
+    storageDataRequest.setRootHash(blockHeader.getStateRoot());
+
+
     final TreeMap<Bytes32, Bytes> slots =
         (TreeMap<Bytes32, Bytes>)
             worldStateStorage.streamStorageFlatDatabase(
                 storageDataRequest.getAccountHash(), storageDataRequest.getStartKeyHash(), 1024);
-    final List<Bytes> leftStorageProofRelatedNodes =
-        worldStateProofProvider.getStorageProofRelatedNodes(
-            storageDataRequest.getStorageRoot(),
-            storageDataRequest.getAccountHash(),
-            slots.firstKey());
-    final List<Bytes> rightStorageProofRelatedNodes =
-        worldStateProofProvider.getStorageProofRelatedNodes(
-            storageDataRequest.getStorageRoot(),
-            storageDataRequest.getAccountHash(),
-            slots.lastKey());
+    if(!slots.isEmpty()) {
+      final List<Bytes> leftStorageProofRelatedNodes =
+              worldStateProofProvider.getStorageProofRelatedNodes(
+                      storageDataRequest.getStorageRoot(),
+                      storageDataRequest.getAccountHash(),
+                      slots.firstKey());
+      final List<Bytes> rightStorageProofRelatedNodes =
+              worldStateProofProvider.getStorageProofRelatedNodes(
+                      storageDataRequest.getStorageRoot(),
+                      storageDataRequest.getAccountHash(),
+                      slots.lastKey());
+      storageDataRequest.addLocalData(
+              worldStateProofProvider,
+              slots,
+              new ArrayDeque<>(
+                      Stream.concat(
+                                      leftStorageProofRelatedNodes.stream(), rightStorageProofRelatedNodes.stream())
+                              .collect(Collectors.toList())));
 
-    if (cpt == 10000) {
-      cpt = 0;
-      System.out.println(
-          "Found storage keys "
-              + slots.size()
-              + " from "
-              + slots.firstKey()
-              + " "
-              + slots.lastKey());
+      if (cpt == 10000) {
+        cpt = 0;
+        System.out.println(
+                "Found storage keys "
+                        + slots.size()
+                        + " from "
+                        + slots.firstKey()
+                        + " "
+                        + slots.lastKey());
+      }
+      cpt++;
+    } else {
+      storageDataRequest.addLocalData(
+              worldStateProofProvider,
+              slots,
+              new ArrayDeque<>());
     }
-    cpt++;
 
-    storageDataRequest.setRootHash(blockHeader.getStateRoot());
-    storageDataRequest.addLocalData(
-        worldStateProofProvider,
-        slots,
-        new ArrayDeque<>(
-            Stream.concat(
-                    leftStorageProofRelatedNodes.stream(), rightStorageProofRelatedNodes.stream())
-                .collect(Collectors.toList())));
 
     return CompletableFuture.completedFuture(requestTask);
   }

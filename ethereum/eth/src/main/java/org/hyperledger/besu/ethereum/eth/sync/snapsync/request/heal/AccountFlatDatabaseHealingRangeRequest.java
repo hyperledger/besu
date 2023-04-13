@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MAX_RANGE;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MIN_RANGE;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findNewBeginElementInRange;
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState.flatHealAccounts;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -48,6 +49,7 @@ import org.apache.tuweni.bytes.Bytes32;
 /** Returns a list of accounts and the merkle proofs of an entire range */
 @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "TooBroadScope", "ModifiedButNotUsed"})
 public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
+
 
   private final Bytes32 startKeyHash;
   private final Bytes32 endKeyHash;
@@ -89,15 +91,17 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
     // find missing storages and code
     for (Map.Entry<Bytes32, Bytes> account : accounts.entrySet()) {
-      final StateTrieAccountValue accountValue =
-          StateTrieAccountValue.readFrom(RLP.input(account.getValue()));
-      childRequests.add(
-          createStorageFlatHealingRangeRequest(
-              getRootHash(),
-              account.getKey(),
-              accountValue.getStorageRoot(),
-              MIN_RANGE,
-              MAX_RANGE));
+      if(flatHealAccounts.contains(account.getKey())) {
+        final StateTrieAccountValue accountValue =
+                StateTrieAccountValue.readFrom(RLP.input(account.getValue()));
+        childRequests.add(
+                createStorageFlatHealingRangeRequest(
+                        getRootHash(),
+                        account.getKey(),
+                        accountValue.getStorageRoot(),
+                        MIN_RANGE,
+                        MAX_RANGE));
+      }
     }
 
     return childRequests.stream();
@@ -180,11 +184,15 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
               keysToDelete.remove(key);
             } else {
               keysAdd.put(key, value);
+              flatHealAccounts.add(Hash.wrap(key));
               bonsaiUpdater.putAccountInfoState(Hash.wrap(key), value);
             }
           });
 
-      keysToDelete.forEach((key, value) -> bonsaiUpdater.removeAccountInfoState(Hash.wrap(key)));
+      keysToDelete.forEach((key, value) -> {
+        flatHealAccounts.add(Hash.wrap(key));
+        bonsaiUpdater.removeAccountInfoState(Hash.wrap(key));
+      });
     }
     return 0;
   }

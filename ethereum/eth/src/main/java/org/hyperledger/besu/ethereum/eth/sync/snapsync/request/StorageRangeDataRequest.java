@@ -19,7 +19,9 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MIN_R
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findNewBeginElementInRange;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAGE_RANGE;
 
+import org.apache.tuweni.rlp.RLP;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
@@ -103,7 +105,13 @@ public class StorageRangeDataRequest extends SnapDataRequest {
         new StackTrie.FlatDatabaseUpdater() {
           @Override
           public void update(final Bytes32 key, final Bytes value) {
-            // NO OP
+            ((BonsaiWorldStateKeyValueStorage.Updater) updaterTmp.get())
+                    .putStorageValueBySlotHash(
+                            accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value)));
+            if (nbNodesSaved.getAndIncrement() % 1000 == 0) {
+              updaterTmp.get().commit();
+              updaterTmp.set(worldStateStorage.updater());
+            }
           }
         },
         nodeUpdater);

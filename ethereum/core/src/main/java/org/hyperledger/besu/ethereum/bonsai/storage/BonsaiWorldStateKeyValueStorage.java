@@ -134,6 +134,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     }
   }
 
+  public Optional<Bytes> getAccountStorageTrieNodeWithoutCheck(
+          final Hash accountHash, final Bytes location) {
+    return trieBranchStorage
+              .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
+              .map(Bytes::wrap);
+  }
+
   public Optional<byte[]> getTrieLog(final Hash blockHash) {
     return trieLogStorage.get(blockHash.toArrayUnsafe());
   }
@@ -203,8 +210,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       final Hash accountHash, final Bytes startKeyHash, final long max) {
     return storageStorage
         .streamFromKey(Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe())
-        .limit(max)
-        .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())))
+            .takeWhile(pair -> Bytes.wrap(pair.getKey()).slice(0,Hash.SIZE).equals(accountHash))
+            .limit(max)
+        .map(pair -> new Pair<>(Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
+                RLP.encodeValue(Bytes.wrap(pair.getValue()).trimLeadingZeros())))
         .collect(Collectors.toMap(Pair::getFirst, Pair::getSecond, (v1, v2) -> v1, TreeMap::new));
   }
 
@@ -242,7 +251,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   public void clearFlatDatabase() {
     subscribers.forEach(BonsaiStorageSubscriber::onClearFlatDatabaseStorage);
     // accountStorage.clear();
-    storageStorage.clear();
+    //storageStorage.clear();
   }
 
   @Override
