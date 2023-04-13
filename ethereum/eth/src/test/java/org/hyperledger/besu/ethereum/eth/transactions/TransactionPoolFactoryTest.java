@@ -300,7 +300,6 @@ public class TransactionPoolFactoryTest {
                 ProtocolSpecAdapters.create(0, Function.identity()),
                 PrivacyParameters.DEFAULT,
                 false,
-                false,
                 EvmConfiguration.DEFAULT)
             .createProtocolSchedule();
 

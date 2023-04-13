@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.storage;
 
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
-import org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStorage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
@@ -37,12 +36,6 @@ public interface StorageProvider extends Closeable {
   KeyValueStorage getStorageBySegmentIdentifier(SegmentIdentifier segment);
 
   SnappableKeyValueStorage getSnappableStorageBySegmentIdentifier(SegmentIdentifier segment);
-
-  WorldStateStorage createPrivateWorldStateStorage();
-
-  WorldStatePreimageStorage createPrivateWorldStatePreimageStorage();
-
-  GoQuorumPrivateStorage createGoQuorumPrivateStorage();
 
   boolean isWorldStateIterable();
 

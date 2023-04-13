@@ -75,7 +75,6 @@ public class PrivacyParameters {
   private boolean privacyPluginEnabled;
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivateWorldStateReader privateWorldStateReader;
-  private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters = Optional.empty();
   private PrivacyPluginService privacyPluginService;
 
   public Address getPrivacyAddress() {
@@ -202,16 +201,6 @@ public class PrivacyParameters {
     this.privateWorldStateReader = privateWorldStateReader;
   }
 
-  public Optional<GoQuorumPrivacyParameters> getGoQuorumPrivacyParameters() {
-    return goQuorumPrivacyParameters;
-  }
-
-  private void setGoQuorumPrivacyParameters(
-      final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
-    this.goQuorumPrivacyParameters =
-        goQuorumPrivacyParameters != null ? goQuorumPrivacyParameters : Optional.empty();
-  }
-
   private void setPrivacyService(final PrivacyPluginService privacyPluginService) {
     this.privacyPluginService = privacyPluginService;
   }
@@ -272,7 +261,6 @@ public class PrivacyParameters {
     private Path privacyTlsKnownEnclaveFile;
     private boolean flexiblePrivacyGroupsEnabled;
     private boolean privacyPluginEnabled;
-    private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters;
     private PrivacyPluginService privacyPluginService;
 
     public Builder setEnclaveUrl(final URI enclaveUrl) {
@@ -327,12 +315,6 @@ public class PrivacyParameters {
 
     public Builder setPrivacyPluginEnabled(final boolean privacyPluginEnabled) {
       this.privacyPluginEnabled = privacyPluginEnabled;
-      return this;
-    }
-
-    public Builder setGoQuorumPrivacyParameters(
-        final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
-      this.goQuorumPrivacyParameters = goQuorumPrivacyParameters;
       return this;
     }
 
@@ -398,7 +380,6 @@ public class PrivacyParameters {
       config.setMultiTenancyEnabled(multiTenancyEnabled);
       config.setFlexiblePrivacyGroupsEnabled(flexiblePrivacyGroupsEnabled);
       config.setPrivacyPluginEnabled(privacyPluginEnabled);
-      config.setGoQuorumPrivacyParameters(goQuorumPrivacyParameters);
       return config;
     }
   }

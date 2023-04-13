@@ -51,7 +51,6 @@ public class MainnetTransactionValidator {
 
   private Optional<TransactionFilter> transactionFilter = Optional.empty();
   private final Set<TransactionType> acceptedTransactionTypes;
-  private final boolean goQuorumCompatibilityMode;
 
   private final int maxInitcodeSize;
 
@@ -59,15 +58,13 @@ public class MainnetTransactionValidator {
       final GasCalculator gasCalculator,
       final GasLimitCalculator gasLimitCalculator,
       final boolean checkSignatureMalleability,
-      final Optional<BigInteger> chainId,
-      final boolean goQuorumCompatibilityMode) {
+      final Optional<BigInteger> chainId) {
     this(
         gasCalculator,
         gasLimitCalculator,
         checkSignatureMalleability,
         chainId,
-        Set.of(TransactionType.FRONTIER),
-        goQuorumCompatibilityMode);
+        Set.of(TransactionType.FRONTIER));
   }
 
   public MainnetTransactionValidator(
@@ -75,8 +72,7 @@ public class MainnetTransactionValidator {
       final GasLimitCalculator gasLimitCalculator,
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
-      final Set<TransactionType> acceptedTransactionTypes,
-      final boolean quorumCompatibilityMode) {
+      final Set<TransactionType> acceptedTransactionTypes) {
     this(
         gasCalculator,
         gasLimitCalculator,
@@ -84,7 +80,6 @@ public class MainnetTransactionValidator {
         checkSignatureMalleability,
         chainId,
         acceptedTransactionTypes,
-        quorumCompatibilityMode,
         Integer.MAX_VALUE);
   }
 
@@ -95,7 +90,6 @@ public class MainnetTransactionValidator {
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
       final Set<TransactionType> acceptedTransactionTypes,
-      final boolean goQuorumCompatibilityMode,
       final int maxInitcodeSize) {
     this.gasCalculator = gasCalculator;
     this.gasLimitCalculator = gasLimitCalculator;
@@ -103,7 +97,6 @@ public class MainnetTransactionValidator {
     this.disallowSignatureMalleability = checkSignatureMalleability;
     this.chainId = chainId;
     this.acceptedTransactionTypes = acceptedTransactionTypes;
-    this.goQuorumCompatibilityMode = goQuorumCompatibilityMode;
     this.maxInitcodeSize = maxInitcodeSize;
   }
 
@@ -156,12 +149,6 @@ public class MainnetTransactionValidator {
       final Transaction transaction,
       final Optional<Wei> maybeBaseFee,
       final TransactionValidationParams transactionValidationParams) {
-
-    if (goQuorumCompatibilityMode && transaction.hasCostParams()) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO,
-          "gasPrice must be set to zero on a GoQuorum compatible network");
-    }
 
     if (maybeBaseFee.isPresent()) {
       final Wei price = feeMarket.getTransactionPriceCalculator().price(transaction, maybeBaseFee);
@@ -284,9 +271,7 @@ public class MainnetTransactionValidator {
               transaction.getChainId().get(), chainId.get()));
     }
 
-    if (!transaction.isGoQuorumPrivateTransaction(goQuorumCompatibilityMode)
-        && chainId.isEmpty()
-        && transaction.getChainId().isPresent()) {
+    if (chainId.isEmpty() && transaction.getChainId().isPresent()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED,
           "replay protected signatures is not supported");
@@ -355,9 +340,5 @@ public class MainnetTransactionValidator {
     final TransactionValidationParams validationParams =
         ImmutableTransactionValidationParams.builder().isAllowFutureNonce(allowFutureNonce).build();
     return validateForSender(transaction, sender, validationParams);
-  }
-
-  public boolean getGoQuorumCompatibilityMode() {
-    return goQuorumCompatibilityMode;
   }
 }
