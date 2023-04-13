@@ -31,8 +31,6 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
