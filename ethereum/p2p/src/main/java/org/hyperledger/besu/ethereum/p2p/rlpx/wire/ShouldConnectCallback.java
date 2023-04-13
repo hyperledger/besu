@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,25 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.goquorum;
+package org.hyperledger.besu.ethereum.p2p.rlpx.wire;
 
-import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 
-import java.util.Optional;
+@FunctionalInterface
+public interface ShouldConnectCallback {
 
-public interface GoQuorumPrivateStorage {
-
-  Optional<Hash> getPrivateStateRootHash(final Hash publicStateRootHash);
-
-  Updater updater();
-
-  interface Updater {
-
-    Updater putPrivateStateRootHashMapping(
-        final Hash publicStateRootHash, final Hash privateStateRootHash);
-
-    void commit();
-
-    void rollback();
-  }
+  boolean shouldConnect(final Peer peer, final boolean incoming);
 }

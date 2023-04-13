@@ -85,46 +85,6 @@ public class EnclaveFactory {
     return new Enclave(vertxTransmitter);
   }
 
-  /**
-   * Create GoQuorum enclave.
-   *
-   * @param enclaveUri the enclave uri
-   * @return the GoQuorum enclave
-   */
-  public GoQuorumEnclave createGoQuorumEnclave(final URI enclaveUri) {
-    final HttpClientOptions clientOptions = createNonTlsClientOptions(enclaveUri);
-
-    final RequestTransmitter vertxTransmitter =
-        new VertxRequestTransmitter(vertx.createHttpClient(clientOptions));
-
-    return new GoQuorumEnclave(vertxTransmitter);
-  }
-
-  /**
-   * Create GoQuorum enclave.
-   *
-   * @param enclaveUri the enclave uri
-   * @param privacyKeyStoreFile the privacy key store file
-   * @param privacyKeyStorePasswordFile the privacy key store password file
-   * @param privacyAllowlistFile the privacy allowlist file
-   * @return the go quorum enclave
-   */
-  public GoQuorumEnclave createGoQuorumEnclave(
-      final URI enclaveUri,
-      final Path privacyKeyStoreFile,
-      final Path privacyKeyStorePasswordFile,
-      final Path privacyAllowlistFile) {
-
-    final HttpClientOptions clientOptions =
-        createTlsClientOptions(
-            enclaveUri, privacyKeyStoreFile, privacyKeyStorePasswordFile, privacyAllowlistFile);
-
-    final RequestTransmitter vertxTransmitter =
-        new VertxRequestTransmitter(vertx.createHttpClient(clientOptions));
-
-    return new GoQuorumEnclave(vertxTransmitter);
-  }
-
   private HttpClientOptions createNonTlsClientOptions(final URI enclaveUri) {
 
     if (enclaveUri.getPort() == -1) {

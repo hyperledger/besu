@@ -3,7 +3,8 @@
 ## 23.4-RC
 
 ### Breaking Changes
-- Removed IBFT1 feature [#5302](https://github.com/hyperledger/besu/pull/5302)
+- Remove IBFT 1.0 feature (deprecated in 23.1.0-beta) [#5302](https://github.com/hyperledger/besu/pull/5302)
+- Remove GoQuorum-compatible privacy feature (deprecated in 23.1.0-beta) [#5303](https://github.com/hyperledger/besu/pull/5303)
 
 ### Additions and Improvements
 - Update most dependencies to latest version [#5269](https://github.com/hyperledger/besu/pull/5269)

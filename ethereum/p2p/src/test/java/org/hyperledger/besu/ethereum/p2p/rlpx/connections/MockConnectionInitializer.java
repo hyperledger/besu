@@ -44,7 +44,7 @@ public class MockConnectionInitializer implements ConnectionInitializer {
   }
 
   public void completePendingFutures() {
-    for (Map.Entry<Peer, CompletableFuture<PeerConnection>> conn :
+    for (final Map.Entry<Peer, CompletableFuture<PeerConnection>> conn :
         incompleteConnections.entrySet()) {
       conn.getValue().complete(MockPeerConnection.create(conn.getKey()));
     }
@@ -57,7 +57,7 @@ public class MockConnectionInitializer implements ConnectionInitializer {
 
   @Override
   public CompletableFuture<InetSocketAddress> start() {
-    InetSocketAddress socketAddress =
+    final InetSocketAddress socketAddress =
         new InetSocketAddress("127.0.0.1", NEXT_PORT.incrementAndGet());
     return CompletableFuture.completedFuture(socketAddress);
   }
@@ -76,12 +76,14 @@ public class MockConnectionInitializer implements ConnectionInitializer {
   public CompletableFuture<PeerConnection> connect(final Peer peer) {
     if (autoDisconnectCounter > 0) {
       autoDisconnectCounter--;
-      MockPeerConnection mockPeerConnection = MockPeerConnection.create(peer, eventDispatcher);
+      final MockPeerConnection mockPeerConnection =
+          MockPeerConnection.create(peer, eventDispatcher, false);
       mockPeerConnection.disconnect(DisconnectMessage.DisconnectReason.CLIENT_QUITTING);
       return CompletableFuture.completedFuture(mockPeerConnection);
     }
     if (autocompleteConnections) {
-      return CompletableFuture.completedFuture(MockPeerConnection.create(peer, eventDispatcher));
+      return CompletableFuture.completedFuture(
+          MockPeerConnection.create(peer, eventDispatcher, false));
     } else {
       final CompletableFuture<PeerConnection> future = new CompletableFuture<>();
       incompleteConnections.put(peer, future);

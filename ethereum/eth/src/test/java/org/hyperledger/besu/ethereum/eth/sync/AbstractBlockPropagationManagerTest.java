@@ -623,8 +623,13 @@ public abstract class AbstractBlockPropagationManagerTest {
                 () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
                 TestClock.fixed(),
                 metricsSystem,
+                EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+                Collections.emptyList(),
+                Bytes.random(64),
                 25,
-                EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE),
+                25,
+                25,
+                false),
             new EthMessages(),
             ethScheduler);
     final BlockPropagationManager blockPropagationManager =
@@ -749,6 +754,7 @@ public abstract class AbstractBlockPropagationManagerTest {
                 return invocation.getArgument(0, Supplier.class).get();
               }
             });
+
     final EthContext ethContext =
         new EthContext(
             new EthPeers(
@@ -756,8 +762,13 @@ public abstract class AbstractBlockPropagationManagerTest {
                 () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
                 TestClock.fixed(),
                 metricsSystem,
+                EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+                Collections.emptyList(),
+                Bytes.random(64),
                 25,
-                EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE),
+                25,
+                25,
+                false),
             new EthMessages(),
             ethScheduler);
     final BlockPropagationManager blockPropagationManager =
