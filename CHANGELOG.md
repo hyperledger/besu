@@ -9,6 +9,7 @@
 - Update most dependencies to latest version [#5269](https://github.com/hyperledger/besu/pull/5269)
 - If jemalloc is used, print its version in the configuration overview [#4738](https://github.com/hyperledger/besu/pull/4738)
 - Add metrics for accounts and storage reads (Flat database vs Merkle Patricia Trie) [#5315](https://github.com/hyperledger/besu/pull/5315)
+- Performance: Reduced usage of UInt256 in EVM operations [#5331](https://github.com/hyperledger/besu/pull/5331)
 
 ### Bug Fixes
 
