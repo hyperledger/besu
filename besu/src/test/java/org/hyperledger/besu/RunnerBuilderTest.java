@@ -55,11 +55,13 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -138,6 +140,7 @@ public final class RunnerBuilderTest {
     when(besuController.getSynchronizer()).thenReturn(mock(Synchronizer.class));
     when(besuController.getMiningCoordinator()).thenReturn(mock(MiningCoordinator.class));
     when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
+    when(besuController.getEthPeers()).thenReturn(mock(EthPeers.class));
     final GenesisConfigOptions genesisConfigOptions = mock(GenesisConfigOptions.class);
     when(genesisConfigOptions.getForkBlockNumbers()).thenReturn(Collections.emptyList());
     when(genesisConfigOptions.getForkBlockTimestamps()).thenReturn(Collections.emptyList());
@@ -389,6 +392,7 @@ public final class RunnerBuilderTest {
             .storageProvider(mock(KeyValueStorageProvider.class))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .besuPluginContext(mock(BesuPluginContextImpl.class))
+            .networkingConfiguration(NetworkingConfiguration.create())
             .build();
 
     assertThat(runner.getJsonRpcPort()).isPresent();
@@ -435,6 +439,7 @@ public final class RunnerBuilderTest {
         .storageProvider(mock(KeyValueStorageProvider.class))
         .rpcEndpointService(new RpcEndpointServiceImpl())
         .besuPluginContext(mock(BesuPluginContextImpl.class))
+        .networkingConfiguration(NetworkingConfiguration.create())
         .build();
 
     verify(mockTransitionCoordinator, times(1)).getPreMergeObject();

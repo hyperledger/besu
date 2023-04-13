@@ -181,7 +181,8 @@ public class AbstractPeerConnectionTest {
           connectionId,
           multiplexer,
           connectionEventDispatcher,
-          outboundMessagesCounter);
+          outboundMessagesCounter,
+          true);
     }
 
     @Override

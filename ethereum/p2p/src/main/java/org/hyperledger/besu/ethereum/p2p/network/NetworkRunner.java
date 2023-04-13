@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.network;
 
+import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -154,6 +155,9 @@ public class NetworkRunner implements AutoCloseable {
             protocolManager.handleNewConnection(connection);
           });
 
+      network.subscribeConnectRequest(
+          (peer, incoming) -> protocolManager.shouldConnect(peer, incoming));
+
       network.subscribeDisconnect(
           (connection, disconnectReason, initiatedByPeer) -> {
             if (Collections.disjoint(
@@ -168,6 +172,10 @@ public class NetworkRunner implements AutoCloseable {
   @Override
   public void close() {
     stop();
+  }
+
+  public RlpxAgent getRlpxAgent() {
+    return network.getRlpxAgent();
   }
 
   public static class Builder {
