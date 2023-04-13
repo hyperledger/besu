@@ -23,6 +23,11 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.sun.jna.Library;
+import com.sun.jna.Native;
+import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.ptr.PointerByReference;
+
 /**
  * Detects OS and VMs.
  *
@@ -36,6 +41,7 @@ public class PlatformDetector {
   private static String _vm;
   private static String _arch;
   private static String _glibc;
+  private static String _jemalloc;
 
   /**
    * Gets OS type.
@@ -96,6 +102,20 @@ public class PlatformDetector {
     }
 
     return _glibc;
+  }
+
+  /**
+   * Gets jemalloc version.
+   *
+   * @throws UnsatisfiedLinkError if the library cannot be found or dependent libraries are missing.
+   * @return the jemalloc version
+   */
+  public static String getJemalloc() {
+    if (_jemalloc == null) {
+      detectJemalloc();
+    }
+
+    return _jemalloc;
   }
 
   private static final String UNKNOWN = "unknown";
@@ -305,5 +325,24 @@ public class PlatformDetector {
     final Matcher matcher = pattern.matcher(rawGlibcVersion);
 
     return matcher.find() ? matcher.group() : null;
+  }
+
+  private static void detectJemalloc() {
+    interface JemallocLib extends Library {
+      int mallctl(
+          String property,
+          PointerByReference value,
+          IntByReference len,
+          String newValue,
+          int newLen);
+    }
+
+    final JemallocLib jemallocLib = Native.load("jemalloc", JemallocLib.class);
+
+    PointerByReference pVersion = new PointerByReference();
+    IntByReference pSize = new IntByReference(Native.POINTER_SIZE);
+    jemallocLib.mallctl("version", pVersion, pSize, null, 0);
+
+    _jemalloc = pVersion.getValue().getString(0);
   }
 }
