@@ -16,7 +16,7 @@
 package org.hyperledger.besu.ethereum.bonsai.trielog;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccu
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -43,21 +44,22 @@ public class TrieLogManagerTests {
   BlockHeader blockHeader = new BlockHeaderTestFixture().buildHeader();
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  BonsaiWorldStateUpdateAccumulator bonsaiUpdater;
-
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   BonsaiWorldState bonsaiWorldState;
 
   @Mock BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage;
+  @Mock BonsaiWorldState worldState;
   @Mock BonsaiWorldStateProvider archive;
   @Mock Blockchain blockchain;
+  //  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  BonsaiWorldStateUpdateAccumulator bonsaiUpdater =
+      spy(new BonsaiWorldStateUpdateAccumulator(worldState, (__, ___) -> {}, (__, ___) -> {}));
 
   TrieLogManager trieLogManager;
 
   @Before
   public void setup() {
     trieLogManager =
-        new CachedWorldStorageManager(archive, blockchain, bonsaiWorldStateKeyValueStorage, 512);
+        new CachedWorldStorageManager(archive, blockchain, bonsaiWorldStateKeyValueStorage, new NoOpMetricsSystem(), 512);
   }
 
   @Test
