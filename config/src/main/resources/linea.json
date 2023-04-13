@@ -1,6 +1,6 @@
 {
   "config": {
-    "chainId": 57,
+    "chainId": 59140,
     "homesteadBlock": 0,
     "daoForkBlock": 0,
     "eip150Block": 0,
@@ -18,7 +18,6 @@
     "ethash": {
     },
     "discovery": {
-      "dns": "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.mainnet.ethdisco.net",
       "bootnodes": []
     }
   },
@@ -26,7 +25,7 @@
   "nonce": "0x42",
   "timestamp": "0x0",
   "extraData": "0x11bbe8db4e347b4e8c937c1c8370e4b5ed33adb3db69cbdb7a38e1e50b1b82fa",
-  "gasLimit": "0x1388",
+  "gasLimit": "0x1C9C380",
   "difficulty": "0x400000000",
   "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
   "coinbase": "0x0000000000000000000000000000000000000000",
