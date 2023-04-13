@@ -24,6 +24,9 @@ As an [Actor], I want [feature] so that [why].
 
 **Frequency:** [What percentage of the time does it occur?]
 
+### Logs
+Please paste relevant logs from Besu (and the consensus client, if running proof of stake) from before and after the issue. 
+
 ### Versions (Add all that apply)
 * Software version: [`besu --version`]
 * Java version: [`java -version`]
