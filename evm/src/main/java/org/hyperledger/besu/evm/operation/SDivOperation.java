@@ -71,11 +71,6 @@ public class SDivOperation extends AbstractFixedCostOperation {
       }
 
       frame.pushStackItem(Bytes32.leftPad(resultBytes, result.signum() < 0 ? (byte) 0xFF : 0x00));
-
-      //      final byte[] padding = new byte[32 - resultBytes.size()];
-      //      Arrays.fill(padding, result.signum() < 0 ? (byte) 0xFF : 0x00);
-      //
-      //      frame.pushStackItem(Bytes.concatenate(Bytes.wrap(padding), resultBytes));
     }
 
     return sdivSuccess;
