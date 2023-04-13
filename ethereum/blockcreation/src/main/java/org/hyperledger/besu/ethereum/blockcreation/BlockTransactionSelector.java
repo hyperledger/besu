@@ -548,7 +548,16 @@ public class BlockTransactionSelector {
   }
 
   private boolean transactionCalldataTooLarge(final Transaction transaction) {
-    this.blockCalldataSum += transaction.getPayload().size();
+    try {
+      blockCalldataSum = Math.addExact(blockCalldataSum, transaction.getPayload().size());
+    } catch (ArithmeticException ae) {
+      LOG.atDebug()
+          .setMessage("Not adding transaction {} otherwise block calldata size {} overflows")
+          .addArgument(transaction::toTraceLog)
+          .addArgument(blockCalldataSum)
+          .log();
+      return false;
+    }
     return blockCalldataSum > blockMaxCalldataSize;
   }
 }

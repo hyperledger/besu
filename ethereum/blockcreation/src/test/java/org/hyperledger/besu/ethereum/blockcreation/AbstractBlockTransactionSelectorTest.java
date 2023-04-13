@@ -455,6 +455,18 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final Wei minGasPrice,
       final Address miningBeneficiary,
       final Wei dataGasPrice) {
+
+    return createBlockSelector(
+        transactionProcessor, blockHeader, minGasPrice, miningBeneficiary, dataGasPrice, -1);
+  }
+
+  protected BlockTransactionSelector createBlockSelector(
+      final MainnetTransactionProcessor transactionProcessor,
+      final ProcessableBlockHeader blockHeader,
+      final Wei minGasPrice,
+      final Address miningBeneficiary,
+      final Wei dataGasPrice,
+      final int blockMaxCalldataSize) {
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
             transactionProcessor,
@@ -471,7 +483,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             getFeeMarket(),
             new LondonGasCalculator(),
             GasLimitCalculator.constant(),
-            -1);
+            blockMaxCalldataSize);
     return selector;
   }
 

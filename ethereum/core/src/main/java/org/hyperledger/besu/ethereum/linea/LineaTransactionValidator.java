@@ -25,7 +25,6 @@ public class LineaTransactionValidator extends MainnetTransactionValidator {
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
       final Set<TransactionType> acceptedTransactionTypes,
-      final boolean goQuorumCompatibilityMode,
       final int maxCalldataSize) {
     super(
         gasCalculator,
@@ -34,7 +33,7 @@ public class LineaTransactionValidator extends MainnetTransactionValidator {
         checkSignatureMalleability,
         chainId,
         acceptedTransactionTypes,
-        goQuorumCompatibilityMode,
+        false,
         Integer.MAX_VALUE);
     this.maxCalldataSize = maxCalldataSize >= 0 ? maxCalldataSize : Integer.MAX_VALUE;
   }
