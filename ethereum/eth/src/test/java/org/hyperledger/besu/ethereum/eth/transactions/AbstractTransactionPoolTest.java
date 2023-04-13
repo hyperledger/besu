@@ -28,7 +28,6 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -346,7 +345,6 @@ public abstract class AbstractTransactionPoolTest {
     transactionPool.addRemoteTransactions(singletonList(transaction));
 
     assertTransactionNotPending(transaction);
-    verify(transactionValidator).getGoQuorumCompatibilityMode();
     verifyNoMoreInteractions(transactionValidator);
   }
 
@@ -380,7 +378,6 @@ public abstract class AbstractTransactionPoolTest {
         .validateForSender(eq(transaction1), eq(null), any(TransactionValidationParams.class));
     verify(transactionValidator).validate(eq(transaction2), any(Optional.class), any());
     verify(transactionValidator).validateForSender(eq(transaction2), any(), any());
-    verify(transactionValidator, atLeastOnce()).getGoQuorumCompatibilityMode();
     verifyNoMoreInteractions(transactionValidator);
   }
 

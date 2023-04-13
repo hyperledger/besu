@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
-import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -34,13 +33,11 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
-import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +47,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
-import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -327,40 +323,18 @@ public class BlockTransactionSelector {
     final WorldUpdater worldStateUpdater = worldState.updater();
     final BlockHashLookup blockHashLookup =
         new CachingBlockHashLookup(processableBlockHeader, blockchain);
-    final boolean isGoQuorumPrivateTransaction =
-        transaction.isGoQuorumPrivateTransaction(
-            transactionProcessor.getTransactionValidator().getGoQuorumCompatibilityMode());
 
-    TransactionProcessingResult effectiveResult;
-
-    if (isGoQuorumPrivateTransaction) {
-      final ValidationResult<TransactionInvalidReason> validationResult =
-          validateTransaction(processableBlockHeader, transaction, worldStateUpdater);
-      if (!validationResult.isValid()) {
-        LOG.warn(
-            "Invalid transaction: {}. Block {} Transaction {}",
-            validationResult.getErrorMessage(),
-            processableBlockHeader.getParentHash().toHexString(),
-            transaction.getHash().toHexString());
-        return transactionSelectionResultForInvalidResult(transaction, validationResult);
-      } else {
-        // valid GoQuorum private tx, we need to handcraft the receipt and increment the nonce
-        effectiveResult = publicResultForWhenWeHaveAPrivateTransaction(transaction);
-        worldStateUpdater.getOrCreate(transaction.getSender()).getMutable().incrementNonce();
-      }
-    } else {
-      effectiveResult =
-          transactionProcessor.processTransaction(
-              blockchain,
-              worldStateUpdater,
-              processableBlockHeader,
-              transaction,
-              miningBeneficiary,
-              blockHashLookup,
-              false,
-              TransactionValidationParams.mining(),
-              dataGasPrice);
-    }
+    final TransactionProcessingResult effectiveResult =
+        transactionProcessor.processTransaction(
+            blockchain,
+            worldStateUpdater,
+            processableBlockHeader,
+            transaction,
+            miningBeneficiary,
+            blockHashLookup,
+            false,
+            TransactionValidationParams.mining(),
+            dataGasPrice);
 
     if (!effectiveResult.isInvalid()) {
       worldStateUpdater.commit();
@@ -445,42 +419,14 @@ public class BlockTransactionSelector {
         || invalidReason.equals(TransactionInvalidReason.NONCE_TOO_HIGH);
   }
 
-  private ValidationResult<TransactionInvalidReason> validateTransaction(
-      final ProcessableBlockHeader blockHeader,
-      final Transaction transaction,
-      final WorldUpdater publicWorldStateUpdater) {
-    final TransactionValidationParams transactionValidationParams =
-        TransactionValidationParams.processingBlock();
-    final MainnetTransactionValidator transactionValidator =
-        transactionProcessor.getTransactionValidator();
-    ValidationResult<TransactionInvalidReason> validationResult =
-        transactionValidator.validate(
-            transaction, blockHeader.getBaseFee(), transactionValidationParams);
-    if (!validationResult.isValid()) {
-      return validationResult;
-    }
-
-    final Address senderAddress = transaction.getSender();
-
-    final EvmAccount sender = publicWorldStateUpdater.getOrCreate(senderAddress);
-    validationResult =
-        transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
-
-    return validationResult;
-  }
-
   /*
   Responsible for updating the state maintained between transaction validation (i.e. receipts,
   cumulative gas, world state root hash.).
    */
   private void updateTransactionResultTracking(
       final Transaction transaction, final TransactionProcessingResult result) {
-    final boolean isGoQuorumPrivateTransaction =
-        transaction.isGoQuorumPrivateTransaction(
-            transactionProcessor.getTransactionValidator().getGoQuorumCompatibilityMode());
 
-    final long gasUsedByTransaction =
-        isGoQuorumPrivateTransaction ? 0 : transaction.getGasLimit() - result.getGasRemaining();
+    final long gasUsedByTransaction = transaction.getGasLimit() - result.getGasRemaining();
 
     final long cumulativeGasUsed =
         transactionSelectionResult.getCumulativeGasUsed() + gasUsedByTransaction;
@@ -497,16 +443,6 @@ public class BlockTransactionSelector {
 
   private boolean isIncorrectNonce(final ValidationResult<TransactionInvalidReason> result) {
     return result.getInvalidReason().equals(TransactionInvalidReason.NONCE_TOO_HIGH);
-  }
-
-  private TransactionProcessingResult publicResultForWhenWeHaveAPrivateTransaction(
-      final Transaction transaction) {
-    return TransactionProcessingResult.successful(
-        Collections.emptyList(),
-        0,
-        transaction.getGasLimit(),
-        Bytes.EMPTY,
-        ValidationResult.valid());
   }
 
   private boolean transactionTooLargeForBlock(final Transaction transaction) {

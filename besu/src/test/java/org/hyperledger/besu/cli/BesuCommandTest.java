@@ -4545,13 +4545,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--privacy-enabled", "--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
 
     assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("GoQuorum mode cannot be enabled with privacy.");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    verify(mockLogger, atLeast(1))
-        .warn(
-            DEPRECATION_WARNING_MSG,
-            "isQuorum mode in genesis file (GoQuorum-compatible privacy mode)",
-            "--privacy-enabled");
+        .contains("GoQuorum privacy is no longer supported in Besu");
   }
 
   @Rule public TemporaryFolder testFolder = new TemporaryFolder();
@@ -5140,52 +5134,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "--min-gas-price must be set to zero if isQuorum mode is enabled in the genesis file.");
-  }
-
-  @Test
-  public void quorumInteropEnabledSucceedsWithGasPriceSetToZero() throws IOException {
-    final Path genesisFile =
-        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
-    parseCommand(
-        "--genesis-file",
-        genesisFile.toString(),
-        "--min-gas-price",
-        "0",
-        "--privacy-public-key-file",
-        ENCLAVE_PUBLIC_KEY_PATH);
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void quorumInteropEnabledFailsIfEnclaveKeyFileDoesNotExist() throws IOException {
-    final Path genesisFile =
-        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
-    parseCommand(
-        "--genesis-file",
-        genesisFile.toString(),
-        "--min-gas-price",
-        "0",
-        "--privacy-public-key-file",
-        "ThisFileDoesNotExist");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("--privacy-public-key-file must be set if isQuorum is set in the genesis file.");
-  }
-
-  @Test
-  public void quorumInteropEnabledFailsIfEnclaveKeyFileIsNotSet() throws IOException {
-    final Path genesisFile =
-        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
-    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("--privacy-public-key-file must be set if isQuorum is set in the genesis file.");
-  }
-
-  @Test
-  public void quorumInteropEnabledFailsWithMainnetDefaultNetwork() throws IOException {
-    final Path genesisFile = createFakeGenesisFile(INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET);
-    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("isQuorum mode cannot be used on Mainnet.");
   }
 
   @Test

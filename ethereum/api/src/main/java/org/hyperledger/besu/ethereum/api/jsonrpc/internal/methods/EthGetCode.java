@@ -14,39 +14,25 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStateUtil.getPrivateWorldStateAtBlock;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.evm.account.Account;
 
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public class EthGetCode extends AbstractBlockParameterOrBlockHashMethod {
-  final Optional<PrivacyParameters> privacyParameters;
 
-  public EthGetCode(
-      final BlockchainQueries blockchainQueries,
-      final Optional<PrivacyParameters> privacyParameters) {
+  public EthGetCode(final BlockchainQueries blockchainQueries) {
     super(blockchainQueries);
-    this.privacyParameters = privacyParameters;
   }
 
-  public EthGetCode(
-      final Supplier<BlockchainQueries> blockchainQueries,
-      final Optional<PrivacyParameters> privacyParameters) {
+  public EthGetCode(final Supplier<BlockchainQueries> blockchainQueries) {
     super(blockchainQueries);
-    this.privacyParameters = privacyParameters;
   }
 
   @Override
@@ -63,21 +49,6 @@ public class EthGetCode extends AbstractBlockParameterOrBlockHashMethod {
   @Override
   protected String resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
     final Address address = request.getRequiredParameter(0, Address.class);
-    if (privacyParameters.isPresent()
-        && privacyParameters.get().getGoQuorumPrivacyParameters().isPresent()) {
-      // get from private state if we can
-      final Optional<BlockHeader> blockHeader =
-          blockchainQueries.get().getBlockHeaderByHash(blockHash);
-      if (blockHeader.isPresent()) {
-        final MutableWorldState privateState =
-            getPrivateWorldStateAtBlock(
-                privacyParameters.get().getGoQuorumPrivacyParameters(), blockHeader.get());
-        final Account privAccount = privateState.get(address);
-        if (privAccount != null) {
-          return privAccount.getCode().toHexString();
-        }
-      }
-    }
     return getBlockchainQueries().getCode(address, blockHash).map(Bytes::toString).orElse(null);
   }
 }

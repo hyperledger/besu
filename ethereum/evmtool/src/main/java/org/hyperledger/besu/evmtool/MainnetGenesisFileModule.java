@@ -115,7 +115,6 @@ class MainnetGenesisFileModule extends GenesisFileModule {
                 ProtocolSpecAdapters.create(0, Function.identity()),
                 PrivacyParameters.DEFAULT,
                 false,
-                options.isQuorum(),
                 EvmConfiguration.DEFAULT)
             .createProtocolSchedule();
   }
@@ -129,7 +128,6 @@ class MainnetGenesisFileModule extends GenesisFileModule {
                 ProtocolSpecAdapters.create(0, Function.identity()),
                 PrivacyParameters.DEFAULT,
                 false,
-                options.isQuorum(),
                 EvmConfiguration.DEFAULT)
             .createTimestampSchedule();
   }
