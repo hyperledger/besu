@@ -9,7 +9,7 @@
 - Update most dependencies to latest version [#5269](https://github.com/hyperledger/besu/pull/5269)
 - If jemalloc is used, print its version in the configuration overview [#4738](https://github.com/hyperledger/besu/pull/4738)
 - Add metrics for accounts and storage reads (Flat database vs Merkle Patricia Trie) [#5315](https://github.com/hyperledger/besu/pull/5315)
-- Renamed --bonsai-maximum-back-layers-to-load option to --bonsai-historical-block-limit for clarity [#5337](https://github.com/hyperledger/besu/pull/5337)
+- Renamed --bonsai-maximum-back-layers-to-load option to --bonsai-historical-block-limit for clarity. Removed --Xbonsai-use-snapshots option as it is no longer functional [#5337](https://github.com/hyperledger/besu/pull/5337)
 
 ### Bug Fixes
 
