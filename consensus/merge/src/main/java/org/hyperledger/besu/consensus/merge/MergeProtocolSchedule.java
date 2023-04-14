@@ -27,7 +27,10 @@ import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 /** The Merge protocol schedule. */
 public class MergeProtocolSchedule {
@@ -59,14 +62,23 @@ public class MergeProtocolSchedule {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled) {
 
+    Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> postMergeModifications =
+        new HashMap<>();
+    postMergeModifications.put(
+        0L,
+        (specBuilder) ->
+            MergeProtocolSchedule.applyMergeSpecificModifications(
+                specBuilder, config.getChainId()));
+    if (config.getShanghaiTime().isPresent()) {
+      postMergeModifications.put(
+          config.getShanghaiTime().getAsLong(),
+          MergeProtocolSchedule::unapplyMergeModificationsFromShanghaiOnwards);
+    }
+
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            ProtocolSpecAdapters.create(
-                0,
-                (specBuilder) ->
-                    MergeProtocolSchedule.applyMergeSpecificModifications(
-                        specBuilder, config.getChainId())),
+            new ProtocolSpecAdapters(postMergeModifications),
             privacyParameters,
             isRevertReasonEnabled,
             EvmConfiguration.DEFAULT)
@@ -85,7 +97,18 @@ public class MergeProtocolSchedule {
         .blockHeaderValidatorBuilder(MergeProtocolSchedule::getBlockHeaderValidator)
         .blockReward(Wei.ZERO)
         .difficultyCalculator((a, b, c) -> BigInteger.ZERO)
-        .skipZeroBlockRewards(true);
+        .skipZeroBlockRewards(true)
+        .isPoS(true)
+        .name("Paris");
+  }
+
+  private static ProtocolSpecBuilder unapplyMergeModificationsFromShanghaiOnwards(
+      final ProtocolSpecBuilder specBuilder) {
+    // TODO Withdrawals Get rid of MergeBlockProcessor
+    // inherits merge config from MainnetProtocolSpecs.parisDefinition
+    // This would be Function.identify() but MergeBlockProcessor can't be used in
+    // MainnetProtocolSpecs due to circular dependency
+    return specBuilder.blockProcessorBuilder(MergeBlockProcessor::new);
   }
 
   private static BlockHeaderValidator.Builder getBlockHeaderValidator(final FeeMarket feeMarket) {
