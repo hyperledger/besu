@@ -45,7 +45,6 @@ public class TimestampScheduleBuilderTest {
     config = new StubGenesisConfigOptions();
     config.chainId(chainId);
     boolean isRevertReasonEnabled = false;
-    boolean quorumCompatibilityMode = false;
     builder =
         new TimestampScheduleBuilder(
             config,
@@ -53,7 +52,6 @@ public class TimestampScheduleBuilderTest {
             ProtocolSpecAdapters.create(FIRST_TIMESTAMP_FORK, modifier),
             privacyParameters,
             isRevertReasonEnabled,
-            quorumCompatibilityMode,
             evmConfiguration);
   }
 

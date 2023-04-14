@@ -65,6 +65,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
@@ -83,6 +84,7 @@ public class RetestethContext {
   private static final PoWHasher NO_WORK_HASHER =
       (final long nonce, final long number, EpochCalculator epochCalc, final Bytes headerHash) ->
           new PoWSolution(nonce, Hash.ZERO, UInt256.ZERO, Hash.ZERO);
+  public static final int MAX_PEERS = 25;
 
   private final ReentrantLock contextLock = new ReentrantLock();
   private Address coinbase;
@@ -198,6 +200,8 @@ public class RetestethContext {
 
     blockReplay = new BlockReplay(protocolSchedule, blockchainQueries.getBlockchain());
 
+    final Bytes localNodeKey = Bytes.wrap(new byte[64]);
+
     // mining support
 
     final Supplier<ProtocolSpec> currentProtocolSpecSupplier =
@@ -208,8 +212,13 @@ public class RetestethContext {
             currentProtocolSpecSupplier,
             retestethClock,
             metricsSystem,
-            0,
-            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+            Collections.emptyList(),
+            localNodeKey,
+            MAX_PEERS,
+            MAX_PEERS,
+            MAX_PEERS,
+            false);
     final SyncState syncState = new SyncState(blockchain, ethPeers);
 
     ethScheduler = new EthScheduler(1, 1, 1, 1, metricsSystem);

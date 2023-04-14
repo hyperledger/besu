@@ -54,7 +54,7 @@ public class TestPermissioningPlugin implements BesuPlugin {
             if (sourceEnode.toString().contains(bobNode)
                 || destinationEnode.toString().contains(bobNode)) {
 
-              boolean isBobTalkingToAlice =
+              final boolean isBobTalkingToAlice =
                   sourceEnode.toString().contains(aliceNode)
                       || destinationEnode.toString().contains(aliceNode);
               if (isBobTalkingToAlice) {
