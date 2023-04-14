@@ -17,18 +17,20 @@ package org.hyperledger.besu.ethereum.stratum;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
-import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.DecodeException;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,50 +39,43 @@ import org.slf4j.LoggerFactory;
 public class GetWorkProtocol implements StratumProtocol {
   private static final Logger LOG = LoggerFactory.getLogger(GetWorkProtocol.class);
   private static final ObjectMapper mapper = new ObjectMapper();
-  private static final String CRLF = "\r\n";
 
   private final EpochCalculator epochCalculator;
   private volatile PoWSolverInputs currentInput;
   private Function<PoWSolution, Boolean> submitCallback;
   private String[] getWorkResult;
 
-  public GetWorkProtocol(final MiningCoordinator miningCoordinator) {
-    if (miningCoordinator instanceof PoWMiningCoordinator) {
-      this.epochCalculator = ((PoWMiningCoordinator) miningCoordinator).getEpochCalculator();
-    } else {
-      this.epochCalculator = new EpochCalculator.DefaultEpochCalculator();
-    }
-  }
-
-  private JsonNode readMessage(final String message) {
-    int bodyIndex = message.indexOf(CRLF + CRLF);
-    if (bodyIndex == -1) {
-      return null;
-    }
-    if (!message.startsWith("POST / HTTP")) {
-      return null;
-    }
-    String body = message.substring(bodyIndex);
-    try {
-      return mapper.readTree(body);
-    } catch (JsonProcessingException e) {
-      return null;
-    }
+  public GetWorkProtocol(final EpochCalculator epochCalculator) {
+    this.epochCalculator = epochCalculator;
   }
 
   @Override
-  public boolean maybeHandle(final String initialMessage, final StratumConnection conn) {
-    JsonNode message = readMessage(initialMessage);
+  public boolean maybeHandle(
+      final Buffer initialMessage, final StratumConnection conn, final Consumer<String> sender) {
+    JsonObject message;
+    try {
+      message = initialMessage.toJsonObject();
+    } catch (DecodeException e) {
+      return false;
+    }
     if (message == null) {
       return false;
     }
-    JsonNode methodNode = message.get("method");
-    if (methodNode != null) {
-      String method = methodNode.textValue();
+    String method = message.getString("method");
+    if (method != null) {
       if ("eth_getWork".equals(method) || "eth_submitWork".equals(method)) {
-        JsonNode idNode = message.get("id");
-        boolean canHandle = idNode != null && idNode.isInt();
-        handle(conn, initialMessage);
+        boolean canHandle;
+        try {
+          Integer idNode = message.getInteger("id");
+          canHandle = idNode != null;
+        } catch (ClassCastException e) {
+          canHandle = false;
+        }
+        try {
+          handle(conn, initialMessage, sender);
+        } catch (Exception e) {
+          LOG.warn("Error handling message", e);
+        }
         return canHandle;
       }
     }
@@ -91,66 +86,58 @@ public class GetWorkProtocol implements StratumProtocol {
   public void onClose(final StratumConnection conn) {}
 
   @Override
-  public void handle(final StratumConnection conn, final String message) {
-    JsonNode jsonrpcMessage = readMessage(message);
+  public void handle(
+      final StratumConnection conn, final Buffer message, final Consumer<String> sender) {
+    JsonObject jsonrpcMessage = message.toJsonObject();
     if (jsonrpcMessage == null) {
       LOG.warn("Invalid message {}", message);
       conn.close();
       return;
     }
-    JsonNode methodNode = jsonrpcMessage.get("method");
-    JsonNode idNode = jsonrpcMessage.get("id");
-    if (methodNode == null || idNode == null) {
-      LOG.warn("Invalid message {}", message);
-      conn.close();
-      return;
+    String method = jsonrpcMessage.getString("method");
+    Integer id;
+    try {
+      id = jsonrpcMessage.getInteger("id");
+    } catch (ClassCastException e) {
+      throw new IllegalArgumentException(e);
     }
-    String method = methodNode.textValue();
+    if (method == null || id == null) {
+      throw new IllegalArgumentException("Invalid JSON-RPC message");
+    }
     if ("eth_getWork".equals(method)) {
-      JsonRpcSuccessResponse response =
-          new JsonRpcSuccessResponse(idNode.intValue(), getWorkResult);
+      JsonRpcSuccessResponse response = new JsonRpcSuccessResponse(id, getWorkResult);
       try {
         String responseMessage = mapper.writeValueAsString(response);
-        conn.send(
-            "HTTP/1.1 200 OK\r\nConnection: Keep-Alive\r\nKeep-Alive: timeout=5, max=1000\r\nContent-Length: "
-                + responseMessage.length()
-                + CRLF
-                + CRLF
-                + responseMessage);
+        sender.accept(responseMessage);
       } catch (JsonProcessingException e) {
         LOG.warn("Error sending work", e);
         conn.close();
       }
     } else if ("eth_submitWork".equals(method)) {
-      JsonNode paramsNode = jsonrpcMessage.get("params");
+      JsonArray paramsNode;
+      try {
+        paramsNode = jsonrpcMessage.getJsonArray("params");
+      } catch (ClassCastException e) {
+        throw new IllegalArgumentException("Invalid eth_submitWork params");
+      }
       if (paramsNode == null || paramsNode.size() != 3) {
-        LOG.warn("Invalid eth_submitWork params {}", message);
-        conn.close();
-        return;
+        throw new IllegalArgumentException("Invalid eth_submitWork params");
       }
       final PoWSolution solution =
           new PoWSolution(
-              Bytes.fromHexString(paramsNode.get(0).textValue()).getLong(0),
-              Hash.fromHexString(paramsNode.get(2).textValue()),
+              Bytes.fromHexString(paramsNode.getString(0)).getLong(0),
+              Hash.fromHexString(paramsNode.getString(2)),
               null,
-              Bytes.fromHexString(paramsNode.get(1).textValue()));
+              Bytes.fromHexString(paramsNode.getString(1)));
       final boolean result = submitCallback.apply(solution);
       try {
-        String resultMessage =
-            mapper.writeValueAsString(new JsonRpcSuccessResponse(idNode.intValue(), result));
-        conn.send(
-            "HTTP/1.1 200 OK\r\nConnection: Keep-Alive\r\nKeep-Alive: timeout=5, max=1000\r\nContent-Length: "
-                + resultMessage.length()
-                + CRLF
-                + CRLF
-                + resultMessage);
+        String resultMessage = mapper.writeValueAsString(new JsonRpcSuccessResponse(id, result));
+        sender.accept(resultMessage);
       } catch (JsonProcessingException e) {
-        LOG.warn("Error accepting solution work", e);
-        conn.close();
+        throw new IllegalStateException("Error accepting solution work", e);
       }
     } else {
-      LOG.warn("Unknown method {}", method);
-      conn.close();
+      throw new UnsupportedOperationException("Unsupported method " + method);
     }
   }
 
