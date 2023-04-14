@@ -485,12 +485,24 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return this;
   }
 
+  /**
+   * sets the networkConfiguration in the builder
+   *
+   * @param networkingConfiguration the networking config
+   * @return the besu controller builder
+   */
   public BesuControllerBuilder networkConfiguration(
       final NetworkingConfiguration networkingConfiguration) {
     this.networkingConfiguration = networkingConfiguration;
     return this;
   }
 
+  /**
+   * sets the randomPeerPriority flag in the builder
+   *
+   * @param randomPeerPriority the random peer priority flag
+   * @return the besu controller builder
+   */
   public BesuControllerBuilder randomPeerPriority(final Boolean randomPeerPriority) {
     this.randomPeerPriority = randomPeerPriority;
     return this;
