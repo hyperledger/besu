@@ -211,6 +211,11 @@ public class BesuController implements java.io.Closeable {
     return miningCoordinator;
   }
 
+  /**
+   * get the collection of eth peers
+   *
+   * @return the EthPeers collection
+   */
   public EthPeers getEthPeers() {
     return ethPeers;
   }

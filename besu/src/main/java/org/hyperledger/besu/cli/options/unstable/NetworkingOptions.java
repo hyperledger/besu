@@ -27,7 +27,9 @@ import picocli.CommandLine;
 
 /** The Networking Cli options. */
 public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
+  /** The constant PEER_LOWER_BOUND_FLAG */
   public static final String PEER_LOWER_BOUND_FLAG = "--Xp2p-peer-lower-bound";
+
   private final String INITIATE_CONNECTIONS_FREQUENCY_FLAG =
       "--Xp2p-initiate-connections-frequency";
   private final String CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG =
