@@ -51,7 +51,6 @@ public class UnifiedProtocolScheduleTest {
     config = new StubGenesisConfigOptions();
     config.chainId(DEFAULT_CHAIN_ID);
     boolean isRevertReasonEnabled = false;
-    boolean quorumCompatibilityMode = false;
     builder =
         new ProtocolScheduleBuilder(
             config,
@@ -59,7 +58,6 @@ public class UnifiedProtocolScheduleTest {
             ProtocolSpecAdapters.create(FIRST_TIMESTAMP_FORK, modifier),
             privacyParameters,
             isRevertReasonEnabled,
-            quorumCompatibilityMode,
             evmConfiguration);
   }
 

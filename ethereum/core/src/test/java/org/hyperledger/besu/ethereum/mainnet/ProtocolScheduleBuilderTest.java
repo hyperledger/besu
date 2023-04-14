@@ -57,7 +57,6 @@ public class ProtocolScheduleBuilderTest {
             ProtocolSpecAdapters.create(0, Function.identity()),
             new PrivacyParameters(),
             false,
-            false,
             EvmConfiguration.DEFAULT);
   }
 
@@ -199,7 +198,6 @@ public class ProtocolScheduleBuilderTest {
             CHAIN_ID,
             ProtocolSpecAdapters.create(blockNumber, modifier),
             new PrivacyParameters(),
-            false,
             false,
             EvmConfiguration.DEFAULT);
 

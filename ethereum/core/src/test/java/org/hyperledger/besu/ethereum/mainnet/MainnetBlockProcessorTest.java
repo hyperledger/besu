@@ -30,8 +30,6 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 
-import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,7 +60,6 @@ public class MainnetBlockProcessorTest extends AbstractBlockProcessorTest {
             Wei.ZERO,
             BlockHeader::getCoinbase,
             true,
-            Optional.empty(),
             protocolSchedule);
 
     final MutableWorldState worldState = ReferenceTestWorldState.create(emptyMap());
@@ -89,7 +86,6 @@ public class MainnetBlockProcessorTest extends AbstractBlockProcessorTest {
             Wei.ZERO,
             BlockHeader::getCoinbase,
             false,
-            Optional.empty(),
             protocolSchedule);
 
     final MutableWorldState worldState = ReferenceTestWorldState.create(emptyMap());

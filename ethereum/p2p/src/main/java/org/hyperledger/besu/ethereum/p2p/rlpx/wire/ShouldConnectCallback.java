@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,12 +12,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.stratum;
+package org.hyperledger.besu.ethereum.p2p.rlpx.wire;
 
-/** Class of exception occurring while launching the Stratum server. */
-public class StratumServerException extends RuntimeException {
+import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 
-  public StratumServerException(final String message) {
-    super(message);
-  }
+@FunctionalInterface
+public interface ShouldConnectCallback {
+
+  boolean shouldConnect(final Peer peer, final boolean incoming);
 }

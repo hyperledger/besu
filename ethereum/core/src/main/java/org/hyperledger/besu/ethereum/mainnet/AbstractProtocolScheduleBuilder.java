@@ -39,7 +39,6 @@ public abstract class AbstractProtocolScheduleBuilder {
   protected final PrivacyParameters privacyParameters;
   protected final boolean isRevertReasonEnabled;
   protected final BadBlockManager badBlockManager = new BadBlockManager();
-  protected final boolean quorumCompatibilityMode;
   protected final EvmConfiguration evmConfiguration;
 
   protected AbstractProtocolScheduleBuilder(
@@ -47,13 +46,11 @@ public abstract class AbstractProtocolScheduleBuilder {
       final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final boolean quorumCompatibilityMode,
       final EvmConfiguration evmConfiguration) {
     this.config = config;
     this.protocolSpecAdapters = protocolSpecAdapters;
     this.privacyParameters = privacyParameters;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
-    this.quorumCompatibilityMode = quorumCompatibilityMode;
     this.evmConfiguration = evmConfiguration;
   }
 
@@ -66,7 +63,6 @@ public abstract class AbstractProtocolScheduleBuilder {
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
             isRevertReasonEnabled,
-            quorumCompatibilityMode,
             config.getEcip1017EraRounds(),
             evmConfiguration);
 

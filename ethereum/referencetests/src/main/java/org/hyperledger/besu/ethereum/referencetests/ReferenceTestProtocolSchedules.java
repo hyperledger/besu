@@ -95,7 +95,6 @@ public class ReferenceTestProtocolSchedules {
             ProtocolSpecAdapters.create(0, Function.identity()),
             PrivacyParameters.DEFAULT,
             false,
-            options.isQuorum(),
             EvmConfiguration.DEFAULT)
         .createProtocolSchedule();
   }

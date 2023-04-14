@@ -22,13 +22,20 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
+import org.slf4j.Logger;
 import oshi.PlatformEnum;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 
 /** The Configuration overview builder. */
 public class ConfigurationOverviewBuilder {
+  @SuppressWarnings("PrivateStaticFinalLoggers")
+  private final Logger logger;
+
   private String network;
   private BigInteger networkId;
   private boolean hasCustomGenesis;
@@ -40,6 +47,14 @@ public class ConfigurationOverviewBuilder {
   private Collection<String> engineApis;
   private String engineJwtFilePath;
   private boolean isHighSpec = false;
+  private Map<String, String> environment;
+
+  /**
+   * @param logger the logger
+   */
+  public ConfigurationOverviewBuilder(final Logger logger) {
+    this.logger = logger;
+  }
 
   /**
    * Sets network.
@@ -162,6 +177,17 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets the environment variables.
+   *
+   * @param environment the enveironment variables
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setEnvironment(final Map<String, String> environment) {
+    this.environment = environment;
+    return this;
+  }
+
+  /**
    * Build configuration overview.
    *
    * @return the string representing configuration overview
@@ -226,6 +252,8 @@ public class ConfigurationOverviewBuilder {
       if (glibcVersion != null) {
         lines.add("glibc: " + glibcVersion);
       }
+
+      detectJemalloc(lines);
     }
 
     final HardwareAbstractionLayer hardwareInfo = new SystemInfo().getHardware();
@@ -234,6 +262,31 @@ public class ConfigurationOverviewBuilder {
     lines.add("CPU cores: " + hardwareInfo.getProcessor().getLogicalProcessorCount());
 
     return FramedLogMessage.generate(lines);
+  }
+
+  private void detectJemalloc(final List<String> lines) {
+    Optional.ofNullable(Objects.isNull(environment) ? null : environment.get("BESU_USING_JEMALLOC"))
+        .ifPresentOrElse(
+            t -> {
+              try {
+                final String version = PlatformDetector.getJemalloc();
+                lines.add("jemalloc: " + version);
+              } catch (final Throwable throwable) {
+                logger.warn(
+                    "BESU_USING_JEMALLOC is present but we failed to load jemalloc library to get the version",
+                    throwable);
+              }
+            },
+            () -> {
+              // in case the user is using jemalloc without BESU_USING_JEMALLOC env var
+              try {
+                final String version = PlatformDetector.getJemalloc();
+                lines.add("jemalloc: " + version);
+              } catch (final Throwable throwable) {
+                logger.info(
+                    "jemalloc library not found, memory usage may be reduced by installing it");
+              }
+            });
   }
 
   private String normalizeSize(final long size) {

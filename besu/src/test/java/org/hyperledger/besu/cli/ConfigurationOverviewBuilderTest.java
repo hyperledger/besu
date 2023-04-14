@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -22,13 +23,14 @@ import java.util.Collection;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
 
 class ConfigurationOverviewBuilderTest {
   private ConfigurationOverviewBuilder builder;
 
   @BeforeEach
   void setUp() {
-    builder = new ConfigurationOverviewBuilder();
+    builder = new ConfigurationOverviewBuilder(mock(Logger.class));
   }
 
   @Test

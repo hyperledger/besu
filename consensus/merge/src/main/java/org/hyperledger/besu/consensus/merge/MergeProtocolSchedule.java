@@ -69,7 +69,6 @@ public class MergeProtocolSchedule {
                         specBuilder, config.getChainId())),
             privacyParameters,
             isRevertReasonEnabled,
-            config.isQuorum(),
             EvmConfiguration.DEFAULT)
         .createProtocolSchedule();
   }

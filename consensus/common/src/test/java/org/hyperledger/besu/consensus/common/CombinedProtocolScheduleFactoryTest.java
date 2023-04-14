@@ -156,7 +156,6 @@ public class CombinedProtocolScheduleFactoryTest {
             ProtocolSpecAdapters.create(0, Function.identity()),
             new PrivacyParameters(),
             false,
-            false,
             EvmConfiguration.DEFAULT);
 
     return new BftProtocolSchedule(

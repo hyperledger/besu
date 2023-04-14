@@ -43,9 +43,9 @@ public class DiscoveryConfiguration {
         bootnodes.stream().filter(e -> !e.isRunningDiscovery()).collect(Collectors.toList());
 
     if (invalidEnodes.size() > 0) {
-      String invalidBootnodes =
+      final String invalidBootnodes =
           invalidEnodes.stream().map(EnodeURL::toString).collect(Collectors.joining(","));
-      String errorMsg =
+      final String errorMsg =
           "Bootnodes must have discovery enabled. Invalid bootnodes: " + invalidBootnodes + ".";
       throw new IllegalArgumentException(errorMsg);
     }

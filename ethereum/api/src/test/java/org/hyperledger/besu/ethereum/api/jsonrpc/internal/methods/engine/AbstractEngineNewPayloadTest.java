@@ -476,7 +476,7 @@ public abstract class AbstractEngineNewPayloadTest {
     return method.response(
         new JsonRpcRequestContext(
             new JsonRpcRequest(
-                "2.0", RpcMethod.ENGINE_EXECUTE_PAYLOAD.getMethodName(), new Object[] {payload})));
+                "2.0", RpcMethod.ENGINE_NEW_PAYLOAD_V2.getMethodName(), new Object[] {payload})));
   }
 
   protected EnginePayloadParameter mockPayload(final BlockHeader header, final List<String> txs) {
