@@ -43,7 +43,8 @@ final class NettyPeerConnection extends AbstractPeerConnection {
       final PeerInfo peerInfo,
       final CapabilityMultiplexer multiplexer,
       final PeerConnectionEventDispatcher connectionEventDispatcher,
-      final LabelledMetric<Counter> outboundMessagesCounter) {
+      final LabelledMetric<Counter> outboundMessagesCounter,
+      final boolean inboundInitiated) {
     super(
         peer,
         peerInfo,
@@ -52,7 +53,8 @@ final class NettyPeerConnection extends AbstractPeerConnection {
         ctx.channel().id().asLongText(),
         multiplexer,
         connectionEventDispatcher,
-        outboundMessagesCounter);
+        outboundMessagesCounter,
+        inboundInitiated);
 
     this.ctx = ctx;
     ctx.channel()

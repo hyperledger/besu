@@ -42,8 +42,6 @@ public class BlockHeader extends SealableBlockHeader
 
   private final Supplier<Hash> hash;
 
-  private Optional<LogsBloomFilter> privateLogsBloom;
-
   private final Supplier<ParsedExtraData> parsedExtraData;
 
   public BlockHeader(
@@ -90,7 +88,6 @@ public class BlockHeader extends SealableBlockHeader
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
-    this.privateLogsBloom = privateLogsBloom;
   }
 
   public BlockHeader(
@@ -136,7 +133,6 @@ public class BlockHeader extends SealableBlockHeader
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
-    this.privateLogsBloom = Optional.empty();
   }
 
   /**
@@ -185,31 +181,6 @@ public class BlockHeader extends SealableBlockHeader
   @Override
   public Hash getBlockHash() {
     return hash.get();
-  }
-
-  public LogsBloomFilter getLogsBloom(final boolean addPrivateBloom) {
-    if (addPrivateBloom && privateLogsBloom.isPresent()) {
-      return LogsBloomFilter.builder()
-          .insertFilter(logsBloom)
-          .insertFilter(privateLogsBloom.get())
-          .build();
-    } else {
-      return logsBloom;
-    }
-  }
-
-  public void setPrivateLogsBloom(final LogsBloomFilter privateLogsBloom) {
-    this.privateLogsBloom = Optional.ofNullable(privateLogsBloom);
-  }
-
-  /**
-   * Returns the block's private logs bloom filter that might be available if we are in goQuorum
-   * mode
-   *
-   * @return the private logs bloom filter
-   */
-  public Optional<LogsBloomFilter> getPrivateLogsBloom() {
-    return privateLogsBloom;
   }
 
   /**

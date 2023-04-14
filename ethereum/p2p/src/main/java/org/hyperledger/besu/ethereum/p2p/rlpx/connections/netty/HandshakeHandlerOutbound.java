@@ -59,7 +59,8 @@ final class HandshakeHandlerOutbound extends AbstractHandshakeHandler {
         connectionEventDispatcher,
         metricsSystem,
         handshakerProvider,
-        framerProvider);
+        framerProvider,
+        false);
     handshaker.prepareInitiator(
         nodeKey, SignatureAlgorithmFactory.getInstance().createPublicKey(peer.getId()));
     this.first = handshaker.firstMessage();

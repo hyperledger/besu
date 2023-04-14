@@ -32,7 +32,6 @@ public enum RpcApis {
   TXPOOL,
   TRACE,
   PLUGINS,
-  GOQUORUM,
   CLIQUE,
   IBFT,
   ENGINE,

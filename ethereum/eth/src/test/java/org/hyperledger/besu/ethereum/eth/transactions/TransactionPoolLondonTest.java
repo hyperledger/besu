@@ -104,7 +104,6 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
                 ProtocolSpecAdapters.create(0, Function.identity()),
                 new PrivacyParameters(),
                 false,
-                false,
                 EvmConfiguration.DEFAULT)
             .createProtocolSchedule();
     final ExecutionContextTestFixture executionContextTestFixture =

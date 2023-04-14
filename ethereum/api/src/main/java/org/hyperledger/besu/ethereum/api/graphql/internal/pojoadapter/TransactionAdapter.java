@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
-import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -207,20 +206,6 @@ public class TransactionAdapter extends AdapterBase {
       }
     }
     return results;
-  }
-
-  public boolean getIsPrivate() {
-    return transactionWithMetadata
-        .getTransaction()
-        .isGoQuorumPrivateTransaction(GoQuorumOptions.getGoQuorumCompatibilityMode());
-  }
-
-  public Optional<Bytes> getPrivateInputData() {
-    final Transaction transaction = transactionWithMetadata.getTransaction();
-    if (transaction.isGoQuorumPrivateTransaction(GoQuorumOptions.getGoQuorumCompatibilityMode())) {
-      return Optional.ofNullable(transaction.getPayload());
-    }
-    return Optional.of(Bytes.EMPTY);
   }
 
   public List<AccessListEntryAdapter> getAccessList() {
