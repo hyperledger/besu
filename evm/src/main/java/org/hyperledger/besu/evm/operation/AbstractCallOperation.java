@@ -183,7 +183,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       frame.expandMemory(outputDataOffset(frame), outputDataLength(frame));
       frame.incrementRemainingGas(gasAvailableForChildCall(frame) + cost);
       frame.popStackItems(getStackItemsConsumed());
-      frame.pushStackItem(Bytes.EMPTY);
+      frame.pushStackItem(FAILURE_STACK_ITEM);
       return new OperationResult(cost, null);
     }
 

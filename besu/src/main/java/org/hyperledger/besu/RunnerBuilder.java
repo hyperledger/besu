@@ -24,7 +24,6 @@ import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIV
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
-import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -67,6 +66,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.syncing.
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -742,10 +742,10 @@ public class RunnerBuilder {
     Optional<StratumServer> stratumServer = Optional.empty();
 
     if (miningParameters.isStratumMiningEnabled()) {
-      var powMiningCoordinator = miningCoordinator;
-      if (miningCoordinator instanceof TransitionCoordinator) {
-        LOG.debug("fetching powMiningCoordinator from TransitionCoordinator");
-        powMiningCoordinator = ((TransitionCoordinator) miningCoordinator).getPreMergeObject();
+      if (!(miningCoordinator instanceof PoWMiningCoordinator powMiningCoordinator)) {
+        throw new IllegalArgumentException(
+            "Stratum server requires an PoWMiningCoordinator not "
+                + ((miningCoordinator == null) ? "null" : miningCoordinator.getClass().getName()));
       }
       stratumServer =
           Optional.of(

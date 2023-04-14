@@ -15,47 +15,46 @@
 package org.hyperledger.besu.ethereum.stratum;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-
-import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import io.vertx.core.buffer.Buffer;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class Stratum1EthProxyProtocolTest {
 
   private Stratum1EthProxyProtocol protocol;
   private StratumConnection conn;
-  private List<String> receivedMessages;
+  private List<Object> receivedMessages;
 
-  @Before
+  @BeforeEach
   public void setUp() {
-    MiningCoordinator coordinator = mock(PoWMiningCoordinator.class);
-    protocol = new Stratum1EthProxyProtocol(coordinator);
+    protocol = new Stratum1EthProxyProtocol(null);
     receivedMessages = new ArrayList<>();
-    conn = new StratumConnection(new StratumProtocol[0], null, receivedMessages::add);
+    conn = new StratumConnection(new StratumProtocol[0], null);
   }
 
   @Test
   public void testCanHandleEmptyString() {
-    assertThat(protocol.maybeHandle("", conn)).isFalse();
+    assertThat(protocol.maybeHandle(Buffer.buffer(), conn, receivedMessages::add)).isFalse();
   }
 
   @Test
   public void testCanHandleMalformedJSON() {
-    assertThat(protocol.maybeHandle("{[\"foo\",", conn)).isFalse();
+    assertThat(protocol.maybeHandle(Buffer.buffer("{[\"foo\","), conn, receivedMessages::add))
+        .isFalse();
   }
 
   @Test
   public void testCanHandleWrongMethod() {
     assertThat(
             protocol.maybeHandle(
-                "{\"id\":0,\"method\":\"eth_byebye\",\"params\":[\"0xdeadbeefdeadbeef.worker\"]}",
-                conn))
+                Buffer.buffer(
+                    "{\"id\":0,\"method\":\"eth_byebye\",\"params\":[\"0xdeadbeefdeadbeef.worker\"]}"),
+                conn,
+                receivedMessages::add))
         .isFalse();
   }
 
@@ -63,8 +62,10 @@ public class Stratum1EthProxyProtocolTest {
   public void testCanHandleWellFormedRequest() {
     assertThat(
             protocol.maybeHandle(
-                "{\"id\":0,\"method\":\"eth_submitLogin\",\"params\":[\"0xdeadbeefdeadbeef.worker\"]}",
-                conn))
+                Buffer.buffer(
+                    "{\"id\":0,\"method\":\"eth_submitLogin\",\"params\":[\"0xdeadbeefdeadbeef.worker\"]}"),
+                conn,
+                receivedMessages::add))
         .isTrue();
   }
 }
