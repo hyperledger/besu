@@ -38,6 +38,8 @@ public class LineaProtocolSpecs {
     final CalldataLimits calldataLimits =
         new CalldataLimits(txCalldataMaxSize, blockCalldataMaxSize);
 
+    final FeeMarket zeroBaseFeeMarket = FeeMarket.zeroBaseFee(0L);
+
     return MainnetProtocolSpecs.parisDefinition(
             chainId,
             configContractSizeLimit,
@@ -46,13 +48,14 @@ public class LineaProtocolSpecs {
             genesisConfigOptions,
             quorumCompatibilityMode,
             evmConfiguration)
+        .feeMarket(zeroBaseFeeMarket)
         .calldataLimits(calldataLimits)
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
                 new LineaTransactionValidator(
                     gasCalculator,
                     gasLimitCalculator,
-                    FeeMarket.zeroBaseFee(0),
+                    zeroBaseFeeMarket,
                     true,
                     chainId,
                     Set.of(
