@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.stratum;
 
-import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -26,16 +25,17 @@ import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
@@ -67,7 +67,7 @@ public class Stratum1Protocol implements StratumProtocol {
   private final List<StratumConnection> activeConnections = new ArrayList<>();
   private final EpochCalculator epochCalculator;
 
-  public Stratum1Protocol(final String extranonce, final MiningCoordinator miningCoordinator) {
+  public Stratum1Protocol(final String extranonce, final PoWMiningCoordinator miningCoordinator) {
     this(
         extranonce,
         miningCoordinator,
@@ -80,28 +80,19 @@ public class Stratum1Protocol implements StratumProtocol {
 
   Stratum1Protocol(
       final String extranonce,
-      final MiningCoordinator miningCoordinator,
+      final PoWMiningCoordinator miningCoordinator,
       final Supplier<String> jobIdSupplier,
       final Supplier<String> subscriptionIdCreator) {
-    MiningCoordinator maybePowMiner = miningCoordinator;
-    if (maybePowMiner instanceof TransitionCoordinator) {
-      maybePowMiner = ((TransitionCoordinator) maybePowMiner).getPreMergeObject();
-    }
-
-    if (!(maybePowMiner instanceof PoWMiningCoordinator)) {
-      throw new IllegalArgumentException(
-          "Stratum1 requires an PoWMiningCoordinator not "
-              + ((maybePowMiner == null) ? "null" : maybePowMiner.getClass().getName()));
-    }
     this.extranonce = extranonce;
-    this.miningCoordinator = maybePowMiner;
+    this.miningCoordinator = miningCoordinator;
     this.jobIdSupplier = jobIdSupplier;
     this.subscriptionIdCreator = subscriptionIdCreator;
-    this.epochCalculator = ((PoWMiningCoordinator) maybePowMiner).getEpochCalculator();
+    this.epochCalculator = miningCoordinator.getEpochCalculator();
   }
 
   @Override
-  public boolean maybeHandle(final String initialMessage, final StratumConnection conn) {
+  public boolean maybeHandle(
+      final Buffer initialMessage, final StratumConnection conn, final Consumer<String> sender) {
     final JsonRpcRequest requestBody;
     try {
       requestBody = new JsonObject(initialMessage).mapTo(JsonRpcRequest.class);
@@ -126,7 +117,7 @@ public class Stratum1Protocol implements StratumProtocol {
                     },
                     extranonce
                   }));
-      conn.send(notify + "\n");
+      sender.accept(notify);
     } catch (JsonProcessingException e) {
       LOG.debug(e.getMessage(), e);
       conn.close();
@@ -134,14 +125,14 @@ public class Stratum1Protocol implements StratumProtocol {
     return true;
   }
 
-  private void registerConnection(final StratumConnection conn) {
+  private void registerConnection(final StratumConnection conn, final Consumer<String> sender) {
     activeConnections.add(conn);
     if (currentInput != null) {
-      sendNewWork(conn);
+      sendNewWork(sender);
     }
   }
 
-  private void sendNewWork(final StratumConnection conn) {
+  private void sendNewWork(final Consumer<String> sender) {
     byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber(), epochCalculator);
     Object[] params =
         new Object[] {
@@ -153,9 +144,9 @@ public class Stratum1Protocol implements StratumProtocol {
         };
     JsonRpcRequest req = new JsonRpcRequest("2.0", "mining.notify", params);
     try {
-      conn.send(mapper.writeValueAsString(req) + "\n");
+      sender.accept(mapper.writeValueAsString(req));
     } catch (JsonProcessingException e) {
-      LOG.debug(e.getMessage(), e);
+      throw new IllegalStateException(e);
     }
   }
 
@@ -165,24 +156,19 @@ public class Stratum1Protocol implements StratumProtocol {
   }
 
   @Override
-  public void handle(final StratumConnection conn, final String message) {
-    try {
-      JsonRpcRequest req = new JsonObject(message).mapTo(JsonRpcRequest.class);
-      if ("mining.authorize".equals(req.getMethod())) {
-        handleMiningAuthorize(conn, req);
-      } else if ("mining.submit".equals(req.getMethod())) {
-        handleMiningSubmit(conn, req);
-      } else if (RpcMethod.ETH_SUBMIT_HASHRATE.getMethodName().equals(req.getMethod())) {
-        handleHashrateSubmit(mapper, miningCoordinator, conn, req);
-      }
-    } catch (IllegalArgumentException | IOException e) {
-      LOG.debug(e.getMessage(), e);
-      conn.close();
+  public void handle(
+      final StratumConnection conn, final Buffer message, final Consumer<String> sender) {
+    JsonRpcRequest req = new JsonObject(message).mapTo(JsonRpcRequest.class);
+    if ("mining.authorize".equals(req.getMethod())) {
+      handleMiningAuthorize(conn, req, sender);
+    } else if ("mining.submit".equals(req.getMethod())) {
+      handleMiningSubmit(req, sender);
+    } else if (RpcMethod.ETH_SUBMIT_HASHRATE.getMethodName().equals(req.getMethod())) {
+      handleHashrateSubmit(mapper, miningCoordinator, conn, req, sender);
     }
   }
 
-  private void handleMiningSubmit(final StratumConnection conn, final JsonRpcRequest message)
-      throws IOException {
+  private void handleMiningSubmit(final JsonRpcRequest message, final Consumer<String> sender) {
     LOG.debug("Miner submitted solution {}", message);
     boolean result = false;
     final PoWSolution solution =
@@ -195,19 +181,28 @@ public class Stratum1Protocol implements StratumProtocol {
       result = submitCallback.apply(solution);
     }
 
-    String response =
-        mapper.writeValueAsString(new JsonRpcSuccessResponse(message.getId(), result));
-    conn.send(response + "\n");
+    String response;
+    try {
+      response = mapper.writeValueAsString(new JsonRpcSuccessResponse(message.getId(), result));
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException(e);
+    }
+    sender.accept(response);
   }
 
-  private void handleMiningAuthorize(final StratumConnection conn, final JsonRpcRequest message)
-      throws IOException {
+  private void handleMiningAuthorize(
+      final StratumConnection conn, final JsonRpcRequest message, final Consumer<String> sender) {
     // discard message contents as we don't care for username/password.
     // send confirmation
-    String confirm = mapper.writeValueAsString(new JsonRpcSuccessResponse(message.getId(), true));
-    conn.send(confirm + "\n");
+    String confirm;
+    try {
+      confirm = mapper.writeValueAsString(new JsonRpcSuccessResponse(message.getId(), true));
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException(e);
+    }
+    sender.accept(confirm);
     // ready for work.
-    registerConnection(conn);
+    registerConnection(conn, sender);
   }
 
   @Override
@@ -215,7 +210,7 @@ public class Stratum1Protocol implements StratumProtocol {
     this.currentInput = input;
     LOG.debug("Sending new work to miners: {}", input);
     for (StratumConnection conn : activeConnections) {
-      sendNewWork(conn);
+      sendNewWork(conn.notificationSender());
     }
   }
 
