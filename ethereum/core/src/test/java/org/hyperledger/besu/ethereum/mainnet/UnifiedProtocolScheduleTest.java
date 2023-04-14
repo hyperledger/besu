@@ -81,7 +81,7 @@ public class UnifiedProtocolScheduleTest {
   }
 
   @Test
-  public void conflictingTimestampSchedules() {
+  public void given_conflictingTimestampSchedules_lastMilestoneOverwritesPrevious() {
     final ProtocolSpec spec1 = mock(ProtocolSpec.class);
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
     final ProtocolSpec spec3 = mock(ProtocolSpec.class);
