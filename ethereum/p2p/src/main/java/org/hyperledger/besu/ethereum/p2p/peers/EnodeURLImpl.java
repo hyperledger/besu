@@ -81,11 +81,12 @@ public class EnodeURLImpl implements EnodeURL {
       return fromURI(URI.create(value), enodeDnsConfiguration);
     } catch (final IllegalArgumentException e) {
       String message = "";
-      if (enodeDnsConfiguration.dnsEnabled() && !enodeDnsConfiguration.updateEnabled()){
-        message = "Invalid IP address or DNS query resolved an invalid IP. --Xdns-enabled is true but --Xdns-update-enabled flag is false.";
-      }
-      else {
-        message = String.format(
+      if (enodeDnsConfiguration.dnsEnabled() && !enodeDnsConfiguration.updateEnabled()) {
+        message =
+            "Invalid IP address or DNS query resolved an invalid IP. --Xdns-enabled is true but --Xdns-update-enabled flag is false.";
+      } else {
+        message =
+            String.format(
                 "Invalid enode URL syntax '%s'. Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.",
                 value);
         if (e.getMessage() != null) {
