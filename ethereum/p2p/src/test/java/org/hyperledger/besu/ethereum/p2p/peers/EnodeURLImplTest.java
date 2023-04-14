@@ -449,7 +449,7 @@ public class EnodeURLImplTest {
     final EnodeURL enodeURL =
         EnodeURLImpl.fromString(
             enodeURLString,
-            ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(false).build());
+            ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(true).build());
     ;
 
     assertThat(enodeURL).isEqualTo(expectedEnodeURL);
