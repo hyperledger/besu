@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatMethod;
@@ -68,6 +69,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -183,7 +185,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     this.peerPermissions = peerPermissions;
 
     // set the requirement here that the number of peers be greater than the lower bound
-    final int peerLowerBound = config.getRlpx().getPeerLowerBound();
+    final int peerLowerBound = rlpxAgent.getPeerLowerBound();
     LOG.debug("setting peerLowerBound {}", peerLowerBound);
     peerDiscoveryAgent.addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= peerLowerBound);
     subscribeDisconnect(reputationManager);
@@ -303,6 +305,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
   }
 
   @Override
+  public RlpxAgent getRlpxAgent() {
+    return rlpxAgent;
+  }
+
+  @Override
   public boolean addMaintainedConnectionPeer(final Peer peer) {
     if (localNode.isReady()
         && localNode.getPeer() != null
@@ -356,11 +363,15 @@ public class DefaultP2PNetwork implements P2PNetwork {
     if (!localNode.isReady()) {
       return;
     }
-    final EnodeURL localEnodeURL = localNode.getPeer().getEnodeURL();
+    final List<Bytes> doNotConnectTo =
+        rlpxAgent
+            .streamActiveConnections()
+            .map(c -> c.getPeer().getId())
+            .collect(Collectors.toList());
+    doNotConnectTo.add(localNode.getPeer().getEnodeURL().getNodeId());
     maintainedPeers
         .streamPeers()
-        .filter(peer -> !peer.getEnodeURL().getNodeId().equals(localEnodeURL.getNodeId()))
-        .filter(p -> !rlpxAgent.getPeerConnection(p).isPresent())
+        .filter(p -> !doNotConnectTo.contains(p.getId()))
         .forEach(rlpxAgent::connect);
   }
 
@@ -377,6 +388,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
   @Override
   public Collection<PeerConnection> getPeers() {
     return rlpxAgent.streamConnections().collect(Collectors.toList());
+  }
+
+  @Override
+  public int getPeerCount() {
+    return getRlpxAgent().getConnectionCount();
   }
 
   @Override
@@ -398,6 +414,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
   public void subscribeConnect(final ConnectCallback callback) {
     rlpxAgent.subscribeConnect(callback);
   }
+
+  @Override
+  public void subscribeConnectRequest(final ShouldConnectCallback callback) {
+    rlpxAgent.subscribeConnectRequest(callback);
+  }
+  ;
 
   @Override
   public void subscribeDisconnect(final DisconnectCallback callback) {
@@ -474,8 +496,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private PeerPermissions peerPermissions = PeerPermissions.noop();
 
     private NatService natService = new NatService(Optional.empty());
-    private boolean randomPeerPriority;
-
     private MetricsSystem metricsSystem;
     private StorageProvider storageProvider;
     private Optional<TLSConfiguration> p2pTLSConfiguration = Optional.empty();
@@ -483,6 +503,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
     private List<Long> blockNumberForks;
     private List<Long> timestampForks;
     private boolean legacyForkIdEnabled = false;
+    private Supplier<Stream<PeerConnection>> allConnectionsSupplier;
+    private Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
+    private int peersLowerBound;
 
     public P2PNetwork build() {
       validate();
@@ -526,6 +549,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
       checkState(peerDiscoveryAgent != null || vertx != null, "Vertx must be set.");
       checkState(blockNumberForks != null, "BlockNumberForks must be set.");
       checkState(timestampForks != null, "TimestampForks must be set.");
+      checkState(allConnectionsSupplier != null, "Supplier must be set.");
+      checkState(allActiveConnectionsSupplier != null, "Supplier must be set.");
     }
 
     private PeerDiscoveryAgent createDiscoveryAgent() {
@@ -546,6 +571,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     private RlpxAgent createRlpxAgent(
         final LocalNode localNode, final PeerPrivileges peerPrivileges) {
+
       return RlpxAgent.builder()
           .nodeKey(nodeKey)
           .config(config.getRlpx())
@@ -553,8 +579,10 @@ public class DefaultP2PNetwork implements P2PNetwork {
           .peerPrivileges(peerPrivileges)
           .localNode(localNode)
           .metricsSystem(metricsSystem)
-          .randomPeerPriority(randomPeerPriority)
           .p2pTLSConfiguration(p2pTLSConfiguration)
+          .allConnectionsSupplier(allConnectionsSupplier)
+          .allActiveConnectionsSupplier(allActiveConnectionsSupplier)
+          .peersLowerBound(peersLowerBound)
           .build();
     }
 
@@ -567,11 +595,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     public Builder rlpxAgent(final RlpxAgent rlpxAgent) {
       checkNotNull(rlpxAgent);
       this.rlpxAgent = rlpxAgent;
-      return this;
-    }
-
-    public Builder randomPeerPriority(final boolean randomPeerPriority) {
-      this.randomPeerPriority = randomPeerPriority;
       return this;
     }
 
@@ -660,6 +683,23 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     public Builder legacyForkIdEnabled(final boolean legacyForkIdEnabled) {
       this.legacyForkIdEnabled = legacyForkIdEnabled;
+      return this;
+    }
+
+    public Builder allConnectionsSupplier(
+        final Supplier<Stream<PeerConnection>> allConnectionsSupplier) {
+      this.allConnectionsSupplier = allConnectionsSupplier;
+      return this;
+    }
+
+    public Builder allActiveConnectionsSupplier(
+        final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier) {
+      this.allActiveConnectionsSupplier = allActiveConnectionsSupplier;
+      return this;
+    }
+
+    public Builder peersLowerBound(final int peersLowerBound) {
+      this.peersLowerBound = peersLowerBound;
       return this;
     }
   }

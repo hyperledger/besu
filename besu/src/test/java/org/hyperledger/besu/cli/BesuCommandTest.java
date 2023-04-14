@@ -249,8 +249,6 @@ public class BesuCommandTest extends CommandTestAbstract {
                 MAINNET_DISCOVERY_URL));
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("127.0.0.1"));
     verify(mockRunnerBuilder).p2pListenPort(eq(30303));
-    verify(mockRunnerBuilder).maxPeers(eq(maxPeers));
-    verify(mockRunnerBuilder).fractionRemoteConnectionsAllowed(eq(0.6f));
     verify(mockRunnerBuilder).jsonRpcConfiguration(eq(DEFAULT_JSON_RPC_CONFIGURATION));
     verify(mockRunnerBuilder).graphQLConfiguration(eq(DEFAULT_GRAPH_QL_CONFIGURATION));
     verify(mockRunnerBuilder).webSocketConfiguration(eq(DEFAULT_WEB_SOCKET_CONFIGURATION));
@@ -271,6 +269,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).storageProvider(storageProviderArgumentCaptor.capture());
     verify(mockControllerBuilder).gasLimitCalculator(eq(GasLimitCalculator.constant()));
     verify(mockControllerBuilder).maxPeers(eq(maxPeers));
+    verify(mockControllerBuilder).lowerBoundPeers(eq(maxPeers));
+    verify(mockControllerBuilder).maxRemotelyInitiatedPeers(eq((int) Math.floor(0.6 * maxPeers)));
     verify(mockControllerBuilder).build();
 
     assertThat(storageProviderArgumentCaptor.getValue()).isNotNull();
@@ -401,7 +401,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("1.2.3.4"));
     verify(mockRunnerBuilder).p2pListenPort(eq(1234));
-    verify(mockRunnerBuilder).maxPeers(eq(42));
     verify(mockRunnerBuilder).jsonRpcConfiguration(eq(jsonRpcConfiguration));
     verify(mockRunnerBuilder).graphQLConfiguration(eq(graphQLConfiguration));
     verify(mockRunnerBuilder).webSocketConfiguration(eq(webSocketConfiguration));
@@ -876,9 +875,6 @@ public class BesuCommandTest extends CommandTestAbstract {
                 MAINNET_DISCOVERY_URL));
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("127.0.0.1"));
     verify(mockRunnerBuilder).p2pListenPort(eq(30303));
-    verify(mockRunnerBuilder).maxPeers(eq(25));
-    verify(mockRunnerBuilder).limitRemoteWireConnectionsEnabled(eq(true));
-    verify(mockRunnerBuilder).fractionRemoteConnectionsAllowed(eq(0.6f));
     verify(mockRunnerBuilder).jsonRpcConfiguration(eq(jsonRpcConfiguration));
     verify(mockRunnerBuilder).graphQLConfiguration(eq(graphQLConfiguration));
     verify(mockRunnerBuilder).webSocketConfiguration(eq(webSocketConfiguration));
@@ -1581,8 +1577,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     final int maxPeers = 123;
     parseCommand("--max-peers", String.valueOf(maxPeers));
 
-    verify(mockRunnerBuilder).maxPeers(intArgumentCaptor.capture());
-    verify(mockRunnerBuilder).build();
+    verify(mockControllerBuilder).maxPeers(intArgumentCaptor.capture());
+    verify(mockControllerBuilder).build();
 
     assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
 
@@ -1613,10 +1609,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
-    verify(mockRunnerBuilder).maxPeers(intArgumentCaptor.capture());
+    verify(mockControllerBuilder).maxPeers(intArgumentCaptor.capture());
     assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
 
-    verify(mockRunnerBuilder).minPeers(intArgumentCaptor.capture());
+    verify(mockControllerBuilder).lowerBoundPeers(intArgumentCaptor.capture());
     assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
 
     verify(mockRunnerBuilder).build();
@@ -1648,10 +1644,10 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--Xp2p-peer-lower-bound",
         String.valueOf(minPeers));
 
-    verify(mockRunnerBuilder).maxPeers(intArgumentCaptor.capture());
+    verify(mockControllerBuilder).maxPeers(intArgumentCaptor.capture());
     assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
 
-    verify(mockRunnerBuilder).minPeers(intArgumentCaptor.capture());
+    verify(mockControllerBuilder).lowerBoundPeers(intArgumentCaptor.capture());
     assertThat(intArgumentCaptor.getValue()).isEqualTo(minPeers);
 
     verify(mockRunnerBuilder).build();
@@ -1665,16 +1661,16 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final int remoteConnectionsPercentage = 12;
     parseCommand(
-        "--remote-connections-limit-enabled",
+        "--remote-connections-limit-enabled=true",
         "--remote-connections-max-percentage",
         String.valueOf(remoteConnectionsPercentage));
 
-    verify(mockRunnerBuilder).fractionRemoteConnectionsAllowed(floatCaptor.capture());
-    verify(mockRunnerBuilder).build();
+    verify(mockControllerBuilder).maxRemotelyInitiatedPeers(intArgumentCaptor.capture());
+    verify(mockControllerBuilder).build();
 
-    assertThat(floatCaptor.getValue())
+    assertThat(intArgumentCaptor.getValue())
         .isEqualTo(
-            Fraction.fromPercentage(Percentage.fromInt(remoteConnectionsPercentage)).getValue());
+            (int) Math.floor(25 * Fraction.fromPercentage(remoteConnectionsPercentage).getValue()));
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1704,22 +1700,6 @@ public class BesuCommandTest extends CommandTestAbstract {
         .contains(
             "Invalid value for option '--remote-connections-max-percentage'",
             "should be a number between 0 and 100 inclusive");
-  }
-
-  @Test
-  public void enableRandomConnectionPrioritization() {
-    parseCommand("--random-peer-priority-enabled");
-    verify(mockRunnerBuilder).randomPeerPriority(eq(true));
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void randomConnectionPrioritizationDisabledByDefault() {
-    parseCommand();
-    verify(mockRunnerBuilder).randomPeerPriority(eq(false));
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -1915,7 +1895,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void launcherDefaultOptionValue() {
-    TestBesuCommand besuCommand = parseCommand();
+    final TestBesuCommand besuCommand = parseCommand();
 
     assertThat(besuCommand.getLauncherOptions().isLauncherMode()).isFalse();
     assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isFalse();
@@ -3379,7 +3359,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void rpcWsApiPropertyMustBeUsed() {
-    TestBesuCommand command = parseCommand("--rpc-ws-enabled", "--rpc-ws-api", "ETH, NET");
+    final TestBesuCommand command = parseCommand("--rpc-ws-enabled", "--rpc-ws-api", "ETH, NET");
 
     assertThat(command).isNotNull();
     verify(mockRunnerBuilder).webSocketConfiguration(wsRpcConfigArgumentCaptor.capture());
@@ -5554,6 +5534,20 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "PoS checkpoint sync can't be used with TTD = 0 and checkpoint totalDifficulty = 0");
+  }
+
+  @Test
+  public void checkP2pPeerLowerBound_isSet() {
+    final int lowerBound = 13;
+    parseCommand("--Xp2p-peer-lower-bound", String.valueOf(lowerBound));
+
+    verify(mockControllerBuilder).lowerBoundPeers(intArgumentCaptor.capture());
+    verify(mockControllerBuilder).build();
+
+    assertThat(intArgumentCaptor.getValue()).isEqualTo(lowerBound);
+
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test

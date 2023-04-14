@@ -412,7 +412,7 @@ public class BesuNodeConfigurationBuilder {
               .withCrlPath(toPath(crl));
           break;
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new RuntimeException(e);
     }
     this.tlsConfiguration = Optional.of(builder.build());
