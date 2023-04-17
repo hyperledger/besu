@@ -83,7 +83,7 @@ public class EnodeURLImpl implements EnodeURL {
       String message = "";
       if (enodeDnsConfiguration.dnsEnabled() && !enodeDnsConfiguration.updateEnabled()) {
         message =
-            "Invalid IP address or DNS query resolved an invalid IP. --Xdns-enabled is true but --Xdns-update-enabled flag is false.";
+            "Invalid IP address (or DNS query resolved an invalid IP). --Xdns-enabled is true but --Xdns-update-enabled flag is false.";
       } else {
         message =
             String.format(
