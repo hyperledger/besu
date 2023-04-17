@@ -308,7 +308,8 @@ public class RequestManagerTest {
         Collections.emptyList(),
         EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
         TestClock.fixed(),
-        Collections.emptyList());
+        Collections.emptyList(),
+        Bytes.random(64));
   }
 
   @Test

@@ -20,6 +20,7 @@ import org.hyperledger.besu.consensus.common.bft.events.BftEvents;
 import org.hyperledger.besu.consensus.common.bft.network.PeerConnectionTracker;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
+import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
@@ -105,6 +106,11 @@ public class BftProtocolManager implements ProtocolManager {
   @Override
   public void handleNewConnection(final PeerConnection peerConnection) {
     peers.add(peerConnection);
+  }
+
+  @Override
+  public boolean shouldConnect(final Peer peer, final boolean incoming) {
+    return false; // for now the EthProtocolManager takes care of this
   }
 
   @Override

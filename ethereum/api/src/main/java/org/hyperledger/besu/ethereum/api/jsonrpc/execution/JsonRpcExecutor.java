@@ -91,11 +91,11 @@ public class JsonRpcExecutor {
 
       return rpcProcessor.process(
           id, method, span, new JsonRpcRequestContext(requestBody, optionalUser, alive));
-    } catch (IllegalArgumentException e) {
+    } catch (final IllegalArgumentException e) {
       try {
         final Integer id = jsonRpcRequest.getInteger("id", null);
         return new JsonRpcErrorResponse(id, INVALID_REQUEST);
-      } catch (ClassCastException idNotIntegerException) {
+      } catch (final ClassCastException idNotIntegerException) {
         return new JsonRpcErrorResponse(null, INVALID_REQUEST);
       }
     }

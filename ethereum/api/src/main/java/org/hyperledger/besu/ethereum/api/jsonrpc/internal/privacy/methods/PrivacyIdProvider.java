@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyUserUtil.privacyUserId;
 
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.util.InvalidConfigurationException;
 
 import java.util.Optional;
 
@@ -29,9 +28,7 @@ public interface PrivacyIdProvider {
   String getPrivacyUserId(Optional<User> user);
 
   static PrivacyIdProvider build(final PrivacyParameters privacyParameters) {
-    if (privacyParameters.getGoQuorumPrivacyParameters().isPresent()) {
-      return goQuorumPrivacyUserIdProvider(privacyParameters);
-    } else if (privacyParameters.isMultiTenancyEnabled()) {
+    if (privacyParameters.isMultiTenancyEnabled()) {
       return multiTenancyPrivacyUserIdProvider();
     }
     return defaultPrivacyUserIdProvider(privacyParameters);
@@ -47,15 +44,5 @@ public interface PrivacyIdProvider {
   private static PrivacyIdProvider defaultPrivacyUserIdProvider(
       final PrivacyParameters privacyParameters) {
     return user -> privacyParameters.getPrivacyUserId();
-  }
-
-  private static PrivacyIdProvider goQuorumPrivacyUserIdProvider(
-      final PrivacyParameters privacyParameters) {
-    return user ->
-        privacyParameters
-            .getGoQuorumPrivacyParameters()
-            .orElseThrow(
-                () -> new InvalidConfigurationException("GoQuorumPrivacyParameters not set"))
-            .enclaveKey();
   }
 }
