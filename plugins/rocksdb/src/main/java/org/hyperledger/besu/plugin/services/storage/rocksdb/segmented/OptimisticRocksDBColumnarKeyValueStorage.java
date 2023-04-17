@@ -94,7 +94,6 @@ public class OptimisticRocksDBColumnarKeyValueStorage extends RocksDBColumnarKey
    * @return the RocksDb columnar key value snapshot
    * @throws StorageException the storage exception
    */
-  @Override
   public RocksDBColumnarKeyValueSnapshot takeSnapshot(final RocksDbSegmentIdentifier segment)
       throws StorageException {
     throwIfClosed();
