@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors..
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -263,15 +263,6 @@ public abstract class RocksDBColumnarKeyValueStorage
       throw new StorageException(e);
     }
   }
-
-  /**
-   * Take snapshot RocksDb columnar key value snapshot.
-   *
-   * @param segment the segment
-   * @return the RocksDb columnar key value snapshot
-   */
-  public abstract RocksDBColumnarKeyValueSnapshot takeSnapshot(
-      final RocksDbSegmentIdentifier segment);
 
   @Override
   public Stream<Pair<byte[], byte[]>> stream(final RocksDbSegmentIdentifier segmentHandle) {
