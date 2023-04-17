@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -28,9 +28,10 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.OptimisticRocksDBColumnarKeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.PessimisticRocksDBColumnarKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.TransactionDBRocksDBColumnarKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented.RocksDBKeyValueStorage;
+import org.hyperledger.besu.services.kvstore.NonSnappableSegmentedKeyValueStorageAdapter;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
 
 import java.io.IOException;
@@ -160,64 +161,63 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
 
     // It's probably a good idea for the creation logic to be entirely dependent on the database
     // version. Introducing intermediate booleans that represent database properties and dispatching
-    // creation logic based on them is error prone.
+    // creation logic based on them is error-prone.
     switch (databaseVersion) {
-      case 0:
-        {
-          segmentedStorage = null;
-          if (unsegmentedStorage == null) {
-            unsegmentedStorage =
-                new RocksDBKeyValueStorage(
-                    rocksDBConfiguration, metricsSystem, rocksDBMetricsFactory);
-          }
-          return unsegmentedStorage;
+      case 0 -> {
+        segmentedStorage = null;
+        if (unsegmentedStorage == null) {
+          unsegmentedStorage =
+              new RocksDBKeyValueStorage(
+                  rocksDBConfiguration, metricsSystem, rocksDBMetricsFactory);
         }
-      case 1:
-      case 2:
-        {
-          unsegmentedStorage = null;
-          if (segmentedStorage == null) {
-            final List<SegmentIdentifier> segmentsForVersion =
-                segments.stream()
-                    .filter(segmentId -> segmentId.includeInDatabaseVersion(databaseVersion))
-                    .collect(Collectors.toList());
-            if (isForestStorageFormat) {
-              LOG.info("FOREST mode detected, using pessimistic DB.");
-              segmentedStorage =
-                  new PessimisticRocksDBColumnarKeyValueStorage(
-                      rocksDBConfiguration,
-                      segmentsForVersion,
-                      ignorableSegments,
-                      metricsSystem,
-                      rocksDBMetricsFactory);
-            } else {
-              LOG.info("Using Optimistic DB.");
-              segmentedStorage =
-                  new OptimisticRocksDBColumnarKeyValueStorage(
-                      rocksDBConfiguration,
-                      segmentsForVersion,
-                      ignorableSegments,
-                      metricsSystem,
-                      rocksDBMetricsFactory);
-            }
-          }
-          final RocksDbSegmentIdentifier rocksSegment =
-              segmentedStorage.getSegmentIdentifierByName(segment);
-
+        return unsegmentedStorage;
+      }
+      case 1, 2 -> {
+        unsegmentedStorage = null;
+        if (segmentedStorage == null) {
+          final List<SegmentIdentifier> segmentsForVersion =
+              segments.stream()
+                  .filter(segmentId -> segmentId.includeInDatabaseVersion(databaseVersion))
+                  .collect(Collectors.toList());
           if (isForestStorageFormat) {
-            return new SegmentedKeyValueStorageAdapter<>(segment, segmentedStorage);
+            LOG.debug("FOREST mode detected, using TransactionDB.");
+            segmentedStorage =
+                new TransactionDBRocksDBColumnarKeyValueStorage(
+                    rocksDBConfiguration,
+                    segmentsForVersion,
+                    ignorableSegments,
+                    metricsSystem,
+                    rocksDBMetricsFactory);
           } else {
-            return new SegmentedKeyValueStorageAdapter<>(
-                segment, segmentedStorage, () -> segmentedStorage.takeSnapshot(rocksSegment));
+            LOG.debug("Using OptimisticTransactionDB.");
+            segmentedStorage =
+                new OptimisticRocksDBColumnarKeyValueStorage(
+                    rocksDBConfiguration,
+                    segmentsForVersion,
+                    ignorableSegments,
+                    metricsSystem,
+                    rocksDBMetricsFactory);
           }
         }
-      default:
-        {
-          throw new IllegalStateException(
-              String.format(
-                  "Developer error: A supported database version (%d) was detected but there is no associated creation logic.",
-                  databaseVersion));
+
+        final RocksDbSegmentIdentifier rocksSegment =
+            segmentedStorage.getSegmentIdentifierByName(segment);
+
+        if (isForestStorageFormat) {
+          return new NonSnappableSegmentedKeyValueStorageAdapter<>(segment, segmentedStorage);
+        } else {
+          return new SegmentedKeyValueStorageAdapter<>(
+              segment,
+              segmentedStorage,
+              () ->
+                  ((OptimisticRocksDBColumnarKeyValueStorage) segmentedStorage)
+                      .takeSnapshot(rocksSegment));
         }
+      }
+      default -> throw new IllegalStateException(
+          String.format(
+              "Developer error: A supported database version (%d) was detected but there is no associated creation logic.",
+              databaseVersion));
     }
   }
 
