@@ -30,7 +30,7 @@ import org.rocksdb.TransactionDB;
 import org.rocksdb.WriteOptions;
 
 /** Pessimistic RocksDB Columnar key value storage */
-public class PessimisticRocksDBColumnarKeyValueStorage extends RocksDBColumnarKeyValueStorage {
+public class TransactionDBRocksDBColumnarKeyValueStorage extends RocksDBColumnarKeyValueStorage {
 
   private final TransactionDB db;
 
@@ -44,7 +44,7 @@ public class PessimisticRocksDBColumnarKeyValueStorage extends RocksDBColumnarKe
    * @param rocksDBMetricsFactory the rocksdb metrics factory
    * @throws StorageException the storage exception
    */
-  public PessimisticRocksDBColumnarKeyValueStorage(
+  public TransactionDBRocksDBColumnarKeyValueStorage(
       final RocksDBConfiguration configuration,
       final List<SegmentIdentifier> segments,
       final List<SegmentIdentifier> ignorableSegments,
@@ -87,17 +87,5 @@ public class PessimisticRocksDBColumnarKeyValueStorage extends RocksDBColumnarKe
     writeOptions.setIgnoreMissingColumnFamilies(true);
     return new SegmentedKeyValueStorageTransactionTransitionValidatorDecorator<>(
         new RocksDbTransaction(db.beginTransaction(writeOptions), writeOptions));
-  }
-
-  /**
-   * Not supported for Pessimistic.
-   *
-   * @param segment the segment
-   * @return the RocksDb columnar key value snapshot
-   * @throws StorageException the storage exception
-   */
-  @Override
-  public RocksDBColumnarKeyValueSnapshot takeSnapshot(final RocksDbSegmentIdentifier segment) {
-    throw new UnsupportedOperationException("Not supported");
   }
 }
