@@ -182,14 +182,13 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   /**
    * Put milestone.
    *
-   * @param blockOrTimestamp the block or timestamp
+   * @param isTimestampMilestone true if the milestone is a timestamp milestone
+   * @param milestone the block or timestamp
    * @param protocolSpec the protocol spec
    */
   @Override
   public void putMilestone(
-      final boolean isTimestampMilestone,
-      final long blockOrTimestamp,
-      final ProtocolSpec protocolSpec) {
+      final boolean isTimestampMilestone, final long milestone, final ProtocolSpec protocolSpec) {
     throw new UnsupportedOperationException(
         "Should not use TransitionProtocolSchedule wrapper class to create milestones");
   }
