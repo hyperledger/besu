@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Clock;
@@ -100,7 +99,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
   }
 
   @Override
-  public void manageBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {
+  public void manageBlockAdded(final BlockHeader blockHeader) {
     blockHeader.getBaseFee().ifPresent(this::updateBaseFee);
   }
 
