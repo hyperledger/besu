@@ -45,11 +45,13 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -93,8 +95,14 @@ public abstract class AbstractMessageTaskTest<T, R> {
                 () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
                 TestClock.fixed(),
                 metricsSystem,
+                EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+                Collections.emptyList(),
+                Bytes.random(64),
                 MAX_PEERS,
-                EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE));
+                MAX_PEERS,
+                MAX_PEERS,
+                false));
+
     final EthMessages ethMessages = new EthMessages();
     final EthScheduler ethScheduler =
         new DeterministicEthScheduler(

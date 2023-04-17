@@ -32,9 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
-import com.google.common.base.MoreObjects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +51,10 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   private final AtomicBoolean disconnected = new AtomicBoolean(false);
   protected final PeerConnectionEventDispatcher connectionEventDispatcher;
   private final LabelledMetric<Counter> outboundMessagesCounter;
+  private final long initiatedAt;
+  private final boolean inboundInitiated;
+  private boolean statusSent;
+  private boolean statusReceived;
 
   protected AbstractPeerConnection(
       final Peer peer,
@@ -62,7 +64,8 @@ public abstract class AbstractPeerConnection implements PeerConnection {
       final String connectionId,
       final CapabilityMultiplexer multiplexer,
       final PeerConnectionEventDispatcher connectionEventDispatcher,
-      final LabelledMetric<Counter> outboundMessagesCounter) {
+      final LabelledMetric<Counter> outboundMessagesCounter,
+      final boolean inboundInitiated) {
     this.peer = peer;
     this.peerInfo = peerInfo;
     this.localAddress = localAddress;
@@ -76,6 +79,10 @@ public abstract class AbstractPeerConnection implements PeerConnection {
     }
     this.connectionEventDispatcher = connectionEventDispatcher;
     this.outboundMessagesCounter = outboundMessagesCounter;
+    this.inboundInitiated = inboundInitiated;
+    this.initiatedAt = System.currentTimeMillis();
+
+    LOG.debug("New PeerConnection ({}) established with peer {}", this, peer.getId());
   }
 
   @Override
@@ -147,7 +154,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
     // Always ensure the context gets closed immediately even if we previously sent a disconnect
     // message and are waiting to close.
     closeConnectionImmediately();
-    LOG.debug("Terminating connection {}, reason {}", System.identityHashCode(this), reason);
+    LOG.debug("Terminating connection {}, reason {}", this, reason);
   }
 
   protected abstract void closeConnectionImmediately();
@@ -180,6 +187,16 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   }
 
   @Override
+  public long getInitiatedAt() {
+    return initiatedAt;
+  }
+
+  @Override
+  public boolean inboundInitiated() {
+    return inboundInitiated;
+  }
+
+  @Override
   public boolean equals(final Object o) {
     if (o == this) {
       return true;
@@ -198,13 +215,30 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   }
 
   @Override
+  public void setStatusSent() {
+    this.statusSent = true;
+  }
+
+  @Override
+  public void setStatusReceived() {
+    this.statusReceived = true;
+  }
+
+  @Override
+  public boolean getStatusExchanged() {
+    return statusReceived && statusSent;
+  }
+
+  @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("nodeId", peerInfo.getNodeId())
-        .add("clientId", peerInfo.getClientId())
-        .add(
-            "caps",
-            agreedCapabilities.stream().map(Capability::toString).collect(Collectors.joining(", ")))
-        .toString();
+    return "[Connection with hashCode "
+        + hashCode()
+        + " with peer "
+        + this.peer.getId()
+        + " inboundInitiated "
+        + inboundInitiated
+        + " initAt "
+        + initiatedAt
+        + "]";
   }
 }

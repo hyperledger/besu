@@ -148,7 +148,6 @@ abstract class AbstractBlockCreatorTest {
                         protocolSpecAdapters,
                         PrivacyParameters.DEFAULT,
                         false,
-                        genesisConfigOptions.isQuorum(),
                         EvmConfiguration.DEFAULT)
                     .createProtocolSchedule())
             .build();

@@ -53,7 +53,6 @@ public class MutableProtocolScheduleTest {
     config = new StubGenesisConfigOptions();
     config.chainId(DEFAULT_CHAIN_ID);
     boolean isRevertReasonEnabled = false;
-    boolean quorumCompatibilityMode = false;
     builder =
         new ProtocolScheduleBuilder(
             config,
@@ -61,7 +60,6 @@ public class MutableProtocolScheduleTest {
             ProtocolSpecAdapters.create(FIRST_TIMESTAMP_FORK, modifier),
             new PrivacyParameters(),
             isRevertReasonEnabled,
-            quorumCompatibilityMode,
             EvmConfiguration.DEFAULT);
   }
 

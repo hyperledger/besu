@@ -50,7 +50,6 @@ public enum RpcMethod {
   DEBUG_GET_RAW_BLOCK("debug_getRawBlock"),
   ENGINE_GET_PAYLOAD_V1("engine_getPayloadV1"),
   ENGINE_GET_PAYLOAD_V2("engine_getPayloadV2"),
-  ENGINE_EXECUTE_PAYLOAD("engine_executePayloadV1"),
   ENGINE_NEW_PAYLOAD_V1("engine_newPayloadV1"),
   ENGINE_NEW_PAYLOAD_V2("engine_newPayloadV2"),
   ENGINE_FORKCHOICE_UPDATED_V1("engine_forkchoiceUpdatedV1"),
@@ -60,8 +59,6 @@ public enum RpcMethod {
   ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1("engine_getPayloadBodiesByRangeV1"),
   ENGINE_EXCHANGE_CAPABILITIES("engine_exchangeCapabilities"),
 
-  GOQUORUM_ETH_GET_QUORUM_PAYLOAD("eth_getQuorumPayload"),
-  GOQUORUM_STORE_RAW("goquorum_storeRaw"),
   PRIV_CALL("priv_call"),
   PRIV_GET_PRIVATE_TRANSACTION("priv_getPrivateTransaction"),
   PRIV_GET_TRANSACTION_COUNT("priv_getTransactionCount"),

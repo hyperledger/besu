@@ -20,10 +20,12 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
-import java.io.IOException;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import io.vertx.core.buffer.Buffer;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
@@ -40,9 +42,10 @@ public interface StratumProtocol {
    *
    * @param initialMessage the initial message sent over the TCP connection.
    * @param conn the connection itself
+   * @param sender the callback to use to send messages back to the client
    * @return true if the protocol can handle this connection
    */
-  boolean maybeHandle(String initialMessage, StratumConnection conn);
+  boolean maybeHandle(Buffer initialMessage, StratumConnection conn, Consumer<String> sender);
 
   /**
    * Callback when a stratum connection is closed.
@@ -56,8 +59,9 @@ public interface StratumProtocol {
    *
    * @param conn the Stratum connection
    * @param message the message to handle
+   * @param sender the callback to use to send messages back to the client
    */
-  void handle(StratumConnection conn, String message);
+  void handle(StratumConnection conn, Buffer message, Consumer<String> sender);
 
   /**
    * Sets the current proof-of-work job.
@@ -72,16 +76,21 @@ public interface StratumProtocol {
       final JsonMapper mapper,
       final MiningCoordinator miningCoordinator,
       final StratumConnection conn,
-      final JsonRpcRequest message)
-      throws IOException {
+      final JsonRpcRequest message,
+      final Consumer<String> sender) {
     final String hashRate = message.getRequiredParameter(0, String.class);
     final String id = message.getRequiredParameter(1, String.class);
-    String response =
-        mapper.writeValueAsString(
-            new JsonRpcSuccessResponse(
-                message.getId(),
-                miningCoordinator.submitHashRate(
-                    id, Bytes.fromHexString(hashRate).toBigInteger().longValue())));
-    conn.send(response + "\n");
+    String response;
+    try {
+      response =
+          mapper.writeValueAsString(
+              new JsonRpcSuccessResponse(
+                  message.getId(),
+                  miningCoordinator.submitHashRate(
+                      id, Bytes.fromHexString(hashRate).toBigInteger().longValue())));
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException(e);
+    }
+    sender.accept(response);
   }
 }
