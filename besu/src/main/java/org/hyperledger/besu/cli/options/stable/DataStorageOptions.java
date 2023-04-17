@@ -48,7 +48,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
       names = {BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD, "--bonsai-maximum-back-layers-to-load"},
       paramLabel = "<LONG>",
       description =
-          "Limit of back layers that can be loaded with BONSAI (default: ${DEFAULT-VALUE}).",
+          "Limit of historical layers that can be loaded with BONSAI (default: ${DEFAULT-VALUE}).",
       arity = "1")
   private final Long bonsaiMaxLayersToLoad = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
 
