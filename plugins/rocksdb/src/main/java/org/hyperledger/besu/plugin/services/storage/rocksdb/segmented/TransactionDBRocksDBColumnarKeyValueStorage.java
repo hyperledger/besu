@@ -29,13 +29,13 @@ import org.rocksdb.RocksDBException;
 import org.rocksdb.TransactionDB;
 import org.rocksdb.WriteOptions;
 
-/** Pessimistic RocksDB Columnar key value storage */
+/** TransactionDB RocksDB Columnar key value storage */
 public class TransactionDBRocksDBColumnarKeyValueStorage extends RocksDBColumnarKeyValueStorage {
 
   private final TransactionDB db;
 
   /**
-   * The constructor of PessimisticRocksDBColumnarKeyValueStorage
+   * The constructor of TransactionDBRocksDBColumnarKeyValueStorage
    *
    * @param configuration the RocksDB configuration
    * @param segments the segments
