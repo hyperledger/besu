@@ -112,7 +112,6 @@ public class LayeredPendingTransactionsLondonTest
                 ProtocolSpecAdapters.create(0, Function.identity()),
                 new PrivacyParameters(),
                 false,
-                false,
                 EvmConfiguration.DEFAULT)
             .createProtocolSchedule();
     final ExecutionContextTestFixture executionContextTestFixture =

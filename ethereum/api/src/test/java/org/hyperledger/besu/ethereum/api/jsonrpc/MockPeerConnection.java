@@ -17,11 +17,15 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
+import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 
 import java.net.InetSocketAddress;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class MockPeerConnection {
   PeerInfo peerInfo;
@@ -32,8 +36,11 @@ public class MockPeerConnection {
       final PeerInfo peerInfo,
       final InetSocketAddress localAddress,
       final InetSocketAddress remoteAddress) {
-    PeerConnection peerConnection = mock(PeerConnection.class);
+    final PeerConnection peerConnection = mock(PeerConnection.class);
     when(peerConnection.getPeerInfo()).thenReturn(peerInfo);
+    if (peerInfo != null) {
+      when(peerConnection.getPeer()).thenReturn(createPeer(peerInfo.getNodeId()));
+    }
     when(peerConnection.getLocalAddress()).thenReturn(localAddress);
     when(peerConnection.getRemoteAddress()).thenReturn(remoteAddress);
     when(peerConnection.getRemoteEnode())
@@ -46,5 +53,13 @@ public class MockPeerConnection {
                 .build());
 
     return peerConnection;
+  }
+
+  public static EnodeURLImpl.Builder enodeBuilder() {
+    return EnodeURLImpl.builder().ipAddress("127.0.0.1").useDefaultPorts().nodeId(Peer.randomId());
+  }
+
+  public static Peer createPeer(final Bytes nodeId) {
+    return DefaultPeer.fromEnodeURL(enodeBuilder().nodeId(nodeId).build());
   }
 }

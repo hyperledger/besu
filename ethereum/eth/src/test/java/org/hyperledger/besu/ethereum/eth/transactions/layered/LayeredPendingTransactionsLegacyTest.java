@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INVALID_TRANSACTION_FORMAT;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURE_REQUIRED;
 import static org.mockito.Mockito.when;
@@ -37,9 +36,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
-import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
@@ -211,26 +208,6 @@ public class LayeredPendingTransactionsLegacyTest
     givenTransactionIsValid(transaction);
 
     addAndAssertLocalTransactionInvalid(transaction, INVALID_TRANSACTION_FORMAT);
-  }
-
-  @Test
-  public void shouldRejectGoQuorumTransactionWithNonZeroValue() {
-    when(transactionValidator.getGoQuorumCompatibilityMode()).thenReturn(true);
-
-    final Transaction transaction37 =
-        Transaction.builder().v(BigInteger.valueOf(37)).value(Wei.ONE).gasPrice(Wei.ZERO).build();
-    final Transaction transaction38 =
-        Transaction.builder().v(BigInteger.valueOf(38)).value(Wei.ONE).gasPrice(Wei.ZERO).build();
-
-    final ValidationResult<TransactionInvalidReason> result37 =
-        transactionPool.addLocalTransaction(transaction37);
-    final ValidationResult<TransactionInvalidReason> result38 =
-        transactionPool.addLocalTransaction(transaction38);
-
-    assertThat(result37.getInvalidReason())
-        .isEqualTo(TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED);
-    assertThat(result38.getInvalidReason())
-        .isEqualTo(TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED);
   }
 
   @Test

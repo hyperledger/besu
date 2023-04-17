@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -89,7 +90,6 @@ import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.GoQuorumOptions;
 import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
@@ -106,7 +106,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.EnclaveFactory;
-import org.hyperledger.besu.enclave.GoQuorumEnclave;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
@@ -122,7 +121,6 @@ import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -141,15 +139,10 @@ import org.hyperledger.besu.ethereum.permissioning.PermissioningConfigurationBui
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
-import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
@@ -213,7 +206,6 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -235,7 +227,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -329,6 +320,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private GenesisConfigOptions genesisConfigOptions;
 
   private RocksDBPlugin rocksDBPlugin;
+
+  private int maxPeers;
+  private int maxRemoteInitiatedPeers;
+  private int peersLowerBound;
 
   // CLI options defined by user at runtime.
   // Options parsing is done with CLI library Picocli https://picocli.info/
@@ -444,8 +439,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         description = "Maximum P2P connections that can be established (default: ${DEFAULT-VALUE})")
     private final Integer maxPeers = DEFAULT_MAX_PEERS;
 
-    private int minPeers;
-
     @Option(
         names = {"--remote-connections-limit-enabled"},
         description =
@@ -474,7 +467,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         names = {"--random-peer-priority-enabled"},
         description =
             "Allow for incoming connections to be prioritized randomly. This will prevent (typically small, stable) networks from forming impenetrable peer cliques. (default: ${DEFAULT-VALUE})")
-    private final Boolean randomPeerPriority = false;
+    private final Boolean randomPeerPriority = Boolean.FALSE;
 
     @Option(
         names = {"--banned-node-ids", "--banned-node-id"},
@@ -1500,7 +1493,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       validateOptions();
       configure();
       configureNativeLibs();
-      initController();
+      besuController = initController();
 
       besuPluginContext.beforeExternalServices();
 
@@ -1697,8 +1690,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         p2pTLSConfiguration,
         p2PDiscoveryOptionGroup.peerDiscoveryEnabled,
         ethNetworkConfig,
-        p2PDiscoveryOptionGroup.maxPeers,
-        p2PDiscoveryOptionGroup.minPeers,
         p2PDiscoveryOptionGroup.p2pHost,
         p2PDiscoveryOptionGroup.p2pInterface,
         p2PDiscoveryOptionGroup.p2pPort,
@@ -1985,17 +1976,29 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void ensureValidPeerBoundParams() {
-    final int min = unstableNetworkingOptions.toDomainObject().getRlpx().getPeerLowerBound();
-    final int max = p2PDiscoveryOptionGroup.maxPeers;
-    if (min > max) {
-      logger.warn("`--Xp2p-peer-lower-bound` " + min + " must not exceed --max-peers " + max);
-      // modify the --X lower-bound value if it's not valid, we don't want unstable defaults
-      // breaking things
-      logger.warn("setting --Xp2p-peer-lower-bound=" + max);
-      unstableNetworkingOptions.toDomainObject().getRlpx().setPeerLowerBound(max);
-      p2PDiscoveryOptionGroup.minPeers = max;
+    maxPeers = p2PDiscoveryOptionGroup.maxPeers;
+    peersLowerBound = unstableNetworkingOptions.toDomainObject().getPeerLowerBound();
+    if (peersLowerBound > maxPeers) {
+      logger.warn(
+          "`--Xp2p-peer-lower-bound` "
+              + peersLowerBound
+              + " must not exceed --max-peers "
+              + maxPeers);
+      logger.warn("setting --Xp2p-peer-lower-bound=" + maxPeers);
+      peersLowerBound = maxPeers;
+    }
+    final Boolean isLimitRemoteWireConnectionsEnabled =
+        p2PDiscoveryOptionGroup.isLimitRemoteWireConnectionsEnabled;
+    if (isLimitRemoteWireConnectionsEnabled) {
+      final float fraction =
+          Fraction.fromPercentage(p2PDiscoveryOptionGroup.maxRemoteConnectionsPercentage)
+              .getValue();
+      checkState(
+          fraction >= 0.0 && fraction <= 1.0,
+          "Fraction of remote connections allowed must be between 0.0 and 1.0 (inclusive).");
+      maxRemoteInitiatedPeers = (int) Math.floor(fraction * maxPeers);
     } else {
-      p2PDiscoveryOptionGroup.minPeers = min;
+      maxRemoteInitiatedPeers = maxPeers;
     }
   }
 
@@ -2007,7 +2010,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 || rpcEndpointServiceImpl.hasNamespace(apiName);
 
     if (!jsonRPCHttpOptionGroup.rpcHttpApis.stream().allMatch(configuredApis)) {
-      List<String> invalidHttpApis = new ArrayList<String>(jsonRPCHttpOptionGroup.rpcHttpApis);
+      final List<String> invalidHttpApis =
+          new ArrayList<String>(jsonRPCHttpOptionGroup.rpcHttpApis);
       invalidHttpApis.removeAll(VALID_APIS);
       throw new ParameterException(
           this.commandLine,
@@ -2016,12 +2020,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (!jsonRPCWebsocketOptionGroup.rpcWsApis.stream().allMatch(configuredApis)) {
-      List<String> invalidWsApis = new ArrayList<String>(jsonRPCWebsocketOptionGroup.rpcWsApis);
+      final List<String> invalidWsApis =
+          new ArrayList<String>(jsonRPCWebsocketOptionGroup.rpcWsApis);
       invalidWsApis.removeAll(VALID_APIS);
       throw new ParameterException(
           this.commandLine,
-          "Invalid value for option '--rpc-ws-api': invalid entries found "
-              + invalidWsApis.toString());
+          "Invalid value for option '--rpc-ws-api': invalid entries found " + invalidWsApis);
     }
 
     final boolean validHttpApiMethods =
@@ -2212,44 +2216,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         vertx.isNativeTransportEnabled() && enabled, actualPath, rpcIpcApis);
   }
 
-  private GoQuorumPrivacyParameters configureGoQuorumPrivacy(
-      final KeyValueStorageProvider storageProvider) {
-    return new GoQuorumPrivacyParameters(
-        createGoQuorumEnclave(),
-        readEnclaveKey(),
-        storageProvider.createGoQuorumPrivateStorage(),
-        createPrivateWorldStateArchive(storageProvider));
-  }
-
-  private GoQuorumEnclave createGoQuorumEnclave() {
-    final EnclaveFactory enclaveFactory = new EnclaveFactory(Vertx.vertx());
-    if (privacyOptionGroup.privacyKeyStoreFile != null) {
-      return enclaveFactory.createGoQuorumEnclave(
-          privacyOptionGroup.privacyUrl,
-          privacyOptionGroup.privacyKeyStoreFile,
-          privacyOptionGroup.privacyKeyStorePasswordFile,
-          privacyOptionGroup.privacyTlsKnownEnclaveFile);
-    } else {
-      return enclaveFactory.createGoQuorumEnclave(privacyOptionGroup.privacyUrl);
-    }
-  }
-
-  private String readEnclaveKey() {
-    final String key;
-    try {
-      key = Files.asCharSource(privacyOptionGroup.privacyPublicKeyFile, UTF_8).read();
-    } catch (final Exception e) {
-      throw new ParameterException(
-          this.commandLine,
-          "--privacy-public-key-file must be set if isQuorum is set in the genesis file.",
-          e);
-    }
-    // throws exception if invalid base 64
-    Base64.getDecoder().decode(key);
-
-    return key;
-  }
-
   private void ensureAllNodesAreInAllowlist(
       final Collection<EnodeURL> enodeAddresses,
       final LocalPermissioningConfiguration permissioningConfiguration) {
@@ -2261,8 +2227,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private void initController() {
-    besuController = buildController();
+  private BesuController initController() {
+    return buildController();
   }
 
   /**
@@ -2290,6 +2256,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             updateNetworkConfig(network), genesisConfigOverrides, getDefaultSyncModeIfNotSet())
         .synchronizerConfiguration(buildSyncConfig())
         .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
+        .networkConfiguration(unstableNetworkingOptions.toDomainObject())
         .dataDirectory(dataDir())
         .miningParameters(
             new MiningParameters.Builder()
@@ -2315,7 +2282,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .nodeKey(new NodeKey(securityModule()))
         .metricsSystem(metricsSystem.get())
         .messagePermissioningProviders(permissioningService.getMessagePermissioningProviders())
-        .privacyParameters(privacyParameters(storageProvider))
+        .privacyParameters(privacyParameters())
         .pkiBlockCreationConfiguration(maybePkiBlockCreationConfiguration())
         .clock(Clock.systemUTC())
         .isRevertReasonEnabled(isRevertReasonEnabled)
@@ -2333,6 +2300,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .evmConfiguration(unstableEvmOptions.toDomainObject())
         .dataStorageConfiguration(dataStorageOptions.toDomainObject())
         .maxPeers(p2PDiscoveryOptionGroup.maxPeers)
+        .lowerBoundPeers(peersLowerBound)
+        .maxRemotelyInitiatedPeers(maxRemoteInitiatedPeers)
+        .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
         .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject());
   }
 
@@ -2808,7 +2778,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         || permissionsOptionGroup.permissionsAccountsContractEnabled;
   }
 
-  private PrivacyParameters privacyParameters(final KeyValueStorageProvider storageProvider) {
+  private PrivacyParameters privacyParameters() {
 
     CommandLineUtils.checkOptionDependencies(
         logger,
@@ -2837,7 +2807,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
       if (isGoQuorumCompatibilityMode) {
         throw new ParameterException(
-            commandLine, String.format("%s %s", "GoQuorum mode", errorSuffix));
+            commandLine, String.format("GoQuorum privacy is no longer supported in Besu"));
       }
 
       if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyMultiTenancyEnabled)
@@ -2899,20 +2869,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             privacyOptionGroup.privacyTlsKnownEnclaveFile);
       }
       privacyParametersBuilder.setEnclaveFactory(new EnclaveFactory(vertx));
-    } else if (isGoQuorumCompatibilityMode) {
-      privacyParametersBuilder.setGoQuorumPrivacyParameters(
-          Optional.of(configureGoQuorumPrivacy(storageProvider)));
     }
 
     if (Boolean.FALSE.equals(privacyOptionGroup.isPrivacyEnabled) && anyPrivacyApiEnabled()) {
       logger.warn("Privacy is disabled. Cannot use EEA/PRIV API methods when not using Privacy.");
     }
 
-    if (!isGoQuorumCompatibilityMode
-        && (jsonRPCHttpOptionGroup.rpcHttpApis.contains(RpcApis.GOQUORUM.name())
-            || jsonRPCWebsocketOptionGroup.rpcWsApis.contains(RpcApis.GOQUORUM.name()))) {
-      logger.warn("Cannot use GOQUORUM API methods when not in GoQuorum mode.");
-    }
     privacyParametersBuilder.setPrivacyService(privacyPluginService);
     final PrivacyParameters privacyParameters = privacyParametersBuilder.build();
 
@@ -2923,14 +2885,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     return privacyParameters;
-  }
-
-  private WorldStateArchive createPrivateWorldStateArchive(final StorageProvider storageProvider) {
-    final WorldStateStorage privateWorldStateStorage =
-        storageProvider.createPrivateWorldStateStorage();
-    final WorldStatePreimageStorage preimageStorage =
-        storageProvider.createPrivateWorldStatePreimageStorage();
-    return new DefaultWorldStateArchive(privateWorldStateStorage, preimageStorage);
   }
 
   private boolean anyPrivacyApiEnabled() {
@@ -2969,7 +2923,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                                   "No KeyValueStorageFactory found for key: " + name)))
               .withCommonConfiguration(pluginCommonConfiguration)
               .withMetricsSystem(getMetricsSystem())
-              .isGoQuorumCompatibilityMode(isGoQuorumCompatibilityMode.booleanValue())
               .build();
     }
     return this.keyValueStorageProvider;
@@ -3010,8 +2963,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Optional<TLSConfiguration> p2pTLSConfiguration,
       final boolean peerDiscoveryEnabled,
       final EthNetworkConfig ethNetworkConfig,
-      final int maxPeers,
-      final int minPeers,
       final String p2pAdvertisedHost,
       final String p2pListenInterface,
       final int p2pListenPort,
@@ -3045,14 +2996,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .p2pAdvertisedHost(p2pAdvertisedHost)
             .p2pListenInterface(p2pListenInterface)
             .p2pListenPort(p2pListenPort)
-            .maxPeers(maxPeers)
-            .minPeers(minPeers)
-            .limitRemoteWireConnectionsEnabled(
-                p2PDiscoveryOptionGroup.isLimitRemoteWireConnectionsEnabled)
-            .fractionRemoteConnectionsAllowed(
-                Fraction.fromPercentage(p2PDiscoveryOptionGroup.maxRemoteConnectionsPercentage)
-                    .getValue())
-            .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
             .networkingConfiguration(unstableNetworkingOptions.toDomainObject())
             .legacyForkId(unstableEthProtocolOptions.toDomainObject().isLegacyEth64ForkIdEnabled())
             .graphQLConfiguration(graphQLConfiguration)
@@ -3509,8 +3452,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   /** Enables Go Quorum Compatibility mode. Visible for testing. */
   @VisibleForTesting
   protected void enableGoQuorumCompatibilityMode() {
-    // this static flag is read by the RLP decoder
-    GoQuorumOptions.setGoQuorumCompatibilityMode(true);
+    // this static flag is still used for GoQuorum permissioning compatibility
     isGoQuorumCompatibilityMode = true;
   }
 

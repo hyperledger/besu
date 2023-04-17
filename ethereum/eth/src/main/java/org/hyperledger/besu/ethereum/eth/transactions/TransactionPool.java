@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import static java.util.Optional.ofNullable;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
@@ -384,15 +383,6 @@ public class TransactionPool implements BlockAddedObserver {
 
   private TransactionInvalidReason validatePrice(
       final Transaction transaction, final boolean isLocal, final FeeMarket feeMarket) {
-
-    // Check whether it's a GoQuorum transaction
-    boolean goQuorumCompatibilityMode = getTransactionValidator().getGoQuorumCompatibilityMode();
-    if (transaction.isGoQuorumPrivateTransaction(goQuorumCompatibilityMode)) {
-      final Optional<Wei> weiValue = ofNullable(transaction.getValue());
-      if (weiValue.isPresent() && !weiValue.get().isZero()) {
-        return TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED;
-      }
-    }
 
     if (isLocal) {
       if (!configuration.getTxFeeCap().isZero()

@@ -30,7 +30,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -363,7 +362,6 @@ public abstract class AbstractTransactionsLayeredPendingTransactionsTest {
     transactionPool.addRemoteTransactions(singletonList(transaction));
 
     assertTransactionNotPending(transaction);
-    verify(transactionValidator).getGoQuorumCompatibilityMode();
     verifyNoMoreInteractions(transactionValidator);
   }
 
@@ -384,7 +382,6 @@ public abstract class AbstractTransactionsLayeredPendingTransactionsTest {
         .validateForSender(eq(transaction0), eq(null), any(TransactionValidationParams.class));
     verify(transactionValidator).validate(eq(transaction1), any(Optional.class), any());
     verify(transactionValidator).validateForSender(eq(transaction1), any(), any());
-    verify(transactionValidator, atLeastOnce()).getGoQuorumCompatibilityMode();
     verifyNoMoreInteractions(transactionValidator);
   }
 

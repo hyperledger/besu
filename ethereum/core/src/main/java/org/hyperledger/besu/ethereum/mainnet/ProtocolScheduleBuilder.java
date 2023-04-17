@@ -36,7 +36,6 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
       final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final boolean quorumCompatibilityMode,
       final EvmConfiguration evmConfiguration) {
     this(
         config,
@@ -44,7 +43,6 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
         protocolSpecAdapters,
         privacyParameters,
         isRevertReasonEnabled,
-        quorumCompatibilityMode,
         evmConfiguration);
   }
 
@@ -53,7 +51,6 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
       final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final boolean quorumCompatibilityMode,
       final EvmConfiguration evmConfiguration) {
     this(
         config,
@@ -61,7 +58,6 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
         protocolSpecAdapters,
         privacyParameters,
         isRevertReasonEnabled,
-        quorumCompatibilityMode,
         evmConfiguration);
   }
 
@@ -71,15 +67,8 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
       final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final boolean quorumCompatibilityMode,
       final EvmConfiguration evmConfiguration) {
-    super(
-        config,
-        protocolSpecAdapters,
-        privacyParameters,
-        isRevertReasonEnabled,
-        quorumCompatibilityMode,
-        evmConfiguration);
+    super(config, protocolSpecAdapters, privacyParameters, isRevertReasonEnabled, evmConfiguration);
     this.defaultChainId = defaultChainId;
   }
 
@@ -225,10 +214,7 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
                   protocolSchedule,
                   classicBlockNumber,
                   ClassicProtocolSpecs.classicRecoveryInitDefinition(
-                      config.getContractSizeLimit(),
-                      config.getEvmStackSize(),
-                      quorumCompatibilityMode,
-                      evmConfiguration),
+                      config.getContractSizeLimit(), config.getEvmStackSize(), evmConfiguration),
                   Function.identity());
               protocolSchedule.putMilestone(classicBlockNumber + 1, originalProtocolSpec);
             });

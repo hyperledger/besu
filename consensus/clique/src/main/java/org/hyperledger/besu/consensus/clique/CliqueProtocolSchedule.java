@@ -79,11 +79,9 @@ public class CliqueProtocolSchedule {
                         epochManager,
                         cliqueConfig.getBlockPeriodSeconds(),
                         localNodeAddress,
-                        builder,
-                        privacyParameters.getGoQuorumPrivacyParameters().isPresent())),
+                        builder)),
             privacyParameters,
             isRevertReasonEnabled,
-            config.isQuorum(),
             evmConfiguration)
         .createProtocolSchedule();
   }
@@ -110,8 +108,7 @@ public class CliqueProtocolSchedule {
       final EpochManager epochManager,
       final long secondsBetweenBlocks,
       final Address localNodeAddress,
-      final ProtocolSpecBuilder specBuilder,
-      final boolean goQuorumMode) {
+      final ProtocolSpecBuilder specBuilder) {
 
     return specBuilder
         .blockHeaderValidatorBuilder(
@@ -121,7 +118,7 @@ public class CliqueProtocolSchedule {
             baseFeeMarket ->
                 getBlockHeaderValidator(epochManager, secondsBetweenBlocks, baseFeeMarket))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
-        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
+        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
         .blockImporterBuilder(MainnetBlockImporter::new)
         .difficultyCalculator(new CliqueDifficultyCalculator(localNodeAddress))
         .blockReward(Wei.ZERO)
