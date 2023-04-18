@@ -31,8 +31,8 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.Optimistic
 import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.TransactionDBRocksDBColumnarKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented.RocksDBKeyValueStorage;
-import org.hyperledger.besu.services.kvstore.NonSnappableSegmentedKeyValueStorageAdapter;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
+import org.hyperledger.besu.services.kvstore.SnappableSegmentedKeyValueStorageAdapter;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -204,9 +204,9 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
             segmentedStorage.getSegmentIdentifierByName(segment);
 
         if (isForestStorageFormat) {
-          return new NonSnappableSegmentedKeyValueStorageAdapter<>(segment, segmentedStorage);
+          return new SegmentedKeyValueStorageAdapter<>(segment, segmentedStorage);
         } else {
-          return new SegmentedKeyValueStorageAdapter<>(
+          return new SnappableSegmentedKeyValueStorageAdapter<>(
               segment,
               segmentedStorage,
               () ->

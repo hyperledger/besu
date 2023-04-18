@@ -24,7 +24,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage.Transaction;
-import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
+import org.hyperledger.besu.services.kvstore.SnappableSegmentedKeyValueStorageAdapter;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -51,7 +51,7 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     final SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store = createSegmentedStore();
     RocksDbSegmentIdentifier segment = store.getSegmentIdentifierByName(TestSegment.FOO);
     KeyValueStorage duplicateSegmentRef =
-        new SegmentedKeyValueStorageAdapter<>(TestSegment.FOO, store);
+        new SnappableSegmentedKeyValueStorageAdapter<>(TestSegment.FOO, store);
 
     final Consumer<byte[]> insert =
         value -> {
@@ -292,6 +292,6 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
 
   @Override
   protected KeyValueStorage createStore() throws Exception {
-    return new SegmentedKeyValueStorageAdapter<>(TestSegment.FOO, createSegmentedStore());
+    return new SnappableSegmentedKeyValueStorageAdapter<>(TestSegment.FOO, createSegmentedStore());
   }
 }
