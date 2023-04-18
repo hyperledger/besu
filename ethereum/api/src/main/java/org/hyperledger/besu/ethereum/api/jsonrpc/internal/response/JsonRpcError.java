@@ -69,7 +69,6 @@ public enum JsonRpcError {
   REPLAY_PROTECTED_SIGNATURE_REQUIRED(-32000, "ChainId is required"),
   TX_FEECAP_EXCEEDED(-32000, "Transaction fee cap exceeded"),
   REVERT_ERROR(-32000, "Execution reverted"),
-  GAS_PRICE_MUST_BE_ZERO(-3200, "gasPrice must be set to zero on a GoQuorum compatible network"),
   TRANSACTION_NOT_FOUND(-32000, "Transaction not found"),
   MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS(
       -32000, "Max priority fee per gas exceeds max fee per gas"),
@@ -144,17 +143,8 @@ public enum JsonRpcError {
   CREATE_PRIVACY_GROUP_ERROR(-50100, "Error creating privacy group"),
   DECODE_ERROR(-50100, "Unable to decode the private signed raw transaction"),
   DELETE_PRIVACY_GROUP_ERROR(-50100, "Error deleting privacy group"),
-  ETHER_VALUE_NOT_SUPPORTED(-50100, "ether value is not supported for private transactions"),
   FIND_PRIVACY_GROUP_ERROR(-50100, "Error finding privacy group"),
   FIND_FLEXIBLE_PRIVACY_GROUP_ERROR(-50100, "Error finding flexible privacy group"),
-  GOQUORUM_NO_PRIVATE_FOR(
-      -50100, "No privateFor specified in rawTxArgs for GoQuorum raw private transaction."),
-  GOQUORUM_ONLY_STANDARD_MODE_SUPPORTED(
-      -50100,
-      "Invalid private transaction mode defined in rawTxArgs for GoQuorum raw private transaction."),
-  GOQUORUM_LOOKUP_ID_NOT_AVAILABLE(
-      -50100, "No lookup id specified in GoQuorum raw private transaction."),
-  GOQUORUM_V_VALUE(-50100, "Signature v value not 37 or 38 for GoQuorum private transaction."),
   GET_PRIVATE_TRANSACTION_NONCE_ERROR(-50100, "Unable to determine nonce for account in group."),
   OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST(-50100, "Offchain Privacy group does not exist."),
   FLEXIBLE_PRIVACY_GROUP_DOES_NOT_EXIST(-50100, "Flexible Privacy group does not exist."),

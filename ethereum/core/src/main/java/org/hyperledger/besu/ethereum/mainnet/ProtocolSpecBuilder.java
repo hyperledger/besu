@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.linea.CalldataLimits;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -353,11 +352,7 @@ public class ProtocolSpecBuilder {
 
     final BlockValidator blockValidator =
         blockValidatorBuilder.apply(
-            blockHeaderValidator,
-            blockBodyValidator,
-            blockProcessor,
-            badBlockManager,
-            privacyParameters.getGoQuorumPrivacyParameters());
+            blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
     final BlockImporter blockImporter = blockImporterBuilder.apply(blockValidator);
     return new ProtocolSpec(
         name,
@@ -434,7 +429,6 @@ public class ProtocolSpecBuilder {
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
-        privacyParameters.getGoQuorumPrivacyParameters(),
         protocolSchedule);
   }
 
@@ -473,7 +467,6 @@ public class ProtocolSpecBuilder {
         Wei blockReward,
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         boolean skipZeroBlockRewards,
-        Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters,
         HeaderBasedProtocolSchedule protocolSchedule);
   }
 
@@ -482,8 +475,7 @@ public class ProtocolSpecBuilder {
         BlockHeaderValidator blockHeaderValidator,
         BlockBodyValidator blockBodyValidator,
         BlockProcessor blockProcessor,
-        BadBlockManager badBlockManager,
-        Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters);
+        BadBlockManager badBlockManager);
   }
 
   public interface BlockImporterBuilder {

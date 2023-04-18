@@ -17,7 +17,6 @@ package org.hyperledger.besu.cli;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyFloat;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -32,6 +31,7 @@ import org.hyperledger.besu.chainexport.RlpBlockExporter;
 import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.LauncherOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
@@ -193,6 +193,8 @@ public abstract class CommandTestAbstract {
 
   @Captor protected ArgumentCaptor<TransactionPoolConfiguration> transactionPoolConfigCaptor;
 
+  @Captor protected ArgumentCaptor<EthstatsOptions> ethstatsOptionsArgumentCaptor;
+
   @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
   @Before
@@ -225,8 +227,14 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.reorgLoggingThreshold(anyLong())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.dataStorageConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.evmConfiguration(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.networkConfiguration(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.randomPeerPriority(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.maxPeers(anyInt())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.chainPruningConfiguration(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.maxPeers(anyInt())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.lowerBoundPeers(anyInt())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.maxRemotelyInitiatedPeers(anyInt()))
+        .thenReturn(mockControllerBuilder);
     // doReturn used because of generic BesuController
     doReturn(mockController).when(mockControllerBuilder).build();
     lenient().when(mockController.getProtocolManager()).thenReturn(mockEthProtocolManager);
@@ -252,13 +260,6 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.p2pListenPort(anyInt())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pListenInterface(anyString())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.permissioningConfiguration(any())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.maxPeers(anyInt())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.minPeers(anyInt())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.limitRemoteWireConnectionsEnabled(anyBoolean()))
-        .thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.fractionRemoteConnectionsAllowed(anyFloat()))
-        .thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.randomPeerPriority(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pEnabled(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.natMethod(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.natManagerServiceName(any())).thenReturn(mockRunnerBuilder);
@@ -279,8 +280,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.besuPluginContext(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.autoLogBloomCaching(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.pidPath(any())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.ethstatsUrl(anyString())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.ethstatsContact(anyString())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.ethstatsOptions(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.storageProvider(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.rpcEndpointService(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.legacyForkId(anyBoolean())).thenReturn(mockRunnerBuilder);
@@ -377,7 +377,7 @@ public abstract class CommandTestAbstract {
     // reset GlobalOpenTelemetry
     GlobalOpenTelemetry.resetForTest();
 
-    TestBesuCommand besuCommand = getTestBesuCommand(testType);
+    final TestBesuCommand besuCommand = getTestBesuCommand(testType);
     besuCommands.add(besuCommand);
 
     final File defaultKeyFile =
@@ -491,14 +491,6 @@ public abstract class CommandTestAbstract {
     protected Vertx createVertx(final VertxOptions vertxOptions) {
       vertx = super.createVertx(vertxOptions);
       return vertx;
-    }
-
-    @Override
-    protected void enableGoQuorumCompatibilityMode() {
-      // We do *not* set the static GoQuorumOptions for test runs as
-      // these are only allowed to be set once during the program
-      // runtime.
-      isGoQuorumCompatibilityMode = true;
     }
 
     public CommandSpec getSpec() {

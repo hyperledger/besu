@@ -116,6 +116,7 @@ public class BesuNodeConfigurationBuilder {
     this.miningParameters =
         new MiningParameters.Builder()
             .miningEnabled(enabled)
+            .minTransactionGasPrice(Wei.of(1000))
             .coinbase(AddressHelpers.ofValue(1))
             .build();
     this.jsonRpcConfiguration.addRpcApi(RpcApis.MINER.name());
@@ -411,7 +412,7 @@ public class BesuNodeConfigurationBuilder {
               .withCrlPath(toPath(crl));
           break;
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new RuntimeException(e);
     }
     this.tlsConfiguration = Optional.of(builder.build());

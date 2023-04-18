@@ -23,7 +23,7 @@ import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIV
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
-import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
+import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -66,11 +66,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.syncing.
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -106,7 +108,7 @@ import org.hyperledger.besu.ethereum.stratum.StratumServer;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethstats.EthStatsService;
-import org.hyperledger.besu.ethstats.util.NetstatsUrl;
+import org.hyperledger.besu.ethstats.util.EthStatsConnectOptions;
 import org.hyperledger.besu.metrics.MetricsService;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -168,14 +170,8 @@ public class RunnerBuilder {
   private NatMethod natMethod = NatMethod.AUTO;
   private String natManagerServiceName;
   private boolean natMethodFallbackEnabled;
-  private int maxPeers;
-  private int minPeers;
-  private boolean limitRemoteWireConnectionsEnabled = false;
-  private float fractionRemoteConnectionsAllowed;
   private EthNetworkConfig ethNetworkConfig;
-
-  private String ethstatsUrl;
-  private String ethstatsContact;
+  private EthstatsOptions ethstatsOptions;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private Optional<JsonRpcConfiguration> engineJsonRpcConfiguration = Optional.empty();
   private GraphQLConfiguration graphQLConfiguration;
@@ -191,7 +187,6 @@ public class RunnerBuilder {
   private Optional<String> identityString = Optional.empty();
   private BesuPluginContextImpl besuPluginContext;
   private boolean autoLogBloomCaching = true;
-  private boolean randomPeerPriority;
   private StorageProvider storageProvider;
   private RpcEndpointServiceImpl rpcEndpointServiceImpl;
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
@@ -357,70 +352,13 @@ public class RunnerBuilder {
   }
 
   /**
-   * Add Max peers.
+   * Add EthStatsOptions
    *
-   * @param maxPeers the max peers
-   * @return the runner builder
+   * @param ethstatsOptions the ethstats options
+   * @return Runner builder instance
    */
-  public RunnerBuilder maxPeers(final int maxPeers) {
-    this.maxPeers = maxPeers;
-    return this;
-  }
-
-  /**
-   * Enable Limit remote wire connections.
-   *
-   * @param limitRemoteWireConnectionsEnabled the limit remote wire connections enabled
-   * @return the runner builder
-   */
-  public RunnerBuilder limitRemoteWireConnectionsEnabled(
-      final boolean limitRemoteWireConnectionsEnabled) {
-    this.limitRemoteWireConnectionsEnabled = limitRemoteWireConnectionsEnabled;
-    return this;
-  }
-
-  /**
-   * Add Fraction remote connections allowed.
-   *
-   * @param fractionRemoteConnectionsAllowed the fraction remote connections allowed
-   * @return the runner builder
-   */
-  public RunnerBuilder fractionRemoteConnectionsAllowed(
-      final float fractionRemoteConnectionsAllowed) {
-    this.fractionRemoteConnectionsAllowed = fractionRemoteConnectionsAllowed;
-    return this;
-  }
-
-  /**
-   * Enable Random peer priority.
-   *
-   * @param randomPeerPriority the random peer priority
-   * @return the runner builder
-   */
-  public RunnerBuilder randomPeerPriority(final boolean randomPeerPriority) {
-    this.randomPeerPriority = randomPeerPriority;
-    return this;
-  }
-
-  /**
-   * Add Ethstats url.
-   *
-   * @param ethstatsUrl the ethstats url
-   * @return the runner builder
-   */
-  public RunnerBuilder ethstatsUrl(final String ethstatsUrl) {
-    this.ethstatsUrl = ethstatsUrl;
-    return this;
-  }
-
-  /**
-   * Add Ethstats contact.
-   *
-   * @param ethstatsContact the ethstats contact
-   * @return the runner builder
-   */
-  public RunnerBuilder ethstatsContact(final String ethstatsContact) {
-    this.ethstatsContact = ethstatsContact;
+  public RunnerBuilder ethstatsOptions(final EthstatsOptions ethstatsOptions) {
+    this.ethstatsOptions = ethstatsOptions;
     return this;
   }
 
@@ -697,12 +635,8 @@ public class RunnerBuilder {
         RlpxConfiguration.create()
             .setBindHost(p2pListenInterface)
             .setBindPort(p2pListenPort)
-            .setPeerUpperBound(maxPeers)
-            .setPeerLowerBound(minPeers)
             .setSupportedProtocols(subProtocols)
-            .setClientId(BesuInfo.nodeName(identityString))
-            .setLimitRemoteWireConnectionsEnabled(limitRemoteWireConnectionsEnabled)
-            .setFractionRemoteWireConnectionsAllowed(fractionRemoteConnectionsAllowed);
+            .setClientId(BesuInfo.nodeName(identityString));
     networkingConfiguration.setRlpx(rlpxConfiguration).setDiscovery(discoveryConfiguration);
 
     final PeerPermissionsDenylist bannedNodes = PeerPermissionsDenylist.create();
@@ -732,23 +666,27 @@ public class RunnerBuilder {
     final NatService natService = new NatService(buildNatManager(natMethod), fallbackEnabled);
     final NetworkBuilder inactiveNetwork = caps -> new NoopP2PNetwork();
     final NetworkBuilder activeNetwork =
-        caps ->
-            DefaultP2PNetwork.builder()
-                .vertx(vertx)
-                .nodeKey(nodeKey)
-                .config(networkingConfiguration)
-                .legacyForkIdEnabled(legacyForkIdEnabled)
-                .peerPermissions(peerPermissions)
-                .metricsSystem(metricsSystem)
-                .supportedCapabilities(caps)
-                .natService(natService)
-                .randomPeerPriority(randomPeerPriority)
-                .storageProvider(storageProvider)
-                .p2pTLSConfiguration(p2pTLSConfiguration)
-                .blockchain(context.getBlockchain())
-                .blockNumberForks(besuController.getGenesisConfigOptions().getForkBlockNumbers())
-                .timestampForks(besuController.getGenesisConfigOptions().getForkBlockTimestamps())
-                .build();
+        caps -> {
+          final EthPeers ethPeers = besuController.getEthPeers();
+          return DefaultP2PNetwork.builder()
+              .vertx(vertx)
+              .nodeKey(nodeKey)
+              .config(networkingConfiguration)
+              .legacyForkIdEnabled(legacyForkIdEnabled)
+              .peerPermissions(peerPermissions)
+              .metricsSystem(metricsSystem)
+              .supportedCapabilities(caps)
+              .natService(natService)
+              .storageProvider(storageProvider)
+              .p2pTLSConfiguration(p2pTLSConfiguration)
+              .blockchain(context.getBlockchain())
+              .blockNumberForks(besuController.getGenesisConfigOptions().getForkBlockNumbers())
+              .timestampForks(besuController.getGenesisConfigOptions().getForkBlockTimestamps())
+              .allConnectionsSupplier(ethPeers::getAllConnections)
+              .allActiveConnectionsSupplier(ethPeers::getAllActiveConnections)
+              .peersLowerBound(ethPeers.getPeerLowerBound())
+              .build();
+        };
 
     final NetworkRunner networkRunner =
         NetworkRunner.builder()
@@ -757,6 +695,8 @@ public class RunnerBuilder {
             .network(p2pEnabled ? activeNetwork : inactiveNetwork)
             .metricsSystem(metricsSystem)
             .build();
+
+    besuController.getEthPeers().setRlpxAgent(networkRunner.getRlpxAgent());
 
     final P2PNetwork network = networkRunner.getNetwork();
     // ForkId in Ethereum Node Record needs updating when we transition to a new protocol spec
@@ -803,10 +743,10 @@ public class RunnerBuilder {
     Optional<StratumServer> stratumServer = Optional.empty();
 
     if (miningParameters.isStratumMiningEnabled()) {
-      var powMiningCoordinator = miningCoordinator;
-      if (miningCoordinator instanceof TransitionCoordinator) {
-        LOG.debug("fetching powMiningCoordinator from TransitionCoordinator");
-        powMiningCoordinator = ((TransitionCoordinator) miningCoordinator).getPreMergeObject();
+      if (!(miningCoordinator instanceof PoWMiningCoordinator powMiningCoordinator)) {
+        throw new IllegalArgumentException(
+            "Stratum server requires an PoWMiningCoordinator not "
+                + ((miningCoordinator == null) ? "null" : miningCoordinator.getClass().getName()));
       }
       stratumServer =
           Optional.of(
@@ -953,9 +893,7 @@ public class RunnerBuilder {
 
     Optional<GraphQLHttpService> graphQLHttpService = Optional.empty();
     if (graphQLConfiguration.isEnabled()) {
-      final GraphQLDataFetchers fetchers =
-          new GraphQLDataFetchers(
-              supportedCapabilities, privacyParameters.getGoQuorumPrivacyParameters());
+      final GraphQLDataFetchers fetchers = new GraphQLDataFetchers(supportedCapabilities);
       final Map<GraphQLContextType, Object> graphQlContextMap = new ConcurrentHashMap<>();
       graphQlContextMap.putIfAbsent(GraphQLContextType.BLOCKCHAIN_QUERIES, blockchainQueries);
       graphQlContextMap.putIfAbsent(GraphQLContextType.PROTOCOL_SCHEDULE, protocolSchedule);
@@ -1044,11 +982,14 @@ public class RunnerBuilder {
         createMetricsService(vertx, metricsConfiguration);
 
     final Optional<EthStatsService> ethStatsService;
-    if (!Strings.isNullOrEmpty(ethstatsUrl)) {
+    if (isEthStatsEnabled()) {
       ethStatsService =
           Optional.of(
               new EthStatsService(
-                  NetstatsUrl.fromParams(ethstatsUrl, ethstatsContact),
+                  EthStatsConnectOptions.fromParams(
+                      ethstatsOptions.getEthstatsUrl(),
+                      ethstatsOptions.getEthstatsContact(),
+                      ethstatsOptions.getEthstatsCaCert()),
                   blockchainQueries,
                   besuController.getProtocolManager(),
                   transactionPool,
@@ -1119,6 +1060,10 @@ public class RunnerBuilder {
         pidPath,
         autoLogBloomCaching ? blockchainQueries.getTransactionLogBloomCacher() : Optional.empty(),
         context.getBlockchain());
+  }
+
+  private boolean isEthStatsEnabled() {
+    return ethstatsOptions != null && !Strings.isNullOrEmpty(ethstatsOptions.getEthstatsUrl());
   }
 
   private Stream<EnodeURL> sanitizePeers(
@@ -1437,26 +1382,6 @@ public class RunnerBuilder {
   private Optional<MetricsService> createMetricsService(
       final Vertx vertx, final MetricsConfiguration configuration) {
     return MetricsService.create(vertx, configuration, metricsSystem);
-  }
-
-  /**
-   * Gets minimum peers.
-   *
-   * @return the minimum peers
-   */
-  public int getMinPeers() {
-    return minPeers;
-  }
-
-  /**
-   * Add Minimum peers.
-   *
-   * @param minPeers the minimum peers
-   * @return the runner builder
-   */
-  public RunnerBuilder minPeers(final int minPeers) {
-    this.minPeers = minPeers;
-    return this;
   }
 
   /**

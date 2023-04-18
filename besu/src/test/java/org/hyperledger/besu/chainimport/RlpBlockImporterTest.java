@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.chainimport;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -30,6 +29,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.BlockTestUtil;
@@ -37,12 +37,9 @@ import org.hyperledger.besu.testutil.TestClock;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.concurrent.CompletionException;
 
-import com.google.common.io.Resources;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Rule;
 import org.junit.Test;
@@ -79,6 +76,7 @@ public final class RlpBlockImporterTest {
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
             .evmConfiguration(EvmConfiguration.DEFAULT)
+            .networkConfiguration(NetworkingConfiguration.create())
             .build();
     final RlpBlockImporter.ImportResult result =
         rlpBlockImporter.importBlockchain(source, targetController, false);
@@ -111,6 +109,7 @@ public final class RlpBlockImporterTest {
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
             .evmConfiguration(EvmConfiguration.DEFAULT)
+            .networkConfiguration(NetworkingConfiguration.create())
             .build();
 
     assertThatThrownBy(
@@ -140,52 +139,12 @@ public final class RlpBlockImporterTest {
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .gasLimitCalculator(GasLimitCalculator.constant())
             .evmConfiguration(EvmConfiguration.DEFAULT)
+            .networkConfiguration(NetworkingConfiguration.create())
             .build();
 
     final RlpBlockImporter.ImportResult result =
         rlpBlockImporter.importBlockchain(source, targetController, true);
     assertThat(result.count).isEqualTo(1);
     assertThat(result.td).isEqualTo(UInt256.valueOf(34351349760L));
-  }
-
-  @Test
-  public void ibftImport() throws IOException {
-    final Path dataDir = folder.newFolder().toPath();
-    final Path source = dataDir.resolve("ibft.blocks");
-    final String config =
-        Resources.toString(this.getClass().getResource("/ibftlegacy_genesis.json"), UTF_8);
-
-    try {
-      Files.write(
-          source,
-          Resources.toByteArray(this.getClass().getResource("/ibft.blocks")),
-          StandardOpenOption.CREATE,
-          StandardOpenOption.TRUNCATE_EXISTING);
-    } catch (final IOException ex) {
-      throw new IllegalStateException(ex);
-    }
-
-    final BesuController controller =
-        new BesuController.Builder()
-            .fromGenesisConfig(GenesisConfigFile.fromConfig(config), SyncMode.FULL)
-            .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
-            .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-            .storageProvider(new InMemoryKeyValueStorageProvider())
-            .networkId(BigInteger.valueOf(10))
-            .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
-            .nodeKey(NodeKeyUtils.generate())
-            .metricsSystem(new NoOpMetricsSystem())
-            .privacyParameters(PrivacyParameters.DEFAULT)
-            .dataDirectory(dataDir)
-            .clock(TestClock.fixed())
-            .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
-            .gasLimitCalculator(GasLimitCalculator.constant())
-            .evmConfiguration(EvmConfiguration.DEFAULT)
-            .build();
-    final RlpBlockImporter.ImportResult result =
-        rlpBlockImporter.importBlockchain(source, controller, false);
-
-    // Don't count the Genesis block
-    assertThat(result.count).isEqualTo(958);
   }
 }

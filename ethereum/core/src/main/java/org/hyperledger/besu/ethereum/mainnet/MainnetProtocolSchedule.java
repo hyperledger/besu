@@ -55,7 +55,6 @@ public class MainnetProtocolSchedule {
             ProtocolSpecAdapters.create(0, Function.identity()),
             privacyParameters,
             isRevertReasonEnabled,
-            config.isQuorum(),
             evmConfiguration,
             lineaParameters)
         .createProtocolSchedule();

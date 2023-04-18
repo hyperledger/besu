@@ -26,7 +26,6 @@ public class LineaProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
-      final boolean quorumCompatibilityMode,
       final EvmConfiguration evmConfiguration,
       final LineaParameters lineaParameters) {
 
@@ -46,7 +45,6 @@ public class LineaProtocolSpecs {
             configStackSizeLimit,
             enableRevertReason,
             genesisConfigOptions,
-            quorumCompatibilityMode,
             evmConfiguration)
         .feeMarket(zeroBaseFeeMarket)
         .calldataLimits(calldataLimits)

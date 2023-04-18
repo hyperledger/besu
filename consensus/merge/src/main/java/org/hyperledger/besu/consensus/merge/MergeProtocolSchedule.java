@@ -74,7 +74,6 @@ public class MergeProtocolSchedule {
                         specBuilder, config.getChainId())),
             privacyParameters,
             isRevertReasonEnabled,
-            config.isQuorum(),
             EvmConfiguration.DEFAULT,
             lineaParameters)
         .createProtocolSchedule();
@@ -101,7 +100,6 @@ public class MergeProtocolSchedule {
                 MergeProtocolSchedule::applyMergeSpecificModificationsForShanghai),
             privacyParameters,
             isRevertReasonEnabled,
-            config.isQuorum(),
             EvmConfiguration.DEFAULT,
             lineaParameters)
         .createTimestampSchedule();

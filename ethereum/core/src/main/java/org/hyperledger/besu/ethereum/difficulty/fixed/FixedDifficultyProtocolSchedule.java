@@ -38,7 +38,6 @@ public class FixedDifficultyProtocolSchedule {
                     builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config))),
             privacyParameters,
             isRevertReasonEnabled,
-            config.isQuorum(),
             evmConfiguration,
             LineaParameters.DEFAULT)
         .createProtocolSchedule();

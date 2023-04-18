@@ -20,7 +20,6 @@ import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_BACKGROUND_THREAD_COUNT;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_IS_HIGH_SPEC;
-import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_BACKGROUND_COMPACTIONS;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_OPEN_FILES;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
@@ -52,6 +51,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -188,7 +188,6 @@ public final class RunnerTest {
             .discovery(true)
             .p2pAdvertisedHost(listenHost)
             .p2pListenPort(0)
-            .maxPeers(3)
             .metricsSystem(noOpMetricsSystem)
             .permissioningService(new PermissioningServiceImpl())
             .staticNodes(emptySet())
@@ -381,7 +380,6 @@ public final class RunnerTest {
                 () ->
                     new RocksDBFactoryConfiguration(
                         DEFAULT_MAX_OPEN_FILES,
-                        DEFAULT_MAX_BACKGROUND_COMPACTIONS,
                         DEFAULT_BACKGROUND_THREAD_COUNT,
                         DEFAULT_CACHE_CAPACITY,
                         DEFAULT_IS_HIGH_SPEC),
@@ -459,6 +457,11 @@ public final class RunnerTest {
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
         .gasLimitCalculator(GasLimitCalculator.constant())
         .evmConfiguration(EvmConfiguration.DEFAULT)
+        .networkConfiguration(NetworkingConfiguration.create())
+        .randomPeerPriority(Boolean.FALSE)
+        .maxPeers(25)
+        .lowerBoundPeers(25)
+        .maxRemotelyInitiatedPeers(15)
         .build();
   }
 }

@@ -77,6 +77,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -172,8 +173,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected EvmConfiguration evmConfiguration;
   /** The Max peers. */
   protected int maxPeers;
+
+  private int peerLowerBound;
+  private int maxRemotelyInitiatedPeers;
   /** The Chain pruner configuration. */
   protected ChainPrunerConfiguration chainPrunerConfiguration = ChainPrunerConfiguration.DEFAULT;
+
+  private NetworkingConfiguration networkingConfiguration;
+  private Boolean randomPeerPriority;
 
   /**
    * Storage provider besu controller builder.
@@ -447,6 +454,29 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
+   * Lower bound of peers where we stop actively trying to initiate new outgoing connections
+   *
+   * @param peerLowerBound lower bound of peers where we stop actively trying to initiate new
+   *     outgoing connections
+   * @return the besu controller builder
+   */
+  public BesuControllerBuilder lowerBoundPeers(final int peerLowerBound) {
+    this.peerLowerBound = peerLowerBound;
+    return this;
+  }
+
+  /**
+   * Maximum number of remotely initiated peer connections
+   *
+   * @param maxRemotelyInitiatedPeers aximum number of remotely initiated peer connections
+   * @return the besu controller builder
+   */
+  public BesuControllerBuilder maxRemotelyInitiatedPeers(final int maxRemotelyInitiatedPeers) {
+    this.maxRemotelyInitiatedPeers = maxRemotelyInitiatedPeers;
+    return this;
+  }
+
+  /**
    * Chain pruning configuration besu controller builder.
    *
    * @param chainPrunerConfiguration the chain pruner configuration
@@ -455,6 +485,29 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   public BesuControllerBuilder chainPruningConfiguration(
       final ChainPrunerConfiguration chainPrunerConfiguration) {
     this.chainPrunerConfiguration = chainPrunerConfiguration;
+    return this;
+  }
+
+  /**
+   * sets the networkConfiguration in the builder
+   *
+   * @param networkingConfiguration the networking config
+   * @return the besu controller builder
+   */
+  public BesuControllerBuilder networkConfiguration(
+      final NetworkingConfiguration networkingConfiguration) {
+    this.networkingConfiguration = networkingConfiguration;
+    return this;
+  }
+
+  /**
+   * sets the randomPeerPriority flag in the builder
+   *
+   * @param randomPeerPriority the random peer priority flag
+   * @return the besu controller builder
+   */
+  public BesuControllerBuilder randomPeerPriority(final Boolean randomPeerPriority) {
+    this.randomPeerPriority = randomPeerPriority;
     return this;
   }
 
@@ -478,6 +531,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     checkNotNull(storageProvider, "Must supply a storage provider");
     checkNotNull(gasLimitCalculator, "Missing gas limit calculator");
     checkNotNull(evmConfiguration, "Missing evm config");
+    checkNotNull(networkingConfiguration, "Missing network configuration");
     prepForBuild();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
@@ -560,9 +614,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             currentProtocolSpecSupplier,
             clock,
             metricsSystem,
-            maxPeers,
             maxMessageSize,
-            messagePermissioningProviders);
+            messagePermissioningProviders,
+            nodeKey.getPublicKey().getEncodedBytes(),
+            peerLowerBound,
+            maxPeers,
+            maxRemotelyInitiatedPeers,
+            randomPeerPriority);
 
     final EthMessages ethMessages = new EthMessages();
     final EthMessages snapMessages = new EthMessages();
@@ -683,6 +741,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         nodeKey,
         closeables,
         additionalPluginServices,
+        ethPeers,
         lineaParameters);
   }
 
@@ -949,7 +1008,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             (BonsaiWorldStateKeyValueStorage) worldStateStorage,
             blockchain,
             Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
-            cachedMerkleTrieLoader);
+            cachedMerkleTrieLoader,
+            metricsSystem);
 
       case FOREST:
       default:

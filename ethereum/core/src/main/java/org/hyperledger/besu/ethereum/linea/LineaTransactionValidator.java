@@ -33,7 +33,6 @@ public class LineaTransactionValidator extends MainnetTransactionValidator {
         checkSignatureMalleability,
         chainId,
         acceptedTransactionTypes,
-        false,
         Integer.MAX_VALUE);
     this.maxCalldataSize = maxCalldataSize >= 0 ? maxCalldataSize : Integer.MAX_VALUE;
   }

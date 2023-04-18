@@ -34,7 +34,6 @@ public class TimestampScheduleBuilder extends AbstractProtocolScheduleBuilder {
       final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final boolean quorumCompatibilityMode,
       final EvmConfiguration evmConfiguration,
       final LineaParameters lineaParameters) {
     super(
@@ -42,7 +41,6 @@ public class TimestampScheduleBuilder extends AbstractProtocolScheduleBuilder {
         protocolSpecAdapters,
         privacyParameters,
         isRevertReasonEnabled,
-        quorumCompatibilityMode,
         evmConfiguration,
         lineaParameters);
     this.defaultChainId = Optional.of(defaultChainId);

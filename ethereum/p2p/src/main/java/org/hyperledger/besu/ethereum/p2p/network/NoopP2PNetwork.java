@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.DisconnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.MessageCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.io.IOException;
@@ -51,6 +52,9 @@ public class NoopP2PNetwork implements P2PNetwork {
 
   @Override
   public void subscribeConnect(final ConnectCallback callback) {}
+
+  @Override
+  public void subscribeConnectRequest(final ShouldConnectCallback callback) {}
 
   @Override
   public void subscribeDisconnect(final DisconnectCallback callback) {}

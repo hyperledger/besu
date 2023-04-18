@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -74,6 +75,7 @@ public class BesuController implements java.io.Closeable {
   private final MiningParameters miningParameters;
   private final PluginServiceFactory additionalPluginServices;
   private final SyncState syncState;
+  private final EthPeers ethPeers;
   private final LineaParameters lineaParameters;
 
   /**
@@ -111,6 +113,7 @@ public class BesuController implements java.io.Closeable {
       final NodeKey nodeKey,
       final List<Closeable> closeables,
       final PluginServiceFactory additionalPluginServices,
+      final EthPeers ethPeers,
       final LineaParameters lineaParameters) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -127,6 +130,7 @@ public class BesuController implements java.io.Closeable {
     this.closeables = closeables;
     this.miningParameters = miningParameters;
     this.additionalPluginServices = additionalPluginServices;
+    this.ethPeers = ethPeers;
     this.lineaParameters = lineaParameters;
   }
 
@@ -211,6 +215,15 @@ public class BesuController implements java.io.Closeable {
     return miningCoordinator;
   }
 
+  /**
+   * get the collection of eth peers
+   *
+   * @return the EthPeers collection
+   */
+  public EthPeers getEthPeers() {
+    return ethPeers;
+  }
+
   @Override
   public void close() {
     closeables.forEach(this::tryClose);
@@ -219,7 +232,7 @@ public class BesuController implements java.io.Closeable {
   private void tryClose(final Closeable closeable) {
     try {
       closeable.close();
-    } catch (IOException e) {
+    } catch (final IOException e) {
       LOG.error("Unable to close resource.", e);
     }
   }
@@ -333,7 +346,8 @@ public class BesuController implements java.io.Closeable {
       } else if (configOptions.isIbft2()) {
         builder = new IbftBesuControllerBuilder();
       } else if (configOptions.isIbftLegacy()) {
-        builder = new IbftLegacyBesuControllerBuilder();
+        throw new IllegalStateException(
+            "IBFT1 (legacy) is no longer supported. Consider using IBFT2 or QBFT.");
       } else if (configOptions.isQbft()) {
         builder = new QbftBesuControllerBuilder();
       } else if (configOptions.isClique()) {
@@ -367,7 +381,8 @@ public class BesuController implements java.io.Closeable {
       if (configOptions.isIbft2()) {
         originalControllerBuilder = new IbftBesuControllerBuilder();
       } else if (configOptions.isIbftLegacy()) {
-        originalControllerBuilder = new IbftLegacyBesuControllerBuilder();
+        throw new IllegalStateException(
+            "IBFT1 (legacy) is no longer supported. Consider using IBFT2 or QBFT.");
       } else {
         throw new IllegalStateException(
             "Invalid genesis migration config. Migration is supported from IBFT (legacy) or IBFT2 to QBFT)");
