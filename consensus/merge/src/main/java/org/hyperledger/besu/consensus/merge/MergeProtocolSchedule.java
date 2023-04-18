@@ -104,7 +104,6 @@ public class MergeProtocolSchedule {
       final ProtocolSpecBuilder specBuilder) {
 
     return specBuilder
-        .blockProcessorBuilder(MergeBlockProcessor::new)
         .blockHeaderValidatorBuilder(MergeProtocolSchedule::getBlockHeaderValidator)
         .blockReward(Wei.ZERO)
         .difficultyCalculator((a, b, c) -> BigInteger.ZERO)
@@ -119,7 +118,6 @@ public class MergeProtocolSchedule {
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.paris(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), EvmConfiguration.DEFAULT))
-        .blockProcessorBuilder(MergeBlockProcessor::new)
         .blockHeaderValidatorBuilder(MergeProtocolSchedule::getBlockHeaderValidator)
         .blockReward(Wei.ZERO)
         .difficultyCalculator((a, b, c) -> BigInteger.ZERO)
