@@ -180,7 +180,6 @@ public class BesuControllerBuilderTest {
             ImmutableDataStorageConfiguration.builder()
                 .dataStorageFormat(DataStorageFormat.BONSAI)
                 .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
-                .useBonsaiSnapshots(DataStorageConfiguration.DEFAULT_BONSAI_USE_SNAPSHOTS)
                 .build());
     besuControllerBuilder.build();
 
@@ -197,7 +196,6 @@ public class BesuControllerBuilderTest {
             ImmutableDataStorageConfiguration.builder()
                 .dataStorageFormat(DataStorageFormat.FOREST)
                 .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
-                .useBonsaiSnapshots(DataStorageConfiguration.DEFAULT_BONSAI_USE_SNAPSHOTS)
                 .build());
     besuControllerBuilder.build();
 
