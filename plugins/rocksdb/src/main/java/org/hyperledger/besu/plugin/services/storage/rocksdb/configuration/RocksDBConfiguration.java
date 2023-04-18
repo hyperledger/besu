@@ -22,7 +22,6 @@ public class RocksDBConfiguration {
   private final Path databaseDir;
   private final int maxOpenFiles;
   private final String label;
-  private final int maxBackgroundCompactions;
   private final int backgroundThreadCount;
   private final long cacheCapacity;
   private final boolean isHighSpec;
@@ -32,7 +31,6 @@ public class RocksDBConfiguration {
    *
    * @param databaseDir the database dir
    * @param maxOpenFiles the max open files
-   * @param maxBackgroundCompactions the max background compactions
    * @param backgroundThreadCount the background thread count
    * @param cacheCapacity the cache capacity
    * @param label the label
@@ -41,12 +39,10 @@ public class RocksDBConfiguration {
   public RocksDBConfiguration(
       final Path databaseDir,
       final int maxOpenFiles,
-      final int maxBackgroundCompactions,
       final int backgroundThreadCount,
       final long cacheCapacity,
       final String label,
       final boolean isHighSpec) {
-    this.maxBackgroundCompactions = maxBackgroundCompactions;
     this.backgroundThreadCount = backgroundThreadCount;
     this.databaseDir = databaseDir;
     this.maxOpenFiles = maxOpenFiles;
@@ -71,15 +67,6 @@ public class RocksDBConfiguration {
    */
   public int getMaxOpenFiles() {
     return maxOpenFiles;
-  }
-
-  /**
-   * Gets max background compactions.
-   *
-   * @return the max background compactions
-   */
-  public int getMaxBackgroundCompactions() {
-    return maxBackgroundCompactions;
   }
 
   /**

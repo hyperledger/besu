@@ -172,7 +172,6 @@ public abstract class RocksDBColumnarKeyValueStorage
                 .setCreateIfMissing(true)
                 .setMaxOpenFiles(configuration.getMaxOpenFiles())
                 .setDbWriteBufferSize(ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC)
-                .setMaxBackgroundCompactions(configuration.getMaxBackgroundCompactions())
                 .setStatistics(stats)
                 .setCreateMissingColumnFamilies(true)
                 .setEnv(
@@ -183,7 +182,6 @@ public abstract class RocksDBColumnarKeyValueStorage
             new DBOptions()
                 .setCreateIfMissing(true)
                 .setMaxOpenFiles(configuration.getMaxOpenFiles())
-                .setMaxBackgroundCompactions(configuration.getMaxBackgroundCompactions())
                 .setStatistics(stats)
                 .setCreateMissingColumnFamilies(true)
                 .setEnv(
