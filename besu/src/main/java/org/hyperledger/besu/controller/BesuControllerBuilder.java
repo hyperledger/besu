@@ -177,6 +177,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** The Chain pruner configuration. */
   protected ChainPrunerConfiguration chainPrunerConfiguration = ChainPrunerConfiguration.DEFAULT;
 
+  private NetworkingConfiguration networkingConfiguration;
+  private Boolean randomPeerPriority;
   /** the Dagger configured context that can provide dependencies */
   protected BesuComponent besuComponent = null;
 

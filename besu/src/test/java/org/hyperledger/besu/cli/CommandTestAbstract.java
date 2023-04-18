@@ -407,7 +407,7 @@ public abstract class CommandTestAbstract {
     switch (testType) {
       case REQUIRED_OPTION:
         return new TestBesuCommandWithRequiredOption(
-                mockBesuComponent,
+            mockBesuComponent,
             () -> rlpBlockImporter,
             this::jsonBlockImporterFactory,
             (blockchain) -> rlpBlockExporter,
@@ -421,7 +421,7 @@ public abstract class CommandTestAbstract {
             privacyPluginService);
       case PORT_CHECK:
         return new TestBesuCommand(
-                mockBesuComponent,
+            mockBesuComponent,
             () -> rlpBlockImporter,
             this::jsonBlockImporterFactory,
             (blockchain) -> rlpBlockExporter,
@@ -435,7 +435,7 @@ public abstract class CommandTestAbstract {
             privacyPluginService);
       default:
         return new TestBesuCommandWithoutPortCheck(
-                mockBesuComponent,
+            mockBesuComponent,
             () -> rlpBlockImporter,
             this::jsonBlockImporterFactory,
             (blockchain) -> rlpBlockExporter,
