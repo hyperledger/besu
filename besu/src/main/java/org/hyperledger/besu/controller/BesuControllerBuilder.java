@@ -139,7 +139,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** The Privacy parameters. */
   protected PrivacyParameters privacyParameters;
 
-  protected LineaParameters lineaParameters;
+  protected LineaParameters lineaParameters = LineaParameters.DEFAULT;
   /** The Pki block creation configuration. */
   protected Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration =
       Optional.empty();
