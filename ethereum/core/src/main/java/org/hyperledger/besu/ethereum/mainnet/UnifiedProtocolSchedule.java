@@ -84,8 +84,7 @@ public class UnifiedProtocolSchedule implements ProtocolSchedule {
 
   @Override
   public boolean isOnMilestoneBoundary(final BlockHeader blockHeader) {
-    return this.protocolSpecs.stream().anyMatch(s -> blockHeader.getTimestamp() == s.milestone())
-        || this.protocolSpecs.stream().anyMatch(s -> blockHeader.getNumber() == s.milestone());
+    return this.protocolSpecs.stream().anyMatch(s -> s.isOnMilestoneBoundary(blockHeader));
   }
 
   @Override

@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.BlockNumberProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.TimestampProtocolSpec;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -88,9 +89,9 @@ public class UnifiedProtocolScheduleTest {
     final ProtocolSpec spec3 = mock(ProtocolSpec.class);
 
     final UnifiedProtocolSchedule protocolSchedule = new UnifiedProtocolSchedule(CHAIN_ID);
-    protocolSchedule.putMilestone(ScheduledProtocolSpec.TimestampProtocolSpec::create, 0, spec1);
-    protocolSchedule.putMilestone(ScheduledProtocolSpec.TimestampProtocolSpec::create, 10, spec2);
-    protocolSchedule.putMilestone(ScheduledProtocolSpec.TimestampProtocolSpec::create, 10, spec3);
+    protocolSchedule.putMilestone(TimestampProtocolSpec::create, 0, spec1);
+    protocolSchedule.putMilestone(TimestampProtocolSpec::create, 10, spec2);
+    protocolSchedule.putMilestone(TimestampProtocolSpec::create, 10, spec3);
     assertThat(protocolSchedule.getByBlockHeader(header(0, 10L))).isSameAs(spec3);
   }
 
@@ -103,7 +104,7 @@ public class UnifiedProtocolScheduleTest {
     final UnifiedProtocolSchedule protocolSchedule = new UnifiedProtocolSchedule(CHAIN_ID);
     protocolSchedule.putMilestone(BlockNumberProtocolSpec::create, 0, spec1);
     protocolSchedule.putMilestone(BlockNumberProtocolSpec::create, 10, spec2);
-    protocolSchedule.putMilestone(ScheduledProtocolSpec.TimestampProtocolSpec::create, 10, spec3);
+    protocolSchedule.putMilestone(TimestampProtocolSpec::create, 10, spec3);
     assertThat(protocolSchedule.getByBlockHeader(header(10, 10L))).isSameAs(spec3);
   }
 
@@ -191,7 +192,7 @@ public class UnifiedProtocolScheduleTest {
 
     final UnifiedProtocolSchedule protocolSchedule = new UnifiedProtocolSchedule(CHAIN_ID);
     protocolSchedule.putMilestone(BlockNumberProtocolSpec::create, 0, spec1);
-    protocolSchedule.putMilestone(ScheduledProtocolSpec.TimestampProtocolSpec::create, 9992, spec2);
+    protocolSchedule.putMilestone(TimestampProtocolSpec::create, 9992, spec2);
 
     final BlockHeader blockHeader =
         new BlockHeaderTestFixture().number(1001L).timestamp(9991L).buildHeader();

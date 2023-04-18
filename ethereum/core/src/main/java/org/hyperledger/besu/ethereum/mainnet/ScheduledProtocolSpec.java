@@ -23,6 +23,8 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 public interface ScheduledProtocolSpec {
   boolean isOnOrAfterMilestoneBoundary(ProcessableBlockHeader header);
 
+  boolean isOnMilestoneBoundary(ProcessableBlockHeader header);
+
   long milestone();
 
   ProtocolSpec spec();
@@ -45,6 +47,11 @@ public interface ScheduledProtocolSpec {
     @Override
     public boolean isOnOrAfterMilestoneBoundary(final ProcessableBlockHeader header) {
       return header.getTimestamp() >= timestamp;
+    }
+
+    @Override
+    public boolean isOnMilestoneBoundary(final ProcessableBlockHeader header) {
+      return header.getTimestamp() == timestamp;
     }
 
     @Override
@@ -75,6 +82,11 @@ public interface ScheduledProtocolSpec {
     @Override
     public boolean isOnOrAfterMilestoneBoundary(final ProcessableBlockHeader header) {
       return header.getNumber() >= blockNumber;
+    }
+
+    @Override
+    public boolean isOnMilestoneBoundary(final ProcessableBlockHeader header) {
+      return header.getNumber() == blockNumber;
     }
 
     @Override
