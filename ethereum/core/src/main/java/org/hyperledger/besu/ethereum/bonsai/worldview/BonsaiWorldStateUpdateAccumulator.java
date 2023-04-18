@@ -493,65 +493,7 @@ public class BonsaiWorldStateUpdateAccumulator
   }
 
   public TrieLogLayer generateTrieLog(final Hash blockHash) {
-    final TrieLogLayer layer = new TrieLogLayer();
-    importIntoTrieLog(layer, blockHash);
-    return layer;
-  }
-
-  private void importIntoTrieLog(final TrieLogLayer layer, final Hash blockHash) {
-    layer.setBlockHash(blockHash);
-    for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> updatedAccount :
-        accountsToUpdate.entrySet()) {
-      final BonsaiValue<BonsaiAccount> bonsaiValue = updatedAccount.getValue();
-      final BonsaiAccount oldValue = bonsaiValue.getPrior();
-      final StateTrieAccountValue oldAccount =
-          oldValue == null
-              ? null
-              : new StateTrieAccountValue(
-                  oldValue.getNonce(),
-                  oldValue.getBalance(),
-                  oldValue.getStorageRoot(),
-                  oldValue.getCodeHash());
-      final BonsaiAccount newValue = bonsaiValue.getUpdated();
-      final StateTrieAccountValue newAccount =
-          newValue == null
-              ? null
-              : new StateTrieAccountValue(
-                  newValue.getNonce(),
-                  newValue.getBalance(),
-                  newValue.getStorageRoot(),
-                  newValue.getCodeHash());
-      if (oldValue == null && newValue == null) {
-        // by default do not persist empty reads of accounts to the trie log
-        continue;
-      }
-      layer.addAccountChange(updatedAccount.getKey(), oldAccount, newAccount);
-    }
-
-    for (final Map.Entry<Address, BonsaiValue<Bytes>> updatedCode : codeToUpdate.entrySet()) {
-      layer.addCodeChange(
-          updatedCode.getKey(),
-          updatedCode.getValue().getPrior(),
-          updatedCode.getValue().getUpdated(),
-          blockHash);
-    }
-
-    for (final Map.Entry<Address, StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>>
-        updatesStorage : storageToUpdate.entrySet()) {
-      final Address address = updatesStorage.getKey();
-      for (final Map.Entry<StorageSlotKey, BonsaiValue<UInt256>> slotUpdate :
-          updatesStorage.getValue().entrySet()) {
-        var val = slotUpdate.getValue();
-
-        if (val.getPrior() == null && val.getUpdated() == null) {
-          // by default do not persist empty reads to the trie log
-          continue;
-        }
-
-        // hash slotKey to match the implied storage interface
-        layer.addStorageChange(address, slotUpdate.getKey(), val.getPrior(), val.getUpdated());
-      }
-    }
+    return trieLogFactory.create(this, blockHash);
   }
 
   public void rollForward(final TrieLogLayer layer) {
