@@ -59,6 +59,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
   private final MetricsSystem metricsSystem;
 
   private final FramerProvider framerProvider;
+  private final boolean inboundInitiated;
 
   AbstractHandshakeHandler(
       final List<SubProtocol> subProtocols,
@@ -68,7 +69,8 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
       final PeerConnectionEventDispatcher connectionEventDispatcher,
       final MetricsSystem metricsSystem,
       final HandshakerProvider handshakerProvider,
-      final FramerProvider framerProvider) {
+      final FramerProvider framerProvider,
+      final boolean inboundInitiated) {
     this.subProtocols = subProtocols;
     this.localNode = localNode;
     this.expectedPeer = expectedPeer;
@@ -77,6 +79,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
     this.metricsSystem = metricsSystem;
     this.handshaker = handshakerProvider.buildInstance();
     this.framerProvider = framerProvider;
+    this.inboundInitiated = inboundInitiated;
   }
 
   /**
@@ -117,7 +120,8 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
               expectedPeer,
               connectionEventDispatcher,
               connectionFuture,
-              metricsSystem);
+              metricsSystem,
+              inboundInitiated);
 
       ctx.channel()
           .pipeline()
