@@ -93,7 +93,7 @@ public class UnifiedProtocolSchedule implements ProtocolSchedule {
 
     final ScheduledProtocolSpec scheduledProtocolSpec = factory.create(milestone, protocolSpec);
     // Ensure this replaces any existing spec at the same block number.
-    protocolSpecs.remove(scheduledProtocolSpec); // TODO SLD will this remove method work now?
+    protocolSpecs.remove(scheduledProtocolSpec);
     protocolSpecs.add(scheduledProtocolSpec);
   }
 
