@@ -206,6 +206,7 @@ public class TransactionPool implements BlockAddedObserver {
                         .addArgument(transaction::toTraceLog)
                         .addArgument(rejectReason)
                         .log();
+                    metrics.incrementRejected(false, rejectReason, "txpool");
                   }
                 } else {
                   LOG.atTrace()

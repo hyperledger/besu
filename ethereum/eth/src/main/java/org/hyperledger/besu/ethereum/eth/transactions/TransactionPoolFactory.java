@@ -285,7 +285,6 @@ public class TransactionPoolFactory {
               transactionReplacementTester);
     }
 
-    return new LayeredPendingTransactions(
-        transactionPoolConfiguration, pendingTransactionsSorter, metrics);
+    return new LayeredPendingTransactions(transactionPoolConfiguration, pendingTransactionsSorter);
   }
 }

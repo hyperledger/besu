@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedL
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.evm.account.Account;
@@ -56,15 +55,12 @@ public class LayeredPendingTransactions implements PendingTransactions {
   private final TransactionPoolConfiguration poolConfig;
   private final Set<Address> localSenders = new HashSet<>();
   private final AbstractPrioritizedTransactions prioritizedTransactions;
-  private final TransactionPoolMetrics metrics;
 
   public LayeredPendingTransactions(
       final TransactionPoolConfiguration poolConfig,
-      final AbstractPrioritizedTransactions prioritizedTransactions,
-      final TransactionPoolMetrics metrics) {
+      final AbstractPrioritizedTransactions prioritizedTransactions) {
     this.poolConfig = poolConfig;
     this.prioritizedTransactions = prioritizedTransactions;
-    this.metrics = metrics;
   }
 
   @Override
@@ -103,10 +99,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
     final TransactionAddedResult nonceChecksResult =
         nonceChecks(pendingTransaction, senderNonce, nonceDistance);
     if (nonceChecksResult != null) {
-      metrics.incrementRejected(
-          pendingTransaction.isReceivedFromLocalSource(),
-          nonceChecksResult.maybeInvalidReason().get(),
-          "layertxpool");
       return nonceChecksResult;
     }
 

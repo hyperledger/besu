@@ -37,8 +37,6 @@ public final class TransactionAddedResult {
       new TransactionAddedResult(TransactionInvalidReason.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER);
   public static final TransactionAddedResult LOWER_NONCE_INVALID_TRANSACTION_KNOWN =
       new TransactionAddedResult(TransactionInvalidReason.LOWER_NONCE_INVALID_TRANSACTION_EXISTS);
-  public static final TransactionAddedResult TX_POOL_FULL =
-      new TransactionAddedResult((TransactionInvalidReason.TX_POOL_FULL));
 
   public static final TransactionAddedResult ADDED = new TransactionAddedResult(Status.ADDED);
   public static final TransactionAddedResult TRY_NEXT_LAYER =
@@ -74,7 +72,7 @@ public final class TransactionAddedResult {
   }
 
   public boolean isSuccess() {
-    return !isRejected();
+    return !isRejected() && status != Status.INTERNAL_ERROR;
   }
 
   public boolean isRejected() {

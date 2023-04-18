@@ -94,19 +94,17 @@ public abstract class AbstractIsolationTests {
       GenesisState.fromConfig(GenesisConfigFile.development(), protocolSchedule);
   protected final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
 
-  protected final TransactionPoolConfiguration transactionPoolConfiguration =
+  protected final TransactionPoolConfiguration poolConfiguration =
       ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(100).build();
+
   protected final TransactionPoolReplacementHandler transactionReplacementHandler =
-      new TransactionPoolReplacementHandler(transactionPoolConfiguration.getPriceBump());
+      new TransactionPoolReplacementHandler(poolConfiguration.getPriceBump());
 
   protected final BiFunction<PendingTransaction, PendingTransaction, Boolean>
       transactionReplacementTester =
           (t1, t2) ->
               transactionReplacementHandler.shouldReplace(
                   t1, t2, protocolContext.getBlockchain().getChainHeadHeader());
-
-  protected final TransactionPoolConfiguration poolConfiguration =
-      ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(100).build();
 
   protected TransactionPoolMetrics txPoolMetrics =
       new TransactionPoolMetrics(new NoOpMetricsSystem());
@@ -118,8 +116,7 @@ public abstract class AbstractIsolationTests {
               poolConfiguration,
               new EndLayer(txPoolMetrics),
               txPoolMetrics,
-              transactionReplacementTester),
-          new TransactionPoolMetrics(new NoOpMetricsSystem()));
+              transactionReplacementTester));
 
   protected final List<GenesisAllocation> accounts =
       GenesisConfigFile.development()
