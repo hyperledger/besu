@@ -63,7 +63,6 @@ import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.EvmOptions;
 import org.hyperledger.besu.cli.options.unstable.IpcOptions;
-import org.hyperledger.besu.cli.options.unstable.LauncherOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.MiningOptions;
 import org.hyperledger.besu.cli.options.unstable.NatOptions;
@@ -233,10 +232,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.metrics.MetricsOptions;
-import net.consensys.quorum.mainnet.launcher.LauncherManager;
-import net.consensys.quorum.mainnet.launcher.config.ImmutableLauncherConfig;
-import net.consensys.quorum.mainnet.launcher.exception.LauncherException;
-import net.consensys.quorum.mainnet.launcher.util.ParseArgsHelper;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -286,7 +281,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final NatOptions unstableNatOptions = NatOptions.create();
   private final NativeLibraryOptions unstableNativeLibraryOptions = NativeLibraryOptions.create();
   private final RPCOptions unstableRPCOptions = RPCOptions.create();
-  final LauncherOptions unstableLauncherOptions = LauncherOptions.create();
   private final PrivacyPluginOptions unstablePrivacyPluginOptions = PrivacyPluginOptions.create();
   private final EvmOptions unstableEvmOptions = EvmOptions.create();
   private final IpcOptions unstableIpcOptions = IpcOptions.create();
@@ -1597,7 +1591,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("TransactionPool", unstableTransactionPoolOptions)
             .put("Mining", unstableMiningOptions)
             .put("Native Library", unstableNativeLibraryOptions)
-            .put("Launcher", unstableLauncherOptions)
             .put("EVM Options", unstableEvmOptions)
             .put("IPC Options", unstableIpcOptions)
             .put("Chain Data Pruning Options", unstableChainPruningOptions)
@@ -1660,35 +1653,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new ConfigOptionSearchAndRunHandler(
             resultHandler, besuParameterExceptionHandler, environment);
 
-    ParseArgsHelper.getLauncherOptions(unstableLauncherOptions, args);
-    if (unstableLauncherOptions.isLauncherMode()
-        || unstableLauncherOptions.isLauncherModeForced()) {
-      try {
-        final ImmutableLauncherConfig launcherConfig =
-            ImmutableLauncherConfig.builder()
-                .launcherScript(BesuCommand.class.getResourceAsStream("launcher.json"))
-                .addCommandClasses(this, unstableNatOptions, ethstatsOptions, unstableMiningOptions)
-                .isLauncherForced(unstableLauncherOptions.isLauncherModeForced())
-                .build();
-        final File file = new LauncherManager(launcherConfig).run();
-        logger.info("Config file location : {}", file.getAbsolutePath());
-        return commandLine
-            .setExecutionStrategy(configParsingHandler)
-            .setParameterExceptionHandler(besuParameterExceptionHandler)
-            .setExecutionExceptionHandler(besuExecutionExceptionHandler)
-            .execute(String.format("%s=%s", CONFIG_FILE_OPTION_NAME, file.getAbsolutePath()));
-
-      } catch (final LauncherException e) {
-        logger.warn("Unable to run the launcher {}", e.getMessage());
-        return -1;
-      }
-    } else {
-      return commandLine
-          .setExecutionStrategy(configParsingHandler)
-          .setParameterExceptionHandler(besuParameterExceptionHandler)
-          .setExecutionExceptionHandler(besuExecutionExceptionHandler)
-          .execute(args);
-    }
+    return commandLine
+        .setExecutionStrategy(configParsingHandler)
+        .setParameterExceptionHandler(besuParameterExceptionHandler)
+        .setExecutionExceptionHandler(besuExecutionExceptionHandler)
+        .execute(args);
   }
 
   private void preSynchronization() {
