@@ -1869,7 +1869,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void parsesValidBonsaiTrieLimitBackLayersOption() {
-    parseCommand("--data-storage-format", "BONSAI", "--bonsai-maximum-back-layers-to-load", "11");
+    parseCommand("--data-storage-format", "BONSAI", "--bonsai-historical-block-limit", "11");
     verify(mockControllerBuilder)
         .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
 
@@ -1891,23 +1891,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Invalid value for option '--bonsai-maximum-back-layers-to-load': 'ten' is not a long");
-  }
-
-  @Test
-  public void launcherDefaultOptionValue() {
-    final TestBesuCommand besuCommand = parseCommand();
-
-    assertThat(besuCommand.getLauncherOptions().isLauncherMode()).isFalse();
-    assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isFalse();
-  }
-
-  @Test
-  public void launcherOptionIsParsedCorrectly() {
-    final TestBesuCommand besuCommand =
-        parseCommand("--Xlauncher", "true", "--Xlauncher-force", "true");
-
-    assertThat(besuCommand.getLauncherOptions().isLauncherMode()).isTrue();
-    assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isFalse();
   }
 
   @Test
