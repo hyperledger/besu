@@ -115,7 +115,9 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
 
   @Override
   protected void internalRemove(
-      final NavigableMap<Long, PendingTransaction> senderTxs, final PendingTransaction removedTx) {
+      final NavigableMap<Long, PendingTransaction> senderTxs,
+      final PendingTransaction removedTx,
+      final RemovalReason removalReason) {
     orderByMaxFee.remove(removedTx);
     if (!senderTxs.isEmpty()) {
       orderByMaxFee.add(senderTxs.firstEntry().getValue());

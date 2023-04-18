@@ -44,7 +44,6 @@ public interface TransactionsLayer {
 
   TransactionAddedResult add(PendingTransaction pendingTransaction, int gap);
 
-  // ToDo: find a more efficient way to handle remove and gaps
   void invalidate(PendingTransaction pendingTransaction);
 
   void blockAdded(

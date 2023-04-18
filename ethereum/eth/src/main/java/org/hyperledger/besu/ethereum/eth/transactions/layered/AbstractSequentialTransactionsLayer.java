@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.EVICTED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.FOLLOW_INVALIDATED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.INVALIDATED;
 
@@ -22,7 +23,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.OptionalLong;
@@ -58,14 +58,13 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
 
       // push following to next layer in reverse order so no gaps are created in next sequential
       // layers
-      new ArrayList<>(senderTxs.tailMap(invalidNonce, false).descendingMap().values())
-          .stream()
-              .peek(
-                  txToRemove -> {
-                    senderTxs.remove(txToRemove.getNonce());
-                    processRemove(senderTxs, txToRemove.getTransaction(), FOLLOW_INVALIDATED);
-                  })
-              .forEach(followingTx -> nextLayer.add(followingTx, 1));
+      senderTxs.tailMap(invalidNonce, false).values().stream().toList().stream()
+          .peek(
+              txToRemove -> {
+                senderTxs.remove(txToRemove.getNonce());
+                processRemove(senderTxs, txToRemove.getTransaction(), FOLLOW_INVALIDATED);
+              })
+          .forEach(followingTx -> nextLayer.add(followingTx, 1));
 
       if (senderTxs.isEmpty()) {
         txsBySender.remove(invalidatedTx.getSender());
@@ -90,7 +89,7 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
   @Override
   protected void internalEvict(
       final NavigableMap<Long, PendingTransaction> senderTxs, final PendingTransaction evictedTx) {
-    internalRemove(senderTxs, evictedTx);
+    internalRemove(senderTxs, evictedTx, EVICTED);
   }
 
   @Override

@@ -364,7 +364,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       decreaseSpaceUsed(removedTx);
       metrics.incrementRemoved(
           removedTx.isReceivedFromLocalSource(), removalReason.label(), name());
-      internalRemove(senderTxs, removedTx);
+      internalRemove(senderTxs, removedTx, removalReason);
     }
     return removedTx;
   }
@@ -455,7 +455,8 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
 
   protected abstract void internalRemove(
       final NavigableMap<Long, PendingTransaction> senderTxs,
-      final PendingTransaction pendingTransaction);
+      final PendingTransaction pendingTransaction,
+      final RemovalReason removalReason);
 
   protected abstract PendingTransaction getEvictable();
 
