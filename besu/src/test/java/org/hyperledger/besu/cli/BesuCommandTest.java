@@ -1894,23 +1894,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void launcherDefaultOptionValue() {
-    final TestBesuCommand besuCommand = parseCommand();
-
-    assertThat(besuCommand.getLauncherOptions().isLauncherMode()).isFalse();
-    assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isFalse();
-  }
-
-  @Test
-  public void launcherOptionIsParsedCorrectly() {
-    final TestBesuCommand besuCommand =
-        parseCommand("--Xlauncher", "true", "--Xlauncher-force", "true");
-
-    assertThat(besuCommand.getLauncherOptions().isLauncherMode()).isTrue();
-    assertThat(besuCommand.getEnodeDnsConfiguration().updateEnabled()).isFalse();
-  }
-
-  @Test
   public void dnsEnabledOptionIsParsedCorrectly() {
     final TestBesuCommand besuCommand = parseCommand("--Xdns-enabled", "true");
 
