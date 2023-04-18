@@ -1348,7 +1348,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   /**
    * Besu command constructor.
    *
-   * @param context BesuComponent which acts as our application context
+   * @param besuComponent BesuComponent which acts as our application context
    * @param rlpBlockImporter RlpBlockImporter supplier
    * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
    * @param rlpBlockExporterFactory instance of {@code Function<Blockchain, RlpBlockExporter>}
@@ -1358,7 +1358,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param environment Environment variables map
    */
   public BesuCommand(
-      final BesuComponent context,
+      final BesuComponent besuComponent,
       final Supplier<RlpBlockImporter> rlpBlockImporter,
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -1367,7 +1367,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final BesuPluginContextImpl besuPluginContext,
       final Map<String, String> environment) {
     this(
-        context,
+        besuComponent,
         rlpBlockImporter,
         jsonBlockImporterFactory,
         rlpBlockExporterFactory,
@@ -1386,7 +1386,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   /**
    * Overloaded Besu command constructor visible for testing.
    *
-   * @param context BesuComponent which acts as our application context
+   * @param besuComponent BesuComponent which acts as our application context
    * @param rlpBlockImporter RlpBlockImporter supplier
    * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
    * @param rlpBlockExporterFactory instance of {@code Function<Blockchain, RlpBlockExporter>}
@@ -1403,7 +1403,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   @VisibleForTesting
   protected BesuCommand(
-      final BesuComponent context,
+      final BesuComponent besuComponent,
       final Supplier<RlpBlockImporter> rlpBlockImporter,
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -1417,7 +1417,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final PrivacyPluginServiceImpl privacyPluginService,
       final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl) {
-    this.logger = context.getBesuCommandLogger();
+    this.logger = besuComponent.getBesuCommandLogger();
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
     this.jsonBlockImporterFactory = jsonBlockImporterFactory;
