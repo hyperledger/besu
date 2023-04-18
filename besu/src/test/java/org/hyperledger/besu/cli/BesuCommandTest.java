@@ -96,6 +96,7 @@ import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 import org.hyperledger.besu.util.platform.PlatformDetector;
+import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 
 import java.io.File;
 import java.io.IOException;
@@ -1899,18 +1900,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(dataStorageConfiguration.getBonsaiMaxLayersToLoad()).isEqualTo(11);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void parsesInvalidBonsaiTrieBonsaiHistoricalBlockLimit() {
-
-    parseCommand("--data-storage-format", "BONSAI", "--bonsai-historical-block-limit", "ten");
-
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "Invalid value for option '--bonsai-historical-block-limit': 'ten' is not a long");
   }
 
   @Test
