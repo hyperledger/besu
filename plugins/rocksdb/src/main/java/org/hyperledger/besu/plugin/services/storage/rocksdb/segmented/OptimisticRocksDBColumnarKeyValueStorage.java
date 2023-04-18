@@ -20,7 +20,6 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
-import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageTransactionTransitionValidatorDecorator;
 
 import java.util.List;
@@ -77,14 +76,12 @@ public class OptimisticRocksDBColumnarKeyValueStorage extends RocksDBColumnarKey
    * @throws StorageException the storage exception
    */
   @Override
-  public SegmentedKeyValueStorage.Transaction<RocksDbSegmentIdentifier> startTransaction()
-      throws StorageException {
+  public Transaction<RocksDbSegmentIdentifier> startTransaction() throws StorageException {
     throwIfClosed();
     final WriteOptions writeOptions = new WriteOptions();
     writeOptions.setIgnoreMissingColumnFamilies(true);
     return new SegmentedKeyValueStorageTransactionTransitionValidatorDecorator<>(
-        new RocksDBColumnarKeyValueStorage.RocksDbTransaction(
-            db.beginTransaction(writeOptions), writeOptions));
+        new RocksDbTransaction(db.beginTransaction(writeOptions), writeOptions));
   }
 
   /**
