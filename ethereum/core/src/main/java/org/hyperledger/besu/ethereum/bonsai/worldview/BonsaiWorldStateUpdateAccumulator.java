@@ -22,6 +22,8 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactory;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -68,6 +70,9 @@ public class BonsaiWorldStateUpdateAccumulator
   // alternative was to keep a giant pre-image cache of the entire trie.
   private final Map<Address, StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>>
       storageToUpdate = new ConcurrentHashMap<>();
+
+  // todo plumb me from plugin service:
+  TrieLogFactory<TrieLogLayer> trieLogFactory = new TrieLogFactoryImpl();
 
   private boolean isAccumulatorStateChanged;
 
