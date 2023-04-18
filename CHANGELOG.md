@@ -13,6 +13,7 @@
 - Offload LogBloom cache generation to computation executor, to avoid interfere with other scheduled tasks [#4530](https://github.com/hyperledger/besu/pull/4530)
 - Reference tests are upgraded to use v12.1 of the ethereum tests [#5343](https://github.com/hyperledger/besu/pull/5343)
 - Add new sepolia bootnodes, which should improve peering in the testnet. [#5352](https://github.com/hyperledger/besu/pull/5352)
+- Renamed --bonsai-maximum-back-layers-to-load option to --bonsai-historical-block-limit for clarity. Removed --Xbonsai-use-snapshots option as it is no longer functional [#5337](https://github.com/hyperledger/besu/pull/5337)
 
 ### Bug Fixes
 
