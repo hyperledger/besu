@@ -96,7 +96,6 @@ import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 import org.hyperledger.besu.util.platform.PlatformDetector;
-import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 
 import java.io.File;
 import java.io.IOException;
