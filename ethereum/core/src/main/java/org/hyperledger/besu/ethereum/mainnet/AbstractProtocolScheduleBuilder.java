@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.BlockNumberProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.TimestampProtocolSpec;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -84,7 +86,7 @@ public abstract class AbstractProtocolScheduleBuilder {
                 builders.put(
                     modifierBlock,
                     new BuilderMapEntry(
-                        parent.isTimestampMilestone,
+                        parent.scheduledSpecFactory,
                         modifierBlock,
                         parent.getBuilder(),
                         entry.getValue()));
@@ -98,7 +100,7 @@ public abstract class AbstractProtocolScheduleBuilder {
             e ->
                 addProtocolSpec(
                     protocolSchedule,
-                    e.isTimestampMilestone,
+                    e.scheduledSpecFactory,
                     e.getBlockIdentifier(),
                     e.getBuilder(),
                     e.modifier));
@@ -137,30 +139,27 @@ public abstract class AbstractProtocolScheduleBuilder {
   abstract Stream<Optional<BuilderMapEntry>> createMilestones(
       final MainnetProtocolSpecFactory specFactory);
 
-  protected Optional<BuilderMapEntry> createTimestampMilestone(
+  protected Optional<BuilderMapEntry> timestampMilestone(
       final OptionalLong blockIdentifier, final ProtocolSpecBuilder builder) {
-    return create(blockIdentifier, builder, true);
+    return createMilestone(blockIdentifier, builder, TimestampProtocolSpec::create);
   }
 
-  protected Optional<BuilderMapEntry> create(
+  protected Optional<BuilderMapEntry> blockNumberMilestone(
       final OptionalLong blockIdentifier, final ProtocolSpecBuilder builder) {
-    return create(blockIdentifier, builder, false);
+    return createMilestone(blockIdentifier, builder, BlockNumberProtocolSpec::create);
   }
 
-  private Optional<BuilderMapEntry> create(
+  private Optional<BuilderMapEntry> createMilestone(
       final OptionalLong blockIdentifier,
       final ProtocolSpecBuilder builder,
-      final boolean isTimestampMilestone) {
+      final ScheduledSpecFactory factory) {
     if (blockIdentifier.isEmpty()) {
       return Optional.empty();
     }
     final long blockVal = blockIdentifier.getAsLong();
     return Optional.of(
         new BuilderMapEntry(
-            isTimestampMilestone,
-            blockVal,
-            builder,
-            protocolSpecAdapters.getModifierForBlock(blockVal)));
+            factory, blockVal, builder, protocolSpecAdapters.getModifierForBlock(blockVal)));
   }
 
   protected ProtocolSpec getProtocolSpec(
@@ -178,33 +177,30 @@ public abstract class AbstractProtocolScheduleBuilder {
 
   protected void addProtocolSpec(
       final ProtocolSchedule protocolSchedule,
-      final boolean isTimestampMilestone,
+      final ScheduledSpecFactory factory,
       final long blockNumberOrTimestamp,
       final ProtocolSpecBuilder definition,
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
 
     protocolSchedule.putMilestone(
-        isTimestampMilestone,
-        blockNumberOrTimestamp,
-        getProtocolSpec(protocolSchedule, definition, modifier));
+        factory, blockNumberOrTimestamp, getProtocolSpec(protocolSchedule, definition, modifier));
   }
 
   abstract void postBuildStep(
       final MainnetProtocolSpecFactory specFactory, final TreeMap<Long, BuilderMapEntry> builders);
 
   protected static class BuilderMapEntry {
-
-    private final boolean isTimestampMilestone;
+    private final ScheduledSpecFactory scheduledSpecFactory;
     private final long blockIdentifier;
     private final ProtocolSpecBuilder builder;
     private final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier;
 
     public BuilderMapEntry(
-        final boolean isTimestampMilestone,
+        final ScheduledSpecFactory factory,
         final long blockIdentifier,
         final ProtocolSpecBuilder builder,
         final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
-      this.isTimestampMilestone = isTimestampMilestone;
+      this.scheduledSpecFactory = factory;
       this.blockIdentifier = blockIdentifier;
       this.builder = builder;
       this.modifier = modifier;

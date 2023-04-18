@@ -23,6 +23,7 @@ import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.BlockNumberProtocolSpec;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -75,8 +76,8 @@ public class UnifiedProtocolScheduleTest {
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
 
     final UnifiedProtocolSchedule protocolSchedule = new UnifiedProtocolSchedule(CHAIN_ID);
-    protocolSchedule.putMilestone(false, 0, spec1);
-    protocolSchedule.putMilestone(false, 0, spec2);
+    protocolSchedule.putMilestone(BlockNumberProtocolSpec::create, 0, spec1);
+    protocolSchedule.putMilestone(BlockNumberProtocolSpec::create, 0, spec2);
     assertThat(protocolSchedule.getByBlockHeader(header(0, 1L))).isSameAs(spec2);
   }
 
@@ -87,9 +88,9 @@ public class UnifiedProtocolScheduleTest {
     final ProtocolSpec spec3 = mock(ProtocolSpec.class);
 
     final UnifiedProtocolSchedule protocolSchedule = new UnifiedProtocolSchedule(CHAIN_ID);
-    protocolSchedule.putMilestone(true, 0, spec1);
-    protocolSchedule.putMilestone(true, 10, spec2);
-    protocolSchedule.putMilestone(true, 10, spec3);
+    protocolSchedule.putMilestone(ScheduledProtocolSpec.TimestampProtocolSpec::create, 0, spec1);
+    protocolSchedule.putMilestone(ScheduledProtocolSpec.TimestampProtocolSpec::create, 10, spec2);
+    protocolSchedule.putMilestone(ScheduledProtocolSpec.TimestampProtocolSpec::create, 10, spec3);
     assertThat(protocolSchedule.getByBlockHeader(header(0, 10L))).isSameAs(spec3);
   }
 
@@ -100,9 +101,9 @@ public class UnifiedProtocolScheduleTest {
     final ProtocolSpec spec3 = mock(ProtocolSpec.class);
 
     final UnifiedProtocolSchedule protocolSchedule = new UnifiedProtocolSchedule(CHAIN_ID);
-    protocolSchedule.putMilestone(false, 0, spec1);
-    protocolSchedule.putMilestone(false, 10, spec2);
-    protocolSchedule.putMilestone(true, 10, spec3);
+    protocolSchedule.putMilestone(BlockNumberProtocolSpec::create, 0, spec1);
+    protocolSchedule.putMilestone(BlockNumberProtocolSpec::create, 10, spec2);
+    protocolSchedule.putMilestone(ScheduledProtocolSpec.TimestampProtocolSpec::create, 10, spec3);
     assertThat(protocolSchedule.getByBlockHeader(header(10, 10L))).isSameAs(spec3);
   }
 
@@ -172,8 +173,8 @@ public class UnifiedProtocolScheduleTest {
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
 
     final UnifiedProtocolSchedule protocolSchedule = new UnifiedProtocolSchedule(CHAIN_ID);
-    protocolSchedule.putMilestone(false, 0, spec1);
-    protocolSchedule.putMilestone(false, 10, spec2);
+    protocolSchedule.putMilestone(BlockNumberProtocolSpec::create, 0, spec1);
+    protocolSchedule.putMilestone(BlockNumberProtocolSpec::create, 10, spec2);
 
     final BlockHeader blockHeader =
         new BlockHeaderTestFixture().number(10L).timestamp(1L).buildHeader();
@@ -189,8 +190,8 @@ public class UnifiedProtocolScheduleTest {
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
 
     final UnifiedProtocolSchedule protocolSchedule = new UnifiedProtocolSchedule(CHAIN_ID);
-    protocolSchedule.putMilestone(false, 0, spec1);
-    protocolSchedule.putMilestone(true, 9992, spec2);
+    protocolSchedule.putMilestone(BlockNumberProtocolSpec::create, 0, spec1);
+    protocolSchedule.putMilestone(ScheduledProtocolSpec.TimestampProtocolSpec::create, 9992, spec2);
 
     final BlockHeader blockHeader =
         new BlockHeaderTestFixture().number(1001L).timestamp(9991L).buildHeader();

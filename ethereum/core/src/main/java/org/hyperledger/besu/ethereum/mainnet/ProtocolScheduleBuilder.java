@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.BlockNumberProtocolSpec;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -144,42 +145,49 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
   protected Stream<Optional<BuilderMapEntry>> createMilestones(
       final MainnetProtocolSpecFactory specFactory) {
     return Stream.of(
-        create(OptionalLong.of(0), specFactory.frontierDefinition()),
-        create(config.getHomesteadBlockNumber(), specFactory.homesteadDefinition()),
-        create(config.getTangerineWhistleBlockNumber(), specFactory.tangerineWhistleDefinition()),
-        create(config.getSpuriousDragonBlockNumber(), specFactory.spuriousDragonDefinition()),
-        create(config.getByzantiumBlockNumber(), specFactory.byzantiumDefinition()),
-        create(config.getConstantinopleBlockNumber(), specFactory.constantinopleDefinition()),
-        create(config.getPetersburgBlockNumber(), specFactory.petersburgDefinition()),
-        create(config.getIstanbulBlockNumber(), specFactory.istanbulDefinition()),
-        create(config.getMuirGlacierBlockNumber(), specFactory.muirGlacierDefinition()),
-        create(config.getBerlinBlockNumber(), specFactory.berlinDefinition()),
-        create(config.getLondonBlockNumber(), specFactory.londonDefinition(config)),
-        create(config.getArrowGlacierBlockNumber(), specFactory.arrowGlacierDefinition(config)),
-        create(config.getGrayGlacierBlockNumber(), specFactory.grayGlacierDefinition(config)),
-        create(config.getMergeNetSplitBlockNumber(), specFactory.parisDefinition(config)),
+        blockNumberMilestone(OptionalLong.of(0), specFactory.frontierDefinition()),
+        blockNumberMilestone(config.getHomesteadBlockNumber(), specFactory.homesteadDefinition()),
+        blockNumberMilestone(
+            config.getTangerineWhistleBlockNumber(), specFactory.tangerineWhistleDefinition()),
+        blockNumberMilestone(
+            config.getSpuriousDragonBlockNumber(), specFactory.spuriousDragonDefinition()),
+        blockNumberMilestone(config.getByzantiumBlockNumber(), specFactory.byzantiumDefinition()),
+        blockNumberMilestone(
+            config.getConstantinopleBlockNumber(), specFactory.constantinopleDefinition()),
+        blockNumberMilestone(config.getPetersburgBlockNumber(), specFactory.petersburgDefinition()),
+        blockNumberMilestone(config.getIstanbulBlockNumber(), specFactory.istanbulDefinition()),
+        blockNumberMilestone(
+            config.getMuirGlacierBlockNumber(), specFactory.muirGlacierDefinition()),
+        blockNumberMilestone(config.getBerlinBlockNumber(), specFactory.berlinDefinition()),
+        blockNumberMilestone(config.getLondonBlockNumber(), specFactory.londonDefinition(config)),
+        blockNumberMilestone(
+            config.getArrowGlacierBlockNumber(), specFactory.arrowGlacierDefinition(config)),
+        blockNumberMilestone(
+            config.getGrayGlacierBlockNumber(), specFactory.grayGlacierDefinition(config)),
+        blockNumberMilestone(
+            config.getMergeNetSplitBlockNumber(), specFactory.parisDefinition(config)),
         // Timestamp Forks
-        createTimestampMilestone(config.getShanghaiTime(), specFactory.shanghaiDefinition(config)),
-        createTimestampMilestone(config.getCancunTime(), specFactory.cancunDefinition(config)),
-        createTimestampMilestone(
-            config.getFutureEipsTime(), specFactory.futureEipsDefinition(config)),
-        createTimestampMilestone(
+        timestampMilestone(config.getShanghaiTime(), specFactory.shanghaiDefinition(config)),
+        timestampMilestone(config.getCancunTime(), specFactory.cancunDefinition(config)),
+        timestampMilestone(config.getFutureEipsTime(), specFactory.futureEipsDefinition(config)),
+        timestampMilestone(
             config.getExperimentalEipsTime(), specFactory.experimentalEipsDefinition(config)),
 
         // Classic Milestones
-        create(config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
-        create(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),
-        create(config.getGothamBlockNumber(), specFactory.gothamDefinition()),
-        create(
+        blockNumberMilestone(
+            config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
+        blockNumberMilestone(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),
+        blockNumberMilestone(config.getGothamBlockNumber(), specFactory.gothamDefinition()),
+        blockNumberMilestone(
             config.getDefuseDifficultyBombBlockNumber(),
             specFactory.defuseDifficultyBombDefinition()),
-        create(config.getAtlantisBlockNumber(), specFactory.atlantisDefinition()),
-        create(config.getAghartaBlockNumber(), specFactory.aghartaDefinition()),
-        create(config.getPhoenixBlockNumber(), specFactory.phoenixDefinition()),
-        create(config.getThanosBlockNumber(), specFactory.thanosDefinition()),
-        create(config.getMagnetoBlockNumber(), specFactory.magnetoDefinition()),
-        create(config.getMystiqueBlockNumber(), specFactory.mystiqueDefinition()),
-        create(config.getEcip1049BlockNumber(), specFactory.ecip1049Definition()));
+        blockNumberMilestone(config.getAtlantisBlockNumber(), specFactory.atlantisDefinition()),
+        blockNumberMilestone(config.getAghartaBlockNumber(), specFactory.aghartaDefinition()),
+        blockNumberMilestone(config.getPhoenixBlockNumber(), specFactory.phoenixDefinition()),
+        blockNumberMilestone(config.getThanosBlockNumber(), specFactory.thanosDefinition()),
+        blockNumberMilestone(config.getMagnetoBlockNumber(), specFactory.magnetoDefinition()),
+        blockNumberMilestone(config.getMystiqueBlockNumber(), specFactory.mystiqueDefinition()),
+        blockNumberMilestone(config.getEcip1049BlockNumber(), specFactory.ecip1049Definition()));
   }
 
   @Override
@@ -200,18 +208,19 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
                       previousSpecBuilder.getModifier());
               addProtocolSpec(
                   protocolSchedule,
-                  false,
+                  BlockNumberProtocolSpec::create,
                   daoBlockNumber,
                   specFactory.daoRecoveryInitDefinition(),
                   protocolSpecAdapters.getModifierForBlock(daoBlockNumber));
               addProtocolSpec(
                   protocolSchedule,
-                  false,
+                  BlockNumberProtocolSpec::create,
                   daoBlockNumber + 1L,
                   specFactory.daoRecoveryTransitionDefinition(),
                   protocolSpecAdapters.getModifierForBlock(daoBlockNumber + 1L));
               // Return to the previous protocol spec after the dao fork has completed.
-              protocolSchedule.putMilestone(false, daoBlockNumber + 10, originalProtocolSpec);
+              protocolSchedule.putMilestone(
+                  BlockNumberProtocolSpec::create, daoBlockNumber + 10, originalProtocolSpec);
             });
 
     // specs for classic network
@@ -228,12 +237,13 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
                       previousSpecBuilder.getModifier());
               addProtocolSpec(
                   protocolSchedule,
-                  false,
+                  BlockNumberProtocolSpec::create,
                   classicBlockNumber,
                   ClassicProtocolSpecs.classicRecoveryInitDefinition(
                       config.getContractSizeLimit(), config.getEvmStackSize(), evmConfiguration),
                   Function.identity());
-              protocolSchedule.putMilestone(false, classicBlockNumber + 1, originalProtocolSpec);
+              protocolSchedule.putMilestone(
+                  BlockNumberProtocolSpec::create, classicBlockNumber + 1, originalProtocolSpec);
             });
   }
 }

@@ -54,8 +54,6 @@ public class UnifiedProtocolSchedule implements ProtocolSchedule {
 
   @Override
   public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
-    // TODO SLD to remove once it's been discussed in PR review
-    //    checkArgument(number >= 0, "number must be non-negative");
     checkArgument(
         !protocolSpecs.isEmpty(), "At least 1 milestone must be provided to the protocol schedule");
     checkArgument(
@@ -63,15 +61,9 @@ public class UnifiedProtocolSchedule implements ProtocolSchedule {
 
     // protocolSpecs is sorted in descending block order, so the first one we find that's lower than
     // the requested level will be the most appropriate spec
-    for (final ScheduledProtocolSpec scheduledProtocolSpec : protocolSpecs) {
-      if (scheduledProtocolSpec.isTimestampMilestone()) {
-        if (blockHeader.getTimestamp() >= scheduledProtocolSpec.milestone()) {
-          return scheduledProtocolSpec.spec();
-        }
-      } else {
-        if (blockHeader.getNumber() >= scheduledProtocolSpec.milestone()) {
-          return scheduledProtocolSpec.spec();
-        }
+    for (final ScheduledProtocolSpec spec : protocolSpecs) {
+      if (spec.isOnOrAfterMilestoneBoundary(blockHeader)) {
+        return spec.spec();
       }
     }
     return null;
@@ -98,11 +90,11 @@ public class UnifiedProtocolSchedule implements ProtocolSchedule {
 
   @Override
   public void putMilestone(
-      final boolean isTimestampMilestone, final long milestone, final ProtocolSpec protocolSpec) {
-    final ScheduledProtocolSpec scheduledProtocolSpec =
-        new ScheduledProtocolSpec(isTimestampMilestone, milestone, protocolSpec);
+      final ScheduledSpecFactory factory, final long milestone, final ProtocolSpec protocolSpec) {
+
+    final ScheduledProtocolSpec scheduledProtocolSpec = factory.create(milestone, protocolSpec);
     // Ensure this replaces any existing spec at the same block number.
-    protocolSpecs.remove(scheduledProtocolSpec);
+    protocolSpecs.remove(scheduledProtocolSpec); // TODO SLD will this remove method work now?
     protocolSpecs.add(scheduledProtocolSpec);
   }
 
