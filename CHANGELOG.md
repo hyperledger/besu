@@ -3,8 +3,8 @@
 ## 23.4-RC
 
 ### Breaking Changes
-- Remove IBFT 1.0 feature (deprecated in 23.1.0-beta) [#5302](https://github.com/hyperledger/besu/pull/5302)
-- Remove GoQuorum-compatible privacy feature (deprecated in 23.1.0-beta) [#5303](https://github.com/hyperledger/besu/pull/5303)
+- Remove IBFT 1.0 feature [#5302](https://github.com/hyperledger/besu/pull/5302)
+- Remove GoQuorum-compatible privacy feature [#5303](https://github.com/hyperledger/besu/pull/5303)
 - Remove launcher command line utility [#5355](https://github.com/hyperledger/besu/pull/5355)
 - Remove deprecated `tx-pool-future-max-by-account` option, see instead: `tx-pool-limit-by-account-percentage` [#5361](https://github.com/hyperledger/besu/pull/5361)
 
