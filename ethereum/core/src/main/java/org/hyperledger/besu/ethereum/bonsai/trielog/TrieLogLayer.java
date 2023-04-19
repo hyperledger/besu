@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkState;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
-import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator.StorageSlotKey;
+import org.hyperledger.besu.ethereum.bonsai.worldview.StorageSlotKey;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.util.HashMap;
@@ -105,7 +105,7 @@ public class TrieLogLayer {
     return this;
   }
 
-  public void addStorageChange(
+  public TrieLogLayer addStorageChange(
       final Address address,
       final StorageSlotKey slot,
       final UInt256 oldValue,
@@ -114,6 +114,7 @@ public class TrieLogLayer {
     storage
         .computeIfAbsent(address, a -> new TreeMap<>())
         .put(slot, new BonsaiValue<>(oldValue, newValue));
+    return this;
   }
 
   public Stream<Map.Entry<Address, BonsaiValue<StateTrieAccountValue>>> streamAccountChanges() {
