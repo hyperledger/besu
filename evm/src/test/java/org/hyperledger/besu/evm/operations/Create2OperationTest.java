@@ -32,6 +32,7 @@ import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.Create2Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
@@ -159,7 +160,7 @@ public class Create2OperationTest {
             .depth(1)
             .completer(__ -> {})
             .address(Address.fromHexString(sender))
-            .blockHashLookup(n -> Hash.hash(Bytes.ofUnsignedLong(n)))
+            .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
             .blockValues(mock(BlockValues.class))
             .gasPrice(Wei.ZERO)
             .messageFrameStack(new ArrayDeque<>())
@@ -284,7 +285,7 @@ public class Create2OperationTest {
             .depth(depth)
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
-            .blockHashLookup(n -> Hash.hash(Bytes.ofUnsignedLong(n)))
+            .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
             .blockValues(mock(BlockValues.class))
             .gasPrice(Wei.ZERO)
             .messageFrameStack(messageFrameStack)

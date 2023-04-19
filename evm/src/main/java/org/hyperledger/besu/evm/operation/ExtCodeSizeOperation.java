@@ -63,7 +63,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
       } else {
         final Account account = frame.getWorldUpdater().get(address);
         frame.pushStackItem(
-            account == null ? Bytes.EMPTY : Bytes.ofUnsignedInt(account.getCode().size()));
+            account == null ? Bytes.EMPTY : Words.intBytes(account.getCode().size()));
         return new OperationResult(cost, null);
       }
     } catch (final UnderflowException ufe) {

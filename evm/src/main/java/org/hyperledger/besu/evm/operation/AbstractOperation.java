@@ -24,7 +24,7 @@ import org.apache.tuweni.bytes.Bytes;
  */
 public abstract class AbstractOperation implements Operation {
 
-  static final Bytes BYTES_ONE = Bytes.ofUnsignedInt(1L);
+  static final Bytes BYTES_ONE = Bytes.of(1);
   static final Bytes SUCCESS_STACK_ITEM = BYTES_ONE;
   static final Bytes FAILURE_STACK_ITEM = Bytes.EMPTY;
 
