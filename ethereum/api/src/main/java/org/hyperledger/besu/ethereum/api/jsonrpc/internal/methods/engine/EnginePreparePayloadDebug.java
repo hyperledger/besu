@@ -15,8 +15,11 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static java.util.stream.Collectors.toList;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
+import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -33,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import java.util.List;
 import java.util.Optional;
 
+import graphql.VisibleForTesting;
 import io.vertx.core.Vertx;
 
 public class EnginePreparePayloadDebug extends ExecutionEngineJsonRpcMethod {
@@ -57,32 +61,36 @@ public class EnginePreparePayloadDebug extends ExecutionEngineJsonRpcMethod {
     final EnginePreparePayloadParameter enginePreparePayloadParameter =
         requestContext.getRequiredParameter(0, EnginePreparePayloadParameter.class);
 
-    // TODO: respond with error if we're syncing
-    final List<Withdrawal> withdrawals =
-        enginePreparePayloadParameter.getWithdrawals().stream()
-            .map(WithdrawalParameter::toWithdrawal)
-            .collect(toList());
+    final var requestId = requestContext.getRequest().getId();
 
-    return enginePreparePayloadParameter
+    if (mergeContext.get().isSyncing()) {
+      return new JsonRpcSuccessResponse(requestId, new EnginePreparePayloadResult(SYNCING, null));
+    }
+
+    return generatePayload(enginePreparePayloadParameter)
+        .<JsonRpcResponse>map(
+            payloadIdentifier ->
+                new JsonRpcSuccessResponse(
+                    requestId, new EnginePreparePayloadResult(VALID, payloadIdentifier)))
+        .orElseGet(() -> new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_PARAMS));
+  }
+
+  @VisibleForTesting
+  Optional<PayloadIdentifier> generatePayload(final EnginePreparePayloadParameter param) {
+    final List<Withdrawal> withdrawals =
+        param.getWithdrawals().stream().map(WithdrawalParameter::toWithdrawal).collect(toList());
+
+    return param
         .getParentHash()
         .map(header -> protocolContext.getBlockchain().getBlockHeader(header))
         .orElseGet(() -> Optional.of(protocolContext.getBlockchain().getChainHeadHeader()))
-        .<JsonRpcResponse>map(
+        .map(
             parentHeader ->
-                new JsonRpcSuccessResponse(
-                    requestContext.getRequest().getId(),
-                    new EnginePreparePayloadResult(
-                        mergeCoordinator.preparePayload(
-                            parentHeader,
-                            enginePreparePayloadParameter
-                                .getTimestamp()
-                                .orElse(parentHeader.getTimestamp() + 1L),
-                            enginePreparePayloadParameter.getPrevRandao(),
-                            enginePreparePayloadParameter.getFeeRecipient(),
-                            Optional.of(withdrawals)))))
-        .orElseGet(
-            () ->
-                new JsonRpcErrorResponse(
-                    requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS));
+                mergeCoordinator.preparePayload(
+                    parentHeader,
+                    param.getTimestamp().orElse(parentHeader.getTimestamp() + 1L),
+                    param.getPrevRandao(),
+                    param.getFeeRecipient(),
+                    Optional.of(withdrawals)));
   }
 }

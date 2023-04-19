@@ -15,20 +15,30 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus;
+
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({"payloadId"})
+@JsonPropertyOrder({"status", "payloadId"})
 public class EnginePreparePayloadResult {
+  private final EngineStatus status;
   private final PayloadIdentifier payloadId;
 
-  public EnginePreparePayloadResult(final PayloadIdentifier payloadId) {
+  public EnginePreparePayloadResult(final EngineStatus status, final PayloadIdentifier payloadId) {
+    this.status = status;
     this.payloadId = payloadId;
   }
 
+  @JsonGetter(value = "status")
+  public String getStatus() {
+    return status.name();
+  }
+
   @JsonGetter(value = "payloadId")
-  public String getNumber() {
-    return payloadId.toShortHexString();
+  public String getPayloadId() {
+    return Optional.ofNullable(payloadId).map(PayloadIdentifier::toShortHexString).orElse("");
   }
 }
