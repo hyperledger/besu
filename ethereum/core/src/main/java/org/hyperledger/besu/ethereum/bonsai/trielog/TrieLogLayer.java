@@ -98,10 +98,7 @@ public class TrieLogLayer {
   public TrieLogLayer addCodeChange(
       final Address address, final Bytes oldValue, final Bytes newValue, final Hash blockHash) {
     checkState(!frozen, "Layer is Frozen");
-    code.put(
-        address,
-        new BonsaiValue<>(
-            oldValue == null ? Bytes.EMPTY : oldValue, newValue == null ? Bytes.EMPTY : newValue));
+    code.put(address, new BonsaiValue<>(oldValue, newValue, newValue == null));
     return this;
   }
 
