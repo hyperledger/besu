@@ -91,12 +91,13 @@ public class PrivCall extends AbstractBlockParameterMethod {
   private JsonRpcError errorResponse(
       final TransactionProcessingResult result, final TransactionInvalidReason reason) {
     final JsonRpcError jsonRpcError;
-    if (result.getRevertReason().isPresent()) {
+    if (result.getRevertReason().isPresent() && result.getRevertReason().get().size() >= 4) {
       jsonRpcError = JsonRpcError.REVERT_ERROR;
       jsonRpcError.setData(result.getRevertReason().get().toHexString());
     } else {
       jsonRpcError = JsonRpcErrorConverter.convertTransactionInvalidReason(reason);
     }
+
     return jsonRpcError;
   }
 
