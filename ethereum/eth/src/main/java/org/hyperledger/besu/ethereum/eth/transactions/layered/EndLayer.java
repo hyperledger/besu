@@ -34,6 +34,8 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Predicate;
 
+import kotlin.ranges.LongRange;
+
 public class EndLayer implements TransactionsLayer {
 
   private final TransactionPoolMetrics metrics;
@@ -90,7 +92,8 @@ public class EndLayer implements TransactionsLayer {
   public void blockAdded(
       final FeeMarket feeMarket,
       final BlockHeader blockHeader,
-      final Map<Address, Long> maxConfirmedNonceBySender) {}
+      final Map<Address, Long> maxConfirmedNonceBySender,
+      final Map<Address, LongRange> reorgNonceRangeBySender) {}
 
   @Override
   public List<Transaction> getAllLocal() {

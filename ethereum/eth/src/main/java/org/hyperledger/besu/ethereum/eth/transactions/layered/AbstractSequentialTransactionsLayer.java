@@ -30,6 +30,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.BiFunction;
 
+import kotlin.ranges.LongRange;
+
 public abstract class AbstractSequentialTransactionsLayer extends AbstractTransactionsLayer {
 
   public AbstractSequentialTransactionsLayer(
@@ -58,18 +60,25 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
 
       // push following to next layer in reverse order so no gaps are created in next sequential
       // layers
-      senderTxs.tailMap(invalidNonce, false).values().stream().toList().stream()
-          .peek(
-              txToRemove -> {
-                senderTxs.remove(txToRemove.getNonce());
-                processRemove(senderTxs, txToRemove.getTransaction(), FOLLOW_INVALIDATED);
-              })
-          .forEach(followingTx -> nextLayer.add(followingTx, 1));
+      pushDown(senderTxs, invalidNonce, 1);
 
       if (senderTxs.isEmpty()) {
         txsBySender.remove(invalidatedTx.getSender());
       }
     }
+  }
+
+  private void pushDown(
+      final NavigableMap<Long, PendingTransaction> senderTxs,
+      final long afterNonce,
+      final int gap) {
+    senderTxs.tailMap(afterNonce, false).values().stream().toList().stream()
+        .peek(
+            txToRemove -> {
+              senderTxs.remove(txToRemove.getNonce());
+              processRemove(senderTxs, txToRemove.getTransaction(), FOLLOW_INVALIDATED);
+            })
+        .forEach(followingTx -> nextLayer.add(followingTx, gap));
   }
 
   @Override
@@ -109,6 +118,24 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
       final NavigableMap<Long, PendingTransaction> senderTxs,
       final PendingTransaction pendingTransaction) {
     // no-op
+  }
+
+  @Override
+  protected void reorg(final Address sender, final LongRange reorgNonceRange) {
+    // a reorg could create gaps at the beginning of the tx list since the
+    // sender nonce goes back, if this is the case, move the current sequential
+    // txs in sparse
+    final var senderTxs = txsBySender.get(sender);
+    if (senderTxs != null) {
+      final long currFirstNonce = senderTxs.firstKey();
+      final long maxReorgNonce = reorgNonceRange.getEndInclusive();
+      if (currFirstNonce > maxReorgNonce + 1) {
+        // the reorg created an initial gap
+        pushDown(senderTxs, maxReorgNonce, (int) (currFirstNonce - reorgNonceRange.getStart()));
+      }
+
+      txsBySender.remove(sender);
+    }
   }
 
   @Override

@@ -1042,7 +1042,8 @@ public class LayersTest extends BaseTransactionPoolTest {
       }
       actions.add(
           (prio, ready, sparse, dropped) ->
-              prio.blockAdded(FeeMarket.london(0L), mockBlockHeader(), maxConfirmedNonceBySender));
+              prio.blockAdded(
+                  FeeMarket.london(0L), mockBlockHeader(), maxConfirmedNonceBySender, Map.of()));
       return this;
     }
 

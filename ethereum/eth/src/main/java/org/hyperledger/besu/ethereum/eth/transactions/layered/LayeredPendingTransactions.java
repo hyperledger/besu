@@ -44,8 +44,10 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import kotlin.ranges.LongRange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,6 +118,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
           throwable,
           pendingTransaction.toTraceLog(),
           prioritizedTransactions.logSender(pendingTransaction.getSender()));
+      LOG.warn("Stack trace", throwable);
       if (LOG.isTraceEnabled()) {
         LOG.trace("Starting consistency check");
         prioritizedTransactions.consistencyCheck(new HashMap<>());
@@ -327,33 +330,63 @@ public class LayeredPendingTransactions implements PendingTransactions {
   public synchronized void manageBlockAdded(
       final BlockHeader blockHeader,
       final List<Transaction> confirmedTransactions,
+      final List<Transaction> reorgTransactions,
       final FeeMarket feeMarket) {
     LOG.atDebug()
         .setMessage("Managing new added block {}")
         .addArgument(blockHeader::toLogString)
         .log();
 
-    final var maxConfirmedNonceBySender = maxConfirmedNonceBySender(confirmedTransactions);
+    final var maxConfirmedNonceBySender = maxNonceBySender(confirmedTransactions);
 
-    prioritizedTransactions.blockAdded(feeMarket, blockHeader, maxConfirmedNonceBySender);
+    final var reorgNonceRangeBySender = nonceRangeBySender(reorgTransactions);
 
-    logBlockHeaderForReplay(blockHeader, maxConfirmedNonceBySender);
+    try {
+      prioritizedTransactions.blockAdded(
+          feeMarket, blockHeader, maxConfirmedNonceBySender, reorgNonceRangeBySender);
+    } catch (final Throwable throwable) {
+      LOG.warn(
+          "Unexpected error {} when adding managing added block {}, maxNonceBySender {}, reorgNonceRangeBySender {}",
+          throwable,
+          blockHeader.toLogString(),
+          maxConfirmedNonceBySender,
+          reorgTransactions);
+      LOG.warn("Stack trace", throwable);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Starting consistency check");
+        prioritizedTransactions.consistencyCheck(new HashMap<>());
+        LOG.trace("Consistency check done");
+      }
+    }
 
-    assert prioritizedTransactions.consistencyCheck(new HashMap<>());
+    logBlockHeaderForReplay(blockHeader, maxConfirmedNonceBySender, reorgNonceRangeBySender);
   }
 
   private void logBlockHeaderForReplay(
-      final BlockHeader blockHeader, final Map<Address, Long> maxConfirmedNonceBySender) {
+      final BlockHeader blockHeader,
+      final Map<Address, Long> maxConfirmedNonceBySender,
+      final Map<Address, LongRange> reorgNonceRangeBySender) {
     // block number, block hash, sender, max nonce ..., rlp
     LOG_FOR_REPLAY
         .atTrace()
-        .setMessage("B,{},{},{},{}")
+        .setMessage("B,{},{},{},R,{},{}")
         .addArgument(blockHeader.getNumber())
         .addArgument(blockHeader.getBlockHash())
         .addArgument(
             () ->
                 maxConfirmedNonceBySender.entrySet().stream()
                     .map(e -> e.getKey().toHexString() + "," + e.getValue())
+                    .collect(Collectors.joining(",")))
+        .addArgument(
+            () ->
+                reorgNonceRangeBySender.entrySet().stream()
+                    .map(
+                        e ->
+                            e.getKey().toHexString()
+                                + ","
+                                + e.getValue().getStart()
+                                + ","
+                                + e.getValue().getEndInclusive())
                     .collect(Collectors.joining(",")))
         .addArgument(
             () -> {
@@ -364,12 +397,51 @@ public class LayeredPendingTransactions implements PendingTransactions {
         .log();
   }
 
-  private Map<Address, Long> maxConfirmedNonceBySender(
-      final List<Transaction> confirmedTransactions) {
+  private Map<Address, Long> maxNonceBySender(final List<Transaction> confirmedTransactions) {
     return confirmedTransactions.stream()
         .collect(
             groupingBy(
                 Transaction::getSender, mapping(Transaction::getNonce, reducing(0L, Math::max))));
+  }
+
+  private Map<Address, LongRange> nonceRangeBySender(
+      final List<Transaction> confirmedTransactions) {
+
+    class MutableLongRange {
+      long start = Long.MAX_VALUE;
+      long end = 0;
+
+      void update(final long nonce) {
+        if (nonce < start) {
+          start = nonce;
+        }
+        if (nonce > end) {
+          end = nonce;
+        }
+      }
+
+      MutableLongRange combine(final MutableLongRange other) {
+        update(other.start);
+        update(other.end);
+        return this;
+      }
+
+      LongRange toImmutable() {
+        return new LongRange(start, end);
+      }
+    }
+
+    return confirmedTransactions.stream()
+        .collect(
+            groupingBy(
+                Transaction::getSender,
+                mapping(
+                    Transaction::getNonce,
+                    Collector.of(
+                        MutableLongRange::new,
+                        MutableLongRange::update,
+                        MutableLongRange::combine,
+                        MutableLongRange::toImmutable))));
   }
 
   @Override

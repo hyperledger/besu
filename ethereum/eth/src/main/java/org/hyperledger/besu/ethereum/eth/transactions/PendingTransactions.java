@@ -63,7 +63,10 @@ public interface PendingTransactions {
   OptionalLong getNextNonceForSender(Address sender);
 
   void manageBlockAdded(
-      BlockHeader blockHeader, List<Transaction> confirmedTransactions, FeeMarket feeMarket);
+      BlockHeader blockHeader,
+      List<Transaction> confirmedTransactions,
+      final List<Transaction> reorgTransactions,
+      FeeMarket feeMarket);
 
   String toTraceLog();
 

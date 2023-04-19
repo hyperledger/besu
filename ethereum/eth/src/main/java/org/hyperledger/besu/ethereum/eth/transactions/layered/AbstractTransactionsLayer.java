@@ -52,6 +52,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import kotlin.ranges.LongRange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -388,16 +389,21 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   public final void blockAdded(
       final FeeMarket feeMarket,
       final BlockHeader blockHeader,
-      final Map<Address, Long> maxConfirmedNonceBySender) {
+      final Map<Address, Long> maxConfirmedNonceBySender,
+      final Map<Address, LongRange> reorgNonceRangeBySender) {
     LOG.atDebug()
         .setMessage("Managing new added block {}")
         .addArgument(blockHeader::toLogString)
         .log();
 
-    nextLayer.blockAdded(feeMarket, blockHeader, maxConfirmedNonceBySender);
+    nextLayer.blockAdded(
+        feeMarket, blockHeader, maxConfirmedNonceBySender, reorgNonceRangeBySender);
     maxConfirmedNonceBySender.forEach(this::confirmed);
+    reorgNonceRangeBySender.forEach(this::reorg);
     internalBlockAdded(blockHeader, feeMarket);
   }
+
+  protected abstract void reorg(final Address sender, final LongRange reorgNonceRange);
 
   protected abstract void internalBlockAdded(
       final BlockHeader blockHeader, final FeeMarket feeMarket);

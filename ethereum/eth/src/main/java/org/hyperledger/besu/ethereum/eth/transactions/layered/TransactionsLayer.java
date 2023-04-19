@@ -30,6 +30,8 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Predicate;
 
+import kotlin.ranges.LongRange;
+
 public interface TransactionsLayer {
 
   String name();
@@ -49,7 +51,8 @@ public interface TransactionsLayer {
   void blockAdded(
       FeeMarket feeMarket,
       BlockHeader blockHeader,
-      final Map<Address, Long> maxConfirmedNonceBySender);
+      final Map<Address, Long> maxConfirmedNonceBySender,
+      final Map<Address, LongRange> reorgNonceRangeBySender);
 
   List<Transaction> getAllLocal();
 

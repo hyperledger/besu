@@ -215,6 +215,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
   public void manageBlockAdded(
       final BlockHeader blockHeader,
       final List<Transaction> confirmedTransactions,
+      final List<Transaction> reorgTransactions,
       final FeeMarket feeMarket) {
     synchronized (lock) {
       confirmedTransactions.forEach(this::transactionAddedToBlock);

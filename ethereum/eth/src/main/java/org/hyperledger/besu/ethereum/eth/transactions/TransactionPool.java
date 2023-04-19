@@ -266,6 +266,7 @@ public class TransactionPool implements BlockAddedObserver {
         pendingTransactions.manageBlockAdded(
             event.getBlock().getHeader(),
             event.getAddedTransactions(),
+            event.getRemovedTransactions(),
             protocolSchedule.getByBlockHeader(event.getBlock().getHeader()).getFeeMarket());
         reAddTransactions(event.getRemovedTransactions());
       }

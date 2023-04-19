@@ -44,6 +44,8 @@ import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import kotlin.ranges.LongRange;
+
 public class SparseTransactions extends AbstractTransactionsLayer {
   //  private static final Logger LOG = LoggerFactory.getLogger(SparseTransactions.class);
   private final NavigableSet<PendingTransaction> sparseEvictionOrder =
@@ -284,6 +286,16 @@ public class SparseTransactions extends AbstractTransactionsLayer {
       if (newGap < currGap) {
         updateGap(sender, currGap, newGap);
       }
+    }
+  }
+
+  @Override
+  protected void reorg(final Address sender, final LongRange reorgNonceRange) {
+    // in case of a reorg the sender nonce goes back, so the gap can increase
+    final var senderTxs = txsBySender.get(sender);
+    if (senderTxs != null) {
+      final int newGap = (int) (senderTxs.firstKey() - reorgNonceRange.getStart());
+      updateGap(sender, gapBySender.get(sender), newGap);
     }
   }
 
