@@ -116,7 +116,7 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
   }
 
   @Test
-  public void mustRevertwithRevertReason() throws Exception {
+  public void mustRevertWithRevertReason() throws Exception {
 
     final String privacyGroupId =
         minerNode.execute(createPrivacyGroup("myGroupName", "my group description", minerNode));
@@ -200,7 +200,7 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
         privCall(privacyGroupId, eventEmitter, true, false, false);
 
     final String errorMessage = priv_call.send().getError().getMessage();
-    assertThat(errorMessage).isEqualTo("Invalid params");
+    assertThat(errorMessage).isEqualTo("Execution reverted");
   }
 
   @Test
