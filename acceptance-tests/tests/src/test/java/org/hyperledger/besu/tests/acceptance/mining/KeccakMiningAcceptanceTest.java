@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.tests.acceptance.mining;
 
-import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
+
+import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -29,12 +30,32 @@ public class KeccakMiningAcceptanceTest extends AcceptanceTestBase {
 
   @Before
   public void setUp() throws Exception {
+    String genesisFile =
+        """
+        {
+          "config": {
+            "ecip1049Block": 0,
+            "keccak256": {
+              "fixeddifficulty": 10000
+            }
+          },
+          "gasLimit": "0x1fffffffffffff",
+          "difficulty": "0x1000000",
+          "alloc": {
+            "fe3b557e8fb62b89f4916b721be55ceb828dbd73": {
+              "privateKey": "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+              "comment": "private key and this comment are ignored.  In a real chain, the private key should NOT be stored",
+              "balance": "0xad78ebc5ac6200000"
+            }
+          }
+        }
+        """;
     minerNode =
         besu.create(
             new BesuNodeConfigurationBuilder()
                 .name("miner1")
                 .devMode(false)
-                .network(NetworkName.ECIP1049_DEV)
+                .genesisConfigProvider((a) -> Optional.of(genesisFile))
                 .miningEnabled()
                 .jsonRpcEnabled()
                 .webSocketEnabled()

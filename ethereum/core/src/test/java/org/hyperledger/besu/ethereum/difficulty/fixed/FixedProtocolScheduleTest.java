@@ -61,10 +61,20 @@ public class FixedProtocolScheduleTest {
 
   @Test
   public void reportedDifficultyForAllBlocksIsAFixedValueKeccak() {
+    String genesisFile =
+        """
+        {
+          "config": {
+            "keccak256": {
+              "fixeddifficulty": 10000
+            }
+          }
+        }
+        """;
 
     final ProtocolSchedule schedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.ecip1049dev().getConfigOptions(), EvmConfiguration.DEFAULT);
+            GenesisConfigFile.fromConfig(genesisFile).getConfigOptions(), EvmConfiguration.DEFAULT);
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 
