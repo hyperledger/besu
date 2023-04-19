@@ -59,7 +59,8 @@ public class TrieLogManagerTests {
   @Before
   public void setup() {
     trieLogManager =
-        new CachedWorldStorageManager(archive, blockchain, bonsaiWorldStateKeyValueStorage, new NoOpMetricsSystem(), 512);
+        new CachedWorldStorageManager(
+            archive, blockchain, bonsaiWorldStateKeyValueStorage, new NoOpMetricsSystem(), 512);
   }
 
   @Test
