@@ -59,49 +59,6 @@ public class FixedProtocolScheduleTest {
         .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
   }
 
-  @Test
-  public void reportedDifficultyForAllBlocksIsAFixedValueKeccak() {
-    String genesisFile =
-        """
-        {
-          "config": {
-            "keccak256": {
-              "fixeddifficulty": 10000
-            }
-          }
-        }
-        """;
-
-    final ProtocolSchedule schedule =
-        FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.fromConfig(genesisFile).getConfigOptions(), EvmConfiguration.DEFAULT);
-
-    final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
-
-    final BlockHeader parentHeader = headerBuilder.number(1).buildHeader();
-
-    assertThat(
-            schedule
-                .getByBlockHeader(blockHeader(0))
-                .getDifficultyCalculator()
-                .nextDifficulty(1, parentHeader, null))
-        .isEqualTo(10000);
-
-    assertThat(
-            schedule
-                .getByBlockHeader(blockHeader(500))
-                .getDifficultyCalculator()
-                .nextDifficulty(1, parentHeader, null))
-        .isEqualTo(10000);
-
-    assertThat(
-            schedule
-                .getByBlockHeader(blockHeader(500_000))
-                .getDifficultyCalculator()
-                .nextDifficulty(1, parentHeader, null))
-        .isEqualTo(10000);
-  }
-
   private BlockHeader blockHeader(final long number) {
     return new BlockHeaderTestFixture().number(number).buildHeader();
   }

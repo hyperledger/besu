@@ -96,11 +96,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   @Override
-  public boolean isKeccak256() {
-    return false;
-  }
-
-  @Override
   public boolean isIbftLegacy() {
     return false;
   }
@@ -148,11 +143,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   @Override
   public EthashConfigOptions getEthashConfigOptions() {
     return EthashConfigOptions.DEFAULT;
-  }
-
-  @Override
-  public Keccak256ConfigOptions getKeccak256ConfigOptions() {
-    return Keccak256ConfigOptions.DEFAULT;
   }
 
   @Override
@@ -387,9 +377,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
     if (isEthHash()) {
       builder.put("ethash", getEthashConfigOptions().asMap());
     }
-    if (isKeccak256()) {
-      builder.put("keccak256", getKeccak256ConfigOptions().asMap());
-    }
     if (isIbft2()) {
       builder.put("ibft2", getBftConfigOptions().asMap());
     }
@@ -413,9 +400,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
 
   @Override
   public PowAlgorithm getPowAlgorithm() {
-    return isEthHash()
-        ? PowAlgorithm.ETHASH
-        : isKeccak256() ? PowAlgorithm.KECCAK256 : PowAlgorithm.UNSUPPORTED;
+    return isEthHash() ? PowAlgorithm.ETHASH : PowAlgorithm.UNSUPPORTED;
   }
 
   @Override

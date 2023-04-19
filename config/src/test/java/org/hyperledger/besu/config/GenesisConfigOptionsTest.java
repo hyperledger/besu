@@ -37,22 +37,9 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
-  public void shouldUseKeccak256WhenKeccak256InConfig() {
-    final GenesisConfigOptions config = fromConfigOptions(singletonMap("keccak256", emptyMap()));
-    assertThat(config.isKeccak256()).isTrue();
-    assertThat(config.getConsensusEngine()).isEqualTo("keccak256");
-  }
-
-  @Test
   public void shouldNotUseEthHashIfEthHashNotPresent() {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.isEthHash()).isFalse();
-  }
-
-  @Test
-  public void shouldNotUseKeccak256IfEthHashNotPresent() {
-    final GenesisConfigOptions config = fromConfigOptions(emptyMap());
-    assertThat(config.isKeccak256()).isFalse();
   }
 
   @Test

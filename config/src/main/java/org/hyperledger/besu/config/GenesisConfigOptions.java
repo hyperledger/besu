@@ -37,13 +37,6 @@ public interface GenesisConfigOptions {
   boolean isEthHash();
 
   /**
-   * Is keccak 256 boolean.
-   *
-   * @return the boolean
-   */
-  boolean isKeccak256();
-
-  /**
    * Is ibft legacy boolean (NOTE this is a deprecated feature).
    *
    * @return the boolean
@@ -128,13 +121,6 @@ public interface GenesisConfigOptions {
    * @return the ethash config options
    */
   EthashConfigOptions getEthashConfigOptions();
-
-  /**
-   * Gets keccak 256 config options.
-   *
-   * @return the keccak 256 config options
-   */
-  Keccak256ConfigOptions getKeccak256ConfigOptions();
 
   /**
    * Gets homestead block number.
