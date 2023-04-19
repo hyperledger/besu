@@ -45,8 +45,8 @@ public class EnginePreparePayloadDebugTest {
   public void setUp() {
     when(protocolContext.safeConsensusContext(MergeContext.class))
         .thenReturn(Optional.of(mergeContext));
-    when(requestContext.getRequiredParameter(0, EnginePreparePayloadParameter.class))
-        .thenReturn(param);
+    when(requestContext.getOptionalParameter(0, EnginePreparePayloadParameter.class))
+        .thenReturn(Optional.of(param));
     method =
         spy(
             new EnginePreparePayloadDebug(
@@ -66,6 +66,17 @@ public class EnginePreparePayloadDebugTest {
 
   @Test
   public void shouldReturnPayloadId() {
+    checkForPayloadId();
+  }
+
+  @Test
+  public void shouldReturnPayloadIdWhenNoParams() {
+    when(requestContext.getOptionalParameter(0, EnginePreparePayloadParameter.class))
+        .thenReturn(Optional.empty());
+    checkForPayloadId();
+  }
+
+  private void checkForPayloadId() {
     doAnswer(__ -> Optional.of(new PayloadIdentifier(0xdeadbeefL)))
         .when(method)
         .generatePayload(any());

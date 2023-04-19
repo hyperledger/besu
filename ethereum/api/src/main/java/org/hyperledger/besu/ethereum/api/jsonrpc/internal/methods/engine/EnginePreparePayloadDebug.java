@@ -59,7 +59,15 @@ public class EnginePreparePayloadDebug extends ExecutionEngineJsonRpcMethod {
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
     final EnginePreparePayloadParameter enginePreparePayloadParameter =
-        requestContext.getRequiredParameter(0, EnginePreparePayloadParameter.class);
+        requestContext
+            .getOptionalParameter(0, EnginePreparePayloadParameter.class)
+            .orElse(
+                new EnginePreparePayloadParameter(
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty()));
 
     final var requestId = requestContext.getRequest().getId();
 

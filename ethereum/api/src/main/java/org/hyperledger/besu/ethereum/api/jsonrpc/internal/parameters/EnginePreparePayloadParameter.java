@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,15 +35,15 @@ public class EnginePreparePayloadParameter {
   @JsonCreator
   public EnginePreparePayloadParameter(
       @JsonProperty("parentHash") final Optional<Hash> parentHash,
-      @JsonProperty("feeRecipient") final Address feeRecipient,
+      @JsonProperty("feeRecipient") final Optional<Address> feeRecipient,
       @JsonProperty("timestamp") final Optional<UnsignedLongParameter> timestamp,
-      @JsonProperty("prevRandao") final String prevRandao,
-      @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals) {
+      @JsonProperty("prevRandao") final Optional<String> prevRandao,
+      @JsonProperty("withdrawals") final Optional<List<WithdrawalParameter>> withdrawals) {
     this.parentHash = parentHash;
-    this.feeRecipient = feeRecipient;
+    this.feeRecipient = feeRecipient.orElse(Address.ZERO);
     this.timestamp = timestamp.map(UnsignedLongParameter::getValue);
-    this.prevRandao = Bytes32.fromHexStringLenient(prevRandao);
-    this.withdrawals = withdrawals;
+    this.prevRandao = Bytes32.fromHexStringLenient(prevRandao.orElse("deadbeef"));
+    this.withdrawals = withdrawals.orElse(Collections.emptyList());
   }
 
   public Optional<Hash> getParentHash() {
