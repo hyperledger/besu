@@ -272,7 +272,7 @@ public abstract class RocksDBColumnarKeyValueStorage
   @Override
   public Stream<Pair<byte[], byte[]>> streamFromKey(
       final RocksDbSegmentIdentifier segmentHandle, final byte[] startKey) {
-    final RocksIterator rocksIterator = db.newIterator(segmentHandle.get());
+    final RocksIterator rocksIterator = getDB().newIterator(segmentHandle.get());
     rocksIterator.seek(startKey);
     return RocksDbIterator.create(rocksIterator).toStream();
   }
