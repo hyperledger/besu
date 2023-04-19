@@ -197,10 +197,12 @@ public class ReplayTest {
         BlockHeader.readFrom(rlpInput, new MainnetBlockHeaderFunctions());
 
     final Map<Address, Long> maxNonceBySender = new HashMap<>();
-    for (int i = 3; i < commaSplit.length - 1; i += 2) {
-      final Address sender = Address.fromHexString(commaSplit[i]);
-      final long nonce = Long.parseLong(commaSplit[i + 1]);
-      maxNonceBySender.put(sender, nonce);
+    if(!commaSplit[3].equals("")) {
+      for (int i = 3; i < commaSplit.length - 1; i += 2) {
+        final Address sender = Address.fromHexString(commaSplit[i]);
+        final long nonce = Long.parseLong(commaSplit[i + 1]);
+        maxNonceBySender.put(sender, nonce);
+      }
     }
 
     prioritizedTransactions.blockAdded(feeMarket, blockHeader, maxNonceBySender);
