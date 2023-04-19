@@ -80,7 +80,6 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                         ProtocolSpecAdapters.create(0, Function.identity()),
                         PrivacyParameters.DEFAULT,
                         false,
-                        genesisConfigOptions.isQuorum(),
                         EvmConfiguration.DEFAULT)
                     .createProtocolSchedule())
             .build();
@@ -142,7 +141,6 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                         ProtocolSpecAdapters.create(0, Function.identity()),
                         PrivacyParameters.DEFAULT,
                         false,
-                        genesisConfigOptions.isQuorum(),
                         EvmConfiguration.DEFAULT)
                     .createProtocolSchedule())
             .build();
@@ -194,7 +192,6 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                 ProtocolSpecAdapters.create(0, Function.identity()),
                 PrivacyParameters.DEFAULT,
                 false,
-                genesisConfigOptions.isQuorum(),
                 EvmConfiguration.DEFAULT)
             .createProtocolSchedule();
     final ExecutionContextTestFixture executionContextTestFixture =
@@ -269,7 +266,6 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
                 ProtocolSpecAdapters.create(0, Function.identity()),
                 PrivacyParameters.DEFAULT,
                 false,
-                genesisConfigOptions.isQuorum(),
                 EvmConfiguration.DEFAULT)
             .createProtocolSchedule();
     final ExecutionContextTestFixture executionContextTestFixture =

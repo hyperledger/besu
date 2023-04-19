@@ -49,7 +49,8 @@ final class HandshakeHandlerInbound extends AbstractHandshakeHandler {
         connectionEventDispatcher,
         metricsSystem,
         handshakerProvider,
-        framerProvider);
+        framerProvider,
+        true);
     handshaker.prepareResponder(nodeKey);
   }
 

@@ -17,8 +17,12 @@ package org.hyperledger.besu.consensus.merge.blockcreation;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Quantity;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import java.math.BigInteger;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -50,24 +54,37 @@ public class PayloadIdentifier implements Quantity {
   }
 
   /**
-   * Create payload identifier for payload params.
+   * Create payload identifier for payload params. This is a deterministic hash of all payload
+   * parameters that aims to avoid collisions
    *
    * @param parentHash the parent hash
    * @param timestamp the timestamp
    * @param prevRandao the prev randao
    * @param feeRecipient the fee recipient
+   * @param withdrawals the withdrawals
    * @return the payload identifier
    */
   public static PayloadIdentifier forPayloadParams(
       final Hash parentHash,
       final Long timestamp,
       final Bytes32 prevRandao,
-      final Address feeRecipient) {
+      final Address feeRecipient,
+      final Optional<List<Withdrawal>> withdrawals) {
+
     return new PayloadIdentifier(
         timestamp
             ^ ((long) parentHash.toHexString().hashCode()) << 8
             ^ ((long) prevRandao.toHexString().hashCode()) << 16
-            ^ ((long) feeRecipient.toHexString().hashCode()) << 24);
+            ^ ((long) feeRecipient.toHexString().hashCode()) << 24
+            ^ (long)
+                withdrawals
+                    .map(
+                        ws ->
+                            ws.stream()
+                                .sorted(Comparator.comparing(Withdrawal::getIndex))
+                                .map(Withdrawal::hashCode)
+                                .reduce(1, (a, b) -> a ^ (b * 31)))
+                    .orElse(0));
   }
 
   @Override

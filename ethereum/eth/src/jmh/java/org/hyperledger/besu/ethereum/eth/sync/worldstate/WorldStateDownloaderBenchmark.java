@@ -18,7 +18,6 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_BACKGROUND_THREAD_COUNT;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_IS_HIGH_SPEC;
-import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_BACKGROUND_COMPACTIONS;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_OPEN_FILES;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -166,7 +165,6 @@ public class WorldStateDownloaderBenchmark {
                 () ->
                     new RocksDBFactoryConfiguration(
                         DEFAULT_MAX_OPEN_FILES,
-                        DEFAULT_MAX_BACKGROUND_COMPACTIONS,
                         DEFAULT_BACKGROUND_THREAD_COUNT,
                         DEFAULT_CACHE_CAPACITY,
                         DEFAULT_IS_HIGH_SPEC),

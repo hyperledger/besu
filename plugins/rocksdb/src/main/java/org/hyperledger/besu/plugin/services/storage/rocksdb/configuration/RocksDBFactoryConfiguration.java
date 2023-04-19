@@ -18,7 +18,6 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 public class RocksDBFactoryConfiguration {
 
   private final int maxOpenFiles;
-  private final int maxBackgroundCompactions;
   private final int backgroundThreadCount;
   private final long cacheCapacity;
   private final boolean isHighSpec;
@@ -27,18 +26,15 @@ public class RocksDBFactoryConfiguration {
    * Instantiates a new RocksDb factory configuration.
    *
    * @param maxOpenFiles the max open files
-   * @param maxBackgroundCompactions the max background compactions
    * @param backgroundThreadCount the background thread count
    * @param cacheCapacity the cache capacity
    * @param isHighSpec the is high spec
    */
   public RocksDBFactoryConfiguration(
       final int maxOpenFiles,
-      final int maxBackgroundCompactions,
       final int backgroundThreadCount,
       final long cacheCapacity,
       final boolean isHighSpec) {
-    this.maxBackgroundCompactions = maxBackgroundCompactions;
     this.backgroundThreadCount = backgroundThreadCount;
     this.maxOpenFiles = maxOpenFiles;
     this.cacheCapacity = cacheCapacity;
@@ -52,15 +48,6 @@ public class RocksDBFactoryConfiguration {
    */
   public int getMaxOpenFiles() {
     return maxOpenFiles;
-  }
-
-  /**
-   * Gets max background compactions.
-   *
-   * @return the max background compactions
-   */
-  public int getMaxBackgroundCompactions() {
-    return maxBackgroundCompactions;
   }
 
   /**

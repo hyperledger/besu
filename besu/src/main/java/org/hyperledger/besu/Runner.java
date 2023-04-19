@@ -149,7 +149,10 @@ public class Runner implements AutoCloseable {
         service ->
             waitForServiceToStart(
                 "ipcJsonRpc", service.start().toCompletionStage().toCompletableFuture()));
-    stratumServer.ifPresent(server -> waitForServiceToStart("stratum", server.start()));
+    stratumServer.ifPresent(
+        server ->
+            waitForServiceToStart(
+                "stratum", server.start().toCompletionStage().toCompletableFuture()));
     autoTransactionLogBloomCachingService.ifPresent(AutoTransactionLogBloomCachingService::start);
     ethStatsService.ifPresent(EthStatsService::start);
   }

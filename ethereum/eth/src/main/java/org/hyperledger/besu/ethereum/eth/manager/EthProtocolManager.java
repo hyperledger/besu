@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
+import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -283,7 +284,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     // Handle STATUS processing
     if (code == EthPV62.STATUS) {
-      handleStatusMessage(ethPeer, messageData);
+      handleStatusMessage(ethPeer, message);
       return;
     } else if (!ethPeer.statusHasBeenReceived()) {
       // Peers are required to send status messages before any other message type
@@ -352,17 +353,12 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
   @Override
   public void handleNewConnection(final PeerConnection connection) {
-    ethPeers.registerConnection(connection, peerValidators);
+    ethPeers.registerNewConnection(connection, peerValidators);
     final EthPeer peer = ethPeers.peer(connection);
-    if (peer.statusHasBeenSentToPeer()) {
-      return;
-    }
 
     final Capability cap = connection.capability(getSupportedProtocol());
     final ForkId latestForkId =
         cap.getVersion() >= 64 ? forkIdManager.getForkIdForChainHead() : null;
-    // TODO: look to consolidate code below if possible
-    // making status non-final and implementing it above would be one way.
     final StatusMessage status =
         StatusMessage.create(
             cap.getVersion(),
@@ -372,9 +368,9 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             genesisHash,
             latestForkId);
     try {
-      LOG.debug("Sending status message to {}.", peer);
-      peer.send(status, getSupportedProtocol());
-      peer.registerStatusSent();
+      LOG.trace("Sending status message to {} for connection {}.", peer.getId(), connection);
+      peer.send(status, getSupportedProtocol(), connection);
+      peer.registerStatusSent(connection);
     } catch (final PeerNotConnected peerNotConnected) {
       // Nothing to do.
     }
@@ -382,32 +378,48 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   }
 
   @Override
+  public boolean shouldConnect(final Peer peer, final boolean incoming) {
+    if (peer.getForkId().map(forkId -> forkIdManager.peerCheck(forkId)).orElse(true)) {
+      LOG.trace("ForkId OK or not available");
+      if (ethPeers.shouldConnect(peer, incoming)) {
+        LOG.trace("EthPeers should connect is TRUE");
+        return true;
+      }
+    }
+    LOG.trace("Should connect in EthProtocolManager returns false");
+    return false;
+  }
+
+  @Override
   public void handleDisconnect(
       final PeerConnection connection,
       final DisconnectReason reason,
       final boolean initiatedByPeer) {
-    ethPeers.registerDisconnect(connection);
-    LOG.debug(
-        "Disconnect - {} - {} - {} - {} peers left",
-        initiatedByPeer ? "Inbound" : "Outbound",
-        reason,
-        connection.getPeerInfo(),
-        ethPeers.peerCount());
-    LOG.trace("{}", ethPeers);
+    if (ethPeers.registerDisconnect(connection)) {
+      LOG.debug(
+          "Disconnect - {} - {} - {} - {} peers left\n{}",
+          initiatedByPeer ? "Inbound" : "Outbound",
+          reason,
+          connection.getPeer().getId(),
+          ethPeers.peerCount(),
+          ethPeers);
+    }
   }
 
-  private void handleStatusMessage(final EthPeer peer, final MessageData data) {
-    final StatusMessage status = StatusMessage.readFrom(data);
+  private void handleStatusMessage(final EthPeer peer, final Message message) {
+    final StatusMessage status = StatusMessage.readFrom(message.getData());
+    final ForkId forkId = status.forkId();
+    peer.getConnection().getPeer().setForkId(forkId);
     try {
       if (!status.networkId().equals(networkId)) {
         LOG.debug("Mismatched network id: {}, EthPeer {}", status.networkId(), peer);
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
-      } else if (!forkIdManager.peerCheck(status.forkId()) && status.protocolVersion() > 63) {
+      } else if (!forkIdManager.peerCheck(forkId) && status.protocolVersion() > 63) {
         LOG.debug(
             "{} has matching network id ({}), but non-matching fork id: {}",
             peer,
             networkId,
-            status.forkId());
+            forkId);
         peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
       } else if (forkIdManager.peerCheck(status.genesisHash())) {
         LOG.debug(
@@ -421,9 +433,16 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         LOG.debug("Post-merge disconnect: peer still PoW {}", peer);
         handleDisconnect(peer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED, false);
       } else {
-        LOG.debug("Received status message from {}: {}", peer, status);
+        LOG.debug(
+            "Received status message from {}: {} with connection {}",
+            peer,
+            status,
+            message.getConnection());
         peer.registerStatusReceived(
-            status.bestHash(), status.totalDifficulty(), status.protocolVersion());
+            status.bestHash(),
+            status.totalDifficulty(),
+            status.protocolVersion(),
+            message.getConnection());
       }
     } catch (final RLPException e) {
       LOG.debug("Unable to parse status message from peer {}.", peer, e);

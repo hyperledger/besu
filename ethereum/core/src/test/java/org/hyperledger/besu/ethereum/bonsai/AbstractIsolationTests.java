@@ -114,7 +114,8 @@ public abstract class AbstractIsolationTests {
             bonsaiWorldStateStorage,
             blockchain,
             Optional.of(16L),
-            new CachedMerkleTrieLoader(new NoOpMetricsSystem()));
+            new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
+            new NoOpMetricsSystem());
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
     protocolContext = new ProtocolContext(blockchain, archive, null);
@@ -130,7 +131,6 @@ public abstract class AbstractIsolationTests {
                   () ->
                       new RocksDBFactoryConfiguration(
                           1024 /* MAX_OPEN_FILES*/,
-                          4 /*MAX_BACKGROUND_COMPACTIONS*/,
                           4 /*BACKGROUND_THREAD_COUNT*/,
                           8388608 /*CACHE_CAPACITY*/,
                           false),

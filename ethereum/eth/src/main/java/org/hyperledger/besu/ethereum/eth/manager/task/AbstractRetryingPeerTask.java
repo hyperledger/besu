@@ -149,10 +149,6 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
         || error instanceof NoAvailablePeersException;
   }
 
-  public boolean isEmptyResponse(final T peerResult) {
-    return isEmptyResponse.test(peerResult);
-  }
-
   protected EthContext getEthContext() {
     return ethContext;
   }

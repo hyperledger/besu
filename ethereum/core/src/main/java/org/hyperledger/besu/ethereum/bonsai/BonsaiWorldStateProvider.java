@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.worldstate.WorldState;
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -68,25 +69,32 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
   public BonsaiWorldStateProvider(
       final StorageProvider provider,
       final Blockchain blockchain,
-      final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
+      final CachedMerkleTrieLoader cachedMerkleTrieLoader,
+      final ObservableMetricsSystem metricsSystem) {
     this(
         (BonsaiWorldStateKeyValueStorage)
             provider.createWorldStateStorage(DataStorageFormat.BONSAI),
         blockchain,
         Optional.empty(),
-        cachedMerkleTrieLoader);
+        cachedMerkleTrieLoader,
+        metricsSystem);
   }
 
   public BonsaiWorldStateProvider(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
-      final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
+      final CachedMerkleTrieLoader cachedMerkleTrieLoader,
+      final ObservableMetricsSystem metricsSystem) {
 
     // TODO: de-dup constructors
     this.trieLogManager =
         new CachedWorldStorageManager(
-            this, blockchain, worldStateStorage, maxLayersToLoad.orElse(RETAINED_LAYERS));
+            this,
+            blockchain,
+            worldStateStorage,
+            metricsSystem,
+            maxLayersToLoad.orElse(RETAINED_LAYERS));
     this.blockchain = blockchain;
     this.worldStateStorage = worldStateStorage;
     this.persistedState = new BonsaiWorldState(this, worldStateStorage);

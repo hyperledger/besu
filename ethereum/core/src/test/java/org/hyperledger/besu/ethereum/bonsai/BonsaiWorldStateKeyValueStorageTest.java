@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.StorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.TreeMap;
 
@@ -289,6 +290,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   }
 
   private BonsaiWorldStateKeyValueStorage emptyStorage() {
-    return new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider());
+    return new BonsaiWorldStateKeyValueStorage(
+        new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
   }
 }

@@ -121,7 +121,6 @@ public class ExecutionContextTestFixture {
                     ProtocolSpecAdapters.create(0, Function.identity()),
                     new PrivacyParameters(),
                     false,
-                    genesisConfigFile.getConfigOptions().isQuorum(),
                     EvmConfiguration.DEFAULT)
                 .createProtocolSchedule();
       }
