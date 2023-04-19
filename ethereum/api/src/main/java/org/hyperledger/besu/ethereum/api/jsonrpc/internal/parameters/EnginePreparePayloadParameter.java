@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -28,17 +29,20 @@ public class EnginePreparePayloadParameter {
   private final Address feeRecipient;
   private final Bytes32 prevRandao;
   private final Optional<Long> timestamp;
+  final List<WithdrawalParameter> withdrawals;
 
   @JsonCreator
   public EnginePreparePayloadParameter(
       @JsonProperty("parentHash") final Optional<Hash> parentHash,
       @JsonProperty("feeRecipient") final Address feeRecipient,
       @JsonProperty("timestamp") final Optional<UnsignedLongParameter> timestamp,
-      @JsonProperty("prevRandao") final String prevRandao) {
+      @JsonProperty("prevRandao") final String prevRandao,
+      @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals) {
     this.parentHash = parentHash;
     this.feeRecipient = feeRecipient;
     this.timestamp = timestamp.map(UnsignedLongParameter::getValue);
     this.prevRandao = Bytes32.fromHexStringLenient(prevRandao);
+    this.withdrawals = withdrawals;
   }
 
   public Optional<Hash> getParentHash() {
@@ -55,5 +59,9 @@ public class EnginePreparePayloadParameter {
 
   public Bytes32 getPrevRandao() {
     return prevRandao;
+  }
+
+  public List<WithdrawalParameter> getWithdrawals() {
+    return withdrawals;
   }
 }

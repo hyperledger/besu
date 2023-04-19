@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,19 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static java.util.stream.Collectors.toList;
+
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePreparePayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EnginePreparePayloadResult;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 
-import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
@@ -54,6 +58,10 @@ public class EnginePreparePayloadDebug extends ExecutionEngineJsonRpcMethod {
         requestContext.getRequiredParameter(0, EnginePreparePayloadParameter.class);
 
     // TODO: respond with error if we're syncing
+    final List<Withdrawal> withdrawals =
+        enginePreparePayloadParameter.getWithdrawals().stream()
+            .map(WithdrawalParameter::toWithdrawal)
+            .collect(toList());
 
     return enginePreparePayloadParameter
         .getParentHash()
@@ -71,7 +79,7 @@ public class EnginePreparePayloadDebug extends ExecutionEngineJsonRpcMethod {
                                 .orElse(parentHeader.getTimestamp() + 1L),
                             enginePreparePayloadParameter.getPrevRandao(),
                             enginePreparePayloadParameter.getFeeRecipient(),
-                            Optional.of(Collections.emptyList())))))
+                            Optional.of(withdrawals)))))
         .orElseGet(
             () ->
                 new JsonRpcErrorResponse(
