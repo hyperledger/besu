@@ -116,7 +116,11 @@ public class LayeredPendingTransactions implements PendingTransactions {
           throwable,
           pendingTransaction.toTraceLog(),
           prioritizedTransactions.logSender(pendingTransaction.getSender()));
-      prioritizedTransactions.consistencyCheck(new HashMap<>());
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Starting consistency check");
+        prioritizedTransactions.consistencyCheck(new HashMap<>());
+        LOG.trace("Consistency check done");
+      }
       return TransactionAddedResult.INTERNAL_ERROR;
     }
   }
