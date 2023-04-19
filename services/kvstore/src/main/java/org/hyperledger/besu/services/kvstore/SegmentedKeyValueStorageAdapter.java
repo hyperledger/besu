@@ -15,16 +15,14 @@
 package org.hyperledger.besu.services.kvstore;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
-import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -34,11 +32,10 @@ import org.apache.commons.lang3.tuple.Pair;
  *
  * @param <S> the type parameter
  */
-public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStorage {
+public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
 
   private final S segmentHandle;
   private final SegmentedKeyValueStorage<S> storage;
-  private final Supplier<SnappedKeyValueStorage> snapshotSupplier;
 
   /**
    * Instantiates a new Segmented key value storage adapter.
@@ -48,28 +45,8 @@ public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStor
    */
   public SegmentedKeyValueStorageAdapter(
       final SegmentIdentifier segment, final SegmentedKeyValueStorage<S> storage) {
-    this(
-        segment,
-        storage,
-        () -> {
-          throw new UnsupportedOperationException("Snapshot not supported");
-        });
-  }
-
-  /**
-   * Instantiates a new Segmented key value storage adapter.
-   *
-   * @param segment the segment
-   * @param storage the storage
-   * @param snapshotSupplier the snapshot supplier
-   */
-  public SegmentedKeyValueStorageAdapter(
-      final SegmentIdentifier segment,
-      final SegmentedKeyValueStorage<S> storage,
-      final Supplier<SnappedKeyValueStorage> snapshotSupplier) {
     segmentHandle = storage.getSegmentIdentifierByName(segment);
     this.storage = storage;
-    this.snapshotSupplier = snapshotSupplier;
   }
 
   @Override
@@ -142,10 +119,5 @@ public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStor
         transaction.rollback();
       }
     };
-  }
-
-  @Override
-  public SnappedKeyValueStorage takeSnapshot() {
-    return snapshotSupplier.get();
   }
 }
