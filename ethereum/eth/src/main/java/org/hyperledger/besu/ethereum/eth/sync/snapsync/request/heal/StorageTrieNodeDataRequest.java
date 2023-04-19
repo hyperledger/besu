@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -55,10 +54,13 @@ public class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
   @Override
   public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
-    BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage = ((BonsaiWorldStateKeyValueStorage) worldStateStorage) ;
-    Optional<Bytes> accountStorageTrieNodeWithoutCheck = bonsaiWorldStateKeyValueStorage.getAccountStorageTrieNodeWithoutCheck(getAccountHash(), getLocation());
-    if(accountStorageTrieNodeWithoutCheck.isPresent()){
-      if(Hash.hash(accountStorageTrieNodeWithoutCheck.get()).equals(getNodeHash())){
+    BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
+        ((BonsaiWorldStateKeyValueStorage) worldStateStorage);
+    Optional<Bytes> accountStorageTrieNodeWithoutCheck =
+        bonsaiWorldStateKeyValueStorage.getAccountStorageTrieNodeWithoutCheck(
+            getAccountHash(), getLocation());
+    if (accountStorageTrieNodeWithoutCheck.isPresent()) {
+      if (Hash.hash(accountStorageTrieNodeWithoutCheck.get()).equals(getNodeHash())) {
         return accountStorageTrieNodeWithoutCheck;
       } else {
         SnapWorldDownloadState.flatHealAccounts.add(getAccountHash());

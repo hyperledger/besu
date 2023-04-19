@@ -164,11 +164,10 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         && pendingTrieNodeRequests.allTasksCompleted()
         && pendingAccountFlatDatabaseHealingRequests.allTasksCompleted()
         && pendingStorageFlatDatabaseHealingRequests.allTasksCompleted()) {
-      if (!snapSyncState.isHealTrieInProgress()) {
-        flatHealAccounts.addAll(inconsistentAccounts);
-        startTrieHeal();
-      } else if (!snapSyncState.isHealFlatDatabaseInProgress()) {
+      if (!snapSyncState.isHealFlatDatabaseInProgress()) {
         startFlatDatabaseHeal(header);
+      } else if (!snapSyncState.isHealTrieInProgress()) {
+        startTrieHeal();
       } else if (dynamicPivotBlockManager.isBlockchainBehind()) {
         LOG.info("Pausing world state download while waiting for sync to complete");
         if (blockObserverId.isEmpty())
@@ -181,6 +180,12 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         metricsManager.notifySnapSyncCompleted();
         snapContext.clear();
         internalFuture.complete(null);
+
+        System.out.println("Fixed account");
+        SnapWorldDownloadState.flatHealAccounts.forEach(
+            bytes -> {
+              System.out.println("Fixed -> " + bytes);
+            });
         return true;
       }
     }

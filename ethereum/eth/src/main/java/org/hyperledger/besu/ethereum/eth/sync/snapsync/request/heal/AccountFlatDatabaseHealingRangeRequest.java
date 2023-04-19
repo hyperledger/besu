@@ -50,7 +50,6 @@ import org.apache.tuweni.bytes.Bytes32;
 @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "TooBroadScope", "ModifiedButNotUsed"})
 public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
-
   private final Bytes32 startKeyHash;
   private final Bytes32 endKeyHash;
 
@@ -91,16 +90,16 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
     // find missing storages and code
     for (Map.Entry<Bytes32, Bytes> account : accounts.entrySet()) {
-      if(flatHealAccounts.contains(account.getKey())) {
+      if (flatHealAccounts.contains(account.getKey())) {
         final StateTrieAccountValue accountValue =
-                StateTrieAccountValue.readFrom(RLP.input(account.getValue()));
+            StateTrieAccountValue.readFrom(RLP.input(account.getValue()));
         childRequests.add(
-                createStorageFlatHealingRangeRequest(
-                        getRootHash(),
-                        account.getKey(),
-                        accountValue.getStorageRoot(),
-                        MIN_RANGE,
-                        MAX_RANGE));
+            createStorageFlatHealingRangeRequest(
+                getRootHash(),
+                account.getKey(),
+                accountValue.getStorageRoot(),
+                MIN_RANGE,
+                MAX_RANGE));
       }
     }
 
@@ -149,15 +148,6 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       final BonsaiWorldStateKeyValueStorage.Updater bonsaiUpdater =
           (BonsaiWorldStateKeyValueStorage.Updater) updater;
 
-      System.out.println(
-          "Range not valid from "
-              + startKeyHash
-              + " to "
-              + accounts.lastKey()
-              + " "
-              + isResponseReceived()
-              + " fixed ");
-
       final MerkleTrie<Bytes, Bytes> accountTrie =
           new StoredMerklePatriciaTrie<>(
               worldStateStorage::getAccountStateTrieNode,
@@ -167,9 +157,12 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
       final RangeStorageEntriesCollector collector =
           RangeStorageEntriesCollector.createCollector(
-              startKeyHash, endKeyHash, Integer.MAX_VALUE, Integer.MAX_VALUE);
+              startKeyHash,
+              accounts.isEmpty() ? endKeyHash : accounts.lastKey(),
+              128,
+              Integer.MAX_VALUE);
       final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
-      final TreeMap<Bytes32, Bytes> accounts =
+      final TreeMap<Bytes32, Bytes> accountsInTrie =
           (TreeMap<Bytes32, Bytes>)
               accountTrie.entriesFrom(
                   root ->
@@ -178,7 +171,7 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
       Map<Bytes32, Bytes> keysAdd = new TreeMap<>();
       Map<Bytes32, Bytes> keysToDelete = new TreeMap<>(accounts);
-      accounts.forEach(
+      accountsInTrie.forEach(
           (key, value) -> {
             if (keysToDelete.containsKey(key)) {
               keysToDelete.remove(key);
@@ -189,10 +182,11 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
             }
           });
 
-      keysToDelete.forEach((key, value) -> {
-        flatHealAccounts.add(Hash.wrap(key));
-        bonsaiUpdater.removeAccountInfoState(Hash.wrap(key));
-      });
+      keysToDelete.forEach(
+          (key, value) -> {
+            flatHealAccounts.add(Hash.wrap(key));
+            bonsaiUpdater.removeAccountInfoState(Hash.wrap(key));
+          });
     }
     return 0;
   }

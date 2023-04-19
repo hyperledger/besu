@@ -19,14 +19,12 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MIN_R
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findNewBeginElementInRange;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAGE_RANGE;
 
-import org.apache.tuweni.rlp.RLP;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataRequest;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
@@ -45,6 +43,7 @@ import java.util.stream.Stream;
 import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.rlp.RLP;
 
 /** Returns a list of accounts and the merkle proofs of an entire range */
 @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "TooBroadScope", "ModifiedButNotUsed"})
@@ -82,7 +81,7 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       final WorldStateStorage worldStateStorage,
       final SnapSyncState snapSyncState) {
     final List<SnapDataRequest> childRequests = new ArrayList<>();
-    if(slots.isEmpty() && storageRoot.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)){
+    if (slots.isEmpty() && storageRoot.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
       return Stream.empty();
     }
     findNewBeginElementInRange(storageRoot, proofs, slots, endKeyHash)
@@ -92,8 +91,8 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
               RangeManager.generateRanges(missingRightElement, endKeyHash, nbRanges)
                   .forEach(
                       (key, value) -> {
-                        final StorageRangeDataRequest storageRangeDataRequest =
-                            createStorageRangeDataRequest(
+                        final StorageFlatDatabaseHealingRangeRequest storageRangeDataRequest =
+                            createStorageFlatHealingRangeRequest(
                                 getRootHash(), accountHash, storageRoot, key, value);
                         childRequests.add(storageRangeDataRequest);
                       });
@@ -137,23 +136,12 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       final WorldStateProofProvider worldStateProofProvider,
       final TreeMap<Bytes32, Bytes> slots,
       final ArrayDeque<Bytes> proofs) {
-    if(storageRoot.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH) && slots.isEmpty()){
+    if (storageRoot.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH) && slots.isEmpty()) {
       isProofValid = Optional.of(true);
-    }else {
+    } else {
       if (!slots.isEmpty() || !proofs.isEmpty()) {
         if (!worldStateProofProvider.isValidRangeProof(
-                startKeyHash, endKeyHash, storageRoot, proofs, slots)) {
-          System.out.println(
-                  "slot proof invalid for account "
-                          + accountHash
-                          + " "
-                          + proofs.toString()
-                          + " "
-                          + storageRoot
-                          + " "
-                          + MerkleTrie.EMPTY_TRIE_NODE_HASH
-                          + " "
-                          + slots.size());
+            startKeyHash, endKeyHash, storageRoot, proofs, slots)) {
           isProofValid = Optional.of(false);
         } else {
           isProofValid = Optional.of(true);
@@ -176,23 +164,6 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       final BonsaiWorldStateKeyValueStorage.Updater bonsaiUpdater =
           (BonsaiWorldStateKeyValueStorage.Updater) updater;
 
-      System.out.println(
-          "Range not valid from "
-                  +" "+accountHash+" "
-                  + " "
-                  +storageRoot+
-                  " "
-              + startKeyHash
-                  +" "
-                  +slots.size()
-                  +" "
-                  +proofs.size()
-              + " "
-              + isResponseReceived()
-              + " fixed "
-      + " "
-      +valid);
-
       final MerkleTrie<Bytes, Bytes> storageTrie =
           new StoredMerklePatriciaTrie<>(
               (location, hash) ->
@@ -203,9 +174,9 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
       final RangeStorageEntriesCollector collector =
           RangeStorageEntriesCollector.createCollector(
-              startKeyHash, endKeyHash, Integer.MAX_VALUE, Integer.MAX_VALUE);
+              startKeyHash, slots.isEmpty() ? endKeyHash : slots.lastKey(), 384, Integer.MAX_VALUE);
       final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
-      final TreeMap<Bytes32, Bytes> slots =
+      final TreeMap<Bytes32, Bytes> slotsInTrie =
           (TreeMap<Bytes32, Bytes>)
               storageTrie.entriesFrom(
                   root ->
@@ -214,20 +185,44 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
       Map<Bytes32, Bytes> keysAdd = new TreeMap<>();
       Map<Bytes32, Bytes> keysToDelete = new TreeMap<>(slots);
-      slots.forEach(
+      slotsInTrie.forEach(
           (key, value) -> {
             if (keysToDelete.containsKey(key)) {
               keysToDelete.remove(key);
             } else {
               keysAdd.put(key, value);
-              bonsaiUpdater.putStorageValueBySlotHash(accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value)));
+              bonsaiUpdater.putStorageValueBySlotHash(
+                  accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value)));
             }
           });
+
+      System.out.println(
+          "Range not valid from "
+              + " "
+              + accountHash
+              + " "
+              + " "
+              + storageRoot
+              + " "
+              + startKeyHash
+              + " "
+              + endKeyHash
+              + " "
+              + slots.firstKey()
+              + " "
+              + slots.lastKey()
+              + " // "
+              + slotsInTrie.firstKey()
+              + " "
+              + slotsInTrie.lastKey()
+              + " fixed "
+              + " "
+              + valid);
 
       keysToDelete.forEach(
           (key, value) -> bonsaiUpdater.removeStorageValueBySlotHash(accountHash, Hash.wrap(key)));
     } else {
-      valid+=1;
+      valid += 1;
     }
     return 0;
   }

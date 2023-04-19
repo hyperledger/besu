@@ -19,7 +19,6 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MIN_R
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findNewBeginElementInRange;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAGE_RANGE;
 
-import org.apache.tuweni.rlp.RLP;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
@@ -45,6 +44,7 @@ import com.google.common.annotations.VisibleForTesting;
 import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.rlp.RLP;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,8 +106,8 @@ public class StorageRangeDataRequest extends SnapDataRequest {
           @Override
           public void update(final Bytes32 key, final Bytes value) {
             ((BonsaiWorldStateKeyValueStorage.Updater) updaterTmp.get())
-                    .putStorageValueBySlotHash(
-                            accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value)));
+                .putStorageValueBySlotHash(
+                    accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value)));
             if (nbNodesSaved.getAndIncrement() % 1000 == 0) {
               updaterTmp.get().commit();
               updaterTmp.set(worldStateStorage.updater());
@@ -131,6 +131,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     if (!slots.isEmpty() || !proofs.isEmpty()) {
       if (!worldStateProofProvider.isValidRangeProof(
           startKeyHash, endKeyHash, storageRoot, proofs, slots)) {
+        SnapWorldDownloadState.flatHealAccounts.add(accountHash);
         downloadState.enqueueRequest(
             createAccountDataRequest(
                 getRootHash(), Hash.wrap(accountHash), startKeyHash, endKeyHash));

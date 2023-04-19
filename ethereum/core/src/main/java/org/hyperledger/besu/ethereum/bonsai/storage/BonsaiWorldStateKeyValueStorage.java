@@ -135,10 +135,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   public Optional<Bytes> getAccountStorageTrieNodeWithoutCheck(
-          final Hash accountHash, final Bytes location) {
+      final Hash accountHash, final Bytes location) {
     return trieBranchStorage
-              .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
-              .map(Bytes::wrap);
+        .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
+        .map(Bytes::wrap);
   }
 
   public Optional<byte[]> getTrieLog(final Hash blockHash) {
@@ -174,26 +174,41 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       final Supplier<Optional<Hash>> storageRootSupplier,
       final Hash accountHash,
       final Hash slotHash) {
-    Optional<Bytes> response =
+    Optional<Bytes> res1 =
         storageStorage
             .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
             .map(Bytes::wrap);
-    if (response.isEmpty()) {
-      final Optional<Hash> storageRoot = storageRootSupplier.get();
-      final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
-      if (storageRoot.isPresent() && worldStateRootHash.isPresent()) {
-        response =
-            new StoredMerklePatriciaTrie<>(
-                    new StoredNodeFactory<>(
-                        (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
-                        Function.identity(),
-                        Function.identity()),
-                    storageRoot.get())
-                .get(slotHash)
-                .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
+
+    /*final Optional<Hash> storageRoot = storageRootSupplier.get();
+    final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
+    if (storageRoot.isPresent() && worldStateRootHash.isPresent()) {
+      Optional<Bytes> res2 =
+          new StoredMerklePatriciaTrie<>(
+                  new StoredNodeFactory<>(
+                      (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
+                      Function.identity(),
+                      Function.identity()),
+                  storageRoot.get())
+              .get(slotHash)
+              .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
+
+      if (!res1.equals(res2)) {
+        System.out.println(
+            accountHash
+                + " "
+                + res1
+                + " "
+                + res2
+                + " "
+                + slotHash
+                + " "
+                + storageRoot
+                + " "
+                + MerkleTrie.EMPTY_TRIE_NODE_HASH);
       }
-    }
-    return response;
+    }*/
+
+    return res1;
   }
 
   @Override
@@ -210,10 +225,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       final Hash accountHash, final Bytes startKeyHash, final long max) {
     return storageStorage
         .streamFromKey(Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe())
-            .takeWhile(pair -> Bytes.wrap(pair.getKey()).slice(0,Hash.SIZE).equals(accountHash))
-            .limit(max)
-        .map(pair -> new Pair<>(Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
-                RLP.encodeValue(Bytes.wrap(pair.getValue()).trimLeadingZeros())))
+        .takeWhile(pair -> Bytes.wrap(pair.getKey()).slice(0, Hash.SIZE).equals(accountHash))
+        .limit(max)
+        .map(
+            pair ->
+                new Pair<>(
+                    Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
+                    RLP.encodeValue(Bytes.wrap(pair.getValue()).trimLeadingZeros())))
         .collect(Collectors.toMap(Pair::getFirst, Pair::getSecond, (v1, v2) -> v1, TreeMap::new));
   }
 
@@ -251,7 +269,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   public void clearFlatDatabase() {
     subscribers.forEach(BonsaiStorageSubscriber::onClearFlatDatabaseStorage);
     // accountStorage.clear();
-    //storageStorage.clear();
+    // storageStorage.clear();
   }
 
   @Override
