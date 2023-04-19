@@ -207,13 +207,6 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
-  // TODO ECIP-1049 change for the actual fork name when known
-  public void shouldGetECIP1049BlockNumber() {
-    final GenesisConfigOptions config = fromConfigOptions(singletonMap("ecip1049block", 1000));
-    assertThat(config.getEcip1049BlockNumber()).hasValue(1000);
-  }
-
-  @Test
   public void shouldNotReturnEmptyOptionalWhenBlockNumberNotSpecified() {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.getHomesteadBlockNumber()).isEmpty();
@@ -234,7 +227,6 @@ public class GenesisConfigOptionsTest {
     assertThat(config.getCancunTime()).isEmpty();
     assertThat(config.getFutureEipsTime()).isEmpty();
     assertThat(config.getExperimentalEipsTime()).isEmpty();
-    assertThat(config.getEcip1049BlockNumber()).isEmpty();
   }
 
   @Test

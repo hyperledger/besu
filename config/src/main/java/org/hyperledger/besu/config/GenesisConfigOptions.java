@@ -426,16 +426,6 @@ public interface GenesisConfigOptions {
   OptionalLong getMystiqueBlockNumber();
 
   /**
-   * Block number to activate ECIP-1049 on Classic networks. Changes the hashing algorithm to
-   * keccak-256.
-   *
-   * @return block number of ECIP-1049 fork on Classic networks
-   * @see <a
-   *     href="https://ecips.ethereumclassic.org/ECIPs/ecip-1049">https://ecips.ethereumclassic.org/ECIPs/ecip-1049</a>
-   */
-  OptionalLong getEcip1049BlockNumber();
-
-  /**
    * Gets chain id.
    *
    * @return the chain id
