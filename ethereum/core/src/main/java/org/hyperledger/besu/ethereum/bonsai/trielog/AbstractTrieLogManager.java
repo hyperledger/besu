@@ -150,7 +150,7 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
   }
 
   @Override
-  public synchronized void unSubscribe(final long id) {
+  public synchronized void unsubscribe(final long id) {
     trieLogAddedObservers.unsubscribe(id);
   }
 }

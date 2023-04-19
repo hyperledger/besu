@@ -62,7 +62,6 @@ public class BonsaiWorldStateUpdateAccumulator
   private final AccountConsumingMap<BonsaiValue<BonsaiAccount>> accountsToUpdate;
   private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
   private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
-  //  private final Set<Bytes> emptySlot = Collections.synchronizedSet(new HashSet<>());
 
   // storage sub mapped by _hashed_ key.  This is because in self_destruct calls we need to
   // enumerate the old storage and delete it.  Those are trie stored by hashed key by spec and the

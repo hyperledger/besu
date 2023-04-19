@@ -51,5 +51,5 @@ public interface TrieLogManager {
 
   long subscribe(final TrieLogAddedEvent.TrieLogAddedObserver sub);
 
-  void unSubscribe(final long id);
+  void unsubscribe(final long id);
 }

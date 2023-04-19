@@ -50,7 +50,6 @@ public class TrieLogManagerTests {
   @Mock BonsaiWorldState worldState;
   @Mock BonsaiWorldStateProvider archive;
   @Mock Blockchain blockchain;
-  //  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   BonsaiWorldStateUpdateAccumulator bonsaiUpdater =
       spy(new BonsaiWorldStateUpdateAccumulator(worldState, (__, ___) -> {}, (__, ___) -> {}));
 
