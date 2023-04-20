@@ -90,7 +90,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public final class RunnerBuilderTest {
 
-  @TempDir private static Path dataDir;
+  @TempDir private Path dataDir;
 
   @Mock BesuController besuController;
   @Mock ProtocolSchedule protocolSchedule;
