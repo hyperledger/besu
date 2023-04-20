@@ -107,13 +107,10 @@ public class JsonRpcMethodsFactory {
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new ExecutionEngineJsonRpcMethods(
                   miningCoordinator,
-                  MergeProtocolSchedule.createTimestamp(
-                      genesisConfigOptions, privacyParameters, false),
+                  MergeProtocolSchedule.create(genesisConfigOptions, privacyParameters, false),
                   protocolContext,
                   ethPeers,
                   consensusEngineServer),
-              new GoQuorumJsonRpcPrivacyMethods(
-                  blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new EthJsonRpcMethods(
                   blockchainQueries,
                   synchronizer,
@@ -122,7 +119,6 @@ public class JsonRpcMethodsFactory {
                   transactionPool,
                   miningCoordinator,
                   supportedCapabilities,
-                  privacyParameters,
                   maxLogRange),
               new NetJsonRpcMethods(
                   p2pNetwork,
@@ -141,7 +137,7 @@ public class JsonRpcMethodsFactory {
               new PrivxJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new Web3JsonRpcMethods(clientVersion),
-              new TraceJsonRpcMethods(blockchainQueries, protocolSchedule, privacyParameters),
+              new TraceJsonRpcMethods(blockchainQueries, protocolSchedule),
               new TxPoolJsonRpcMethods(transactionPool),
               new PluginsJsonRpcMethods(namedPlugins));
 

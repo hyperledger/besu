@@ -64,7 +64,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -86,7 +85,6 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final TransactionPool transactionPool;
   private final MiningCoordinator miningCoordinator;
   private final Set<Capability> supportedCapabilities;
-  private final PrivacyParameters privacyParameters;
   private final Optional<Long> maxLogRange;
 
   public EthJsonRpcMethods(
@@ -97,7 +95,6 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
       final Set<Capability> supportedCapabilities,
-      final PrivacyParameters privacyParameters,
       final Optional<Long> maxLogRange) {
     this.blockchainQueries = blockchainQueries;
     this.synchronizer = synchronizer;
@@ -106,7 +103,6 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.transactionPool = transactionPool;
     this.miningCoordinator = miningCoordinator;
     this.supportedCapabilities = supportedCapabilities;
-    this.privacyParameters = privacyParameters;
     this.maxLogRange = maxLogRange;
   }
 
@@ -130,10 +126,9 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                privacyParameters)),
+                protocolSchedule)),
         new EthFeeHistory(protocolSchedule, blockchainQueries.getBlockchain()),
-        new EthGetCode(blockchainQueries, Optional.of(privacyParameters)),
+        new EthGetCode(blockchainQueries),
         new EthGetLogs(blockchainQueries, maxLogRange),
         new EthGetProof(blockchainQueries),
         new EthGetUncleCountByBlockHash(blockchainQueries),
@@ -160,15 +155,13 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                privacyParameters)),
+                protocolSchedule)),
         new EthCreateAccessList(
             blockchainQueries,
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                privacyParameters)),
+                protocolSchedule)),
         new EthMining(miningCoordinator),
         new EthCoinbase(miningCoordinator),
         new EthProtocolVersion(supportedCapabilities),

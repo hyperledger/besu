@@ -25,8 +25,9 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Jump operation. */
 public class JumpOperation extends AbstractFixedCostOperation {
 
-  private final Operation.OperationResult invalidJumpResponse;
-  private final OperationResult jumpResponse;
+  private static final Operation.OperationResult invalidJumpResponse =
+      new Operation.OperationResult(8L, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
+  private static final OperationResult jumpResponse = new OperationResult(8L, null, 0);
 
   /**
    * Instantiates a new Jump operation.
@@ -35,14 +36,21 @@ public class JumpOperation extends AbstractFixedCostOperation {
    */
   public JumpOperation(final GasCalculator gasCalculator) {
     super(0x56, "JUMP", 2, 0, gasCalculator, gasCalculator.getMidTierGasCost());
-    invalidJumpResponse =
-        new Operation.OperationResult(gasCost, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
-    jumpResponse = new OperationResult(gasCost, null, 0);
   }
 
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    return staticOperation(frame);
+  }
+
+  /**
+   * Performs Jump operation.
+   *
+   * @param frame the frame
+   * @return the operation result
+   */
+  public static OperationResult staticOperation(final MessageFrame frame) {
     final int jumpDestination;
     final Bytes bytes = frame.popStackItem().trimLeadingZeros();
     try {

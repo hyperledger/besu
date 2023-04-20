@@ -20,7 +20,7 @@ import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
-import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import io.vertx.core.Vertx;
 
@@ -28,13 +28,12 @@ public class EngineNewPayloadV1 extends AbstractEngineNewPayload {
 
   public EngineNewPayloadV1(
       final Vertx vertx,
-      final TimestampSchedule timestampSchedule,
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
       final EthPeers ethPeers,
       final EngineCallListener engineCallListener) {
-    super(
-        vertx, timestampSchedule, protocolContext, mergeCoordinator, ethPeers, engineCallListener);
+    super(vertx, protocolSchedule, protocolContext, mergeCoordinator, ethPeers, engineCallListener);
   }
 
   @Override

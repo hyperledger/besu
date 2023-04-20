@@ -132,6 +132,7 @@ public class DiscoveryPeer extends DefaultPeer {
     return endpoint;
   }
 
+  @Override
   public Optional<NodeRecord> getNodeRecord() {
     return Optional.ofNullable(nodeRecord);
   }
@@ -141,8 +142,14 @@ public class DiscoveryPeer extends DefaultPeer {
     this.forkId = ForkId.fromRawForkId(nodeRecord.get("eth"));
   }
 
+  @Override
   public Optional<ForkId> getForkId() {
     return this.forkId;
+  }
+
+  @Override
+  public void setForkId(final ForkId forkId) {
+    this.forkId = Optional.ofNullable(forkId);
   }
 
   public boolean discoveryEndpointMatches(final DiscoveryPeer peer) {

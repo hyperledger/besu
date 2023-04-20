@@ -36,6 +36,8 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -70,26 +72,29 @@ public class TrieLogLayer {
     return blockHash;
   }
 
-  public void setBlockHash(final Hash blockHash) {
+  public TrieLogLayer setBlockHash(final Hash blockHash) {
     checkState(!frozen, "Layer is Frozen");
     this.blockHash = blockHash;
+    return this;
   }
 
-  public void addAccountChange(
+  public TrieLogLayer addAccountChange(
       final Address address,
       final StateTrieAccountValue oldValue,
       final StateTrieAccountValue newValue) {
     checkState(!frozen, "Layer is Frozen");
     accounts.put(address, new BonsaiValue<>(oldValue, newValue));
+    return this;
   }
 
-  public void addCodeChange(
+  public TrieLogLayer addCodeChange(
       final Address address, final Bytes oldValue, final Bytes newValue, final Hash blockHash) {
     checkState(!frozen, "Layer is Frozen");
     code.put(
         address,
         new BonsaiValue<>(
             oldValue == null ? Bytes.EMPTY : oldValue, newValue == null ? Bytes.EMPTY : newValue));
+    return this;
   }
 
   public void addStorageChange(
@@ -316,5 +321,34 @@ public class TrieLogLayer {
       }
     }
     return sb.toString();
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    TrieLogLayer that = (TrieLogLayer) o;
+    return new EqualsBuilder()
+        .append(frozen, that.frozen)
+        .append(blockHash, that.blockHash)
+        .append(accounts, that.accounts)
+        .append(code, that.code)
+        .append(storage, that.storage)
+        .isEquals();
+  }
+
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder(17, 37)
+        .append(blockHash)
+        .append(frozen)
+        .append(accounts)
+        .append(code)
+        .append(storage)
+        .toHashCode();
   }
 }

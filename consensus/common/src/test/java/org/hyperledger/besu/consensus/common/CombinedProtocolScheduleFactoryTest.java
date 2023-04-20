@@ -18,11 +18,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.BlockNumberStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
+import org.hyperledger.besu.ethereum.mainnet.UnifiedProtocolSchedule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -49,15 +51,14 @@ public class CombinedProtocolScheduleFactoryTest {
     genesisConfigOptions.homesteadBlock(5L);
     genesisConfigOptions.constantinopleBlock(10L);
     genesisConfigOptions.chainId(BigInteger.TEN);
-    final ProtocolSchedule protocolSchedule = createProtocolSchedule(genesisConfigOptions);
+    final BftProtocolSchedule protocolSchedule = createProtocolSchedule(genesisConfigOptions);
 
     final NavigableSet<ForkSpec<ProtocolSchedule>> consensusSchedule =
         new TreeSet<>(ForkSpec.COMPARATOR);
     consensusSchedule.add(new ForkSpec<>(0, protocolSchedule));
 
-    final BlockNumberStreamingProtocolSchedule combinedProtocolSchedule =
-        new BlockNumberStreamingProtocolSchedule(
-            combinedProtocolScheduleFactory.create(consensusSchedule, Optional.of(BigInteger.TEN)));
+    final BftProtocolSchedule combinedProtocolSchedule =
+        combinedProtocolScheduleFactory.create(consensusSchedule, Optional.of(BigInteger.TEN));
 
     assertThat(combinedProtocolSchedule.getByBlockNumber(0L).getName()).isEqualTo("Frontier");
     assertThat(combinedProtocolSchedule.getByBlockNumber(0L))
@@ -72,7 +73,10 @@ public class CombinedProtocolScheduleFactoryTest {
     assertThat(combinedProtocolSchedule.getByBlockNumber(10L))
         .isSameAs(protocolSchedule.getByBlockNumber(10L));
 
-    assertThat(combinedProtocolSchedule.streamMilestoneBlocks().collect(Collectors.toList()))
+    assertThat(
+            new BlockNumberStreamingProtocolSchedule(combinedProtocolSchedule)
+                .streamMilestoneBlocks()
+                .collect(Collectors.toList()))
         .isEqualTo(List.of(0L, 5L, 10L));
   }
 
@@ -86,9 +90,9 @@ public class CombinedProtocolScheduleFactoryTest {
     genesisConfigOptions.londonBlock(220L);
     genesisConfigOptions.chainId(BigInteger.TEN);
 
-    final ProtocolSchedule protocolSchedule1 = createProtocolSchedule(genesisConfigOptions);
-    final ProtocolSchedule protocolSchedule2 = createProtocolSchedule(genesisConfigOptions);
-    final ProtocolSchedule protocolSchedule3 = createProtocolSchedule(genesisConfigOptions);
+    final BftProtocolSchedule protocolSchedule1 = createProtocolSchedule(genesisConfigOptions);
+    final BftProtocolSchedule protocolSchedule2 = createProtocolSchedule(genesisConfigOptions);
+    final BftProtocolSchedule protocolSchedule3 = createProtocolSchedule(genesisConfigOptions);
 
     final NavigableSet<ForkSpec<ProtocolSchedule>> consensusSchedule =
         new TreeSet<>(ForkSpec.COMPARATOR);
@@ -96,9 +100,8 @@ public class CombinedProtocolScheduleFactoryTest {
     consensusSchedule.add(new ForkSpec<>(100L, protocolSchedule2));
     consensusSchedule.add(new ForkSpec<>(200L, protocolSchedule3));
 
-    final BlockNumberStreamingProtocolSchedule combinedProtocolSchedule =
-        new BlockNumberStreamingProtocolSchedule(
-            combinedProtocolScheduleFactory.create(consensusSchedule, Optional.of(BigInteger.TEN)));
+    final BftProtocolSchedule combinedProtocolSchedule =
+        combinedProtocolScheduleFactory.create(consensusSchedule, Optional.of(BigInteger.TEN));
 
     // consensus schedule 1
     assertThat(combinedProtocolSchedule.getByBlockNumber(0L).getName()).isEqualTo("Frontier");
@@ -137,11 +140,15 @@ public class CombinedProtocolScheduleFactoryTest {
     assertThat(combinedProtocolSchedule.getByBlockNumber(220L))
         .isSameAs(protocolSchedule3.getByBlockNumber(220L));
 
-    assertThat(combinedProtocolSchedule.streamMilestoneBlocks().collect(Collectors.toList()))
+    assertThat(
+            new BlockNumberStreamingProtocolSchedule(combinedProtocolSchedule)
+                .streamMilestoneBlocks()
+                .collect(Collectors.toList()))
         .isEqualTo(List.of(0L, 5L, 10L, 100L, 105L, 110L, 200L, 220L));
   }
 
-  private ProtocolSchedule createProtocolSchedule(final GenesisConfigOptions genesisConfigOptions) {
+  private BftProtocolSchedule createProtocolSchedule(
+      final GenesisConfigOptions genesisConfigOptions) {
     final ProtocolScheduleBuilder protocolScheduleBuilder =
         new ProtocolScheduleBuilder(
             genesisConfigOptions,
@@ -149,9 +156,9 @@ public class CombinedProtocolScheduleFactoryTest {
             ProtocolSpecAdapters.create(0, Function.identity()),
             new PrivacyParameters(),
             false,
-            false,
             EvmConfiguration.DEFAULT);
 
-    return protocolScheduleBuilder.createProtocolSchedule();
+    return new BftProtocolSchedule(
+        (UnifiedProtocolSchedule) protocolScheduleBuilder.createProtocolSchedule());
   }
 }

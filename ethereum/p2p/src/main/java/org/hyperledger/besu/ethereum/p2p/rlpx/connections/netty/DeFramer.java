@@ -69,6 +69,7 @@ final class DeFramer extends ByteToMessageDecoder {
   // The peer we are expecting to connect to, if such a peer is known
   private final Optional<Peer> expectedPeer;
   private final List<SubProtocol> subProtocols;
+  private final boolean inboundInitiated;
   private boolean hellosExchanged;
   private final LabelledMetric<Counter> outboundMessagesCounter;
 
@@ -79,13 +80,15 @@ final class DeFramer extends ByteToMessageDecoder {
       final Optional<Peer> expectedPeer,
       final PeerConnectionEventDispatcher connectionEventDispatcher,
       final CompletableFuture<PeerConnection> connectFuture,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final boolean inboundInitiated) {
     this.framer = framer;
     this.subProtocols = subProtocols;
     this.localNode = localNode;
     this.expectedPeer = expectedPeer;
     this.connectFuture = connectFuture;
     this.connectionEventDispatcher = connectionEventDispatcher;
+    this.inboundInitiated = inboundInitiated;
     this.outboundMessagesCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.NETWORK,
@@ -140,7 +143,8 @@ final class DeFramer extends ByteToMessageDecoder {
                 peerInfo,
                 capabilityMultiplexer,
                 connectionEventDispatcher,
-                outboundMessagesCounter);
+                outboundMessagesCounter,
+                inboundInitiated);
 
         // Check peer is who we expected
         if (expectedPeer.isPresent()

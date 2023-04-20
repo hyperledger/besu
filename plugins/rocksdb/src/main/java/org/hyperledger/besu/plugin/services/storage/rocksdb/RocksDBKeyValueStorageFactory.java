@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,6 +16,7 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -26,9 +27,12 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.Databa
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.OptimisticRocksDBColumnarKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.TransactionDBRocksDBColumnarKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented.RocksDBKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
+import org.hyperledger.besu.services.kvstore.SnappableSegmentedKeyValueStorageAdapter;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -149,55 +153,71 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       final BesuConfiguration commonConfiguration,
       final MetricsSystem metricsSystem)
       throws StorageException {
-
+    final boolean isForestStorageFormat =
+        DataStorageFormat.FOREST.getDatabaseVersion() == commonConfiguration.getDatabaseVersion();
     if (requiresInit()) {
       init(commonConfiguration);
     }
 
     // It's probably a good idea for the creation logic to be entirely dependent on the database
     // version. Introducing intermediate booleans that represent database properties and dispatching
-    // creation logic based on them is error prone.
+    // creation logic based on them is error-prone.
     switch (databaseVersion) {
-      case 0:
-        {
-          segmentedStorage = null;
-          if (unsegmentedStorage == null) {
-            unsegmentedStorage =
-                new RocksDBKeyValueStorage(
-                    rocksDBConfiguration, metricsSystem, rocksDBMetricsFactory);
-          }
-          return unsegmentedStorage;
+      case 0 -> {
+        segmentedStorage = null;
+        if (unsegmentedStorage == null) {
+          unsegmentedStorage =
+              new RocksDBKeyValueStorage(
+                  rocksDBConfiguration, metricsSystem, rocksDBMetricsFactory);
         }
-      case 1:
-      case 2:
-        {
-          unsegmentedStorage = null;
-          if (segmentedStorage == null) {
-            final List<SegmentIdentifier> segmentsForVersion =
-                segments.stream()
-                    .filter(segmentId -> segmentId.includeInDatabaseVersion(databaseVersion))
-                    .collect(Collectors.toList());
-
+        return unsegmentedStorage;
+      }
+      case 1, 2 -> {
+        unsegmentedStorage = null;
+        if (segmentedStorage == null) {
+          final List<SegmentIdentifier> segmentsForVersion =
+              segments.stream()
+                  .filter(segmentId -> segmentId.includeInDatabaseVersion(databaseVersion))
+                  .collect(Collectors.toList());
+          if (isForestStorageFormat) {
+            LOG.debug("FOREST mode detected, using TransactionDB.");
             segmentedStorage =
-                new RocksDBColumnarKeyValueStorage(
+                new TransactionDBRocksDBColumnarKeyValueStorage(
+                    rocksDBConfiguration,
+                    segmentsForVersion,
+                    ignorableSegments,
+                    metricsSystem,
+                    rocksDBMetricsFactory);
+          } else {
+            LOG.debug("Using OptimisticTransactionDB.");
+            segmentedStorage =
+                new OptimisticRocksDBColumnarKeyValueStorage(
                     rocksDBConfiguration,
                     segmentsForVersion,
                     ignorableSegments,
                     metricsSystem,
                     rocksDBMetricsFactory);
           }
-          final RocksDbSegmentIdentifier rocksSegment =
-              segmentedStorage.getSegmentIdentifierByName(segment);
-          return new SegmentedKeyValueStorageAdapter<>(
-              segment, segmentedStorage, () -> segmentedStorage.takeSnapshot(rocksSegment));
         }
-      default:
-        {
-          throw new IllegalStateException(
-              String.format(
-                  "Developer error: A supported database version (%d) was detected but there is no associated creation logic.",
-                  databaseVersion));
+
+        final RocksDbSegmentIdentifier rocksSegment =
+            segmentedStorage.getSegmentIdentifierByName(segment);
+
+        if (isForestStorageFormat) {
+          return new SegmentedKeyValueStorageAdapter<>(segment, segmentedStorage);
+        } else {
+          return new SnappableSegmentedKeyValueStorageAdapter<>(
+              segment,
+              segmentedStorage,
+              () ->
+                  ((OptimisticRocksDBColumnarKeyValueStorage) segmentedStorage)
+                      .takeSnapshot(rocksSegment));
         }
+      }
+      default -> throw new IllegalStateException(
+          String.format(
+              "Developer error: A supported database version (%d) was detected but there is no associated creation logic.",
+              databaseVersion));
     }
   }
 
@@ -238,7 +258,10 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     final int databaseVersion;
     if (databaseExists) {
       databaseVersion = DatabaseMetadata.lookUpFrom(dataDir).getVersion();
-      LOG.info("Existing database detected at {}. Version {}", dataDir, databaseVersion);
+      LOG.info(
+          "Existing database detected at {}. Version {}. Compacting database...",
+          dataDir,
+          databaseVersion);
     } else {
       databaseVersion = commonConfiguration.getDatabaseVersion();
       LOG.info("No existing database detected at {}. Using version {}", dataDir, databaseVersion);

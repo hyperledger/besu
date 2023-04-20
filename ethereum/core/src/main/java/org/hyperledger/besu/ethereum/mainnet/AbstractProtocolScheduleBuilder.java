@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.BlockNumberProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.TimestampProtocolSpec;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -39,7 +41,6 @@ public abstract class AbstractProtocolScheduleBuilder {
   protected final PrivacyParameters privacyParameters;
   protected final boolean isRevertReasonEnabled;
   protected final BadBlockManager badBlockManager = new BadBlockManager();
-  protected final boolean quorumCompatibilityMode;
   protected final EvmConfiguration evmConfiguration;
 
   protected AbstractProtocolScheduleBuilder(
@@ -47,18 +48,16 @@ public abstract class AbstractProtocolScheduleBuilder {
       final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final boolean quorumCompatibilityMode,
       final EvmConfiguration evmConfiguration) {
     this.config = config;
     this.protocolSpecAdapters = protocolSpecAdapters;
     this.privacyParameters = privacyParameters;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
-    this.quorumCompatibilityMode = quorumCompatibilityMode;
     this.evmConfiguration = evmConfiguration;
   }
 
   protected void initSchedule(
-      final HeaderBasedProtocolSchedule protocolSchedule, final Optional<BigInteger> chainId) {
+      final ProtocolSchedule protocolSchedule, final Optional<BigInteger> chainId) {
 
     final MainnetProtocolSpecFactory specFactory =
         new MainnetProtocolSpecFactory(
@@ -66,7 +65,6 @@ public abstract class AbstractProtocolScheduleBuilder {
             config.getContractSizeLimit(),
             config.getEvmStackSize(),
             isRevertReasonEnabled,
-            quorumCompatibilityMode,
             config.getEcip1017EraRounds(),
             evmConfiguration);
 
@@ -87,7 +85,11 @@ public abstract class AbstractProtocolScheduleBuilder {
                         .getValue();
                 builders.put(
                     modifierBlock,
-                    new BuilderMapEntry(modifierBlock, parent.getBuilder(), entry.getValue()));
+                    new BuilderMapEntry(
+                        parent.scheduledSpecFactory,
+                        modifierBlock,
+                        parent.getBuilder(),
+                        entry.getValue()));
               });
     }
 
@@ -97,7 +99,11 @@ public abstract class AbstractProtocolScheduleBuilder {
         .forEach(
             e ->
                 addProtocolSpec(
-                    protocolSchedule, e.getBlockIdentifier(), e.getBuilder(), e.modifier));
+                    protocolSchedule,
+                    e.scheduledSpecFactory,
+                    e.getBlockIdentifier(),
+                    e.getBuilder(),
+                    e.modifier));
 
     postBuildStep(specFactory, builders);
 
@@ -133,18 +139,31 @@ public abstract class AbstractProtocolScheduleBuilder {
   abstract Stream<Optional<BuilderMapEntry>> createMilestones(
       final MainnetProtocolSpecFactory specFactory);
 
-  protected Optional<BuilderMapEntry> create(
+  protected Optional<BuilderMapEntry> timestampMilestone(
       final OptionalLong blockIdentifier, final ProtocolSpecBuilder builder) {
+    return createMilestone(blockIdentifier, builder, TimestampProtocolSpec::create);
+  }
+
+  protected Optional<BuilderMapEntry> blockNumberMilestone(
+      final OptionalLong blockIdentifier, final ProtocolSpecBuilder builder) {
+    return createMilestone(blockIdentifier, builder, BlockNumberProtocolSpec::create);
+  }
+
+  private Optional<BuilderMapEntry> createMilestone(
+      final OptionalLong blockIdentifier,
+      final ProtocolSpecBuilder builder,
+      final ScheduledSpecFactory factory) {
     if (blockIdentifier.isEmpty()) {
       return Optional.empty();
     }
     final long blockVal = blockIdentifier.getAsLong();
     return Optional.of(
-        new BuilderMapEntry(blockVal, builder, protocolSpecAdapters.getModifierForBlock(blockVal)));
+        new BuilderMapEntry(
+            factory, blockVal, builder, protocolSpecAdapters.getModifierForBlock(blockVal)));
   }
 
   protected ProtocolSpec getProtocolSpec(
-      final HeaderBasedProtocolSchedule protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final ProtocolSpecBuilder definition,
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
     definition
@@ -157,28 +176,31 @@ public abstract class AbstractProtocolScheduleBuilder {
   }
 
   protected void addProtocolSpec(
-      final HeaderBasedProtocolSchedule protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
+      final ScheduledSpecFactory factory,
       final long blockNumberOrTimestamp,
       final ProtocolSpecBuilder definition,
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
 
     protocolSchedule.putMilestone(
-        blockNumberOrTimestamp, getProtocolSpec(protocolSchedule, definition, modifier));
+        factory, blockNumberOrTimestamp, getProtocolSpec(protocolSchedule, definition, modifier));
   }
 
   abstract void postBuildStep(
       final MainnetProtocolSpecFactory specFactory, final TreeMap<Long, BuilderMapEntry> builders);
 
   protected static class BuilderMapEntry {
-
+    private final ScheduledSpecFactory scheduledSpecFactory;
     private final long blockIdentifier;
     private final ProtocolSpecBuilder builder;
     private final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier;
 
     public BuilderMapEntry(
+        final ScheduledSpecFactory factory,
         final long blockIdentifier,
         final ProtocolSpecBuilder builder,
         final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
+      this.scheduledSpecFactory = factory;
       this.blockIdentifier = blockIdentifier;
       this.builder = builder;
       this.modifier = modifier;

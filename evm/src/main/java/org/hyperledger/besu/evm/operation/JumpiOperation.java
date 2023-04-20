@@ -25,8 +25,10 @@ import org.apache.tuweni.bytes.Bytes;
 /** The JUMPI operation. */
 public class JumpiOperation extends AbstractFixedCostOperation {
 
-  private final OperationResult invalidJumpResponse;
-  private final OperationResult jumpResponse;
+  private static final OperationResult invalidJumpResponse =
+      new Operation.OperationResult(10L, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
+  private static final OperationResult jumpiResponse = new OperationResult(10L, null, 0);
+  private static final OperationResult nojumpResponse = new OperationResult(10L, null);
 
   /**
    * Instantiates a new JUMPI operation.
@@ -35,19 +37,26 @@ public class JumpiOperation extends AbstractFixedCostOperation {
    */
   public JumpiOperation(final GasCalculator gasCalculator) {
     super(0x57, "JUMPI", 2, 0, gasCalculator, gasCalculator.getHighTierGasCost());
-    invalidJumpResponse =
-        new Operation.OperationResult(gasCost, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
-    jumpResponse = new OperationResult(gasCost, null, 0);
   }
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
+    return staticOperation(frame);
+  }
+
+  /**
+   * Performs Jump operation.
+   *
+   * @param frame the frame
+   * @return the operation result
+   */
+  public static OperationResult staticOperation(final MessageFrame frame) {
     final Bytes dest = frame.popStackItem().trimLeadingZeros();
-    final Bytes condition = frame.popStackItem();
+    final Bytes condition = frame.popStackItem().trimLeadingZeros();
 
     // If condition is zero (false), no jump is will be performed. Therefore, skip the test.
-    if (condition.isZero()) {
-      return successResponse;
+    if (condition.size() == 0) {
+      return nojumpResponse;
     } else {
       final int jumpDestination;
       try {
@@ -60,7 +69,7 @@ public class JumpiOperation extends AbstractFixedCostOperation {
         return invalidJumpResponse;
       }
       frame.setPC(jumpDestination);
-      return jumpResponse;
+      return jumpiResponse;
     }
   }
 }

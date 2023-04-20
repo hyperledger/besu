@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.util.Collections.singletonList;
-import static java.util.Optional.ofNullable;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_NOT_AVAILABLE;
@@ -33,8 +32,8 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -72,7 +71,7 @@ public class TransactionPool implements BlockAddedObserver {
   private static final String REMOTE = "remote";
   private static final String LOCAL = "local";
   private final PendingTransactions pendingTransactions;
-  private final HeaderBasedProtocolSchedule protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final TransactionBroadcaster transactionBroadcaster;
   private final MiningParameters miningParameters;
@@ -82,7 +81,7 @@ public class TransactionPool implements BlockAddedObserver {
 
   public TransactionPool(
       final PendingTransactions pendingTransactions,
-      final HeaderBasedProtocolSchedule protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionBroadcaster transactionBroadcaster,
       final EthContext ethContext,
@@ -354,15 +353,6 @@ public class TransactionPool implements BlockAddedObserver {
 
   private TransactionInvalidReason validatePrice(
       final Transaction transaction, final boolean isLocal, final FeeMarket feeMarket) {
-
-    // Check whether it's a GoQuorum transaction
-    boolean goQuorumCompatibilityMode = getTransactionValidator().getGoQuorumCompatibilityMode();
-    if (transaction.isGoQuorumPrivateTransaction(goQuorumCompatibilityMode)) {
-      final Optional<Wei> weiValue = ofNullable(transaction.getValue());
-      if (weiValue.isPresent() && !weiValue.get().isZero()) {
-        return TransactionInvalidReason.ETHER_VALUE_NOT_SUPPORTED;
-      }
-    }
 
     if (isLocal) {
       if (!configuration.getTxFeeCap().isZero()

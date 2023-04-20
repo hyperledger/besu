@@ -84,7 +84,6 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
               .setCreateIfMissing(true)
               .setMaxOpenFiles(configuration.getMaxOpenFiles())
               .setTableFormatConfig(createBlockBasedTableConfig(configuration))
-              .setMaxBackgroundCompactions(configuration.getMaxBackgroundCompactions())
               .setStatistics(stats);
       options.getEnv().setBackgroundThreads(configuration.getBackgroundThreadCount());
 

@@ -27,6 +27,8 @@ import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import com.google.common.io.BaseEncoding;
@@ -56,21 +58,24 @@ public class EthGetWork implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Optional<PoWSolverInputs> solver = miner.getWorkDefinition();
+    final Object requestId = requestContext.getRequest().getId();
     if (solver.isPresent()) {
       final PoWSolverInputs rawResult = solver.get();
-      final byte[] dagSeed =
-          DirectAcyclicGraphSeed.dagSeed(rawResult.getBlockNumber(), epochCalculator);
-      final String[] result = {
-        rawResult.getPrePowHash().toHexString(),
-        "0x" + BaseEncoding.base16().lowerCase().encode(dagSeed),
-        rawResult.getTarget().toHexString(),
-        Quantity.create(rawResult.getBlockNumber())
-      };
-      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
+      final List<String> response = new ArrayList<>(rawResponse(rawResult));
+      response.add(Quantity.create(rawResult.getBlockNumber()));
+      return new JsonRpcSuccessResponse(requestId, response);
     } else {
       LOG.trace("Mining is not operational, eth_getWork request cannot be processed");
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.NO_MINING_WORK_FOUND);
+      return new JsonRpcErrorResponse(requestId, JsonRpcError.NO_MINING_WORK_FOUND);
     }
+  }
+
+  public List<String> rawResponse(final PoWSolverInputs rawResult) {
+    final byte[] dagSeed =
+        DirectAcyclicGraphSeed.dagSeed(rawResult.getBlockNumber(), epochCalculator);
+    return List.of(
+        rawResult.getPrePowHash().toHexString(),
+        "0x" + BaseEncoding.base16().lowerCase().encode(dagSeed),
+        rawResult.getTarget().toHexString());
   }
 }
