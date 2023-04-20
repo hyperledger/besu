@@ -37,6 +37,7 @@ import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
 import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
+import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
@@ -165,6 +166,8 @@ public abstract class CommandTestAbstract {
   @SuppressWarnings("PrivateStaticFinalLoggers") // @Mocks are inited by JUnit
   @Mock
   protected Logger mockLogger;
+
+  @Mock protected BesuComponent mockBesuComponent;
 
   @Mock protected PkiBlockCreationConfigurationProvider mockPkiBlockCreationConfigProvider;
   @Mock protected PkiBlockCreationConfiguration mockPkiBlockCreationConfiguration;
@@ -318,6 +321,7 @@ public abstract class CommandTestAbstract {
         .doReturn(mockPkiBlockCreationConfiguration)
         .when(mockPkiBlockCreationConfigProvider)
         .load(pkiKeyStoreConfigurationArgumentCaptor.capture());
+    when(mockBesuComponent.getBesuCommandLogger()).thenReturn(mockLogger);
   }
 
   @Before
@@ -402,7 +406,7 @@ public abstract class CommandTestAbstract {
     switch (testType) {
       case REQUIRED_OPTION:
         return new TestBesuCommandWithRequiredOption(
-            mockLogger,
+            mockBesuComponent,
             () -> rlpBlockImporter,
             this::jsonBlockImporterFactory,
             (blockchain) -> rlpBlockExporter,
@@ -416,7 +420,7 @@ public abstract class CommandTestAbstract {
             privacyPluginService);
       case PORT_CHECK:
         return new TestBesuCommand(
-            mockLogger,
+            mockBesuComponent,
             () -> rlpBlockImporter,
             this::jsonBlockImporterFactory,
             (blockchain) -> rlpBlockExporter,
@@ -430,7 +434,7 @@ public abstract class CommandTestAbstract {
             privacyPluginService);
       default:
         return new TestBesuCommandWithoutPortCheck(
-            mockLogger,
+            mockBesuComponent,
             () -> rlpBlockImporter,
             this::jsonBlockImporterFactory,
             (blockchain) -> rlpBlockExporter,
@@ -452,7 +456,7 @@ public abstract class CommandTestAbstract {
     private Vertx vertx;
 
     TestBesuCommand(
-        final Logger mockLogger,
+        final BesuComponent besuComponent,
         final Supplier<RlpBlockImporter> mockBlockImporter,
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -465,7 +469,7 @@ public abstract class CommandTestAbstract {
         final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
         final PrivacyPluginServiceImpl privacyPluginService) {
       super(
-          mockLogger,
+          besuComponent,
           mockBlockImporter,
           jsonBlockImporterFactory,
           rlpBlockExporterFactory,
@@ -536,7 +540,7 @@ public abstract class CommandTestAbstract {
     private final Boolean acceptTermsAndConditions = false;
 
     TestBesuCommandWithRequiredOption(
-        final Logger mockLogger,
+        final BesuComponent besuComponent,
         final Supplier<RlpBlockImporter> mockBlockImporter,
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -549,7 +553,7 @@ public abstract class CommandTestAbstract {
         final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
         final PrivacyPluginServiceImpl privacyPluginService) {
       super(
-          mockLogger,
+          besuComponent,
           mockBlockImporter,
           jsonBlockImporterFactory,
           rlpBlockExporterFactory,
@@ -572,7 +576,7 @@ public abstract class CommandTestAbstract {
   public static class TestBesuCommandWithoutPortCheck extends TestBesuCommand {
 
     TestBesuCommandWithoutPortCheck(
-        final Logger mockLogger,
+        final BesuComponent context,
         final Supplier<RlpBlockImporter> mockBlockImporter,
         final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
         final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -585,7 +589,7 @@ public abstract class CommandTestAbstract {
         final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
         final PrivacyPluginServiceImpl privacyPluginService) {
       super(
-          mockLogger,
+          context,
           mockBlockImporter,
           jsonBlockImporterFactory,
           rlpBlockExporterFactory,
