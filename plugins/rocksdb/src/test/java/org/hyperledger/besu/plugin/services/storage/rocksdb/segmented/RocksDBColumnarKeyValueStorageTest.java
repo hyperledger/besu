@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,23 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented;
+package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import org.hyperledger.besu.kvstore.AbstractKeyValueStorageTest;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage.Transaction;
-import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
+import org.hyperledger.besu.services.kvstore.SnappableSegmentedKeyValueStorageAdapter;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -43,7 +39,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageTest {
+public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageTest {
 
   @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
@@ -55,7 +51,7 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
     final SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store = createSegmentedStore();
     RocksDbSegmentIdentifier segment = store.getSegmentIdentifierByName(TestSegment.FOO);
     KeyValueStorage duplicateSegmentRef =
-        new SegmentedKeyValueStorageAdapter<>(TestSegment.FOO, store);
+        new SnappableSegmentedKeyValueStorageAdapter<>(TestSegment.FOO, store);
 
     final Consumer<byte[]> insert =
         value -> {
@@ -286,29 +282,16 @@ public class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageT
     }
   }
 
-  private SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore()
-      throws Exception {
-    return new RocksDBColumnarKeyValueStorage(
-        new RocksDBConfigurationBuilder().databaseDir(folder.newFolder().toPath()).build(),
-        Arrays.asList(TestSegment.FOO, TestSegment.BAR),
-        new NoOpMetricsSystem(),
-        RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
-  }
+  protected abstract SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore()
+      throws Exception;
 
-  private SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore(
+  protected abstract SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore(
       final Path path,
       final List<SegmentIdentifier> segments,
-      final List<SegmentIdentifier> ignorableSegments) {
-    return new RocksDBColumnarKeyValueStorage(
-        new RocksDBConfigurationBuilder().databaseDir(path).build(),
-        segments,
-        ignorableSegments,
-        new NoOpMetricsSystem(),
-        RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
-  }
+      final List<SegmentIdentifier> ignorableSegments);
 
   @Override
   protected KeyValueStorage createStore() throws Exception {
-    return new SegmentedKeyValueStorageAdapter<>(TestSegment.FOO, createSegmentedStore());
+    return new SnappableSegmentedKeyValueStorageAdapter<>(TestSegment.FOO, createSegmentedStore());
   }
 }

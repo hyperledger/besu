@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -13,23 +13,23 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
+package org.hyperledger.besu.ethereum.bonsai.trielog;
 
-package org.hyperledger.besu.ethereum.worldstate;
+public class TrieLogAddedEvent {
 
-import org.immutables.value.Value;
+  private final TrieLogLayer layer;
 
-@Value.Immutable
-public interface DataStorageConfiguration {
+  public TrieLogAddedEvent(final TrieLogLayer layer) {
+    this.layer = layer;
+  }
 
-  long DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD = 512;
+  public TrieLogLayer getLayer() {
+    return layer;
+  }
 
-  DataStorageConfiguration DEFAULT_CONFIG =
-      ImmutableDataStorageConfiguration.builder()
-          .dataStorageFormat(DataStorageFormat.FOREST)
-          .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
-          .build();
+  @FunctionalInterface
+  interface TrieLogAddedObserver {
 
-  DataStorageFormat getDataStorageFormat();
-
-  Long getBonsaiMaxLayersToLoad();
+    void onTrieLogAdded(TrieLogAddedEvent event);
+  }
 }
