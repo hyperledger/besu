@@ -139,7 +139,7 @@ public abstract class AbstractTransactionsLayeredPendingTransactionsTest {
     when(protocolSpec.getTransactionValidator()).thenReturn(transactionValidator);
     when(protocolSpec.getFeeMarket()).thenReturn(getFeeMarket());
     protocolSchedule = spy(executionContext.getProtocolSchedule());
-    doReturn(protocolSpec).when(protocolSchedule).getByBlockNumber(anyLong());
+    doReturn(protocolSpec).when(protocolSchedule).getByBlockHeader(any());
     blockGasLimit = blockchain.getChainHeadBlock().getHeader().getGasLimit();
     ethProtocolManager = EthProtocolManagerTestUtil.create();
     ethContext = spy(ethProtocolManager.ethContext());

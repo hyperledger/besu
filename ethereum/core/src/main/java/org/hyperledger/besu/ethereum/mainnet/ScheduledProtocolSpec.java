@@ -14,8 +14,89 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+
 /**
- * Tuple that associates a {@link ProtocolSpec} with a given block number or timestamp level
- * starting point
+ * Associates a {@link ProtocolSpec} with a given block number or timestamp level starting point
+ * Knows how to query the timestamp or block number of a given block header
  */
-public record ScheduledProtocolSpec(long milestone, ProtocolSpec spec) {}
+public interface ScheduledProtocolSpec {
+  boolean isOnOrAfterMilestoneBoundary(ProcessableBlockHeader header);
+
+  boolean isOnMilestoneBoundary(ProcessableBlockHeader header);
+
+  long milestone();
+
+  ProtocolSpec spec();
+
+  class TimestampProtocolSpec implements ScheduledProtocolSpec {
+
+    private final long timestamp;
+    private final ProtocolSpec protocolSpec;
+
+    public static TimestampProtocolSpec create(
+        final long timestamp, final ProtocolSpec protocolSpec) {
+      return new TimestampProtocolSpec(timestamp, protocolSpec);
+    }
+
+    private TimestampProtocolSpec(final long timestamp, final ProtocolSpec protocolSpec) {
+      this.timestamp = timestamp;
+      this.protocolSpec = protocolSpec;
+    }
+
+    @Override
+    public boolean isOnOrAfterMilestoneBoundary(final ProcessableBlockHeader header) {
+      return header.getTimestamp() >= timestamp;
+    }
+
+    @Override
+    public boolean isOnMilestoneBoundary(final ProcessableBlockHeader header) {
+      return header.getTimestamp() == timestamp;
+    }
+
+    @Override
+    public long milestone() {
+      return timestamp;
+    }
+
+    @Override
+    public ProtocolSpec spec() {
+      return protocolSpec;
+    }
+  }
+
+  class BlockNumberProtocolSpec implements ScheduledProtocolSpec {
+    private final long blockNumber;
+    private final ProtocolSpec protocolSpec;
+
+    public static BlockNumberProtocolSpec create(
+        final long blockNumber, final ProtocolSpec protocolSpec) {
+      return new BlockNumberProtocolSpec(blockNumber, protocolSpec);
+    }
+
+    private BlockNumberProtocolSpec(final long blockNumber, final ProtocolSpec protocolSpec) {
+      this.blockNumber = blockNumber;
+      this.protocolSpec = protocolSpec;
+    }
+
+    @Override
+    public boolean isOnOrAfterMilestoneBoundary(final ProcessableBlockHeader header) {
+      return header.getNumber() >= blockNumber;
+    }
+
+    @Override
+    public boolean isOnMilestoneBoundary(final ProcessableBlockHeader header) {
+      return header.getNumber() == blockNumber;
+    }
+
+    @Override
+    public long milestone() {
+      return blockNumber;
+    }
+
+    @Override
+    public ProtocolSpec spec() {
+      return protocolSpec;
+    }
+  }
+}

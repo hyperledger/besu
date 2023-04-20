@@ -21,6 +21,9 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 public class BonsaiValue<T> {
   private T prior;
   private T updated;
@@ -80,6 +83,10 @@ public class BonsaiValue<T> {
     return Objects.equals(updated, prior);
   }
 
+  public void setCleared() {
+    this.cleared = true;
+  }
+
   public boolean isCleared() {
     return cleared;
   }
@@ -94,5 +101,26 @@ public class BonsaiValue<T> {
         + ", cleared="
         + cleared
         + '}';
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    BonsaiValue<?> that = (BonsaiValue<?>) o;
+    return new EqualsBuilder()
+        .append(cleared, that.cleared)
+        .append(prior, that.prior)
+        .append(updated, that.updated)
+        .isEquals();
+  }
+
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder(17, 37).append(prior).append(updated).append(cleared).toHashCode();
   }
 }

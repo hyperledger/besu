@@ -23,6 +23,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -71,7 +72,10 @@ public class TraceTransactionIntegrationTest {
     blockchain = contextTestFixture.getBlockchain();
     worldStateArchive = contextTestFixture.getStateArchive();
     final ProtocolSchedule protocolSchedule = contextTestFixture.getProtocolSchedule();
-    transactionProcessor = protocolSchedule.getByBlockNumber(0).getTransactionProcessor();
+    transactionProcessor =
+        protocolSchedule
+            .getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader())
+            .getTransactionProcessor();
     blockHashLookup = new CachingBlockHashLookup(genesisBlock.getHeader(), blockchain);
   }
 

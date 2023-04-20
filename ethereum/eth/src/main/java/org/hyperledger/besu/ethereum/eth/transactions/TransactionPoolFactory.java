@@ -30,7 +30,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.layered.SparseTransactions
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -45,7 +45,7 @@ public class TransactionPoolFactory {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPoolFactory.class);
 
   public static TransactionPool createTransactionPool(
-      final HeaderBasedProtocolSchedule protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final Clock clock,
@@ -82,7 +82,7 @@ public class TransactionPoolFactory {
   }
 
   static TransactionPool createTransactionPool(
-      final HeaderBasedProtocolSchedule protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final TransactionPoolMetrics metrics,
@@ -183,7 +183,7 @@ public class TransactionPoolFactory {
   }
 
   private static PendingTransactions createPendingTransactions(
-      final HeaderBasedProtocolSchedule protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final Clock clock,
       final TransactionPoolMetrics metrics,
@@ -233,7 +233,7 @@ public class TransactionPoolFactory {
   }
 
   private static PendingTransactions createLayeredPendingTransactions(
-      final HeaderBasedProtocolSchedule protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionPoolMetrics metrics,
       final TransactionPoolConfiguration transactionPoolConfiguration,

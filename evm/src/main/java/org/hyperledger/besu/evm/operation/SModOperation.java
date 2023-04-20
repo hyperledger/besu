@@ -22,7 +22,6 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /** The SMod operation. */
 public class SModOperation extends AbstractFixedCostOperation {
@@ -55,7 +54,7 @@ public class SModOperation extends AbstractFixedCostOperation {
     final Bytes value1 = frame.popStackItem();
 
     if (value1.isZero()) {
-      frame.pushStackItem(UInt256.ZERO);
+      frame.pushStackItem(Bytes.EMPTY);
     } else {
       final BigInteger b1 =
           value0.size() < 32

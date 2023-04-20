@@ -48,4 +48,8 @@ public interface TrieLogManager {
   void reset();
 
   Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash);
+
+  long subscribe(final TrieLogAddedEvent.TrieLogAddedObserver sub);
+
+  void unsubscribe(final long id);
 }
