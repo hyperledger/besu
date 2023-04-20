@@ -53,7 +53,7 @@ public class PrivacyBlockProcessor implements BlockProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(PrivacyBlockProcessor.class);
 
   private final BlockProcessor blockProcessor;
-  private final HeaderBasedProtocolSchedule protocolSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final Enclave enclave;
   private final PrivateStateStorage privateStateStorage;
   private final WorldStateArchive privateWorldStateArchive;
@@ -63,7 +63,7 @@ public class PrivacyBlockProcessor implements BlockProcessor {
 
   public PrivacyBlockProcessor(
       final BlockProcessor blockProcessor,
-      final HeaderBasedProtocolSchedule protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final Enclave enclave,
       final PrivateStateStorage privateStateStorage,
       final WorldStateArchive privateWorldStateArchive,

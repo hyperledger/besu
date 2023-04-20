@@ -180,8 +180,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
         new TransitionProtocolSchedule(
             preMergeBesuControllerBuilder.createProtocolSchedule(),
             mergeBesuControllerBuilder.createProtocolSchedule(),
-            PostMergeContext.get(),
-            mergeBesuControllerBuilder.createTimestampProtocolSchedule());
+            PostMergeContext.get());
     return transitionProtocolSchedule;
   }
 

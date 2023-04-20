@@ -33,7 +33,6 @@ import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
@@ -65,7 +64,7 @@ public class ExtCodeHashOperationTest {
   @Test
   public void shouldReturnZeroWhenAccountDoesNotExist() {
     final Bytes result = executeOperation(REQUESTED_ADDRESS);
-    assertThat(result).isEqualTo(Bytes32.ZERO);
+    assertThat(result.trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 
   @Test
@@ -77,12 +76,12 @@ public class ExtCodeHashOperationTest {
   @Test
   public void shouldReturnZeroWhenAccountExistsButIsEmpty() {
     worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
-    assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(Bytes32.ZERO);
+    assertThat(executeOperation(REQUESTED_ADDRESS).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 
   @Test
   public void shouldReturnZeroWhenPrecompiledContractHasNoBalance() {
-    assertThat(executeOperation(Address.ECREC)).isEqualTo(Bytes32.ZERO);
+    assertThat(executeOperation(Address.ECREC).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 
   @Test

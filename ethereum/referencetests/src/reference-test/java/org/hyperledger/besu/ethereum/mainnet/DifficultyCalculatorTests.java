@@ -48,10 +48,11 @@ public class DifficultyCalculatorTests {
   public static Stream<Arguments> getTestParametersForConfig() throws IOException {
     return Stream.of(
         Arguments.of(
-          "/BasicTests/difficultyMainNetwork.json",
-          MainnetProtocolSchedule.fromConfig(
-              GenesisConfigFile.mainnet().getConfigOptions(), EvmConfiguration.DEFAULT)
-        ),
+            "/BasicTests/difficultyMainNetwork.json",
+            MainnetProtocolSchedule.fromConfig(
+                GenesisConfigFile.mainnet()
+                    .getConfigOptions(Map.of("shanghaiTime", "999999999999")),
+                EvmConfiguration.DEFAULT)),
         Arguments.of(
           "/DifficultyTests/dfGrayGlacier/difficultyGrayGlacierForkBlock.json",
           MainnetProtocolSchedule.fromConfig(

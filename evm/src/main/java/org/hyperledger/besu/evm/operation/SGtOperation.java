@@ -21,7 +21,6 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /** The SGt operation. */
 public class SGtOperation extends AbstractFixedCostOperation {
@@ -63,7 +62,7 @@ public class SGtOperation extends AbstractFixedCostOperation {
             ? new BigInteger(1, value1.toArrayUnsafe())
             : new BigInteger(value1.toArrayUnsafe());
 
-    final UInt256 result = b0.compareTo(b1) > 0 ? UInt256.ONE : UInt256.ZERO;
+    final Bytes result = b0.compareTo(b1) > 0 ? BYTES_ONE : Bytes.EMPTY;
 
     frame.pushStackItem(result);
 
