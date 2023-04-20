@@ -193,4 +193,33 @@ public interface Words {
     }
     return (array[index] << 8) | (array[index + 1] & 0xff);
   }
+
+  /**
+   * Get the big-endian Bytes representation of an unsigned int, including leading zeros
+   *
+   * @param value the int value
+   * @return a Bytes object of the value, Big Endian order
+   */
+  static Bytes intBytes(final int value) {
+    return Bytes.of(
+        (byte) (value >>> 24), (byte) (value >>> 16), (byte) (value >>> 8), (byte) value);
+  }
+
+  /**
+   * Get the big-endian Bytes representation of an unsigned int, including leading zeros
+   *
+   * @param value the long value
+   * @return a Bytes object of the value, Big Endian order
+   */
+  static Bytes longBytes(final long value) {
+    return Bytes.of(
+        (byte) (value >>> 56),
+        (byte) (value >>> 48),
+        (byte) (value >>> 40),
+        (byte) (value >>> 32),
+        (byte) (value >>> 24),
+        (byte) (value >>> 16),
+        (byte) (value >>> 8),
+        (byte) value);
+  }
 }

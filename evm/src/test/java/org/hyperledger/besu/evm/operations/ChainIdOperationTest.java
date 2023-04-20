@@ -23,6 +23,7 @@ import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.operation.ChainIdOperation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
@@ -60,7 +61,7 @@ public class ChainIdOperationTest {
   @SuppressWarnings("ResultOfMethodCallIgnored")
   @Test
   public void shouldReturnChainId() {
-    final ArgumentCaptor<UInt256> arg = ArgumentCaptor.forClass(UInt256.class);
+    final ArgumentCaptor<Bytes> arg = ArgumentCaptor.forClass(UInt256.class);
     when(messageFrame.getRemainingGas()).thenReturn(100L);
     operation.execute(messageFrame, null);
     Mockito.verify(messageFrame).getRemainingGas();
