@@ -258,7 +258,10 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     final int databaseVersion;
     if (databaseExists) {
       databaseVersion = DatabaseMetadata.lookUpFrom(dataDir).getVersion();
-      LOG.info("Existing database detected at {}. Version {}", dataDir, databaseVersion);
+      LOG.info(
+          "Existing database detected at {}. Version {}. Compacting database...",
+          dataDir,
+          databaseVersion);
     } else {
       databaseVersion = commonConfiguration.getDatabaseVersion();
       LOG.info("No existing database detected at {}. Using version {}", dataDir, databaseVersion);
