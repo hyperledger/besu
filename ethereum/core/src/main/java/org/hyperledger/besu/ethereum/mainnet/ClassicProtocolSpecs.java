@@ -275,34 +275,6 @@ public class ClassicProtocolSpecs {
         result.isSuccessful() ? 1 : 0, gasUsed, result.getLogs(), result.getRevertReason());
   }
 
-  public static ProtocolSpecBuilder ecip1049Definition(
-      final Optional<BigInteger> chainId,
-      final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason,
-      final OptionalLong ecip1017EraRounds,
-      final EvmConfiguration evmConfiguration) {
-    return thanosDefinition(
-            chainId,
-            configContractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            ecip1017EraRounds,
-            evmConfiguration)
-        .blockHeaderValidatorBuilder(
-            feeMarket ->
-                MainnetBlockHeaderValidator.createPgaBlockHeaderValidator(
-                    new EpochCalculator.Ecip1099EpochCalculator(),
-                    powHasher(PowAlgorithm.KECCAK256)))
-        .ommerHeaderValidatorBuilder(
-            feeMarket ->
-                MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator(
-                    new EpochCalculator.Ecip1099EpochCalculator(),
-                    powHasher(PowAlgorithm.KECCAK256)))
-        .powHasher(powHasher(PowAlgorithm.KECCAK256))
-        .name("ecip1049");
-  }
-
   public static ProtocolSpecBuilder magnetoDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,

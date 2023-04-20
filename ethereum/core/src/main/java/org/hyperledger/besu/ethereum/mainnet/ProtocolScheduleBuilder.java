@@ -186,8 +186,7 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
         blockNumberMilestone(config.getPhoenixBlockNumber(), specFactory.phoenixDefinition()),
         blockNumberMilestone(config.getThanosBlockNumber(), specFactory.thanosDefinition()),
         blockNumberMilestone(config.getMagnetoBlockNumber(), specFactory.magnetoDefinition()),
-        blockNumberMilestone(config.getMystiqueBlockNumber(), specFactory.mystiqueDefinition()),
-        blockNumberMilestone(config.getEcip1049BlockNumber(), specFactory.ecip1049Definition()));
+        blockNumberMilestone(config.getMystiqueBlockNumber(), specFactory.mystiqueDefinition()));
   }
 
   @Override
