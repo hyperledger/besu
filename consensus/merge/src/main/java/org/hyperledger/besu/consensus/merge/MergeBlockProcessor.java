@@ -17,10 +17,10 @@ package org.hyperledger.besu.consensus.merge;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
 
@@ -44,7 +44,7 @@ public class MergeBlockProcessor extends MainnetBlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
-      final HeaderBasedProtocolSchedule protocolSchedule) {
+      final ProtocolSchedule protocolSchedule) {
     super(
         transactionProcessor,
         transactionReceiptFactory,

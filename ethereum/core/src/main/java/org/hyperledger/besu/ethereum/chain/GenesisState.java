@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
@@ -84,7 +83,7 @@ public final class GenesisState {
    * @return A new {@link GenesisState}.
    */
   public static GenesisState fromConfig(
-      final GenesisConfigFile config, final HeaderBasedProtocolSchedule protocolSchedule) {
+      final GenesisConfigFile config, final ProtocolSchedule protocolSchedule) {
     final List<GenesisAccount> genesisAccounts =
         parseAllocations(config).collect(Collectors.toList());
     final Block block =
@@ -147,7 +146,7 @@ public final class GenesisState {
   private static BlockHeader buildHeader(
       final GenesisConfigFile genesis,
       final Hash genesisRootHash,
-      final HeaderBasedProtocolSchedule protocolSchedule) {
+      final ProtocolSchedule protocolSchedule) {
 
     return BlockHeaderBuilder.create()
         .parentHash(parseParentHash(genesis))

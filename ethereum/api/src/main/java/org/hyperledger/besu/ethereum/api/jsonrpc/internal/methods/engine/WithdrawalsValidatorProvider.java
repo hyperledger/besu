@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 
 import java.util.Optional;
@@ -26,16 +26,14 @@ import java.util.Optional;
 public class WithdrawalsValidatorProvider {
 
   static WithdrawalsValidator getWithdrawalsValidator(
-      final TimestampSchedule timestampSchedule,
-      final long blockTimestamp,
-      final long blockNumber) {
+      final ProtocolSchedule protocolSchedule, final long blockTimestamp, final long blockNumber) {
 
     final BlockHeader blockHeader =
         BlockHeaderBuilder.createDefault()
             .timestamp(blockTimestamp)
             .number(blockNumber)
             .buildBlockHeader();
-    return Optional.ofNullable(timestampSchedule.getByBlockHeader(blockHeader))
+    return Optional.ofNullable(protocolSchedule.getByBlockHeader(blockHeader))
         .map(ProtocolSpec::getWithdrawalsValidator)
         // TODO Withdrawals this is a quirk of the fact timestampSchedule doesn't fallback to the
         // previous fork. This might be resolved when
@@ -45,12 +43,12 @@ public class WithdrawalsValidatorProvider {
   }
 
   static WithdrawalsValidator getWithdrawalsValidator(
-      final TimestampSchedule timestampSchedule,
+      final ProtocolSchedule protocolSchedule,
       final BlockHeader parentBlockHeader,
       final long timestampForNextBlock) {
 
     return Optional.ofNullable(
-            timestampSchedule.getForNextBlockHeader(parentBlockHeader, timestampForNextBlock))
+            protocolSchedule.getForNextBlockHeader(parentBlockHeader, timestampForNextBlock))
         .map(ProtocolSpec::getWithdrawalsValidator)
         // TODO Withdrawals this is a quirk of the fact timestampSchedule doesn't fallback to the
         // previous fork. This might be resolved when

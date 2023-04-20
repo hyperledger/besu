@@ -17,25 +17,25 @@ package org.hyperledger.besu.consensus.common.bft;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.UnifiedProtocolSchedule;
 
 import java.util.List;
 
 /**
  * A Bft-specific wrapper around a ProtocolSchedule that is allowed to look up ProtocolSpecs by
- * block number Extending MutableProtocolSchedule gives this class access to the protocolSpecs
+ * block number Extending UnifiedProtocolSchedule gives this class access to the protocolSpecs
  */
-public class BftProtocolSchedule extends MutableProtocolSchedule {
+public class BftProtocolSchedule extends UnifiedProtocolSchedule {
 
   /**
-   * Construct from an existing MutableProtocolSchedule
+   * Construct from an existing UnifiedProtocolSchedule
    *
-   * @param mutableProtocolSchedule a blockNumber-based ProtocolSchedule
+   * @param protocolSchedule a blockNumber-based ProtocolSchedule
    */
-  public BftProtocolSchedule(final MutableProtocolSchedule mutableProtocolSchedule) {
-    super(mutableProtocolSchedule);
+  public BftProtocolSchedule(final UnifiedProtocolSchedule protocolSchedule) {
+    super(protocolSchedule);
   }
 
   /**
@@ -44,7 +44,6 @@ public class BftProtocolSchedule extends MutableProtocolSchedule {
    * @param number block number
    * @return the protocol spec for that block number
    */
-  @Override
   public ProtocolSpec getByBlockNumber(final long number) {
     checkArgument(number >= 0, "number must be non-negative");
     checkArgument(

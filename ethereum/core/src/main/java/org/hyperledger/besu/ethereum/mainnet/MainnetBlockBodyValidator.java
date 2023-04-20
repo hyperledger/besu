@@ -37,9 +37,9 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
   private static final int MAX_OMMERS = 2;
 
   private static final int MAX_GENERATION = 6;
-  protected final HeaderBasedProtocolSchedule protocolSchedule;
+  protected final ProtocolSchedule protocolSchedule;
 
-  public MainnetBlockBodyValidator(final HeaderBasedProtocolSchedule protocolSchedule) {
+  public MainnetBlockBodyValidator(final ProtocolSchedule protocolSchedule) {
     this.protocolSchedule = protocolSchedule;
   }
 
