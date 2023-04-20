@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.precompile;
 
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.internal.Words;
 
 import java.nio.file.Path;
 import java.util.Optional;
@@ -36,7 +37,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
   private static void init() {
     CKZG4844JNI.loadNativeLibrary(CKZG4844JNI.Preset.MAINNET);
     Bytes fieldElementsPerBlob =
-        Bytes32.wrap(Bytes.ofUnsignedInt(CKZG4844JNI.getFieldElementsPerBlob()).xor(Bytes32.ZERO));
+        Bytes32.wrap(Words.intBytes(CKZG4844JNI.getFieldElementsPerBlob()).xor(Bytes32.ZERO));
     Bytes blsModulus =
         Bytes32.wrap(Bytes.of(CKZG4844JNI.BLS_MODULUS.toByteArray()).xor(Bytes32.ZERO));
 

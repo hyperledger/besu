@@ -16,11 +16,17 @@ package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+import org.apache.tuweni.bytes.Bytes;
+
 /**
  * All {@link Operation} implementations should inherit from this class to get the setting of some
  * members for free.
  */
 public abstract class AbstractOperation implements Operation {
+
+  static final Bytes BYTES_ONE = Bytes.of(1);
+  static final Bytes SUCCESS_STACK_ITEM = BYTES_ONE;
+  static final Bytes FAILURE_STACK_ITEM = Bytes.EMPTY;
 
   private final int opcode;
   private final String name;
