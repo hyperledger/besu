@@ -21,8 +21,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Sar operation. */
 public class SarOperation extends AbstractFixedCostOperation {
@@ -30,7 +28,8 @@ public class SarOperation extends AbstractFixedCostOperation {
   /** The Sar operation success result. */
   static final OperationResult sarSuccess = new OperationResult(3, null);
 
-  private static final UInt256 ALL_BITS = UInt256.MAX_VALUE;
+  private static final Bytes ALL_BITS =
+      Bytes.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
   /**
    * Instantiates a new Sar operation.
@@ -58,19 +57,19 @@ public class SarOperation extends AbstractFixedCostOperation {
     final Bytes value = leftPad(frame.popStackItem());
     final boolean negativeNumber = value.get(0) < 0;
     if (shiftAmount.size() > 4 && (shiftAmount = shiftAmount.trimLeadingZeros()).size() > 4) {
-      frame.pushStackItem(negativeNumber ? ALL_BITS : UInt256.ZERO);
+      frame.pushStackItem(negativeNumber ? ALL_BITS : Bytes.EMPTY);
     } else {
       final int shiftAmountInt = shiftAmount.toInt();
 
       if (shiftAmountInt >= 256 || shiftAmountInt < 0) {
-        frame.pushStackItem(negativeNumber ? ALL_BITS : UInt256.ZERO);
+        frame.pushStackItem(negativeNumber ? ALL_BITS : Bytes.EMPTY);
       } else {
         // first perform standard shift right.
         Bytes result = value.shiftRight(shiftAmountInt);
 
         // if a negative number, carry through the sign.
         if (negativeNumber) {
-          final Bytes32 significantBits = ALL_BITS.shiftLeft(256 - shiftAmountInt);
+          final Bytes significantBits = ALL_BITS.shiftLeft(256 - shiftAmountInt);
           result = result.or(significantBits);
         }
         frame.pushStackItem(result);

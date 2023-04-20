@@ -42,8 +42,7 @@ public class MainnetBlockProcessorTest extends AbstractBlockProcessorTest {
       mock(MainnetTransactionProcessor.class);
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
       mock(AbstractBlockProcessor.TransactionReceiptFactory.class);
-  private final HeaderBasedProtocolSchedule protocolSchedule =
-      mock(HeaderBasedProtocolSchedule.class);
+  private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
   private final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
 
   @BeforeEach

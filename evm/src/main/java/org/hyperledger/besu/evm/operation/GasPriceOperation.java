@@ -35,7 +35,7 @@ public class GasPriceOperation extends AbstractFixedCostOperation {
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     final Wei gasPrice = frame.getGasPrice();
-    frame.pushStackItem(gasPrice.toUInt256());
+    frame.pushStackItem(gasPrice.toBytes());
 
     return successResponse;
   }

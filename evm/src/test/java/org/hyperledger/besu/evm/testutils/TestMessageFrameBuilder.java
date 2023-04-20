@@ -23,6 +23,7 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -163,8 +164,7 @@ public class TestMessageFrameBuilder {
             .depth(depth)
             .completer(c -> {})
             .miningBeneficiary(Address.ZERO)
-            .blockHashLookup(
-                blockHashLookup.orElse(number -> Hash.hash(Bytes.ofUnsignedLong(number))))
+            .blockHashLookup(blockHashLookup.orElse(number -> Hash.hash(Words.longBytes(number))))
             .maxStackSize(maxStackSize)
             .build();
     frame.setPC(pc);

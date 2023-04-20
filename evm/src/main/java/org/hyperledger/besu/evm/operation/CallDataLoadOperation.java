@@ -21,7 +21,6 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Call data load operation. */
 public class CallDataLoadOperation extends AbstractFixedCostOperation {
@@ -38,23 +37,30 @@ public class CallDataLoadOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final UInt256 startWord = UInt256.fromBytes(frame.popStackItem());
+    final Bytes startWord = frame.popStackItem().trimLeadingZeros();
 
-    // If the start index doesn't fit a int, it comes after anything in data, and so the returned
+    // If the start index doesn't fit in an int, it comes after anything in data, and so the
+    // returned
     // word should be zero.
-    if (!startWord.fitsInt()) {
-      frame.pushStackItem(UInt256.ZERO);
+    if (startWord.size() > 4) {
+      frame.pushStackItem(Bytes.EMPTY);
       return successResponse;
     }
 
-    final int offset = startWord.intValue();
+    final int offset = startWord.toInt();
+    if (offset < 0) {
+      frame.pushStackItem(Bytes.EMPTY);
+      return successResponse;
+    }
     final Bytes data = frame.getInputData();
     final MutableBytes32 res = MutableBytes32.create();
     if (offset < data.size()) {
       final Bytes toCopy = data.slice(offset, Math.min(Bytes32.SIZE, data.size() - offset));
       toCopy.copyTo(res, 0);
+      frame.pushStackItem(res.copy());
+    } else {
+      frame.pushStackItem(Bytes.EMPTY);
     }
-    frame.pushStackItem(UInt256.fromBytes(res));
 
     return successResponse;
   }
