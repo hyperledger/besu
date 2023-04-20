@@ -41,6 +41,7 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.BufferedWriter;

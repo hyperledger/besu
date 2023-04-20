@@ -86,6 +86,7 @@ import org.hyperledger.besu.cli.util.BesuCommandCustomFactory;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
 import org.hyperledger.besu.cli.util.VersionProvider;
+import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -1323,8 +1324,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Collection<EnodeURL> staticNodes;
   private BesuController besuController;
   private BesuConfiguration pluginCommonConfiguration;
+
+  private BesuComponent besuComponent;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
-      Suppliers.memoize(() -> MetricsSystemFactory.create(metricsConfiguration()));
+      Suppliers.memoize(
+          () -> {
+            return besuComponent == null
+                ? MetricsSystemFactory.create(metricsConfiguration())
+                : besuComponent.getObservableMetricsSystem();
+          });
   private Vertx vertx;
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
@@ -1334,7 +1342,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   /**
    * Besu command constructor.
    *
-   * @param logger Logger instance
+   * @param besuComponent BesuComponent which acts as our application context
    * @param rlpBlockImporter RlpBlockImporter supplier
    * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
    * @param rlpBlockExporterFactory instance of {@code Function<Blockchain, RlpBlockExporter>}
@@ -1344,7 +1352,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param environment Environment variables map
    */
   public BesuCommand(
-      final Logger logger,
+      final BesuComponent besuComponent,
       final Supplier<RlpBlockImporter> rlpBlockImporter,
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -1353,7 +1361,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final BesuPluginContextImpl besuPluginContext,
       final Map<String, String> environment) {
     this(
-        logger,
+        besuComponent,
         rlpBlockImporter,
         jsonBlockImporterFactory,
         rlpBlockExporterFactory,
@@ -1372,7 +1380,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   /**
    * Overloaded Besu command constructor visible for testing.
    *
-   * @param logger Logger instance
+   * @param besuComponent BesuComponent which acts as our application context
    * @param rlpBlockImporter RlpBlockImporter supplier
    * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
    * @param rlpBlockExporterFactory instance of {@code Function<Blockchain, RlpBlockExporter>}
@@ -1389,7 +1397,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   @VisibleForTesting
   protected BesuCommand(
-      final Logger logger,
+      final BesuComponent besuComponent,
       final Supplier<RlpBlockImporter> rlpBlockImporter,
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -1403,7 +1411,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final PrivacyPluginServiceImpl privacyPluginService,
       final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl) {
-    this.logger = logger;
+    this.logger = besuComponent.getBesuCommandLogger();
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
     this.jsonBlockImporterFactory = jsonBlockImporterFactory;
@@ -1438,9 +1446,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final InputStream in,
       final String... args) {
 
-    commandLine =
-        new CommandLine(this, new BesuCommandCustomFactory(besuPluginContext))
-            .setCaseInsensitiveEnumValuesAllowed(true);
+    toCommandLine();
 
     handleStableOptions();
     addSubCommands(in);
@@ -1452,6 +1458,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         parse(resultHandler, executionExceptionHandler, parameterExceptionHandler, args);
 
     return exitCode;
+  }
+
+  /** Used by Dagger to parse all options into a commandline instance. */
+  public void toCommandLine() {
+    commandLine =
+        new CommandLine(this, new BesuCommandCustomFactory(besuPluginContext))
+            .setCaseInsensitiveEnumValuesAllowed(true);
   }
 
   @Override
@@ -2206,7 +2219,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   public BesuController buildController() {
     try {
-      return getControllerBuilder().build();
+      return this.besuComponent == null
+          ? getControllerBuilder().build()
+          : getControllerBuilder().besuComponent(this.besuComponent).build();
     } catch (final Exception e) {
       throw new ExecutionException(this.commandLine, e.getMessage(), e);
     }
