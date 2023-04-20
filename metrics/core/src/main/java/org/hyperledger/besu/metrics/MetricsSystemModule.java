@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,9 +14,8 @@
  *
  */
 
-package org.hyperledger.besu.evmtool;
+package org.hyperledger.besu.metrics;
 
-import org.hyperledger.besu.metrics.MetricsSystemFactory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -25,13 +24,22 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 
-@SuppressWarnings("WeakerAccess")
+/**
+ * Dagger module for providing the {@link MetricsSystem} and {@link ObservableMetricsSystem}
+ * instances.
+ */
 @Module
 public class MetricsSystemModule {
 
   @Provides
   @Singleton
-  MetricsSystem getMetricsSystem() {
-    return MetricsSystemFactory.create(MetricsConfiguration.builder().build());
+  MetricsSystem provideMetricsSystem(final MetricsConfiguration metricsConfig) {
+    return MetricsSystemFactory.create(metricsConfig);
+  }
+
+  @Provides
+  @Singleton
+  ObservableMetricsSystem provideObservableMetricsSystem(final MetricsConfiguration metricsConfig) {
+    return MetricsSystemFactory.create(metricsConfig);
   }
 }
