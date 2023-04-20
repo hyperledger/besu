@@ -33,13 +33,7 @@ public class WithdrawalsValidatorProvider {
             .timestamp(blockTimestamp)
             .number(blockNumber)
             .buildBlockHeader();
-    return Optional.ofNullable(protocolSchedule.getByBlockHeader(blockHeader))
-        .map(ProtocolSpec::getWithdrawalsValidator)
-        // TODO Withdrawals this is a quirk of the fact timestampSchedule doesn't fallback to the
-        // previous fork. This might be resolved when
-        // https://github.com/hyperledger/besu/issues/4789 is played
-        // and if we can combine protocolSchedule and timestampSchedule.
-        .orElseGet(WithdrawalsValidator.ProhibitedWithdrawals::new);
+    return getWithdrawalsValidator(protocolSchedule.getByBlockHeader(blockHeader));
   }
 
   static WithdrawalsValidator getWithdrawalsValidator(
@@ -47,13 +41,13 @@ public class WithdrawalsValidatorProvider {
       final BlockHeader parentBlockHeader,
       final long timestampForNextBlock) {
 
-    return Optional.ofNullable(
-            protocolSchedule.getForNextBlockHeader(parentBlockHeader, timestampForNextBlock))
+    return getWithdrawalsValidator(
+        protocolSchedule.getForNextBlockHeader(parentBlockHeader, timestampForNextBlock));
+  }
+
+  private static WithdrawalsValidator getWithdrawalsValidator(final ProtocolSpec protocolSchedule) {
+    return Optional.ofNullable(protocolSchedule)
         .map(ProtocolSpec::getWithdrawalsValidator)
-        // TODO Withdrawals this is a quirk of the fact timestampSchedule doesn't fallback to the
-        // previous fork. This might be resolved when
-        // https://github.com/hyperledger/besu/issues/4789 is played
-        // and if we can combine protocolSchedule and timestampSchedule.
         .orElseGet(WithdrawalsValidator.ProhibitedWithdrawals::new);
   }
 }
