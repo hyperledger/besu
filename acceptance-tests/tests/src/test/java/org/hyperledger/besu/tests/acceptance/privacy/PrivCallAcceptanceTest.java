@@ -15,26 +15,31 @@
 package org.hyperledger.besu.tests.acceptance.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.tests.web3j.generated.RevertReason.FUNC_REVERTWITHREVERTREASON;
 import static org.web3j.utils.Restriction.UNRESTRICTED;
 
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.ParameterizedEnclaveTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.account.PrivacyAccountResolver;
 import org.hyperledger.besu.tests.web3j.generated.EventEmitter;
+import org.hyperledger.besu.tests.web3j.generated.RevertReason;
 import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.TypeReference;
+import org.web3j.abi.datatypes.Bool;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
 import org.web3j.abi.datatypes.generated.Uint256;
@@ -93,7 +98,8 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
             eventEmitter.getContractAddress(), minerNode.getAddress().toString())
         .verify(eventEmitter);
 
-    final Request<Object, EthCall> priv_call = privCall(privacyGroupId, eventEmitter, false, false);
+    final Request<Object, EthCall> priv_call =
+        privCall(privacyGroupId, eventEmitter, false, false, false);
 
     EthCall resp = priv_call.send();
 
@@ -107,6 +113,38 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
     value = resp.getValue();
     assertThat(new BigInteger(value.substring(2), 16))
         .isEqualByComparingTo(BigInteger.valueOf(VALUE));
+  }
+
+  @Test
+  public void mustRevertWithRevertReason() throws Exception {
+
+    final String privacyGroupId =
+        minerNode.execute(createPrivacyGroup("myGroupName", "my group description", minerNode));
+
+    final RevertReason revertReasonContract =
+        minerNode.execute(
+            privateContractTransactions.createSmartContractWithPrivacyGroupId(
+                RevertReason.class,
+                minerNode.getTransactionSigningKey(),
+                restriction,
+                minerNode.getEnclaveKey(),
+                privacyGroupId));
+
+    privateContractVerifier
+        .validPrivateContractDeployed(
+            revertReasonContract.getContractAddress(), minerNode.getAddress().toString())
+        .verify(revertReasonContract);
+
+    final Request<Object, EthCall> priv_call =
+        privCall(privacyGroupId, revertReasonContract, false, false, true);
+
+    EthCall resp = priv_call.send();
+    assertThat(resp.getRevertReason()).isEqualTo("Execution reverted");
+
+    byte[] bytes = Hex.decode(resp.getError().getData().substring(3, 203));
+    String revertMessage =
+        new String(Arrays.copyOfRange(bytes, 4, bytes.length), Charset.defaultCharset()).trim();
+    assertThat(revertMessage).isEqualTo("RevertReason");
   }
 
   @Test
@@ -131,7 +169,7 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
 
     final String invalidPrivacyGroup = constructInvalidString(privacyGroupId);
     final Request<Object, EthCall> privCall =
-        privCall(invalidPrivacyGroup, eventEmitter, false, false);
+        privCall(invalidPrivacyGroup, eventEmitter, false, false, false);
 
     final EthCall result = privCall.send();
 
@@ -158,7 +196,8 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
             eventEmitter.getContractAddress(), minerNode.getAddress().toString())
         .verify(eventEmitter);
 
-    final Request<Object, EthCall> priv_call = privCall(privacyGroupId, eventEmitter, true, false);
+    final Request<Object, EthCall> priv_call =
+        privCall(privacyGroupId, eventEmitter, true, false, false);
 
     final String errorMessage = priv_call.send().getError().getMessage();
     assertThat(errorMessage).isEqualTo("Invalid params");
@@ -184,7 +223,8 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
             eventEmitter.getContractAddress(), minerNode.getAddress().toString())
         .verify(eventEmitter);
 
-    final Request<Object, EthCall> priv_call = privCall(privacyGroupId, eventEmitter, false, true);
+    final Request<Object, EthCall> priv_call =
+        privCall(privacyGroupId, eventEmitter, false, true, false);
 
     final EthCall result = priv_call.send();
 
@@ -206,9 +246,10 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
   @Nonnull
   private Request<Object, EthCall> privCall(
       final String privacyGroupId,
-      final Contract eventEmitter,
+      final Contract contract,
       final boolean useInvalidParameters,
-      final boolean useInvalidContractAddress) {
+      final boolean useInvalidContractAddress,
+      final boolean useRevertFunction) {
 
     final Uint256 invalid = new Uint256(BigInteger.TEN);
 
@@ -217,10 +258,15 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
         useInvalidParameters ? Arrays.asList(invalid) : Collections.emptyList();
 
     final Function function =
-        new Function(
-            "value",
-            inputParameters,
-            Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
+        useRevertFunction
+            ? new Function(
+                FUNC_REVERTWITHREVERTREASON,
+                inputParameters,
+                Arrays.<TypeReference<?>>asList(new TypeReference<Bool>() {}))
+            : new Function(
+                "value",
+                inputParameters,
+                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
 
     final String encoded = FunctionEncoder.encode(function);
 
@@ -231,7 +277,7 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
                 + ":"
                 + minerNode.getBesu().getJsonRpcPort().get());
 
-    final String validContractAddress = eventEmitter.getContractAddress();
+    final String validContractAddress = contract.getContractAddress();
     final String invalidContractAddress = constructInvalidString(validContractAddress);
     final String contractAddress =
         useInvalidContractAddress ? invalidContractAddress : validContractAddress;
