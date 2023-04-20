@@ -58,8 +58,7 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
         processRemove(senderTxs, invalidatedTx.getTransaction(), INVALIDATED);
       }
 
-      // push following to next layer in reverse order so no gaps are created in next sequential
-      // layers
+      // push following to next layer
       pushDown(senderTxs, invalidNonce, 1);
 
       if (senderTxs.isEmpty()) {

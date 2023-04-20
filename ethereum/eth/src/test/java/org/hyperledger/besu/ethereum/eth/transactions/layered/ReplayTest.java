@@ -54,13 +54,19 @@ import kotlin.ranges.LongRange;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ReplayTest {
+  private static final Logger LOG = LoggerFactory.getLogger(ReplayTest.class);
   private final TransactionPoolConfiguration poolConfig =
       ImmutableTransactionPoolConfiguration.builder().build();
 
   private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
   private final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
+
+  private final Address senderToLog =
+      Address.fromHexString("0x7c125c1d515b8945841b3d5144a060115c58725f");
 
   private BlockHeader currBlockHeader;
 
@@ -121,15 +127,15 @@ public class ReplayTest {
                               + commaSplit[1]
                               + " @ "
                               + Instant.ofEpochMilli(Long.parseLong(commaSplit[2])));
-                      processTransaction(commaSplit, pendingTransactions);
+                      processTransaction(commaSplit, pendingTransactions, prioritizedTransactions);
                       break;
                     case "B":
-                      System.out.println("B:" + commaSplit[1]);
+                      //                      System.out.println("B:" + commaSplit[1]);
                       processBlock(commaSplit, prioritizedTransactions, baseFeeMarket);
                       break;
                     case "S":
-                      System.out.println("S");
                       // commented since not always working, needs fix
+                      // System.out.println("S");
                       // assertStats(line, pendingTransactions);
                       break;
                     case "D":
@@ -223,25 +229,55 @@ public class ReplayTest {
       }
     }
 
+    if (maxNonceBySender.containsKey(senderToLog) || nonceRangeBySender.containsKey(senderToLog)) {
+      LOG.warn(
+          "B {} M {} R {} Before {}",
+          blockHeader.getNumber(),
+          maxNonceBySender.get(senderToLog),
+          nonceRangeBySender.get(senderToLog),
+          prioritizedTransactions.logSender(senderToLog));
+    }
     prioritizedTransactions.blockAdded(
         feeMarket, blockHeader, maxNonceBySender, nonceRangeBySender);
+    if (maxNonceBySender.containsKey(senderToLog) || nonceRangeBySender.containsKey(senderToLog)) {
+      LOG.warn("After {}", prioritizedTransactions.logSender(senderToLog));
+    }
   }
 
   private void processTransaction(
-      final String[] commaSplit, final LayeredPendingTransactions pendingTransactions) {
+      final String[] commaSplit,
+      final LayeredPendingTransactions pendingTransactions,
+      final AbstractPrioritizedTransactions prioritizedTransactions) {
     final Bytes rlp = Bytes.fromHexString(commaSplit[commaSplit.length - 1]);
     final Transaction tx = Transaction.readFrom(rlp);
     final Account mockAccount = mock(Account.class);
-    when(mockAccount.getNonce()).thenReturn(Long.parseLong(commaSplit[4]));
+    final long nonce = Long.parseLong(commaSplit[4]);
+    when(mockAccount.getNonce()).thenReturn(nonce);
+    if (tx.getSender().equals(senderToLog)) {
+      LOG.warn(
+          "N {} T {}, Before {}",
+          nonce,
+          tx.getNonce(),
+          prioritizedTransactions.logSender(senderToLog));
+    }
     assertThat(pendingTransactions.addRemoteTransaction(tx, Optional.of(mockAccount)))
         .isNotEqualTo(TransactionAddedResult.INTERNAL_ERROR);
+    if (tx.getSender().equals(senderToLog)) {
+      LOG.warn("After {}", prioritizedTransactions.logSender(senderToLog));
+    }
   }
 
   private void processInvalid(
       final String[] commaSplit, final AbstractPrioritizedTransactions prioritizedTransactions) {
     final Bytes rlp = Bytes.fromHexString(commaSplit[commaSplit.length - 1]);
     final Transaction tx = Transaction.readFrom(rlp);
+    if (tx.getSender().equals(senderToLog)) {
+      LOG.warn("D {}, Before {}", tx.getNonce(), prioritizedTransactions.logSender(senderToLog));
+    }
     prioritizedTransactions.invalidate(new PendingTransaction.Remote(tx));
+    if (tx.getSender().equals(senderToLog)) {
+      LOG.warn("After {}", prioritizedTransactions.logSender(senderToLog));
+    }
   }
 
   private boolean transactionReplacementTester(

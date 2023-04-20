@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
+import java.util.Objects;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.TreeMap;
@@ -98,7 +99,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
             orderByGap.get(gap).add(sender);
             return gap;
           }
-          if (gap < currGap) {
+          if (pendingTransaction.getNonce() < txsBySender.get(sender).firstKey()) {
             orderByGap.get(currGap).remove(sender);
             orderByGap.get(gap).add(sender);
             return gap;
@@ -297,6 +298,18 @@ public class SparseTransactions extends AbstractTransactionsLayer {
       final int newGap = (int) (senderTxs.firstKey() - reorgNonceRange.getStart());
       updateGap(sender, gapBySender.get(sender), newGap);
     }
+  }
+
+  @Override
+  public String logSender(final Address sender) {
+    final var senderTxs = txsBySender.get(sender);
+    return name()
+        + "["
+        + (Objects.isNull(senderTxs) ? "Empty" : senderTxs.keySet())
+        + "] Gap "
+        + gapBySender.get(sender)
+        + " "
+        + nextLayer.logSender(sender);
   }
 
   @Override
