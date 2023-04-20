@@ -72,7 +72,7 @@ public interface PendingTransactions {
 
   String logStats();
 
-  default void signalInvalidTransaction(final Transaction transaction) {
+  default void signalInvalidAndRemoveDependentTransactions(final Transaction transaction) {
     // ToDo: remove when the legacy tx pool is removed
   }
 

@@ -102,11 +102,11 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
 
   @Override
   public Optional<Transaction> getByHash(final Hash transactionHash) {
-    final var hereTx = pendingTransactions.get(transactionHash);
-    if (hereTx == null) {
+    final var currLayerTx = pendingTransactions.get(transactionHash);
+    if (currLayerTx == null) {
       return nextLayer.getByHash(transactionHash);
     }
-    return Optional.of(hereTx.getTransaction());
+    return Optional.of(currLayerTx.getTransaction());
   }
 
   @Override

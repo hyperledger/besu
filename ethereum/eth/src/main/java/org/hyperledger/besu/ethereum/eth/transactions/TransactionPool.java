@@ -216,7 +216,7 @@ public class TransactionPool implements BlockAddedObserver {
                       .log();
                   metrics.incrementRejected(
                       false, validationResult.result.getInvalidReason(), "txpool");
-                  pendingTransactions.signalInvalidTransaction(transaction);
+                  pendingTransactions.signalInvalidAndRemoveDependentTransactions(transaction);
                 }
               }
             });

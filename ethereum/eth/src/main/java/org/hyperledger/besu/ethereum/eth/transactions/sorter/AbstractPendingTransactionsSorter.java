@@ -264,7 +264,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
           switch (result) {
             case DELETE_TRANSACTION_AND_CONTINUE:
               transactionsToRemove.add(transactionToProcess);
-              signalInvalidTransaction(transactionToProcess);
+              signalInvalidAndRemoveDependentTransactions(transactionToProcess);
               break;
             case CONTINUE:
               break;
@@ -516,7 +516,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
   }
 
   @Override
-  public void signalInvalidTransaction(final Transaction transaction) {
+  public void signalInvalidAndRemoveDependentTransactions(final Transaction transaction) {
     final long invalidNonce = lowestInvalidKnownNonceCache.registerInvalidTransaction(transaction);
 
     PendingTransactionsForSender txsForSender = transactionsBySender.get(transaction.getSender());
