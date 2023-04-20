@@ -44,7 +44,8 @@ public class BftValidatorsValidationRuleTest {
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
 
     final ProtocolContext context =
-        new ProtocolContext(null, null, setupContextWithBftExtraData(validators, bftExtraData));
+        new ProtocolContext(
+            null, null, setupContextWithBftExtraData(validators, bftExtraData), null);
     when(bftExtraData.getValidators()).thenReturn(validators);
 
     assertThat(validatorsValidationRule.validate(blockHeader, null, context)).isTrue();
@@ -58,7 +59,8 @@ public class BftValidatorsValidationRuleTest {
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
 
     final ProtocolContext context =
-        new ProtocolContext(null, null, setupContextWithBftExtraData(validators, bftExtraData));
+        new ProtocolContext(
+            null, null, setupContextWithBftExtraData(validators, bftExtraData), null);
     when(bftExtraData.getValidators()).thenReturn(Lists.reverse(validators));
 
     assertThat(validatorsValidationRule.validate(blockHeader, null, context)).isFalse();
@@ -76,7 +78,7 @@ public class BftValidatorsValidationRuleTest {
 
     final ProtocolContext context =
         new ProtocolContext(
-            null, null, setupContextWithBftExtraData(storedValidators, bftExtraData));
+            null, null, setupContextWithBftExtraData(storedValidators, bftExtraData), null);
     when(bftExtraData.getValidators()).thenReturn(Lists.reverse(reportedValidators));
 
     assertThat(validatorsValidationRule.validate(blockHeader, null, context)).isFalse();

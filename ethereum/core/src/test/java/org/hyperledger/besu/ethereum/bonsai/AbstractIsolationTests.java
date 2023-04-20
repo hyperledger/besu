@@ -118,7 +118,7 @@ public abstract class AbstractIsolationTests {
             new NoOpMetricsSystem());
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
-    protocolContext = new ProtocolContext(blockchain, archive, null);
+    protocolContext = new ProtocolContext(blockchain, archive, null, null);
   }
 
   // storage provider which uses a temporary directory based rocksdb

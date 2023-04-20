@@ -151,7 +151,8 @@ public class BlockchainSetupUtil {
           public <C extends ConsensusContext> C as(final Class<C> klass) {
             return null;
           }
-        });
+        },
+        null);
   }
 
   private static BlockchainSetupUtil create(

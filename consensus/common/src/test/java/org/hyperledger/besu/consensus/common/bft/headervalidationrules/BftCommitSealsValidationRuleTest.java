@@ -57,7 +57,7 @@ public class BftCommitSealsValidationRuleTest {
             .collect(Collectors.toList());
 
     final BftContext bftContext = setupContextWithValidators(committerAddresses);
-    final ProtocolContext context = new ProtocolContext(null, null, bftContext);
+    final ProtocolContext context = new ProtocolContext(null, null, bftContext, null);
     when(bftContext.getBlockInterface().getCommitters(any())).thenReturn(committerAddresses);
 
     assertThat(commitSealsValidationRule.validate(blockHeader, null, context)).isTrue();
@@ -71,7 +71,7 @@ public class BftCommitSealsValidationRuleTest {
 
     final List<Address> validators = singletonList(committerAddress);
     final BftContext bftContext = setupContextWithValidators(validators);
-    final ProtocolContext context = new ProtocolContext(null, null, bftContext);
+    final ProtocolContext context = new ProtocolContext(null, null, bftContext, null);
     when(bftContext.getBlockInterface().getCommitters(any())).thenReturn(emptyList());
 
     assertThat(commitSealsValidationRule.validate(blockHeader, null, context)).isFalse();
@@ -88,7 +88,7 @@ public class BftCommitSealsValidationRuleTest {
     final NodeKey nonValidatorNodeKey = NodeKeyUtils.generate();
 
     final BftContext bftContext = setupContextWithValidators(validators);
-    final ProtocolContext context = new ProtocolContext(null, null, bftContext);
+    final ProtocolContext context = new ProtocolContext(null, null, bftContext, null);
     when(bftContext.getBlockInterface().getCommitters(any()))
         .thenReturn(singletonList(Util.publicKeyToAddress(nonValidatorNodeKey.getPublicKey())));
 
@@ -135,7 +135,7 @@ public class BftCommitSealsValidationRuleTest {
     final List<Address> validators = singletonList(committerAddress);
 
     final BftContext bftContext = setupContextWithValidators(validators);
-    final ProtocolContext context = new ProtocolContext(null, null, bftContext);
+    final ProtocolContext context = new ProtocolContext(null, null, bftContext, null);
     when(bftContext.getBlockInterface().getCommitters(any()))
         .thenReturn(List.of(committerAddress, committerAddress));
 
@@ -154,7 +154,7 @@ public class BftCommitSealsValidationRuleTest {
     Collections.sort(validators);
 
     final BftContext bftContext = setupContextWithValidators(validators);
-    final ProtocolContext context = new ProtocolContext(null, null, bftContext);
+    final ProtocolContext context = new ProtocolContext(null, null, bftContext, null);
     when(bftContext.getBlockInterface().getCommitters(any()))
         .thenReturn(validators.subList(0, committerCount));
 

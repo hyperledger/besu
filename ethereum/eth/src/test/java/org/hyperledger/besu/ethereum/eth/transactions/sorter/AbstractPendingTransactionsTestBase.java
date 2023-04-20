@@ -15,12 +15,12 @@
 package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult.COMPLETE_OPERATION;
-import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult.CONTINUE;
-import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedStatus.REJECTED_UNDERPRICED_REPLACEMENT;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.COMPLETE_OPERATION;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.CONTINUE;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;

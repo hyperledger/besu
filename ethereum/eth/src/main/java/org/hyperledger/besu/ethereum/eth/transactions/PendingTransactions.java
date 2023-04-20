@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import java.util.List;
 import java.util.Optional;
@@ -72,12 +73,6 @@ public interface PendingTransactions {
   List<Transaction> signalInvalidAndGetDependentTransactions(final Transaction transaction);
 
   boolean isLocalSender(final Address sender);
-
-  enum TransactionSelectionResult {
-    DELETE_TRANSACTION_AND_CONTINUE,
-    CONTINUE,
-    COMPLETE_OPERATION
-  }
 
   @FunctionalInterface
   interface TransactionSelector {

@@ -93,6 +93,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
+import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
 
 import java.io.Closeable;
 import java.math.BigInteger;
@@ -178,6 +179,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   private NetworkingConfiguration networkingConfiguration;
   private Boolean randomPeerPriority;
+  private TransactionSelectorFactory transactionSelectorFactory;
 
   /**
    * Storage provider besu controller builder.
@@ -508,6 +510,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return this;
   }
 
+  public BesuControllerBuilder transactionSelectorFactory(
+      final TransactionSelectorFactory transactionSelectorFactory) {
+    this.transactionSelectorFactory = transactionSelectorFactory;
+    return this;
+  }
+
   /**
    * Build besu controller.
    *
@@ -558,7 +566,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final ProtocolContext protocolContext =
         createProtocolContext(
-            blockchain, worldStateArchive, protocolSchedule, this::createConsensusContext);
+            blockchain,
+            worldStateArchive,
+            protocolSchedule,
+            this::createConsensusContext,
+            transactionSelectorFactory);
     validateContext(protocolContext);
 
     if (chainPrunerConfiguration.getChainPruningEnabled()) {
@@ -980,9 +992,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory) {
+      final ConsensusContextFactory consensusContextFactory,
+      final TransactionSelectorFactory transactionSelectorFactory) {
     return ProtocolContext.init(
-        blockchain, worldStateArchive, protocolSchedule, consensusContextFactory);
+        blockchain,
+        worldStateArchive,
+        protocolSchedule,
+        consensusContextFactory,
+        transactionSelectorFactory);
   }
 
   private Optional<SnapProtocolManager> createSnapProtocolManager(

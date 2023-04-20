@@ -478,7 +478,8 @@ public abstract class CommandTestAbstract {
           new PermissioningServiceImpl(),
           privacyPluginService,
           pkiBlockCreationConfigProvider,
-          rpcEndpointServiceImpl);
+          rpcEndpointServiceImpl,
+          null);
     }
 
     @Override

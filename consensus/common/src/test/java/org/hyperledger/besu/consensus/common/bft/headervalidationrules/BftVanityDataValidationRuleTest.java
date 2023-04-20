@@ -44,7 +44,7 @@ public class BftVanityDataValidationRuleTest {
         new BftExtraData(Bytes.wrap(new byte[extraDataSize]), emptyList(), empty(), 0, emptyList());
 
     final ProtocolContext context =
-        new ProtocolContext(null, null, setupContextWithBftExtraData(emptyList(), extraData));
+        new ProtocolContext(null, null, setupContextWithBftExtraData(emptyList(), extraData), null);
     return validationRule.validate(blockHeader, null, context);
   }
 }

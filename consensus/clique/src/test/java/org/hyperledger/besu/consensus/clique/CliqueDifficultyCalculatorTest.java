@@ -57,7 +57,7 @@ public class CliqueDifficultyCalculatorTest {
     when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
 
     final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext);
+    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext, null);
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }
 

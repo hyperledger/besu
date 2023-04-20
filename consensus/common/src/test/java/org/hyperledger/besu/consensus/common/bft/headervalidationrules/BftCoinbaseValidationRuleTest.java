@@ -50,7 +50,7 @@ public class BftCoinbaseValidationRuleTest {
     final List<Address> validators = Lists.newArrayList(proposerAddress);
 
     final ProtocolContext context =
-        new ProtocolContext(null, null, setupContextWithValidators(validators));
+        new ProtocolContext(null, null, setupContextWithValidators(validators), null);
 
     final BftCoinbaseValidationRule coinbaseValidationRule = new BftCoinbaseValidationRule();
 
@@ -70,7 +70,7 @@ public class BftCoinbaseValidationRuleTest {
     final List<Address> validators = Lists.newArrayList(otherValidatorNodeAddress);
 
     final ProtocolContext context =
-        new ProtocolContext(null, null, setupContextWithValidators(validators));
+        new ProtocolContext(null, null, setupContextWithValidators(validators), null);
 
     final BftCoinbaseValidationRule coinbaseValidationRule = new BftCoinbaseValidationRule();
 
