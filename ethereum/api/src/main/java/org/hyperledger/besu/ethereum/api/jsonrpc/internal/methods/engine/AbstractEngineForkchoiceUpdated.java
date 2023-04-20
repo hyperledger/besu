@@ -37,7 +37,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateForkchoiceResult;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
 import java.util.Optional;
@@ -49,17 +49,17 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineForkchoiceUpdated.class);
-  private final TimestampSchedule timestampSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final MergeMiningCoordinator mergeCoordinator;
 
   public AbstractEngineForkchoiceUpdated(
       final Vertx vertx,
-      final TimestampSchedule timestampSchedule,
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
       final EngineCallListener engineCallListener) {
     super(vertx, protocolContext, engineCallListener);
-    this.timestampSchedule = timestampSchedule;
+    this.protocolSchedule = protocolSchedule;
     this.mergeCoordinator = mergeCoordinator;
   }
 
@@ -208,7 +208,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
         payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
     return newTimestampGreaterThanHead
         && getWithdrawalsValidator(
-                timestampSchedule, headBlockHeader, payloadAttributes.getTimestamp())
+                protocolSchedule, headBlockHeader, payloadAttributes.getTimestamp())
             .validateWithdrawals(maybeWithdrawals);
   }
 

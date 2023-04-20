@@ -17,9 +17,10 @@ package org.hyperledger.besu.consensus.common;
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.BlockNumberProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.UnifiedProtocolSchedule;
 
 import java.math.BigInteger;
 import java.util.NavigableSet;
@@ -40,25 +41,30 @@ public class CombinedProtocolScheduleFactory {
       final NavigableSet<ForkSpec<ProtocolSchedule>> forkSpecs,
       final Optional<BigInteger> chainId) {
     final BftProtocolSchedule combinedProtocolSchedule =
-        new BftProtocolSchedule(new MutableProtocolSchedule(chainId));
+        new BftProtocolSchedule(new UnifiedProtocolSchedule(chainId));
     for (ForkSpec<ProtocolSchedule> spec : forkSpecs) {
       checkState(
-          spec.getValue() instanceof MutableProtocolSchedule,
-          "Consensus migration requires a MutableProtocolSchedule");
+          spec.getValue() instanceof UnifiedProtocolSchedule,
+          "Consensus migration requires a UnifiedProtocolSchedule");
       final BftProtocolSchedule protocolSchedule =
-          new BftProtocolSchedule((MutableProtocolSchedule) spec.getValue());
+          new BftProtocolSchedule((UnifiedProtocolSchedule) spec.getValue());
 
       final Optional<Long> endBlock =
           Optional.ofNullable(forkSpecs.higher(spec)).map(ForkSpec::getBlock);
       protocolSchedule.getScheduledProtocolSpecs().stream()
           .filter(protocolSpecMatchesConsensusBlockRange(spec.getBlock(), endBlock))
-          .forEach(s -> combinedProtocolSchedule.putMilestone(s.milestone(), s.spec()));
+          .forEach(
+              s ->
+                  combinedProtocolSchedule.putMilestone(
+                      BlockNumberProtocolSpec::create, s.milestone(), s.spec()));
 
       // When moving to a new consensus mechanism we want to use the last milestone but created by
       // our consensus mechanism's BesuControllerBuilder so any additional rules are applied
       if (spec.getBlock() > 0) {
         combinedProtocolSchedule.putMilestone(
-            spec.getBlock(), protocolSchedule.getByBlockNumber(spec.getBlock()));
+            BlockNumberProtocolSpec::create,
+            spec.getBlock(),
+            protocolSchedule.getByBlockNumber(spec.getBlock()));
       }
     }
     return combinedProtocolSchedule;

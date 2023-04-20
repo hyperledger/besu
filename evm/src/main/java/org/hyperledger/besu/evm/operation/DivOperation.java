@@ -21,7 +21,6 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Div operation. */
 public class DivOperation extends AbstractFixedCostOperation {
@@ -56,7 +55,7 @@ public class DivOperation extends AbstractFixedCostOperation {
     final Bytes value1 = frame.popStackItem();
 
     if (value1.isZero()) {
-      frame.pushStackItem(UInt256.ZERO);
+      frame.pushStackItem(Bytes.EMPTY);
     } else {
       BigInteger b1 = new BigInteger(1, value0.toArrayUnsafe());
       BigInteger b2 = new BigInteger(1, value1.toArrayUnsafe());

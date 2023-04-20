@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -35,7 +35,7 @@ public class TransactionPoolFactory {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPoolFactory.class);
 
   public static TransactionPool createTransactionPool(
-      final HeaderBasedProtocolSchedule protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final Clock clock,
@@ -70,7 +70,7 @@ public class TransactionPoolFactory {
   }
 
   static TransactionPool createTransactionPool(
-      final HeaderBasedProtocolSchedule protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
@@ -170,7 +170,7 @@ public class TransactionPoolFactory {
   }
 
   private static PendingTransactions createPendingTransactions(
-      final HeaderBasedProtocolSchedule protocolSchedule,
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final Clock clock,
       final MetricsSystem metricsSystem,

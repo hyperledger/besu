@@ -52,8 +52,8 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 
 import java.util.List;
@@ -77,7 +77,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
   interface MethodFactory {
     AbstractEngineForkchoiceUpdated create(
         final Vertx vertx,
-        final TimestampSchedule timestampSchedule,
+        final ProtocolSchedule protocolSchedule,
         final ProtocolContext protocolContext,
         final MergeMiningCoordinator mergeCoordinator,
         final EngineCallListener engineCallListener);
@@ -100,7 +100,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
       new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
 
   @Mock private ProtocolSpec protocolSpec;
-  @Mock private TimestampSchedule timestampSchedule;
+  @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolContext protocolContext;
 
   @Mock private MergeContext mergeContext;
@@ -117,10 +117,10 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(protocolSpec.getWithdrawalsValidator())
         .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
-    when(timestampSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(protocolSpec);
+    when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(protocolSpec);
     this.method =
         methodFactory.create(
-            vertx, timestampSchedule, protocolContext, mergeCoordinator, engineCallListener);
+            vertx, protocolSchedule, protocolContext, mergeCoordinator, engineCallListener);
   }
 
   @Test
@@ -625,8 +625,8 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
   }
 
   @Test
-  public void shouldReturnValidIfTimestampScheduleIsEmpty() {
-    when(timestampSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(null);
+  public void shouldReturnValidIfProtocolScheduleIsEmpty() {
+    when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(null);
 
     BlockHeader mockParent = blockHeaderBuilder.number(9L).buildHeader();
     BlockHeader mockHeader =

@@ -27,7 +27,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * A skeleton class for implementing call operations.
@@ -184,7 +183,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       frame.expandMemory(outputDataOffset(frame), outputDataLength(frame));
       frame.incrementRemainingGas(gasAvailableForChildCall(frame) + cost);
       frame.popStackItems(getStackItemsConsumed());
-      frame.pushStackItem(UInt256.ZERO);
+      frame.pushStackItem(FAILURE_STACK_ITEM);
       return new OperationResult(cost, null);
     }
 
@@ -268,9 +267,9 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     frame.popStackItems(getStackItemsConsumed());
     if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
       frame.mergeWarmedUpFields(childFrame);
-      frame.pushStackItem(UInt256.ONE);
+      frame.pushStackItem(SUCCESS_STACK_ITEM);
     } else {
-      frame.pushStackItem(UInt256.ZERO);
+      frame.pushStackItem(FAILURE_STACK_ITEM);
     }
 
     final int currentPC = frame.getPC();

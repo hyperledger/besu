@@ -15,16 +15,16 @@
 
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.UnifiedProtocolSchedule;
 
 import java.util.Comparator;
 import java.util.stream.Stream;
 
-public class BlockNumberStreamingProtocolSchedule extends MutableProtocolSchedule
+public class BlockNumberStreamingProtocolSchedule extends UnifiedProtocolSchedule
     implements MilestoneStreamingProtocolSchedule {
 
-  public BlockNumberStreamingProtocolSchedule(final MutableProtocolSchedule protocolSchedule) {
+  public BlockNumberStreamingProtocolSchedule(final UnifiedProtocolSchedule protocolSchedule) {
     super(protocolSchedule);
   }
 

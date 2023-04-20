@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.RelativeJumpIfOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpOperation;
@@ -92,7 +93,7 @@ class RelativeJumpOperationTest {
             .code(mockCode)
             .pc(rjumpOperationIndex)
             .initialGas(5L)
-            .pushStackItem(Bytes.ofUnsignedInt(1))
+            .pushStackItem(Words.intBytes(1))
             .build();
     when(mockCode.getBytes()).thenReturn(code);
 

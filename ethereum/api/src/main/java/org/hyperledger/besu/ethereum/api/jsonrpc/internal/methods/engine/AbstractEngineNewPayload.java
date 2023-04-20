@@ -48,7 +48,7 @@ import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -70,19 +70,19 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   private static final Hash OMMERS_HASH_CONSTANT = Hash.EMPTY_LIST_HASH;
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineNewPayload.class);
   private static final BlockHeaderFunctions headerFunctions = new MainnetBlockHeaderFunctions();
-  private final TimestampSchedule timestampSchedule;
+  private final ProtocolSchedule protocolSchedule;
   private final MergeMiningCoordinator mergeCoordinator;
   private final EthPeers ethPeers;
 
   public AbstractEngineNewPayload(
       final Vertx vertx,
-      final TimestampSchedule timestampSchedule,
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
       final EthPeers ethPeers,
       final EngineCallListener engineCallListener) {
     super(vertx, protocolContext, engineCallListener);
-    this.timestampSchedule = timestampSchedule;
+    this.protocolSchedule = protocolSchedule;
     this.mergeCoordinator = mergeCoordinator;
     this.ethPeers = ethPeers;
   }
@@ -106,7 +106,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()));
 
     if (!getWithdrawalsValidator(
-            timestampSchedule, blockParam.getTimestamp(), blockParam.getBlockNumber())
+            protocolSchedule, blockParam.getTimestamp(), blockParam.getBlockNumber())
         .validateWithdrawals(maybeWithdrawals)) {
       return new JsonRpcErrorResponse(reqId, INVALID_PARAMS);
     }
