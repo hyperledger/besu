@@ -19,11 +19,13 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedBonsaiWorldView;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiUpdater;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogAddedEvent.TrieLogAddedObserver;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Map;
 import java.util.Optional;
@@ -36,12 +38,12 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractTrieLogManager implements TrieLogManager {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTrieLogManager.class);
   public static final long RETAINED_LAYERS = 512; // at least 256 + typical rollbacks
-
   protected final Blockchain blockchain;
   protected final BonsaiWorldStateKeyValueStorage rootWorldStateStorage;
 
   protected final Map<Bytes32, CachedBonsaiWorldView> cachedWorldStatesByHash;
   protected final long maxLayersToLoad;
+  private final Subscribers<TrieLogAddedObserver> trieLogAddedObservers = Subscribers.create();
 
   protected AbstractTrieLogManager(
       final Blockchain blockchain,
@@ -69,6 +71,10 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
       try {
         final TrieLogLayer trieLog = prepareTrieLog(forBlockHeader, localUpdater);
         persistTrieLog(forBlockHeader, forWorldStateRootHash, trieLog, stateUpdater);
+
+        // notify trie log added observers, synchronously
+        trieLogAddedObservers.forEach(o -> o.onTrieLogAdded(new TrieLogAddedEvent(trieLog)));
+
         success = true;
       } finally {
         if (success) {
@@ -136,5 +142,15 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
   @Override
   public Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash) {
     return rootWorldStateStorage.getTrieLog(blockHash).map(TrieLogLayer::fromBytes);
+  }
+
+  @Override
+  public synchronized long subscribe(final TrieLogAddedObserver sub) {
+    return trieLogAddedObservers.subscribe(sub);
+  }
+
+  @Override
+  public synchronized void unsubscribe(final long id) {
+    trieLogAddedObservers.unsubscribe(id);
   }
 }
