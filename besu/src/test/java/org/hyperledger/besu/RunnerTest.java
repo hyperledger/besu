@@ -73,6 +73,7 @@ import org.hyperledger.besu.testutil.TestClock;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -96,32 +97,31 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.awaitility.Awaitility;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /** Tests for {@link Runner}. */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public final class RunnerTest {
 
   public static final BigInteger NETWORK_ID = BigInteger.valueOf(2929);
   private Vertx vertx;
 
-  @Before
+  @BeforeEach
   public void initVertx() {
     vertx = Vertx.vertx();
   }
 
-  @After
+  @AfterEach
   public void stopVertx() {
     vertx.close();
   }
 
-  @Rule public final TemporaryFolder temp = new TemporaryFolder();
+  @TempDir private static Path temp;
 
   @Test
   public void getFixedNodes() {
@@ -159,7 +159,7 @@ public final class RunnerTest {
 
   private void syncFromGenesis(final SyncMode mode, final GenesisConfigFile genesisConfig)
       throws Exception {
-    final Path dataDirAhead = temp.newFolder().toPath();
+    final Path dataDirAhead = Files.createTempDirectory(temp, "db-ahead");
     final Path dbAhead = dataDirAhead.resolve("database");
     final int blockCount = 500;
     final NodeKey aheadDbNodeKey = NodeKeyUtils.createFrom(KeyPairUtil.loadKeyPair(dbAhead));
@@ -181,7 +181,7 @@ public final class RunnerTest {
         blockCount, controllerAhead.getProtocolSchedule(), controllerAhead.getProtocolContext());
 
     final String listenHost = InetAddress.getLoopbackAddress().getHostAddress();
-    final Path pidPath = temp.getRoot().toPath().resolve("pid");
+    final Path pidPath = dataDirAhead.resolve("pid");
     final RunnerBuilder runnerBuilder =
         new RunnerBuilder()
             .vertx(vertx)
@@ -220,7 +220,7 @@ public final class RunnerTest {
               .fastSyncPivotDistance(5)
               .fastSyncMinimumPeerCount(1)
               .build();
-      final Path dataDirBehind = temp.newFolder().toPath();
+      final Path dataDirBehind = Files.createTempDirectory(temp, "db-behind");
 
       // Setup runner with no block data
       final BesuController controllerBehind =
