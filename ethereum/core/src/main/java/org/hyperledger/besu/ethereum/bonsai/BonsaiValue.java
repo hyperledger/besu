@@ -77,6 +77,11 @@ public class BonsaiValue<T> {
     } else {
       writer.accept(output, updated);
     }
+    if (!cleared) {
+      output.writeNull();
+    } else {
+      output.writeInt(1);
+    }
   }
 
   public boolean isUnchanged() {

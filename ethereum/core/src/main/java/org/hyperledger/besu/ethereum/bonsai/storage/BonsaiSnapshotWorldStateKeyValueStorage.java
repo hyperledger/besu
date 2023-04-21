@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.bonsai.storage;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
+import org.hyperledger.besu.ethereum.bonsai.worldview.StorageSlotKey;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -122,20 +123,21 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   @Override
-  public Optional<Bytes> getStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
+  public Optional<Bytes> getStorageValueByStorageSlotKey(
+      final Hash accountHash, final StorageSlotKey storageSlotKey) {
     return isClosed.get()
         ? Optional.empty()
-        : super.getStorageValueBySlotHash(accountHash, slotHash);
+        : super.getStorageValueByStorageSlotKey(accountHash, storageSlotKey);
   }
 
   @Override
-  public Optional<Bytes> getStorageValueBySlotHash(
+  public Optional<Bytes> getStorageValueByStorageSlotKey(
       final Supplier<Optional<Hash>> storageRootSupplier,
       final Hash accountHash,
-      final Hash slotHash) {
+      final StorageSlotKey storageSlotKey) {
     return isClosed.get()
         ? Optional.empty()
-        : super.getStorageValueBySlotHash(storageRootSupplier, accountHash, slotHash);
+        : super.getStorageValueByStorageSlotKey(storageRootSupplier, accountHash, storageSlotKey);
   }
 
   @Override
