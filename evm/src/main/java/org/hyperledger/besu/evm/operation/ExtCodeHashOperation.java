@@ -15,8 +15,10 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -28,6 +30,9 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** The Ext code hash operation. */
 public class ExtCodeHashOperation extends AbstractOperation {
+
+  // // 0x9dbf3648db8210552e9c4f75c6a1c3057c0ca432043bd648be15fe7be05646f5
+  static final Hash EOF_HASH = Hash.hash(Bytes.fromHexString("0xef00"));
 
   /**
    * Instantiates a new Ext code hash operation.
@@ -65,7 +70,12 @@ public class ExtCodeHashOperation extends AbstractOperation {
         if (account == null || account.isEmpty()) {
           frame.pushStackItem(Bytes.EMPTY);
         } else {
-          frame.pushStackItem(account.getCodeHash());
+          final Bytes code = account.getCode();
+          if (code.size() >= 2 && code.get(0) == EOFLayout.EOF_PREFIX_BYTE && code.get(1) == 0) {
+            frame.pushStackItem(EOF_HASH);
+          } else {
+            frame.pushStackItem(account.getCodeHash());
+          }
         }
         return new OperationResult(cost, null);
       }

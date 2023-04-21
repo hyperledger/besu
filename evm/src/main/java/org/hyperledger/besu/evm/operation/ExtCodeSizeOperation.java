@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -28,6 +29,8 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** The Ext code size operation. */
 public class ExtCodeSizeOperation extends AbstractOperation {
+
+  static final Bytes EOF_SIZE = Bytes.of(2);
 
   /**
    * Instantiates a new Ext code size operation.
@@ -46,7 +49,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
    */
   protected long cost(final boolean accountIsWarm) {
     return gasCalculator().getExtCodeSizeOperationGasCost()
-        + (accountIsWarm
+            + (accountIsWarm
             ? gasCalculator().getWarmStorageReadCost()
             : gasCalculator().getColdAccountAccessCost());
   }
@@ -56,14 +59,24 @@ public class ExtCodeSizeOperation extends AbstractOperation {
     try {
       final Address address = Words.toAddress(frame.popStackItem());
       final boolean accountIsWarm =
-          frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
+              frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
       final long cost = cost(accountIsWarm);
       if (frame.getRemainingGas() < cost) {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
         final Account account = frame.getWorldUpdater().get(address);
-        frame.pushStackItem(
-            account == null ? Bytes.EMPTY : Words.intBytes(account.getCode().size()));
+        Bytes codeSize;
+        if (account == null) {
+          codeSize = Bytes.EMPTY;
+        } else {
+          final Bytes code = account.getCode();
+          if (code.size() >= 2 && code.get(0) == EOFLayout.EOF_PREFIX_BYTE && code.get(1) == 0) {
+            codeSize = EOF_SIZE;
+          } else {
+            codeSize = Words.intBytes(code.size());
+          }
+        }
+        frame.pushStackItem(codeSize);
         return new OperationResult(cost, null);
       }
     } catch (final UnderflowException ufe) {

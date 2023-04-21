@@ -23,6 +23,8 @@ import org.apache.tuweni.bytes.Bytes;
 /** The EOF layout. */
 public class EOFLayout {
 
+  public static final byte EOF_PREFIX_BYTE = (byte) 0xEF;
+
   /** header terminator */
   static final int SECTION_TERMINATOR = 0x00;
   /** type data (stack heights, inputs/outputs) */
@@ -228,8 +230,9 @@ public class EOFLayout {
             + 1 // padding
             + (codeSectionCount * 4); // type data
     if (containerSectionCount > 0) {
-      pos += 3 // subcontainer header
-            + (containerSectionCount * 2); // subcontainer sizes
+      pos +=
+          3 // subcontainer header
+              + (containerSectionCount * 2); // subcontainer sizes
     }
 
     for (int i = 0; i < codeSectionCount; i++) {
