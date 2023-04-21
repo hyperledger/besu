@@ -147,7 +147,58 @@ public class ProtocolScheduleBuilder {
                     e.getBuilder(),
                     e.modifier));
 
-    postBuildStep(specFactory, builders);
+    // NOTE: It is assumed that Daofork blocks will not be used for private networks
+    // as too many risks exist around inserting a protocol-spec between daoBlock and daoBlock+10.
+    config
+        .getDaoForkBlock()
+        .ifPresent(
+            daoBlockNumber -> {
+              final BuilderMapEntry previousSpecBuilder =
+                  builders.floorEntry(daoBlockNumber).getValue();
+              final ProtocolSpec originalProtocolSpec =
+                  getProtocolSpec(
+                      protocolSchedule,
+                      previousSpecBuilder.getBuilder(),
+                      previousSpecBuilder.getModifier());
+              addProtocolSpec(
+                  protocolSchedule,
+                  BlockNumberProtocolSpec::create,
+                  daoBlockNumber,
+                  specFactory.daoRecoveryInitDefinition(),
+                  protocolSpecAdapters.getModifierForBlock(daoBlockNumber));
+              addProtocolSpec(
+                  protocolSchedule,
+                  BlockNumberProtocolSpec::create,
+                  daoBlockNumber + 1L,
+                  specFactory.daoRecoveryTransitionDefinition(),
+                  protocolSpecAdapters.getModifierForBlock(daoBlockNumber + 1L));
+              // Return to the previous protocol spec after the dao fork has completed.
+              protocolSchedule.putMilestone(
+                  BlockNumberProtocolSpec::create, daoBlockNumber + 10, originalProtocolSpec);
+            });
+
+    // specs for classic network
+    config
+        .getClassicForkBlock()
+        .ifPresent(
+            classicBlockNumber -> {
+              final BuilderMapEntry previousSpecBuilder =
+                  builders.floorEntry(classicBlockNumber).getValue();
+              final ProtocolSpec originalProtocolSpec =
+                  getProtocolSpec(
+                      protocolSchedule,
+                      previousSpecBuilder.getBuilder(),
+                      previousSpecBuilder.getModifier());
+              addProtocolSpec(
+                  protocolSchedule,
+                  BlockNumberProtocolSpec::create,
+                  classicBlockNumber,
+                  ClassicProtocolSpecs.classicRecoveryInitDefinition(
+                      config.getContractSizeLimit(), config.getEvmStackSize(), evmConfiguration),
+                  Function.identity());
+              protocolSchedule.putMilestone(
+                  BlockNumberProtocolSpec::create, classicBlockNumber + 1, originalProtocolSpec);
+            });
 
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
   }
@@ -305,62 +356,6 @@ public class ProtocolScheduleBuilder {
     return Optional.of(
         new BuilderMapEntry(
             factory, blockVal, builder, protocolSpecAdapters.getModifierForBlock(blockVal)));
-  }
-
-  private void postBuildStep(
-      final MainnetProtocolSpecFactory specFactory, final TreeMap<Long, BuilderMapEntry> builders) {
-    // NOTE: It is assumed that Daofork blocks will not be used for private networks
-    // as too many risks exist around inserting a protocol-spec between daoBlock and daoBlock+10.
-    config
-        .getDaoForkBlock()
-        .ifPresent(
-            daoBlockNumber -> {
-              final BuilderMapEntry previousSpecBuilder =
-                  builders.floorEntry(daoBlockNumber).getValue();
-              final ProtocolSpec originalProtocolSpec =
-                  getProtocolSpec(
-                      protocolSchedule,
-                      previousSpecBuilder.getBuilder(),
-                      previousSpecBuilder.getModifier());
-              addProtocolSpec(
-                  protocolSchedule,
-                  BlockNumberProtocolSpec::create,
-                  daoBlockNumber,
-                  specFactory.daoRecoveryInitDefinition(),
-                  protocolSpecAdapters.getModifierForBlock(daoBlockNumber));
-              addProtocolSpec(
-                  protocolSchedule,
-                  BlockNumberProtocolSpec::create,
-                  daoBlockNumber + 1L,
-                  specFactory.daoRecoveryTransitionDefinition(),
-                  protocolSpecAdapters.getModifierForBlock(daoBlockNumber + 1L));
-              // Return to the previous protocol spec after the dao fork has completed.
-              protocolSchedule.putMilestone(
-                  BlockNumberProtocolSpec::create, daoBlockNumber + 10, originalProtocolSpec);
-            });
-
-    // specs for classic network
-    config
-        .getClassicForkBlock()
-        .ifPresent(
-            classicBlockNumber -> {
-              final BuilderMapEntry previousSpecBuilder =
-                  builders.floorEntry(classicBlockNumber).getValue();
-              final ProtocolSpec originalProtocolSpec =
-                  getProtocolSpec(
-                      protocolSchedule,
-                      previousSpecBuilder.getBuilder(),
-                      previousSpecBuilder.getModifier());
-              addProtocolSpec(
-                  protocolSchedule,
-                  BlockNumberProtocolSpec::create,
-                  classicBlockNumber,
-                  ClassicProtocolSpecs.classicRecoveryInitDefinition(
-                      config.getContractSizeLimit(), config.getEvmStackSize(), evmConfiguration),
-                  Function.identity());
-              protocolSchedule.putMilestone(
-                  BlockNumberProtocolSpec::create, classicBlockNumber + 1, originalProtocolSpec);
-            });
   }
 
   private ProtocolSpec getProtocolSpec(
