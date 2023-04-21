@@ -34,8 +34,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
+import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.UnifiedProtocolSchedule;
 
 import java.util.Collection;
 import java.util.List;
@@ -211,10 +211,10 @@ public class ForkIdsNetworkConfigTest {
       final GenesisConfigOptions configOptions = genesisConfigFile.getConfigOptions();
       MilestoneStreamingProtocolSchedule preMergeProtocolSchedule =
           new MilestoneStreamingProtocolSchedule(
-              (UnifiedProtocolSchedule) MainnetProtocolSchedule.fromConfig(configOptions));
+              (DefaultProtocolSchedule) MainnetProtocolSchedule.fromConfig(configOptions));
       MilestoneStreamingProtocolSchedule postMergeProtocolSchedule =
           new MilestoneStreamingProtocolSchedule(
-              (UnifiedProtocolSchedule) MergeProtocolSchedule.create(configOptions, false));
+              (DefaultProtocolSchedule) MergeProtocolSchedule.create(configOptions, false));
       final MilestoneStreamingTransitionProtocolSchedule schedule =
           new MilestoneStreamingTransitionProtocolSchedule(
               preMergeProtocolSchedule, postMergeProtocolSchedule);

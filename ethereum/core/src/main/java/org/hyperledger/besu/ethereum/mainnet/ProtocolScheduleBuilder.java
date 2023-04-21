@@ -43,7 +43,7 @@ public class ProtocolScheduleBuilder {
   private final EvmConfiguration evmConfiguration;
   private final BadBlockManager badBlockManager = new BadBlockManager();
 
-  private UnifiedProtocolSchedule protocolSchedule;
+  private DefaultProtocolSchedule protocolSchedule;
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
@@ -93,7 +93,7 @@ public class ProtocolScheduleBuilder {
 
   public ProtocolSchedule createProtocolSchedule() {
     final Optional<BigInteger> chainId = config.getChainId().or(() -> defaultChainId);
-    protocolSchedule = new UnifiedProtocolSchedule(chainId);
+    protocolSchedule = new DefaultProtocolSchedule(chainId);
     initSchedule(protocolSchedule, chainId);
     return protocolSchedule;
   }

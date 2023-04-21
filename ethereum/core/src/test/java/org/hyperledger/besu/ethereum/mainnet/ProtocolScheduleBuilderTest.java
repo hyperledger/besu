@@ -202,7 +202,7 @@ public class ProtocolScheduleBuilderTest {
             EvmConfiguration.DEFAULT);
 
     return new MilestoneStreamingProtocolSchedule(
-        (UnifiedProtocolSchedule) builder.createProtocolSchedule());
+        (DefaultProtocolSchedule) builder.createProtocolSchedule());
   }
 
   private BlockHeader blockHeader(final long number) {

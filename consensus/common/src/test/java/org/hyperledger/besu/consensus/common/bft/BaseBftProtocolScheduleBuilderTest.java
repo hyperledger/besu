@@ -32,9 +32,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
+import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.UnifiedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -213,7 +213,7 @@ public class BaseBftProtocolScheduleBuilderTest {
 
     final MilestoneStreamingProtocolSchedule schedule =
         new MilestoneStreamingProtocolSchedule(
-            (UnifiedProtocolSchedule)
+            (DefaultProtocolSchedule)
                 createProtocolSchedule(
                     List.of(
                         new ForkSpec<>(0, configOptions),

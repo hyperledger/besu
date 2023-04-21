@@ -21,10 +21,10 @@ import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
-import org.hyperledger.besu.ethereum.mainnet.UnifiedProtocolSchedule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -159,6 +159,6 @@ public class CombinedProtocolScheduleFactoryTest {
             EvmConfiguration.DEFAULT);
 
     return new BftProtocolSchedule(
-        (UnifiedProtocolSchedule) protocolScheduleBuilder.createProtocolSchedule());
+        (DefaultProtocolSchedule) protocolScheduleBuilder.createProtocolSchedule());
   }
 }
