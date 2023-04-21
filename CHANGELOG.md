@@ -1,5 +1,15 @@
 # Changelog
 
+## 23.4.0-RC2
+
+### Breaking Changes
+
+### Additions and Improvements
+
+### Bug Fixes
+
+### Download Links
+
 ## 23.4.0-RC1
 
 ### Breaking Changes
@@ -27,7 +37,7 @@
 ### Bug Fixes
 
 ### Download Links
-https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.0-RC1/besu-23.4.0-RC1.tar.gz / sha256: TBA
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.0-RC1/besu-23.4.0-RC1.tar.gz / sha256: 
 https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.0-RC1/besu-23.4.0-RC1.zip / sha256:  TBA
 
 ## 23.1.3 
