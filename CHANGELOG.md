@@ -1,5 +1,15 @@
 # Changelog
 
+## 23.4.1
+
+### Breaking Changes
+
+### Additions and Improvements
+
+### Bug Fixes
+
+### Download Links
+
 ## 23.4.0-RC1
 
 ### Breaking Changes
