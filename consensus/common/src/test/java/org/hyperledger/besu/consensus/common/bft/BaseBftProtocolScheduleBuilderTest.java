@@ -29,12 +29,12 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.BlockNumberStreamingProtocolSchedule;
+import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
+import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.UnifiedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -211,9 +211,9 @@ public class BaseBftProtocolScheduleBuilderTest {
         new MutableBftConfigOptions(JsonBftConfigOptions.DEFAULT);
     blockRewardTransition.setBlockRewardWei(forkBlockReward);
 
-    final BlockNumberStreamingProtocolSchedule schedule =
-        new BlockNumberStreamingProtocolSchedule(
-            (UnifiedProtocolSchedule)
+    final MilestoneStreamingProtocolSchedule schedule =
+        new MilestoneStreamingProtocolSchedule(
+            (DefaultProtocolSchedule)
                 createProtocolSchedule(
                     List.of(
                         new ForkSpec<>(0, configOptions),

@@ -38,7 +38,7 @@ import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockNumberStreamingProtocolSchedule;
+import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -84,7 +84,7 @@ public class IbftProtocolScheduleTest {
                 new ForkSpec<>(0, JsonQbftConfigOptions.DEFAULT),
                 new ForkSpec<>(1, arbitraryTransition),
                 new ForkSpec<>(2, JsonQbftConfigOptions.DEFAULT)));
-    assertThat(new BlockNumberStreamingProtocolSchedule(schedule).streamMilestoneBlocks().count())
+    assertThat(new MilestoneStreamingProtocolSchedule(schedule).streamMilestoneBlocks().count())
         .isEqualTo(3);
     assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 0)).isTrue();
     assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 1)).isTrue();
