@@ -37,8 +37,8 @@
 ### Bug Fixes
 
 ### Download Links
-https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.0-RC1/besu-23.4.0-RC1.tar.gz / sha256: 
-https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.0-RC1/besu-23.4.0-RC1.zip / sha256:  TBA
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.0-RC1/besu-23.4.0-RC1.tar.gz / sha256: 0eebe041c1eb8d16587de1f6d19355a0ec7845fcb0e66a6a96d36bbd376311d3
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.0-RC1/besu-23.4.0-RC1.zip / sha256:  f0b4657d88d07a6aea0457c18e227ecf9bc1fdd942fe411e12996962a9c4e08f
 
 ## 23.1.3 
 
