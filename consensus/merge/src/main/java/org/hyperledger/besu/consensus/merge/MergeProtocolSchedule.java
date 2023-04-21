@@ -70,9 +70,8 @@ public class MergeProtocolSchedule {
             MergeProtocolSchedule.applyMergeSpecificModifications(
                 specBuilder, config.getChainId()));
     if (config.getShanghaiTime().isPresent()) {
-      postMergeModifications.put(
-          config.getShanghaiTime().getAsLong(),
-          MergeProtocolSchedule::unapplyMergeModificationsFromShanghaiOnwards);
+      // unapply merge modifications from Shanghai onwards
+      postMergeModifications.put(config.getShanghaiTime().getAsLong(), Function.identity());
     }
 
     return new ProtocolScheduleBuilder(
@@ -93,22 +92,12 @@ public class MergeProtocolSchedule {
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.paris(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), EvmConfiguration.DEFAULT))
-        .blockProcessorBuilder(MergeBlockProcessor::new)
         .blockHeaderValidatorBuilder(MergeProtocolSchedule::getBlockHeaderValidator)
         .blockReward(Wei.ZERO)
         .difficultyCalculator((a, b, c) -> BigInteger.ZERO)
         .skipZeroBlockRewards(true)
         .isPoS(true)
         .name("Paris");
-  }
-
-  private static ProtocolSpecBuilder unapplyMergeModificationsFromShanghaiOnwards(
-      final ProtocolSpecBuilder specBuilder) {
-    // TODO Withdrawals Get rid of MergeBlockProcessor
-    // inherits merge config from MainnetProtocolSpecs.parisDefinition
-    // This would be Function.identify() but MergeBlockProcessor can't be used in
-    // MainnetProtocolSpecs due to circular dependency
-    return specBuilder.blockProcessorBuilder(MergeBlockProcessor::new);
   }
 
   private static BlockHeaderValidator.Builder getBlockHeaderValidator(final FeeMarket feeMarket) {

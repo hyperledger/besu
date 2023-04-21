@@ -7,6 +7,7 @@
 - Remove GoQuorum-compatible privacy feature [#5303](https://github.com/hyperledger/besu/pull/5303)
 - Remove launcher command line utility [#5355](https://github.com/hyperledger/besu/pull/5355)
 - Remove deprecated `tx-pool-future-max-by-account` option, see instead: `tx-pool-limit-by-account-percentage` [#5361](https://github.com/hyperledger/besu/pull/5361)
+- Default configuration for the deprecated ECIP-1049 network has been removed from the CLI network list [#5371](https://github.com/hyperledger/besu/pull/5371)
 
 ### Additions and Improvements
 - Update most dependencies to latest version [#5269](https://github.com/hyperledger/besu/pull/5269)
@@ -18,6 +19,8 @@
 - Renamed --bonsai-maximum-back-layers-to-load option to --bonsai-historical-block-limit for clarity. Removed --Xbonsai-use-snapshots option as it is no longer functional [#5337](https://github.com/hyperledger/besu/pull/5337)
 - Change Forest to use TransactionDB instead of OptimisticTransactionDB [#5328](https://github.com/hyperledger/besu/pull/5328)
 - Performance: Reduced usage of UInt256 in EVM operations [#5331](https://github.com/hyperledger/besu/pull/5331)
+- Changed wrong error message "Invalid params" when private tx is reverted to "Execution reverted" with correct revert reason in data. [#5369](https://github.com/hyperledger/besu/pull/5369)
+- Changes to the way gas is estimated to provide an exact gas estimate [#5142](https://github.com/hyperledger/besu/pull/5142)
 
 ### Bug Fixes
 

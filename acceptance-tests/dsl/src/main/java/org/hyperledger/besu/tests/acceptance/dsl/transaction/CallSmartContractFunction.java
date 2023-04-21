@@ -29,27 +29,36 @@ import org.web3j.tx.RawTransactionManager;
 public class CallSmartContractFunction implements Transaction<EthSendTransaction> {
 
   private static final BigInteger GAS_PRICE = BigInteger.valueOf(1000);
-  private static final BigInteger GAS_LIMIT = BigInteger.valueOf(3000000);
+
   private static final Credentials BENEFACTOR_ONE =
       Credentials.create(Accounts.GENESIS_ACCOUNT_ONE_PRIVATE_KEY);
 
-  private final String functionName;
+  private BigInteger gasLimit = BigInteger.valueOf(3000000);
+  private final String functionCall;
   private final String contractAddress;
 
-  public CallSmartContractFunction(final String functionName, final String contractAddress) {
-    this.functionName = functionName;
+  public CallSmartContractFunction(final String contractAddress, final String functionName) {
+    final Function function =
+        new Function(functionName, Collections.emptyList(), Collections.emptyList());
+
     this.contractAddress = contractAddress;
+    this.functionCall = FunctionEncoder.encode(function);
+  }
+
+  public CallSmartContractFunction(
+      final String contractAddress, final String functionCall, final BigInteger gasLimit) {
+    this.contractAddress = contractAddress;
+    this.functionCall = functionCall;
+    this.gasLimit = gasLimit;
   }
 
   @Override
   public EthSendTransaction execute(final NodeRequests node) {
-    final Function function =
-        new Function(functionName, Collections.emptyList(), Collections.emptyList());
     final RawTransactionManager transactionManager =
         new RawTransactionManager(node.eth(), BENEFACTOR_ONE);
     try {
       return transactionManager.sendTransaction(
-          GAS_PRICE, GAS_LIMIT, contractAddress, FunctionEncoder.encode(function), BigInteger.ZERO);
+          GAS_PRICE, gasLimit, contractAddress, functionCall, BigInteger.ZERO);
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }

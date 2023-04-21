@@ -175,8 +175,6 @@ public abstract class MainnetProtocolSpecs {
     switch (powAlgorithm) {
       case ETHASH:
         return PoWHasher.ETHASH_LIGHT;
-      case KECCAK256:
-        return KeccakHasher.KECCAK256;
       case UNSUPPORTED:
       default:
         return PoWHasher.UNSUPPORTED;
