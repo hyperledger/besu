@@ -18,6 +18,7 @@ package org.hyperledger.besu.ethereum.bonsai.trielog;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.bonsai.worldview.StorageSlotKey;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.util.Optional;
@@ -36,6 +37,15 @@ public class TrieLogLayerTests {
   public void setUp() {
     trieLogLayer = new TrieLogLayer();
     otherTrieLogLayer = new TrieLogLayer();
+  }
+
+  @Test
+  public void testStorageSlotKeyEquivalence() {
+    StorageSlotKey key = new StorageSlotKey(UInt256.ZERO);
+    StorageSlotKey otherKey = new StorageSlotKey(UInt256.ZERO);
+
+    Assertions.assertThat(key).isEqualTo(otherKey);
+    Assertions.assertThat(key.hashCode()).isEqualTo(otherKey.hashCode());
   }
 
   @Test
@@ -93,29 +103,31 @@ public class TrieLogLayerTests {
 
   @Test
   public void testAddStorageChange() {
-    Address address = Address.fromHexString("0x0");
+    Address address = Address.fromHexString("0x00");
     UInt256 oldValue = UInt256.ZERO;
     UInt256 newValue = UInt256.ONE;
     UInt256 slot = UInt256.ONE;
+    StorageSlotKey storageSlotKey = new StorageSlotKey(slot);
 
-    Address otherAddress = Address.fromHexString("0x0");
+    Address otherAddress = Address.fromHexString("0x000000");
     UInt256 otherOldValue = UInt256.ZERO;
     UInt256 otherNewValue = UInt256.ONE;
     UInt256 otherSlot = UInt256.ONE;
+    StorageSlotKey otherStorageSlotKey = new StorageSlotKey(otherSlot);
 
-    trieLogLayer.addStorageChange(address, Hash.hash(slot), oldValue, newValue);
+    trieLogLayer.addStorageChange(address, storageSlotKey, oldValue, newValue);
     otherTrieLogLayer.addStorageChange(
-        otherAddress, Hash.hash(otherSlot), otherOldValue, otherNewValue);
+        otherAddress, otherStorageSlotKey, otherOldValue, otherNewValue);
 
     Assertions.assertThat(trieLogLayer).isEqualTo(otherTrieLogLayer);
 
     Optional<UInt256> priorStorageValue =
-        trieLogLayer.getPriorStorageBySlotHash(address, Hash.hash(slot));
+        trieLogLayer.getPriorStorageByStorageSlotKey(address, storageSlotKey);
     Assertions.assertThat(priorStorageValue).isPresent();
     Assertions.assertThat(priorStorageValue.get()).isEqualTo(oldValue);
 
     Optional<UInt256> updatedStorageValue =
-        trieLogLayer.getStorageBySlotHash(address, Hash.hash(slot));
+        trieLogLayer.getStorageByStorageSlotKey(address, storageSlotKey);
     Assertions.assertThat(updatedStorageValue).isPresent();
     Assertions.assertThat(updatedStorageValue.get()).isEqualTo(newValue);
   }
