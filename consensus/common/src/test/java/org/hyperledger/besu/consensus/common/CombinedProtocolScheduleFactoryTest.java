@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
-import org.hyperledger.besu.ethereum.core.BlockNumberStreamingProtocolSchedule;
+import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -74,7 +74,7 @@ public class CombinedProtocolScheduleFactoryTest {
         .isSameAs(protocolSchedule.getByBlockNumber(10L));
 
     assertThat(
-            new BlockNumberStreamingProtocolSchedule(combinedProtocolSchedule)
+            new MilestoneStreamingProtocolSchedule(combinedProtocolSchedule)
                 .streamMilestoneBlocks()
                 .collect(Collectors.toList()))
         .isEqualTo(List.of(0L, 5L, 10L));
@@ -141,7 +141,7 @@ public class CombinedProtocolScheduleFactoryTest {
         .isSameAs(protocolSchedule3.getByBlockNumber(220L));
 
     assertThat(
-            new BlockNumberStreamingProtocolSchedule(combinedProtocolSchedule)
+            new MilestoneStreamingProtocolSchedule(combinedProtocolSchedule)
                 .streamMilestoneBlocks()
                 .collect(Collectors.toList()))
         .isEqualTo(List.of(0L, 5L, 10L, 100L, 105L, 110L, 200L, 220L));

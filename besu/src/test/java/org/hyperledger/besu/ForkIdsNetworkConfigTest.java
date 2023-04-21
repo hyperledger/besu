@@ -31,7 +31,6 @@ import org.hyperledger.besu.consensus.merge.TransitionUtils;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockNumberStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
@@ -210,11 +209,11 @@ public class ForkIdsNetworkConfigTest {
     private static MilestoneStreamingTransitionProtocolSchedule createSchedule(
         final GenesisConfigFile genesisConfigFile) {
       final GenesisConfigOptions configOptions = genesisConfigFile.getConfigOptions();
-      BlockNumberStreamingProtocolSchedule preMergeProtocolSchedule =
-          new BlockNumberStreamingProtocolSchedule(
+      MilestoneStreamingProtocolSchedule preMergeProtocolSchedule =
+          new MilestoneStreamingProtocolSchedule(
               (UnifiedProtocolSchedule) MainnetProtocolSchedule.fromConfig(configOptions));
-      BlockNumberStreamingProtocolSchedule postMergeProtocolSchedule =
-          new BlockNumberStreamingProtocolSchedule(
+      MilestoneStreamingProtocolSchedule postMergeProtocolSchedule =
+          new MilestoneStreamingProtocolSchedule(
               (UnifiedProtocolSchedule) MergeProtocolSchedule.create(configOptions, false));
       final MilestoneStreamingTransitionProtocolSchedule schedule =
           new MilestoneStreamingTransitionProtocolSchedule(
@@ -228,8 +227,8 @@ public class ForkIdsNetworkConfigTest {
       private final TransitionUtils<MilestoneStreamingProtocolSchedule> transitionUtils;
 
       public MilestoneStreamingTransitionProtocolSchedule(
-          final BlockNumberStreamingProtocolSchedule preMergeProtocolSchedule,
-          final BlockNumberStreamingProtocolSchedule postMergeProtocolSchedule) {
+          final MilestoneStreamingProtocolSchedule preMergeProtocolSchedule,
+          final MilestoneStreamingProtocolSchedule postMergeProtocolSchedule) {
         super(preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
         transitionUtils =
             new TransitionUtils<>(

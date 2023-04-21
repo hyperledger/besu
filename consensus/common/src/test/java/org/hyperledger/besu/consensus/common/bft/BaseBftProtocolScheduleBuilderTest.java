@@ -29,7 +29,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.BlockNumberStreamingProtocolSchedule;
+import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -211,8 +211,8 @@ public class BaseBftProtocolScheduleBuilderTest {
         new MutableBftConfigOptions(JsonBftConfigOptions.DEFAULT);
     blockRewardTransition.setBlockRewardWei(forkBlockReward);
 
-    final BlockNumberStreamingProtocolSchedule schedule =
-        new BlockNumberStreamingProtocolSchedule(
+    final MilestoneStreamingProtocolSchedule schedule =
+        new MilestoneStreamingProtocolSchedule(
             (UnifiedProtocolSchedule)
                 createProtocolSchedule(
                     List.of(

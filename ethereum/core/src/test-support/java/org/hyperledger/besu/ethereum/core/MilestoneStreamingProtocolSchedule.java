@@ -15,9 +15,21 @@
 
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.UnifiedProtocolSchedule;
+
+import java.util.Comparator;
 import java.util.stream.Stream;
 
-public interface MilestoneStreamingProtocolSchedule {
+public class MilestoneStreamingProtocolSchedule extends UnifiedProtocolSchedule {
 
-  Stream<Long> streamMilestoneBlocks();
+  public MilestoneStreamingProtocolSchedule(final UnifiedProtocolSchedule protocolSchedule) {
+    super(protocolSchedule);
+  }
+
+  public Stream<Long> streamMilestoneBlocks() {
+    return protocolSpecs.stream()
+        .sorted(Comparator.comparing(ScheduledProtocolSpec::milestone))
+        .map(ScheduledProtocolSpec::milestone);
+  }
 }
