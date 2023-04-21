@@ -1,6 +1,6 @@
 # Changelog
 
-## 23.4-RC
+## 23.4.0-RC1
 
 ### Breaking Changes
 - Remove IBFT 1.0 feature [#5302](https://github.com/hyperledger/besu/pull/5302)
@@ -21,8 +21,14 @@
 - Performance: Reduced usage of UInt256 in EVM operations [#5331](https://github.com/hyperledger/besu/pull/5331)
 - Changed wrong error message "Invalid params" when private tx is reverted to "Execution reverted" with correct revert reason in data. [#5369](https://github.com/hyperledger/besu/pull/5369)
 - Changes to the way gas is estimated to provide an exact gas estimate [#5142](https://github.com/hyperledger/besu/pull/5142)
+- Add zero reads to Bonsai TrieLogs [#5317](https://github.com/hyperledger/besu/pull/5317) 
+- Bonsai TrieLog serialization interface and default implementation [#5372](https://github.com/hyperledger/besu/pull/5372) 
 
 ### Bug Fixes
+
+### Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.0-RC1/besu-23.4.0-RC1.tar.gz / sha256: TBA
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.0-RC1/besu-23.4.0-RC1.zip / sha256:  TBA
 
 ## 23.1.3 
 
@@ -47,6 +53,8 @@
 - Add withdrawals to payloadId calculation to avoid collisions [#5321](https://github.com/hyperledger/besu/pull/5321) 
 
 ### Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.3/besu-23.1.3.tar.gz / sha256: 36898932a7535c4d126c1980443b33c9a4971f9354112992a18ee134c1777aa3
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.3/besu-23.1.3.zip / sha256: adb3b17e45217f86a56f07f09faba2e5d8a0eb8a585ad5307696d6cc58ee2f73
 
 ## 23.1.2
 This update is a mainnet-compatible Shanghai/Capella upgrade and is recommended for all Mainnet users.
