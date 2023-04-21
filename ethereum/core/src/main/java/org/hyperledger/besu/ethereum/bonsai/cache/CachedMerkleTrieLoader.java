@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
+import org.hyperledger.besu.ethereum.bonsai.worldview.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
@@ -92,15 +93,15 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
   public void preLoadStorageSlot(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Address account,
-      final Hash slotHash) {
-    CompletableFuture.runAsync(() -> cacheStorageNodes(worldStateStorage, account, slotHash));
+      final StorageSlotKey slotKey) {
+    CompletableFuture.runAsync(() -> cacheStorageNodes(worldStateStorage, account, slotKey));
   }
 
   @VisibleForTesting
   public void cacheStorageNodes(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Address account,
-      final Hash slotHash) {
+      final StorageSlotKey slotKey) {
     final Hash accountHash = Hash.hash(account);
     final long storageSubscriberId = worldStateStorage.subscribe(this);
     try {
@@ -121,7 +122,7 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
                           Hash.hash(storageRoot),
                           Function.identity(),
                           Function.identity());
-                  storageTrie.get(slotHash);
+                  storageTrie.get(slotKey.slotHash());
                 } catch (MerkleTrieException e) {
                   // ignore exception for the cache
                 }

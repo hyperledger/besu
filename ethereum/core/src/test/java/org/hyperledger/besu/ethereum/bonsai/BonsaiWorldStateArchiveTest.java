@@ -29,6 +29,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
@@ -258,7 +259,7 @@ public class BonsaiWorldStateArchiveTest {
     final BytesValueRLPOutput rlpLogBlockB = new BytesValueRLPOutput();
     final TrieLogLayer trieLogLayerBlockB = new TrieLogLayer();
     trieLogLayerBlockB.setBlockHash(blockHeaderChainB.getHash());
-    trieLogLayerBlockB.writeTo(rlpLogBlockB);
+    TrieLogFactoryImpl.writeTo(trieLogLayerBlockB, rlpLogBlockB);
     when(keyValueStorage.get(blockHeaderChainB.getHash().toArrayUnsafe()))
         .thenReturn(Optional.of(rlpLogBlockB.encoded().toArrayUnsafe()));
 
