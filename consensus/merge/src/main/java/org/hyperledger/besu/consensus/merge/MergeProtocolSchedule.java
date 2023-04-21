@@ -103,10 +103,7 @@ public class MergeProtocolSchedule {
 
   private static ProtocolSpecBuilder unapplyMergeModificationsFromShanghaiOnwards(
       final ProtocolSpecBuilder specBuilder) {
-    // TODO Withdrawals Get rid of MergeBlockProcessor
     // inherits merge config from MainnetProtocolSpecs.parisDefinition
-    // This would be Function.identify() but MergeBlockProcessor can't be used in
-    // MainnetProtocolSpecs due to circular dependency
     return specBuilder;
   }
 
