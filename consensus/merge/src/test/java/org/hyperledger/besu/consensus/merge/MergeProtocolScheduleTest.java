@@ -21,6 +21,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
@@ -97,7 +98,7 @@ public class MergeProtocolScheduleTest {
         .isEqualTo(BigInteger.ZERO);
     assertThat(spec.getBlockReward()).isEqualTo(Wei.ZERO);
     assertThat(spec.isSkipZeroBlockRewards()).isTrue();
-    assertThat(spec.getBlockProcessor()).isInstanceOf(MergeBlockProcessor.class);
+    assertThat(spec.getBlockProcessor()).isInstanceOf(MainnetBlockProcessor.class);
   }
 
   private BlockHeader blockHeader(final long number) {
