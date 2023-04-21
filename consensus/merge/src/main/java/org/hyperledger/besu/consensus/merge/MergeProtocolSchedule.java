@@ -70,9 +70,8 @@ public class MergeProtocolSchedule {
             MergeProtocolSchedule.applyMergeSpecificModifications(
                 specBuilder, config.getChainId()));
     if (config.getShanghaiTime().isPresent()) {
-      postMergeModifications.put(
-          config.getShanghaiTime().getAsLong(),
-          MergeProtocolSchedule::unapplyMergeModificationsFromShanghaiOnwards);
+      // unapply merge modifications from Shanghai onwards
+      postMergeModifications.put(config.getShanghaiTime().getAsLong(), Function.identity());
     }
 
     return new ProtocolScheduleBuilder(
@@ -99,12 +98,6 @@ public class MergeProtocolSchedule {
         .skipZeroBlockRewards(true)
         .isPoS(true)
         .name("Paris");
-  }
-
-  private static ProtocolSpecBuilder unapplyMergeModificationsFromShanghaiOnwards(
-      final ProtocolSpecBuilder specBuilder) {
-    // inherits merge config from MainnetProtocolSpecs.parisDefinition
-    return specBuilder;
   }
 
   private static BlockHeaderValidator.Builder getBlockHeaderValidator(final FeeMarket feeMarket) {
