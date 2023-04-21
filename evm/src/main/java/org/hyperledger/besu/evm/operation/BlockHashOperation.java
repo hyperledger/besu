@@ -22,6 +22,8 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.function.Function;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Block hash operation. */
@@ -41,10 +43,10 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final UInt256 blockArg = UInt256.fromBytes(frame.popStackItem());
+    final Bytes blockArg = frame.popStackItem().trimLeadingZeros();
 
     // Short-circuit if value is unreasonably large
-    if (!blockArg.fitsLong()) {
+    if (blockArg.size() > 8) {
       frame.pushStackItem(UInt256.ZERO);
       return successResponse;
     }
@@ -59,11 +61,11 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
     if (currentBlockNumber == 0
         || soughtBlock < (mostRecentBlockNumber - MAX_RELATIVE_BLOCK)
         || soughtBlock > mostRecentBlockNumber) {
-      frame.pushStackItem(UInt256.ZERO);
+      frame.pushStackItem(Bytes32.ZERO);
     } else {
       final Function<Long, Hash> blockHashLookup = frame.getBlockHashLookup();
       final Hash blockHash = blockHashLookup.apply(soughtBlock);
-      frame.pushStackItem(UInt256.fromBytes(blockHash));
+      frame.pushStackItem(blockHash);
     }
 
     return successResponse;

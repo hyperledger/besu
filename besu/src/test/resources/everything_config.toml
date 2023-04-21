@@ -195,8 +195,7 @@ ethstats-cacert-file="./root.cert"
 
 # Data storage
 data-storage-format="BONSAI"
-bonsai-maximum-back-layers-to-load=512
-Xbonsai-use-snapshots=true
+bonsai-historical-block-limit=512
 
 # feature flags
 Xsecp256k1-native-enabled=false

@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 public class BaseFeeBlockBodyValidator extends MainnetBlockBodyValidator {
   private static final Logger LOG = LoggerFactory.getLogger(BaseFeeBlockBodyValidator.class);
 
-  public BaseFeeBlockBodyValidator(final HeaderBasedProtocolSchedule protocolSchedule) {
+  public BaseFeeBlockBodyValidator(final ProtocolSchedule protocolSchedule) {
     super(protocolSchedule);
   }
 
