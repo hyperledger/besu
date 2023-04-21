@@ -36,6 +36,8 @@ public record EOFLayout(
 
   public static final byte EOF_PREFIX_BYTE = (byte) 0xEF;
 
+  public static final byte EOF_PREFIX_BYTE = (byte) 0xEF;
+
   /** header terminator */
   static final int SECTION_TERMINATOR = 0x00;
 
