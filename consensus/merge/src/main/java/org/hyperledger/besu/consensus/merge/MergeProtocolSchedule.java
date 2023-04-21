@@ -93,6 +93,7 @@ public class MergeProtocolSchedule {
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.paris(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), EvmConfiguration.DEFAULT))
+        .blockHeaderValidatorBuilder(MergeProtocolSchedule::getBlockHeaderValidator)
         .blockReward(Wei.ZERO)
         .difficultyCalculator((a, b, c) -> BigInteger.ZERO)
         .skipZeroBlockRewards(true)
@@ -106,7 +107,7 @@ public class MergeProtocolSchedule {
     // inherits merge config from MainnetProtocolSpecs.parisDefinition
     // This would be Function.identify() but MergeBlockProcessor can't be used in
     // MainnetProtocolSpecs due to circular dependency
-    return specBuilder.blockProcessorBuilder(MergeBlockProcessor::new);
+    return specBuilder;
   }
 
   private static BlockHeaderValidator.Builder getBlockHeaderValidator(final FeeMarket feeMarket) {
