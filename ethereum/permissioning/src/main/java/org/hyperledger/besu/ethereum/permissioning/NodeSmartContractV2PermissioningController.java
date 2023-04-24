@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.net.URI;
 import java.util.List;
 import javax.annotation.Nonnull;
 
@@ -95,22 +96,46 @@ public class NodeSmartContractV2PermissioningController
 
   private Bytes createPayload(final EnodeURL enodeUrl) {
     try {
+
       final String hexNodeIdString = enodeUrl.getNodeId().toUnprefixedHexString();
-      final String host = enodeUrl.toURI().getHost();
-      final String address = host == null ? enodeUrl.getIpAsString() : host;
+      final String address = getHost(enodeUrl);
       final int port = enodeUrl.getListeningPortOrZero();
 
       final Function connectionAllowedFunction =
           FunctionEncoder.makeFunction(
               "connectionAllowed",
               List.of("string", "string", "uint16"),
-              List.of(hexNodeIdString, address == null ? "" : address, port),
+              List.of(hexNodeIdString, address, port),
               List.of(Bool.TYPE_NAME));
       return Bytes.fromHexString(FunctionEncoder.encode(connectionAllowedFunction));
     } catch (Exception e) {
       throw new RuntimeException(
           "Error building payload to call node permissioning smart contract", e);
     }
+  }
+
+  /**
+   * If <code>URI.getHost()</code> returns <code>null</code>,
+   * the host is extracted from the string of the URI
+   * 
+   * @param enodeUrl EnodeURL to get the host from
+   * @return the host from EnodeURL
+   */
+  private String getHost(final EnodeURL enodeUrl) {
+    URI uriWithoutDiscoveryPort = enodeUrl.toURIWithoutDiscoveryPort();
+    String host = uriWithoutDiscoveryPort.getHost();
+    if (host == null) {
+      host = "";
+      final String uriString = uriWithoutDiscoveryPort.toString();
+      int indexOfAt = uriString.indexOf("@");
+      if (indexOfAt > -1) {
+        int lastIndexOfColon = uriString.lastIndexOf(":");
+        if (lastIndexOfColon > indexOfAt) {
+          host = uriString.substring(indexOfAt + 1, lastIndexOfColon);
+        }
+      }
+    }
+    return host;
   }
 
   private boolean parseResult(final TransactionSimulatorResult result) {
