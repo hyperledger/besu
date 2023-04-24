@@ -114,12 +114,6 @@ public class NodeSmartContractV2PermissioningController
     }
   }
 
-  /**
-   * If URI.getHost() returns null, the host is extracted from the string of the URI
-   * 
-   * @param enodeUrl EnodeURL to get the host from
-   * @return The host from EnodeURL
-   */
   private String getHost(final EnodeURL enodeUrl) {
     URI uriWithoutDiscoveryPort = enodeUrl.toURIWithoutDiscoveryPort();
     String host = uriWithoutDiscoveryPort.getHost();
