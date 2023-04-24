@@ -96,11 +96,11 @@ public class NodeSmartContractV2PermissioningController
 
   private Bytes createPayload(final EnodeURL enodeUrl) {
     try {
-      
+
       final String hexNodeIdString = enodeUrl.getNodeId().toUnprefixedHexString();
       final String address = getHost(enodeUrl);
       final int port = enodeUrl.getListeningPortOrZero();
-      
+
       final Function connectionAllowedFunction =
           FunctionEncoder.makeFunction(
               "connectionAllowed",
@@ -113,7 +113,7 @@ public class NodeSmartContractV2PermissioningController
           "Error building payload to call node permissioning smart contract", e);
     }
   }
-  
+
   /**
    * If <code>URI.getHost()</code> returns <code>null</code>,
    * the host is extracted from the string of the URI
@@ -123,19 +123,19 @@ public class NodeSmartContractV2PermissioningController
    */
   private String getHost(final EnodeURL enodeUrl) {
     URI uriWithoutDiscoveryPort = enodeUrl.toURIWithoutDiscoveryPort();
-	String host = uriWithoutDiscoveryPort.getHost();
-	if (host == null) {
-	  host = "";
-	  final String uriString = uriWithoutDiscoveryPort.toString();
+    String host = uriWithoutDiscoveryPort.getHost();
+    if (host == null) {
+      host = "";
+      final String uriString = uriWithoutDiscoveryPort.toString();
       int indexOfAt = uriString.indexOf("@");
       if (indexOfAt > -1) {
         int lastIndexOfColon = uriString.lastIndexOf(":");
         if (lastIndexOfColon > indexOfAt) {
-		  host = uriString.substring(indexOfAt + 1, lastIndexOfColon);
+          host = uriString.substring(indexOfAt + 1, lastIndexOfColon);
         }
-	  }
-	}
-	return host;
+      }
+    }
+    return host;
   }
 
   private boolean parseResult(final TransactionSimulatorResult result) {
