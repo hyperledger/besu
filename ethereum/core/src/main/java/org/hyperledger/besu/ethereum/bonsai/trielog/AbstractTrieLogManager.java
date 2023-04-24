@@ -44,8 +44,8 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
   protected final long maxLayersToLoad;
   private final Subscribers<TrieLogAddedObserver> trieLogAddedObservers = Subscribers.create();
 
-  // TODO plumb factory from plugin service:
-  TrieLogFactory<TrieLogLayer> trieLogFactory = new TrieLogFactoryImpl();
+  // TODO plumb factory from plugin service, DO NOT MERGE WITH ZkTrieLogFactoryImpl as default
+  TrieLogFactory<TrieLogLayer> trieLogFactory = new ZkTrieLogFactoryImpl();
 
   protected AbstractTrieLogManager(
       final Blockchain blockchain,
