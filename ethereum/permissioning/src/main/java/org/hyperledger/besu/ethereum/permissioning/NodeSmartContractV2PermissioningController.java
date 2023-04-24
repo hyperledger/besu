@@ -96,11 +96,11 @@ public class NodeSmartContractV2PermissioningController
 
   private Bytes createPayload(final EnodeURL enodeUrl) {
     try {
-      
+
       final String hexNodeIdString = enodeUrl.getNodeId().toUnprefixedHexString();
       final String address = getHost(enodeUrl);
       final int port = enodeUrl.getListeningPortOrZero();
-      
+
       final Function connectionAllowedFunction =
           FunctionEncoder.makeFunction(
               "connectionAllowed",
@@ -113,7 +113,7 @@ public class NodeSmartContractV2PermissioningController
           "Error building payload to call node permissioning smart contract", e);
     }
   }
-  
+
   /**
    * If <code>URI.getHost()</code> returns <code>null</code>,
    * the host is extracted from the string of the URI
