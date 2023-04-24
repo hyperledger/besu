@@ -42,19 +42,19 @@ public class ZkTrieLogFactoryImpl extends TrieLogFactoryImpl {
       output.startList(); // this change
       output.writeBytes(address);
 
+      final BonsaiValue<Bytes> codeChange = layer.code.get(address);
+      if (codeChange == null || codeChange.isUnchanged()) {
+        output.writeNull();
+      } else {
+        codeChange.writeRlp(output, RLPOutput::writeBytes);
+      }
+
       final BonsaiValue<StateTrieAccountValue> accountChange = layer.accounts.get(address);
 
       if (accountChange == null || accountChange.isUnchanged()) {
         output.writeNull();
       } else {
         accountChange.writeRlp(output, (o, sta) -> sta.writeTo(o));
-      }
-
-      final BonsaiValue<Bytes> codeChange = layer.code.get(address);
-      if (codeChange == null || codeChange.isUnchanged()) {
-        output.writeNull();
-      } else {
-        codeChange.writeRlp(output, RLPOutput::writeBytes);
       }
 
       final Map<StorageSlotKey, BonsaiValue<UInt256>> storageChanges = layer.storage.get(address);
@@ -100,22 +100,22 @@ public class ZkTrieLogFactoryImpl extends TrieLogFactoryImpl {
         input.skipNext();
       } else {
         input.enterList();
-        final StateTrieAccountValue oldValue = nullOrValue(input, StateTrieAccountValue::readFrom);
-        final StateTrieAccountValue newValue = nullOrValue(input, StateTrieAccountValue::readFrom);
+        final Bytes oldCode = nullOrValue(input, RLPInput::readBytes);
+        final Bytes newCode = nullOrValue(input, RLPInput::readBytes);
         final boolean isCleared = getOptionalIsCleared(input);
         input.leaveList();
-        newLayer.accounts.put(address, new BonsaiValue<>(oldValue, newValue, isCleared));
+        newLayer.code.put(address, new BonsaiValue<>(oldCode, newCode, isCleared));
       }
 
       if (input.nextIsNull()) {
         input.skipNext();
       } else {
         input.enterList();
-        final Bytes oldCode = nullOrValue(input, RLPInput::readBytes);
-        final Bytes newCode = nullOrValue(input, RLPInput::readBytes);
+        final StateTrieAccountValue oldValue = nullOrValue(input, StateTrieAccountValue::readFrom);
+        final StateTrieAccountValue newValue = nullOrValue(input, StateTrieAccountValue::readFrom);
         final boolean isCleared = getOptionalIsCleared(input);
         input.leaveList();
-        newLayer.code.put(address, new BonsaiValue<>(oldCode, newCode, isCleared));
+        newLayer.accounts.put(address, new BonsaiValue<>(oldValue, newValue, isCleared));
       }
 
       if (input.nextIsNull()) {
