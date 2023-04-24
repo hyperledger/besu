@@ -28,10 +28,10 @@ import org.apache.tuweni.bytes.Bytes32;
 /** Represents the raw values associated with an account in the world state trie. */
 public class StateTrieAccountValue {
 
-  private final long nonce;
-  private final Wei balance;
-  private final Hash storageRoot;
-  private final Hash codeHash;
+  protected final long nonce;
+  protected final Wei balance;
+  protected final Hash storageRoot;
+  protected final Hash codeHash;
 
   public StateTrieAccountValue(
       final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
