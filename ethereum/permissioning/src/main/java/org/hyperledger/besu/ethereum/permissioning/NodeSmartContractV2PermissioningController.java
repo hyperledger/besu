@@ -123,19 +123,19 @@ public class NodeSmartContractV2PermissioningController
    */
   private String getHost(final EnodeURL enodeUrl) {
     URI uriWithoutDiscoveryPort = enodeUrl.toURIWithoutDiscoveryPort();
-	String host = uriWithoutDiscoveryPort.getHost();
-	if (host == null) {
-	  host = "";
-	  final String uriString = uriWithoutDiscoveryPort.toString();
+    String host = uriWithoutDiscoveryPort.getHost();
+    if (host == null) {
+      host = "";
+      final String uriString = uriWithoutDiscoveryPort.toString();
       int indexOfAt = uriString.indexOf("@");
       if (indexOfAt > -1) {
         int lastIndexOfColon = uriString.lastIndexOf(":");
-        if (lastIndexOfColon > indexOfAt) {
-		  host = uriString.substring(indexOfAt + 1, lastIndexOfColon);
+          if (lastIndexOfColon > indexOfAt) {
+            host = uriString.substring(indexOfAt + 1, lastIndexOfColon);
         }
-	  }
-	}
-	return host;
+      }
+    }
+    return host;
   }
 
   private boolean parseResult(final TransactionSimulatorResult result) {
