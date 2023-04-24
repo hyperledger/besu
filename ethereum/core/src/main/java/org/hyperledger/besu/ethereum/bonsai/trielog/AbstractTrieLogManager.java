@@ -75,7 +75,7 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
         persistTrieLog(forBlockHeader, forWorldStateRootHash, trieLog, stateUpdater);
 
         // notify trie log added observers, synchronously
-        trieLogAddedObservers.forEach(o -> o.onTrieLogAdded(new TrieLogAddedEvent(trieLog)));
+        trieLogAddedObservers.forEach(o -> o.onTrieLogAdded(new TrieLogAddedEvent(forBlockHeader.getHash(), trieLog)));
 
         success = true;
       } finally {
