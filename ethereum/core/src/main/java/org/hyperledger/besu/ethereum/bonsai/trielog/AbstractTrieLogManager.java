@@ -44,8 +44,10 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
   protected final long maxLayersToLoad;
   private final Subscribers<TrieLogAddedObserver> trieLogAddedObservers = Subscribers.create();
 
-  // TODO plumb factory from plugin service, DO NOT MERGE WITH ZkTrieLogFactoryImpl as default
-  TrieLogFactory<TrieLogLayer> trieLogFactory = new ZkTrieLogFactoryImpl();
+  // TODO plumb factory and observer(s) from plugin service, DO NOT MERGE
+  protected TrieLogFactory<TrieLogLayer> trieLogFactory = new ZkTrieLogFactoryImpl();
+  protected TrieLogAddedObserver observer =
+      new ZkTrieLogObserver("localhost", 8888).addAsObserverTo(trieLogAddedObservers);
 
   protected AbstractTrieLogManager(
       final Blockchain blockchain,
@@ -75,7 +77,8 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
         persistTrieLog(forBlockHeader, forWorldStateRootHash, trieLog, stateUpdater);
 
         // notify trie log added observers, synchronously
-        trieLogAddedObservers.forEach(o -> o.onTrieLogAdded(new TrieLogAddedEvent(forBlockHeader.getHash(), trieLog)));
+        trieLogAddedObservers.forEach(
+            o -> o.onTrieLogAdded(new TrieLogAddedEvent(forBlockHeader.getHash(), trieLog)));
 
         success = true;
       } finally {
