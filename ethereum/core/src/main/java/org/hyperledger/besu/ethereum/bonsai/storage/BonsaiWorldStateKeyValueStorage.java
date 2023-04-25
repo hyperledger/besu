@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
@@ -292,26 +293,38 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   @Override
   public Map<Bytes32, Bytes> streamAccountFlatDatabase(final Bytes startKeyHash, final long max) {
-    return accountStorage
-        .streamFromKey(startKeyHash.toArrayUnsafe())
-        .limit(max)
-        .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())))
-        .collect(Collectors.toMap(Pair::getFirst, Pair::getSecond, (v1, v2) -> v1, TreeMap::new));
+    final Stream<Pair<Bytes32, Bytes>> pairStream =
+        accountStorage
+            .streamFromKey(startKeyHash.toArrayUnsafe())
+            .limit(max)
+            .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
+
+    final TreeMap<Bytes32, Bytes> collected =
+        pairStream.collect(
+            Collectors.toMap(Pair::getFirst, Pair::getSecond, (v1, v2) -> v1, TreeMap::new));
+    pairStream.close();
+    return collected;
   }
 
   @Override
   public Map<Bytes32, Bytes> streamStorageFlatDatabase(
       final Hash accountHash, final Bytes startKeyHash, final long max) {
-    return storageStorage
-        .streamFromKey(Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe())
-        .takeWhile(pair -> Bytes.wrap(pair.getKey()).slice(0, Hash.SIZE).equals(accountHash))
-        .limit(max)
-        .map(
-            pair ->
-                new Pair<>(
-                    Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
-                    RLP.encodeValue(Bytes.wrap(pair.getValue()).trimLeadingZeros())))
-        .collect(Collectors.toMap(Pair::getFirst, Pair::getSecond, (v1, v2) -> v1, TreeMap::new));
+    final Stream<Pair<Bytes32, Bytes>> pairStream =
+        storageStorage
+            .streamFromKey(Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe())
+            .takeWhile(pair -> Bytes.wrap(pair.getKey()).slice(0, Hash.SIZE).equals(accountHash))
+            .limit(max)
+            .map(
+                pair ->
+                    new Pair<>(
+                        Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
+                        RLP.encodeValue(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
+
+    final TreeMap<Bytes32, Bytes> collected =
+        pairStream.collect(
+            Collectors.toMap(Pair::getFirst, Pair::getSecond, (v1, v2) -> v1, TreeMap::new));
+    pairStream.close();
+    return collected;
   }
 
   @Override

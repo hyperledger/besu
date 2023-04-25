@@ -174,7 +174,7 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
       final RangeStorageEntriesCollector collector =
           RangeStorageEntriesCollector.createCollector(
-              startKeyHash, slots.isEmpty() ? endKeyHash : slots.lastKey(), 384, Integer.MAX_VALUE);
+              startKeyHash, slots.isEmpty() ? endKeyHash : slots.lastKey(), 128, Integer.MAX_VALUE);
       final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
       final TreeMap<Bytes32, Bytes> slotsInTrie =
           (TreeMap<Bytes32, Bytes>)
@@ -183,14 +183,13 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
                       RangeStorageEntriesCollector.collectEntries(
                           collector, visitor, root, startKeyHash));
 
-      Map<Bytes32, Bytes> keysAdd = new TreeMap<>();
       Map<Bytes32, Bytes> keysToDelete = new TreeMap<>(slots);
       slotsInTrie.forEach(
           (key, value) -> {
             if (keysToDelete.containsKey(key)) {
               keysToDelete.remove(key);
             } else {
-              keysAdd.put(key, value);
+              slots.put(key, value);
               bonsaiUpdater.putStorageValueBySlotHash(
                   accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value)));
             }
@@ -220,7 +219,11 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
               + valid);
 
       keysToDelete.forEach(
-          (key, value) -> bonsaiUpdater.removeStorageValueBySlotHash(accountHash, Hash.wrap(key)));
+          (key, value) -> {
+            final Hash slot = Hash.wrap(key);
+            slots.remove(slot);
+            bonsaiUpdater.removeStorageValueBySlotHash(accountHash, slot);
+          });
     } else {
       valid += 1;
     }

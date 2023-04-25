@@ -164,10 +164,10 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         && pendingTrieNodeRequests.allTasksCompleted()
         && pendingAccountFlatDatabaseHealingRequests.allTasksCompleted()
         && pendingStorageFlatDatabaseHealingRequests.allTasksCompleted()) {
-      if (!snapSyncState.isHealFlatDatabaseInProgress()) {
-        startFlatDatabaseHeal(header);
-      } else if (!snapSyncState.isHealTrieInProgress()) {
+      if (!snapSyncState.isHealTrieInProgress()) {
         startTrieHeal();
+      } else if (!snapSyncState.isHealFlatDatabaseInProgress()) {
+        startFlatDatabaseHeal(header);
       } else if (dynamicPivotBlockManager.isBlockchainBehind()) {
         LOG.info("Pausing world state download while waiting for sync to complete");
         if (blockObserverId.isEmpty())
@@ -230,7 +230,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public synchronized void startFlatDatabaseHeal(final BlockHeader header) {
     LOG.info("Running flat database heal process");
-    snapSyncState.setHealTrieStatus(false);
     snapSyncState.setHealFlatDatabaseInProgress(true);
     final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
     ranges.forEach(

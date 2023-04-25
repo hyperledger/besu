@@ -76,10 +76,9 @@ public class PersistDataStep {
         (BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater();
     for (Task<SnapDataRequest> task : tasks) {
       // enqueue child requests
-      final Stream<SnapDataRequest> childRequests =
-          task.getData().getChildRequests(downloadState, worldStateStorage, snapSyncState);
-      enqueueChildren(childRequests);
       task.getData().persist(worldStateStorage, updater, downloadState, snapSyncState);
+      enqueueChildren(
+          task.getData().getChildRequests(downloadState, worldStateStorage, snapSyncState));
     }
     updater.commit();
     return tasks;

@@ -169,14 +169,13 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
                       RangeStorageEntriesCollector.collectEntries(
                           collector, visitor, root, startKeyHash));
 
-      Map<Bytes32, Bytes> keysAdd = new TreeMap<>();
       Map<Bytes32, Bytes> keysToDelete = new TreeMap<>(accounts);
       accountsInTrie.forEach(
           (key, value) -> {
             if (keysToDelete.containsKey(key)) {
               keysToDelete.remove(key);
             } else {
-              keysAdd.put(key, value);
+              accounts.put(key, value);
               flatHealAccounts.add(Hash.wrap(key));
               bonsaiUpdater.putAccountInfoState(Hash.wrap(key), value);
             }
@@ -184,8 +183,10 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
       keysToDelete.forEach(
           (key, value) -> {
-            flatHealAccounts.add(Hash.wrap(key));
-            bonsaiUpdater.removeAccountInfoState(Hash.wrap(key));
+            final Hash acct = Hash.wrap(key);
+            flatHealAccounts.add(acct);
+            accounts.remove(acct);
+            bonsaiUpdater.removeAccountInfoState(acct);
           });
     }
     return 0;

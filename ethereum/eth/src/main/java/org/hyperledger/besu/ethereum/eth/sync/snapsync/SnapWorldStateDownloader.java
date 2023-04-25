@@ -42,6 +42,7 @@ import java.util.function.IntSupplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -145,8 +146,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               snapsyncMetricsManager,
               clock);
 
-      snapContext.clear();
-
       final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
       snapsyncMetricsManager.initRange(ranges);
 
@@ -228,6 +227,12 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
         downloadState.getDownloadFuture().cancel(true);
       }
     }
+  }
+
+  public static void main(final String[] args) {
+    System.out.println(Bytes.concatenate(Bytes.of(1), UInt256.valueOf(10)).toHexString());
+    System.out.println(UInt256.valueOf(10).toLong());
+    System.out.println(Bytes32.leftPad(UInt256.valueOf(10)));
   }
 
   @Override

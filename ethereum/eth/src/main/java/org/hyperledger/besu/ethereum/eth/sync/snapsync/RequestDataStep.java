@@ -268,7 +268,7 @@ public class RequestDataStep {
     final TreeMap<Bytes32, Bytes> slots =
         (TreeMap<Bytes32, Bytes>)
             worldStateStorage.streamStorageFlatDatabase(
-                storageDataRequest.getAccountHash(), storageDataRequest.getStartKeyHash(), 384);
+                storageDataRequest.getAccountHash(), storageDataRequest.getStartKeyHash(), 128);
     if (!slots.isEmpty()) {
       final List<Bytes> leftStorageProofRelatedNodes =
           worldStateProofProvider.getStorageProofRelatedNodes(
