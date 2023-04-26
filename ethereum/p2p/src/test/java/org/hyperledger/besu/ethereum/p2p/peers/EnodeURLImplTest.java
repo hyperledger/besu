@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.util.IllegalPortException;
@@ -31,6 +32,7 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class EnodeURLImplTest {
 
@@ -967,4 +969,99 @@ public class EnodeURLImplTest {
         URI.create(String.format("enode://%s@%s:%d", VALID_NODE_ID, "hyperledger.org", 9999));
     assertThat(enodeA.toURIWithoutDiscoveryPort()).isEqualTo(expected);
   }
+  
+  @Test
+  public void getHostShoulReturnHostNameIpv4() {
+	final EnodeURL enode =
+	        EnodeURLImpl.builder()
+	            .nodeId(VALID_NODE_ID)
+	            .ipAddress(IPV4_ADDRESS)
+	            .disableListening()
+	            .discoveryPort(DISCOVERY_PORT)
+	            .build();
+	assertEquals(IPV4_ADDRESS, enode.getHost());
+  }
+
+  @Test
+  public void getHostShoulReturnHostNameIpv6Compact() {
+	final EnodeURL enode =
+	        EnodeURLImpl.builder()
+	            .nodeId(VALID_NODE_ID)
+	            .ipAddress(IPV6_COMPACT_ADDRESS)
+	            .disableListening()
+	            .discoveryPort(DISCOVERY_PORT)
+	            .build();
+	assertEquals(IPV6_COMPACT_ADDRESS, enode.getHost());
+  }
+  
+  @Test
+  public void getHostShoulReturnHostNameIpv6CompactFromFull() {
+	final EnodeURL enode =
+	        EnodeURLImpl.builder()
+	            .nodeId(VALID_NODE_ID)
+	            .ipAddress(IPV6_FULL_ADDRESS)
+	            .disableListening()
+	            .discoveryPort(DISCOVERY_PORT)
+	            .build();
+	assertEquals(IPV6_COMPACT_ADDRESS, enode.getHost());
+  }
+  
+  @Test
+  public void getHostShoulReturnHostNameWhenHostContainsUnderscore() {
+	EnodeURL enodeMock = Mockito.mock(EnodeURLImpl.class);
+	URI uriMock = Mockito.mock(URI.class);
+	Mockito.when(enodeMock.getHost()).thenCallRealMethod();
+	Mockito.when(enodeMock.toURIWithoutDiscoveryPort()).thenReturn(uriMock);
+	Mockito.when(uriMock.getHost()).thenReturn(null);
+	String hostName = "host_name";
+	Mockito.when(uriMock.toString()).thenReturn("enode://" + VALID_NODE_ID + "@" + hostName + ":9999");
+	assertEquals(hostName, enodeMock.getHost());
+  }
+
+  @Test
+  public void getHostShoulReturnEmptyStringWhenUriToStringDoesNotContainAt() {
+	EnodeURL enodeMock = Mockito.mock(EnodeURLImpl.class);
+	URI uriMock = Mockito.mock(URI.class);
+	Mockito.when(enodeMock.getHost()).thenCallRealMethod();
+	Mockito.when(enodeMock.toURIWithoutDiscoveryPort()).thenReturn(uriMock);
+	Mockito.when(uriMock.getHost()).thenReturn(null);
+	String hostName = "host_name";
+	Mockito.when(uriMock.toString()).thenReturn("enode://" + VALID_NODE_ID + hostName + ":9999");
+	assertEquals("", enodeMock.getHost());
+  }
+
+  @Test
+  public void getHostShoulReturnEmptyStringWhenUriToStringReturnsColonBeforeAt() {
+	EnodeURL enodeMock = Mockito.mock(EnodeURLImpl.class);
+	URI uriMock = Mockito.mock(URI.class);
+	Mockito.when(enodeMock.getHost()).thenCallRealMethod();
+	Mockito.when(enodeMock.toURIWithoutDiscoveryPort()).thenReturn(uriMock);
+	Mockito.when(uriMock.getHost()).thenReturn(null);
+	String hostName = "host_name";
+	Mockito.when(uriMock.toString()).thenReturn("enode://" + VALID_NODE_ID + "@" + hostName);
+	assertEquals("", enodeMock.getHost());
+  }
+
+  @Test
+  public void getHostShoulReturnHostNameDomainFound() {
+	String site = "hyperledger.org";
+	String enodeString = String.format("enode://%s@%s:%d", VALID_NODE_ID, site, 9999);
+	final EnodeURL enode =
+	    EnodeURLImpl.fromString(
+	        enodeString,
+	        ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(true).build());
+	assertEquals(site, enode.getHost());
+  }
+  
+  @Test
+  public void getHostShoulReturnLoopBackWhenHostNameDomainNotFound() {
+	String site = "besu-is-awesome.example.com";
+	String enodeString = String.format("enode://%s@%s:%d", VALID_NODE_ID, site, 9999);
+	final EnodeURL enode =
+	    EnodeURLImpl.fromString(
+	        enodeString,
+	        ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(true).build());
+	assertEquals("127.0.0.1", enode.getHost());
+  }
+  
 }

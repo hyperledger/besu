@@ -98,7 +98,7 @@ public class NodeSmartContractV2PermissioningController
     try {
 
       final String hexNodeIdString = enodeUrl.getNodeId().toUnprefixedHexString();
-      final String address = getHost(enodeUrl);
+      final String address = enodeUrl.getHost();
       final int port = enodeUrl.getListeningPortOrZero();
 
       final Function connectionAllowedFunction =
@@ -112,23 +112,6 @@ public class NodeSmartContractV2PermissioningController
       throw new RuntimeException(
           "Error building payload to call node permissioning smart contract", e);
     }
-  }
-
-  private String getHost(final EnodeURL enodeUrl) {
-    URI uriWithoutDiscoveryPort = enodeUrl.toURIWithoutDiscoveryPort();
-    String host = uriWithoutDiscoveryPort.getHost();
-    if (host == null) {
-      host = "";
-      final String uriString = uriWithoutDiscoveryPort.toString();
-      int indexOfAt = uriString.indexOf("@");
-      if (indexOfAt > -1) {
-        int lastIndexOfColon = uriString.lastIndexOf(":");
-        if (lastIndexOfColon > indexOfAt) {
-          host = uriString.substring(indexOfAt + 1, lastIndexOfColon);
-        }
-      }
-    }
-    return host;
   }
 
   private boolean parseResult(final TransactionSimulatorResult result) {
