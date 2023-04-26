@@ -281,7 +281,7 @@ public class EnodeURLImpl implements EnodeURL {
   public int getDiscoveryPortOrZero() {
     return discoveryPort.orElse(0);
   }
-  
+
   @Override
   public String getHost() {
     final URI uriWithoutDiscoveryPort = toURIWithoutDiscoveryPort();

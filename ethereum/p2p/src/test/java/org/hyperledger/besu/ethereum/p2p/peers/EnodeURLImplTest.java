@@ -972,21 +972,24 @@ public class EnodeURLImplTest {
 
   @Test
   public void getHostShoulReturnHostNameIpv4() {
-    final EnodeURL enode = EnodeURLImpl.builder().nodeId(VALID_NODE_ID).ipAddress(IPV4_ADDRESS).disableListening()
+    final EnodeURL enode = EnodeURLImpl.builder().nodeId(VALID_NODE_ID)
+        .ipAddress(IPV4_ADDRESS).disableListening()
         .discoveryPort(DISCOVERY_PORT).build();
     assertEquals(IPV4_ADDRESS, enode.getHost());
   }
 
   @Test
   public void getHostShoulReturnHostNameIpv6Compact() {
-    final EnodeURL enode = EnodeURLImpl.builder().nodeId(VALID_NODE_ID).ipAddress(IPV6_COMPACT_ADDRESS)
-        .disableListening().discoveryPort(DISCOVERY_PORT).build();
+    final EnodeURL enode = EnodeURLImpl.builder().nodeId(VALID_NODE_ID)
+        .ipAddress(IPV6_COMPACT_ADDRESS).disableListening()
+        .discoveryPort(DISCOVERY_PORT).build();
     assertEquals(IPV6_COMPACT_ADDRESS, enode.getHost());
   }
 
   @Test
   public void getHostShoulReturnHostNameIpv6CompactFromFull() {
-    final EnodeURL enode = EnodeURLImpl.builder().nodeId(VALID_NODE_ID).ipAddress(IPV6_FULL_ADDRESS).disableListening()
+    final EnodeURL enode = EnodeURLImpl.builder().nodeId(VALID_NODE_ID)
+        .ipAddress(IPV6_FULL_ADDRESS).disableListening()
         .discoveryPort(DISCOVERY_PORT).build();
     assertEquals(IPV6_COMPACT_ADDRESS, enode.getHost());
   }
