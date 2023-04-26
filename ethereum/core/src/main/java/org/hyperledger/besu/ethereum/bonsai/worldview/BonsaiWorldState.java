@@ -503,7 +503,8 @@ public class BonsaiWorldState
 
   @Override
   public UInt256 getStorageValue(final Address address, final UInt256 storageKey) {
-    return Optional.ofNullable(getStorageValue(address, storageKey)).orElse(UInt256.ZERO);
+    return getStorageValueByStorageSlotKey(address, new StorageSlotKey(storageKey))
+        .orElse(UInt256.ZERO);
   }
 
   @Override
