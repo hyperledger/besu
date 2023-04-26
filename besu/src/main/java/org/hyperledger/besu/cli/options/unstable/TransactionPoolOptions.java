@@ -126,7 +126,7 @@ public class TransactionPoolOptions
       paramLabel = "<Int>",
       hidden = true,
       description =
-          "Max number future pending transactions that are allow for a single sender (default: ${DEFAULT-VALUE})",
+          "Max number of future pending transactions allowed for a single sender (default: ${DEFAULT-VALUE})",
       arity = "1")
   private int layeredTxPoolMaxFutureBySender =
       TransactionPoolConfiguration.DEFAULT_MAX_FUTURE_BY_SENDER;
