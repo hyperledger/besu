@@ -105,5 +105,4 @@ public interface EnodeURL {
    * @return the host
    */
   String getHost();
-
 }
