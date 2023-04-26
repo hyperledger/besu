@@ -94,7 +94,7 @@ public class TransactionPoolMetrics {
         metricsSystem.createLabelledGauge(
             BesuMetricCategory.TRANSACTION_POOL,
             "unique_senders",
-            "The number of sender with at least one transaction currently present in the layer",
+            "The number of senders with at least one transaction currently present in the layer",
             "layer");
 
     expiredMessagesCounter =
