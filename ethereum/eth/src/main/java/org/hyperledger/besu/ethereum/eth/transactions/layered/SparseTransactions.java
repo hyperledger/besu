@@ -304,10 +304,10 @@ public class SparseTransactions extends AbstractTransactionsLayer {
     final var senderTxs = txsBySender.get(sender);
     return name()
         + "["
-        + (Objects.isNull(senderTxs) ? "Empty" : senderTxs.keySet())
-        + "] Gap "
-        + gapBySender.get(sender)
-        + " "
+        + (Objects.isNull(senderTxs)
+            ? "Empty"
+            : "gap(" + gapBySender.get(sender) + ") " + senderTxs.keySet())
+        + "] "
         + nextLayer.logSender(sender);
   }
 
