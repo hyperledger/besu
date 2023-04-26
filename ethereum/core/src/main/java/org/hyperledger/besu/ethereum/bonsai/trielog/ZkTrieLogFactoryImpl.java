@@ -11,9 +11,11 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -57,8 +59,17 @@ public class ZkTrieLogFactoryImpl extends TrieLogFactoryImpl {
         accountChange.writeRlp(output, (o, sta) -> sta.writeTo(o));
       }
 
-      final Map<StorageSlotKey, BonsaiValue<UInt256>> storageChanges = layer.storage.get(address);
-      if (storageChanges == null) {
+      // get storage changes for this address, filtering out self-destructed slots:
+      final Map<StorageSlotKey, BonsaiValue<UInt256>> storageChanges =
+          Optional.ofNullable(layer.storage.get(address))
+              .map(
+                  d ->
+                      d.entrySet().stream()
+                          .filter(k -> k.getKey().slotKey().isPresent())
+                          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
+              .orElse(null);
+
+      if (storageChanges == null || storageChanges.isEmpty()) {
         output.writeNull();
       } else {
         output.startList();
