@@ -48,7 +48,6 @@ import java.util.stream.Stream;
 import kotlin.ranges.LongRange;
 
 public class SparseTransactions extends AbstractTransactionsLayer {
-  //  private static final Logger LOG = LoggerFactory.getLogger(SparseTransactions.class);
   private final NavigableSet<PendingTransaction> sparseEvictionOrder =
       new TreeSet<>(Comparator.comparing(PendingTransaction::getSequence));
   private final Map<Address, Integer> gapBySender = new HashMap<>();

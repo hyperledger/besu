@@ -93,7 +93,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
       assertThat(prioritizeResult).isEqualTo(ADDED);
     }
 
-    assertThat(evictCollector.getEvictedTransactions()).contains(remoteTxs.get(0));
+    assertEvicted(remoteTxs.get(0));
     assertTransactionPrioritized(localTransaction);
     remoteTxs.stream().skip(1).forEach(remoteTx -> assertTransactionPrioritized(remoteTx));
   }
@@ -115,7 +115,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
     final var lastLocalTransaction =
         createLocalPendingTransaction(createTransaction(MAX_TRANSACTIONS));
     prioritizeTransaction(lastLocalTransaction);
-    assertThat(evictCollector.getEvictedTransactions()).contains(lastLocalTransaction);
+    assertEvicted(lastLocalTransaction);
 
     assertThat(transactions.count()).isEqualTo(MAX_TRANSACTIONS);
 
@@ -147,7 +147,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
     // This should kick the oldest tx with the low gas price out, namely the first one we added
     final var highValuePrioRes = transactions.add(highValueTx, 0);
     assertThat(highValuePrioRes).isEqualTo(ADDED);
-    assertThat(evictCollector.getEvictedTransactions()).contains(expectedDroppedTx);
+    assertEvicted(expectedDroppedTx);
 
     assertTransactionPrioritized(highValueTx);
     lowGasPriceTransactions.stream()
@@ -177,5 +177,9 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
 
   protected void assertTransactionNotPrioritized(final Transaction tx) {
     assertThat(transactions.getByHash(tx.getHash())).isEmpty();
+  }
+
+  protected void assertEvicted(final PendingTransaction tx) {
+    assertThat(evictCollector.getEvictedTransactions()).contains(tx);
   }
 }

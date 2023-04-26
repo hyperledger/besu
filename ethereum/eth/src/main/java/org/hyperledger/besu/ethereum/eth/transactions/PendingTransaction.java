@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * and deciding which transactions to drop when the transaction pool reaches its size limit.
  */
 public abstract class PendingTransaction {
+  static final int NOT_INITIALIZED = -1;
   static final int FRONTIER_BASE_MEMORY_SIZE = 944;
   static final int ACCESS_LIST_BASE_MEMORY_SIZE = 944;
   static final int EIP1559_BASE_MEMORY_SIZE = 1056;
@@ -43,7 +44,7 @@ public abstract class PendingTransaction {
   private final long addedAt;
   private final long sequence; // Allows prioritization based on order transactions are added
 
-  private int memorySize = -1;
+  private int memorySize = NOT_INITIALIZED;
 
   protected PendingTransaction(final Transaction transaction, final long addedAt) {
     this.transaction = transaction;
@@ -82,7 +83,7 @@ public abstract class PendingTransaction {
   }
 
   public int memorySize() {
-    if (memorySize == -1) {
+    if (memorySize == NOT_INITIALIZED) {
       memorySize = computeMemorySize();
     }
     return memorySize;
