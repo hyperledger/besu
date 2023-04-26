@@ -106,7 +106,7 @@ public class TransactionPoolOptions
       paramLabel = "<Long>",
       hidden = true,
       description =
-          "Max amount of memory space, in bytes, that pending transactions layer could occupy (default: ${DEFAULT-VALUE})",
+          "Max amount of memory space, in bytes, that any layer within the transaction pool could occupy (default: ${DEFAULT-VALUE})",
       arity = "1")
   private long layeredTxPoolLayerMaxCapacity =
       TransactionPoolConfiguration.DEFAULT_PENDING_TRANSACTIONS_LAYER_MAX_CAPACITY_BYTES;
