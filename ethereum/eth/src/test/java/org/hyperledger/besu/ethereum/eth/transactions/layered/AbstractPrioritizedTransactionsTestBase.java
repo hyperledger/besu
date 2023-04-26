@@ -149,7 +149,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
     assertThat(highValuePrioRes).isEqualTo(ADDED);
     assertThat(evictCollector.getEvictedTransactions()).contains(expectedDroppedTx);
 
-    assertThat(transactions.getByHash(highValueTx.getHash())).isPresent();
+    assertTransactionPrioritized(highValueTx);
     lowGasPriceTransactions.stream()
         .filter(tx -> !tx.equals(expectedDroppedTx))
         .forEach(tx -> assertThat(transactions.getByHash(tx.getHash())).isPresent());
