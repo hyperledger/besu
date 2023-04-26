@@ -229,7 +229,7 @@ public class TransactionPool implements BlockAddedObserver {
 
     LOG.atDebug()
         .setMessage(
-            "Added {} transactions to the pool in {}ms, not added {}, current pool stats {}")
+            "Added {} transactions to the pool in {}ms, {} not added, current pool stats {}")
         .addArgument(addedTransactions::size)
         .addArgument(() -> System.currentTimeMillis() - started)
         .addArgument(() -> initialCount - addedTransactions.size())
