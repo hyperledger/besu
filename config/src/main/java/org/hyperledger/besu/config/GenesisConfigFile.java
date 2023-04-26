@@ -82,15 +82,6 @@ public class GenesisConfigFile {
   }
 
   /**
-   * Ecip 1049 dev genesis config file.
-   *
-   * @return the genesis config file
-   */
-  public static GenesisConfigFile ecip1049dev() {
-    return genesisFileFromResources("/ecip1049_dev.json");
-  }
-
-  /**
    * Genesis file from resources genesis config file.
    *
    * @param resourceName the resource name

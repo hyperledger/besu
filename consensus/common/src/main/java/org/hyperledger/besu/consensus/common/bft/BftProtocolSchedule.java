@@ -17,24 +17,24 @@ package org.hyperledger.besu.consensus.common.bft;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.UnifiedProtocolSchedule;
 
 import java.util.List;
 
 /**
  * A Bft-specific wrapper around a ProtocolSchedule that is allowed to look up ProtocolSpecs by
- * block number Extending UnifiedProtocolSchedule gives this class access to the protocolSpecs
+ * block number. Extending DefaultProtocolSchedule gives this class access to the protocolSpecs
  */
-public class BftProtocolSchedule extends UnifiedProtocolSchedule {
+public class BftProtocolSchedule extends DefaultProtocolSchedule {
 
   /**
-   * Construct from an existing UnifiedProtocolSchedule
+   * Construct from an existing DefaultProtocolSchedule
    *
-   * @param protocolSchedule a blockNumber-based ProtocolSchedule
+   * @param protocolSchedule a blockNumber-supporting ProtocolSchedule
    */
-  public BftProtocolSchedule(final UnifiedProtocolSchedule protocolSchedule) {
+  public BftProtocolSchedule(final DefaultProtocolSchedule protocolSchedule) {
     super(protocolSchedule);
   }
 

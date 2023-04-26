@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verify;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.worldview.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -34,6 +35,7 @@ import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
+import java.util.Optional;
 import java.util.TreeMap;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -219,8 +221,9 @@ public class BonsaiWorldStateKeyValueStorageTest {
     storage.clearFlatDatabase();
 
     assertThat(
-            storage.getStorageValueBySlotHash(
-                Hash.wrap(accounts.firstKey()), Hash.wrap(slots.firstKey())))
+            storage.getStorageValueByStorageSlotKey(
+                Hash.wrap(accounts.firstKey()),
+                new StorageSlotKey(Hash.wrap(slots.firstKey()), Optional.empty())))
         .map(Bytes::toShortHexString)
         .contains(slots.firstEntry().getValue().toShortHexString());
 

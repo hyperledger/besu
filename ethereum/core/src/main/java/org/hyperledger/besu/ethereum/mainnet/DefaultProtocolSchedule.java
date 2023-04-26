@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 
-public class UnifiedProtocolSchedule implements ProtocolSchedule {
+public class DefaultProtocolSchedule implements ProtocolSchedule {
 
   @VisibleForTesting
   protected NavigableSet<ScheduledProtocolSpec> protocolSpecs =
@@ -42,12 +42,12 @@ public class UnifiedProtocolSchedule implements ProtocolSchedule {
 
   private final Optional<BigInteger> chainId;
 
-  public UnifiedProtocolSchedule(final Optional<BigInteger> chainId) {
+  public DefaultProtocolSchedule(final Optional<BigInteger> chainId) {
     this.chainId = chainId;
   }
 
   @VisibleForTesting
-  protected UnifiedProtocolSchedule(final UnifiedProtocolSchedule protocolSchedule) {
+  protected DefaultProtocolSchedule(final DefaultProtocolSchedule protocolSchedule) {
     this.chainId = protocolSchedule.chainId;
     this.protocolSpecs = protocolSchedule.protocolSpecs;
   }

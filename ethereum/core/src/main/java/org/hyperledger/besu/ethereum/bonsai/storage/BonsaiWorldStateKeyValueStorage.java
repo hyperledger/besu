@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.bonsai.storage;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.worldview.StorageSlotKey;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
@@ -232,8 +233,9 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return trieBranchStorage.get(WORLD_BLOCK_HASH_KEY).map(Bytes32::wrap).map(Hash::wrap);
   }
 
-  public Optional<Bytes> getStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
-    return getStorageValueBySlotHash(
+  public Optional<Bytes> getStorageValueByStorageSlotKey(
+      final Hash accountHash, final StorageSlotKey storageSlotKey) {
+    return getStorageValueByStorageSlotKey(
         () ->
             getAccount(accountHash)
                 .map(
@@ -242,17 +244,17 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                                 org.hyperledger.besu.ethereum.rlp.RLP.input(b))
                             .getStorageRoot()),
         accountHash,
-        slotHash);
+        storageSlotKey);
   }
 
-  public Optional<Bytes> getStorageValueBySlotHash(
+  public Optional<Bytes> getStorageValueByStorageSlotKey(
       final Supplier<Optional<Hash>> storageRootSupplier,
       final Hash accountHash,
-      final Hash slotHash) {
+      final StorageSlotKey storageSlotKey) {
     getStorageValueCounter.inc();
     Optional<Bytes> response =
         storageStorage
-            .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
+            .get(Bytes.concatenate(accountHash, storageSlotKey.slotHash()).toArrayUnsafe())
             .map(Bytes::wrap);
     if (response.isEmpty()) {
       final Optional<Hash> storageRoot = storageRootSupplier.get();
@@ -265,7 +267,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                         Function.identity(),
                         Function.identity()),
                     storageRoot.get())
-                .get(slotHash)
+                .get(storageSlotKey.slotHash())
                 .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
         if (response.isEmpty()) getStorageValueMissingMerkleTrieCounter.inc();
         else getStorageValueMerkleTrieCounter.inc();

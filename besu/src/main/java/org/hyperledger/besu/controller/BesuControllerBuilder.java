@@ -16,6 +16,7 @@ package org.hyperledger.besu.controller;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -178,6 +179,19 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   private NetworkingConfiguration networkingConfiguration;
   private Boolean randomPeerPriority;
+  /** the Dagger configured context that can provide dependencies */
+  protected BesuComponent besuComponent = null;
+
+  /**
+   * Provide a BesuComponent which can be used to get other dependencies
+   *
+   * @param besuComponent application context that can be used to get other dependencies
+   * @return the besu controller builder
+   */
+  public BesuControllerBuilder besuComponent(final BesuComponent besuComponent) {
+    this.besuComponent = besuComponent;
+    return this;
+  }
 
   /**
    * Storage provider besu controller builder.
@@ -547,7 +561,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             reorgLoggingThreshold,
             dataDirectory.toString());
 
-    final CachedMerkleTrieLoader cachedMerkleTrieLoader = new CachedMerkleTrieLoader(metricsSystem);
+    final CachedMerkleTrieLoader cachedMerkleTrieLoader =
+        besuComponent == null
+            ? new CachedMerkleTrieLoader(metricsSystem)
+            : besuComponent.getCachedMerkleTrieLoader();
 
     final WorldStateArchive worldStateArchive =
         createWorldStateArchive(worldStateStorage, blockchain, cachedMerkleTrieLoader);

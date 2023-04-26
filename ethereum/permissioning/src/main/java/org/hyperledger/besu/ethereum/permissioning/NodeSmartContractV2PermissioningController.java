@@ -96,14 +96,15 @@ public class NodeSmartContractV2PermissioningController
   private Bytes createPayload(final EnodeURL enodeUrl) {
     try {
       final String hexNodeIdString = enodeUrl.getNodeId().toUnprefixedHexString();
-      final String address = enodeUrl.toURI().getHost();
+      final String host = enodeUrl.toURI().getHost();
+      final String address = host == null ? enodeUrl.getIpAsString() : host;
       final int port = enodeUrl.getListeningPortOrZero();
 
       final Function connectionAllowedFunction =
           FunctionEncoder.makeFunction(
               "connectionAllowed",
               List.of("string", "string", "uint16"),
-              List.of(hexNodeIdString, address, port),
+              List.of(hexNodeIdString, address == null ? "" : address, port),
               List.of(Bool.TYPE_NAME));
       return Bytes.fromHexString(FunctionEncoder.encode(connectionAllowedFunction));
     } catch (Exception e) {

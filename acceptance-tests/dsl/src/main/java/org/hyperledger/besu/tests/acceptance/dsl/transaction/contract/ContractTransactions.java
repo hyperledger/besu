@@ -17,6 +17,8 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction.contract;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.CallSmartContractFunction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.DeploySmartContractTransaction;
 
+import java.math.BigInteger;
+
 import org.web3j.tx.Contract;
 
 public class ContractTransactions {
@@ -32,7 +34,12 @@ public class ContractTransactions {
   }
 
   public CallSmartContractFunction callSmartContract(
-      final String functionName, final String contractAddress) {
-    return new CallSmartContractFunction(functionName, contractAddress);
+      final String contractAddress, final String functionName) {
+    return new CallSmartContractFunction(contractAddress, functionName);
+  }
+
+  public CallSmartContractFunction callSmartContract(
+      final String contractAddress, final String functionCall, final BigInteger gasLimit) {
+    return new CallSmartContractFunction(contractAddress, functionCall, gasLimit);
   }
 }
