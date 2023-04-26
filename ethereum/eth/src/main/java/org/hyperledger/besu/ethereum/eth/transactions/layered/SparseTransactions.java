@@ -365,7 +365,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
                   (sender, txsByNonce) -> {
                     final long prevLayerMaxNonce = txsByNonce.lastKey();
                     assert prevLayerMaxNonce < firstTx.getNonce()
-                        : "first nonce is not greater that previous layer last nonce";
+                        : "first nonce is not greater than previous layer last nonce";
 
                     final int gap = (int) (firstTx.getNonce() - (prevLayerMaxNonce + 1));
                     assert gapBySender.get(firstTx.getSender()).equals(gap) : "gap mismatch";
