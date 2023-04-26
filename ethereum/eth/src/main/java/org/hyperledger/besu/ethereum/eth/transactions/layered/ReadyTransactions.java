@@ -229,6 +229,6 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
     }
 
     assert itCurrent.hasNext() == false
-        : "orderByMaxFee has more elements that pendingTransactions";
+        : "orderByMaxFee has more elements than pendingTransactions";
   }
 }
