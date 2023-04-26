@@ -284,20 +284,20 @@ public class EnodeURLImpl implements EnodeURL {
   
   @Override
   public String getHost() {
-	    final URI uriWithoutDiscoveryPort = toURIWithoutDiscoveryPort();
-	    String host = uriWithoutDiscoveryPort.getHost();
-	    if (host == null) {
-	      host = "";
-	      final String uriString = uriWithoutDiscoveryPort.toString();
-	      int indexOfAt = uriString.indexOf("@");
-	      if (indexOfAt > -1) {
-	        int lastIndexOfColon = uriString.lastIndexOf(":");
-	        if (lastIndexOfColon > indexOfAt) {
-	          host = uriString.substring(indexOfAt + 1, lastIndexOfColon);
-	        }
-	      }
-	    }
-	    return host;
+    final URI uriWithoutDiscoveryPort = toURIWithoutDiscoveryPort();
+    String host = uriWithoutDiscoveryPort.getHost();
+    if (host == null) {
+      host = "";
+      final String uriString = uriWithoutDiscoveryPort.toString();
+      int indexOfAt = uriString.indexOf("@");
+      if (indexOfAt > -1) {
+        int lastIndexOfColon = uriString.lastIndexOf(":");
+        if (lastIndexOfColon > indexOfAt) {
+          host = uriString.substring(indexOfAt + 1, lastIndexOfColon);
+        }
+      }
+    }
+    return host;
   }
 
   @Override
