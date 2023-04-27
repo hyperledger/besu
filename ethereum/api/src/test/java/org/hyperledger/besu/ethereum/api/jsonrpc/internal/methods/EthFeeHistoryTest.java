@@ -148,15 +148,15 @@ public class EthFeeHistoryTest {
     when(protocolSchedule.getForNextBlockHeader(
             eq(blockchain.getChainHeadHeader()),
             eq(blockchain.getChainHeadHeader().getTimestamp())))
-            .thenReturn(londonSpec);
+        .thenReturn(londonSpec);
     double[] percentile = new double[] {100.0};
 
     final Object ninenTh =
-            ((JsonRpcSuccessResponse) feeHistoryRequest(2, "9", percentile)).getResult();
+        ((JsonRpcSuccessResponse) feeHistoryRequest(2, "9", percentile)).getResult();
     assertFeeMetadataSize(ninenTh, 2);
 
     final Object eightTh =
-            ((JsonRpcSuccessResponse) feeHistoryRequest(4, "8", percentile)).getResult();
+        ((JsonRpcSuccessResponse) feeHistoryRequest(4, "8", percentile)).getResult();
     assertFeeMetadataSize(eightTh, 4);
   }
 
@@ -167,18 +167,17 @@ public class EthFeeHistoryTest {
     when(protocolSchedule.getForNextBlockHeader(
             eq(blockchain.getChainHeadHeader()),
             eq(blockchain.getChainHeadHeader().getTimestamp())))
-            .thenReturn(londonSpec);
+        .thenReturn(londonSpec);
     double[] percentile = new double[] {100.0};
 
     final Object second =
-            ((JsonRpcSuccessResponse) feeHistoryRequest(4, "2", percentile)).getResult();
+        ((JsonRpcSuccessResponse) feeHistoryRequest(4, "2", percentile)).getResult();
     assertFeeMetadataSize(second, 3);
 
     final Object third =
-            ((JsonRpcSuccessResponse) feeHistoryRequest(11, "3", percentile)).getResult();
+        ((JsonRpcSuccessResponse) feeHistoryRequest(11, "3", percentile)).getResult();
     assertFeeMetadataSize(third, 4);
   }
-
 
   @Test
   public void correctlyHandlesForkBlock() {
@@ -218,12 +217,11 @@ public class EthFeeHistoryTest {
 
   private void assertFeeMetadataSize(final Object feeObject, final int blockCount) {
     assertThat(((ImmutableFeeHistoryResult) feeObject).getBaseFeePerGas().size())
-            .isEqualTo(blockCount + 1);
+        .isEqualTo(blockCount + 1);
     assertThat(((ImmutableFeeHistoryResult) feeObject).getReward().size()).isEqualTo(blockCount);
     assertThat(((ImmutableFeeHistoryResult) feeObject).getGasUsedRatio().size())
-            .isEqualTo(blockCount);
+        .isEqualTo(blockCount);
   }
-
 
   private JsonRpcResponse feeHistoryRequest(final Object... params) {
     return method.response(

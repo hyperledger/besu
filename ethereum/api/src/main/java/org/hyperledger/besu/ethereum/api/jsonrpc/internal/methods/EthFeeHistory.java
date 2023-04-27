@@ -90,9 +90,9 @@ public class EthFeeHistory implements JsonRpcMethod {
     final long oldestBlock = Math.max(0, resolvedHighestBlockNumber - (blockCount - 1));
 
     final long lastBlock =
-            blockCount > resolvedHighestBlockNumber
-                    ? (resolvedHighestBlockNumber + 1)
-                    : (oldestBlock + blockCount);
+        blockCount > resolvedHighestBlockNumber
+            ? (resolvedHighestBlockNumber + 1)
+            : (oldestBlock + blockCount);
 
     final List<BlockHeader> blockHeaders =
         LongStream.range(oldestBlock, lastBlock)
