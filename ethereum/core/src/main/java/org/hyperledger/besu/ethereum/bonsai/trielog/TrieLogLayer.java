@@ -46,6 +46,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class TrieLogLayer {
 
   protected Hash blockHash;
+  protected Optional<Long> blockNumber = Optional.empty();
 
   Map<Address, BonsaiValue<StateTrieAccountValue>> getAccounts() {
     return accounts;
@@ -83,6 +84,16 @@ public class TrieLogLayer {
   public TrieLogLayer setBlockHash(final Hash blockHash) {
     checkState(!frozen, "Layer is Frozen");
     this.blockHash = blockHash;
+    return this;
+  }
+
+  public Optional<Long> getBlockNumber() {
+    return blockNumber;
+  }
+
+  public TrieLogLayer setBlockNumber(final long blockNumber) {
+    checkState(!frozen, "Layer is Frozen");
+    this.blockNumber = Optional.of(blockNumber);
     return this;
   }
 

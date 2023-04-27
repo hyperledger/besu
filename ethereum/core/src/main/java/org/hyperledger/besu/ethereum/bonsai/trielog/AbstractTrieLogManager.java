@@ -78,7 +78,7 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
 
         // notify trie log added observers, synchronously
         trieLogAddedObservers.forEach(
-            o -> o.onTrieLogAdded(new TrieLogAddedEvent(forBlockHeader.getHash(), trieLog)));
+            o -> o.onTrieLogAdded(new TrieLogAddedEvent(forBlockHeader, trieLog)));
 
         success = true;
       } finally {
@@ -98,7 +98,7 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
         .setMessage("Adding layered world state for {}")
         .addArgument(blockHeader::toLogString)
         .log();
-    final TrieLogLayer trieLog = localUpdater.generateTrieLog(blockHeader.getBlockHash());
+    final TrieLogLayer trieLog = localUpdater.generateTrieLog(blockHeader);
     trieLog.freeze();
     return trieLog;
   }

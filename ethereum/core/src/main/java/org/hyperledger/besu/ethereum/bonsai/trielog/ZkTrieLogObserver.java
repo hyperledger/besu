@@ -50,7 +50,10 @@ public class ZkTrieLogObserver implements TrieLogAddedObserver {
             .put("method", "state_sendRawTrieLog")
             .put(
                 "params",
-                List.of(event.getBlockHash().toHexString(), Bytes.wrap(rlpBytes).toHexString()));
+                new JsonObject()
+                    .put("blockNumber", event.getBlockHeader().getNumber())
+                    .put("blockHash", event.getBlockHeader().getBlockHash().toHexString())
+                    .put("trieLog", Bytes.wrap(rlpBytes).toHexString()));
 
     // Send the request to the JSON-RPC service
     return webClient
