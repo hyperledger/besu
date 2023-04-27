@@ -249,14 +249,14 @@ public class LayeredPendingTransactions implements PendingTransactions {
                           switch (selector.evaluateTransaction(
                               candidatePendingTx.getTransaction())) {
                             case CONTINUE:
-                              LOG.atDebug()
+                              LOG.atTrace()
                                   .setMessage("CONTINUE: Transaction {}")
                                   .addArgument(candidatePendingTx::toTraceLog)
                                   .log();
                               break;
                             case DELETE_TRANSACTION_AND_CONTINUE:
                               invalidTransactions.add(candidatePendingTx);
-                              LOG.atDebug()
+                              LOG.atTrace()
                                   .setMessage("DELETE_TRANSACTION_AND_CONTINUE: Transaction {}")
                                   .addArgument(candidatePendingTx::toTraceLog)
                                   .log();
@@ -264,7 +264,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
                               break;
                             case COMPLETE_OPERATION:
                               completed.set(true);
-                              LOG.atDebug()
+                              LOG.atTrace()
                                   .setMessage("COMPLETE_OPERATION: Transaction {}")
                                   .addArgument(candidatePendingTx::toTraceLog)
                                   .log();

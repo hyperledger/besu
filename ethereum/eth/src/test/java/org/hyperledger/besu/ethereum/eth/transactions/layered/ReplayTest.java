@@ -66,7 +66,7 @@ public class ReplayTest {
   private final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
 
   private final Address senderToLog =
-      Address.fromHexString("0x7c125c1d515b8945841b3d5144a060115c58725f");
+      Address.fromHexString("0x1a8ed0d3ad42c9019cc141aace7e5fb6e576b917");
 
   private BlockHeader currBlockHeader;
 
@@ -130,11 +130,11 @@ public class ReplayTest {
                       processTransaction(commaSplit, pendingTransactions, prioritizedTransactions);
                       break;
                     case "B":
-                      //                      System.out.println("B:" + commaSplit[1]);
+                      System.out.println("B:" + commaSplit[1]);
                       processBlock(commaSplit, prioritizedTransactions, baseFeeMarket);
                       break;
                     case "S":
-                      // commented since not always working, needs fix
+                      // ToDo: commented since not always working, needs fix
                       // System.out.println("S");
                       // assertStats(line, pendingTransactions);
                       break;
@@ -190,6 +190,7 @@ public class ReplayTest {
         baseFeeMarket);
   }
 
+  // ToDo: commented since not always working, needs fix
   //  private void assertStats(
   //      final String line, final LayeredPendingTransactions pendingTransactions) {
   //    final String statsString = line.substring(2);

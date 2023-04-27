@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -149,9 +149,15 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .addForSender(S1, 2, 1, 0)
                 .expectedPrioritizedForSender(S1, 0, 1, 2)),
         Arguments.of(
-            new Scenario("fill prioritized mixed order 1")
-                .addForSender(S1, 2, 0, 1)
-                .expectedPrioritizedForSender(S1, 0, 1, 2)),
+            new Scenario("fill prioritized mixed order 1 step by step")
+                .addForSender(S1, 2)
+                .expectedSparseForSender(S1, 2)
+                .addForSender(S1, 0)
+                .expectedPrioritizedForSender(S1, 0)
+                .expectedSparseForSender(S1, 2)
+                .addForSender(S1, 1)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedSparseForSenders()),
         Arguments.of(
             new Scenario("fill prioritized mixed order 2")
                 .addForSender(S1, 0, 2, 1)

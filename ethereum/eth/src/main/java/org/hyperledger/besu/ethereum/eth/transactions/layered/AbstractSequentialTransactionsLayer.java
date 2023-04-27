@@ -50,8 +50,8 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
     final var senderTxs = txsBySender.get(invalidatedTx.getSender());
     final long invalidNonce = invalidatedTx.getNonce();
     if (senderTxs != null && invalidNonce <= senderTxs.lastKey()) {
-      // on sequential layer we to push to next layer all the following txs, even if the invalid
-      // belong to a previous layer
+      // on sequential layers we need to push to next layer all the txs following the invalid one,
+      // even if it belongs to a previous layer
 
       if (senderTxs.remove(invalidNonce) != null) {
         // invalid tx removed in this layer
