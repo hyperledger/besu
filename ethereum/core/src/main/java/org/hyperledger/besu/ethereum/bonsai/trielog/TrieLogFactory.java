@@ -15,12 +15,12 @@
  */
 package org.hyperledger.besu.ethereum.bonsai.trielog;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 
 /** Interface for serializing and deserializing {@link TrieLogLayer} objects. */
 public interface TrieLogFactory<T extends TrieLogLayer> {
-  T create(BonsaiWorldStateUpdateAccumulator accumulator, final Hash blockHash);
+  T create(BonsaiWorldStateUpdateAccumulator accumulator, final BlockHeader blockHeader);
 
   T deserialize(final byte[] bytes);
 

@@ -3,6 +3,7 @@ package org.hyperledger.besu.ethereum.bonsai.trielog;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.util.Base64;
@@ -37,7 +38,8 @@ public class ZkTrieLogObserverTest {
               Address.ZERO,
               null,
               new StateTrieAccountValue(1, Wei.fromEth(1), Hash.ZERO, Hash.ZERO))
-          .setBlockHash(Hash.ZERO);
+          .setBlockHash(Hash.ZERO)
+          .setBlockNumber(1337L);
 
   // should be provided by test method:
   private Consumer<HttpServerRequest> requestVerifier = null;
@@ -88,7 +90,8 @@ public class ZkTrieLogObserverTest {
 
   @Test
   public void testSendToZk(final TestContext context) {
-    Async async = context.async(2);
+    Async async = context.async();
+    Async async2 = context.async();
 
     this.requestVerifier =
         req -> {
@@ -102,11 +105,13 @@ public class ZkTrieLogObserverTest {
 
                 context.assertEquals(
                     params.getJsonObject("blockHash").encode(), Hash.ZERO.toHexString());
-                async.complete();
+                context.assertEquals(
+                    params.getJsonObject("blockNumber").encode(), Hash.ZERO.toHexString());
+                async2.complete();
               });
         };
     ZkTrieLogObserver observer = new ZkTrieLogObserver("localhost", rpcServicePort);
-    TrieLogAddedEvent addEvent = new TrieLogAddedEvent(Hash.ZERO, trieLogFixture);
+    TrieLogAddedEvent addEvent = new TrieLogAddedEvent(new BlockHeaderTestFixture().buildHeader(), trieLogFixture);
 
     observer
         .handleShip(addEvent)

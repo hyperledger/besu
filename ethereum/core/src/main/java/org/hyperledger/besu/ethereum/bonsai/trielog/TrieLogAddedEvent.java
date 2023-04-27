@@ -15,20 +15,20 @@
  */
 package org.hyperledger.besu.ethereum.bonsai.trielog;
 
-import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 public class TrieLogAddedEvent {
 
   private final TrieLogLayer layer;
-  private final Hash blockHash;
+  private final BlockHeader blockHeader;
 
-  public TrieLogAddedEvent(final Hash blockHash, final TrieLogLayer layer) {
-    this.blockHash = blockHash;
+  public TrieLogAddedEvent(final BlockHeader blockHeader, final TrieLogLayer layer) {
+    this.blockHeader = blockHeader;
     this.layer = layer;
   }
 
-  public Hash getBlockHash() {
-    return blockHash;
+  public BlockHeader getBlockHeader() {
+    return blockHeader;
   }
 
   public TrieLogLayer getLayer() {

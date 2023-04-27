@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.Map;
 import java.util.Optional;
@@ -41,9 +42,10 @@ public class TrieLogFactoryImpl implements TrieLogFactory<TrieLogLayer> {
 
   @Override
   public TrieLogLayer create(
-      final BonsaiWorldStateUpdateAccumulator accumulator, final Hash blockHash) {
+      final BonsaiWorldStateUpdateAccumulator accumulator, final BlockHeader blockHeader) {
     TrieLogLayer layer = new TrieLogLayer();
-    layer.setBlockHash(blockHash);
+    layer.setBlockHash(blockHeader.getBlockHash());
+    layer.setBlockNumber(blockHeader.getNumber());
     for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> updatedAccount :
         accumulator.getAccountsToUpdate().entrySet()) {
       final BonsaiValue<BonsaiAccount> bonsaiValue = updatedAccount.getValue();
@@ -78,7 +80,7 @@ public class TrieLogFactoryImpl implements TrieLogFactory<TrieLogLayer> {
           updatedCode.getKey(),
           updatedCode.getValue().getPrior(),
           updatedCode.getValue().getUpdated(),
-          blockHash);
+          blockHeader.getBlockHash());
     }
 
     for (final Map.Entry<
