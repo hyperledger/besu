@@ -17,23 +17,21 @@ package org.hyperledger.besu.services;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 /** The Storage service implementation. */
 public class TransactionSelectionServiceImpl implements TransactionSelectionService {
 
-  private final Map<String, TransactionSelectorFactory> factoryMap = new HashMap<>();
+  private Optional<TransactionSelectorFactory> factory = Optional.empty();
 
   @Override
-  public Optional<TransactionSelectorFactory> getByName(final String name) {
-    return Optional.ofNullable(factoryMap.get(name));
+  public Optional<TransactionSelectorFactory> get() {
+    return factory;
   }
 
   @Override
   public void registerTransactionSeclectorFactory(
       final TransactionSelectorFactory transactionSelectorFactory) {
-    this.factoryMap.put(transactionSelectorFactory.getName(), transactionSelectorFactory);
+    factory = Optional.ofNullable(transactionSelectorFactory);
   }
 }

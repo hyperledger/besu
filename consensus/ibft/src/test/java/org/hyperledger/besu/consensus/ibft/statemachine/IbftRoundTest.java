@@ -106,7 +106,8 @@ public class IbftRoundTest {
         new ProtocolContext(
             blockChain,
             worldStateArchive,
-            setupContextWithBftExtraDataEncoder(emptyList(), new IbftExtraDataCodec()));
+            setupContextWithBftExtraDataEncoder(emptyList(), new IbftExtraDataCodec()),
+            Optional.empty());
 
     when(messageValidator.validateProposal(any())).thenReturn(true);
     when(messageValidator.validatePrepare(any())).thenReturn(true);

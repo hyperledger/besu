@@ -328,7 +328,8 @@ public class TestContextBuilder {
         new ProtocolContext(
             blockChain,
             worldStateArchive,
-            new BftContext(validatorProvider, epochManager, blockInterface));
+            new BftContext(validatorProvider, epochManager, blockInterface),
+            Optional.empty());
 
     final GasPricePendingTransactionsSorter pendingTransactions =
         new GasPricePendingTransactionsSorter(

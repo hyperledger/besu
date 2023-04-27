@@ -47,6 +47,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -119,6 +120,7 @@ public class IbftProtocolScheduleTest {
     return new ProtocolContext(
         null,
         null,
-        setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec));
+        setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec),
+        Optional.empty());
   }
 }

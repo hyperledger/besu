@@ -37,12 +37,14 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.txselection.TransactionSelector;
+import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -72,8 +74,6 @@ import org.slf4j.LoggerFactory;
  * not cleared between executions of buildTransactionListForBlock().
  */
 public class BlockTransactionSelector {
-
-  private final TransactionSelector transactionSelector;
 
   public static class TransactionValidationResult {
     private final Transaction transaction;
@@ -222,6 +222,7 @@ public class BlockTransactionSelector {
   private final FeeMarket feeMarket;
   private final GasCalculator gasCalculator;
   private final GasLimitCalculator gasLimitCalculator;
+  private final TransactionSelector transactionSelector;
 
   private final TransactionSelectionResults transactionSelectionResults =
       new TransactionSelectionResults();
@@ -241,7 +242,7 @@ public class BlockTransactionSelector {
       final FeeMarket feeMarket,
       final GasCalculator gasCalculator,
       final GasLimitCalculator gasLimitCalculator,
-      final TransactionSelector transactionSelector) {
+      final Optional<TransactionSelectorFactory> transactionSelectorFactory) {
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
     this.worldState = worldState;
@@ -256,7 +257,10 @@ public class BlockTransactionSelector {
     this.feeMarket = feeMarket;
     this.gasCalculator = gasCalculator;
     this.gasLimitCalculator = gasLimitCalculator;
-    this.transactionSelector = transactionSelector;
+    this.transactionSelector =
+        transactionSelectorFactory.isPresent()
+            ? transactionSelectorFactory.get().create()
+            : new TransactionSelector() {};
   }
 
   /*
@@ -355,7 +359,7 @@ public class BlockTransactionSelector {
           transactionReceiptFactory.create(
               transaction.getType(), effectiveResult, worldState, cumulativeGasUsed);
 
-      final TransactionSelectionResult transactionSelectionResult =
+      TransactionSelectionResult transactionSelectionResult =
           transactionSelector.selectTransaction(transaction, receipt);
 
       if (transactionSelectionResult == TransactionSelectionResult.CONTINUE) {

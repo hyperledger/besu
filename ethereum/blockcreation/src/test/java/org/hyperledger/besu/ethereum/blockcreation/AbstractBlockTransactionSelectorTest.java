@@ -274,7 +274,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             FeeMarket.london(0L),
             new LondonGasCalculator(),
             GasLimitCalculator.constant(),
-            null);
+            Optional.empty());
 
     // this should fill up all the block space
     final Transaction fillingLegacyTx =
@@ -480,7 +480,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             getFeeMarket(),
             new LondonGasCalculator(),
             GasLimitCalculator.constant(),
-            DO_NOTHING_TRANSACTION_SELECTOR);
+            Optional.empty());
     return selector;
   }
 

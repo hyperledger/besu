@@ -155,9 +155,6 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.vertx.VertxMetricsAdapterFactory;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.plugin.data.EnodeURL;
-import org.hyperledger.besu.plugin.data.Transaction;
-import org.hyperledger.besu.plugin.data.TransactionReceipt;
-import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.BlockchainService;
@@ -176,7 +173,6 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
-import org.hyperledger.besu.plugin.services.txselection.TransactionSelector;
 import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -238,7 +234,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.metrics.MetricsOptions;
-import linea.LineaTransactionSelectorPlugin;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.jetbrains.annotations.NotNull;
@@ -267,27 +262,6 @@ import picocli.CommandLine.ParameterException;
     footerHeading = "%n",
     footer = "Besu is licensed under the Apache License 2.0")
 public class BesuCommand implements DefaultCommandValues, Runnable {
-
-  public static final TransactionSelector DO_NOTHING_TRANSACTION_SELECTOR =
-      new TransactionSelector() {
-        @Override
-        public TransactionSelectionResult selectTransaction(
-            final Transaction transaction, final TransactionReceipt receipt) {
-          return TransactionSelectionResult.CONTINUE;
-        }
-      };
-  public static final TransactionSelectorFactory DO_NOTHING_TRANSACTION_SELECTOR_FACTORY =
-      new TransactionSelectorFactory() {
-        @Override
-        public String getName() {
-          return null;
-        }
-
-        @Override
-        public TransactionSelector create() {
-          return DO_NOTHING_TRANSACTION_SELECTOR;
-        }
-      };
 
   @SuppressWarnings("PrivateStaticFinalLoggers")
   // non-static for testing
@@ -389,7 +363,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @CommandLine.ArgGroup(validate = false, heading = "@|bold P2P Discovery Options|@%n")
   P2PDiscoveryOptionGroup p2PDiscoveryOptionGroup = new P2PDiscoveryOptionGroup();
 
-  private final TransactionSelectionServiceImpl transactionSelectionService;
+  private final TransactionSelectionServiceImpl transactionSelectionServiceImpl;
 
   static class P2PDiscoveryOptionGroup {
 
@@ -1419,6 +1393,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param privacyPluginService instance of PrivacyPluginServiceImpl
    * @param pkiBlockCreationConfigProvider instance of PkiBlockCreationConfigurationProvider
    * @param rpcEndpointServiceImpl instance of RpcEndpointServiceImpl
+   * @param transactionSelectionServiceImpl instance of TransactionSelectionServiceImpl
    */
   @VisibleForTesting
   protected BesuCommand(
@@ -1436,7 +1411,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final PrivacyPluginServiceImpl privacyPluginService,
       final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl,
-      final TransactionSelectionServiceImpl transactionSelectionService) {
+      final TransactionSelectionServiceImpl transactionSelectionServiceImpl) {
     this.logger = logger;
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
@@ -1453,7 +1428,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
     this.pkiBlockCreationConfigProvider = pkiBlockCreationConfigProvider;
     this.rpcEndpointServiceImpl = rpcEndpointServiceImpl;
-    this.transactionSelectionService = transactionSelectionService;
+    this.transactionSelectionServiceImpl = transactionSelectionServiceImpl;
   }
 
   /**
@@ -1629,14 +1604,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(PermissioningService.class, permissioningService);
     besuPluginContext.addService(PrivacyPluginService.class, privacyPluginService);
     besuPluginContext.addService(RpcEndpointService.class, rpcEndpointServiceImpl);
-    besuPluginContext.addService(TransactionSelectionService.class, transactionSelectionService);
+    besuPluginContext.addService(
+        TransactionSelectionService.class, transactionSelectionServiceImpl);
 
     // register built-in plugins
     rocksDBPlugin = new RocksDBPlugin();
     rocksDBPlugin.register(besuPluginContext);
     new InMemoryStoragePlugin().register(besuPluginContext);
-
-    new LineaTransactionSelectorPlugin().register(besuPluginContext);
 
     besuPluginContext.registerPlugins(pluginsDir());
 
@@ -2260,8 +2234,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   public BesuControllerBuilder getControllerBuilder() {
     final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
-    final TransactionSelectorFactory transactionSelectorFactory;
-    transactionSelectorFactory = getTransactionSelectorFactory();
+    final Optional<TransactionSelectorFactory> transactionSelectorFactory =
+        getTransactionSelectorFactory();
     return controllerBuilderFactory
         .fromEthNetworkConfig(
             updateNetworkConfig(network), genesisConfigOverrides, getDefaultSyncModeIfNotSet())
@@ -2319,18 +2293,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   @NotNull
-  private TransactionSelectorFactory getTransactionSelectorFactory() {
-    final TransactionSelectorFactory transactionSelectorFactory;
+  private Optional<TransactionSelectorFactory> getTransactionSelectorFactory() {
     final Optional<TransactionSelectionService> txSelectionService =
         besuPluginContext.getService(TransactionSelectionService.class);
-    if (txSelectionService.isPresent()) {
-      final Optional<TransactionSelectorFactory> linea =
-          txSelectionService.get().getByName("linea");
-      transactionSelectorFactory = linea.orElse(DO_NOTHING_TRANSACTION_SELECTOR_FACTORY);
-    } else {
-      transactionSelectorFactory = DO_NOTHING_TRANSACTION_SELECTOR_FACTORY;
-    }
-    return transactionSelectorFactory;
+    return txSelectionService.isPresent() ? txSelectionService.get().get() : Optional.empty();
   }
 
   private GraphQLConfiguration graphQLConfiguration() {

@@ -31,7 +31,7 @@ public class ProtocolContext {
   private final MutableBlockchain blockchain;
   private final WorldStateArchive worldStateArchive;
   private final ConsensusContext consensusContext;
-  private final TransactionSelectorFactory transactionSelectorFactory;
+  private final Optional<TransactionSelectorFactory> transactionSelectorFactory;
 
   private Optional<Synchronizer> synchronizer;
 
@@ -39,14 +39,14 @@ public class ProtocolContext {
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ConsensusContext consensusContext) {
-    this(blockchain, worldStateArchive, consensusContext, null);
+    this(blockchain, worldStateArchive, consensusContext, Optional.empty());
   }
 
   public ProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ConsensusContext consensusContext,
-      final TransactionSelectorFactory transactionSelectorFactory) {
+      final Optional<TransactionSelectorFactory> transactionSelectorFactory) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.consensusContext = consensusContext;
@@ -59,7 +59,7 @@ public class ProtocolContext {
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
       final ConsensusContextFactory consensusContextFactory,
-      final TransactionSelectorFactory transactionSelectorFactory) {
+      final Optional<TransactionSelectorFactory> transactionSelectorFactory) {
     return new ProtocolContext(
         blockchain,
         worldStateArchive,
@@ -93,7 +93,7 @@ public class ProtocolContext {
         .map(klass::cast);
   }
 
-  public TransactionSelectorFactory getTransactionSelectorFactory() {
+  public Optional<TransactionSelectorFactory> getTransactionSelectorFactory() {
     return transactionSelectorFactory;
   }
 }

@@ -190,7 +190,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
       final ConsensusContextFactory consensusContextFactory,
-      final TransactionSelectorFactory transactionSelectorFactory) {
+      final Optional<TransactionSelectorFactory> transactionSelectorFactory) {
     final ProtocolContext protocolContext =
         super.createProtocolContext(
             blockchain,

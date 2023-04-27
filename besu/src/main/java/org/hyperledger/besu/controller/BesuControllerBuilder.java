@@ -179,7 +179,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   private NetworkingConfiguration networkingConfiguration;
   private Boolean randomPeerPriority;
-  private TransactionSelectorFactory transactionSelectorFactory;
+  private Optional<TransactionSelectorFactory> transactionSelectorFactory = Optional.empty();
 
   /**
    * Storage provider besu controller builder.
@@ -511,7 +511,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   public BesuControllerBuilder transactionSelectorFactory(
-      final TransactionSelectorFactory transactionSelectorFactory) {
+      final Optional<TransactionSelectorFactory> transactionSelectorFactory) {
     this.transactionSelectorFactory = transactionSelectorFactory;
     return this;
   }
@@ -993,7 +993,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
       final ConsensusContextFactory consensusContextFactory,
-      final TransactionSelectorFactory transactionSelectorFactory) {
+      final Optional<TransactionSelectorFactory> transactionSelectorFactory) {
     return ProtocolContext.init(
         blockchain,
         worldStateArchive,
