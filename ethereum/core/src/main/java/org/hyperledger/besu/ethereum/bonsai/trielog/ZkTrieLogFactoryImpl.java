@@ -76,11 +76,13 @@ public class ZkTrieLogFactoryImpl extends TrieLogFactoryImpl {
         for (final Map.Entry<StorageSlotKey, BonsaiValue<UInt256>> storageChangeEntry :
             storageChanges.entrySet()) {
           output.startList();
-          output.writeUInt256Scalar(
-              storageChangeEntry
-                  .getKey()
-                  .slotKey()
-                  .orElseThrow(() -> new IllegalStateException("Slot key is not present")));
+          StorageSlotKey storageSlotKey = storageChangeEntry.getKey();
+          if (!storageSlotKey.slotKey().isPresent()) {
+            output.writeNull();
+          } else {
+            output.writeUInt256Scalar(storageSlotKey.slotKey().get());
+          }
+          output.writeBytes(storageChangeEntry.getKey().slotHash());
           storageChangeEntry.getValue().writeInnerRlp(output, RLPOutput::writeUInt256Scalar);
           output.endList();
         }
@@ -136,8 +138,10 @@ public class ZkTrieLogFactoryImpl extends TrieLogFactoryImpl {
         input.enterList();
         while (!input.isEndOfCurrentList()) {
           input.enterList();
-          final UInt256 slotKey = input.readUInt256Scalar();
-          final StorageSlotKey storageSlotKey = new StorageSlotKey(slotKey);
+
+          final UInt256 slotKey = nullOrValue(input, RLPInput::readUInt256Scalar);
+          final Hash slotHash = Hash.wrap(input.readBytes32());
+          final StorageSlotKey storageSlotKey = new StorageSlotKey(slotHash, Optional.of(slotKey));
           final UInt256 oldValue = nullOrValue(input, RLPInput::readUInt256Scalar);
           final UInt256 newValue = nullOrValue(input, RLPInput::readUInt256Scalar);
           final boolean isCleared = getOptionalIsCleared(input);
