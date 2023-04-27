@@ -141,7 +141,7 @@ public class EndLayer implements TransactionsLayer {
   }
 
   @Override
-  public PendingTransaction promote(final Address sender, final long nonce) {
+  public PendingTransaction promoteFor(final Address sender, final long nonce) {
     return null;
   }
 

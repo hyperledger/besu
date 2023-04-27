@@ -200,7 +200,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     // allow gaps
     if (!addStatus.isReplacement() && !gapsAllowed()) {
       final PendingTransaction promotedTx =
-          nextLayer.promote(pendingTransaction.getSender(), pendingTransaction.getNonce());
+          nextLayer.promoteFor(pendingTransaction.getSender(), pendingTransaction.getNonce());
       if (promotedTx != null) {
         processAdded(promotedTx);
         if (!maybeFull()) {
@@ -239,7 +239,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       final PendingTransaction pendingTransaction);
 
   @Override
-  public PendingTransaction promote(final Address sender, final long nonce) {
+  public PendingTransaction promoteFor(final Address sender, final long nonce) {
     final var senderTxs = txsBySender.get(sender);
     if (senderTxs != null) {
       long expectedNonce = nonce + 1;
@@ -254,7 +254,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
         return promotedTx;
       }
     }
-    return nextLayer.promote(sender, nonce);
+    return nextLayer.promoteFor(sender, nonce);
   }
 
   private TransactionAddedResult addToNextLayer(
