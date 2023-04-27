@@ -128,7 +128,7 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
     if (senderTxs != null) {
       final long currFirstNonce = senderTxs.firstKey();
       final long maxReorgNonce = reorgNonceRange.getEndInclusive();
-      if (currFirstNonce > maxReorgNonce + 1) {
+      if (currFirstNonce > maxReorgNonce) {
         // the reorg created an initial gap
         pushDown(senderTxs, maxReorgNonce, (int) (currFirstNonce - reorgNonceRange.getStart()));
       }
