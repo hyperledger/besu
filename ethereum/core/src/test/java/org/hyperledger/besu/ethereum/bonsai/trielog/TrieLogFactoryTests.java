@@ -27,6 +27,8 @@ import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
@@ -36,31 +38,56 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class TrieLogFactoryTests {
 
-  BlockchainSetupUtil setup = BlockchainSetupUtil.forTesting(DataStorageFormat.BONSAI);
+  final BlockchainSetupUtil setup = BlockchainSetupUtil.forTesting(DataStorageFormat.BONSAI);
+
+  final Address accountFixture = Address.fromHexString("0xdeadbeef");
+
+  final BlockHeader headerFixture =
+      new BlockHeaderTestFixture()
+          .parentHash(setup.getGenesisState().getBlock().getHash())
+          .coinbase(Address.ZERO)
+          .buildHeader();
+
+  final TrieLogLayer trieLogFixture =
+      new TrieLogLayer()
+          .setBlockHash(headerFixture.getBlockHash())
+          .addAccountChange(
+              accountFixture,
+              null,
+              new StateTrieAccountValue(0, Wei.fromEth(1), Hash.EMPTY, Hash.EMPTY))
+          .addCodeChange(
+              Address.ZERO,
+              null,
+              Bytes.fromHexString("0xfeeddeadbeef"),
+              headerFixture.getBlockHash())
+          .addStorageChange(Address.ZERO, new StorageSlotKey(UInt256.ZERO), null, UInt256.ONE);
 
   @Test
   public void testSerializeDeserializeAreEqual() {
-    BlockHeader header =
-        new BlockHeaderTestFixture()
-            .parentHash(setup.getGenesisState().getBlock().getHash())
-            .coinbase(Address.ZERO)
-            .buildHeader();
-
-    TrieLogLayer fixture =
-        new TrieLogLayer()
-            .setBlockHash(header.getBlockHash())
-            .addAccountChange(
-                Address.fromHexString("0xdeadbeef"),
-                null,
-                new StateTrieAccountValue(0, Wei.fromEth(1), Hash.EMPTY, Hash.EMPTY))
-            .addCodeChange(
-                Address.ZERO, null, Bytes.fromHexString("0xdeadbeef"), header.getBlockHash())
-            .addStorageChange(Address.ZERO, new StorageSlotKey(UInt256.ZERO), null, UInt256.ONE);
 
     TrieLogFactory<TrieLogLayer> factory = new TrieLogFactoryImpl();
-    byte[] rlp = factory.serialize(fixture);
+    byte[] rlp = factory.serialize(trieLogFixture);
 
     TrieLogLayer layer = factory.deserialize(rlp);
-    assertThat(layer).isEqualTo(fixture);
+    assertThat(layer).isEqualTo(trieLogFixture);
+  }
+
+  @Test
+  public void testZkSlotKeyIsZeroIsPresent() {
+    // similar test but with zk criteria of decoding slot key when it is present, even if all zero
+    TrieLogFactory<TrieLogLayer> factory = new ZkTrieLogFactoryImpl();
+    byte[] rlp = factory.serialize(trieLogFixture);
+
+    TrieLogLayer layer = factory.deserialize(rlp);
+    assertThat(layer).isEqualTo(trieLogFixture);
+
+    // assert slot key is present for an all zero key:
+    assertThat(
+            layer.getStorage().get(Address.ZERO).keySet().stream()
+                .map(StorageSlotKey::slotKey)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .anyMatch(key -> key.equals(UInt256.ZERO)))
+        .isTrue();
   }
 }
