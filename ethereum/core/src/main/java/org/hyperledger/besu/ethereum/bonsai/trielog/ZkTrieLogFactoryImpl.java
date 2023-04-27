@@ -15,7 +15,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -59,15 +58,8 @@ public class ZkTrieLogFactoryImpl extends TrieLogFactoryImpl {
         accountChange.writeRlp(output, (o, sta) -> sta.writeTo(o));
       }
 
-      // get storage changes for this address, filtering out self-destructed slots:
-      final Map<StorageSlotKey, BonsaiValue<UInt256>> storageChanges =
-          Optional.ofNullable(layer.storage.get(address))
-              .map(
-                  d ->
-                      d.entrySet().stream()
-                          .filter(k -> k.getKey().slotKey().isPresent())
-                          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
-              .orElse(null);
+      // get storage changes for this address:
+      final Map<StorageSlotKey, BonsaiValue<UInt256>> storageChanges = layer.storage.get(address);
 
       if (storageChanges == null || storageChanges.isEmpty()) {
         output.writeNull();
@@ -76,14 +68,13 @@ public class ZkTrieLogFactoryImpl extends TrieLogFactoryImpl {
         for (final Map.Entry<StorageSlotKey, BonsaiValue<UInt256>> storageChangeEntry :
             storageChanges.entrySet()) {
           output.startList();
+
           StorageSlotKey storageSlotKey = storageChangeEntry.getKey();
-          if (!storageSlotKey.slotKey().isPresent()) {
-            output.writeNull();
-          } else {
+          output.writeBytes(storageSlotKey.slotHash());
+          storageChangeEntry.getValue().writeInnerRlp(output, RLPOutput::writeUInt256Scalar);
+          if (storageSlotKey.slotKey().isPresent()) {
             output.writeUInt256Scalar(storageSlotKey.slotKey().get());
           }
-          output.writeBytes(storageChangeEntry.getKey().slotHash());
-          storageChangeEntry.getValue().writeInnerRlp(output, RLPOutput::writeUInt256Scalar);
           output.endList();
         }
         output.endList();
@@ -137,14 +128,20 @@ public class ZkTrieLogFactoryImpl extends TrieLogFactoryImpl {
         final Map<StorageSlotKey, BonsaiValue<UInt256>> storageChanges = new TreeMap<>();
         input.enterList();
         while (!input.isEndOfCurrentList()) {
-          input.enterList();
+          int storageElementlistSize = input.enterList();
 
-          final UInt256 slotKey = nullOrValue(input, RLPInput::readUInt256Scalar);
           final Hash slotHash = Hash.wrap(input.readBytes32());
-          final StorageSlotKey storageSlotKey = new StorageSlotKey(slotHash, Optional.of(slotKey));
           final UInt256 oldValue = nullOrValue(input, RLPInput::readUInt256Scalar);
           final UInt256 newValue = nullOrValue(input, RLPInput::readUInt256Scalar);
           final boolean isCleared = getOptionalIsCleared(input);
+          final Optional<UInt256> slotKey =
+              Optional.of(storageElementlistSize)
+                  .filter(listSize -> listSize == 5)
+                  .map(__ -> input.readUInt256Scalar())
+                  .or(Optional::empty);
+
+          final StorageSlotKey storageSlotKey = new StorageSlotKey(slotHash, slotKey);
+
           storageChanges.put(storageSlotKey, new BonsaiValue<>(oldValue, newValue, isCleared));
           input.leaveList();
         }
