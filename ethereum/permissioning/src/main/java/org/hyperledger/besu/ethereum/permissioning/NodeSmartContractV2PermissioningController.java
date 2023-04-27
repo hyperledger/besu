@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.net.URI;
 import java.util.List;
 import javax.annotation.Nonnull;
 
