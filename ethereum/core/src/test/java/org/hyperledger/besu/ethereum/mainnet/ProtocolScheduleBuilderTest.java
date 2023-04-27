@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.BlockNumberStreamingProtocolSchedule;
+import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -144,7 +144,7 @@ public class ProtocolScheduleBuilderTest {
     when(modifier.apply(any()))
         .thenAnswer((Answer<ProtocolSpecBuilder>) invocation -> invocation.getArgument(0));
 
-    final BlockNumberStreamingProtocolSchedule schedule = createScheduleModifiedAt(2);
+    final MilestoneStreamingProtocolSchedule schedule = createScheduleModifiedAt(2);
 
     // A default spec exists at 0 (frontier), then the spec as requested in config, then another
     // added at the point at which the modifier is applied.
@@ -162,7 +162,7 @@ public class ProtocolScheduleBuilderTest {
     when(modifier.apply(any()))
         .thenAnswer((Answer<ProtocolSpecBuilder>) invocation -> invocation.getArgument(0));
 
-    final BlockNumberStreamingProtocolSchedule schedule = createScheduleModifiedAt(2);
+    final MilestoneStreamingProtocolSchedule schedule = createScheduleModifiedAt(2);
 
     // A default spec exists at 0 (frontier), then the spec as requested in config, then another
     // added at the point at which the modifier is applied.
@@ -180,7 +180,7 @@ public class ProtocolScheduleBuilderTest {
     when(modifier.apply(any()))
         .thenAnswer((Answer<ProtocolSpecBuilder>) invocation -> invocation.getArgument(0));
 
-    final BlockNumberStreamingProtocolSchedule schedule = createScheduleModifiedAt(5);
+    final MilestoneStreamingProtocolSchedule schedule = createScheduleModifiedAt(5);
 
     // A default spec exists at 0 (frontier), then the spec as requested in config, then another
     // added at the point at which the modifier is applied.
@@ -191,7 +191,7 @@ public class ProtocolScheduleBuilderTest {
     verify(modifier, times(1)).apply(any());
   }
 
-  private BlockNumberStreamingProtocolSchedule createScheduleModifiedAt(final int blockNumber) {
+  private MilestoneStreamingProtocolSchedule createScheduleModifiedAt(final int blockNumber) {
     final ProtocolScheduleBuilder builder =
         new ProtocolScheduleBuilder(
             configOptions,
@@ -201,8 +201,8 @@ public class ProtocolScheduleBuilderTest {
             false,
             EvmConfiguration.DEFAULT);
 
-    return new BlockNumberStreamingProtocolSchedule(
-        (UnifiedProtocolSchedule) builder.createProtocolSchedule());
+    return new MilestoneStreamingProtocolSchedule(
+        (DefaultProtocolSchedule) builder.createProtocolSchedule());
   }
 
   private BlockHeader blockHeader(final long number) {

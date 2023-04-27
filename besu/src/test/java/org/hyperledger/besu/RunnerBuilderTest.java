@@ -72,6 +72,7 @@ import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Collections;
 
 import io.vertx.core.Vertx;
@@ -79,18 +80,17 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.ethereum.beacon.discovery.schema.NodeRecordFactory;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public final class RunnerBuilderTest {
 
-  @Rule public TemporaryFolder dataDir = new TemporaryFolder();
+  @TempDir private Path dataDir;
 
   @Mock BesuController besuController;
   @Mock ProtocolSchedule protocolSchedule;
@@ -99,7 +99,7 @@ public final class RunnerBuilderTest {
   @Mock Vertx vertx;
   private NodeKey nodeKey;
 
-  @Before
+  @BeforeEach
   public void setup() {
     final SubProtocolConfiguration subProtocolConfiguration = mock(SubProtocolConfiguration.class);
     final EthProtocolManager ethProtocolManager = mock(EthProtocolManager.class);
@@ -118,11 +118,7 @@ public final class RunnerBuilderTest {
     when(ethProtocolManager.ethContext()).thenReturn(ethContext);
     when(subProtocolConfiguration.getSubProtocols())
         .thenReturn(Collections.singletonList(new IbftSubProtocol()));
-    final DefaultBlockchain blockchain = mock(DefaultBlockchain.class);
-    when(protocolContext.getBlockchain()).thenReturn(blockchain);
-    final Block block = mock(Block.class);
-    when(blockchain.getGenesisBlock()).thenReturn(block);
-    when(block.getHash()).thenReturn(Hash.ZERO);
+
     when(protocolContext.getWorldStateArchive()).thenReturn(worldstateArchive);
     when(besuController.getProtocolManager()).thenReturn(ethProtocolManager);
     when(besuController.getSubProtocolConfiguration()).thenReturn(subProtocolConfiguration);
@@ -144,6 +140,8 @@ public final class RunnerBuilderTest {
 
   @Test
   public void enodeUrlShouldHaveAdvertisedHostWhenDiscoveryDisabled() {
+    setupBlockchainAndBlock();
+
     final String p2pAdvertisedHost = "172.0.0.1";
     final int p2pListenPort = 30302;
 
@@ -164,7 +162,7 @@ public final class RunnerBuilderTest {
             .jsonRpcIpcConfiguration(mock(JsonRpcIpcConfiguration.class))
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(vertx)
-            .dataDir(dataDir.getRoot().toPath())
+            .dataDir(dataDir.getRoot())
             .storageProvider(mock(KeyValueStorageProvider.class))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
@@ -208,7 +206,7 @@ public final class RunnerBuilderTest {
             .jsonRpcIpcConfiguration(mock(JsonRpcIpcConfiguration.class))
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(Vertx.vertx())
-            .dataDir(dataDir.getRoot().toPath())
+            .dataDir(dataDir.getRoot())
             .storageProvider(storageProvider)
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
@@ -236,6 +234,8 @@ public final class RunnerBuilderTest {
 
   @Test
   public void whenEngineApiAddedListensOnDefaultPort() {
+    setupBlockchainAndBlock();
+
     final JsonRpcConfiguration jrpc = JsonRpcConfiguration.createDefault();
     jrpc.setEnabled(true);
     final JsonRpcConfiguration engine = JsonRpcConfiguration.createEngineDefault();
@@ -264,7 +264,7 @@ public final class RunnerBuilderTest {
             .jsonRpcIpcConfiguration(mock(JsonRpcIpcConfiguration.class))
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(Vertx.vertx())
-            .dataDir(dataDir.getRoot().toPath())
+            .dataDir(dataDir.getRoot())
             .storageProvider(mock(KeyValueStorageProvider.class))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .besuPluginContext(mock(BesuPluginContextImpl.class))
@@ -276,6 +276,8 @@ public final class RunnerBuilderTest {
 
   @Test
   public void whenEngineApiAddedWebSocketReadyOnSamePort() {
+    setupBlockchainAndBlock();
+
     final WebSocketConfiguration wsRpc = WebSocketConfiguration.createDefault();
     wsRpc.setEnabled(true);
     final EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
@@ -304,7 +306,7 @@ public final class RunnerBuilderTest {
             .graphQLConfiguration(mock(GraphQLConfiguration.class))
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(Vertx.vertx())
-            .dataDir(dataDir.getRoot().toPath())
+            .dataDir(dataDir.getRoot())
             .storageProvider(mock(KeyValueStorageProvider.class))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .besuPluginContext(mock(BesuPluginContextImpl.class))
@@ -315,6 +317,8 @@ public final class RunnerBuilderTest {
 
   @Test
   public void whenEngineApiAddedEthSubscribeAvailable() {
+    setupBlockchainAndBlock();
+
     final WebSocketConfiguration wsRpc = WebSocketConfiguration.createDefault();
     wsRpc.setEnabled(true);
     final EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
@@ -343,7 +347,7 @@ public final class RunnerBuilderTest {
             .graphQLConfiguration(mock(GraphQLConfiguration.class))
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(Vertx.vertx())
-            .dataDir(dataDir.getRoot().toPath())
+            .dataDir(dataDir.getRoot())
             .storageProvider(mock(KeyValueStorageProvider.class))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .besuPluginContext(mock(BesuPluginContextImpl.class))
@@ -357,6 +361,8 @@ public final class RunnerBuilderTest {
 
   @Test
   public void noEngineApiNoServiceForMethods() {
+    setupBlockchainAndBlock();
+
     final JsonRpcConfiguration defaultRpcConfig = JsonRpcConfiguration.createDefault();
     defaultRpcConfig.setEnabled(true);
     final WebSocketConfiguration defaultWebSockConfig = WebSocketConfiguration.createDefault();
@@ -383,7 +389,7 @@ public final class RunnerBuilderTest {
             .jsonRpcIpcConfiguration(mock(JsonRpcIpcConfiguration.class))
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(Vertx.vertx())
-            .dataDir(dataDir.getRoot().toPath())
+            .dataDir(dataDir.getRoot())
             .storageProvider(mock(KeyValueStorageProvider.class))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .besuPluginContext(mock(BesuPluginContextImpl.class))
@@ -392,5 +398,13 @@ public final class RunnerBuilderTest {
 
     assertThat(runner.getJsonRpcPort()).isPresent();
     assertThat(runner.getEngineJsonRpcPort()).isEmpty();
+  }
+
+  private void setupBlockchainAndBlock() {
+    final DefaultBlockchain blockchain = mock(DefaultBlockchain.class);
+    when(protocolContext.getBlockchain()).thenReturn(blockchain);
+    final Block block = mock(Block.class);
+    when(blockchain.getGenesisBlock()).thenReturn(block);
+    when(block.getHash()).thenReturn(Hash.ZERO);
   }
 }

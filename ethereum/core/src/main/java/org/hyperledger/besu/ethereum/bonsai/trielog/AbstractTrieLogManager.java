@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Map;
@@ -44,6 +43,9 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
   protected final Map<Bytes32, CachedBonsaiWorldView> cachedWorldStatesByHash;
   protected final long maxLayersToLoad;
   private final Subscribers<TrieLogAddedObserver> trieLogAddedObservers = Subscribers.create();
+
+  // TODO plumb factory from plugin service:
+  TrieLogFactory<TrieLogLayer> trieLogFactory = new TrieLogFactoryImpl();
 
   protected AbstractTrieLogManager(
       final Blockchain blockchain,
@@ -122,11 +124,10 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
         .addArgument(blockHeader::toLogString)
         .addArgument(worldStateRootHash::toHexString)
         .log();
-    final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
-    trieLog.writeTo(rlpLog);
+
     stateUpdater
         .getTrieLogStorageTransaction()
-        .put(blockHeader.getHash().toArrayUnsafe(), rlpLog.encoded().toArrayUnsafe());
+        .put(blockHeader.getHash().toArrayUnsafe(), trieLogFactory.serialize(trieLog));
   }
 
   @Override
@@ -141,7 +142,7 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
 
   @Override
   public Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash) {
-    return rootWorldStateStorage.getTrieLog(blockHash).map(TrieLogLayer::fromBytes);
+    return rootWorldStateStorage.getTrieLog(blockHash).map(trieLogFactory::deserialize);
   }
 
   @Override

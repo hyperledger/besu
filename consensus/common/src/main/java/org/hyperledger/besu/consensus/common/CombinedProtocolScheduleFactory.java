@@ -17,10 +17,10 @@ package org.hyperledger.besu.consensus.common;
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.BlockNumberProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.UnifiedProtocolSchedule;
 
 import java.math.BigInteger;
 import java.util.NavigableSet;
@@ -41,13 +41,13 @@ public class CombinedProtocolScheduleFactory {
       final NavigableSet<ForkSpec<ProtocolSchedule>> forkSpecs,
       final Optional<BigInteger> chainId) {
     final BftProtocolSchedule combinedProtocolSchedule =
-        new BftProtocolSchedule(new UnifiedProtocolSchedule(chainId));
+        new BftProtocolSchedule(new DefaultProtocolSchedule(chainId));
     for (ForkSpec<ProtocolSchedule> spec : forkSpecs) {
       checkState(
-          spec.getValue() instanceof UnifiedProtocolSchedule,
-          "Consensus migration requires a UnifiedProtocolSchedule");
+          spec.getValue() instanceof DefaultProtocolSchedule,
+          "Consensus migration requires a DefaultProtocolSchedule");
       final BftProtocolSchedule protocolSchedule =
-          new BftProtocolSchedule((UnifiedProtocolSchedule) spec.getValue());
+          new BftProtocolSchedule((DefaultProtocolSchedule) spec.getValue());
 
       final Optional<Long> endBlock =
           Optional.ofNullable(forkSpecs.higher(spec)).map(ForkSpec::getBlock);

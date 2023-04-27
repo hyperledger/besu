@@ -35,7 +35,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 
-public class UnifiedProtocolScheduleTest {
+public class DefaultProtocolScheduleTest {
 
   private static final Optional<BigInteger> CHAIN_ID = Optional.of(BigInteger.ONE);
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
@@ -67,7 +67,7 @@ public class UnifiedProtocolScheduleTest {
   public void emptySchedule() {
     final BlockHeader blockHeader = new BlockHeaderTestFixture().number(0L).buildHeader();
     Assertions.assertThatThrownBy(
-            () -> new UnifiedProtocolSchedule(CHAIN_ID).getByBlockHeader(blockHeader))
+            () -> new DefaultProtocolSchedule(CHAIN_ID).getByBlockHeader(blockHeader))
         .hasMessage("At least 1 milestone must be provided to the protocol schedule");
   }
 
@@ -76,7 +76,7 @@ public class UnifiedProtocolScheduleTest {
     final ProtocolSpec spec1 = mock(ProtocolSpec.class);
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
 
-    final UnifiedProtocolSchedule protocolSchedule = new UnifiedProtocolSchedule(CHAIN_ID);
+    final DefaultProtocolSchedule protocolSchedule = new DefaultProtocolSchedule(CHAIN_ID);
     protocolSchedule.putMilestone(BlockNumberProtocolSpec::create, 0, spec1);
     protocolSchedule.putMilestone(BlockNumberProtocolSpec::create, 0, spec2);
     assertThat(protocolSchedule.getByBlockHeader(header(0, 1L))).isSameAs(spec2);
@@ -88,7 +88,7 @@ public class UnifiedProtocolScheduleTest {
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
     final ProtocolSpec spec3 = mock(ProtocolSpec.class);
 
-    final UnifiedProtocolSchedule protocolSchedule = new UnifiedProtocolSchedule(CHAIN_ID);
+    final DefaultProtocolSchedule protocolSchedule = new DefaultProtocolSchedule(CHAIN_ID);
     protocolSchedule.putMilestone(TimestampProtocolSpec::create, 0, spec1);
     protocolSchedule.putMilestone(TimestampProtocolSpec::create, 10, spec2);
     protocolSchedule.putMilestone(TimestampProtocolSpec::create, 10, spec3);
@@ -101,7 +101,7 @@ public class UnifiedProtocolScheduleTest {
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
     final ProtocolSpec spec3 = mock(ProtocolSpec.class);
 
-    final UnifiedProtocolSchedule protocolSchedule = new UnifiedProtocolSchedule(CHAIN_ID);
+    final DefaultProtocolSchedule protocolSchedule = new DefaultProtocolSchedule(CHAIN_ID);
     protocolSchedule.putMilestone(BlockNumberProtocolSpec::create, 0, spec1);
     protocolSchedule.putMilestone(BlockNumberProtocolSpec::create, 10, spec2);
     protocolSchedule.putMilestone(TimestampProtocolSpec::create, 10, spec3);
@@ -173,7 +173,7 @@ public class UnifiedProtocolScheduleTest {
     final ProtocolSpec spec1 = mock(ProtocolSpec.class);
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
 
-    final UnifiedProtocolSchedule protocolSchedule = new UnifiedProtocolSchedule(CHAIN_ID);
+    final DefaultProtocolSchedule protocolSchedule = new DefaultProtocolSchedule(CHAIN_ID);
     protocolSchedule.putMilestone(BlockNumberProtocolSpec::create, 0, spec1);
     protocolSchedule.putMilestone(BlockNumberProtocolSpec::create, 10, spec2);
 
@@ -190,7 +190,7 @@ public class UnifiedProtocolScheduleTest {
     final ProtocolSpec spec1 = mock(ProtocolSpec.class);
     final ProtocolSpec spec2 = mock(ProtocolSpec.class);
 
-    final UnifiedProtocolSchedule protocolSchedule = new UnifiedProtocolSchedule(CHAIN_ID);
+    final DefaultProtocolSchedule protocolSchedule = new DefaultProtocolSchedule(CHAIN_ID);
     protocolSchedule.putMilestone(BlockNumberProtocolSpec::create, 0, spec1);
     protocolSchedule.putMilestone(TimestampProtocolSpec::create, 9992, spec2);
 

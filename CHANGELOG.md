@@ -1,14 +1,32 @@
 # Changelog
 
-## 23.4-RC
+## 23.4.1
 
 ### Breaking Changes
+
+### Additions and Improvements
+
+### Bug Fixes
+
+### Download Links
+
+## 23.4.0-RC1
+
+### Breaking Changes
+- In `evmtool` (an offline EVM executor tool principally used for reference tests), the `--prestate` and `--genesis` options no longer parse genesis files containing IBFT, QBFT, and Clique network definitions. The same genesis files will work with those json entries removed. [#5192](https://github.com/hyperledger/besu/pull/5192)
+- In `--ethstats`, if the port is not specified in the URI, it will default to 443 and 80 for ssl and non-ssl connections respectively instead of 3000. [#5301](https://github.com/hyperledger/besu/pull/5301)
 - Remove IBFT 1.0 feature [#5302](https://github.com/hyperledger/besu/pull/5302)
 - Remove GoQuorum-compatible privacy feature [#5303](https://github.com/hyperledger/besu/pull/5303)
 - Remove launcher command line utility [#5355](https://github.com/hyperledger/besu/pull/5355)
 - Remove deprecated `tx-pool-future-max-by-account` option, see instead: `tx-pool-limit-by-account-percentage` [#5361](https://github.com/hyperledger/besu/pull/5361)
+- Default configuration for the deprecated ECIP-1049 network has been removed from the CLI network list [#5371](https://github.com/hyperledger/besu/pull/5371)
 
 ### Additions and Improvements
+- An alternate build target for the EVM using GraalVM AOT compilation was added.  [#5192](https://github.com/hyperledger/besu/pull/5192)
+- To generate the binary install and use GraalVM 23.3.r17 or higher and run `./gradlew nativeCompile`.  The binary will be located in `ethereum/evmtool/build/native/nativeCompile`
+- Upgrade RocksDB version from 7.7.3 to 8.0.0. Besu Team [contributed](https://github.com/facebook/rocksdb/pull/11099) to this release to make disabling checksum verification work. 
+- Log an error with stacktrace when RPC responds with internal error [#5288](https://github.com/hyperledger/besu/pull/5288)
+- `--ethstats-cacert` to specify root CA of ethstats server (useful for non-production environments). [#5301](https://github.com/hyperledger/besu/pull/5301)
 - Update most dependencies to latest version [#5269](https://github.com/hyperledger/besu/pull/5269)
 - If jemalloc is used, print its version in the configuration overview [#4738](https://github.com/hyperledger/besu/pull/4738)
 - Add metrics for accounts and storage reads (Flat database vs Merkle Patricia Trie) [#5315](https://github.com/hyperledger/besu/pull/5315)
@@ -18,22 +36,10 @@
 - Renamed --bonsai-maximum-back-layers-to-load option to --bonsai-historical-block-limit for clarity. Removed --Xbonsai-use-snapshots option as it is no longer functional [#5337](https://github.com/hyperledger/besu/pull/5337)
 - Change Forest to use TransactionDB instead of OptimisticTransactionDB [#5328](https://github.com/hyperledger/besu/pull/5328)
 - Performance: Reduced usage of UInt256 in EVM operations [#5331](https://github.com/hyperledger/besu/pull/5331)
-
-### Bug Fixes
-
-## 23.1.3 
-
-### Breaking Changes
-
-- In `evmtool` (an offline EVM executor tool principally used for reference tests), the `--prestate` and `--genesis` options no longer parse genesis files containing IBFT, QBFT, and Clique network definitions. The same genesis files will work with those json entries removed. [#5192](https://github.com/hyperledger/besu/pull/5192)
-- In `--ethstats`, if the port is not specified in the URI, it will default to 443 and 80 for ssl and non-ssl connections respectively instead of 3000. [#5301](https://github.com/hyperledger/besu/pull/5301)
-
-### Additions and Improvements
-- An alternate build target for the EVM using GraalVM AOT compilation was added.  [#5192](https://github.com/hyperledger/besu/pull/5192)
-- To generate the binary install and use GraalVM 23.3.r17 or higher and run `./gradlew nativeCompile`.  The binary will be located in `ethereum/evmtool/build/native/nativeCompile`
-- Upgrade RocksDB version from 7.7.3 to 8.0.0. Besu Team [contributed](https://github.com/facebook/rocksdb/pull/11099) to this release to make disabling checksum verification work. 
-- Log an error with stacktrace when RPC responds with internal error [#5288](https://github.com/hyperledger/besu/pull/5288)
-- `--ethstats-cacert` to specify root CA of ethstats server (useful for non-production environments). [#5301](https://github.com/hyperledger/besu/pull/5301)
+- Changed wrong error message "Invalid params" when private tx is reverted to "Execution reverted" with correct revert reason in data. [#5369](https://github.com/hyperledger/besu/pull/5369)
+- Changes to the way gas is estimated to provide an exact gas estimate [#5142](https://github.com/hyperledger/besu/pull/5142)
+- Add zero reads to Bonsai TrieLogs [#5317](https://github.com/hyperledger/besu/pull/5317) 
+- Bonsai TrieLog serialization interface and default implementation [#5372](https://github.com/hyperledger/besu/pull/5372) 
 
 ### Bug Fixes
 - Fix eth_getBlockByNumber cache error for latest block when called during syncing [#5292](https://github.com/hyperledger/besu/pull/5292)
@@ -44,6 +50,17 @@
 - Add withdrawals to payloadId calculation to avoid collisions [#5321](https://github.com/hyperledger/besu/pull/5321) 
 
 ### Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.0-RC1/besu-23.4.0-RC1.tar.gz / sha256: 0eebe041c1eb8d16587de1f6d19355a0ec7845fcb0e66a6a96d36bbd376311d3
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.0-RC1/besu-23.4.0-RC1.zip / sha256:  f0b4657d88d07a6aea0457c18e227ecf9bc1fdd942fe411e12996962a9c4e08f
+
+## 23.1.3 - Nimbus Hotfix
+This update is strongly recommended for anyone running Nimbus with Besu. Due to the way Nimbus send request data, this can lead to a missed block proposal in certain circumstances.
+
+### Bug Fixes
+Add withdrawals to payloadId calculation to avoid collisions #5321
+Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.3/besu-23.1.3.tar.gz / sha256: 36898932a7535c4d126c1980443b33c9a4971f9354112992a18ee134c1777aa3
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.3/besu-23.1.3.zip / sha256: adb3b17e45217f86a56f07f09faba2e5d8a0eb8a585ad5307696d6cc58ee2f73
 
 ## 23.1.2
 This update is a mainnet-compatible Shanghai/Capella upgrade and is recommended for all Mainnet users.
