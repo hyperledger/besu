@@ -52,7 +52,7 @@ public class ZkTrieLogFactoryImpl extends TrieLogFactoryImpl {
 
       final BonsaiValue<StateTrieAccountValue> accountChange = layer.accounts.get(address);
 
-      if (accountChange == null || accountChange.isUnchanged()) {
+      if (accountChange == null) {
         output.writeNull();
       } else {
         accountChange.writeRlp(output, (o, sta) -> sta.writeTo(o));
