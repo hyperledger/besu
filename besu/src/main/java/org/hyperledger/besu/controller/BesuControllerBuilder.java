@@ -184,7 +184,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** the Dagger configured context that can provide dependencies */
   protected BesuComponent besuComponent = null;
 
-
   /**
    * Provide a BesuComponent which can be used to get other dependencies
    *
