@@ -27,21 +27,21 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes32;
 
-@JsonPropertyOrder({
-  "executionPayload",
-  "blockValue",
-})
+@JsonPropertyOrder({"executionPayload", "blockValue", "blobsBundle"})
 public class EngineGetPayloadResultV3 {
   protected final PayloadResult executionPayload;
   private final String blockValue;
+  private final BlobsBundleV1 blobsBundle;
 
   public EngineGetPayloadResultV3(
       final BlockHeader header,
       final List<String> transactions,
       final Optional<List<Withdrawal>> withdrawals,
-      final String blockValue) {
+      final String blockValue,
+      final BlobsBundleV1 blobsBundle) {
     this.executionPayload = new PayloadResult(header, transactions, withdrawals);
     this.blockValue = blockValue;
+    this.blobsBundle = blobsBundle;
   }
 
   @JsonGetter(value = "executionPayload")
@@ -52,6 +52,11 @@ public class EngineGetPayloadResultV3 {
   @JsonGetter(value = "blockValue")
   public String getBlockValue() {
     return blockValue;
+  }
+
+  @JsonGetter(value = "blobsBundle")
+  public BlobsBundleV1 getBlobsBundle() {
+    return blobsBundle;
   }
 
   public static class PayloadResult {
