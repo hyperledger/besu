@@ -1333,8 +1333,8 @@ public class Transaction
     public Builder kzgBlobs(
         final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGCommitment> kzgCommitments,
         final SSZFixedSizeTypeList<TransactionNetworkPayload.Blob> blobs,
-        final TransactionNetworkPayload.KZGProof kzgProof) {
-      this.blobsWithCommitments = new BlobsWithCommitments(kzgCommitments, blobs, kzgProof);
+        final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGProof> kzgProofs) {
+      this.blobsWithCommitments = new BlobsWithCommitments(kzgCommitments, blobs, kzgProofs);
       return this;
     }
   }
@@ -1342,15 +1342,15 @@ public class Transaction
   public static class BlobsWithCommitments {
     public final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGCommitment> kzgCommitments;
     public final SSZFixedSizeTypeList<TransactionNetworkPayload.Blob> blobs;
-    public final TransactionNetworkPayload.KZGProof kzgProof;
+    public final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGProof> kzgProofs;
 
     public BlobsWithCommitments(
         final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGCommitment> kzgCommitments,
         final SSZFixedSizeTypeList<TransactionNetworkPayload.Blob> blobs,
-        final TransactionNetworkPayload.KZGProof kzgProof) {
+        final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGProof> kzgProofs) {
       this.kzgCommitments = kzgCommitments;
       this.blobs = blobs;
-      this.kzgProof = kzgProof;
+      this.kzgProofs = kzgProofs;
     }
 
     public List<Bytes> getBlobs() {
@@ -1361,7 +1361,13 @@ public class Transaction
 
     public List<Bytes> getKzgCommitments() {
       return kzgCommitments.getElements().stream()
-          .map(c -> c.getData())
+          .map(TransactionNetworkPayload.KZGCommitment::getData)
+          .collect(Collectors.toList());
+    }
+
+    public List<Bytes> getKzgProofs() {
+      return kzgProofs.getElements().stream()
+          .map(TransactionNetworkPayload.KZGProof::getBytes)
           .collect(Collectors.toList());
     }
   }

@@ -97,7 +97,7 @@ public class TransactionDecoder {
       payload.populateFromReader(input);
       signedBlobTransaction = payload.getSignedBlobTransaction();
 
-      builder.kzgBlobs(payload.getKzgCommitments(), payload.getBlobs(), payload.getKzgProof());
+      builder.kzgBlobs(payload.getKzgCommitments(), payload.getBlobs(), payload.getKzgProofs());
     } else {
       LOG.trace("Decoding TransactionNetworkPayload.SingedBlobTransaction");
       signedBlobTransaction = new TransactionNetworkPayload.SingedBlobTransaction();
