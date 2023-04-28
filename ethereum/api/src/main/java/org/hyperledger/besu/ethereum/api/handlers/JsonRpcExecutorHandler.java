@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -55,25 +54,24 @@ public class JsonRpcExecutorHandler {
   private static final Logger LOG = LoggerFactory.getLogger(JsonRpcExecutorHandler.class);
   private static final String SPAN_CONTEXT = "span_context";
   private static final String APPLICATION_JSON = "application/json";
-  private static final ObjectMapper JSON_OBJECT_MAPPER =
+  private static ObjectMapper jsonObjectMapper =
       new ObjectMapper()
           .registerModule(new Jdk8Module()); // Handle JDK8 Optionals (de)serialization
-  private static final ObjectWriter JSON_OBJECT_WRITER =
-      JSON_OBJECT_MAPPER
+  private static ObjectWriter jsonObjectWriter =
+      jsonObjectMapper
           .writerWithDefaultPrettyPrinter()
           .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM)
           .with(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
 
   private JsonRpcExecutorHandler() {}
 
-  public static Handler<RoutingContext> handler(
-      final JsonRpcExecutor jsonRpcExecutor,
-      final Tracer tracer,
-      final JsonRpcConfiguration jsonRpcConfiguration,
-      final Module... mapperModules) {
-
-    JSON_OBJECT_MAPPER.registerModules(mapperModules);
-    return handler(jsonRpcExecutor, tracer, jsonRpcConfiguration);
+  public static void updateJsonObjectMapper(final ObjectMapper jsonObjectMapper) {
+    JsonRpcExecutorHandler.jsonObjectMapper = jsonObjectMapper;
+    JsonRpcExecutorHandler.jsonObjectWriter =
+        jsonObjectMapper
+            .writerWithDefaultPrettyPrinter()
+            .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM)
+            .with(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
   }
 
   public static Handler<RoutingContext> handler(
@@ -182,8 +180,8 @@ public class JsonRpcExecutorHandler {
       try (final JsonResponseStreamer streamer =
           new JsonResponseStreamer(response, ctx.request().remoteAddress())) {
         // underlying output stream lifecycle is managed by the json object writer
-        lazyTraceLogger(() -> JSON_OBJECT_MAPPER.writeValueAsString(jsonRpcResponse));
-        JSON_OBJECT_WRITER.writeValue(streamer, jsonRpcResponse);
+        lazyTraceLogger(() -> jsonObjectMapper.writeValueAsString(jsonRpcResponse));
+        jsonObjectWriter.writeValue(streamer, jsonRpcResponse);
       }
     }
   }
@@ -200,8 +198,8 @@ public class JsonRpcExecutorHandler {
     try (final JsonResponseStreamer streamer =
         new JsonResponseStreamer(response, ctx.request().remoteAddress())) {
       // underlying output stream lifecycle is managed by the json object writer
-      lazyTraceLogger(() -> JSON_OBJECT_MAPPER.writeValueAsString(completed));
-      JSON_OBJECT_WRITER.writeValue(streamer, completed);
+      lazyTraceLogger(() -> jsonObjectMapper.writeValueAsString(completed));
+      jsonObjectWriter.writeValue(streamer, completed);
     }
   }
 
