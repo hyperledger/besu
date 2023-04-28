@@ -10,7 +10,7 @@
 
 ### Download Links
 
-## 23.4.0-RC1
+## 23.4.0
 
 ### Breaking Changes
 - In `evmtool` (an offline EVM executor tool principally used for reference tests), the `--prestate` and `--genesis` options no longer parse genesis files containing IBFT, QBFT, and Clique network definitions. The same genesis files will work with those json entries removed. [#5192](https://github.com/hyperledger/besu/pull/5192)
@@ -50,8 +50,8 @@
 - Add withdrawals to payloadId calculation to avoid collisions [#5321](https://github.com/hyperledger/besu/pull/5321) 
 
 ### Download Links
-https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.0-RC1/besu-23.4.0-RC1.tar.gz / sha256: 0eebe041c1eb8d16587de1f6d19355a0ec7845fcb0e66a6a96d36bbd376311d3
-https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.0-RC1/besu-23.4.0-RC1.zip / sha256:  f0b4657d88d07a6aea0457c18e227ecf9bc1fdd942fe411e12996962a9c4e08f
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.0/besu-23.4.0.zip / sha256: 023a267ee07ed6e069cb15020c1c0262efc5ea0a3e32adc6596068cff7fd0be5
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.0/besu-23.4.0.tar.gz / sha256: 821695b3255c9f646f4d527e374219c96416f498231520f2eec2bebedc53f5a0
 
 ## 23.1.3 - Nimbus Hotfix
 This update is strongly recommended for anyone running Nimbus with Besu. Due to the way Nimbus send request data, this can lead to a missed block proposal in certain circumstances.
