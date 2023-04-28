@@ -33,6 +33,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
   public static final int KZG_COMMITMENT_SIZE = 48;
+  public static final int KZG_PROOF_SIZE = 48;
   public static final int FIELD_ELEMENTS_PER_BLOB = 4096;
   public static final int ELEMENT_SIZE = 32;
   SingedBlobTransaction signedBlobTransaction = new SingedBlobTransaction();
@@ -41,7 +42,8 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
   SSZFixedSizeTypeList<Blob> blobs =
       new SSZFixedSizeTypeList<>(FIELD_ELEMENTS_PER_BLOB * ELEMENT_SIZE, Blob::new);
 
-  KZGProof kzgProof = new KZGProof();
+  SSZFixedSizeTypeList<KZGProof> kzgProofs =
+      new SSZFixedSizeTypeList<>(KZG_PROOF_SIZE, KZGProof::new);
 
   @Override
   public boolean isFixed() {
@@ -50,12 +52,12 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
 
   @Override
   public void populateFromReader(final SSZReader reader) {
-    reader.readAsContainer(signedBlobTransaction, kzgCommitments, blobs, kzgProof);
+    reader.readAsContainer(signedBlobTransaction, kzgCommitments, blobs, kzgProofs);
   }
 
   @Override
   public void writeTo(final SSZWriter writer) {
-    writer.writeAsContainer(signedBlobTransaction, kzgCommitments, blobs, kzgProof);
+    writer.writeAsContainer(signedBlobTransaction, kzgCommitments, blobs, kzgProofs);
   }
 
   public SingedBlobTransaction getSignedBlobTransaction() {
@@ -70,8 +72,8 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
     return blobs;
   }
 
-  public KZGProof getKzgProof() {
-    return kzgProof;
+  public SSZFixedSizeTypeList<KZGProof> getKzgProofs() {
+    return kzgProofs;
   }
 
   public void setKzgCommitments(final SSZFixedSizeTypeList<KZGCommitment> kzgCommitments) {
@@ -82,8 +84,8 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
     this.blobs = blobs;
   }
 
-  public void setKzgProof(final KZGProof kzgProof) {
-    this.kzgProof = kzgProof;
+  public void setKzgProofs(final SSZFixedSizeTypeList<KZGProof> kzgProofs) {
+    this.kzgProofs = kzgProofs;
   }
 
   public static class SingedBlobTransaction implements SSZReadable, SSZWritable {
@@ -528,7 +530,7 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
 
     @Override
     public void populateFromReader(final SSZReader reader) {
-      bytes = reader.readFixedBytes(48);
+      bytes = reader.readFixedBytes(KZG_PROOF_SIZE);
     }
 
     @Override
