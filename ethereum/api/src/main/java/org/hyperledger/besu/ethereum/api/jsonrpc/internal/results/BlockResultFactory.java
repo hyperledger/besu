@@ -137,11 +137,15 @@ public class BlockResultFactory {
             .collect(Collectors.toList());
 
     final Wei blockValue = new BlockValueCalculator().calculateBlockValue(blockWithReceipts);
+
+    final BlobsBundleV1 blobsBundleV1 =
+        new BlobsBundleV1(blockWithReceipts.getBlock().getBody().getTransactions());
     return new EngineGetPayloadResultV3(
         blockWithReceipts.getHeader(),
         txs,
         blockWithReceipts.getBlock().getBody().getWithdrawals(),
-        Quantity.create(blockValue));
+        Quantity.create(blockValue),
+        blobsBundleV1);
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {
