@@ -14,9 +14,12 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ZkTrieLogObserver implements TrieLogAddedObserver {
 
+  private static final Logger LOG = LoggerFactory.getLogger(ZkTrieLogObserver.class);
   // todo: get from config
   private String shomeiHttpHost = "localhost";
   private int shomeiHttpPort = 8888;
@@ -34,7 +37,24 @@ public class ZkTrieLogObserver implements TrieLogAddedObserver {
 
   @Override
   public void onTrieLogAdded(final TrieLogAddedEvent event) {
-    handleShip(event);
+    handleShip(event)
+        .onComplete(
+            ar -> {
+              if (ar.succeeded()) {
+                LOG.atTrace()
+                    .setMessage("shipped trie log for {}, response: {}")
+                    .addArgument(event.getBlockHeader().toLogString())
+                    .addArgument(ar.result().bodyAsString())
+                    .log();
+
+              } else {
+                LOG.atTrace()
+                    .setMessage("failed to ship trie log for {} \n {}")
+                    .addArgument(event.getBlockHeader().toLogString())
+                    .addArgument(ar.cause())
+                    .log();
+              }
+            });
   }
 
   @VisibleForTesting
@@ -42,7 +62,6 @@ public class ZkTrieLogObserver implements TrieLogAddedObserver {
 
     byte[] rlpBytes = zkTrieLogFactory.serialize(event.getLayer());
 
-    // Create a JSON-RPC request
     JsonObject jsonRpcRequest =
         new JsonObject()
             .put("jsonrpc", "2.0")
@@ -50,10 +69,12 @@ public class ZkTrieLogObserver implements TrieLogAddedObserver {
             .put("method", "state_sendRawTrieLog")
             .put(
                 "params",
-                new JsonObject()
-                    .put("blockNumber", event.getBlockHeader().getNumber())
-                    .put("blockHash", event.getBlockHeader().getBlockHash().toHexString())
-                    .put("trieLog", Bytes.wrap(rlpBytes).toHexString()));
+                // TODO: interface this parameter
+                List.of(
+                    new JsonObject()
+                        .put("blockNumber", event.getBlockHeader().getNumber())
+                        .put("blockHash", event.getBlockHeader().getBlockHash().toHexString())
+                        .put("trieLog", Bytes.wrap(rlpBytes).toHexString())));
 
     // Send the request to the JSON-RPC service
     return webClient

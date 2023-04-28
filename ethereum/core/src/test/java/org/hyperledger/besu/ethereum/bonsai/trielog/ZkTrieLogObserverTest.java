@@ -3,10 +3,10 @@ package org.hyperledger.besu.ethereum.bonsai.trielog;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
-import java.util.Base64;
 import java.util.function.Consumer;
 
 import io.vertx.core.Vertx;
@@ -17,6 +17,7 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,8 +30,10 @@ public class ZkTrieLogObserverTest {
   private HttpServer server;
 
   private int rpcServicePort;
+  private static final BlockHeader headerFixture = new BlockHeaderTestFixture().buildHeader();
   private static final String JSON_SUCCESS_RESPONSE =
       "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"accepted\"}";
+
   private static final ZkTrieLogFactoryImpl zkTrieLogFactory = new ZkTrieLogFactoryImpl();
   private static final TrieLogLayer trieLogFixture =
       new TrieLogLayer()
@@ -97,21 +100,19 @@ public class ZkTrieLogObserverTest {
         req -> {
           req.bodyHandler(
               body -> {
-                var params = body.toJsonObject().getJsonObject("params");
+                var params = body.toJsonObject().getJsonArray("params").getJsonObject(0);
 
                 context.assertEquals(
-                    params.getJsonObject("trieLog").encode(),
-                    Base64.getEncoder().encode(zkTrieLogFactory.serialize(trieLogFixture)));
-
+                    params.getString("trieLog"),
+                    Bytes.wrap(zkTrieLogFactory.serialize(trieLogFixture)).toHexString());
                 context.assertEquals(
-                    params.getJsonObject("blockHash").encode(), Hash.ZERO.toHexString());
-                context.assertEquals(
-                    params.getJsonObject("blockNumber").encode(), Hash.ZERO.toHexString());
+                    params.getString("blockHash"), headerFixture.getBlockHash().toHexString());
+                context.assertEquals(params.getLong("blockNumber"), headerFixture.getNumber());
                 async2.complete();
               });
         };
     ZkTrieLogObserver observer = new ZkTrieLogObserver("localhost", rpcServicePort);
-    TrieLogAddedEvent addEvent = new TrieLogAddedEvent(new BlockHeaderTestFixture().buildHeader(), trieLogFixture);
+    TrieLogAddedEvent addEvent = new TrieLogAddedEvent(headerFixture, trieLogFixture);
 
     observer
         .handleShip(addEvent)
