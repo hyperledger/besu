@@ -394,12 +394,18 @@ public class MainnetTransactionValidator implements TransactionValidator {
             .reduce(Bytes::concatenate)
             .orElseThrow();
 
+    final Bytes kzgProofs =
+        blobsWithCommitments.kzgProofs.getElements().stream()
+            .map(TransactionNetworkPayload.KZGProof::getBytes)
+            .reduce(Bytes::concatenate)
+            .orElseThrow();
+
     final boolean kzgVerification =
         CKZG4844JNI.verifyAggregateKzgProof(
             blobs.toArrayUnsafe(),
             kzgCommitments.toArrayUnsafe(),
             blobsWithCommitments.blobs.getElements().size(),
-            blobsWithCommitments.kzgProof.getBytes().toArrayUnsafe());
+            kzgProofs.toArrayUnsafe());
 
     if (!kzgVerification) {
       return ValidationResult.invalid(

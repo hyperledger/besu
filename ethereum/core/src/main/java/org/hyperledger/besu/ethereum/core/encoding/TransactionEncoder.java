@@ -81,7 +81,7 @@ public class TransactionEncoder {
     var blobsWithCommitments = transaction.getBlobsWithCommitments();
     if (blobsWithCommitments.isPresent()) {
       payload.setBlobs(blobsWithCommitments.get().blobs);
-      payload.setKzgProof(blobsWithCommitments.get().kzgProof);
+      payload.setKzgProofs(blobsWithCommitments.get().kzgProofs);
       payload.setKzgCommitments(blobsWithCommitments.get().kzgCommitments);
     }
 
