@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.BlockNumberProtocolSpec;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.math.BigInteger;
@@ -145,7 +144,7 @@ public class BlockMinerTest {
   private ProtocolSchedule singleSpecSchedule(final ProtocolSpec protocolSpec) {
     final DefaultProtocolSchedule protocolSchedule =
         new DefaultProtocolSchedule(Optional.of(BigInteger.valueOf(1234)));
-    protocolSchedule.putMilestone(BlockNumberProtocolSpec::create, 0, protocolSpec);
+    protocolSchedule.putBlockNumberMilestone(0, protocolSpec);
     return protocolSchedule;
   }
 }

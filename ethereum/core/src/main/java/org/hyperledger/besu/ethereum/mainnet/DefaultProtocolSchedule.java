@@ -22,6 +22,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.BlockNumberProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.TimestampProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
@@ -88,10 +90,16 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
   }
 
   @Override
-  public void putMilestone(
-      final ScheduledSpecFactory factory, final long milestone, final ProtocolSpec protocolSpec) {
+  public void putBlockNumberMilestone(final long blockNumber, final ProtocolSpec protocolSpec) {
+    putMilestone(BlockNumberProtocolSpec.create(blockNumber, protocolSpec));
+  }
 
-    final ScheduledProtocolSpec scheduledProtocolSpec = factory.create(milestone, protocolSpec);
+  @Override
+  public void putTimestampMilestone(final long timestamp, final ProtocolSpec protocolSpec) {
+    putMilestone(TimestampProtocolSpec.create(timestamp, protocolSpec));
+  }
+
+  private void putMilestone(final ScheduledProtocolSpec scheduledProtocolSpec) {
     // Ensure this replaces any existing spec at the same block number.
     protocolSpecs.remove(scheduledProtocolSpec);
     protocolSpecs.add(scheduledProtocolSpec);

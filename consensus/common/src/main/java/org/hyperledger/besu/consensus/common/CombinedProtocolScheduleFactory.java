@@ -20,7 +20,6 @@ import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.BlockNumberProtocolSpec;
 
 import java.math.BigInteger;
 import java.util.NavigableSet;
@@ -53,18 +52,13 @@ public class CombinedProtocolScheduleFactory {
           Optional.ofNullable(forkSpecs.higher(spec)).map(ForkSpec::getBlock);
       protocolSchedule.getScheduledProtocolSpecs().stream()
           .filter(protocolSpecMatchesConsensusBlockRange(spec.getBlock(), endBlock))
-          .forEach(
-              s ->
-                  combinedProtocolSchedule.putMilestone(
-                      BlockNumberProtocolSpec::create, s.milestone(), s.spec()));
+          .forEach(s -> combinedProtocolSchedule.putBlockNumberMilestone(s.milestone(), s.spec()));
 
       // When moving to a new consensus mechanism we want to use the last milestone but created by
       // our consensus mechanism's BesuControllerBuilder so any additional rules are applied
       if (spec.getBlock() > 0) {
-        combinedProtocolSchedule.putMilestone(
-            BlockNumberProtocolSpec::create,
-            spec.getBlock(),
-            protocolSchedule.getByBlockNumber(spec.getBlock()));
+        combinedProtocolSchedule.putBlockNumberMilestone(
+            spec.getBlock(), protocolSchedule.getByBlockNumber(spec.getBlock()));
       }
     }
     return combinedProtocolSchedule;
