@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -64,6 +65,16 @@ public class JsonRpcExecutorHandler {
           .with(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
 
   private JsonRpcExecutorHandler() {}
+
+  public static Handler<RoutingContext> handler(
+      final JsonRpcExecutor jsonRpcExecutor,
+      final Tracer tracer,
+      final JsonRpcConfiguration jsonRpcConfiguration,
+      final Module... mapperModules) {
+
+    JSON_OBJECT_MAPPER.registerModules(mapperModules);
+    return handler(jsonRpcExecutor, tracer, jsonRpcConfiguration);
+  }
 
   public static Handler<RoutingContext> handler(
       final JsonRpcExecutor jsonRpcExecutor,
