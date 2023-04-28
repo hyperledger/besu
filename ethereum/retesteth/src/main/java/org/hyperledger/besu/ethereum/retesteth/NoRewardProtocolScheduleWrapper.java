@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledSpecFactory;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
@@ -106,9 +105,13 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
   }
 
   @Override
-  public void putMilestone(
-      final ScheduledSpecFactory factory, final long milestone, final ProtocolSpec protocolSpec) {
-    delegate.putMilestone(factory, milestone, protocolSpec);
+  public void putBlockNumberMilestone(final long blockNumber, final ProtocolSpec protocolSpec) {
+    delegate.putBlockNumberMilestone(blockNumber, protocolSpec);
+  }
+
+  @Override
+  public void putTimestampMilestone(final long timestamp, final ProtocolSpec protocolSpec) {
+    delegate.putTimestampMilestone(timestamp, protocolSpec);
   }
 
   @Override

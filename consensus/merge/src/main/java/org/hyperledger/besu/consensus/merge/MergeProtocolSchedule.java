@@ -67,12 +67,9 @@ public class MergeProtocolSchedule {
     postMergeModifications.put(
         0L,
         (specBuilder) ->
-            MergeProtocolSchedule.applyMergeSpecificModifications(
+            MergeProtocolSchedule.applyParisSpecificModifications(
                 specBuilder, config.getChainId()));
-    if (config.getShanghaiTime().isPresent()) {
-      // unapply merge modifications from Shanghai onwards
-      postMergeModifications.put(config.getShanghaiTime().getAsLong(), Function.identity());
-    }
+    unapplyModificationsFromShanghaiOnwards(config, postMergeModifications);
 
     return new ProtocolScheduleBuilder(
             config,
@@ -84,7 +81,13 @@ public class MergeProtocolSchedule {
         .createProtocolSchedule();
   }
 
-  private static ProtocolSpecBuilder applyMergeSpecificModifications(
+  /**
+   * Apply Paris specific modifications because the Merge Transition code does not utilise {@link
+   * org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecFactory.parisDefinition} until the
+   * shanghaiDefinition is utilised. This is due to the way the Transition works via TTD rather than
+   * via a blockNumber so it can't be looked up in the schedule.
+   */
+  private static ProtocolSpecBuilder applyParisSpecificModifications(
       final ProtocolSpecBuilder specBuilder, final Optional<BigInteger> chainId) {
 
     return specBuilder
@@ -102,5 +105,15 @@ public class MergeProtocolSchedule {
 
   private static BlockHeaderValidator.Builder getBlockHeaderValidator(final FeeMarket feeMarket) {
     return MergeValidationRulesetFactory.mergeBlockHeaderValidator(feeMarket);
+  }
+
+  private static void unapplyModificationsFromShanghaiOnwards(
+      final GenesisConfigOptions config,
+      final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> postMergeModifications) {
+    // Any post-Paris fork can rely on the MainnetProtocolSpec definitions again
+    // Must allow for config to skip Shanghai and go straight to a later fork.
+    if (config.getForkBlockTimestamps().size() > 0) {
+      postMergeModifications.put(config.getForkBlockTimestamps().get(0), Function.identity());
+    }
   }
 }
