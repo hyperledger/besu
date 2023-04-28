@@ -15,36 +15,67 @@
 
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.apache.tuweni.bytes.Bytes;
 
-@JsonPropertyOrder({"blockHash", "kzgs", "blobs"})
+@JsonPropertyOrder({"commitments", "proofs", "blobs"})
 public class BlobsBundleV1 {
 
-  private final String blockHash;
+  private final List<String> commitments;
 
-  private final List<String> kzgs;
+  private final List<String> proofs;
 
   private final List<String> blobs;
 
-  public BlobsBundleV1(final Hash blockHash, final List<String> kzgs, final List<String> blobs) {
-    this.blockHash = blockHash.toString();
-    this.kzgs = kzgs;
+  public BlobsBundleV1(final List<Transaction> transactions) {
+    final List<Transaction.BlobsWithCommitments> blobsWithCommitments =
+        transactions.stream()
+            .map(Transaction::getBlobsWithCommitments)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toList());
+
+    this.commitments =
+        blobsWithCommitments.stream()
+            .flatMap(b -> b.getKzgCommitments().stream())
+            .map(Bytes::toString)
+            .collect(Collectors.toList());
+
+    this.proofs =
+        blobsWithCommitments.stream()
+            .flatMap(b -> b.getKzgProofs().stream())
+            .map(Bytes::toString)
+            .collect(Collectors.toList());
+
+    this.blobs =
+        blobsWithCommitments.stream()
+            .flatMap(b -> b.getBlobs().stream())
+            .map(Bytes::toString)
+            .collect(Collectors.toList());
+  }
+
+  public BlobsBundleV1(
+      final List<String> commitments, final List<String> proofs, final List<String> blobs) {
+    this.commitments = commitments;
+    this.proofs = proofs;
     this.blobs = blobs;
   }
 
-  @JsonGetter("blockHash")
-  public String getBlockHash() {
-    return blockHash;
+  @JsonGetter("commitments")
+  public List<String> getCommitments() {
+    return commitments;
   }
 
-  @JsonGetter("kzgs")
-  public List<String> getKzgs() {
-    return kzgs;
+  @JsonGetter("proofs")
+  public List<String> getProofs() {
+    return proofs;
   }
 
   @JsonGetter("blobs")
