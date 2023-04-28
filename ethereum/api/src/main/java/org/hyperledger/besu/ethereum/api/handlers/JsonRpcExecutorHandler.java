@@ -57,21 +57,18 @@ public class JsonRpcExecutorHandler {
   private static ObjectMapper jsonObjectMapper =
       new ObjectMapper()
           .registerModule(new Jdk8Module()); // Handle JDK8 Optionals (de)serialization
-  private static ObjectWriter jsonObjectWriter =
-      jsonObjectMapper
-          .writerWithDefaultPrettyPrinter()
-          .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM)
-          .with(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
+  private static ObjectWriter jsonObjectWriter = createObjectWriter(jsonObjectMapper);
 
   private JsonRpcExecutorHandler() {}
 
-  public static void updateJsonObjectMapper(final ObjectMapper jsonObjectMapper) {
+  public static Handler<RoutingContext> handler(
+      final ObjectMapper jsonObjectMapper,
+      final JsonRpcExecutor jsonRpcExecutor,
+      final Tracer tracer,
+      final JsonRpcConfiguration jsonRpcConfiguration) {
     JsonRpcExecutorHandler.jsonObjectMapper = jsonObjectMapper;
-    JsonRpcExecutorHandler.jsonObjectWriter =
-        jsonObjectMapper
-            .writerWithDefaultPrettyPrinter()
-            .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM)
-            .with(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
+    JsonRpcExecutorHandler.jsonObjectWriter = createObjectWriter(jsonObjectMapper);
+    return handler(jsonRpcExecutor, tracer, jsonRpcConfiguration);
   }
 
   public static Handler<RoutingContext> handler(
@@ -107,6 +104,13 @@ public class JsonRpcExecutorHandler {
         handleJsonRpcError(ctx, null, JsonRpcError.INTERNAL_ERROR);
       }
     };
+  }
+
+  private static ObjectWriter createObjectWriter(final ObjectMapper jsonObjectMapper) {
+    return jsonObjectMapper
+        .writerWithDefaultPrettyPrinter()
+        .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM)
+        .with(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
   }
 
   private static boolean isJsonObjectRequest(final RoutingContext ctx) {
