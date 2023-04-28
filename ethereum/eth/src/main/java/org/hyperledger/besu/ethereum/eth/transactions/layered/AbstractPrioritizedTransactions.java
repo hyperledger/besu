@@ -76,17 +76,6 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
     orderByFee.remove(replacedTx);
   }
 
-  private boolean hasExpectedNonce(
-      final NavigableMap<Long, PendingTransaction> senderTxs,
-      final PendingTransaction pendingTransaction,
-      final long gap) {
-    if (senderTxs == null) {
-      return gap == 0;
-    }
-
-    return (senderTxs.lastKey() + 1) == pendingTransaction.getNonce();
-  }
-
   private boolean hasPriority(final PendingTransaction pendingTransaction) {
     if (orderByFee.size() < poolConfig.getMaxPrioritizedTransactions()) {
       return true;

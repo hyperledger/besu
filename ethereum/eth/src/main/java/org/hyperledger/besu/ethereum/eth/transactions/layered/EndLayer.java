@@ -34,8 +34,6 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Predicate;
 
-import kotlin.ranges.LongRange;
-
 public class EndLayer implements TransactionsLayer {
 
   private final TransactionPoolMetrics metrics;
@@ -86,14 +84,15 @@ public class EndLayer implements TransactionsLayer {
   }
 
   @Override
-  public void invalidate(final PendingTransaction pendingTransaction) {}
+  public void remove(final PendingTransaction pendingTransaction, final RemovalReason reason) {}
 
   @Override
   public void blockAdded(
       final FeeMarket feeMarket,
       final BlockHeader blockHeader,
-      final Map<Address, Long> maxConfirmedNonceBySender,
-      final Map<Address, LongRange> reorgNonceRangeBySender) {}
+      final Map<Address, Long> maxConfirmedNonceBySender) {
+    // no-op
+  }
 
   @Override
   public List<Transaction> getAllLocal() {
@@ -163,5 +162,10 @@ public class EndLayer implements TransactionsLayer {
   @Override
   public String logSender(final Address sender) {
     return "";
+  }
+
+  @Override
+  public List<PendingTransaction> getAllFor(final Address sender) {
+    return List.of();
   }
 }

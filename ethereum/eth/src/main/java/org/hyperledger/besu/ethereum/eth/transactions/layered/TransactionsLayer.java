@@ -30,8 +30,6 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Predicate;
 
-import kotlin.ranges.LongRange;
-
 public interface TransactionsLayer {
 
   String name();
@@ -46,13 +44,12 @@ public interface TransactionsLayer {
 
   TransactionAddedResult add(PendingTransaction pendingTransaction, int gap);
 
-  void invalidate(PendingTransaction pendingTransaction);
+  void remove(PendingTransaction pendingTransaction, RemovalReason reason);
 
   void blockAdded(
       FeeMarket feeMarket,
       BlockHeader blockHeader,
-      final Map<Address, Long> maxConfirmedNonceBySender,
-      final Map<Address, LongRange> reorgNonceRangeBySender);
+      final Map<Address, Long> maxConfirmedNonceBySender);
 
   List<Transaction> getAllLocal();
 
@@ -80,6 +77,8 @@ public interface TransactionsLayer {
 
   String logSender(Address sender);
 
+  List<PendingTransaction> getAllFor(Address sender);
+
   enum RemovalReason {
     CONFIRMED,
     CROSS_LAYER_REPLACED,
@@ -88,7 +87,8 @@ public interface TransactionsLayer {
     FOLLOW_INVALIDATED,
     INVALIDATED,
     PROMOTED,
-    REPLACED;
+    REPLACED,
+    REORG;
 
     private final String label;
 

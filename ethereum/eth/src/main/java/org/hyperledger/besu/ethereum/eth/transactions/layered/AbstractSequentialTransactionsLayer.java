@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.EVICTED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.FOLLOW_INVALIDATED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.INVALIDATED;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
@@ -30,8 +29,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.BiFunction;
 
-import kotlin.ranges.LongRange;
-
 public abstract class AbstractSequentialTransactionsLayer extends AbstractTransactionsLayer {
 
   public AbstractSequentialTransactionsLayer(
@@ -44,8 +41,8 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
   }
 
   @Override
-  public void invalidate(final PendingTransaction invalidatedTx) {
-    nextLayer.invalidate(invalidatedTx);
+  public void remove(final PendingTransaction invalidatedTx, final RemovalReason reason) {
+    nextLayer.remove(invalidatedTx, reason);
 
     final var senderTxs = txsBySender.get(invalidatedTx.getSender());
     final long invalidNonce = invalidatedTx.getNonce();
@@ -55,7 +52,7 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
 
       if (senderTxs.remove(invalidNonce) != null) {
         // invalid tx removed in this layer
-        processRemove(senderTxs, invalidatedTx.getTransaction(), INVALIDATED);
+        processRemove(senderTxs, invalidatedTx.getTransaction(), reason);
       }
 
       // push following to next layer
@@ -119,22 +116,17 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
     // no-op
   }
 
-  @Override
-  protected void reorg(final Address sender, final LongRange reorgNonceRange) {
-    // a reorg could create gaps at the beginning of the tx list since the
-    // sender nonce goes back, if this is the case, move the current sequential
-    // txs in sparse
-    final var senderTxs = txsBySender.get(sender);
-    if (senderTxs != null) {
-      final long currFirstNonce = senderTxs.firstKey();
-      final long maxReorgNonce = reorgNonceRange.getEndInclusive();
-      if (currFirstNonce > maxReorgNonce) {
-        // the reorg created an initial gap
-        pushDown(senderTxs, maxReorgNonce, (int) (currFirstNonce - reorgNonceRange.getStart()));
-      }
-
-      txsBySender.remove(sender);
+  protected boolean hasExpectedNonce(
+      final NavigableMap<Long, PendingTransaction> senderTxs,
+      final PendingTransaction pendingTransaction,
+      final long gap) {
+    if (senderTxs == null) {
+      return gap == 0;
     }
+
+    // true if prepend or append
+    return (senderTxs.lastKey() + 1) == pendingTransaction.getNonce()
+        || (senderTxs.firstKey() - 1) == pendingTransaction.getNonce();
   }
 
   @Override

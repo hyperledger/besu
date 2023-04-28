@@ -283,14 +283,26 @@ public class TransactionPool implements BlockAddedObserver {
       var reAddLocalTxs = txsByOrigin.get(true);
       var reAddRemoteTxs = txsByOrigin.get(false);
       if (!reAddLocalTxs.isEmpty()) {
-        LOG.trace("Re-adding {} local transactions from a block event", reAddLocalTxs.size());
+        logReAddedTransactions(reAddLocalTxs, "local");
         sortedBySenderAndNonce(reAddLocalTxs).forEach(this::addLocalTransaction);
       }
       if (!reAddRemoteTxs.isEmpty()) {
-        LOG.trace("Re-adding {} remote transactions from a block event", reAddRemoteTxs.size());
+        logReAddedTransactions(reAddRemoteTxs, "remote");
         addRemoteTransactions(reAddRemoteTxs);
       }
     }
+  }
+
+  private static void logReAddedTransactions(
+      final List<Transaction> reAddedTxs, final String source) {
+    LOG.atTrace()
+        .setMessage("Re-adding {} {} transactions from a block event: {}")
+        .addArgument(reAddedTxs::size)
+        .addArgument(source)
+        .addArgument(
+            () ->
+                reAddedTxs.stream().map(Transaction::toTraceLog).collect(Collectors.joining("; ")))
+        .log();
   }
 
   private MainnetTransactionValidator getTransactionValidator() {

@@ -45,8 +45,6 @@ import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import kotlin.ranges.LongRange;
-
 public class SparseTransactions extends AbstractTransactionsLayer {
   private final NavigableSet<PendingTransaction> sparseEvictionOrder =
       new TreeSet<>(Comparator.comparing(PendingTransaction::getSequence));
@@ -161,18 +159,18 @@ public class SparseTransactions extends AbstractTransactionsLayer {
   }
 
   @Override
-  public void invalidate(final PendingTransaction invalidatedTx) {
+  public void remove(final PendingTransaction invalidatedTx, final RemovalReason reason) {
 
     final var senderTxs = txsBySender.get(invalidatedTx.getSender());
     if (senderTxs != null && senderTxs.containsKey(invalidatedTx.getNonce())) {
       // gaps are allowed here then just remove
       senderTxs.remove(invalidatedTx.getNonce());
-      processRemove(senderTxs, invalidatedTx.getTransaction(), INVALIDATED);
+      processRemove(senderTxs, invalidatedTx.getTransaction(), reason);
       if (senderTxs.isEmpty()) {
         txsBySender.remove(invalidatedTx.getSender());
       }
     } else {
-      nextLayer.invalidate(invalidatedTx);
+      nextLayer.remove(invalidatedTx, reason);
     }
   }
 
@@ -286,16 +284,6 @@ public class SparseTransactions extends AbstractTransactionsLayer {
       if (newGap < currGap) {
         updateGap(sender, currGap, newGap);
       }
-    }
-  }
-
-  @Override
-  protected void reorg(final Address sender, final LongRange reorgNonceRange) {
-    // in case of a reorg the sender nonce goes back, so the gap can increase
-    final var senderTxs = txsBySender.get(sender);
-    if (senderTxs != null) {
-      final int newGap = (int) (senderTxs.firstKey() - reorgNonceRange.getStart());
-      updateGap(sender, gapBySender.get(sender), newGap);
     }
   }
 

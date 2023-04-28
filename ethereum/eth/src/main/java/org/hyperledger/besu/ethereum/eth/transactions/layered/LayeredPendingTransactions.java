@@ -18,7 +18,11 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.reducing;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.INTERNAL_ERROR;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REORG_SENDER;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.INVALIDATED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.REORG;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -89,7 +93,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
     return addedResult;
   }
 
-  private TransactionAddedResult addTransaction(
+  TransactionAddedResult addTransaction(
       final PendingTransaction pendingTransaction, final Optional<Account> maybeSenderAccount) {
 
     final long senderNonce = maybeSenderAccount.map(AccountState::getNonce).orElse(0L);
@@ -105,10 +109,12 @@ public class LayeredPendingTransactions implements PendingTransactions {
     }
 
     try {
-      final TransactionAddedResult result =
+      TransactionAddedResult result =
           prioritizedTransactions.add(pendingTransaction, (int) nonceDistance);
 
-      assert prioritizedTransactions.consistencyCheck(new HashMap<>());
+      if (result.equals(REORG_SENDER)) {
+        result = reorgSenderOf(pendingTransaction, (int) nonceDistance);
+      }
 
       return result;
     } catch (final Throwable throwable) {
@@ -124,8 +130,36 @@ public class LayeredPendingTransactions implements PendingTransactions {
         prioritizedTransactions.consistencyCheck(new HashMap<>());
         LOG.trace("Consistency check done");
       }
-      return TransactionAddedResult.INTERNAL_ERROR;
+      return INTERNAL_ERROR;
     }
+  }
+
+  private TransactionAddedResult reorgSenderOf(
+      final PendingTransaction pendingTransaction, final int nonceDistance) {
+    final var existingSenderTxs = prioritizedTransactions.getAllFor(pendingTransaction.getSender());
+
+    // it is more performant to invalidate backward
+    for (int i = existingSenderTxs.size() - 1; i >= 0; --i) {
+      prioritizedTransactions.remove(existingSenderTxs.get(i), REORG);
+    }
+
+    // add the new one and re-add all the previous
+    final var result = prioritizedTransactions.add(pendingTransaction, nonceDistance);
+    existingSenderTxs.forEach(ptx -> prioritizedTransactions.add(ptx, nonceDistance));
+    LOG.atTrace()
+        .setMessage(
+            "Pending transaction {} with nonce distance {} triggered a reorg for sender {} with {} existing transactions: {}")
+        .addArgument(pendingTransaction::toTraceLog)
+        .addArgument(nonceDistance)
+        .addArgument(pendingTransaction::getSender)
+        .addArgument(existingSenderTxs::size)
+        .addArgument(
+            () ->
+                existingSenderTxs.stream()
+                    .map(PendingTransaction::toTraceLog)
+                    .collect(Collectors.joining("; ")))
+        .log();
+    return result;
   }
 
   private void logTransactionForReplayAdd(
@@ -272,8 +306,8 @@ public class LayeredPendingTransactions implements PendingTransactions {
                           }
                         }));
 
-    invalidTransactions.forEach(prioritizedTransactions::invalidate);
-    assert prioritizedTransactions.consistencyCheck(new HashMap<>());
+    invalidTransactions.forEach(
+        invalidTx -> prioritizedTransactions.remove(invalidTx, INVALIDATED));
   }
 
   @Override
@@ -342,8 +376,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
     final var reorgNonceRangeBySender = nonceRangeBySender(reorgTransactions);
 
     try {
-      prioritizedTransactions.blockAdded(
-          feeMarket, blockHeader, maxConfirmedNonceBySender, reorgNonceRangeBySender);
+      prioritizedTransactions.blockAdded(feeMarket, blockHeader, maxConfirmedNonceBySender);
     } catch (final Throwable throwable) {
       LOG.warn(
           "Unexpected error {} when adding managing added block {}, maxNonceBySender {}, reorgNonceRangeBySender {}",

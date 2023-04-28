@@ -81,19 +81,6 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
     return TransactionAddedResult.TRY_NEXT_LAYER;
   }
 
-  private boolean hasExpectedNonce(
-      final NavigableMap<Long, PendingTransaction> senderTxs,
-      final PendingTransaction pendingTransaction,
-      final long gap) {
-    if (senderTxs == null) {
-      return gap == 0;
-    }
-
-    // true if prepend or append
-    return (senderTxs.lastKey() + 1) == pendingTransaction.getNonce()
-        || (senderTxs.firstKey() - 1) == pendingTransaction.getNonce();
-  }
-
   @Override
   protected void internalAdd(
       final NavigableMap<Long, PendingTransaction> senderTxs,

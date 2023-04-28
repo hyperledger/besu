@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.S2;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.S3;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.S4;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.INVALIDATED;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -33,6 +34,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.evm.account.Account;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,7 +54,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 public class LayersTest extends BaseTransactionPoolTest {
   private static final int MAX_PRIO_TRANSACTIONS = 3;
-  private static final int MAX_FUTURE_FOR_SENDER = 9;
+  private static final int MAX_FUTURE_FOR_SENDER = 10;
 
   private final TransactionPoolConfiguration poolConfig =
       ImmutableTransactionPoolConfiguration.builder()
@@ -82,9 +84,12 @@ public class LayersTest extends BaseTransactionPoolTest {
           this::transactionReplacementTester,
           FeeMarket.london(0L));
 
+  private final LayeredPendingTransactions pendingTransactions =
+      new LayeredPendingTransactions(poolConfig, prioritizedTransactions);
+
   @AfterEach
   void reset() {
-    prioritizedTransactions.reset();
+    pendingTransactions.reset();
   }
 
   @ParameterizedTest
@@ -129,9 +134,19 @@ public class LayersTest extends BaseTransactionPoolTest {
     assertScenario(scenario);
   }
 
+  @ParameterizedTest
+  @MethodSource("providerReorg")
+  void reorg(final Scenario scenario) {
+    assertScenario(scenario);
+  }
+
   private void assertScenario(final Scenario scenario) {
     scenario.execute(
-        prioritizedTransactions, readyTransactions, sparseTransactions, evictCollector);
+        pendingTransactions,
+        prioritizedTransactions,
+        readyTransactions,
+        sparseTransactions,
+        evictCollector);
   }
 
   static Stream<Arguments> providerAddTransactions() {
@@ -966,6 +981,24 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .expectedSelectedTransactions()));
   }
 
+  static Stream<Arguments> providerReorg() {
+    return Stream.of(
+        Arguments.of(
+            new Scenario("reorg")
+                .setAccountNonce(S1, 0)
+                .addForSender(S1, 0, 1, 2)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .confirmedForSenders(S1, 1)
+                .expectedPrioritizedForSender(S1, 2)
+                .expectedNextNonceForSenders(S1, 3)
+                .addForSender(S1, 3)
+                .expectedPrioritizedForSender(S1, 2, 3)
+                .setAccountNonce(S1, 0) // rewind nonce due to reorg
+                .addForSender(S1, 0)
+                .expectedPrioritizedForSender(S1, 0)
+                .expectedSparseForSender(S1, 2, 3)));
+  }
+
   private static BlockHeader mockBlockHeader() {
     final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ONE));
@@ -989,6 +1022,7 @@ public class LayersTest extends BaseTransactionPoolTest {
   static class Scenario extends BaseTransactionPoolTest {
     interface TransactionLayersConsumer {
       void accept(
+          LayeredPendingTransactions pending,
           AbstractPrioritizedTransactions prioritized,
           ReadyTransactions ready,
           SparseTransactions sparse,
@@ -1002,10 +1036,10 @@ public class LayersTest extends BaseTransactionPoolTest {
     List<PendingTransaction> lastExpectedSparse = new ArrayList<>();
     List<PendingTransaction> lastExpectedDropped = new ArrayList<>();
 
-    final EnumMap<Sender, Integer> nonceBySender = new EnumMap<>(Sender.class);
+    final EnumMap<Sender, Long> nonceBySender = new EnumMap<>(Sender.class);
 
     {
-      Arrays.stream(Sender.values()).forEach(e -> nonceBySender.put(e, 0));
+      Arrays.stream(Sender.values()).forEach(e -> nonceBySender.put(e, 0L));
     }
 
     final EnumMap<Sender, Map<Long, PendingTransaction>> txsBySender = new EnumMap<>(Sender.class);
@@ -1024,8 +1058,11 @@ public class LayersTest extends BaseTransactionPoolTest {
               n -> {
                 final var pendingTx = getOrCreate(sender, n);
                 actions.add(
-                    (prio, ready, sparse, dropped) ->
-                        prio.add(pendingTx, (int) (n - nonceBySender.get(sender))));
+                    (pending, prio, ready, sparse, dropped) -> {
+                      final Account mockSender = mock(Account.class);
+                      when(mockSender.getNonce()).thenReturn(nonceBySender.get(sender));
+                      pending.addTransaction(pendingTx, Optional.of(mockSender));
+                    });
               });
       return this;
     }
@@ -1047,23 +1084,23 @@ public class LayersTest extends BaseTransactionPoolTest {
         maxConfirmedNonceBySender.put(sender.address, nonce);
       }
       actions.add(
-          (prio, ready, sparse, dropped) ->
-              prio.blockAdded(
-                  FeeMarket.london(0L), mockBlockHeader(), maxConfirmedNonceBySender, Map.of()));
+          (pending, prio, ready, sparse, dropped) ->
+              prio.blockAdded(FeeMarket.london(0L), mockBlockHeader(), maxConfirmedNonceBySender));
       return this;
     }
 
-    Scenario setAccountNonce(final Sender sender, final int nonce) {
+    Scenario setAccountNonce(final Sender sender, final long nonce) {
       nonceBySender.put(sender, nonce);
       return this;
     }
 
     void execute(
+        final LayeredPendingTransactions pending,
         final AbstractPrioritizedTransactions prioritized,
         final ReadyTransactions ready,
         final SparseTransactions sparse,
         final EvictCollectorLayer dropped) {
-      actions.forEach(action -> action.accept(prioritized, ready, sparse, dropped));
+      actions.forEach(action -> action.accept(pending, prioritized, ready, sparse, dropped));
       assertExpectedPrioritized(prioritized, lastExpectedPrioritized);
       assertExpectedReady(ready, lastExpectedReady);
       assertExpectedSparse(sparse, lastExpectedSparse);
@@ -1089,28 +1126,32 @@ public class LayersTest extends BaseTransactionPoolTest {
     public Scenario expectedPrioritizedForSender(final Sender sender, final long... nonce) {
       lastExpectedPrioritized = expectedForSender(sender, nonce);
       final var expectedCopy = List.copyOf(lastExpectedPrioritized);
-      actions.add((prio, ready, sparse, dropped) -> assertExpectedPrioritized(prio, expectedCopy));
+      actions.add(
+          (pending, prio, ready, sparse, dropped) -> assertExpectedPrioritized(prio, expectedCopy));
       return this;
     }
 
     public Scenario expectedReadyForSender(final Sender sender, final long... nonce) {
       lastExpectedReady = expectedForSender(sender, nonce);
       final var expectedCopy = List.copyOf(lastExpectedReady);
-      actions.add((prio, ready, sparse, dropped) -> assertExpectedReady(ready, expectedCopy));
+      actions.add(
+          (pending, prio, ready, sparse, dropped) -> assertExpectedReady(ready, expectedCopy));
       return this;
     }
 
     public Scenario expectedSparseForSender(final Sender sender, final long... nonce) {
       lastExpectedSparse = expectedForSender(sender, nonce);
       final var expectedCopy = List.copyOf(lastExpectedSparse);
-      actions.add((prio, ready, sparse, dropped) -> assertExpectedSparse(sparse, expectedCopy));
+      actions.add(
+          (pending, prio, ready, sparse, dropped) -> assertExpectedSparse(sparse, expectedCopy));
       return this;
     }
 
     public Scenario expectedDroppedForSender(final Sender sender, final long... nonce) {
       lastExpectedDropped = expectedForSender(sender, nonce);
       final var expectedCopy = List.copyOf(lastExpectedDropped);
-      actions.add((prio, ready, sparse, dropped) -> assertExpectedDropped(dropped, expectedCopy));
+      actions.add(
+          (pending, prio, ready, sparse, dropped) -> assertExpectedDropped(dropped, expectedCopy));
       return this;
     }
 
@@ -1118,14 +1159,16 @@ public class LayersTest extends BaseTransactionPoolTest {
         final Sender sender1, final long nonce1, final Sender sender2, Object... args) {
       lastExpectedPrioritized = expectedForSenders(sender1, nonce1, sender2, args);
       final var expectedCopy = List.copyOf(lastExpectedPrioritized);
-      actions.add((prio, ready, sparse, dropped) -> assertExpectedPrioritized(prio, expectedCopy));
+      actions.add(
+          (pending, prio, ready, sparse, dropped) -> assertExpectedPrioritized(prio, expectedCopy));
       return this;
     }
 
     public Scenario expectedPrioritizedForSenders() {
       lastExpectedPrioritized = List.of();
       final var expectedCopy = List.copyOf(lastExpectedPrioritized);
-      actions.add((prio, ready, sparse, dropped) -> assertExpectedPrioritized(prio, expectedCopy));
+      actions.add(
+          (pending, prio, ready, sparse, dropped) -> assertExpectedPrioritized(prio, expectedCopy));
       return this;
     }
 
@@ -1133,14 +1176,16 @@ public class LayersTest extends BaseTransactionPoolTest {
         final Sender sender1, final long nonce1, final Sender sender2, final Object... args) {
       lastExpectedReady = expectedForSenders(sender1, nonce1, sender2, args);
       final var expectedCopy = List.copyOf(lastExpectedReady);
-      actions.add((prio, ready, sparse, dropped) -> assertExpectedReady(ready, expectedCopy));
+      actions.add(
+          (pending, prio, ready, sparse, dropped) -> assertExpectedReady(ready, expectedCopy));
       return this;
     }
 
     public Scenario expectedReadyForSenders() {
       lastExpectedReady = List.of();
       final var expectedCopy = List.copyOf(lastExpectedReady);
-      actions.add((prio, ready, sparse, dropped) -> assertExpectedReady(ready, expectedCopy));
+      actions.add(
+          (pending, prio, ready, sparse, dropped) -> assertExpectedReady(ready, expectedCopy));
       return this;
     }
 
@@ -1148,14 +1193,16 @@ public class LayersTest extends BaseTransactionPoolTest {
         final Sender sender1, final long nonce1, final Sender sender2, final Object... args) {
       lastExpectedSparse = expectedForSenders(sender1, nonce1, sender2, args);
       final var expectedCopy = List.copyOf(lastExpectedSparse);
-      actions.add((prio, ready, sparse, dropped) -> assertExpectedSparse(sparse, expectedCopy));
+      actions.add(
+          (pending, prio, ready, sparse, dropped) -> assertExpectedSparse(sparse, expectedCopy));
       return this;
     }
 
     public Scenario expectedSparseForSenders() {
       lastExpectedSparse = List.of();
       final var expectedCopy = List.copyOf(lastExpectedSparse);
-      actions.add((prio, ready, sparse, dropped) -> assertExpectedSparse(sparse, expectedCopy));
+      actions.add(
+          (pending, prio, ready, sparse, dropped) -> assertExpectedSparse(sparse, expectedCopy));
       return this;
     }
 
@@ -1163,14 +1210,16 @@ public class LayersTest extends BaseTransactionPoolTest {
         final Sender sender1, final long nonce1, final Sender sender2, final Object... args) {
       lastExpectedDropped = expectedForSenders(sender1, nonce1, sender2, args);
       final var expectedCopy = List.copyOf(lastExpectedDropped);
-      actions.add((prio, ready, sparse, dropped) -> assertExpectedDropped(dropped, expectedCopy));
+      actions.add(
+          (pending, prio, ready, sparse, dropped) -> assertExpectedDropped(dropped, expectedCopy));
       return this;
     }
 
     public Scenario expectedDroppedForSenders() {
       lastExpectedDropped = List.of();
       final var expectedCopy = List.copyOf(lastExpectedDropped);
-      actions.add((prio, ready, sparse, dropped) -> assertExpectedDropped(dropped, expectedCopy));
+      actions.add(
+          (pending, prio, ready, sparse, dropped) -> assertExpectedDropped(dropped, expectedCopy));
       return this;
     }
 
@@ -1227,7 +1276,7 @@ public class LayersTest extends BaseTransactionPoolTest {
         final OptionalLong nonce =
             nullableInt == null ? OptionalLong.empty() : OptionalLong.of(nullableInt);
         actions.add(
-            (prio, ready, sparse, dropped) ->
+            (pending, prio, ready, sparse, dropped) ->
                 assertThat(prio.getNextNonceFor(sender.address)).isEqualTo(nonce));
       }
       return this;
@@ -1238,7 +1287,8 @@ public class LayersTest extends BaseTransactionPoolTest {
           .forEach(
               n -> {
                 final var pendingTx = getOrCreate(sender, n);
-                actions.add((prio, ready, sparse, dropped) -> prio.invalidate(pendingTx));
+                actions.add(
+                    (pending, prio, ready, sparse, dropped) -> prio.remove(pendingTx, INVALIDATED));
               });
       return this;
     }
@@ -1251,7 +1301,7 @@ public class LayersTest extends BaseTransactionPoolTest {
         expectedSelected.add(get(sender, nonce));
       }
       actions.add(
-          (prio, ready, sparse, dropped) ->
+          (pending, prio, ready, sparse, dropped) ->
               assertThat(prio.stream()).containsExactlyElementsOf(expectedSelected));
       return this;
     }

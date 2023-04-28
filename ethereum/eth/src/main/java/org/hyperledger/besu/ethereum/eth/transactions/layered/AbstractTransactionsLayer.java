@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REORG_SENDER;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.TRY_NEXT_LAYER;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.CONFIRMED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.CROSS_LAYER_REPLACED;
@@ -52,7 +53,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import kotlin.ranges.LongRange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -274,6 +274,9 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       nextLayerDistance = distance;
     } else {
       nextLayerDistance = (int) (pendingTransaction.getNonce() - (senderTxs.lastKey() + 1));
+      if (nextLayerDistance < 0) {
+        return REORG_SENDER;
+      }
     }
     return nextLayer.add(pendingTransaction, nextLayerDistance);
   }
@@ -389,21 +392,16 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   public final void blockAdded(
       final FeeMarket feeMarket,
       final BlockHeader blockHeader,
-      final Map<Address, Long> maxConfirmedNonceBySender,
-      final Map<Address, LongRange> reorgNonceRangeBySender) {
+      final Map<Address, Long> maxConfirmedNonceBySender) {
     LOG.atDebug()
         .setMessage("Managing new added block {}")
         .addArgument(blockHeader::toLogString)
         .log();
 
-    nextLayer.blockAdded(
-        feeMarket, blockHeader, maxConfirmedNonceBySender, reorgNonceRangeBySender);
+    nextLayer.blockAdded(feeMarket, blockHeader, maxConfirmedNonceBySender);
     maxConfirmedNonceBySender.forEach(this::confirmed);
-    reorgNonceRangeBySender.forEach(this::reorg);
     internalBlockAdded(blockHeader, feeMarket);
   }
-
-  protected abstract void reorg(final Address sender, final LongRange reorgNonceRange);
 
   protected abstract void internalBlockAdded(
       final BlockHeader blockHeader, final FeeMarket feeMarket);
@@ -491,6 +489,11 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
 
   Stream<PendingTransaction> stream(final Address sender) {
     return txsBySender.getOrDefault(sender, EMPTY_SENDER_TXS).values().stream();
+  }
+
+  @Override
+  public List<PendingTransaction> getAllFor(final Address sender) {
+    return Stream.concat(stream(sender), nextLayer.getAllFor(sender).stream()).toList();
   }
 
   abstract Stream<PendingTransaction> stream();

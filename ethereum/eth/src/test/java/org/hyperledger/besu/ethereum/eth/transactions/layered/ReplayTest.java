@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.INVALIDATED;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -238,8 +239,7 @@ public class ReplayTest {
           nonceRangeBySender.get(senderToLog),
           prioritizedTransactions.logSender(senderToLog));
     }
-    prioritizedTransactions.blockAdded(
-        feeMarket, blockHeader, maxNonceBySender, nonceRangeBySender);
+    prioritizedTransactions.blockAdded(feeMarket, blockHeader, maxNonceBySender);
     if (maxNonceBySender.containsKey(senderToLog) || nonceRangeBySender.containsKey(senderToLog)) {
       LOG.warn("After {}", prioritizedTransactions.logSender(senderToLog));
     }
@@ -275,7 +275,7 @@ public class ReplayTest {
     if (tx.getSender().equals(senderToLog)) {
       LOG.warn("D {}, Before {}", tx.getNonce(), prioritizedTransactions.logSender(senderToLog));
     }
-    prioritizedTransactions.invalidate(new PendingTransaction.Remote(tx));
+    prioritizedTransactions.remove(new PendingTransaction.Remote(tx), INVALIDATED);
     if (tx.getSender().equals(senderToLog)) {
       LOG.warn("After {}", prioritizedTransactions.logSender(senderToLog));
     }
