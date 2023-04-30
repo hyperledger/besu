@@ -104,20 +104,6 @@ public class EngineGetPayloadV2Test extends AbstractEngineGetPayloadTest {
               assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResultV2.class);
               final EngineGetPayloadResultV2 res = (EngineGetPayloadResultV2) r.getResult();
               assertThat(res.getExecutionPayload().getWithdrawals()).isNull();
-            });
-    verify(engineCallListener, times(1)).executionEngineCalled();
-  }
-
-  @Test
-  public void shouldReturnExecutionPayloadWithoutDeposits_PreShanghaiBlock() {
-    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V2.getMethodName(), mockPid);
-    assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
-    Optional.of(resp)
-        .map(JsonRpcSuccessResponse.class::cast)
-        .ifPresent(
-            r -> {
-              assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResultV2.class);
-              final EngineGetPayloadResultV2 res = (EngineGetPayloadResultV2) r.getResult();
               assertThat(res.getExecutionPayload().getDeposits()).isNull();
             });
     verify(engineCallListener, times(1)).executionEngineCalled();

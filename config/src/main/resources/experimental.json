@@ -35,5 +35,6 @@
       "comment": "private key and this comment are ignored.  In a real chain, the private key should NOT be stored",
       "balance": "90000000000000000000000"
     }
-  }
+  },
+  "depositContractAddress": "0x00000000219ab540356cbb839cbe05303d7705fa"
 }

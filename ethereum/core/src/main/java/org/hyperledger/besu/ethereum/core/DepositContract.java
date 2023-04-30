@@ -42,7 +42,7 @@ public class DepositContract extends Contract {
               new TypeReference<DynamicBytes>() {},
               new TypeReference<DynamicBytes>() {}));
 
-  protected DepositContract(
+  private DepositContract(
       final String contractBinary,
       final String contractAddress,
       final Web3j web3j,

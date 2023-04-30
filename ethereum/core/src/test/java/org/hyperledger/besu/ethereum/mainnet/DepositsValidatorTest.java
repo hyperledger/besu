@@ -49,7 +49,6 @@ public class DepositsValidatorTest {
 
   @BeforeAll
   public static void setup() {
-    System.out.println("setting");
     DEPOSIT_1 =
         new Deposit(
             BLSPublicKey.fromHexString(
