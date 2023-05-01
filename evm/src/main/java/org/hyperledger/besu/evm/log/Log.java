@@ -58,7 +58,7 @@ public class Log {
     out.writeBytes(logger);
     out.writeList(topics, (topic, listOut) -> listOut.writeBytes(topic));
     if (isCompacted) {
-      final Bytes shortData = Bytes.fromHexString(data.toShortHexString());
+      final Bytes shortData = data.trimLeadingZeros();
       final int zeroLeadDataSize = data.size() - shortData.size();
       out.writeInt(zeroLeadDataSize);
       out.writeBytes(shortData);
