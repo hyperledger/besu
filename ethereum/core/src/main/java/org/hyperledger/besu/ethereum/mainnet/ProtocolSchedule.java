@@ -43,10 +43,9 @@ public interface ProtocolSchedule extends PrivacySupportingProtocolSchedule {
 
   String listMilestones();
 
-  void putMilestone(
-      final ScheduledSpecFactory specFactory,
-      final long milestone,
-      final ProtocolSpec protocolSpec);
+  void putBlockNumberMilestone(final long blockNumber, final ProtocolSpec protocolSpec);
+
+  void putTimestampMilestone(final long timestamp, final ProtocolSpec protocolSpec);
 
   boolean isOnMilestoneBoundary(final BlockHeader blockHeader);
 
