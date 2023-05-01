@@ -245,7 +245,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
    * @return the transaction receipt
    */
   public static TransactionReceipt readFrom(
-      final RLPInput rlpInput, final boolean revertReasonAllowed, boolean isCompressed) {
+      final RLPInput rlpInput, final boolean revertReasonAllowed, final boolean isCompressed) {
     RLPInput input = rlpInput;
     TransactionType transactionType = TransactionType.FRONTIER;
     if (!rlpInput.nextIsList()) {
