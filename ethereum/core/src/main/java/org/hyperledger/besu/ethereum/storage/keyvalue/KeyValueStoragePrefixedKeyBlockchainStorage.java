@@ -125,7 +125,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   }
 
   private List<TransactionReceipt> rlpDecodeTransactionReceipts(final Bytes bytes) {
-    return RLP.input(bytes).readList(TransactionReceipt::readFrom);
+    return RLP.input(bytes).readList(input -> TransactionReceipt.readFrom(input, true, true));
   }
 
   private Hash bytesToHash(final Bytes bytes) {
@@ -247,7 +247,12 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
     }
 
     private Bytes rlpEncode(final List<TransactionReceipt> receipts) {
-      return RLP.encode(o -> o.writeList(receipts, TransactionReceipt::writeToWithRevertReason));
+      return RLP.encode(
+          o ->
+              o.writeList(
+                  receipts,
+                  (transactionReceipt, rlpOutput) ->
+                      transactionReceipt.writeToWithRevertReason(rlpOutput, true)));
     }
   }
 }

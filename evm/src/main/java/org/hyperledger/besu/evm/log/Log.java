@@ -24,6 +24,7 @@ import java.util.Objects;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.MutableBytes;
 
 /**
  * A log entry is a tuple of a logger’s address (the address of the contract that added the logs), a
@@ -48,30 +49,54 @@ public class Log {
     this.topics = ImmutableList.copyOf(topics);
   }
 
-  /**
-   * Writes the log entry to the provided RLP output.
-   *
-   * @param out the output in which to encode the log entry.
-   */
   public void writeTo(final RLPOutput out) {
+    writeTo(out, false);
+  }
+
+  public void writeTo(final RLPOutput out, final boolean isCompacted) {
     out.startList();
     out.writeBytes(logger);
     out.writeList(topics, (topic, listOut) -> listOut.writeBytes(topic));
-    out.writeBytes(data);
+    if (isCompacted) {
+      final Bytes shortData = Bytes.fromHexString(data.toShortHexString());
+      final int zeroLeadDataSize = data.size() - shortData.size();
+      out.writeInt(zeroLeadDataSize);
+      out.writeBytes(shortData);
+    } else {
+      out.writeBytes(data);
+    }
     out.endList();
   }
 
+  public static Log readFrom(final RLPInput in) {
+    return readFrom(in, false);
+  }
   /**
    * Reads the log entry from the provided RLP input.
    *
    * @param in the input from which to decode the log entry.
    * @return the read log entry.
    */
-  public static Log readFrom(final RLPInput in) {
+  public static Log readFrom(final RLPInput in, final boolean isCompacted) {
     in.enterList();
     final Address logger = Address.wrap(in.readBytes());
     final List<LogTopic> topics = in.readList(listIn -> LogTopic.wrap(listIn.readBytes32()));
-    final Bytes data = in.readBytes();
+    final Bytes data;
+    if (isCompacted) {
+      final int zeroLeadDataSize = in.readInt();
+      if (in.nextIsNull()) {
+        data = MutableBytes.create(zeroLeadDataSize);
+        in.skipNext();
+      } else {
+        final Bytes shortData = in.readBytes();
+        MutableBytes unCompactedData = MutableBytes.create(zeroLeadDataSize + shortData.size());
+        unCompactedData.set(zeroLeadDataSize, shortData);
+        data = unCompactedData;
+      }
+    } else {
+      data = in.readBytes();
+    }
+
     in.leaveList();
     return new Log(logger, data, topics);
   }
