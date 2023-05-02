@@ -113,7 +113,7 @@ public class BootNodesGenesisSetupTest extends AcceptanceTestBase {
             (nodes) ->
                 Optional.of(
                     String.format(
-                        "{\"config\": {\"keccak256\": {}, \"discovery\": { \"bootnodes\": [\"enode://%s@127.0.0.1:%d\"]}}, \"gasLimit\": \"0x1\", \"difficulty\": \"0x1\"}",
+                        "{\"config\": {\"ethash\": {}, \"discovery\": { \"bootnodes\": [\"enode://%s@127.0.0.1:%d\"]}}, \"gasLimit\": \"0x1\", \"difficulty\": \"0x1\"}",
                         peerPublicKey.toString().substring(2), peerP2pBindingPort)))
         .bootnodeEligible(false)
         .jsonRpcEnabled()

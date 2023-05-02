@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
-import static org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStateUtil.getPrivateWorldStateAtBlock;
-
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -27,7 +25,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -36,7 +33,6 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
-import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateAndPublicWorldStateUpdater;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -77,7 +73,6 @@ public class TransactionSimulator {
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
   private final ProtocolSchedule protocolSchedule;
-  private final Optional<PrivacyParameters> maybePrivacyParameters;
 
   public TransactionSimulator(
       final Blockchain blockchain,
@@ -86,18 +81,6 @@ public class TransactionSimulator {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.protocolSchedule = protocolSchedule;
-    this.maybePrivacyParameters = Optional.empty();
-  }
-
-  public TransactionSimulator(
-      final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
-      final ProtocolSchedule protocolSchedule,
-      final PrivacyParameters privacyParameters) {
-    this.blockchain = blockchain;
-    this.worldStateArchive = worldStateArchive;
-    this.protocolSchedule = protocolSchedule;
-    this.maybePrivacyParameters = Optional.of(privacyParameters);
   }
 
   public Optional<TransactionSimulatorResult> process(
@@ -245,29 +228,6 @@ public class TransactionSimulator {
             operationTracer,
             dataGasPrice);
 
-    // If GoQuorum privacy enabled, and value = zero, get max gas possible for a PMT hash.
-    // It is possible to have a data field that has a lower intrinsic value than the PMT hash.
-    // This means a potential over-estimate of gas, but the tx, if sent with this gas, will not
-    // fail.
-    final boolean goQuorumCompatibilityMode =
-        transactionProcessor.getTransactionValidator().getGoQuorumCompatibilityMode();
-
-    if (goQuorumCompatibilityMode && value.isZero()) {
-      final long privateGasEstimateAndState =
-          protocolSpec.getGasCalculator().getMaximumTransactionCost(64);
-      if (privateGasEstimateAndState > result.getEstimateGasUsedByTransaction()) {
-        // modify the result to have the larger estimate
-        final TransactionProcessingResult resultPmt =
-            TransactionProcessingResult.successful(
-                result.getLogs(),
-                privateGasEstimateAndState,
-                result.getGasRemaining(),
-                result.getOutput(),
-                result.getValidationResult());
-        return Optional.of(new TransactionSimulatorResult(transaction, resultPmt));
-      }
-    }
-
     return Optional.of(new TransactionSimulatorResult(transaction, result));
   }
 
@@ -325,20 +285,8 @@ public class TransactionSimulator {
     return Optional.ofNullable(transaction);
   }
 
-  // return combined private/public world state updater if GoQuorum mode, otherwise the public state
   public WorldUpdater getEffectiveWorldStateUpdater(
       final BlockHeader header, final MutableWorldState publicWorldState) {
-
-    if (maybePrivacyParameters.isPresent()
-        && maybePrivacyParameters.get().getGoQuorumPrivacyParameters().isPresent()) {
-
-      final MutableWorldState privateWorldState =
-          getPrivateWorldStateAtBlock(
-              maybePrivacyParameters.get().getGoQuorumPrivacyParameters(), header);
-      return new GoQuorumMutablePrivateAndPublicWorldStateUpdater(
-          publicWorldState.updater(), privateWorldState.updater());
-    }
-
     return publicWorldState.updater();
   }
 

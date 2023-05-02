@@ -19,9 +19,7 @@ public enum PowAlgorithm {
   /** Unsupported pow algorithm. */
   UNSUPPORTED,
   /** Ethash pow algorithm. */
-  ETHASH,
-  /** Keccak 256 pow algorithm. */
-  KECCAK256;
+  ETHASH;
 
   /**
    * From string pow algorithm.

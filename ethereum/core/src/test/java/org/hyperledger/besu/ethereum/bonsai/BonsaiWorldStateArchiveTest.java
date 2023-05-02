@@ -29,6 +29,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
@@ -88,7 +89,7 @@ public class BonsaiWorldStateArchiveTest {
     bonsaiWorldStateArchive =
         new BonsaiWorldStateProvider(
             trieLogManager,
-            new BonsaiWorldStateKeyValueStorage(storageProvider),
+            new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()),
             blockchain,
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()));
 
@@ -100,10 +101,11 @@ public class BonsaiWorldStateArchiveTest {
   public void testGetMutableReturnEmptyWhenLoadMoreThanLimitLayersBack() {
     bonsaiWorldStateArchive =
         new BonsaiWorldStateProvider(
-            new BonsaiWorldStateKeyValueStorage(storageProvider),
+            new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()),
             blockchain,
             Optional.of(512L),
-            new CachedMerkleTrieLoader(new NoOpMetricsSystem()));
+            new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
+            new NoOpMetricsSystem());
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(512).buildHeader();
     when(blockchain.getChainHeadHeader()).thenReturn(chainHead);
@@ -117,7 +119,7 @@ public class BonsaiWorldStateArchiveTest {
     bonsaiWorldStateArchive =
         new BonsaiWorldStateProvider(
             trieLogManager,
-            new BonsaiWorldStateKeyValueStorage(storageProvider),
+            new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()),
             blockchain,
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()));
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
@@ -141,7 +143,8 @@ public class BonsaiWorldStateArchiveTest {
     when(keyValueStorage.startTransaction()).thenReturn(mock(KeyValueStorageTransaction.class));
     when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.of(mock(TrieLogLayer.class)));
 
-    var worldStateStorage = new BonsaiWorldStateKeyValueStorage(storageProvider);
+    var worldStateStorage =
+        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateProvider(
@@ -166,7 +169,8 @@ public class BonsaiWorldStateArchiveTest {
 
     when(keyValueStorage.startTransaction()).thenReturn(mock(KeyValueStorageTransaction.class));
 
-    var worldStateStorage = new BonsaiWorldStateKeyValueStorage(storageProvider);
+    var worldStateStorage =
+        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
     bonsaiWorldStateArchive =
         spy(
             new BonsaiWorldStateProvider(
@@ -199,7 +203,8 @@ public class BonsaiWorldStateArchiveTest {
 
     when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.of(mock(TrieLogLayer.class)));
 
-    var worldStateStorage = new BonsaiWorldStateKeyValueStorage(storageProvider);
+    var worldStateStorage =
+        new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
 
     bonsaiWorldStateArchive =
         spy(
@@ -244,7 +249,7 @@ public class BonsaiWorldStateArchiveTest {
         spy(
             new BonsaiWorldStateProvider(
                 trieLogManager,
-                new BonsaiWorldStateKeyValueStorage(storageProvider),
+                new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()),
                 blockchain,
                 new CachedMerkleTrieLoader(new NoOpMetricsSystem())));
 
@@ -254,7 +259,7 @@ public class BonsaiWorldStateArchiveTest {
     final BytesValueRLPOutput rlpLogBlockB = new BytesValueRLPOutput();
     final TrieLogLayer trieLogLayerBlockB = new TrieLogLayer();
     trieLogLayerBlockB.setBlockHash(blockHeaderChainB.getHash());
-    trieLogLayerBlockB.writeTo(rlpLogBlockB);
+    TrieLogFactoryImpl.writeTo(trieLogLayerBlockB, rlpLogBlockB);
     when(keyValueStorage.get(blockHeaderChainB.getHash().toArrayUnsafe()))
         .thenReturn(Optional.of(rlpLogBlockB.encoded().toArrayUnsafe()));
 

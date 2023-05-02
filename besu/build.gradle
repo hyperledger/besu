@@ -63,6 +63,7 @@ dependencies {
   implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
   implementation 'com.github.oshi:oshi-core'
   implementation 'com.google.guava:guava'
+  implementation 'com.google.dagger:dagger'
   implementation 'com.graphql-java:graphql-java'
   implementation 'info.picocli:picocli'
   implementation 'io.vertx:vertx-core'
@@ -75,7 +76,6 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.springframework.security:spring-security-crypto'
   implementation 'org.xerial.snappy:snappy-java'
-  implementation 'net.consensys.services:quorum-mainnet-launcher'
   implementation 'tech.pegasys:jc-kzg-4844'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-jul'
@@ -103,4 +103,5 @@ dependencies {
   testImplementation 'tech.pegasys.discovery:discovery'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+  annotationProcessor 'com.google.dagger:dagger-compiler'
 }

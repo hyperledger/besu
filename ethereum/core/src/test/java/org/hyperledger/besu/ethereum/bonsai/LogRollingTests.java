@@ -24,6 +24,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
@@ -123,7 +124,9 @@ public class LogRollingTests {
     final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
     final CachedMerkleTrieLoader cachedMerkleTrieLoader =
         new CachedMerkleTrieLoader(new NoOpMetricsSystem());
-    archive = new BonsaiWorldStateProvider(provider, blockchain, cachedMerkleTrieLoader);
+    archive =
+        new BonsaiWorldStateProvider(
+            provider, blockchain, cachedMerkleTrieLoader, new NoOpMetricsSystem());
     accountStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
@@ -145,7 +148,8 @@ public class LogRollingTests {
     final CachedMerkleTrieLoader secondOptimizedMerkleTrieLoader =
         new CachedMerkleTrieLoader(new NoOpMetricsSystem());
     secondArchive =
-        new BonsaiWorldStateProvider(secondProvider, blockchain, secondOptimizedMerkleTrieLoader);
+        new BonsaiWorldStateProvider(
+            secondProvider, blockchain, secondOptimizedMerkleTrieLoader, new NoOpMetricsSystem());
     secondAccountStorage =
         (InMemoryKeyValueStorage)
             secondProvider.getStorageBySegmentIdentifier(
@@ -174,7 +178,12 @@ public class LogRollingTests {
         new BonsaiWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                trieBranchStorage,
+                trieLogStorage,
+                new NoOpMetricsSystem()));
     final WorldUpdater updater = worldState.updater();
 
     final MutableAccount mutableAccount =
@@ -192,14 +201,15 @@ public class LogRollingTests {
                 secondCodeStorage,
                 secondStorageStorage,
                 secondTrieBranchStorage,
-                secondTrieLogStorage));
+                secondTrieLogStorage,
+                new NoOpMetricsSystem()));
     final BonsaiWorldStateUpdateAccumulator secondUpdater =
         (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
 
     final Optional<byte[]> value = trieLogStorage.get(headerOne.getHash().toArrayUnsafe());
 
     final TrieLogLayer layer =
-        TrieLogLayer.readFrom(new BytesValueRLPInput(Bytes.wrap(value.get()), false));
+        TrieLogFactoryImpl.readFrom(new BytesValueRLPInput(Bytes.wrap(value.get()), false));
 
     secondUpdater.rollForward(layer);
     secondUpdater.commit();
@@ -223,7 +233,12 @@ public class LogRollingTests {
         new BonsaiWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                trieBranchStorage,
+                trieLogStorage,
+                new NoOpMetricsSystem()));
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount =
@@ -249,7 +264,8 @@ public class LogRollingTests {
                 secondCodeStorage,
                 secondStorageStorage,
                 secondTrieBranchStorage,
-                secondTrieLogStorage));
+                secondTrieLogStorage,
+                new NoOpMetricsSystem()));
     final BonsaiWorldStateUpdateAccumulator secondUpdater =
         (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
 
@@ -281,7 +297,12 @@ public class LogRollingTests {
         new BonsaiWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                trieBranchStorage,
+                trieLogStorage,
+                new NoOpMetricsSystem()));
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount =
@@ -314,7 +335,8 @@ public class LogRollingTests {
                 secondCodeStorage,
                 secondStorageStorage,
                 secondTrieBranchStorage,
-                secondTrieLogStorage));
+                secondTrieLogStorage,
+                new NoOpMetricsSystem()));
 
     final WorldUpdater secondUpdater = secondWorldState.updater();
     final MutableAccount secondMutableAccount =
@@ -340,7 +362,7 @@ public class LogRollingTests {
   private TrieLogLayer getTrieLogLayer(final InMemoryKeyValueStorage storage, final Bytes key) {
     return storage
         .get(key.toArrayUnsafe())
-        .map(bytes -> TrieLogLayer.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false)))
+        .map(bytes -> TrieLogFactoryImpl.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false)))
         .get();
   }
 

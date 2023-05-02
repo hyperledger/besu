@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -73,6 +74,7 @@ public class BesuController implements java.io.Closeable {
   private final MiningParameters miningParameters;
   private final PluginServiceFactory additionalPluginServices;
   private final SyncState syncState;
+  private final EthPeers ethPeers;
 
   /**
    * Instantiates a new Besu controller.
@@ -108,7 +110,8 @@ public class BesuController implements java.io.Closeable {
       final JsonRpcMethods additionalJsonRpcMethodsFactory,
       final NodeKey nodeKey,
       final List<Closeable> closeables,
-      final PluginServiceFactory additionalPluginServices) {
+      final PluginServiceFactory additionalPluginServices,
+      final EthPeers ethPeers) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
@@ -124,6 +127,7 @@ public class BesuController implements java.io.Closeable {
     this.closeables = closeables;
     this.miningParameters = miningParameters;
     this.additionalPluginServices = additionalPluginServices;
+    this.ethPeers = ethPeers;
   }
 
   /**
@@ -207,6 +211,15 @@ public class BesuController implements java.io.Closeable {
     return miningCoordinator;
   }
 
+  /**
+   * get the collection of eth peers
+   *
+   * @return the EthPeers collection
+   */
+  public EthPeers getEthPeers() {
+    return ethPeers;
+  }
+
   @Override
   public void close() {
     closeables.forEach(this::tryClose);
@@ -215,7 +228,7 @@ public class BesuController implements java.io.Closeable {
   private void tryClose(final Closeable closeable) {
     try {
       closeable.close();
-    } catch (IOException e) {
+    } catch (final IOException e) {
       LOG.error("Unable to close resource.", e);
     }
   }

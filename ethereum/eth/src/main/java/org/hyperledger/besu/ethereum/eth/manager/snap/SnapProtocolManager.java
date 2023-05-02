@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
+import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -136,6 +137,11 @@ public class SnapProtocolManager implements ProtocolManager {
 
   @Override
   public void handleNewConnection(final PeerConnection connection) {}
+
+  @Override
+  public boolean shouldConnect(final Peer peer, final boolean incoming) {
+    return false; // EthManager is taking care of this for now
+  }
 
   @Override
   public void handleDisconnect(

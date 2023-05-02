@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.bonsai.storage;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
+import org.hyperledger.besu.ethereum.bonsai.worldview.StorageSlotKey;
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
@@ -41,21 +43,30 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final SnappedKeyValueStorage codeStorage,
       final SnappedKeyValueStorage storageStorage,
       final SnappedKeyValueStorage trieBranchStorage,
-      final KeyValueStorage trieLogStorage) {
-    super(accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage);
+      final KeyValueStorage trieLogStorage,
+      final ObservableMetricsSystem metricsSystem) {
+    super(
+        accountStorage,
+        codeStorage,
+        storageStorage,
+        trieBranchStorage,
+        trieLogStorage,
+        metricsSystem);
     this.parentWorldStateStorage = parentWorldStateStorage;
     this.subscribeParentId = parentWorldStateStorage.subscribe(this);
   }
 
   public BonsaiSnapshotWorldStateKeyValueStorage(
-      final BonsaiWorldStateKeyValueStorage worldStateStorage) {
+      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final ObservableMetricsSystem metricsSystem) {
     this(
         worldStateStorage,
         ((SnappableKeyValueStorage) worldStateStorage.accountStorage).takeSnapshot(),
         ((SnappableKeyValueStorage) worldStateStorage.codeStorage).takeSnapshot(),
         ((SnappableKeyValueStorage) worldStateStorage.storageStorage).takeSnapshot(),
         ((SnappableKeyValueStorage) worldStateStorage.trieBranchStorage).takeSnapshot(),
-        worldStateStorage.trieLogStorage);
+        worldStateStorage.trieLogStorage,
+        metricsSystem);
   }
 
   @Override
@@ -112,20 +123,21 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   @Override
-  public Optional<Bytes> getStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
+  public Optional<Bytes> getStorageValueByStorageSlotKey(
+      final Hash accountHash, final StorageSlotKey storageSlotKey) {
     return isClosed.get()
         ? Optional.empty()
-        : super.getStorageValueBySlotHash(accountHash, slotHash);
+        : super.getStorageValueByStorageSlotKey(accountHash, storageSlotKey);
   }
 
   @Override
-  public Optional<Bytes> getStorageValueBySlotHash(
+  public Optional<Bytes> getStorageValueByStorageSlotKey(
       final Supplier<Optional<Hash>> storageRootSupplier,
       final Hash accountHash,
-      final Hash slotHash) {
+      final StorageSlotKey storageSlotKey) {
     return isClosed.get()
         ? Optional.empty()
-        : super.getStorageValueBySlotHash(storageRootSupplier, accountHash, slotHash);
+        : super.getStorageValueByStorageSlotKey(storageRootSupplier, accountHash, storageSlotKey);
   }
 
   @Override

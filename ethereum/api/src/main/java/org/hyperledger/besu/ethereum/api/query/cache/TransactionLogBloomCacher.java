@@ -207,7 +207,7 @@ public class TransactionLogBloomCacher {
         throw new InvalidCacheException();
       }
       writer.seek(offset);
-      writer.write(ensureBloomBitsAreCorrectLength(blockHeader.getLogsBloom(true).toArray()));
+      writer.write(ensureBloomBitsAreCorrectLength(blockHeader.getLogsBloom().toArray()));
 
       // remove invalid logs when there was a reorg
       final long validCacheSize = offset + BLOOM_BITS_LENGTH;
@@ -284,32 +284,36 @@ public class TransactionLogBloomCacher {
       final long blockNumber, final boolean overrideCacheCheck) {
     if (!cachingStatus.isCaching()) {
       scheduler.scheduleFutureTask(
-          () -> {
-            long currentSegment = (blockNumber / BLOCKS_PER_BLOOM_CACHE) - 1;
-            while (currentSegment >= 0) {
-              try {
-                if (overrideCacheCheck || !cachedSegments.getOrDefault(currentSegment, false)) {
-                  final long startBlock = currentSegment * BLOCKS_PER_BLOOM_CACHE;
-                  final File cacheFile = calculateCacheFileName(startBlock, cacheDir);
-                  if (overrideCacheCheck
-                      || !cacheFile.isFile()
-                      || cacheFile.length() != EXPECTED_BLOOM_FILE_SIZE) {
-                    generateLogBloomCache(startBlock, startBlock + BLOCKS_PER_BLOOM_CACHE);
-                  }
-                  cachedSegments.put(currentSegment, true);
-                }
-              } finally {
-                currentSegment--;
-              }
-            }
-          },
+          () ->
+              scheduler.scheduleComputationTask(
+                  () -> {
+                    long currentSegment = (blockNumber / BLOCKS_PER_BLOOM_CACHE) - 1;
+                    while (currentSegment >= 0) {
+                      try {
+                        if (overrideCacheCheck
+                            || !cachedSegments.getOrDefault(currentSegment, false)) {
+                          final long startBlock = currentSegment * BLOCKS_PER_BLOOM_CACHE;
+                          final File cacheFile = calculateCacheFileName(startBlock, cacheDir);
+                          if (overrideCacheCheck
+                              || !cacheFile.isFile()
+                              || cacheFile.length() != EXPECTED_BLOOM_FILE_SIZE) {
+                            generateLogBloomCache(startBlock, startBlock + BLOCKS_PER_BLOOM_CACHE);
+                          }
+                          cachedSegments.put(currentSegment, true);
+                        }
+                      } finally {
+                        currentSegment--;
+                      }
+                    }
+                    return null;
+                  }),
           Duration.ofSeconds(1));
     }
   }
 
   private void fillCacheFileWithBlock(final BlockHeader blockHeader, final OutputStream fos)
       throws IOException {
-    fos.write(ensureBloomBitsAreCorrectLength(blockHeader.getLogsBloom(true).toArray()));
+    fos.write(ensureBloomBitsAreCorrectLength(blockHeader.getLogsBloom().toArray()));
   }
 
   private byte[] ensureBloomBitsAreCorrectLength(final byte[] logs) {

@@ -62,8 +62,8 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -91,7 +91,7 @@ public abstract class AbstractEngineNewPayloadTest {
   interface MethodFactory {
     AbstractEngineNewPayload create(
         final Vertx vertx,
-        final TimestampSchedule timestampSchedule,
+        final ProtocolSchedule protocolSchedule,
         final ProtocolContext protocolContext,
         final MergeMiningCoordinator mergeCoordinator,
         final EthPeers ethPeers,
@@ -111,7 +111,7 @@ public abstract class AbstractEngineNewPayloadTest {
       Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
 
   @Mock private ProtocolSpec protocolSpec;
-  @Mock private TimestampSchedule timestampSchedule;
+  @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolContext protocolContext;
 
   @Mock private MergeContext mergeContext;
@@ -132,12 +132,12 @@ public abstract class AbstractEngineNewPayloadTest {
         .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
     when(protocolSpec.getDepositsValidator())
         .thenReturn(new DepositsValidator.ProhibitedDeposits());
-    when(timestampSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(ethPeers.peerCount()).thenReturn(1);
     this.method =
         methodFactory.create(
             vertx,
-            timestampSchedule,
+            protocolSchedule,
             protocolContext,
             mergeCoordinator,
             ethPeers,
@@ -550,8 +550,8 @@ public abstract class AbstractEngineNewPayloadTest {
   }
 
   @Test
-  public void shouldReturnValidIfTimestampScheduleIsEmpty() {
-    when(timestampSchedule.getByBlockHeader(any())).thenReturn(null);
+  public void shouldReturnValidIfProtocolScheduleIsEmpty() {
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(null);
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
@@ -567,7 +567,7 @@ public abstract class AbstractEngineNewPayloadTest {
     return method.response(
         new JsonRpcRequestContext(
             new JsonRpcRequest(
-                "2.0", RpcMethod.ENGINE_EXECUTE_PAYLOAD.getMethodName(), new Object[] {payload})));
+                "2.0", RpcMethod.ENGINE_NEW_PAYLOAD_V2.getMethodName(), new Object[] {payload})));
   }
 
   protected EnginePayloadParameter mockPayload(final BlockHeader header, final List<String> txs) {

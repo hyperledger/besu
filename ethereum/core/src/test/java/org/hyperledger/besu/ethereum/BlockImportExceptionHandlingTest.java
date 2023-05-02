@@ -38,11 +38,11 @@ import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
-import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -63,8 +63,7 @@ public class BlockImportExceptionHandlingTest {
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
       mock(AbstractBlockProcessor.TransactionReceiptFactory.class);
 
-  private final HeaderBasedProtocolSchedule protocolSchedule =
-      mock(HeaderBasedProtocolSchedule.class);
+  private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
   private final BlockProcessor blockProcessor =
       new MainnetBlockProcessor(
           transactionProcessor,
@@ -72,7 +71,6 @@ public class BlockImportExceptionHandlingTest {
           Wei.ZERO,
           BlockHeader::getCoinbase,
           true,
-          Optional.empty(),
           protocolSchedule);
   private final BlockHeaderValidator blockHeaderValidator = mock(BlockHeaderValidator.class);
   private final BlockBodyValidator blockBodyValidator = mock(BlockBodyValidator.class);
@@ -82,14 +80,16 @@ public class BlockImportExceptionHandlingTest {
   private final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
 
   private final WorldStateStorage worldStateStorage =
-      new BonsaiWorldStateKeyValueStorage(storageProvider);
+      new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
 
   private CachedMerkleTrieLoader cachedMerkleTrieLoader;
 
   private final WorldStateArchive worldStateArchive =
       // contains a BonsaiWorldState which we need to spy on.
       // do we need to also test with a DefaultWorldStateArchive?
-      spy(new BonsaiWorldStateProvider(storageProvider, blockchain, cachedMerkleTrieLoader));
+      spy(
+          new BonsaiWorldStateProvider(
+              storageProvider, blockchain, cachedMerkleTrieLoader, new NoOpMetricsSystem()));
 
   private final BonsaiWorldState persisted =
       spy(

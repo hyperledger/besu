@@ -168,7 +168,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .build();
 
     final int maxPeers = 25;
-    final int minPeers = 25;
 
     builder
         .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
@@ -187,7 +186,11 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             node.getPkiKeyStoreConfiguration()
                 .map(pkiConfig -> new PkiBlockCreationConfigurationProvider().load(pkiConfig)))
         .evmConfiguration(EvmConfiguration.DEFAULT)
-        .maxPeers(maxPeers);
+        .maxPeers(maxPeers)
+        .lowerBoundPeers(maxPeers)
+        .maxRemotelyInitiatedPeers(15)
+        .networkConfiguration(node.getNetworkingConfiguration())
+        .randomPeerPriority(false);
 
     node.getGenesisConfig()
         .map(GenesisConfigFile::fromConfig)
@@ -205,8 +208,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .discovery(node.isDiscoveryEnabled())
         .p2pAdvertisedHost(node.getHostName())
         .p2pListenPort(0)
-        .maxPeers(maxPeers)
-        .minPeers(minPeers)
         .networkingConfiguration(node.getNetworkingConfiguration())
         .jsonRpcConfiguration(node.jsonRpcConfiguration())
         .webSocketConfiguration(node.webSocketConfiguration())

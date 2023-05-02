@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
@@ -47,7 +48,8 @@ public class RollingImport {
     final CachedMerkleTrieLoader cachedMerkleTrieLoader =
         new CachedMerkleTrieLoader(new NoOpMetricsSystem());
     final BonsaiWorldStateProvider archive =
-        new BonsaiWorldStateProvider(provider, null, cachedMerkleTrieLoader);
+        new BonsaiWorldStateProvider(
+            provider, null, cachedMerkleTrieLoader, new NoOpMetricsSystem());
     final InMemoryKeyValueStorage accountStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
@@ -68,7 +70,12 @@ public class RollingImport {
         new BonsaiWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                accountStorage, codeStorage, storageStorage, trieBranchStorage, trieLogStorage));
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                trieBranchStorage,
+                trieLogStorage,
+                new NoOpMetricsSystem()));
 
     int count = 0;
     while (!reader.isDone()) {
@@ -78,7 +85,7 @@ public class RollingImport {
           continue;
         }
         final TrieLogLayer layer =
-            TrieLogLayer.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false));
+            TrieLogFactoryImpl.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false));
         final BonsaiWorldStateUpdateAccumulator updater =
             (BonsaiWorldStateUpdateAccumulator) bonsaiState.updater();
         updater.rollForward(layer);
@@ -107,7 +114,7 @@ public class RollingImport {
         reader.seek(count);
         final byte[] bytes = reader.readBytes();
         final TrieLogLayer layer =
-            TrieLogLayer.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false));
+            TrieLogFactoryImpl.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false));
         final BonsaiWorldStateUpdateAccumulator updater =
             (BonsaiWorldStateUpdateAccumulator) bonsaiState.updater();
         updater.rollBack(layer);

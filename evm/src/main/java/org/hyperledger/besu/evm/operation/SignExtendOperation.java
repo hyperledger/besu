@@ -18,8 +18,9 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Sign extend operation. */
 public class SignExtendOperation extends AbstractFixedCostOperation {
@@ -48,23 +49,30 @@ public class SignExtendOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
+    final Bytes value0 = frame.popStackItem().trimLeadingZeros();
+    final Bytes value1 = Bytes32.leftPad(frame.popStackItem());
 
     final MutableBytes32 result = MutableBytes32.create();
 
     // Any value >= 31 imply an index <= 0, so no work to do (note that 0 itself is a valid index,
     // but copying the 0th byte to itself is only so useful).
-    if (!value0.fitsInt() || value0.intValue() >= 31) {
+    int value0size = value0.size();
+    if (value0size > 1) {
       frame.pushStackItem(value1);
-    } else {
-      // This is safe, since other < 31.
-      final int byteIndex = 32 - 1 - value0.getInt(32 - 4);
-      final byte toSet = value1.get(byteIndex) < 0 ? (byte) 0xFF : 0x00;
-      result.mutableSlice(0, byteIndex).fill(toSet);
-      value1.slice(byteIndex).copyTo(result, byteIndex);
-      frame.pushStackItem(UInt256.fromBytes(result));
+      return signExtendSuccess;
     }
+
+    int value0Value = value0.toInt();
+    if (value0Value >= 31) {
+      frame.pushStackItem(value1);
+      return signExtendSuccess;
+    }
+
+    final int byteIndex = 31 - value0.toInt();
+    final byte toSet = value1.get(byteIndex) < 0 ? (byte) 0xFF : 0x00;
+    result.mutableSlice(0, byteIndex).fill(toSet);
+    value1.slice(byteIndex).copyTo(result, byteIndex);
+    frame.pushStackItem(result);
 
     return signExtendSuccess;
   }

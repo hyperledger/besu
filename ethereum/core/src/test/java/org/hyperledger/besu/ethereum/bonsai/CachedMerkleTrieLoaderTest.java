@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.worldview.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -33,6 +34,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -46,7 +48,7 @@ public class CachedMerkleTrieLoaderTest {
   private CachedMerkleTrieLoader merkleTrieLoader;
   private final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
   private final BonsaiWorldStateKeyValueStorage inMemoryWorldState =
-      Mockito.spy(new BonsaiWorldStateKeyValueStorage(storageProvider));
+      Mockito.spy(new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem()));
 
   final List<Address> accounts =
       List.of(Address.fromHexString("0xdeadbeef"), Address.fromHexString("0xdeadbeee"));
@@ -67,7 +69,8 @@ public class CachedMerkleTrieLoaderTest {
         inMemoryWorldState, Hash.wrap(trie.getRootHash()), accounts.get(0));
 
     final BonsaiWorldStateKeyValueStorage emptyStorage =
-        new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider());
+        new BonsaiWorldStateKeyValueStorage(
+            new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
     StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
@@ -96,14 +99,17 @@ public class CachedMerkleTrieLoaderTest {
     storageTrie.visitLeafs(
         (keyHash, node) -> {
           merkleTrieLoader.cacheStorageNodes(
-              inMemoryWorldState, accounts.get(0), Hash.wrap(keyHash));
+              inMemoryWorldState,
+              accounts.get(0),
+              new StorageSlotKey(Hash.wrap(keyHash), Optional.empty()));
           originalSlots.add(node.getEncodedBytes());
           return TrieIterator.State.CONTINUE;
         });
 
     final List<Bytes> cachedSlots = new ArrayList<>();
     final BonsaiWorldStateKeyValueStorage emptyStorage =
-        new BonsaiWorldStateKeyValueStorage(new InMemoryKeyValueStorageProvider());
+        new BonsaiWorldStateKeyValueStorage(
+            new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
     final StoredMerklePatriciaTrie<Bytes, Bytes> cachedTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
