@@ -18,24 +18,37 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 
 import java.util.Optional;
 
 public class DepositsValidatorProvider {
+
   static DepositsValidator getDepositsValidator(
-      final TimestampSchedule timestampSchedule,
-      final long blockTimestamp,
-      final long blockNumber) {
+      final ProtocolSchedule protocolSchedule, final long blockTimestamp, final long blockNumber) {
 
     final BlockHeader blockHeader =
         BlockHeaderBuilder.createDefault()
             .timestamp(blockTimestamp)
             .number(blockNumber)
             .buildBlockHeader();
-    return Optional.ofNullable(timestampSchedule.getByBlockHeader(blockHeader))
+    return getDepositsValidator(protocolSchedule.getByBlockHeader(blockHeader));
+  }
+
+  static DepositsValidator getDepositsValidator(
+      final ProtocolSchedule protocolSchedule,
+      final BlockHeader parentBlockHeader,
+      final long timestampForNextBlock) {
+
+    return getDepositsValidator(
+        protocolSchedule.getForNextBlockHeader(parentBlockHeader, timestampForNextBlock));
+  }
+
+  private static DepositsValidator getDepositsValidator(final ProtocolSpec protocolSchedule) {
+    return Optional.ofNullable(protocolSchedule)
         .map(ProtocolSpec::getDepositsValidator)
         .orElseGet(DepositsValidator.ProhibitedDeposits::new);
   }
+
 }
