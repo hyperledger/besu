@@ -22,7 +22,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,7 +60,7 @@ public class GenesisFileModule {
   @Singleton
   @Provides
   @SuppressWarnings("UnusedVariable")
-  HeaderBasedProtocolSchedule provideProtocolSchedule(
+  ProtocolSchedule provideProtocolSchedule(
       final GenesisConfigOptions configOptions,
       @Named("Fork") final Optional<String> fork,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
@@ -70,8 +70,7 @@ public class GenesisFileModule {
   @Singleton
   @Provides
   GenesisState provideGenesisState(
-      final GenesisConfigFile genesisConfigFile,
-      final HeaderBasedProtocolSchedule protocolSchedule) {
+      final GenesisConfigFile genesisConfigFile, final ProtocolSchedule protocolSchedule) {
     return GenesisState.fromConfig(genesisConfigFile, protocolSchedule);
   }
 

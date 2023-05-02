@@ -22,6 +22,8 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactory;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -57,25 +59,27 @@ public class BonsaiWorldStateUpdateAccumulator
   private static final Logger LOG =
       LoggerFactory.getLogger(BonsaiWorldStateUpdateAccumulator.class);
   private final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader;
-  private final Consumer<Hash> storagePreloader;
+  private final Consumer<StorageSlotKey> storagePreloader;
 
   private final AccountConsumingMap<BonsaiValue<BonsaiAccount>> accountsToUpdate;
   private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
   private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
-  private final Set<Bytes> emptySlot = Collections.synchronizedSet(new HashSet<>());
 
   // storage sub mapped by _hashed_ key.  This is because in self_destruct calls we need to
   // enumerate the old storage and delete it.  Those are trie stored by hashed key by spec and the
   // alternative was to keep a giant pre-image cache of the entire trie.
-  private final Map<Address, StorageConsumingMap<BonsaiValue<UInt256>>> storageToUpdate =
-      new ConcurrentHashMap<>();
+  private final Map<Address, StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>>
+      storageToUpdate = new ConcurrentHashMap<>();
+
+  // todo plumb me from plugin service:
+  TrieLogFactory<TrieLogLayer> trieLogFactory = new TrieLogFactoryImpl();
 
   private boolean isAccumulatorStateChanged;
 
   public BonsaiWorldStateUpdateAccumulator(
       final BonsaiWorldView world,
       final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader,
-      final Consumer<Hash> storagePreloader) {
+      final Consumer<StorageSlotKey> storagePreloader) {
     super(world);
     this.accountsToUpdate = new AccountConsumingMap<>(new ConcurrentHashMap<>(), accountPreloader);
     this.accountPreloader = accountPreloader;
@@ -98,7 +102,6 @@ public class BonsaiWorldStateUpdateAccumulator
     storageToUpdate.putAll(source.storageToUpdate);
     updatedAccounts.putAll(source.updatedAccounts);
     deletedAccounts.addAll(source.deletedAccounts);
-    emptySlot.addAll(source.emptySlot);
     this.isAccumulatorStateChanged = true;
   }
 
@@ -155,7 +158,8 @@ public class BonsaiWorldStateUpdateAccumulator
     return storageToClear;
   }
 
-  public Map<Address, StorageConsumingMap<BonsaiValue<UInt256>>> getStorageToUpdate() {
+  public Map<Address, StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>>
+      getStorageToUpdate() {
     return storageToUpdate;
   }
 
@@ -178,12 +182,14 @@ public class BonsaiWorldStateUpdateAccumulator
         } else {
           account = wrappedWorldView().get(address);
         }
+        BonsaiAccount mutableAccount = null;
         if (account instanceof BonsaiAccount) {
-          final BonsaiAccount mutableAccount =
-              new BonsaiAccount((BonsaiAccount) account, this, true);
+          mutableAccount = new BonsaiAccount((BonsaiAccount) account, this, true);
           accountsToUpdate.put(address, new BonsaiValue<>((BonsaiAccount) account, mutableAccount));
           return mutableAccount;
         } else {
+          // add the empty read in accountsToUpdate
+          accountsToUpdate.put(address, new BonsaiValue<>(null, null));
           return null;
         }
       } else {
@@ -218,11 +224,11 @@ public class BonsaiWorldStateUpdateAccumulator
       final BonsaiValue<BonsaiAccount> accountValue =
           accountsToUpdate.computeIfAbsent(
               deletedAddress,
-              __ -> loadAccountFromParent(deletedAddress, new BonsaiValue<>(null, null)));
+              __ -> loadAccountFromParent(deletedAddress, new BonsaiValue<>(null, null, true)));
       storageToClear.add(deletedAddress);
       final BonsaiValue<Bytes> codeValue = codeToUpdate.get(deletedAddress);
       if (codeValue != null) {
-        codeValue.setUpdated(null);
+        codeValue.setUpdated(null).setCleared();
       } else {
         wrappedWorldView()
             .getCode(
@@ -233,25 +239,25 @@ public class BonsaiWorldStateUpdateAccumulator
                     .orElse(Hash.EMPTY))
             .ifPresent(
                 deletedCode ->
-                    codeToUpdate.put(deletedAddress, new BonsaiValue<>(deletedCode, null)));
+                    codeToUpdate.put(deletedAddress, new BonsaiValue<>(deletedCode, null, true)));
       }
 
       // mark all updated storage as to be cleared
-      final Map<Hash, BonsaiValue<UInt256>> deletedStorageUpdates =
+      final Map<StorageSlotKey, BonsaiValue<UInt256>> deletedStorageUpdates =
           storageToUpdate.computeIfAbsent(
               deletedAddress,
               k ->
                   new StorageConsumingMap<>(
                       deletedAddress, new ConcurrentHashMap<>(), storagePreloader));
-      final Iterator<Map.Entry<Hash, BonsaiValue<UInt256>>> iter =
+      final Iterator<Map.Entry<StorageSlotKey, BonsaiValue<UInt256>>> iter =
           deletedStorageUpdates.entrySet().iterator();
       while (iter.hasNext()) {
-        final Map.Entry<Hash, BonsaiValue<UInt256>> updateEntry = iter.next();
+        final Map.Entry<StorageSlotKey, BonsaiValue<UInt256>> updateEntry = iter.next();
         final BonsaiValue<UInt256> updatedSlot = updateEntry.getValue();
         if (updatedSlot.getPrior() == null || updatedSlot.getPrior().isZero()) {
           iter.remove();
         } else {
-          updatedSlot.setUpdated(null);
+          updatedSlot.setUpdated(null).setCleared();
         }
       }
 
@@ -262,10 +268,11 @@ public class BonsaiWorldStateUpdateAccumulator
             .getAllAccountStorage(deletedAddress, originalValue.getStorageRoot())
             .forEach(
                 (keyHash, entryValue) -> {
-                  final Hash slotHash = Hash.wrap(keyHash);
-                  if (!deletedStorageUpdates.containsKey(slotHash)) {
+                  final StorageSlotKey storageSlotKey =
+                      new StorageSlotKey(Hash.wrap(keyHash), Optional.empty());
+                  if (!deletedStorageUpdates.containsKey(storageSlotKey)) {
                     final UInt256 value = UInt256.fromBytes(RLP.decodeOne(entryValue));
-                    deletedStorageUpdates.put(slotHash, new BonsaiValue<>(value, null, true));
+                    deletedStorageUpdates.put(storageSlotKey, new BonsaiValue<>(value, null, true));
                   }
                 });
       }
@@ -322,14 +329,20 @@ public class BonsaiWorldStateUpdateAccumulator
                                 null));
                 pendingCode.setUpdated(updatedAccount.getCode());
               }
+
               // This is especially to avoid unnecessary computation for withdrawals
-              if (updatedAccount.getUpdatedStorage().isEmpty()) return;
-              final StorageConsumingMap<BonsaiValue<UInt256>> pendingStorageUpdates =
-                  storageToUpdate.computeIfAbsent(
-                      updatedAddress,
-                      __ ->
-                          new StorageConsumingMap<>(
-                              updatedAddress, new ConcurrentHashMap<>(), storagePreloader));
+              if (updatedAccount.getUpdatedStorage().isEmpty()) {
+                return;
+              }
+
+              final StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>
+                  pendingStorageUpdates =
+                      storageToUpdate.computeIfAbsent(
+                          updatedAddress,
+                          __ ->
+                              new StorageConsumingMap<>(
+                                  updatedAddress, new ConcurrentHashMap<>(), storagePreloader));
+
               if (tracked.getStorageWasCleared()) {
                 storageToClear.add(updatedAddress);
                 pendingStorageUpdates.clear();
@@ -344,11 +357,13 @@ public class BonsaiWorldStateUpdateAccumulator
                   storageUpdate -> {
                     final UInt256 keyUInt = storageUpdate.getKey();
                     final Hash slotHash = Hash.hash(keyUInt);
+                    final StorageSlotKey slotKey =
+                        new StorageSlotKey(slotHash, Optional.of(keyUInt));
                     final UInt256 value = storageUpdate.getValue();
-                    final BonsaiValue<UInt256> pendingValue = pendingStorageUpdates.get(slotHash);
+                    final BonsaiValue<UInt256> pendingValue = pendingStorageUpdates.get(slotKey);
                     if (pendingValue == null) {
                       pendingStorageUpdates.put(
-                          slotHash,
+                          slotKey,
                           new BonsaiValue<>(
                               updatedAccount.getOriginalStorageValue(keyUInt), value));
                     } else {
@@ -384,64 +399,57 @@ public class BonsaiWorldStateUpdateAccumulator
   }
 
   @Override
-  public UInt256 getStorageValue(final Address address, final UInt256 storageKey) {
-    // TODO maybe log the read into the trie layer?
-    final Hash slotHashBytes = Hash.hash(storageKey);
-    return getStorageValueBySlotHash(address, slotHashBytes).orElse(UInt256.ZERO);
+  public UInt256 getStorageValue(final Address address, final UInt256 slotKey) {
+    StorageSlotKey storageSlotKey = new StorageSlotKey(Hash.hash(slotKey), Optional.of(slotKey));
+    return getStorageValueByStorageSlotKey(address, storageSlotKey).orElse(UInt256.ZERO);
   }
 
   @Override
-  public Optional<UInt256> getStorageValueBySlotHash(final Address address, final Hash slotHash) {
-    final Map<Hash, BonsaiValue<UInt256>> localAccountStorage = storageToUpdate.get(address);
+  public Optional<UInt256> getStorageValueByStorageSlotKey(
+      final Address address, final StorageSlotKey storageSlotKey) {
+    final Map<StorageSlotKey, BonsaiValue<UInt256>> localAccountStorage =
+        storageToUpdate.get(address);
     if (localAccountStorage != null) {
-      final BonsaiValue<UInt256> value = localAccountStorage.get(slotHash);
+      final BonsaiValue<UInt256> value = localAccountStorage.get(storageSlotKey);
       if (value != null) {
         return Optional.ofNullable(value.getUpdated());
       }
     }
-    final Bytes slot = Bytes.concatenate(Hash.hash(address), slotHash);
-    if (emptySlot.contains(slot)) {
-      return Optional.empty();
-    } else {
-      try {
-        final Optional<UInt256> valueUInt =
-            (wrappedWorldView() instanceof BonsaiWorldState)
-                ? ((BonsaiWorldState) wrappedWorldView())
-                    .getStorageValueBySlotHash(
-                        () ->
-                            Optional.ofNullable(loadAccount(address, BonsaiValue::getPrior))
-                                .map(BonsaiAccount::getStorageRoot),
-                        address,
-                        slotHash)
-                : wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
-        valueUInt.ifPresentOrElse(
-            v ->
-                storageToUpdate
-                    .computeIfAbsent(
-                        address,
-                        key ->
-                            new StorageConsumingMap<>(
-                                address, new ConcurrentHashMap<>(), storagePreloader))
-                    .put(slotHash, new BonsaiValue<>(v, v)),
-            () -> {
-              emptySlot.add(Bytes.concatenate(Hash.hash(address), slotHash));
-            });
-        return valueUInt;
-      } catch (MerkleTrieException e) {
-        // need to throw to trigger the heal
-        throw new MerkleTrieException(
-            e.getMessage(), Optional.of(address), e.getHash(), e.getLocation());
-      }
+    try {
+      final Optional<UInt256> valueUInt =
+          (wrappedWorldView() instanceof BonsaiWorldState)
+              ? ((BonsaiWorldState) wrappedWorldView())
+                  .getStorageValueByStorageSlotKey(
+                      () ->
+                          Optional.ofNullable(loadAccount(address, BonsaiValue::getPrior))
+                              .map(BonsaiAccount::getStorageRoot),
+                      address,
+                      storageSlotKey)
+              : wrappedWorldView().getStorageValueByStorageSlotKey(address, storageSlotKey);
+      storageToUpdate
+          .computeIfAbsent(
+              address,
+              key ->
+                  new StorageConsumingMap<>(address, new ConcurrentHashMap<>(), storagePreloader))
+          .put(storageSlotKey, new BonsaiValue<>(valueUInt.orElse(null), valueUInt.orElse(null)));
+
+      return valueUInt;
+    } catch (MerkleTrieException e) {
+      // need to throw to trigger the heal
+      throw new MerkleTrieException(
+          e.getMessage(), Optional.of(address), e.getHash(), e.getLocation());
     }
   }
 
   @Override
   public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
     // TODO maybe log the read into the trie layer?
-    final Map<Hash, BonsaiValue<UInt256>> localAccountStorage = storageToUpdate.get(address);
+    StorageSlotKey storageSlotKey =
+        new StorageSlotKey(Hash.hash(storageKey), Optional.of(storageKey));
+    final Map<StorageSlotKey, BonsaiValue<UInt256>> localAccountStorage =
+        storageToUpdate.get(address);
     if (localAccountStorage != null) {
-      final Hash slotHash = Hash.hash(storageKey);
-      final BonsaiValue<UInt256> value = localAccountStorage.get(slotHash);
+      final BonsaiValue<UInt256> value = localAccountStorage.get(storageSlotKey);
       if (value != null) {
         if (value.isCleared()) {
           return UInt256.ZERO;
@@ -465,10 +473,11 @@ public class BonsaiWorldStateUpdateAccumulator
   @Override
   public Map<Bytes32, Bytes> getAllAccountStorage(final Address address, final Hash rootHash) {
     final Map<Bytes32, Bytes> results = wrappedWorldView().getAllAccountStorage(address, rootHash);
-    final StorageConsumingMap<BonsaiValue<UInt256>> bonsaiValueStorage =
+    final StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>> bonsaiValueStorage =
         storageToUpdate.get(address);
     if (bonsaiValueStorage != null) {
-      bonsaiValueStorage.forEach((key, value) -> results.put(key, value.getUpdated()));
+      // hash the key to match the implied storage interface of hashed slotKey
+      bonsaiValueStorage.forEach((key, value) -> results.put(key.slotHash(), value.getUpdated()));
     }
     return results;
   }
@@ -484,57 +493,7 @@ public class BonsaiWorldStateUpdateAccumulator
   }
 
   public TrieLogLayer generateTrieLog(final Hash blockHash) {
-    final TrieLogLayer layer = new TrieLogLayer();
-    importIntoTrieLog(layer, blockHash);
-    return layer;
-  }
-
-  private void importIntoTrieLog(final TrieLogLayer layer, final Hash blockHash) {
-    layer.setBlockHash(blockHash);
-    for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> updatedAccount :
-        accountsToUpdate.entrySet()) {
-      final BonsaiValue<BonsaiAccount> bonsaiValue = updatedAccount.getValue();
-      final BonsaiAccount oldValue = bonsaiValue.getPrior();
-      final StateTrieAccountValue oldAccount =
-          oldValue == null
-              ? null
-              : new StateTrieAccountValue(
-                  oldValue.getNonce(),
-                  oldValue.getBalance(),
-                  oldValue.getStorageRoot(),
-                  oldValue.getCodeHash());
-      final BonsaiAccount newValue = bonsaiValue.getUpdated();
-      final StateTrieAccountValue newAccount =
-          newValue == null
-              ? null
-              : new StateTrieAccountValue(
-                  newValue.getNonce(),
-                  newValue.getBalance(),
-                  newValue.getStorageRoot(),
-                  newValue.getCodeHash());
-      layer.addAccountChange(updatedAccount.getKey(), oldAccount, newAccount);
-    }
-
-    for (final Map.Entry<Address, BonsaiValue<Bytes>> updatedCode : codeToUpdate.entrySet()) {
-      layer.addCodeChange(
-          updatedCode.getKey(),
-          updatedCode.getValue().getPrior(),
-          updatedCode.getValue().getUpdated(),
-          blockHash);
-    }
-
-    for (final Map.Entry<Address, StorageConsumingMap<BonsaiValue<UInt256>>> updatesStorage :
-        storageToUpdate.entrySet()) {
-      final Address address = updatesStorage.getKey();
-      for (final Map.Entry<Hash, BonsaiValue<UInt256>> slotUpdate :
-          updatesStorage.getValue().entrySet()) {
-        layer.addStorageChange(
-            address,
-            slotUpdate.getKey(),
-            slotUpdate.getValue().getPrior(),
-            slotUpdate.getValue().getUpdated());
-      }
-    }
+    return trieLogFactory.create(this, blockHash);
   }
 
   public void rollForward(final TrieLogLayer layer) {
@@ -557,9 +516,12 @@ public class BonsaiWorldStateUpdateAccumulator
                 entry
                     .getValue()
                     .forEach(
-                        (key, value) ->
+                        (storageSlotKey, value) ->
                             rollStorageChange(
-                                entry.getKey(), key, value.getPrior(), value.getUpdated())));
+                                entry.getKey(),
+                                storageSlotKey,
+                                value.getPrior(),
+                                value.getUpdated())));
   }
 
   public void rollBack(final TrieLogLayer layer) {
@@ -582,9 +544,12 @@ public class BonsaiWorldStateUpdateAccumulator
                 entry
                     .getValue()
                     .forEach(
-                        (slotHash, value) ->
+                        (storageSlotKey, value) ->
                             rollStorageChange(
-                                entry.getKey(), slotHash, value.getUpdated(), value.getPrior())));
+                                entry.getKey(),
+                                storageSlotKey,
+                                value.getUpdated(),
+                                value.getPrior())));
   }
 
   private void rollAccountChange(
@@ -706,10 +671,10 @@ public class BonsaiWorldStateUpdateAccumulator
     }
   }
 
-  private Map<Hash, BonsaiValue<UInt256>> maybeCreateStorageMap(
-      final Map<Hash, BonsaiValue<UInt256>> storageMap, final Address address) {
+  private Map<StorageSlotKey, BonsaiValue<UInt256>> maybeCreateStorageMap(
+      final Map<StorageSlotKey, BonsaiValue<UInt256>> storageMap, final Address address) {
     if (storageMap == null) {
-      final StorageConsumingMap<BonsaiValue<UInt256>> newMap =
+      final StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>> newMap =
           new StorageConsumingMap<>(address, new ConcurrentHashMap<>(), storagePreloader);
       storageToUpdate.put(address, newMap);
       return newMap;
@@ -720,7 +685,7 @@ public class BonsaiWorldStateUpdateAccumulator
 
   private void rollStorageChange(
       final Address address,
-      final Hash slotHash,
+      final StorageSlotKey storageSlotKey,
       final UInt256 expectedValue,
       final UInt256 replacementValue) {
     if (Objects.equals(expectedValue, replacementValue)) {
@@ -731,11 +696,11 @@ public class BonsaiWorldStateUpdateAccumulator
       // corner case on deletes, non-change
       return;
     }
-    final Map<Hash, BonsaiValue<UInt256>> storageMap = storageToUpdate.get(address);
-    BonsaiValue<UInt256> slotValue = storageMap == null ? null : storageMap.get(slotHash);
+    final Map<StorageSlotKey, BonsaiValue<UInt256>> storageMap = storageToUpdate.get(address);
+    BonsaiValue<UInt256> slotValue = storageMap == null ? null : storageMap.get(storageSlotKey);
     if (slotValue == null) {
       final Optional<UInt256> storageValue =
-          wrappedWorldView().getStorageValueBySlotHash(address, slotHash);
+          wrappedWorldView().getStorageValueByStorageSlotKey(address, storageSlotKey);
       if (storageValue.isPresent()) {
         slotValue = new BonsaiValue<>(storageValue.get(), storageValue.get());
         storageToUpdate
@@ -743,18 +708,18 @@ public class BonsaiWorldStateUpdateAccumulator
                 address,
                 k ->
                     new StorageConsumingMap<>(address, new ConcurrentHashMap<>(), storagePreloader))
-            .put(slotHash, slotValue);
+            .put(storageSlotKey, slotValue);
       }
     }
     if (slotValue == null) {
       if ((expectedValue == null || expectedValue.isZero()) && replacementValue != null) {
         maybeCreateStorageMap(storageMap, address)
-            .put(slotHash, new BonsaiValue<>(null, replacementValue));
+            .put(storageSlotKey, new BonsaiValue<>(null, replacementValue));
       } else {
         throw new IllegalStateException(
             String.format(
-                "Expected to update storage value, but the slot does not exist. Account=%s SlotHash=%s",
-                address, slotHash));
+                "Expected to update storage value, but the slot does not exist. Account=%s SlotKey=%s",
+                address, storageSlotKey));
       }
     } else {
       final UInt256 existingSlotValue = slotValue.getUpdated();
@@ -763,22 +728,22 @@ public class BonsaiWorldStateUpdateAccumulator
           && !existingSlotValue.isZero()) {
         throw new IllegalStateException(
             String.format(
-                "Expected to create slot, but the slot exists. Account=%s SlotHash=%s expectedValue=%s existingValue=%s",
-                address, slotHash, expectedValue, existingSlotValue));
+                "Expected to create slot, but the slot exists. Account=%s SlotKey=%s expectedValue=%s existingValue=%s",
+                address, storageSlotKey, expectedValue, existingSlotValue));
       }
       if (!isSlotEquals(expectedValue, existingSlotValue)) {
         throw new IllegalStateException(
             String.format(
-                "Old value of slot does not match expected value. Account=%s SlotHash=%s Expected=%s Actual=%s",
+                "Old value of slot does not match expected value. Account=%s SlotKey=%s Expected=%s Actual=%s",
                 address,
-                slotHash,
+                storageSlotKey,
                 expectedValue == null ? "null" : expectedValue.toShortHexString(),
                 existingSlotValue == null ? "null" : existingSlotValue.toShortHexString()));
       }
       if (replacementValue == null && slotValue.getPrior() == null) {
-        final Map<Hash, BonsaiValue<UInt256>> thisStorageUpdate =
+        final Map<StorageSlotKey, BonsaiValue<UInt256>> thisStorageUpdate =
             maybeCreateStorageMap(storageMap, address);
-        thisStorageUpdate.remove(slotHash);
+        thisStorageUpdate.remove(storageSlotKey);
         if (thisStorageUpdate.isEmpty()) {
           storageToUpdate.remove(address);
         }
@@ -803,21 +768,12 @@ public class BonsaiWorldStateUpdateAccumulator
     isAccumulatorStateChanged = false;
   }
 
-  public Consumer<BonsaiValue<BonsaiAccount>> getAccountPreloader() {
-    return accountPreloader;
-  }
-
-  public Consumer<Hash> getStoragePreloader() {
-    return storagePreloader;
-  }
-
   @Override
   public void reset() {
     storageToClear.clear();
     storageToUpdate.clear();
     codeToUpdate.clear();
     accountsToUpdate.clear();
-    emptySlot.clear();
     resetAccumulatorStateChanged();
     super.reset();
   }
@@ -849,34 +805,32 @@ public class BonsaiWorldStateUpdateAccumulator
     }
   }
 
-  public static class StorageConsumingMap<T> extends ForwardingMap<Hash, T> {
+  public static class StorageConsumingMap<K, T> extends ForwardingMap<K, T> {
 
     private final Address address;
 
-    private final ConcurrentHashMap<Hash, T> storages;
-    private final Consumer<Hash> consumer;
+    private final ConcurrentHashMap<K, T> storages;
+    private final Consumer<K> consumer;
 
     public StorageConsumingMap(
-        final Address address,
-        final ConcurrentHashMap<Hash, T> storages,
-        final Consumer<Hash> consumer) {
+        final Address address, final ConcurrentHashMap<K, T> storages, final Consumer<K> consumer) {
       this.address = address;
       this.storages = storages;
       this.consumer = consumer;
     }
 
     @Override
-    public T put(@NotNull final Hash slotHash, @NotNull final T value) {
-      consumer.process(address, slotHash);
-      return storages.put(slotHash, value);
+    public T put(@NotNull final K slotKey, @NotNull final T value) {
+      consumer.process(address, slotKey);
+      return storages.put(slotKey, value);
     }
 
-    public Consumer<Hash> getConsumer() {
+    public Consumer<K> getConsumer() {
       return consumer;
     }
 
     @Override
-    protected Map<Hash, T> delegate() {
+    protected Map<K, T> delegate() {
       return storages;
     }
   }

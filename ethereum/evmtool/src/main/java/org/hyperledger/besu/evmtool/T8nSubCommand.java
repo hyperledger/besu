@@ -34,8 +34,8 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
-import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -261,8 +261,7 @@ public class T8nSubCommand implements Runnable {
 
     final MutableWorldState worldState = new DefaultMutableWorldState(initialWorldState);
 
-    final HeaderBasedProtocolSchedule protocolSchedule =
-        referenceTestProtocolSchedules.getByName(fork);
+    final ProtocolSchedule protocolSchedule = referenceTestProtocolSchedules.getByName(fork);
     if (protocolSchedule == null) {
       throw new UnsupportedForkException(fork);
     }

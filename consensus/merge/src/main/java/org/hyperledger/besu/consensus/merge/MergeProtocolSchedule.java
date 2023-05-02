@@ -23,14 +23,15 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
-import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
-import org.hyperledger.besu.ethereum.mainnet.TimestampScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 /** The Merge protocol schedule. */
 public class MergeProtocolSchedule {
@@ -64,14 +65,19 @@ public class MergeProtocolSchedule {
       final boolean isRevertReasonEnabled,
       final LineaParameters lineaParameters) {
 
+    Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> postMergeModifications =
+        new HashMap<>();
+    postMergeModifications.put(
+        0L,
+        (specBuilder) ->
+            MergeProtocolSchedule.applyParisSpecificModifications(
+                specBuilder, config.getChainId()));
+    unapplyModificationsFromShanghaiOnwards(config, postMergeModifications);
+
     return new ProtocolScheduleBuilder(
             config,
             DEFAULT_CHAIN_ID,
-            ProtocolSpecAdapters.create(
-                0,
-                (specBuilder) ->
-                    MergeProtocolSchedule.applyMergeSpecificModifications(
-                        specBuilder, config.getChainId())),
+            new ProtocolSpecAdapters(postMergeModifications),
             privacyParameters,
             isRevertReasonEnabled,
             EvmConfiguration.DEFAULT,
@@ -80,44 +86,12 @@ public class MergeProtocolSchedule {
   }
 
   /**
-   * Create timestamp schedule.
-   *
-   * @param config the config
-   * @param privacyParameters the privacy parameters
-   * @param isRevertReasonEnabled the is revert reason enabled
-   * @return the timestamp schedule
+   * Apply Paris specific modifications because the Merge Transition code does not utilise {@link
+   * org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecFactory.parisDefinition} until the
+   * shanghaiDefinition is utilised. This is due to the way the Transition works via TTD rather than
+   * via a blockNumber so it can't be looked up in the schedule.
    */
-  public static TimestampSchedule createTimestamp(
-      final GenesisConfigOptions config,
-      final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled,
-      final LineaParameters lineaParameters) {
-    return new TimestampScheduleBuilder(
-            config,
-            DEFAULT_CHAIN_ID,
-            ProtocolSpecAdapters.create(
-                config.getShanghaiTime().orElse(0),
-                MergeProtocolSchedule::applyMergeSpecificModificationsForShanghai),
-            privacyParameters,
-            isRevertReasonEnabled,
-            EvmConfiguration.DEFAULT,
-            lineaParameters)
-        .createTimestampSchedule();
-  }
-
-  // TODO Withdrawals remove this as part of https://github.com/hyperledger/besu/issues/4788
-  private static ProtocolSpecBuilder applyMergeSpecificModificationsForShanghai(
-      final ProtocolSpecBuilder specBuilder) {
-
-    return specBuilder
-        .blockProcessorBuilder(MergeBlockProcessor::new)
-        .blockHeaderValidatorBuilder(MergeProtocolSchedule::getBlockHeaderValidator)
-        .blockReward(Wei.ZERO)
-        .difficultyCalculator((a, b, c) -> BigInteger.ZERO)
-        .skipZeroBlockRewards(true);
-  }
-
-  private static ProtocolSpecBuilder applyMergeSpecificModifications(
+  private static ProtocolSpecBuilder applyParisSpecificModifications(
       final ProtocolSpecBuilder specBuilder, final Optional<BigInteger> chainId) {
 
     return specBuilder
@@ -125,14 +99,25 @@ public class MergeProtocolSchedule {
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.paris(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), EvmConfiguration.DEFAULT))
-        .blockProcessorBuilder(MergeBlockProcessor::new)
         .blockHeaderValidatorBuilder(MergeProtocolSchedule::getBlockHeaderValidator)
         .blockReward(Wei.ZERO)
         .difficultyCalculator((a, b, c) -> BigInteger.ZERO)
-        .skipZeroBlockRewards(true);
+        .skipZeroBlockRewards(true)
+        .isPoS(true)
+        .name("Paris");
   }
 
   private static BlockHeaderValidator.Builder getBlockHeaderValidator(final FeeMarket feeMarket) {
     return MergeValidationRulesetFactory.mergeBlockHeaderValidator(feeMarket);
+  }
+
+  private static void unapplyModificationsFromShanghaiOnwards(
+      final GenesisConfigOptions config,
+      final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> postMergeModifications) {
+    // Any post-Paris fork can rely on the MainnetProtocolSpec definitions again
+    // Must allow for config to skip Shanghai and go straight to a later fork.
+    if (config.getForkBlockTimestamps().size() > 0) {
+      postMergeModifications.put(config.getForkBlockTimestamps().get(0), Function.identity());
+    }
   }
 }

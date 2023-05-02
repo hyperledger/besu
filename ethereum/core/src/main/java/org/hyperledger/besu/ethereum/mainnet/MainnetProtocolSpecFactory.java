@@ -300,14 +300,4 @@ public class MainnetProtocolSpecFactory {
         ecip1017EraRounds,
         evmConfiguration);
   }
-
-  public ProtocolSpecBuilder ecip1049Definition() {
-    return ClassicProtocolSpecs.ecip1049Definition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        ecip1017EraRounds,
-        evmConfiguration);
-  }
 }

@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
@@ -41,8 +42,8 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
   }
 
   @Override
-  public ProtocolSpec getByBlockNumber(final long number) {
-    final ProtocolSpec original = delegate.getByBlockNumber(number);
+  public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
+    final ProtocolSpec original = delegate.getByBlockHeader(blockHeader);
     final BlockProcessor noRewardBlockProcessor =
         new MainnetBlockProcessor(
             original.getTransactionProcessor(),
@@ -105,8 +106,13 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
   }
 
   @Override
-  public void putMilestone(final long blockOrTimestamp, final ProtocolSpec protocolSpec) {
-    delegate.putMilestone(blockOrTimestamp, protocolSpec);
+  public void putBlockNumberMilestone(final long blockNumber, final ProtocolSpec protocolSpec) {
+    delegate.putBlockNumberMilestone(blockNumber, protocolSpec);
+  }
+
+  @Override
+  public void putTimestampMilestone(final long timestamp, final ProtocolSpec protocolSpec) {
+    delegate.putTimestampMilestone(timestamp, protocolSpec);
   }
 
   @Override

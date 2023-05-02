@@ -43,7 +43,6 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -66,7 +65,6 @@ public class TransitionControllerBuilderTest {
 
   @Mock ProtocolSchedule preMergeProtocolSchedule;
   @Mock ProtocolSchedule postMergeProtocolSchedule;
-  @Mock TimestampSchedule timestampSchedule;
   @Mock ProtocolContext protocolContext;
   @Mock MutableBlockchain mockBlockchain;
   @Mock TransactionPool transactionPool;
@@ -87,10 +85,7 @@ public class TransitionControllerBuilderTest {
     transitionProtocolSchedule =
         spy(
             new TransitionProtocolSchedule(
-                preMergeProtocolSchedule,
-                postMergeProtocolSchedule,
-                mergeContext,
-                timestampSchedule));
+                preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext));
     transitionProtocolSchedule.setProtocolContext(protocolContext);
     cliqueBuilder.nodeKey(NodeKeyUtils.generate());
     postMergeBuilder.storageProvider(storageProvider);

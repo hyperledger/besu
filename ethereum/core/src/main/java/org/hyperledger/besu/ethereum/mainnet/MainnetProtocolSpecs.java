@@ -175,8 +175,6 @@ public abstract class MainnetProtocolSpecs {
     switch (powAlgorithm) {
       case ETHASH:
         return PoWHasher.ETHASH_LIGHT;
-      case KECCAK256:
-        return KeccakHasher.KECCAK256;
       case UNSUPPORTED:
       default:
         return PoWHasher.UNSUPPORTED;
@@ -566,8 +564,9 @@ public abstract class MainnetProtocolSpecs {
         .difficultyCalculator(MainnetDifficultyCalculators.PROOF_OF_STAKE_DIFFICULTY)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::mergeBlockHeaderValidator)
         .blockReward(Wei.ZERO)
-        .name("ParisFork")
-        .isPoS(true);
+        .skipZeroBlockRewards(true)
+        .isPoS(true)
+        .name("ParisFork");
   }
 
   static ProtocolSpecBuilder shanghaiDefinition(

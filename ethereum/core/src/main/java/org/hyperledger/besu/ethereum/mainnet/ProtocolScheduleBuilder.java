@@ -15,8 +15,10 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.linea.LineaParameters;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -24,12 +26,25 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.TreeMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+public class ProtocolScheduleBuilder {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ProtocolScheduleBuilder.class);
+  private final GenesisConfigOptions config;
   private final Optional<BigInteger> defaultChainId;
-  private MutableProtocolSchedule protocolSchedule;
+  private final ProtocolSpecAdapters protocolSpecAdapters;
+  private final PrivacyParameters privacyParameters;
+  private final boolean isRevertReasonEnabled;
+  private final EvmConfiguration evmConfiguration;
+  private final LineaParameters lineaParameters;
+  private final BadBlockManager badBlockManager = new BadBlockManager();
+
+  private DefaultProtocolSchedule protocolSchedule;
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
@@ -106,25 +121,127 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
       final LineaParameters lineaParameters) {
-    super(
-        config,
-        protocolSpecAdapters,
-        privacyParameters,
-        isRevertReasonEnabled,
-        evmConfiguration,
-        lineaParameters);
+    this.config = config;
+    this.protocolSpecAdapters = protocolSpecAdapters;
+    this.privacyParameters = privacyParameters;
+    this.isRevertReasonEnabled = isRevertReasonEnabled;
+    this.evmConfiguration = evmConfiguration;
     this.defaultChainId = defaultChainId;
+    this.lineaParameters = lineaParameters;
   }
 
   public ProtocolSchedule createProtocolSchedule() {
     final Optional<BigInteger> chainId = config.getChainId().or(() -> defaultChainId);
-    protocolSchedule = new MutableProtocolSchedule(chainId);
+    protocolSchedule = new DefaultProtocolSchedule(chainId);
     initSchedule(protocolSchedule, chainId);
     return protocolSchedule;
   }
 
-  @Override
-  protected void validateForkOrdering() {
+  private void initSchedule(
+      final ProtocolSchedule protocolSchedule, final Optional<BigInteger> chainId) {
+
+    final MainnetProtocolSpecFactory specFactory =
+        new MainnetProtocolSpecFactory(
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled,
+            config.getEcip1017EraRounds(),
+            evmConfiguration);
+
+    validateForkOrdering();
+
+    final TreeMap<Long, BuilderMapEntry> builders = buildMilestoneMap(specFactory);
+
+    // At this stage, all milestones are flagged with correct modifier, but ProtocolSpecs must be
+    // inserted _AT_ the modifier block entry.
+    if (!builders.isEmpty()) {
+      protocolSpecAdapters.stream()
+          .forEach(
+              entry -> {
+                final long modifierBlock = entry.getKey();
+                final BuilderMapEntry parent =
+                    Optional.ofNullable(builders.floorEntry(modifierBlock))
+                        .orElse(builders.firstEntry())
+                        .getValue();
+                builders.put(
+                    modifierBlock,
+                    new BuilderMapEntry(
+                        parent.milestoneType,
+                        modifierBlock,
+                        parent.getBuilder(),
+                        entry.getValue()));
+              });
+    }
+
+    // Create the ProtocolSchedule, such that the Dao/fork milestones can be inserted
+    builders
+        .values()
+        .forEach(
+            e ->
+                addProtocolSpec(
+                    protocolSchedule,
+                    e.milestoneType,
+                    e.getBlockIdentifier(),
+                    e.getBuilder(),
+                    e.modifier));
+
+    // NOTE: It is assumed that Daofork blocks will not be used for private networks
+    // as too many risks exist around inserting a protocol-spec between daoBlock and daoBlock+10.
+    config
+        .getDaoForkBlock()
+        .ifPresent(
+            daoBlockNumber -> {
+              final BuilderMapEntry previousSpecBuilder =
+                  builders.floorEntry(daoBlockNumber).getValue();
+              final ProtocolSpec originalProtocolSpec =
+                  getProtocolSpec(
+                      protocolSchedule,
+                      previousSpecBuilder.getBuilder(),
+                      previousSpecBuilder.getModifier());
+              addProtocolSpec(
+                  protocolSchedule,
+                  BuilderMapEntry.MilestoneType.BLOCK_NUMBER,
+                  daoBlockNumber,
+                  specFactory.daoRecoveryInitDefinition(),
+                  protocolSpecAdapters.getModifierForBlock(daoBlockNumber));
+              addProtocolSpec(
+                  protocolSchedule,
+                  BuilderMapEntry.MilestoneType.BLOCK_NUMBER,
+                  daoBlockNumber + 1L,
+                  specFactory.daoRecoveryTransitionDefinition(),
+                  protocolSpecAdapters.getModifierForBlock(daoBlockNumber + 1L));
+              // Return to the previous protocol spec after the dao fork has completed.
+              protocolSchedule.putBlockNumberMilestone(daoBlockNumber + 10, originalProtocolSpec);
+            });
+
+    // specs for classic network
+    config
+        .getClassicForkBlock()
+        .ifPresent(
+            classicBlockNumber -> {
+              final BuilderMapEntry previousSpecBuilder =
+                  builders.floorEntry(classicBlockNumber).getValue();
+              final ProtocolSpec originalProtocolSpec =
+                  getProtocolSpec(
+                      protocolSchedule,
+                      previousSpecBuilder.getBuilder(),
+                      previousSpecBuilder.getModifier());
+              addProtocolSpec(
+                  protocolSchedule,
+                  BuilderMapEntry.MilestoneType.BLOCK_NUMBER,
+                  classicBlockNumber,
+                  ClassicProtocolSpecs.classicRecoveryInitDefinition(
+                      config.getContractSizeLimit(), config.getEvmStackSize(), evmConfiguration),
+                  Function.identity());
+              protocolSchedule.putBlockNumberMilestone(
+                  classicBlockNumber + 1, originalProtocolSpec);
+            });
+
+    LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
+  }
+
+  private void validateForkOrdering() {
     if (config.getDaoForkBlock().isEmpty() && config.getLineaBlockNumber().isEmpty()) {
       validateClassicForkOrdering();
     } else {
@@ -156,7 +273,12 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
     lastForkBlock =
         validateForkOrder("GrayGlacier", config.getGrayGlacierBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Linea", config.getLineaBlockNumber(), lastForkBlock);
-
+    // Begin timestamp forks
+    lastForkBlock = validateForkOrder("Shanghai", config.getShanghaiTime(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Cancun", config.getCancunTime(), lastForkBlock);
+    lastForkBlock = validateForkOrder("FutureEips", config.getFutureEipsTime(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder("ExperimentalEips", config.getExperimentalEipsTime(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 
@@ -180,90 +302,167 @@ public class ProtocolScheduleBuilder extends AbstractProtocolScheduleBuilder {
     assert (lastForkBlock >= 0);
   }
 
-  @Override
-  protected Stream<Optional<BuilderMapEntry>> createMilestones(
-      final MainnetProtocolSpecFactory specFactory) {
-    return Stream.of(
-        create(OptionalLong.of(0), specFactory.frontierDefinition()),
-        create(config.getHomesteadBlockNumber(), specFactory.homesteadDefinition()),
-        create(config.getTangerineWhistleBlockNumber(), specFactory.tangerineWhistleDefinition()),
-        create(config.getSpuriousDragonBlockNumber(), specFactory.spuriousDragonDefinition()),
-        create(config.getByzantiumBlockNumber(), specFactory.byzantiumDefinition()),
-        create(config.getConstantinopleBlockNumber(), specFactory.constantinopleDefinition()),
-        create(config.getPetersburgBlockNumber(), specFactory.petersburgDefinition()),
-        create(config.getIstanbulBlockNumber(), specFactory.istanbulDefinition()),
-        create(config.getMuirGlacierBlockNumber(), specFactory.muirGlacierDefinition()),
-        create(config.getBerlinBlockNumber(), specFactory.berlinDefinition()),
-        create(config.getLondonBlockNumber(), specFactory.londonDefinition(config)),
-        create(config.getArrowGlacierBlockNumber(), specFactory.arrowGlacierDefinition(config)),
-        create(config.getGrayGlacierBlockNumber(), specFactory.grayGlacierDefinition(config)),
-        create(config.getMergeNetSplitBlockNumber(), specFactory.parisDefinition(config)),
-        create(config.getLineaBlockNumber(), specFactory.lineaDefinition(config, lineaParameters)),
-        // Classic Milestones
-        create(config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
-        create(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),
-        create(config.getGothamBlockNumber(), specFactory.gothamDefinition()),
-        create(
-            config.getDefuseDifficultyBombBlockNumber(),
-            specFactory.defuseDifficultyBombDefinition()),
-        create(config.getAtlantisBlockNumber(), specFactory.atlantisDefinition()),
-        create(config.getAghartaBlockNumber(), specFactory.aghartaDefinition()),
-        create(config.getPhoenixBlockNumber(), specFactory.phoenixDefinition()),
-        create(config.getThanosBlockNumber(), specFactory.thanosDefinition()),
-        create(config.getMagnetoBlockNumber(), specFactory.magnetoDefinition()),
-        create(config.getMystiqueBlockNumber(), specFactory.mystiqueDefinition()),
-        create(config.getEcip1049BlockNumber(), specFactory.ecip1049Definition()));
+  private long validateForkOrder(
+      final String forkName, final OptionalLong thisForkBlock, final long lastForkBlock) {
+    final long referenceForkBlock = thisForkBlock.orElse(lastForkBlock);
+    if (lastForkBlock > referenceForkBlock) {
+      throw new RuntimeException(
+          String.format(
+              "Genesis Config Error: '%s' is scheduled for milestone %d but it must be on or after milestone %d.",
+              forkName, thisForkBlock.getAsLong(), lastForkBlock));
+    }
+    return referenceForkBlock;
   }
 
-  @Override
-  protected void postBuildStep(
-      final MainnetProtocolSpecFactory specFactory, final TreeMap<Long, BuilderMapEntry> builders) {
-    // NOTE: It is assumed that Daofork blocks will not be used for private networks
-    // as too many risks exist around inserting a protocol-spec between daoBlock and daoBlock+10.
-    config
-        .getDaoForkBlock()
-        .ifPresent(
-            daoBlockNumber -> {
-              final BuilderMapEntry previousSpecBuilder =
-                  builders.floorEntry(daoBlockNumber).getValue();
-              final ProtocolSpec originalProtocolSpec =
-                  getProtocolSpec(
-                      protocolSchedule,
-                      previousSpecBuilder.getBuilder(),
-                      previousSpecBuilder.getModifier());
-              addProtocolSpec(
-                  protocolSchedule,
-                  daoBlockNumber,
-                  specFactory.daoRecoveryInitDefinition(),
-                  protocolSpecAdapters.getModifierForBlock(daoBlockNumber));
-              addProtocolSpec(
-                  protocolSchedule,
-                  daoBlockNumber + 1L,
-                  specFactory.daoRecoveryTransitionDefinition(),
-                  protocolSpecAdapters.getModifierForBlock(daoBlockNumber + 1L));
-              // Return to the previous protocol spec after the dao fork has completed.
-              protocolSchedule.putMilestone(daoBlockNumber + 10, originalProtocolSpec);
-            });
+  private TreeMap<Long, BuilderMapEntry> buildMilestoneMap(
+      final MainnetProtocolSpecFactory specFactory) {
+    return createMilestones(specFactory)
+        .flatMap(Optional::stream)
+        .collect(
+            Collectors.toMap(
+                BuilderMapEntry::getBlockIdentifier,
+                b -> b,
+                (existing, replacement) -> replacement,
+                TreeMap::new));
+  }
 
-    // specs for classic network
-    config
-        .getClassicForkBlock()
-        .ifPresent(
-            classicBlockNumber -> {
-              final BuilderMapEntry previousSpecBuilder =
-                  builders.floorEntry(classicBlockNumber).getValue();
-              final ProtocolSpec originalProtocolSpec =
-                  getProtocolSpec(
-                      protocolSchedule,
-                      previousSpecBuilder.getBuilder(),
-                      previousSpecBuilder.getModifier());
-              addProtocolSpec(
-                  protocolSchedule,
-                  classicBlockNumber,
-                  ClassicProtocolSpecs.classicRecoveryInitDefinition(
-                      config.getContractSizeLimit(), config.getEvmStackSize(), evmConfiguration),
-                  Function.identity());
-              protocolSchedule.putMilestone(classicBlockNumber + 1, originalProtocolSpec);
-            });
+  private Stream<Optional<BuilderMapEntry>> createMilestones(
+      final MainnetProtocolSpecFactory specFactory) {
+    return Stream.of(
+        blockNumberMilestone(OptionalLong.of(0), specFactory.frontierDefinition()),
+        blockNumberMilestone(config.getHomesteadBlockNumber(), specFactory.homesteadDefinition()),
+        blockNumberMilestone(
+            config.getTangerineWhistleBlockNumber(), specFactory.tangerineWhistleDefinition()),
+        blockNumberMilestone(
+            config.getSpuriousDragonBlockNumber(), specFactory.spuriousDragonDefinition()),
+        blockNumberMilestone(config.getByzantiumBlockNumber(), specFactory.byzantiumDefinition()),
+        blockNumberMilestone(
+            config.getConstantinopleBlockNumber(), specFactory.constantinopleDefinition()),
+        blockNumberMilestone(config.getPetersburgBlockNumber(), specFactory.petersburgDefinition()),
+        blockNumberMilestone(config.getIstanbulBlockNumber(), specFactory.istanbulDefinition()),
+        blockNumberMilestone(
+            config.getMuirGlacierBlockNumber(), specFactory.muirGlacierDefinition()),
+        blockNumberMilestone(config.getBerlinBlockNumber(), specFactory.berlinDefinition()),
+        blockNumberMilestone(config.getLondonBlockNumber(), specFactory.londonDefinition(config)),
+        blockNumberMilestone(
+            config.getArrowGlacierBlockNumber(), specFactory.arrowGlacierDefinition(config)),
+        blockNumberMilestone(
+            config.getGrayGlacierBlockNumber(), specFactory.grayGlacierDefinition(config)),
+        blockNumberMilestone(
+            config.getMergeNetSplitBlockNumber(), specFactory.parisDefinition(config)),
+        blockNumberMilestone(
+            config.getLineaBlockNumber(), specFactory.lineaDefinition(config, lineaParameters)),
+        // Timestamp Forks
+        timestampMilestone(config.getShanghaiTime(), specFactory.shanghaiDefinition(config)),
+        timestampMilestone(config.getCancunTime(), specFactory.cancunDefinition(config)),
+        timestampMilestone(config.getFutureEipsTime(), specFactory.futureEipsDefinition(config)),
+        timestampMilestone(
+            config.getExperimentalEipsTime(), specFactory.experimentalEipsDefinition(config)),
+
+        // Classic Milestones
+        blockNumberMilestone(
+            config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
+        blockNumberMilestone(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),
+        blockNumberMilestone(config.getGothamBlockNumber(), specFactory.gothamDefinition()),
+        blockNumberMilestone(
+            config.getDefuseDifficultyBombBlockNumber(),
+            specFactory.defuseDifficultyBombDefinition()),
+        blockNumberMilestone(config.getAtlantisBlockNumber(), specFactory.atlantisDefinition()),
+        blockNumberMilestone(config.getAghartaBlockNumber(), specFactory.aghartaDefinition()),
+        blockNumberMilestone(config.getPhoenixBlockNumber(), specFactory.phoenixDefinition()),
+        blockNumberMilestone(config.getThanosBlockNumber(), specFactory.thanosDefinition()),
+        blockNumberMilestone(config.getMagnetoBlockNumber(), specFactory.magnetoDefinition()),
+        blockNumberMilestone(config.getMystiqueBlockNumber(), specFactory.mystiqueDefinition()));
+  }
+
+  private Optional<BuilderMapEntry> timestampMilestone(
+      final OptionalLong blockIdentifier, final ProtocolSpecBuilder builder) {
+    return createMilestone(blockIdentifier, builder, BuilderMapEntry.MilestoneType.TIMESTAMP);
+  }
+
+  private Optional<BuilderMapEntry> blockNumberMilestone(
+      final OptionalLong blockIdentifier, final ProtocolSpecBuilder builder) {
+    return createMilestone(blockIdentifier, builder, BuilderMapEntry.MilestoneType.BLOCK_NUMBER);
+  }
+
+  private Optional<BuilderMapEntry> createMilestone(
+      final OptionalLong blockIdentifier,
+      final ProtocolSpecBuilder builder,
+      final BuilderMapEntry.MilestoneType milestoneType) {
+    if (blockIdentifier.isEmpty()) {
+      return Optional.empty();
+    }
+    final long blockVal = blockIdentifier.getAsLong();
+    return Optional.of(
+        new BuilderMapEntry(
+            milestoneType, blockVal, builder, protocolSpecAdapters.getModifierForBlock(blockVal)));
+  }
+
+  private ProtocolSpec getProtocolSpec(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolSpecBuilder definition,
+      final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
+    definition
+        .badBlocksManager(badBlockManager)
+        .privacyParameters(privacyParameters)
+        .privateTransactionValidatorBuilder(
+            () -> new PrivateTransactionValidator(protocolSchedule.getChainId()));
+
+    return modifier.apply(definition).build(protocolSchedule);
+  }
+
+  private void addProtocolSpec(
+      final ProtocolSchedule protocolSchedule,
+      final BuilderMapEntry.MilestoneType milestoneType,
+      final long blockNumberOrTimestamp,
+      final ProtocolSpecBuilder definition,
+      final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
+
+    switch (milestoneType) {
+      case BLOCK_NUMBER -> protocolSchedule.putBlockNumberMilestone(
+          blockNumberOrTimestamp, getProtocolSpec(protocolSchedule, definition, modifier));
+      case TIMESTAMP -> protocolSchedule.putTimestampMilestone(
+          blockNumberOrTimestamp, getProtocolSpec(protocolSchedule, definition, modifier));
+      default -> throw new IllegalStateException(
+          "Unexpected milestoneType: "
+              + milestoneType
+              + " for milestone: "
+              + blockNumberOrTimestamp);
+    }
+  }
+
+  private static class BuilderMapEntry {
+    private final MilestoneType milestoneType;
+    private final long blockIdentifier;
+    private final ProtocolSpecBuilder builder;
+    private final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier;
+
+    public BuilderMapEntry(
+        final MilestoneType milestoneType,
+        final long blockIdentifier,
+        final ProtocolSpecBuilder builder,
+        final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
+      this.milestoneType = milestoneType;
+      this.blockIdentifier = blockIdentifier;
+      this.builder = builder;
+      this.modifier = modifier;
+    }
+
+    public long getBlockIdentifier() {
+      return blockIdentifier;
+    }
+
+    public ProtocolSpecBuilder getBuilder() {
+      return builder;
+    }
+
+    public Function<ProtocolSpecBuilder, ProtocolSpecBuilder> getModifier() {
+      return modifier;
+    }
+
+    private enum MilestoneType {
+      BLOCK_NUMBER,
+      TIMESTAMP
+    }
   }
 }

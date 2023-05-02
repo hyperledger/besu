@@ -27,7 +27,6 @@ import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.EthashConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.Keccak256ConfigOptions;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
@@ -82,7 +81,6 @@ public class BesuControllerBuilderTest {
   @Mock GenesisConfigOptions genesisConfigOptions;
   @Mock EthashConfigOptions ethashConfigOptions;
   @Mock CheckpointConfigOptions checkpointConfigOptions;
-  @Mock Keccak256ConfigOptions keccak256ConfigOptions;
   @Mock SynchronizerConfiguration synchronizerConfiguration;
   @Mock EthProtocolConfiguration ethProtocolConfiguration;
   @Mock MiningParameters miningParameters;
@@ -114,8 +112,6 @@ public class BesuControllerBuilderTest {
     when(genesisConfigOptions.getEthashConfigOptions()).thenReturn(ethashConfigOptions);
     when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
     when(ethashConfigOptions.getFixedDifficulty()).thenReturn(OptionalLong.empty());
-    when(genesisConfigOptions.getKeccak256ConfigOptions()).thenReturn(keccak256ConfigOptions);
-    when(keccak256ConfigOptions.getFixedDifficulty()).thenReturn(OptionalLong.empty());
     when(storageProvider.getStorageBySegmentIdentifier(any()))
         .thenReturn(new InMemoryKeyValueStorage());
     when(storageProvider.createBlockchainStorage(any()))
@@ -180,7 +176,6 @@ public class BesuControllerBuilderTest {
             ImmutableDataStorageConfiguration.builder()
                 .dataStorageFormat(DataStorageFormat.BONSAI)
                 .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
-                .useBonsaiSnapshots(DataStorageConfiguration.DEFAULT_BONSAI_USE_SNAPSHOTS)
                 .build());
     besuControllerBuilder.build();
 
@@ -197,7 +192,6 @@ public class BesuControllerBuilderTest {
             ImmutableDataStorageConfiguration.builder()
                 .dataStorageFormat(DataStorageFormat.FOREST)
                 .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
-                .useBonsaiSnapshots(DataStorageConfiguration.DEFAULT_BONSAI_USE_SNAPSHOTS)
                 .build());
     besuControllerBuilder.build();
 

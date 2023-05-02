@@ -18,8 +18,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import org.apache.tuweni.bytes.MutableBytes32;
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes;
 
 /** The Byte operation. */
 public class ByteOperation extends AbstractFixedCostOperation {
@@ -36,20 +35,21 @@ public class ByteOperation extends AbstractFixedCostOperation {
     super(0x1A, "BYTE", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
-  private static UInt256 getByte(final UInt256 seq, final UInt256 offset) {
-    if (!offset.fitsInt()) {
-      return UInt256.ZERO;
+  private static Bytes getByte(final Bytes seq, final Bytes offset) {
+    Bytes trimmedOffset = offset.trimLeadingZeros();
+    if (trimmedOffset.size() > 1) {
+      return Bytes.EMPTY;
     }
+    final int index = trimmedOffset.toInt();
 
-    final int index = offset.intValue();
-    if (index >= 32) {
-      return UInt256.ZERO;
+    int size = seq.size();
+    int pos = index - 32 + size;
+    if (pos >= size || pos < 0) {
+      return Bytes.EMPTY;
+    } else {
+      final byte b = seq.get(pos);
+      return Bytes.of(b);
     }
-
-    final byte b = seq.get(index);
-    final MutableBytes32 res = MutableBytes32.create();
-    res.set(31, b);
-    return UInt256.fromBytes(res);
   }
 
   @Override
@@ -65,11 +65,11 @@ public class ByteOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final UInt256 value0 = UInt256.fromBytes(frame.popStackItem());
-    final UInt256 value1 = UInt256.fromBytes(frame.popStackItem());
+    final Bytes value0 = frame.popStackItem();
+    final Bytes value1 = frame.popStackItem();
 
     // Stack items are reversed for the BYTE operation.
-    final UInt256 result = getByte(value1, value0);
+    final Bytes result = getByte(value1, value0);
 
     frame.pushStackItem(result);
 

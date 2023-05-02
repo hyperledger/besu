@@ -7,8 +7,8 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BaseFeeBlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
-import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ public class LineaBlockBodyValidator extends BaseFeeBlockBodyValidator
     implements BlockBodyValidator {
   private static final Logger LOG = LoggerFactory.getLogger(LineaBlockBodyValidator.class);
 
-  public LineaBlockBodyValidator(final HeaderBasedProtocolSchedule protocolSchedule) {
+  public LineaBlockBodyValidator(final ProtocolSchedule protocolSchedule) {
     super(protocolSchedule);
   }
 

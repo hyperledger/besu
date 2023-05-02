@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.linea.CalldataLimits;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -116,7 +117,7 @@ public class EthGetTransactionReceiptTest {
           Optional.empty(),
           null,
           true,
-          -1);
+          CalldataLimits.NO_LIMITS);
   private final ProtocolSpec statusTransactionTypeSpec =
       new ProtocolSpec(
           "status",
@@ -146,7 +147,7 @@ public class EthGetTransactionReceiptTest {
           Optional.empty(),
           null,
           true,
-          -1);
+          CalldataLimits.NO_LIMITS);
 
   @SuppressWarnings("unchecked")
   private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);

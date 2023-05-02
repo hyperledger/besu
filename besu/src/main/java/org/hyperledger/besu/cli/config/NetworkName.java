@@ -41,8 +41,6 @@ public enum NetworkName {
   KOTTI("/kotti.json", BigInteger.valueOf(6)),
   /** Mordor network name. */
   MORDOR("/mordor.json", BigInteger.valueOf(7)),
-  /** Ecip 1049 dev network name. */
-  ECIP1049_DEV("/ecip1049_dev.json", BigInteger.valueOf(2021)),
 
   LINEA("/linea.json", BigInteger.valueOf(59140), false);
 

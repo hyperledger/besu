@@ -17,8 +17,13 @@
 
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.BlockNumberProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.TimestampProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
@@ -31,7 +36,7 @@ import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 
-public class DefaultTimestampSchedule implements TimestampSchedule {
+public class DefaultProtocolSchedule implements ProtocolSchedule {
 
   @VisibleForTesting
   protected NavigableSet<ScheduledProtocolSpec> protocolSpecs =
@@ -39,34 +44,31 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
 
   private final Optional<BigInteger> chainId;
 
-  DefaultTimestampSchedule(final Optional<BigInteger> chainId) {
+  public DefaultProtocolSchedule(final Optional<BigInteger> chainId) {
     this.chainId = chainId;
   }
 
   @VisibleForTesting
-  protected DefaultTimestampSchedule(final DefaultTimestampSchedule timestampSchedule) {
-    this.chainId = timestampSchedule.chainId;
-    this.protocolSpecs = timestampSchedule.protocolSpecs;
+  protected DefaultProtocolSchedule(final DefaultProtocolSchedule protocolSchedule) {
+    this.chainId = protocolSchedule.chainId;
+    this.protocolSpecs = protocolSchedule.protocolSpecs;
   }
 
   @Override
-  public Optional<ProtocolSpec> getByTimestamp(final long timestamp) {
-    for (final ScheduledProtocolSpec protocolSpec : protocolSpecs) {
-      if (protocolSpec.milestone() <= timestamp) {
-        return Optional.of(protocolSpec.spec());
+  public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
+    checkArgument(
+        !protocolSpecs.isEmpty(), "At least 1 milestone must be provided to the protocol schedule");
+    checkArgument(
+        protocolSpecs.last().milestone() == 0, "There must be a milestone starting from block 0");
+
+    // protocolSpecs is sorted in descending block order, so the first one we find that's lower than
+    // the requested level will be the most appropriate spec
+    for (final ScheduledProtocolSpec spec : protocolSpecs) {
+      if (spec.isOnOrAfterMilestoneBoundary(blockHeader)) {
+        return spec.spec();
       }
     }
-    return Optional.empty();
-  }
-
-  @Override
-  public boolean anyMatch(final Predicate<ScheduledProtocolSpec> predicate) {
-    return this.protocolSpecs.stream().anyMatch(predicate);
-  }
-
-  @Override
-  public boolean isOnMilestoneBoundary(final BlockHeader blockHeader) {
-    return this.protocolSpecs.stream().anyMatch(s -> blockHeader.getTimestamp() == s.milestone());
+    return null;
   }
 
   @Override
@@ -75,20 +77,37 @@ public class DefaultTimestampSchedule implements TimestampSchedule {
   }
 
   @Override
-  public void putMilestone(final long timestamp, final ProtocolSpec protocolSpec) {
-    final ScheduledProtocolSpec scheduledProtocolSpec =
-        new ScheduledProtocolSpec(timestamp, protocolSpec);
+  public String listMilestones() {
+    return protocolSpecs.stream()
+        .sorted(Comparator.comparing(ScheduledProtocolSpec::milestone))
+        .map(scheduledSpec -> scheduledSpec.spec().getName() + ": " + scheduledSpec.milestone())
+        .collect(Collectors.joining(", ", "[", "]"));
+  }
+
+  @Override
+  public boolean isOnMilestoneBoundary(final BlockHeader blockHeader) {
+    return this.protocolSpecs.stream().anyMatch(s -> s.isOnMilestoneBoundary(blockHeader));
+  }
+
+  @Override
+  public void putBlockNumberMilestone(final long blockNumber, final ProtocolSpec protocolSpec) {
+    putMilestone(BlockNumberProtocolSpec.create(blockNumber, protocolSpec));
+  }
+
+  @Override
+  public void putTimestampMilestone(final long timestamp, final ProtocolSpec protocolSpec) {
+    putMilestone(TimestampProtocolSpec.create(timestamp, protocolSpec));
+  }
+
+  private void putMilestone(final ScheduledProtocolSpec scheduledProtocolSpec) {
     // Ensure this replaces any existing spec at the same block number.
     protocolSpecs.remove(scheduledProtocolSpec);
     protocolSpecs.add(scheduledProtocolSpec);
   }
 
   @Override
-  public String listMilestones() {
-    return protocolSpecs.stream()
-        .sorted(Comparator.comparing(ScheduledProtocolSpec::milestone))
-        .map(scheduledSpec -> scheduledSpec.spec().getName() + ": " + scheduledSpec.milestone())
-        .collect(Collectors.joining(", ", "[", "]"));
+  public boolean anyMatch(final Predicate<ScheduledProtocolSpec> predicate) {
+    return this.protocolSpecs.stream().anyMatch(predicate);
   }
 
   @Override
