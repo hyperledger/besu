@@ -155,7 +155,7 @@ public class EthFeeHistoryTest {
         ((JsonRpcSuccessResponse) feeHistoryRequest(2, "9", percentile)).getResult();
     assertFeeMetadataSize(ninenTh, 2);
 
-    final Object eightTh =
+    final Object eighth =
         ((JsonRpcSuccessResponse) feeHistoryRequest(4, "8", percentile)).getResult();
     assertFeeMetadataSize(eightTh, 4);
   }
