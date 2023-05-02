@@ -151,7 +151,7 @@ public class EthFeeHistoryTest {
         .thenReturn(londonSpec);
     double[] percentile = new double[] {100.0};
 
-    final Object ninenTh =
+    final Object ninth =
         ((JsonRpcSuccessResponse) feeHistoryRequest(2, "9", percentile)).getResult();
     assertFeeMetadataSize(ninenTh, 2);
 
