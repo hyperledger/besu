@@ -72,8 +72,15 @@ public interface PendingTransactions {
 
   String logStats();
 
+  default List<Transaction> signalInvalidAndGetDependentTransactions(
+      final Transaction transaction) {
+    // ToDo: remove when the legacy tx pool is removed
+    return List.of();
+  }
+
   default void signalInvalidAndRemoveDependentTransactions(final Transaction transaction) {
     // ToDo: remove when the legacy tx pool is removed
+    // no-op
   }
 
   boolean isLocalSender(Address sender);

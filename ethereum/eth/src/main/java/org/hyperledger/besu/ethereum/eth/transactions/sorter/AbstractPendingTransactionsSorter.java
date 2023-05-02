@@ -206,7 +206,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
     return transactionAdded;
   }
 
-  public void removeTransaction(final Transaction transaction) {
+  void removeTransaction(final Transaction transaction) {
     removeTransaction(transaction, false);
     notifyTransactionDropped(transaction);
   }
@@ -264,7 +264,8 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
           switch (result) {
             case DELETE_TRANSACTION_AND_CONTINUE:
               transactionsToRemove.add(transactionToProcess);
-              signalInvalidAndRemoveDependentTransactions(transactionToProcess);
+              transactionsToRemove.addAll(
+                  signalInvalidAndGetDependentTransactions(transactionToProcess));
               break;
             case CONTINUE:
               break;
@@ -516,12 +517,12 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
   }
 
   @Override
-  public void signalInvalidAndRemoveDependentTransactions(final Transaction transaction) {
+  public List<Transaction> signalInvalidAndGetDependentTransactions(final Transaction transaction) {
     final long invalidNonce = lowestInvalidKnownNonceCache.registerInvalidTransaction(transaction);
 
     PendingTransactionsForSender txsForSender = transactionsBySender.get(transaction.getSender());
     if (txsForSender != null) {
-      txsForSender
+      return txsForSender
           .streamPendingTransactions()
           .filter(pendingTx -> pendingTx.getTransaction().getNonce() > invalidNonce)
           .peek(
@@ -533,9 +534,14 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
                       .addArgument(invalidNonce)
                       .log())
           .map(PendingTransaction::getTransaction)
-          .collect(Collectors.toList())
-          .forEach(this::removeTransaction);
+          .collect(Collectors.toList());
     }
+    return List.of();
+  }
+
+  @Override
+  public void signalInvalidAndRemoveDependentTransactions(final Transaction transaction) {
+    signalInvalidAndGetDependentTransactions(transaction).forEach(this::removeTransaction);
   }
 
   @Override
