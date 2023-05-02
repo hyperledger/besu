@@ -7,6 +7,7 @@
 ### Additions and Improvements
 
 ### Bug Fixes
+- Fix eth_feeHistory response for the case in which blockCount is higher than highestBlock requested. [#5397](https://github.com/hyperledger/besu/pull/5397)
 
 ### Download Links
 
