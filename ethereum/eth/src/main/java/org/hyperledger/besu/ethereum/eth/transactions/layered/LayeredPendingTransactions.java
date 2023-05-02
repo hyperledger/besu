@@ -40,7 +40,6 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -118,18 +117,14 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
       return result;
     } catch (final Throwable throwable) {
-      // in case something unexpected happened, log this sender txs and do a consistency check
+      // in case something unexpected happened, log this sender txs and force a reorg of his txs
       LOG.warn(
           "Unexpected error {} when adding transaction {}, current sender status {}",
           throwable,
           pendingTransaction.toTraceLog(),
           prioritizedTransactions.logSender(pendingTransaction.getSender()));
       LOG.warn("Stack trace", throwable);
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("Starting consistency check");
-        prioritizedTransactions.consistencyCheck(new HashMap<>());
-        LOG.trace("Consistency check done");
-      }
+      reorgSenderOf(pendingTransaction, (int) nonceDistance);
       return INTERNAL_ERROR;
     }
   }
@@ -379,17 +374,12 @@ public class LayeredPendingTransactions implements PendingTransactions {
       prioritizedTransactions.blockAdded(feeMarket, blockHeader, maxConfirmedNonceBySender);
     } catch (final Throwable throwable) {
       LOG.warn(
-          "Unexpected error {} when adding managing added block {}, maxNonceBySender {}, reorgNonceRangeBySender {}",
+          "Unexpected error {} when managing added block {}, maxNonceBySender {}, reorgNonceRangeBySender {}",
           throwable,
           blockHeader.toLogString(),
           maxConfirmedNonceBySender,
           reorgTransactions);
       LOG.warn("Stack trace", throwable);
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("Starting consistency check");
-        prioritizedTransactions.consistencyCheck(new HashMap<>());
-        LOG.trace("Consistency check done");
-      }
     }
 
     logBlockHeaderForReplay(blockHeader, maxConfirmedNonceBySender, reorgNonceRangeBySender);
