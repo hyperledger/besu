@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedSta
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.TRANSACTION_ALREADY_KNOWN;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -113,8 +114,20 @@ public class TransactionPool implements BlockAddedObserver {
     pendingTransactions.reset();
   }
 
-  public ValidationResult<TransactionInvalidReason> addLocalTransaction(
+  public ValidationResult<TransactionInvalidReason> addTransactionViaApi(
       final Transaction transaction) {
+
+    if (configuration.getDisableLocalTransactions()) {
+      final var result = addRemoteTransaction(transaction);
+      if (result.isValid()) {
+        transactionBroadcaster.onTransactionsAdded(List.of(transaction));
+      }
+      return result;
+    }
+    return addLocalTransaction(transaction);
+  }
+
+  ValidationResult<TransactionInvalidReason> addLocalTransaction(final Transaction transaction) {
     final ValidationResultAndAccount validationResult = validateLocalTransaction(transaction);
 
     if (validationResult.result.isValid()) {
@@ -159,48 +172,9 @@ public class TransactionPool implements BlockAddedObserver {
 
     for (final Transaction transaction : transactions) {
 
-      if (pendingTransactions.containsTransaction(transaction.getHash())) {
-        LOG.atTrace()
-            .setMessage("Discard already present transaction {}")
-            .addArgument(transaction::toTraceLog)
-            .log();
-        // We already have this transaction, don't even validate it.
-        duplicateTransactionCounter.labels(REMOTE).inc();
-        continue;
-      }
-
-      final ValidationResultAndAccount validationResult = validateRemoteTransaction(transaction);
-
-      if (validationResult.result.isValid()) {
-        final TransactionAddedStatus status =
-            pendingTransactions.addRemoteTransaction(transaction, validationResult.maybeAccount);
-        switch (status) {
-          case ADDED:
-            LOG.atTrace()
-                .setMessage("Added remote transaction {}")
-                .addArgument(transaction::toTraceLog)
-                .log();
-            addedTransactions.add(transaction);
-            break;
-          case ALREADY_KNOWN:
-            LOG.atTrace()
-                .setMessage("Duplicate remote transaction {}")
-                .addArgument(transaction::toTraceLog)
-                .log();
-            duplicateTransactionCounter.labels(REMOTE).inc();
-            break;
-          default:
-            LOG.atTrace().setMessage("Transaction added status {}").addArgument(status::name).log();
-        }
-      } else {
-        LOG.atTrace()
-            .setMessage("Discard invalid transaction {}, reason {}")
-            .addArgument(transaction::toTraceLog)
-            .addArgument(validationResult.result::getInvalidReason)
-            .log();
-        pendingTransactions
-            .signalInvalidAndGetDependentTransactions(transaction)
-            .forEach(pendingTransactions::removeTransaction);
+      final var result = addRemoteTransaction(transaction);
+      if (result.isValid()) {
+        addedTransactions.add(transaction);
       }
     }
 
@@ -213,6 +187,56 @@ public class TransactionPool implements BlockAddedObserver {
           .addArgument(() -> pendingTransactions.toTraceLog(true, true))
           .log();
     }
+  }
+
+  private ValidationResult<TransactionInvalidReason> addRemoteTransaction(
+      final Transaction transaction) {
+    if (pendingTransactions.containsTransaction(transaction.getHash())) {
+      LOG.atTrace()
+          .setMessage("Discard already present transaction {}")
+          .addArgument(transaction::toTraceLog)
+          .log();
+      // We already have this transaction, don't even validate it.
+      duplicateTransactionCounter.labels(REMOTE).inc();
+      return ValidationResult.invalid(TRANSACTION_ALREADY_KNOWN);
+    }
+
+    final ValidationResultAndAccount validationResult = validateRemoteTransaction(transaction);
+
+    if (validationResult.result.isValid()) {
+      final var status =
+          pendingTransactions.addRemoteTransaction(transaction, validationResult.maybeAccount);
+      switch (status) {
+        case ADDED:
+          LOG.atTrace()
+              .setMessage("Added remote transaction {}")
+              .addArgument(transaction::toTraceLog)
+              .log();
+          break;
+        case ALREADY_KNOWN:
+          LOG.atTrace()
+              .setMessage("Duplicate remote transaction {}")
+              .addArgument(transaction::toTraceLog)
+              .log();
+          duplicateTransactionCounter.labels(REMOTE).inc();
+          return ValidationResult.invalid(TRANSACTION_ALREADY_KNOWN);
+        default:
+          LOG.atTrace().setMessage("Transaction added status {}").addArgument(status::name).log();
+          return ValidationResult.invalid(status.getInvalidReason().get());
+      }
+
+    } else {
+      LOG.atTrace()
+          .setMessage("Discard invalid transaction {}, reason {}")
+          .addArgument(transaction::toTraceLog)
+          .addArgument(validationResult.result::getInvalidReason)
+          .log();
+      pendingTransactions
+          .signalInvalidAndGetDependentTransactions(transaction)
+          .forEach(pendingTransactions::removeTransaction);
+    }
+
+    return validationResult.result;
   }
 
   public long subscribePendingTransactions(final PendingTransactionListener listener) {
@@ -247,7 +271,10 @@ public class TransactionPool implements BlockAddedObserver {
           reAddTransactions.stream()
               .collect(
                   Collectors.partitioningBy(
-                      tx -> pendingTransactions.isLocalSender(tx.getSender())));
+                      tx ->
+                          configuration.getDisableLocalTransactions()
+                              ? false
+                              : pendingTransactions.isLocalSender(tx.getSender())));
       var reAddLocalTxs = txsByOrigin.get(true);
       var reAddRemoteTxs = txsByOrigin.get(false);
       if (!reAddLocalTxs.isEmpty()) {
