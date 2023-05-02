@@ -23,12 +23,12 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.evm.log.Log;
 
+import java.nio.ByteOrder;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.web3j.tx.Contract;
-
-import java.nio.ByteOrder;
 
 public class DepositDecoder {
 
@@ -55,7 +55,10 @@ public class DepositDecoder {
     return new Deposit(
         BLSPublicKey.wrap(Bytes.wrap(rawPublicKey)),
         Bytes32.wrap(Bytes.wrap(rawWithdrawalCredential)),
-        GWei.of(Bytes.wrap(rawAmount).toLong(ByteOrder.LITTLE_ENDIAN)), // Amount is little endian as per Deposit Contract
+        GWei.of(
+            Bytes.wrap(rawAmount)
+                .toLong(
+                    ByteOrder.LITTLE_ENDIAN)), // Amount is little endian as per Deposit Contract
         BLSSignature.wrap(Bytes.wrap(rawSignature)),
         UInt64.valueOf(Bytes.wrap(rawIndex).reverse().toLong()));
   }
@@ -63,5 +66,4 @@ public class DepositDecoder {
   public static Deposit decodeOpaqueBytes(final Bytes input) {
     return decode(RLP.input(input));
   }
-
 }
