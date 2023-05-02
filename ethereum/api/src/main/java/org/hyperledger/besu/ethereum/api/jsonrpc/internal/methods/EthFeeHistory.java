@@ -89,8 +89,13 @@ public class EthFeeHistory implements JsonRpcMethod {
 
     final long oldestBlock = Math.max(0, resolvedHighestBlockNumber - (blockCount - 1));
 
+    final long lastBlock =
+        blockCount > resolvedHighestBlockNumber
+            ? (resolvedHighestBlockNumber + 1)
+            : (oldestBlock + blockCount);
+
     final List<BlockHeader> blockHeaders =
-        LongStream.range(oldestBlock, oldestBlock + blockCount)
+        LongStream.range(oldestBlock, lastBlock)
             .mapToObj(blockchain::getBlockHeader)
             .flatMap(Optional::stream)
             .collect(toUnmodifiableList());
@@ -138,7 +143,7 @@ public class EthFeeHistory implements JsonRpcMethod {
     final Optional<List<List<Wei>>> maybeRewards =
         maybeRewardPercentiles.map(
             rewardPercentiles ->
-                LongStream.range(oldestBlock, oldestBlock + blockCount)
+                LongStream.range(oldestBlock, lastBlock)
                     .mapToObj(blockchain::getBlockByNumber)
                     .flatMap(Optional::stream)
                     .map(
