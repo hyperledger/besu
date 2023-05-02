@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledSpecFactory;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
@@ -181,17 +180,25 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   }
 
   /**
-   * Put milestone.
+   * Put blockNumber milestone.
    *
-   * @param scheduledSpecFactory static factory for creating a scheduled protocol spec
-   * @param milestone the block or timestamp
+   * @param blockNumber the block or timestamp
    * @param protocolSpec the protocol spec
    */
   @Override
-  public void putMilestone(
-      final ScheduledSpecFactory scheduledSpecFactory,
-      final long milestone,
-      final ProtocolSpec protocolSpec) {
+  public void putBlockNumberMilestone(final long blockNumber, final ProtocolSpec protocolSpec) {
+    throw new UnsupportedOperationException(
+        "Should not use TransitionProtocolSchedule wrapper class to create milestones");
+  }
+
+  /**
+   * Put timestamp milestone.
+   *
+   * @param timestamp the block or timestamp
+   * @param protocolSpec the protocol spec
+   */
+  @Override
+  public void putTimestampMilestone(final long timestamp, final ProtocolSpec protocolSpec) {
     throw new UnsupportedOperationException(
         "Should not use TransitionProtocolSchedule wrapper class to create milestones");
   }
