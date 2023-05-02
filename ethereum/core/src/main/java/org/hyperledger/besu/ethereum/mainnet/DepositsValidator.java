@@ -83,6 +83,10 @@ public interface DepositsValidator {
       this.depositContractAddress = depositContractAddress;
     }
 
+    public Address getDepositContractAddress() {
+      return depositContractAddress;
+    }
+
     @Override
     public boolean validateDepositParameter(final Optional<List<Deposit>> deposits) {
       return deposits.isPresent();
