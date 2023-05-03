@@ -971,7 +971,7 @@ public class EnodeURLImplTest {
   }
 
   @Test
-  public void getHostShoulReturnHostNameIpv4() {
+  public void getHostShouldReturnHostNameIpv4() {
     final EnodeURL enode =
         EnodeURLImpl.builder()
             .nodeId(VALID_NODE_ID)
