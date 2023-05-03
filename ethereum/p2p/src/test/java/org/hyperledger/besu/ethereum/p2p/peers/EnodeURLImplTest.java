@@ -1007,7 +1007,7 @@ public class EnodeURLImplTest {
   }
 
   @Test
-  public void getHostShoulReturnHostNameWhenHostContainsUnderscore() {
+  public void getHostShouldReturnHostNameWhenHostContainsUnderscore() {
     EnodeURL enodeMock = Mockito.mock(EnodeURLImpl.class);
     URI uriMock = Mockito.mock(URI.class);
     Mockito.when(enodeMock.getHost()).thenCallRealMethod();
@@ -1020,7 +1020,7 @@ public class EnodeURLImplTest {
   }
 
   @Test
-  public void getHostShoulReturnEmptyStringWhenUriToStringDoesNotContainAt() {
+  public void getHostShouldReturnEmptyStringWhenUriToStringDoesNotContainAt() {
     EnodeURL enodeMock = Mockito.mock(EnodeURLImpl.class);
     URI uriMock = Mockito.mock(URI.class);
     Mockito.when(enodeMock.getHost()).thenCallRealMethod();
@@ -1032,7 +1032,7 @@ public class EnodeURLImplTest {
   }
 
   @Test
-  public void getHostShoulReturnEmptyStringWhenUriToStringReturnsColonBeforeAt() {
+  public void getHostShouldReturnEmptyStringWhenUriToStringReturnsColonBeforeAt() {
     EnodeURL enodeMock = Mockito.mock(EnodeURLImpl.class);
     URI uriMock = Mockito.mock(URI.class);
     Mockito.when(enodeMock.getHost()).thenCallRealMethod();
@@ -1044,7 +1044,7 @@ public class EnodeURLImplTest {
   }
 
   @Test
-  public void getHostShoulReturnHostNameDomainFound() {
+  public void getHostShouldReturnHostNameWhenDomainFound() {
     String site = "hyperledger.org";
     String enodeString = String.format("enode://%s@%s:%d", VALID_NODE_ID, site, 9999);
     final EnodeURL enode =
@@ -1055,7 +1055,7 @@ public class EnodeURLImplTest {
   }
 
   @Test
-  public void getHostShoulReturnLoopBackWhenHostNameDomainNotFound() {
+  public void getHostShouldReturnLoopBackWhenDomainNotFound() {
     String site = "besu-is-awesome.example.com";
     String enodeString = String.format("enode://%s@%s:%d", VALID_NODE_ID, site, 9999);
     final EnodeURL enode =
