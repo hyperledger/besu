@@ -115,6 +115,7 @@ public class TransactionPoolOptions
         config.getEth65TrxAnnouncedBufferingPeriod().toMillis();
     options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
     options.txPoolLimitByAccountPercentage = config.getTxPoolLimitByAccountPercentage();
+    options.disableLocalTxs = config.getDisableLocalTransactions();
     return options;
   }
 
@@ -124,7 +125,8 @@ public class TransactionPoolOptions
         .strictTransactionReplayProtectionEnabled(strictTxReplayProtectionEnabled)
         .txMessageKeepAliveSeconds(txMessageKeepAliveSeconds)
         .eth65TrxAnnouncedBufferingPeriod(Duration.ofMillis(eth65TrxAnnouncedBufferingPeriod))
-        .txPoolLimitByAccountPercentage(txPoolLimitByAccountPercentage);
+        .txPoolLimitByAccountPercentage(txPoolLimitByAccountPercentage)
+        .disableLocalTransactions(disableLocalTxs);
   }
 
   @Override
