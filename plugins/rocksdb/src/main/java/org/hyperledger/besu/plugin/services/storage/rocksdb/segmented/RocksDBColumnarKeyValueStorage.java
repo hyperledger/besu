@@ -78,10 +78,10 @@ public abstract class RocksDBColumnarKeyValueStorage
   protected static final long ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC = 1_073_741_824L;
   /** RocksDb memtable size when using the high spec option */
   protected static final long ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC = 1_073_741_824L;
-  /** RocksDb memtable size when using the high spec option */
+  /** RocksDb number of log files to keep on disk */
   private static final long NUMBER_OF_LOG_FILES_TO_KEEP = 5;
+  /** RocksDb Max size of each log file */
   private static final long MAX_LOG_FILE_SIZE = 104_857_600L;
-
 
   static {
     RocksDbUtil.loadNativeLibrary();
@@ -181,17 +181,15 @@ public abstract class RocksDBColumnarKeyValueStorage
   }
 
   private void setGlobalOptions(final RocksDBConfiguration configuration, final Statistics stats) {
-    options =
-            new DBOptions();
-    options.setCreateIfMissing(true)
-            .setMaxOpenFiles(configuration.getMaxOpenFiles())
-            .setStatistics(stats)
-            .setCreateMissingColumnFamilies(true)
-            .setKeepLogFileNum(NUMBER_OF_LOG_FILES_TO_KEEP)
-            .setMaxLogFileSize(MAX_LOG_FILE_SIZE)
-            .setEnv(
-                    Env.getDefault()
-                            .setBackgroundThreads(configuration.getBackgroundThreadCount()));
+    options = new DBOptions();
+    options
+        .setCreateIfMissing(true)
+        .setMaxOpenFiles(configuration.getMaxOpenFiles())
+        .setStatistics(stats)
+        .setCreateMissingColumnFamilies(true)
+        .setKeepLogFileNum(NUMBER_OF_LOG_FILES_TO_KEEP)
+        .setMaxLogFileSize(MAX_LOG_FILE_SIZE)
+        .setEnv(Env.getDefault().setBackgroundThreads(configuration.getBackgroundThreadCount()));
 
     if (configuration.isHighSpec()) {
       options.setDbWriteBufferSize(ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC);
