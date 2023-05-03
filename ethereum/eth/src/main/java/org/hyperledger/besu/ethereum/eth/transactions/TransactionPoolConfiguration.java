@@ -34,6 +34,7 @@ public interface TransactionPoolConfiguration {
   Percentage DEFAULT_PRICE_BUMP = Percentage.fromInt(10);
   Wei DEFAULT_RPC_TX_FEE_CAP = Wei.fromEth(1);
   Duration ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD = Duration.ofMillis(500);
+  boolean DEFAULT_DISABLE_LOCAL_TXS = false;
 
   TransactionPoolConfiguration DEFAULT = ImmutableTransactionPoolConfiguration.builder().build();
 
@@ -80,6 +81,11 @@ public interface TransactionPoolConfiguration {
   @Value.Default
   default Boolean getStrictTransactionReplayProtectionEnabled() {
     return DEFAULT_STRICT_TX_REPLAY_PROTECTION_ENABLED;
+  }
+
+  @Value.Default
+  default Boolean getDisableLocalTransactions() {
+    return DEFAULT_DISABLE_LOCAL_TXS;
   }
 
   Optional<File> getSaveFile();

@@ -41,6 +41,8 @@ public class TransactionPoolOptions
   private static final String TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE =
       "--tx-pool-limit-by-account-percentage";
 
+  private static final String DISABLE_LOCAL_TXS_FLAG = "--tx-pool-disable-locals";
+
   @CommandLine.Option(
       names = {STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG},
       paramLabel = "<Boolean>",
@@ -80,6 +82,15 @@ public class TransactionPoolOptions
   private Float txPoolLimitByAccountPercentage =
       TransactionPoolConfiguration.LIMIT_TXPOOL_BY_ACCOUNT_PERCENTAGE;
 
+  @CommandLine.Option(
+      names = {DISABLE_LOCAL_TXS_FLAG},
+      paramLabel = "<Boolean>",
+      description =
+          "Set to true if transactions sent via RPC should not have less strict checks and not be prioritized over remote ones (default: ${DEFAULT-VALUE})",
+      fallbackValue = "false",
+      arity = "0..1")
+  private Boolean disableLocalTxs = TransactionPoolConfiguration.DEFAULT_DISABLE_LOCAL_TXS;
+
   private TransactionPoolOptions() {}
 
   /**
@@ -104,6 +115,7 @@ public class TransactionPoolOptions
         config.getEth65TrxAnnouncedBufferingPeriod().toMillis();
     options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
     options.txPoolLimitByAccountPercentage = config.getTxPoolLimitByAccountPercentage();
+    options.disableLocalTxs = config.getDisableLocalTransactions();
     return options;
   }
 
@@ -113,13 +125,15 @@ public class TransactionPoolOptions
         .strictTransactionReplayProtectionEnabled(strictTxReplayProtectionEnabled)
         .txMessageKeepAliveSeconds(txMessageKeepAliveSeconds)
         .eth65TrxAnnouncedBufferingPeriod(Duration.ofMillis(eth65TrxAnnouncedBufferingPeriod))
-        .txPoolLimitByAccountPercentage(txPoolLimitByAccountPercentage);
+        .txPoolLimitByAccountPercentage(txPoolLimitByAccountPercentage)
+        .disableLocalTransactions(disableLocalTxs);
   }
 
   @Override
   public List<String> getCLIOptions() {
     return Arrays.asList(
         STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG + "=" + strictTxReplayProtectionEnabled,
+        DISABLE_LOCAL_TXS_FLAG + "=" + disableLocalTxs,
         TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE,
         OptionParser.format(txPoolLimitByAccountPercentage),
         TX_MESSAGE_KEEP_ALIVE_SEC_FLAG,
