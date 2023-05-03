@@ -171,7 +171,7 @@ public abstract class RocksDBColumnarKeyValueStorage
 
       final Statistics stats = new Statistics();
 
-      setOptions(configuration, stats);
+      setGlobalOptions(configuration, stats);
 
       txOptions = new TransactionDBOptions();
       columnHandles = new ArrayList<>(columnDescriptors.size());
@@ -180,7 +180,7 @@ public abstract class RocksDBColumnarKeyValueStorage
     }
   }
 
-  private void setOptions(RocksDBConfiguration configuration, Statistics stats) {
+  private void setGlobalOptions(final RocksDBConfiguration configuration, final Statistics stats) {
     options =
             new DBOptions();
     options.setCreateIfMissing(true)
