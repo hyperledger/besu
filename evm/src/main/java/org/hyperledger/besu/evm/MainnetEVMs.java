@@ -104,7 +104,8 @@ import org.hyperledger.besu.evm.operation.SModOperation;
 import org.hyperledger.besu.evm.operation.SStoreOperation;
 import org.hyperledger.besu.evm.operation.SarOperation;
 import org.hyperledger.besu.evm.operation.SelfBalanceOperation;
-import org.hyperledger.besu.evm.operation.SelfDestructOperation;
+import org.hyperledger.besu.evm.operation.SelfDestructEIP6780Operation;
+import org.hyperledger.besu.evm.operation.SelfDestructFrontierOperation;
 import org.hyperledger.besu.evm.operation.ShlOperation;
 import org.hyperledger.besu.evm.operation.ShrOperation;
 import org.hyperledger.besu.evm.operation.SignExtendOperation;
@@ -243,7 +244,7 @@ public class MainnetEVMs {
     registry.put(new ReturnOperation(gasCalculator));
     registry.put(new InvalidOperation(gasCalculator));
     registry.put(new StopOperation(gasCalculator));
-    registry.put(new SelfDestructOperation(gasCalculator));
+    registry.put(new SelfDestructFrontierOperation(gasCalculator));
     registry.put(new CreateOperation(gasCalculator, Integer.MAX_VALUE));
     registry.put(new CallOperation(gasCalculator));
     registry.put(new CallCodeOperation(gasCalculator));
@@ -1075,6 +1076,9 @@ public class MainnetEVMs {
     registry.put(new RelativeJumpVectorOperation(gasCalculator));
     registry.put(new CallFOperation(gasCalculator));
     registry.put(new RetFOperation(gasCalculator));
+
+    // EIP-6780 self destruct
+    registry.put(new SelfDestructEIP6780Operation(gasCalculator));
   }
 
   /**

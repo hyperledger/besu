@@ -149,6 +149,11 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   }
 
   @Override
+  public boolean isNewAccount() {
+    return account == null;
+  }
+
+  @Override
   public Address getAddress() {
     return address;
   }

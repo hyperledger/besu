@@ -83,6 +83,11 @@ public class SimpleAccount implements EvmAccount, MutableAccount {
   }
 
   @Override
+  public boolean isNewAccount() {
+    return parent == null;
+  }
+
+  @Override
   public Address getAddress() {
     return address;
   }

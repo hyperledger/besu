@@ -24,15 +24,15 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
-/** The Self destruct operation. */
-public class SelfDestructOperation extends AbstractOperation {
+/** The Self destruct operation that observes EIP-6780 semantics. */
+public class SelfDestructEIP6780Operation extends AbstractOperation {
 
   /**
    * Instantiates a new Self destruct operation.
    *
    * @param gasCalculator the gas calculator
    */
-  public SelfDestructOperation(final GasCalculator gasCalculator) {
+  public SelfDestructEIP6780Operation(final GasCalculator gasCalculator) {
     super(0xFF, "SELFDESTRUCT", 1, 0, gasCalculator);
   }
 
@@ -60,7 +60,9 @@ public class SelfDestructOperation extends AbstractOperation {
     final Address address = frame.getRecipientAddress();
     final MutableAccount account = frame.getWorldUpdater().getAccount(address).getMutable();
 
-    frame.addSelfDestruct(address);
+    if (account.isNewAccount()) {
+      frame.addSelfDestruct(address);
+    }
 
     final MutableAccount recipient =
         frame.getWorldUpdater().getOrCreate(recipientAddress).getMutable();
