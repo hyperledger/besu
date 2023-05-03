@@ -308,19 +308,24 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           "New payloadId {} received so cancelling block creation tasks for the following payloadIds: {}",
           payloadIdentifier,
           existingPayloadIdsBeingBuilt);
-      blockCreationTask.values().forEach(BlockCreationTask::cancel);
+
+      blockCreationTask.keySet().forEach(this::cleanupBlockCreationTask);
     }
+  }
+
+  private void cleanupBlockCreationTask(final PayloadIdentifier payloadIdentifier) {
+    blockCreationTask.computeIfPresent(
+        payloadIdentifier,
+        (pid, blockCreationTask) -> {
+          blockCreationTask.cancel();
+          return null;
+        });
   }
 
   @Override
   public void finalizeProposalById(final PayloadIdentifier payloadId) {
     LOG.debug("Finalizing block proposal for payload id {}", payloadId);
-    blockCreationTask.computeIfPresent(
-        payloadId,
-        (pid, blockCreationTask) -> {
-          blockCreationTask.cancel();
-          return blockCreationTask;
-        });
+    cleanupBlockCreationTask(payloadId);
   }
 
   private void tryToBuildBetterBlock(
@@ -350,12 +355,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                     .addArgument(() -> logException(throwable))
                     .log();
               }
-              blockCreationTask.computeIfPresent(
-                  payloadIdentifier,
-                  (pid, blockCreationTask) -> {
-                    blockCreationTask.cancel();
-                    return null;
-                  });
+              cleanupBlockCreationTask(payloadIdentifier);
             });
   }
 
