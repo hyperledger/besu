@@ -76,7 +76,7 @@ class DepositDecoderTest {
             GWei.of(32000000000L),
             BLSSignature.fromHexString(
                 "0xa889db8300194050a2636c92a95bc7160515867614b7971a9500cdb62f9c0890217d2901c3241f86fac029428fc106930606154bd9e406d7588934a5f15b837180b17194d6e44bd6de23e43b163dfe12e369dcc75a3852cd997963f158217eb5"),
-            UInt64.ONE);
+            UInt64.valueOf(539967));
 
     assertThat(deposit).isEqualTo(expectedDeposit);
   }
