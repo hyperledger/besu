@@ -995,7 +995,7 @@ public class EnodeURLImplTest {
   }
 
   @Test
-  public void getHostShoulReturnHostNameIpv6CompactFromFull() {
+  public void getHostShouldReturnHostNameIpv6CompactFromFull() {
     final EnodeURL enode =
         EnodeURLImpl.builder()
             .nodeId(VALID_NODE_ID)
