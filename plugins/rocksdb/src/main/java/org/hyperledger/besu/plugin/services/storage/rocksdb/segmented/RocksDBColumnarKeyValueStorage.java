@@ -78,6 +78,10 @@ public abstract class RocksDBColumnarKeyValueStorage
   protected static final long ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC = 1_073_741_824L;
   /** RocksDb memtable size when using the high spec option */
   protected static final long ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC = 1_073_741_824L;
+  /** RocksDb memtable size when using the high spec option */
+  private static final long NUMBER_OF_LOG_FILES_TO_KEEP = 5;
+  private static final long MAX_LOG_FILE_SIZE = 104_857_600L;
+
 
   static {
     RocksDbUtil.loadNativeLibrary();
@@ -166,33 +170,31 @@ public abstract class RocksDBColumnarKeyValueStorage
                   .setTableFormatConfig(createBlockBasedTableConfig(configuration))));
 
       final Statistics stats = new Statistics();
-      if (configuration.isHighSpec()) {
-        options =
-            new DBOptions()
-                .setCreateIfMissing(true)
-                .setMaxOpenFiles(configuration.getMaxOpenFiles())
-                .setDbWriteBufferSize(ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC)
-                .setStatistics(stats)
-                .setCreateMissingColumnFamilies(true)
-                .setEnv(
-                    Env.getDefault()
-                        .setBackgroundThreads(configuration.getBackgroundThreadCount()));
-      } else {
-        options =
-            new DBOptions()
-                .setCreateIfMissing(true)
-                .setMaxOpenFiles(configuration.getMaxOpenFiles())
-                .setStatistics(stats)
-                .setCreateMissingColumnFamilies(true)
-                .setEnv(
-                    Env.getDefault()
-                        .setBackgroundThreads(configuration.getBackgroundThreadCount()));
-      }
+
+      setOptions(configuration, stats);
 
       txOptions = new TransactionDBOptions();
       columnHandles = new ArrayList<>(columnDescriptors.size());
     } catch (RocksDBException e) {
       throw new StorageException(e);
+    }
+  }
+
+  private void setOptions(RocksDBConfiguration configuration, Statistics stats) {
+    options =
+            new DBOptions();
+    options.setCreateIfMissing(true)
+            .setMaxOpenFiles(configuration.getMaxOpenFiles())
+            .setStatistics(stats)
+            .setCreateMissingColumnFamilies(true)
+            .setKeepLogFileNum(NUMBER_OF_LOG_FILES_TO_KEEP)
+            .setMaxLogFileSize(MAX_LOG_FILE_SIZE)
+            .setEnv(
+                    Env.getDefault()
+                            .setBackgroundThreads(configuration.getBackgroundThreadCount()));
+
+    if (configuration.isHighSpec()) {
+      options.setDbWriteBufferSize(ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC);
     }
   }
 
