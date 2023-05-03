@@ -165,7 +165,6 @@ public abstract class RocksDBColumnarKeyValueStorage
                   .setCompressionType(CompressionType.LZ4_COMPRESSION)
                   .setTableFormatConfig(createBlockBasedTableConfig(configuration))));
 
-      final Statistics stats = new Statistics();
       if (configuration.isHighSpec()) {
         options =
             new DBOptions()
