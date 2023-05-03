@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -24,13 +24,13 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class ExecutionEngineAcceptanceTest extends AbstractJsonRpcTest {
-  private static final String GENESIS_FILE = "/jsonrpc/engine/paris/genesis.json";
-  private static final String TEST_CASE_PATH = "/jsonrpc/engine/paris/test-cases/";
+public class ExecutionEngineShanghaiAcceptanceTest extends AbstractJsonRpcTest {
+  private static final String GENESIS_FILE = "/jsonrpc/engine/shanghai/genesis.json";
+  private static final String TEST_CASE_PATH = "/jsonrpc/engine/shanghai/test-cases/";
 
   private static JsonRpcTestsContext testsContext;
 
-  public ExecutionEngineAcceptanceTest(final String ignored, final URI testCaseFileURI) {
+  public ExecutionEngineShanghaiAcceptanceTest(final String ignored, final URI testCaseFileURI) {
     super(ignored, testsContext, testCaseFileURI);
   }
 
