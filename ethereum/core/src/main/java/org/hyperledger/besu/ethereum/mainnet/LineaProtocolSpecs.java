@@ -15,8 +15,8 @@ import java.util.OptionalInt;
 import java.util.Set;
 
 public class LineaProtocolSpecs {
-  private static final int LINEA_BLOCK_MAX_CALLDATA_SIZE = 71680;
-  private static final int LINEA_TX_MAX_CALLDATA_SIZE = 61440;
+  private static final int LINEA_BLOCK_MAX_CALLDATA_SIZE = 70000;
+  private static final int LINEA_TX_MAX_CALLDATA_SIZE = 60000;
 
   private LineaProtocolSpecs() {}
 
