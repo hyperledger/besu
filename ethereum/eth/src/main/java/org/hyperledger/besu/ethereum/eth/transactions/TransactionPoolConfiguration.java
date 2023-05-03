@@ -17,7 +17,9 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.util.number.Percentage;
 
+import java.io.File;
 import java.time.Duration;
+import java.util.Optional;
 
 import org.immutables.value.Value;
 
@@ -79,4 +81,6 @@ public interface TransactionPoolConfiguration {
   default Boolean getStrictTransactionReplayProtectionEnabled() {
     return DEFAULT_STRICT_TX_REPLAY_PROTECTION_ENABLED;
   }
+
+  Optional<File> getSaveFile();
 }

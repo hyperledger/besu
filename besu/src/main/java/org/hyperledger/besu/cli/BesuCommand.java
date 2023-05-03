@@ -2932,6 +2932,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .pendingTxRetentionPeriod(txPoolOptionGroup.pendingTxRetentionPeriod)
         .priceBump(Percentage.fromInt(txPoolOptionGroup.priceBump))
         .txFeeCap(txFeeCap)
+        .saveFile(dataDir().resolve("txpool.dump").toFile())
         .build();
   }
 
