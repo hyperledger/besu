@@ -57,6 +57,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.IntSummaryStatistics;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -161,22 +162,30 @@ public class TransactionPool implements BlockAddedObserver {
                 LOG.info("Loading transaction pool content from file {}", saveFile);
                 try (final BufferedReader br =
                     new BufferedReader(new FileReader(saveFile, StandardCharsets.US_ASCII))) {
-                  final long txCount =
+                  final IntSummaryStatistics stats =
                       br.lines()
                           .parallel()
-                          .peek(
+                          .mapToInt(
                               line -> {
                                 final boolean isLocal = line.charAt(0) == 'l';
                                 final Transaction tx =
                                     Transaction.readFrom(Bytes.fromBase64String(line.substring(1)));
-                                if (isLocal) {
-                                  addLocalTransaction(tx);
+
+                                final ValidationResult<TransactionInvalidReason> result;
+                                if (isLocal && !configuration.getDisableLocalTransactions()) {
+                                  result = addLocalTransaction(tx);
                                 } else {
-                                  addRemoteTransactions(List.of(tx));
+                                  result = addRemoteTransaction(tx);
                                 }
+
+                                return result.isValid() ? 1 : 0;
                               })
-                          .count();
-                  LOG.info("Loaded {} transactions from file {}", txCount, saveFile);
+                          .summaryStatistics();
+                  LOG.info(
+                      "Added {} transactions of {} loaded from file {}",
+                      stats.getSum(),
+                      stats.getCount(),
+                      saveFile);
                 } catch (IOException e) {
                   LOG.error("Error while saving txpool content to disk", e);
                 }
