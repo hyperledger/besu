@@ -5,6 +5,7 @@
 ### Breaking Changes
 
 ### Additions and Improvements
+- EIP-4844: Zero blob transactions are invalid [#5425](https://github.com/hyperledger/besu/pull/5425)
 
 ### Bug Fixes
 - Fix eth_feeHistory response for the case in which blockCount is higher than highestBlock requested. [#5397](https://github.com/hyperledger/besu/pull/5397)
