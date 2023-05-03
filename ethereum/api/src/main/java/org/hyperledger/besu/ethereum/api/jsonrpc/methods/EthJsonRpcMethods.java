@@ -55,6 +55,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthNewFilter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthNewPendingTransactionFilter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendRawTransaction;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendRawTransactionConditional;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSubmitHashRate;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSubmitWork;
@@ -149,6 +150,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthSyncing(synchronizer),
         new EthGetStorageAt(blockchainQueries),
         new EthSendRawTransaction(transactionPool),
+        new EthSendRawTransactionConditional(transactionPool),
         new EthSendTransaction(),
         new EthEstimateGas(
             blockchainQueries,

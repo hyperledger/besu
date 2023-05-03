@@ -36,21 +36,21 @@ import com.google.common.base.Suppliers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EthSendRawTransaction extends AbstractEthSendRawTransaction {
-  private static final Logger LOG = LoggerFactory.getLogger(EthSendRawTransaction.class);
+public class EthSendRawTransactionConditional extends AbstractEthSendRawTransaction {
+  private static final Logger LOG = LoggerFactory.getLogger(EthSendRawTransactionConditional.class);
 
-  public EthSendRawTransaction(final TransactionPool transactionPool) {
+  public EthSendRawTransactionConditional(final TransactionPool transactionPool) {
     this(Suppliers.ofInstance(transactionPool), false);
   }
 
-  public EthSendRawTransaction(
+  public EthSendRawTransactionConditional(
       final Supplier<TransactionPool> transactionPool, final boolean sendEmptyHashOnInvalidBlock) {
     super(transactionPool, sendEmptyHashOnInvalidBlock);
   }
 
   @Override
   public String getName() {
-    return RpcMethod.ETH_SEND_RAW_TRANSACTION.getMethodName();
+    return RpcMethod.ETH_SEND_RAW_TRANSACTION_CONDITIONAL.getMethodName();
   }
 
   @Override
