@@ -5,6 +5,7 @@
 ### Breaking Changes
 
 ### Additions and Improvements
+- "Big-EOF" (the EOF version initially slotted for Shanghai) has been moved from Cancun to FutureEIPs [#5429](https://github.com/hyperledger/besu/pull/5429)
 - EIP-4844: Zero blob transactions are invalid [#5425](https://github.com/hyperledger/besu/pull/5425)
 
 ### Bug Fixes
