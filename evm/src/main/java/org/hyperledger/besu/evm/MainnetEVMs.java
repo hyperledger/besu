@@ -164,7 +164,7 @@ public class MainnetEVMs {
   }
 
   /**
-   * Frontier operations operation registry.
+   * Operation registry for frontier's operations.
    *
    * @param gasCalculator the gas calculator
    * @return the operation registry
@@ -296,7 +296,7 @@ public class MainnetEVMs {
   }
 
   /**
-   * Homestead operations operation registry.
+   * Operation registry for homestead's operations.
    *
    * @param gasCalculator the gas calculator
    * @return the operation registry
@@ -366,7 +366,7 @@ public class MainnetEVMs {
   }
 
   /**
-   * Byzantium operations operation registry.
+   * Operation registry for byzantium's operations.
    *
    * @param gasCalculator the gas calculator
    * @return the operation registry
@@ -419,7 +419,7 @@ public class MainnetEVMs {
   }
 
   /**
-   * Constantinople operations registry.
+   * Operation registry for constantinople's operations.
    *
    * @param gasCalculator the gas calculator
    * @return the operation registry
@@ -497,7 +497,7 @@ public class MainnetEVMs {
   }
 
   /**
-   * Istanbul operations registry.
+   * Operation registry for istanbul's operations.
    *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
@@ -590,7 +590,7 @@ public class MainnetEVMs {
   }
 
   /**
-   * London operations registry.
+   * Operation registry for london's operations.
    *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
@@ -638,7 +638,7 @@ public class MainnetEVMs {
   }
 
   /**
-   * Paris operations registry.
+   * Operation registry for paris's operations.
    *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
@@ -767,7 +767,7 @@ public class MainnetEVMs {
   }
 
   /**
-   * Cancun operations operation registry.
+   * Operation registry for cancun's operations.
    *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
@@ -799,13 +799,217 @@ public class MainnetEVMs {
     // TSTORE/TLOAD
     registry.put(new TStoreOperation(gasCalculator));
     registry.put(new TLoadOperation(gasCalculator));
+  }
 
-    // EOFV1
-    registry.put(new RelativeJumpOperation(gasCalculator));
-    registry.put(new RelativeJumpIfOperation(gasCalculator));
-    registry.put(new RelativeJumpVectorOperation(gasCalculator));
-    registry.put(new CallFOperation(gasCalculator));
-    registry.put(new RetFOperation(gasCalculator));
+  /**
+   * Prague evm.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM prague(final EvmConfiguration evmConfiguration) {
+    return prague(DEV_NET_CHAIN_ID, evmConfiguration);
+  }
+  /**
+   * Prague evm.
+   *
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM prague(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return prague(new CancunGasCalculator(), chainId, evmConfiguration);
+  }
+
+  /**
+   * Prague evm.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM prague(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(
+        pragueOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.PRAGUE);
+  }
+
+  /**
+   * Operation registry for prague's operations.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @return the operation registry
+   */
+  public static OperationRegistry pragueOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry operationRegistry = new OperationRegistry();
+    registerPragueOperations(operationRegistry, gasCalculator, chainId);
+    return operationRegistry;
+  }
+
+  /**
+   * Register prague operations.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   * @param chainID the chain id
+   */
+  public static void registerPragueOperations(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
+    registerCancunOperations(registry, gasCalculator, chainID);
+  }
+
+  /**
+   * Osaka evm.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM osaka(final EvmConfiguration evmConfiguration) {
+    return osaka(DEV_NET_CHAIN_ID, evmConfiguration);
+  }
+  /**
+   * Osaka evm.
+   *
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM osaka(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return osaka(new CancunGasCalculator(), chainId, evmConfiguration);
+  }
+
+  /**
+   * Osaka evm.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM osaka(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(
+        osakaOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.OSAKA);
+  }
+
+  /**
+   * Operation registry for osaka's operations.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @return the operation registry
+   */
+  public static OperationRegistry osakaOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry operationRegistry = new OperationRegistry();
+    registerOsakaOperations(operationRegistry, gasCalculator, chainId);
+    return operationRegistry;
+  }
+
+  /**
+   * Register osaka operations.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   * @param chainID the chain id
+   */
+  public static void registerOsakaOperations(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
+    registerPragueOperations(registry, gasCalculator, chainID);
+  }
+
+  /**
+   * Bogota evm.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM bogota(final EvmConfiguration evmConfiguration) {
+    return bogota(DEV_NET_CHAIN_ID, evmConfiguration);
+  }
+  /**
+   * Bogota evm.
+   *
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM bogota(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return bogota(new CancunGasCalculator(), chainId, evmConfiguration);
+  }
+
+  /**
+   * Bogota evm.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM bogota(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(
+        bogotaOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.BOGOTA);
+  }
+
+  /**
+   * Bogota operation registry.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @return the operation registry
+   */
+  public static OperationRegistry bogotaOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry operationRegistry = new OperationRegistry();
+    registerBogotaOperations(operationRegistry, gasCalculator, chainId);
+    return operationRegistry;
+  }
+
+  /**
+   * Register bogota operations.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   * @param chainID the chain id
+   */
+  public static void registerBogotaOperations(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
+    registerOsakaOperations(registry, gasCalculator, chainID);
+  }
+
+  /**
+   * Future eips evm.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM futureEips(final EvmConfiguration evmConfiguration) {
+    return futureEips(DEV_NET_CHAIN_ID, evmConfiguration);
   }
 
   /**
@@ -816,7 +1020,7 @@ public class MainnetEVMs {
    * @return the evm
    */
   public static EVM futureEips(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return shanghai(chainId, evmConfiguration);
+    return futureEips(new CancunGasCalculator(), chainId, evmConfiguration);
   }
 
   /**
@@ -831,13 +1035,62 @@ public class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainId,
       final EvmConfiguration evmConfiguration) {
-    return cancun(gasCalculator, chainId, evmConfiguration);
+    return new EVM(
+        futureEipsOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.FUTURE_EIPS);
+  }
+
+  /**
+   * Future Operation registry for eIPs's operations.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @return the operation registry
+   */
+  public static OperationRegistry futureEipsOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry operationRegistry = new OperationRegistry();
+    registerFutureEipsOperations(operationRegistry, gasCalculator, chainId);
+    return operationRegistry;
+  }
+
+  /**
+   * Register FutureEIPs operations.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   * @param chainID the chain id
+   */
+  public static void registerFutureEipsOperations(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
+    registerBogotaOperations(registry, gasCalculator, chainID);
+
+    // "big" EOF
+    registry.put(new RelativeJumpOperation(gasCalculator));
+    registry.put(new RelativeJumpIfOperation(gasCalculator));
+    registry.put(new RelativeJumpVectorOperation(gasCalculator));
+    registry.put(new CallFOperation(gasCalculator));
+    registry.put(new RetFOperation(gasCalculator));
   }
 
   /**
    * Experimental eips evm.
    *
-   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM experimentalEips(final EvmConfiguration evmConfiguration) {
+    return futureEips(DEV_NET_CHAIN_ID, evmConfiguration);
+  }
+
+  /**
+   * Experimental eips evm.
+   *
+   * @param chainId the chain Id
    * @param evmConfiguration the evm configuration
    * @return the evm
    */
@@ -858,6 +1111,38 @@ public class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainId,
       final EvmConfiguration evmConfiguration) {
-    return futureEips(gasCalculator, chainId, evmConfiguration);
+    return new EVM(
+        experimentalEipsOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.FUTURE_EIPS);
+  }
+
+  /**
+   * Operation registry for experimental's operations.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @return the operation registry
+   */
+  public static OperationRegistry experimentalEipsOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry operationRegistry = new OperationRegistry();
+    registerExperimentalEipsOperations(operationRegistry, gasCalculator, chainId);
+    return operationRegistry;
+  }
+
+  /**
+   * Register experimental eips operations.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   * @param chainID the chain id
+   */
+  public static void registerExperimentalEipsOperations(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
+    registerFutureEipsOperations(registry, gasCalculator, chainID);
   }
 }
