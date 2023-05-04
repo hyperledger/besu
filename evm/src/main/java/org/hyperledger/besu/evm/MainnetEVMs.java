@@ -164,7 +164,7 @@ public class MainnetEVMs {
   }
 
   /**
-   * Frontier operations operation registry.
+   * Operation registry for frontier's operations.
    *
    * @param gasCalculator the gas calculator
    * @return the operation registry
@@ -296,7 +296,7 @@ public class MainnetEVMs {
   }
 
   /**
-   * Homestead operations operation registry.
+   * Operation registry for homestead's operations.
    *
    * @param gasCalculator the gas calculator
    * @return the operation registry
@@ -366,7 +366,7 @@ public class MainnetEVMs {
   }
 
   /**
-   * Byzantium operations operation registry.
+   * Operation registry for byzantium's operations.
    *
    * @param gasCalculator the gas calculator
    * @return the operation registry
@@ -419,7 +419,7 @@ public class MainnetEVMs {
   }
 
   /**
-   * Constantinople operations operation registry.
+   * Operation registry for constantinople's operations.
    *
    * @param gasCalculator the gas calculator
    * @return the operation registry
@@ -497,7 +497,7 @@ public class MainnetEVMs {
   }
 
   /**
-   * Istanbul operations operation registry.
+   * Operation registry for istanbul's operations.
    *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
@@ -590,7 +590,7 @@ public class MainnetEVMs {
   }
 
   /**
-   * London operations operation registry.
+   * Operation registry for london's operations.
    *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
@@ -638,7 +638,7 @@ public class MainnetEVMs {
   }
 
   /**
-   * Paris operations operation registry.
+   * Operation registry for paris's operations.
    *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
@@ -767,7 +767,7 @@ public class MainnetEVMs {
   }
 
   /**
-   * Cancun operations operation registry.
+   * Operation registry for cancun's operations.
    *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
@@ -841,7 +841,7 @@ public class MainnetEVMs {
   }
 
   /**
-   * Prague operations operation registry.
+   * Operation registry for prague's operations.
    *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
@@ -908,7 +908,7 @@ public class MainnetEVMs {
   }
 
   /**
-   * Osaka operations operation registry.
+   * Operation registry for osaka's operations.
    *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
@@ -1005,6 +1005,16 @@ public class MainnetEVMs {
   /**
    * Future eips evm.
    *
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM futureEips(final EvmConfiguration evmConfiguration) {
+    return futureEips(DEV_NET_CHAIN_ID, evmConfiguration);
+  }
+
+  /**
+   * Future eips evm.
+   *
    * @param chainId the chain id
    * @param evmConfiguration the evm configuration
    * @return the evm
@@ -1033,7 +1043,7 @@ public class MainnetEVMs {
   }
 
   /**
-   * Future EIPs operations operation registry.
+   * Future Operation registry for eIPs's operations.
    *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
@@ -1070,7 +1080,16 @@ public class MainnetEVMs {
   /**
    * Experimental eips evm.
    *
-   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM experimentalEips(final EvmConfiguration evmConfiguration) {
+    return futureEips(DEV_NET_CHAIN_ID, evmConfiguration);
+  }
+
+  /**
+   * Experimental eips evm.
+   *
    * @param evmConfiguration the evm configuration
    * @return the evm
    */
@@ -1099,7 +1118,7 @@ public class MainnetEVMs {
   }
 
   /**
-   * Experimental operations operation registry.
+   * Operation registry for experimental's operations.
    *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
