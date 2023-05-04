@@ -40,6 +40,8 @@ All the CA keystores will be generated in `ca_certs` directory.
 
 Generate Root CA (validity 100 years)
 ~~~
+cd ca_certs
+
 export ROOT_CA_KS=root_ca.p12
 export INTER_CA_KS=inter_ca.p12
 export PARTNER1_CA_KS=partner1_ca.p12
@@ -75,7 +77,7 @@ CSR, Signing and re-import
 keytool -storepass test123 -keystore $ROOT_CA_KS -alias root_ca -exportcert -rfc > root_ca.pem
 
 keytool -storepass test123 -keystore $INTER_CA_KS -certreq -alias inter_ca \
-| keytool -storepass test123 -keystore $ROOT_CA_KS -gencert -alias root_ca \
+| keytool -storepass test123 -keystore $ROOT_CA_KS -gencert -validity 36500 -alias root_ca \
 -ext bc:c=ca:true,pathlen:1 -ext ku:c=dS,kCS,cRLs -rfc > inter_ca.pem
 
 cat root_ca.pem >> inter_ca.pem
@@ -84,11 +86,11 @@ keytool -keystore $INTER_CA_KS -importcert -alias inter_ca \
 -storepass test123 -noprompt -file ./inter_ca.pem
 
 keytool -storepass test123 -keystore $PARTNER1_CA_KS -certreq -alias partner1_ca \
-| keytool -storepass test123 -keystore $INTER_CA_KS -gencert -alias inter_ca \
+| keytool -storepass test123 -keystore $INTER_CA_KS -gencert -validity 36500 -alias inter_ca \
 -ext bc:c=ca:true,pathlen:0 -ext ku:c=dS,kCS,cRLs -rfc > partner1_ca.pem
 
 keytool -storepass test123 -keystore $PARTNER2_CA_KS -certreq -alias partner2_ca \
-| keytool -storepass test123 -keystore $INTER_CA_KS -gencert -alias inter_ca \
+| keytool -storepass test123 -keystore $INTER_CA_KS -gencert -validity 36500 -alias inter_ca \
 -ext bc:c=ca:true,pathlen:0 -ext ku:c=dS,kCS,cRLs -rfc > partner2_ca.pem
 
 cat root_ca.pem >> partner1_ca.pem
@@ -99,6 +101,8 @@ keytool -keystore $PARTNER1_CA_KS -importcert -alias partner1_ca \
 
 keytool -keystore $PARTNER2_CA_KS -importcert -alias partner2_ca \
 -storepass test123 -noprompt -file ./partner2_ca.pem
+
+cd ..
 ~~~
 
 ---
@@ -116,27 +120,31 @@ Modify the partner and client variables while running following commands accordi
 ## Truststore
 Create truststore for each partner and copy in appropriate client directories
 ~~~
-export OU=partner1
+cd partner2client1
+
+export OU=partner2
 
 keytool -import -trustcacerts -alias root_ca \
--file ./ca_certs/root_ca.pem -keystore truststore.p12 \
+-file ../ca_certs/root_ca.pem -keystore truststore.p12 \
 -storepass test123 -noprompt
 
 keytool -import -trustcacerts -alias inter_ca \
--file ./ca_certs/inter_ca.pem -keystore truststore.p12 \
+-file ../ca_certs/inter_ca.pem -keystore truststore.p12 \
 -storepass test123 -noprompt
 
 keytool -import -trustcacerts -alias ${OU}_ca \
--file ./ca_certs/${OU}_ca.pem -keystore truststore.p12 \
+-file ../ca_certs/${OU}_ca.pem -keystore truststore.p12 \
 -storepass test123 -noprompt
 
 ~~~
 
 Cd to appropriate client directory and generate the certificates.
-Note: The keyalg for partner1client1 is different than others
+Note: The keyalg for partner1client1 (EC) is different than others
 
 Modify the export command.
 ~~~
+cd partner1client1
+
 export OU=partner1
 export CLIENT=client1
 ~~~
@@ -159,7 +167,7 @@ keytool -genkeypair -keystore $CLIENT.p12 -storepass test123 -alias $CLIENT \
 CSR and reimport
 ~~~
 keytool -storepass test123 -keystore "$CLIENT.p12" -certreq -alias $CLIENT \
-| keytool -storepass test123 -keystore "../ca_certs/${OU}_ca.p12" -gencert -alias ${OU}_ca \
+| keytool -storepass test123 -keystore "../ca_certs/${OU}_ca.p12" -gencert -validity 36500 -alias ${OU}_ca \
 -ext ku:c=digitalSignature,nonRepudiation,keyEncipherment -ext eku=sA,cA -rfc > "$CLIENT.pem"
 
 cat ../ca_certs/root_ca.pem >> $CLIENT.pem
