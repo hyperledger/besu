@@ -242,10 +242,14 @@ public class ProtocolScheduleBuilder {
   }
 
   private void validateForkOrdering() {
-    if (config.getDaoForkBlock().isEmpty() && config.getLineaBlockNumber().isEmpty()) {
+    if (config.getDaoForkBlock().isEmpty()) {
       validateClassicForkOrdering();
     } else {
-      validateEthereumForkOrdering();
+      if (config.getLineaBlockNumber().isEmpty()) {
+        validateEthereumForkOrdering();
+      } else {
+        validateLineaForkOrdering();
+      }
     }
   }
 
@@ -272,7 +276,6 @@ public class ProtocolScheduleBuilder {
         validateForkOrder("ArrowGlacier", config.getArrowGlacierBlockNumber(), lastForkBlock);
     lastForkBlock =
         validateForkOrder("GrayGlacier", config.getGrayGlacierBlockNumber(), lastForkBlock);
-    lastForkBlock = validateForkOrder("Linea", config.getLineaBlockNumber(), lastForkBlock);
     // Begin timestamp forks
     lastForkBlock = validateForkOrder("Shanghai", config.getShanghaiTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("Cancun", config.getCancunTime(), lastForkBlock);
@@ -299,6 +302,28 @@ public class ProtocolScheduleBuilder {
     lastForkBlock = validateForkOrder("Thanos", config.getThanosBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Magneto", config.getMagnetoBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Mystique", config.getMystiqueBlockNumber(), lastForkBlock);
+    assert (lastForkBlock >= 0);
+  }
+
+  private void validateLineaForkOrdering() {
+    long lastForkBlock = 0;
+    lastForkBlock = validateForkOrder("Homestead", config.getHomesteadBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("DaoFork", config.getDaoForkBlock(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder(
+            "TangerineWhistle", config.getTangerineWhistleBlockNumber(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder("SpuriousDragon", config.getSpuriousDragonBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Byzantium", config.getByzantiumBlockNumber(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder("Constantinople", config.getConstantinopleBlockNumber(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder("Petersburg", config.getPetersburgBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Istanbul", config.getIstanbulBlockNumber(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder("MuirGlacier", config.getMuirGlacierBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Berlin", config.getBerlinBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Linea", config.getLineaBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 
@@ -350,8 +375,6 @@ public class ProtocolScheduleBuilder {
             config.getGrayGlacierBlockNumber(), specFactory.grayGlacierDefinition(config)),
         blockNumberMilestone(
             config.getMergeNetSplitBlockNumber(), specFactory.parisDefinition(config)),
-        blockNumberMilestone(
-            config.getLineaBlockNumber(), specFactory.lineaDefinition(config, lineaParameters)),
         // Timestamp Forks
         timestampMilestone(config.getShanghaiTime(), specFactory.shanghaiDefinition(config)),
         timestampMilestone(config.getCancunTime(), specFactory.cancunDefinition(config)),
@@ -372,7 +395,11 @@ public class ProtocolScheduleBuilder {
         blockNumberMilestone(config.getPhoenixBlockNumber(), specFactory.phoenixDefinition()),
         blockNumberMilestone(config.getThanosBlockNumber(), specFactory.thanosDefinition()),
         blockNumberMilestone(config.getMagnetoBlockNumber(), specFactory.magnetoDefinition()),
-        blockNumberMilestone(config.getMystiqueBlockNumber(), specFactory.mystiqueDefinition()));
+        blockNumberMilestone(config.getMystiqueBlockNumber(), specFactory.mystiqueDefinition()),
+
+        // Linea Milestones
+        blockNumberMilestone(
+            config.getLineaBlockNumber(), specFactory.lineaDefinition(config, lineaParameters)));
   }
 
   private Optional<BuilderMapEntry> timestampMilestone(

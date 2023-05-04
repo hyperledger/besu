@@ -14,11 +14,13 @@
  */
 package org.hyperledger.besu.consensus.merge;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
@@ -54,23 +56,22 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
         new TransitionUtils<>(preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext);
   }
 
-  //  /**
-  //   * Create a Proof-of-Stake protocol schedule from a config object
-  //   *
-  //   * @param genesisConfigOptions {@link GenesisConfigOptions} containing the config options for
-  // the
-  //   *     milestone starting points
-  //   * @return an initialised TransitionProtocolSchedule using post-merge defaults
-  //   */
-  //  public static TransitionProtocolSchedule fromConfig(
-  //      final GenesisConfigOptions genesisConfigOptions) {
-  //    ProtocolSchedule preMergeProtocolSchedule =
-  //        MainnetProtocolSchedule.fromConfig(genesisConfigOptions);
-  //    ProtocolSchedule postMergeProtocolSchedule =
-  //        MergeProtocolSchedule.create(genesisConfigOptions, false);
-  //    return new TransitionProtocolSchedule(
-  //        preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
-  //  }
+  /**
+   * Create a Proof-of-Stake protocol schedule from a config object
+   *
+   * @param genesisConfigOptions {@link GenesisConfigOptions} containing the config options for the
+   *     milestone starting points
+   * @return an initialised TransitionProtocolSchedule using post-merge defaults
+   */
+  public static TransitionProtocolSchedule fromConfig(
+      final GenesisConfigOptions genesisConfigOptions) {
+    ProtocolSchedule preMergeProtocolSchedule =
+        MainnetProtocolSchedule.fromConfig(genesisConfigOptions);
+    ProtocolSchedule postMergeProtocolSchedule =
+        MergeProtocolSchedule.create(genesisConfigOptions, false);
+    return new TransitionProtocolSchedule(
+        preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
+  }
 
   /**
    * Gets pre merge schedule.

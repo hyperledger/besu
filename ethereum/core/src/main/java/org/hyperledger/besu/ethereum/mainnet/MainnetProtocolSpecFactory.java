@@ -149,18 +149,6 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration);
   }
 
-  public ProtocolSpecBuilder lineaDefinition(
-      final GenesisConfigOptions genesisConfigOptions, final LineaParameters lineaParameters) {
-    return LineaProtocolSpecs.lineaDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        genesisConfigOptions,
-        evmConfiguration,
-        lineaParameters);
-  }
-
   public ProtocolSpecBuilder shanghaiDefinition(final GenesisConfigOptions genesisConfigOptions) {
     return MainnetProtocolSpecs.shanghaiDefinition(
         chainId,
@@ -299,5 +287,20 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         ecip1017EraRounds,
         evmConfiguration);
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+  // Linea Protocol Specs
+  public ProtocolSpecBuilder lineaDefinition(
+      final GenesisConfigOptions genesisConfigOptions, final LineaParameters lineaParameters) {
+    return LineaProtocolSpecs.lineaDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        evmConfiguration,
+        lineaParameters);
   }
 }
