@@ -5,6 +5,7 @@
 ### Breaking Changes
 
 ### Additions and Improvements
+- "Big-EOF" (the EOF version initially slotted for Shanghai) has been moved from Cancun to FutureEIPs [#5429](https://github.com/hyperledger/besu/pull/5429)
 -  Transaction pool flag to disable specific behaviors for locally submitted transactions [#5418](https://github.com/hyperledger/besu/pull/5418)
 
 ### Bug Fixes
