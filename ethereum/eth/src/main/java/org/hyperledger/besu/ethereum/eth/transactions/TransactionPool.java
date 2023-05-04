@@ -51,6 +51,7 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -119,79 +120,75 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   public void saveToDisk() {
-    configuration
-        .getSaveFile()
-        .ifPresent(
-            saveFile -> {
-              LOG.info("Saving transaction pool content to file {}", saveFile);
-              try (final BufferedWriter bw =
-                  new BufferedWriter(new FileWriter(saveFile, StandardCharsets.US_ASCII))) {
-                final var pendingTrasactions = pendingTransactions.getPendingTransactions();
-                pendingTrasactions.parallelStream()
-                    .map(
-                        ptx -> {
-                          final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
-                          ptx.getTransaction().writeTo(rlp);
-                          return (ptx.isReceivedFromLocalSource() ? "l" : "r")
-                              + rlp.encoded().toBase64String();
-                        })
-                    .forEach(
-                        line -> {
-                          synchronized (bw) {
-                            try {
-                              bw.write(line);
-                              bw.newLine();
-                            } catch (IOException e) {
-                              throw new RuntimeException(e);
-                            }
-                          }
-                        });
-                LOG.info("Saved {} transactions to file {}", pendingTrasactions.size(), saveFile);
-              } catch (IOException e) {
-                LOG.error("Error while saving txpool content to disk", e);
-              }
-            });
+    if (configuration.getEnableSave()) {
+      final File saveFile = configuration.getSaveFile();
+      LOG.info("Saving transaction pool content to file {}", saveFile);
+      try (final BufferedWriter bw =
+          new BufferedWriter(new FileWriter(saveFile, StandardCharsets.US_ASCII))) {
+        final var allTxs = pendingTransactions.getPendingTransactions();
+        allTxs.parallelStream()
+            .map(
+                ptx -> {
+                  final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+                  ptx.getTransaction().writeTo(rlp);
+                  return (ptx.isReceivedFromLocalSource() ? "l" : "r")
+                      + rlp.encoded().toBase64String();
+                })
+            .forEach(
+                line -> {
+                  synchronized (bw) {
+                    try {
+                      bw.write(line);
+                      bw.newLine();
+                    } catch (IOException e) {
+                      throw new RuntimeException(e);
+                    }
+                  }
+                });
+        LOG.info("Saved {} transactions to file {}", allTxs.size(), saveFile);
+      } catch (IOException e) {
+        LOG.error("Error while saving txpool content to disk", e);
+      }
+    }
   }
 
   public void loadFromDisk() {
-    configuration
-        .getSaveFile()
-        .ifPresent(
-            saveFile -> {
-              if (saveFile.exists()) {
-                LOG.info("Loading transaction pool content from file {}", saveFile);
-                try (final BufferedReader br =
-                    new BufferedReader(new FileReader(saveFile, StandardCharsets.US_ASCII))) {
-                  final IntSummaryStatistics stats =
-                      br.lines()
-                          .parallel()
-                          .mapToInt(
-                              line -> {
-                                final boolean isLocal = line.charAt(0) == 'l';
-                                final Transaction tx =
-                                    Transaction.readFrom(Bytes.fromBase64String(line.substring(1)));
+    if (configuration.getEnableSave()) {
+      final File saveFile = configuration.getSaveFile();
+      if (saveFile.exists()) {
+        LOG.info("Loading transaction pool content from file {}", saveFile);
+        try (final BufferedReader br =
+            new BufferedReader(new FileReader(saveFile, StandardCharsets.US_ASCII))) {
+          final IntSummaryStatistics stats =
+              br.lines()
+                  .parallel()
+                  .mapToInt(
+                      line -> {
+                        final boolean isLocal = line.charAt(0) == 'l';
+                        final Transaction tx =
+                            Transaction.readFrom(Bytes.fromBase64String(line.substring(1)));
 
-                                final ValidationResult<TransactionInvalidReason> result;
-                                if (isLocal && !configuration.getDisableLocalTransactions()) {
-                                  result = addLocalTransaction(tx);
-                                } else {
-                                  result = addRemoteTransaction(tx);
-                                }
+                        final ValidationResult<TransactionInvalidReason> result;
+                        if (isLocal && !configuration.getDisableLocalTransactions()) {
+                          result = addLocalTransaction(tx);
+                        } else {
+                          result = addRemoteTransaction(tx);
+                        }
 
-                                return result.isValid() ? 1 : 0;
-                              })
-                          .summaryStatistics();
-                  LOG.info(
-                      "Added {} transactions of {} loaded from file {}",
-                      stats.getSum(),
-                      stats.getCount(),
-                      saveFile);
-                } catch (IOException e) {
-                  LOG.error("Error while saving txpool content to disk", e);
-                }
-              }
-              saveFile.delete();
-            });
+                        return result.isValid() ? 1 : 0;
+                      })
+                  .summaryStatistics();
+          LOG.info(
+              "Added {} transactions of {} loaded from file {}",
+              stats.getSum(),
+              stats.getCount(),
+              saveFile);
+        } catch (IOException e) {
+          LOG.error("Error while saving txpool content to disk", e);
+        }
+      }
+      saveFile.delete();
+    }
   }
 
   void handleConnect(final EthPeer peer) {

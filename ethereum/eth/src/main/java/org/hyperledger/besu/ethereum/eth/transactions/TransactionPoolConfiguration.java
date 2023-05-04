@@ -19,13 +19,13 @@ import org.hyperledger.besu.util.number.Percentage;
 
 import java.io.File;
 import java.time.Duration;
-import java.util.Optional;
 
 import org.immutables.value.Value;
 
 @Value.Immutable
 @Value.Style(allParameters = true)
 public interface TransactionPoolConfiguration {
+  String DEFAULT_SAVE_FILE_NAME = "txpool.dump";
   int DEFAULT_TX_MSG_KEEP_ALIVE = 60;
   int MAX_PENDING_TRANSACTIONS = 4096;
   float LIMIT_TXPOOL_BY_ACCOUNT_PERCENTAGE = 0.001f; // 0.1%
@@ -35,6 +35,9 @@ public interface TransactionPoolConfiguration {
   Wei DEFAULT_RPC_TX_FEE_CAP = Wei.fromEth(1);
   Duration ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD = Duration.ofMillis(500);
   boolean DEFAULT_DISABLE_LOCAL_TXS = false;
+  boolean DEFAULT_ENABLE_SAVE = false;
+
+  File DEFAULT_SAVE_FILE = new File(DEFAULT_SAVE_FILE_NAME);
 
   TransactionPoolConfiguration DEFAULT = ImmutableTransactionPoolConfiguration.builder().build();
 
@@ -88,5 +91,13 @@ public interface TransactionPoolConfiguration {
     return DEFAULT_DISABLE_LOCAL_TXS;
   }
 
-  Optional<File> getSaveFile();
+  @Value.Default
+  default Boolean getEnableSave() {
+    return DEFAULT_ENABLE_SAVE;
+  }
+
+  @Value.Default
+  default File getSaveFile() {
+    return DEFAULT_SAVE_FILE;
+  }
 }

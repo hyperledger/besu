@@ -22,6 +22,7 @@ import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 
+import java.io.File;
 import java.time.Duration;
 
 import org.junit.Test;
@@ -188,6 +189,45 @@ public class TransactionPoolOptionsTest
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
+  @Test
+  public void saveToFileDisabledByDefault() {
+    final TestBesuCommand cmd = parseCommand();
+
+    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
+    final TransactionPoolConfiguration config = options.toDomainObject().build();
+    assertThat(config.getEnableSave()).isFalse();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void saveToFileEnabledDefaultPath() {
+    final TestBesuCommand cmd = parseCommand("--tx-pool-enable-save=true");
+
+    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
+    final TransactionPoolConfiguration config = options.toDomainObject().build();
+    assertThat(config.getEnableSave()).isTrue();
+    assertThat(config.getSaveFile()).hasName(TransactionPoolConfiguration.DEFAULT_SAVE_FILE_NAME);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void saveToFileEnabledCustomPath() {
+    final TestBesuCommand cmd =
+        parseCommand("--tx-pool-enable-save=true", "--tx-pool-save-file=my.save.file");
+
+    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
+    final TransactionPoolConfiguration config = options.toDomainObject().build();
+    assertThat(config.getEnableSave()).isTrue();
+    assertThat(config.getSaveFile()).hasName("my.save.file");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
   @Override
   ImmutableTransactionPoolConfiguration.Builder createDefaultDomainObject() {
     final ImmutableTransactionPoolConfiguration defaultValue =
@@ -197,7 +237,9 @@ public class TransactionPoolOptionsTest
         .txMessageKeepAliveSeconds(defaultValue.getTxMessageKeepAliveSeconds())
         .eth65TrxAnnouncedBufferingPeriod(defaultValue.getEth65TrxAnnouncedBufferingPeriod())
         .txPoolLimitByAccountPercentage(defaultValue.getTxPoolLimitByAccountPercentage())
-        .disableLocalTransactions(defaultValue.getDisableLocalTransactions());
+        .disableLocalTransactions(defaultValue.getDisableLocalTransactions())
+        .enableSave(defaultValue.getEnableSave())
+        .saveFile(defaultValue.getSaveFile());
   }
 
   @Override
@@ -209,7 +251,9 @@ public class TransactionPoolOptionsTest
             TransactionPoolConfiguration.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD.plus(
                 Duration.ofMillis(100)))
         .txPoolLimitByAccountPercentage(0.5f)
-        .disableLocalTransactions(true);
+        .disableLocalTransactions(true)
+        .enableSave(true)
+        .saveFile(new File("abc.xyz"));
   }
 
   @Override
