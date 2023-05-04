@@ -1,9 +1,12 @@
 package org.hyperledger.besu.ethereum.bonsai.trielog;
 
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogAddedEvent.TrieLogAddedObserver;
+import org.hyperledger.besu.plugin.data.SyncStatus;
+import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.vertx.core.Future;
@@ -17,12 +20,14 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ZkTrieLogObserver implements TrieLogAddedObserver {
+public class ZkTrieLogObserver implements TrieLogAddedObserver, BesuEvents.SyncStatusListener {
 
   private static final Logger LOG = LoggerFactory.getLogger(ZkTrieLogObserver.class);
   // todo: get from config
   private String shomeiHttpHost = "localhost";
   private int shomeiHttpPort = 8888;
+  private boolean isSyncing;
+  private static long timeSinceLastLog = System.currentTimeMillis();
 
   static TrieLogFactory<TrieLogLayer> zkTrieLogFactory = new ZkTrieLogFactoryImpl();
   private final WebClient webClient;
@@ -33,6 +38,11 @@ public class ZkTrieLogObserver implements TrieLogAddedObserver {
     this.webClient = WebClient.create(vertx, options);
     this.shomeiHttpHost = shomeiHttpHost;
     this.shomeiHttpPort = shomeiHttpPort;
+
+    // TODO: remove this once we are able to wire up the SyncStatusListener via plugin
+    long now = System.currentTimeMillis();
+    this.isSyncing = timeSinceLastLog - now < 1000;
+    timeSinceLastLog = now;
   }
 
   @Override
@@ -74,6 +84,7 @@ public class ZkTrieLogObserver implements TrieLogAddedObserver {
                     new JsonObject()
                         .put("blockNumber", event.getBlockHeader().getNumber())
                         .put("blockHash", event.getBlockHeader().getBlockHash().toHexString())
+                        .put("isSync", isSyncing)
                         .put("trieLog", Bytes.wrap(rlpBytes).toHexString())));
 
     // Send the request to the JSON-RPC service
@@ -87,5 +98,14 @@ public class ZkTrieLogObserver implements TrieLogAddedObserver {
   ZkTrieLogObserver addAsObserverTo(final Subscribers<TrieLogAddedObserver> addToSubscribers) {
     addToSubscribers.subscribe(this);
     return this;
+  }
+
+  @Override
+  public void onSyncStatusChanged(final Optional<SyncStatus> syncStatus) {
+    syncStatus.ifPresent(
+        sync -> {
+          // return isSyncing if we are more than 50 blocks behind head
+          isSyncing = sync.getCurrentBlock() < sync.getHighestBlock() - 50;
+        });
   }
 }

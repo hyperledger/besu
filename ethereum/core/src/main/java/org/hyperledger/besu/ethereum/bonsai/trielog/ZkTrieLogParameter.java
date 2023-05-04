@@ -11,6 +11,8 @@ public class ZkTrieLogParameter {
 
   private final Hash blockHash;
 
+  private final Boolean isSyncing;
+
   private final String trieLogRlpBytes;
 
   public Long getBlockNumber() {
@@ -21,6 +23,10 @@ public class ZkTrieLogParameter {
     return blockHash;
   }
 
+  public boolean isSyncing() {
+    return isSyncing;
+  }
+
   public String gettrieLogRlpBytes() {
     return trieLogRlpBytes;
   }
@@ -29,9 +35,11 @@ public class ZkTrieLogParameter {
   public ZkTrieLogParameter(
       @JsonProperty("blockNumber") final Long blockNumber,
       @JsonProperty("blockHash") final Hash blockHash,
+      @JsonProperty("isSyncing") final boolean isSyncing,
       @JsonProperty("trieLogRlpBytes") final String trieLogRlpBytes) {
     this.blockNumber = blockNumber;
     this.blockHash = blockHash;
+    this.isSyncing = isSyncing;
     this.trieLogRlpBytes = trieLogRlpBytes;
   }
 
@@ -41,6 +49,8 @@ public class ZkTrieLogParameter {
         + blockNumber
         + ", blockHash="
         + blockHash
+        + ", isSyncing="
+        + isSyncing
         + ", trieLogRlpBytes="
         + trieLogRlpBytes;
   }
