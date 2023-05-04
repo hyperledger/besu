@@ -14,38 +14,35 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.SendRawTransactionConditionalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.util.DomainObjectDecodeUtils;
-import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.rlp.RLPException;
-import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jetbrains.annotations.NotNull;
 
 public class EthSendRawTransactionConditional extends AbstractEthSendRawTransaction {
-  private static final Logger LOG = LoggerFactory.getLogger(EthSendRawTransactionConditional.class);
+  protected final Supplier<BlockchainQueries> blockchainQueries;
 
-  public EthSendRawTransactionConditional(final TransactionPool transactionPool) {
-    this(Suppliers.ofInstance(transactionPool), false);
+  public EthSendRawTransactionConditional(
+      final BlockchainQueries blockchainQueries, final TransactionPool transactionPool) {
+    this(Suppliers.ofInstance(blockchainQueries), Suppliers.ofInstance(transactionPool), false);
   }
 
   public EthSendRawTransactionConditional(
-      final Supplier<TransactionPool> transactionPool, final boolean sendEmptyHashOnInvalidBlock) {
+      final Supplier<BlockchainQueries> blockchainQueries,
+      final Supplier<TransactionPool> transactionPool,
+      final boolean sendEmptyHashOnInvalidBlock) {
     super(transactionPool, sendEmptyHashOnInvalidBlock);
+    this.blockchainQueries = blockchainQueries;
   }
 
   @Override
@@ -55,42 +52,59 @@ public class EthSendRawTransactionConditional extends AbstractEthSendRawTransact
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    if (requestContext.getRequest().getParamLength() != 1) {
+    if (requestContext.getRequest().getParamLength() < 1) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
-    final String rawTransaction = requestContext.getRequiredParameter(0, String.class);
-
-    final Transaction transaction;
-    try {
-      transaction = DomainObjectDecodeUtils.decodeRawTransaction(rawTransaction);
-      LOG.trace("Received local transaction {}", transaction);
-    } catch (final RLPException e) {
-      LOG.debug("RLPException: {} caused by {}", e.getMessage(), e.getCause());
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
-    } catch (final InvalidJsonRpcRequestException i) {
-      LOG.debug("InvalidJsonRpcRequestException: {} caused by {}", i.getMessage(), i.getCause());
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
-    } catch (final IllegalArgumentException ill) {
-      LOG.debug("IllegalArgumentException: {} caused by {}", ill.getMessage(), ill.getCause());
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+    final Optional<JsonRpcErrorResponse> errorResponse = checkConditions(requestContext);
+    if (errorResponse.isEmpty()) {
+      return processRawTransaction(requestContext);
+    } else {
+      return errorResponse.get();
     }
+  }
 
-    final ValidationResult<TransactionInvalidReason> validationResult =
-        transactionPool.get().addLocalTransaction(transaction);
-    return validationResult.either(
-        () ->
-            new JsonRpcSuccessResponse(
-                requestContext.getRequest().getId(), transaction.getHash().toString()),
-        errorReason ->
-            sendEmptyHashOnInvalidBlock
-                ? new JsonRpcSuccessResponse(
-                    requestContext.getRequest().getId(), Hash.EMPTY.toString())
-                : new JsonRpcErrorResponse(
-                    requestContext.getRequest().getId(),
-                    JsonRpcErrorConverter.convertTransactionInvalidReason(errorReason)));
+  private Optional<JsonRpcErrorResponse> checkConditions(
+      final JsonRpcRequestContext requestContext) {
+    if (requestContext.getRequest().getParamLength() == 2) {
+      final SendRawTransactionConditionalParameter conditions =
+          conditionalParameter(requestContext);
+      if (!withinRange(
+          blockchainQueries.get().headBlockNumber(),
+          conditions.getBlockNumberMin(),
+          conditions.getBlockNumberMax())) {
+        return getJsonRpcErrorResponse(requestContext, "block number not within specified range");
+      }
+      if (!withinRange(
+          blockchainQueries.get().headBlockHeader().getTimestamp(),
+          conditions.getTimestampMin(),
+          conditions.getTimestampMax())) {
+        return getJsonRpcErrorResponse(requestContext, "timestamp not within specified range");
+      }
+      // TODO check knownAccounts - blockchainQueries.storageAt()
+    }
+    // no conditions violated - behave as eth_sendRawTransaction
+    return Optional.empty();
+  }
+
+  private boolean withinRange(
+      final long value, final Optional<Long> maybeMin, final Optional<Long> maybeMax) {
+    long min = maybeMin.orElse(0L);
+    long max = maybeMax.orElse(value);
+    return value <= max && value >= min;
+  }
+
+  @NotNull
+  private Optional<JsonRpcErrorResponse> getJsonRpcErrorResponse(
+      final JsonRpcRequestContext requestContext, final String message) {
+    final JsonRpcError jsonRpcError = JsonRpcError.INVALID_PARAMS;
+    jsonRpcError.setData(message);
+    return Optional.of(
+        new JsonRpcErrorResponse(requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS));
+  }
+
+  protected SendRawTransactionConditionalParameter conditionalParameter(
+      final JsonRpcRequestContext request) {
+    return request.getRequiredParameter(1, SendRawTransactionConditionalParameter.class);
   }
 }
