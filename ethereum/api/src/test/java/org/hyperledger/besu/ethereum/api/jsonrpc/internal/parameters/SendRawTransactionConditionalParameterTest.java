@@ -18,14 +18,34 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Test;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
 
 public class SendRawTransactionConditionalParameterTest {
-  //  private static final String METHOD = "eth_sendRawTransactionConditional";
+
+  @Test
+  public void maxBlockNumber_shouldSerializeSuccessfully() throws JsonProcessingException {
+    final SendRawTransactionConditionalParameter expectedParam =
+        parameterWithBlockNumberConditions(90L, 98L);
+
+    final String jsonWithBlockConditions =
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendRawTransactionConditional\",\"params\":[\"0x2815c17b00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\"}],\"id\":1}";
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new ObjectMapper().readValue(jsonWithBlockConditions, JsonRpcRequest.class));
+
+    final SendRawTransactionConditionalParameter parsedParam =
+        request.getRequiredParameter(1, SendRawTransactionConditionalParameter.class);
+
+    assertThat(parsedParam).usingRecursiveComparison().isEqualTo(expectedParam);
+  }
 
   @Test
   public void noConditionsParamDecodesCorrectly() {
@@ -91,9 +111,4 @@ public class SendRawTransactionConditionalParameterTest {
       final Map<Address, Hash> knownAccounts) {
     return new SendRawTransactionConditionalParameter(null, null, knownAccounts, null, null);
   }
-
-  //  private SendRawTransactionConditionalParameter readJsonAsConditionalParameter(final String
-  // json) throws java.io.IOException {
-  //    return new ObjectMapper().readValue(json, SendRawTransactionConditionalParameter.class);
-  //  }
 }
