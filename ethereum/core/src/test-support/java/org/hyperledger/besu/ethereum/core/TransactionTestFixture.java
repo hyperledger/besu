@@ -29,6 +29,10 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class TransactionTestFixture {
+  private static final Hash DEFAULT_VERSIONED_HASH =
+      Hash.wrap(
+          Bytes32.wrap(
+              Bytes.concatenate(Bytes.fromHexString("0x01"), Bytes.repeat((byte) 42, 31))));
 
   private TransactionType transactionType = TransactionType.FRONTIER;
 
@@ -84,7 +88,7 @@ public class TransactionTestFixture {
         builder.maxFeePerGas(maxFeePerGas.orElse(Wei.of(5000)));
         builder.accessList(accessListEntries.orElse(List.of()));
         builder.maxFeePerDataGas(maxFeePerDataGas.orElse(Wei.ONE));
-        builder.versionedHashes(versionedHashes.orElse(List.of(Hash.wrap(Bytes32.random()))));
+        builder.versionedHashes(versionedHashes.orElse(List.of(DEFAULT_VERSIONED_HASH)));
         break;
     }
 

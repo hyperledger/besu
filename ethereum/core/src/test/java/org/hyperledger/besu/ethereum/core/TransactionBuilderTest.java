@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -61,12 +62,17 @@ public class TransactionBuilderTest {
             });
   }
 
-  @Test(expected = java.lang.IllegalArgumentException.class)
+  @Test
   public void zeroBlobTransactionIsInvalid() {
-    new TransactionTestFixture()
-        .type(TransactionType.BLOB)
-        .chainId(Optional.of(BigInteger.ONE))
-        .versionedHashes(List.of())
-        .createTransaction(senderKeys);
+    try {
+      new TransactionTestFixture()
+          .type(TransactionType.BLOB)
+          .chainId(Optional.of(BigInteger.ONE))
+          .versionedHashes(List.of())
+          .createTransaction(senderKeys);
+      fail();
+    } catch (IllegalArgumentException iea) {
+      assertThat(iea).hasMessage("Blob transaction must have at least one blob");
+    }
   }
 }
