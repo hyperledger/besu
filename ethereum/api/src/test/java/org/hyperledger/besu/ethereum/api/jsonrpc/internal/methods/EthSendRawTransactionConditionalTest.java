@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -59,17 +60,9 @@ public class EthSendRawTransactionConditionalTest {
 
     final String jsonWithBlockConditions =
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendRawTransactionConditional\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\"}],\"id\":1}";
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new ObjectMapper().readValue(jsonWithBlockConditions, JsonRpcRequest.class));
 
-    final JsonRpcError jsonRpcError = JsonRpcError.INVALID_PARAMS;
-    jsonRpcError.setData("block number not within specified range");
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);
-
-    final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+    assertActualResponseIsErrorWithGivenMessage(
+        jsonWithBlockConditions, "block number not within specified range");
   }
 
   @Test
@@ -78,17 +71,9 @@ public class EthSendRawTransactionConditionalTest {
 
     final String jsonWithBlockConditions =
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendRawTransactionConditional\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\"}],\"id\":1}";
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new ObjectMapper().readValue(jsonWithBlockConditions, JsonRpcRequest.class));
 
-    final JsonRpcError jsonRpcError = JsonRpcError.INVALID_PARAMS;
-    jsonRpcError.setData("block number not within specified range");
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);
-
-    final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+    assertActualResponseIsErrorWithGivenMessage(
+        jsonWithBlockConditions, "block number not within specified range");
   }
 
   @Test
@@ -100,17 +85,9 @@ public class EthSendRawTransactionConditionalTest {
 
     final String jsonWithBlockConditions =
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendRawTransactionConditional\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\",\"timestampMin\":\"7339\",\"timestampMax\":\"7447\"}],\"id\":1}";
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new ObjectMapper().readValue(jsonWithBlockConditions, JsonRpcRequest.class));
 
-    final JsonRpcError jsonRpcError = JsonRpcError.INVALID_PARAMS;
-    jsonRpcError.setData("timestamp not within specified range");
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);
-
-    final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+    assertActualResponseIsErrorWithGivenMessage(
+        jsonWithBlockConditions, "timestamp not within specified range");
   }
 
   @Test
@@ -122,17 +99,9 @@ public class EthSendRawTransactionConditionalTest {
 
     final String jsonWithBlockConditions =
         "{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendRawTransactionConditional\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\",\"timestampMin\":\"7339\",\"timestampMax\":\"7447\"}],\"id\":1}";
-    final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(
-            new ObjectMapper().readValue(jsonWithBlockConditions, JsonRpcRequest.class));
 
-    final JsonRpcError jsonRpcError = JsonRpcError.INVALID_PARAMS;
-    jsonRpcError.setData("timestamp not within specified range");
-    final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);
-
-    final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+    assertActualResponseIsErrorWithGivenMessage(
+        jsonWithBlockConditions, "timestamp not within specified range");
   }
 
   @Test
@@ -181,4 +150,20 @@ public class EthSendRawTransactionConditionalTest {
   //          final Map<Address, Hash> knownAccounts) {
   //    return new SendRawTransactionConditionalParameter(null, null, knownAccounts, null, null);
   //  }
+
+  private void assertActualResponseIsErrorWithGivenMessage(
+      final String jsonRequestString, final String message) throws JsonProcessingException {
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new ObjectMapper().readValue(jsonRequestString, JsonRpcRequest.class));
+    final JsonRpcResponse actualResponse = method.response(request);
+    // the JsonRpcError.data field gets reset by the enum
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+    assertThat(actualResponse.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+    // test for the exact error message in data field
+    assertThat(((JsonRpcErrorResponse) actualResponse).getError().getData()).isEqualTo(message);
+  }
 }
