@@ -86,7 +86,7 @@ public class TransactionPoolOptions
       names = {DISABLE_LOCAL_TXS_FLAG},
       paramLabel = "<Boolean>",
       description =
-          "Set to true if transactions sent via RPC should not have less strict checks and not be prioritized over remote ones (default: ${DEFAULT-VALUE})",
+          "Set to true if transactions sent via RPC should have the same checks and not be prioritized over remote ones (default: ${DEFAULT-VALUE})",
       fallbackValue = "false",
       arity = "0..1")
   private Boolean disableLocalTxs = TransactionPoolConfiguration.DEFAULT_DISABLE_LOCAL_TXS;
