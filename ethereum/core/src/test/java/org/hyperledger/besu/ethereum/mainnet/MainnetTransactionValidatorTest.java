@@ -522,7 +522,7 @@ public class MainnetTransactionValidatorTest {
             .chainId(Optional.of(BigInteger.ONE))
             .createTransaction(senderKeys);
     var validationResult =
-        validator.validate(zeroBlobTx, Optional.empty(), transactionValidationParams);
+        validator.validate(blobTx, Optional.empty(), transactionValidationParams);
 
     assertThat(validationResult.isValid()).isTrue();
   }
