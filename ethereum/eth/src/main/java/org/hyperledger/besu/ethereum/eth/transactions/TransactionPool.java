@@ -329,6 +329,7 @@ public class TransactionPool implements BlockAddedObserver {
             .addArgument(rejectReason)
             .log();
         metrics.incrementRejected(false, rejectReason, "txpool");
+        return ValidationResult.invalid(rejectReason);
       }
     } else {
       LOG.atTrace()
