@@ -24,13 +24,13 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class ExecutionEngineAcceptanceTest extends AbstractJsonRpcTest {
+public class ExecutionEngineParisAcceptanceTest extends AbstractJsonRpcTest {
   private static final String GENESIS_FILE = "/jsonrpc/engine/paris/genesis.json";
   private static final String TEST_CASE_PATH = "/jsonrpc/engine/paris/test-cases/";
 
   private static JsonRpcTestsContext testsContext;
 
-  public ExecutionEngineAcceptanceTest(final String ignored, final URI testCaseFileURI) {
+  public ExecutionEngineParisAcceptanceTest(final String ignored, final URI testCaseFileURI) {
     super(ignored, testsContext, testCaseFileURI);
   }
 
