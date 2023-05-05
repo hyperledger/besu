@@ -90,26 +90,26 @@ public class TransactionPoolOptions
       names = {DISABLE_LOCAL_TXS_FLAG},
       paramLabel = "<Boolean>",
       description =
-          "Set to true if transactions sent via RPC should not have less strict checks and not be prioritized over remote ones (default: ${DEFAULT-VALUE})",
+          "Set to true if transactions sent via RPC should have the same checks and not be prioritized over remote ones (default: ${DEFAULT-VALUE})",
       fallbackValue = "true",
       arity = "0..1")
   private Boolean disableLocalTxs = TransactionPoolConfiguration.DEFAULT_DISABLE_LOCAL_TXS;
 
   @CommandLine.Option(
-      names = {SAVE_FLAG},
-      paramLabel = "<Boolean>",
-      description =
-          "Set to true to enable saving the txpool content to file on shutdown and reloading it on startup (default: ${DEFAULT-VALUE})",
-      fallbackValue = "true",
-      arity = "0..1")
+          names = {SAVE_FLAG},
+          paramLabel = "<Boolean>",
+          description =
+                  "Set to true to enable saving the txpool content to file on shutdown and reloading it on startup (default: ${DEFAULT-VALUE})",
+          fallbackValue = "true",
+          arity = "0..1")
   private Boolean saveEnabled = TransactionPoolConfiguration.DEFAULT_ENABLE_SAVE;
 
   @CommandLine.Option(
-      names = {SAVE_FILE},
-      paramLabel = "<STRING>",
-      description =
-          "If saving the txpool content is enabled, define a custom path for the save file (default: ${DEFAULT-VALUE} in the data-dir)",
-      arity = "1")
+          names = {SAVE_FILE},
+          paramLabel = "<STRING>",
+          description =
+                  "If saving the txpool content is enabled, define a custom path for the save file (default: ${DEFAULT-VALUE} in the data-dir)",
+          arity = "1")
   private File saveFile = TransactionPoolConfiguration.DEFAULT_SAVE_FILE;
 
   private TransactionPoolOptions() {}
