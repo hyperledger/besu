@@ -97,7 +97,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
   protected final TransactionPoolReplacementHandler transactionReplacementHandler;
   protected final Supplier<BlockHeader> chainHeadHeaderSupplier;
 
-  private final Set<Address> localSenders = ConcurrentHashMap.newKeySet();
+  private final Set<Address> localSenders;
 
   public AbstractPendingTransactionsSorter(
       final TransactionPoolConfiguration poolConfig,
@@ -106,6 +106,8 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
       final Supplier<BlockHeader> chainHeadHeaderSupplier) {
     this.poolConfig = poolConfig;
     this.pendingTransactions = new ConcurrentHashMap<>(poolConfig.getTxPoolMaxSize());
+    this.localSenders =
+        poolConfig.getDisableLocalTransactions() ? Set.of() : ConcurrentHashMap.newKeySet();
     this.clock = clock;
     this.chainHeadHeaderSupplier = chainHeadHeaderSupplier;
     this.transactionReplacementHandler =
@@ -546,6 +548,6 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
 
   @Override
   public boolean isLocalSender(final Address sender) {
-    return localSenders.contains(sender);
+    return poolConfig.getDisableLocalTransactions() ? false : localSenders.contains(sender);
   }
 }

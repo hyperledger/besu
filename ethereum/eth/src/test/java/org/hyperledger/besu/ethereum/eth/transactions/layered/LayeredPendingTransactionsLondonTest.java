@@ -265,7 +265,7 @@ public class LayeredPendingTransactionsLondonTest
     givenTransactionIsValid(transaction);
 
     if (isLocal) {
-      transactionPool.addLocalTransaction(transaction);
+      transactionPool.addTransactionViaApi(transaction);
     } else {
       transactionPool.addRemoteTransactions(List.of(transaction));
     }
