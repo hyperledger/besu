@@ -17,8 +17,10 @@ package org.hyperledger.besu.ethereum.util;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -77,13 +79,14 @@ public class RawBlockIteratorTest {
       }
     }
     writer.close();
-
+    final BlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
     // Read blocks
     final int initialCapacity = initialCapacityFromBlockSize.apply(firstSerializedBlock.length);
     final RawBlockIterator iterator =
         new RawBlockIterator(
             blocksFile.toPath(),
-            rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()),
+            rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions),
+            rlp -> BlockBody.readBodyFields(rlp, blockHeaderFunctions),
             initialCapacity);
 
     // Read blocks and check that they match

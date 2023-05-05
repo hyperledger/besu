@@ -37,10 +37,13 @@ public final class BlockSyncTestUtils {
     try {
       temp.create();
       final Path blocks = temp.newFile().toPath();
+      final BlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
       BlockTestUtil.write1000Blocks(blocks);
       try (final RawBlockIterator iterator =
           new RawBlockIterator(
-              blocks, rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()))) {
+              blocks,
+              rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions),
+              rlp -> BlockBody.readBodyFields(rlp, blockHeaderFunctions))) {
         for (int i = 0; i < count; ++i) {
           result.add(iterator.next());
         }

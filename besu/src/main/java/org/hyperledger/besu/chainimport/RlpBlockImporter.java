@@ -20,7 +20,9 @@ import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -102,13 +104,13 @@ public class RlpBlockImporter implements Closeable {
     final ProtocolContext context = besuController.getProtocolContext();
     final MutableBlockchain blockchain = context.getBlockchain();
     int count = 0;
-
+    final BlockHeaderFunctions blockHeaderFunctions =
+        ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
     try (final RawBlockIterator iterator =
         new RawBlockIterator(
             blocks,
-            rlp ->
-                BlockHeader.readFrom(
-                    rlp, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)))) {
+            rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions),
+            rlp -> BlockBody.readBodyFields(rlp, blockHeaderFunctions))) {
       BlockHeader previousHeader = null;
       CompletableFuture<Void> previousBlockFuture = null;
       final AtomicReference<Throwable> threadedException = new AtomicReference<>();

@@ -151,6 +151,7 @@ downloadLicenses {
     // RocksDB is dual licensed under Apache v2.0 or GPL 2 licenses
     // Explicitly declare that we are using the Apache v2.0 license
     (group('org.rocksdb')) : apache,
+    (group('org.apache.tuweni')) : apache,
 
     // Logback is dual licensed under EPL v1.0 or LGPL v2.1
     // Explicitly declare that we are using the EPL v1.0 license
