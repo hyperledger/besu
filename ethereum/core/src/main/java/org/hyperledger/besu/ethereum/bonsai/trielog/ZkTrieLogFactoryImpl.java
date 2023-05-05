@@ -14,26 +14,73 @@
  */
 package org.hyperledger.besu.ethereum.bonsai.trielog;
 
+import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.StateTrieAccountValue;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogAccumulator;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogFactory;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class ZkTrieLogFactoryImpl extends TrieLogFactoryImpl {
+public class ZkTrieLogFactoryImpl implements TrieLogFactory<TrieLogLayer> {
+
+  // DUPLICATED here because this code will be in the plugin, and cannot extend TrieLogFactoryImpl
+  @Override
+  public <U extends TrieLogAccumulator> TrieLogLayer create(
+      final U accumulator, final BlockHeader blockHeader) {
+    TrieLogLayer layer = new TrieLogLayer();
+    layer.setBlockHash(blockHeader.getBlockHash());
+    layer.setBlockNumber(blockHeader.getNumber());
+    for (final var updatedAccount : accumulator.getAccountsToUpdate().entrySet()) {
+      final var bonsaiValue = updatedAccount.getValue();
+      final var oldAccountValue = bonsaiValue.getPrior();
+      final var newAccountValue = bonsaiValue.getUpdated();
+      if (oldAccountValue == null && newAccountValue == null) {
+        // by default do not persist empty reads of accounts to the trie log
+        continue;
+      }
+      layer.addAccountChange(updatedAccount.getKey(), oldAccountValue, newAccountValue);
+    }
+
+    for (final var updatedCode : accumulator.getCodeToUpdate().entrySet()) {
+      layer.addCodeChange(
+          updatedCode.getKey(),
+          updatedCode.getValue().getPrior(),
+          updatedCode.getValue().getUpdated(),
+          blockHeader.getBlockHash());
+    }
+
+    for (final var updatesStorage : accumulator.getStorageToUpdate().entrySet()) {
+      final Address address = updatesStorage.getKey();
+      for (final var slotUpdate : updatesStorage.getValue().entrySet()) {
+        var val = slotUpdate.getValue();
+
+        if (val.getPrior() == null && val.getUpdated() == null) {
+          // by default do not persist empty reads to the trie log
+          continue;
+        }
+
+        layer.addStorageChange(address, slotUpdate.getKey(), val.getPrior(), val.getUpdated());
+      }
+    }
+    return layer;
+  }
 
   @Override
   public byte[] serialize(final TrieLogLayer layer) {
@@ -64,7 +111,7 @@ public class ZkTrieLogFactoryImpl extends TrieLogFactoryImpl {
         codeChange.writeRlp(output, RLPOutput::writeBytes);
       }
 
-      final BonsaiValue<StateTrieAccountValue> accountChange = layer.accounts.get(address);
+      final BonsaiValue<AccountValue> accountChange = layer.accounts.get(address);
 
       if (accountChange == null) {
         output.writeNull();
@@ -170,5 +217,21 @@ public class ZkTrieLogFactoryImpl extends TrieLogFactoryImpl {
     newLayer.freeze();
 
     return newLayer;
+  }
+  protected static <T> T nullOrValue(final RLPInput input, final Function<RLPInput, T> reader) {
+    if (input.nextIsNull()) {
+      input.skipNext();
+      return null;
+    } else {
+      return reader.apply(input);
+    }
+  }
+
+  protected static boolean getOptionalIsCleared(final RLPInput input) {
+    return Optional.of(input.isEndOfCurrentList())
+        .filter(isEnd -> !isEnd) // isCleared is optional
+        .map(__ -> nullOrValue(input, RLPInput::readInt))
+        .filter(i -> i == 1)
+        .isPresent();
   }
 }

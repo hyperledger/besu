@@ -18,11 +18,12 @@ package org.hyperledger.besu.ethereum.bonsai.trielog;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.StateTrieAccountValue;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
+import org.hyperledger.besu.plugin.data.TrieLog;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,12 +45,12 @@ import org.apache.tuweni.units.bigints.UInt256;
  * trie changes as well.
  */
 @SuppressWarnings("unchecked")
-public class TrieLogLayer implements org.hyperledger.besu.plugin.data.TrieLogLayer<BonsaiValue<?>> {
+public class TrieLogLayer implements TrieLog {
 
   protected Hash blockHash;
   protected Optional<Long> blockNumber = Optional.empty();
 
-  Map<Address, BonsaiValue<StateTrieAccountValue>> getAccounts() {
+  Map<Address, BonsaiValue<AccountValue>> getAccounts() {
     return accounts;
   }
 
@@ -61,7 +62,7 @@ public class TrieLogLayer implements org.hyperledger.besu.plugin.data.TrieLogLay
     return storage;
   }
 
-  protected final Map<Address, BonsaiValue<StateTrieAccountValue>> accounts;
+  protected final Map<Address, BonsaiValue<AccountValue>> accounts;
   protected final Map<Address, BonsaiValue<Bytes>> code;
   protected final Map<Address, Map<StorageSlotKey, BonsaiValue<UInt256>>> storage;
   protected boolean frozen = false;
@@ -101,9 +102,7 @@ public class TrieLogLayer implements org.hyperledger.besu.plugin.data.TrieLogLay
   }
 
   public TrieLogLayer addAccountChange(
-      final Address address,
-      final StateTrieAccountValue oldValue,
-      final StateTrieAccountValue newValue) {
+      final Address address, final AccountValue oldValue, final AccountValue newValue) {
     checkState(!frozen, "Layer is Frozen");
     accounts.put(address, new BonsaiValue<>(oldValue, newValue));
     return this;
@@ -129,7 +128,7 @@ public class TrieLogLayer implements org.hyperledger.besu.plugin.data.TrieLogLay
   }
 
   @Override
-  public Stream<Map.Entry<Address, BonsaiValue<StateTrieAccountValue>>> streamAccountChanges() {
+  public Stream<Map.Entry<Address, BonsaiValue<AccountValue>>> streamAccountChanges() {
     return accounts.entrySet().stream();
   }
 
@@ -156,12 +155,12 @@ public class TrieLogLayer implements org.hyperledger.besu.plugin.data.TrieLogLay
 
   @Override
   public Optional<Bytes> getPriorCode(final Address address) {
-    return Optional.ofNullable(code.get(address)).map(z -> z.getPrior());
+    return Optional.ofNullable(code.get(address)).map(BonsaiValue::getPrior);
   }
 
   @Override
   public Optional<Bytes> getCode(final Address address) {
-    return Optional.ofNullable(code.get(address)).map(z -> z.getUpdated());
+    return Optional.ofNullable(code.get(address)).map(BonsaiValue::getUpdated);
   }
 
   @Override
@@ -181,21 +180,20 @@ public class TrieLogLayer implements org.hyperledger.besu.plugin.data.TrieLogLay
   }
 
   @Override
-  public Optional<StateTrieAccountValue> getPriorAccount(final Address address) {
-    return Optional.ofNullable(accounts.get(address)).map(z -> z.getPrior());
+  public Optional<AccountValue> getPriorAccount(final Address address) {
+    return Optional.ofNullable(accounts.get(address)).map(BonsaiValue::getPrior);
   }
 
   @Override
-  public Optional<StateTrieAccountValue> getAccount(final Address address) {
-    return Optional.ofNullable(accounts.get(address)).map(z -> z.getUpdated());
+  public Optional<AccountValue> getAccount(final Address address) {
+    return Optional.ofNullable(accounts.get(address)).map(BonsaiValue::getUpdated);
   }
 
   public String dump() {
     final StringBuilder sb = new StringBuilder();
-    sb.append("TrieLogLayer{" + "blockHash=").append(blockHash).append(frozen).append('}');
+    sb.append("TrieLog{" + "blockHash=").append(blockHash).append(frozen).append('}');
     sb.append("accounts\n");
-    for (final Map.Entry<Address, BonsaiValue<StateTrieAccountValue>> account :
-        accounts.entrySet()) {
+    for (final Map.Entry<Address, BonsaiValue<AccountValue>> account : accounts.entrySet()) {
       sb.append(" : ").append(account.getKey()).append("\n");
       if (Objects.equals(account.getValue().getPrior(), account.getValue().getUpdated())) {
         sb.append("   = ").append(account.getValue().getUpdated()).append("\n");

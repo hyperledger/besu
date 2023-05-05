@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,18 +11,22 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-package org.hyperledger.besu.ethereum.bonsai.trielog;
+package org.hyperledger.besu.plugin.services.trielogs;
 
-import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
-import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.data.TrieLog;
 
-/** Interface for serializing and deserializing {@link TrieLogLayer} objects. */
-public interface TrieLogFactory<T extends TrieLogLayer> {
-  T create(BonsaiWorldStateUpdateAccumulator accumulator, final BlockHeader blockHeader);
+public interface TrieLogEvent<T extends TrieLog> {
+  enum Type {
+    ADDED
+  }
 
-  T deserialize(final byte[] bytes);
+  TrieLogEvent.Type getType();
 
-  byte[] serialize(final T layer);
+  T layer();
+
+  interface TrieLogObserver<T extends TrieLog> {
+
+    <U extends TrieLogEvent<T>>void onTrieLogAdded(U event);
+  }
 }

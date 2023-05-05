@@ -14,12 +14,23 @@
  */
 package org.hyperledger.besu.plugin.services.trielogs;
 
-import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.AccountValue;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.plugin.data.TrieLog;
 
-import java.util.Optional;
+import java.util.Map;
 
-@FunctionalInterface
-public interface TrieLogProvider {
-  <T extends TrieLog.LogTuple<?>> Optional<TrieLog> getTrieLogLayer(final Hash blockHash);
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
+
+public interface TrieLogAccumulator {
+
+  <T extends AccountValue, U extends TrieLog.LogTuple<T>>
+      Map<Address, U> getAccountsToUpdate();
+
+  <U extends TrieLog.LogTuple<Bytes>> Map<Address, U> getCodeToUpdate();
+
+  <U extends TrieLog.LogTuple<UInt256>>
+      Map<Address, ? extends Map<StorageSlotKey, U>> getStorageToUpdate();
 }
