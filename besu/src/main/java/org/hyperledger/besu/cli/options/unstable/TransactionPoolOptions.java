@@ -96,20 +96,20 @@ public class TransactionPoolOptions
   private Boolean disableLocalTxs = TransactionPoolConfiguration.DEFAULT_DISABLE_LOCAL_TXS;
 
   @CommandLine.Option(
-          names = {SAVE_FLAG},
-          paramLabel = "<Boolean>",
-          description =
-                  "Set to true to enable saving the txpool content to file on shutdown and reloading it on startup (default: ${DEFAULT-VALUE})",
-          fallbackValue = "true",
-          arity = "0..1")
+      names = {SAVE_FLAG},
+      paramLabel = "<Boolean>",
+      description =
+          "Set to true to enable saving the txpool content to file on shutdown and reloading it on startup (default: ${DEFAULT-VALUE})",
+      fallbackValue = "true",
+      arity = "0..1")
   private Boolean saveEnabled = TransactionPoolConfiguration.DEFAULT_ENABLE_SAVE;
 
   @CommandLine.Option(
-          names = {SAVE_FILE},
-          paramLabel = "<STRING>",
-          description =
-                  "If saving the txpool content is enabled, define a custom path for the save file (default: ${DEFAULT-VALUE} in the data-dir)",
-          arity = "1")
+      names = {SAVE_FILE},
+      paramLabel = "<STRING>",
+      description =
+          "If saving the txpool content is enabled, define a custom path for the save file (default: ${DEFAULT-VALUE} in the data-dir)",
+      arity = "1")
   private File saveFile = TransactionPoolConfiguration.DEFAULT_SAVE_FILE;
 
   private TransactionPoolOptions() {}
@@ -169,6 +169,11 @@ public class TransactionPoolOptions
         OptionParser.format(eth65TrxAnnouncedBufferingPeriod));
   }
 
+  /**
+   * Return the file where to save txpool content if the relative option is enabled.
+   *
+   * @return the save file
+   */
   public File getSaveFile() {
     return saveFile;
   }
