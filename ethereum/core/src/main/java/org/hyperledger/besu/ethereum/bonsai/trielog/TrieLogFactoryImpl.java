@@ -15,18 +15,19 @@
  */
 package org.hyperledger.besu.ethereum.bonsai.trielog;
 
+import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.StateTrieAccountValue;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
-import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogAccumulator;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogFactory;
 
 import java.util.Map;
 import java.util.Optional;
@@ -41,41 +42,23 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class TrieLogFactoryImpl implements TrieLogFactory<TrieLogLayer> {
 
   @Override
-  public TrieLogLayer create(
-      final BonsaiWorldStateUpdateAccumulator accumulator, final BlockHeader blockHeader) {
+  public <U extends TrieLogAccumulator> TrieLogLayer create(
+      final U accumulator, final BlockHeader blockHeader) {
     TrieLogLayer layer = new TrieLogLayer();
     layer.setBlockHash(blockHeader.getBlockHash());
     layer.setBlockNumber(blockHeader.getNumber());
-    for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> updatedAccount :
-        accumulator.getAccountsToUpdate().entrySet()) {
-      final BonsaiValue<BonsaiAccount> bonsaiValue = updatedAccount.getValue();
-      final BonsaiAccount oldValue = bonsaiValue.getPrior();
-      final StateTrieAccountValue oldAccount =
-          oldValue == null
-              ? null
-              : new StateTrieAccountValue(
-                  oldValue.getNonce(),
-                  oldValue.getBalance(),
-                  oldValue.getStorageRoot(),
-                  oldValue.getCodeHash());
-      final BonsaiAccount newValue = bonsaiValue.getUpdated();
-      final StateTrieAccountValue newAccount =
-          newValue == null
-              ? null
-              : new StateTrieAccountValue(
-                  newValue.getNonce(),
-                  newValue.getBalance(),
-                  newValue.getStorageRoot(),
-                  newValue.getCodeHash());
-      if (oldValue == null && newValue == null) {
+    for (final var updatedAccount : accumulator.getAccountsToUpdate().entrySet()) {
+      final var bonsaiValue = updatedAccount.getValue();
+      final var oldAccountValue = bonsaiValue.getPrior();
+      final var newAccountValue = bonsaiValue.getUpdated();
+      if (oldAccountValue == null && newAccountValue == null) {
         // by default do not persist empty reads of accounts to the trie log
         continue;
       }
-      layer.addAccountChange(updatedAccount.getKey(), oldAccount, newAccount);
+      layer.addAccountChange(updatedAccount.getKey(), oldAccountValue, newAccountValue);
     }
 
-    for (final Map.Entry<Address, BonsaiValue<Bytes>> updatedCode :
-        accumulator.getCodeToUpdate().entrySet()) {
+    for (final var updatedCode : accumulator.getCodeToUpdate().entrySet()) {
       layer.addCodeChange(
           updatedCode.getKey(),
           updatedCode.getValue().getPrior(),
@@ -83,14 +66,9 @@ public class TrieLogFactoryImpl implements TrieLogFactory<TrieLogLayer> {
           blockHeader.getBlockHash());
     }
 
-    for (final Map.Entry<
-            Address,
-            BonsaiWorldStateUpdateAccumulator.StorageConsumingMap<
-                StorageSlotKey, BonsaiValue<UInt256>>>
-        updatesStorage : accumulator.getStorageToUpdate().entrySet()) {
+    for (final var updatesStorage : accumulator.getStorageToUpdate().entrySet()) {
       final Address address = updatesStorage.getKey();
-      for (final Map.Entry<StorageSlotKey, BonsaiValue<UInt256>> slotUpdate :
-          updatesStorage.getValue().entrySet()) {
+      for (final var slotUpdate : updatesStorage.getValue().entrySet()) {
         var val = slotUpdate.getValue();
 
         if (val.getPrior() == null && val.getUpdated() == null) {
@@ -126,7 +104,7 @@ public class TrieLogFactoryImpl implements TrieLogFactory<TrieLogLayer> {
       output.startList(); // this change
       output.writeBytes(address);
 
-      final BonsaiValue<StateTrieAccountValue> accountChange = layer.accounts.get(address);
+      final BonsaiValue<AccountValue> accountChange = layer.accounts.get(address);
       if (accountChange == null || accountChange.isUnchanged()) {
         output.writeNull();
       } else {

@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyVa
 import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -141,7 +142,8 @@ public class BonsaiWorldStateArchiveTest {
   public void testGetMutableWithStorageInconsistencyRollbackTheState() {
 
     when(keyValueStorage.startTransaction()).thenReturn(mock(KeyValueStorageTransaction.class));
-    when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.of(mock(TrieLogLayer.class)));
+    doAnswer(__ -> Optional.of(mock(TrieLogLayer.class)))
+        .when(trieLogManager).getTrieLogLayer(any(Hash.class));
 
     var worldStateStorage =
         new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
@@ -201,7 +203,8 @@ public class BonsaiWorldStateArchiveTest {
     final BlockHeader blockHeaderChainB =
         blockBuilder.number(1).timestamp(2).parentHash(genesis.getHash()).buildHeader();
 
-    when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.of(mock(TrieLogLayer.class)));
+    doAnswer(__ -> Optional.of(mock(TrieLogLayer.class)))
+        .when(trieLogManager).getTrieLogLayer(any(Hash.class));
 
     var worldStateStorage =
         new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
@@ -242,8 +245,8 @@ public class BonsaiWorldStateArchiveTest {
     final BlockHeader blockHeaderChainB =
         blockBuilder.number(1).timestamp(2).parentHash(genesis.getHash()).buildHeader();
 
-    when(trieLogManager.getTrieLogLayer(any(Hash.class)))
-        .thenReturn(Optional.of(mock(TrieLogLayer.class)));
+    doAnswer(__ -> Optional.of(mock(TrieLogLayer.class)))
+        .when(trieLogManager).getTrieLogLayer(any(Hash.class));
 
     bonsaiWorldStateArchive =
         spy(

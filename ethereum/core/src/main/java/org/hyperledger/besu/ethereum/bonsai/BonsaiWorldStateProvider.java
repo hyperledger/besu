@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.bonsai.cache.CachedWorldStorageManag
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -37,9 +36,11 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.data.TrieLog;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -189,8 +190,8 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
         final Optional<BlockHeader> maybePersistedHeader =
             blockchain.getBlockHeader(mutableState.blockHash()).map(BlockHeader.class::cast);
 
-        final List<TrieLogLayer> rollBacks = new ArrayList<>();
-        final List<TrieLogLayer> rollForwards = new ArrayList<>();
+        final List<TrieLog> rollBacks = new ArrayList<>();
+        final List<TrieLog> rollForwards = new ArrayList<>();
         if (maybePersistedHeader.isEmpty()) {
           trieLogManager.getTrieLogLayer(mutableState.blockHash()).ifPresent(rollBacks::add);
         } else {
@@ -232,7 +233,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
         final BonsaiWorldStateUpdateAccumulator bonsaiUpdater =
             (BonsaiWorldStateUpdateAccumulator) mutableState.updater();
         try {
-          for (final TrieLogLayer rollBack : rollBacks) {
+          for (final TrieLog rollBack : rollBacks) {
             LOG.debug("Attempting Rollback of {}", rollBack.getBlockHash());
             bonsaiUpdater.rollBack(rollBack);
           }

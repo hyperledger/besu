@@ -15,10 +15,10 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.proof;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.StateTrieAccountValue;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.util.ArrayList;
 import java.util.List;

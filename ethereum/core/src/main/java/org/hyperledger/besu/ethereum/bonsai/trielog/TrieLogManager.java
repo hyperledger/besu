@@ -19,6 +19,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.plugin.data.TrieLog;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -47,9 +49,9 @@ public interface TrieLogManager {
 
   void reset();
 
-  Optional<TrieLogLayer> getTrieLogLayer(final Hash blockHash);
+  Optional<? extends TrieLog> getTrieLogLayer(final Hash blockHash);
 
-  long subscribe(final TrieLogAddedEvent.TrieLogAddedObserver sub);
+  <T extends TrieLog> long subscribe(final TrieLogEvent.TrieLogObserver<T> sub);
 
   void unsubscribe(final long id);
 }

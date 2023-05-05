@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.rlp.RLP;

@@ -14,12 +14,15 @@
  */
 package org.hyperledger.besu.plugin.services.trielogs;
 
-import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.TrieLog;
 
-import java.util.Optional;
+/** Interface for serializing and deserializing {@link TrieLog} objects. */
+public interface TrieLogFactory<T extends TrieLog> {
 
-@FunctionalInterface
-public interface TrieLogProvider {
-  <T extends TrieLog.LogTuple<?>> Optional<TrieLog> getTrieLogLayer(final Hash blockHash);
+  <U extends TrieLogAccumulator> T create(U accumulator, BlockHeader blockHeader);
+
+  T deserialize(final byte[] bytes);
+
+  byte[] serialize(final T layer);
 }

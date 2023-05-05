@@ -19,11 +19,14 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedBonsaiWorldView;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiUpdater;
-import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogAddedEvent.TrieLogAddedObserver;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.plugin.data.TrieLog;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent.TrieLogObserver;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogFactory;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Map;
@@ -42,12 +45,12 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
 
   protected final Map<Bytes32, CachedBonsaiWorldView> cachedWorldStatesByHash;
   protected final long maxLayersToLoad;
-  private final Subscribers<TrieLogAddedObserver> trieLogAddedObservers = Subscribers.create();
+  private final Subscribers<TrieLogObserver<? extends TrieLog>> trieLogObservers = Subscribers.create();
 
   // TODO plumb factory and observer(s) from plugin service, DO NOT MERGE
   protected TrieLogFactory<TrieLogLayer> trieLogFactory = new ZkTrieLogFactoryImpl();
-  protected TrieLogAddedObserver observer =
-      new ZkTrieLogObserver("localhost", 8888).addAsObserverTo(trieLogAddedObservers);
+  protected TrieLogObserver<TrieLogLayer> observer =
+      new ZkTrieLogObserver("localhost", 8888).addAsObserverTo(trieLogObservers);
 
   protected AbstractTrieLogManager(
       final Blockchain blockchain,
@@ -77,8 +80,7 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
         persistTrieLog(forBlockHeader, forWorldStateRootHash, trieLog, stateUpdater);
 
         // notify trie log added observers, synchronously
-        trieLogAddedObservers.forEach(
-            o -> o.onTrieLogAdded(new TrieLogAddedEvent(forBlockHeader, trieLog)));
+        trieLogObservers.forEach(o -> o.onTrieLogAdded(new TrieLogAddedEvent<? extends TrieLog>(trieLog)));
 
         success = true;
       } finally {
@@ -149,12 +151,12 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
   }
 
   @Override
-  public synchronized long subscribe(final TrieLogAddedObserver sub) {
-    return trieLogAddedObservers.subscribe(sub);
+  public synchronized <T extends TrieLog> long subscribe(final TrieLogObserver<T> sub) {
+    return trieLogObservers.subscribe(sub);
   }
 
   @Override
   public synchronized void unsubscribe(final long id) {
-    trieLogAddedObservers.unsubscribe(id);
+    trieLogObservers.unsubscribe(id);
   }
 }

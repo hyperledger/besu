@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.bonsai.trielog;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.StateTrieAccountValue;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.util.function.Consumer;
 
@@ -126,7 +126,7 @@ public class ZkTrieLogObserverTest {
               });
         };
     ZkTrieLogObserver observer = new ZkTrieLogObserver("localhost", rpcServicePort);
-    TrieLogAddedEvent addEvent = new TrieLogAddedEvent(headerFixture, trieLogFixture);
+    TrieLogAddedEvent addEvent = new TrieLogAddedEvent(trieLogFixture);
 
     observer
         .handleShip(addEvent)

@@ -14,9 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.bonsai.trielog;
 
-import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogAddedEvent.TrieLogAddedObserver;
 import org.hyperledger.besu.plugin.data.SyncStatus;
+import org.hyperledger.besu.plugin.data.TrieLog;
 import org.hyperledger.besu.plugin.services.BesuEvents;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogFactory;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.List;
@@ -34,7 +36,8 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ZkTrieLogObserver implements TrieLogAddedObserver, BesuEvents.SyncStatusListener {
+public class ZkTrieLogObserver
+    implements TrieLogEvent.TrieLogObserver<TrieLogLayer>, BesuEvents.SyncStatusListener {
 
   private static final Logger LOG = LoggerFactory.getLogger(ZkTrieLogObserver.class);
   // todo: get from config
@@ -56,21 +59,23 @@ public class ZkTrieLogObserver implements TrieLogAddedObserver, BesuEvents.SyncS
   }
 
   @Override
-  public void onTrieLogAdded(final TrieLogAddedEvent event) {
+  public <U extends TrieLogEvent<TrieLogLayer>> void onTrieLogAdded(final U event) {
     handleShip(event)
         .onComplete(
             ar -> {
               if (ar.succeeded()) {
                 LOG.atTrace()
-                    .setMessage("shipped trie log for {}, response: {}")
-                    .addArgument(event.getBlockHeader().toLogString())
+                    .setMessage("shipped trie log for {}:{}, response: {}")
+                    .addArgument(event.layer().getBlockNumber())
+                    .addArgument(event.layer().getBlockHash())
                     .addArgument(ar.result().bodyAsString())
                     .log();
 
               } else {
                 LOG.atTrace()
-                    .setMessage("failed to ship trie log for {} \n {}")
-                    .addArgument(event.getBlockHeader().toLogString())
+                    .setMessage("failed to ship trie log for {}:{} \n {}")
+                    .addArgument(event.layer().getBlockNumber())
+                    .addArgument(event.layer().getBlockHash())
                     .addArgument(ar.cause())
                     .log();
               }
@@ -78,9 +83,9 @@ public class ZkTrieLogObserver implements TrieLogAddedObserver, BesuEvents.SyncS
   }
 
   @VisibleForTesting
-  Future<HttpResponse<Buffer>> handleShip(final TrieLogAddedEvent event) {
+  Future<HttpResponse<Buffer>> handleShip(final TrieLogEvent<TrieLogLayer> addedEvent) {
 
-    byte[] rlpBytes = zkTrieLogFactory.serialize(event.getLayer());
+    byte[] rlpBytes = zkTrieLogFactory.serialize(addedEvent.layer());
 
     JsonObject jsonRpcRequest =
         new JsonObject()
@@ -92,8 +97,8 @@ public class ZkTrieLogObserver implements TrieLogAddedObserver, BesuEvents.SyncS
                 // TODO: interface this parameter
                 List.of(
                     new JsonObject()
-                        .put("blockNumber", event.getBlockHeader().getNumber())
-                        .put("blockHash", event.getBlockHeader().getBlockHash().toHexString())
+                        .put("blockNumber", addedEvent.layer().getBlockNumber())
+                        .put("blockHash", addedEvent.layer().getBlockHash().toHexString())
                         .put("isSync", isSyncing)
                         .put("trieLog", Bytes.wrap(rlpBytes).toHexString())));
 
@@ -105,7 +110,8 @@ public class ZkTrieLogObserver implements TrieLogAddedObserver, BesuEvents.SyncS
   }
 
   // TODO: remove this in favor of plugin-based configuration of observers:
-  ZkTrieLogObserver addAsObserverTo(final Subscribers<TrieLogAddedObserver> addToSubscribers) {
+  ZkTrieLogObserver addAsObserverTo(
+      final Subscribers<TrieLogEvent.TrieLogObserver<? extends TrieLog>> addToSubscribers) {
     addToSubscribers.subscribe(this);
     return this;
   }
@@ -118,4 +124,5 @@ public class ZkTrieLogObserver implements TrieLogAddedObserver, BesuEvents.SyncS
           isSyncing = sync.getCurrentBlock() < sync.getHighestBlock() - 50;
         });
   }
+
 }

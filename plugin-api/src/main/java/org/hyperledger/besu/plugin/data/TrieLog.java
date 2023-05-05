@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.plugin.data;
 
+import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.StateTrieAccountValue;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 
 import java.util.Map;
@@ -26,12 +26,12 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public interface TrieLogLayer<T extends TrieLogLayer.LogTuple<?>> {
+public interface TrieLog {
   Hash getBlockHash();
 
   Optional<Long> getBlockNumber();
 
-  <U extends LogTuple<StateTrieAccountValue>> Stream<Map.Entry<Address, U>> streamAccountChanges();
+  <U extends LogTuple<AccountValue>> Stream<Map.Entry<Address, U>> streamAccountChanges();
 
   <U extends LogTuple<Bytes>> Stream<Map.Entry<Address, U>> streamCodeChanges();
 
@@ -51,9 +51,9 @@ public interface TrieLogLayer<T extends TrieLogLayer.LogTuple<?>> {
   Optional<UInt256> getStorageByStorageSlotKey(
       final Address address, final StorageSlotKey storageSlotKey);
 
-  Optional<? extends StateTrieAccountValue> getPriorAccount(final Address address);
+  Optional<? extends AccountValue> getPriorAccount(final Address address);
 
-  Optional<? extends StateTrieAccountValue> getAccount(final Address address);
+  Optional<? extends AccountValue> getAccount(final Address address);
 
   interface LogTuple<T> {
     T getPrior();
