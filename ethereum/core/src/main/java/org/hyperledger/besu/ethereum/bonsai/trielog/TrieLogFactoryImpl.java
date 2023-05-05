@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.data.TrieLog;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogAccumulator;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogFactory;
 
@@ -34,16 +35,16 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class TrieLogFactoryImpl implements TrieLogFactory<TrieLogLayer> {
+public class TrieLogFactoryImpl implements TrieLogFactory {
 
   @Override
-  public <U extends TrieLogAccumulator> TrieLogLayer create(
-      final U accumulator, final BlockHeader blockHeader) {
+  public TrieLogLayer create(final TrieLogAccumulator accumulator, final BlockHeader blockHeader) {
     TrieLogLayer layer = new TrieLogLayer();
     layer.setBlockHash(blockHeader.getBlockHash());
     layer.setBlockNumber(blockHeader.getNumber());
@@ -83,52 +84,53 @@ public class TrieLogFactoryImpl implements TrieLogFactory<TrieLogLayer> {
   }
 
   @Override
-  public byte[] serialize(final TrieLogLayer layer) {
+  public byte[] serialize(final TrieLog layer) {
     final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
     writeTo(layer, rlpLog);
     return rlpLog.encoded().toArrayUnsafe();
   }
 
-  public static void writeTo(final TrieLogLayer layer, final RLPOutput output) {
+  public static void writeTo(final TrieLog layer, final RLPOutput output) {
     layer.freeze();
 
     final Set<Address> addresses = new TreeSet<>();
-    addresses.addAll(layer.getAccounts().keySet());
-    addresses.addAll(layer.getCode().keySet());
-    addresses.addAll(layer.getStorage().keySet());
+    addresses.addAll(layer.getAccountChanges().keySet());
+    addresses.addAll(layer.getCodeChanges().keySet());
+    addresses.addAll(layer.getStorageChanges().keySet());
 
     output.startList(); // container
-    output.writeBytes(layer.blockHash);
+    output.writeBytes(layer.getBlockHash());
 
     for (final Address address : addresses) {
       output.startList(); // this change
       output.writeBytes(address);
 
-      final BonsaiValue<AccountValue> accountChange = layer.accounts.get(address);
+      final TrieLog.LogTuple<AccountValue> accountChange = layer.getAccountChanges().get(address);
       if (accountChange == null || accountChange.isUnchanged()) {
         output.writeNull();
       } else {
-        accountChange.writeRlp(output, (o, sta) -> sta.writeTo(o));
+        writeRlp(accountChange, output, (o, sta) -> sta.writeTo(o));
       }
 
-      final BonsaiValue<Bytes> codeChange = layer.code.get(address);
+      final TrieLog.LogTuple<Bytes> codeChange = layer.getCodeChanges().get(address);
       if (codeChange == null || codeChange.isUnchanged()) {
         output.writeNull();
       } else {
-        codeChange.writeRlp(output, RLPOutput::writeBytes);
+        writeRlp(codeChange, output, RLPOutput::writeBytes);
       }
 
-      final Map<StorageSlotKey, BonsaiValue<UInt256>> storageChanges = layer.storage.get(address);
+      final Map<StorageSlotKey, TrieLog.LogTuple<UInt256>> storageChanges =
+          layer.getStorageChanges().get(address);
       if (storageChanges == null) {
         output.writeNull();
       } else {
         output.startList();
-        for (final Map.Entry<StorageSlotKey, BonsaiValue<UInt256>> storageChangeEntry :
+        for (final Map.Entry<StorageSlotKey, TrieLog.LogTuple<UInt256>> storageChangeEntry :
             storageChanges.entrySet()) {
           output.startList();
           // do not write slotKey, it is not used in mainnet bonsai trielogs
           output.writeBytes(storageChangeEntry.getKey().getSlotHash());
-          storageChangeEntry.getValue().writeInnerRlp(output, RLPOutput::writeUInt256Scalar);
+          writeInnerRlp(storageChangeEntry.getValue(), output, RLPOutput::writeUInt256Scalar);
           output.endList();
         }
         output.endList();
@@ -221,5 +223,35 @@ public class TrieLogFactoryImpl implements TrieLogFactory<TrieLogLayer> {
         .map(__ -> nullOrValue(input, RLPInput::readInt))
         .filter(i -> i == 1)
         .isPresent();
+  }
+
+  public static <T> void writeRlp(
+      final TrieLog.LogTuple<T> value,
+      final RLPOutput output,
+      final BiConsumer<RLPOutput, T> writer) {
+    output.startList();
+    writeInnerRlp(value, output, writer);
+    output.endList();
+  }
+
+  public static <T> void writeInnerRlp(
+      final TrieLog.LogTuple<T> value,
+      final RLPOutput output,
+      final BiConsumer<RLPOutput, T> writer) {
+    if (value.getPrior() == null) {
+      output.writeNull();
+    } else {
+      writer.accept(output, value.getPrior());
+    }
+    if (value.getUpdated() == null) {
+      output.writeNull();
+    } else {
+      writer.accept(output, value.getUpdated());
+    }
+    if (!value.isCleared()) {
+      output.writeNull();
+    } else {
+      output.writeInt(1);
+    }
   }
 }

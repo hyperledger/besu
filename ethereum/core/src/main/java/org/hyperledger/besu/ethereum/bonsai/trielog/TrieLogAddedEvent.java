@@ -18,7 +18,7 @@ package org.hyperledger.besu.ethereum.bonsai.trielog;
 import org.hyperledger.besu.plugin.data.TrieLog;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
 
-public record TrieLogAddedEvent<T extends TrieLog>(T layer) implements TrieLogEvent<T> {
+public record TrieLogAddedEvent(TrieLog layer) implements TrieLogEvent {
 
   @Override
   public Type getType() {

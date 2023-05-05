@@ -40,8 +40,6 @@ public interface AccountValue {
    */
   Hash getCodeHash();
 
-  /**
-   * Writes the account value to the provided {@link RLPOutput}.
-   */
+  /** Writes the account value to the provided {@link RLPOutput}. */
   void writeTo(final RLPOutput out);
 }

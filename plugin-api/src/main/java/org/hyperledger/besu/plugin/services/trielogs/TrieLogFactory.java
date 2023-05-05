@@ -18,11 +18,11 @@ import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.TrieLog;
 
 /** Interface for serializing and deserializing {@link TrieLog} objects. */
-public interface TrieLogFactory<T extends TrieLog> {
+public interface TrieLogFactory {
 
-  <U extends TrieLogAccumulator> T create(U accumulator, BlockHeader blockHeader);
+  TrieLog create(TrieLogAccumulator accumulator, BlockHeader blockHeader);
 
-  T deserialize(final byte[] bytes);
+  TrieLog deserialize(final byte[] bytes);
 
-  byte[] serialize(final T layer);
+  byte[] serialize(final TrieLog layer);
 }

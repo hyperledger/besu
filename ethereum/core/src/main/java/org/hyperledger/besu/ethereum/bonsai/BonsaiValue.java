@@ -16,11 +16,7 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.plugin.data.TrieLog;
-
-import java.util.Objects;
-import java.util.function.BiConsumer;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -63,38 +59,11 @@ public class BonsaiValue<T> implements TrieLog.LogTuple<T> {
     return this;
   }
 
-  public void writeRlp(final RLPOutput output, final BiConsumer<RLPOutput, T> writer) {
-    output.startList();
-    writeInnerRlp(output, writer);
-    output.endList();
-  }
-
-  public void writeInnerRlp(final RLPOutput output, final BiConsumer<RLPOutput, T> writer) {
-    if (prior == null) {
-      output.writeNull();
-    } else {
-      writer.accept(output, prior);
-    }
-    if (updated == null) {
-      output.writeNull();
-    } else {
-      writer.accept(output, updated);
-    }
-    if (!cleared) {
-      output.writeNull();
-    } else {
-      output.writeInt(1);
-    }
-  }
-
-  public boolean isUnchanged() {
-    return Objects.equals(updated, prior);
-  }
-
   public void setCleared() {
     this.cleared = true;
   }
 
+  @Override
   public boolean isCleared() {
     return cleared;
   }

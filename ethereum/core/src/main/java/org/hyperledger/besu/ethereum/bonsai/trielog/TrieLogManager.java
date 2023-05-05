@@ -51,7 +51,7 @@ public interface TrieLogManager {
 
   Optional<? extends TrieLog> getTrieLogLayer(final Hash blockHash);
 
-  <T extends TrieLog> long subscribe(final TrieLogEvent.TrieLogObserver<T> sub);
+  long subscribe(final TrieLogEvent.TrieLogObserver sub);
 
   void unsubscribe(final long id);
 }
