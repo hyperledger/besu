@@ -20,9 +20,9 @@ import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StateTrieAccountValue;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
-import org.hyperledger.besu.ethereum.bonsai.worldview.StorageSlotKey;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,7 +43,8 @@ import org.apache.tuweni.units.bigints.UInt256;
  * <p>In this particular formulation only the "Leaves" are tracked" Future layers may track patrica
  * trie changes as well.
  */
-public class TrieLogLayer {
+@SuppressWarnings("unchecked")
+public class TrieLogLayer implements org.hyperledger.besu.plugin.data.TrieLogLayer<BonsaiValue<?>> {
 
   protected Hash blockHash;
   protected Optional<Long> blockNumber = Optional.empty();
@@ -77,6 +78,7 @@ public class TrieLogLayer {
     frozen = true; // The code never bothered me anyway
   }
 
+  @Override
   public Hash getBlockHash() {
     return blockHash;
   }
@@ -87,6 +89,7 @@ public class TrieLogLayer {
     return this;
   }
 
+  @Override
   public Optional<Long> getBlockNumber() {
     return blockNumber;
   }
@@ -125,14 +128,17 @@ public class TrieLogLayer {
     return this;
   }
 
+  @Override
   public Stream<Map.Entry<Address, BonsaiValue<StateTrieAccountValue>>> streamAccountChanges() {
     return accounts.entrySet().stream();
   }
 
+  @Override
   public Stream<Map.Entry<Address, BonsaiValue<Bytes>>> streamCodeChanges() {
     return code.entrySet().stream();
   }
 
+  @Override
   public Stream<Map.Entry<Address, Map<StorageSlotKey, BonsaiValue<UInt256>>>>
       streamStorageChanges() {
     return storage.entrySet().stream();
@@ -142,39 +148,46 @@ public class TrieLogLayer {
     return storage.containsKey(address);
   }
 
+  @Override
   public Stream<Map.Entry<StorageSlotKey, BonsaiValue<UInt256>>> streamStorageChanges(
       final Address address) {
     return storage.getOrDefault(address, Map.of()).entrySet().stream();
   }
 
+  @Override
   public Optional<Bytes> getPriorCode(final Address address) {
-    return Optional.ofNullable(code.get(address)).map(BonsaiValue::getPrior);
+    return Optional.ofNullable(code.get(address)).map(z -> z.getPrior());
   }
 
+  @Override
   public Optional<Bytes> getCode(final Address address) {
-    return Optional.ofNullable(code.get(address)).map(BonsaiValue::getUpdated);
+    return Optional.ofNullable(code.get(address)).map(z -> z.getUpdated());
   }
 
-  Optional<UInt256> getPriorStorageByStorageSlotKey(
+  @Override
+  public Optional<UInt256> getPriorStorageByStorageSlotKey(
       final Address address, final StorageSlotKey storageSlotKey) {
     return Optional.ofNullable(storage.get(address))
         .map(i -> i.get(storageSlotKey))
         .map(BonsaiValue::getPrior);
   }
 
-  Optional<UInt256> getStorageByStorageSlotKey(
+  @Override
+  public Optional<UInt256> getStorageByStorageSlotKey(
       final Address address, final StorageSlotKey storageSlotKey) {
     return Optional.ofNullable(storage.get(address))
         .map(i -> i.get(storageSlotKey))
         .map(BonsaiValue::getUpdated);
   }
 
+  @Override
   public Optional<StateTrieAccountValue> getPriorAccount(final Address address) {
-    return Optional.ofNullable(accounts.get(address)).map(BonsaiValue::getPrior);
+    return Optional.ofNullable(accounts.get(address)).map(z -> z.getPrior());
   }
 
+  @Override
   public Optional<StateTrieAccountValue> getAccount(final Address address) {
-    return Optional.ofNullable(accounts.get(address)).map(BonsaiValue::getUpdated);
+    return Optional.ofNullable(accounts.get(address)).map(z -> z.getUpdated());
   }
 
   public String dump() {

@@ -19,13 +19,13 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StateTrieAccountValue;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.bonsai.worldview.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.util.Optional;
 
@@ -84,7 +84,7 @@ public class TrieLogFactoryTests {
     // assert slot key is present for an all zero key:
     assertThat(
             layer.getStorage().get(Address.ZERO).keySet().stream()
-                .map(StorageSlotKey::slotKey)
+                .map(k -> k.getSlotKey())
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .anyMatch(key -> key.equals(UInt256.ZERO)))

@@ -1,3 +1,17 @@
+/*
+ * Copyright contributors to Hyperledger Besu
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.hyperledger.besu.ethereum.bonsai.trielog;
 
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogAddedEvent.TrieLogAddedObserver;
@@ -27,7 +41,6 @@ public class ZkTrieLogObserver implements TrieLogAddedObserver, BesuEvents.SyncS
   private String shomeiHttpHost = "localhost";
   private int shomeiHttpPort = 8888;
   private boolean isSyncing;
-  private static long timeSinceLastLog = System.currentTimeMillis();
 
   static TrieLogFactory<TrieLogLayer> zkTrieLogFactory = new ZkTrieLogFactoryImpl();
   private final WebClient webClient;
@@ -39,10 +52,7 @@ public class ZkTrieLogObserver implements TrieLogAddedObserver, BesuEvents.SyncS
     this.shomeiHttpHost = shomeiHttpHost;
     this.shomeiHttpPort = shomeiHttpPort;
 
-    // TODO: remove this once we are able to wire up the SyncStatusListener via plugin
-    long now = System.currentTimeMillis();
-    this.isSyncing = timeSinceLastLog - now < 1000;
-    timeSinceLastLog = now;
+    // TODO: wire up the SyncStatusListener via plugin
   }
 
   @Override

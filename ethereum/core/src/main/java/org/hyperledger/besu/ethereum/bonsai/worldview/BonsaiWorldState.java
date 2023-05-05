@@ -22,6 +22,7 @@ import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyVa
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
@@ -261,7 +262,7 @@ public class BonsaiWorldState
       // for manicured tries and composting, collect branches here (not implemented)
       for (final Map.Entry<StorageSlotKey, BonsaiValue<UInt256>> storageUpdate :
           storageAccountUpdate.getValue().entrySet()) {
-        final Hash slotHash = storageUpdate.getKey().slotHash();
+        final Hash slotHash = storageUpdate.getKey().getSlotHash();
         final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
         try {
           if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
