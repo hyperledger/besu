@@ -143,7 +143,8 @@ public class BonsaiWorldStateArchiveTest {
 
     when(keyValueStorage.startTransaction()).thenReturn(mock(KeyValueStorageTransaction.class));
     doAnswer(__ -> Optional.of(mock(TrieLogLayer.class)))
-        .when(trieLogManager).getTrieLogLayer(any(Hash.class));
+        .when(trieLogManager)
+        .getTrieLogLayer(any(Hash.class));
 
     var worldStateStorage =
         new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
@@ -204,7 +205,8 @@ public class BonsaiWorldStateArchiveTest {
         blockBuilder.number(1).timestamp(2).parentHash(genesis.getHash()).buildHeader();
 
     doAnswer(__ -> Optional.of(mock(TrieLogLayer.class)))
-        .when(trieLogManager).getTrieLogLayer(any(Hash.class));
+        .when(trieLogManager)
+        .getTrieLogLayer(any(Hash.class));
 
     var worldStateStorage =
         new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
@@ -246,7 +248,8 @@ public class BonsaiWorldStateArchiveTest {
         blockBuilder.number(1).timestamp(2).parentHash(genesis.getHash()).buildHeader();
 
     doAnswer(__ -> Optional.of(mock(TrieLogLayer.class)))
-        .when(trieLogManager).getTrieLogLayer(any(Hash.class));
+        .when(trieLogManager)
+        .getTrieLogLayer(any(Hash.class));
 
     bonsaiWorldStateArchive =
         spy(

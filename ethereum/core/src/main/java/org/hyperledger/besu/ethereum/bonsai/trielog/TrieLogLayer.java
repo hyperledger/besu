@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
-import java.util.stream.Stream;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -75,8 +74,9 @@ public class TrieLogLayer implements TrieLog {
   }
 
   /** Locks the layer so no new changes can be added; */
-  void freeze() {
-    frozen = true; // The code never bothered me anyway
+  @Override
+  public void freeze() {
+    frozen = true; // The code never bothered me anyway 🥶
   }
 
   @Override
@@ -128,19 +128,18 @@ public class TrieLogLayer implements TrieLog {
   }
 
   @Override
-  public Stream<Map.Entry<Address, BonsaiValue<AccountValue>>> streamAccountChanges() {
-    return accounts.entrySet().stream();
+  public Map<Address, BonsaiValue<AccountValue>> getAccountChanges() {
+    return accounts;
   }
 
   @Override
-  public Stream<Map.Entry<Address, BonsaiValue<Bytes>>> streamCodeChanges() {
-    return code.entrySet().stream();
+  public Map<Address, BonsaiValue<Bytes>> getCodeChanges() {
+    return code;
   }
 
   @Override
-  public Stream<Map.Entry<Address, Map<StorageSlotKey, BonsaiValue<UInt256>>>>
-      streamStorageChanges() {
-    return storage.entrySet().stream();
+  public Map<Address, Map<StorageSlotKey, BonsaiValue<UInt256>>> getStorageChanges() {
+    return storage;
   }
 
   public boolean hasStorageChanges(final Address address) {
@@ -148,9 +147,8 @@ public class TrieLogLayer implements TrieLog {
   }
 
   @Override
-  public Stream<Map.Entry<StorageSlotKey, BonsaiValue<UInt256>>> streamStorageChanges(
-      final Address address) {
-    return storage.getOrDefault(address, Map.of()).entrySet().stream();
+  public Map<StorageSlotKey, BonsaiValue<UInt256>> getStorageChanges(final Address address) {
+    return storage.getOrDefault(address, Map.of());
   }
 
   @Override

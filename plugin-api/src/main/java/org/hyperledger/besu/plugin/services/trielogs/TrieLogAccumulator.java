@@ -26,11 +26,10 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public interface TrieLogAccumulator {
 
-  <T extends AccountValue, U extends TrieLog.LogTuple<T>>
-      Map<Address, U> getAccountsToUpdate();
+  Map<Address, ? extends TrieLog.LogTuple<? extends AccountValue>> getAccountsToUpdate();
 
-  <U extends TrieLog.LogTuple<Bytes>> Map<Address, U> getCodeToUpdate();
+  Map<Address, ? extends TrieLog.LogTuple<Bytes>> getCodeToUpdate();
 
-  <U extends TrieLog.LogTuple<UInt256>>
-      Map<Address, ? extends Map<StorageSlotKey, U>> getStorageToUpdate();
+  Map<Address, ? extends Map<StorageSlotKey, ? extends TrieLog.LogTuple<UInt256>>>
+      getStorageToUpdate();
 }

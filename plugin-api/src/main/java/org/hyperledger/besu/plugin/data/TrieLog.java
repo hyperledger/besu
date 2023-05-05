@@ -20,8 +20,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -31,15 +31,15 @@ public interface TrieLog {
 
   Optional<Long> getBlockNumber();
 
-  <U extends LogTuple<AccountValue>> Stream<Map.Entry<Address, U>> streamAccountChanges();
+  void freeze();
 
-  <U extends LogTuple<Bytes>> Stream<Map.Entry<Address, U>> streamCodeChanges();
+  <U extends LogTuple<AccountValue>> Map<Address, U> getAccountChanges();
 
-  <U extends LogTuple<UInt256>>
-      Stream<Map.Entry<Address, Map<StorageSlotKey, U>>> streamStorageChanges();
+  <U extends LogTuple<Bytes>> Map<Address, U> getCodeChanges();
 
-  <U extends LogTuple<UInt256>> Stream<Map.Entry<StorageSlotKey, U>> streamStorageChanges(
-      final Address address);
+  <U extends LogTuple<UInt256>> Map<Address, Map<StorageSlotKey, U>> getStorageChanges();
+
+  <U extends LogTuple<UInt256>> Map<StorageSlotKey, U> getStorageChanges(final Address address);
 
   Optional<Bytes> getPriorCode(final Address address);
 
@@ -59,5 +59,11 @@ public interface TrieLog {
     T getPrior();
 
     T getUpdated();
+
+    default boolean isUnchanged() {
+      return Objects.equals(getUpdated(), getPrior());
+    }
+
+    boolean isCleared();
   }
 }

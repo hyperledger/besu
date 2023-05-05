@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.bonsai.trielog;
 
 import org.hyperledger.besu.plugin.data.SyncStatus;
-import org.hyperledger.besu.plugin.data.TrieLog;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogFactory;
@@ -37,7 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ZkTrieLogObserver
-    implements TrieLogEvent.TrieLogObserver<TrieLogLayer>, BesuEvents.SyncStatusListener {
+    implements TrieLogEvent.TrieLogObserver, BesuEvents.SyncStatusListener {
 
   private static final Logger LOG = LoggerFactory.getLogger(ZkTrieLogObserver.class);
   // todo: get from config
@@ -45,7 +44,7 @@ public class ZkTrieLogObserver
   private int shomeiHttpPort = 8888;
   private boolean isSyncing;
 
-  static TrieLogFactory<TrieLogLayer> zkTrieLogFactory = new ZkTrieLogFactoryImpl();
+  static TrieLogFactory zkTrieLogFactory = new ZkTrieLogFactoryImpl();
   private final WebClient webClient;
 
   public ZkTrieLogObserver(final String shomeiHttpHost, final int shomeiHttpPort) {
@@ -59,7 +58,7 @@ public class ZkTrieLogObserver
   }
 
   @Override
-  public <U extends TrieLogEvent<TrieLogLayer>> void onTrieLogAdded(final U event) {
+  public void onTrieLogAdded(final TrieLogEvent event) {
     handleShip(event)
         .onComplete(
             ar -> {
@@ -83,7 +82,7 @@ public class ZkTrieLogObserver
   }
 
   @VisibleForTesting
-  Future<HttpResponse<Buffer>> handleShip(final TrieLogEvent<TrieLogLayer> addedEvent) {
+  Future<HttpResponse<Buffer>> handleShip(final TrieLogEvent addedEvent) {
 
     byte[] rlpBytes = zkTrieLogFactory.serialize(addedEvent.layer());
 
@@ -111,7 +110,7 @@ public class ZkTrieLogObserver
 
   // TODO: remove this in favor of plugin-based configuration of observers:
   ZkTrieLogObserver addAsObserverTo(
-      final Subscribers<TrieLogEvent.TrieLogObserver<? extends TrieLog>> addToSubscribers) {
+      final Subscribers<TrieLogEvent.TrieLogObserver> addToSubscribers) {
     addToSubscribers.subscribe(this);
     return this;
   }
@@ -124,5 +123,4 @@ public class ZkTrieLogObserver
           isSyncing = sync.getCurrentBlock() < sync.getHighestBlock() - 50;
         });
   }
-
 }

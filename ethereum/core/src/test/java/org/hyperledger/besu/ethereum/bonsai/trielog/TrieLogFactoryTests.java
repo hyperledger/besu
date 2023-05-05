@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.plugin.data.TrieLog;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogFactory;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -64,13 +65,14 @@ public class TrieLogFactoryTests {
   @Test
   public void testSerializeDeserializeAreEqual() {
 
-    TrieLogFactory<TrieLogLayer> factory = new TrieLogFactoryImpl();
+    TrieLogFactory factory = new TrieLogFactoryImpl();
     byte[] rlp = factory.serialize(trieLogFixture);
 
-    TrieLogLayer layer = factory.deserialize(rlp);
+    TrieLog layer = factory.deserialize(rlp);
     assertThat(layer).isEqualTo(trieLogFixture);
   }
 
+  // TODO: move to besu-shomei-plugin
   //  @Test
   //  public void testZkSlotKeyIsZeroIsPresent() {
   //    // zkbesu test with criteria of decoding slot key when it is present, even if all zero

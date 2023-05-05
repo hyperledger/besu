@@ -16,17 +16,17 @@ package org.hyperledger.besu.plugin.services.trielogs;
 
 import org.hyperledger.besu.plugin.data.TrieLog;
 
-public interface TrieLogEvent<T extends TrieLog> {
+public interface TrieLogEvent {
   enum Type {
     ADDED
   }
 
   TrieLogEvent.Type getType();
 
-  T layer();
+  TrieLog layer();
 
-  interface TrieLogObserver<T extends TrieLog> {
+  interface TrieLogObserver {
 
-    <U extends TrieLogEvent<T>>void onTrieLogAdded(U event);
+    void onTrieLogAdded(TrieLogEvent event);
   }
 }
