@@ -213,7 +213,8 @@ public class EthSendRawTransactionConditionalTest {
     final JsonRpcResponse actualResponse = method.response(request);
     // the JsonRpcError.data field gets reset by the enum
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(
+            request.getRequest().getId(), JsonRpcError.USER_SPECIFIED_CONDITIONS_NOT_MET);
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     assertThat(actualResponse.getType()).isEqualTo(JsonRpcResponseType.ERROR);
     // test for the exact error message in data field
