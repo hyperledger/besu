@@ -20,6 +20,7 @@ import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 
+import java.io.File;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
@@ -42,6 +43,9 @@ public class TransactionPoolOptions
       "--tx-pool-limit-by-account-percentage";
 
   private static final String DISABLE_LOCAL_TXS_FLAG = "--tx-pool-disable-locals";
+
+  private static final String SAVE_RESTORE_FLAG = "--tx-pool-enable-save-restore";
+  private static final String SAVE_FILE = "--tx-pool-save-file";
 
   @CommandLine.Option(
       names = {STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG},
@@ -87,9 +91,26 @@ public class TransactionPoolOptions
       paramLabel = "<Boolean>",
       description =
           "Set to true if transactions sent via RPC should have the same checks and not be prioritized over remote ones (default: ${DEFAULT-VALUE})",
-      fallbackValue = "false",
+      fallbackValue = "true",
       arity = "0..1")
   private Boolean disableLocalTxs = TransactionPoolConfiguration.DEFAULT_DISABLE_LOCAL_TXS;
+
+  @CommandLine.Option(
+      names = {SAVE_RESTORE_FLAG},
+      paramLabel = "<Boolean>",
+      description =
+          "Set to true to enable saving the txpool content to file on shutdown and reloading it on startup (default: ${DEFAULT-VALUE})",
+      fallbackValue = "true",
+      arity = "0..1")
+  private Boolean saveRestoreEnabled = TransactionPoolConfiguration.DEFAULT_ENABLE_SAVE_RESTORE;
+
+  @CommandLine.Option(
+      names = {SAVE_FILE},
+      paramLabel = "<STRING>",
+      description =
+          "If saving the txpool content is enabled, define a custom path for the save file (default: ${DEFAULT-VALUE} in the data-dir)",
+      arity = "1")
+  private File saveFile = TransactionPoolConfiguration.DEFAULT_SAVE_FILE;
 
   private TransactionPoolOptions() {}
 
@@ -116,6 +137,8 @@ public class TransactionPoolOptions
     options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
     options.txPoolLimitByAccountPercentage = config.getTxPoolLimitByAccountPercentage();
     options.disableLocalTxs = config.getDisableLocalTransactions();
+    options.saveRestoreEnabled = config.getEnableSaveRestore();
+    options.saveFile = config.getSaveFile();
     return options;
   }
 
@@ -126,7 +149,9 @@ public class TransactionPoolOptions
         .txMessageKeepAliveSeconds(txMessageKeepAliveSeconds)
         .eth65TrxAnnouncedBufferingPeriod(Duration.ofMillis(eth65TrxAnnouncedBufferingPeriod))
         .txPoolLimitByAccountPercentage(txPoolLimitByAccountPercentage)
-        .disableLocalTransactions(disableLocalTxs);
+        .disableLocalTransactions(disableLocalTxs)
+        .enableSaveRestore(saveRestoreEnabled)
+        .saveFile(saveFile);
   }
 
   @Override
@@ -134,11 +159,22 @@ public class TransactionPoolOptions
     return Arrays.asList(
         STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG + "=" + strictTxReplayProtectionEnabled,
         DISABLE_LOCAL_TXS_FLAG + "=" + disableLocalTxs,
+        SAVE_RESTORE_FLAG + "=" + saveRestoreEnabled,
+        SAVE_FILE + "=" + saveFile,
         TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE,
         OptionParser.format(txPoolLimitByAccountPercentage),
         TX_MESSAGE_KEEP_ALIVE_SEC_FLAG,
         OptionParser.format(txMessageKeepAliveSeconds),
         ETH65_TX_ANNOUNCED_BUFFERING_PERIOD_FLAG,
         OptionParser.format(eth65TrxAnnouncedBufferingPeriod));
+  }
+
+  /**
+   * Return the file where to save txpool content if the relative option is enabled.
+   *
+   * @return the save file
+   */
+  public File getSaveFile() {
+    return saveFile;
   }
 }
