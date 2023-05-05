@@ -516,7 +516,7 @@ public class MainnetTransactionValidatorTest {
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559, TransactionType.BLOB),
             0xc000);
 
-    var zeroBlobTx =
+    var blobTx =
         new TransactionTestFixture()
             .type(TransactionType.BLOB)
             .chainId(Optional.of(BigInteger.ONE))
