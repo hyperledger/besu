@@ -152,6 +152,42 @@ public class TransactionPoolOptionsTest
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
+  @Test
+  public void disableLocalsDefault() {
+    final TestBesuCommand cmd = parseCommand();
+
+    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
+    final TransactionPoolConfiguration config = options.toDomainObject().build();
+    assertThat(config.getDisableLocalTransactions()).isFalse();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void disableLocalsOn() {
+    final TestBesuCommand cmd = parseCommand("--tx-pool-disable-locals=true");
+
+    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
+    final TransactionPoolConfiguration config = options.toDomainObject().build();
+    assertThat(config.getDisableLocalTransactions()).isTrue();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void disableLocalsOff() {
+    final TestBesuCommand cmd = parseCommand("--tx-pool-disable-locals=false");
+
+    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
+    final TransactionPoolConfiguration config = options.toDomainObject().build();
+    assertThat(config.getDisableLocalTransactions()).isFalse();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
   @Override
   ImmutableTransactionPoolConfiguration.Builder createDefaultDomainObject() {
     final ImmutableTransactionPoolConfiguration defaultValue =
@@ -160,7 +196,8 @@ public class TransactionPoolOptionsTest
         .strictTransactionReplayProtectionEnabled(false)
         .txMessageKeepAliveSeconds(defaultValue.getTxMessageKeepAliveSeconds())
         .eth65TrxAnnouncedBufferingPeriod(defaultValue.getEth65TrxAnnouncedBufferingPeriod())
-        .txPoolLimitByAccountPercentage(defaultValue.getTxPoolLimitByAccountPercentage());
+        .txPoolLimitByAccountPercentage(defaultValue.getTxPoolLimitByAccountPercentage())
+        .disableLocalTransactions(defaultValue.getDisableLocalTransactions());
   }
 
   @Override
@@ -171,7 +208,8 @@ public class TransactionPoolOptionsTest
         .eth65TrxAnnouncedBufferingPeriod(
             TransactionPoolConfiguration.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD.plus(
                 Duration.ofMillis(100)))
-        .txPoolLimitByAccountPercentage(0.5f);
+        .txPoolLimitByAccountPercentage(0.5f)
+        .disableLocalTransactions(true);
   }
 
   @Override

@@ -221,7 +221,7 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
         .thenReturn(MOCK_ORION_KEY);
     when(privacyController.validatePrivateTransaction(any(), anyString()))
         .thenReturn(ValidationResult.valid());
-    when(transactionPool.addLocalTransaction(any()))
+    when(transactionPool.addTransactionViaApi(any()))
         .thenReturn(ValidationResult.invalid(transactionInvalidReason));
 
     final JsonRpcResponse expectedResponse =

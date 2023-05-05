@@ -108,7 +108,7 @@ public class EthSendRawTransactionTest {
 
   @Test
   public void validTransactionIsSentToTransactionPool() {
-    when(transactionPool.addLocalTransaction(any(Transaction.class)))
+    when(transactionPool.addTransactionViaApi(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
 
     final JsonRpcRequestContext request =
@@ -123,7 +123,7 @@ public class EthSendRawTransactionTest {
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionPool).addLocalTransaction(any(Transaction.class));
+    verify(transactionPool).addTransactionViaApi(any(Transaction.class));
   }
 
   @Test
@@ -178,7 +178,7 @@ public class EthSendRawTransactionTest {
 
   private void verifyErrorForInvalidTransaction(
       final TransactionInvalidReason transactionInvalidReason, final JsonRpcError expectedError) {
-    when(transactionPool.addLocalTransaction(any(Transaction.class)))
+    when(transactionPool.addTransactionViaApi(any(Transaction.class)))
         .thenReturn(ValidationResult.invalid(transactionInvalidReason));
 
     final JsonRpcRequestContext request =
@@ -191,7 +191,7 @@ public class EthSendRawTransactionTest {
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionPool).addLocalTransaction(any(Transaction.class));
+    verify(transactionPool).addTransactionViaApi(any(Transaction.class));
   }
 
   @Test
