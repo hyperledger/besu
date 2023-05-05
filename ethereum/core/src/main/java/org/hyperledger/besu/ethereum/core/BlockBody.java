@@ -28,7 +28,9 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
       new BlockBody(Collections.emptyList(), Collections.emptyList());
   /**
    * Adding a new field with a corresponding root hash in the block header will require a change in
-   * {@link org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask.BodyIdentifier }
+   * {@link org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask.BodyIdentifier}
+   * Also requires adding the new field to the constructor used in the {@link
+   * org.hyperledger.besu.ethereum.util.RawBlockIterator }
    */
   private final List<Transaction> transactions;
 
@@ -115,29 +117,59 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     return readFrom(input, blockHeaderFunctions, false);
   }
 
+  //
+  // E.g
+
+  /**
+   * Read all fields from the block body expecting a list wrapping them An example of valid body
+   * structure that this method would be able to read is: [[txs],[ommers],[withdrawals]] This is
+   * used for decoding list of bodies
+   *
+   * @param input The RLP-encoded input
+   * @param blockHeaderFunctions The block header functions used for parsing block headers
+   * @param allowEmptyBody A flag indicating whether an empty body is allowed
+   * @return the decoded BlockBody from the RLP
+   */
   public static BlockBody readFrom(
       final RLPInput input,
       final BlockHeaderFunctions blockHeaderFunctions,
       final boolean allowEmptyBody) {
     input.enterList();
+
+    // BlockBody -> [transactions, ommers, withdraws]
+
     if (input.isEndOfCurrentList() && allowEmptyBody) {
       // empty block [] -> Return empty body.
       input.leaveList();
+
       return empty();
     }
     // TODO: Support multiple hard fork transaction formats.
-    final BlockBody body =
-        new BlockBody(
-            input.readList(Transaction::readFrom),
-            input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)),
-            input.isEndOfCurrentList()
-                ? Optional.empty()
-                : Optional.of(input.readList(Withdrawal::readFrom)),
-            input.isEndOfCurrentList()
-                ? Optional.empty()
-                : Optional.of(input.readList(Deposit::readFrom)));
+    final BlockBody body = readBodyFields(input, blockHeaderFunctions);
     input.leaveList();
     return body;
+  }
+
+  /**
+   * Read all fields from the block body expecting no list wrapping them An example of a valid body
+   * would be: [txs],[ommers],[withdrawals] this method is called directly for importing a single
+   * block
+   *
+   * @param input The RLP-encoded input
+   * @param blockHeaderFunctions The block header functions used for parsing block headers
+   * @return the BlockBody decoded from the RLP
+   */
+  public static BlockBody readBodyFields(
+      final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
+    return new BlockBody(
+        input.readList(Transaction::readFrom),
+        input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)),
+        input.isEndOfCurrentList()
+            ? Optional.empty()
+            : Optional.of(input.readList(Withdrawal::readFrom)),
+        input.isEndOfCurrentList()
+            ? Optional.empty()
+            : Optional.of(input.readList(Deposit::readFrom)));
   }
 
   @Override
