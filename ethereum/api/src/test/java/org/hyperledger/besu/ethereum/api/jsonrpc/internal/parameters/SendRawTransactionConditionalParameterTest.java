@@ -30,13 +30,40 @@ import org.junit.jupiter.api.Test;
 
 public class SendRawTransactionConditionalParameterTest {
 
+  public static final String METHOD_NAME = "eth_XsendRawTransactionConditional";
+
   @Test
   public void maxBlockNumber_shouldSerializeSuccessfully() throws JsonProcessingException {
     final SendRawTransactionConditionalParameter expectedParam =
         parameterWithBlockNumberConditions(90L, 98L);
 
     final String jsonWithBlockConditions =
-        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendRawTransactionConditional\",\"params\":[\"0x2815c17b00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\"}],\"id\":1}";
+        "{\"jsonrpc\":\"2.0\",\"method\":\""
+            + METHOD_NAME
+            + "\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\"}],\"id\":1}";
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new ObjectMapper().readValue(jsonWithBlockConditions, JsonRpcRequest.class));
+
+    final SendRawTransactionConditionalParameter parsedParam =
+        request.getRequiredParameter(1, SendRawTransactionConditionalParameter.class);
+
+    assertThat(parsedParam).usingRecursiveComparison().isEqualTo(expectedParam);
+  }
+
+  @Test
+  public void allConditions_shouldSerializeSuccessfully() throws JsonProcessingException {
+    final Map<Address, Hash> knownAccounts = new HashMap<>();
+    knownAccounts.put(
+        Address.fromHexString("0x000000000000000000000000000000000000abcd"),
+        Hash.fromHexString("0x000000000000000000000000000000000000000000000000000000000000beef"));
+    final SendRawTransactionConditionalParameter expectedParam =
+        parameterWithConditions(90L, 98L, knownAccounts, 7337L, 7447L);
+
+    final String jsonWithBlockConditions =
+        "{\"jsonrpc\":\"2.0\",\"method\":\""
+            + METHOD_NAME
+            + "\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\",\"knownAccounts\": {\"0x000000000000000000000000000000000000abcd\": \"0x000000000000000000000000000000000000000000000000000000000000beef\"}, \"timestampMin\":\"7337\",\"timestampMax\":\"7447\"}],\"id\":1}";
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new ObjectMapper().readValue(jsonWithBlockConditions, JsonRpcRequest.class));
@@ -110,5 +137,15 @@ public class SendRawTransactionConditionalParameterTest {
   private SendRawTransactionConditionalParameter parameterWithKnownAccountConditions(
       final Map<Address, Hash> knownAccounts) {
     return new SendRawTransactionConditionalParameter(null, null, knownAccounts, null, null);
+  }
+
+  private SendRawTransactionConditionalParameter parameterWithConditions(
+      final long blockNumberMin,
+      final long blockNumberMax,
+      final Map<Address, Hash> knownAccounts,
+      final long timestampMin,
+      final long timestampMax) {
+    return new SendRawTransactionConditionalParameter(
+        blockNumberMin, blockNumberMax, knownAccounts, timestampMin, timestampMax);
   }
 }
