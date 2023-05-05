@@ -40,7 +40,7 @@ public interface TransactionPoolConfiguration {
   File DEFAULT_SAVE_FILE = new File(DEFAULT_SAVE_FILE_NAME);
   long DEFAULT_PENDING_TRANSACTIONS_LAYER_MAX_CAPACITY_BYTES = 50_000_000L;
   int DEFAULT_MAX_PRIORITIZED_TRANSACTIONS = 2000;
-  int DEFAULT_MAX_FUTURE_BY_SENDER = 1000;
+  int DEFAULT_MAX_FUTURE_BY_SENDER = 200;
   boolean DEFAULT_LAYERED_TX_POOL_ENABLED = false;
 
   TransactionPoolConfiguration DEFAULT = ImmutableTransactionPoolConfiguration.builder().build();
