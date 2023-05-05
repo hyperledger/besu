@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.proof;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.InnerNodeDiscoveryManager;
 import org.hyperledger.besu.ethereum.trie.InnerNodeDiscoveryManager.InnerNode;
@@ -25,7 +26,6 @@ import org.hyperledger.besu.ethereum.trie.Proof;
 import org.hyperledger.besu.ethereum.trie.patricia.RemoveVisitor;
 import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
 import java.util.HashMap;

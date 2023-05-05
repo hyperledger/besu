@@ -17,15 +17,15 @@ package org.hyperledger.besu.ethereum.bonsai.trielog;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StateTrieAccountValue;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.bonsai.worldview.StorageSlotKey;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.Map;
@@ -149,7 +149,7 @@ public class TrieLogFactoryImpl implements TrieLogFactory<TrieLogLayer> {
             storageChanges.entrySet()) {
           output.startList();
           // do not write slotKey, it is not used in mainnet bonsai trielogs
-          output.writeBytes(storageChangeEntry.getKey().slotHash());
+          output.writeBytes(storageChangeEntry.getKey().getSlotHash());
           storageChangeEntry.getValue().writeInnerRlp(output, RLPOutput::writeUInt256Scalar);
           output.endList();
         }

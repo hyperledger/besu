@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.proof;
 
+import org.hyperledger.besu.datatypes.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.Proof;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.util.ArrayList;
 import java.util.List;

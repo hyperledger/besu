@@ -17,9 +17,9 @@ package org.hyperledger.besu.ethereum.bonsai.trielog;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StateTrieAccountValue;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.bonsai.worldview.StorageSlotKey;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 
 import java.util.Optional;
 

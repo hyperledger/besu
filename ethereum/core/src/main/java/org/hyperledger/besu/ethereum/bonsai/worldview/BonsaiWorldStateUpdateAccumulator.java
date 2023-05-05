@@ -18,6 +18,8 @@ package org.hyperledger.besu.ethereum.bonsai.worldview;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StateTrieAccountValue;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
@@ -28,7 +30,6 @@ import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.worldstate.AbstractWorldUpdater;
@@ -478,7 +479,8 @@ public class BonsaiWorldStateUpdateAccumulator
         storageToUpdate.get(address);
     if (bonsaiValueStorage != null) {
       // hash the key to match the implied storage interface of hashed slotKey
-      bonsaiValueStorage.forEach((key, value) -> results.put(key.slotHash(), value.getUpdated()));
+      bonsaiValueStorage.forEach(
+          (key, value) -> results.put(key.getSlotHash(), value.getUpdated()));
     }
     return results;
   }
