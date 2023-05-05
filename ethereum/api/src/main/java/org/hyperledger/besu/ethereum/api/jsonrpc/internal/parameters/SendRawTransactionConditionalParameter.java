@@ -119,18 +119,26 @@ public class SendRawTransactionConditionalParameter {
 
   public static class KnownAccountInfo {
     // either a hash, or a map of storage slot to value
-    @SuppressWarnings("UnusedVariable")
-    private Hash storageRootHash;
+    private final Optional<Hash> storageRootHash;
 
-    @SuppressWarnings("UnusedVariable")
-    private List<StorageEntry> expectedStorageEntries;
+    private final Optional<List<StorageEntry>> expectedStorageEntries;
 
     public KnownAccountInfo(final Hash hash) {
-      this.storageRootHash = hash;
+      this.storageRootHash = Optional.of(hash);
+      this.expectedStorageEntries = Optional.empty();
     }
 
     public KnownAccountInfo(final List<StorageEntry> storageEntryList) {
-      this.expectedStorageEntries = storageEntryList;
+      this.expectedStorageEntries = Optional.of(storageEntryList);
+      this.storageRootHash = Optional.empty();
+    }
+
+    public Optional<Hash> getStorageRootHash() {
+      return storageRootHash;
+    }
+
+    public Optional<List<StorageEntry>> getExpectedStorageEntries() {
+      return expectedStorageEntries;
     }
   }
 

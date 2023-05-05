@@ -68,13 +68,13 @@ public class SendRawTransactionConditionalParameterTest {
     final SendRawTransactionConditionalParameter expectedParam =
         parameterWithConditions(90L, 98L, knownAccounts, 7337L, 7447L);
 
-    final String jsonWithBlockConditions =
+    final String jsonWithKnownAccounts =
         "{\"jsonrpc\":\"2.0\",\"method\":\""
             + METHOD_NAME
             + "\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\",\"knownAccounts\": {\"0x000000000000000000000000000000000000abcd\": \"0x000000000000000000000000000000000000000000000000000000000000beef\"}, \"timestampMin\":\"7337\",\"timestampMax\":\"7447\"}],\"id\":1}";
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
-            new ObjectMapper().readValue(jsonWithBlockConditions, JsonRpcRequest.class));
+            new ObjectMapper().readValue(jsonWithKnownAccounts, JsonRpcRequest.class));
 
     final SendRawTransactionConditionalParameter parsedParam =
         request.getRequiredParameter(1, SendRawTransactionConditionalParameter.class);
@@ -88,7 +88,9 @@ public class SendRawTransactionConditionalParameterTest {
     final Map<Address, SendRawTransactionConditionalParameter.KnownAccountInfo> knownAccounts =
         new HashMap<>();
     final StorageEntry storageEntry1 = new StorageEntry(UInt256.ONE, Bytes.fromHexString("0x54be"));
-    final List<StorageEntry> storageEntryList = List.of(storageEntry1);
+    final StorageEntry storageEntry2 =
+        new StorageEntry(UInt256.ZERO, Bytes.fromHexString("0xbe44"));
+    final List<StorageEntry> storageEntryList = List.of(storageEntry1, storageEntry2);
 
     // account abcd has storageHash
     knownAccounts.put(
@@ -103,16 +105,17 @@ public class SendRawTransactionConditionalParameterTest {
     final SendRawTransactionConditionalParameter expectedParam =
         parameterWithConditions(90L, 98L, knownAccounts, 7337L, 7447L);
 
-    final String jsonWithBlockConditions =
+    final String jsonWithKnownAccounts =
         "{\"jsonrpc\":\"2.0\",\"method\":\""
             + METHOD_NAME
             + "\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\","
             + "\"knownAccounts\": {\"0x000000000000000000000000000000000000abcd\": \"0x000000000000000000000000000000000000000000000000000000000000beef\","
-            + "\"0x000000000000000000000000000000000099abcd\": {\"0x01\": \"0x54be\"}}, "
+            + "\"0x000000000000000000000000000000000099abcd\": {\"0x01\": \"0x54be\", \"0x00\": \"0xbe44\"}"
+            + "}, "
             + "\"timestampMin\":\"7337\",\"timestampMax\":\"7447\"}],\"id\":1}";
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
-            new ObjectMapper().readValue(jsonWithBlockConditions, JsonRpcRequest.class));
+            new ObjectMapper().readValue(jsonWithKnownAccounts, JsonRpcRequest.class));
 
     final SendRawTransactionConditionalParameter parsedParam =
         request.getRequiredParameter(1, SendRawTransactionConditionalParameter.class);

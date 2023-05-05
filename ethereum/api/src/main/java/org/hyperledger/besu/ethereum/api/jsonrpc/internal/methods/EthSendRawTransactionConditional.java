@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.SendRawTransactionConditionalParameter;
@@ -22,11 +23,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.evm.internal.StorageEntry;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.jetbrains.annotations.NotNull;
 
 public class EthSendRawTransactionConditional extends AbstractEthSendRawTransaction {
@@ -81,7 +85,31 @@ public class EthSendRawTransactionConditional extends AbstractEthSendRawTransact
           conditions.getTimestampMax())) {
         return getJsonRpcErrorResponse(requestContext, "timestamp not within specified range");
       }
-      // TODO check knownAccounts - blockchainQueries.storageAt()
+      if (conditions.getKnownAccounts().isEmpty()) {
+        return Optional.empty();
+      }
+      final Map<Address, SendRawTransactionConditionalParameter.KnownAccountInfo> storageToCheck =
+          conditions.getKnownAccounts().get();
+      final long headBlockNumber = blockchainQueries.get().headBlockNumber();
+      for (Address a : storageToCheck.keySet()) {
+        SendRawTransactionConditionalParameter.KnownAccountInfo info = storageToCheck.get(a);
+        if (info.getStorageRootHash().isPresent()) {
+          // TODO check storage root
+          // not yet exposed via blockchainQueries
+        } else {
+          for (StorageEntry expectedStorageEntry : info.getExpectedStorageEntries().get()) {
+            final UInt256 slot = expectedStorageEntry.getOffset();
+            final Optional<UInt256> actualStorageValue =
+                blockchainQueries.get().storageAt(a, slot, headBlockNumber);
+            if (actualStorageValue.isPresent()
+                && !actualStorageValue.get().equals(expectedStorageEntry.getValue())) {
+              return getJsonRpcErrorResponse(
+                  requestContext,
+                  String.format("storage at address %s slot %s has been modified", a, slot));
+            }
+          }
+        }
+      }
     }
     // no conditions violated - behave as eth_sendRawTransaction
     return Optional.empty();

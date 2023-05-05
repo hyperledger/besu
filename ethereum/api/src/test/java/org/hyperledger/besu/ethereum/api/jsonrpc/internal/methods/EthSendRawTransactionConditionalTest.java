@@ -20,6 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -33,8 +34,12 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
+import java.util.Optional;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -111,6 +116,35 @@ public class EthSendRawTransactionConditionalTest {
 
     assertActualResponseIsErrorWithGivenMessage(
         jsonWithBlockConditions, "timestamp not within specified range");
+  }
+
+  @Test
+  public void knownAccount_storageEntry_hasChanged_returnsError() throws JsonProcessingException {
+    final BlockHeader header = mock(BlockHeader.class);
+    // timestamp within the min/max range
+    when(header.getTimestamp()).thenReturn(7437L);
+    when(blockchainQueries.headBlockHeader()).thenReturn(header);
+    // block number within the min/max range
+    final long headBlockNumber = 93L;
+    when(blockchainQueries.headBlockNumber()).thenReturn(headBlockNumber);
+    // storage entries
+    final Address address = Address.fromHexString("0x000000000000000000000000000000000099abcd");
+    when(blockchainQueries.storageAt(address, UInt256.ONE, headBlockNumber))
+        .thenReturn(Optional.of(UInt256.fromBytes(Bytes.fromHexString("0x54be"))));
+    when(blockchainQueries.storageAt(address, UInt256.ZERO, headBlockNumber))
+        .thenReturn(Optional.of(UInt256.fromBytes(Bytes.fromHexString("0xbe00"))));
+
+    final String jsonWithKnownAccounts =
+        "{\"jsonrpc\":\"2.0\",\"method\":\""
+            + METHOD_NAME
+            + "\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\","
+            + "\"knownAccounts\": "
+            + "{\"0x000000000000000000000000000000000099abcd\": {\"0x01\": \"0x54be\", \"0x00\": \"0xbe44\"}},"
+            + "\"timestampMin\":\"7337\",\"timestampMax\":\"7447\"}],\"id\":1}";
+
+    assertActualResponseIsErrorWithGivenMessage(
+        jsonWithKnownAccounts,
+        "storage at address 0x000000000000000000000000000000000099abcd slot 0x0000000000000000000000000000000000000000000000000000000000000001 has been modified");
   }
 
   @Test
