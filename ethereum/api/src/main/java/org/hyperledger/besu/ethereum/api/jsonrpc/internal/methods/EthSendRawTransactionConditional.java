@@ -125,10 +125,9 @@ public class EthSendRawTransactionConditional extends AbstractEthSendRawTransact
   @NotNull
   private Optional<JsonRpcErrorResponse> getJsonRpcErrorResponse(
       final JsonRpcRequestContext requestContext, final String message) {
-    final JsonRpcError jsonRpcError = JsonRpcError.INVALID_PARAMS;
+    final JsonRpcError jsonRpcError = JsonRpcError.USER_SPECIFIED_CONDITIONS_NOT_MET;
     jsonRpcError.setData(message);
-    return Optional.of(
-        new JsonRpcErrorResponse(requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS));
+    return Optional.of(new JsonRpcErrorResponse(requestContext.getRequest().getId(), jsonRpcError));
   }
 
   protected SendRawTransactionConditionalParameter conditionalParameter(
