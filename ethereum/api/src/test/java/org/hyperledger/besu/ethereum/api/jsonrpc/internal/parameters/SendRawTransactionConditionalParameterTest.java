@@ -20,12 +20,16 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.evm.internal.StorageEntry;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 
 public class SendRawTransactionConditionalParameterTest {
@@ -52,11 +56,15 @@ public class SendRawTransactionConditionalParameterTest {
   }
 
   @Test
-  public void allConditions_shouldSerializeSuccessfully() throws JsonProcessingException {
-    final Map<Address, Hash> knownAccounts = new HashMap<>();
+  public void knownAccounts_withStorageHash_shouldSerializeSuccessfully()
+      throws JsonProcessingException {
+    final Map<Address, SendRawTransactionConditionalParameter.KnownAccountInfo> knownAccounts =
+        new HashMap<>();
     knownAccounts.put(
         Address.fromHexString("0x000000000000000000000000000000000000abcd"),
-        Hash.fromHexString("0x000000000000000000000000000000000000000000000000000000000000beef"));
+        new SendRawTransactionConditionalParameter.KnownAccountInfo(
+            Hash.fromHexString(
+                "0x000000000000000000000000000000000000000000000000000000000000beef")));
     final SendRawTransactionConditionalParameter expectedParam =
         parameterWithConditions(90L, 98L, knownAccounts, 7337L, 7447L);
 
@@ -64,6 +72,44 @@ public class SendRawTransactionConditionalParameterTest {
         "{\"jsonrpc\":\"2.0\",\"method\":\""
             + METHOD_NAME
             + "\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\",\"knownAccounts\": {\"0x000000000000000000000000000000000000abcd\": \"0x000000000000000000000000000000000000000000000000000000000000beef\"}, \"timestampMin\":\"7337\",\"timestampMax\":\"7447\"}],\"id\":1}";
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new ObjectMapper().readValue(jsonWithBlockConditions, JsonRpcRequest.class));
+
+    final SendRawTransactionConditionalParameter parsedParam =
+        request.getRequiredParameter(1, SendRawTransactionConditionalParameter.class);
+
+    assertThat(parsedParam).usingRecursiveComparison().isEqualTo(expectedParam);
+  }
+
+  @Test
+  public void knownAccounts_withStorageEntries_shouldSerializeSuccessfully()
+      throws JsonProcessingException {
+    final Map<Address, SendRawTransactionConditionalParameter.KnownAccountInfo> knownAccounts =
+        new HashMap<>();
+    final StorageEntry storageEntry1 = new StorageEntry(UInt256.ONE, Bytes.fromHexString("0x54be"));
+    final List<StorageEntry> storageEntryList = List.of(storageEntry1);
+
+    // account abcd has storageHash
+    knownAccounts.put(
+        Address.fromHexString("0x000000000000000000000000000000000000abcd"),
+        new SendRawTransactionConditionalParameter.KnownAccountInfo(
+            Hash.fromHexString(
+                "0x000000000000000000000000000000000000000000000000000000000000beef")));
+    // account 99abcd has storage entries
+    knownAccounts.put(
+        Address.fromHexString("0x000000000000000000000000000000000099abcd"),
+        new SendRawTransactionConditionalParameter.KnownAccountInfo(storageEntryList));
+    final SendRawTransactionConditionalParameter expectedParam =
+        parameterWithConditions(90L, 98L, knownAccounts, 7337L, 7447L);
+
+    final String jsonWithBlockConditions =
+        "{\"jsonrpc\":\"2.0\",\"method\":\""
+            + METHOD_NAME
+            + "\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\","
+            + "\"knownAccounts\": {\"0x000000000000000000000000000000000000abcd\": \"0x000000000000000000000000000000000000000000000000000000000000beef\","
+            + "\"0x000000000000000000000000000000000099abcd\": {\"0x01\": \"0x54be\"}}, "
+            + "\"timestampMin\":\"7337\",\"timestampMax\":\"7447\"}],\"id\":1}";
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new ObjectMapper().readValue(jsonWithBlockConditions, JsonRpcRequest.class));
@@ -108,15 +154,22 @@ public class SendRawTransactionConditionalParameterTest {
 
   @Test
   public void knownAccountConditionsParamDecodesCorrectly() {
-    final Map<Address, Hash> knownAccounts = new HashMap<>();
-    knownAccounts.put(Address.ZERO, Hash.ZERO);
+    SendRawTransactionConditionalParameter.KnownAccountInfo knownAccountInfo;
+    knownAccountInfo = new SendRawTransactionConditionalParameter.KnownAccountInfo(Hash.ZERO);
+    final Map<Address, SendRawTransactionConditionalParameter.KnownAccountInfo> knownAccounts =
+        new HashMap<>();
+    knownAccounts.put(Address.ZERO, knownAccountInfo);
     final SendRawTransactionConditionalParameter param =
         parameterWithKnownAccountConditions(knownAccounts);
     assertThat(param.getTimestampMin()).isEmpty();
     assertThat(param.getTimestampMax()).isEmpty();
     assertThat(param.getBlockNumberMin()).isEmpty();
     assertThat(param.getBlockNumberMax()).isEmpty();
-    assertThat(param.getKnownAccounts().get()).containsExactly(Map.entry(Address.ZERO, Hash.ZERO));
+    assertThat(param.getKnownAccounts().get().get(Address.ZERO))
+        .isInstanceOf(SendRawTransactionConditionalParameter.KnownAccountInfo.class);
+    assertThat(param.getKnownAccounts().get().get(Address.ZERO))
+        .usingRecursiveComparison()
+        .isEqualTo(knownAccountInfo);
   }
 
   private SendRawTransactionConditionalParameter parameterWithNoConditions() {
@@ -135,14 +188,14 @@ public class SendRawTransactionConditionalParameterTest {
   }
 
   private SendRawTransactionConditionalParameter parameterWithKnownAccountConditions(
-      final Map<Address, Hash> knownAccounts) {
+      final Map<Address, SendRawTransactionConditionalParameter.KnownAccountInfo> knownAccounts) {
     return new SendRawTransactionConditionalParameter(null, null, knownAccounts, null, null);
   }
 
   private SendRawTransactionConditionalParameter parameterWithConditions(
       final long blockNumberMin,
       final long blockNumberMax,
-      final Map<Address, Hash> knownAccounts,
+      final Map<Address, SendRawTransactionConditionalParameter.KnownAccountInfo> knownAccounts,
       final long timestampMin,
       final long timestampMax) {
     return new SendRawTransactionConditionalParameter(
