@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.util;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -37,25 +36,31 @@ public final class RawBlockIterator implements Iterator<Block>, Closeable {
   private static final int DEFAULT_INIT_BUFFER_CAPACITY = 1 << 16;
 
   private final FileChannel fileChannel;
-  private final Function<RLPInput, BlockHeader> headerReader;
   private ByteBuffer readBuffer;
+  private final Function<RLPInput, BlockHeader> headerReader;
+  private final Function<RLPInput, BlockBody> bodyReader;
 
   private Block next;
 
   RawBlockIterator(
       final Path file,
       final Function<RLPInput, BlockHeader> headerReader,
+      final Function<RLPInput, BlockBody> bodyReader,
       final int initialCapacity)
       throws IOException {
-    fileChannel = FileChannel.open(file);
     this.headerReader = headerReader;
+    this.bodyReader = bodyReader;
+    fileChannel = FileChannel.open(file);
     readBuffer = ByteBuffer.allocate(initialCapacity);
     nextBlock();
   }
 
-  public RawBlockIterator(final Path file, final Function<RLPInput, BlockHeader> headerReader)
+  public RawBlockIterator(
+      final Path file,
+      final Function<RLPInput, BlockHeader> headerReader,
+      final Function<RLPInput, BlockBody> bodyReader)
       throws IOException {
-    this(file, headerReader, DEFAULT_INIT_BUFFER_CAPACITY);
+    this(file, headerReader, bodyReader, DEFAULT_INIT_BUFFER_CAPACITY);
   }
 
   @Override
@@ -100,8 +105,7 @@ public final class RawBlockIterator implements Iterator<Block>, Closeable {
       final RLPInput rlp = new BytesValueRLPInput(rlpBytes, false);
       rlp.enterList();
       final BlockHeader header = headerReader.apply(rlp);
-      final BlockBody body =
-          new BlockBody(rlp.readList(Transaction::readFrom), rlp.readList(headerReader));
+      final BlockBody body = bodyReader.apply(rlp);
       next = new Block(header, body);
       readBuffer.position(length);
       readBuffer.compact();
