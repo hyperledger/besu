@@ -98,4 +98,11 @@ public interface EnodeURL {
    * @return the discovery port or zero
    */
   int getDiscoveryPortOrZero();
+
+  /**
+   * Gets the host.
+   *
+   * @return the host
+   */
+  String getHost();
 }
