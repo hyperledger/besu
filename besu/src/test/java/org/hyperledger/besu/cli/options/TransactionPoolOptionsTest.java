@@ -195,7 +195,7 @@ public class TransactionPoolOptionsTest
 
     final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
     final TransactionPoolConfiguration config = options.toDomainObject().build();
-    assertThat(config.getEnableSave()).isFalse();
+    assertThat(config.getEnableSaveRestore()).isFalse();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -203,11 +203,11 @@ public class TransactionPoolOptionsTest
 
   @Test
   public void saveToFileEnabledDefaultPath() {
-    final TestBesuCommand cmd = parseCommand("--tx-pool-enable-save=true");
+    final TestBesuCommand cmd = parseCommand("--tx-pool-enable-save-restore=true");
 
     final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
     final TransactionPoolConfiguration config = options.toDomainObject().build();
-    assertThat(config.getEnableSave()).isTrue();
+    assertThat(config.getEnableSaveRestore()).isTrue();
     assertThat(config.getSaveFile()).hasName(TransactionPoolConfiguration.DEFAULT_SAVE_FILE_NAME);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -217,11 +217,11 @@ public class TransactionPoolOptionsTest
   @Test
   public void saveToFileEnabledCustomPath() {
     final TestBesuCommand cmd =
-        parseCommand("--tx-pool-enable-save=true", "--tx-pool-save-file=my.save.file");
+        parseCommand("--tx-pool-enable-save-restore=true", "--tx-pool-save-file=my.save.file");
 
     final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
     final TransactionPoolConfiguration config = options.toDomainObject().build();
-    assertThat(config.getEnableSave()).isTrue();
+    assertThat(config.getEnableSaveRestore()).isTrue();
     assertThat(config.getSaveFile()).hasName("my.save.file");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -238,7 +238,7 @@ public class TransactionPoolOptionsTest
         .eth65TrxAnnouncedBufferingPeriod(defaultValue.getEth65TrxAnnouncedBufferingPeriod())
         .txPoolLimitByAccountPercentage(defaultValue.getTxPoolLimitByAccountPercentage())
         .disableLocalTransactions(defaultValue.getDisableLocalTransactions())
-        .enableSave(defaultValue.getEnableSave())
+        .enableSaveRestore(defaultValue.getEnableSaveRestore())
         .saveFile(defaultValue.getSaveFile());
   }
 
@@ -252,7 +252,7 @@ public class TransactionPoolOptionsTest
                 Duration.ofMillis(100)))
         .txPoolLimitByAccountPercentage(0.5f)
         .disableLocalTransactions(true)
-        .enableSave(true)
+        .enableSaveRestore(true)
         .saveFile(new File("abc.xyz"));
   }
 

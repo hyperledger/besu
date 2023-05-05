@@ -44,7 +44,7 @@ public class TransactionPoolOptions
 
   private static final String DISABLE_LOCAL_TXS_FLAG = "--tx-pool-disable-locals";
 
-  private static final String SAVE_FLAG = "--tx-pool-enable-save";
+  private static final String SAVE_RESTORE_FLAG = "--tx-pool-enable-save-restore";
   private static final String SAVE_FILE = "--tx-pool-save-file";
 
   @CommandLine.Option(
@@ -96,13 +96,13 @@ public class TransactionPoolOptions
   private Boolean disableLocalTxs = TransactionPoolConfiguration.DEFAULT_DISABLE_LOCAL_TXS;
 
   @CommandLine.Option(
-      names = {SAVE_FLAG},
+      names = {SAVE_RESTORE_FLAG},
       paramLabel = "<Boolean>",
       description =
           "Set to true to enable saving the txpool content to file on shutdown and reloading it on startup (default: ${DEFAULT-VALUE})",
       fallbackValue = "true",
       arity = "0..1")
-  private Boolean saveEnabled = TransactionPoolConfiguration.DEFAULT_ENABLE_SAVE;
+  private Boolean saveRestoreEnabled = TransactionPoolConfiguration.DEFAULT_ENABLE_SAVE_RESTORE;
 
   @CommandLine.Option(
       names = {SAVE_FILE},
@@ -137,7 +137,7 @@ public class TransactionPoolOptions
     options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
     options.txPoolLimitByAccountPercentage = config.getTxPoolLimitByAccountPercentage();
     options.disableLocalTxs = config.getDisableLocalTransactions();
-    options.saveEnabled = config.getEnableSave();
+    options.saveRestoreEnabled = config.getEnableSaveRestore();
     options.saveFile = config.getSaveFile();
     return options;
   }
@@ -150,7 +150,7 @@ public class TransactionPoolOptions
         .eth65TrxAnnouncedBufferingPeriod(Duration.ofMillis(eth65TrxAnnouncedBufferingPeriod))
         .txPoolLimitByAccountPercentage(txPoolLimitByAccountPercentage)
         .disableLocalTransactions(disableLocalTxs)
-        .enableSave(saveEnabled)
+        .enableSaveRestore(saveRestoreEnabled)
         .saveFile(saveFile);
   }
 
@@ -159,7 +159,7 @@ public class TransactionPoolOptions
     return Arrays.asList(
         STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG + "=" + strictTxReplayProtectionEnabled,
         DISABLE_LOCAL_TXS_FLAG + "=" + disableLocalTxs,
-        SAVE_FLAG + "=" + saveEnabled,
+        SAVE_RESTORE_FLAG + "=" + saveRestoreEnabled,
         SAVE_FILE + "=" + saveFile,
         TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE,
         OptionParser.format(txPoolLimitByAccountPercentage),

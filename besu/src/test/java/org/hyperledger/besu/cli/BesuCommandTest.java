@@ -5580,7 +5580,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void txpoolDefaultSaveFileRelativeToDataPath() throws IOException {
     final Path dataDir = Files.createTempDirectory("data-dir");
-    parseCommand("--data-path", dataDir.toString(), "--tx-pool-enable-save", "true");
+    parseCommand("--data-path", dataDir.toString(), "--tx-pool-enable-save-restore", "true");
     verify(mockControllerBuilder)
         .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
 
@@ -5600,7 +5600,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand(
         "--data-path",
         dataDir.toString(),
-        "--tx-pool-enable-save",
+        "--tx-pool-enable-save-restore",
         "true",
         "--tx-pool-save-file",
         saveFile.getName());
@@ -5624,7 +5624,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand(
         "--data-path",
         dataDir.toString(),
-        "--tx-pool-enable-save",
+        "--tx-pool-enable-save-restore",
         "true",
         "--tx-pool-save-file",
         saveFile.getAbsolutePath());

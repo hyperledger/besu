@@ -120,7 +120,7 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   public void saveToDisk() {
-    if (configuration.getEnableSave()) {
+    if (configuration.getEnableSaveRestore()) {
       final File saveFile = configuration.getSaveFile();
       LOG.info("Saving transaction pool content to file {}", saveFile);
       try (final BufferedWriter bw =
@@ -153,7 +153,7 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   public void loadFromDisk() {
-    if (configuration.getEnableSave()) {
+    if (configuration.getEnableSaveRestore()) {
       final File saveFile = configuration.getSaveFile();
       if (saveFile.exists()) {
         LOG.info("Loading transaction pool content from file {}", saveFile);

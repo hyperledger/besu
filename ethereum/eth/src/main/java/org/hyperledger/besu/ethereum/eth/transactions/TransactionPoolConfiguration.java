@@ -35,7 +35,7 @@ public interface TransactionPoolConfiguration {
   Wei DEFAULT_RPC_TX_FEE_CAP = Wei.fromEth(1);
   Duration ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD = Duration.ofMillis(500);
   boolean DEFAULT_DISABLE_LOCAL_TXS = false;
-  boolean DEFAULT_ENABLE_SAVE = false;
+  boolean DEFAULT_ENABLE_SAVE_RESTORE = false;
 
   File DEFAULT_SAVE_FILE = new File(DEFAULT_SAVE_FILE_NAME);
 
@@ -92,8 +92,8 @@ public interface TransactionPoolConfiguration {
   }
 
   @Value.Default
-  default Boolean getEnableSave() {
-    return DEFAULT_ENABLE_SAVE;
+  default Boolean getEnableSaveRestore() {
+    return DEFAULT_ENABLE_SAVE_RESTORE;
   }
 
   @Value.Default
