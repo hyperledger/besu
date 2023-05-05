@@ -213,7 +213,9 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
       rlpOutput.writeLongScalar(status);
     }
     rlpOutput.writeLongScalar(cumulativeGasUsed);
-    rlpOutput.writeBytes(bloomFilter);
+    if (!isCompressed) {
+      rlpOutput.writeBytes(bloomFilter);
+    }
     rlpOutput.writeList(logs, (log, out) -> log.writeTo(out, isCompressed));
     if (withRevertReason && revertReason.isPresent()) {
       rlpOutput.writeBytes(revertReason.get());
@@ -261,8 +263,16 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     final long cumulativeGas = input.readLongScalar();
     // The logs below will populate the bloom filter upon construction.
     // TODO consider validating that the logs and bloom filter match.
-    final LogsBloomFilter bloomFilter = LogsBloomFilter.readFrom(input);
+    LogsBloomFilter bloomFilter = null;
+    if (!isCompressed) {
+      bloomFilter = LogsBloomFilter.readFrom(input);
+    }
     final List<Log> logs = input.readList(in -> Log.readFrom(in, isCompressed));
+
+    if (bloomFilter == null) {
+      bloomFilter = LogsBloomFilter.builder().insertLogs(logs).build();
+    }
+
     final Optional<Bytes> revertReason;
     if (input.isEndOfCurrentList()) {
       revertReason = Optional.empty();
