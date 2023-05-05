@@ -45,6 +45,7 @@ public class EthSendRawTransactionConditionalTest {
 
   private static final String VALID_TRANSACTION =
       "0xf86d0485174876e800830222e0945aae326516b4f8fe08074b7e972e40a713048d62880de0b6b3a7640000801ba05d4e7998757264daab67df2ce6f7e7a0ae36910778a406ca73898c9899a32b9ea0674700d5c3d1d27f2e6b4469957dfd1a1c49bf92383d80717afc84eb05695d5b";
+  public static final String METHOD_NAME = "eth_XsendRawTransactionConditional";
   private final TransactionPool transactionPool = mock(TransactionPool.class);
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private EthSendRawTransactionConditional method;
@@ -59,7 +60,9 @@ public class EthSendRawTransactionConditionalTest {
     when(blockchainQueries.headBlockNumber()).thenReturn(99L);
 
     final String jsonWithBlockConditions =
-        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendRawTransactionConditional\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\"}],\"id\":1}";
+        "{\"jsonrpc\":\"2.0\",\"method\":\""
+            + METHOD_NAME
+            + "\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\"}],\"id\":1}";
 
     assertActualResponseIsErrorWithGivenMessage(
         jsonWithBlockConditions, "block number not within specified range");
@@ -70,7 +73,9 @@ public class EthSendRawTransactionConditionalTest {
     when(blockchainQueries.headBlockNumber()).thenReturn(89L);
 
     final String jsonWithBlockConditions =
-        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendRawTransactionConditional\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\"}],\"id\":1}";
+        "{\"jsonrpc\":\"2.0\",\"method\":\""
+            + METHOD_NAME
+            + "\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\"}],\"id\":1}";
 
     assertActualResponseIsErrorWithGivenMessage(
         jsonWithBlockConditions, "block number not within specified range");
@@ -84,7 +89,9 @@ public class EthSendRawTransactionConditionalTest {
     when(blockchainQueries.headBlockNumber()).thenReturn(93L);
 
     final String jsonWithBlockConditions =
-        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendRawTransactionConditional\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\",\"timestampMin\":\"7339\",\"timestampMax\":\"7447\"}],\"id\":1}";
+        "{\"jsonrpc\":\"2.0\",\"method\":\""
+            + METHOD_NAME
+            + "\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\",\"timestampMin\":\"7339\",\"timestampMax\":\"7447\"}],\"id\":1}";
 
     assertActualResponseIsErrorWithGivenMessage(
         jsonWithBlockConditions, "timestamp not within specified range");
@@ -98,21 +105,54 @@ public class EthSendRawTransactionConditionalTest {
     when(blockchainQueries.headBlockNumber()).thenReturn(93L);
 
     final String jsonWithBlockConditions =
-        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendRawTransactionConditional\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\",\"timestampMin\":\"7339\",\"timestampMax\":\"7447\"}],\"id\":1}";
+        "{\"jsonrpc\":\"2.0\",\"method\":\""
+            + METHOD_NAME
+            + "\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\",\"timestampMin\":\"7339\",\"timestampMax\":\"7447\"}],\"id\":1}";
 
     assertActualResponseIsErrorWithGivenMessage(
         jsonWithBlockConditions, "timestamp not within specified range");
   }
 
   @Test
-  public void validTransactionIsSentToTransactionPool() {
+  public void validTimestamp_validBlockNumber_isSentToTransactionPool()
+      throws JsonProcessingException {
+    when(transactionPool.addLocalTransaction(any(Transaction.class)))
+        .thenReturn(ValidationResult.valid());
+
+    final BlockHeader header = mock(BlockHeader.class);
+    when(header.getTimestamp()).thenReturn(7437L);
+    when(blockchainQueries.headBlockHeader()).thenReturn(header);
+    when(blockchainQueries.headBlockNumber()).thenReturn(93L);
+
+    final String jsonRequestString =
+        "{\"jsonrpc\":\"2.0\",\"method\":\""
+            + METHOD_NAME
+            + "\",\"params\":[\""
+            + VALID_TRANSACTION
+            + "\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\",\"timestampMin\":\"7339\",\"timestampMax\":\"7447\"}],\"id\":1}";
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new ObjectMapper().readValue(jsonRequestString, JsonRpcRequest.class));
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(
+            request.getRequest().getId(),
+            "0xbaabcc1bd699e7378451e4ce5969edb9bdcae76cb79bdacae793525c31e423c7");
+
+    final JsonRpcResponse actualResponse = method.response(request);
+
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+    verify(transactionPool).addLocalTransaction(any(Transaction.class));
+  }
+
+  @Test
+  public void noConditionsTransaction_isSentToTransactionPool() {
     when(transactionPool.addLocalTransaction(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
-            new JsonRpcRequest(
-                "2.0", "eth_sendRawTransactionConditional", new String[] {VALID_TRANSACTION}));
+            new JsonRpcRequest("2.0", METHOD_NAME, new String[] {VALID_TRANSACTION}));
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
@@ -127,29 +167,8 @@ public class EthSendRawTransactionConditionalTest {
 
   @Test
   public void getMethodReturnsExpectedName() {
-    assertThat(method.getName()).matches("eth_sendRawTransactionConditional");
+    assertThat(method.getName()).matches(METHOD_NAME);
   }
-
-  //  private SendRawTransactionConditionalParameter parameterWithNoConditions() {
-  //    return new SendRawTransactionConditionalParameter(null, null, null, null, null);
-  //  }
-  //
-  //  private SendRawTransactionConditionalParameter parameterWithBlockNumberConditions(
-  //          final long blockNumberMin, final long blockNumberMax) {
-  //    return new SendRawTransactionConditionalParameter(
-  //            blockNumberMin, blockNumberMax, null, null, null);
-  //  }
-  //
-  //  private SendRawTransactionConditionalParameter parameterWithTimestampConditions(
-  //          final long timestampMin, final long timestampMax) {
-  //    return new SendRawTransactionConditionalParameter(null, null, null, timestampMin,
-  // timestampMax);
-  //  }
-  //
-  //  private SendRawTransactionConditionalParameter parameterWithKnownAccountConditions(
-  //          final Map<Address, Hash> knownAccounts) {
-  //    return new SendRawTransactionConditionalParameter(null, null, knownAccounts, null, null);
-  //  }
 
   private void assertActualResponseIsErrorWithGivenMessage(
       final String jsonRequestString, final String message) throws JsonProcessingException {

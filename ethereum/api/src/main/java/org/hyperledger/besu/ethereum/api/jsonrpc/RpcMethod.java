@@ -121,7 +121,7 @@ public enum RpcMethod {
   ETH_PROTOCOL_VERSION("eth_protocolVersion"),
   ETH_SEND_RAW_PRIVATE_TRANSACTION("eth_sendRawPrivateTransaction"),
   ETH_SEND_RAW_TRANSACTION("eth_sendRawTransaction"),
-  ETH_SEND_RAW_TRANSACTION_CONDITIONAL("eth_sendRawTransactionConditional"),
+  ETH_SEND_RAW_TRANSACTION_CONDITIONAL("eth_XsendRawTransactionConditional"),
   ETH_SEND_TRANSACTION("eth_sendTransaction"),
   ETH_SUBMIT_HASHRATE("eth_submitHashrate"),
   ETH_SUBMIT_WORK("eth_submitWork"),
