@@ -17,6 +17,7 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -78,6 +80,8 @@ public abstract class RocksDBColumnarKeyValueStorage
   protected static final long ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC = 1_073_741_824L;
   /** RocksDb memtable size when using the high spec option */
   protected static final long ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC = 1_073_741_824L;
+  /** values at or above this threshold will be written to blob files during flush or compaction */
+  protected static final long BLOB_SIZE_THRESHOLD = 4096L;
 
   static {
     RocksDbUtil.loadNativeLibrary();
@@ -151,11 +155,7 @@ public abstract class RocksDBColumnarKeyValueStorage
               .map(
                   segment ->
                       new ColumnFamilyDescriptor(
-                          segment.getId(),
-                          new ColumnFamilyOptions()
-                              .setTtl(0)
-                              .setCompressionType(CompressionType.LZ4_COMPRESSION)
-                              .setTableFormatConfig(createBlockBasedTableConfig(configuration))))
+                          segment.getId(), createColumnFamilyOptions(configuration, segment)))
               .collect(Collectors.toList());
       columnDescriptors.add(
           new ColumnFamilyDescriptor(
@@ -193,6 +193,22 @@ public abstract class RocksDBColumnarKeyValueStorage
     } catch (RocksDBException e) {
       throw new StorageException(e);
     }
+  }
+
+  private ColumnFamilyOptions createColumnFamilyOptions(
+      final RocksDBConfiguration configuration, final SegmentIdentifier segment) {
+    if (Objects.equals(segment.getName(), KeyValueSegmentIdentifier.BLOCKCHAIN.getName())
+        || Objects.equals(segment.getName(), KeyValueSegmentIdentifier.TRIE_LOG_STORAGE.getName()))
+      return new ColumnFamilyOptions()
+          .setTtl(0)
+          .setEnableBlobFiles(true)
+          .setMinBlobSize(BLOB_SIZE_THRESHOLD)
+          .setCompressionType(CompressionType.LZ4_COMPRESSION)
+          .setTableFormatConfig(createBlockBasedTableConfig(configuration));
+    else
+      return new ColumnFamilyOptions()
+          .setCompressionType(CompressionType.LZ4_COMPRESSION)
+          .setTableFormatConfig(createBlockBasedTableConfig(configuration));
   }
 
   void initMetrics() {
