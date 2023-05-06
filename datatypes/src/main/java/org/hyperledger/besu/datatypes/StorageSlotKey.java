@@ -34,11 +34,22 @@ public class StorageSlotKey implements Comparable<StorageSlotKey> {
   private final Hash slotHash;
   private final Optional<UInt256> slotKey;
 
+  /**
+   * Creates a StorageSlotKey.
+   *
+   * @param slotHash Hashed storage slot key.
+   * @param slotKey Optional UInt256 storage slot key.
+   */
   public StorageSlotKey(final Hash slotHash, final Optional<UInt256> slotKey) {
     this.slotHash = slotHash;
     this.slotKey = slotKey;
   }
 
+  /**
+   * Creates a StorageSlotKey, hashing the slotKey.
+   *
+   * @param slotKey the UInt256 storage slot key.
+   */
   public StorageSlotKey(final UInt256 slotKey) {
     this(Hash.hash(slotKey), Optional.of(slotKey));
   }

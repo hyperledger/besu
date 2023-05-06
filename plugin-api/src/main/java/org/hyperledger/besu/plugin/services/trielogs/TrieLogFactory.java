@@ -20,9 +20,28 @@ import org.hyperledger.besu.plugin.data.TrieLog;
 /** Interface for serializing and deserializing {@link TrieLog} objects. */
 public interface TrieLogFactory {
 
+  /**
+   * Creates a new TrieLog object.
+   *
+   * @param accumulator the accumulator
+   * @param blockHeader the block header
+   * @return a new TrieLog object
+   */
   TrieLog create(TrieLogAccumulator accumulator, BlockHeader blockHeader);
 
+  /**
+   * Deserializes a TrieLog object.
+   *
+   * @param bytes the serialized TrieLog
+   * @return the deserialized TrieLog
+   */
   TrieLog deserialize(final byte[] bytes);
 
+  /**
+   * Serializes a TrieLog object.
+   *
+   * @param layer the TrieLog
+   * @return the serialized TrieLog
+   */
   byte[] serialize(final TrieLog layer);
 }

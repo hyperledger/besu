@@ -16,7 +16,13 @@ package org.hyperledger.besu.datatypes;
 
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+/** The values of an account in the world state trie. */
 public interface AccountValue {
+  /**
+   * The nonce of the account.
+   *
+   * @return the nonce of the account.
+   */
   long getNonce();
 
   /**
@@ -40,6 +46,10 @@ public interface AccountValue {
    */
   Hash getCodeHash();
 
-  /** Writes the account value to the provided {@link RLPOutput}. */
+  /**
+   * Writes the account value to the provided {@link RLPOutput}.
+   *
+   * @param out the {@link RLPOutput} to write to.
+   */
   void writeTo(final RLPOutput out);
 }

@@ -24,12 +24,28 @@ import java.util.Map;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** Accumulator interface tor provding trie updates for creating TrieLogs. */
 public interface TrieLogAccumulator {
 
+  /**
+   * Returns the state trie accounts which have been updated.
+   *
+   * @return the accounts to update
+   */
   Map<Address, ? extends TrieLog.LogTuple<? extends AccountValue>> getAccountsToUpdate();
 
+  /**
+   * Returns code which has been updated.
+   *
+   * @return the code to update
+   */
   Map<Address, ? extends TrieLog.LogTuple<Bytes>> getCodeToUpdate();
 
+  /**
+   * Returns storage which has been updated.
+   *
+   * @return the storage to update
+   */
   Map<Address, ? extends Map<StorageSlotKey, ? extends TrieLog.LogTuple<UInt256>>>
       getStorageToUpdate();
 }
