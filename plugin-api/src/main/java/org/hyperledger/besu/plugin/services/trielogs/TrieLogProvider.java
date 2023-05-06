@@ -19,7 +19,15 @@ import org.hyperledger.besu.plugin.data.TrieLog;
 
 import java.util.Optional;
 
+/** Trielog provider interface for a given block hash. */
 @FunctionalInterface
 public interface TrieLogProvider {
+  /**
+   * Returns the TrieLog layer for the given block hash.
+   *
+   * @param blockHash the block hash
+   * @return the TrieLog layer for the given block hash
+   * @param <T> the type of the TrieLog
+   */
   <T extends TrieLog.LogTuple<?>> Optional<TrieLog> getTrieLogLayer(final Hash blockHash);
 }

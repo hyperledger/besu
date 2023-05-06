@@ -16,17 +16,36 @@ package org.hyperledger.besu.plugin.services.trielogs;
 
 import org.hyperledger.besu.plugin.data.TrieLog;
 
+/** A TrieLog event. */
 public interface TrieLogEvent {
+  /** The type of the event. */
   enum Type {
+    /** TrieLog added event type */
     ADDED
   }
 
+  /**
+   * The type of the event.
+   *
+   * @return the type of the event
+   */
   TrieLogEvent.Type getType();
 
+  /**
+   * The TrieLog layer.
+   *
+   * @return the TrieLog layer
+   */
   TrieLog layer();
 
+  /** Observer interface for TrieLog events. */
   interface TrieLogObserver {
 
+    /**
+     * Called when a TrieLog is added.
+     *
+     * @param event the TrieLog event
+     */
     void onTrieLogAdded(TrieLogEvent event);
   }
 }

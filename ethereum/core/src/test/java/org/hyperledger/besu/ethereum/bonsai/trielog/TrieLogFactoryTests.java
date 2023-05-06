@@ -71,40 +71,4 @@ public class TrieLogFactoryTests {
     TrieLog layer = factory.deserialize(rlp);
     assertThat(layer).isEqualTo(trieLogFixture);
   }
-
-  // TODO: move to besu-shomei-plugin
-  //  @Test
-  //  public void testZkSlotKeyIsZeroIsPresent() {
-  //    // zkbesu test with criteria of decoding slot key when it is present, even if all zero
-  //    TrieLogFactory<TrieLog> factory = new ZkTrieLogFactoryImpl();
-  //    byte[] rlp = factory.serialize(trieLogFixture);
-  //
-  //    TrieLog layer = factory.deserialize(rlp);
-  //    assertThat(layer).isEqualTo(trieLogFixture);
-  //
-  //    // assert slot key is present for an all zero key:
-  //    assertThat(
-  //            layer.getStorage().get(Address.ZERO).keySet().stream()
-  //                .map(k -> k.getSlotKey())
-  //                .filter(Optional::isPresent)
-  //                .map(Optional::get)
-  //                .anyMatch(key -> key.equals(UInt256.ZERO)))
-  //        .isTrue();
-  //  }
-  //
-  //  @Test
-  //  public void testZkAccountReadIsPresent() {
-  //    // zkbesu test
-  //    final TrieLogFactory<TrieLog> factory = new ZkTrieLogFactoryImpl();
-  //    final Address readAccount = Address.fromHexString("0xfeedf00d");
-  //    final StateTrieAccountValue read =
-  //        new StateTrieAccountValue(0, Wei.fromEth(1), Hash.EMPTY, Hash.EMPTY);
-  //    trieLogFixture.addAccountChange(readAccount, read, read);
-  //    byte[] rlp = factory.serialize(trieLogFixture);
-  //
-  //    TrieLog layer = factory.deserialize(rlp);
-  //    assertThat(layer).isEqualTo(trieLogFixture);
-  //    assertThat(layer.getAccounts().get(readAccount).getUpdated()).isEqualTo(read);
-  //    assertThat(layer.getAccounts().get(readAccount).getPrior()).isEqualTo(read);
-  //  }
 }
