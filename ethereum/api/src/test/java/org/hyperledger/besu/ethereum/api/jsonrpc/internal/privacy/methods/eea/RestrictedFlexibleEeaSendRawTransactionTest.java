@@ -59,7 +59,7 @@ public class RestrictedFlexibleEeaSendRawTransactionTest extends BaseEeaSendRawT
   public void validFlexibleTransactionPrivacyGroupIsSentToTransactionPool() {
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
-    when(transactionPool.addLocalTransaction(any(Transaction.class)))
+    when(transactionPool.addTransactionViaApi(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
 
     when(privacyController.createPrivateMarkerTransactionPayload(any(), any(), any()))
@@ -81,7 +81,7 @@ public class RestrictedFlexibleEeaSendRawTransactionTest extends BaseEeaSendRawT
     final JsonRpcResponse actualResponse = method.response(validPrivacyGroupTransactionRequest);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionPool).addLocalTransaction(PUBLIC_FLEXIBLE_TRANSACTION);
+    verify(transactionPool).addTransactionViaApi(PUBLIC_FLEXIBLE_TRANSACTION);
   }
 
   @Test

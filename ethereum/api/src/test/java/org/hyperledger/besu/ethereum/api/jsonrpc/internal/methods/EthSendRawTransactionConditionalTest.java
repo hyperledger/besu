@@ -150,7 +150,7 @@ public class EthSendRawTransactionConditionalTest {
   @Test
   public void validTimestamp_validBlockNumber_isSentToTransactionPool()
       throws JsonProcessingException {
-    when(transactionPool.addLocalTransaction(any(Transaction.class)))
+    when(transactionPool.addTransactionViaApi(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
 
     final BlockHeader header = mock(BlockHeader.class);
@@ -176,12 +176,12 @@ public class EthSendRawTransactionConditionalTest {
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionPool).addLocalTransaction(any(Transaction.class));
+    verify(transactionPool).addTransactionViaApi(any(Transaction.class));
   }
 
   @Test
   public void noConditionsTransaction_isSentToTransactionPool() {
-    when(transactionPool.addLocalTransaction(any(Transaction.class)))
+    when(transactionPool.addTransactionViaApi(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
 
     final JsonRpcRequestContext request =
@@ -196,7 +196,7 @@ public class EthSendRawTransactionConditionalTest {
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionPool).addLocalTransaction(any(Transaction.class));
+    verify(transactionPool).addTransactionViaApi(any(Transaction.class));
   }
 
   @Test

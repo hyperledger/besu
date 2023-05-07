@@ -53,7 +53,7 @@ public class PluginEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
 
-    when(transactionPool.addLocalTransaction(any())).thenReturn(ValidationResult.valid());
+    when(transactionPool.addTransactionViaApi(any())).thenReturn(ValidationResult.valid());
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
@@ -64,6 +64,6 @@ public class PluginEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
         method.response(validUnrestrictedPrivacyGroupTransactionRequest);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionPool).addLocalTransaction(PUBLIC_PLUGIN_TRANSACTION);
+    verify(transactionPool).addTransactionViaApi(PUBLIC_PLUGIN_TRANSACTION);
   }
 }

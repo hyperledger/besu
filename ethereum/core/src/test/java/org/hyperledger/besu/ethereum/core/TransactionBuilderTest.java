@@ -17,18 +17,29 @@ package org.hyperledger.besu.ethereum.core;
 
 import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
+import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import com.google.common.base.Suppliers;
 import org.junit.Test;
 
 public class TransactionBuilderTest {
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final KeyPair senderKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
 
   @Test
   public void guessTypeCanGuessAllTypes() {
@@ -49,5 +60,19 @@ public class TransactionBuilderTest {
             new TransactionType[] {
               TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
             });
+  }
+
+  @Test
+  public void zeroBlobTransactionIsInvalid() {
+    try {
+      new TransactionTestFixture()
+          .type(TransactionType.BLOB)
+          .chainId(Optional.of(BigInteger.ONE))
+          .versionedHashes(List.of())
+          .createTransaction(senderKeys);
+      fail();
+    } catch (IllegalArgumentException iea) {
+      assertThat(iea).hasMessage("Blob transaction must have at least one blob");
+    }
   }
 }
