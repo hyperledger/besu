@@ -130,7 +130,7 @@ public class TransactionDecoder {
                     signedBlobTransaction.getSignature().getR().toUnsignedBigInteger(),
                     signedBlobTransaction.getSignature().getS().toUnsignedBigInteger(),
                     signedBlobTransaction.getSignature().isParity() ? (byte) 1 : 0))
-        .maxFeePerData(Wei.of(blobTransaction.getMaxFeePerData()))
+        .maxFeePerDataGas(Wei.of(blobTransaction.getMaxFeePerDataGas()))
         .versionedHashes(blobTransaction.getBlobVersionedHashes())
         .build();
   }
