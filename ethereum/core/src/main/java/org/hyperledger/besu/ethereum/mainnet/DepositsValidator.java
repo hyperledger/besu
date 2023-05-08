@@ -114,7 +114,8 @@ public interface DepositsValidator {
       boolean isValid = actualDeposits.equals(expectedDeposits);
 
       if (!isValid) {
-        LOG.warn("Deposits validation failed. Deposits from block body do not match deposits from logs");
+        LOG.warn(
+            "Deposits validation failed. Deposits from block body do not match deposits from logs");
       }
 
       return isValid;
