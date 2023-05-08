@@ -114,7 +114,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
         new RawBlockIterator(
             Paths.get(blocksUrl.toURI()),
             rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions),
-            rlp -> BlockBody.readBodyFields(rlp, blockHeaderFunctions))) {
+            rlp -> BlockBody.readBodyFieldsFrom(rlp, blockHeaderFunctions))) {
       while (iterator.hasNext()) {
         BLOCKS.add(iterator.next());
       }

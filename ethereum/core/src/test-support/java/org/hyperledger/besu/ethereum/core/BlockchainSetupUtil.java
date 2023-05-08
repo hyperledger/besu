@@ -187,7 +187,7 @@ public class BlockchainSetupUtil {
           new RawBlockIterator(
               blocksPath,
               rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions),
-              rlp -> BlockBody.readBodyFields(rlp, blockHeaderFunctions))) {
+              rlp -> BlockBody.readBodyFieldsFrom(rlp, blockHeaderFunctions))) {
         while (iterator.hasNext()) {
           blocks.add(iterator.next());
         }

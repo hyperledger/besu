@@ -43,7 +43,7 @@ public final class BlockSyncTestUtils {
           new RawBlockIterator(
               blocks,
               rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions),
-              rlp -> BlockBody.readBodyFields(rlp, blockHeaderFunctions))) {
+              rlp -> BlockBody.readBodyFieldsFrom(rlp, blockHeaderFunctions))) {
         for (int i = 0; i < count; ++i) {
           result.add(iterator.next());
         }

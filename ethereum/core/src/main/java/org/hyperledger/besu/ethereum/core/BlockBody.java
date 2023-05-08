@@ -117,9 +117,6 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     return readFrom(input, blockHeaderFunctions, false);
   }
 
-  //
-  // E.g
-
   /**
    * Read all fields from the block body expecting a list wrapping them An example of valid body
    * structure that this method would be able to read is: [[txs],[ommers],[withdrawals]] This is
@@ -135,31 +132,26 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
       final BlockHeaderFunctions blockHeaderFunctions,
       final boolean allowEmptyBody) {
     input.enterList();
-
-    // BlockBody -> [transactions, ommers, withdraws]
-
     if (input.isEndOfCurrentList() && allowEmptyBody) {
       // empty block [] -> Return empty body.
       input.leaveList();
-
       return empty();
     }
-    // TODO: Support multiple hard fork transaction formats.
-    final BlockBody body = readBodyFields(input, blockHeaderFunctions);
+    final BlockBody body = readBodyFieldsFrom(input, blockHeaderFunctions);
     input.leaveList();
     return body;
   }
 
   /**
-   * Read all fields from the block body expecting no list wrapping them An example of a valid body
-   * would be: [txs],[ommers],[withdrawals] this method is called directly for importing a single
+   * Read all fields from the block body expecting no list wrapping them. An example of a valid body
+   * would be: [txs],[ommers],[withdrawals] this method is called directly when importing a single
    * block
    *
    * @param input The RLP-encoded input
    * @param blockHeaderFunctions The block header functions used for parsing block headers
    * @return the BlockBody decoded from the RLP
    */
-  public static BlockBody readBodyFields(
+  public static BlockBody readBodyFieldsFrom(
       final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
     return new BlockBody(
         input.readList(Transaction::readFrom),

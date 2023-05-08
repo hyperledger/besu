@@ -268,7 +268,7 @@ public class MessageWrapperTest {
     bytesValueRLPInput.leaveList();
 
     final BlockBody blockBodyDecodefromRLP =
-        BlockBody.readBodyFields(bytesValueRLPInput, new MainnetBlockHeaderFunctions());
+        BlockBody.readBodyFieldsFrom(bytesValueRLPInput, new MainnetBlockHeaderFunctions());
 
     assertThat(blockBodyDecodefromRLP)
         .isEqualTo(
@@ -288,7 +288,7 @@ public class MessageWrapperTest {
 
     assertThrows(
         RLPException.class,
-        () -> BlockBody.readBodyFields(bytesValueRLPInput, new MainnetBlockHeaderFunctions()));
+        () -> BlockBody.readBodyFieldsFrom(bytesValueRLPInput, new MainnetBlockHeaderFunctions()));
   }
 
   private static class TestTransaction extends Transaction {

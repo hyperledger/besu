@@ -86,7 +86,7 @@ public class RawBlockIteratorTest {
         new RawBlockIterator(
             blocksFile.toPath(),
             rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions),
-            rlp -> BlockBody.readBodyFields(rlp, blockHeaderFunctions),
+            rlp -> BlockBody.readBodyFieldsFrom(rlp, blockHeaderFunctions),
             initialCapacity);
 
     // Read blocks and check that they match

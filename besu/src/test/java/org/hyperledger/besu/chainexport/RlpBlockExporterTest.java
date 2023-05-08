@@ -250,7 +250,7 @@ public final class RlpBlockExporterTest {
     return new RawBlockIterator(
         blocks,
         rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions),
-        rlp -> BlockBody.readBodyFields(rlp, blockHeaderFunctions));
+        rlp -> BlockBody.readBodyFieldsFrom(rlp, blockHeaderFunctions));
   }
 
   private Block getBlock(final Blockchain blockchain, final long blockNumber) {
