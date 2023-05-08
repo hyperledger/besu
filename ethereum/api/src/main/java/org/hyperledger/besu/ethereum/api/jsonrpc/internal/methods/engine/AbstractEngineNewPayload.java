@@ -164,7 +164,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             blockParam.getExcessDataGas() == null
                 ? null
                 : DataGas.fromHexString(blockParam.getExcessDataGas()),
-            null, headerFunctions);
+            null,
+            headerFunctions);
 
     // ensure the block hash matches the blockParam hash
     // this must be done before any other check

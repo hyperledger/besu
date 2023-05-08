@@ -49,11 +49,12 @@ public class BftProtocolSchedule extends DefaultProtocolSchedule {
     checkArgument(
         !protocolSpecs.isEmpty(), "At least 1 milestone must be provided to the protocol schedule");
     checkArgument(
-        protocolSpecs.last().milestone() == 0, "There must be a milestone starting from block 0");
+        protocolSpecs.last().fork().milestone() == 0,
+        "There must be a milestone starting from block 0");
     // protocolSpecs is sorted in descending block order, so the first one we find that's lower than
     // the requested level will be the most appropriate spec
     for (final ScheduledProtocolSpec s : protocolSpecs) {
-      if (number >= s.milestone()) {
+      if (number >= s.fork().milestone()) {
         return s.spec();
       }
     }
