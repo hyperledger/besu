@@ -48,10 +48,75 @@ public class TransactionEncoder {
 
   private static final Map<TransactionType, Encoder> TYPED_TRANSACTION_ENCODERS =
       Map.of(
-          TransactionType.ACCESS_LIST,
-          TransactionEncoder::encodeAccessList,
-          TransactionType.EIP1559,
-          TransactionEncoder::encodeEIP1559);
+          TransactionType.ACCESS_LIST, Encoder.rlpEncoder(TransactionEncoder::encodeAccessList),
+          TransactionType.EIP1559, Encoder.rlpEncoder(TransactionEncoder::encodeEIP1559),
+          TransactionType.BLOB, Encoder.sszEncoder(TransactionEncoder::encodeWithoutBlobs));
+
+  private static final Map<TransactionType, Encoder> TYPED_TRANSACTION_ENCODERS_FOR_NETWORK =
+      Map.of(
+          TransactionType.ACCESS_LIST, Encoder.rlpEncoder(TransactionEncoder::encodeAccessList),
+          TransactionType.EIP1559, Encoder.rlpEncoder(TransactionEncoder::encodeEIP1559),
+          TransactionType.BLOB, Encoder.sszEncoder(TransactionEncoder::encodeWithBlobs));
+
+  public static void encodeWithBlobs(final Transaction transaction, final SSZWriter rlpOutput) {
+    LOG.trace("Encoding transaction with blobs {}", transaction);
+    var payload = new TransactionNetworkPayload();
+    var blobsWithCommitments = transaction.getBlobsWithCommitments();
+    if (blobsWithCommitments.isPresent()) {
+      payload.setBlobs(blobsWithCommitments.get().blobs);
+      payload.setKzgProof(blobsWithCommitments.get().kzgProof);
+      payload.setKzgCommitments(blobsWithCommitments.get().kzgCommitments);
+    }
+
+    var signedBlobTransaction = payload.getSignedBlobTransaction();
+    populatedSignedBlobTransaction(transaction, signedBlobTransaction);
+
+    payload.writeTo(rlpOutput);
+  }
+
+  public static void encodeWithoutBlobs(final Transaction transaction, final SSZWriter rlpOutput) {
+    LOG.trace("Encoding transaction without blobs {}", transaction);
+    var signedBlobTransaction = new TransactionNetworkPayload.SingedBlobTransaction();
+    populatedSignedBlobTransaction(transaction, signedBlobTransaction);
+    signedBlobTransaction.writeTo(rlpOutput);
+  }
+
+  private static void populatedSignedBlobTransaction(
+      final Transaction transaction,
+      final TransactionNetworkPayload.SingedBlobTransaction signedBlobTransaction) {
+    var signature = signedBlobTransaction.getSignature();
+    signature.setR(UInt256.valueOf(transaction.getSignature().getR()));
+    signature.setS(UInt256.valueOf(transaction.getSignature().getS()));
+    signature.setParity(transaction.getSignature().getRecId() == 1);
+
+    var blobTransaction = signedBlobTransaction.getMessage();
+
+    blobTransaction.setChainId(UInt256.valueOf(transaction.getChainId().orElseThrow()));
+    blobTransaction.setNonce(transaction.getNonce());
+    blobTransaction.setMaxPriorityFeePerGas(
+        transaction.getMaxPriorityFeePerGas().orElseThrow().toUInt256());
+    blobTransaction.setMaxFeePerGas(transaction.getMaxFeePerGas().orElseThrow().toUInt256());
+    blobTransaction.setGas(transaction.getGasLimit());
+    blobTransaction.setAddress(transaction.getTo());
+    blobTransaction.setValue(transaction.getValue().toUInt256());
+    blobTransaction.setData(transaction.getPayload());
+    transaction
+        .getAccessList()
+        .ifPresent(
+            accessListEntries -> {
+              var accessList = blobTransaction.getAccessList();
+              accessListEntries.forEach(
+                  accessListEntry -> {
+                    var tuple = new TransactionNetworkPayload.SingedBlobTransaction.AccessTuple();
+                    tuple.setAddress(accessListEntry.getAddress());
+                    tuple.setStorageKeys(accessListEntry.getStorageKeys());
+                    accessList.add(tuple);
+                  });
+            });
+    blobTransaction.setMaxFeePerDataGas(
+        transaction.getMaxFeePerDataGas().orElseThrow().toUInt256());
+    blobTransaction.setBlobVersionedHashes(transaction.getVersionedHashes().orElseThrow());
+  }
 
   public static void encodeForWire(final Transaction transaction, final RLPOutput rlpOutput) {
     final TransactionType transactionType =
