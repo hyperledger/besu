@@ -15,14 +15,11 @@
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -72,13 +69,10 @@ public class ZeroBaseFeeMarketTest {
             .gasPrice(null)
             .createTransaction(KEY_PAIR1);
 
-    final ProcessableBlockHeader blockHeader = mock(ProcessableBlockHeader.class);
-    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ZERO));
-
     assertThat(
             zeroBaseFeeMarket
                 .getTransactionPriceCalculator()
-                .price(transaction, blockHeader.getBaseFee()))
+                .price(transaction, Optional.of(Wei.ZERO)))
         .isEqualTo(Wei.of(8));
   }
 
@@ -147,8 +141,8 @@ public class ZeroBaseFeeMarketTest {
   }
 
   @Test
-  public void implementsDataFeedShouldReturnFalse() {
-    assertThat(zeroBaseFeeMarket.implementsDataFee()).isFalse();
+  public void implementsDataFeeShouldReturnTrue() {
+    assertThat(zeroBaseFeeMarket.implementsDataFee()).isTrue();
   }
 
   @Test
