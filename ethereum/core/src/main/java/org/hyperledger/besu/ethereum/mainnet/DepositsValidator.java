@@ -111,7 +111,13 @@ public interface DepositsValidator {
         }
       }
 
-      return actualDeposits.equals(expectedDeposits);
+      boolean isValid = actualDeposits.equals(expectedDeposits);
+
+      if (!isValid) {
+        LOG.warn("Deposits validation failed. Deposits from block body do not match deposits from logs");
+      }
+
+      return isValid;
     }
 
     @Override
@@ -127,7 +133,7 @@ public interface DepositsValidator {
       final Hash expectedDepositsRoot = BodyValidation.depositsRoot(deposits);
       if (!expectedDepositsRoot.equals(depositsRoot.get())) {
         LOG.info(
-            "Invalid block: transaction root mismatch (expected={}, actual={})",
+            "Invalid block: depositsRoot mismatch (expected={}, actual={})",
             expectedDepositsRoot,
             depositsRoot.get());
         return false;
