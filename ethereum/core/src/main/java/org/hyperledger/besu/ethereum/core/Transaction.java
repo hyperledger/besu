@@ -1333,8 +1333,8 @@ public class Transaction
     public Builder kzgBlobs(
         final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGCommitment> kzgCommitments,
         final SSZFixedSizeTypeList<TransactionNetworkPayload.Blob> blobs,
-        final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGProof> kzgProofs) {
-      this.blobsWithCommitments = new BlobsWithCommitments(kzgCommitments, blobs, kzgProofs);
+        final TransactionNetworkPayload.KZGProof kzgProof) {
+      this.blobsWithCommitments = new BlobsWithCommitments(kzgCommitments, blobs, kzgProof);
       return this;
     }
   }
