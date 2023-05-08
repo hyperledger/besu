@@ -55,7 +55,7 @@ public interface DepositsValidator {
       Optional<List<Deposit>> deposits = block.getBody().getDeposits();
       final boolean isValid = deposits.isEmpty();
       if (!isValid) {
-        LOG.warn("Deposits must be null when Deposits are prohibited but were: {}", deposits);
+        LOG.warn("Deposits must be empty when Deposits are prohibited but were: {}", deposits);
       }
       return isValid;
     }
@@ -95,7 +95,7 @@ public interface DepositsValidator {
     @Override
     public boolean validateDeposits(final Block block, final List<TransactionReceipt> receipts) {
       if (block.getBody().getDeposits().isEmpty()) {
-        LOG.warn("Deposits must not be null when Deposits are activated");
+        LOG.warn("Deposits must not be empty when Deposits are activated");
         return false;
       }
 
