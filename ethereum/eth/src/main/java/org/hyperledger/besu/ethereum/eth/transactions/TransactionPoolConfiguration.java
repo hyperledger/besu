@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.util.number.Percentage;
 
+import java.io.File;
 import java.time.Duration;
 
 import org.immutables.value.Value;
@@ -24,6 +25,7 @@ import org.immutables.value.Value;
 @Value.Immutable
 @Value.Style(allParameters = true)
 public interface TransactionPoolConfiguration {
+  String DEFAULT_SAVE_FILE_NAME = "txpool.dump";
   int DEFAULT_TX_MSG_KEEP_ALIVE = 60;
   int MAX_PENDING_TRANSACTIONS = 4096;
   float LIMIT_TXPOOL_BY_ACCOUNT_PERCENTAGE = 0.001f; // 0.1%
@@ -32,6 +34,10 @@ public interface TransactionPoolConfiguration {
   Percentage DEFAULT_PRICE_BUMP = Percentage.fromInt(10);
   Wei DEFAULT_RPC_TX_FEE_CAP = Wei.fromEth(1);
   Duration ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD = Duration.ofMillis(500);
+  boolean DEFAULT_DISABLE_LOCAL_TXS = false;
+  boolean DEFAULT_ENABLE_SAVE_RESTORE = false;
+
+  File DEFAULT_SAVE_FILE = new File(DEFAULT_SAVE_FILE_NAME);
 
   TransactionPoolConfiguration DEFAULT = ImmutableTransactionPoolConfiguration.builder().build();
 
@@ -78,5 +84,20 @@ public interface TransactionPoolConfiguration {
   @Value.Default
   default Boolean getStrictTransactionReplayProtectionEnabled() {
     return DEFAULT_STRICT_TX_REPLAY_PROTECTION_ENABLED;
+  }
+
+  @Value.Default
+  default Boolean getDisableLocalTransactions() {
+    return DEFAULT_DISABLE_LOCAL_TXS;
+  }
+
+  @Value.Default
+  default Boolean getEnableSaveRestore() {
+    return DEFAULT_ENABLE_SAVE_RESTORE;
+  }
+
+  @Value.Default
+  default File getSaveFile() {
+    return DEFAULT_SAVE_FILE;
   }
 }
