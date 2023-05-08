@@ -106,11 +106,10 @@ public class Transaction
   // Caches the hash used to uniquely identify the transaction.
   protected volatile Hash hash;
   // Caches the size in bytes of the encoded transaction.
-  protected volatile Optional<Integer> networkSize = Optional.empty();
+  protected volatile int size = -1;
   private final TransactionType transactionType;
 
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
-  private final Optional<Wei> maxFeePerData;
   private final Optional<List<Hash>> versionedHashes;
 
   private final Optional<BlobsWithCommitments> blobsWithCommitments;
@@ -165,14 +164,8 @@ public class Transaction
       final Optional<List<AccessListEntry>> maybeAccessList,
       final Address sender,
       final Optional<BigInteger> chainId,
-      final Optional<BigInteger> v,
-      final Optional<Wei> maxFeePerData,
       final Optional<List<Hash>> versionedHashes,
       final Optional<BlobsWithCommitments> blobsWithCommitments) {
-    if (v.isPresent() && chainId.isPresent()) {
-      throw new IllegalArgumentException(
-          String.format("chainId '%s' and v '%s' cannot both be provided", chainId.get(), v.get()));
-    }
 
     if (transactionType.requiresChainId()) {
       checkArgument(
@@ -219,8 +212,6 @@ public class Transaction
     this.maybeAccessList = maybeAccessList;
     this.sender = sender;
     this.chainId = chainId;
-    this.v = v;
-    this.maxFeePerData = maxFeePerData;
     this.versionedHashes = versionedHashes;
     this.blobsWithCommitments = blobsWithCommitments;
 
@@ -242,8 +233,6 @@ public class Transaction
       final Bytes payload,
       final Address sender,
       final Optional<BigInteger> chainId,
-      final Optional<BigInteger> v,
-      final Optional<Wei> maxFeePerData,
       final Optional<List<Hash>> versionedHashes,
       final Optional<BlobsWithCommitments> blobsWithCommitments) {
     this(
@@ -261,8 +250,6 @@ public class Transaction
         Optional.empty(),
         sender,
         chainId,
-        v,
-        maxFeePerData,
         versionedHashes,
         blobsWithCommitments);
   }
@@ -276,7 +263,6 @@ public class Transaction
       final SECPSignature signature,
       final Bytes payload,
       final Optional<BigInteger> chainId,
-      final Optional<BigInteger> v,
       final Optional<List<Hash>> versionedHashes,
       final Optional<BlobsWithCommitments> blobsWithCommitments) {
     this(
@@ -294,8 +280,6 @@ public class Transaction
         Optional.empty(),
         null,
         chainId,
-        v,
-        Optional.empty(),
         versionedHashes,
         blobsWithCommitments);
   }
@@ -333,6 +317,7 @@ public class Transaction
         Optional.of(gasPrice),
         Optional.empty(),
         Optional.empty(),
+        Optional.empty(),
         gasLimit,
         to,
         value,
@@ -340,9 +325,7 @@ public class Transaction
         payload,
         sender,
         chainId,
-        Optional.empty(),
-        Optional.empty(),
-        Optional.empty(),
+        versionedHashes,
         Optional.empty());
   }
 
@@ -358,7 +341,6 @@ public class Transaction
    * @param payload the payload
    * @param sender the transaction sender
    * @param chainId the chain id to apply the transaction to
-   * @param v the v value (only passed in directly for GoQuorum private transactions)
    *     <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
    *     otherwise it should contain an address.
    *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
@@ -374,8 +356,7 @@ public class Transaction
       final Bytes payload,
       final Address sender,
       final Optional<BigInteger> chainId,
-      final Optional<BigInteger> v,
-      final Optional<Wei> maxFeePerData,
+      final Optional<Wei> maxFeePerDataGas,
       final Optional<List<Hash>> versionedHashes,
       final Optional<BlobsWithCommitments> blobsWithCommitments) {
     this(
@@ -383,7 +364,7 @@ public class Transaction
         Optional.of(gasPrice),
         Optional.empty(),
         Optional.empty(),
-        Optional.empty(),
+        maxFeePerDataGas,
         gasLimit,
         to,
         value,
@@ -391,8 +372,6 @@ public class Transaction
         payload,
         sender,
         chainId,
-        v,
-        maxFeePerData,
         versionedHashes,
         blobsWithCommitments);
   }
@@ -693,11 +672,11 @@ public class Transaction
    *
    * @return the size in bytes of the encoded transaction.
    */
-  public Optional<Integer> getNetworkSize() {
-    if (networkSize.isEmpty()) {
+  public int getSize() {
+    if (size == -1) {
       memoizeHashAndSize();
     }
-    return networkSize;
+    return size;
   }
 
   private void memoizeHashAndSize() {
@@ -706,12 +685,12 @@ public class Transaction
 
     if (transactionType.supportsBlob()) {
       if (getBlobsWithCommitments().isPresent()) {
-        networkSize = Optional.of(TransactionEncoder.encodeOpaqueBytesForNetwork(this).size());
+        size = TransactionEncoder.encodeOpaqueBytesForNetwork(this).size();
       }
     } else {
       final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
       TransactionEncoder.encodeForWire(transactionType, bytes, rlpOutput);
-      networkSize = Optional.of(rlpOutput.encodedSize());
+      size = rlpOutput.encodedSize();
     }
   }
 
@@ -822,10 +801,6 @@ public class Transaction
   @Override
   public TransactionType getType() {
     return this.transactionType;
-  }
-
-  public Optional<Wei> getMaxFeePerData() {
-    return maxFeePerData;
   }
 
   public Optional<List<Hash>> getVersionedHashes() {
@@ -1201,7 +1176,6 @@ public class Transaction
     protected Optional<BigInteger> chainId = Optional.empty();
 
     protected List<Hash> versionedHashes = null;
-    private Wei maxFeePerData;
     private BlobsWithCommitments blobsWithCommitments;
 
     public Builder type(final TransactionType transactionType) {
@@ -1316,8 +1290,6 @@ public class Transaction
           accessList,
           sender,
           chainId,
-          v,
-          Optional.ofNullable(maxFeePerData),
           Optional.ofNullable(versionedHashes),
           Optional.ofNullable(blobsWithCommitments));
     }
@@ -1355,11 +1327,6 @@ public class Transaction
         final SSZFixedSizeTypeList<TransactionNetworkPayload.Blob> blobs,
         final TransactionNetworkPayload.KZGProof kzgProof) {
       this.blobsWithCommitments = new BlobsWithCommitments(kzgCommitments, blobs, kzgProof);
-      return this;
-    }
-
-    public Builder maxFeePerData(final Wei maxFeePerData) {
-      this.maxFeePerData = maxFeePerData;
       return this;
     }
   }
