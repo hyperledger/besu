@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -33,8 +32,6 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-import org.hyperledger.besu.ethereum.mainnet.DefaultTimestampSchedule;
-import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -50,19 +47,10 @@ import org.mockito.junit.MockitoJUnitRunner;
         .class) // mocks in parent class may not be used, throwing unnecessary stubbing
 public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
 
-  private static final long SHANGHAI_AT = 1337L;
   private static final long CANCUN_AT = 31337L;
 
   public EngineGetPayloadV3Test() {
     super(EngineGetPayloadV3::new);
-  }
-
-  @Override
-  public TimestampSchedule getTimestampSchedule() {
-    DefaultTimestampSchedule mockSchedule = mock(DefaultTimestampSchedule.class);
-    when(mockSchedule.scheduledAt("Cancun")).thenReturn(CANCUN_AT);
-    when(mockSchedule.scheduledAt("Shanghai")).thenReturn(SHANGHAI_AT);
-    return mockSchedule;
   }
 
   @Override
@@ -84,7 +72,11 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
     // should return withdrawals and excessGas for a post-cancun block
     PayloadIdentifier postCancunPid =
         PayloadIdentifier.forPayloadParams(
-            Hash.ZERO, CANCUN_AT, Bytes32.random(), Address.fromHexString("0x42"));
+            Hash.ZERO,
+            CANCUN_AT,
+            Bytes32.random(),
+            Address.fromHexString("0x42"),
+            Optional.empty());
 
     BlockWithReceipts postCancunBlock =
         new BlockWithReceipts(
@@ -93,7 +85,8 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
                 new BlockBody(
                     Collections.emptyList(),
                     Collections.emptyList(),
-                    Optional.of(Collections.emptyList()))),
+                    Optional.of(Collections.emptyList()),
+                    Optional.empty())),
             Collections.emptyList());
 
     when(mergeContext.retrieveBlockById(postCancunPid)).thenReturn(Optional.of(postCancunBlock));

@@ -36,7 +36,8 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -61,7 +62,7 @@ public abstract class AbstractEngineGetPayloadTest {
         final MergeMiningCoordinator mergeCoordinator,
         final BlockResultFactory ethPeers,
         final EngineCallListener engineCallListener,
-        final TimestampSchedule schedule);
+        final ProtocolSchedule schedule);
   }
 
   private final MethodFactory methodFactory;
@@ -128,11 +129,7 @@ public abstract class AbstractEngineGetPayloadTest {
             mergeMiningCoordinator,
             factory,
             engineCallListener,
-            getTimestampSchedule());
-  }
-
-  protected TimestampSchedule getTimestampSchedule() {
-    return null;
+            protocolSchedule);
   }
 
   @Test
