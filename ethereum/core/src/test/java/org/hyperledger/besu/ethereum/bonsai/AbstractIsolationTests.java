@@ -139,7 +139,7 @@ public abstract class AbstractIsolationTests {
             blockchain,
             Optional.of(16L),
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(), null);
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
     protocolContext = new ProtocolContext(blockchain, archive, null);

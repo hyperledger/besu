@@ -51,12 +51,6 @@ dependencies {
   implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'io.vertx:vertx-core'
 
-  // for zkbesu-756, should not be committed to main
-  implementation 'io.vertx:vertx-web-client'
-  implementation 'io.vertx:vertx-web'
-  implementation 'io.vertx:vertx-unit'
-  // end zkbesu-756
-
   implementation 'net.java.dev.jna:jna'
   implementation 'org.apache.commons:commons-lang3'
   implementation 'org.apache.tuweni:tuweni-bytes'
