@@ -130,7 +130,8 @@ public class TransactionEncoder {
                     accessList.add(tuple);
                   });
             });
-    blobTransaction.setMaxFeePerData(transaction.getMaxFeePerData().orElseThrow().toUInt256());
+    blobTransaction.setMaxFeePerDataGas(
+        transaction.getMaxFeePerDataGas().orElseThrow().toUInt256());
     blobTransaction.setBlobVersionedHashes(transaction.getVersionedHashes().orElseThrow());
   }
 
