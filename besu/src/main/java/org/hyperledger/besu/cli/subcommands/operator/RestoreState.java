@@ -145,7 +145,7 @@ public class RestoreState implements Runnable {
             BlockHeader.readFrom(
                 new BytesValueRLPInput(Bytes.wrap(headerEntry), false, true), functions);
         final BlockBody body =
-            BlockBody.readFrom(
+            BlockBody.readWrappedBodyFrom(
                 new BytesValueRLPInput(Bytes.wrap(bodyEntry), false, true), functions);
         final RLPInput receiptsRlp = new BytesValueRLPInput(Bytes.wrap(receiptEntry), false, true);
         final int receiptsCount = receiptsRlp.enterList();

@@ -243,7 +243,7 @@ public class MessageWrapperTest {
     final BytesValueRLPInput bytesValueRLPInput =
         new BytesValueRLPInput(Bytes.fromHexString("0xc3c0c0c0"), false);
     final BlockBody blockBodyDecodefromRLP =
-        BlockBody.readFrom(bytesValueRLPInput, new MainnetBlockHeaderFunctions());
+        BlockBody.readWrappedBodyFrom(bytesValueRLPInput, new MainnetBlockHeaderFunctions());
 
     assertThat(blockBodyDecodefromRLP)
         .isEqualTo(
@@ -268,7 +268,7 @@ public class MessageWrapperTest {
     bytesValueRLPInput.leaveList();
 
     final BlockBody blockBodyDecodefromRLP =
-        BlockBody.readBodyFieldsFrom(bytesValueRLPInput, new MainnetBlockHeaderFunctions());
+        BlockBody.readFrom(bytesValueRLPInput, new MainnetBlockHeaderFunctions());
 
     assertThat(blockBodyDecodefromRLP)
         .isEqualTo(
@@ -288,7 +288,7 @@ public class MessageWrapperTest {
 
     assertThrows(
         RLPException.class,
-        () -> BlockBody.readBodyFieldsFrom(bytesValueRLPInput, new MainnetBlockHeaderFunctions()));
+        () -> BlockBody.readFrom(bytesValueRLPInput, new MainnetBlockHeaderFunctions()));
   }
 
   private static class TestTransaction extends Transaction {

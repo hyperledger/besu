@@ -101,20 +101,22 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
    *
    * @param output Output to write to
    */
-  public void writeTo(final RLPOutput output) {
+  public void writeWrappedBodyTo(final RLPOutput output) {
     output.startList();
+    writeTo(output);
+    output.endList();
+  }
 
+  public void writeTo(final RLPOutput output) {
     output.writeList(getTransactions(), Transaction::writeTo);
     output.writeList(getOmmers(), BlockHeader::writeTo);
     withdrawals.ifPresent(withdrawals -> output.writeList(withdrawals, Withdrawal::writeTo));
     deposits.ifPresent(deposits -> output.writeList(deposits, Deposit::writeTo));
-
-    output.endList();
   }
 
-  public static BlockBody readFrom(
+  public static BlockBody readWrappedBodyFrom(
       final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
-    return readFrom(input, blockHeaderFunctions, false);
+    return readWrappedBodyFrom(input, blockHeaderFunctions, false);
   }
 
   /**
@@ -127,7 +129,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
    * @param allowEmptyBody A flag indicating whether an empty body is allowed
    * @return the decoded BlockBody from the RLP
    */
-  public static BlockBody readFrom(
+  public static BlockBody readWrappedBodyFrom(
       final RLPInput input,
       final BlockHeaderFunctions blockHeaderFunctions,
       final boolean allowEmptyBody) {
@@ -137,7 +139,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
       input.leaveList();
       return empty();
     }
-    final BlockBody body = readBodyFieldsFrom(input, blockHeaderFunctions);
+    final BlockBody body = readFrom(input, blockHeaderFunctions);
     input.leaveList();
     return body;
   }
@@ -151,7 +153,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
    * @param blockHeaderFunctions The block header functions used for parsing block headers
    * @return the BlockBody decoded from the RLP
    */
-  public static BlockBody readBodyFieldsFrom(
+  public static BlockBody readFrom(
       final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
     return new BlockBody(
         input.readList(Transaction::readFrom),

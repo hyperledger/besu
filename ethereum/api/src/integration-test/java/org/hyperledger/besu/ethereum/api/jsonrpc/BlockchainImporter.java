@@ -52,7 +52,7 @@ public class BlockchainImporter {
         new RawBlockIterator(
             Paths.get(blocksUrl.toURI()),
             rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions),
-            rlp -> BlockBody.readBodyFieldsFrom(rlp, blockHeaderFunctions))) {
+            rlp -> BlockBody.readFrom(rlp, blockHeaderFunctions))) {
       while (iterator.hasNext()) {
         blocks.add(iterator.next());
       }
