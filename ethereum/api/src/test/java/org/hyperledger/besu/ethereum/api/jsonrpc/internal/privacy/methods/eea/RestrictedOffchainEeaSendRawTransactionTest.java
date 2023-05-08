@@ -60,7 +60,7 @@ public class RestrictedOffchainEeaSendRawTransactionTest extends BaseEeaSendRawT
         .thenReturn(MOCK_ORION_KEY);
     when(privacyController.validatePrivateTransaction(any(), any()))
         .thenReturn(ValidationResult.valid());
-    when(transactionPool.addLocalTransaction(any())).thenReturn(ValidationResult.valid());
+    when(transactionPool.addTransactionViaApi(any())).thenReturn(ValidationResult.valid());
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
@@ -70,7 +70,7 @@ public class RestrictedOffchainEeaSendRawTransactionTest extends BaseEeaSendRawT
     final JsonRpcResponse actualResponse = method.response(validPrivateForTransactionRequest);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionPool).addLocalTransaction(PUBLIC_OFF_CHAIN_TRANSACTION);
+    verify(transactionPool).addTransactionViaApi(PUBLIC_OFF_CHAIN_TRANSACTION);
   }
 
   @Test
@@ -87,7 +87,7 @@ public class RestrictedOffchainEeaSendRawTransactionTest extends BaseEeaSendRawT
 
     when(privacyController.findPrivacyGroupByGroupId(any(), any()))
         .thenReturn(pantheonPrivacyGroup);
-    when(transactionPool.addLocalTransaction(any())).thenReturn(ValidationResult.valid());
+    when(transactionPool.addTransactionViaApi(any())).thenReturn(ValidationResult.valid());
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(

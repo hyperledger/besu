@@ -265,7 +265,7 @@ public class TestNode implements Closeable {
   }
 
   public void receiveLocalTransaction(final Transaction transaction) {
-    transactionPool.addLocalTransaction(transaction);
+    transactionPool.addTransactionViaApi(transaction);
   }
 
   public int getPendingTransactionCount() {
