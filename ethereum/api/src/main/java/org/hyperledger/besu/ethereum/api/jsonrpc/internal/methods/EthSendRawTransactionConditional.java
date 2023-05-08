@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.EXCEEDS_RPC_MAX_CONDITIONS_SIZE;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.USER_SPECIFIED_CONDITIONS_NOT_MET;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -35,6 +38,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class EthSendRawTransactionConditional extends AbstractEthSendRawTransaction {
   protected final Supplier<BlockchainQueries> blockchainQueries;
+
+  public static final long MAX_CONDITIONS = 100;
 
   public EthSendRawTransactionConditional(
       final BlockchainQueries blockchainQueries, final TransactionPool transactionPool) {
@@ -77,16 +82,28 @@ public class EthSendRawTransactionConditional extends AbstractEthSendRawTransact
           blockchainQueries.get().headBlockNumber(),
           conditions.getBlockNumberMin(),
           conditions.getBlockNumberMax())) {
-        return getJsonRpcErrorResponse(requestContext, "block number not within specified range");
+        return getJsonRpcErrorResponse(
+            requestContext,
+            USER_SPECIFIED_CONDITIONS_NOT_MET,
+            "block number not within specified range");
       }
       if (!withinRange(
           blockchainQueries.get().headBlockHeader().getTimestamp(),
           conditions.getTimestampMin(),
           conditions.getTimestampMax())) {
-        return getJsonRpcErrorResponse(requestContext, "timestamp not within specified range");
+        return getJsonRpcErrorResponse(
+            requestContext,
+            USER_SPECIFIED_CONDITIONS_NOT_MET,
+            "timestamp not within specified range");
       }
       if (conditions.getKnownAccounts().isEmpty()) {
         return Optional.empty();
+      }
+      if (conditions.getKnownAccounts().get().size() > MAX_CONDITIONS) {
+        return getJsonRpcErrorResponse(
+            requestContext,
+            USER_SPECIFIED_CONDITIONS_NOT_MET,
+            "maximum number of conditions exceeded");
       }
       final Map<Address, SendRawTransactionConditionalParameter.KnownAccountInfo> storageToCheck =
           conditions.getKnownAccounts().get();
@@ -96,7 +113,15 @@ public class EthSendRawTransactionConditional extends AbstractEthSendRawTransact
         if (info.getStorageRootHash().isPresent()) {
           // TODO check storage root
           // not yet exposed via blockchainQueries
+          //          return getJsonRpcErrorResponse(requestContext, String.format("storage at
+          // address %s has been modified", a));
         } else {
+          if (info.getExpectedStorageEntries().get().size() > MAX_CONDITIONS) {
+            return getJsonRpcErrorResponse(
+                requestContext,
+                EXCEEDS_RPC_MAX_CONDITIONS_SIZE,
+                "maximum number of conditions exceeded");
+          }
           for (StorageEntry expectedStorageEntry : info.getExpectedStorageEntries().get()) {
             final UInt256 slot = expectedStorageEntry.getOffset();
             final Optional<UInt256> actualStorageValue =
@@ -105,6 +130,7 @@ public class EthSendRawTransactionConditional extends AbstractEthSendRawTransact
                 && !actualStorageValue.get().equals(expectedStorageEntry.getValue())) {
               return getJsonRpcErrorResponse(
                   requestContext,
+                  USER_SPECIFIED_CONDITIONS_NOT_MET,
                   String.format("storage at address %s slot %s has been modified", a, slot));
             }
           }
@@ -124,8 +150,9 @@ public class EthSendRawTransactionConditional extends AbstractEthSendRawTransact
 
   @NotNull
   private Optional<JsonRpcErrorResponse> getJsonRpcErrorResponse(
-      final JsonRpcRequestContext requestContext, final String message) {
-    final JsonRpcError jsonRpcError = JsonRpcError.USER_SPECIFIED_CONDITIONS_NOT_MET;
+      final JsonRpcRequestContext requestContext,
+      final JsonRpcError jsonRpcError,
+      final String message) {
     jsonRpcError.setData(message);
     return Optional.of(new JsonRpcErrorResponse(requestContext.getRequest().getId(), jsonRpcError));
   }

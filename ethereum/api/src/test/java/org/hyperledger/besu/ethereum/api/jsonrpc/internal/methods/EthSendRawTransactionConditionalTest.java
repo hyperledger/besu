@@ -15,9 +15,13 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSendRawTransactionConditional.MAX_CONDITIONS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.EXCEEDS_RPC_MAX_CONDITIONS_SIZE;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.USER_SPECIFIED_CONDITIONS_NOT_MET;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -40,6 +44,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -70,7 +75,9 @@ public class EthSendRawTransactionConditionalTest {
             + "\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\"}],\"id\":1}";
 
     assertActualResponseIsErrorWithGivenMessage(
-        jsonWithBlockConditions, "block number not within specified range");
+        jsonWithBlockConditions,
+        USER_SPECIFIED_CONDITIONS_NOT_MET,
+        "block number not within specified range");
   }
 
   @Test
@@ -83,7 +90,9 @@ public class EthSendRawTransactionConditionalTest {
             + "\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\"}],\"id\":1}";
 
     assertActualResponseIsErrorWithGivenMessage(
-        jsonWithBlockConditions, "block number not within specified range");
+        jsonWithBlockConditions,
+        USER_SPECIFIED_CONDITIONS_NOT_MET,
+        "block number not within specified range");
   }
 
   @Test
@@ -99,7 +108,9 @@ public class EthSendRawTransactionConditionalTest {
             + "\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\",\"timestampMin\":\"7339\",\"timestampMax\":\"7447\"}],\"id\":1}";
 
     assertActualResponseIsErrorWithGivenMessage(
-        jsonWithBlockConditions, "timestamp not within specified range");
+        jsonWithBlockConditions,
+        USER_SPECIFIED_CONDITIONS_NOT_MET,
+        "timestamp not within specified range");
   }
 
   @Test
@@ -115,7 +126,9 @@ public class EthSendRawTransactionConditionalTest {
             + "\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\",\"timestampMin\":\"7339\",\"timestampMax\":\"7447\"}],\"id\":1}";
 
     assertActualResponseIsErrorWithGivenMessage(
-        jsonWithBlockConditions, "timestamp not within specified range");
+        jsonWithBlockConditions,
+        USER_SPECIFIED_CONDITIONS_NOT_MET,
+        "timestamp not within specified range");
   }
 
   @Test
@@ -144,7 +157,54 @@ public class EthSendRawTransactionConditionalTest {
 
     assertActualResponseIsErrorWithGivenMessage(
         jsonWithKnownAccounts,
+        USER_SPECIFIED_CONDITIONS_NOT_MET,
         "storage at address 0x000000000000000000000000000000000099abcd slot 0x0000000000000000000000000000000000000000000000000000000000000001 has been modified");
+  }
+
+  @Test
+  public void maxConditionsExceeded_returnsError() throws JsonProcessingException {
+    final BlockHeader header = mock(BlockHeader.class);
+    // timestamp within the min/max range
+    when(header.getTimestamp()).thenReturn(7437L);
+    when(blockchainQueries.headBlockHeader()).thenReturn(header);
+    // block number within the min/max range
+    final long headBlockNumber = 93L;
+    when(blockchainQueries.headBlockNumber()).thenReturn(headBlockNumber);
+
+    final String jsonWithKnownAccountsTooLarge = getJsonWithTooManyStorageEntries();
+
+    assertActualResponseIsErrorWithGivenMessage(
+        jsonWithKnownAccountsTooLarge,
+        EXCEEDS_RPC_MAX_CONDITIONS_SIZE,
+        "maximum number of conditions exceeded");
+  }
+
+  @NotNull
+  private String getJsonWithTooManyStorageEntries() {
+    final StringBuilder stringBuilder = new StringBuilder("{");
+    for (int i = 0; i <= MAX_CONDITIONS; i++) {
+      stringBuilder.append("\"");
+      stringBuilder.append(Bytes.of(i));
+      stringBuilder.append("\"");
+      stringBuilder.append(": ");
+      stringBuilder.append("\"0x1234\"");
+      if (i < MAX_CONDITIONS) {
+        stringBuilder.append(",");
+      }
+    }
+    stringBuilder.append("}");
+    final String json =
+        "{\"jsonrpc\":\"2.0\",\"method\":\""
+            + METHOD_NAME
+            + "\",\"params\":[\""
+            + VALID_TRANSACTION
+            + "\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\","
+            + "\"knownAccounts\": "
+            + "{\"0x000000000000000000000000000000000099abcd\": "
+            + stringBuilder
+            + "},"
+            + "\"timestampMin\":\"7337\",\"timestampMax\":\"7447\"}],\"id\":1}";
+    return json;
   }
 
   @Test
@@ -205,7 +265,9 @@ public class EthSendRawTransactionConditionalTest {
   }
 
   private void assertActualResponseIsErrorWithGivenMessage(
-      final String jsonRequestString, final String message) throws JsonProcessingException {
+      final String jsonRequestString, final JsonRpcError jsonRpcError, final String message)
+      throws JsonProcessingException {
+    verifyNoInteractions(transactionPool);
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -213,8 +275,7 @@ public class EthSendRawTransactionConditionalTest {
     final JsonRpcResponse actualResponse = method.response(request);
     // the JsonRpcError.data field gets reset by the enum
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.USER_SPECIFIED_CONDITIONS_NOT_MET);
+        new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     assertThat(actualResponse.getType()).isEqualTo(JsonRpcResponseType.ERROR);
     // test for the exact error message in data field
