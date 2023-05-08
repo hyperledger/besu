@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoaderModule;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
-import org.hyperledger.besu.plugin.BesuContext;
+import org.hyperledger.besu.services.BesuPluginContextImpl;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -75,5 +75,5 @@ public interface BesuComponent {
    * @return BesuComponent
    */
   @Named("besuPluginContext")
-  BesuContext getBesuContext();
+  BesuPluginContextImpl getBesuPluginContext();
 }

@@ -1,6 +1,5 @@
 package org.hyperledger.besu.components;
 
-import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
 import javax.inject.Named;
@@ -16,10 +15,15 @@ import dagger.Provides;
 @Module
 public class BesuPluginContextModule {
 
+  /**
+   * Creates a BesuPluginContextImpl, used for plugin service discovery.
+   *
+   * @return the BesuPluginContext
+   */
   @Provides
   @Named("besuPluginContext")
   @Singleton
-  public BesuContext provideBesuPluginContext() {
+  public BesuPluginContextImpl provideBesuPluginContext() {
     return new BesuPluginContextImpl();
   }
 }

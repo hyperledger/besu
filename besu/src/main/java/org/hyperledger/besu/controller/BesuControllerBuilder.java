@@ -1023,7 +1023,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
             cachedMerkleTrieLoader,
             metricsSystem,
-            besuComponent.getBesuContext());
+            besuComponent.getBesuPluginContext());
 
       case FOREST:
       default:
