@@ -45,12 +45,9 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
 
   protected final Map<Bytes32, CachedBonsaiWorldView> cachedWorldStatesByHash;
   protected final long maxLayersToLoad;
-  private final Subscribers<TrieLogObserver> trieLogObservers = Subscribers.create();
+  protected final Subscribers<TrieLogObserver> trieLogObservers = Subscribers.create();
 
-  // TODO plumb factory and observer(s) from plugin service, DO NOT MERGE
   protected final TrieLogFactory trieLogFactory;
-  //  protected TrieLogObserver observer =
-  //      new ZkTrieLogObserver("localhost", 8888).addAsObserverTo(trieLogObservers);
 
   protected AbstractTrieLogManager(
       final Blockchain blockchain,
