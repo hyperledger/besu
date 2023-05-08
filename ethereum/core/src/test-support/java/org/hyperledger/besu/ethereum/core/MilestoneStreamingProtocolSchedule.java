@@ -29,7 +29,7 @@ public class MilestoneStreamingProtocolSchedule extends DefaultProtocolSchedule 
 
   public Stream<Long> streamMilestoneBlocks() {
     return protocolSpecs.stream()
-        .sorted(Comparator.comparing(ScheduledProtocolSpec::milestone))
-        .map(ScheduledProtocolSpec::milestone);
+        .sorted(Comparator.comparing(ScheduledProtocolSpec::fork))
+        .map(s -> s.fork().milestone());
   }
 }

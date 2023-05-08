@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Associates a {@link ProtocolSpec} with a given block number or timestamp level starting point
  * Knows how to query the timestamp or block number of a given block header
@@ -25,9 +27,23 @@ public interface ScheduledProtocolSpec {
 
   boolean isOnMilestoneBoundary(ProcessableBlockHeader header);
 
-  long milestone();
+  // long milestone();
+  Hardfork fork();
 
   ProtocolSpec spec();
+
+  public record Hardfork(String name, long milestone) implements Comparable<Hardfork> {
+    @Override
+    public int compareTo(@NotNull final Hardfork h) {
+      return this.milestone == h.milestone ? 0 : this.milestone < h.milestone ? -1 : 1;
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%s:%d", name, milestone);
+    }
+  }
+  ;
 
   class TimestampProtocolSpec implements ScheduledProtocolSpec {
 
@@ -55,8 +71,8 @@ public interface ScheduledProtocolSpec {
     }
 
     @Override
-    public long milestone() {
-      return timestamp;
+    public Hardfork fork() {
+      return new Hardfork(protocolSpec.getName(), timestamp);
     }
 
     @Override
@@ -90,8 +106,8 @@ public interface ScheduledProtocolSpec {
     }
 
     @Override
-    public long milestone() {
-      return blockNumber;
+    public Hardfork fork() {
+      return new Hardfork(protocolSpec.getName(), blockNumber);
     }
 
     @Override

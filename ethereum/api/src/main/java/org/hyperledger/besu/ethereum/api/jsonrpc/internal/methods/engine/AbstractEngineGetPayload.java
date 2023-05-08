@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Optional;
 
@@ -40,7 +40,7 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
   protected final BlockResultFactory blockResultFactory;
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineGetPayload.class);
 
-  protected final Optional<TimestampSchedule> schedule;
+  protected final Optional<ProtocolSchedule> schedule;
 
   public AbstractEngineGetPayload(
       final Vertx vertx,
@@ -48,7 +48,7 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
       final MergeMiningCoordinator mergeMiningCoordinator,
       final BlockResultFactory blockResultFactory,
       final EngineCallListener engineCallListener,
-      final TimestampSchedule schedule) {
+      final ProtocolSchedule schedule) {
     super(vertx, protocolContext, engineCallListener);
     this.mergeMiningCoordinator = mergeMiningCoordinator;
     this.blockResultFactory = blockResultFactory;
