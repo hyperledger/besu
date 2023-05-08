@@ -62,7 +62,58 @@ public class TransactionDecoder {
           TransactionType.ACCESS_LIST,
           TransactionDecoder::decodeAccessList,
           TransactionType.EIP1559,
-          TransactionDecoder::decodeEIP1559);
+          Decoder.rlpDecoder(TransactionDecoder::decodeEIP1559),
+          TransactionType.BLOB,
+          Decoder.sszDecoder(TransactionDecoder::decodeBlob));
+
+  public static Transaction decodeBlob(final SSZReader input, final UInt32 firstOffset) {
+    Transaction.Builder builder = Transaction.builder();
+    TransactionNetworkPayload.SingedBlobTransaction signedBlobTransaction;
+
+    if (firstOffset.equals(BLOB_TRANSACTION_OFFSET)) {
+      LOG.trace("Decoding TransactionNetworkPayload");
+
+      TransactionNetworkPayload payload = new TransactionNetworkPayload();
+      payload.populateFromReader(input);
+      signedBlobTransaction = payload.getSignedBlobTransaction();
+
+      builder.kzgBlobs(payload.getKzgCommitments(), payload.getBlobs(), payload.getKzgProof());
+    } else {
+      LOG.trace("Decoding TransactionNetworkPayload.SingedBlobTransaction");
+      signedBlobTransaction = new TransactionNetworkPayload.SingedBlobTransaction();
+      signedBlobTransaction.populateFromReader(input);
+    }
+
+    var blobTransaction = signedBlobTransaction.getMessage();
+
+    return builder
+        .type(TransactionType.BLOB)
+        .chainId(blobTransaction.getChainId().toUnsignedBigInteger())
+        .nonce(blobTransaction.getNonce())
+        .maxPriorityFeePerGas(Wei.of(blobTransaction.getMaxPriorityFeePerGas()))
+        .maxFeePerGas(Wei.of(blobTransaction.getMaxFeePerGas()))
+        .gasLimit(blobTransaction.getGas())
+        .to(blobTransaction.getAddress().orElse(null))
+        .value(Wei.of(blobTransaction.getValue()))
+        .payload(blobTransaction.getData())
+        .accessList(
+            blobTransaction.getAccessList().stream()
+                .map(
+                    accessListEntry ->
+                        new AccessListEntry(
+                            accessListEntry.getAddress(), accessListEntry.getStorageKeys()))
+                .collect(Collectors.toList()))
+        .signature(
+            SIGNATURE_ALGORITHM
+                .get()
+                .createSignature(
+                    signedBlobTransaction.getSignature().getR().toUnsignedBigInteger(),
+                    signedBlobTransaction.getSignature().getS().toUnsignedBigInteger(),
+                    signedBlobTransaction.getSignature().isParity() ? (byte) 1 : 0))
+        .maxFeePerDataGas(Wei.of(blobTransaction.getMaxFeePerDataGas()))
+        .versionedHashes(blobTransaction.getBlobVersionedHashes())
+        .build();
+  }
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
