@@ -247,10 +247,7 @@ public final class RlpBlockExporterTest {
   private RawBlockIterator getBlockIterator(final Path blocks) throws IOException {
     final BlockHeaderFunctions blockHeaderFunctions =
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
-    return new RawBlockIterator(
-        blocks,
-        rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions),
-        rlp -> BlockBody.readFrom(rlp, blockHeaderFunctions));
+    return new RawBlockIterator(blocks, blockHeaderFunctions);
   }
 
   private Block getBlock(final Blockchain blockchain, final long blockNumber) {

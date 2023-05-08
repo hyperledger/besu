@@ -24,8 +24,6 @@ import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.DefaultSyncStatus;
@@ -111,10 +109,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
     final BlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
     BLOCKS = new ArrayList<>();
     try (final RawBlockIterator iterator =
-        new RawBlockIterator(
-            Paths.get(blocksUrl.toURI()),
-            rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions),
-            rlp -> BlockBody.readFrom(rlp, blockHeaderFunctions))) {
+        new RawBlockIterator(Paths.get(blocksUrl.toURI()), blockHeaderFunctions)) {
       while (iterator.hasNext()) {
         BLOCKS.add(iterator.next());
       }
