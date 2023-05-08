@@ -34,12 +34,11 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.jetbrains.annotations.NotNull;
 
 public class EthSendRawTransactionConditional extends AbstractEthSendRawTransaction {
   protected final Supplier<BlockchainQueries> blockchainQueries;
 
-  public static final long MAX_CONDITIONS = 100;
+  public static final long MAX_CONDITIONS = 100; // TODO make this configurable
 
   public EthSendRawTransactionConditional(
       final BlockchainQueries blockchainQueries, final TransactionPool transactionPool) {
@@ -113,8 +112,6 @@ public class EthSendRawTransactionConditional extends AbstractEthSendRawTransact
         if (info.getStorageRootHash().isPresent()) {
           // TODO check storage root
           // not yet exposed via blockchainQueries
-          //          return getJsonRpcErrorResponse(requestContext, String.format("storage at
-          // address %s has been modified", a));
         } else {
           if (info.getExpectedStorageEntries().get().size() > MAX_CONDITIONS) {
             return getJsonRpcErrorResponse(
@@ -148,7 +145,6 @@ public class EthSendRawTransactionConditional extends AbstractEthSendRawTransact
     return value <= max && value >= min;
   }
 
-  @NotNull
   private Optional<JsonRpcErrorResponse> getJsonRpcErrorResponse(
       final JsonRpcRequestContext requestContext,
       final JsonRpcError jsonRpcError,
