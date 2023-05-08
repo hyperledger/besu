@@ -216,13 +216,14 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
   @Override
   protected TrieLogFactory setupTrieLogFactory(final BesuContext pluginContext) {
     // if we have a TrieLogService from pluginContext, use it.
-
     var trieLogService =
         Optional.ofNullable(pluginContext)
             .flatMap(context -> context.getService(TrieLogService.class));
 
     if (trieLogService.isPresent()) {
+      // push the TrieLogProvider into the TrieLogService
       trieLogService.get().configureTrieLogProvider(getTrieLogProvider());
+      // return the TrieLogFactory implementation from the TrieLogService
       return trieLogService.get().getTrieLogFactory();
     } else {
       // Otherwise default to TrieLogFactoryImpl
