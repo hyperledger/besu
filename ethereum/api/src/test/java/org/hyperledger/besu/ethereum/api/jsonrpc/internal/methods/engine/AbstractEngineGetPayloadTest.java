@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -35,7 +36,8 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -60,7 +62,7 @@ public abstract class AbstractEngineGetPayloadTest {
         final MergeMiningCoordinator mergeCoordinator,
         final BlockResultFactory ethPeers,
         final EngineCallListener engineCallListener,
-        final TimestampSchedule schedule);
+        final ProtocolSchedule schedule);
   }
 
   private final MethodFactory methodFactory;
@@ -99,10 +101,16 @@ public abstract class AbstractEngineGetPayloadTest {
 
   @Mock protected EngineCallListener engineCallListener;
 
+  @Mock protected ProtocolSchedule protocolSchedule;
+
+  private static final long SHANGHAI_AT = 1337L;
+
   @Before
   public void before() {
     when(mergeContext.retrieveBlockById(mockPid)).thenReturn(Optional.of(mockBlockWithReceipts));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
+    when(protocolSchedule.hardforkFor(any()))
+        .thenReturn(new ScheduledProtocolSpec.Hardfork("shanghai", SHANGHAI_AT));
     this.method =
         methodFactory.create(
             vertx,
@@ -110,11 +118,7 @@ public abstract class AbstractEngineGetPayloadTest {
             mergeMiningCoordinator,
             factory,
             engineCallListener,
-            getTimestampSchedule());
-  }
-
-  protected TimestampSchedule getTimestampSchedule() {
-    return null;
+            protocolSchedule);
   }
 
   @Test
