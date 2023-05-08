@@ -106,7 +106,7 @@ public class BonsaiWorldStateArchiveTest {
             blockchain,
             Optional.of(512L),
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(), null );
     final BlockHeader blockHeader = blockBuilder.number(0).buildHeader();
     final BlockHeader chainHead = blockBuilder.number(512).buildHeader();
     when(blockchain.getChainHeadHeader()).thenReturn(chainHead);

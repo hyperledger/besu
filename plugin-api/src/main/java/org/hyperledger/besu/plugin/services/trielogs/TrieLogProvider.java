@@ -17,10 +17,10 @@ package org.hyperledger.besu.plugin.services.trielogs;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.plugin.data.TrieLog;
 
+import java.util.List;
 import java.util.Optional;
 
 /** Trielog provider interface for a given block hash. */
-@FunctionalInterface
 public interface TrieLogProvider {
   /**
    * Returns the TrieLog layer for the given block hash.
@@ -30,4 +30,24 @@ public interface TrieLogProvider {
    * @param <T> the type of the TrieLog
    */
   <T extends TrieLog.LogTuple<?>> Optional<TrieLog> getTrieLogLayer(final Hash blockHash);
+
+  /**
+   * Returns the TrieLog layer for the given block number.
+   *
+   * @param blockNumber the block hash
+   * @return the TrieLog layer for the given block hash
+   * @param <T> the type of the TrieLog
+   */
+  <T extends TrieLog.LogTuple<?>> Optional<TrieLog> getTrieLogLayer(final long blockNumber);
+
+  /**
+   * Returns the TrieLog layers for the given block number range.
+   *
+   * @param fromBlockNumber the from block number
+   * @param toBlockNumber the to block number
+   * @return the TrieLog layers for the given block number range
+   * @param <T> the type of the TrieLog
+   */
+  <T extends TrieLog.LogTuple<?>> List<TrieLog> getTrieLogsByRange(
+      long fromBlockNumber, long toBlockNumber);
 }

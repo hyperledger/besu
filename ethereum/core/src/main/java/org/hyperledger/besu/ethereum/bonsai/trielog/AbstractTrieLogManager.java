@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.data.TrieLog;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent.TrieLogObserver;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogFactory;
@@ -47,7 +48,7 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
   private final Subscribers<TrieLogObserver> trieLogObservers = Subscribers.create();
 
   // TODO plumb factory and observer(s) from plugin service, DO NOT MERGE
-  protected TrieLogFactory trieLogFactory = new TrieLogFactoryImpl();
+  protected final TrieLogFactory trieLogFactory;
   //  protected TrieLogObserver observer =
   //      new ZkTrieLogObserver("localhost", 8888).addAsObserverTo(trieLogObservers);
 
@@ -55,12 +56,16 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
       final Blockchain blockchain,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final long maxLayersToLoad,
-      final Map<Bytes32, CachedBonsaiWorldView> cachedWorldStatesByHash) {
+      final Map<Bytes32, CachedBonsaiWorldView> cachedWorldStatesByHash,
+      final BesuContext pluginContext) {
     this.blockchain = blockchain;
     this.rootWorldStateStorage = worldStateStorage;
     this.cachedWorldStatesByHash = cachedWorldStatesByHash;
     this.maxLayersToLoad = maxLayersToLoad;
+    this.trieLogFactory = setupTrieLogFactory(pluginContext);
   }
+
+  protected abstract TrieLogFactory setupTrieLogFactory(final BesuContext pluginContext);
 
   @Override
   public synchronized void saveTrieLog(
