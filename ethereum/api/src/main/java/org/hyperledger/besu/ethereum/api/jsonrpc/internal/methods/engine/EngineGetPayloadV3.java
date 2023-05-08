@@ -28,8 +28,6 @@ import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
-import java.util.Optional;
-
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +35,8 @@ import org.slf4j.LoggerFactory;
 public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
 
   private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadV3.class);
-  private final Optional<ScheduledProtocolSpec.Hardfork> shanghai;
-  private final Optional<ScheduledProtocolSpec.Hardfork> cancun;
+  private final ScheduledProtocolSpec.Hardfork shanghai;
+  private final ScheduledProtocolSpec.Hardfork cancun;
 
   public EngineGetPayloadV3(
       final Vertx vertx,
@@ -72,11 +70,11 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
     try {
       long builtAt = blockWithReceipts.getHeader().getTimestamp();
 
-      if (beforeShanghai(builtAt)) {
+      if (builtAt < this.shanghai.milestone()) {
         return new JsonRpcSuccessResponse(
             request.getRequest().getId(),
             blockResultFactory.payloadTransactionCompleteV1(blockWithReceipts.getBlock()));
-      } else if (duringShanghai(builtAt)) {
+      } else if (builtAt >= this.shanghai.milestone() && builtAt < this.cancun.milestone()) {
         return new JsonRpcSuccessResponse(
             request.getRequest().getId(),
             blockResultFactory.payloadTransactionCompleteV2(blockWithReceipts));
@@ -90,16 +88,5 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
       LOG.error("configuration error, can't call V3 endpoint with non-default protocol schedule");
       return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
     }
-  }
-
-  private boolean duringShanghai(final long builtAt) {
-    return (this.shanghai.isPresent() && builtAt >= this.shanghai.get().milestone())
-        && //
-        (this.cancun.isEmpty()
-            || (this.cancun.isPresent() && builtAt < this.cancun.get().milestone()));
-  }
-
-  private boolean beforeShanghai(final long builtAt) {
-    return this.shanghai.isEmpty() || builtAt < this.shanghai.get().milestone();
   }
 }
