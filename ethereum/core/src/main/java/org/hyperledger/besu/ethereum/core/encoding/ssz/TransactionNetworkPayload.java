@@ -124,7 +124,7 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
       UInt256 value;
       SSZVariableSizeTypeList<AccessTuple> accessList =
           new SSZVariableSizeTypeList<>(AccessTuple::new);
-      UInt256 maxFeePerData;
+      UInt256 maxFeePerDataGas;
 
       SSZFixedSizeTypeList<VersionedHash> blobVersionedHashes =
           new SSZFixedSizeTypeList<>(32, VersionedHash::new);
@@ -146,7 +146,7 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
             r -> value = r.readUInt256(),
             data,
             accessList,
-            r -> maxFeePerData = r.readUInt256(),
+            r -> maxFeePerDataGas = r.readUInt256(),
             blobVersionedHashes);
       }
 
@@ -162,7 +162,7 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
             w -> w.writeUInt256(value),
             data,
             accessList,
-            w -> w.writeUInt256(maxFeePerData),
+            w -> w.writeUInt256(maxFeePerDataGas),
             blobVersionedHashes);
       }
 
@@ -202,8 +202,8 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
         return accessList.getElements();
       }
 
-      public UInt256 getMaxFeePerData() {
-        return maxFeePerData;
+      public UInt256 getMaxFeePerDataGas() {
+        return maxFeePerDataGas;
       }
 
       public List<Hash> getBlobVersionedHashes() {
@@ -244,8 +244,8 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
         this.accessList = accessList;
       }
 
-      public void setMaxFeePerData(final UInt256 maxFeePerData) {
-        this.maxFeePerData = maxFeePerData;
+      public void setMaxFeePerDataGas(final UInt256 maxFeePerData) {
+        this.maxFeePerDataGas = maxFeePerData;
       }
 
       public void setBlobVersionedHashes(final List<Hash> blobVersionedHashes) {
