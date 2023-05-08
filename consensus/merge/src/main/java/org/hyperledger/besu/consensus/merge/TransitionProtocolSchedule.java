@@ -246,13 +246,4 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   public void setProtocolContext(final ProtocolContext protocolContext) {
     this.protocolContext = protocolContext;
   }
-
-  /**
-   * Exposes timestamp based schedules for reference.
-   *
-   * @return timestampSchedule the timestamp schedule
-   */
-  public TimestampSchedule getTimestampSchedule() {
-    return timestampSchedule;
-  }
 }

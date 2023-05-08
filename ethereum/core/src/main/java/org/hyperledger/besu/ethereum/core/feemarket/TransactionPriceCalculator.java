@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.core.feemarket;
 
-import static org.hyperledger.besu.util.Slf4jLambdaHelper.traceLambda;
-
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -23,27 +21,17 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import java.math.BigInteger;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+@FunctionalInterface
 public interface TransactionPriceCalculator {
-  Wei price(Transaction transaction, Optional<Wei> maybeFee);
+  Wei price(Transaction transaction, Optional<Wei> baseFee);
 
-  default Wei dataPrice(final DataGas excessDataGas) {
-    return Wei.ZERO;
+  static TransactionPriceCalculator frontier() {
+    return (transaction, baseFee) -> transaction.getGasPrice().orElse(Wei.ZERO);
   }
 
-  class Frontier implements TransactionPriceCalculator {
-    @Override
-    public Wei price(final Transaction transaction, final Optional<Wei> maybeFee) {
-      return transaction.getGasPrice().orElse(Wei.ZERO);
-    }
-  }
-
-  class EIP1559 implements TransactionPriceCalculator {
-    @Override
-    public Wei price(final Transaction transaction, final Optional<Wei> maybeFee) {
-      final Wei baseFee = maybeFee.orElseThrow();
+  static TransactionPriceCalculator eip1559() {
+    return (transaction, maybeBaseFee) -> {
+      final Wei baseFee = maybeBaseFee.orElseThrow();
       if (!transaction.getType().supports1559FeeMarket()) {
         return transaction.getGasPrice().orElse(Wei.ZERO);
       }
@@ -54,47 +42,36 @@ public interface TransactionPriceCalculator {
         price = maxFeePerGas;
       }
       return price;
-    }
+    };
   }
 
-  class DataBlob extends EIP1559 {
-    private static final Logger LOG = LoggerFactory.getLogger(DataBlob.class);
-    private final BigInteger minDataGasPrice;
-    private final BigInteger dataGasPriceUpdateFraction;
-
-    public DataBlob(final int minDataGasPrice, final int dataGasPriceUpdateFraction) {
-      this.minDataGasPrice = BigInteger.valueOf(minDataGasPrice);
-      this.dataGasPriceUpdateFraction = BigInteger.valueOf(dataGasPriceUpdateFraction);
-    }
-
-    @Override
-    public Wei dataPrice(final DataGas excessDataGas) {
+  static TransactionPriceCalculator dataGas(
+      final int minDataGasPrice,
+      final int dataGasPriceUpdateFraction,
+      final DataGas excessDataGas) {
+    return ((transaction, baseFee) -> {
       final var dataGasPrice =
           Wei.of(
               fakeExponential(
-                  minDataGasPrice, excessDataGas.toBigInteger(), dataGasPriceUpdateFraction));
-      traceLambda(
-          LOG,
-          "parentExcessDataGas: {} dataGasPrice: {}",
-          excessDataGas::toShortHexString,
-          dataGasPrice::toHexString);
-
+                  BigInteger.valueOf(minDataGasPrice),
+                  excessDataGas.toBigInteger(),
+                  BigInteger.valueOf(dataGasPriceUpdateFraction)));
       return dataGasPrice;
-    }
+    });
+  }
 
-    private BigInteger fakeExponential(
-        final BigInteger factor, final BigInteger numerator, final BigInteger denominator) {
-      int i = 1;
-      BigInteger output = BigInteger.ZERO;
-      BigInteger numeratorAccumulator = factor.multiply(denominator);
-      while (numeratorAccumulator.signum() > 0) {
-        output = output.add(numeratorAccumulator);
-        numeratorAccumulator =
-            (numeratorAccumulator.multiply(numerator))
-                .divide(denominator.multiply(BigInteger.valueOf(i)));
-        ++i;
-      }
-      return output.divide(denominator);
+  private static BigInteger fakeExponential(
+      final BigInteger factor, final BigInteger numerator, final BigInteger denominator) {
+    int i = 1;
+    BigInteger output = BigInteger.ZERO;
+    BigInteger numeratorAccumulator = factor.multiply(denominator);
+    while (numeratorAccumulator.signum() > 0) {
+      output = output.add(numeratorAccumulator);
+      numeratorAccumulator =
+          (numeratorAccumulator.multiply(numerator))
+              .divide(denominator.multiply(BigInteger.valueOf(i)));
+      ++i;
     }
+    return output.divide(denominator);
   }
 }

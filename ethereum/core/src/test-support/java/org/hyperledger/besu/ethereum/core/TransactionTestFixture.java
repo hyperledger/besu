@@ -16,30 +16,21 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class TransactionTestFixture {
-  private static final Hash DEFAULT_VERSIONED_HASH =
-      Hash.wrap(
-          Bytes32.wrap(
-              Bytes.concatenate(
-                  Bytes.fromHexString("0x01"), Bytes.fromHexString("2a".repeat(31)))));
 
   private TransactionType transactionType = TransactionType.FRONTIER;
 
   private long nonce = 0;
 
-  private Optional<Wei> gasPrice = Optional.empty();
+  private Wei gasPrice = Wei.of(5000);
 
   private long gasLimit = 5000;
 
@@ -54,48 +45,23 @@ public class TransactionTestFixture {
 
   private Optional<Wei> maxPriorityFeePerGas = Optional.empty();
   private Optional<Wei> maxFeePerGas = Optional.empty();
-  private Optional<Wei> maxFeePerDataGas = Optional.empty();
-
-  private Optional<List<AccessListEntry>> accessListEntries = Optional.empty();
-  private Optional<List<Hash>> versionedHashes = Optional.empty();
-
-  private Optional<BigInteger> v = Optional.empty();
 
   public Transaction createTransaction(final KeyPair keys) {
     final Transaction.Builder builder = Transaction.builder();
     builder
         .type(transactionType)
         .gasLimit(gasLimit)
+        .gasPrice(gasPrice)
         .nonce(nonce)
         .payload(payload)
         .value(value)
         .sender(sender);
 
-    switch (transactionType) {
-      case FRONTIER:
-        builder.gasPrice(gasPrice.orElse(Wei.of(5000)));
-        break;
-      case ACCESS_LIST:
-        builder.gasPrice(gasPrice.orElse(Wei.of(5000)));
-        builder.accessList(accessListEntries.orElse(List.of()));
-        break;
-      case EIP1559:
-        builder.maxPriorityFeePerGas(maxPriorityFeePerGas.orElse(Wei.of(500)));
-        builder.maxFeePerGas(maxFeePerGas.orElse(Wei.of(5000)));
-        builder.accessList(accessListEntries.orElse(List.of()));
-        break;
-      case BLOB:
-        builder.maxPriorityFeePerGas(maxPriorityFeePerGas.orElse(Wei.of(500)));
-        builder.maxFeePerGas(maxFeePerGas.orElse(Wei.of(5000)));
-        builder.accessList(accessListEntries.orElse(List.of()));
-        builder.maxFeePerDataGas(maxFeePerDataGas.orElse(Wei.ONE));
-        builder.versionedHashes(versionedHashes.orElse(List.of(DEFAULT_VERSIONED_HASH)));
-        break;
-    }
-
     to.ifPresent(builder::to);
     chainId.ifPresent(builder::chainId);
-    v.ifPresent(builder::v);
+
+    maxPriorityFeePerGas.ifPresent(builder::maxPriorityFeePerGas);
+    maxFeePerGas.ifPresent(builder::maxFeePerGas);
 
     return builder.signAndBuild(keys);
   }
@@ -111,7 +77,7 @@ public class TransactionTestFixture {
   }
 
   public TransactionTestFixture gasPrice(final Wei gasPrice) {
-    this.gasPrice = Optional.ofNullable(gasPrice);
+    this.gasPrice = gasPrice;
     return this;
   }
 
@@ -152,26 +118,6 @@ public class TransactionTestFixture {
 
   public TransactionTestFixture maxFeePerGas(final Optional<Wei> maxFeePerGas) {
     this.maxFeePerGas = maxFeePerGas;
-    return this;
-  }
-
-  public TransactionTestFixture maxFeePerDataGas(final Optional<Wei> maxFeePerDataGas) {
-    this.maxFeePerDataGas = maxFeePerDataGas;
-    return this;
-  }
-
-  public TransactionTestFixture accessList(final List<AccessListEntry> accessListEntries) {
-    this.accessListEntries = Optional.ofNullable(accessListEntries);
-    return this;
-  }
-
-  public TransactionTestFixture versionedHashes(final List<Hash> versionedHashes) {
-    this.versionedHashes = Optional.ofNullable(versionedHashes);
-    return this;
-  }
-
-  public TransactionTestFixture v(final Optional<BigInteger> v) {
-    this.v = v;
     return this;
   }
 }
