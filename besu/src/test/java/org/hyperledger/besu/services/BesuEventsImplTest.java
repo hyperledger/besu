@@ -384,7 +384,7 @@ public class BesuEventsImplTest {
     serviceImpl.addTransactionAddedListener(result::set);
 
     assertThat(result.get()).isNull();
-    transactionPool.addLocalTransaction(TX1);
+    transactionPool.addTransactionViaApi(TX1);
 
     assertThat(result.get()).isNotNull();
   }
@@ -395,13 +395,13 @@ public class BesuEventsImplTest {
     final long id = serviceImpl.addTransactionAddedListener(result::set);
 
     assertThat(result.get()).isNull();
-    transactionPool.addLocalTransaction(TX1);
+    transactionPool.addTransactionViaApi(TX1);
     assertThat(result.get()).isNotNull();
 
     serviceImpl.removeTransactionAddedListener(id);
     result.set(null);
 
-    transactionPool.addLocalTransaction(TX2);
+    transactionPool.addTransactionViaApi(TX2);
     assertThat(result.get()).isNull();
   }
 
@@ -418,8 +418,8 @@ public class BesuEventsImplTest {
 
     assertThat(result.get()).isNull();
     // sending a replacement with higher gas should drop the previous one
-    transactionPool.addLocalTransaction(TX1);
-    transactionPool.addLocalTransaction(
+    transactionPool.addTransactionViaApi(TX1);
+    transactionPool.addTransactionViaApi(
         bumpTransactionGasPrice(TX1, TX1.getGasPrice().get().multiply(2)));
 
     assertThat(result.get()).isNotNull();
@@ -431,9 +431,9 @@ public class BesuEventsImplTest {
     final long id = serviceImpl.addTransactionDroppedListener(result::set);
 
     assertThat(result.get()).isNull();
-    transactionPool.addLocalTransaction(TX1);
+    transactionPool.addTransactionViaApi(TX1);
     // first replacement with higher gas should drop the previous one
-    transactionPool.addLocalTransaction(
+    transactionPool.addTransactionViaApi(
         bumpTransactionGasPrice(TX1, TX1.getGasPrice().get().multiply(2)));
 
     assertThat(result.get()).isNotNull();
@@ -441,7 +441,7 @@ public class BesuEventsImplTest {
     result.set(null);
 
     // second replacement with higher gas should drop the previous one
-    transactionPool.addLocalTransaction(
+    transactionPool.addTransactionViaApi(
         bumpTransactionGasPrice(TX1, TX1.getGasPrice().get().multiply(4)));
     assertThat(result.get()).isNull();
   }

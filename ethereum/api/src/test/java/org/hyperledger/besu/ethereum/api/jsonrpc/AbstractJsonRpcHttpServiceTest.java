@@ -136,10 +136,10 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final TransactionPool transactionPoolMock = mock(TransactionPool.class);
     final PoWMiningCoordinator miningCoordinatorMock = mock(PoWMiningCoordinator.class);
-    when(transactionPoolMock.addLocalTransaction(any(Transaction.class)))
+    when(transactionPoolMock.addTransactionViaApi(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
     // nonce too low tests uses a tx with nonce=16
-    when(transactionPoolMock.addLocalTransaction(argThat(tx -> tx.getNonce() == 16)))
+    when(transactionPoolMock.addTransactionViaApi(argThat(tx -> tx.getNonce() == 16)))
         .thenReturn(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW));
     final GasPricePendingTransactionsSorter pendingTransactionsMock =
         mock(GasPricePendingTransactionsSorter.class);

@@ -2930,12 +2930,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private TransactionPoolConfiguration buildTransactionPoolConfiguration() {
+    final File saveFile = unstableTransactionPoolOptions.getSaveFile();
     return unstableTransactionPoolOptions
         .toDomainObject()
         .txPoolMaxSize(txPoolOptionGroup.txPoolMaxSize)
         .pendingTxRetentionPeriod(txPoolOptionGroup.pendingTxRetentionPeriod)
         .priceBump(Percentage.fromInt(txPoolOptionGroup.priceBump))
         .txFeeCap(txFeeCap)
+        .saveFile(dataPath.resolve(saveFile.getPath()).toFile())
         .build();
   }
 

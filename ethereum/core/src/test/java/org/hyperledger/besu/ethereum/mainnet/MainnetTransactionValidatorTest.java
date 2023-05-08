@@ -506,6 +506,29 @@ public class MainnetTransactionValidatorTest {
         .isEqualTo("Initcode size of 49153 exceeds maximum size of 49152");
   }
 
+  @Test
+  public void shouldAcceptTransactionWithAtLeastOneBlob() {
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(
+            gasCalculator,
+            GasLimitCalculator.constant(),
+            FeeMarket.london(0L),
+            false,
+            Optional.of(BigInteger.ONE),
+            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559, TransactionType.BLOB),
+            0xc000);
+
+    var blobTx =
+        new TransactionTestFixture()
+            .type(TransactionType.BLOB)
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(senderKeys);
+    var validationResult =
+        validator.validate(blobTx, Optional.empty(), transactionValidationParams);
+
+    assertThat(validationResult.isValid()).isTrue();
+  }
+
   private Account accountWithNonce(final long nonce) {
     return account(basicTransaction.getUpfrontCost(0L), nonce);
   }

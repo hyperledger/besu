@@ -22,6 +22,7 @@ import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 
+import java.io.File;
 import java.time.Duration;
 
 import org.junit.Test;
@@ -152,6 +153,81 @@ public class TransactionPoolOptionsTest
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
+  @Test
+  public void disableLocalsDefault() {
+    final TestBesuCommand cmd = parseCommand();
+
+    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
+    final TransactionPoolConfiguration config = options.toDomainObject().build();
+    assertThat(config.getDisableLocalTransactions()).isFalse();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void disableLocalsOn() {
+    final TestBesuCommand cmd = parseCommand("--tx-pool-disable-locals=true");
+
+    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
+    final TransactionPoolConfiguration config = options.toDomainObject().build();
+    assertThat(config.getDisableLocalTransactions()).isTrue();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void disableLocalsOff() {
+    final TestBesuCommand cmd = parseCommand("--tx-pool-disable-locals=false");
+
+    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
+    final TransactionPoolConfiguration config = options.toDomainObject().build();
+    assertThat(config.getDisableLocalTransactions()).isFalse();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void saveToFileDisabledByDefault() {
+    final TestBesuCommand cmd = parseCommand();
+
+    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
+    final TransactionPoolConfiguration config = options.toDomainObject().build();
+    assertThat(config.getEnableSaveRestore()).isFalse();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void saveToFileEnabledDefaultPath() {
+    final TestBesuCommand cmd = parseCommand("--tx-pool-enable-save-restore=true");
+
+    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
+    final TransactionPoolConfiguration config = options.toDomainObject().build();
+    assertThat(config.getEnableSaveRestore()).isTrue();
+    assertThat(config.getSaveFile()).hasName(TransactionPoolConfiguration.DEFAULT_SAVE_FILE_NAME);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void saveToFileEnabledCustomPath() {
+    final TestBesuCommand cmd =
+        parseCommand("--tx-pool-enable-save-restore=true", "--tx-pool-save-file=my.save.file");
+
+    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
+    final TransactionPoolConfiguration config = options.toDomainObject().build();
+    assertThat(config.getEnableSaveRestore()).isTrue();
+    assertThat(config.getSaveFile()).hasName("my.save.file");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
   @Override
   ImmutableTransactionPoolConfiguration.Builder createDefaultDomainObject() {
     final ImmutableTransactionPoolConfiguration defaultValue =
@@ -160,7 +236,10 @@ public class TransactionPoolOptionsTest
         .strictTransactionReplayProtectionEnabled(false)
         .txMessageKeepAliveSeconds(defaultValue.getTxMessageKeepAliveSeconds())
         .eth65TrxAnnouncedBufferingPeriod(defaultValue.getEth65TrxAnnouncedBufferingPeriod())
-        .txPoolLimitByAccountPercentage(defaultValue.getTxPoolLimitByAccountPercentage());
+        .txPoolLimitByAccountPercentage(defaultValue.getTxPoolLimitByAccountPercentage())
+        .disableLocalTransactions(defaultValue.getDisableLocalTransactions())
+        .enableSaveRestore(defaultValue.getEnableSaveRestore())
+        .saveFile(defaultValue.getSaveFile());
   }
 
   @Override
@@ -171,7 +250,10 @@ public class TransactionPoolOptionsTest
         .eth65TrxAnnouncedBufferingPeriod(
             TransactionPoolConfiguration.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD.plus(
                 Duration.ofMillis(100)))
-        .txPoolLimitByAccountPercentage(0.5f);
+        .txPoolLimitByAccountPercentage(0.5f)
+        .disableLocalTransactions(true)
+        .enableSaveRestore(true)
+        .saveFile(new File("abc.xyz"));
   }
 
   @Override

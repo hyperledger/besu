@@ -133,11 +133,11 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
 
     final TransactionPool transactionPoolMock = Mockito.mock(TransactionPool.class);
 
-    Mockito.when(transactionPoolMock.addLocalTransaction(ArgumentMatchers.any(Transaction.class)))
+    Mockito.when(transactionPoolMock.addTransactionViaApi(ArgumentMatchers.any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
     // nonce too low tests uses a tx with nonce=16
     Mockito.when(
-            transactionPoolMock.addLocalTransaction(
+            transactionPoolMock.addTransactionViaApi(
                 ArgumentMatchers.argThat(tx -> tx.getNonce() == 16)))
         .thenReturn(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW));
     final GasPricePendingTransactionsSorter pendingTransactionsMock =
