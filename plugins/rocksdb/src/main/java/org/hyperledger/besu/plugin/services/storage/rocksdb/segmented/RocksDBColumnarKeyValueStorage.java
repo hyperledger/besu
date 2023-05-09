@@ -80,8 +80,8 @@ public abstract class RocksDBColumnarKeyValueStorage
   protected static final long ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC = 1_073_741_824L;
   /** RocksDb number of log files to keep on disk */
   private static final long NUMBER_OF_LOG_FILES_TO_KEEP = 5;
-  /** RocksDb Max size of each log file */
-  private static final long MAX_LOG_FILE_SIZE = 104_857_600L;
+  /** RocksDb Time to roll a log file (1 day = 3600 * 24 seconds) */
+  private static final long TIME_TO_ROLL_LOG_FILE = 86_400L;
 
   static {
     RocksDbUtil.loadNativeLibrary();
@@ -187,8 +187,8 @@ public abstract class RocksDBColumnarKeyValueStorage
         .setMaxOpenFiles(configuration.getMaxOpenFiles())
         .setStatistics(stats)
         .setCreateMissingColumnFamilies(true)
+        .setLogFileTimeToRoll(TIME_TO_ROLL_LOG_FILE)
         .setKeepLogFileNum(NUMBER_OF_LOG_FILES_TO_KEEP)
-        .setMaxLogFileSize(MAX_LOG_FILE_SIZE)
         .setEnv(Env.getDefault().setBackgroundThreads(configuration.getBackgroundThreadCount()));
 
     if (configuration.isHighSpec()) {
