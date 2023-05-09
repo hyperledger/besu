@@ -79,7 +79,7 @@ public abstract class RocksDBColumnarKeyValueStorage
   /** RocksDb memtable size when using the high spec option */
   protected static final long ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC = 1_073_741_824L;
   /** RocksDb number of log files to keep on disk */
-  private static final long NUMBER_OF_LOG_FILES_TO_KEEP = 5;
+  private static final long NUMBER_OF_LOG_FILES_TO_KEEP = 7;
   /** RocksDb Time to roll a log file (1 day = 3600 * 24 seconds) */
   private static final long TIME_TO_ROLL_LOG_FILE = 86_400L;
 

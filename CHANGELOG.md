@@ -5,7 +5,7 @@
 ### Breaking Changes
 
 ### Additions and Improvements
-- Set the number of RocksDB log files to keep on disk and the size of each file [#5428](https://github.com/hyperledger/besu/pull/5428)
+- Set the retention policy for RocksDB log files to maintain only the logs from the last week [#5428](https://github.com/hyperledger/besu/pull/5428)
 - "Big-EOF" (the EOF version initially slotted for Shanghai) has been moved from Cancun to FutureEIPs [#5429](https://github.com/hyperledger/besu/pull/5429)
 - EIP-4844: Zero blob transactions are invalid [#5425](https://github.com/hyperledger/besu/pull/5425)
 - Transaction pool flag to disable specific behaviors for locally submitted transactions [#5418](https://github.com/hyperledger/besu/pull/5418)
