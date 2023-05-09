@@ -51,5 +51,11 @@ public interface TrieLogProvider {
   <T extends TrieLog.LogTuple<?>> List<TrieLogRangePair> getTrieLogsByRange(
       long fromBlockNumber, long toBlockNumber);
 
+  /**
+   * Block and TrieLog layer composition, used for returning a range of TrieLog layers.
+   *
+   * @param blockNumber the block number
+   * @param trieLog the associated TrieLog layer
+   */
   record TrieLogRangePair(long blockNumber, TrieLog trieLog) {}
 }
