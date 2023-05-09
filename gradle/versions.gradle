@@ -16,7 +16,7 @@
 dependencyManagement {
   dependencies {
 
-    dependencySet(group: 'org.antlr', version: '4.10.1') {
+    dependencySet(group: 'org.antlr', version: '4.11.0') {
       entry 'antlr4'
       entry 'antlr4-runtime'
     }
@@ -146,6 +146,8 @@ dependencyManagement {
       entry 'tuweni-toml'
       entry 'tuweni-units'
     }
+
+    dependency 'commons-net:commons-net:3.9.0'
 
     dependency 'org.assertj:assertj-core:3.24.2'
 
