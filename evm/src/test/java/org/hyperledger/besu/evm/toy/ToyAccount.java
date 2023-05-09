@@ -152,4 +152,9 @@ public class ToyAccount implements EvmAccount, MutableAccount {
   public Map<UInt256, UInt256> getUpdatedStorage() {
     return storage;
   }
+
+  @Override
+  public Hash getStorageRoot() {
+    return Hash.EMPTY;
+  }
 }

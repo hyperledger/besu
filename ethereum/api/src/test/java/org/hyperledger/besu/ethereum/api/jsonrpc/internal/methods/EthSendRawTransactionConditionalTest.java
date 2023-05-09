@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -162,6 +163,37 @@ public class EthSendRawTransactionConditionalTest {
   }
 
   @Test
+  public void knownAccount_storageHash_hasChanged_returnsError() throws JsonProcessingException {
+    final BlockHeader header = mock(BlockHeader.class);
+    // timestamp within the min/max range
+    when(header.getTimestamp()).thenReturn(7437L);
+    when(blockchainQueries.headBlockHeader()).thenReturn(header);
+    // block number within the min/max range
+    final long headBlockNumber = 93L;
+    when(blockchainQueries.headBlockNumber()).thenReturn(headBlockNumber);
+    // non-matching storage hash
+    final Address address = Address.fromHexString("0x000000000000000000000000000000000099abcd");
+    when(blockchainQueries.storageRoot(address, headBlockNumber))
+        .thenReturn(
+            Optional.of(
+                Hash.fromHexString(
+                    "0xbeef460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470")));
+
+    final String jsonWithKnownAccounts =
+        "{\"jsonrpc\":\"2.0\",\"method\":\""
+            + METHOD_NAME
+            + "\",\"params\":[\"0x00\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\","
+            + "\"knownAccounts\": "
+            + "{\"0x000000000000000000000000000000000099abcd\": \"0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470\"},"
+            + "\"timestampMin\":\"7337\",\"timestampMax\":\"7447\"}],\"id\":1}";
+
+    assertActualResponseIsErrorWithGivenMessage(
+        jsonWithKnownAccounts,
+        USER_SPECIFIED_CONDITIONS_NOT_MET,
+        "storage at address 0x000000000000000000000000000000000099abcd has been modified");
+  }
+
+  @Test
   public void maxConditionsExceeded_returnsError() throws JsonProcessingException {
     final BlockHeader header = mock(BlockHeader.class);
     // timestamp within the min/max range
@@ -224,6 +256,46 @@ public class EthSendRawTransactionConditionalTest {
             + "\",\"params\":[\""
             + VALID_TRANSACTION
             + "\",{\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\",\"timestampMin\":\"7339\",\"timestampMax\":\"7447\"}],\"id\":1}";
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new ObjectMapper().readValue(jsonRequestString, JsonRpcRequest.class));
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(
+            request.getRequest().getId(),
+            "0xbaabcc1bd699e7378451e4ce5969edb9bdcae76cb79bdacae793525c31e423c7");
+
+    final JsonRpcResponse actualResponse = method.response(request);
+
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+    verify(transactionPool).addTransactionViaApi(any(Transaction.class));
+  }
+
+  @Test
+  public void validKnownAccounts_isSentToTransactionPool() throws JsonProcessingException {
+    when(transactionPool.addTransactionViaApi(any(Transaction.class)))
+        .thenReturn(ValidationResult.valid());
+
+    final BlockHeader header = mock(BlockHeader.class);
+    when(header.getTimestamp()).thenReturn(7437L);
+    when(blockchainQueries.headBlockHeader()).thenReturn(header);
+    when(blockchainQueries.headBlockNumber()).thenReturn(93L);
+    when(blockchainQueries.storageRoot(
+            Address.fromHexString("0x000000000000000000000000000000000099abcd"), 93L))
+        .thenReturn(
+            Optional.of(
+                Hash.fromHexString(
+                    "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470")));
+
+    final String jsonRequestString =
+        "{\"jsonrpc\":\"2.0\",\"method\":\""
+            + METHOD_NAME
+            + "\",\"params\":[\""
+            + VALID_TRANSACTION
+            + "\",{"
+            + "\"knownAccounts\": "
+            + "{\"0x000000000000000000000000000000000099abcd\": \"0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470\"},"
+            + "\"blockNumberMin\":\"90\",\"blockNumberMax\":\"98\",\"timestampMin\":\"7339\",\"timestampMax\":\"7447\"}],\"id\":1}";
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(

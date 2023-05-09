@@ -36,7 +36,7 @@ public interface MutableAccount extends Account {
   }
 
   /**
-   * Sets the nonce of this account to the provide value.
+   * Sets the nonce of this account to the provided value.
    *
    * @param value the value to set the nonce to.
    */

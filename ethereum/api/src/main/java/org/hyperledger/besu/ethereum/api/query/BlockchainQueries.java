@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.io.EOFException;
@@ -198,6 +199,20 @@ public class BlockchainQueries {
       final Address address, final UInt256 storageIndex, final Hash blockHash) {
     return fromAccount(
         address, blockHash, account -> account.getStorageValue(storageIndex), UInt256.ZERO);
+  }
+
+  /**
+   * Returns the storage root hash for the given address.
+   *
+   * @param address The address of the account that owns the storage being queried.
+   * @param blockNumber The blockNumber that is being queried.
+   * @return The storage root hash for the account being queried.
+   */
+  public Optional<Hash> storageRoot(final Address address, final long blockNumber) {
+    final Hash blockHash =
+        getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
+
+    return fromAccount(address, blockHash, AccountState::getStorageRoot, Hash.EMPTY);
   }
 
   /**

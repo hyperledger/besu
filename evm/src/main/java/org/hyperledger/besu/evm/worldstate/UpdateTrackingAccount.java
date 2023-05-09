@@ -59,7 +59,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   @Nullable private Bytes updatedCode; // Null if the underlying code has not been updated.
   @Nullable private Hash updatedCodeHash;
 
-  // Only contains updated storage entries, but may contains entry with a value of 0 to signify
+  // Only contains updated storage entries, but may contain entry with a value of 0 to signify
   // deletion.
   private final NavigableMap<UInt256, UInt256> updatedStorage;
   private boolean storageWasCleared = false;
@@ -306,5 +306,10 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   @Override
   public MutableAccount getMutable() throws ModificationNotAllowedException {
     return this;
+  }
+
+  @Override
+  public Hash getStorageRoot() {
+    return Hash.EMPTY;
   }
 }

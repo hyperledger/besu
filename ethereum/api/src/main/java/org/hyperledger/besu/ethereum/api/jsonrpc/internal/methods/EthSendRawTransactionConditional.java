@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRp
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.USER_SPECIFIED_CONDITIONS_NOT_MET;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.SendRawTransactionConditionalParameter;
@@ -110,8 +111,13 @@ public class EthSendRawTransactionConditional extends AbstractEthSendRawTransact
       for (Address a : storageToCheck.keySet()) {
         SendRawTransactionConditionalParameter.KnownAccountInfo info = storageToCheck.get(a);
         if (info.getStorageRootHash().isPresent()) {
-          // TODO check storage root
-          // not yet exposed via blockchainQueries
+          final Optional<Hash> maybeHash = blockchainQueries.get().storageRoot(a, headBlockNumber);
+          if (maybeHash.isEmpty() || !maybeHash.get().equals(info.getStorageRootHash().get())) {
+            return getJsonRpcErrorResponse(
+                requestContext,
+                USER_SPECIFIED_CONDITIONS_NOT_MET,
+                String.format("storage at address %s has been modified", a));
+          }
         } else {
           if (info.getExpectedStorageEntries().get().size() > MAX_CONDITIONS) {
             return getJsonRpcErrorResponse(

@@ -82,7 +82,7 @@ public interface AccountState {
   Hash getCodeHash();
 
   /**
-   * Whether the account has (non empty) EVM bytecode associated to it.
+   * Whether the account has (non-empty) EVM bytecode associated to it.
    *
    * <p>This is functionally equivalent to {@code !code().isEmpty()}, though could be implemented
    * more efficiently.

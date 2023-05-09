@@ -123,6 +123,11 @@ public interface WorldState extends WorldView, AutoCloseable {
     }
 
     @Override
+    public Hash getStorageRoot() {
+      return accountState.getStorageRoot();
+    }
+
+    @Override
     public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
         final Bytes32 startKeyHash, final int limit) {
       return accountState.storageEntriesFrom(startKeyHash, limit);

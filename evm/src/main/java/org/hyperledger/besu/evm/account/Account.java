@@ -21,7 +21,7 @@ import org.hyperledger.besu.datatypes.Wei;
  * A world state account.
  *
  * <p>In addition to holding the account state, a full account provides access to the account
- * address, which is not stored directly in the world state trie (account's are indexed by the hash
+ * address, which is not stored directly in the world state trie (accounts are indexed by the hash
  * of their address).
  */
 public interface Account extends AccountState {

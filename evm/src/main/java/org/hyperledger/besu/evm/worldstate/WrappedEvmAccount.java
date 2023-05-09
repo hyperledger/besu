@@ -116,4 +116,9 @@ public class WrappedEvmAccount implements EvmAccount {
       final Bytes32 startKeyHash, final int limit) {
     return mutableAccount.storageEntriesFrom(startKeyHash, limit);
   }
+
+  @Override
+  public Hash getStorageRoot() {
+    return Hash.EMPTY;
+  }
 }

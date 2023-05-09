@@ -131,6 +131,11 @@ public class SimpleAccount implements EvmAccount, MutableAccount {
   }
 
   @Override
+  public Hash getStorageRoot() {
+    return Hash.EMPTY;
+  }
+
+  @Override
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
       final Bytes32 startKeyHash, final int limit) {
     throw new UnsupportedOperationException(
