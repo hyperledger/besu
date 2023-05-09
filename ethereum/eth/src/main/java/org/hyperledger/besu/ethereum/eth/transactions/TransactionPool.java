@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedSta
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.TRANSACTION_ALREADY_KNOWN;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -37,6 +38,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.account.Account;
@@ -47,13 +49,23 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.IntSummaryStatistics;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,6 +115,80 @@ public class TransactionPool implements BlockAddedObserver {
             "source");
 
     ethContext.getEthPeers().subscribeConnect(this::handleConnect);
+
+    CompletableFuture.runAsync(this::loadFromDisk);
+  }
+
+  public void saveToDisk() {
+    if (configuration.getEnableSaveRestore()) {
+      final File saveFile = configuration.getSaveFile();
+      LOG.info("Saving transaction pool content to file {}", saveFile);
+      try (final BufferedWriter bw =
+          new BufferedWriter(new FileWriter(saveFile, StandardCharsets.US_ASCII))) {
+        final var allTxs = pendingTransactions.getPendingTransactions();
+        allTxs.parallelStream()
+            .map(
+                ptx -> {
+                  final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+                  ptx.getTransaction().writeTo(rlp);
+                  return (ptx.isReceivedFromLocalSource() ? "l" : "r")
+                      + rlp.encoded().toBase64String();
+                })
+            .forEach(
+                line -> {
+                  synchronized (bw) {
+                    try {
+                      bw.write(line);
+                      bw.newLine();
+                    } catch (IOException e) {
+                      throw new RuntimeException(e);
+                    }
+                  }
+                });
+        LOG.info("Saved {} transactions to file {}", allTxs.size(), saveFile);
+      } catch (IOException e) {
+        LOG.error("Error while saving txpool content to disk", e);
+      }
+    }
+  }
+
+  public void loadFromDisk() {
+    if (configuration.getEnableSaveRestore()) {
+      final File saveFile = configuration.getSaveFile();
+      if (saveFile.exists()) {
+        LOG.info("Loading transaction pool content from file {}", saveFile);
+        try (final BufferedReader br =
+            new BufferedReader(new FileReader(saveFile, StandardCharsets.US_ASCII))) {
+          final IntSummaryStatistics stats =
+              br.lines()
+                  .parallel()
+                  .mapToInt(
+                      line -> {
+                        final boolean isLocal = line.charAt(0) == 'l';
+                        final Transaction tx =
+                            Transaction.readFrom(Bytes.fromBase64String(line.substring(1)));
+
+                        final ValidationResult<TransactionInvalidReason> result;
+                        if (isLocal && !configuration.getDisableLocalTransactions()) {
+                          result = addLocalTransaction(tx);
+                        } else {
+                          result = addRemoteTransaction(tx);
+                        }
+
+                        return result.isValid() ? 1 : 0;
+                      })
+                  .summaryStatistics();
+          LOG.info(
+              "Added {} transactions of {} loaded from file {}",
+              stats.getSum(),
+              stats.getCount(),
+              saveFile);
+        } catch (IOException e) {
+          LOG.error("Error while saving txpool content to disk", e);
+        }
+      }
+      saveFile.delete();
+    }
   }
 
   void handleConnect(final EthPeer peer) {
@@ -113,8 +199,20 @@ public class TransactionPool implements BlockAddedObserver {
     pendingTransactions.reset();
   }
 
-  public ValidationResult<TransactionInvalidReason> addLocalTransaction(
+  public ValidationResult<TransactionInvalidReason> addTransactionViaApi(
       final Transaction transaction) {
+
+    if (configuration.getDisableLocalTransactions()) {
+      final var result = addRemoteTransaction(transaction);
+      if (result.isValid()) {
+        transactionBroadcaster.onTransactionsAdded(List.of(transaction));
+      }
+      return result;
+    }
+    return addLocalTransaction(transaction);
+  }
+
+  ValidationResult<TransactionInvalidReason> addLocalTransaction(final Transaction transaction) {
     final ValidationResultAndAccount validationResult = validateLocalTransaction(transaction);
 
     if (validationResult.result.isValid()) {
@@ -159,48 +257,9 @@ public class TransactionPool implements BlockAddedObserver {
 
     for (final Transaction transaction : transactions) {
 
-      if (pendingTransactions.containsTransaction(transaction.getHash())) {
-        LOG.atTrace()
-            .setMessage("Discard already present transaction {}")
-            .addArgument(transaction::toTraceLog)
-            .log();
-        // We already have this transaction, don't even validate it.
-        duplicateTransactionCounter.labels(REMOTE).inc();
-        continue;
-      }
-
-      final ValidationResultAndAccount validationResult = validateRemoteTransaction(transaction);
-
-      if (validationResult.result.isValid()) {
-        final TransactionAddedStatus status =
-            pendingTransactions.addRemoteTransaction(transaction, validationResult.maybeAccount);
-        switch (status) {
-          case ADDED:
-            LOG.atTrace()
-                .setMessage("Added remote transaction {}")
-                .addArgument(transaction::toTraceLog)
-                .log();
-            addedTransactions.add(transaction);
-            break;
-          case ALREADY_KNOWN:
-            LOG.atTrace()
-                .setMessage("Duplicate remote transaction {}")
-                .addArgument(transaction::toTraceLog)
-                .log();
-            duplicateTransactionCounter.labels(REMOTE).inc();
-            break;
-          default:
-            LOG.atTrace().setMessage("Transaction added status {}").addArgument(status::name).log();
-        }
-      } else {
-        LOG.atTrace()
-            .setMessage("Discard invalid transaction {}, reason {}")
-            .addArgument(transaction::toTraceLog)
-            .addArgument(validationResult.result::getInvalidReason)
-            .log();
-        pendingTransactions
-            .signalInvalidAndGetDependentTransactions(transaction)
-            .forEach(pendingTransactions::removeTransaction);
+      final var result = addRemoteTransaction(transaction);
+      if (result.isValid()) {
+        addedTransactions.add(transaction);
       }
     }
 
@@ -213,6 +272,56 @@ public class TransactionPool implements BlockAddedObserver {
           .addArgument(() -> pendingTransactions.toTraceLog(true, true))
           .log();
     }
+  }
+
+  private ValidationResult<TransactionInvalidReason> addRemoteTransaction(
+      final Transaction transaction) {
+    if (pendingTransactions.containsTransaction(transaction.getHash())) {
+      LOG.atTrace()
+          .setMessage("Discard already present transaction {}")
+          .addArgument(transaction::toTraceLog)
+          .log();
+      // We already have this transaction, don't even validate it.
+      duplicateTransactionCounter.labels(REMOTE).inc();
+      return ValidationResult.invalid(TRANSACTION_ALREADY_KNOWN);
+    }
+
+    final ValidationResultAndAccount validationResult = validateRemoteTransaction(transaction);
+
+    if (validationResult.result.isValid()) {
+      final var status =
+          pendingTransactions.addRemoteTransaction(transaction, validationResult.maybeAccount);
+      switch (status) {
+        case ADDED:
+          LOG.atTrace()
+              .setMessage("Added remote transaction {}")
+              .addArgument(transaction::toTraceLog)
+              .log();
+          break;
+        case ALREADY_KNOWN:
+          LOG.atTrace()
+              .setMessage("Duplicate remote transaction {}")
+              .addArgument(transaction::toTraceLog)
+              .log();
+          duplicateTransactionCounter.labels(REMOTE).inc();
+          return ValidationResult.invalid(TRANSACTION_ALREADY_KNOWN);
+        default:
+          LOG.atTrace().setMessage("Transaction added status {}").addArgument(status::name).log();
+          return ValidationResult.invalid(status.getInvalidReason().get());
+      }
+
+    } else {
+      LOG.atTrace()
+          .setMessage("Discard invalid transaction {}, reason {}")
+          .addArgument(transaction::toTraceLog)
+          .addArgument(validationResult.result::getInvalidReason)
+          .log();
+      pendingTransactions
+          .signalInvalidAndGetDependentTransactions(transaction)
+          .forEach(pendingTransactions::removeTransaction);
+    }
+
+    return validationResult.result;
   }
 
   public long subscribePendingTransactions(final PendingTransactionListener listener) {
@@ -247,7 +356,10 @@ public class TransactionPool implements BlockAddedObserver {
           reAddTransactions.stream()
               .collect(
                   Collectors.partitioningBy(
-                      tx -> pendingTransactions.isLocalSender(tx.getSender())));
+                      tx ->
+                          configuration.getDisableLocalTransactions()
+                              ? false
+                              : pendingTransactions.isLocalSender(tx.getSender())));
       var reAddLocalTxs = txsByOrigin.get(true);
       var reAddRemoteTxs = txsByOrigin.get(false);
       if (!reAddLocalTxs.isEmpty()) {
