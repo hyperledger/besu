@@ -113,6 +113,13 @@ public interface AccountState {
   UInt256 getOriginalStorageValue(UInt256 key);
 
   /**
+   * Retrieves the account storage root hash.
+   *
+   * @return the value associated to the account storage.
+   */
+  Hash getStorageRoot();
+
+  /**
    * Whether the account is "empty".
    *
    * <p>An account is defined as empty if:

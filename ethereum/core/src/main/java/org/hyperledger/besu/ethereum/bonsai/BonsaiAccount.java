@@ -262,6 +262,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     }
   }
 
+  @Override
   public Hash getStorageRoot() {
     return storageRoot;
   }

@@ -264,7 +264,8 @@ public class DefaultMutableWorldState implements MutableWorldState {
       return accountValue.getBalance();
     }
 
-    Hash getStorageRoot() {
+    @Override
+    public Hash getStorageRoot() {
       return accountValue.getStorageRoot();
     }
 
