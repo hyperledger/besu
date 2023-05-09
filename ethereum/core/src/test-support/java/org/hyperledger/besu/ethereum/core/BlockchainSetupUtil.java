@@ -184,8 +184,7 @@ public class BlockchainSetupUtil {
       final BlockHeaderFunctions blockHeaderFunctions =
           ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
       try (final RawBlockIterator iterator =
-          new RawBlockIterator(
-              blocksPath, rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions))) {
+          new RawBlockIterator(blocksPath, blockHeaderFunctions)) {
         while (iterator.hasNext()) {
           blocks.add(iterator.next());
         }

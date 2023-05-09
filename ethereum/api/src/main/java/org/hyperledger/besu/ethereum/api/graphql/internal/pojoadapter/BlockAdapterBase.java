@@ -273,7 +273,7 @@ public class BlockAdapterBase extends AdapterBase {
         .map(
             blockBody -> {
               final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-              blockBody.writeTo(rlpOutput);
+              blockBody.writeWrappedBodyTo(rlpOutput);
               return rlpOutput.encoded();
             });
   }
