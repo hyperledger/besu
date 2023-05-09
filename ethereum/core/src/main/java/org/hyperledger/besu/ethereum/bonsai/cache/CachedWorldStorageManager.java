@@ -256,14 +256,16 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
       }
 
       @Override
-      public <T extends TrieLog.LogTuple<?>> List<TrieLog> getTrieLogsByRange(
+      public <T extends TrieLog.LogTuple<?>> List<TrieLogRangePair> getTrieLogsByRange(
           final long fromBlockNumber, final long toBlockNumber) {
         return rangeAsStream(fromBlockNumber, toBlockNumber)
-            .map(blockchain::getBlockHeader)
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .map(BlockHeader::getHash)
-            .map(CachedWorldStorageManager.this::getTrieLogLayer)
+            .map(
+                blockNumber ->
+                    blockchain
+                        .getBlockHeader(blockNumber)
+                        .map(BlockHeader::getHash)
+                        .flatMap(CachedWorldStorageManager.this::getTrieLogLayer)
+                        .map(layer -> new TrieLogRangePair(blockNumber, layer)))
             .filter(Optional::isPresent)
             .map(Optional::get)
             .collect(Collectors.toList());
