@@ -146,8 +146,8 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
   /**
    * Read all fields from the block body expecting no list wrapping them. An example of a valid body
-   * would be: [txs],[ommers],[withdrawals] this method is called directly when importing a single
-   * block
+   * would be: [txs],[ommers],[withdrawals],[deposits] this method is called directly when importing
+   * a single block
    *
    * @param input The RLP-encoded input
    * @param blockHeaderFunctions The block header functions used for parsing block headers
