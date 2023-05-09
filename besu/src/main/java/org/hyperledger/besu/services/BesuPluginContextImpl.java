@@ -83,6 +83,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
    * @param serviceType the service type
    * @param service the service
    */
+  @Override
   public <T extends BesuService> void addService(final Class<T> serviceType, final T service) {
     checkArgument(serviceType.isInterface(), "Services must be Java interfaces.");
     checkArgument(
