@@ -187,6 +187,8 @@ public class Transaction
       checkArgument(
           versionedHashes.isPresent(), "Must specify blob versioned hashes for blob transaction");
       checkArgument(
+          !versionedHashes.get().isEmpty(), "Blob transaction must have at least one blob");
+      checkArgument(
           maxFeePerDataGas.isPresent(), "Must specify max fee per data gas for blob transaction");
     }
 

@@ -79,6 +79,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
@@ -5571,6 +5572,68 @@ public class BesuCommandTest extends CommandTestAbstract {
         genesisFileWithBlobs.toString(),
         "--kzg-trusted-setup",
         testSetupAbsolutePath.toString());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void txpoolDefaultSaveFileRelativeToDataPath() throws IOException {
+    final Path dataDir = Files.createTempDirectory("data-dir");
+    parseCommand("--data-path", dataDir.toString(), "--tx-pool-enable-save-restore", "true");
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+
+    assertThat(transactionPoolConfigCaptor.getValue().getSaveFile())
+        .isEqualTo(dataDir.resolve(TransactionPoolConfiguration.DEFAULT_SAVE_FILE_NAME).toFile());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void txpoolCustomSaveFileRelativeToDataPath() throws IOException {
+    final Path dataDir = Files.createTempDirectory("data-dir");
+    dataDir.toFile().deleteOnExit();
+    final File saveFile = Files.createTempFile(dataDir, "txpool", "save").toFile();
+    saveFile.deleteOnExit();
+    parseCommand(
+        "--data-path",
+        dataDir.toString(),
+        "--tx-pool-enable-save-restore",
+        "true",
+        "--tx-pool-save-file",
+        saveFile.getName());
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+
+    final File configuredSaveFile = transactionPoolConfigCaptor.getValue().getSaveFile();
+    assertThat(configuredSaveFile).isEqualTo(saveFile);
+    assertThat(configuredSaveFile.toPath().getParent()).isEqualTo(dataDir);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void txpoolSaveFileAbsolutePathOutsideDataPath() throws IOException {
+    final Path dataDir = Files.createTempDirectory("data-dir");
+    dataDir.toFile().deleteOnExit();
+    final File saveFile = File.createTempFile("txpool", "dump");
+    saveFile.deleteOnExit();
+    parseCommand(
+        "--data-path",
+        dataDir.toString(),
+        "--tx-pool-enable-save-restore",
+        "true",
+        "--tx-pool-save-file",
+        saveFile.getAbsolutePath());
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+
+    final File configuredSaveFile = transactionPoolConfigCaptor.getValue().getSaveFile();
+    assertThat(configuredSaveFile).isEqualTo(saveFile);
+    assertThat(configuredSaveFile.toPath().getParent()).isNotEqualTo(dataDir);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();

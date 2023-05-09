@@ -88,7 +88,7 @@ public class GraphQLDataFetchers {
 
         final Transaction transaction = Transaction.readFrom(RLP.input(rawTran));
         final ValidationResult<TransactionInvalidReason> validationResult =
-            transactionPool.addLocalTransaction(transaction);
+            transactionPool.addTransactionViaApi(transaction);
         if (validationResult.isValid()) {
           return Optional.of(transaction.getHash());
         } else {
