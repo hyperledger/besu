@@ -1033,19 +1033,27 @@ public class Transaction
 
   public String toTraceLog() {
     final StringBuilder sb = new StringBuilder();
+    sb.append(getHash()).append("={");
     sb.append(isContractCreation() ? "ContractCreation" : "MessageCall").append(", ");
+    sb.append(getNonce()).append(", ");
     sb.append(getSender()).append(", ");
     sb.append(getType()).append(", ");
-    sb.append(getNonce()).append(", ");
-    getGasPrice().ifPresent(gasPrice -> sb.append(gasPrice.toBigInteger()).append(", "));
+    getGasPrice()
+        .ifPresent(
+            gasPrice -> sb.append("gp: ").append(gasPrice.toHumanReadableString()).append(", "));
     if (getMaxPriorityFeePerGas().isPresent() && getMaxFeePerGas().isPresent()) {
-      sb.append(getMaxPriorityFeePerGas().map(Wei::toBigInteger).get()).append(", ");
-      sb.append(getMaxFeePerGas().map(Wei::toBigInteger).get()).append(", ");
-      getMaxFeePerDataGas().ifPresent(wei -> sb.append(wei.toShortHexString()).append(", "));
+      sb.append("mf: ")
+          .append(getMaxFeePerGas().map(Wei::toHumanReadableString).get())
+          .append(", ");
+      sb.append("pf: ")
+          .append(getMaxPriorityFeePerGas().map(Wei::toHumanReadableString).get())
+          .append(", ");
+      getMaxFeePerDataGas()
+          .ifPresent(wei -> sb.append("df: ").append(wei.toHumanReadableString()).append(", "));
     }
-    sb.append(getGasLimit()).append(", ");
-    sb.append(getValue().toBigInteger()).append(", ");
-    if (getTo().isPresent()) sb.append(getTo().get()).append(", ");
+    sb.append("gl: ").append(getGasLimit()).append(", ");
+    sb.append("v: ").append(getValue().toHumanReadableString()).append(", ");
+    getTo().ifPresent(to -> sb.append(to));
     return sb.append("}").toString();
   }
 
@@ -1057,6 +1065,7 @@ public class Transaction
   }
 
   public static class Builder {
+    private static final Optional<List<AccessListEntry>> EMPTY_ACCESS_LIST = Optional.of(List.of());
 
     protected TransactionType transactionType;
 
@@ -1149,7 +1158,10 @@ public class Transaction
     }
 
     public Builder accessList(final List<AccessListEntry> accessList) {
-      this.accessList = Optional.ofNullable(accessList);
+      this.accessList =
+          accessList == null
+              ? Optional.empty()
+              : accessList.isEmpty() ? EMPTY_ACCESS_LIST : Optional.of(accessList);
       return this;
     }
 

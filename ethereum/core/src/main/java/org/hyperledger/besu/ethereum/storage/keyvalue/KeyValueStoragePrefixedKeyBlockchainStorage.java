@@ -95,7 +95,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   @Override
   public Optional<BlockBody> getBlockBody(final Hash blockHash) {
     return get(BLOCK_BODY_PREFIX, blockHash)
-        .map(bytes -> BlockBody.readFrom(RLP.input(bytes), blockHeaderFunctions));
+        .map(bytes -> BlockBody.readWrappedBodyFrom(RLP.input(bytes), blockHeaderFunctions));
   }
 
   @Override
@@ -151,7 +151,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
     @Override
     public void putBlockBody(final Hash blockHash, final BlockBody blockBody) {
-      set(BLOCK_BODY_PREFIX, blockHash, RLP.encode(blockBody::writeTo));
+      set(BLOCK_BODY_PREFIX, blockHash, RLP.encode(blockBody::writeWrappedBodyTo));
     }
 
     @Override
