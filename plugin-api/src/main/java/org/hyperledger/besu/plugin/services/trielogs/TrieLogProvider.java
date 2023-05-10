@@ -47,7 +47,7 @@ public interface TrieLogProvider {
    * @return the TrieLog layers for the given block number range
    * @param <T> the type of the TrieLog
    */
-  <T extends TrieLog.LogTuple<?>> List<TrieLogRangePair> getTrieLogsByRange(
+  <T extends TrieLog.LogTuple<?>> List<TrieLogRangeTuple> getTrieLogsByRange(
       long fromBlockNumber, long toBlockNumber);
 
   /**
@@ -56,5 +56,5 @@ public interface TrieLogProvider {
    * @param blockNumber the block number
    * @param trieLog the associated TrieLog layer
    */
-  record TrieLogRangePair(long blockNumber, TrieLog trieLog) {}
+  record TrieLogRangeTuple(Hash blockHash, long blockNumber, TrieLog trieLog) {}
 }
