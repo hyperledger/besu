@@ -1204,7 +1204,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         description =
             "Maximum number of pending transactions that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
         arity = "1")
-    private final Integer txPoolMaxSize = TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS;
+    private final Integer txPoolMaxSize =
+        TransactionPoolConfiguration.DEFAULT_MAX_PENDING_TRANSACTIONS;
 
     @Option(
         names = {"--tx-pool-retention-hours"},

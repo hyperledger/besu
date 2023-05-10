@@ -4,7 +4,6 @@
 *~.nib
 *.iml
 *.launch
-*.swp
 *.log
 .classpath
 .DS_Store
@@ -31,3 +30,4 @@ site/
 **/src/*/generated
 jitpack.yml
 /BESU_HOME/
+/ethereum/eth/src/test/resources/tx.csv.gz

@@ -268,10 +268,9 @@ public class BlockTransactionSelector {
   in this throwing an CancellationException).
    */
   public TransactionSelectionResults buildTransactionListForBlock() {
-    LOG.debug("Transaction pool size {}", pendingTransactions.size());
-    LOG.atTrace()
-        .setMessage("Transaction pool content {}")
-        .addArgument(() -> pendingTransactions.toTraceLog(false, false))
+    LOG.atDebug()
+        .setMessage("Transaction pool stats {}")
+        .addArgument(pendingTransactions.logStats())
         .log();
     pendingTransactions.selectTransactions(
         pendingTransaction -> evaluateTransaction(pendingTransaction, false));

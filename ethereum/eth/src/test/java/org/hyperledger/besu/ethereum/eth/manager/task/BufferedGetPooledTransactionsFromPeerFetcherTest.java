@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PeerTransactionTracker;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 
 import java.util.List;
@@ -68,7 +69,13 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
     ScheduledFuture<?> mock = mock(ScheduledFuture.class);
     fetcher =
         new BufferedGetPooledTransactionsFromPeerFetcher(
-            ethContext, mock, ethPeer, transactionPool, transactionTracker, metricsSystem);
+            ethContext,
+            mock,
+            ethPeer,
+            transactionPool,
+            transactionTracker,
+            new TransactionPoolMetrics(metricsSystem),
+            "new_pooled_transaction_hashes");
   }
 
   @Test
@@ -123,6 +130,9 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
 
     verifyNoInteractions(ethScheduler);
     verify(transactionPool, never()).addRemoteTransactions(List.of(transaction));
-    assertThat(metricsSystem.getCounterValue("remote_already_seen_total", "hashes")).isEqualTo(1);
+    assertThat(
+            metricsSystem.getCounterValue(
+                "remote_transactions_already_seen_total", "new_pooled_transaction_hashes"))
+        .isEqualTo(1);
   }
 }
