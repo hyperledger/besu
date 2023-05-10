@@ -209,10 +209,14 @@ public class BlockchainQueries {
    * @return The storage root hash for the account being queried.
    */
   public Optional<Hash> storageRoot(final Address address, final long blockNumber) {
-    final Hash blockHash =
-        getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
+    final Optional<Hash> maybeBlockHash =
+        getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash);
+    if (maybeBlockHash.isEmpty()) {
+      return Optional.empty();
+    }
 
-    return fromAccount(address, blockHash, AccountState::getStorageRoot, Hash.EMPTY);
+    return fromAccount(
+        address, maybeBlockHash.get(), AccountState::getStorageRoot, Hash.EMPTY_TRIE_HASH);
   }
 
   /**

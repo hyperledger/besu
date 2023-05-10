@@ -41,35 +41,33 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class SendRawTransactionConditionalParameter {
 
-  private final Optional<Long> fromBlock;
-  private final Optional<Long> toBlock;
-  // TODO may need a custom deserializer because the hash here could actually be a map
+  private final Optional<Long> blockNumberMin, blockNumberMax;
   private final Optional<Map<Address, KnownAccountInfo>> knownAccounts;
   private final Optional<Long> timestampMin, timestampMax;
 
   @JsonCreator
   public SendRawTransactionConditionalParameter(
-      @JsonProperty("blockNumberMin") final Long fromBlock,
-      @JsonProperty("blockNumberMax") final Long toBlock,
+      @JsonProperty("blockNumberMin") final Long blockNumberMin,
+      @JsonProperty("blockNumberMax") final Long blockNumberMax,
       @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
           @JsonDeserialize(using = KnownAccountsInfoDeserializer.class)
           @JsonProperty("knownAccounts")
           final Map<Address, KnownAccountInfo> knownAccounts,
       @JsonProperty("timestampMin") final Long timestampMin,
       @JsonProperty("timestampMax") final Long timestampMax) {
-    this.fromBlock = Optional.ofNullable(fromBlock);
-    this.toBlock = Optional.ofNullable(toBlock);
+    this.blockNumberMin = Optional.ofNullable(blockNumberMin);
+    this.blockNumberMax = Optional.ofNullable(blockNumberMax);
     this.knownAccounts = Optional.ofNullable(knownAccounts);
     this.timestampMin = Optional.ofNullable(timestampMin);
     this.timestampMax = Optional.ofNullable(timestampMax);
   }
 
   public Optional<Long> getBlockNumberMin() {
-    return fromBlock;
+    return blockNumberMin;
   }
 
   public Optional<Long> getBlockNumberMax() {
-    return toBlock;
+    return blockNumberMax;
   }
 
   public Optional<Map<Address, KnownAccountInfo>> getKnownAccounts() {
@@ -89,8 +87,8 @@ public class SendRawTransactionConditionalParameter {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     SendRawTransactionConditionalParameter that = (SendRawTransactionConditionalParameter) o;
-    return Objects.equals(fromBlock, that.fromBlock)
-        && Objects.equals(toBlock, that.toBlock)
+    return Objects.equals(blockNumberMin, that.blockNumberMin)
+        && Objects.equals(blockNumberMax, that.blockNumberMax)
         && Objects.equals(knownAccounts, that.knownAccounts)
         && Objects.equals(timestampMin, that.timestampMin)
         && Objects.equals(timestampMax, that.timestampMax);
@@ -98,16 +96,16 @@ public class SendRawTransactionConditionalParameter {
 
   @Override
   public int hashCode() {
-    return Objects.hash(fromBlock, toBlock, knownAccounts, timestampMin, timestampMax);
+    return Objects.hash(blockNumberMin, blockNumberMax, knownAccounts, timestampMin, timestampMax);
   }
 
   @Override
   public String toString() {
     return "SendRawTransactionConditionalParameter{"
-        + "fromBlock="
-        + fromBlock
-        + ", toBlock="
-        + toBlock
+        + "blockNumberMin="
+        + blockNumberMin
+        + ", blockNumberMax="
+        + blockNumberMax
         + ", knownAccounts="
         + knownAccounts
         + ", timestampMin="
@@ -118,7 +116,7 @@ public class SendRawTransactionConditionalParameter {
   }
 
   public static class KnownAccountInfo {
-    // either a hash, or a map of storage slot to value
+    // either a hash of the storage root, or a map of storage slot to value
     private final Optional<Hash> storageRootHash;
 
     private final Optional<List<StorageEntry>> expectedStorageEntries;
@@ -159,8 +157,7 @@ public class SendRawTransactionConditionalParameter {
       final ObjectMapper mapper = (ObjectMapper) jsonParser.getCodec();
       final JsonNode rootNode = jsonParser.getCodec().readTree(jsonParser);
       if (rootNode.isObject()) {
-        // field names of the rootNode should be the addresses of the known accounts
-
+        // fieldNames of the rootNode will be the addresses of the known accounts
         for (Iterator<String> it = rootNode.fieldNames(); it.hasNext(); ) {
           String key = it.next();
           final Address address = Address.fromHexString(key);
