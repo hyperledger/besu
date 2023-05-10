@@ -32,7 +32,7 @@ import org.hyperledger.besu.evm.operation.MLoadOperation;
 import org.hyperledger.besu.evm.operation.MStore8Operation;
 import org.hyperledger.besu.evm.operation.MStoreOperation;
 import org.hyperledger.besu.evm.operation.SLoadOperation;
-import org.hyperledger.besu.evm.operation.SelfDestructFrontierOperation;
+import org.hyperledger.besu.evm.operation.SelfDestructOperation;
 import org.hyperledger.besu.evm.precompile.ECRECPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.IDPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.RIPEMD160PrecompiledContract;
@@ -326,7 +326,7 @@ public interface GasCalculator {
   long mStore8OperationGasCost(MessageFrame frame, long offset);
 
   /**
-   * Returns the cost for executing a {@link SelfDestructFrontierOperation}.
+   * Returns the cost for executing a {@link SelfDestructOperation}.
    *
    * @param recipient The recipient of the self destructed inheritance (may be null)
    * @param inheritance The amount the recipient will receive
@@ -374,7 +374,7 @@ public interface GasCalculator {
       UInt256 newValue, Supplier<UInt256> currentValue, Supplier<UInt256> originalValue);
 
   /**
-   * Returns the refund amount for deleting an account in a {@link SelfDestructFrontierOperation}.
+   * Returns the refund amount for deleting an account in a {@link SelfDestructOperation}.
    *
    * @return the refund amount for deleting an account in a self destruct operation
    */

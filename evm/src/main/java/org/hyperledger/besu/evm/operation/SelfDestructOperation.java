@@ -24,16 +24,31 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
-/** The Self destruct operation that observes EIP-6780 semantics. */
-public class SelfDestructEIP6780Operation extends AbstractOperation {
+/** The Self destruct operation that observes frontier semantics */
+public class SelfDestructOperation extends AbstractOperation {
+
+  final boolean eip6780Semantics;
 
   /**
    * Instantiates a new Self destruct operation.
    *
    * @param gasCalculator the gas calculator
    */
-  public SelfDestructEIP6780Operation(final GasCalculator gasCalculator) {
+  public SelfDestructOperation(final GasCalculator gasCalculator) {
+    this(gasCalculator, false);
+  }
+
+  /**
+   * Instantiates a new Self destruct operation, with an optional EIP-6780 semantics flag. EIP-6780
+   * will only remove an account if the account was created within the current transaction. All
+   * other semantics remain.
+   *
+   * @param gasCalculator the gas calculator
+   * @param eip6780Semantics Enforce EIP6780 semantics.
+   */
+  public SelfDestructOperation(final GasCalculator gasCalculator, final boolean eip6780Semantics) {
     super(0xFF, "SELFDESTRUCT", 1, 0, gasCalculator);
+    this.eip6780Semantics = eip6780Semantics;
   }
 
   @Override
@@ -60,7 +75,7 @@ public class SelfDestructEIP6780Operation extends AbstractOperation {
     final Address address = frame.getRecipientAddress();
     final MutableAccount account = frame.getWorldUpdater().getAccount(address).getMutable();
 
-    if (account.isNewAccount()) {
+    if (!eip6780Semantics || account.isNewAccount()) {
       frame.addSelfDestruct(address);
     }
 

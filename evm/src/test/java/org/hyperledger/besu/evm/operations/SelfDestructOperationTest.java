@@ -1,3 +1,17 @@
+/*
+ * Copyright contributors to Hyperledger Besu
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.hyperledger.besu.evm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,8 +32,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.Operation;
-import org.hyperledger.besu.evm.operation.SelfDestructEIP6780Operation;
-import org.hyperledger.besu.evm.operation.SelfDestructFrontierOperation;
+import org.hyperledger.besu.evm.operation.SelfDestructOperation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
@@ -49,11 +62,11 @@ public class SelfDestructOperationTest {
   @Mock private EVM evm;
   @Mock private MutableAccount newMutableAccount;
 
-  private final SelfDestructFrontierOperation operation =
-      new SelfDestructFrontierOperation(new ConstantinopleGasCalculator());
+  private final SelfDestructOperation operation =
+      new SelfDestructOperation(new ConstantinopleGasCalculator());
 
-  private final SelfDestructEIP6780Operation newOperation =
-      new SelfDestructEIP6780Operation(new ConstantinopleGasCalculator());
+  private final SelfDestructOperation newOperation =
+      new SelfDestructOperation(new ConstantinopleGasCalculator(), true);
 
   public void setUp(final String contract, final String beneficiary, final String balanceHex) {
 
