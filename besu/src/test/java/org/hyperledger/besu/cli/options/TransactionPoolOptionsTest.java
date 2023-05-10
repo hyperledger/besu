@@ -16,7 +16,7 @@ package org.hyperledger.besu.cli.options;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.LIMIT_TXPOOL_BY_ACCOUNT_PERCENTAGE;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE;
 
 import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -101,7 +101,7 @@ public class TransactionPoolOptionsTest
     final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
     final TransactionPoolConfiguration config = options.toDomainObject().build();
     assertThat(config.getTxPoolLimitByAccountPercentage())
-        .isEqualTo(LIMIT_TXPOOL_BY_ACCOUNT_PERCENTAGE);
+        .isEqualTo(DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
@@ -239,7 +239,13 @@ public class TransactionPoolOptionsTest
         .txPoolLimitByAccountPercentage(defaultValue.getTxPoolLimitByAccountPercentage())
         .disableLocalTransactions(defaultValue.getDisableLocalTransactions())
         .enableSaveRestore(defaultValue.getEnableSaveRestore())
-        .saveFile(defaultValue.getSaveFile());
+        .saveFile(defaultValue.getSaveFile())
+        .txPoolLimitByAccountPercentage(defaultValue.getTxPoolLimitByAccountPercentage())
+        .layeredTxPoolEnabled(defaultValue.getLayeredTxPoolEnabled())
+        .pendingTransactionsLayerMaxCapacityBytes(
+            defaultValue.getPendingTransactionsLayerMaxCapacityBytes())
+        .maxPrioritizedTransactions(defaultValue.getMaxPrioritizedTransactions())
+        .maxFutureBySender(defaultValue.getMaxFutureBySender());
   }
 
   @Override
@@ -253,7 +259,12 @@ public class TransactionPoolOptionsTest
         .txPoolLimitByAccountPercentage(0.5f)
         .disableLocalTransactions(true)
         .enableSaveRestore(true)
-        .saveFile(new File("abc.xyz"));
+        .saveFile(new File("abc.xyz"))
+        .txPoolLimitByAccountPercentage(0.5f)
+        .layeredTxPoolEnabled(true)
+        .pendingTransactionsLayerMaxCapacityBytes(1_000_000L)
+        .maxPrioritizedTransactions(1000)
+        .maxFutureBySender(10);
   }
 
   @Override

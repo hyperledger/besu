@@ -30,7 +30,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -64,13 +63,13 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
   }
 
   public void relayTransactionPoolTo(final EthPeer peer) {
-    Set<PendingTransaction> pendingPendingTransaction =
+    final Collection<PendingTransaction> allPendingTransactions =
         pendingTransactions.getPendingTransactions();
-    if (!pendingPendingTransaction.isEmpty()) {
+    if (!allPendingTransactions.isEmpty()) {
       if (peer.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES)) {
-        sendTransactionHashes(toTransactionList(pendingPendingTransaction), List.of(peer));
+        sendTransactionHashes(toTransactionList(allPendingTransactions), List.of(peer));
       } else {
-        sendFullTransactions(toTransactionList(pendingPendingTransaction), List.of(peer));
+        sendFullTransactions(toTransactionList(allPendingTransactions), List.of(peer));
       }
     }
   }

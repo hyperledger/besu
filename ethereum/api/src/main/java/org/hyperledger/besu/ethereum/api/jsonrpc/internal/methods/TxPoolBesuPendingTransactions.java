@@ -25,9 +25,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.transaction.po
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class TxPoolBesuPendingTransactions implements JsonRpcMethod {
@@ -56,7 +56,7 @@ public class TxPoolBesuPendingTransactions implements JsonRpcMethod {
             .map(PendingTransactionsParams::filters)
             .orElse(Collections.emptyList());
 
-    final Set<Transaction> pendingTransactionsFiltered =
+    final Collection<Transaction> pendingTransactionsFiltered =
         pendingTransactionFilter.reduce(
             pendingTransactions.getPendingTransactions(), filters, limit);
 

@@ -80,6 +80,7 @@ dependencies {
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
+  testImplementation 'org.openjdk.jol:jol-core'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 
