@@ -284,6 +284,11 @@ public class BesuController implements java.io.Closeable {
     return additionalPluginServices;
   }
 
+  /**
+   * Gets linea-specific parameters
+   *
+   * @return configured LineaParameters
+   */
   public LineaParameters getLineaParameters() {
     return lineaParameters;
   }

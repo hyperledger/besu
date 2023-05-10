@@ -585,6 +585,12 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
     return this;
   }
 
+  /**
+   * Linea stub genesis config options.
+   *
+   * @param blockNumber the block number
+   * @return the stub genesis config options
+   */
   public StubGenesisConfigOptions lineaBlock(final long blockNumber) {
     lineaBlockNumber = OptionalLong.of(blockNumber);
     return this;
