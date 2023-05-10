@@ -15,7 +15,6 @@
 package org.hyperledger.besu.plugin.services.trielogs;
 
 import org.hyperledger.besu.plugin.data.BlockHeader;
-import org.hyperledger.besu.plugin.data.TrieLog;
 
 /** Interface for serializing and deserializing {@link TrieLog} objects. */
 public interface TrieLogFactory {

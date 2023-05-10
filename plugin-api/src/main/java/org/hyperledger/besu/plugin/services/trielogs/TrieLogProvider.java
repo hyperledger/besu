@@ -15,7 +15,6 @@
 package org.hyperledger.besu.plugin.services.trielogs;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.plugin.data.TrieLog;
 
 import java.util.List;
 import java.util.Optional;

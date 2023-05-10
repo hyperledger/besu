@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.plugin.services.trielogs;
 
-import org.hyperledger.besu.plugin.data.TrieLog;
-
 /** A TrieLog event. */
 public interface TrieLogEvent {
   /** The type of the event. */
