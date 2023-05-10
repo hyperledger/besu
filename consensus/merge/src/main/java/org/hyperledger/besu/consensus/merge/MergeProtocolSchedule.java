@@ -57,6 +57,7 @@ public class MergeProtocolSchedule {
    * @param config the config
    * @param privacyParameters the privacy parameters
    * @param isRevertReasonEnabled the is revert reason enabled
+   * @param lineaParameters parameters for linea
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(

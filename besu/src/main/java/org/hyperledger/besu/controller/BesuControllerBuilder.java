@@ -139,7 +139,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected ObservableMetricsSystem metricsSystem;
   /** The Privacy parameters. */
   protected PrivacyParameters privacyParameters;
-
+  /** The Linea parameters. */
   protected LineaParameters lineaParameters = LineaParameters.DEFAULT;
   /** The Pki block creation configuration. */
   protected Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration =
@@ -1106,6 +1106,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected abstract PluginServiceFactory createAdditionalPluginServices(
       final Blockchain blockchain, final ProtocolContext protocolContext);
 
+  /**
+   * Setter for LineaParameters .
+   * @param lineaParameters linea params to add to controller builder.
+   * @return the controller builder.
+   */
   public BesuControllerBuilder lineaParameters(final LineaParameters lineaParameters) {
     this.lineaParameters = lineaParameters;
     return this;

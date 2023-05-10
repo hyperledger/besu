@@ -220,6 +220,11 @@ public interface GenesisConfigOptions {
    */
   OptionalLong getMergeNetSplitBlockNumber();
 
+  /**
+   * Gets linea block number.
+   *
+   * @return the merge net split block number
+   */
   OptionalLong getLineaBlockNumber();
   /**
    * Gets shanghai time.

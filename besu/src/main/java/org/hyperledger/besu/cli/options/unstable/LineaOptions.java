@@ -9,11 +9,18 @@ import java.util.Optional;
 
 import picocli.CommandLine;
 
+/**
+ * Linea CLI options.
+ */
 public class LineaOptions implements CLIOptions<LineaParameters> {
   private static final String TRANSACTION_MAX_CALLDATA_SIZE = "--Xtransaction-max-calldata-size";
   private static final String BLOCK_MAX_CALLDATA_SIZE = "--Xblock-max-calldata-size";
-  ;
 
+  /**
+   * Create linea options.
+   *
+   * @return the linea options
+   */
   public static LineaOptions create() {
     return new LineaOptions();
   }
@@ -34,10 +41,20 @@ public class LineaOptions implements CLIOptions<LineaParameters> {
           "If specified, overrides the max size in bytes of the sum of all transaction calldata fields contained in a block, specified by the current hard fork")
   private Integer blockMaxCalldataSize;
 
+  /**
+   * Linea max transaction calldata size.
+   *
+   * @return optional max transaction calldata size.
+   */
   public Optional<Integer> getTransactionMaxCalldataSize() {
     return Optional.ofNullable(transactionMaxCalldataSize);
   }
 
+  /**
+   * Linea max block calldata size.
+   *
+   * @return optional max block calldata size.
+   */
   public Optional<Integer> getBlockMaxCalldataSize() {
     return Optional.ofNullable(blockMaxCalldataSize);
   }
