@@ -24,7 +24,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
-/** The Self destruct operation that observes frontier semantics */
+/** The Self destruct operation. */
 public class SelfDestructOperation extends AbstractOperation {
 
   final boolean eip6780Semantics;
