@@ -31,11 +31,13 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
+
 public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
 
   private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadV3.class);
-  private final ScheduledProtocolSpec.Hardfork shanghai;
-  private final ScheduledProtocolSpec.Hardfork cancun;
+  private final Optional<ScheduledProtocolSpec.Hardfork> shanghai;
+  private final Optional<ScheduledProtocolSpec.Hardfork> cancun;
 
   public EngineGetPayloadV3(
       final Vertx vertx,
@@ -67,11 +69,11 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
     try {
       long builtAt = blockWithReceipts.getHeader().getTimestamp();
 
-      if (builtAt < this.shanghai.milestone()) {
+      if (beforeShanghai(builtAt)) {
         return new JsonRpcSuccessResponse(
             request.getRequest().getId(),
             blockResultFactory.payloadTransactionCompleteV1(blockWithReceipts.getBlock()));
-      } else if (builtAt >= this.shanghai.milestone() && builtAt < this.cancun.milestone()) {
+      } else if (duringShanghai(builtAt)) {
         return new JsonRpcSuccessResponse(
             request.getRequest().getId(),
             blockResultFactory.payloadTransactionCompleteV2(blockWithReceipts));
@@ -85,5 +87,14 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
       LOG.error("configuration error, can't call V3 endpoint with non-default protocol schedule");
       return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
     }
+  }
+
+  private boolean duringShanghai(final long builtAt) {
+    return (this.shanghai.isPresent() && builtAt >= this.shanghai.get().milestone()) && //
+            (this.cancun.isEmpty() || (this.cancun.isPresent() && builtAt < this.cancun.get().milestone()));
+  }
+
+  private boolean beforeShanghai(final long builtAt) {
+    return this.shanghai.isEmpty() || builtAt < this.shanghai.get().milestone();
   }
 }
