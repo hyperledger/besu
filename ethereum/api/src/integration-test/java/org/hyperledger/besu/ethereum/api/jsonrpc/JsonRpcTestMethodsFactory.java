@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -184,6 +185,7 @@ public class JsonRpcTestMethodsFactory {
             dataDir,
             ethPeers,
             Vertx.vertx(new VertxOptions().setWorkerPoolSize(1)),
-            Optional.empty());
+            Optional.empty(),
+            LineaParameters.DEFAULT);
   }
 }

@@ -45,6 +45,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   private OptionalLong arrowGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong grayGlacierBlockNumber = OptionalLong.empty();
   private OptionalLong mergeNetSplitBlockNumber = OptionalLong.empty();
+  private OptionalLong lineaBlockNumber = OptionalLong.empty();
   private OptionalLong shanghaiTime = OptionalLong.empty();
   private OptionalLong cancunTime = OptionalLong.empty();
   private OptionalLong futureEipsTime = OptionalLong.empty();
@@ -216,6 +217,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   @Override
+  public OptionalLong getLineaBlockNumber() {
+    return lineaBlockNumber;
+  }
+
+  @Override
   public OptionalLong getShanghaiTime() {
     return shanghaiTime;
   }
@@ -356,6 +362,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
     getExperimentalEipsTime().ifPresent(l -> builder.put("experimentalEipsTime", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h));
+    // linea fork blocks
+    getLineaBlockNumber().ifPresent(l -> builder.put("lineaBlock", l));
     // classic fork blocks
     getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
     getEcip1015BlockNumber().ifPresent(l -> builder.put("ecip1015Block", l));
@@ -574,6 +582,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    */
   public StubGenesisConfigOptions mergeNetSplitBlock(final long blockNumber) {
     mergeNetSplitBlockNumber = OptionalLong.of(blockNumber);
+    return this;
+  }
+
+  public StubGenesisConfigOptions lineaBlock(final long blockNumber) {
+    lineaBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 

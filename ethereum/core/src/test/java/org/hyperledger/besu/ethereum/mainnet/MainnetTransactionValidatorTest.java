@@ -49,23 +49,23 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class MainnetTransactionValidatorTest {
 
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+  protected static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
-  private static final KeyPair senderKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
+  protected static final KeyPair senderKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
 
   private static final TransactionValidationParams transactionValidationParams =
       TransactionValidationParams.processingBlockParams;
 
-  @Mock private GasCalculator gasCalculator;
+  @Mock protected GasCalculator gasCalculator;
 
   private final Transaction basicTransaction =
       new TransactionTestFixture()
@@ -190,7 +190,6 @@ public class MainnetTransactionValidatorTest {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
-    validator.setTransactionFilter(transactionFilter(false));
 
     Account invalidEOA =
         when(account(basicTransaction.getUpfrontCost(0L), basicTransaction.getNonce())
@@ -199,7 +198,12 @@ public class MainnetTransactionValidatorTest {
             .getMock();
 
     assertThat(validator.validateForSender(basicTransaction, invalidEOA, true))
-        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED));
+        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED))
+        .extracting(ValidationResult::getErrorMessage)
+        .isEqualTo(
+            "Sender "
+                + basicTransaction.getSender()
+                + " has deployed code and so is not authorized to send transactions");
   }
 
   @Test
@@ -229,7 +233,6 @@ public class MainnetTransactionValidatorTest {
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
-    validator.setTransactionFilter(transactionFilter(true));
 
     assertThat(
             validator.validateForSender(
@@ -263,7 +266,6 @@ public class MainnetTransactionValidatorTest {
                   TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
                 }),
             Integer.MAX_VALUE);
-    validator.setTransactionFilter(transactionFilter(true));
 
     final Transaction transaction =
         Transaction.builder()

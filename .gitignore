@@ -29,4 +29,5 @@ site/
 /kubernetes/besu-*.tar.gz
 **/src/*/generated
 jitpack.yml
+/BESU_HOME/
 /ethereum/eth/src/test/resources/tx.csv.gz

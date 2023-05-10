@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -71,6 +72,7 @@ import org.slf4j.LoggerFactory;
  * not cleared between executions of buildTransactionListForBlock().
  */
 public class BlockTransactionSelector {
+
   public static class TransactionValidationResult {
     private final Transaction transaction;
     private final ValidationResult<TransactionInvalidReason> validationResult;
@@ -218,7 +220,9 @@ public class BlockTransactionSelector {
   private final FeeMarket feeMarket;
   private final GasCalculator gasCalculator;
   private final GasLimitCalculator gasLimitCalculator;
-
+  private final int blockMaxCalldataSize;
+  private final Predicate<Transaction> maxCalldataSizeChecker;
+  private int blockCalldataSum;
   private final TransactionSelectionResults transactionSelectionResult =
       new TransactionSelectionResults();
 
@@ -236,7 +240,8 @@ public class BlockTransactionSelector {
       final Wei dataGasPrice,
       final FeeMarket feeMarket,
       final GasCalculator gasCalculator,
-      final GasLimitCalculator gasLimitCalculator) {
+      final GasLimitCalculator gasLimitCalculator,
+      final int blockMaxCalldataSize) {
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
     this.worldState = worldState;
@@ -251,6 +256,9 @@ public class BlockTransactionSelector {
     this.feeMarket = feeMarket;
     this.gasCalculator = gasCalculator;
     this.gasLimitCalculator = gasLimitCalculator;
+    this.blockMaxCalldataSize = blockMaxCalldataSize;
+    this.maxCalldataSizeChecker =
+        (blockMaxCalldataSize >= 0) ? this::transactionCalldataTooLarge : t -> false;
   }
 
   /*
@@ -297,6 +305,10 @@ public class BlockTransactionSelector {
       final Transaction transaction, final boolean reportFutureNonceTransactionsAsInvalid) {
     if (isCancelled.get()) {
       throw new CancellationException("Cancelled during transaction selection.");
+    }
+
+    if (maxCalldataSizeChecker.test(transaction)) {
+      return TransactionSelectionResult.COMPLETE_OPERATION;
     }
 
     if (transactionTooLargeForBlock(transaction)) {
@@ -468,5 +480,19 @@ public class BlockTransactionSelector {
         gasAvailable,
         occupancyRatio);
     return occupancyRatio >= minBlockOccupancyRatio;
+  }
+
+  private boolean transactionCalldataTooLarge(final Transaction transaction) {
+    try {
+      blockCalldataSum = Math.addExact(blockCalldataSum, transaction.getPayload().size());
+    } catch (ArithmeticException ae) {
+      LOG.atDebug()
+          .setMessage("Not adding transaction {} otherwise block calldata size {} overflows")
+          .addArgument(transaction::toTraceLog)
+          .addArgument(blockCalldataSum)
+          .log();
+      return false;
+    }
+    return blockCalldataSum > blockMaxCalldataSize;
   }
 }
