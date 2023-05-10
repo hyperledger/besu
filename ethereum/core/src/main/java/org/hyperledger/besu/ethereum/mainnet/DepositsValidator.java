@@ -115,7 +115,8 @@ public interface DepositsValidator {
 
       if (!isValid) {
         LOG.warn(
-            "Deposits validation failed. Deposits from block body do not match deposits from logs");
+            "Deposits validation failed. Deposits from block body do not match deposits from logs. Block hash: {}", block.getHash());
+        LOG.debug("Deposits from logs: {}, deposits from block body: {}", expectedDeposits, actualDeposits);
       }
 
       return isValid;
