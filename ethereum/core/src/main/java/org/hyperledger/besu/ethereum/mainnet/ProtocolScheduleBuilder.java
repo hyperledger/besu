@@ -324,6 +324,10 @@ public class ProtocolScheduleBuilder {
         validateForkOrder("MuirGlacier", config.getMuirGlacierBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Berlin", config.getBerlinBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Linea", config.getLineaBlockNumber(), lastForkBlock);
+    if (config.getLineaOpcodesBlockNumber().isPresent()) {
+      lastForkBlock =
+          validateForkOrder("LineaOpcodes", config.getLineaOpcodesBlockNumber(), lastForkBlock);
+    }
     assert (lastForkBlock >= 0);
   }
 
@@ -399,7 +403,12 @@ public class ProtocolScheduleBuilder {
 
         // Linea Milestones
         blockNumberMilestone(
-            config.getLineaBlockNumber(), specFactory.lineaDefinition(config, lineaParameters)));
+            config.getLineaBlockNumber(), specFactory.lineaDefinition(config, lineaParameters)),
+
+        // Linea with the evm opcodes changes
+        blockNumberMilestone(
+            config.getLineaOpcodesBlockNumber(),
+            specFactory.lineaOpCodesDefinition(config, lineaParameters)));
   }
 
   private Optional<BuilderMapEntry> timestampMilestone(

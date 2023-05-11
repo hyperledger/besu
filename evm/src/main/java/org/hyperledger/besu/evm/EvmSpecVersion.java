@@ -47,8 +47,9 @@ public enum EvmSpecVersion {
   /** Development fork for unscheduled EIPs */
   FUTURE_EIPS(1, false),
   /** Development fork for EIPs not accepted to Mainnet */
-  EXPERIMENTAL_EIPS(1, false);
-
+  EXPERIMENTAL_EIPS(1, false),
+  /** Linea evm spec version. */
+  LINEA(0, false);
   private static final Logger LOGGER = LoggerFactory.getLogger(EvmSpecVersion.class);
 
   /** The Spec finalized. */

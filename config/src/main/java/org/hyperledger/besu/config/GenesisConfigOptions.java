@@ -219,13 +219,18 @@ public interface GenesisConfigOptions {
    * @return the merge net split block number
    */
   OptionalLong getMergeNetSplitBlockNumber();
-
   /**
-   * Gets linea block number.
+   * Gets Linea block number.
    *
-   * @return the merge net split block number
+   * @return the Linea block number
    */
   OptionalLong getLineaBlockNumber();
+  /**
+   * Gets Linea with Opcodes change block number.
+   *
+   * @return the Linea block number with opcodes
+   */
+  OptionalLong getLineaOpcodesBlockNumber();
   /**
    * Gets shanghai time.
    *

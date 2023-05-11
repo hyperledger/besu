@@ -281,6 +281,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getLineaOpcodesBlockNumber() {
+    return getOptionalLong("lineaopcodesblock");
+  }
+
+  @Override
   public OptionalLong getShanghaiTime() {
     return getOptionalLong("shanghaitime");
   }
@@ -452,7 +457,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
     // linea fork blocks
     getLineaBlockNumber().ifPresent(l -> builder.put("lineaBlock", l));
-
+    getLineaOpcodesBlockNumber().ifPresent(l -> builder.put("lineaOpCodesBlock", l));
     // classic fork blocks
     getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
     getEcip1015BlockNumber().ifPresent(l -> builder.put("ecip1015Block", l));
@@ -567,6 +572,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getGrayGlacierBlockNumber(),
             getMergeNetSplitBlockNumber(),
             getLineaBlockNumber(),
+            getLineaOpcodesBlockNumber(),
             getEcip1015BlockNumber(),
             getDieHardBlockNumber(),
             getGothamBlockNumber(),

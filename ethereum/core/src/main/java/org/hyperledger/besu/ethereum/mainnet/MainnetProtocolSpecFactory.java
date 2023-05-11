@@ -303,4 +303,16 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration,
         lineaParameters);
   }
+
+  public ProtocolSpecBuilder lineaOpCodesDefinition(
+      final GenesisConfigOptions genesisConfigOptions, final LineaParameters lineaParameters) {
+    return LineaProtocolSpecs.lineaOpCodesDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        evmConfiguration,
+        lineaParameters);
+  }
 }
