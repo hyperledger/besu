@@ -61,7 +61,8 @@ class MergeBlockCreator extends AbstractBlockCreator {
       final Wei minTransactionGasPrice,
       final Address miningBeneficiary,
       final Double minBlockOccupancyRatio,
-      final BlockHeader parentHeader) {
+      final BlockHeader parentHeader,
+      final Optional<Address> depositContractAddress) {
     super(
         miningBeneficiary,
         __ -> miningBeneficiary,
@@ -72,7 +73,8 @@ class MergeBlockCreator extends AbstractBlockCreator {
         protocolSchedule,
         minTransactionGasPrice,
         minBlockOccupancyRatio,
-        parentHeader);
+        parentHeader,
+        depositContractAddress);
   }
 
   /**

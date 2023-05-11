@@ -84,6 +84,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   private final Wei minTransactionGasPrice;
   private final Double minBlockOccupancyRatio;
   protected final BlockHeader parentHeader;
+  private static final Address DEFAULT_DEPOSIT_CONTRACT_ADDRESS =
+      Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
+
+  private final Optional<Address> depositContractAddress;
 
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
 
@@ -97,7 +101,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final ProtocolSchedule protocolSchedule,
       final Wei minTransactionGasPrice,
       final Double minBlockOccupancyRatio,
-      final BlockHeader parentHeader) {
+      final BlockHeader parentHeader,
+      final Optional<Address> depositContractAddress) {
     this.coinbase = coinbase;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.targetGasLimitSupplier = targetGasLimitSupplier;
@@ -108,6 +113,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.minBlockOccupancyRatio = minBlockOccupancyRatio;
     this.parentHeader = parentHeader;
+    this.depositContractAddress = depositContractAddress;
     blockHeaderFunctions = ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
   }
 
@@ -206,8 +212,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                 .flatMap(receipt -> receipt.getLogsList().stream())
                 .filter(
                     log ->
-                        ((DepositsValidator.AllowedDeposits) depositsValidator)
-                            .getDepositContractAddress()
+                        depositContractAddress
+                            .orElse(DEFAULT_DEPOSIT_CONTRACT_ADDRESS)
                             .equals(log.getLogger()))
                 .map(DepositDecoder::decodeFromLog)
                 .toList();

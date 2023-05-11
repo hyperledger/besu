@@ -45,6 +45,7 @@ import org.hyperledger.besu.util.LogConfigurator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.Before;
@@ -90,7 +91,8 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
             CompletableFuture::runAsync,
             mockPendingTransactions,
             new MiningParameters.Builder().coinbase(coinbase).build(),
-            mock(BackwardSyncContext.class));
+            mock(BackwardSyncContext.class),
+            Optional.empty());
     mergeContext.setIsPostMerge(genesisState.getBlock().getHeader().getDifficulty());
     blockchain.observeBlockAdded(
         blockAddedEvent ->

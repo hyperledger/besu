@@ -205,7 +205,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             proposalBuilderExecutor,
             transactions,
             miningParameters,
-            backwardSyncContext);
+            backwardSyncContext,
+            Optional.empty());
   }
 
   @Test
@@ -255,7 +256,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                       this.miningParameters.getMinTransactionGasPrice(),
                       address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                       this.miningParameters.getMinBlockOccupancyRatio(),
-                      parentHeader));
+                      parentHeader,
+                      Optional.empty()));
 
           doCallRealMethod()
               .doCallRealMethod()
@@ -656,7 +658,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             proposalBuilderExecutor,
             transactions,
             miningParameters,
-            backwardSyncContext);
+            backwardSyncContext,
+            Optional.empty());
 
     final PayloadIdentifier payloadId =
         this.coordinator.preparePayload(
@@ -939,7 +942,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             CompletableFuture::runAsync,
             transactions,
             new MiningParameters.Builder().coinbase(coinbase).build(),
-            mock(BackwardSyncContext.class));
+            mock(BackwardSyncContext.class),
+            Optional.empty());
 
     var blockZero = mockHeaderBuilder.number(0L).difficulty(Difficulty.of(1336L)).buildHeader();
     var blockOne =
@@ -1000,7 +1004,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             CompletableFuture::runAsync,
             transactions,
             new MiningParameters.Builder().coinbase(coinbase).build(),
-            mock(BackwardSyncContext.class));
+            mock(BackwardSyncContext.class),
+            Optional.empty());
 
     var blockZero = mockHeaderBuilder.number(0L).buildHeader();
     var blockOne = mockHeaderBuilder.number(1L).parentHash(blockZero.getHash()).buildHeader();
@@ -1147,7 +1152,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                 CompletableFuture::runAsync,
                 transactions,
                 new MiningParameters.Builder().coinbase(coinbase).build(),
-                mock(BackwardSyncContext.class)));
+                mock(BackwardSyncContext.class),
+                Optional.empty()));
 
     return mockCoordinator;
   }

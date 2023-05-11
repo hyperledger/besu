@@ -111,7 +111,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final ProposalBuilderExecutor blockBuilderExecutor,
       final PendingTransactions pendingTransactions,
       final MiningParameters miningParams,
-      final BackwardSyncContext backwardSyncContext) {
+      final BackwardSyncContext backwardSyncContext,
+      final Optional<Address> depositContractAddress) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.blockBuilderExecutor = blockBuilderExecutor;
@@ -137,7 +138,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 this.miningParameters.getMinTransactionGasPrice(),
                 address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                 this.miningParameters.getMinBlockOccupancyRatio(),
-                parentHeader);
+                parentHeader,
+                depositContractAddress);
 
     this.backwardSyncContext.subscribeBadChainListener(this);
   }

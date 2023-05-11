@@ -196,7 +196,8 @@ abstract class AbstractBlockCreatorTest {
           protocolSchedule,
           minTransactionGasPrice,
           minBlockOccupancyRatio,
-          parentHeader);
+          parentHeader,
+          Optional.empty());
     }
 
     @Override
