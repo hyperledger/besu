@@ -216,6 +216,7 @@ Xp2p-tls-truststore-type="none"
 Xp2p-tls-truststore-file="none.file"
 Xp2p-tls-keystore-password-file="none"
 Xp2p-tls-crl-file="none.file"
+Xp2p-tls-clienthello-sni=false
 
 #contracts
 Xevm-jumpdest-cache-weight-kb=32000
