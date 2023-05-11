@@ -110,6 +110,15 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
   }
 
   @Override
+  public OptionalLong getCurrentNonceFor(final Address sender) {
+    final var senderTxs = txsBySender.get(sender);
+    if (senderTxs != null) {
+      return OptionalLong.of(senderTxs.firstKey());
+    }
+    return nextLayer.getCurrentNonceFor(sender);
+  }
+
+  @Override
   protected void internalNotifyAdded(
       final NavigableMap<Long, PendingTransaction> senderTxs,
       final PendingTransaction pendingTransaction) {

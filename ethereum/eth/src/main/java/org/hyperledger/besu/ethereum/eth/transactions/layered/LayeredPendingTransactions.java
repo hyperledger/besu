@@ -20,7 +20,6 @@ import static java.util.stream.Collectors.reducing;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.INTERNAL_ERROR;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REORG_SENDER;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.INVALIDATED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.REORG;
 
@@ -39,6 +38,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -95,58 +95,87 @@ public class LayeredPendingTransactions implements PendingTransactions {
   TransactionAddedResult addTransaction(
       final PendingTransaction pendingTransaction, final Optional<Account> maybeSenderAccount) {
 
-    final long senderNonce = maybeSenderAccount.map(AccountState::getNonce).orElse(0L);
+    final long stateSenderNonce = maybeSenderAccount.map(AccountState::getNonce).orElse(0L);
 
-    logTransactionForReplayAdd(pendingTransaction, senderNonce);
+    logTransactionForReplayAdd(pendingTransaction, stateSenderNonce);
 
-    final long nonceDistance = pendingTransaction.getNonce() - senderNonce;
+    if (nonceSkewDetected(pendingTransaction, stateSenderNonce)) {
+      reconcileSender(pendingTransaction.getSender(), stateSenderNonce);
+    }
+
+    final long nonceDistance = pendingTransaction.getNonce() - stateSenderNonce;
 
     final TransactionAddedResult nonceChecksResult =
-        nonceChecks(pendingTransaction, senderNonce, nonceDistance);
+        nonceChecks(pendingTransaction, stateSenderNonce, nonceDistance);
     if (nonceChecksResult != null) {
       return nonceChecksResult;
     }
 
     try {
-      TransactionAddedResult result =
-          prioritizedTransactions.add(pendingTransaction, (int) nonceDistance);
-
-      if (result.equals(REORG_SENDER)) {
-        result = reorgSenderOf(pendingTransaction, (int) nonceDistance);
-      }
-
-      return result;
+      return prioritizedTransactions.add(pendingTransaction, (int) nonceDistance);
     } catch (final Throwable throwable) {
-      // in case something unexpected happened, log this sender txs and force a reorg of his txs
+      return reconcileAndRetryAdd(
+          pendingTransaction, stateSenderNonce, (int) nonceDistance, throwable);
+    }
+  }
+
+  private TransactionAddedResult reconcileAndRetryAdd(
+      final PendingTransaction pendingTransaction,
+      final long stateSenderNonce,
+      final int nonceDistance,
+      final Throwable throwable) {
+    // in case something unexpected happened, log this sender txs and force a reorg of his txs
+    LOG.warn(
+        "Unexpected error {} when adding transaction {}, current sender status {}",
+        throwable,
+        pendingTransaction.toTraceLog(),
+        prioritizedTransactions.logSender(pendingTransaction.getSender()));
+    LOG.warn("Stack trace", throwable);
+    reconcileSender(pendingTransaction.getSender(), stateSenderNonce);
+    try {
+      return prioritizedTransactions.add(pendingTransaction, nonceDistance);
+    } catch (final Throwable throwable2) {
       LOG.warn(
           "Unexpected error {} when adding transaction {}, current sender status {}",
           throwable,
           pendingTransaction.toTraceLog(),
           prioritizedTransactions.logSender(pendingTransaction.getSender()));
       LOG.warn("Stack trace", throwable);
-      reorgSenderOf(pendingTransaction, (int) nonceDistance);
       return INTERNAL_ERROR;
     }
   }
 
-  private TransactionAddedResult reorgSenderOf(
-      final PendingTransaction pendingTransaction, final int nonceDistance) {
-    final var existingSenderTxs = prioritizedTransactions.getAllFor(pendingTransaction.getSender());
+  private boolean nonceSkewDetected(
+      final PendingTransaction pendingTransaction, final long stateSenderNonce) {
+    final OptionalLong maybeTxPoolSenderNonce =
+        prioritizedTransactions.getCurrentNonceFor(pendingTransaction.getSender());
+    if (maybeTxPoolSenderNonce.isPresent()) {
+      final long txPoolSenderNonce = maybeTxPoolSenderNonce.getAsLong();
+      if (stateSenderNonce != txPoolSenderNonce) {
+        LOG.atDebug()
+            .setMessage(
+                "Nonce skew detected when adding pending transaction {}. Account nonce from world state is {} while current txpool nonce is {}")
+            .addArgument(pendingTransaction::toTraceLog)
+            .addArgument(stateSenderNonce)
+            .addArgument(txPoolSenderNonce)
+            .log();
+        return true;
+      }
+    }
+    return false;
+  }
 
-    // it is more performant to invalidate backward
-    for (int i = existingSenderTxs.size() - 1; i >= 0; --i) {
-      prioritizedTransactions.remove(existingSenderTxs.get(i), REORG);
+  private void reconcileSender(final Address sender, final long stateSenderNonce) {
+    final var existingSenderTxs = prioritizedTransactions.getAllFor(sender);
+    if (existingSenderTxs.isEmpty()) {
+      LOG.debug("Sender {} has no transactions to reconcile", sender);
+      return;
     }
 
-    // add the new one and re-add all the previous
-    final var result = prioritizedTransactions.add(pendingTransaction, nonceDistance);
-    existingSenderTxs.forEach(ptx -> prioritizedTransactions.add(ptx, nonceDistance));
-    LOG.atTrace()
-        .setMessage(
-            "Pending transaction {} with nonce distance {} triggered a reorg for sender {} with {} existing transactions: {}")
-        .addArgument(pendingTransaction::toTraceLog)
-        .addArgument(nonceDistance)
-        .addArgument(pendingTransaction::getSender)
+    LOG.atDebug()
+        .setMessage("Sender {} with nonce {} has {} transaction(s) to reconcile {}")
+        .addArgument(sender)
+        .addArgument(stateSenderNonce)
         .addArgument(existingSenderTxs::size)
         .addArgument(
             () ->
@@ -154,9 +183,40 @@ public class LayeredPendingTransactions implements PendingTransactions {
                     .map(PendingTransaction::toTraceLog)
                     .collect(Collectors.joining("; ")))
         .log();
-    return result;
-  }
 
+    final var reAddTxs = new ArrayDeque<PendingTransaction>(existingSenderTxs.size());
+
+    for (int i = existingSenderTxs.size() - 1; i >= 0; --i) {
+      final var ptx = existingSenderTxs.get(i);
+      prioritizedTransactions.remove(ptx, REORG);
+      if (ptx.getNonce() >= stateSenderNonce) {
+        reAddTxs.addFirst(ptx);
+      }
+    }
+
+    if (!reAddTxs.isEmpty()) {
+      final long lowestNonce = reAddTxs.getFirst().getNonce();
+      final int newNonceDistance = (int) Math.max(0, lowestNonce - stateSenderNonce);
+
+      reAddTxs.stream()
+          .filter(pt -> pt.getNonce() > stateSenderNonce)
+          .forEach(ptx -> prioritizedTransactions.add(ptx, newNonceDistance));
+    }
+
+    LOG.atDebug()
+        .setMessage("Sender {} with nonce {} after reconciliation has {}")
+        .addArgument(sender)
+        .addArgument(stateSenderNonce)
+        .addArgument(
+            () -> {
+              final var senderTxs = prioritizedTransactions.getAllFor(sender);
+              return senderTxs.stream()
+                  .map(PendingTransaction::toTraceLog)
+                  .collect(Collectors.joining("; ", senderTxs.size() + " transaction(s) ", ""));
+            })
+        .log();
+  }
+  
   private void logTransactionForReplayAdd(
       final PendingTransaction pendingTransaction, final long senderNonce) {
     // csv fields: sequence, addedAt, sender, sender_nonce, nonce, type, hash, rlp
