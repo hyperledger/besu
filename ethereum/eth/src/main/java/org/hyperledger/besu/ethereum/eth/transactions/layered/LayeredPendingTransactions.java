@@ -21,7 +21,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedRes
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.INTERNAL_ERROR;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.INVALIDATED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.REORG;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.RECONCILED;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -188,7 +188,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
     for (int i = existingSenderTxs.size() - 1; i >= 0; --i) {
       final var ptx = existingSenderTxs.get(i);
-      prioritizedTransactions.remove(ptx, REORG);
+      prioritizedTransactions.remove(ptx, RECONCILED);
       if (ptx.getNonce() >= stateSenderNonce) {
         reAddTxs.addFirst(ptx);
       }
@@ -216,7 +216,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
             })
         .log();
   }
-  
+
   private void logTransactionForReplayAdd(
       final PendingTransaction pendingTransaction, final long senderNonce) {
     // csv fields: sequence, addedAt, sender, sender_nonce, nonce, type, hash, rlp

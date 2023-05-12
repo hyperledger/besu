@@ -90,7 +90,7 @@ public interface TransactionsLayer {
     INVALIDATED,
     PROMOTED,
     REPLACED,
-    REORG;
+    RECONCILED;
 
     private final String label;
 
