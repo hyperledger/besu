@@ -22,6 +22,7 @@ import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_MIN;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.datatypes.Address;
@@ -34,6 +35,8 @@ import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
+import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.evm.log.LogTopic;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -41,6 +44,7 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -229,6 +233,62 @@ public class MessageWrapperTest {
     final Bytes actual =
         pooledTransactionsMessage.wrapMessageData(BigInteger.valueOf(1111)).getData();
     assertThat(actual).isEqualTo(expected);
+  }
+
+  @Test
+  public void readFromExpectsListWrappingBodyFields() {
+    // BodiesMessages broadcast bodies in this format
+    // [[txs],[ommers],[withdrawals]]
+    // 0xc3c0c0c0
+    final BytesValueRLPInput bytesValueRLPInput =
+        new BytesValueRLPInput(Bytes.fromHexString("0xc3c0c0c0"), false);
+    final BlockBody blockBodyDecodefromRLP =
+        BlockBody.readWrappedBodyFrom(bytesValueRLPInput, new MainnetBlockHeaderFunctions());
+
+    assertThat(blockBodyDecodefromRLP)
+        .isEqualTo(
+            new BlockBody(
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Optional.of(Collections.emptyList()),
+                Optional.empty()));
+  }
+
+  @Test
+  public void readBodyFieldsExpectsNoListWrappingBodyFields() {
+    // rlps of blocks contains block data in this format
+    // [[blockheader],[txs],[ommers],[withdrawals]]
+    // 0xc4c0c0c0c0
+    final BytesValueRLPInput bytesValueRLPInput =
+        new BytesValueRLPInput(Bytes.fromHexString("0xc4c0c0c0c0"), false);
+    // Enters the initial
+    bytesValueRLPInput.enterList();
+    // skips block header list
+    bytesValueRLPInput.enterList();
+    bytesValueRLPInput.leaveList();
+
+    final BlockBody blockBodyDecodefromRLP =
+        BlockBody.readFrom(bytesValueRLPInput, new MainnetBlockHeaderFunctions());
+
+    assertThat(blockBodyDecodefromRLP)
+        .isEqualTo(
+            new BlockBody(
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Optional.of(Collections.emptyList()),
+                Optional.empty()));
+  }
+
+  @Test
+  public void readBodyFieldsThrowsIfThereIsListWrappingBodyFields() {
+    // [[txs],[ommers],[withdrawals]]
+    // 0xc3c0c0c0
+    final BytesValueRLPInput bytesValueRLPInput =
+        new BytesValueRLPInput(Bytes.fromHexString("0xc3c0c0c0"), false);
+
+    assertThrows(
+        RLPException.class,
+        () -> BlockBody.readFrom(bytesValueRLPInput, new MainnetBlockHeaderFunctions()));
   }
 
   private static class TestTransaction extends Transaction {

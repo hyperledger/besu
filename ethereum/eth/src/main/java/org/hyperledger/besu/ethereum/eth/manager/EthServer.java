@@ -197,7 +197,7 @@ class EthServer {
 
       final BlockBody body = maybeBody.get();
       final BytesValueRLPOutput bodyOutput = new BytesValueRLPOutput();
-      body.writeTo(bodyOutput);
+      body.writeWrappedBodyTo(bodyOutput);
       final int encodedSize = bodyOutput.encodedSize();
       if (responseSizeEstimate + encodedSize > maxMessageSize) {
         break;
