@@ -156,7 +156,7 @@ public class JsonRpcExecutorHandler {
       throw new InvalidParameterException();
     }
     return new JsonRpcBatchExecutor(jsonRpcExecutor, tracer, ctx, jsonRpcConfiguration)
-        .executeJsonRpcBatch(batchJsonRequest);
+        .executeRpcRequestBatch(batchJsonRequest);
   }
 
   private static void handleJsonObjectResponse(
