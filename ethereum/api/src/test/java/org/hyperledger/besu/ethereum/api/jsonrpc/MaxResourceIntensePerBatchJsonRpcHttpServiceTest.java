@@ -102,7 +102,6 @@ public class MaxResourceIntensePerBatchJsonRpcHttpServiceTest extends JsonRpcHtt
   // Create a batch request containing two types of requests: one resource-intensive and one
   // non-resource-intensive.
   // The batch request is structured as a JSON array containing five requests in total.
-
   private RequestBody createRequestBody() {
     return RequestBody.create(
         "["

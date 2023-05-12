@@ -55,24 +55,36 @@ public class JsonRpcBatchExecutor {
     this.jsonRpcConfiguration = jsonRpcConfiguration;
   }
 
-  public List<JsonRpcResponse> executeJsonArrayRequest(final JsonArray batchJsonRequest) {
-    final List<JsonRpcResponse> jsonRpcBatchResponses = new ArrayList<>();
-    for (int i = 0; i < batchJsonRequest.size(); i++) {
-      final JsonObject jsonRequest;
+  /**
+   * This method is used to execute a batch of JSON RPC requests.
+   *
+   * @param jsonRequestBatch A JsonArray containing individual JSON RPC requests.
+   * @return A List of JsonRpcResponse objects, each corresponding to the result of an individual request.
+   */
+  public List<JsonRpcResponse> executeJsonRpcBatch(final JsonArray jsonRequestBatch) {
+    final List<JsonRpcResponse> rpcResponses = new ArrayList<>();
+    for (int requestIndex = 0; requestIndex < jsonRequestBatch.size(); requestIndex++) {
       try {
-        jsonRequest = batchJsonRequest.getJsonObject(i);
-        if (canExecuteRequest(jsonRequest)) {
-          JsonRpcResponse response = execute(jsonRequest);
-          jsonRpcBatchResponses.add(response);
-        } else {
-          final Integer id = jsonRequest.getInteger("id", null);
-          jsonRpcBatchResponses.add(new JsonRpcErrorResponse(id, EXCEEDS_RPC_MAX_BATCH_SIZE));
-        }
-      } catch (final ClassCastException e) {
-        jsonRpcBatchResponses.add(new JsonRpcErrorResponse(null, INVALID_REQUEST));
+        final JsonObject individualRequest = jsonRequestBatch.getJsonObject(requestIndex);
+        rpcResponses.add(processSingleRequest(individualRequest));
+      } catch (final ClassCastException exception) {
+        rpcResponses.add(new JsonRpcErrorResponse(null, INVALID_REQUEST));
       }
     }
-    return jsonRpcBatchResponses;
+    return rpcResponses;
+  }
+
+  private JsonRpcResponse processSingleRequest(final JsonObject singleRpcRequest) {
+    // Check if the request is resource-intensive and doesn't exceed the limit per batch
+    if (isValidRequestForProcessing(singleRpcRequest)) {
+      // Execute the request and return the response
+      return execute(singleRpcRequest);
+    } else {
+      // If the request is resource-intensive and the limit for such requests has been
+      // exceeded, retrieve the request ID and add an error response
+      final Integer requestId = singleRpcRequest.getInteger("id", null);
+      return new JsonRpcErrorResponse(requestId, EXCEEDS_RPC_MAX_BATCH_SIZE);
+    }
   }
 
   private JsonRpcResponse execute(final JsonObject jsonRequest) {
@@ -87,7 +99,7 @@ public class JsonRpcBatchExecutor {
         req -> req.mapTo(JsonRpcRequest.class));
   }
 
-  private boolean canExecuteRequest(final JsonObject jsonRequest) {
+  private boolean isValidRequestForProcessing(final JsonObject jsonRequest) {
     if (jsonRpcConfiguration.getMaxResourceIntensivePerBatchSize() > 0
         && isResourceIntensiveRequest(jsonRequest)) {
       return resourceIntensiveRequestsCounter++

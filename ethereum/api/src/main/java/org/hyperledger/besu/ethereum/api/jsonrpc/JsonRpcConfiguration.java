@@ -38,7 +38,7 @@ public class JsonRpcConfiguration {
   public static final int DEFAULT_MAX_ACTIVE_CONNECTIONS = 80;
   public static final int DEFAULT_MAX_BATCH_SIZE = 1024;
   public static final int DEFAULT_MAX_RESOURCE_INTENSIVE_REQUESTS_BATCH_SIZE = 1;
-  public static final List<String> DEFAULT_RESOURCE_INTENSIVE_METHODS =
+  public static final List<String> RESOURCE_INTENSIVE_METHODS =
       List.of(RpcMethod.ETH_CALL.getMethodName());
 
   private boolean enabled;
@@ -281,6 +281,6 @@ public class JsonRpcConfiguration {
   }
 
   public List<String> getResourceIntensiveMethods() {
-    return DEFAULT_RESOURCE_INTENSIVE_METHODS;
+    return RESOURCE_INTENSIVE_METHODS;
   }
 }

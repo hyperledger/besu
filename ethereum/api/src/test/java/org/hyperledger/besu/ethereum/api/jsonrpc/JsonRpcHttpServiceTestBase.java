@@ -94,7 +94,7 @@ public class JsonRpcHttpServiceTestBase {
   protected static int maxResourceIntensivePerBatchSize = 10;
 
   protected static List<String> resourceIntenseMethods =
-      JsonRpcConfiguration.DEFAULT_RESOURCE_INTENSIVE_METHODS;
+      JsonRpcConfiguration.RESOURCE_INTENSIVE_METHODS;
 
   public static void initServerAndClient() throws Exception {
     peerDiscoveryMock = mock(P2PNetwork.class);
