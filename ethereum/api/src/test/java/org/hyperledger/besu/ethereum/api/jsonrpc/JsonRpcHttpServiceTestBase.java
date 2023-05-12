@@ -93,7 +93,7 @@ public class JsonRpcHttpServiceTestBase {
   protected static int maxBatchSize = 10;
   protected static int maxResourceIntensivePerBatchSize = 10;
 
-  protected static List<String> resourceIntenseMethods =
+  protected static List<String> resourceIntensiveMethods =
       JsonRpcConfiguration.RESOURCE_INTENSIVE_METHODS;
 
   public static void initServerAndClient() throws Exception {
@@ -180,7 +180,7 @@ public class JsonRpcHttpServiceTestBase {
     config.setMaxActiveConnections(maxConnections);
     config.setMaxBatchSize(maxBatchSize);
     config.setMaxResourceIntensivePerBatchSize(maxResourceIntensivePerBatchSize);
-    when(config.getResourceIntensiveMethods()).thenReturn(resourceIntenseMethods);
+    when(config.getResourceIntensiveMethods()).thenReturn(resourceIntensiveMethods);
     return config;
   }
 

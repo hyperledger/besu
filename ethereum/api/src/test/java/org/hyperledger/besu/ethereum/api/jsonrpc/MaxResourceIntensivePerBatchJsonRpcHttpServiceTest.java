@@ -28,12 +28,12 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.junit.Test;
 
-public class MaxResourceIntensePerBatchJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
+public class MaxResourceIntensivePerBatchJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
 
   private void initMaxResourceIntensivePerBatchSize(final int rpcResourceIntensiveMaxBatchSize)
       throws Exception {
     maxResourceIntensivePerBatchSize = rpcResourceIntensiveMaxBatchSize;
-    resourceIntenseMethods = List.of("resourceIntensiveMethod");
+    resourceIntensiveMethods = List.of("resourceIntensiveMethod");
     initServerAndClient();
   }
 

@@ -1638,7 +1638,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void rpcHttpMaxResourceIntensiveBatchSizeOptionMustBeUsed() {
     final int rpcHttpMaxResourceIntensiveBatchSize = 100;
     parseCommand(
-        "--rpc-http-max-resource-intense-per-batch-size",
+        "--rpc-http-max-resource-intensive-per-batch-size",
         Integer.toString(rpcHttpMaxResourceIntensiveBatchSize));
 
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());

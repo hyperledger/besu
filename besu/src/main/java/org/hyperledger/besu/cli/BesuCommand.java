@@ -769,7 +769,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     private final Integer rpcHttpMaxBatchSize = DEFAULT_HTTP_MAX_BATCH_SIZE;
 
     @CommandLine.Option(
-        names = {"--rpc-http-max-resource-intense-per-batch-size"},
+        names = {"--rpc-http-max-resource-intensive-per-batch-size"},
         paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
         description =
             "Specifies the maximum number of resource-intensive requests in a single RPC batch request via RPC. -1 specifies no limit  (default: ${DEFAULT-VALUE})")
