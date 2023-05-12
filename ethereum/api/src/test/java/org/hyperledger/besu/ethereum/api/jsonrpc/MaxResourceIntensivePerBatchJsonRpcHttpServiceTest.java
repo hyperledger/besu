@@ -105,15 +105,10 @@ public class MaxResourceIntensivePerBatchJsonRpcHttpServiceTest extends JsonRpcH
   private RequestBody createRequestBody() {
     return RequestBody.create(
         "["
-            // 1 - Non-resource-intensive request
             + "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"web3_clientVersion\"},"
-            // 2 - Resource-intensive request
             + "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"resourceIntensiveMethod\"},"
-            // 3 - Non-resource-intensive request
             + "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"web3_clientVersion\"},"
-            // 4 - Resource-intensive request
             + "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"resourceIntensiveMethod\"},"
-            // 5 - Non-resource-intensive request
             + "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"web3_clientVersion\"}"
             + "]",
         JSON);
