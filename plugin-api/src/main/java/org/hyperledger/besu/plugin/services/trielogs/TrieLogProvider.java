@@ -53,6 +53,7 @@ public interface TrieLogProvider {
   /**
    * Block and TrieLog layer composition, used for returning a range of TrieLog layers.
    *
+   * @param blockHash the block hash
    * @param blockNumber the block number
    * @param trieLog the associated TrieLog layer
    */

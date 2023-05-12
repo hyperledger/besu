@@ -1329,9 +1329,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuComponent besuComponent;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
       Suppliers.memoize(
-          () -> besuComponent == null || besuComponent.getObservableMetricsSystem() == null
-                ? MetricsSystemFactory.create(metricsConfiguration())
-                : besuComponent.getObservableMetricsSystem());
+          () ->
+              besuComponent == null || besuComponent.getObservableMetricsSystem() == null
+                  ? MetricsSystemFactory.create(metricsConfiguration())
+                  : besuComponent.getObservableMetricsSystem());
   private Vertx vertx;
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
