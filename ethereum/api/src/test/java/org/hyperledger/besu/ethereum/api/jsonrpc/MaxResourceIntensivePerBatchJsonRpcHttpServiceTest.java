@@ -38,7 +38,8 @@ public class MaxResourceIntensivePerBatchJsonRpcHttpServiceTest extends JsonRpcH
   }
 
   @Test
-  public void shouldOnlyExecuteOneResourceIntensiveRequestPerBatch_whenLimitIsEnabled() throws Exception {
+  public void shouldOnlyExecuteOneResourceIntensiveRequestPerBatch_whenLimitIsEnabled()
+      throws Exception {
     // Set up the limit resource-intensive methods per batch
     final int resourceIntensiveLimit = 1;
     initMaxResourceIntensivePerBatchSize(resourceIntensiveLimit);
@@ -74,7 +75,8 @@ public class MaxResourceIntensivePerBatchJsonRpcHttpServiceTest extends JsonRpcH
   }
 
   @Test
-  public void shouldExecuteAllResourceIntensiveRequestsInBatch_whenLimitIsDisabled() throws Exception {
+  public void shouldExecuteAllResourceIntensiveRequestsInBatch_whenLimitIsDisabled()
+      throws Exception {
     // disable resource-intensive methods per batch
     final int resourceIntensiveLimit = -1;
     initMaxResourceIntensivePerBatchSize(resourceIntensiveLimit);
