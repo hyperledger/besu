@@ -37,6 +37,9 @@ public class JsonRpcConfiguration {
   public static final int DEFAULT_ENGINE_JSON_RPC_PORT = 8551;
   public static final int DEFAULT_MAX_ACTIVE_CONNECTIONS = 80;
   public static final int DEFAULT_MAX_BATCH_SIZE = 1024;
+  public static final int DEFAULT_MAX_RESOURCE_INTENSIVE_REQUESTS_BATCH_SIZE = 1;
+  public static final List<String> DEFAULT_RESOURCE_INTENSIVE_METHODS =
+      List.of(RpcMethod.ETH_CALL.getMethodName());
 
   private boolean enabled;
   private int port;
@@ -53,6 +56,7 @@ public class JsonRpcConfiguration {
   private long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
   private int maxActiveConnections;
   private int maxBatchSize;
+  private int maxResourceIntensivePerBatchSize;
 
   public static JsonRpcConfiguration createDefault() {
     final JsonRpcConfiguration config = new JsonRpcConfiguration();
@@ -63,6 +67,7 @@ public class JsonRpcConfiguration {
     config.httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
     config.setMaxActiveConnections(DEFAULT_MAX_ACTIVE_CONNECTIONS);
     config.setMaxBatchSize(DEFAULT_MAX_BATCH_SIZE);
+    config.setMaxResourceIntensivePerBatchSize(DEFAULT_MAX_RESOURCE_INTENSIVE_REQUESTS_BATCH_SIZE);
     return config;
   }
 
@@ -209,6 +214,7 @@ public class JsonRpcConfiguration {
         .add("httpTimeoutSec", httpTimeoutSec)
         .add("maxActiveConnections", maxActiveConnections)
         .add("maxBatchSize", maxBatchSize)
+        .add("maxResourceIntensivePerBatchSize", maxResourceIntensivePerBatchSize)
         .toString();
   }
 
@@ -230,7 +236,8 @@ public class JsonRpcConfiguration {
         && Objects.equals(hostsAllowlist, that.hostsAllowlist)
         && Objects.equals(authenticationCredentialsFile, that.authenticationCredentialsFile)
         && Objects.equals(authenticationPublicKeyFile, that.authenticationPublicKeyFile)
-        && maxBatchSize == that.maxBatchSize;
+        && maxBatchSize == that.maxBatchSize
+        && maxResourceIntensivePerBatchSize == that.maxResourceIntensivePerBatchSize;
   }
 
   @Override
@@ -245,7 +252,8 @@ public class JsonRpcConfiguration {
         authenticationEnabled,
         authenticationCredentialsFile,
         authenticationPublicKeyFile,
-        maxBatchSize);
+        maxBatchSize,
+        maxResourceIntensivePerBatchSize);
   }
 
   public int getMaxActiveConnections() {
@@ -262,5 +270,17 @@ public class JsonRpcConfiguration {
 
   public void setMaxBatchSize(final int maxBatchSize) {
     this.maxBatchSize = maxBatchSize;
+  }
+
+  public int getMaxResourceIntensivePerBatchSize() {
+    return maxResourceIntensivePerBatchSize;
+  }
+
+  public void setMaxResourceIntensivePerBatchSize(final int maxResourceIntensivePerBatchSize) {
+    this.maxResourceIntensivePerBatchSize = maxResourceIntensivePerBatchSize;
+  }
+
+  public List<String> getResourceIntensiveMethods() {
+    return DEFAULT_RESOURCE_INTENSIVE_METHODS;
   }
 }

@@ -206,6 +206,8 @@ public abstract class AbstractJsonRpcHttpServiceTest {
 
     config.setPort(0);
     config.setMaxBatchSize(10);
+    config.setMaxResourceIntensivePerBatchSize(10);
+
     service =
         new JsonRpcHttpService(
             vertx,

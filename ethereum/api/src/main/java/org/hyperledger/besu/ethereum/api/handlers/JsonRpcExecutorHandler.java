@@ -14,8 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.handlers;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_REQUEST;
-
+import org.hyperledger.besu.ethereum.api.handlers.batch.JsonRpcBatchExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonResponseStreamer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.context.ContextKey;
@@ -28,7 +27,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 
 import java.io.IOException;
 import java.security.InvalidParameterException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -152,24 +150,13 @@ public class JsonRpcExecutorHandler {
       throws InvalidParameterException {
     final JsonArray batchJsonRequest = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_ARRAY.name());
     lazyTraceLogger(batchJsonRequest::toString);
-    final List<JsonRpcResponse> jsonRpcBatchResponses = new ArrayList<>();
 
     if (jsonRpcConfiguration.getMaxBatchSize() > 0
         && batchJsonRequest.size() > jsonRpcConfiguration.getMaxBatchSize()) {
       throw new InvalidParameterException();
     }
-
-    for (int i = 0; i < batchJsonRequest.size(); i++) {
-      final JsonObject jsonRequest;
-      try {
-        jsonRequest = batchJsonRequest.getJsonObject(i);
-      } catch (final ClassCastException e) {
-        jsonRpcBatchResponses.add(new JsonRpcErrorResponse(null, INVALID_REQUEST));
-        continue;
-      }
-      jsonRpcBatchResponses.add(executeRequest(jsonRpcExecutor, tracer, jsonRequest, ctx));
-    }
-    return jsonRpcBatchResponses;
+    return new JsonRpcBatchExecutor(jsonRpcExecutor, tracer, ctx, jsonRpcConfiguration)
+        .executeJsonArrayRequest(batchJsonRequest);
   }
 
   private static void handleJsonObjectResponse(

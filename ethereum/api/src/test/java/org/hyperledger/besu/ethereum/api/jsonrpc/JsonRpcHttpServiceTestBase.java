@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -50,6 +51,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -89,6 +91,10 @@ public class JsonRpcHttpServiceTestBase {
   protected static final NatService natService = new NatService(Optional.empty());
   protected static int maxConnections = 80;
   protected static int maxBatchSize = 10;
+  protected static int maxResourceIntensivePerBatchSize = 10;
+
+  protected static List<String> resourceIntenseMethods =
+      JsonRpcConfiguration.DEFAULT_RESOURCE_INTENSIVE_METHODS;
 
   public static void initServerAndClient() throws Exception {
     peerDiscoveryMock = mock(P2PNetwork.class);
@@ -168,11 +174,13 @@ public class JsonRpcHttpServiceTestBase {
   }
 
   private static JsonRpcConfiguration createLimitedJsonRpcConfig() {
-    final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
+    final JsonRpcConfiguration config = spy(JsonRpcConfiguration.createDefault());
     config.setPort(0);
     config.setHostsAllowlist(Collections.singletonList("*"));
     config.setMaxActiveConnections(maxConnections);
     config.setMaxBatchSize(maxBatchSize);
+    config.setMaxResourceIntensivePerBatchSize(maxResourceIntensivePerBatchSize);
+    when(config.getResourceIntensiveMethods()).thenReturn(resourceIntenseMethods);
     return config;
   }
 
