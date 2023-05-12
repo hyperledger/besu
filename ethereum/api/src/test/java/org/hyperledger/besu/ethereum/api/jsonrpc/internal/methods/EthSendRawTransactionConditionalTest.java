@@ -78,7 +78,7 @@ public class EthSendRawTransactionConditionalTest {
     assertActualResponseIsErrorWithGivenMessage(
         jsonWithBlockConditions,
         USER_SPECIFIED_CONDITIONS_NOT_MET,
-        "block number not within specified range");
+        "block number 99 not within specified range min 90 max 98");
   }
 
   @Test
@@ -93,7 +93,7 @@ public class EthSendRawTransactionConditionalTest {
     assertActualResponseIsErrorWithGivenMessage(
         jsonWithBlockConditions,
         USER_SPECIFIED_CONDITIONS_NOT_MET,
-        "block number not within specified range");
+        "block number 89 not within specified range min 90 max 98");
   }
 
   @Test
@@ -111,7 +111,7 @@ public class EthSendRawTransactionConditionalTest {
     assertActualResponseIsErrorWithGivenMessage(
         jsonWithBlockConditions,
         USER_SPECIFIED_CONDITIONS_NOT_MET,
-        "timestamp not within specified range");
+        "timestamp 7557 not within specified range min 7339 max 7447");
   }
 
   @Test
@@ -129,7 +129,7 @@ public class EthSendRawTransactionConditionalTest {
     assertActualResponseIsErrorWithGivenMessage(
         jsonWithBlockConditions,
         USER_SPECIFIED_CONDITIONS_NOT_MET,
-        "timestamp not within specified range");
+        "timestamp 7337 not within specified range min 7339 max 7447");
   }
 
   @Test

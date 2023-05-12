@@ -78,23 +78,28 @@ public class EthSendRawTransactionConditional extends AbstractEthSendRawTransact
     if (requestContext.getRequest().getParamLength() == 2) {
       final SendRawTransactionConditionalParameter conditions =
           conditionalParameter(requestContext);
+      long headBlockNumber = blockchainQueries.get().headBlockNumber();
       if (!withinRange(
-          blockchainQueries.get().headBlockNumber(),
-          conditions.getBlockNumberMin(),
-          conditions.getBlockNumberMax())) {
+          headBlockNumber, conditions.getBlockNumberMin(), conditions.getBlockNumberMax())) {
         return getJsonRpcErrorResponse(
             requestContext,
             USER_SPECIFIED_CONDITIONS_NOT_MET,
-            "block number not within specified range");
+            String.format(
+                "block number %s not within specified range min %s max %s",
+                headBlockNumber,
+                conditions.getBlockNumberMin().orElse(0L),
+                conditions.getBlockNumberMax().orElse(headBlockNumber)));
       }
-      if (!withinRange(
-          blockchainQueries.get().headBlockHeader().getTimestamp(),
-          conditions.getTimestampMin(),
-          conditions.getTimestampMax())) {
+      long headTimestamp = blockchainQueries.get().headBlockHeader().getTimestamp();
+      if (!withinRange(headTimestamp, conditions.getTimestampMin(), conditions.getTimestampMax())) {
         return getJsonRpcErrorResponse(
             requestContext,
             USER_SPECIFIED_CONDITIONS_NOT_MET,
-            "timestamp not within specified range");
+            String.format(
+                "timestamp %s not within specified range min %s max %s",
+                headTimestamp,
+                conditions.getTimestampMin().orElse(0L),
+                conditions.getTimestampMax().orElse(headTimestamp)));
       }
       if (conditions.getKnownAccounts().isEmpty()) {
         return Optional.empty();
@@ -107,7 +112,6 @@ public class EthSendRawTransactionConditional extends AbstractEthSendRawTransact
       }
       final Map<Address, SendRawTransactionConditionalParameter.KnownAccountInfo> storageToCheck =
           conditions.getKnownAccounts().get();
-      final long headBlockNumber = blockchainQueries.get().headBlockNumber();
       for (Address a : storageToCheck.keySet()) {
         SendRawTransactionConditionalParameter.KnownAccountInfo info = storageToCheck.get(a);
         if (info.getStorageRootHash().isPresent()) {
