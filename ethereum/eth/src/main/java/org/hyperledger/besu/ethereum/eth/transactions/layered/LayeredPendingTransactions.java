@@ -186,6 +186,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
     final var reAddTxs = new ArrayDeque<PendingTransaction>(existingSenderTxs.size());
 
+    // it is more performant to invalidate backward
     for (int i = existingSenderTxs.size() - 1; i >= 0; --i) {
       final var ptx = existingSenderTxs.get(i);
       prioritizedTransactions.remove(ptx, RECONCILED);
@@ -195,12 +196,11 @@ public class LayeredPendingTransactions implements PendingTransactions {
     }
 
     if (!reAddTxs.isEmpty()) {
+      // re-add all the previous txs
       final long lowestNonce = reAddTxs.getFirst().getNonce();
       final int newNonceDistance = (int) Math.max(0, lowestNonce - stateSenderNonce);
 
-      reAddTxs.stream()
-          .filter(pt -> pt.getNonce() > stateSenderNonce)
-          .forEach(ptx -> prioritizedTransactions.add(ptx, newNonceDistance));
+      reAddTxs.forEach(ptx -> prioritizedTransactions.add(ptx, newNonceDistance));
     }
 
     LOG.atDebug()
