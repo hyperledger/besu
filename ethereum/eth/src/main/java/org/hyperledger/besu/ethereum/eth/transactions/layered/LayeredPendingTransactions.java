@@ -313,7 +313,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
         .takeWhile(unused -> !completed.get())
         .peek(
             highPrioPendingTx ->
-                LOG.atDebug()
+                LOG.atTrace()
                     .setMessage("highPrioPendingTx {}, senderTxs {}")
                     .addArgument(highPrioPendingTx::toTraceLog)
                     .addArgument(
@@ -421,7 +421,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
       final List<Transaction> confirmedTransactions,
       final List<Transaction> reorgTransactions,
       final FeeMarket feeMarket) {
-    LOG.atDebug()
+    LOG.atTrace()
         .setMessage("Managing new added block {}")
         .addArgument(blockHeader::toLogString)
         .log();
