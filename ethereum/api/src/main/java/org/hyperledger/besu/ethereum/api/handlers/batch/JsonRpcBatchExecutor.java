@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.handlers.batch;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.EXCEEDS_RPC_MAX_BATCH_SIZE;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.EXCEEDS_RPC_MAX_RESOURCE_INTENSIVE_BATCH_SIZE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_REQUEST;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -123,7 +123,7 @@ public class JsonRpcBatchExecutor {
       // If the request is resource-intensive and the limit for such requests has been
       // exceeded, retrieve the request ID and add an error response
       final Integer requestId = rpcRequest.getInteger("id", null);
-      return new JsonRpcErrorResponse(requestId, EXCEEDS_RPC_MAX_BATCH_SIZE);
+      return new JsonRpcErrorResponse(requestId, EXCEEDS_RPC_MAX_RESOURCE_INTENSIVE_BATCH_SIZE);
     }
   }
 

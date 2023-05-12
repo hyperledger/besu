@@ -56,7 +56,7 @@ public class MaxResourceIntensivePerBatchJsonRpcHttpServiceTest extends JsonRpcH
       // As per our configuration, only one resource-intensive request should be allowed per batch,
       // so it should not exceed the limit.
       assertThat(json.getJsonObject(1).getJsonObject("error").getInteger("code"))
-          .isNotEqualTo(JsonRpcError.EXCEEDS_RPC_MAX_BATCH_SIZE.getCode());
+          .isNotEqualTo(JsonRpcError.EXCEEDS_RPC_MAX_RESOURCE_INTENSIVE_BATCH_SIZE.getCode());
 
       // Assert that the second non-resource-intensive request executed successfully (it should not
       // contain an error).
@@ -65,7 +65,7 @@ public class MaxResourceIntensivePerBatchJsonRpcHttpServiceTest extends JsonRpcH
       // Assert that the second resource-intensive request failed due to exceeding the limit of
       // resource-intensive requests per batch.
       assertThat(json.getJsonObject(3).getJsonObject("error").getInteger("code"))
-          .isEqualTo(JsonRpcError.EXCEEDS_RPC_MAX_BATCH_SIZE.getCode());
+          .isEqualTo(JsonRpcError.EXCEEDS_RPC_MAX_RESOURCE_INTENSIVE_BATCH_SIZE.getCode());
 
       // Assert that the third non-resource-intensive request executed successfully (it should not
       // contain an error).
@@ -93,7 +93,7 @@ public class MaxResourceIntensivePerBatchJsonRpcHttpServiceTest extends JsonRpcH
         JsonObject jsonObject = json.getJsonObject(i);
         if (jsonObject.containsKey("error")) {
           assertThat(jsonObject.getJsonObject("error").getInteger("code"))
-              .isNotEqualTo(JsonRpcError.EXCEEDS_RPC_MAX_BATCH_SIZE.getCode());
+              .isNotEqualTo(JsonRpcError.EXCEEDS_RPC_MAX_RESOURCE_INTENSIVE_BATCH_SIZE.getCode());
         }
       }
     }
