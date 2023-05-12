@@ -40,7 +40,7 @@ import org.apache.tuweni.units.bigints.UInt256;
  * This class encapsulates the changes that are done to transition one block to the next. This
  * includes serialization and deserialization tasks for storing this log to off-memory storage.
  *
- * <p>In this particular formulation only the "Leaves" are tracked" Future layers may track patrica
+ * <p>In this particular formulation only the "Leaves" are tracked Future layers may track patricia
  * trie changes as well.
  */
 @SuppressWarnings("unchecked")
