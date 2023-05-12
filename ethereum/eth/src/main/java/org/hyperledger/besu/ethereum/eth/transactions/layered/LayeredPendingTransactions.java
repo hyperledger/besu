@@ -177,11 +177,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
         .addArgument(sender)
         .addArgument(stateSenderNonce)
         .addArgument(existingSenderTxs::size)
-        .addArgument(
-            () ->
-                existingSenderTxs.stream()
-                    .map(PendingTransaction::toTraceLog)
-                    .collect(Collectors.joining("; ")))
+        .addArgument(() -> prioritizedTransactions.logSender(sender))
         .log();
 
     final var reAddTxs = new ArrayDeque<PendingTransaction>(existingSenderTxs.size());
@@ -204,16 +200,10 @@ public class LayeredPendingTransactions implements PendingTransactions {
     }
 
     LOG.atDebug()
-        .setMessage("Sender {} with nonce {} after reconciliation has {}")
+        .setMessage("Sender {} with nonce {} status after reconciliation {}")
         .addArgument(sender)
         .addArgument(stateSenderNonce)
-        .addArgument(
-            () -> {
-              final var senderTxs = prioritizedTransactions.getAllFor(sender);
-              return senderTxs.stream()
-                  .map(PendingTransaction::toTraceLog)
-                  .collect(Collectors.joining("; ", senderTxs.size() + " transaction(s) ", ""));
-            })
+        .addArgument(() -> prioritizedTransactions.logSender(sender))
         .log();
   }
 
