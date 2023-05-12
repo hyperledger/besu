@@ -61,7 +61,7 @@ public enum JsonRpcError {
   EXCEEDS_RPC_MAX_BLOCK_RANGE(-32005, "Requested range exceeds maximum RPC range limit"),
   EXCEEDS_RPC_MAX_BATCH_SIZE(-32005, "Number of requests exceeds max batch size"),
   EXCEEDS_RPC_MAX_RESOURCE_INTENSIVE_BATCH_SIZE(
-      -32005, "Resource-Intensive Request Limit Exceeded"),
+      -32005, "Number of resource-intensive requests exceeds batch limit"),
 
   NONCE_TOO_HIGH(-32006, "Nonce too high"),
   TX_SENDER_NOT_AUTHORIZED(-32007, "Sender account not authorized to send transactions"),
