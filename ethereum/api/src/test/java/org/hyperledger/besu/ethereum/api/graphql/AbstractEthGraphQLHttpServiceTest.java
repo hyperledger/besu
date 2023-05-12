@@ -34,8 +34,8 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -51,7 +51,6 @@ import org.hyperledger.besu.testutil.BlockTestUtil;
 
 import java.net.URL;
 import java.nio.file.Paths;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -139,21 +138,18 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
             transactionPoolMock.addTransactionViaApi(
                 ArgumentMatchers.argThat(tx -> tx.getNonce() == 16)))
         .thenReturn(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW));
-    final GasPricePendingTransactionsSorter pendingTransactionsMock =
-        Mockito.mock(GasPricePendingTransactionsSorter.class);
+    final PendingTransactions pendingTransactionsMock = Mockito.mock(PendingTransactions.class);
     Mockito.when(transactionPoolMock.getPendingTransactions()).thenReturn(pendingTransactionsMock);
     Mockito.when(pendingTransactionsMock.getPendingTransactions())
         .thenReturn(
             Collections.singleton(
-                new PendingTransaction(
+                new PendingTransaction.Local(
                     Transaction.builder()
                         .type(TransactionType.FRONTIER)
                         .nonce(42)
                         .gasLimit(654321)
                         .gasPrice(Wei.ONE)
-                        .build(),
-                    true,
-                    Instant.ofEpochSecond(Integer.MAX_VALUE))));
+                        .build())));
 
     final WorldStateArchive stateArchive = createInMemoryWorldStateArchive();
     GENESIS_CONFIG.writeStateTo(stateArchive.getMutable());

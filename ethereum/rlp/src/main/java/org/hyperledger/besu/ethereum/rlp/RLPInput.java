@@ -350,7 +350,7 @@ public interface RLPInput {
    */
   default <T> List<T> readList(final Function<RLPInput, T> valueReader) {
     final int size = enterList();
-    final List<T> res = new ArrayList<>(size);
+    final List<T> res = size == 0 ? List.of() : new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       try {
         res.add(valueReader.apply(this));

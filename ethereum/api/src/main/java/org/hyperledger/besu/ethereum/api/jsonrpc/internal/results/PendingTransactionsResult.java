@@ -16,24 +16,22 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public class PendingTransactionsResult implements TransactionResult {
 
-  private final Set<PendingTransactionResult> pendingTransactionResults;
+  private final List<PendingTransactionResult> pendingTransactionResults;
 
-  public PendingTransactionsResult(final Set<PendingTransaction> pendingTransactionSet) {
+  public PendingTransactionsResult(final Collection<PendingTransaction> pendingTransactionSet) {
     pendingTransactionResults =
-        pendingTransactionSet.stream()
-            .map(PendingTransactionResult::new)
-            .collect(Collectors.toSet());
+        pendingTransactionSet.stream().map(PendingTransactionResult::new).toList();
   }
 
   @JsonValue
-  public Set<PendingTransactionResult> getResults() {
+  public List<PendingTransactionResult> getResults() {
     return pendingTransactionResults;
   }
 }

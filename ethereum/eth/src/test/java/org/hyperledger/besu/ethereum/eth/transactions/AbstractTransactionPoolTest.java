@@ -98,7 +98,7 @@ public abstract class AbstractTransactionPoolTest {
   private static final KeyPair KEY_PAIR2 =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
   @Mock protected MainnetTransactionValidator transactionValidator;
-  @Mock protected PendingTransactionListener listener;
+  @Mock protected PendingTransactionAddedListener listener;
   @Mock protected MiningParameters miningParameters;
   @Mock protected TransactionsMessageSender transactionsMessageSender;
   @Mock protected NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
@@ -182,7 +182,7 @@ public abstract class AbstractTransactionPoolTest {
         transactionBroadcaster,
         ethContext,
         miningParameters,
-        metricsSystem,
+        new TransactionPoolMetrics(metricsSystem),
         config);
   }
 
@@ -433,10 +433,10 @@ public abstract class AbstractTransactionPoolTest {
 
   @Test
   public void shouldDiscardRemoteTransactionThatAlreadyExistsBeforeValidation() {
-    doReturn(true).when(transactions).containsTransaction(transaction1.getHash());
+    doReturn(true).when(transactions).containsTransaction(transaction1);
     transactionPool.addRemoteTransactions(singletonList(transaction1));
 
-    verify(transactions).containsTransaction(transaction1.getHash());
+    verify(transactions).containsTransaction(transaction1);
     verifyNoInteractions(transactionValidator);
     verifyNoMoreInteractions(transactions);
   }
