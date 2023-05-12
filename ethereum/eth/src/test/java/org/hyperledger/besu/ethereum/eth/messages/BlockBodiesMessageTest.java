@@ -99,7 +99,7 @@ public final class BlockBodiesMessageTest {
   @Test
   public void shouldNotThrowRLPExceptionIfAllowedEmptyBody() {
     final Bytes bytes = Bytes.fromHexString("0xc0");
-    final BlockBody empty = BlockBody.readFrom(RLP.input(bytes), null, true);
+    final BlockBody empty = BlockBody.readWrappedBodyFrom(RLP.input(bytes), null, true);
     Assertions.assertThat(empty.isEmpty()).isTrue();
   }
 
@@ -111,7 +111,7 @@ public final class BlockBodiesMessageTest {
     assertThrows(
         RLPException.class,
         () -> {
-          BlockBody.readFrom(RLP.input(bytes), blockHeaderFunctions, false);
+          BlockBody.readWrappedBodyFrom(RLP.input(bytes), blockHeaderFunctions, false);
         });
   }
 }

@@ -175,6 +175,9 @@ tx-pool-limit-by-account-percentage=0.017
 Xincoming-tx-messages-keep-alive-seconds=60
 rpc-tx-feecap=2000000000000000000
 strict-tx-replay-protection-enabled=true
+tx-pool-disable-locals=false
+tx-pool-enable-save-restore=true
+tx-pool-save-file="txpool.dump"
 
 # Revert Reason
 revert-reason-enabled=false
@@ -213,6 +216,7 @@ Xp2p-tls-truststore-type="none"
 Xp2p-tls-truststore-file="none.file"
 Xp2p-tls-keystore-password-file="none"
 Xp2p-tls-crl-file="none.file"
+Xp2p-tls-clienthello-sni=false
 
 #contracts
 Xevm-jumpdest-cache-weight-kb=32000

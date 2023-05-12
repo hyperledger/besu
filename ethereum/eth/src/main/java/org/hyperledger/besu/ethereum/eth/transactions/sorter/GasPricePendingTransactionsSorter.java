@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
 import static java.util.Comparator.comparing;
 
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -40,7 +39,7 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
       new TreeSet<>(
           comparing(PendingTransaction::isReceivedFromLocalSource)
               .thenComparing(PendingTransaction::getGasPrice)
-              .thenComparing(PendingTransaction::getAddedToPoolAt)
+              .thenComparing(PendingTransaction::getAddedAt)
               .thenComparing(PendingTransaction::getSequence)
               .reversed());
 
@@ -59,7 +58,7 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
   }
 
   @Override
-  public void manageBlockAdded(final Block block) {
+  public void manageBlockAdded(final BlockHeader blockHeader) {
     // nothing to do
   }
 

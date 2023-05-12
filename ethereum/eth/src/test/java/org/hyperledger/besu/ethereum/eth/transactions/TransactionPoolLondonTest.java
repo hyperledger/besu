@@ -49,7 +49,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
 
@@ -158,8 +160,11 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
     return block;
   }
 
-  @Test
-  public void shouldAcceptZeroGasPriceFrontierTxsWhenMinGasPriceIsZeroAndLondonWithZeroBaseFee() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void shouldAcceptZeroGasPriceFrontierTxsWhenMinGasPriceIsZeroAndLondonWithZeroBaseFee(
+      final boolean disableLocalTxs) {
+    transactionPool = createTransactionPool(b -> b.disableLocalTransactions(disableLocalTxs));
     when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0, Optional.of(Wei.ZERO)));
     whenBlockBaseFeeIs(Wei.ZERO);
@@ -167,11 +172,14 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
     final Transaction frontierTransaction = createFrontierTransaction(0, Wei.ZERO);
 
     givenTransactionIsValid(frontierTransaction);
-    assertLocalTransactionValid(frontierTransaction);
+    assertTransactionViaApiValid(frontierTransaction, disableLocalTxs);
   }
 
-  @Test
-  public void shouldAcceptZeroGasPrice1559TxsWhenMinGasPriceIsZeroAndLondonWithZeroBaseFee() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void shouldAcceptZeroGasPrice1559TxsWhenMinGasPriceIsZeroAndLondonWithZeroBaseFee(
+      final boolean disableLocalTxs) {
+    transactionPool = createTransactionPool(b -> b.disableLocalTransactions(disableLocalTxs));
     when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ZERO);
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0, Optional.of(Wei.ZERO)));
     whenBlockBaseFeeIs(Wei.ZERO);
@@ -179,16 +187,17 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
     final Transaction transaction = createTransaction(0, Wei.ZERO);
 
     givenTransactionIsValid(transaction);
-    assertLocalTransactionValid(transaction);
+    assertTransactionViaApiValid(transaction, disableLocalTxs);
   }
 
   @Test
-  public void shouldAcceptBaseFeeFloorGasPriceFrontierTransactionsWhenMining() {
+  public void shouldAcceptBaseFeeFloorGasPriceFrontierLocalTransactionsWhenMining() {
+    transactionPool = createTransactionPool(b -> b.disableLocalTransactions(false));
     final Transaction frontierTransaction = createFrontierTransaction(0, BASE_FEE_FLOOR);
 
     givenTransactionIsValid(frontierTransaction);
 
-    assertLocalTransactionValid(frontierTransaction);
+    assertTransactionViaApiValid(frontierTransaction, false);
   }
 
   @Test
