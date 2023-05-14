@@ -104,6 +104,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
    * @param pendingTransactions the pending transactions
    * @param miningParams the mining params
    * @param backwardSyncContext the backward sync context
+   * @param depositContractAddress the address of the deposit contract
    */
   public MergeCoordinator(
       final ProtocolContext protocolContext,
