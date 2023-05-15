@@ -23,10 +23,7 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 
-/**
- * A dagger module that know how to create the BesuCommand, which collects all configuration
- * settings.
- */
+/** A dagger module that know how to create the BesuPluginContextImpl singleton. */
 @Module
 public class BesuPluginContextModule {
 

@@ -276,7 +276,7 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
       }
 
       Stream<Long> rangeAsStream(final long fromBlockNumber, final long toBlockNumber) {
-        if (Math.abs(toBlockNumber - fromBlockNumber) > 1000L) {
+        if (Math.abs(toBlockNumber - fromBlockNumber) > LOG_RANGE_LIMIT) {
           throw new IllegalArgumentException("Requested Range too large");
         }
         long left = Math.min(fromBlockNumber, toBlockNumber);
