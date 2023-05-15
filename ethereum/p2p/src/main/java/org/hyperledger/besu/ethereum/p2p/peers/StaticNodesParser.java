@@ -48,7 +48,9 @@ public class StaticNodesParser {
       LOG.debug("StaticNodes file {} does not exist, no static connections will be created.", path);
       return emptySet();
     } catch (AccessDeniedException ex) {
-      LOG.warn("Access denied to static nodes file ({}). Ensure static nodes file and node data directory have correct permissions.", path);
+      LOG.warn(
+          "Access denied to static nodes file ({}). Ensure static nodes file and node data directory have correct permissions.",
+          path);
       throw ex;
     } catch (IOException ex) {
       LOG.warn("Unable to parse static nodes file ({})", path);
