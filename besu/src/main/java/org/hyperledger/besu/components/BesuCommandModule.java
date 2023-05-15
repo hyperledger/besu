@@ -23,7 +23,6 @@ import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.services.BesuPluginContextImpl;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -50,7 +49,7 @@ public class BesuCommandModule {
             RlpBlockExporter::new,
             new RunnerBuilder(),
             new BesuController.Builder(),
-            new BesuPluginContextImpl(),
+            besuComponent.getBesuPluginContext(),
             System.getenv());
     besuCommand.toCommandLine();
     return besuCommand;
