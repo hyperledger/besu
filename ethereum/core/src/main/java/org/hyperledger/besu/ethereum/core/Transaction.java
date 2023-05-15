@@ -617,6 +617,10 @@ public class Transaction
    * @param out the output to write the transaction to
    */
   public void writeTo(final RLPOutput out) {
+    //there is context missing here. Are we writing a transaction (possibly type 0x03, Blobs) to be gossiped out,
+    //or to be written within a block.  Gossiped type 0x03s need to include blobs and proofs. Writing transactions
+    //to a new block being produced, or to a block being imported, should not include blobs or proofs.
+    //TODO: remove this method, require direct interaction with TransactionEncoder
     TransactionEncoder.encodeForWire(this, out);
   }
 
