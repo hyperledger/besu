@@ -71,7 +71,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
     if (maybeForkchoice.isPresent() && maybeForkchoice.get().hasValidSafeBlockHash()) {
       return Optional.of(selectLastSafeBlockAsPivot(maybeForkchoice.get().getSafeBlockHash()));
     }
-    if (lastNoFcuReceivedInfoLog + ONE_MIN_LOGGING_THRESHOLD < System.currentTimeMillis()) {
+    if (lastNoFcuReceivedInfoLog + NO_FCU_RECEIVED_LOGGING_THRESHOLD < System.currentTimeMillis()) {
       lastNoFcuReceivedInfoLog = System.currentTimeMillis();
       LOG.info("Waiting on CL to supply a pivot block, please check if your CL is in sync");
     }
