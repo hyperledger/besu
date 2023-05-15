@@ -45,7 +45,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
   private final Runnable cleanupAction;
 
   private long lastNoFcuReceivedInfoLog = System.currentTimeMillis();
-  private static final long ONE_MIN_LOGGING_THRESHOLD = 60000L;
+  private static final long NO_FCU_RECEIVED_LOGGING_THRESHOLD = 60000L;
   private volatile Optional<BlockHeader> maybeCachedHeadBlockHeader = Optional.empty();
 
   public PivotSelectorFromSafeBlock(
