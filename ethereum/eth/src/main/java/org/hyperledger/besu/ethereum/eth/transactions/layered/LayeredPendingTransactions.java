@@ -99,7 +99,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
     logTransactionForReplayAdd(pendingTransaction, stateSenderNonce);
 
-    if (nonceSkewDetected(pendingTransaction, stateSenderNonce)) {
+    if (accountNonceDisparityDetected(pendingTransaction, stateSenderNonce)) {
       reconcileSender(pendingTransaction.getSender(), stateSenderNonce);
     }
 
@@ -140,12 +140,24 @@ public class LayeredPendingTransactions implements PendingTransactions {
           throwable,
           pendingTransaction.toTraceLog(),
           prioritizedTransactions.logSender(pendingTransaction.getSender()));
+      // ToDo: demoted to debug when Layered TxPool is out of preview
       LOG.warn("Stack trace", throwable);
       return INTERNAL_ERROR;
     }
   }
 
-  private boolean nonceSkewDetected(
+  /**
+   * Detect a disparity between account nonce has seen by the world state and the txpool, that could
+   * happen during the small amount of time during block import when the world state is updated
+   * while the txpool still does not process the confirmed txs, or when there is a reorg and the
+   * sender nonce goes back.
+   *
+   * @param pendingTransaction the incoming transaction to check
+   * @param stateSenderNonce account nonce from the world state
+   * @return false if the nonce for the sender has seen by the txpool matches the value of the
+   *     account nonce in the world state, true if they differ
+   */
+  private boolean accountNonceDisparityDetected(
       final PendingTransaction pendingTransaction, final long stateSenderNonce) {
     final OptionalLong maybeTxPoolSenderNonce =
         prioritizedTransactions.getCurrentNonceFor(pendingTransaction.getSender());
@@ -154,7 +166,8 @@ public class LayeredPendingTransactions implements PendingTransactions {
       if (stateSenderNonce != txPoolSenderNonce) {
         LOG.atDebug()
             .setMessage(
-                "Nonce skew detected when adding pending transaction {}. Account nonce from world state is {} while current txpool nonce is {}")
+                "Nonce disparity detected when adding pending transaction {}. "
+                    + "Account nonce from world state is {} while current txpool nonce is {}")
             .addArgument(pendingTransaction::toTraceLog)
             .addArgument(stateSenderNonce)
             .addArgument(txPoolSenderNonce)
@@ -165,6 +178,16 @@ public class LayeredPendingTransactions implements PendingTransactions {
     return false;
   }
 
+  /**
+   * Rebuild the txpool for a sender according to the specified nonce. This is used in case the
+   * account nonce has seen by the txpool is not the correct one (see {@link
+   * LayeredPendingTransactions#accountNonceDisparityDetected(PendingTransaction, long)} for when
+   * this could happen). It works by removing all the txs for the sender and readding them using the
+   * passed nonce.
+   *
+   * @param sender the sender for which rebuild the txpool
+   * @param stateSenderNonce the world state account nonce to use in the txpool for the sender
+   */
   private void reconcileSender(final Address sender, final long stateSenderNonce) {
     final var existingSenderTxs = prioritizedTransactions.getAllFor(sender);
     if (existingSenderTxs.isEmpty()) {
