@@ -21,16 +21,13 @@ import java.util.Optional;
 public class TransactionSelectionResult {
 
   private enum Status {
-    DELETE_TRANSACTION_AND_CONTINUE,
-    CONTINUE,
+    SELECTED,
     BLOCK_OCCUPANCY_ABOVE_THRESHOLD(true, false),
     TX_TOO_LARGE,
     TX_PRICE_BELOW_MIN,
     DATA_PRICE_BELOW_MIN,
     INVALID_TRANSIENT(false, false),
-    INVALID(false, true),
-    SELECTED,
-    COMPLETE_OPERATION;
+    INVALID(false, true);
 
     private final boolean stop;
     private final boolean discard;
@@ -91,6 +88,10 @@ public class TransactionSelectionResult {
 
   public boolean discard() {
     return status.discard;
+  }
+
+  public boolean skip() {
+    return !Status.SELECTED.equals(status);
   }
 
   @Override

@@ -267,7 +267,7 @@ public class BlockTransactionSelector {
     pendingTransactions.selectTransactions(
         pendingTransaction -> evaluateTransaction(pendingTransaction, false));
     LOG.atTrace()
-        .setMessage("Transaction selection result result {}")
+        .setMessage("Transaction selection result {}")
         .addArgument(transactionSelectionResult::toTraceLog)
         .log();
     return transactionSelectionResult;
