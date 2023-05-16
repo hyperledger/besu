@@ -110,6 +110,11 @@ public class EndLayer implements TransactionsLayer {
   }
 
   @Override
+  public OptionalLong getCurrentNonceFor(final Address sender) {
+    return OptionalLong.empty();
+  }
+
+  @Override
   public PendingTransaction promote(final Predicate<PendingTransaction> promotionFilter) {
     return null;
   }
