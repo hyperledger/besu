@@ -84,9 +84,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   private final Wei minTransactionGasPrice;
   private final Double minBlockOccupancyRatio;
   protected final BlockHeader parentHeader;
-  private static final Address DEFAULT_DEPOSIT_CONTRACT_ADDRESS =
-      Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
-
   private final Optional<Address> depositContractAddress;
 
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
@@ -206,14 +203,14 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final DepositsValidator depositsValidator = newProtocolSpec.getDepositsValidator();
       Optional<List<Deposit>> maybeDeposits = Optional.empty();
 
-      if (depositsValidator instanceof DepositsValidator.AllowedDeposits) {
+      if (depositContractAddress.isPresent()) {
         final List<Deposit> depositsFromReceipts =
             transactionResults.getReceipts().stream()
                 .flatMap(receipt -> receipt.getLogsList().stream())
                 .filter(
                     log ->
                         depositContractAddress
-                            .orElse(DEFAULT_DEPOSIT_CONTRACT_ADDRESS)
+                            .get()
                             .equals(log.getLogger()))
                 .map(DepositDecoder::decodeFromLog)
                 .toList();
