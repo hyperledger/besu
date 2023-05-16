@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionSelectionResult;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
@@ -306,17 +306,17 @@ public class BlockTransactionSelector {
           .log();
       if (blockOccupancyAboveThreshold()) {
         LOG.trace("Block occupancy above threshold, completing operation");
-        return TransactionSelectionResult.COMPLETE_OPERATION;
+        return TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
       } else {
-        return TransactionSelectionResult.CONTINUE;
+        return TransactionSelectionResult.TX_TOO_LARGE;
       }
     }
 
     if (transactionCurrentPriceBelowMin(transaction)) {
-      return TransactionSelectionResult.CONTINUE;
+      return TransactionSelectionResult.TX_PRICE_BELOW_MIN;
     }
     if (transactionDataPriceBelowMin(transaction)) {
-      return TransactionSelectionResult.CONTINUE;
+      return TransactionSelectionResult.DATA_PRICE_BELOW_MIN;
     }
 
     final WorldUpdater worldStateUpdater = worldState.updater();
@@ -351,7 +351,7 @@ public class BlockTransactionSelector {
       return transactionSelectionResultForInvalidResult(
           transaction, effectiveResult.getValidationResult());
     }
-    return TransactionSelectionResult.CONTINUE;
+    return TransactionSelectionResult.SELECTED;
   }
 
   private boolean transactionDataPriceBelowMin(final Transaction transaction) {
@@ -402,7 +402,7 @@ public class BlockTransactionSelector {
           .addArgument(invalidReason)
           .addArgument(transaction::toTraceLog)
           .log();
-      return TransactionSelectionResult.CONTINUE;
+      return TransactionSelectionResult.invalidTransient(invalidReason);
     }
     // If the transaction was invalid for any other reason, delete it, and continue.
     LOG.atTrace()
@@ -410,7 +410,7 @@ public class BlockTransactionSelector {
         .addArgument(transaction::toTraceLog)
         .addArgument(invalidReason)
         .log();
-    return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
+    return TransactionSelectionResult.invalid(invalidReason);
   }
 
   private boolean isTransientValidationError(final TransactionInvalidReason invalidReason) {

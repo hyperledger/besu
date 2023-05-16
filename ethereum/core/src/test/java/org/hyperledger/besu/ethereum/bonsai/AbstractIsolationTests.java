@@ -116,7 +116,8 @@ public abstract class AbstractIsolationTests {
               poolConfiguration,
               new EndLayer(txPoolMetrics),
               txPoolMetrics,
-              transactionReplacementTester));
+              transactionReplacementTester),
+          txPoolMetrics);
 
   protected final List<GenesisAllocation> accounts =
       GenesisConfigFile.development()

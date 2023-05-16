@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedL
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.evm.account.Account;
@@ -60,12 +61,15 @@ public class LayeredPendingTransactions implements PendingTransactions {
   private final TransactionPoolConfiguration poolConfig;
   private final Set<Address> localSenders = new HashSet<>();
   private final AbstractPrioritizedTransactions prioritizedTransactions;
+  private final TransactionPoolMetrics metrics;
 
   public LayeredPendingTransactions(
       final TransactionPoolConfiguration poolConfig,
-      final AbstractPrioritizedTransactions prioritizedTransactions) {
+      final AbstractPrioritizedTransactions prioritizedTransactions,
+      final TransactionPoolMetrics metrics) {
     this.poolConfig = poolConfig;
     this.prioritizedTransactions = prioritizedTransactions;
+    this.metrics = metrics;
   }
 
   @Override
@@ -275,29 +279,24 @@ public class LayeredPendingTransactions implements PendingTransactions {
                     .forEach(
                         candidatePendingTx -> {
                           alreadyChecked.add(candidatePendingTx.getHash());
-                          switch (selector.evaluateTransaction(
-                              candidatePendingTx.getTransaction())) {
-                            case CONTINUE:
-                              LOG.atTrace()
-                                  .setMessage("CONTINUE: Transaction {}")
-                                  .addArgument(candidatePendingTx::toTraceLog)
-                                  .log();
-                              break;
-                            case DELETE_TRANSACTION_AND_CONTINUE:
-                              invalidTransactions.add(candidatePendingTx);
-                              LOG.atTrace()
-                                  .setMessage("DELETE_TRANSACTION_AND_CONTINUE: Transaction {}")
-                                  .addArgument(candidatePendingTx::toTraceLog)
-                                  .log();
-                              logTransactionForReplayDelete(candidatePendingTx);
-                              break;
-                            case COMPLETE_OPERATION:
-                              completed.set(true);
-                              LOG.atTrace()
-                                  .setMessage("COMPLETE_OPERATION: Transaction {}")
-                                  .addArgument(candidatePendingTx::toTraceLog)
-                                  .log();
-                              break;
+                          final var res =
+                              selector.evaluateTransaction(candidatePendingTx.getTransaction());
+
+                          metrics.incrementSelectionResult(
+                              candidatePendingTx.isReceivedFromLocalSource(), res);
+                          LOG.atTrace()
+                              .setMessage("Selection result {} for transaction {}")
+                              .addArgument(res)
+                              .addArgument(candidatePendingTx::toTraceLog)
+                              .log();
+
+                          if (res.discard()) {
+                            invalidTransactions.add(candidatePendingTx);
+                            logTransactionForReplayDelete(candidatePendingTx);
+                          }
+
+                          if (res.stop()) {
+                            completed.set(true);
                           }
                         }));
 

@@ -15,13 +15,12 @@
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult.COMPLETE_OPERATION;
-import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult.CONTINUE;
-import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionSelectionResult.SELECTED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.DROPPED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.REPLACED;
 import static org.mockito.Mockito.mock;
@@ -42,7 +41,9 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedL
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionSelectionResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.account.Account;
 
 import java.util.ArrayList;
@@ -128,11 +129,12 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     layers = createLayers(poolConf);
     senderLimitedLayers = createLayers(senderLimitedConfig);
 
-    pendingTransactions = new LayeredPendingTransactions(poolConf, layers.prioritizedTransactions);
+    pendingTransactions =
+        new LayeredPendingTransactions(poolConf, layers.prioritizedTransactions, txPoolMetrics);
 
     senderLimitedTransactions =
         new LayeredPendingTransactions(
-            senderLimitedConfig, senderLimitedLayers.prioritizedTransactions);
+            senderLimitedConfig, senderLimitedLayers.prioritizedTransactions, txPoolMetrics);
   }
 
   @Test
@@ -292,7 +294,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     pendingTransactions.selectTransactions(
         transaction -> {
           parsedTransactions.add(transaction);
-          return COMPLETE_OPERATION;
+          return BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
         });
 
     assertThat(parsedTransactions.size()).isEqualTo(1);
@@ -308,7 +310,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     pendingTransactions.selectTransactions(
         transaction -> {
           parsedTransactions.add(transaction);
-          return CONTINUE;
+          return SELECTED;
         });
 
     assertThat(parsedTransactions.size()).isEqualTo(2);
@@ -328,7 +330,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     pendingTransactions.selectTransactions(
         transaction -> {
           parsedTransactions.add(transaction);
-          return CONTINUE;
+          return SELECTED;
         });
 
     assertThat(parsedTransactions).containsExactly(transaction1b);
@@ -349,7 +351,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     pendingTransactions.selectTransactions(
         transaction -> {
           iterationOrder.add(transaction);
-          return CONTINUE;
+          return SELECTED;
         });
 
     assertThat(iterationOrder).containsExactly(transaction0, transaction1, transaction2);
@@ -370,7 +372,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     pendingTransactions.selectTransactions(
         transaction -> {
           iterationOrder.add(transaction);
-          return CONTINUE;
+          return SELECTED;
         });
 
     assertThat(iterationOrder).containsExactly(transactionSender2, transactionSender1);
@@ -385,7 +387,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     pendingTransactions.selectTransactions(
         transaction -> {
           parsedTransactions.add(transaction);
-          return DELETE_TRANSACTION_AND_CONTINUE;
+          return TransactionSelectionResult.invalid(
+              TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE);
         });
 
     assertThat(parsedTransactions.size()).isEqualTo(2);
