@@ -19,13 +19,15 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.bonsai.worldview.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogFactory;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -36,31 +38,37 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class TrieLogFactoryTests {
 
-  BlockchainSetupUtil setup = BlockchainSetupUtil.forTesting(DataStorageFormat.BONSAI);
+  final BlockchainSetupUtil setup = BlockchainSetupUtil.forTesting(DataStorageFormat.BONSAI);
+
+  final Address accountFixture = Address.fromHexString("0xdeadbeef");
+
+  final BlockHeader headerFixture =
+      new BlockHeaderTestFixture()
+          .parentHash(setup.getGenesisState().getBlock().getHash())
+          .coinbase(Address.ZERO)
+          .buildHeader();
+
+  final TrieLogLayer trieLogFixture =
+      new TrieLogLayer()
+          .setBlockHash(headerFixture.getBlockHash())
+          .addAccountChange(
+              accountFixture,
+              null,
+              new StateTrieAccountValue(0, Wei.fromEth(1), Hash.EMPTY, Hash.EMPTY))
+          .addCodeChange(
+              Address.ZERO,
+              null,
+              Bytes.fromHexString("0xfeeddeadbeef"),
+              headerFixture.getBlockHash())
+          .addStorageChange(Address.ZERO, new StorageSlotKey(UInt256.ZERO), null, UInt256.ONE);
 
   @Test
   public void testSerializeDeserializeAreEqual() {
-    BlockHeader header =
-        new BlockHeaderTestFixture()
-            .parentHash(setup.getGenesisState().getBlock().getHash())
-            .coinbase(Address.ZERO)
-            .buildHeader();
 
-    TrieLogLayer fixture =
-        new TrieLogLayer()
-            .setBlockHash(header.getBlockHash())
-            .addAccountChange(
-                Address.fromHexString("0xdeadbeef"),
-                null,
-                new StateTrieAccountValue(0, Wei.fromEth(1), Hash.EMPTY, Hash.EMPTY))
-            .addCodeChange(
-                Address.ZERO, null, Bytes.fromHexString("0xdeadbeef"), header.getBlockHash())
-            .addStorageChange(Address.ZERO, new StorageSlotKey(UInt256.ZERO), null, UInt256.ONE);
+    TrieLogFactory factory = new TrieLogFactoryImpl();
+    byte[] rlp = factory.serialize(trieLogFixture);
 
-    TrieLogFactory<TrieLogLayer> factory = new TrieLogFactoryImpl();
-    byte[] rlp = factory.serialize(fixture);
-
-    TrieLogLayer layer = factory.deserialize(rlp);
-    assertThat(layer).isEqualTo(fixture);
+    TrieLog layer = factory.deserialize(rlp);
+    assertThat(layer).isEqualTo(trieLogFixture);
   }
 }

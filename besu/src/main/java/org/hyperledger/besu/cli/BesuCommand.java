@@ -1331,11 +1331,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuComponent besuComponent;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
       Suppliers.memoize(
-          () -> {
-            return besuComponent == null
-                ? MetricsSystemFactory.create(metricsConfiguration())
-                : besuComponent.getObservableMetricsSystem();
-          });
+          () ->
+              besuComponent == null || besuComponent.getObservableMetricsSystem() == null
+                  ? MetricsSystemFactory.create(metricsConfiguration())
+                  : besuComponent.getObservableMetricsSystem());
   private Vertx vertx;
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
@@ -1414,6 +1413,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final PrivacyPluginServiceImpl privacyPluginService,
       final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl) {
+    this.besuComponent = besuComponent;
     this.logger = besuComponent.getBesuCommandLogger();
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;

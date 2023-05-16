@@ -163,7 +163,6 @@ public class TransactionPool implements BlockAddedObserver {
             new BufferedReader(new FileReader(saveFile, StandardCharsets.US_ASCII))) {
           final IntSummaryStatistics stats =
               br.lines()
-                  .parallel()
                   .mapToInt(
                       line -> {
                         final boolean isLocal = line.charAt(0) == 'l';
