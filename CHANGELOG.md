@@ -15,6 +15,7 @@
 
 ### Bug Fixes
 - Fix eth_feeHistory response for the case in which blockCount is higher than highestBlock requested. [#5397](https://github.com/hyperledger/besu/pull/5397)
+- Fix Besu Docker image failing to start due to NoClassDefFoundError with org.xerial.snappy.Snappy library. [#5462](https://github.com/hyperledger/besu/pull/5462)
 
 ### Download Links
 
@@ -28,6 +29,7 @@
 - Remove launcher command line utility [#5355](https://github.com/hyperledger/besu/pull/5355)
 - Remove deprecated `tx-pool-future-max-by-account` option, see instead: `tx-pool-limit-by-account-percentage` [#5361](https://github.com/hyperledger/besu/pull/5361)
 - Default configuration for the deprecated ECIP-1049 network has been removed from the CLI network list [#5371](https://github.com/hyperledger/besu/pull/5371)
+- Besu now requires glibc 2.32 or later to run. Ubuntu 20.04 users will need to update to a newer version of Ubuntu, 22.04 or later to run Besu
 
 ### Additions and Improvements
 - An alternate build target for the EVM using GraalVM AOT compilation was added.  [#5192](https://github.com/hyperledger/besu/pull/5192)
