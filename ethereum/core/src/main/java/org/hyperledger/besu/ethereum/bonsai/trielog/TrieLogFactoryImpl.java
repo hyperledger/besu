@@ -15,80 +15,61 @@
  */
 package org.hyperledger.besu.ethereum.bonsai.trielog;
 
+import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
-import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.bonsai.worldview.StorageSlotKey;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogAccumulator;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogFactory;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class TrieLogFactoryImpl implements TrieLogFactory<TrieLogLayer> {
+public class TrieLogFactoryImpl implements TrieLogFactory {
 
   @Override
-  public TrieLogLayer create(
-      final BonsaiWorldStateUpdateAccumulator accumulator, final Hash blockHash) {
+  public TrieLogLayer create(final TrieLogAccumulator accumulator, final BlockHeader blockHeader) {
     TrieLogLayer layer = new TrieLogLayer();
-    layer.setBlockHash(blockHash);
-    for (final Map.Entry<Address, BonsaiValue<BonsaiAccount>> updatedAccount :
-        accumulator.getAccountsToUpdate().entrySet()) {
-      final BonsaiValue<BonsaiAccount> bonsaiValue = updatedAccount.getValue();
-      final BonsaiAccount oldValue = bonsaiValue.getPrior();
-      final StateTrieAccountValue oldAccount =
-          oldValue == null
-              ? null
-              : new StateTrieAccountValue(
-                  oldValue.getNonce(),
-                  oldValue.getBalance(),
-                  oldValue.getStorageRoot(),
-                  oldValue.getCodeHash());
-      final BonsaiAccount newValue = bonsaiValue.getUpdated();
-      final StateTrieAccountValue newAccount =
-          newValue == null
-              ? null
-              : new StateTrieAccountValue(
-                  newValue.getNonce(),
-                  newValue.getBalance(),
-                  newValue.getStorageRoot(),
-                  newValue.getCodeHash());
-      if (oldValue == null && newValue == null) {
+    layer.setBlockHash(blockHeader.getBlockHash());
+    layer.setBlockNumber(blockHeader.getNumber());
+    for (final var updatedAccount : accumulator.getAccountsToUpdate().entrySet()) {
+      final var bonsaiValue = updatedAccount.getValue();
+      final var oldAccountValue = bonsaiValue.getPrior();
+      final var newAccountValue = bonsaiValue.getUpdated();
+      if (oldAccountValue == null && newAccountValue == null) {
         // by default do not persist empty reads of accounts to the trie log
         continue;
       }
-      layer.addAccountChange(updatedAccount.getKey(), oldAccount, newAccount);
+      layer.addAccountChange(updatedAccount.getKey(), oldAccountValue, newAccountValue);
     }
 
-    for (final Map.Entry<Address, BonsaiValue<Bytes>> updatedCode :
-        accumulator.getCodeToUpdate().entrySet()) {
+    for (final var updatedCode : accumulator.getCodeToUpdate().entrySet()) {
       layer.addCodeChange(
           updatedCode.getKey(),
           updatedCode.getValue().getPrior(),
           updatedCode.getValue().getUpdated(),
-          blockHash);
+          blockHeader.getBlockHash());
     }
 
-    for (final Map.Entry<
-            Address,
-            BonsaiWorldStateUpdateAccumulator.StorageConsumingMap<
-                StorageSlotKey, BonsaiValue<UInt256>>>
-        updatesStorage : accumulator.getStorageToUpdate().entrySet()) {
+    for (final var updatesStorage : accumulator.getStorageToUpdate().entrySet()) {
       final Address address = updatesStorage.getKey();
-      for (final Map.Entry<StorageSlotKey, BonsaiValue<UInt256>> slotUpdate :
-          updatesStorage.getValue().entrySet()) {
+      for (final var slotUpdate : updatesStorage.getValue().entrySet()) {
         var val = slotUpdate.getValue();
 
         if (val.getPrior() == null && val.getUpdated() == null) {
@@ -103,52 +84,53 @@ public class TrieLogFactoryImpl implements TrieLogFactory<TrieLogLayer> {
   }
 
   @Override
-  public byte[] serialize(final TrieLogLayer layer) {
+  public byte[] serialize(final TrieLog layer) {
     final BytesValueRLPOutput rlpLog = new BytesValueRLPOutput();
     writeTo(layer, rlpLog);
     return rlpLog.encoded().toArrayUnsafe();
   }
 
-  public static void writeTo(final TrieLogLayer layer, final RLPOutput output) {
+  public static void writeTo(final TrieLog layer, final RLPOutput output) {
     layer.freeze();
 
     final Set<Address> addresses = new TreeSet<>();
-    addresses.addAll(layer.getAccounts().keySet());
-    addresses.addAll(layer.getCode().keySet());
-    addresses.addAll(layer.getStorage().keySet());
+    addresses.addAll(layer.getAccountChanges().keySet());
+    addresses.addAll(layer.getCodeChanges().keySet());
+    addresses.addAll(layer.getStorageChanges().keySet());
 
     output.startList(); // container
-    output.writeBytes(layer.blockHash);
+    output.writeBytes(layer.getBlockHash());
 
     for (final Address address : addresses) {
       output.startList(); // this change
       output.writeBytes(address);
 
-      final BonsaiValue<StateTrieAccountValue> accountChange = layer.accounts.get(address);
+      final TrieLog.LogTuple<AccountValue> accountChange = layer.getAccountChanges().get(address);
       if (accountChange == null || accountChange.isUnchanged()) {
         output.writeNull();
       } else {
-        accountChange.writeRlp(output, (o, sta) -> sta.writeTo(o));
+        writeRlp(accountChange, output, (o, sta) -> sta.writeTo(o));
       }
 
-      final BonsaiValue<Bytes> codeChange = layer.code.get(address);
+      final TrieLog.LogTuple<Bytes> codeChange = layer.getCodeChanges().get(address);
       if (codeChange == null || codeChange.isUnchanged()) {
         output.writeNull();
       } else {
-        codeChange.writeRlp(output, RLPOutput::writeBytes);
+        writeRlp(codeChange, output, RLPOutput::writeBytes);
       }
 
-      final Map<StorageSlotKey, BonsaiValue<UInt256>> storageChanges = layer.storage.get(address);
+      final Map<StorageSlotKey, TrieLog.LogTuple<UInt256>> storageChanges =
+          layer.getStorageChanges().get(address);
       if (storageChanges == null) {
         output.writeNull();
       } else {
         output.startList();
-        for (final Map.Entry<StorageSlotKey, BonsaiValue<UInt256>> storageChangeEntry :
+        for (final Map.Entry<StorageSlotKey, TrieLog.LogTuple<UInt256>> storageChangeEntry :
             storageChanges.entrySet()) {
           output.startList();
           // do not write slotKey, it is not used in mainnet bonsai trielogs
-          output.writeBytes(storageChangeEntry.getKey().slotHash());
-          storageChangeEntry.getValue().writeInnerRlp(output, RLPOutput::writeUInt256Scalar);
+          output.writeBytes(storageChangeEntry.getKey().getSlotHash());
+          writeInnerRlp(storageChangeEntry.getValue(), output, RLPOutput::writeUInt256Scalar);
           output.endList();
         }
         output.endList();
@@ -241,5 +223,35 @@ public class TrieLogFactoryImpl implements TrieLogFactory<TrieLogLayer> {
         .map(__ -> nullOrValue(input, RLPInput::readInt))
         .filter(i -> i == 1)
         .isPresent();
+  }
+
+  public static <T> void writeRlp(
+      final TrieLog.LogTuple<T> value,
+      final RLPOutput output,
+      final BiConsumer<RLPOutput, T> writer) {
+    output.startList();
+    writeInnerRlp(value, output, writer);
+    output.endList();
+  }
+
+  public static <T> void writeInnerRlp(
+      final TrieLog.LogTuple<T> value,
+      final RLPOutput output,
+      final BiConsumer<RLPOutput, T> writer) {
+    if (value.getPrior() == null) {
+      output.writeNull();
+    } else {
+      writer.accept(output, value.getPrior());
+    }
+    if (value.getUpdated() == null) {
+      output.writeNull();
+    } else {
+      writer.accept(output, value.getUpdated());
+    }
+    if (!value.isCleared()) {
+      output.writeNull();
+    } else {
+      output.writeInt(1);
+    }
   }
 }
