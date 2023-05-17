@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -81,19 +82,19 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
     final FastSyncState fastSyncState =
         fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
 
-    snapContext.clear();
+    // snapContext.clear();
     if (syncState.isResyncNeeded()) {
       snapContext.clear();
       syncState
           .getAccountToRepair()
           .ifPresent(address -> snapContext.addAccountsToBeRepaired(Hash.hash(address)));
-    } /*else if (fastSyncState.getPivotBlockHeader().isEmpty()
-          && protocolContext.getBlockchain().getChainHeadBlockNumber()
-              != BlockHeader.GENESIS_BLOCK_NUMBER) {
-        LOG.info(
-            "Checkpoint sync was requested, but cannot be enabled because the local blockchain is not empty.");
-        return Optional.empty();
-      }*/
+    } else if (fastSyncState.getPivotBlockHeader().isEmpty()
+        && protocolContext.getBlockchain().getChainHeadBlockNumber()
+            != BlockHeader.GENESIS_BLOCK_NUMBER) {
+      LOG.info(
+          "Checkpoint sync was requested, but cannot be enabled because the local blockchain is not empty.");
+      return Optional.empty();
+    }
 
     final FastSyncActions fastSyncActions;
     if (syncState.getCheckpoint().isEmpty()) {
