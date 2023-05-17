@@ -97,6 +97,7 @@ public class JsonRpcHttpService {
   private static final String SPAN_CONTEXT = "span_context";
   private static final InetSocketAddress EMPTY_SOCKET_ADDRESS = new InetSocketAddress("0.0.0.0", 0);
   private static final String APPLICATION_JSON = "application/json";
+  private static final long BODY_LIMIT = 100000000; // 100 MB
 
   private static final TextMapPropagator traceFormats =
       TextMapPropagator.composite(
@@ -320,6 +321,7 @@ public class JsonRpcHttpService {
         .route()
         .handler(
             BodyHandler.create()
+                .setBodyLimit(BODY_LIMIT)
                 .setUploadsDirectory(dataDir.resolve("uploads").toString())
                 .setDeleteUploadedFilesOnEnd(true));
     router.route("/").method(HttpMethod.GET).handler(this::handleEmptyRequest);
