@@ -129,8 +129,7 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
             .filter(predicate)
             .findFirst()
             .map(osps -> osps.fork())
-                .orElse(null));
-
+            .orElse(null));
   }
 
   @Override
