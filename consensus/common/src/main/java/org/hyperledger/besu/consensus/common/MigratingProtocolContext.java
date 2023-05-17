@@ -35,6 +35,7 @@ public class MigratingProtocolContext extends ProtocolContext {
    * @param blockchain the blockchain
    * @param worldStateArchive the world state archive
    * @param consensusContextSchedule the consensus context schedule
+   * @param transactionSelectorFactory the optional transaction selector factory
    */
   public MigratingProtocolContext(
       final MutableBlockchain blockchain,
@@ -52,6 +53,7 @@ public class MigratingProtocolContext extends ProtocolContext {
    * @param worldStateArchive the world state archive
    * @param protocolSchedule the protocol schedule
    * @param consensusContextFactory the consensus context factory
+   * @param transactionSelectorFactory the optional transaction selector factory
    * @return the protocol context
    */
   public static ProtocolContext init(

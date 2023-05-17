@@ -524,6 +524,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return this;
   }
 
+  /**
+   * sets the transactionSelectorFactory in the builder
+   *
+   * @param transactionSelectorFactory the optional transaction selector factory
+   * @return the besu controller builder
+   */
   public BesuControllerBuilder transactionSelectorFactory(
       final Optional<TransactionSelectorFactory> transactionSelectorFactory) {
     this.transactionSelectorFactory = transactionSelectorFactory;
@@ -1003,6 +1009,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param worldStateArchive the world state archive
    * @param protocolSchedule the protocol schedule
    * @param consensusContextFactory the consensus context factory
+   * @param transactionSelectorFactory optional transaction selector factory
    * @return the protocol context
    */
   protected ProtocolContext createProtocolContext(

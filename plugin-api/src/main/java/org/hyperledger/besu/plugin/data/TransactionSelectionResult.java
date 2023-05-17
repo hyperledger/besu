@@ -15,8 +15,12 @@
 
 package org.hyperledger.besu.plugin.data;
 
+/** Enum for the transaection selection result */
 public enum TransactionSelectionResult {
+  /** remove transaction from pool and continue block building */
   DELETE_TRANSACTION_AND_CONTINUE,
+  /** continue block building */
   CONTINUE,
+  /** stop block building */
   COMPLETE_OPERATION
 }
