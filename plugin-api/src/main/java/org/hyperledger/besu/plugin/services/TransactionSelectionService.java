@@ -15,10 +15,12 @@
 
 package org.hyperledger.besu.plugin.services;
 
+import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
 
 import java.util.Optional;
 
+@Unstable
 public interface TransactionSelectionService extends BesuService {
 
   Optional<TransactionSelectorFactory> get();

@@ -15,10 +15,12 @@
 
 package org.hyperledger.besu.plugin.services.txselection;
 
+import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.Transaction;
 import org.hyperledger.besu.plugin.data.TransactionReceipt;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
+@Unstable
 public interface TransactionSelector {
 
   default TransactionSelectionResult selectTransaction(
