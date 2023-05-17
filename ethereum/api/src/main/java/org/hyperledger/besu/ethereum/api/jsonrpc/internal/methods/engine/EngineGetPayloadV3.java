@@ -27,11 +27,11 @@ import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
+import java.util.Optional;
+
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Optional;
 
 public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
 
@@ -90,8 +90,10 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
   }
 
   private boolean duringShanghai(final long builtAt) {
-    return (this.shanghai.isPresent() && builtAt >= this.shanghai.get().milestone()) && //
-            (this.cancun.isEmpty() || (this.cancun.isPresent() && builtAt < this.cancun.get().milestone()));
+    return (this.shanghai.isPresent() && builtAt >= this.shanghai.get().milestone())
+        && //
+        (this.cancun.isEmpty()
+            || (this.cancun.isPresent() && builtAt < this.cancun.get().milestone()));
   }
 
   private boolean beforeShanghai(final long builtAt) {
