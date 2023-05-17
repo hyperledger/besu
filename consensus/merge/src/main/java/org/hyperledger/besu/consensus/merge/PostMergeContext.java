@@ -16,9 +16,11 @@ package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockValueCalculator;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -67,6 +69,7 @@ public class PostMergeContext implements MergeContext {
   private final AtomicReference<BlockHeader> lastSafeBlock = new AtomicReference<>();
   private final AtomicReference<Optional<BlockHeader>> terminalPoWBlock =
       new AtomicReference<>(Optional.empty());
+  private final BlockValueCalculator blockValueCalculator = new BlockValueCalculator();
   private boolean isCheckpointPostMergeSync;
   private boolean isPostMergeAtGenesis;
 
@@ -246,19 +249,27 @@ public class PostMergeContext implements MergeContext {
               blocksInProgress.removeAll(
                   retrieveTuplesById(payloadId).collect(Collectors.toUnmodifiableList()));
               blocksInProgress.add(new PayloadTuple(payloadId, newBlockWithReceipts));
+              logCurrentBestBlock(newBlockWithReceipts);
             }
           },
           () -> blocksInProgress.add(new PayloadTuple(payloadId, newBlockWithReceipts)));
+    }
+  }
 
-      LOG.atDebug()
-          .setMessage("Current best proposal for payloadId {} {}")
-          .addArgument(payloadId)
-          .addArgument(
-              () ->
-                  retrieveBlockById(payloadId)
-                      .map(bb -> logBlockProposal(bb.getBlock()))
-                      .orElse("N/A"))
-          .log();
+  private void logCurrentBestBlock(final BlockWithReceipts blockWithReceipts) {
+    if (LOG.isDebugEnabled()) {
+      final Block block = blockWithReceipts.getBlock();
+      final float gasUsedPerc =
+          100 * (float) block.getHeader().getGasUsed() / (float) block.getHeader().getGasLimit();
+      final int txsNum = block.getBody().getTransactions().size();
+      final Wei reward = blockValueCalculator.calculateBlockValue(blockWithReceipts);
+
+      LOG.debug(
+          "Current best proposal for block {}: txs {}, gas used {}%, reward {}",
+          blockWithReceipts.getNumber(),
+          txsNum,
+          String.format("%1.2f", gasUsedPerc),
+          reward.toHumanReadableString());
     }
   }
 
