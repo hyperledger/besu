@@ -18,10 +18,11 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MAX_R
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MIN_RANGE;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findNewBeginElementInRange;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.ACCOUNT_RANGE;
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapsyncMetricsManager.Step.DOWNLOAD;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
@@ -103,7 +104,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       final WorldStateStorage worldStateStorage,
       final Updater updater,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncState snapSyncState) {
+      final SnapSyncProcessState snapSyncState) {
 
     if (startStorageRange.isPresent() && endStorageRange.isPresent()) {
       // not store the new account if we just want to complete the account thanks to another
@@ -119,15 +120,14 @@ public class AccountRangeDataRequest extends SnapDataRequest {
           nbNodesSaved.getAndIncrement();
         };
 
-    stackTrie.commit(
-        new StackTrie.FlatDatabaseUpdater() {
-          @Override
-          public void update(final Bytes32 key, final Bytes value) {
-            ((BonsaiWorldStateKeyValueStorage.BonsaiUpdater) updater)
-                .putAccountInfoState(Hash.wrap(key), value);
-          }
-        },
-        nodeUpdater);
+    // we have a flat DB only with Bonsai
+    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+      stackTrie.commit(
+          (key, value) ->
+              ((BonsaiWorldStateKeyValueStorage.BonsaiUpdater) updater)
+                  .putAccountInfoState(Hash.wrap(key), value),
+          nodeUpdater);
+    }
 
     downloadState.getMetricsManager().notifyAccountsDownloaded(stackTrie.getElementsCount().get());
 
@@ -158,7 +158,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
   public Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
       final WorldStateStorage worldStateStorage,
-      final SnapSyncState snapSyncState) {
+      final SnapSyncProcessState snapSyncState) {
     final List<SnapDataRequest> childRequests = new ArrayList<>();
 
     final StackTrie.TaskElement taskElement = stackTrie.getElement(startKeyHash);
@@ -168,11 +168,14 @@ public class AccountRangeDataRequest extends SnapDataRequest {
             missingRightElement -> {
               downloadState
                   .getMetricsManager()
-                  .notifyStateDownloaded(missingRightElement, endKeyHash);
+                  .notifyRangeProgress(DOWNLOAD, missingRightElement, endKeyHash);
               childRequests.add(
                   createAccountRangeDataRequest(getRootHash(), missingRightElement, endKeyHash));
             },
-            () -> downloadState.getMetricsManager().notifyStateDownloaded(endKeyHash, endKeyHash));
+            () ->
+                downloadState
+                    .getMetricsManager()
+                    .notifyRangeProgress(DOWNLOAD, endKeyHash, endKeyHash));
 
     // find missing storages and code
     for (Map.Entry<Bytes32, Bytes> account : taskElement.keys().entrySet()) {

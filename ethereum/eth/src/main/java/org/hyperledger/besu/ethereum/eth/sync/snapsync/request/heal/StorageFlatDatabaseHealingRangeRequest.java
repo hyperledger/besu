@@ -14,15 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal;
 
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MAX_RANGE;
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MIN_RANGE;
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findNewBeginElementInRange;
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findNbRanges;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAGE_RANGE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
@@ -32,10 +30,10 @@ import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -45,7 +43,11 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
 
-/** Returns a list of accounts and the merkle proofs of an entire range */
+/**
+ * The StorageFlatDatabaseHealingRangeRequest class represents a request to heal a range of storage
+ * in the flat databases. It encapsulates the necessary information to identify the range and
+ * initiate the healing process.
+ */
 @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "TooBroadScope", "ModifiedButNotUsed"})
 public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
@@ -53,13 +55,8 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
   private final Bytes32 storageRoot;
   private final Bytes32 startKeyHash;
   private final Bytes32 endKeyHash;
-
-  private List<Bytes> proofs;
   private TreeMap<Bytes32, Bytes> slots;
-
-  private Optional<Boolean> isProofValid;
-
-  private static Long valid = 0L;
+  private boolean isProofValid;
 
   public StorageFlatDatabaseHealingRangeRequest(
       final Hash rootHash,
@@ -72,43 +69,65 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
     this.storageRoot = storageRoot;
     this.startKeyHash = startKeyHash;
     this.endKeyHash = endKeyHash;
-    this.isProofValid = Optional.empty();
+    this.isProofValid = false;
   }
 
   @Override
   public Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
       final WorldStateStorage worldStateStorage,
-      final SnapSyncState snapSyncState) {
+      final SnapSyncProcessState snapSyncState) {
     final List<SnapDataRequest> childRequests = new ArrayList<>();
-    if (slots.isEmpty() && storageRoot.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
-      return Stream.empty();
+    System.out.println(
+        "Try Generate range "
+            + " "
+            + accountHash
+            + " "
+            + storageRoot
+            + " "
+            + startKeyHash
+            + " "
+            + endKeyHash
+            + " "
+            + ((slots.isEmpty()) ? "empty" : slots.firstKey())
+            + " "
+            + ((slots.isEmpty()) ? "empty" : slots.lastKey())
+            + " "
+            + slots.size()
+            + " // "
+            + isProofValid);
+    if (!slots.isEmpty()) {
+      // new request is added if the response does not match all the requested range
+      final int nbRanges = findNbRanges(startKeyHash, endKeyHash, slots);
+      RangeManager.generateRanges(
+              slots.lastKey().toUnsignedBigInteger().add(BigInteger.ONE),
+              endKeyHash.toUnsignedBigInteger(),
+              nbRanges)
+          .forEach(
+              (key, value) -> {
+                System.out.println(
+                    "Generate range "
+                        + " "
+                        + accountHash
+                        + " "
+                        + storageRoot
+                        + " "
+                        + key
+                        + " "
+                        + value
+                        + " "
+                        + ((slots.isEmpty()) ? "empty" : slots.firstKey())
+                        + " "
+                        + ((slots.isEmpty()) ? "empty" : slots.lastKey())
+                        + " // "
+                        + isProofValid);
+                final StorageFlatDatabaseHealingRangeRequest storageRangeDataRequest =
+                    createStorageFlatHealingRangeRequest(
+                        getRootHash(), accountHash, storageRoot, key, value);
+                childRequests.add(storageRangeDataRequest);
+              });
     }
-    findNewBeginElementInRange(storageRoot, proofs, slots, endKeyHash)
-        .ifPresent(
-            missingRightElement -> {
-              final int nbRanges = findNbRanges(slots);
-              RangeManager.generateRanges(missingRightElement, endKeyHash, nbRanges)
-                  .forEach(
-                      (key, value) -> {
-                        final StorageFlatDatabaseHealingRangeRequest storageRangeDataRequest =
-                            createStorageFlatHealingRangeRequest(
-                                getRootHash(), accountHash, storageRoot, key, value);
-                        childRequests.add(storageRangeDataRequest);
-                      });
-            });
     return childRequests.stream();
-  }
-
-  private int findNbRanges(final TreeMap<Bytes32, Bytes> slots) {
-    if (startKeyHash.equals(MIN_RANGE) && endKeyHash.equals(MAX_RANGE)) {
-      return MAX_RANGE
-          .toUnsignedBigInteger()
-          .divide(
-              slots.lastKey().toUnsignedBigInteger().subtract(startKeyHash.toUnsignedBigInteger()))
-          .intValue();
-    }
-    return 1;
   }
 
   public Hash getAccountHash() {
@@ -136,20 +155,13 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       final WorldStateProofProvider worldStateProofProvider,
       final TreeMap<Bytes32, Bytes> slots,
       final ArrayDeque<Bytes> proofs) {
-    if (storageRoot.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH) && slots.isEmpty()) {
-      isProofValid = Optional.of(true);
-    } else {
-      if (!slots.isEmpty() || !proofs.isEmpty()) {
-        if (!worldStateProofProvider.isValidRangeProof(
-            startKeyHash, endKeyHash, storageRoot, proofs, slots)) {
-          isProofValid = Optional.of(false);
-        } else {
-          isProofValid = Optional.of(true);
-        }
-      }
+    if (!slots.isEmpty() && !proofs.isEmpty()) {
+      // very proof in order to check if the local flat database is valid or not
+      isProofValid =
+          worldStateProofProvider.isValidRangeProof(
+              startKeyHash, endKeyHash, storageRoot, proofs, slots);
     }
     this.slots = slots;
-    this.proofs = proofs;
   }
 
   @Override
@@ -157,9 +169,10 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       final WorldStateStorage worldStateStorage,
       final WorldStateStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncState snapSyncState) {
+      final SnapSyncProcessState snapSyncState) {
 
-    if (!isProofValid.orElse(false)) {
+    if (!isProofValid) {
+      // If the proof is not valid, it indicates that the flat database needs to be fixed.
 
       final BonsaiWorldStateKeyValueStorage.Updater bonsaiUpdater =
           (BonsaiWorldStateKeyValueStorage.Updater) updater;
@@ -172,24 +185,30 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
               Function.identity(),
               Function.identity());
 
+      Map<Bytes32, Bytes> remainingKeys = new TreeMap<>(slots);
+
+      // Retrieve the data from the trie in order to know what needs to be fixed in the flat
+      // database
       final RangeStorageEntriesCollector collector =
           RangeStorageEntriesCollector.createCollector(
-              startKeyHash, slots.isEmpty() ? endKeyHash : slots.lastKey(), 128, Integer.MAX_VALUE);
+              startKeyHash,
+              slots.isEmpty() ? endKeyHash : slots.lastKey(),
+              slots.isEmpty() ? 1024 : Integer.MAX_VALUE,
+              Integer.MAX_VALUE);
       final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
-      final TreeMap<Bytes32, Bytes> slotsInTrie =
+      slots =
           (TreeMap<Bytes32, Bytes>)
               storageTrie.entriesFrom(
                   root ->
                       RangeStorageEntriesCollector.collectEntries(
                           collector, visitor, root, startKeyHash));
 
-      Map<Bytes32, Bytes> keysToDelete = new TreeMap<>(slots);
-      slotsInTrie.forEach(
+      // Perform the fix by updating the flat database
+      slots.forEach(
           (key, value) -> {
-            if (keysToDelete.containsKey(key)) {
-              keysToDelete.remove(key);
+            if (remainingKeys.containsKey(key)) {
+              remainingKeys.remove(key);
             } else {
-              slots.put(key, value);
               bonsaiUpdater.putStorageValueBySlotHash(
                   accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value)));
             }
@@ -207,25 +226,31 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
               + " "
               + endKeyHash
               + " "
-              + slots.firstKey()
+              + ((slots.isEmpty()) ? "empty" : slots.firstKey())
               + " "
-              + slots.lastKey()
-              + " // "
-              + slotsInTrie.firstKey()
-              + " "
-              + slotsInTrie.lastKey()
-              + " fixed "
-              + " "
-              + valid);
+              + ((slots.isEmpty()) ? "empty" : slots.lastKey())
+              + " ");
 
-      keysToDelete.forEach(
-          (key, value) -> {
-            final Hash slot = Hash.wrap(key);
-            slots.remove(slot);
-            bonsaiUpdater.removeStorageValueBySlotHash(accountHash, slot);
-          });
+      remainingKeys.forEach(
+          (key, value) -> bonsaiUpdater.removeStorageValueBySlotHash(accountHash, Hash.wrap(key)));
     } else {
-      valid += 1;
+      System.out.println(
+          "Range valid from "
+              + " "
+              + accountHash
+              + " "
+              + " "
+              + storageRoot
+              + " "
+              + startKeyHash
+              + " "
+              + endKeyHash
+              + " "
+              + ((slots.isEmpty()) ? "empty" : slots.firstKey())
+              + " "
+              + ((slots.isEmpty()) ? "empty" : slots.lastKey())
+              + " fixed "
+              + " ");
     }
     return 0;
   }

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeDataRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -32,14 +32,14 @@ public class LoadLocalDataStep {
 
   private final WorldStateStorage worldStateStorage;
   private final SnapWorldDownloadState downloadState;
-  private final SnapSyncState snapSyncState;
+  private final SnapSyncProcessState snapSyncState;
   private final Counter existingNodeCounter;
 
   public LoadLocalDataStep(
       final WorldStateStorage worldStateStorage,
       final SnapWorldDownloadState downloadState,
       final MetricsSystem metricsSystem,
-      final SnapSyncState snapSyncState) {
+      final SnapSyncProcessState snapSyncState) {
     this.worldStateStorage = worldStateStorage;
     this.downloadState = downloadState;
     existingNodeCounter =
@@ -52,10 +52,10 @@ public class LoadLocalDataStep {
 
   public Stream<Task<SnapDataRequest>> loadLocalDataTrieNode(
       final Task<SnapDataRequest> task, final Pipe<Task<SnapDataRequest>> completedTasks) {
-    final TrieNodeDataRequest request = (TrieNodeDataRequest) task.getData();
+    final TrieNodeHealingRequest request = (TrieNodeHealingRequest) task.getData();
     // check if node is already stored in the worldstate
     if (snapSyncState.hasPivotBlockHeader()) {
-      Optional<Bytes> existingData = request.getExistingData(worldStateStorage);
+      Optional<Bytes> existingData = request.getExistingData(downloadState, worldStateStorage);
       if (existingData.isPresent()) {
         existingNodeCounter.inc();
         request.setData(existingData.get());

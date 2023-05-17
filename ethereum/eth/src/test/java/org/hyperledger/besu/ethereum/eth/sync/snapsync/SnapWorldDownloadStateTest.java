@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProcess;
@@ -77,12 +78,13 @@ public class SnapWorldDownloadStateTest {
       new InMemoryTasksPriorityQueues<>();
   private final WorldStateDownloadProcess worldStateDownloadProcess =
       mock(WorldStateDownloadProcess.class);
-  private final SnapSyncState snapSyncState = mock(SnapSyncState.class);
-  private final SnapPersistedContext snapContext = mock(SnapPersistedContext.class);
+  private final SnapSyncProcessState snapSyncState = mock(SnapSyncProcessState.class);
+  private final SnapSyncStatePersistenceManager snapContext =
+      mock(SnapSyncStatePersistenceManager.class);
   private final SnapsyncMetricsManager metricsManager = mock(SnapsyncMetricsManager.class);
   private final Blockchain blockchain = mock(Blockchain.class);
-  private final DynamicPivotBlockManager dynamicPivotBlockManager =
-      mock(DynamicPivotBlockManager.class);
+  private final AdaptivePivotBlockSelector dynamicPivotBlockManager =
+      mock(AdaptivePivotBlockSelector.class);
 
   private final TestClock clock = new TestClock();
   private SnapWorldDownloadState downloadState;
@@ -123,7 +125,8 @@ public class SnapWorldDownloadStateTest {
             MIN_MILLIS_BEFORE_STALLING,
             metricsManager,
             clock);
-    final DynamicPivotBlockManager dynamicPivotBlockManager = mock(DynamicPivotBlockManager.class);
+    final AdaptivePivotBlockSelector dynamicPivotBlockManager =
+        mock(AdaptivePivotBlockSelector.class);
     doAnswer(
             invocation -> {
               BiConsumer<BlockHeader, Boolean> callback = invocation.getArgument(0);
@@ -132,7 +135,7 @@ public class SnapWorldDownloadStateTest {
             })
         .when(dynamicPivotBlockManager)
         .switchToNewPivotBlock(any());
-    downloadState.setDynamicPivotBlockManager(dynamicPivotBlockManager);
+    downloadState.setAdaptivePivotBlockSelector(dynamicPivotBlockManager);
     downloadState.setRootNodeData(ROOT_NODE_DATA);
     future = downloadState.getDownloadFuture();
     assertThat(downloadState.isDownloading()).isTrue();
@@ -203,7 +206,7 @@ public class SnapWorldDownloadStateTest {
     assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
 
-    downloadState.pendingBigStorageRequests.add(
+    downloadState.pendingLargeStorageRequests.add(
         SnapDataRequest.createStorageTrieNodeDataRequest(
             Hash.EMPTY_TRIE_HASH, Hash.wrap(Bytes32.random()), Hash.EMPTY_TRIE_HASH, Bytes.EMPTY));
 
@@ -282,7 +285,7 @@ public class SnapWorldDownloadStateTest {
   public void shouldWaitingBlockchainWhenTooBehind() {
     when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
 
-    downloadState.setDynamicPivotBlockManager(dynamicPivotBlockManager);
+    downloadState.setAdaptivePivotBlockSelector(dynamicPivotBlockManager);
     when(dynamicPivotBlockManager.isBlockchainBehind()).thenReturn(true);
 
     downloadState.checkCompletion(header);
@@ -303,7 +306,7 @@ public class SnapWorldDownloadStateTest {
 
     when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
 
-    downloadState.setDynamicPivotBlockManager(dynamicPivotBlockManager);
+    downloadState.setAdaptivePivotBlockSelector(dynamicPivotBlockManager);
     when(dynamicPivotBlockManager.isBlockchainBehind()).thenReturn(true);
 
     downloadState.checkCompletion(header);
@@ -340,7 +343,7 @@ public class SnapWorldDownloadStateTest {
 
     when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
 
-    downloadState.setDynamicPivotBlockManager(dynamicPivotBlockManager);
+    downloadState.setAdaptivePivotBlockSelector(dynamicPivotBlockManager);
     when(dynamicPivotBlockManager.isBlockchainBehind()).thenReturn(true);
 
     downloadState.checkCompletion(header);

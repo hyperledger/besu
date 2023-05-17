@@ -40,7 +40,7 @@ public class PersistDataStepTest {
 
   private final WorldStateStorage worldStateStorage =
       new InMemoryKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.FOREST);
-  private final SnapSyncState snapSyncState = mock(SnapSyncState.class);
+  private final SnapSyncProcessState snapSyncState = mock(SnapSyncProcessState.class);
   private final SnapWorldDownloadState downloadState = mock(SnapWorldDownloadState.class);
 
   private final PersistDataStep persistDataStep =

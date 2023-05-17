@@ -25,10 +25,10 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDownloaderFactory;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapPersistedContext;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldStateDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
@@ -51,7 +51,7 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
 
   @SuppressWarnings("UnusedVariable")
   public static Optional<FastSyncDownloader<?>> createCheckpointDownloader(
-      final SnapPersistedContext snapContext,
+      final SnapSyncStatePersistenceManager snapContext,
       final PivotBlockSelector pivotBlockSelector,
       final SynchronizerConfiguration syncConfig,
       final Path dataDirectory,
@@ -81,11 +81,12 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
     final FastSyncState fastSyncState =
         fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
 
+    snapContext.clear();
     if (syncState.isResyncNeeded()) {
       snapContext.clear();
       syncState
           .getAccountToRepair()
-          .ifPresent(address -> snapContext.addInconsistentAccount(Hash.hash(address)));
+          .ifPresent(address -> snapContext.addAccountsToBeRepaired(Hash.hash(address)));
     } /*else if (fastSyncState.getPivotBlockHeader().isEmpty()
           && protocolContext.getBlockchain().getChainHeadBlockNumber()
               != BlockHeader.GENESIS_BLOCK_NUMBER) {
@@ -126,8 +127,8 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
               metricsSystem);
     }
 
-    final SnapSyncState snapSyncState =
-        new SnapSyncState(
+    final SnapSyncProcessState snapSyncState =
+        new SnapSyncProcessState(
             fastSyncStateStorage.loadState(
                 ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
 

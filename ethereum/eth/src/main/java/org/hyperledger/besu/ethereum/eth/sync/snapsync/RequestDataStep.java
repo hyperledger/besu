@@ -29,20 +29,19 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.AccountFlatDatabaseHealingRangeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.StorageFlatDatabaseHealingRangeRequest;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeDataRequest;
-import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.Task;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
 import kotlin.collections.ArrayDeque;
@@ -52,19 +51,17 @@ import org.apache.tuweni.bytes.Bytes32;
 public class RequestDataStep {
 
   private final WorldStateStorage worldStateStorage;
-  private final SnapSyncState fastSyncState;
-  private final WorldDownloadState<SnapDataRequest> downloadState;
+  private final SnapSyncProcessState fastSyncState;
+  private final SnapWorldDownloadState downloadState;
   private final MetricsSystem metricsSystem;
   private final EthContext ethContext;
   private final WorldStateProofProvider worldStateProofProvider;
 
-  private long cpt = 0;
-
   public RequestDataStep(
       final EthContext ethContext,
       final WorldStateStorage worldStateStorage,
-      final SnapSyncState fastSyncState,
-      final WorldDownloadState<SnapDataRequest> downloadState,
+      final SnapSyncProcessState fastSyncState,
+      final SnapWorldDownloadState downloadState,
       final MetricsSystem metricsSystem) {
     this.worldStateStorage = worldStateStorage;
     this.fastSyncState = fastSyncState;
@@ -183,8 +180,8 @@ public class RequestDataStep {
     final Map<Bytes, List<Bytes>> message = new HashMap<>();
     requestTasks.stream()
         .map(Task::getData)
-        .map(TrieNodeDataRequest.class::cast)
-        .map(TrieNodeDataRequest::getTrieNodePath)
+        .map(TrieNodeHealingRequest.class::cast)
+        .map(TrieNodeHealingRequest::getTrieNodePath)
         .forEach(
             path -> {
               final List<Bytes> bytes =
@@ -204,7 +201,7 @@ public class RequestDataStep {
               if (response != null) {
                 downloadState.removeOutstandingTask(getTrieNodeFromPeerTask);
                 for (final Task<SnapDataRequest> task : requestTasks) {
-                  final TrieNodeDataRequest request = (TrieNodeDataRequest) task.getData();
+                  final TrieNodeHealingRequest request = (TrieNodeHealingRequest) task.getData();
                   final Bytes matchingData = response.get(request.getPathId());
                   if (matchingData != null) {
                     request.setData(matchingData);
@@ -215,47 +212,49 @@ public class RequestDataStep {
             });
   }
 
-  public CompletableFuture<Task<SnapDataRequest>> requestLocalAccount(
+  /**
+   * Retrieves local accounts from the flat database and generates the necessary proof, updates the
+   * data request with the retrieved information, and returns the modified data request task.
+   *
+   * @param requestTask request data to fill
+   * @return data request with local accounts
+   */
+  public CompletableFuture<Task<SnapDataRequest>> requestLocalAccounts(
       final Task<SnapDataRequest> requestTask) {
 
     final AccountFlatDatabaseHealingRangeRequest accountDataRequest =
         (AccountFlatDatabaseHealingRangeRequest) requestTask.getData();
     final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
 
+    // retrieve accounts from flat database
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
-            worldStateStorage.streamAccountFlatDatabase(accountDataRequest.getStartKeyHash(), 128);
-    final List<Bytes> leftAccountProofRelatedNodes =
-        worldStateProofProvider.getAccountProofRelatedNodes(
-            blockHeader.getStateRoot(), accounts.firstKey());
-    final List<Bytes> rightAccountProofRelatedNodes =
-        worldStateProofProvider.getAccountProofRelatedNodes(
-            blockHeader.getStateRoot(), accounts.lastKey());
-
-    if (cpt == 10000) {
-      cpt = 0;
-      System.out.println(
-          "Found keys "
-              + accounts.size()
-              + " from "
-              + accounts.firstKey()
-              + " "
-              + accounts.lastKey());
+            worldStateStorage.streamAccountFlatDatabase(
+                accountDataRequest.getStartKeyHash(), accountDataRequest.getEndKeyHash(), 128);
+    final List<Bytes> proofs = new ArrayList<>();
+    if (!accounts.isEmpty()) {
+      // generate range proof if accounts are present
+      proofs.addAll(
+          worldStateProofProvider.getAccountProofRelatedNodes(
+              blockHeader.getStateRoot(), accounts.firstKey()));
+      proofs.addAll(
+          worldStateProofProvider.getAccountProofRelatedNodes(
+              blockHeader.getStateRoot(), accounts.lastKey()));
     }
-    cpt++;
 
     accountDataRequest.setRootHash(blockHeader.getStateRoot());
-    accountDataRequest.addLocalData(
-        worldStateProofProvider,
-        accounts,
-        new ArrayDeque<>(
-            Stream.concat(
-                    leftAccountProofRelatedNodes.stream(), rightAccountProofRelatedNodes.stream())
-                .collect(Collectors.toList())));
+    accountDataRequest.addLocalData(worldStateProofProvider, accounts, new ArrayDeque<>(proofs));
 
     return CompletableFuture.completedFuture(requestTask);
   }
 
+  /**
+   * Retrieves local storage slots from the flat database and generates the necessary proof, updates
+   * the data request with the retrieved information, and returns the modified data request task.
+   *
+   * @param requestTask request data to fill
+   * @return data request with local slots
+   */
   public CompletableFuture<Task<SnapDataRequest>> requestLocalStorage(
       final Task<SnapDataRequest> requestTask) {
 
@@ -265,43 +264,29 @@ public class RequestDataStep {
 
     storageDataRequest.setRootHash(blockHeader.getStateRoot());
 
+    // retrieve slots from flat database
     final TreeMap<Bytes32, Bytes> slots =
         (TreeMap<Bytes32, Bytes>)
             worldStateStorage.streamStorageFlatDatabase(
-                storageDataRequest.getAccountHash(), storageDataRequest.getStartKeyHash(), 128);
+                storageDataRequest.getAccountHash(),
+                storageDataRequest.getStartKeyHash(),
+                storageDataRequest.getEndKeyHash(),
+                1024);
+    final List<Bytes> proofs = new ArrayList<>();
     if (!slots.isEmpty()) {
-      final List<Bytes> leftStorageProofRelatedNodes =
+      // generate range proof if slots are present
+      proofs.addAll(
           worldStateProofProvider.getStorageProofRelatedNodes(
               storageDataRequest.getStorageRoot(),
               storageDataRequest.getAccountHash(),
-              slots.firstKey());
-      final List<Bytes> rightStorageProofRelatedNodes =
+              slots.firstKey()));
+      proofs.addAll(
           worldStateProofProvider.getStorageProofRelatedNodes(
               storageDataRequest.getStorageRoot(),
               storageDataRequest.getAccountHash(),
-              slots.lastKey());
-      storageDataRequest.addLocalData(
-          worldStateProofProvider,
-          slots,
-          new ArrayDeque<>(
-              Stream.concat(
-                      leftStorageProofRelatedNodes.stream(), rightStorageProofRelatedNodes.stream())
-                  .collect(Collectors.toList())));
-
-      if (cpt == 10000) {
-        cpt = 0;
-        System.out.println(
-            "Found storage keys "
-                + slots.size()
-                + " from "
-                + slots.firstKey()
-                + " "
-                + slots.lastKey());
-      }
-      cpt++;
-    } else {
-      storageDataRequest.addLocalData(worldStateProofProvider, slots, new ArrayDeque<>());
+              slots.lastKey()));
     }
+    storageDataRequest.addLocalData(worldStateProofProvider, slots, new ArrayDeque<>(proofs));
 
     return CompletableFuture.completedFuture(requestTask);
   }

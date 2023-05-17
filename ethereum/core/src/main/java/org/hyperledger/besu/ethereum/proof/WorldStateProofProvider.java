@@ -42,6 +42,10 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/**
+ * The WorldStateProofProvider class is responsible for providing proofs for world state entries. It
+ * interacts with the underlying storage and trie data structures to generate proofs.
+ */
 public class WorldStateProofProvider {
 
   private final WorldStateStorage worldStateStorage;
@@ -87,6 +91,13 @@ public class WorldStateProofProvider {
     return storageProofs;
   }
 
+  /**
+   * Retrieves the proof-related nodes for an account in the specified world state.
+   *
+   * @param worldStateRoot The root hash of the world state.
+   * @param accountHash The hash of the account.
+   * @return A list of proof-related nodes for the account.
+   */
   public List<Bytes> getAccountProofRelatedNodes(
       final Hash worldStateRoot, final Bytes32 accountHash) {
     final Proof<Bytes> accountProof =
@@ -94,6 +105,14 @@ public class WorldStateProofProvider {
     return accountProof.getProofRelatedNodes();
   }
 
+  /**
+   * Retrieves the proof-related nodes for a storage slot in the specified account storage trie.
+   *
+   * @param storageRoot The root hash of the account storage trie.
+   * @param accountHash The hash of the account.
+   * @param slotHash The hash of the storage slot.
+   * @return A list of proof-related nodes for the storage slot.
+   */
   public List<Bytes> getStorageProofRelatedNodes(
       final Bytes32 storageRoot, final Bytes32 accountHash, final Bytes32 slotHash) {
     final Proof<Bytes> storageProof =
@@ -116,6 +135,16 @@ public class WorldStateProofProvider {
         b -> b);
   }
 
+  /**
+   * Checks if a range proof is valid for a given range of keys.
+   *
+   * @param startKeyHash The hash of the starting key in the range.
+   * @param endKeyHash The hash of the ending key in the range.
+   * @param rootHash The root hash of the Merkle Trie.
+   * @param proofs The list of proofs for the keys in the range.
+   * @param keys The TreeMap of key-value pairs representing the range.
+   * @return {@code true} if the range proof is valid, {@code false} otherwise.
+   */
   public boolean isValidRangeProof(
       final Bytes32 startKeyHash,
       final Bytes32 endKeyHash,

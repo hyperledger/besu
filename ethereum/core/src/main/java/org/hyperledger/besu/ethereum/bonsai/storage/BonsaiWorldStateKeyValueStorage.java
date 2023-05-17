@@ -55,6 +55,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   public static final byte[] WORLD_BLOCK_HASH_KEY =
       "worldBlockHash".getBytes(StandardCharsets.UTF_8);
 
+  public static final byte[] FLAT_DB_STATUS = "flatDbStatus".getBytes(StandardCharsets.UTF_8);
+
   protected final KeyValueStorage accountStorage;
   protected final KeyValueStorage codeStorage;
   protected final KeyValueStorage storageStorage;
@@ -169,26 +171,23 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     getAccountCounter.inc();
     getAccountFlatDatabaseCounter.inc();
     return accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
+    /*
 
-    /*Optional<Bytes> response = accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
-    if (response.isEmpty()) {
       // after a snapsync/fastsync we only have the trie branches.
       final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
       if (worldStateRootHash.isPresent()) {
-        response =
+        Optional<Bytes> un2 =
             new StoredMerklePatriciaTrie<>(
                     new StoredNodeFactory<>(
                         this::getAccountStateTrieNode, Function.identity(), Function.identity()),
                     Bytes32.wrap(worldStateRootHash.get()))
                 .get(accountHash);
-        if (response.isEmpty()) getAccountMissingMerkleTrieCounter.inc();
-        else getAccountMerkleTrieCounter.inc();
+        if(!un.equals(un2)) {
+          System.out.println("invalid account "+accountHash+" "+un+" "+un2);
+        }
       }
-    } else {
-      getAccountFlatDatabaseCounter.inc();
-    }
 
-    return response;*/
+    return un;*/
   }
 
   @Override
@@ -209,24 +208,32 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     }
   }
 
-  @Override
+  /**
+   * Retrieves the storage trie node associated with the specified account and location, if
+   * available.
+   *
+   * @param accountHash The hash of the account.
+   * @param location The location within the storage trie.
+   * @param maybeNodeHash The optional hash of the storage trie node to validate the retrieved data
+   *     against.
+   * @return The optional bytes of the storage trie node.
+   */
   public Optional<Bytes> getAccountStorageTrieNode(
-      final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
-    if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
+      final Hash accountHash, final Bytes location, final Optional<Bytes32> maybeNodeHash) {
+    if (maybeNodeHash.filter(hash -> hash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)).isPresent()) {
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else {
       return trieBranchStorage
           .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
           .map(Bytes::wrap)
-          .filter(b -> Hash.hash(b).equals(nodeHash));
+          .filter(data -> maybeNodeHash.map(hash -> Hash.hash(data).equals(hash)).orElse(true));
     }
   }
 
-  public Optional<Bytes> getAccountStorageTrieNodeWithoutCheck(
-      final Hash accountHash, final Bytes location) {
-    return trieBranchStorage
-        .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
-        .map(Bytes::wrap);
+  @Override
+  public Optional<Bytes> getAccountStorageTrieNode(
+      final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
+    return getAccountStorageTrieNode(accountHash, location, Optional.ofNullable(nodeHash));
   }
 
   public Optional<byte[]> getTrieLog(final Hash blockHash) {
@@ -268,36 +275,54 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return storageStorage
         .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
         .map(Bytes::wrap);
-    /*if (response.isEmpty()) {
-      final Optional<Hash> storageRoot = storageRootSupplier.get();
-      final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
-      if (storageRoot.isPresent() && worldStateRootHash.isPresent()) {
-        response =
-                new StoredMerklePatriciaTrie<>(
-                        new StoredNodeFactory<>(
-                                (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
-                                Function.identity(),
-                                Function.identity()),
-                        storageRoot.get())
-                        .get(slotHash)
-                        .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
-        if (response.isEmpty()) getStorageValueMissingMerkleTrieCounter.inc();
-        else getStorageValueMerkleTrieCounter.inc();
+    /*final Optional<Hash> storageRoot = storageRootSupplier.get();
+    final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
+    if (storageRoot.isPresent() && worldStateRootHash.isPresent()) {
+      StoredMerklePatriciaTrie<Bytes, Bytes> bytesBytesStoredMerklePatriciaTrie =
+          new StoredMerklePatriciaTrie<>(
+              new StoredNodeFactory<>(
+                  (location, hash) -> {
+                    Optional<Bytes> accountStorageTrieNode =
+                        getAccountStorageTrieNode(accountHash, location, hash);
+                    // if
+                    // (accountHash.equals(Bytes.fromHexString("0x8e202b7d5c7fee3d8451c6aa6d35bf476c91bdc73fad9e80461263664fba1ea8")))
+                    //  System.out.println(accountStorageTrieNode);
+                    return accountStorageTrieNode;
+                  },
+                  Function.identity(),
+                  Function.identity()),
+              storageRoot.get());
+      Optional<Bytes> response =
+          bytesBytesStoredMerklePatriciaTrie
+              .get(slotHash)
+              .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
+      if (!response.equals(un)) {
+        System.out.println(
+            "invalid slot "
+                + accountHash
+                + " "
+                + storageRoot
+                + " "
+                + slotHash
+                + " "
+                + un
+                + " "
+                + response);
       }
-    } else {
-      getStorageValueFlatDatabaseCounter.inc();
     }
-    return response;*/
 
+    return un;*/
   }
 
   @Override
-  public Map<Bytes32, Bytes> streamAccountFlatDatabase(final Bytes startKeyHash, final long max) {
+  public Map<Bytes32, Bytes> streamAccountFlatDatabase(
+      final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
     final Stream<Pair<Bytes32, Bytes>> pairStream =
         accountStorage
             .streamFromKey(startKeyHash.toArrayUnsafe())
             .limit(max)
-            .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
+            .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())))
+            .takeWhile(pair -> pair.getFirst().compareTo(endKeyHash) <= 0);
 
     final TreeMap<Bytes32, Bytes> collected =
         pairStream.collect(
@@ -308,7 +333,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   @Override
   public Map<Bytes32, Bytes> streamStorageFlatDatabase(
-      final Hash accountHash, final Bytes startKeyHash, final long max) {
+      final Hash accountHash, final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
     final Stream<Pair<Bytes32, Bytes>> pairStream =
         storageStorage
             .streamFromKey(Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe())
@@ -318,7 +343,9 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                 pair ->
                     new Pair<>(
                         Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
-                        RLP.encodeValue(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
+                        RLP.encodeValue(Bytes.wrap(pair.getValue()).trimLeadingZeros())))
+            .takeWhile(pair -> pair.getFirst().compareTo(endKeyHash) <= 0);
+    ;
 
     final TreeMap<Bytes32, Bytes> collected =
         pairStream.collect(

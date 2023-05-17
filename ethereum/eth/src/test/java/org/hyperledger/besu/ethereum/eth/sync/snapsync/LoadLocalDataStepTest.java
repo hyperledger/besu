@@ -26,7 +26,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.AccountTrieNodeDataRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.AccountTrieNodeHealingRequest;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.pipeline.Pipe;
@@ -48,7 +48,7 @@ public class LoadLocalDataStepTest {
 
   private final BlockHeader blockHeader =
       new BlockHeaderTestFixture().stateRoot(HASH).buildHeader();
-  private final AccountTrieNodeDataRequest request =
+  private final AccountTrieNodeHealingRequest request =
       SnapDataRequest.createAccountTrieNodeDataRequest(
           HASH, Bytes.fromHexString("0x01"), new HashSet<>());
   private final Task<SnapDataRequest> task = new StubTask(request);
@@ -56,7 +56,7 @@ public class LoadLocalDataStepTest {
   private final Pipe<Task<SnapDataRequest>> completedTasks =
       new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER);
 
-  private final SnapSyncState snapSyncState = mock(SnapSyncState.class);
+  private final SnapSyncProcessState snapSyncState = mock(SnapSyncProcessState.class);
   private final SnapWorldDownloadState downloadState = mock(SnapWorldDownloadState.class);
   private final WorldStateStorage worldStateStorage = mock(WorldStateStorage.class);
   private final WorldStateStorage.Updater updater = mock(WorldStateStorage.Updater.class);

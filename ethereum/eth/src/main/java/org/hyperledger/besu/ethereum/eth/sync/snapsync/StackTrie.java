@@ -38,6 +38,13 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.immutables.value.Value;
 
+/**
+ * StackTrie represents a stack-based Merkle Patricia Trie used in the context of snapsync
+ * synchronization. It allows adding elements, retrieving elements, and committing the trie changes
+ * to a node updater and flat database updater. The trie operates on a stack of segments and commits
+ * the changes once the number of segments reaches a threshold. It utilizes proofs and keys to build
+ * and update the trie structure.
+ */
 public class StackTrie {
 
   private final Bytes32 rootHash;

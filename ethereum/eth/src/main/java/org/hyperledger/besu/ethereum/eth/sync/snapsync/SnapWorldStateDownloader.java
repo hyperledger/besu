@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapsyncMetricsManager.Step.DOWNLOAD;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountRangeDataRequest;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -22,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
@@ -55,7 +57,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
   private final MetricsSystem metricsSystem;
 
   private final EthContext ethContext;
-  private final SnapPersistedContext snapContext;
+  private final SnapSyncStatePersistenceManager snapContext;
   private final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection;
   private final SnapSyncConfiguration snapSyncConfiguration;
   private final int maxOutstandingRequests;
@@ -67,7 +69,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
   public SnapWorldStateDownloader(
       final EthContext ethContext,
-      final SnapPersistedContext snapContext,
+      final SnapSyncStatePersistenceManager snapContext,
       final ProtocolContext protocolContext,
       final WorldStateStorage worldStateStorage,
       final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection,
@@ -122,7 +124,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
         return failed;
       }
 
-      final SnapSyncState snapSyncState = (SnapSyncState) fastSyncState;
+      final SnapSyncProcessState snapSyncState = (SnapSyncProcessState) fastSyncState;
       final BlockHeader header = fastSyncState.getPivotBlockHeader().get();
       final Hash stateRoot = header.getStateRoot();
       LOG.info(
@@ -151,26 +153,26 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
       final List<AccountRangeDataRequest> currentAccountRange =
           snapContext.getCurrentAccountRange();
-      final HashSet<Bytes> inconsistentAccounts = snapContext.getInconsistentAccounts();
+      final HashSet<Bytes> inconsistentAccounts = snapContext.getAccountsToBeRepaired();
 
       if (!currentAccountRange.isEmpty()) { // continue to download worldstate ranges
-        newDownloadState.setInconsistentAccounts(inconsistentAccounts);
+        newDownloadState.setAccountsToBeRepaired(inconsistentAccounts);
         snapContext
             .getCurrentAccountRange()
             .forEach(
                 snapDataRequest -> {
-                  snapsyncMetricsManager.notifyStateDownloaded(
-                      snapDataRequest.getStartKeyHash(), snapDataRequest.getEndKeyHash());
+                  snapsyncMetricsManager.notifyRangeProgress(
+                      DOWNLOAD, snapDataRequest.getStartKeyHash(), snapDataRequest.getEndKeyHash());
                   newDownloadState.enqueueRequest(snapDataRequest);
                 });
-      } else if (!snapContext.getInconsistentAccounts().isEmpty()) { // restart only the heal step
+      } else if (!snapContext.getAccountsToBeRepaired().isEmpty()) { // restart only the heal step
         snapSyncState.setHealTrieStatus(true);
         worldStateStorage.clearFlatDatabase();
         worldStateStorage.clearTrieLog();
-        newDownloadState.setInconsistentAccounts(inconsistentAccounts);
+        newDownloadState.setAccountsToBeRepaired(inconsistentAccounts);
         newDownloadState.enqueueRequest(
             SnapDataRequest.createAccountTrieNodeDataRequest(
-                stateRoot, Bytes.EMPTY, snapContext.getInconsistentAccounts()));
+                stateRoot, Bytes.EMPTY, snapContext.getAccountsToBeRepaired()));
       } else { // start from scratch
         worldStateStorage.clear();
         ranges.forEach(
@@ -182,8 +184,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       Optional<CompleteTaskStep> maybeCompleteTask =
           Optional.of(new CompleteTaskStep(snapSyncState, metricsSystem));
 
-      final DynamicPivotBlockManager dynamicPivotBlockManager =
-          new DynamicPivotBlockManager(
+      final AdaptivePivotBlockSelector dynamicPivotBlockManager =
+          new AdaptivePivotBlockSelector(
               ethContext,
               fastSyncActions,
               snapSyncState,
@@ -213,7 +215,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               .metricsSystem(metricsSystem)
               .build();
 
-      newDownloadState.setDynamicPivotBlockManager(dynamicPivotBlockManager);
+      newDownloadState.setAdaptivePivotBlockSelector(dynamicPivotBlockManager);
 
       return newDownloadState.startDownload(downloadProcess, ethContext.getScheduler());
     }

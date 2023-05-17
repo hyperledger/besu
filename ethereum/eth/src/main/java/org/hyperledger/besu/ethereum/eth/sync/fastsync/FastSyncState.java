@@ -83,8 +83,6 @@ public class FastSyncState {
     pivotBlockNumber = OptionalLong.of(header.getNumber());
     pivotBlockHash = Optional.of(header.getHash());
     pivotBlockHeader = Optional.of(header);
-    System.out.println("set current header " + header.getBlockHash() + " " + header.getStateRoot());
-    new Exception().printStackTrace(System.out);
   }
 
   @Override

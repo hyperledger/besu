@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeDataRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.tasks.Task;
 
@@ -25,12 +25,12 @@ import java.util.stream.Stream;
 
 public class PersistDataStep {
 
-  private final SnapSyncState snapSyncState;
+  private final SnapSyncProcessState snapSyncState;
   private final WorldStateStorage worldStateStorage;
   private final SnapWorldDownloadState downloadState;
 
   public PersistDataStep(
-      final SnapSyncState snapSyncState,
+      final SnapSyncProcessState snapSyncState,
       final WorldStateStorage worldStateStorage,
       final SnapWorldDownloadState downloadState) {
     this.snapSyncState = snapSyncState;
@@ -45,7 +45,7 @@ public class PersistDataStep {
         // enqueue child requests
         final Stream<SnapDataRequest> childRequests =
             task.getData().getChildRequests(downloadState, worldStateStorage, snapSyncState);
-        if (!(task.getData() instanceof TrieNodeDataRequest)) {
+        if (!(task.getData() instanceof TrieNodeHealingRequest)) {
           enqueueChildren(childRequests);
         } else {
           if (!task.getData().isExpired(snapSyncState)) {
@@ -59,8 +59,8 @@ public class PersistDataStep {
         final int persistedNodes =
             task.getData().persist(worldStateStorage, updater, downloadState, snapSyncState);
         if (persistedNodes > 0) {
-          if (task.getData() instanceof TrieNodeDataRequest) {
-            downloadState.getMetricsManager().notifyNodesHealed(persistedNodes);
+          if (task.getData() instanceof TrieNodeHealingRequest) {
+            downloadState.getMetricsManager().notifyTrieNodesHealed(persistedNodes);
           } else {
             downloadState.getMetricsManager().notifyNodesGenerated(persistedNodes);
           }
@@ -71,12 +71,20 @@ public class PersistDataStep {
     return tasks;
   }
 
+  /**
+   * This method will heal the local flat database if necessary and persist it
+   *
+   * @param tasks range to heal and/or persist
+   * @return completed tasks
+   */
   public List<Task<SnapDataRequest>> healFlatDatabase(final List<Task<SnapDataRequest>> tasks) {
     final BonsaiWorldStateKeyValueStorage.Updater updater =
         (BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater();
     for (Task<SnapDataRequest> task : tasks) {
-      // enqueue child requests
+      // heal and/or persist
       task.getData().persist(worldStateStorage, updater, downloadState, snapSyncState);
+      // enqueue child requests, these will be the right part of the ranges to complete if we have
+      // not healed all the range
       enqueueChildren(
           task.getData().getChildRequests(downloadState, worldStateStorage, snapSyncState));
     }
