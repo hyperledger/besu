@@ -102,6 +102,7 @@ public class BackwardSyncContext {
   }
 
   public synchronized void updateHead(final Hash headHash) {
+    LOG.atTrace().setMessage("Maybe update maybeHead to {}").addArgument(headHash).log();
     if (Hash.ZERO.equals(headHash)) {
       maybeHead = Optional.empty();
     } else {
@@ -331,6 +332,11 @@ public class BackwardSyncContext {
   @VisibleForTesting
   protected void possiblyMoveHead(final Block lastSavedBlock) {
     final MutableBlockchain blockchain = getProtocolContext().getBlockchain();
+    LOG.atTrace()
+        .setMessage("possibleMoveHead(lastSavedBlock={}); maybeHead={}")
+        .addArgument(lastSavedBlock::toLogString)
+        .addArgument(maybeHead)
+        .log();
     if (maybeHead.isEmpty()) {
       LOG.debug("Nothing to do with the head");
       return;

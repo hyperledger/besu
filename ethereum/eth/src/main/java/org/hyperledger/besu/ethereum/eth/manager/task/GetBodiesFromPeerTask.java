@@ -84,6 +84,11 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
   protected PendingPeerRequest sendRequest() {
     final List<Hash> blockHashes =
         headers.stream().map(BlockHeader::getHash).collect(Collectors.toList());
+    LOG.atTrace()
+        .setMessage("Requesting {} bodies with hashes {}.")
+        .addArgument(blockHashes.size())
+        .addArgument(blockHashes)
+        .log();
     final long minimumRequiredBlockNumber = headers.get(headers.size() - 1).getNumber();
 
     return sendRequestToPeer(
@@ -105,7 +110,13 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
     }
 
     final BlockBodiesMessage bodiesMessage = BlockBodiesMessage.readFrom(message);
+    LOG.atTrace().setMessage("Received BlockBodiesMessage {}").addArgument(bodiesMessage).log();
     final List<BlockBody> bodies = bodiesMessage.bodies(protocolSchedule);
+    LOG.atTrace()
+        .setMessage("Received {} bodies: {}")
+        .addArgument(bodies.size())
+        .addArgument(bodies)
+        .log();
     if (bodies.size() == 0) {
       // Message contains no data - nothing to do
       LOG.debug("Message contains no data. Peer: {}", peer);
