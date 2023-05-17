@@ -22,7 +22,7 @@ package org.hyperledger.besu.evm.gascalculator;
  *   <LI>Data gas for EIP-4844
  * </UL>
  */
-public class CancunGasCalculator extends LondonGasCalculator {
+public class CancunGasCalculator extends ShanghaiGasCalculator {
 
   private static final long TLOAD_GAS = WARM_STORAGE_READ_COST;
   private static final long TSTORE_GAS = WARM_STORAGE_READ_COST;
