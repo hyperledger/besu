@@ -216,24 +216,9 @@ public abstract class RocksDBColumnarKeyValueStorage
   }
 
   BlockBasedTableConfig createBlockBasedTableConfig(final RocksDBConfiguration config) {
-    if (config.isHighSpec()) return createBlockBasedTableConfigHighSpec();
-    else return createBlockBasedTableConfigDefault(config);
-  }
-
-  private BlockBasedTableConfig createBlockBasedTableConfigHighSpec() {
-    final LRUCache cache = new LRUCache(ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC);
-    return new BlockBasedTableConfig()
-        .setFormatVersion(ROCKSDB_FORMAT_VERSION)
-        .setBlockCache(cache)
-        .setFilterPolicy(new BloomFilter(10, false))
-        .setPartitionFilters(true)
-        .setCacheIndexAndFilterBlocks(false)
-        .setBlockSize(ROCKSDB_BLOCK_SIZE);
-  }
-
-  private BlockBasedTableConfig createBlockBasedTableConfigDefault(
-      final RocksDBConfiguration config) {
-    final LRUCache cache = new LRUCache(config.getCacheCapacity());
+    final LRUCache cache =
+        new LRUCache(
+            config.isHighSpec() ? ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC : config.getCacheCapacity());
     return new BlockBasedTableConfig()
         .setFormatVersion(ROCKSDB_FORMAT_VERSION)
         .setBlockCache(cache)
