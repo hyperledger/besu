@@ -334,7 +334,7 @@ public class BackwardSyncContext {
     final MutableBlockchain blockchain = getProtocolContext().getBlockchain();
     LOG.atTrace()
         .setMessage("possibleMoveHead(lastSavedBlock={}); maybeHead={}")
-        .addArgument(lastSavedBlock::toLogString)
+        .addArgument(Optional.ofNullable(lastSavedBlock).map(Block::toLogString).orElse("null"))
         .addArgument(maybeHead)
         .log();
     if (maybeHead.isEmpty()) {
