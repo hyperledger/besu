@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -46,6 +47,11 @@ public class StaticNodesParser {
     } catch (FileNotFoundException | NoSuchFileException ex) {
       LOG.debug("StaticNodes file {} does not exist, no static connections will be created.", path);
       return emptySet();
+    } catch (AccessDeniedException ex) {
+      LOG.warn(
+          "Access denied to static nodes file ({}). Ensure static nodes file and node data directory have correct permissions.",
+          path);
+      throw ex;
     } catch (IOException ex) {
       LOG.warn("Unable to parse static nodes file ({})", path);
       throw ex;
