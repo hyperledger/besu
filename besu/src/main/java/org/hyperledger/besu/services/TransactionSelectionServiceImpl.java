@@ -30,7 +30,7 @@ public class TransactionSelectionServiceImpl implements TransactionSelectionServ
   }
 
   @Override
-  public void registerTransactionSeclectorFactory(
+  public void registerTransactionSelectorFactory(
       final TransactionSelectorFactory transactionSelectorFactory) {
     factory = Optional.ofNullable(transactionSelectorFactory);
   }
