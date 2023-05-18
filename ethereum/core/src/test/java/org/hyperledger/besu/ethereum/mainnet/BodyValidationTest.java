@@ -30,11 +30,12 @@ public final class BodyValidationTest {
 
   @Test
   public void calculateTransactionsRoot() throws IOException {
-    for (final int block : Arrays.asList(300006, 4400002)) {
+    for (final int block : Arrays.asList(300006, 4400002, 62717)) {
       final BlockHeader header = ValidationTestUtils.readHeader(block);
       final BlockBody body = ValidationTestUtils.readBody(block);
       final Bytes32 transactionRoot = BodyValidation.transactionsRoot(body.getTransactions());
-      Assertions.assertThat(header.getTransactionsRoot()).isEqualTo(transactionRoot);
+      //Assertions.assertThat(header.getTransactionsRoot()).isEqualTo(transactionRoot);
+      Assertions.assertThat(transactionRoot).isEqualTo(header.getTransactionsRoot());
     }
   }
 
