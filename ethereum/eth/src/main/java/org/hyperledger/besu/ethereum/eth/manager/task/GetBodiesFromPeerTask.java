@@ -110,7 +110,6 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
     }
 
     final BlockBodiesMessage bodiesMessage = BlockBodiesMessage.readFrom(message);
-    LOG.atTrace().setMessage("Received BlockBodiesMessage {}").addArgument(bodiesMessage).log();
     final List<BlockBody> bodies = bodiesMessage.bodies(protocolSchedule);
     LOG.atTrace()
         .setMessage("Received {} bodies: {}")
@@ -139,6 +138,13 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
       // Clear processed headers
       headers.clear();
     }
+    LOG.atDebug()
+        .setMessage("Associated {} bodies with {} headers to get {} blocks with these hashes: {}")
+        .addArgument(bodies.size())
+        .addArgument(headers.size())
+        .addArgument(blocks.size())
+        .addArgument(blocks.stream().map(Block::getHash).collect(Collectors.toList()))
+        .log();
     return Optional.of(blocks);
   }
 
