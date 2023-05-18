@@ -20,9 +20,18 @@ import org.hyperledger.besu.plugin.data.Transaction;
 import org.hyperledger.besu.plugin.data.TransactionReceipt;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
+/** Interface for the transaction selector */
 @Unstable
 public interface TransactionSelector {
 
+  /**
+   * Method called to decide whether a transaction is added to a block. The method can also indicate
+   * that no further transactions can be added to the block.
+   *
+   * @param transaction candidate transaction
+   * @param receipt receipt for the candidate transaction
+   * @return TransactionSelectionResult that indicates whether to include the transaction
+   */
   default TransactionSelectionResult selectTransaction(
       final Transaction transaction, final TransactionReceipt receipt) {
     return TransactionSelectionResult.CONTINUE;

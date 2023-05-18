@@ -99,7 +99,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         TransactionSelectionService.class, new TransactionSelectionServiceImpl());
 
     final Path pluginsPath;
-    if (System.getenv("besu.plugins.dir").isEmpty()) {
+    final String pluginDirEnv = System.getenv("besu.plugins.dir");
+    if (pluginDirEnv == null || pluginDirEnv.isEmpty()) {
       pluginsPath = node.homeDirectory().resolve("plugins");
       final File pluginsDirFile = pluginsPath.toFile();
       if (!pluginsDirFile.isDirectory()) {
@@ -107,7 +108,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         pluginsDirFile.deleteOnExit();
       }
     } else {
-      pluginsPath = Path.of(System.getenv("besu.plugins.dir"));
+      pluginsPath = Path.of(pluginDirEnv);
       System.setProperty("besu.plugins.dir", pluginsPath.toString());
     }
     besuPluginContext.registerPlugins(pluginsPath);

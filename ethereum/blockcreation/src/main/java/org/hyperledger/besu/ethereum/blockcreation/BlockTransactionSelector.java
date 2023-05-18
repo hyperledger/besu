@@ -340,7 +340,6 @@ public class BlockTransactionSelector {
             processableBlockHeader,
             transaction,
             miningBeneficiary,
-            //            externalTransactionSelector.getTracer(),
             blockHashLookup,
             false,
             TransactionValidationParams.mining(),
@@ -358,7 +357,7 @@ public class BlockTransactionSelector {
           transactionReceiptFactory.create(
               transaction.getType(), effectiveResult, worldState, cumulativeGasUsed);
 
-      TransactionSelectionResult transactionSelectionResult =
+      final TransactionSelectionResult transactionSelectionResult =
           transactionSelector.selectTransaction(transaction, receipt);
 
       if (transactionSelectionResult == TransactionSelectionResult.CONTINUE) {
