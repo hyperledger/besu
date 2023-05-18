@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
+import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -64,7 +65,10 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
 
   @Override
   protected JsonRpcResponse createResponse(
-      final JsonRpcRequestContext request, final BlockWithReceipts blockWithReceipts) {
+          final JsonRpcRequestContext request,
+          final PayloadIdentifier payloadId,
+          final BlockWithReceipts blockWithReceipts
+      ) {
 
     try {
       long builtAt = blockWithReceipts.getHeader().getTimestamp();
