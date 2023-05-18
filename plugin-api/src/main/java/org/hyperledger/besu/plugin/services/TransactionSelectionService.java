@@ -25,5 +25,5 @@ public interface TransactionSelectionService extends BesuService {
 
   Optional<TransactionSelectorFactory> get();
 
-  void registerTransactionSeclectorFactory(TransactionSelectorFactory transactionSelectorFactory);
+  void registerTransactionSelectorFactory(TransactionSelectorFactory transactionSelectorFactory);
 }
