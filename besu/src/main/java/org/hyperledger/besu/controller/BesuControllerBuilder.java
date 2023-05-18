@@ -182,7 +182,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   private Boolean randomPeerPriority;
   private Optional<TransactionSelectorFactory> transactionSelectorFactory = Optional.empty();
   /** the Dagger configured context that can provide dependencies */
-  protected BesuComponent besuComponent = null;
+  protected Optional<BesuComponent> besuComponent = Optional.empty();
 
   /**
    * Provide a BesuComponent which can be used to get other dependencies
@@ -191,7 +191,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @return the besu controller builder
    */
   public BesuControllerBuilder besuComponent(final BesuComponent besuComponent) {
-    this.besuComponent = besuComponent;
+    this.besuComponent = Optional.ofNullable(besuComponent);
     return this;
   }
 
@@ -576,9 +576,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             dataDirectory.toString());
 
     final CachedMerkleTrieLoader cachedMerkleTrieLoader =
-        besuComponent == null
-            ? new CachedMerkleTrieLoader(metricsSystem)
-            : besuComponent.getCachedMerkleTrieLoader();
+        besuComponent
+            .map(BesuComponent::getCachedMerkleTrieLoader)
+            .orElseGet(() -> new CachedMerkleTrieLoader(metricsSystem));
 
     final WorldStateArchive worldStateArchive =
         createWorldStateArchive(worldStateStorage, blockchain, cachedMerkleTrieLoader);
@@ -1046,7 +1046,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             blockchain,
             Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
             cachedMerkleTrieLoader,
-            metricsSystem);
+            metricsSystem,
+            besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null));
 
       case FOREST:
       default:

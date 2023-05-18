@@ -239,6 +239,8 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.maxRemotelyInitiatedPeers(anyInt()))
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.transactionSelectorFactory(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.besuComponent(any(BesuComponent.class)))
+        .thenReturn(mockControllerBuilder);
     // doReturn used because of generic BesuController
     doReturn(mockController).when(mockControllerBuilder).build();
     lenient().when(mockController.getProtocolManager()).thenReturn(mockEthProtocolManager);

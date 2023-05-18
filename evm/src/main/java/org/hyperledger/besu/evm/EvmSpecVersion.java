@@ -37,7 +37,13 @@ public enum EvmSpecVersion {
   /** Shanghai evm spec version. */
   SHANGHAI(0, true),
   /** Cancun evm spec version. */
-  CANCUN(1, false),
+  CANCUN(0, false),
+  /** Prague evm spec version. */
+  PRAGUE(0, false),
+  /** Osaka evm spec version. */
+  OSAKA(0, false),
+  /** Bogota evm spec version. */
+  BOGOTA(0, false),
   /** Development fork for unscheduled EIPs */
   FUTURE_EIPS(1, false),
   /** Development fork for EIPs not accepted to Mainnet */

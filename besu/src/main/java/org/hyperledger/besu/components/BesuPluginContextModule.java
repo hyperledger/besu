@@ -13,16 +13,29 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-package org.hyperledger.besu.ethereum.bonsai.trielog;
+package org.hyperledger.besu.components;
 
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.services.BesuPluginContextImpl;
 
-/** Interface for serializing and deserializing {@link TrieLogLayer} objects. */
-public interface TrieLogFactory<T extends TrieLogLayer> {
-  T create(BonsaiWorldStateUpdateAccumulator accumulator, final Hash blockHash);
+import javax.inject.Named;
+import javax.inject.Singleton;
 
-  T deserialize(final byte[] bytes);
+import dagger.Module;
+import dagger.Provides;
 
-  byte[] serialize(final T layer);
+/** A dagger module that know how to create the BesuPluginContextImpl singleton. */
+@Module
+public class BesuPluginContextModule {
+
+  /**
+   * Creates a BesuPluginContextImpl, used for plugin service discovery.
+   *
+   * @return the BesuPluginContext
+   */
+  @Provides
+  @Named("besuPluginContext")
+  @Singleton
+  public BesuPluginContextImpl provideBesuPluginContext() {
+    return new BesuPluginContextImpl();
+  }
 }

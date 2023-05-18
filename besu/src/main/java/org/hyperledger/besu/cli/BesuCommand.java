@@ -1208,7 +1208,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         description =
             "Maximum number of pending transactions that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
         arity = "1")
-    private final Integer txPoolMaxSize = TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS;
+    private final Integer txPoolMaxSize =
+        TransactionPoolConfiguration.DEFAULT_MAX_PENDING_TRANSACTIONS;
 
     @Option(
         names = {"--tx-pool-retention-hours"},
@@ -1334,11 +1335,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuComponent besuComponent;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
       Suppliers.memoize(
-          () -> {
-            return besuComponent == null
-                ? MetricsSystemFactory.create(metricsConfiguration())
-                : besuComponent.getObservableMetricsSystem();
-          });
+          () ->
+              besuComponent == null || besuComponent.getObservableMetricsSystem() == null
+                  ? MetricsSystemFactory.create(metricsConfiguration())
+                  : besuComponent.getObservableMetricsSystem());
   private Vertx vertx;
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
@@ -1420,6 +1420,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl,
       final TransactionSelectionServiceImpl transactionSelectionServiceImpl) {
+    this.besuComponent = besuComponent;
     this.logger = besuComponent.getBesuCommandLogger();
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
@@ -2951,12 +2952,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private TransactionPoolConfiguration buildTransactionPoolConfiguration() {
+    final File saveFile = unstableTransactionPoolOptions.getSaveFile();
     return unstableTransactionPoolOptions
         .toDomainObject()
         .txPoolMaxSize(txPoolOptionGroup.txPoolMaxSize)
         .pendingTxRetentionPeriod(txPoolOptionGroup.pendingTxRetentionPeriod)
         .priceBump(Percentage.fromInt(txPoolOptionGroup.priceBump))
         .txFeeCap(txFeeCap)
+        .saveFile(dataPath.resolve(saveFile.getPath()).toFile())
         .build();
   }
 

@@ -307,7 +307,7 @@ public class StateBackupService {
         headerWriter.writeBytes(headerOutput.encoded().toArrayUnsafe());
 
         final BytesValueRLPOutput bodyOutput = new BytesValueRLPOutput();
-        block.get().getBody().writeTo(bodyOutput);
+        block.get().getBody().writeWrappedBodyTo(bodyOutput);
         bodyWriter.writeBytes(bodyOutput.encoded().toArrayUnsafe());
 
         final BytesValueRLPOutput receiptsOutput = new BytesValueRLPOutput();
