@@ -19,7 +19,7 @@ import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFacto
 
 import java.util.Optional;
 
-/** The Storage service implementation. */
+/** The Transaction Selection service implementation. */
 public class TransactionSelectionServiceImpl implements TransactionSelectionService {
 
   private Optional<TransactionSelectorFactory> factory = Optional.empty();
