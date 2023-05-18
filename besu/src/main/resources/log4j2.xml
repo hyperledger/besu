@@ -38,6 +38,9 @@
         </Routing>
     </Appenders>
     <Loggers>
+        <Logger name="org.hyperledger.besu.ethereum.api.query.BlockchainQueries" level="DEBUG"/>
+        <Logger name="org.hyperledger.besu.ethereum.bonsai.cache.CachedWorldStorageManager" level="DEBUG"/>
+        <Logger name="org.hyperledger.besu.ethereum.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage" level="DEBUG"/>
         <Logger name="org.apache.logging.log4j.status.StatusLogger" level="OFF"/>
         <Logger name="org.apache.tuweni.discovery.DNSTimerTask">
             <RegexFilter regex="Refreshing DNS records with .*" onMatch="DENY" onMismatch="NEUTRAL" />
