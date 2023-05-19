@@ -299,7 +299,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   @CommandLine.Option(
       names = SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG,
       hidden = true,
-      defaultValue = "128",
+      defaultValue = "1024",
       paramLabel = "<INTEGER>",
       description =
           "Snap sync flat slots verified and healed per request (default: ${DEFAULT-VALUE})")

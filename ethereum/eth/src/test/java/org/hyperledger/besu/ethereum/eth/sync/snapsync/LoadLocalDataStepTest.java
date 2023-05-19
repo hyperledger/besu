@@ -61,9 +61,15 @@ public class LoadLocalDataStepTest {
   private final WorldStateStorage worldStateStorage = mock(WorldStateStorage.class);
   private final WorldStateStorage.Updater updater = mock(WorldStateStorage.Updater.class);
 
+  private final SnapSyncConfiguration snapSyncConfiguration = mock(SnapSyncConfiguration.class);
+
   private final LoadLocalDataStep loadLocalDataStep =
       new LoadLocalDataStep(
-          worldStateStorage, downloadState, new NoOpMetricsSystem(), snapSyncState);
+          worldStateStorage,
+          downloadState,
+          snapSyncConfiguration,
+          new NoOpMetricsSystem(),
+          snapSyncState);
 
   @Before
   public void setup() {
@@ -115,7 +121,8 @@ public class LoadLocalDataStepTest {
     Mockito.reset(updater);
 
     // Should not require persisting.
-    request.persist(worldStateStorage, updater, downloadState, snapSyncState);
+    request.persist(
+        worldStateStorage, updater, downloadState, snapSyncState, snapSyncConfiguration);
     verifyNoInteractions(updater);
   }
 }
