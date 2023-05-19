@@ -73,7 +73,8 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
     }
     if (lastNoFcuReceivedInfoLog + NO_FCU_RECEIVED_LOGGING_THRESHOLD < System.currentTimeMillis()) {
       lastNoFcuReceivedInfoLog = System.currentTimeMillis();
-      LOG.info("Waiting on CL to supply a pivot block, please check if your CL is in sync");
+      LOG.info(
+          "Waiting for consensus client, this may be because your consensus client is still syncing");
     }
     LOG.debug("No finalized block hash announced yet");
     return Optional.empty();
