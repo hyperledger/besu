@@ -3,7 +3,7 @@
 ## 23.4.1
 
 ### Breaking Changes
-- Add request content length limit for the JSON-RPC api (5MB) [#5467](https://github.com/hyperledger/besu/pull/5467)
+- Add request content length limit for the JSON-RPC API (5MB) [#5467](https://github.com/hyperledger/besu/pull/5467)
 
 ### Additions and Improvements
 - Set the retention policy for RocksDB log files to maintain only the logs from the last week [#5428](https://github.com/hyperledger/besu/pull/5428)
