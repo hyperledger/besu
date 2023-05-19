@@ -71,8 +71,7 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
       final BlockWithReceipts proposal,
       final Optional<Wei> maybeReward) {
     final BlockHeader proposalHeader = proposal.getHeader();
-    final float gasUsedPerc =
-        100 * (float) proposalHeader.getGasUsed() / (float) proposalHeader.getGasLimit();
+    final float gasUsedPerc = 100.0f * proposalHeader.getGasUsed() / proposalHeader.getGasLimit();
 
     final String message =
         "Fetch block proposal by identifier: {}, hash: {}, "

@@ -260,7 +260,7 @@ public class PostMergeContext implements MergeContext {
     if (LOG.isDebugEnabled()) {
       final Block block = blockWithReceipts.getBlock();
       final float gasUsedPerc =
-          100 * (float) block.getHeader().getGasUsed() / (float) block.getHeader().getGasLimit();
+          100.0f * block.getHeader().getGasUsed() / block.getHeader().getGasLimit();
       final int txsNum = block.getBody().getTransactions().size();
       final Wei reward = blockValueCalculator.calculateBlockValue(blockWithReceipts);
 
