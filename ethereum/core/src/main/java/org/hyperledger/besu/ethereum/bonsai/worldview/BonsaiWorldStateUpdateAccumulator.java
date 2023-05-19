@@ -24,8 +24,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.account.Account;
@@ -35,7 +33,6 @@ import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogAccumulator;
-import org.hyperledger.besu.plugin.services.trielogs.TrieLogFactory;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -74,9 +71,6 @@ public class BonsaiWorldStateUpdateAccumulator
   // alternative was to keep a giant pre-image cache of the entire trie.
   private final Map<Address, StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>>
       storageToUpdate = new ConcurrentHashMap<>();
-
-  // todo plumb me from plugin service:
-  TrieLogFactory trieLogFactory = new TrieLogFactoryImpl();
 
   private boolean isAccumulatorStateChanged;
 
@@ -498,10 +492,6 @@ public class BonsaiWorldStateUpdateAccumulator
   @Override
   public BonsaiWorldStateKeyValueStorage getWorldStateStorage() {
     return wrappedWorldView().getWorldStateStorage();
-  }
-
-  public TrieLog generateTrieLog(final BlockHeader blockHeader) {
-    return trieLogFactory.create(this, blockHeader);
   }
 
   public void rollForward(final TrieLog layer) {
