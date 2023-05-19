@@ -43,8 +43,10 @@ public class PersistDataStepTest {
   private final SnapSyncProcessState snapSyncState = mock(SnapSyncProcessState.class);
   private final SnapWorldDownloadState downloadState = mock(SnapWorldDownloadState.class);
 
+  private final SnapSyncConfiguration snapSyncConfiguration = mock(SnapSyncConfiguration.class);
+
   private final PersistDataStep persistDataStep =
-      new PersistDataStep(snapSyncState, worldStateStorage, downloadState);
+      new PersistDataStep(snapSyncState, worldStateStorage, downloadState, snapSyncConfiguration);
 
   @Before
   public void setUp() {

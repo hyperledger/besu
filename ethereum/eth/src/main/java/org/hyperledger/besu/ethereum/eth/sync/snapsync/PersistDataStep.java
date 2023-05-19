@@ -29,13 +29,17 @@ public class PersistDataStep {
   private final WorldStateStorage worldStateStorage;
   private final SnapWorldDownloadState downloadState;
 
+  private final SnapSyncConfiguration snapSyncConfiguration;
+
   public PersistDataStep(
       final SnapSyncProcessState snapSyncState,
       final WorldStateStorage worldStateStorage,
-      final SnapWorldDownloadState downloadState) {
+      final SnapWorldDownloadState downloadState,
+      final SnapSyncConfiguration snapSyncConfiguration) {
     this.snapSyncState = snapSyncState;
     this.worldStateStorage = worldStateStorage;
     this.downloadState = downloadState;
+    this.snapSyncConfiguration = snapSyncConfiguration;
   }
 
   public List<Task<SnapDataRequest>> persist(final List<Task<SnapDataRequest>> tasks) {
@@ -57,7 +61,13 @@ public class PersistDataStep {
 
         // persist nodes
         final int persistedNodes =
-            task.getData().persist(worldStateStorage, updater, downloadState, snapSyncState);
+            task.getData()
+                .persist(
+                    worldStateStorage,
+                    updater,
+                    downloadState,
+                    snapSyncState,
+                    snapSyncConfiguration);
         if (persistedNodes > 0) {
           if (task.getData() instanceof TrieNodeHealingRequest) {
             downloadState.getMetricsManager().notifyTrieNodesHealed(persistedNodes);
@@ -82,7 +92,8 @@ public class PersistDataStep {
         (BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater();
     for (Task<SnapDataRequest> task : tasks) {
       // heal and/or persist
-      task.getData().persist(worldStateStorage, updater, downloadState, snapSyncState);
+      task.getData()
+          .persist(worldStateStorage, updater, downloadState, snapSyncState, snapSyncConfiguration);
       // enqueue child requests, these will be the right part of the ranges to complete if we have
       // not healed all the range
       enqueueChildren(

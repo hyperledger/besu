@@ -49,7 +49,6 @@ import org.apache.tuweni.rlp.RLP;
  * in the flat databases. It encapsulates the necessary information to identify the range and
  * initiate the healing process.
  */
-@SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "TooBroadScope", "ModifiedButNotUsed"})
 public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
   private final Hash accountHash;
@@ -256,6 +255,6 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
               + " fixed "
               + " ");
     }
-    return 0;
+    return slots.size();
   }
 }

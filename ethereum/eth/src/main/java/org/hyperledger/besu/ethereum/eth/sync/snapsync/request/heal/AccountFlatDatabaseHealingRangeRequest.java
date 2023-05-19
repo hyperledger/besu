@@ -213,6 +213,6 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
             bonsaiUpdater.removeAccountInfoState(accountHash);
           });
     }
-    return 0;
+    return accounts.size();
   }
 }
