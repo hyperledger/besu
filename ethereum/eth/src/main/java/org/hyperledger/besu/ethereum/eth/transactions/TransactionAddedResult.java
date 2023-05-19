@@ -26,7 +26,6 @@ public final class TransactionAddedResult {
     DROPPED,
     TRY_NEXT_LAYER,
     ADDED,
-    REORG_SENDER,
     INTERNAL_ERROR
   }
 
@@ -42,9 +41,6 @@ public final class TransactionAddedResult {
   public static final TransactionAddedResult ADDED = new TransactionAddedResult(Status.ADDED);
   public static final TransactionAddedResult TRY_NEXT_LAYER =
       new TransactionAddedResult(Status.TRY_NEXT_LAYER);
-
-  public static final TransactionAddedResult REORG_SENDER =
-      new TransactionAddedResult(Status.REORG_SENDER);
 
   public static final TransactionAddedResult DROPPED = new TransactionAddedResult(Status.DROPPED);
 

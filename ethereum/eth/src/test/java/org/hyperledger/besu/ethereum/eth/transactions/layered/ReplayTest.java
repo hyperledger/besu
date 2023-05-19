@@ -67,7 +67,7 @@ public class ReplayTest {
   private final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
 
   private final Address senderToLog =
-      Address.fromHexString("0x1a8ed0d3ad42c9019cc141aace7e5fb6e576b917");
+      Address.fromHexString("0xf7445f4b8a07921bf882175470dc8f7221c53996");
 
   private BlockHeader currBlockHeader;
 
