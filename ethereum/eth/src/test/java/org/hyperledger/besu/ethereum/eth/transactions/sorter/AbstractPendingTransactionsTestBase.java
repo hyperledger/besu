@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
-import static org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable.AddResult.AddOutcome.ADDED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.CONTINUE;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
 import static org.mockito.Mockito.mock;
@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolCo
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
