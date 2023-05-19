@@ -99,7 +99,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
     logTransactionForReplayAdd(pendingTransaction, stateSenderNonce);
 
-    if (accountNonceDisparityDetected(pendingTransaction, stateSenderNonce)) {
+    if (hasAccountNonceDisparity(pendingTransaction, stateSenderNonce)) {
       reconcileSender(pendingTransaction.getSender(), stateSenderNonce);
     }
 
@@ -124,7 +124,9 @@ public class LayeredPendingTransactions implements PendingTransactions {
       final long stateSenderNonce,
       final int nonceDistance,
       final Throwable throwable) {
-    // in case something unexpected happened, log this sender txs and force a reorg of his txs
+    // in case something unexpected happened, log this sender txs, force a reconcile and retry
+    // another time
+    // ToDo: demote to debug when Layered TxPool is out of preview
     LOG.warn(
         "Unexpected error {} when adding transaction {}, current sender status {}",
         throwable,
@@ -140,7 +142,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
           throwable,
           pendingTransaction.toTraceLog(),
           prioritizedTransactions.logSender(pendingTransaction.getSender()));
-      // ToDo: demoted to debug when Layered TxPool is out of preview
       LOG.warn("Stack trace", throwable);
       return INTERNAL_ERROR;
     }
@@ -157,7 +158,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
    * @return false if the nonce for the sender has seen by the txpool matches the value of the
    *     account nonce in the world state, true if they differ
    */
-  private boolean accountNonceDisparityDetected(
+  private boolean hasAccountNonceDisparity(
       final PendingTransaction pendingTransaction, final long stateSenderNonce) {
     final OptionalLong maybeTxPoolSenderNonce =
         prioritizedTransactions.getCurrentNonceFor(pendingTransaction.getSender());
@@ -181,8 +182,8 @@ public class LayeredPendingTransactions implements PendingTransactions {
   /**
    * Rebuild the txpool for a sender according to the specified nonce. This is used in case the
    * account nonce has seen by the txpool is not the correct one (see {@link
-   * LayeredPendingTransactions#accountNonceDisparityDetected(PendingTransaction, long)} for when
-   * this could happen). It works by removing all the txs for the sender and readding them using the
+   * LayeredPendingTransactions#hasAccountNonceDisparity(PendingTransaction, long)} for when this
+   * could happen). It works by removing all the txs for the sender and re-adding them using the
    * passed nonce.
    *
    * @param sender the sender for which rebuild the txpool
