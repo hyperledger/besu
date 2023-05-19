@@ -3,6 +3,7 @@
 ## 23.4.1
 
 ### Breaking Changes
+- Add request content length limit for the JSON-RPC api (5MB) [#5467](https://github.com/hyperledger/besu/pull/5467)
 
 ### Additions and Improvements
 - "Big-EOF" (the EOF version initially slotted for Shanghai) has been moved from Cancun to FutureEIPs [#5429](https://github.com/hyperledger/besu/pull/5429)

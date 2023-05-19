@@ -767,6 +767,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         description =
             "Specifies the maximum number of requests in a single RPC batch request via RPC. -1 specifies no limit  (default: ${DEFAULT-VALUE})")
     private final Integer rpcHttpMaxBatchSize = DEFAULT_HTTP_MAX_BATCH_SIZE;
+
+    @CommandLine.Option(
+        names = {"--rpc-http-max-request-content-length"},
+        paramLabel = MANDATORY_LONG_FORMAT_HELP,
+        description = "Specifies the maximum request content length. (default: ${DEFAULT-VALUE})")
+    private final Long rpcHttpMaxRequestContentLength = DEFAULT_MAX_REQUEST_CONTENT_LENGTH;
   }
 
   // JSON-RPC Websocket Options
@@ -2379,6 +2385,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
     jsonRpcConfiguration.setHttpTimeoutSec(unstableRPCOptions.getHttpTimeoutSec());
     jsonRpcConfiguration.setMaxBatchSize(jsonRPCHttpOptionGroup.rpcHttpMaxBatchSize);
+    jsonRpcConfiguration.setMaxRequestContentLength(
+        jsonRPCHttpOptionGroup.rpcHttpMaxRequestContentLength);
     return jsonRpcConfiguration;
   }
 
