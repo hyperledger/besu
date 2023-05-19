@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.bonsai.storage;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.worldview.StorageSlotKey;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
@@ -254,7 +254,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     getStorageValueCounter.inc();
     Optional<Bytes> response =
         storageStorage
-            .get(Bytes.concatenate(accountHash, storageSlotKey.slotHash()).toArrayUnsafe())
+            .get(Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
             .map(Bytes::wrap);
     if (response.isEmpty()) {
       final Optional<Hash> storageRoot = storageRootSupplier.get();
@@ -267,7 +267,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                         Function.identity(),
                         Function.identity()),
                     storageRoot.get())
-                .get(storageSlotKey.slotHash())
+                .get(storageSlotKey.getSlotHash())
                 .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
         if (response.isEmpty()) getStorageValueMissingMerkleTrieCounter.inc();
         else getStorageValueMerkleTrieCounter.inc();

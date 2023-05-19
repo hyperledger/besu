@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.worldstate;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -26,12 +27,12 @@ import java.util.Objects;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** Represents the raw values associated with an account in the world state trie. */
-public class StateTrieAccountValue {
+public class StateTrieAccountValue implements AccountValue {
 
-  private final long nonce;
-  private final Wei balance;
-  private final Hash storageRoot;
-  private final Hash codeHash;
+  protected final long nonce;
+  protected final Wei balance;
+  protected final Hash storageRoot;
+  protected final Hash codeHash;
 
   public StateTrieAccountValue(
       final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
@@ -49,6 +50,7 @@ public class StateTrieAccountValue {
    *
    * @return the account nonce.
    */
+  @Override
   public long getNonce() {
     return nonce;
   }
@@ -58,6 +60,7 @@ public class StateTrieAccountValue {
    *
    * @return the balance, in Wei, of the account.
    */
+  @Override
   public Wei getBalance() {
     return balance;
   }
@@ -67,6 +70,7 @@ public class StateTrieAccountValue {
    *
    * @return the hash of the root node of the storage trie.
    */
+  @Override
   public Hash getStorageRoot() {
     return storageRoot;
   }
@@ -76,6 +80,7 @@ public class StateTrieAccountValue {
    *
    * @return the hash of the account code (which may be {@link Hash#EMPTY}).
    */
+  @Override
   public Hash getCodeHash() {
     return codeHash;
   }
@@ -96,6 +101,7 @@ public class StateTrieAccountValue {
     return Objects.hash(nonce, balance, storageRoot, codeHash);
   }
 
+  @Override
   public void writeTo(final RLPOutput out) {
     out.startList();
 

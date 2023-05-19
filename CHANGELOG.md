@@ -6,6 +6,7 @@
 - Add request content length limit for the JSON-RPC api (5MB) [#5467](https://github.com/hyperledger/besu/pull/5467)
 
 ### Additions and Improvements
+- Set the retention policy for RocksDB log files to maintain only the logs from the last week [#5428](https://github.com/hyperledger/besu/pull/5428)
 - "Big-EOF" (the EOF version initially slotted for Shanghai) has been moved from Cancun to FutureEIPs [#5429](https://github.com/hyperledger/besu/pull/5429)
 - EIP-4844: Zero blob transactions are invalid [#5425](https://github.com/hyperledger/besu/pull/5425)
 - Transaction pool flag to disable specific behaviors for locally submitted transactions [#5418](https://github.com/hyperledger/besu/pull/5418)
@@ -15,6 +16,7 @@
 
 ### Bug Fixes
 - Fix eth_feeHistory response for the case in which blockCount is higher than highestBlock requested. [#5397](https://github.com/hyperledger/besu/pull/5397)
+- Fix Besu Docker image failing to start due to NoClassDefFoundError with org.xerial.snappy.Snappy library. [#5462](https://github.com/hyperledger/besu/pull/5462)
 
 ### Download Links
 
@@ -28,6 +30,7 @@
 - Remove launcher command line utility [#5355](https://github.com/hyperledger/besu/pull/5355)
 - Remove deprecated `tx-pool-future-max-by-account` option, see instead: `tx-pool-limit-by-account-percentage` [#5361](https://github.com/hyperledger/besu/pull/5361)
 - Default configuration for the deprecated ECIP-1049 network has been removed from the CLI network list [#5371](https://github.com/hyperledger/besu/pull/5371)
+- Besu now requires glibc 2.32 or later to run. Ubuntu 20.04 users will need to update to a newer version of Ubuntu, 22.04 or later to run Besu
 
 ### Additions and Improvements
 - An alternate build target for the EVM using GraalVM AOT compilation was added.  [#5192](https://github.com/hyperledger/besu/pull/5192)
