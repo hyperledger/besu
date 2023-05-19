@@ -255,6 +255,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
   private int readDatabaseVersion(final BesuConfiguration commonConfiguration) throws IOException {
     final Path dataDir = commonConfiguration.getDataPath();
     final boolean databaseExists = commonConfiguration.getStoragePath().toFile().exists();
+    final boolean dataDirExists = dataDir.toFile().exists();
     final int databaseVersion;
     if (databaseExists) {
       databaseVersion = DatabaseMetadata.lookUpFrom(dataDir).getVersion();
@@ -265,7 +266,9 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     } else {
       databaseVersion = commonConfiguration.getDatabaseVersion();
       LOG.info("No existing database detected at {}. Using version {}", dataDir, databaseVersion);
-      Files.createDirectories(dataDir);
+      if (!dataDirExists) {
+        Files.createDirectories(dataDir);
+      }
       new DatabaseMetadata(databaseVersion).writeToDirectory(dataDir);
     }
 
