@@ -39,14 +39,14 @@ public class DynamicPivotBlockManagerTest {
   private final FastSyncActions fastSyncActions = mock(FastSyncActions.class);
   private final SyncState syncState = mock(SyncState.class);
   private final EthContext ethContext = mock(EthContext.class);
-  private AdaptivePivotBlockSelector dynamicPivotBlockManager;
+  private DynamicPivotBlockSelector dynamicPivotBlockManager;
 
   @Before
   public void setup() {
     when(fastSyncActions.getSyncState()).thenReturn(syncState);
     when(ethContext.getScheduler()).thenReturn(new DeterministicEthScheduler());
     dynamicPivotBlockManager =
-        new AdaptivePivotBlockSelector(
+        new DynamicPivotBlockSelector(
             ethContext,
             fastSyncActions,
             snapSyncState,

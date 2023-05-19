@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDat
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.AccountFlatDatabaseHealingRangeRequest;
@@ -117,15 +118,18 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
       final WorldStateStorage worldStateStorage,
       final WorldStateStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncProcessState snapSyncState) {
-    return doPersist(worldStateStorage, updater, downloadState, snapSyncState);
+      final SnapSyncProcessState snapSyncState,
+      final SnapSyncConfiguration snapSyncConfiguration) {
+    return doPersist(
+        worldStateStorage, updater, downloadState, snapSyncState, snapSyncConfiguration);
   }
 
   protected abstract int doPersist(
       final WorldStateStorage worldStateStorage,
       final WorldStateStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncProcessState snapSyncState);
+      final SnapSyncProcessState snapSyncState,
+      final SnapSyncConfiguration snapSyncConfiguration);
 
   public abstract boolean isResponseReceived();
 
@@ -155,9 +159,11 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
       final WorldStateStorage worldStateStorage,
       final WorldStateStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncProcessState snapSyncState) {
+      final SnapSyncProcessState snapSyncState,
+      final SnapSyncConfiguration snapSyncConfiguration) {
     if (pendingChildren.decrementAndGet() == 0) {
-      return persist(worldStateStorage, updater, downloadState, snapSyncState);
+      return persist(
+          worldStateStorage, updater, downloadState, snapSyncState, snapSyncConfiguration);
     }
     return 0;
   }

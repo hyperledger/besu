@@ -32,16 +32,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * AdaptivePivotBlockSelector is responsible for dynamically selecting the pivot block for Snapsync.
- * It uses an adaptive algorithm to find the most suitable pivot block based on the current network
+ * DynamicPivotBlockSelector is responsible for dynamically selecting the pivot block for Snapsync.
+ * It uses an algorithm to find the most suitable pivot block based on the current network
  * conditions.
  */
-public class AdaptivePivotBlockSelector {
+public class DynamicPivotBlockSelector {
 
   private static final Duration DEFAULT_CHECK_INTERVAL = Duration.ofSeconds(60);
   public static final BiConsumer<BlockHeader, Boolean> doNothingOnPivotChange = (___, __) -> {};
 
-  private static final Logger LOG = LoggerFactory.getLogger(AdaptivePivotBlockSelector.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DynamicPivotBlockSelector.class);
 
   private final AtomicBoolean isTimeToCheckAgain = new AtomicBoolean(true);
 
@@ -54,7 +54,7 @@ public class AdaptivePivotBlockSelector {
 
   private Optional<BlockHeader> lastPivotBlockFound;
 
-  public AdaptivePivotBlockSelector(
+  public DynamicPivotBlockSelector(
       final EthContext ethContext,
       final FastSyncActions fastSyncActions,
       final SnapSyncProcessState fastSyncState,

@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.TRIE_NODE;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
@@ -56,7 +57,8 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
       final WorldStateStorage worldStateStorage,
       final WorldStateStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncProcessState snapSyncState) {
+      final SnapSyncProcessState snapSyncState,
+      final SnapSyncConfiguration snapSyncConfiguration) {
     if (isExpired(snapSyncState) || pendingChildren.get() > 0) {
       // we do nothing. Our last child will eventually persist us.
       return 0;
@@ -64,12 +66,15 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
     int saved = 0;
     if (requiresPersisting) {
       checkNotNull(data, "Must set data before node can be persisted.");
-      saved = doPersist(worldStateStorage, updater, downloadState, snapSyncState);
+      saved =
+          doPersist(
+              worldStateStorage, updater, downloadState, snapSyncState, snapSyncConfiguration);
     }
     if (possibleParent.isPresent()) {
       return possibleParent
               .get()
-              .saveParent(worldStateStorage, updater, downloadState, snapSyncState)
+              .saveParent(
+                  worldStateStorage, updater, downloadState, snapSyncState, snapSyncConfiguration)
           + saved;
     }
     return saved;

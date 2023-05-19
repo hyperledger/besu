@@ -5,6 +5,7 @@ import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStor
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapsyncMetricsManager;
@@ -146,8 +147,7 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
         new AccountFlatDatabaseHealingRangeRequest(
             Hash.EMPTY, accounts.lastKey(), RangeManager.MAX_RANGE);
 
-    // Add local data to the request, including proof provider, an empty TreeMap, and an empty
-    // ArrayDeque
+    // Add local data to the request
     request.addLocalData(proofProvider, new TreeMap<>(), new ArrayDeque<>());
 
     // Verify that no child requests are returned from the request
@@ -201,7 +201,12 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
     request.addLocalData(proofProvider, accounts, new ArrayDeque<>(proofs));
 
     WorldStateStorage.Updater updater = Mockito.spy(worldStateStorage.updater());
-    request.doPersist(worldStateStorage, updater, downloadState, snapSyncState);
+    request.doPersist(
+        worldStateStorage,
+        updater,
+        downloadState,
+        snapSyncState,
+        SnapSyncConfiguration.getDefault());
     Mockito.verifyNoInteractions(updater);
   }
 
@@ -265,7 +270,12 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
 
     BonsaiWorldStateKeyValueStorage.Updater updater =
         (BonsaiWorldStateKeyValueStorage.Updater) Mockito.spy(worldStateStorage.updater());
-    request.doPersist(worldStateStorage, updater, downloadState, snapSyncState);
+    request.doPersist(
+        worldStateStorage,
+        updater,
+        downloadState,
+        snapSyncState,
+        SnapSyncConfiguration.getDefault());
     // check add the missing account to the updater
     Mockito.verify(updater)
         .putAccountInfoState(Hash.wrap(removedAccount.getKey()), removedAccount.getValue());

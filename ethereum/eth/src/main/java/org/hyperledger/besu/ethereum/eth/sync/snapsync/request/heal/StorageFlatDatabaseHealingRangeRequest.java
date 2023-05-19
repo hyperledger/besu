@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAG
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
@@ -169,7 +170,8 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       final WorldStateStorage worldStateStorage,
       final WorldStateStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncProcessState snapSyncState) {
+      final SnapSyncProcessState snapSyncState,
+      final SnapSyncConfiguration snapSyncConfiguration) {
 
     if (!isProofValid) {
       // If the proof is not valid, it indicates that the flat database needs to be fixed.
@@ -193,7 +195,9 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
           RangeStorageEntriesCollector.createCollector(
               startKeyHash,
               slots.isEmpty() ? endKeyHash : slots.lastKey(),
-              slots.isEmpty() ? 1024 : Integer.MAX_VALUE,
+              slots.isEmpty()
+                  ? snapSyncConfiguration.getLocalFlatStorageCountToHealPerRequest()
+                  : Integer.MAX_VALUE,
               Integer.MAX_VALUE);
       final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
       slots =

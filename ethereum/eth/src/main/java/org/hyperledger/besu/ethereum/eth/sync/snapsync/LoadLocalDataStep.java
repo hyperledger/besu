@@ -33,15 +33,19 @@ public class LoadLocalDataStep {
   private final WorldStateStorage worldStateStorage;
   private final SnapWorldDownloadState downloadState;
   private final SnapSyncProcessState snapSyncState;
+
+  private final SnapSyncConfiguration snapSyncConfiguration;
   private final Counter existingNodeCounter;
 
   public LoadLocalDataStep(
       final WorldStateStorage worldStateStorage,
       final SnapWorldDownloadState downloadState,
+      final SnapSyncConfiguration snapSyncConfiguration,
       final MetricsSystem metricsSystem,
       final SnapSyncProcessState snapSyncState) {
     this.worldStateStorage = worldStateStorage;
     this.downloadState = downloadState;
+    this.snapSyncConfiguration = snapSyncConfiguration;
     existingNodeCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.SYNCHRONIZER,
@@ -61,7 +65,8 @@ public class LoadLocalDataStep {
         request.setData(existingData.get());
         request.setRequiresPersisting(false);
         final WorldStateStorage.Updater updater = worldStateStorage.updater();
-        request.persist(worldStateStorage, updater, downloadState, snapSyncState);
+        request.persist(
+            worldStateStorage, updater, downloadState, snapSyncState, snapSyncConfiguration);
         updater.commit();
         downloadState.enqueueRequests(request.getRootStorageRequests(worldStateStorage));
         completedTasks.put(task);

@@ -73,6 +73,12 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG =
       "--Xsnapsync-synchronizer-trienode-count-per-request";
 
+  private static final String SNAP_FLAT_ACCOUNT_HEALED_COUNT_PER_REQUEST_FLAG =
+      "--Xsnapsync-synchronizer-flat-account-healed-count-per-request";
+
+  private static final String SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG =
+      "--Xsnapsync-synchronizer-flat-slot-healed-count-per-request";
+
   private static final String CHECKPOINT_POST_MERGE_FLAG = "--Xcheckpoint-post-merge-enabled";
 
   /**
@@ -258,7 +264,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       hidden = true,
       defaultValue = "384",
       paramLabel = "<INTEGER>",
-      description = "Snap sync sync storage queried per request (default: ${DEFAULT-VALUE})")
+      description = "Snap sync storage queried per request (default: ${DEFAULT-VALUE})")
   private int snapsyncStorageCountPerRequest =
       SnapSyncConfiguration.DEFAULT_STORAGE_COUNT_PER_REQUEST;
 
@@ -267,7 +273,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       hidden = true,
       defaultValue = "84",
       paramLabel = "<INTEGER>",
-      description = "Snap sync sync bytecode queried per request (default: ${DEFAULT-VALUE})")
+      description = "Snap sync bytecode queried per request (default: ${DEFAULT-VALUE})")
   private int snapsyncBytecodeCountPerRequest =
       SnapSyncConfiguration.DEFAULT_BYTECODE_COUNT_PER_REQUEST;
 
@@ -276,9 +282,29 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       hidden = true,
       defaultValue = "384",
       paramLabel = "<INTEGER>",
-      description = "Snap sync sync trie node queried per request (default: ${DEFAULT-VALUE})")
+      description = "Snap sync trie node queried per request (default: ${DEFAULT-VALUE})")
   private int snapsyncTrieNodeCountPerRequest =
       SnapSyncConfiguration.DEFAULT_TRIENODE_COUNT_PER_REQUEST;
+
+  @CommandLine.Option(
+      names = SNAP_FLAT_ACCOUNT_HEALED_COUNT_PER_REQUEST_FLAG,
+      hidden = true,
+      defaultValue = "128",
+      paramLabel = "<INTEGER>",
+      description =
+          "Snap sync flat accounts verified and healed per request (default: ${DEFAULT-VALUE})")
+  private int snapsyncFlatAccountHealedCountPerRequest =
+      SnapSyncConfiguration.DEFAULT_LOCAL_FLAT_ACCOUNT_COUNT_TO_HEAL_PER_REQUEST;
+
+  @CommandLine.Option(
+      names = SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG,
+      hidden = true,
+      defaultValue = "128",
+      paramLabel = "<INTEGER>",
+      description =
+          "Snap sync flat slots verified and healed per request (default: ${DEFAULT-VALUE})")
+  private int snapsyncFlatStorageHealedCountPerRequest =
+      SnapSyncConfiguration.DEFAULT_LOCAL_FLAT_STORAGE_COUNT_TO_HEAL_PER_REQUEST;
 
   @CommandLine.Option(
       names = {CHECKPOINT_POST_MERGE_FLAG},
@@ -334,6 +360,10 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.getSnapSyncConfiguration().getBytecodeCountPerRequest();
     options.snapsyncTrieNodeCountPerRequest =
         config.getSnapSyncConfiguration().getTrienodeCountPerRequest();
+    options.snapsyncFlatAccountHealedCountPerRequest =
+        config.getSnapSyncConfiguration().getLocalFlatAccountCountToHealPerRequest();
+    options.snapsyncFlatStorageHealedCountPerRequest =
+        config.getSnapSyncConfiguration().getLocalFlatStorageCountToHealPerRequest();
     options.checkpointPostMergeSyncEnabled = config.isCheckpointPostMergeEnabled();
     return options;
   }
@@ -364,6 +394,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .storageCountPerRequest(snapsyncStorageCountPerRequest)
             .bytecodeCountPerRequest(snapsyncBytecodeCountPerRequest)
             .trienodeCountPerRequest(snapsyncTrieNodeCountPerRequest)
+            .localFlatAccountCountToHealPerRequest(snapsyncFlatAccountHealedCountPerRequest)
+            .localFlatStorageCountToHealPerRequest(snapsyncFlatStorageHealedCountPerRequest)
             .build());
     builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
 
@@ -414,6 +446,10 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         SNAP_BYTECODE_COUNT_PER_REQUEST_FLAG,
         OptionParser.format(snapsyncBytecodeCountPerRequest),
         SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG,
-        OptionParser.format(snapsyncTrieNodeCountPerRequest));
+        OptionParser.format(snapsyncTrieNodeCountPerRequest),
+        SNAP_FLAT_ACCOUNT_HEALED_COUNT_PER_REQUEST_FLAG,
+        OptionParser.format(snapsyncFlatAccountHealedCountPerRequest),
+        SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG,
+        OptionParser.format(snapsyncFlatStorageHealedCountPerRequest));
   }
 }

@@ -184,8 +184,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       Optional<CompleteTaskStep> maybeCompleteTask =
           Optional.of(new CompleteTaskStep(snapSyncState, metricsSystem));
 
-      final AdaptivePivotBlockSelector dynamicPivotBlockManager =
-          new AdaptivePivotBlockSelector(
+      final DynamicPivotBlockSelector dynamicPivotBlockManager =
+          new DynamicPivotBlockSelector(
               ethContext,
               fastSyncActions,
               snapSyncState,
@@ -196,16 +196,21 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
           SnapWorldStateDownloadProcess.builder()
               .configuration(snapSyncConfiguration)
               .maxOutstandingRequests(maxOutstandingRequests)
-              .pivotBlockManager(dynamicPivotBlockManager)
+              .dynamicPivotBlockSelector(dynamicPivotBlockManager)
               .loadLocalDataStep(
                   new LoadLocalDataStep(
-                      worldStateStorage, newDownloadState, metricsSystem, snapSyncState))
+                      worldStateStorage,
+                      newDownloadState,
+                      snapSyncConfiguration,
+                      metricsSystem,
+                      snapSyncState))
               .requestDataStep(
                   new RequestDataStep(
                       ethContext,
                       worldStateStorage,
                       snapSyncState,
                       newDownloadState,
+                      snapSyncConfiguration,
                       metricsSystem))
               .persistDataStep(
                   new PersistDataStep(snapSyncState, worldStateStorage, newDownloadState))
@@ -215,7 +220,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               .metricsSystem(metricsSystem)
               .build();
 
-      newDownloadState.setAdaptivePivotBlockSelector(dynamicPivotBlockManager);
+      newDownloadState.setPivotBlockSelector(dynamicPivotBlockManager);
 
       return newDownloadState.startDownload(downloadProcess, ethContext.getScheduler());
     }

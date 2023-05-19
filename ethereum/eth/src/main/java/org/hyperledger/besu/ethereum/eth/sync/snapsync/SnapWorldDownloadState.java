@@ -72,7 +72,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   protected final InMemoryTasksPriorityQueues<SnapDataRequest>
       pendingStorageFlatDatabaseHealingRequests = new InMemoryTasksPriorityQueues<>();
   private HashSet<Bytes> accountsToBeRepaired = new HashSet<>();
-  private AdaptivePivotBlockSelector adaptivePivotBlockSelector;
+  private DynamicPivotBlockSelector pivotBlockSelector;
 
   private final SnapSyncStatePersistenceManager snapContext;
   private final SnapSyncProcessState snapSyncState;
@@ -165,14 +165,14 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         && pendingStorageFlatDatabaseHealingRequests.allTasksCompleted()) {
       if (!snapSyncState.isHealTrieInProgress()) {
         startTrieHeal();
-      } else if (!snapSyncState.isHealFlatDatabaseInProgress() && isBonsaiStorageFormat()) {
-        // only doing a flat db heal for bonsai
-        startFlatDatabaseHeal(header);
-      } else if (adaptivePivotBlockSelector.isBlockchainBehind()) {
+      } else if (pivotBlockSelector.isBlockchainBehind()) {
         LOG.info("Pausing world state download while waiting for sync to complete");
         if (blockObserverId.isEmpty())
           blockObserverId = OptionalLong.of(blockchain.observeBlockAdded(getBlockAddedListener()));
         snapSyncState.setWaitingBlockchain(true);
+      } else if (!snapSyncState.isHealFlatDatabaseInProgress() && isBonsaiStorageFormat()) {
+        // only doing a flat db heal for bonsai
+        startFlatDatabaseHeal(header);
       } else {
         final WorldStateStorage.Updater updater = worldStateStorage.updater();
         updater.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
@@ -202,7 +202,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     snapContext.clearAccountRangeTasks();
     snapSyncState.setHealTrieStatus(true);
     // try to find new pivot block before healing
-    adaptivePivotBlockSelector.switchToNewPivotBlock(
+    pivotBlockSelector.switchToNewPivotBlock(
         (blockHeader, newPivotBlockFound) -> {
           snapContext.clearAccountRangeTasks();
           LOG.info(
@@ -379,23 +379,22 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     return metricsManager;
   }
 
-  public void setAdaptivePivotBlockSelector(
-      final AdaptivePivotBlockSelector adaptivePivotBlockSelector) {
-    this.adaptivePivotBlockSelector = adaptivePivotBlockSelector;
+  public void setPivotBlockSelector(final DynamicPivotBlockSelector pivotBlockSelector) {
+    this.pivotBlockSelector = pivotBlockSelector;
   }
 
   public BlockAddedObserver getBlockAddedListener() {
     return addedBlockContext -> {
       if (snapSyncState.isWaitingBlockchain()) {
         // if we receive a new pivot block we can restart the heal
-        adaptivePivotBlockSelector.check(
+        pivotBlockSelector.check(
             (____, isNewPivotBlock) -> {
               if (isNewPivotBlock) {
                 snapSyncState.setWaitingBlockchain(false);
               }
             });
         // if we are close to the head we can also restart the heal and finish snapsync
-        if (!adaptivePivotBlockSelector.isBlockchainBehind()) {
+        if (!pivotBlockSelector.isBlockchainBehind()) {
           snapSyncState.setWaitingBlockchain(false);
         }
         if (!snapSyncState.isWaitingBlockchain()) {

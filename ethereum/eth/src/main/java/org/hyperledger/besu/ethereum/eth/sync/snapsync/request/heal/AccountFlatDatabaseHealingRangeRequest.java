@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
@@ -156,7 +157,8 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       final WorldStateStorage worldStateStorage,
       final WorldStateStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncProcessState snapSyncState) {
+      final SnapSyncProcessState snapSyncState,
+      final SnapSyncConfiguration syncConfig) {
 
     if (!isProofValid) { // if proof is not valid we need to fix the flat database
 
@@ -175,7 +177,9 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
           RangeStorageEntriesCollector.createCollector(
               startKeyHash,
               accounts.isEmpty() ? endKeyHash : accounts.lastKey(),
-              accounts.isEmpty() ? 128 : Integer.MAX_VALUE,
+              accounts.isEmpty()
+                  ? syncConfig.getLocalFlatAccountCountToHealPerRequest()
+                  : Integer.MAX_VALUE,
               Integer.MAX_VALUE);
 
       Map<Bytes32, Bytes> remainingKeys = new TreeMap<>(accounts);

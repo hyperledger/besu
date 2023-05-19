@@ -53,6 +53,7 @@ public class RequestDataStep {
   private final WorldStateStorage worldStateStorage;
   private final SnapSyncProcessState fastSyncState;
   private final SnapWorldDownloadState downloadState;
+  private final SnapSyncConfiguration snapSyncConfiguration;
   private final MetricsSystem metricsSystem;
   private final EthContext ethContext;
   private final WorldStateProofProvider worldStateProofProvider;
@@ -62,10 +63,12 @@ public class RequestDataStep {
       final WorldStateStorage worldStateStorage,
       final SnapSyncProcessState fastSyncState,
       final SnapWorldDownloadState downloadState,
+      final SnapSyncConfiguration snapSyncConfiguration,
       final MetricsSystem metricsSystem) {
     this.worldStateStorage = worldStateStorage;
     this.fastSyncState = fastSyncState;
     this.downloadState = downloadState;
+    this.snapSyncConfiguration = snapSyncConfiguration;
     this.metricsSystem = metricsSystem;
     this.ethContext = ethContext;
     this.worldStateProofProvider = new WorldStateProofProvider(worldStateStorage);
@@ -219,7 +222,7 @@ public class RequestDataStep {
    * @param requestTask request data to fill
    * @return data request with local accounts
    */
-  public CompletableFuture<Task<SnapDataRequest>> requestLocalAccounts(
+  public CompletableFuture<Task<SnapDataRequest>> requestLocalFlatAccounts(
       final Task<SnapDataRequest> requestTask) {
 
     final AccountFlatDatabaseHealingRangeRequest accountDataRequest =
@@ -230,7 +233,9 @@ public class RequestDataStep {
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             worldStateStorage.streamAccountFlatDatabase(
-                accountDataRequest.getStartKeyHash(), accountDataRequest.getEndKeyHash(), 128);
+                accountDataRequest.getStartKeyHash(),
+                accountDataRequest.getEndKeyHash(),
+                snapSyncConfiguration.getLocalFlatAccountCountToHealPerRequest());
     final List<Bytes> proofs = new ArrayList<>();
     if (!accounts.isEmpty()) {
       // generate range proof if accounts are present
@@ -255,7 +260,7 @@ public class RequestDataStep {
    * @param requestTask request data to fill
    * @return data request with local slots
    */
-  public CompletableFuture<Task<SnapDataRequest>> requestLocalStorage(
+  public CompletableFuture<Task<SnapDataRequest>> requestLocalFlatStorages(
       final Task<SnapDataRequest> requestTask) {
 
     final StorageFlatDatabaseHealingRangeRequest storageDataRequest =
@@ -271,7 +276,7 @@ public class RequestDataStep {
                 storageDataRequest.getAccountHash(),
                 storageDataRequest.getStartKeyHash(),
                 storageDataRequest.getEndKeyHash(),
-                1024);
+                snapSyncConfiguration.getLocalFlatStorageCountToHealPerRequest());
     final List<Bytes> proofs = new ArrayList<>();
     if (!slots.isEmpty()) {
       // generate range proof if slots are present
