@@ -271,7 +271,7 @@ public class JsonRpcConfiguration {
     return maxRequestContentLength;
   }
 
-  public void setMaxRequestContentLength(final long maxBatchSize) {
-    this.maxRequestContentLength = maxBatchSize;
+  public void setMaxRequestContentLength(final long maxRequestContentLength) {
+    this.maxRequestContentLength = maxRequestContentLength;
   }
 }
