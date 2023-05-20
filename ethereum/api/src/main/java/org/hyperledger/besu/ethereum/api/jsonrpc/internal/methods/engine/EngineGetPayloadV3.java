@@ -65,10 +65,9 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
 
   @Override
   protected JsonRpcResponse createResponse(
-          final JsonRpcRequestContext request,
-          final PayloadIdentifier payloadId,
-          final BlockWithReceipts blockWithReceipts
-      ) {
+      final JsonRpcRequestContext request,
+      final PayloadIdentifier payloadId,
+      final BlockWithReceipts blockWithReceipts) {
 
     try {
       long builtAt = blockWithReceipts.getHeader().getTimestamp();
