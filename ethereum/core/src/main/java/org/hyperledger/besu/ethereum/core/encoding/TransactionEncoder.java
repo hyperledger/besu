@@ -171,8 +171,9 @@ public class TransactionEncoder {
               TYPED_TRANSACTION_ENCODERS.get(transactionType),
               "Developer Error. A supported transaction type %s has no associated encoding logic",
               transactionType);
-      return Bytes.concatenate(
-          Bytes.of(transactionType.getSerializedType()), encoder.encode(transaction));
+      Bytes encoded = encoder.encode(transaction);
+      Bytes appended = Bytes.concatenate(Bytes.of(transactionType.getSerializedType()), encoded);
+      return appended;
     }
   }
 
