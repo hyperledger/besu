@@ -319,7 +319,12 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
       @Override
       public void writeTo(final SSZWriter writer) {
         if (data != Bytes.EMPTY) {
-          writer.writeBytes(data);
+          // TODO: update tuweni to implement ByteList[] correctly.
+          // spec relies on delta between offsets to determine variable lengths, length is not
+          // explicitly encoded.
+          for (byte b : data.toArray()) {
+            writer.writeUInt8(b);
+          }
         }
       }
 
