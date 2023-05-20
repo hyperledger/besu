@@ -55,9 +55,10 @@ public class EngineGetBlobsBundleV1 extends AbstractEngineGetPayload {
   }
 
   @Override
-  protected JsonRpcResponse createResponse(final JsonRpcRequestContext request,
-                                           final PayloadIdentifier payloadId,
-                                           final BlockWithReceipts blockWithReceipts) {
+  protected JsonRpcResponse createResponse(
+      final JsonRpcRequestContext request,
+      final PayloadIdentifier payloadId,
+      final BlockWithReceipts blockWithReceipts) {
 
     return new JsonRpcSuccessResponse(
         request.getRequest().getId(), createResponse(blockWithReceipts.getBlock()));
