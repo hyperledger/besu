@@ -1083,7 +1083,11 @@ public class Transaction
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder();
-    sb.append(transactionType.supportsBlob() ? "Blob" : isContractCreation() ? "ContractCreation" : "MessageCall").append("{");
+    sb.append(
+            transactionType.supportsBlob()
+                ? "Blob"
+                : isContractCreation() ? "ContractCreation" : "MessageCall")
+        .append("{");
     sb.append("type=").append(getType()).append(", ");
     sb.append("nonce=").append(getNonce()).append(", ");
     getGasPrice()
@@ -1115,7 +1119,11 @@ public class Transaction
   public String toTraceLog() {
     final StringBuilder sb = new StringBuilder();
     sb.append(getHash()).append("={");
-    sb.append(transactionType.supportsBlob() ? "Blob" : isContractCreation() ? "ContractCreation" : "MessageCall").append(", ");
+    sb.append(
+            transactionType.supportsBlob()
+                ? "Blob"
+                : isContractCreation() ? "ContractCreation" : "MessageCall")
+        .append(", ");
     sb.append(getNonce()).append(", ");
     sb.append(getSender()).append(", ");
     sb.append(getType()).append(", ");
