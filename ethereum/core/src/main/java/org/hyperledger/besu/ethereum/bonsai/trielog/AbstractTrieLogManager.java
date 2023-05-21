@@ -102,7 +102,7 @@ public abstract class AbstractTrieLogManager implements TrieLogManager {
         .setMessage("Adding layered world state for {}")
         .addArgument(blockHeader::toLogString)
         .log();
-    final TrieLog trieLog = localUpdater.generateTrieLog(blockHeader);
+    final TrieLog trieLog = trieLogFactory.create(localUpdater, blockHeader);
     trieLog.freeze();
     return trieLog;
   }
