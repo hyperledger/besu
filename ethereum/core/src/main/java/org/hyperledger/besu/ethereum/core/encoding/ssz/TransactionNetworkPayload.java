@@ -323,7 +323,7 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
           // spec relies on delta between offsets to determine variable lengths, length is not
           // explicitly encoded.
           for (byte b : data.toArray()) {
-            writer.writeUInt8(b);
+            writer.writeUInt8((b & 0xFF));
           }
         }
       }
