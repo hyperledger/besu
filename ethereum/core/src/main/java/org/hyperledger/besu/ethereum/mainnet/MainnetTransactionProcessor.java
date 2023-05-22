@@ -395,21 +395,22 @@ public class MainnetTransactionProcessor {
                 .code(contractCreationProcessor.getCodeFromEVM(null, initCodeBytes))
                 .build();
       } else {
-        @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
-        final Address to = transaction.getTo().get();
-        final Optional<Account> maybeContract = Optional.ofNullable(worldState.get(to));
-        initialFrame =
-            commonMessageFrameBuilder
-                .type(MessageFrame.Type.MESSAGE_CALL)
-                .address(to)
-                .contract(to)
-                .inputData(transaction.getPayload())
-                .versionedHashes(transaction.getVersionedHashes())
-                .code(
-                    maybeContract
-                        .map(c -> messageCallProcessor.getCodeFromEVM(c.getCodeHash(), c.getCode()))
-                        .orElse(CodeV0.EMPTY_CODE))
-                .build();
+        commonMessageFrameBuilder
+            .type(MessageFrame.Type.MESSAGE_CALL)
+            .inputData(transaction.getPayload())
+            .versionedHashes(transaction.getVersionedHashes());
+        if (transaction.getTo().isPresent()) {
+          final Address to = transaction.getTo().get();
+          final Optional<Account> maybeContract = Optional.ofNullable(worldState.get(to));
+          commonMessageFrameBuilder
+              .address(to)
+              .contract(to)
+              .code(
+                  maybeContract
+                      .map(c -> messageCallProcessor.getCodeFromEVM(c.getCodeHash(), c.getCode()))
+                      .orElse(CodeV0.EMPTY_CODE));
+        }
+        initialFrame = commonMessageFrameBuilder.build();
       }
 
       messageFrameStack.addFirst(initialFrame);
