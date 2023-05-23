@@ -19,8 +19,6 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
-import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -35,7 +33,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -257,29 +254,28 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   public Optional<Bytes> getStorageValueByStorageSlotKey(
-          final Hash accountHash, final StorageSlotKey storageSlotKey) {
+      final Hash accountHash, final StorageSlotKey storageSlotKey) {
     return getStorageValueByStorageSlotKey(
-            () ->
-                    getAccount(accountHash)
-                            .map(
-                                    b ->
-                                            StateTrieAccountValue.readFrom(
-                                                            org.hyperledger.besu.ethereum.rlp.RLP.input(b))
-                                                    .getStorageRoot()),
-            accountHash,
-            storageSlotKey);
+        () ->
+            getAccount(accountHash)
+                .map(
+                    b ->
+                        StateTrieAccountValue.readFrom(
+                                org.hyperledger.besu.ethereum.rlp.RLP.input(b))
+                            .getStorageRoot()),
+        accountHash,
+        storageSlotKey);
   }
 
   public Optional<Bytes> getStorageValueByStorageSlotKey(
-          final Supplier<Optional<Hash>> storageRootSupplier,
-          final Hash accountHash,
-          final StorageSlotKey storageSlotKey) {
+      final Supplier<Optional<Hash>> storageRootSupplier,
+      final Hash accountHash,
+      final StorageSlotKey storageSlotKey) {
     getStorageValueCounter.inc();
-    Optional<Bytes> response =
-            storageStorage
-                    .get(Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
-                    .map(Bytes::wrap);
-    if (response.isEmpty()) {
+    return storageStorage
+        .get(Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
+        .map(Bytes::wrap);
+    /*if (response.isEmpty()) {
       final Optional<Hash> storageRoot = storageRootSupplier.get();
       final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
       if (storageRoot.isPresent() && worldStateRootHash.isPresent()) {
@@ -298,9 +294,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     } else {
       getStorageValueFlatDatabaseCounter.inc();
     }
-    return response;
+    return response;*/
   }
-
 
   @Override
   public Map<Bytes32, Bytes> streamAccountFlatDatabase(
