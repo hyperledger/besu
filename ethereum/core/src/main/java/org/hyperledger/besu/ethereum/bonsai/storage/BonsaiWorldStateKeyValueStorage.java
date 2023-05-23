@@ -16,9 +16,14 @@ package org.hyperledger.besu.ethereum.bonsai.storage;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
+import org.hyperledger.besu.ethereum.bonsai.storage.flat.FlatDbMode;
+import org.hyperledger.besu.ethereum.bonsai.storage.flat.FlatDbReaderStrategy;
+import org.hyperledger.besu.ethereum.bonsai.storage.flat.FullFlatDbReaderStrategy;
+import org.hyperledger.besu.ethereum.bonsai.storage.flat.PartialFlatDbReaderStrategy;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -31,17 +36,12 @@ import org.hyperledger.besu.util.Subscribers;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.rlp.RLP;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +57,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       "worldBlockHash".getBytes(StandardCharsets.UTF_8);
 
   public static final byte[] FLAT_DB_STATUS = "flatDbStatus".getBytes(StandardCharsets.UTF_8);
+
+  protected FlatDbMode flatDbMode;
 
   protected final KeyValueStorage accountStorage;
   protected final KeyValueStorage codeStorage;
@@ -157,6 +159,34 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   @Override
+  public DataStorageFormat getDataStorageFormat() {
+    return DataStorageFormat.BONSAI;
+  }
+
+  public FlatDbMode getFlatDbMode() {
+    if (flatDbMode == null) {
+      flatDbMode =
+          FlatDbMode.fromVersion(
+              trieBranchStorage
+                  .get(FLAT_DB_STATUS)
+                  .map(Bytes::wrap)
+                  .orElse(
+                      FlatDbMode.PARTIAL
+                          .getVersion())); // for backward compatibility we use partial as default
+    }
+    return flatDbMode;
+  }
+
+  public FlatDbReaderStrategy getFlatDbReaderStrategy() {
+    if (getFlatDbMode() == FlatDbMode.FULL) {
+      return new FullFlatDbReaderStrategy(
+          metricsSystem, accountStorage, codeStorage, storageStorage);
+    }
+    return new PartialFlatDbReaderStrategy(
+        metricsSystem, accountStorage, codeStorage, storageStorage);
+  }
+
+  @Override
   public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
@@ -169,26 +199,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    getAccountCounter.inc();
-    getAccountFlatDatabaseCounter.inc();
-    return accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
-    /*
-
-      // after a snapsync/fastsync we only have the trie branches.
-      final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
-      if (worldStateRootHash.isPresent()) {
-        Optional<Bytes> un2 =
-            new StoredMerklePatriciaTrie<>(
-                    new StoredNodeFactory<>(
-                        this::getAccountStateTrieNode, Function.identity(), Function.identity()),
-                    Bytes32.wrap(worldStateRootHash.get()))
-                .get(accountHash);
-        if(!un.equals(un2)) {
-          System.out.println("invalid account "+accountHash+" "+un+" "+un2);
-        }
-      }
-
-    return un;*/
+    return getFlatDbReaderStrategy().getAccount(accountHash);
   }
 
   @Override
@@ -271,70 +282,26 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       final Supplier<Optional<Hash>> storageRootSupplier,
       final Hash accountHash,
       final StorageSlotKey storageSlotKey) {
-    getStorageValueCounter.inc();
-    return storageStorage
-        .get(Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
-        .map(Bytes::wrap);
-    /*if (response.isEmpty()) {
-      final Optional<Hash> storageRoot = storageRootSupplier.get();
-      final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
-      if (storageRoot.isPresent() && worldStateRootHash.isPresent()) {
-        response =
-                new StoredMerklePatriciaTrie<>(
-                        new StoredNodeFactory<>(
-                                (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
-                                Function.identity(),
-                                Function.identity()),
-                        storageRoot.get())
-                        .get(storageSlotKey.getSlotHash())
-                        .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
-        if (response.isEmpty()) getStorageValueMissingMerkleTrieCounter.inc();
-        else getStorageValueMerkleTrieCounter.inc();
-      }
-    } else {
-      getStorageValueFlatDatabaseCounter.inc();
-    }
-    return response;*/
+    return getFlatDbReaderStrategy()
+        .getStorageValueByStorageSlotKey(
+            this::getWorldStateRootHash,
+            storageRootSupplier,
+            (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
+            accountHash,
+            storageSlotKey);
   }
 
   @Override
   public Map<Bytes32, Bytes> streamAccountFlatDatabase(
       final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
-    final Stream<Pair<Bytes32, Bytes>> pairStream =
-        accountStorage
-            .streamFromKey(startKeyHash.toArrayUnsafe())
-            .limit(max)
-            .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())))
-            .takeWhile(pair -> pair.getFirst().compareTo(endKeyHash) <= 0);
-
-    final TreeMap<Bytes32, Bytes> collected =
-        pairStream.collect(
-            Collectors.toMap(Pair::getFirst, Pair::getSecond, (v1, v2) -> v1, TreeMap::new));
-    pairStream.close();
-    return collected;
+    return getFlatDbReaderStrategy().streamAccountFlatDatabase(startKeyHash, endKeyHash, max);
   }
 
   @Override
   public Map<Bytes32, Bytes> streamStorageFlatDatabase(
       final Hash accountHash, final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
-    final Stream<Pair<Bytes32, Bytes>> pairStream =
-        storageStorage
-            .streamFromKey(Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe())
-            .takeWhile(pair -> Bytes.wrap(pair.getKey()).slice(0, Hash.SIZE).equals(accountHash))
-            .limit(max)
-            .map(
-                pair ->
-                    new Pair<>(
-                        Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
-                        RLP.encodeValue(Bytes.wrap(pair.getValue()).trimLeadingZeros())))
-            .takeWhile(pair -> pair.getFirst().compareTo(endKeyHash) <= 0);
-    ;
-
-    final TreeMap<Bytes32, Bytes> collected =
-        pairStream.collect(
-            Collectors.toMap(Pair::getFirst, Pair::getSecond, (v1, v2) -> v1, TreeMap::new));
-    pairStream.close();
-    return collected;
+    return getFlatDbReaderStrategy()
+        .streamStorageFlatDatabase(accountHash, startKeyHash, endKeyHash, max);
   }
 
   @Override
@@ -351,6 +318,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         .orElse(false);
   }
 
+  public void upgradeToFullFlatDbMode() {
+    final KeyValueStorageTransaction transaction = trieBranchStorage.startTransaction();
+    transaction.put(FLAT_DB_STATUS, FlatDbMode.FULL.getVersion().toArrayUnsafe());
+    transaction.commit();
+    flatDbMode = FlatDbMode.FULL;
+  }
+
   @Override
   public void clear() {
     subscribers.forEach(BonsaiStorageSubscriber::onClearStorage);
@@ -359,6 +333,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     storageStorage.clear();
     trieBranchStorage.clear();
     trieLogStorage.clear();
+    flatDbMode = null;
   }
 
   @Override
@@ -370,8 +345,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   @Override
   public void clearFlatDatabase() {
     subscribers.forEach(BonsaiStorageSubscriber::onClearFlatDatabaseStorage);
-    // accountStorage.clear();
-    // storageStorage.clear();
+    getFlatDbReaderStrategy().clearAccountAndStorageDatabase();
   }
 
   @Override

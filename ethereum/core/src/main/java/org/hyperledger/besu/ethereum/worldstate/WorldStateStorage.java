@@ -74,6 +74,8 @@ public interface WorldStateStorage {
     return Collections.emptyMap();
   }
 
+  DataStorageFormat getDataStorageFormat();
+
   void clear();
 
   void clearTrieLog();

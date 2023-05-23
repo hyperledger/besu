@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
@@ -123,7 +124,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
         };
 
     // we have a flat DB only with Bonsai
-    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+    if (worldStateStorage.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
       stackTrie.commit(
           (key, value) ->
               ((BonsaiWorldStateKeyValueStorage.BonsaiUpdater) updater)

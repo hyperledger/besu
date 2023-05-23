@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
@@ -98,7 +99,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
         };
 
     // we have a flat DB only with Bonsai
-    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+    if (worldStateStorage.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
       stackTrie.commit(
           (key, value) -> {
             ((BonsaiWorldStateKeyValueStorage.Updater) updater)

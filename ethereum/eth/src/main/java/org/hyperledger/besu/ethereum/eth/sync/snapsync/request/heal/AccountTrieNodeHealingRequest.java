@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
@@ -140,7 +141,7 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
             Bytes32.wrap(CompactEncoding.pathToBytes(Bytes.concatenate(getLocation(), path))));
 
     // update the flat db only for bonsai
-    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+    if (worldStateStorage.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
       ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
           .putAccountInfoState(accountHash, value)
           .commit();

@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
@@ -93,7 +94,7 @@ public class StorageTrieNodeHealingRequest extends TrieNodeHealingRequest {
       final Bytes location,
       final Bytes path,
       final Bytes value) {
-    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+    if (worldStateStorage.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
       ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
           .putStorageValueBySlotHash(
               accountHash, getSlotHash(location, path), Bytes32.leftPad(RLP.decodeValue(value)))
