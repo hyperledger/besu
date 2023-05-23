@@ -377,7 +377,8 @@ public class MainnetTransactionProcessor {
               .blockHashLookup(blockHashLookup)
               .contextVariables(contextVariablesBuilder.build())
               .accessListWarmAddresses(addressList)
-              .accessListWarmStorage(storageList);
+              .accessListWarmStorage(storageList)
+              .versionedHashes(transaction.getVersionedHashes());
 
       final MessageFrame initialFrame;
       if (transaction.isContractCreation()) {
@@ -391,7 +392,7 @@ public class MainnetTransactionProcessor {
                 .address(contractAddress)
                 .contract(contractAddress)
                 .inputData(Bytes.EMPTY)
-                .versionedHashes(transaction.getVersionedHashes())
+
                 .code(contractCreationProcessor.getCodeFromEVM(null, initCodeBytes))
                 .build();
       } else {
@@ -404,7 +405,6 @@ public class MainnetTransactionProcessor {
                 .address(to)
                 .contract(to)
                 .inputData(transaction.getPayload())
-                .versionedHashes(transaction.getVersionedHashes())
                 .code(
                     maybeContract
                         .map(c -> messageCallProcessor.getCodeFromEVM(c.getCodeHash(), c.getCode()))
