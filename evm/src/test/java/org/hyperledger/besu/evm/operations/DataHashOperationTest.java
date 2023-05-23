@@ -21,10 +21,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.operation.DataHashOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 
@@ -58,7 +60,7 @@ public class DataHashOperationTest {
 
     EVM fakeEVM = mock(EVM.class);
 
-    DataHashOperation getHash = new DataHashOperation(new LondonGasCalculator());
+    DataHashOperation getHash = new DataHashOperation(new ShanghaiGasCalculator());
     MessageFrame frame = mock(MessageFrame.class);
     when(frame.popStackItem()).thenReturn(Bytes.of(0));
     when(frame.getVersionedHashes()).thenReturn(Optional.empty());
@@ -79,9 +81,24 @@ public class DataHashOperationTest {
   public void pushZeroOnVersionIndexOutOFBounds() {
     Hash version0Hash = Hash.fromHexStringLenient("0xcafebabeb0b0facedeadbeef");
     List<Hash> versionedHashes = Arrays.asList(version0Hash);
-    DataHashOperation getHash = new DataHashOperation(new LondonGasCalculator());
+    DataHashOperation getHash = new DataHashOperation(new ShanghaiGasCalculator());
     MessageFrame frame = mock(MessageFrame.class);
     when(frame.popStackItem()).thenReturn(Bytes.of(1));
+    when(frame.getVersionedHashes()).thenReturn(Optional.of(versionedHashes));
+    EVM fakeEVM = mock(EVM.class);
+    Operation.OperationResult r = getHash.execute(frame, fakeEVM);
+    assertThat(r.getGasCost()).isEqualTo(3);
+    assertThat(r.getHaltReason()).isNull();
+    verify(frame).pushStackItem(Bytes.EMPTY);
+  }
+
+  @Test
+  public void pushZeroWhenPopsMissingUint256SizedIndex() {
+    Hash version0Hash = Hash.fromHexStringLenient("0xcafebabeb0b0facedeadbeef");
+    List<Hash> versionedHashes = Arrays.asList(version0Hash);
+    DataHashOperation getHash = new DataHashOperation(new ShanghaiGasCalculator());
+    MessageFrame frame = mock(MessageFrame.class);
+    when(frame.popStackItem()).thenReturn(Bytes32.repeat((byte) 0x2C));
     when(frame.getVersionedHashes()).thenReturn(Optional.of(versionedHashes));
     EVM fakeEVM = mock(EVM.class);
     Operation.OperationResult r = getHash.execute(frame, fakeEVM);
