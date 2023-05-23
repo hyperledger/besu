@@ -85,6 +85,7 @@ rpc-ws-authentication-jwt-algorithm="RS256"
 rpc-http-tls-protocols=["TLSv1.2,TlSv1.1"]
 rpc-http-tls-cipher-suites=["TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384","TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"]
 rpc-http-max-batch-size=1
+rpc-http-max-request-content-length = 5242880
 rpc-max-logs-range=100
 
 # PRIVACY TLS
