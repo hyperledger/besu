@@ -286,6 +286,6 @@ public class TransactionPoolFactory {
     }
 
     return new LayeredPendingTransactions(
-        transactionPoolConfiguration, pendingTransactionsSorter, metrics);
+        transactionPoolConfiguration, pendingTransactionsSorter);
   }
 }

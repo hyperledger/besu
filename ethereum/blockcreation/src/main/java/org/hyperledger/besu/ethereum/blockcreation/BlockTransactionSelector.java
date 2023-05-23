@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -75,43 +76,8 @@ import org.slf4j.LoggerFactory;
  */
 public class BlockTransactionSelector {
 
-  public static class TransactionValidationResult {
-    private final Transaction transaction;
-    private final ValidationResult<TransactionInvalidReason> validationResult;
-
-    public TransactionValidationResult(
-        final Transaction transaction,
-        final ValidationResult<TransactionInvalidReason> validationResult) {
-      this.transaction = transaction;
-      this.validationResult = validationResult;
-    }
-
-    public Transaction getTransaction() {
-      return transaction;
-    }
-
-    public ValidationResult<TransactionInvalidReason> getValidationResult() {
-      return validationResult;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      TransactionValidationResult that = (TransactionValidationResult) o;
-      return Objects.equals(transaction, that.transaction)
-          && Objects.equals(validationResult, that.validationResult);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(transaction, validationResult);
-    }
-  }
+  public record TransactionValidationResult(
+      Transaction transaction, ValidationResult<TransactionInvalidReason> validationResult) {}
 
   public static class TransactionSelectionResults {
     private final List<Transaction> transactions = Lists.newArrayList();
@@ -119,6 +85,7 @@ public class BlockTransactionSelector {
         new EnumMap<>(TransactionType.class);
     private final List<TransactionReceipt> receipts = Lists.newArrayList();
     private final List<TransactionValidationResult> invalidTransactions = Lists.newArrayList();
+    private final List<TransactionSelectionResult> selectionResults = Lists.newArrayList();
     private long cumulativeGasUsed = 0;
     private long cumulativeDataGasUsed = 0;
 
@@ -172,6 +139,36 @@ public class BlockTransactionSelector {
 
     public List<TransactionValidationResult> getInvalidTransactions() {
       return invalidTransactions;
+    }
+
+    public void addSelectionResult(final TransactionSelectionResult res) {
+      selectionResults.add(res);
+    }
+
+    public void logSelectionStats() {
+      if (LOG.isDebugEnabled()) {
+        final Map<TransactionSelectionResult, Long> selectionStats =
+            selectionResults.stream()
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+        LOG.debug(
+            "Selection stats: Totals[Evaluated={}, Selected={}, Skipped={}, Dropped={}]; Detailed[{}]",
+            selectionResults.size(),
+            selectionStats.getOrDefault(TransactionSelectionResult.SELECTED, 0L),
+            selectionStats.entrySet().stream()
+                .filter(e -> e.getKey().skip())
+                .map(Map.Entry::getValue)
+                .mapToInt(Long::intValue)
+                .sum(),
+            selectionStats.entrySet().stream()
+                .filter(e -> e.getKey().discard())
+                .map(Map.Entry::getValue)
+                .mapToInt(Long::intValue)
+                .sum(),
+            selectionStats.entrySet().stream()
+                .map(e -> e.getKey().toString() + "=" + e.getValue())
+                .collect(Collectors.joining(", ")));
+      }
     }
 
     @Override
@@ -275,7 +272,11 @@ public class BlockTransactionSelector {
         .addArgument(pendingTransactions.logStats())
         .log();
     pendingTransactions.selectTransactions(
-        pendingTransaction -> evaluateTransaction(pendingTransaction, false));
+        pendingTransaction -> {
+          final var res = evaluateTransaction(pendingTransaction, false);
+          transactionSelectionResults.addSelectionResult(res);
+          return res;
+        });
     LOG.atTrace()
         .setMessage("Transaction selection result {}")
         .addArgument(transactionSelectionResults::toTraceLog)
@@ -290,7 +291,9 @@ public class BlockTransactionSelector {
    * @return The {@code TransactionSelectionResults} results of transaction evaluation.
    */
   public TransactionSelectionResults evaluateTransactions(final List<Transaction> transactions) {
-    transactions.forEach(transaction -> evaluateTransaction(transaction, true));
+    transactions.forEach(
+        transaction ->
+            transactionSelectionResults.addSelectionResult(evaluateTransaction(transaction, true)));
     return transactionSelectionResults;
   }
 
@@ -360,7 +363,7 @@ public class BlockTransactionSelector {
       final TransactionSelectionResult transactionSelectionResult =
           transactionSelector.selectTransaction(transaction, receipt);
 
-      if (transactionSelectionResult == TransactionSelectionResult.SELECTED) {
+      if (transactionSelectionResult.equals(TransactionSelectionResult.SELECTED)) {
         final long dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount());
 
         transactionSelectionResults.update(transaction, receipt, gasUsedByTransaction, dataGasUsed);

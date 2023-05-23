@@ -15,6 +15,7 @@
 
 package org.hyperledger.besu.plugin.data;
 
+import java.util.Objects;
 import java.util.Optional;
 
 public class TransactionSelectionResult {
@@ -94,5 +95,18 @@ public class TransactionSelectionResult {
   @Override
   public String toString() {
     return status + maybeInvalidReason.map(ir -> "(" + ir + ")").orElse("");
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final TransactionSelectionResult that = (TransactionSelectionResult) o;
+    return status == that.status && Objects.equals(maybeInvalidReason, that.maybeInvalidReason);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(status, maybeInvalidReason);
   }
 }

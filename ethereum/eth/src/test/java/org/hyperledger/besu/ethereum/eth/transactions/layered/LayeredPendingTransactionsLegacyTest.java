@@ -63,8 +63,7 @@ public class LayeredPendingTransactionsLegacyTest
     return new LayeredPendingTransactions(
         poolConfig,
         new GasPricePrioritizedTransactions(
-            poolConfig, new EndLayer(txPoolMetrics), txPoolMetrics, transactionReplacementTester),
-        txPoolMetrics);
+            poolConfig, new EndLayer(txPoolMetrics), txPoolMetrics, transactionReplacementTester));
   }
 
   @Override

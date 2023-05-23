@@ -74,8 +74,7 @@ public class LayeredPendingTransactionsLondonTest
             new EndLayer(txPoolMetrics),
             txPoolMetrics,
             transactionReplacementTester,
-            FeeMarket.london(0L)),
-        txPoolMetrics);
+            FeeMarket.london(0L)));
   }
 
   @Override

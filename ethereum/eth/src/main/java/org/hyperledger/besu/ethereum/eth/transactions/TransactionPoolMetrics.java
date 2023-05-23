@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.RunnableCounter;
-import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
@@ -35,14 +34,12 @@ public class TransactionPoolMetrics {
   public static final String ADDED_COUNTER_NAME = "added_total";
   public static final String REMOVED_COUNTER_NAME = "removed_total";
   public static final String REJECTED_COUNTER_NAME = "rejected_total";
-  public static final String SELECTION_RESULT_COUNTER_NAME = "selection_result_total";
   public static final String EXPIRED_MESSAGES_COUNTER_NAME = "messages_expired_total";
   private static final int SKIPPED_MESSAGES_LOGGING_THRESHOLD = 1000;
   private final MetricsSystem metricsSystem;
   private final LabelledMetric<Counter> addedCounter;
   private final LabelledMetric<Counter> removedCounter;
   private final LabelledMetric<Counter> rejectedCounter;
-  private final LabelledMetric<Counter> selectionResultCounter;
   private final LabelledGauge spaceUsed;
   private final LabelledGauge transactionCount;
   private final LabelledGauge uniqueSenderCount;
@@ -78,14 +75,6 @@ public class TransactionPoolMetrics {
             "source",
             "reason",
             "layer");
-
-    selectionResultCounter =
-        metricsSystem.createLabelledCounter(
-            BesuMetricCategory.TRANSACTION_POOL,
-            SELECTION_RESULT_COUNTER_NAME,
-            "Count of transaction selection results when building a block",
-            "source",
-            "result");
 
     spaceUsed =
         metricsSystem.createLabelledGauge(
@@ -168,11 +157,6 @@ public class TransactionPoolMetrics {
       final TransactionInvalidReason rejectReason,
       final String layer) {
     rejectedCounter.labels(location(receivedFromLocalSource), rejectReason.name(), layer).inc();
-  }
-
-  public void incrementSelectionResult(
-      final boolean receivedFromLocalSource, final TransactionSelectionResult result) {
-    selectionResultCounter.labels(location(receivedFromLocalSource), result.toString()).inc();
   }
 
   public void incrementExpiredMessages(final String message) {

@@ -61,15 +61,12 @@ public class LayeredPendingTransactions implements PendingTransactions {
   private final TransactionPoolConfiguration poolConfig;
   private final Set<Address> localSenders = new HashSet<>();
   private final AbstractPrioritizedTransactions prioritizedTransactions;
-  private final TransactionPoolMetrics metrics;
 
   public LayeredPendingTransactions(
       final TransactionPoolConfiguration poolConfig,
-      final AbstractPrioritizedTransactions prioritizedTransactions,
-      final TransactionPoolMetrics metrics) {
+      final AbstractPrioritizedTransactions prioritizedTransactions) {
     this.poolConfig = poolConfig;
     this.prioritizedTransactions = prioritizedTransactions;
-    this.metrics = metrics;
   }
 
   @Override
@@ -357,8 +354,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
                           final var res =
                               selector.evaluateTransaction(candidatePendingTx.getTransaction());
 
-                          metrics.incrementSelectionResult(
-                              candidatePendingTx.isReceivedFromLocalSource(), res);
                           LOG.atTrace()
                               .setMessage("Selection result {} for transaction {}")
                               .addArgument(res)

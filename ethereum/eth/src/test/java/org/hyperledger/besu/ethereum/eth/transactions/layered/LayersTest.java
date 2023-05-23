@@ -85,7 +85,7 @@ public class LayersTest extends BaseTransactionPoolTest {
           FeeMarket.london(0L));
 
   private final LayeredPendingTransactions pendingTransactions =
-      new LayeredPendingTransactions(poolConfig, prioritizedTransactions, txPoolMetrics);
+      new LayeredPendingTransactions(poolConfig, prioritizedTransactions);
 
   @AfterEach
   void reset() {
