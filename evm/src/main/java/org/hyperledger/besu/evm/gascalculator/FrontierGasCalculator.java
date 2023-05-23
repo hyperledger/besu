@@ -489,4 +489,9 @@ public class FrontierGasCalculator implements GasCalculator {
   public long getMaximumTransactionCost(final int size) {
     return TX_BASE_COST + TX_DATA_NON_ZERO_COST * size;
   }
+
+  @Override
+  public long getMinimumTransactionCost() {
+    return TX_BASE_COST;
+  }
 }
