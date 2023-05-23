@@ -88,6 +88,8 @@ public interface DefaultCommandValues {
   int DEFAULT_HTTP_MAX_CONNECTIONS = 80;
   /** The constant DEFAULT_HTTP_MAX_BATCH_SIZE. */
   int DEFAULT_HTTP_MAX_BATCH_SIZE = 1024;
+  /** The constant DEFAULT_MAX_REQUEST_CONTENT_LENGTH. */
+  long DEFAULT_MAX_REQUEST_CONTENT_LENGTH = 5 * 1024 * 1024; // 5MB
   /** The constant DEFAULT_WS_MAX_CONNECTIONS. */
   int DEFAULT_WS_MAX_CONNECTIONS = 80;
   /** The constant DEFAULT_WS_MAX_FRAME_SIZE. */

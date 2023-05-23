@@ -15,11 +15,11 @@
 package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult.CONTINUE;
-import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.CONTINUE;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
+import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.Clock;
@@ -314,7 +315,7 @@ public abstract class AbstractPendingTransactionsTestBase {
     transactions.selectTransactions(
         transaction -> {
           parsedTransactions.add(transaction);
-          return PendingTransactions.TransactionSelectionResult.COMPLETE_OPERATION;
+          return TransactionSelectionResult.COMPLETE_OPERATION;
         });
 
     assertThat(parsedTransactions.size()).isEqualTo(1);
