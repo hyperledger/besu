@@ -140,6 +140,12 @@ public class LayersTest extends BaseTransactionPoolTest {
     assertScenario(scenario);
   }
 
+  @ParameterizedTest
+  @MethodSource("providerAsyncWorldStateUpdates")
+  void asyncWorldStateUpdates(final Scenario scenario) {
+    assertScenario(scenario);
+  }
+
   private void assertScenario(final Scenario scenario) {
     scenario.execute(
         pendingTransactions,
@@ -999,6 +1005,24 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .expectedSparseForSender(S1, 2, 3)));
   }
 
+  static Stream<Arguments> providerAsyncWorldStateUpdates() {
+    return Stream.of(
+        Arguments.of(
+            new Scenario("nonce forward just before confirmed block is processed")
+                .setAccountNonce(S1, 0)
+                .addForSender(S1, 0, 1, 2, 8, 9)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedSparseForSender(S1, 8, 9)
+                .expectedNextNonceForSenders(S1, 3)
+                // block has been imported and world state already has the new nonce,
+                // but block has not yet been processed by txpool
+                .setAccountNonce(S1, 5)
+                .addForSender(S1, 7)
+                .expectedPrioritizedForSenders()
+                // remember that sparse are checked by oldest first
+                .expectedSparseForSender(S1, 8, 9, 7)));
+  }
+
   private static BlockHeader mockBlockHeader() {
     final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ONE));
@@ -1082,6 +1106,7 @@ public class LayersTest extends BaseTransactionPoolTest {
         final Sender sender = (Sender) args[i];
         final long nonce = (int) args[i + 1];
         maxConfirmedNonceBySender.put(sender.address, nonce);
+        setAccountNonce(sender, nonce + 1);
       }
       actions.add(
           (pending, prio, ready, sparse, dropped) ->
@@ -1090,7 +1115,7 @@ public class LayersTest extends BaseTransactionPoolTest {
     }
 
     Scenario setAccountNonce(final Sender sender, final long nonce) {
-      nonceBySender.put(sender, nonce);
+      actions.add((pending, prio, ready, sparse, dropped) -> nonceBySender.put(sender, nonce));
       return this;
     }
 
