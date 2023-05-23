@@ -700,7 +700,7 @@ public class Transaction
    * @return {@code true} if this is a contract-creation transaction; otherwise {@code false}
    */
   public boolean isContractCreation() {
-    return !transactionType.supportsBlob() && getTo().isEmpty();
+    return getTo().isEmpty();
   }
 
   /**
