@@ -61,7 +61,7 @@ public class SyncState {
 
   private volatile boolean isResyncNeeded;
 
-  private Optional<Address> maybeAccountToRepair;
+  private Optional<Address> maybeAccountToRepair = Optional.empty();
 
   public SyncState(final Blockchain blockchain, final EthPeers ethPeers) {
     this(blockchain, ethPeers, false, Optional.empty());
