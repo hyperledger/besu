@@ -20,9 +20,10 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.toml.Toml;
@@ -184,8 +185,15 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
   private void checkUnknownOptions(final TomlParseResult result) {
     final CommandSpec commandSpec = commandLine.getCommandSpec();
 
-    final Set<String> unknownOptionsList =
-        result.keySet().stream()
+    // We ignore TOML table headings (e.g. [TxPool]) so use keyPathSet() and take the
+    // last element in each one. For a TOML entry that's not in a table the lists in keyPathSet()
+    // will contain a single entry - the config parameter itself. For a TOML entry that's in a table
+    // the list will contain N entries, the last one being the config parameter itself.
+    final Set<String> optionsWithoutTables = new HashSet<String>();
+    result.keyPathSet().stream().forEach(strings -> {optionsWithoutTables.add(strings.get(strings.size()-1));});
+
+    // Once we've stripped TOML table headings from the lists, we can check that the remaining options are valid
+    final Set<String> unknownOptionsList = optionsWithoutTables.stream()
             .filter(option -> !commandSpec.optionsMap().containsKey("--" + option))
             .collect(Collectors.toSet());
 
