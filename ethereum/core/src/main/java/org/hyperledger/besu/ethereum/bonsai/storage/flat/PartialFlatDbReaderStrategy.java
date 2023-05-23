@@ -57,6 +57,7 @@ public class PartialFlatDbReaderStrategy extends FlatDbReaderStrategy {
             "Number of storage slots not found (either in the flat database or in the merkle trie)");
   }
 
+  @Override
   public Optional<Bytes> getAccount(
       final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
       final NodeLoader nodeLoader,
