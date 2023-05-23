@@ -12,9 +12,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.transactions;
 
-import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+package org.hyperledger.besu.plugin.data;
 
 import java.util.Optional;
 
@@ -60,25 +59,23 @@ public class TransactionSelectionResult {
       new TransactionSelectionResult(Status.DATA_PRICE_BELOW_MIN);
 
   private final Status status;
-  private final Optional<TransactionInvalidReason> maybeInvalidReason;
+  private final Optional<String> maybeInvalidReason;
 
   public TransactionSelectionResult(final Status status) {
     this.status = status;
     this.maybeInvalidReason = Optional.empty();
   }
 
-  public TransactionSelectionResult(
-      final Status status, final TransactionInvalidReason invalidReason) {
+  public TransactionSelectionResult(final Status status, final String invalidReason) {
     this.status = status;
     this.maybeInvalidReason = Optional.of(invalidReason);
   }
 
-  public static TransactionSelectionResult invalidTransient(
-      final TransactionInvalidReason invalidReason) {
+  public static TransactionSelectionResult invalidTransient(final String invalidReason) {
     return new TransactionSelectionResult(Status.INVALID_TRANSIENT, invalidReason);
   }
 
-  public static TransactionSelectionResult invalid(final TransactionInvalidReason invalidReason) {
+  public static TransactionSelectionResult invalid(final String invalidReason) {
     return new TransactionSelectionResult(Status.INVALID, invalidReason);
   }
 
@@ -96,6 +93,6 @@ public class TransactionSelectionResult {
 
   @Override
   public String toString() {
-    return status + maybeInvalidReason.map(ir -> "(" + ir.name() + ")").orElse("");
+    return status + maybeInvalidReason.map(ir -> "(" + ir + ")").orElse("");
   }
 }
