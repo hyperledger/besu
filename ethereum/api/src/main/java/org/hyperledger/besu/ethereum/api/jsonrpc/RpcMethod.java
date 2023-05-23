@@ -48,6 +48,7 @@ public enum RpcMethod {
   DEBUG_GET_BAD_BLOCKS("debug_getBadBlocks"),
   DEBUG_GET_RAW_HEADER("debug_getRawHeader"),
   DEBUG_GET_RAW_BLOCK("debug_getRawBlock"),
+  DEBUG_GET_RAW_RECEIPTS("debug_getRawReceipts"),
   ENGINE_GET_PAYLOAD_V1("engine_getPayloadV1"),
   ENGINE_GET_PAYLOAD_V2("engine_getPayloadV2"),
   ENGINE_NEW_PAYLOAD_V1("engine_newPayloadV1"),
@@ -58,7 +59,7 @@ public enum RpcMethod {
   ENGINE_GET_PAYLOAD_BODIES_BY_HASH_V1("engine_getPayloadBodiesByHashV1"),
   ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1("engine_getPayloadBodiesByRangeV1"),
   ENGINE_EXCHANGE_CAPABILITIES("engine_exchangeCapabilities"),
-
+  ENGINE_PREPARE_PAYLOAD_DEBUG("engine_preparePayload_debug"),
   PRIV_CALL("priv_call"),
   PRIV_GET_PRIVATE_TRANSACTION("priv_getPrivateTransaction"),
   PRIV_GET_TRANSACTION_COUNT("priv_getTransactionCount"),

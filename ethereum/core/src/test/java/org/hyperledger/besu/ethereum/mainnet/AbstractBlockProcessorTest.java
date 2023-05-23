@@ -50,7 +50,7 @@ abstract class AbstractBlockProcessorTest {
 
   @Mock private MainnetTransactionProcessor transactionProcessor;
   @Mock private AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
-  @Mock private HeaderBasedProtocolSchedule protocolSchedule;
+  @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private WithdrawalsProcessor withdrawalsProcessor;
 
@@ -149,7 +149,7 @@ abstract class AbstractBlockProcessorTest {
         final Wei blockReward,
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         final boolean skipZeroBlockRewards,
-        final HeaderBasedProtocolSchedule protocolSchedule) {
+        final ProtocolSchedule protocolSchedule) {
       super(
           transactionProcessor,
           transactionReceiptFactory,

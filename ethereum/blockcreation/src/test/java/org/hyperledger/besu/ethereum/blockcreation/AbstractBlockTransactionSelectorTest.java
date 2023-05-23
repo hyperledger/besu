@@ -56,8 +56,10 @@ import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.txselection.TransactionSelector;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
@@ -80,6 +82,15 @@ import org.mockito.junit.MockitoJUnitRunner;
 public abstract class AbstractBlockTransactionSelectorTest {
   protected static final KeyPair keyPair =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
+  public static final TransactionSelector DO_NOTHING_TRANSACTION_SELECTOR =
+      new TransactionSelector() {
+        @Override
+        public TransactionSelectionResult selectTransaction(
+            final org.hyperledger.besu.plugin.data.Transaction transaction,
+            final org.hyperledger.besu.plugin.data.TransactionReceipt receipt) {
+          return TransactionSelectionResult.CONTINUE;
+        }
+      };
   protected final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   protected final Blockchain blockchain = new ReferenceTestBlockchain();
@@ -262,7 +273,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
             Wei.ZERO,
             FeeMarket.london(0L),
             new LondonGasCalculator(),
-            GasLimitCalculator.constant());
+            GasLimitCalculator.constant(),
+            Optional.empty());
 
     // this should fill up all the block space
     final Transaction fillingLegacyTx =
@@ -467,7 +479,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
             dataGasPrice,
             getFeeMarket(),
             new LondonGasCalculator(),
-            GasLimitCalculator.constant());
+            GasLimitCalculator.constant(),
+            Optional.empty());
     return selector;
   }
 

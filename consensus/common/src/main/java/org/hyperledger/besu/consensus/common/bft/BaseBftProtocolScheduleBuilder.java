@@ -20,10 +20,11 @@ import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
+import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
-import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
@@ -70,17 +71,16 @@ public abstract class BaseBftProtocolScheduleBuilder {
 
     final ProtocolSpecAdapters specAdapters = new ProtocolSpecAdapters(specMap);
 
-    final MutableProtocolSchedule mutableProtocolSchedule =
-        (MutableProtocolSchedule)
-            new ProtocolScheduleBuilder(
-                    config,
-                    DEFAULT_CHAIN_ID,
-                    specAdapters,
-                    privacyParameters,
-                    isRevertReasonEnabled,
-                    evmConfiguration)
-                .createProtocolSchedule();
-    return new BftProtocolSchedule(mutableProtocolSchedule);
+    final ProtocolSchedule protocolSchedule =
+        new ProtocolScheduleBuilder(
+                config,
+                DEFAULT_CHAIN_ID,
+                specAdapters,
+                privacyParameters,
+                isRevertReasonEnabled,
+                evmConfiguration)
+            .createProtocolSchedule();
+    return new BftProtocolSchedule((DefaultProtocolSchedule) protocolSchedule);
   }
 
   /**

@@ -21,9 +21,14 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.evm.operation.InvalidOperation;
 import org.hyperledger.besu.evm.operation.PrevRanDaoOperation;
+import org.hyperledger.besu.evm.operation.Push0Operation;
+
+import java.math.BigInteger;
 
 import org.junit.Test;
 
@@ -50,17 +55,112 @@ public class MergeProtocolScheduleTest {
   }
 
   @Test
+  public void mergeSpecificModificationsAreUnappliedForShanghai() {
+
+    final GenesisConfigOptions config = GenesisConfigFile.mainnet().getConfigOptions();
+    final ProtocolSchedule protocolSchedule = MergeProtocolSchedule.create(config, false);
+
+    final long lastParisBlockNumber = 17034869L;
+    final ProtocolSpec parisSpec =
+        protocolSchedule.getByBlockHeader(blockHeader(lastParisBlockNumber));
+    final ProtocolSpec shanghaiSpec =
+        protocolSchedule.getByBlockHeader(
+            new BlockHeaderTestFixture().timestamp(1681338455).buildHeader());
+
+    assertThat(parisSpec.getName()).isEqualTo("Paris");
+    assertThat(shanghaiSpec.getName()).isEqualTo("Shanghai");
+
+    // ensure PUSH0 is enabled in Shanghai
+    final int PUSH0 = 0x5f;
+    assertThat(parisSpec.getEvm().getOperationsUnsafe()[PUSH0])
+        .isInstanceOf(InvalidOperation.class);
+    assertThat(shanghaiSpec.getEvm().getOperationsUnsafe()[PUSH0])
+        .isInstanceOf(Push0Operation.class);
+
+    assertProofOfStakeConfigIsEnabled(parisSpec);
+    assertProofOfStakeConfigIsEnabled(shanghaiSpec);
+  }
+
+  @Test
+  public void mergeSpecificModificationsAreUnappliedForCancun_whenShanghaiNotConfigured() {
+
+    final String jsonInput =
+        "{\"config\": "
+            + "{\"chainId\": 1,\n"
+            + "\"parisBlock\": 0,\n"
+            + "\"cancunTime\": 1000}"
+            + "}";
+
+    final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
+    final ProtocolSchedule protocolSchedule = MergeProtocolSchedule.create(config, false);
+
+    final ProtocolSpec parisSpec =
+        protocolSchedule.getByBlockHeader(
+            new BlockHeaderTestFixture().number(9).timestamp(999).buildHeader());
+    final ProtocolSpec cancunSpec =
+        protocolSchedule.getByBlockHeader(
+            new BlockHeaderTestFixture().number(10).timestamp(1000).buildHeader());
+
+    assertThat(parisSpec.getName()).isEqualTo("Paris");
+    assertThat(cancunSpec.getName()).isEqualTo("Cancun");
+
+    // ensure PUSH0 is enabled in Cancun (i.e. it has picked up the Shanghai change rather than been
+    // reverted to Paris)
+    final int PUSH0 = 0x5f;
+    assertThat(parisSpec.getEvm().getOperationsUnsafe()[PUSH0])
+        .isInstanceOf(InvalidOperation.class);
+    assertThat(cancunSpec.getEvm().getOperationsUnsafe()[PUSH0]).isInstanceOf(Push0Operation.class);
+
+    assertProofOfStakeConfigIsEnabled(parisSpec);
+    assertProofOfStakeConfigIsEnabled(cancunSpec);
+  }
+
+  @Test
+  public void mergeSpecificModificationsAreUnappliedForAllMainnetForksAfterParis() {
+    final GenesisConfigOptions config = GenesisConfigFile.mainnet().getConfigOptions();
+    final ProtocolSchedule protocolSchedule = MergeProtocolSchedule.create(config, false);
+
+    final long lastParisBlockNumber = 17034869L;
+    final ProtocolSpec parisSpec =
+        protocolSchedule.getByBlockHeader(blockHeader(lastParisBlockNumber));
+    assertThat(parisSpec.getName()).isEqualTo("Paris");
+
+    for (long forkTimestamp : config.getForkBlockTimestamps()) {
+      final ProtocolSpec postParisSpec =
+          protocolSchedule.getByBlockHeader(
+              new BlockHeaderTestFixture().timestamp(forkTimestamp).buildHeader());
+
+      assertThat(postParisSpec.getName()).isNotEqualTo("Paris");
+      // ensure PUSH0 is enabled from Shanghai onwards
+      final int PUSH0 = 0x5f;
+      assertThat(parisSpec.getEvm().getOperationsUnsafe()[PUSH0])
+          .isInstanceOf(InvalidOperation.class);
+      assertThat(postParisSpec.getEvm().getOperationsUnsafe()[PUSH0])
+          .isInstanceOf(Push0Operation.class);
+
+      assertProofOfStakeConfigIsEnabled(parisSpec);
+      assertProofOfStakeConfigIsEnabled(postParisSpec);
+    }
+  }
+
+  @Test
   public void parametersAlignWithMainnetWithAdjustments() {
     final ProtocolSpec london =
         MergeProtocolSchedule.create(GenesisConfigFile.DEFAULT.getConfigOptions(), false)
             .getByBlockHeader(blockHeader(0));
 
-    assertThat(london.getName()).isEqualTo("Frontier");
-    assertThat(london.getBlockReward()).isEqualTo(Wei.ZERO);
-    assertThat(london.isSkipZeroBlockRewards()).isTrue();
+    assertThat(london.getName()).isEqualTo("Paris");
+    assertProofOfStakeConfigIsEnabled(london);
+  }
 
-    var op = london.getEvm().getOperationsUnsafe()[0x44];
-    assertThat(op).isInstanceOf(PrevRanDaoOperation.class);
+  private static void assertProofOfStakeConfigIsEnabled(final ProtocolSpec spec) {
+    assertThat(spec.isPoS()).isTrue();
+    assertThat(spec.getEvm().getOperationsUnsafe()[0x44]).isInstanceOf(PrevRanDaoOperation.class);
+    assertThat(spec.getDifficultyCalculator().nextDifficulty(-1, null, null))
+        .isEqualTo(BigInteger.ZERO);
+    assertThat(spec.getBlockReward()).isEqualTo(Wei.ZERO);
+    assertThat(spec.isSkipZeroBlockRewards()).isTrue();
+    assertThat(spec.getBlockProcessor()).isInstanceOf(MainnetBlockProcessor.class);
   }
 
   private BlockHeader blockHeader(final long number) {

@@ -92,7 +92,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   /** The Protocol schedule. */
   protected final ProtocolSchedule protocolSchedule;
 
-  private final Map<PayloadIdentifier, BlockCreationTask> blockCreationTask =
+  private final Map<PayloadIdentifier, BlockCreationTask> blockCreationTasks =
       new ConcurrentHashMap<>();
 
   /**
@@ -254,7 +254,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         PayloadIdentifier.forPayloadParams(
             parentHeader.getBlockHash(), timestamp, prevRandao, feeRecipient, withdrawals);
 
-    if (blockCreationTask.containsKey(payloadIdentifier)) {
+    if (blockCreationTasks.containsKey(payloadIdentifier)) {
       LOG.debug(
           "Block proposal for the same payload id {} already present, nothing to do",
           payloadIdentifier);
@@ -266,7 +266,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     final MergeBlockCreator mergeBlockCreator =
         this.mergeBlockCreatorFactory.forParams(parentHeader, Optional.ofNullable(feeRecipient));
 
-    blockCreationTask.put(payloadIdentifier, new BlockCreationTask(mergeBlockCreator));
+    blockCreationTasks.put(payloadIdentifier, new BlockCreationTask(mergeBlockCreator));
 
     // put the empty block in first
     final Block emptyBlock =
@@ -278,11 +278,10 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     if (result.isSuccessful()) {
       mergeContext.putPayloadById(
           payloadIdentifier, new BlockWithReceipts(emptyBlock, result.getReceipts()));
-      LOG.atDebug()
-          .setMessage("Built empty block proposal {} for payload {}")
-          .addArgument(emptyBlock::toLogString)
-          .addArgument(payloadIdentifier)
-          .log();
+      LOG.info(
+          "Start building proposals for block {} identified by {}",
+          emptyBlock.getHeader().getNumber(),
+          payloadIdentifier);
     } else {
       LOG.warn(
           "failed to validate empty block proposal {}, reason {}",
@@ -299,28 +298,33 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   private void cancelAnyExistingBlockCreationTasks(final PayloadIdentifier payloadIdentifier) {
-    if (blockCreationTask.size() > 0) {
+    if (blockCreationTasks.size() > 0) {
       String existingPayloadIdsBeingBuilt =
-          blockCreationTask.keySet().stream()
+          blockCreationTasks.keySet().stream()
               .map(PayloadIdentifier::toHexString)
               .collect(joining(","));
       LOG.warn(
           "New payloadId {} received so cancelling block creation tasks for the following payloadIds: {}",
           payloadIdentifier,
           existingPayloadIdsBeingBuilt);
-      blockCreationTask.values().forEach(BlockCreationTask::cancel);
+
+      blockCreationTasks.keySet().forEach(this::cleanupBlockCreationTask);
     }
+  }
+
+  private void cleanupBlockCreationTask(final PayloadIdentifier payloadIdentifier) {
+    blockCreationTasks.computeIfPresent(
+        payloadIdentifier,
+        (pid, blockCreationTask) -> {
+          blockCreationTask.cancel();
+          return null;
+        });
   }
 
   @Override
   public void finalizeProposalById(final PayloadIdentifier payloadId) {
     LOG.debug("Finalizing block proposal for payload id {}", payloadId);
-    blockCreationTask.computeIfPresent(
-        payloadId,
-        (pid, blockCreationTask) -> {
-          blockCreationTask.cancel();
-          return blockCreationTask;
-        });
+    cleanupBlockCreationTask(payloadId);
   }
 
   private void tryToBuildBetterBlock(
@@ -350,12 +354,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                     .addArgument(() -> logException(throwable))
                     .log();
               }
-              blockCreationTask.computeIfPresent(
-                  payloadIdentifier,
-                  (pid, blockCreationTask) -> {
-                    blockCreationTask.cancel();
-                    return null;
-                  });
+              cleanupBlockCreationTask(payloadIdentifier);
             });
   }
 
@@ -931,7 +930,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   @VisibleForTesting
   boolean isBlockCreationCancelled(final PayloadIdentifier payloadId) {
-    final BlockCreationTask job = blockCreationTask.get(payloadId);
+    final BlockCreationTask job = blockCreationTasks.get(payloadId);
     if (job == null) {
       return true;
     }

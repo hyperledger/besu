@@ -40,9 +40,7 @@ public enum NetworkName {
   /** Kotti network name. */
   KOTTI("/kotti.json", BigInteger.valueOf(6)),
   /** Mordor network name. */
-  MORDOR("/mordor.json", BigInteger.valueOf(7)),
-  /** Ecip 1049 dev network name. */
-  ECIP1049_DEV("/ecip1049_dev.json", BigInteger.valueOf(2021));
+  MORDOR("/mordor.json", BigInteger.valueOf(7));
 
   private final String genesisFile;
   private final BigInteger networkId;

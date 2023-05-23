@@ -437,7 +437,8 @@ public class P2PPlainNetworkTest {
         .withTrustStoreType(KEYSTORE_TYPE_PKCS12)
         .withTrustStorePath(toPath(String.format(truststorePath, clientDirName)))
         .withTrustStorePasswordSupplier(() -> "test123")
-        .withCrlPath(toPath(crl));
+        .withCrlPath(toPath(crl))
+        .withClientHelloSniEnabled(false);
 
     return Optional.of(builder.build());
   }

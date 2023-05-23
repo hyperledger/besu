@@ -95,7 +95,7 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
           createPrivateMarkerTransaction(sender, privateTransaction, user);
 
       return transactionPool
-          .addLocalTransaction(privateMarkerTransaction)
+          .addTransactionViaApi(privateMarkerTransaction)
           .either(
               () -> new JsonRpcSuccessResponse(id, privateMarkerTransaction.getHash().toString()),
               errorReason -> getJsonRpcErrorResponse(id, errorReason));

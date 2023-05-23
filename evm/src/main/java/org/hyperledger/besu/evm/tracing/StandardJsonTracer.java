@@ -20,6 +20,7 @@ import static com.google.common.base.Strings.padStart;
 
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.Operation;
 
 import java.io.PrintStream;
@@ -222,9 +223,7 @@ public class StandardJsonTracer implements OperationTracer {
     } else {
       sb.append("\"output\":\"\",");
     }
-    sb.append("\"gasUsed\":\"")
-        .append(Bytes.ofUnsignedLong(gasUsed).toShortHexString())
-        .append("\",");
+    sb.append("\"gasUsed\":\"").append(Words.longBytes(gasUsed).toShortHexString()).append("\",");
     sb.append("\"time\":").append(timeNs).append("}");
     out.println(sb);
   }

@@ -24,7 +24,7 @@ import org.hyperledger.besu.evm.internal.FixedStack.OverflowException;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 import org.hyperledger.besu.evm.internal.Words;
 
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes;
 
 /** The Ext code size operation. */
 public class ExtCodeSizeOperation extends AbstractOperation {
@@ -63,7 +63,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
       } else {
         final Account account = frame.getWorldUpdater().get(address);
         frame.pushStackItem(
-            account == null ? UInt256.ZERO : UInt256.valueOf(account.getCode().size()));
+            account == null ? Bytes.EMPTY : Words.intBytes(account.getCode().size()));
         return new OperationResult(cost, null);
       }
     } catch (final UnderflowException ufe) {

@@ -157,7 +157,8 @@ public class QbftBlockHeightManagerTest {
             null,
             null,
             setupContextWithBftExtraDataEncoder(
-                QbftContext.class, validators, new QbftExtraDataCodec()));
+                QbftContext.class, validators, new QbftExtraDataCodec()),
+            Optional.empty());
 
     // Ensure the created QbftRound has the valid ConsensusRoundIdentifier;
     when(roundFactory.createNewRound(any(), anyInt()))

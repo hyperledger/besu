@@ -86,6 +86,7 @@ import org.hyperledger.besu.cli.util.BesuCommandCustomFactory;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
 import org.hyperledger.besu.cli.util.VersionProvider;
+import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -166,12 +167,14 @@ import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.TraceService;
+import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
+import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
@@ -182,6 +185,7 @@ import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.TraceServiceImpl;
+import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.LogConfigurator;
@@ -233,6 +237,7 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.metrics.MetricsOptions;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import picocli.AutoComplete;
 import picocli.CommandLine;
@@ -358,6 +363,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   // P2P Discovery Option Group
   @CommandLine.ArgGroup(validate = false, heading = "@|bold P2P Discovery Options|@%n")
   P2PDiscoveryOptionGroup p2PDiscoveryOptionGroup = new P2PDiscoveryOptionGroup();
+
+  private final TransactionSelectionServiceImpl transactionSelectionServiceImpl;
 
   static class P2PDiscoveryOptionGroup {
 
@@ -766,6 +773,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         description =
             "Specifies the maximum number of requests in a single RPC batch request via RPC. -1 specifies no limit  (default: ${DEFAULT-VALUE})")
     private final Integer rpcHttpMaxBatchSize = DEFAULT_HTTP_MAX_BATCH_SIZE;
+
+    @CommandLine.Option(
+        names = {"--rpc-http-max-request-content-length"},
+        paramLabel = MANDATORY_LONG_FORMAT_HELP,
+        description = "Specifies the maximum request content length. (default: ${DEFAULT-VALUE})")
+    private final Long rpcHttpMaxRequestContentLength = DEFAULT_MAX_REQUEST_CONTENT_LENGTH;
   }
 
   // JSON-RPC Websocket Options
@@ -1201,7 +1214,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         description =
             "Maximum number of pending transactions that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
         arity = "1")
-    private final Integer txPoolMaxSize = TransactionPoolConfiguration.MAX_PENDING_TRANSACTIONS;
+    private final Integer txPoolMaxSize =
+        TransactionPoolConfiguration.DEFAULT_MAX_PENDING_TRANSACTIONS;
 
     @Option(
         names = {"--tx-pool-retention-hours"},
@@ -1323,8 +1337,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Collection<EnodeURL> staticNodes;
   private BesuController besuController;
   private BesuConfiguration pluginCommonConfiguration;
+
+  private BesuComponent besuComponent;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
-      Suppliers.memoize(() -> MetricsSystemFactory.create(metricsConfiguration()));
+      Suppliers.memoize(
+          () ->
+              besuComponent == null || besuComponent.getObservableMetricsSystem() == null
+                  ? MetricsSystemFactory.create(metricsConfiguration())
+                  : besuComponent.getObservableMetricsSystem());
   private Vertx vertx;
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
@@ -1334,7 +1354,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   /**
    * Besu command constructor.
    *
-   * @param logger Logger instance
+   * @param besuComponent BesuComponent which acts as our application context
    * @param rlpBlockImporter RlpBlockImporter supplier
    * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
    * @param rlpBlockExporterFactory instance of {@code Function<Blockchain, RlpBlockExporter>}
@@ -1344,7 +1364,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param environment Environment variables map
    */
   public BesuCommand(
-      final Logger logger,
+      final BesuComponent besuComponent,
       final Supplier<RlpBlockImporter> rlpBlockImporter,
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -1353,7 +1373,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final BesuPluginContextImpl besuPluginContext,
       final Map<String, String> environment) {
     this(
-        logger,
+        besuComponent,
         rlpBlockImporter,
         jsonBlockImporterFactory,
         rlpBlockExporterFactory,
@@ -1366,13 +1386,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new PermissioningServiceImpl(),
         new PrivacyPluginServiceImpl(),
         new PkiBlockCreationConfigurationProvider(),
-        new RpcEndpointServiceImpl());
+        new RpcEndpointServiceImpl(),
+        new TransactionSelectionServiceImpl());
   }
 
   /**
    * Overloaded Besu command constructor visible for testing.
    *
-   * @param logger Logger instance
+   * @param besuComponent BesuComponent which acts as our application context
    * @param rlpBlockImporter RlpBlockImporter supplier
    * @param jsonBlockImporterFactory instance of {@code Function<BesuController, JsonBlockImporter>}
    * @param rlpBlockExporterFactory instance of {@code Function<Blockchain, RlpBlockExporter>}
@@ -1386,10 +1407,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param privacyPluginService instance of PrivacyPluginServiceImpl
    * @param pkiBlockCreationConfigProvider instance of PkiBlockCreationConfigurationProvider
    * @param rpcEndpointServiceImpl instance of RpcEndpointServiceImpl
+   * @param transactionSelectionServiceImpl instance of TransactionSelectionServiceImpl
    */
   @VisibleForTesting
   protected BesuCommand(
-      final Logger logger,
+      final BesuComponent besuComponent,
       final Supplier<RlpBlockImporter> rlpBlockImporter,
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
@@ -1402,8 +1424,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final PermissioningServiceImpl permissioningService,
       final PrivacyPluginServiceImpl privacyPluginService,
       final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
-      final RpcEndpointServiceImpl rpcEndpointServiceImpl) {
-    this.logger = logger;
+      final RpcEndpointServiceImpl rpcEndpointServiceImpl,
+      final TransactionSelectionServiceImpl transactionSelectionServiceImpl) {
+    this.besuComponent = besuComponent;
+    this.logger = besuComponent.getBesuCommandLogger();
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
     this.jsonBlockImporterFactory = jsonBlockImporterFactory;
@@ -1419,6 +1443,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
     this.pkiBlockCreationConfigProvider = pkiBlockCreationConfigProvider;
     this.rpcEndpointServiceImpl = rpcEndpointServiceImpl;
+    this.transactionSelectionServiceImpl = transactionSelectionServiceImpl;
   }
 
   /**
@@ -1438,9 +1463,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final InputStream in,
       final String... args) {
 
-    commandLine =
-        new CommandLine(this, new BesuCommandCustomFactory(besuPluginContext))
-            .setCaseInsensitiveEnumValuesAllowed(true);
+    toCommandLine();
 
     handleStableOptions();
     addSubCommands(in);
@@ -1452,6 +1475,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         parse(resultHandler, executionExceptionHandler, parameterExceptionHandler, args);
 
     return exitCode;
+  }
+
+  /** Used by Dagger to parse all options into a commandline instance. */
+  public void toCommandLine() {
+    commandLine =
+        new CommandLine(this, new BesuCommandCustomFactory(besuPluginContext))
+            .setCaseInsensitiveEnumValuesAllowed(true);
   }
 
   @Override
@@ -1594,6 +1624,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(PermissioningService.class, permissioningService);
     besuPluginContext.addService(PrivacyPluginService.class, privacyPluginService);
     besuPluginContext.addService(RpcEndpointService.class, rpcEndpointServiceImpl);
+    besuPluginContext.addService(
+        TransactionSelectionService.class, transactionSelectionServiceImpl);
 
     // register built-in plugins
     rocksDBPlugin = new RocksDBPlugin();
@@ -1694,6 +1726,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 besuController.getProtocolContext().getBlockchain(),
                 besuController.getProtocolContext().getWorldStateArchive()),
             besuController.getProtocolSchedule()));
+
+    besuPluginContext.addService(
+        TransactionSelectionService.class, new TransactionSelectionServiceImpl());
 
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
@@ -2206,7 +2241,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   public BesuController buildController() {
     try {
-      return getControllerBuilder().build();
+      return this.besuComponent == null
+          ? getControllerBuilder().build()
+          : getControllerBuilder().besuComponent(this.besuComponent).build();
     } catch (final Exception e) {
       throw new ExecutionException(this.commandLine, e.getMessage(), e);
     }
@@ -2219,12 +2256,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   public BesuControllerBuilder getControllerBuilder() {
     final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
+    final Optional<TransactionSelectorFactory> transactionSelectorFactory =
+        getTransactionSelectorFactory();
     return controllerBuilderFactory
         .fromEthNetworkConfig(
             updateNetworkConfig(network), genesisConfigOverrides, getDefaultSyncModeIfNotSet())
         .synchronizerConfiguration(buildSyncConfig())
         .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
         .networkConfiguration(unstableNetworkingOptions.toDomainObject())
+        .transactionSelectorFactory(transactionSelectorFactory)
         .dataDirectory(dataDir())
         .miningParameters(
             new MiningParameters.Builder()
@@ -2272,6 +2312,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .maxRemotelyInitiatedPeers(maxRemoteInitiatedPeers)
         .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
         .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject());
+  }
+
+  @NotNull
+  private Optional<TransactionSelectorFactory> getTransactionSelectorFactory() {
+    final Optional<TransactionSelectionService> txSelectionService =
+        besuPluginContext.getService(TransactionSelectionService.class);
+    return txSelectionService.isPresent() ? txSelectionService.get().get() : Optional.empty();
   }
 
   private GraphQLConfiguration graphQLConfiguration() {
@@ -2363,6 +2410,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setTlsConfiguration(rpcHttpTlsConfiguration());
     jsonRpcConfiguration.setHttpTimeoutSec(unstableRPCOptions.getHttpTimeoutSec());
     jsonRpcConfiguration.setMaxBatchSize(jsonRPCHttpOptionGroup.rpcHttpMaxBatchSize);
+    jsonRpcConfiguration.setMaxRequestContentLength(
+        jsonRPCHttpOptionGroup.rpcHttpMaxRequestContentLength);
     return jsonRpcConfiguration;
   }
 
@@ -2911,12 +2960,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private TransactionPoolConfiguration buildTransactionPoolConfiguration() {
+    final File saveFile = unstableTransactionPoolOptions.getSaveFile();
     return unstableTransactionPoolOptions
         .toDomainObject()
         .txPoolMaxSize(txPoolOptionGroup.txPoolMaxSize)
         .pendingTxRetentionPeriod(txPoolOptionGroup.pendingTxRetentionPeriod)
         .priceBump(Percentage.fromInt(txPoolOptionGroup.priceBump))
         .txFeeCap(txFeeCap)
+        .saveFile(dataPath.resolve(saveFile.getPath()).toFile())
         .build();
   }
 

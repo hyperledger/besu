@@ -15,9 +15,12 @@
 package org.hyperledger.besu.ethereum.bonsai.storage;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -32,6 +35,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -252,67 +256,51 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return trieBranchStorage.get(WORLD_BLOCK_HASH_KEY).map(Bytes32::wrap).map(Hash::wrap);
   }
 
-  public Optional<Bytes> getStorageValueBySlotHash(final Hash accountHash, final Hash slotHash) {
-    return getStorageValueBySlotHash(
-        () ->
-            getAccount(accountHash)
-                .map(
-                    b ->
-                        StateTrieAccountValue.readFrom(
-                                org.hyperledger.besu.ethereum.rlp.RLP.input(b))
-                            .getStorageRoot()),
-        accountHash,
-        slotHash);
+  public Optional<Bytes> getStorageValueByStorageSlotKey(
+          final Hash accountHash, final StorageSlotKey storageSlotKey) {
+    return getStorageValueByStorageSlotKey(
+            () ->
+                    getAccount(accountHash)
+                            .map(
+                                    b ->
+                                            StateTrieAccountValue.readFrom(
+                                                            org.hyperledger.besu.ethereum.rlp.RLP.input(b))
+                                                    .getStorageRoot()),
+            accountHash,
+            storageSlotKey);
   }
 
-  public Optional<Bytes> getStorageValueBySlotHash(
-      final Supplier<Optional<Hash>> storageRootSupplier,
-      final Hash accountHash,
-      final Hash slotHash) {
-
+  public Optional<Bytes> getStorageValueByStorageSlotKey(
+          final Supplier<Optional<Hash>> storageRootSupplier,
+          final Hash accountHash,
+          final StorageSlotKey storageSlotKey) {
     getStorageValueCounter.inc();
-    getStorageValueFlatDatabaseCounter.inc();
-    return storageStorage
-        .get(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe())
-        .map(Bytes::wrap);
-    /*final Optional<Hash> storageRoot = storageRootSupplier.get();
-    final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
-    if (storageRoot.isPresent() && worldStateRootHash.isPresent()) {
-      StoredMerklePatriciaTrie<Bytes, Bytes> bytesBytesStoredMerklePatriciaTrie =
-          new StoredMerklePatriciaTrie<>(
-              new StoredNodeFactory<>(
-                  (location, hash) -> {
-                    Optional<Bytes> accountStorageTrieNode =
-                        getAccountStorageTrieNode(accountHash, location, hash);
-                    // if
-                    // (accountHash.equals(Bytes.fromHexString("0x8e202b7d5c7fee3d8451c6aa6d35bf476c91bdc73fad9e80461263664fba1ea8")))
-                    //  System.out.println(accountStorageTrieNode);
-                    return accountStorageTrieNode;
-                  },
-                  Function.identity(),
-                  Function.identity()),
-              storageRoot.get());
-      Optional<Bytes> response =
-          bytesBytesStoredMerklePatriciaTrie
-              .get(slotHash)
-              .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
-      if (!response.equals(un)) {
-        System.out.println(
-            "invalid slot "
-                + accountHash
-                + " "
-                + storageRoot
-                + " "
-                + slotHash
-                + " "
-                + un
-                + " "
-                + response);
+    Optional<Bytes> response =
+            storageStorage
+                    .get(Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
+                    .map(Bytes::wrap);
+    if (response.isEmpty()) {
+      final Optional<Hash> storageRoot = storageRootSupplier.get();
+      final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
+      if (storageRoot.isPresent() && worldStateRootHash.isPresent()) {
+        response =
+                new StoredMerklePatriciaTrie<>(
+                        new StoredNodeFactory<>(
+                                (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
+                                Function.identity(),
+                                Function.identity()),
+                        storageRoot.get())
+                        .get(storageSlotKey.getSlotHash())
+                        .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
+        if (response.isEmpty()) getStorageValueMissingMerkleTrieCounter.inc();
+        else getStorageValueMerkleTrieCounter.inc();
       }
+    } else {
+      getStorageValueFlatDatabaseCounter.inc();
     }
-
-    return un;*/
+    return response;
   }
+
 
   @Override
   public Map<Bytes32, Bytes> streamAccountFlatDatabase(
