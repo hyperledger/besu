@@ -171,6 +171,7 @@ public class BlockTransactionSelector {
                 .sum(),
             selectionStats.entrySet().stream()
                 .map(e -> e.getKey().toString() + "=" + e.getValue())
+                .sorted()
                 .collect(Collectors.joining(", ")));
       }
     }
