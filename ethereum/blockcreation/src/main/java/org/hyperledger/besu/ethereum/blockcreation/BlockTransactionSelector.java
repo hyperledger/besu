@@ -154,9 +154,13 @@ public class BlockTransactionSelector {
         LOG.debug(
             "Selection stats: Totals[Evaluated={}, Selected={}, Skipped={}, Dropped={}]; Detailed[{}]",
             selectionResults.size(),
-            selectionStats.getOrDefault(TransactionSelectionResult.SELECTED, 0L),
             selectionStats.entrySet().stream()
-                .filter(e -> e.getKey().skip())
+                .filter(e -> e.getKey().selected())
+                .map(Map.Entry::getValue)
+                .mapToInt(Long::intValue)
+                .sum(),
+            selectionStats.entrySet().stream()
+                .filter(e -> !e.getKey().selected())
                 .map(Map.Entry::getValue)
                 .mapToInt(Long::intValue)
                 .sum(),
@@ -324,15 +328,15 @@ public class BlockTransactionSelector {
         LOG.trace("Block full, completing operation");
         return TransactionSelectionResult.BLOCK_FULL;
       } else {
-        return TransactionSelectionResult.TX_TOO_LARGE;
+        return TransactionSelectionResult.TX_TOO_LARGE_FOR_REMAINING_GAS;
       }
     }
 
     if (transactionCurrentPriceBelowMin(transaction)) {
-      return TransactionSelectionResult.TX_PRICE_BELOW_MIN;
+      return TransactionSelectionResult.CURRENT_TX_PRICE_BELOW_MIN;
     }
     if (transactionDataPriceBelowMin(transaction)) {
-      return TransactionSelectionResult.DATA_PRICE_BELOW_MIN;
+      return TransactionSelectionResult.DATA_PRICE_BELOW_CURRENT_MIN;
     }
 
     final WorldUpdater worldStateUpdater = worldState.updater();
