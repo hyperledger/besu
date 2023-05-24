@@ -21,8 +21,12 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedRes
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.DROPPED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.REPLACED;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_FULL;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.DATA_PRICE_BELOW_MIN;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_PRICE_BELOW_MIN;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_TOO_LARGE;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -51,9 +55,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
@@ -284,8 +291,10 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     verifyNoMoreInteractions(listener);
   }
 
-  @Test
-  public void selectTransactionsUntilSelectorRequestsNoMore() {
+  @ParameterizedTest
+  @MethodSource
+  public void selectTransactionsUntilSelectorRequestsNoMore(
+      final TransactionSelectionResult selectionResult) {
     pendingTransactions.addRemoteTransaction(transaction0, Optional.empty());
     pendingTransactions.addRemoteTransaction(transaction1, Optional.empty());
 
@@ -293,11 +302,15 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     pendingTransactions.selectTransactions(
         transaction -> {
           parsedTransactions.add(transaction);
-          return BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
+          return selectionResult;
         });
 
     assertThat(parsedTransactions.size()).isEqualTo(1);
     assertThat(parsedTransactions.get(0)).isEqualTo(transaction0);
+  }
+
+  static Stream<TransactionSelectionResult> selectTransactionsUntilSelectorRequestsNoMore() {
+    return Stream.of(BLOCK_OCCUPANCY_ABOVE_THRESHOLD, BLOCK_FULL);
   }
 
   @Test
@@ -354,6 +367,40 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
         });
 
     assertThat(iterationOrder).containsExactly(transaction0, transaction1, transaction2);
+  }
+
+  @ParameterizedTest
+  @MethodSource
+  public void ignoreSenderTransactionsAfterASkippedOne(
+      final TransactionSelectionResult skipSelectionResult) {
+    final Transaction transaction0 = createTransaction(0, KEYS1);
+    final Transaction transaction1 = createTransaction(1, KEYS1);
+    final Transaction transaction2 = createTransaction(2, KEYS1);
+
+    pendingTransactions.addLocalTransaction(transaction0, Optional.empty());
+    pendingTransactions.addLocalTransaction(transaction1, Optional.empty());
+    pendingTransactions.addLocalTransaction(transaction2, Optional.empty());
+
+    final List<Transaction> iterationOrder = new ArrayList<>(2);
+    pendingTransactions.selectTransactions(
+        transaction -> {
+          iterationOrder.add(transaction);
+          // pretending that the 2nd tx is not selected
+          return transaction.getNonce() == 1 ? skipSelectionResult : SELECTED;
+        });
+    // the 3rd must not be processed, since the 2nd is skipped
+    assertThat(iterationOrder).containsExactly(transaction0, transaction1);
+  }
+
+  static Stream<TransactionSelectionResult> ignoreSenderTransactionsAfterASkippedOne() {
+    return Stream.of(
+        TX_PRICE_BELOW_MIN,
+        DATA_PRICE_BELOW_MIN,
+        TX_TOO_LARGE,
+        TransactionSelectionResult.invalidTransient(
+            TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE.name()),
+        TransactionSelectionResult.invalid(
+            TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE.name()));
   }
 
   @Test
