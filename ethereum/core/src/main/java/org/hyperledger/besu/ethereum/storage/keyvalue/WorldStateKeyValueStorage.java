@@ -59,11 +59,6 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
-  public Optional<Bytes> getAccountTrieNodeData(final Bytes location, final Bytes32 hash) {
-    return getAccountStateTrieNode(null, hash);
-  }
-
-  @Override
   public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
     return getTrieNode(nodeHash);
   }

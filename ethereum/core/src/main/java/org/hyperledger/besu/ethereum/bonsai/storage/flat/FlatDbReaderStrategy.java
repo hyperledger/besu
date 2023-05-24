@@ -1,3 +1,18 @@
+/*
+ * Copyright Hyperledger Besu Contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ */
 package org.hyperledger.besu.ethereum.bonsai.storage.flat;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -20,6 +35,11 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
 
+/**
+ * This class represents a FlatDbReaderStrategy, which is responsible for reading data from flat
+ * databases. It implements various methods for retrieving account data, code data, and storage data
+ * from the corresponding KeyValueStorage.
+ */
 public abstract class FlatDbReaderStrategy {
 
   protected final MetricsSystem metricsSystem;
@@ -67,10 +87,9 @@ public abstract class FlatDbReaderStrategy {
             "Number of storage slots found in the flat database");
   }
 
-  public Optional<Bytes> getAccount(final Hash accountHash) {
-    return getAccount(Optional::empty, (location, hash) -> Optional.empty(), accountHash);
-  }
-
+  /*
+   * Retrieves the account data for the given account hash, using the world state root hash supplier and node loader.
+   */
   public Optional<Bytes> getAccount(
       final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
       final NodeLoader nodeLoader,
@@ -78,6 +97,9 @@ public abstract class FlatDbReaderStrategy {
     return accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
   }
 
+  /*
+   * Retrieves the code data for the given code hash and account hash.
+   */
   public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
@@ -89,16 +111,9 @@ public abstract class FlatDbReaderStrategy {
     }
   }
 
-  public Optional<Bytes> getStorageValueByStorageSlotKey(
-      final Hash accountHash, final StorageSlotKey storageSlotKey) {
-    return getStorageValueByStorageSlotKey(
-        Optional::empty,
-        Optional::empty,
-        (location, hash) -> Optional.empty(),
-        accountHash,
-        storageSlotKey);
-  }
-
+  /*
+   * Retrieves the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
+   */
   public Optional<Bytes> getStorageValueByStorageSlotKey(
       final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
       final Supplier<Optional<Hash>> storageRootSupplier,

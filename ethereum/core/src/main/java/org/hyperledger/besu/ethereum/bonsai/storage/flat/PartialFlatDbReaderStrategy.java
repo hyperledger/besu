@@ -1,3 +1,18 @@
+/*
+ * Copyright Hyperledger Besu Contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ */
 package org.hyperledger.besu.ethereum.bonsai.storage.flat;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -18,6 +33,14 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
 
+/**
+ * This class represents a strategy for reading data from a partial flat database. It extends the
+ * FlatDbReaderStrategy and provides additional functionality for reading data from a merkle trie.
+ * If data is missing in the flat database, this strategy falls back to the merkle trie to retrieve
+ * the data. It adds a fallback mechanism for the `getAccount` and `getStorageValueByStorageSlotKey`
+ * methods, which checks if the data is present in the flat database, and if not, queries the merkle
+ * trie
+ */
 public class PartialFlatDbReaderStrategy extends FlatDbReaderStrategy {
 
   protected final Counter getAccountMerkleTrieCounter;
@@ -57,12 +80,13 @@ public class PartialFlatDbReaderStrategy extends FlatDbReaderStrategy {
             "Number of storage slots not found (either in the flat database or in the merkle trie)");
   }
 
+  @Override
   public Optional<Bytes> getAccount(
       final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
       final NodeLoader nodeLoader,
       final Hash accountHash) {
     getAccountCounter.inc();
-    Optional<Bytes> response = super.getAccount(accountHash);
+    Optional<Bytes> response = accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
     if (response.isEmpty()) {
       // after a snapsync/fastsync we only have the trie branches.
       final Optional<Bytes> worldStateRootHash = worldStateRootHashSupplier.get();
@@ -90,7 +114,11 @@ public class PartialFlatDbReaderStrategy extends FlatDbReaderStrategy {
       final Hash accountHash,
       final StorageSlotKey storageSlotKey) {
     getStorageValueCounter.inc();
-    Optional<Bytes> response = super.getStorageValueByStorageSlotKey(accountHash, storageSlotKey);
+    Optional<Bytes> response =
+        storageStorage
+            .get(Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
+            .map(Bytes::wrap);
+    ;
     if (response.isEmpty()) {
       final Optional<Hash> storageRoot = storageRootSupplier.get();
       final Optional<Bytes> worldStateRootHash = worldStateRootHashSupplier.get();

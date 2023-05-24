@@ -191,21 +191,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
-      return codeStorage
-          .get(accountHash.toArrayUnsafe())
-          .map(Bytes::wrap)
-          .filter(b -> Hash.hash(b).equals(codeHash));
+      return getFlatDbReaderStrategy().getCode(codeHash, accountHash);
     }
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    return getFlatDbReaderStrategy().getAccount(accountHash);
-  }
-
-  @Override
-  public Optional<Bytes> getAccountTrieNodeData(final Bytes location, final Bytes32 hash) {
-    // for Bonsai trie fast sync this method should return an empty
-    return Optional.empty();
+    return getFlatDbReaderStrategy()
+        .getAccount(this::getWorldStateRootHash, this::getAccountStateTrieNode, accountHash);
   }
 
   @Override
@@ -328,9 +320,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   @Override
   public void clear() {
     subscribers.forEach(BonsaiStorageSubscriber::onClearStorage);
-    accountStorage.clear();
-    codeStorage.clear();
-    storageStorage.clear();
+    getFlatDbReaderStrategy().clearAll();
     trieBranchStorage.clear();
     trieLogStorage.clear();
     flatDbMode = null;
