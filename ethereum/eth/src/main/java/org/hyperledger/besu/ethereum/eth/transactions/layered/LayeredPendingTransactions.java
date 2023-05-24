@@ -321,7 +321,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
       final PendingTransactions.TransactionSelector selector) {
     final List<PendingTransaction> invalidTransactions = new ArrayList<>();
     final Set<Hash> alreadyChecked = new HashSet<>();
-    final Set<Address> skipSenders = new HashSet<>();
     final AtomicBoolean completed = new AtomicBoolean(false);
 
     prioritizedTransactions.stream()
@@ -338,15 +337,15 @@ public class LayeredPendingTransactions implements PendingTransactions {
                                 .collect(Collectors.joining(", ")))
                     .log())
         .forEach(
-            highPrioPendingTx -> {
-              if (!skipSenders.contains(highPrioPendingTx.getSender())) {
+            highPrioPendingTx ->
                 prioritizedTransactions.stream(highPrioPendingTx.getSender())
                     .takeWhile(unused -> !completed.get())
                     .filter(
                         candidatePendingTx ->
-                            !skipSenders.contains(candidatePendingTx.getSender())
-                                && !alreadyChecked.contains(candidatePendingTx.getHash())
-                                && candidatePendingTx.getNonce() <= highPrioPendingTx.getNonce())
+                            !alreadyChecked.contains(candidatePendingTx.getHash()))
+                    .filter(
+                        candidatePendingTx ->
+                            candidatePendingTx.getNonce() <= highPrioPendingTx.getNonce())
                     .forEach(
                         candidatePendingTx -> {
                           alreadyChecked.add(candidatePendingTx.getHash());
@@ -367,15 +366,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
                           if (res.stop()) {
                             completed.set(true);
                           }
-
-                          if (res.skip()) {
-                            // avoid processing other txs from this sender if this one is skipped
-                            // since the following will not be selected due to the nonce gap
-                            skipSenders.add(candidatePendingTx.getSender());
-                          }
-                        });
-              }
-            });
+                        }));
 
     invalidTransactions.forEach(
         invalidTx -> prioritizedTransactions.remove(invalidTx, INVALIDATED));
