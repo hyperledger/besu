@@ -49,54 +49,26 @@ public class TransactionEncoder {
     static Encoder rlpEncoder(final RLPEncoder rlpEncoder) {
       return transaction -> RLP.encode(rlpOutput -> rlpEncoder.encode(transaction, rlpOutput));
     }
-
-    static Encoder sszEncoder(final SSZEncoder sszEncoder) {
-      return transaction -> SSZ.encode(sszOutput -> sszEncoder.encode(transaction, sszOutput));
-    }
   }
 
   interface RLPEncoder {
     void encode(final Transaction transaction, final RLPOutput output);
   }
 
-  interface SSZEncoder {
-    void encode(final Transaction transaction, final SSZWriter output);
-  }
 
   private static final Map<TransactionType, Encoder> TYPED_TRANSACTION_ENCODERS =
       Map.of(
           TransactionType.ACCESS_LIST, Encoder.rlpEncoder(TransactionEncoder::encodeAccessList),
           TransactionType.EIP1559, Encoder.rlpEncoder(TransactionEncoder::encodeEIP1559),
-          TransactionType.BLOB, Encoder.sszEncoder(TransactionEncoder::encodeWithoutBlobs));
+          TransactionType.BLOB, Encoder.rlpEncoder(TransactionEncoder::encodeEIP4844));
+
 
   private static final Map<TransactionType, Encoder> TYPED_TRANSACTION_ENCODERS_FOR_NETWORK =
       Map.of(
           TransactionType.ACCESS_LIST, Encoder.rlpEncoder(TransactionEncoder::encodeAccessList),
           TransactionType.EIP1559, Encoder.rlpEncoder(TransactionEncoder::encodeEIP1559),
-          TransactionType.BLOB, Encoder.sszEncoder(TransactionEncoder::encodeWithBlobs));
+          TransactionType.BLOB, Encoder.rlpEncoder(TransactionEncoder::encodeEIP4844Network));
 
-  public static void encodeWithBlobs(final Transaction transaction, final SSZWriter rlpOutput) {
-    LOG.trace("Encoding transaction with blobs {}", transaction);
-    var payload = new TransactionNetworkPayload();
-    var blobsWithCommitments = transaction.getBlobsWithCommitments();
-    if (blobsWithCommitments.isPresent()) {
-      payload.setBlobs(blobsWithCommitments.get().blobs);
-      payload.setKzgProofs(blobsWithCommitments.get().kzgProofs);
-      payload.setKzgCommitments(blobsWithCommitments.get().kzgCommitments);
-    }
-
-    var signedBlobTransaction = payload.getSignedBlobTransaction();
-    populatedSignedBlobTransaction(transaction, signedBlobTransaction);
-
-    payload.writeTo(rlpOutput);
-  }
-
-  public static void encodeWithoutBlobs(final Transaction transaction, final SSZWriter rlpOutput) {
-    LOG.trace("Encoding transaction without blobs {}", transaction);
-    var signedBlobTransaction = new TransactionNetworkPayload.SingedBlobTransaction();
-    populatedSignedBlobTransaction(transaction, signedBlobTransaction);
-    signedBlobTransaction.writeTo(rlpOutput);
-  }
 
   private static void populatedSignedBlobTransaction(
       final Transaction transaction,
@@ -277,6 +249,45 @@ public class TransactionEncoder {
     writeAccessList(out, transaction.getAccessList());
     writeSignatureAndRecoveryId(transaction, out);
     out.endList();
+  }
+
+  public static void encodeEIP4844(final Transaction transaction, final RLPOutput out) {
+    out.startList();
+    out.writeBigIntegerScalar(transaction.getChainId().orElseThrow());
+    out.writeLongScalar(transaction.getNonce());
+    out.writeUInt256Scalar(transaction.getMaxPriorityFeePerGas().orElseThrow());
+    out.writeUInt256Scalar(transaction.getMaxFeePerGas().orElseThrow());
+    out.writeLongScalar(transaction.getGasLimit());
+    out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
+    out.writeUInt256Scalar(transaction.getValue());
+    out.writeBytes(transaction.getPayload());
+    writeAccessList(out, transaction.getAccessList());
+    out.writeUInt256Scalar(transaction.getMaxFeePerDataGas().orElseThrow());
+    out.startList();
+    transaction.getVersionedHashes().get().forEach(out::writeBytes);
+    out.endList();
+    writeSignatureAndRecoveryId(transaction, out);
+    out.endList();
+  }
+
+  public static void encodeEIP4844Network(final Transaction transaction, final RLPOutput out) {
+    LOG.trace("Encoding transaction with blobs {}", transaction);
+    var blobsWithCommitments = transaction.getBlobsWithCommitments().orElseThrow();
+    encodeEIP4844(transaction, out);
+    out.startList();
+    blobsWithCommitments.getKzgCommitments().forEach(com -> {
+      out.writeBytes(com);
+    });
+    out.endList();
+    out.startList();
+    blobsWithCommitments.getBlobs().forEach(blob -> {
+      out.startList();
+      out.writeUInt256Scalar(UInt256.fromBytes(blob));
+      out.endList();
+    });
+    out.writeBytes(blobsWithCommitments.kzgProof.getBytes());
+    out.endList();
+
   }
 
   public static void writeAccessList(
