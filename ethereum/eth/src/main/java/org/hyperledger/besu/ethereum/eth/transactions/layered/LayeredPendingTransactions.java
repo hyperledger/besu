@@ -368,7 +368,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
                             completed.set(true);
                           }
 
-                          if (res.skip()) {
+                          if (!res.selected()) {
                             // avoid processing other txs from this sender if this one is skipped
                             // since the following will not be selected due to the nonce gap
                             skipSenders.add(candidatePendingTx.getSender());

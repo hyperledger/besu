@@ -53,6 +53,7 @@ public class TransactionSelectionResult {
   /** The transaction has been selected to be included in the new block */
   public static final TransactionSelectionResult SELECTED =
       new TransactionSelectionResult(Status.SELECTED);
+  /** The transaction has not been selected since the block is full. */
   public static final TransactionSelectionResult BLOCK_FULL =
       new TransactionSelectionResult(Status.BLOCK_FULL);
   /**
