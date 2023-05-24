@@ -29,8 +29,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolCo
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -56,11 +54,6 @@ public class LondonFeeMarketBlockTransactionSelectorTest
         LondonFeeMarketBlockTransactionSelectorTest::mockBlockHeader);
   }
 
-  @Override
-  protected GasCalculator getGasCalculator() {
-    return new LondonGasCalculator();
-  }
-
   private static BlockHeader mockBlockHeader() {
     final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ONE));
@@ -79,12 +72,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
         createBlockSelector(
-            transactionProcessor,
-            blockHeader,
-            Wei.of(6),
-            miningBeneficiary,
-            Wei.ZERO,
-            MIN_OCCUPANCY_80_PERCENT);
+            transactionProcessor, blockHeader, Wei.of(6), miningBeneficiary, Wei.ZERO);
 
     // tx is willing to pay max 6 wei for gas, but current network condition (baseFee == 1)
     // result in it paying 2 wei, that is below the minimum accepted by the node, so it is skipped
@@ -105,12 +93,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
         createBlockSelector(
-            transactionProcessor,
-            blockHeader,
-            Wei.of(6),
-            miningBeneficiary,
-            Wei.ZERO,
-            MIN_OCCUPANCY_80_PERCENT);
+            transactionProcessor, blockHeader, Wei.of(6), miningBeneficiary, Wei.ZERO);
 
     // tx is willing to pay max 6 wei for gas, and current network condition (baseFee == 5)
     // result in it paying the max, that is >= the minimum accepted by the node, so it is selected
@@ -133,12 +116,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
         createBlockSelector(
-            transactionProcessor,
-            blockHeader,
-            Wei.of(6),
-            miningBeneficiary,
-            Wei.ZERO,
-            MIN_OCCUPANCY_80_PERCENT);
+            transactionProcessor, blockHeader, Wei.of(6), miningBeneficiary, Wei.ZERO);
 
     // tx is willing to pay max 6 wei for gas, but current network condition (baseFee == 1)
     // result in it paying 2 wei, that is below the minimum accepted by the node, but since it is
@@ -190,12 +168,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
         createBlockSelector(
-            transactionProcessor,
-            blockHeader,
-            Wei.ZERO,
-            miningBeneficiary,
-            Wei.ZERO,
-            MIN_OCCUPANCY_80_PERCENT);
+            transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary, Wei.ZERO);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();

@@ -22,8 +22,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolCo
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.ZoneId;
@@ -54,10 +52,5 @@ public class LegacyFeeMarketBlockTransactionSelectorTest
   @Override
   protected FeeMarket getFeeMarket() {
     return FeeMarket.legacy();
-  }
-
-  @Override
-  protected GasCalculator getGasCalculator() {
-    return new BerlinGasCalculator();
   }
 }

@@ -129,7 +129,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     layers = createLayers(poolConf);
     senderLimitedLayers = createLayers(senderLimitedConfig);
 
-    pendingTransactions = new LayeredPendingTransactions(poolConf, layers.prioritizedTransactions);
+    pendingTransactions =
+        new LayeredPendingTransactions(poolConf, layers.prioritizedTransactions);
 
     senderLimitedTransactions =
         new LayeredPendingTransactions(

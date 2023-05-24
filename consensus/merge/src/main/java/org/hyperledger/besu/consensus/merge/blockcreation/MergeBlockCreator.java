@@ -48,6 +48,7 @@ class MergeBlockCreator extends AbstractBlockCreator {
    * @param protocolSchedule the protocol schedule
    * @param minTransactionGasPrice the min transaction gas price
    * @param miningBeneficiary the mining beneficiary
+   * @param minBlockOccupancyRatio the min block occupancy ratio
    * @param parentHeader the parent header
    */
   public MergeBlockCreator(
@@ -59,6 +60,7 @@ class MergeBlockCreator extends AbstractBlockCreator {
       final ProtocolSchedule protocolSchedule,
       final Wei minTransactionGasPrice,
       final Address miningBeneficiary,
+      final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader) {
     super(
         miningBeneficiary,
@@ -69,7 +71,7 @@ class MergeBlockCreator extends AbstractBlockCreator {
         protocolContext,
         protocolSchedule,
         minTransactionGasPrice,
-        1.0,
+        minBlockOccupancyRatio,
         parentHeader);
   }
 
