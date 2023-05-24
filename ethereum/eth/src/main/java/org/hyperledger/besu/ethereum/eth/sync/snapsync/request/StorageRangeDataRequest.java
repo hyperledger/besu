@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MIN_R
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findNbRanges;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findNewBeginElementInRange;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAGE_RANGE;
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie.FlatDatabaseUpdater.noop;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -98,16 +99,17 @@ public class StorageRangeDataRequest extends SnapDataRequest {
           updater.putAccountStorageTrieNode(accountHash, location, hash, value);
         };
 
-    // we have a flat DB only with Bonsai
+    StackTrie.FlatDatabaseUpdater flatDatabaseUpdater = noop();
     if (worldStateStorage.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
-      stackTrie.commit(
-          (key, value) -> {
-            ((BonsaiWorldStateKeyValueStorage.Updater) updater)
-                .putStorageValueBySlotHash(
-                    accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value)));
-          },
-          nodeUpdater);
+      // we have a flat DB only with Bonsai
+      flatDatabaseUpdater =
+          (key, value) ->
+              ((BonsaiWorldStateKeyValueStorage.Updater) updater)
+                  .putStorageValueBySlotHash(
+                      accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value)));
     }
+
+    stackTrie.commit(flatDatabaseUpdater, nodeUpdater);
 
     downloadState.getMetricsManager().notifySlotsDownloaded(stackTrie.getElementsCount().get());
 

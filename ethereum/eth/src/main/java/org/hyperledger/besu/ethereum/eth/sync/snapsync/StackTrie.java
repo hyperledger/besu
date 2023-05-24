@@ -153,6 +153,11 @@ public class StackTrie {
 
   public interface FlatDatabaseUpdater {
 
+    static FlatDatabaseUpdater noop() {
+      return (key, value) -> {};
+    }
+    ;
+
     void update(final Bytes32 key, final Bytes value);
   }
 

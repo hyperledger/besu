@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MIN_R
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findNewBeginElementInRange;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.ACCOUNT_RANGE;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapsyncMetricsManager.Step.DOWNLOAD;
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie.FlatDatabaseUpdater.noop;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -123,14 +124,15 @@ public class AccountRangeDataRequest extends SnapDataRequest {
           nbNodesSaved.getAndIncrement();
         };
 
-    // we have a flat DB only with Bonsai
+    StackTrie.FlatDatabaseUpdater flatDatabaseUpdater = noop();
     if (worldStateStorage.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
-      stackTrie.commit(
+      // we have a flat DB only with Bonsai
+      flatDatabaseUpdater =
           (key, value) ->
               ((BonsaiWorldStateKeyValueStorage.BonsaiUpdater) updater)
-                  .putAccountInfoState(Hash.wrap(key), value),
-          nodeUpdater);
+                  .putAccountInfoState(Hash.wrap(key), value);
     }
+    stackTrie.commit(flatDatabaseUpdater, nodeUpdater);
 
     downloadState.getMetricsManager().notifyAccountsDownloaded(stackTrie.getElementsCount().get());
 
