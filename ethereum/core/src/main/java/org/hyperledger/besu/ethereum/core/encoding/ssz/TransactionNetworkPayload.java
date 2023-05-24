@@ -31,7 +31,7 @@ import org.apache.tuweni.ssz.SSZWritable;
 import org.apache.tuweni.ssz.SSZWriter;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
+public class TransactionNetworkPayload {
   public static final int KZG_COMMITMENT_SIZE = 48;
   public static final int KZG_PROOF_SIZE = 48;
   public static final int FIELD_ELEMENTS_PER_BLOB = 4096;
@@ -44,21 +44,6 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
 
   SSZFixedSizeTypeList<KZGProof> kzgProofs =
       new SSZFixedSizeTypeList<>(KZG_PROOF_SIZE, KZGProof::new);
-
-  @Override
-  public boolean isFixed() {
-    return false;
-  }
-
-  @Override
-  public void populateFromReader(final SSZReader reader) {
-    reader.readAsContainer(signedBlobTransaction, kzgCommitments, blobs, kzgProofs);
-  }
-
-  @Override
-  public void writeTo(final SSZWriter writer) {
-    writer.writeAsContainer(signedBlobTransaction, kzgCommitments, blobs, kzgProofs);
-  }
 
   public SingedBlobTransaction getSignedBlobTransaction() {
     return signedBlobTransaction;
@@ -88,21 +73,17 @@ public class TransactionNetworkPayload implements SSZReadable, SSZWritable {
     this.kzgProofs = kzgProofs;
   }
 
-  public static class SingedBlobTransaction implements SSZReadable, SSZWritable {
+  public static class SingedBlobTransaction {
     private final BlobTransaction message = new BlobTransaction();
     private final ECDSASignature signature = new ECDSASignature();
 
-    @Override
-    public boolean isFixed() {
-      return false;
-    }
 
-    @Override
+
     public void populateFromReader(final SSZReader reader) {
       reader.readAsContainer(message, signature);
     }
 
-    @Override
+
     public void writeTo(final SSZWriter writer) {
       writer.writeAsContainer(message, signature);
     }
