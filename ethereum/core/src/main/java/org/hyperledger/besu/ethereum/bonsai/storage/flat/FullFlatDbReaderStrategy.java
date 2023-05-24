@@ -27,4 +27,9 @@ public class FullFlatDbReaderStrategy extends FlatDbReaderStrategy {
       final KeyValueStorage storageStorage) {
     super(metricsSystem, accountStorage, codeStorage, storageStorage);
   }
+
+  @Override
+  public void clearAccountAndStorageDatabase() {
+    // NOOP
+  }
 }

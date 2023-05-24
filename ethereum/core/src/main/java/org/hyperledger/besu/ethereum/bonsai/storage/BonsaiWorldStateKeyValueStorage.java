@@ -173,6 +173,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                   .orElse(
                       FlatDbMode.PARTIAL
                           .getVersion())); // for backward compatibility we use partial as default
+      System.out.println("FLAT DB MODE IS " + flatDbMode + " " + getFlatDbReaderStrategy());
     }
     return flatDbMode;
   }
