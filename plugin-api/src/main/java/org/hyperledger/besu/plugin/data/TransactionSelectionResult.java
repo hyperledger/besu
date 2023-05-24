@@ -22,6 +22,7 @@ public class TransactionSelectionResult {
 
   private enum Status {
     SELECTED,
+    BLOCK_FULL(true, false),
     BLOCK_OCCUPANCY_ABOVE_THRESHOLD(true, false),
     TX_TOO_LARGE,
     TX_PRICE_BELOW_MIN,
@@ -50,6 +51,8 @@ public class TransactionSelectionResult {
 
   public static final TransactionSelectionResult SELECTED =
       new TransactionSelectionResult(Status.SELECTED);
+  public static final TransactionSelectionResult BLOCK_FULL =
+      new TransactionSelectionResult(Status.BLOCK_FULL);
   public static final TransactionSelectionResult BLOCK_OCCUPANCY_ABOVE_THRESHOLD =
       new TransactionSelectionResult(Status.BLOCK_OCCUPANCY_ABOVE_THRESHOLD);
   public static final TransactionSelectionResult TX_TOO_LARGE =
