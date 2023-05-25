@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.EmptyAccountAdapter;
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.NormalBlockAdapter;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
@@ -36,10 +37,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class BlockDataFetcherTest extends AbstractDataFetcherTest {
 
   @Test
-  public void bothNumberAndHashThrows() throws Exception {
+  public void bothNumberAndHashThrows() {
     final Hash fakedHash = Hash.hash(Bytes.of(1));
-    when(environment.getArgument(ArgumentMatchers.eq("number"))).thenReturn(1L);
-    when(environment.getArgument(ArgumentMatchers.eq("hash"))).thenReturn(fakedHash);
+    when(environment.getArgument("number")).thenReturn(1L);
+    when(environment.getArgument("hash")).thenReturn(fakedHash);
 
     assertThatThrownBy(() -> fetcher.get(environment)).isInstanceOf(GraphQLException.class);
   }
@@ -47,8 +48,8 @@ public class BlockDataFetcherTest extends AbstractDataFetcherTest {
   @Test
   public void onlyNumber() throws Exception {
 
-    when(environment.getArgument(ArgumentMatchers.eq("number"))).thenReturn(1L);
-    when(environment.getArgument(ArgumentMatchers.eq("hash"))).thenReturn(null);
+    when(environment.getArgument("number")).thenReturn(1L);
+    when(environment.getArgument("hash")).thenReturn(null);
 
     when(environment.getGraphQlContext()).thenReturn(graphQLContext);
     when(graphQLContext.get(GraphQLContextType.BLOCKCHAIN_QUERIES)).thenReturn(query);
@@ -64,8 +65,8 @@ public class BlockDataFetcherTest extends AbstractDataFetcherTest {
     // as null. The compromise is to report zeros and empty on query from a block.
     final Address testAddress = Address.fromHexString("0xdeadbeef");
 
-    when(environment.getArgument(ArgumentMatchers.eq("number"))).thenReturn(1L);
-    when(environment.getArgument(ArgumentMatchers.eq("hash"))).thenReturn(null);
+    when(environment.getArgument("number")).thenReturn(1L);
+    when(environment.getArgument("hash")).thenReturn(null);
 
     when(environment.getGraphQlContext()).thenReturn(graphQLContext);
     when(graphQLContext.get(GraphQLContextType.BLOCKCHAIN_QUERIES)).thenReturn(query);
@@ -75,10 +76,10 @@ public class BlockDataFetcherTest extends AbstractDataFetcherTest {
 
     final Optional<NormalBlockAdapter> maybeBlock = fetcher.get(environment);
     assertThat(maybeBlock).isPresent();
-    assertThat(maybeBlock.get().getMiner(environment)).isPresent();
-    assertThat(((EmptyAccountAdapter) maybeBlock.get().getMiner(environment).get()).getBalance())
-        .isPresent();
-    assertThat(((EmptyAccountAdapter) maybeBlock.get().getMiner(environment).get()).getAddress())
-        .contains(testAddress);
+    assertThat(maybeBlock.get().getMiner(environment)).isNotNull();
+    assertThat(((EmptyAccountAdapter) maybeBlock.get().getMiner(environment)).getBalance())
+        .isGreaterThan(Wei.ZERO);
+    assertThat(((EmptyAccountAdapter) maybeBlock.get().getMiner(environment)).getAddress())
+        .isEqualTo(testAddress);
   }
 }
