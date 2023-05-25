@@ -320,7 +320,9 @@ public class EthPeers {
   }
 
   public Stream<EthPeer> streamBestPeers() {
-    return streamAvailablePeers().sorted(getBestChainComparator().reversed());
+    return streamAvailablePeers()
+        .filter(EthPeer::isFullyValidated)
+        .sorted(getBestChainComparator().reversed());
   }
 
   public Optional<EthPeer> bestPeer() {

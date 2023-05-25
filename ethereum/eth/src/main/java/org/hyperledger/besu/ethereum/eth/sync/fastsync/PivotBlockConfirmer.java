@@ -183,7 +183,6 @@ class PivotBlockConfirmer {
         .getEthPeers()
         .streamBestPeers()
         .filter(p -> p.chainState().getEstimatedHeight() >= blockNumber)
-        .filter(EthPeer::isFullyValidated)
         .filter(p -> !pivotBlockQueriesByPeerId.keySet().contains(p.nodeId()))
         .findFirst()
         .flatMap((peer) -> createGetHeaderTask(peer, blockNumber));
