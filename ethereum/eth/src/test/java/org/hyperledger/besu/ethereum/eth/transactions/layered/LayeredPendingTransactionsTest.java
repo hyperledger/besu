@@ -374,23 +374,27 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   @MethodSource
   public void ignoreSenderTransactionsAfterASkippedOne(
       final TransactionSelectionResult skipSelectionResult) {
-    final Transaction transaction0 = createTransaction(0, KEYS1);
-    final Transaction transaction1 = createTransaction(1, KEYS1);
-    final Transaction transaction2 = createTransaction(2, KEYS1);
+    final Transaction transaction0a = createTransaction(0, Wei.of(20), KEYS1);
+    final Transaction transaction1a = createTransaction(1, Wei.of(20), KEYS1);
+    final Transaction transaction2a = createTransaction(2, Wei.of(20), KEYS1);
+    final Transaction transaction0b = createTransaction(0, Wei.of(10), KEYS2);
 
-    pendingTransactions.addLocalTransaction(transaction0, Optional.empty());
-    pendingTransactions.addLocalTransaction(transaction1, Optional.empty());
-    pendingTransactions.addLocalTransaction(transaction2, Optional.empty());
+    pendingTransactions.addLocalTransaction(transaction0a, Optional.empty());
+    pendingTransactions.addLocalTransaction(transaction1a, Optional.empty());
+    pendingTransactions.addLocalTransaction(transaction2a, Optional.empty());
+    pendingTransactions.addLocalTransaction(transaction0b, Optional.empty());
 
-    final List<Transaction> iterationOrder = new ArrayList<>(2);
+    final List<Transaction> iterationOrder = new ArrayList<>(3);
     pendingTransactions.selectTransactions(
         transaction -> {
           iterationOrder.add(transaction);
-          // pretending that the 2nd tx is not selected
+          // pretending that the 2nd tx of the 1st sender is not selected
           return transaction.getNonce() == 1 ? skipSelectionResult : SELECTED;
         });
-    // the 3rd must not be processed, since the 2nd is skipped
-    assertThat(iterationOrder).containsExactly(transaction0, transaction1);
+
+    // the 3rd tx of the 1st must not be processed, since the 2nd is skipped
+    // but the 2nd sender must not be affected
+    assertThat(iterationOrder).containsExactly(transaction0a, transaction1a, transaction0b);
   }
 
   static Stream<TransactionSelectionResult> ignoreSenderTransactionsAfterASkippedOne() {
