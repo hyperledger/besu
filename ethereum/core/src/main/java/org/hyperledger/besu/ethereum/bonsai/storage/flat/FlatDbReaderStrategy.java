@@ -49,6 +49,7 @@ public abstract class FlatDbReaderStrategy {
 
   protected final Counter getAccountCounter;
   protected final Counter getAccountFlatDatabaseCounter;
+
   protected final Counter getStorageValueCounter;
   protected final Counter getStorageValueFlatDatabaseCounter;
 
@@ -94,7 +95,13 @@ public abstract class FlatDbReaderStrategy {
       final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
       final NodeLoader nodeLoader,
       final Hash accountHash) {
-    return accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
+    getAccountCounter.inc();
+    final Optional<Bytes> accountFound =
+        accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
+    if (accountFound.isPresent()) {
+      getAccountFlatDatabaseCounter.inc();
+    }
+    return accountFound;
   }
 
   /*
@@ -120,9 +127,15 @@ public abstract class FlatDbReaderStrategy {
       final NodeLoader nodeLoader,
       final Hash accountHash,
       final StorageSlotKey storageSlotKey) {
-    return storageStorage
-        .get(Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
-        .map(Bytes::wrap);
+    getStorageValueCounter.inc();
+    final Optional<Bytes> storageFound =
+        storageStorage
+            .get(Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
+            .map(Bytes::wrap);
+    if (storageFound.isPresent()) {
+      getStorageValueFlatDatabaseCounter.inc();
+    }
+    return storageFound;
   }
 
   public void clearAll() {
@@ -131,7 +144,7 @@ public abstract class FlatDbReaderStrategy {
     codeStorage.clear();
   }
 
-  public void clearAccountAndStorageDatabase() {
+  public void resetOnResync() {
     accountStorage.clear();
     storageStorage.clear();
   }

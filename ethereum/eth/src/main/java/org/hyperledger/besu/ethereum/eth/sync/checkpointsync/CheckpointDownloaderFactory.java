@@ -82,7 +82,6 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
     final FastSyncState fastSyncState =
         fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
 
-    // snapContext.clear();
     if (syncState.isResyncNeeded()) {
       snapContext.clear();
       syncState

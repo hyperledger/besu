@@ -96,8 +96,11 @@ public class PartialFlatDbReaderStrategy extends FlatDbReaderStrategy {
                     new StoredNodeFactory<>(nodeLoader, Function.identity(), Function.identity()),
                     Bytes32.wrap(worldStateRootHash.get()))
                 .get(accountHash);
-        if (response.isEmpty()) getAccountMissingMerkleTrieCounter.inc();
-        else getAccountMerkleTrieCounter.inc();
+        if (response.isEmpty()) {
+          getAccountMissingMerkleTrieCounter.inc();
+        } else {
+          getAccountMerkleTrieCounter.inc();
+        }
       }
     } else {
       getAccountFlatDatabaseCounter.inc();

@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MAX_RANGE;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MIN_RANGE;
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findNbRanges;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findNewBeginElementInRange;
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.getRangeCount;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAGE_RANGE;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie.FlatDatabaseUpdater.noop;
 
@@ -161,7 +161,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     findNewBeginElementInRange(storageRoot, taskElement.proofs(), taskElement.keys(), endKeyHash)
         .ifPresent(
             missingRightElement -> {
-              final int nbRanges = findNbRanges(startKeyHash, endKeyHash, taskElement.keys());
+              final int nbRanges = getRangeCount(startKeyHash, endKeyHash, taskElement.keys());
               RangeManager.generateRanges(missingRightElement, endKeyHash, nbRanges)
                   .forEach(
                       (key, value) -> {

@@ -42,7 +42,8 @@ public final class RangeManagerTest {
   public void testRemainingRangesEqualToOneWhenFirstRangeContainsMoreThanHalf() {
     TreeMap<Bytes32, Bytes> items = new TreeMap<>();
     items.put(Bytes32.repeat((byte) 0xbb), Bytes.wrap(new byte[] {0x03}));
-    int nbRanges = RangeManager.findNbRanges(RangeManager.MIN_RANGE, RangeManager.MAX_RANGE, items);
+    int nbRanges =
+        RangeManager.getRangeCount(RangeManager.MIN_RANGE, RangeManager.MAX_RANGE, items);
     assertThat(nbRanges).isEqualTo(1);
   }
 
@@ -50,7 +51,8 @@ public final class RangeManagerTest {
   public void testRemainingRangesEqualToOneWhenFirstRangeContainsLessThanHalf() {
     TreeMap<Bytes32, Bytes> items = new TreeMap<>();
     items.put(Bytes32.repeat((byte) 0x77), Bytes.wrap(new byte[] {0x03}));
-    int nbRanges = RangeManager.findNbRanges(RangeManager.MIN_RANGE, RangeManager.MAX_RANGE, items);
+    int nbRanges =
+        RangeManager.getRangeCount(RangeManager.MIN_RANGE, RangeManager.MAX_RANGE, items);
     assertThat(nbRanges).isEqualTo(2);
   }
 

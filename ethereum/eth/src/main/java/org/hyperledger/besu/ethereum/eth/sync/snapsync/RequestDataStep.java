@@ -232,7 +232,7 @@ public class RequestDataStep {
     // retrieve accounts from flat database
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
-            worldStateStorage.streamAccountFlatDatabase(
+            worldStateStorage.streamFlatAccounts(
                 accountDataRequest.getStartKeyHash(),
                 accountDataRequest.getEndKeyHash(),
                 snapSyncConfiguration.getLocalFlatAccountCountToHealPerRequest());
@@ -272,7 +272,7 @@ public class RequestDataStep {
     // retrieve slots from flat database
     final TreeMap<Bytes32, Bytes> slots =
         (TreeMap<Bytes32, Bytes>)
-            worldStateStorage.streamStorageFlatDatabase(
+            worldStateStorage.streamFlatStorages(
                 storageDataRequest.getAccountHash(),
                 storageDataRequest.getStartKeyHash(),
                 storageDataRequest.getEndKeyHash(),

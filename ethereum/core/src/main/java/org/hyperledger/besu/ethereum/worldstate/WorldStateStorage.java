@@ -43,31 +43,28 @@ public interface WorldStateStorage {
   }
 
   /**
-   * Streams the entries of the account flat database within the specified range.
+   * Streams flat accounts within a specified range.
    *
    * @param startKeyHash The start key hash of the range.
    * @param endKeyHash The end key hash of the range.
    * @param max The maximum number of entries to stream.
-   * @return A map of entries from the account flat database. (Empty map in this default
-   *     implementation)
+   * @return A map of flat accounts. (Empty map in this default implementation)
    */
-  default Map<Bytes32, Bytes> streamAccountFlatDatabase(
+  default Map<Bytes32, Bytes> streamFlatAccounts(
       final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
     return Collections.emptyMap();
   }
 
   /**
-   * Streams the entries of the storage flat database associated with the given account hash within
-   * the specified range.
+   * Streams flat storages within a specified range.
    *
    * @param accountHash The account hash.
    * @param startKeyHash The start key hash of the range.
    * @param endKeyHash The end key hash of the range.
    * @param max The maximum number of entries to stream.
-   * @return A map of entries from the storage flat database. (Empty map in this default
-   *     implementation)
+   * @return A map of flat storages. (Empty map in this default implementation)
    */
-  default Map<Bytes32, Bytes> streamStorageFlatDatabase(
+  default Map<Bytes32, Bytes> streamFlatStorages(
       final Hash accountHash, final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
     return Collections.emptyMap();
   }

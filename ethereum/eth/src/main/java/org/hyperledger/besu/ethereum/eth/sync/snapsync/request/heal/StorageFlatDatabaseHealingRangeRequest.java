@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal;
 
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findNbRanges;
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.getRangeCount;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAGE_RANGE;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -98,7 +98,7 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
             + isProofValid);
     if (!slots.isEmpty()) {
       // new request is added if the response does not match all the requested range
-      final int nbRanges = findNbRanges(startKeyHash, endKeyHash, slots);
+      final int nbRanges = getRangeCount(startKeyHash, endKeyHash, slots);
       RangeManager.generateRanges(
               slots.lastKey().toUnsignedBigInteger().add(BigInteger.ONE),
               endKeyHash.toUnsignedBigInteger(),

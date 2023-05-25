@@ -29,7 +29,8 @@ public class FullFlatDbReaderStrategy extends FlatDbReaderStrategy {
   }
 
   @Override
-  public void clearAccountAndStorageDatabase() {
+  public void resetOnResync() {
     // NOOP
+    // not need to reset anything in full mode
   }
 }

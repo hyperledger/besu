@@ -42,12 +42,12 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
   public Node<V> visit(final ExtensionNode<V> node, final Bytes searchPath) {
     Bytes remainingPath = searchPath;
     final Bytes extensionPath;
-    final Bytes ignoreRemainingPath;
+    final Bytes commonPrefixPath;
     if (state == State.SEARCHING) {
       extensionPath = node.getPath();
-      ignoreRemainingPath = searchPath.slice(0, Math.min(searchPath.size(), extensionPath.size()));
-      remainingPath = searchPath.slice(ignoreRemainingPath.size());
-      if (node.getPath().compareTo(ignoreRemainingPath) > 0) {
+      commonPrefixPath = searchPath.slice(0, Math.min(searchPath.size(), extensionPath.size()));
+      remainingPath = searchPath.slice(commonPrefixPath.size());
+      if (node.getPath().compareTo(commonPrefixPath) > 0) {
         remainingPath = MutableBytes.create(remainingPath.size());
       }
     }
