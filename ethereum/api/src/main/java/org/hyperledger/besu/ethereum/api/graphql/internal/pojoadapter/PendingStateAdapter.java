@@ -116,7 +116,7 @@ public class PendingStateAdapter extends AdapterBase {
     ImmutableTransactionValidationParams.Builder transactionValidationParams =
         ImmutableTransactionValidationParams.builder()
             .from(TransactionValidationParams.transactionSimulator());
-    transactionValidationParams.isAllowMaxFeeGasBelowBaseFee(true);
+    transactionValidationParams.isAllowExceedingBalance(true);
 
     final Optional<TransactionSimulatorResult> opt =
         transactionSimulator.process(

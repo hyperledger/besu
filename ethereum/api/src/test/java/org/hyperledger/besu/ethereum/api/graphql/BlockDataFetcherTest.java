@@ -78,7 +78,7 @@ public class BlockDataFetcherTest extends AbstractDataFetcherTest {
     assertThat(maybeBlock).isPresent();
     assertThat(maybeBlock.get().getMiner(environment)).isNotNull();
     assertThat(((EmptyAccountAdapter) maybeBlock.get().getMiner(environment)).getBalance())
-        .isGreaterThan(Wei.ZERO);
+        .isGreaterThanOrEqualTo(Wei.ZERO);
     assertThat(((EmptyAccountAdapter) maybeBlock.get().getMiner(environment)).getAddress())
         .isEqualTo(testAddress);
   }

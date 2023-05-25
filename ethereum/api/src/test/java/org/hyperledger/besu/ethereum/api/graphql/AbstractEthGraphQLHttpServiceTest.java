@@ -75,7 +75,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
   public static void setupConstants() {
     blockchainSetupUtil =
         BlockchainSetupUtil.createForEthashChain(
-            BlockTestUtil.getTestChainResources(), DataStorageFormat.FOREST);
+            BlockTestUtil.getHiveTestChainResources(), DataStorageFormat.FOREST);
     blockchainSetupUtil.importAllBlocks();
   }
 
@@ -111,7 +111,8 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
                         .build())));
 
     final MutableBlockchain blockchain = blockchainSetupUtil.getBlockchain();
-    ProtocolContext context = new ProtocolContext(blockchain, blockchainSetupUtil.getWorldArchive(), null);
+    ProtocolContext context =
+        new ProtocolContext(blockchain, blockchainSetupUtil.getWorldArchive(), null);
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
             context.getBlockchain(),
