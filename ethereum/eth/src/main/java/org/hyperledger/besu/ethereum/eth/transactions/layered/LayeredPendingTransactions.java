@@ -326,26 +326,18 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
     prioritizedTransactions.stream()
         .takeWhile(unused -> !completed.get())
-        .peek(
-            highPrioPendingTx ->
-                LOG.atTrace()
-                    .setMessage("highPrioPendingTx {}, senderTxs {}")
-                    .addArgument(highPrioPendingTx::toTraceLog)
-                    .addArgument(
-                        () ->
-                            prioritizedTransactions.stream(highPrioPendingTx.getSender())
-                                .map(PendingTransaction::toTraceLog)
-                                .collect(Collectors.joining(", ")))
-                    .log())
+        .filter(highPrioPendingTx -> !skipSenders.contains(highPrioPendingTx.getSender()))
+        .peek(this::logSenderTxs)
         .forEach(
-            highPrioPendingTx -> {
-              if (!skipSenders.contains(highPrioPendingTx.getSender())) {
+            highPrioPendingTx ->
                 prioritizedTransactions.stream(highPrioPendingTx.getSender())
-                    .takeWhile(unused -> !completed.get())
-                    .filter(
+                    .takeWhile(
                         candidatePendingTx ->
                             !skipSenders.contains(candidatePendingTx.getSender())
-                                && !alreadyChecked.contains(candidatePendingTx.getHash())
+                                && !completed.get())
+                    .filter(
+                        candidatePendingTx ->
+                            !alreadyChecked.contains(candidatePendingTx.getHash())
                                 && candidatePendingTx.getNonce() <= highPrioPendingTx.getNonce())
                     .forEach(
                         candidatePendingTx -> {
@@ -372,13 +364,24 @@ public class LayeredPendingTransactions implements PendingTransactions {
                             // avoid processing other txs from this sender if this one is skipped
                             // since the following will not be selected due to the nonce gap
                             skipSenders.add(candidatePendingTx.getSender());
+                            LOG.trace("Skip sender {}", candidatePendingTx.getSender());
                           }
-                        });
-              }
-            });
+                        }));
 
     invalidTransactions.forEach(
         invalidTx -> prioritizedTransactions.remove(invalidTx, INVALIDATED));
+  }
+
+  private void logSenderTxs(final PendingTransaction highPrioPendingTx) {
+    LOG.atTrace()
+        .setMessage("highPrioPendingTx {}, senderTxs {}")
+        .addArgument(highPrioPendingTx::toTraceLog)
+        .addArgument(
+            () ->
+                prioritizedTransactions.stream(highPrioPendingTx.getSender())
+                    .map(PendingTransaction::toTraceLog)
+                    .collect(Collectors.joining(", ")))
+        .log();
   }
 
   @Override
