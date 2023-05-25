@@ -78,24 +78,6 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       final WorldStateStorage worldStateStorage,
       final SnapSyncProcessState snapSyncState) {
     final List<SnapDataRequest> childRequests = new ArrayList<>();
-    System.out.println(
-        "Try Generate range "
-            + " "
-            + accountHash
-            + " "
-            + storageRoot
-            + " "
-            + startKeyHash
-            + " "
-            + endKeyHash
-            + " "
-            + ((slots.isEmpty()) ? "empty" : slots.firstKey())
-            + " "
-            + ((slots.isEmpty()) ? "empty" : slots.lastKey())
-            + " "
-            + slots.size()
-            + " // "
-            + isProofValid);
     if (!slots.isEmpty()) {
       // new request is added if the response does not match all the requested range
       final int nbRanges = getRangeCount(startKeyHash, endKeyHash, slots);
@@ -105,22 +87,6 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
               nbRanges)
           .forEach(
               (key, value) -> {
-                System.out.println(
-                    "Generate range "
-                        + " "
-                        + accountHash
-                        + " "
-                        + storageRoot
-                        + " "
-                        + key
-                        + " "
-                        + value
-                        + " "
-                        + ((slots.isEmpty()) ? "empty" : slots.firstKey())
-                        + " "
-                        + ((slots.isEmpty()) ? "empty" : slots.lastKey())
-                        + " // "
-                        + isProofValid);
                 final StorageFlatDatabaseHealingRangeRequest storageRangeDataRequest =
                     createStorageFlatHealingRangeRequest(
                         getRootHash(), accountHash, storageRoot, key, value);
@@ -216,44 +182,8 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
                   accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value)));
             }
           });
-
-      System.out.println(
-          "Range not valid from "
-              + " "
-              + accountHash
-              + " "
-              + " "
-              + storageRoot
-              + " "
-              + startKeyHash
-              + " "
-              + endKeyHash
-              + " "
-              + ((slots.isEmpty()) ? "empty" : slots.firstKey())
-              + " "
-              + ((slots.isEmpty()) ? "empty" : slots.lastKey())
-              + " ");
-
       remainingKeys.forEach(
           (key, value) -> bonsaiUpdater.removeStorageValueBySlotHash(accountHash, Hash.wrap(key)));
-    } else {
-      System.out.println(
-          "Range valid from "
-              + " "
-              + accountHash
-              + " "
-              + " "
-              + storageRoot
-              + " "
-              + startKeyHash
-              + " "
-              + endKeyHash
-              + " "
-              + ((slots.isEmpty()) ? "empty" : slots.firstKey())
-              + " "
-              + ((slots.isEmpty()) ? "empty" : slots.lastKey())
-              + " fixed "
-              + " ");
     }
     return slots.size();
   }

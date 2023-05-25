@@ -84,19 +84,6 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
               1)
           .forEach(
               (key, value) -> {
-                System.out.println(
-                    "Generate account range "
-                        + " "
-                        + " "
-                        + key
-                        + " "
-                        + value
-                        + " "
-                        + ((accounts.isEmpty()) ? "empty" : accounts.firstKey())
-                        + " "
-                        + ((accounts.isEmpty()) ? "empty" : accounts.lastKey())
-                        + " // "
-                        + isProofValid);
                 downloadState.getMetricsManager().notifyRangeProgress(HEAL_FLAT, key, endKeyHash);
                 final AccountFlatDatabaseHealingRangeRequest storageRangeDataRequest =
                     createAccountFlatHealingRangeRequest(getRootHash(), key, value);
