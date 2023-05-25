@@ -94,13 +94,21 @@ public class SnapWorldDownloadStateTest {
 
   @Parameterized.Parameters
   public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][] {{DataStorageFormat.BONSAI}, {DataStorageFormat.FOREST}});
+    return Arrays.asList(
+        new Object[][] {
+          {DataStorageFormat.BONSAI, true},
+          {DataStorageFormat.BONSAI, false},
+          {DataStorageFormat.FOREST, false}
+        });
   }
 
   private final DataStorageFormat storageFormat;
+  private final boolean isFlatDbHealingEnabled;
 
-  public SnapWorldDownloadStateTest(final DataStorageFormat storageFormat) {
+  public SnapWorldDownloadStateTest(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
     this.storageFormat = storageFormat;
+    this.isFlatDbHealingEnabled = isFlatDbHealingEnabled;
   }
 
   @Before
@@ -124,6 +132,7 @@ public class SnapWorldDownloadStateTest {
             pendingRequests,
             MAX_REQUESTS_WITHOUT_PROGRESS,
             MIN_MILLIS_BEFORE_STALLING,
+            isFlatDbHealingEnabled,
             metricsManager,
             clock);
     final DynamicPivotBlockSelector dynamicPivotBlockManager =
@@ -384,7 +393,9 @@ public class SnapWorldDownloadStateTest {
 
   @Test
   public void shouldCompleteReturnedFutureWhenNoPendingTasksRemainAndFlatDBHealNotNeeded() {
-    Assume.assumeTrue(storageFormat == DataStorageFormat.FOREST);
+    Assume.assumeTrue(
+        storageFormat == DataStorageFormat.FOREST
+            || (storageFormat == DataStorageFormat.BONSAI && !isFlatDbHealingEnabled));
     when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
     downloadState.checkCompletion(header);
 
@@ -395,6 +406,7 @@ public class SnapWorldDownloadStateTest {
   @Test
   public void shouldNotCompleteReturnedFutureWhenNoPendingTasksRemainAndFlatDBHealNeeded() {
     Assume.assumeTrue(storageFormat == DataStorageFormat.BONSAI);
+    Assume.assumeTrue(isFlatDbHealingEnabled);
     when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
     downloadState.checkCompletion(header);
 

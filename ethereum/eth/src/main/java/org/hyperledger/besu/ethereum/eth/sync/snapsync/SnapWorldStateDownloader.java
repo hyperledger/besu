@@ -145,6 +145,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               snapTaskCollection,
               maxNodeRequestsWithoutProgress,
               minMillisBeforeStalling,
+              snapSyncConfiguration.isFlatDbHealingEnabled(),
               snapsyncMetricsManager,
               clock);
 
@@ -177,7 +178,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
         // start from scratch
         worldStateStorage.clear();
         // we have to upgrade to full flat db mode if we are in bonsai mode
-        if (worldStateStorage.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
+        if (worldStateStorage.getDataStorageFormat().equals(DataStorageFormat.BONSAI)
+            && snapSyncConfiguration.isFlatDbHealingEnabled()) {
           ((BonsaiWorldStateKeyValueStorage) worldStateStorage).upgradeToFullFlatDbMode();
         }
         ranges.forEach(

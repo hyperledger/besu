@@ -81,6 +81,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   private final Blockchain blockchain;
   private OptionalLong blockObserverId;
 
+  private final boolean isFlatDbHealingEnabled; // TODO remove when no more experimental feature
+
   // metrics around the snapsync
   private final SnapsyncMetricsManager metricsManager;
 
@@ -92,6 +94,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       final InMemoryTasksPriorityQueues<SnapDataRequest> pendingRequests,
       final int maxRequestsWithoutProgress,
       final long minMillisBeforeStalling,
+      final boolean isFlatDbHealingEnabled,
       final SnapsyncMetricsManager metricsManager,
       final Clock clock) {
     super(
@@ -103,6 +106,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     this.snapContext = snapContext;
     this.blockchain = blockchain;
     this.snapSyncState = snapSyncState;
+    this.isFlatDbHealingEnabled = isFlatDbHealingEnabled;
     this.metricsManager = metricsManager;
     this.blockObserverId = OptionalLong.empty();
     metricsManager
@@ -170,7 +174,9 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         if (blockObserverId.isEmpty())
           blockObserverId = OptionalLong.of(blockchain.observeBlockAdded(getBlockAddedListener()));
         snapSyncState.setWaitingBlockchain(true);
-      } else if (!snapSyncState.isHealFlatDatabaseInProgress() && isBonsaiStorageFormat()) {
+      } else if (!snapSyncState.isHealFlatDatabaseInProgress()
+          && isBonsaiStorageFormat()
+          && isFlatDbHealingEnabled) {
         // only doing a flat db heal for bonsai
         startFlatDatabaseHeal(header);
       } else {

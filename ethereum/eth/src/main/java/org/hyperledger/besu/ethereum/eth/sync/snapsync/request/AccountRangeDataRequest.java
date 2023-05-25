@@ -125,7 +125,8 @@ public class AccountRangeDataRequest extends SnapDataRequest {
         };
 
     StackTrie.FlatDatabaseUpdater flatDatabaseUpdater = noop();
-    if (worldStateStorage.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
+    if (worldStateStorage.getDataStorageFormat().equals(DataStorageFormat.BONSAI)
+        && snapSyncConfiguration.isFlatDbHealingEnabled()) {
       // we have a flat DB only with Bonsai
       flatDatabaseUpdater =
           (key, value) ->

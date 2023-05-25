@@ -79,6 +79,9 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG =
       "--Xsnapsync-synchronizer-flat-slot-healed-count-per-request";
 
+  private static final String SNAP_FLAT_DB_HEALING_ENABLED_FLAG =
+      "--Xsnapsync-synchronizer-flat-db-healing-enabled";
+
   private static final String CHECKPOINT_POST_MERGE_FLAG = "--Xcheckpoint-post-merge-enabled";
 
   /**
@@ -307,6 +310,15 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       SnapSyncConfiguration.DEFAULT_LOCAL_FLAT_STORAGE_COUNT_TO_HEAL_PER_REQUEST;
 
   @CommandLine.Option(
+      names = SNAP_FLAT_DB_HEALING_ENABLED_FLAG,
+      hidden = true,
+      defaultValue = "false",
+      paramLabel = "<Boolean>",
+      description = "Snap sync flat db healing enabled (default: ${DEFAULT-VALUE})")
+  private boolean snapsyncFlatDbHealingEnabled =
+      SnapSyncConfiguration.DEFAULT_IS_FLAT_DB_HEALING_ENABLED;
+
+  @CommandLine.Option(
       names = {CHECKPOINT_POST_MERGE_FLAG},
       hidden = true,
       description = "Enable the sync to start from a post-merge block.")
@@ -322,6 +334,10 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
    */
   public static SynchronizerOptions create() {
     return new SynchronizerOptions();
+  }
+
+  public boolean isSnapsyncFlatDbHealingEnabled() {
+    return snapsyncFlatDbHealingEnabled;
   }
 
   /**
@@ -364,6 +380,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.getSnapSyncConfiguration().getLocalFlatAccountCountToHealPerRequest();
     options.snapsyncFlatStorageHealedCountPerRequest =
         config.getSnapSyncConfiguration().getLocalFlatStorageCountToHealPerRequest();
+    options.snapsyncFlatDbHealingEnabled =
+        config.getSnapSyncConfiguration().isFlatDbHealingEnabled();
     options.checkpointPostMergeSyncEnabled = config.isCheckpointPostMergeEnabled();
     return options;
   }
@@ -396,6 +414,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .trienodeCountPerRequest(snapsyncTrieNodeCountPerRequest)
             .localFlatAccountCountToHealPerRequest(snapsyncFlatAccountHealedCountPerRequest)
             .localFlatStorageCountToHealPerRequest(snapsyncFlatStorageHealedCountPerRequest)
+            .isFlatDbHealingEnabled(snapsyncFlatDbHealingEnabled)
             .build());
     builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
 
@@ -450,6 +469,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         SNAP_FLAT_ACCOUNT_HEALED_COUNT_PER_REQUEST_FLAG,
         OptionParser.format(snapsyncFlatAccountHealedCountPerRequest),
         SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG,
-        OptionParser.format(snapsyncFlatStorageHealedCountPerRequest));
+        OptionParser.format(snapsyncFlatStorageHealedCountPerRequest),
+        SNAP_FLAT_DB_HEALING_ENABLED_FLAG,
+        Boolean.toString(snapsyncFlatDbHealingEnabled));
   }
 }

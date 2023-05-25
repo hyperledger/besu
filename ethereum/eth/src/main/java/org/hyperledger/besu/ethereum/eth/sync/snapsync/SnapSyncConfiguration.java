@@ -36,6 +36,8 @@ public class SnapSyncConfiguration {
   public static final int DEFAULT_LOCAL_FLAT_STORAGE_COUNT_TO_HEAL_PER_REQUEST =
       1024; // The default number of flat slots entries to verify and heal per request.
 
+  public static final boolean DEFAULT_IS_FLAT_DB_HEALING_ENABLED = false;
+
   public static SnapSyncConfiguration getDefault() {
     return ImmutableSnapSyncConfiguration.builder().build();
   }
@@ -73,5 +75,10 @@ public class SnapSyncConfiguration {
   @Value.Default
   public int getLocalFlatStorageCountToHealPerRequest() {
     return DEFAULT_LOCAL_FLAT_STORAGE_COUNT_TO_HEAL_PER_REQUEST;
+  }
+
+  @Value.Default
+  public boolean isFlatDbHealingEnabled() {
+    return DEFAULT_IS_FLAT_DB_HEALING_ENABLED;
   }
 }
