@@ -143,7 +143,7 @@ public abstract class AbstractIsolationTests {
             null);
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
-    protocolContext = new ProtocolContext(blockchain, archive, null, Optional.empty());
+    protocolContext = new ProtocolContext(blockchain, archive, null);
   }
 
   // storage provider which uses a temporary directory based rocksdb

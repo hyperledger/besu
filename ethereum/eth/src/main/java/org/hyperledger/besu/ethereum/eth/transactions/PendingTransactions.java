@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import java.util.Collection;
 import java.util.List;
@@ -85,6 +84,12 @@ public interface PendingTransactions {
   }
 
   boolean isLocalSender(Address sender);
+
+  enum TransactionSelectionResult {
+    DELETE_TRANSACTION_AND_CONTINUE,
+    CONTINUE,
+    COMPLETE_OPERATION
+  }
 
   @FunctionalInterface
   interface TransactionSelector {
