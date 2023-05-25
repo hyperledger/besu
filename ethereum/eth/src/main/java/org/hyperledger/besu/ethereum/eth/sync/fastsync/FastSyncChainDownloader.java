@@ -39,7 +39,7 @@ public class FastSyncChainDownloader {
       final FastSyncState fastSyncState) {
 
     final FastSyncTargetManager syncTargetManager =
-        new FastSyncTargetManager(
+        new PoSFastSyncTargetManager(
             config,
             worldStateStorage,
             protocolSchedule,
