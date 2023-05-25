@@ -315,7 +315,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       defaultValue = "false",
       paramLabel = "<Boolean>",
       description = "Snap sync flat db healing enabled (default: ${DEFAULT-VALUE})")
-  private boolean snapsyncFlatDbHealingEnabled =
+  private Boolean snapsyncFlatDbHealingEnabled =
       SnapSyncConfiguration.DEFAULT_IS_FLAT_DB_HEALING_ENABLED;
 
   @CommandLine.Option(
@@ -423,54 +423,58 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
 
   @Override
   public List<String> getCLIOptions() {
-    return Arrays.asList(
-        BLOCK_PROPAGATION_RANGE_FLAG,
-        OptionParser.format(blockPropagationRange),
-        DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_HEIGHT_FLAG,
-        OptionParser.format(downloaderChangeTargetThresholdByHeight),
-        DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_TD_FLAG,
-        OptionParser.format(downloaderChangeTargetThresholdByTd),
-        DOWNLOADER_HEADER_REQUEST_SIZE_FLAG,
-        OptionParser.format(downloaderHeaderRequestSize),
-        DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED_FLAG,
-        OptionParser.format(downloaderCheckpointTimeoutsPermitted),
-        DOWNLOADER_CHAIN_SEGMENT_SIZE_FLAG,
-        OptionParser.format(downloaderChainSegmentSize),
-        DOWNLOADER_PARALLELISM_FLAG,
-        OptionParser.format(downloaderParallelism),
-        TRANSACTIONS_PARALLELISM_FLAG,
-        OptionParser.format(transactionsParallelism),
-        COMPUTATION_PARALLELISM_FLAG,
-        OptionParser.format(computationParallelism),
-        PIVOT_DISTANCE_FROM_HEAD_FLAG,
-        OptionParser.format(fastSyncPivotDistance),
-        FULL_VALIDATION_RATE_FLAG,
-        OptionParser.format(fastSyncFullValidationRate),
-        WORLD_STATE_HASH_COUNT_PER_REQUEST_FLAG,
-        OptionParser.format(worldStateHashCountPerRequest),
-        WORLD_STATE_REQUEST_PARALLELISM_FLAG,
-        OptionParser.format(worldStateRequestParallelism),
-        WORLD_STATE_MAX_REQUESTS_WITHOUT_PROGRESS_FLAG,
-        OptionParser.format(worldStateMaxRequestsWithoutProgress),
-        WORLD_STATE_MIN_MILLIS_BEFORE_STALLING_FLAG,
-        OptionParser.format(worldStateMinMillisBeforeStalling),
-        WORLD_STATE_TASK_CACHE_SIZE_FLAG,
-        OptionParser.format(worldStateTaskCacheSize),
-        SNAP_PIVOT_BLOCK_WINDOW_VALIDITY_FLAG,
-        OptionParser.format(snapsyncPivotBlockWindowValidity),
-        SNAP_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING_FLAG,
-        OptionParser.format(snapsyncPivotBlockDistanceBeforeCaching),
-        SNAP_STORAGE_COUNT_PER_REQUEST_FLAG,
-        OptionParser.format(snapsyncStorageCountPerRequest),
-        SNAP_BYTECODE_COUNT_PER_REQUEST_FLAG,
-        OptionParser.format(snapsyncBytecodeCountPerRequest),
-        SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG,
-        OptionParser.format(snapsyncTrieNodeCountPerRequest),
-        SNAP_FLAT_ACCOUNT_HEALED_COUNT_PER_REQUEST_FLAG,
-        OptionParser.format(snapsyncFlatAccountHealedCountPerRequest),
-        SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG,
-        OptionParser.format(snapsyncFlatStorageHealedCountPerRequest),
-        SNAP_FLAT_DB_HEALING_ENABLED_FLAG,
-        Boolean.toString(snapsyncFlatDbHealingEnabled));
+    List<String> value =
+        Arrays.asList(
+            BLOCK_PROPAGATION_RANGE_FLAG,
+            OptionParser.format(blockPropagationRange),
+            DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_HEIGHT_FLAG,
+            OptionParser.format(downloaderChangeTargetThresholdByHeight),
+            DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_TD_FLAG,
+            OptionParser.format(downloaderChangeTargetThresholdByTd),
+            DOWNLOADER_HEADER_REQUEST_SIZE_FLAG,
+            OptionParser.format(downloaderHeaderRequestSize),
+            DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED_FLAG,
+            OptionParser.format(downloaderCheckpointTimeoutsPermitted),
+            DOWNLOADER_CHAIN_SEGMENT_SIZE_FLAG,
+            OptionParser.format(downloaderChainSegmentSize),
+            DOWNLOADER_PARALLELISM_FLAG,
+            OptionParser.format(downloaderParallelism),
+            TRANSACTIONS_PARALLELISM_FLAG,
+            OptionParser.format(transactionsParallelism),
+            COMPUTATION_PARALLELISM_FLAG,
+            OptionParser.format(computationParallelism),
+            PIVOT_DISTANCE_FROM_HEAD_FLAG,
+            OptionParser.format(fastSyncPivotDistance),
+            FULL_VALIDATION_RATE_FLAG,
+            OptionParser.format(fastSyncFullValidationRate),
+            WORLD_STATE_HASH_COUNT_PER_REQUEST_FLAG,
+            OptionParser.format(worldStateHashCountPerRequest),
+            WORLD_STATE_REQUEST_PARALLELISM_FLAG,
+            OptionParser.format(worldStateRequestParallelism),
+            WORLD_STATE_MAX_REQUESTS_WITHOUT_PROGRESS_FLAG,
+            OptionParser.format(worldStateMaxRequestsWithoutProgress),
+            WORLD_STATE_MIN_MILLIS_BEFORE_STALLING_FLAG,
+            OptionParser.format(worldStateMinMillisBeforeStalling),
+            WORLD_STATE_TASK_CACHE_SIZE_FLAG,
+            OptionParser.format(worldStateTaskCacheSize),
+            SNAP_PIVOT_BLOCK_WINDOW_VALIDITY_FLAG,
+            OptionParser.format(snapsyncPivotBlockWindowValidity),
+            SNAP_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING_FLAG,
+            OptionParser.format(snapsyncPivotBlockDistanceBeforeCaching),
+            SNAP_STORAGE_COUNT_PER_REQUEST_FLAG,
+            OptionParser.format(snapsyncStorageCountPerRequest),
+            SNAP_BYTECODE_COUNT_PER_REQUEST_FLAG,
+            OptionParser.format(snapsyncBytecodeCountPerRequest),
+            SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG,
+            OptionParser.format(snapsyncTrieNodeCountPerRequest));
+    if (isSnapsyncFlatDbHealingEnabled()) {
+      value.addAll(
+          Arrays.asList(
+              SNAP_FLAT_ACCOUNT_HEALED_COUNT_PER_REQUEST_FLAG,
+              OptionParser.format(snapsyncFlatAccountHealedCountPerRequest),
+              SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG,
+              OptionParser.format(snapsyncFlatStorageHealedCountPerRequest)));
+    }
+    return value;
   }
 }
