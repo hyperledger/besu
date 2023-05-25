@@ -43,7 +43,12 @@ public class DownloadBodiesStep
 
   @Override
   public CompletableFuture<List<Block>> apply(final List<BlockHeader> blockHeaders) {
-    return CompleteBlocksTask.forHeaders(protocolSchedule, ethContext, blockHeaders, metricsSystem)
+    return CompleteBlocksTask.forHeaders(
+            protocolSchedule,
+            ethContext,
+            blockHeaders,
+            ethContext.getEthPeers().peerCount(),
+            metricsSystem)
         .run();
   }
 }

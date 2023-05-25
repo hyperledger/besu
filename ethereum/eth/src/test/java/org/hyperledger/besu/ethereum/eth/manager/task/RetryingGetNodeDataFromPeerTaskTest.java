@@ -53,7 +53,7 @@ public class RetryingGetNodeDataFromPeerTaskTest extends RetryingMessageTaskTest
   protected EthTask<Map<Hash, Bytes>> createTask(final Map<Hash, Bytes> requestedData) {
     final List<Hash> hashes = Lists.newArrayList(requestedData.keySet());
     return RetryingGetNodeDataFromPeerTask.forHashes(
-        ethContext, hashes, GENESIS_BLOCK_NUMBER, metricsSystem);
+        ethContext, hashes, GENESIS_BLOCK_NUMBER, metricsSystem, ethPeers.peerCount());
   }
 
   @Test

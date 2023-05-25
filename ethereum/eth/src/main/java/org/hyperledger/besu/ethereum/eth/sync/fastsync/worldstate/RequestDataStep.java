@@ -46,7 +46,11 @@ public class RequestDataStep {
     this(
         (hashes, pivotBlockNumber) ->
             RetryingGetNodeDataFromPeerTask.forHashes(
-                ethContext, hashes, pivotBlockNumber, metricsSystem));
+                ethContext,
+                hashes,
+                pivotBlockNumber,
+                metricsSystem,
+                ethContext.getEthPeers().peerCount()));
   }
 
   RequestDataStep(

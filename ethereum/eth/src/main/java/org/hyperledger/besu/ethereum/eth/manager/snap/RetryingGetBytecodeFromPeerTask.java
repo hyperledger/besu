@@ -17,19 +17,19 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingSwitchingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class RetryingGetBytecodeFromPeerTask extends AbstractRetryingPeerTask<Map<Bytes32, Bytes>> {
+public class RetryingGetBytecodeFromPeerTask
+    extends AbstractRetryingSwitchingPeerTask<Map<Bytes32, Bytes>> {
 
   private final EthContext ethContext;
   private final List<Bytes32> codeHashes;
@@ -40,8 +40,9 @@ public class RetryingGetBytecodeFromPeerTask extends AbstractRetryingPeerTask<Ma
       final EthContext ethContext,
       final List<Bytes32> codeHashes,
       final BlockHeader blockHeader,
-      final MetricsSystem metricsSystem) {
-    super(ethContext, 4, Map::isEmpty, metricsSystem);
+      final MetricsSystem metricsSystem,
+      final int maxRetries) {
+    super(ethContext, metricsSystem, Map::isEmpty, maxRetries);
     this.ethContext = ethContext;
     this.codeHashes = codeHashes;
     this.blockHeader = blockHeader;
@@ -52,16 +53,17 @@ public class RetryingGetBytecodeFromPeerTask extends AbstractRetryingPeerTask<Ma
       final EthContext ethContext,
       final List<Bytes32> codeHashes,
       final BlockHeader blockHeader,
-      final MetricsSystem metricsSystem) {
-    return new RetryingGetBytecodeFromPeerTask(ethContext, codeHashes, blockHeader, metricsSystem);
+      final MetricsSystem metricsSystem,
+      final int maxRetries) {
+    return new RetryingGetBytecodeFromPeerTask(
+        ethContext, codeHashes, blockHeader, metricsSystem, maxRetries);
   }
 
   @Override
-  protected CompletableFuture<Map<Bytes32, Bytes>> executePeerTask(
-      final Optional<EthPeer> assignedPeer) {
+  protected CompletableFuture<Map<Bytes32, Bytes>> executeTaskOnCurrentPeer(final EthPeer peer) {
     final GetBytecodeFromPeerTask task =
         GetBytecodeFromPeerTask.forBytecode(ethContext, codeHashes, blockHeader, metricsSystem);
-    assignedPeer.ifPresent(task::assignPeer);
+    task.assignPeer(peer);
     return executeSubTask(task::run)
         .thenApply(
             peerResult -> {

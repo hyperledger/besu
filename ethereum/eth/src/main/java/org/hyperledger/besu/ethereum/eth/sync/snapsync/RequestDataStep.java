@@ -78,7 +78,8 @@ public class RequestDataStep {
             accountDataRequest.getStartKeyHash(),
             accountDataRequest.getEndKeyHash(),
             blockHeader,
-            metricsSystem);
+            metricsSystem,
+            ethContext.getEthPeers().peerCount());
     downloadState.addOutstandingTask(getAccountTask);
     return getAccountTask
         .run()
@@ -113,7 +114,13 @@ public class RequestDataStep {
             : RangeManager.MAX_RANGE;
     final EthTask<StorageRangeMessage.SlotRangeData> getStorageRangeTask =
         RetryingGetStorageRangeFromPeerTask.forStorageRange(
-            ethContext, accountHashes, minRange, maxRange, blockHeader, metricsSystem);
+            ethContext,
+            accountHashes,
+            minRange,
+            maxRange,
+            blockHeader,
+            metricsSystem,
+            ethContext.getEthPeers().peerCount());
     downloadState.addOutstandingTask(getStorageRangeTask);
     return getStorageRangeTask
         .run()
@@ -148,7 +155,11 @@ public class RequestDataStep {
     final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
     final EthTask<Map<Bytes32, Bytes>> getByteCodeTask =
         RetryingGetBytecodeFromPeerTask.forByteCode(
-            ethContext, codeHashes, blockHeader, metricsSystem);
+            ethContext,
+            codeHashes,
+            blockHeader,
+            metricsSystem,
+            ethContext.getEthPeers().peerCount());
     downloadState.addOutstandingTask(getByteCodeTask);
     return getByteCodeTask
         .run()
@@ -187,7 +198,7 @@ public class RequestDataStep {
             });
     final EthTask<Map<Bytes, Bytes>> getTrieNodeFromPeerTask =
         RetryingGetTrieNodeFromPeerTask.forTrieNodes(
-            ethContext, message, blockHeader, metricsSystem);
+            ethContext, message, blockHeader, metricsSystem, ethContext.getEthPeers().peerCount());
     downloadState.addOutstandingTask(getTrieNodeFromPeerTask);
     return getTrieNodeFromPeerTask
         .run()
