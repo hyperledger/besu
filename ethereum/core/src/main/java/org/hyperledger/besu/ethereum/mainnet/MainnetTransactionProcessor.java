@@ -452,20 +452,15 @@ public class MainnetTransactionProcessor {
       if (blockHeader.getBaseFee().isPresent()) {
         final Wei baseFee = blockHeader.getBaseFee().get();
         if (transactionGasPrice.compareTo(baseFee) < 0) {
-          if (transactionValidationParams.isAllowMaxFeeGasBelowBaseFee()) {
-            coinbaseCalculator = CoinbaseFeePriceCalculator.frontier();
-          } else {
-            return TransactionProcessingResult.failed(
-                gasUsedByTransaction,
-                refundedGas,
-                ValidationResult.invalid(
-                    TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
-                    "transaction price must be greater than base fee"),
-                Optional.empty());
-          }
-        } else {
-          coinbaseCalculator = coinbaseFeePriceCalculator;
+          return TransactionProcessingResult.failed(
+              gasUsedByTransaction,
+              refundedGas,
+              ValidationResult.invalid(
+                  TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
+                  "transaction price must be greater than base fee"),
+              Optional.empty());
         }
+        coinbaseCalculator = coinbaseFeePriceCalculator;
       } else {
         coinbaseCalculator = CoinbaseFeePriceCalculator.frontier();
       }
@@ -514,10 +509,14 @@ public class MainnetTransactionProcessor {
   }
 
   private AbstractMessageProcessor getMessageProcessor(final MessageFrame.Type type) {
-    return switch (type) {
-      case MESSAGE_CALL -> messageCallProcessor;
-      case CONTRACT_CREATION -> contractCreationProcessor;
-    };
+    switch (type) {
+      case MESSAGE_CALL:
+        return messageCallProcessor;
+      case CONTRACT_CREATION:
+        return contractCreationProcessor;
+      default:
+        throw new IllegalStateException("Request for unsupported message processor type " + type);
+    }
   }
 
   protected long refunded(
