@@ -83,6 +83,7 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
    * retrieve a stream of data from the storage, starting from the given key. If no data is
    * available from the specified key onwards, an empty stream is returned.
    *
+   * @param segmentHandle The segment handle whose keys we want to stream.
    * @param startKey The key from which the stream should start.
    * @return A stream of key-value pairs starting from the specified key.
    */
