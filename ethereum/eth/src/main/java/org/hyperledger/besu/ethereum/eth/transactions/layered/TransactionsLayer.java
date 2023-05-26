@@ -57,6 +57,15 @@ public interface TransactionsLayer {
 
   OptionalLong getNextNonceFor(Address sender);
 
+  /**
+   * Get the sender nonce has seen by this and the following layers
+   *
+   * @param sender the sender for which retrieve the txpool
+   * @return either the sender nonce or empty if the sender is unknown to this or the following
+   *     layers
+   */
+  OptionalLong getCurrentNonceFor(Address sender);
+
   PendingTransaction promote(Predicate<PendingTransaction> promotionFilter);
 
   long subscribeToAdded(PendingTransactionAddedListener listener);
@@ -88,7 +97,7 @@ public interface TransactionsLayer {
     INVALIDATED,
     PROMOTED,
     REPLACED,
-    REORG;
+    RECONCILED;
 
     private final String label;
 

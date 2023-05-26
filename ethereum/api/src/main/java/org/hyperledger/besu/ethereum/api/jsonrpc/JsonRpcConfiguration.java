@@ -37,6 +37,7 @@ public class JsonRpcConfiguration {
   public static final int DEFAULT_ENGINE_JSON_RPC_PORT = 8551;
   public static final int DEFAULT_MAX_ACTIVE_CONNECTIONS = 80;
   public static final int DEFAULT_MAX_BATCH_SIZE = 1024;
+  public static final long DEFAULT_MAX_REQUEST_CONTENT_LENGTH = 5 * 1024 * 1024; // 5MB
 
   private boolean enabled;
   private int port;
@@ -53,6 +54,7 @@ public class JsonRpcConfiguration {
   private long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
   private int maxActiveConnections;
   private int maxBatchSize;
+  private long maxRequestContentLength;
 
   public static JsonRpcConfiguration createDefault() {
     final JsonRpcConfiguration config = new JsonRpcConfiguration();
@@ -63,6 +65,7 @@ public class JsonRpcConfiguration {
     config.httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
     config.setMaxActiveConnections(DEFAULT_MAX_ACTIVE_CONNECTIONS);
     config.setMaxBatchSize(DEFAULT_MAX_BATCH_SIZE);
+    config.setMaxRequestContentLength(DEFAULT_MAX_REQUEST_CONTENT_LENGTH);
     return config;
   }
 
@@ -262,5 +265,13 @@ public class JsonRpcConfiguration {
 
   public void setMaxBatchSize(final int maxBatchSize) {
     this.maxBatchSize = maxBatchSize;
+  }
+
+  public long getMaxRequestContentLength() {
+    return maxRequestContentLength;
+  }
+
+  public void setMaxRequestContentLength(final long maxRequestContentLength) {
+    this.maxRequestContentLength = maxRequestContentLength;
   }
 }

@@ -20,9 +20,8 @@ import static java.util.stream.Collectors.reducing;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.INTERNAL_ERROR;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REORG_SENDER;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.INVALIDATED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.REORG;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.RECONCILED;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -39,6 +38,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -95,66 +95,140 @@ public class LayeredPendingTransactions implements PendingTransactions {
   TransactionAddedResult addTransaction(
       final PendingTransaction pendingTransaction, final Optional<Account> maybeSenderAccount) {
 
-    final long senderNonce = maybeSenderAccount.map(AccountState::getNonce).orElse(0L);
+    final long stateSenderNonce = maybeSenderAccount.map(AccountState::getNonce).orElse(0L);
 
-    logTransactionForReplayAdd(pendingTransaction, senderNonce);
+    logTransactionForReplayAdd(pendingTransaction, stateSenderNonce);
 
-    final long nonceDistance = pendingTransaction.getNonce() - senderNonce;
+    if (hasAccountNonceDisparity(pendingTransaction, stateSenderNonce)) {
+      reconcileSender(pendingTransaction.getSender(), stateSenderNonce);
+    }
+
+    final long nonceDistance = pendingTransaction.getNonce() - stateSenderNonce;
 
     final TransactionAddedResult nonceChecksResult =
-        nonceChecks(pendingTransaction, senderNonce, nonceDistance);
+        nonceChecks(pendingTransaction, stateSenderNonce, nonceDistance);
     if (nonceChecksResult != null) {
       return nonceChecksResult;
     }
 
     try {
-      TransactionAddedResult result =
-          prioritizedTransactions.add(pendingTransaction, (int) nonceDistance);
-
-      if (result.equals(REORG_SENDER)) {
-        result = reorgSenderOf(pendingTransaction, (int) nonceDistance);
-      }
-
-      return result;
+      return prioritizedTransactions.add(pendingTransaction, (int) nonceDistance);
     } catch (final Throwable throwable) {
-      // in case something unexpected happened, log this sender txs and force a reorg of his txs
+      return reconcileAndRetryAdd(
+          pendingTransaction, stateSenderNonce, (int) nonceDistance, throwable);
+    }
+  }
+
+  private TransactionAddedResult reconcileAndRetryAdd(
+      final PendingTransaction pendingTransaction,
+      final long stateSenderNonce,
+      final int nonceDistance,
+      final Throwable throwable) {
+    // in case something unexpected happened, log this sender txs, force a reconcile and retry
+    // another time
+    // ToDo: demote to debug when Layered TxPool is out of preview
+    LOG.warn(
+        "Unexpected error {} when adding transaction {}, current sender status {}",
+        throwable,
+        pendingTransaction.toTraceLog(),
+        prioritizedTransactions.logSender(pendingTransaction.getSender()));
+    LOG.warn("Stack trace", throwable);
+    reconcileSender(pendingTransaction.getSender(), stateSenderNonce);
+    try {
+      return prioritizedTransactions.add(pendingTransaction, nonceDistance);
+    } catch (final Throwable throwable2) {
       LOG.warn(
           "Unexpected error {} when adding transaction {}, current sender status {}",
           throwable,
           pendingTransaction.toTraceLog(),
           prioritizedTransactions.logSender(pendingTransaction.getSender()));
       LOG.warn("Stack trace", throwable);
-      reorgSenderOf(pendingTransaction, (int) nonceDistance);
       return INTERNAL_ERROR;
     }
   }
 
-  private TransactionAddedResult reorgSenderOf(
-      final PendingTransaction pendingTransaction, final int nonceDistance) {
-    final var existingSenderTxs = prioritizedTransactions.getAllFor(pendingTransaction.getSender());
+  /**
+   * Detect a disparity between account nonce has seen by the world state and the txpool, that could
+   * happen during the small amount of time during block import when the world state is updated
+   * while the txpool still does not process the confirmed txs, or when there is a reorg and the
+   * sender nonce goes back.
+   *
+   * @param pendingTransaction the incoming transaction to check
+   * @param stateSenderNonce account nonce from the world state
+   * @return false if the nonce for the sender has seen by the txpool matches the value of the
+   *     account nonce in the world state, true if they differ
+   */
+  private boolean hasAccountNonceDisparity(
+      final PendingTransaction pendingTransaction, final long stateSenderNonce) {
+    final OptionalLong maybeTxPoolSenderNonce =
+        prioritizedTransactions.getCurrentNonceFor(pendingTransaction.getSender());
+    if (maybeTxPoolSenderNonce.isPresent()) {
+      final long txPoolSenderNonce = maybeTxPoolSenderNonce.getAsLong();
+      if (stateSenderNonce != txPoolSenderNonce) {
+        LOG.atDebug()
+            .setMessage(
+                "Nonce disparity detected when adding pending transaction {}. "
+                    + "Account nonce from world state is {} while current txpool nonce is {}")
+            .addArgument(pendingTransaction::toTraceLog)
+            .addArgument(stateSenderNonce)
+            .addArgument(txPoolSenderNonce)
+            .log();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Rebuild the txpool for a sender according to the specified nonce. This is used in case the
+   * account nonce has seen by the txpool is not the correct one (see {@link
+   * LayeredPendingTransactions#hasAccountNonceDisparity(PendingTransaction, long)} for when this
+   * could happen). It works by removing all the txs for the sender and re-adding them using the
+   * passed nonce.
+   *
+   * @param sender the sender for which rebuild the txpool
+   * @param stateSenderNonce the world state account nonce to use in the txpool for the sender
+   */
+  private void reconcileSender(final Address sender, final long stateSenderNonce) {
+    final var existingSenderTxs = prioritizedTransactions.getAllFor(sender);
+    if (existingSenderTxs.isEmpty()) {
+      LOG.debug("Sender {} has no transactions to reconcile", sender);
+      return;
+    }
+
+    LOG.atDebug()
+        .setMessage("Sender {} with nonce {} has {} transaction(s) to reconcile {}")
+        .addArgument(sender)
+        .addArgument(stateSenderNonce)
+        .addArgument(existingSenderTxs::size)
+        .addArgument(() -> prioritizedTransactions.logSender(sender))
+        .log();
+
+    final var reAddTxs = new ArrayDeque<PendingTransaction>(existingSenderTxs.size());
 
     // it is more performant to invalidate backward
     for (int i = existingSenderTxs.size() - 1; i >= 0; --i) {
-      prioritizedTransactions.remove(existingSenderTxs.get(i), REORG);
+      final var ptx = existingSenderTxs.get(i);
+      prioritizedTransactions.remove(ptx, RECONCILED);
+      if (ptx.getNonce() >= stateSenderNonce) {
+        reAddTxs.addFirst(ptx);
+      }
     }
 
-    // add the new one and re-add all the previous
-    final var result = prioritizedTransactions.add(pendingTransaction, nonceDistance);
-    existingSenderTxs.forEach(ptx -> prioritizedTransactions.add(ptx, nonceDistance));
-    LOG.atTrace()
-        .setMessage(
-            "Pending transaction {} with nonce distance {} triggered a reorg for sender {} with {} existing transactions: {}")
-        .addArgument(pendingTransaction::toTraceLog)
-        .addArgument(nonceDistance)
-        .addArgument(pendingTransaction::getSender)
-        .addArgument(existingSenderTxs::size)
-        .addArgument(
-            () ->
-                existingSenderTxs.stream()
-                    .map(PendingTransaction::toTraceLog)
-                    .collect(Collectors.joining("; ")))
+    if (!reAddTxs.isEmpty()) {
+      // re-add all the previous txs
+      final long lowestNonce = reAddTxs.getFirst().getNonce();
+      final int newNonceDistance = (int) Math.max(0, lowestNonce - stateSenderNonce);
+
+      reAddTxs.forEach(ptx -> prioritizedTransactions.add(ptx, newNonceDistance));
+    }
+
+    LOG.atDebug()
+        .setMessage("Sender {} with nonce {} status after reconciliation {}")
+        .addArgument(sender)
+        .addArgument(stateSenderNonce)
+        .addArgument(() -> prioritizedTransactions.logSender(sender))
         .log();
-    return result;
   }
 
   private void logTransactionForReplayAdd(
@@ -253,7 +327,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
         .takeWhile(unused -> !completed.get())
         .peek(
             highPrioPendingTx ->
-                LOG.atDebug()
+                LOG.atTrace()
                     .setMessage("highPrioPendingTx {}, senderTxs {}")
                     .addArgument(highPrioPendingTx::toTraceLog)
                     .addArgument(
@@ -361,7 +435,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
       final List<Transaction> confirmedTransactions,
       final List<Transaction> reorgTransactions,
       final FeeMarket feeMarket) {
-    LOG.atDebug()
+    LOG.atTrace()
         .setMessage("Managing new added block {}")
         .addArgument(blockHeader::toLogString)
         .log();

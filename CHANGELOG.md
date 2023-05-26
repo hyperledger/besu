@@ -1,10 +1,24 @@
 # Changelog
 
-## 23.4.1
+## 23.4.2
 
 ### Breaking Changes
 
 ### Additions and Improvements
+
+### Bug Fixes
+
+### Download Links
+
+---
+
+## 23.4.1
+
+### Breaking Changes
+- Add request content length limit for the JSON-RPC API (5MB) [#5467](https://github.com/hyperledger/besu/pull/5467)
+
+### Additions and Improvements
+- Set the retention policy for RocksDB log files to maintain only the logs from the last week [#5428](https://github.com/hyperledger/besu/pull/5428)
 - "Big-EOF" (the EOF version initially slotted for Shanghai) has been moved from Cancun to FutureEIPs [#5429](https://github.com/hyperledger/besu/pull/5429)
 - EIP-4844: Zero blob transactions are invalid [#5425](https://github.com/hyperledger/besu/pull/5425)
 - Transaction pool flag to disable specific behaviors for locally submitted transactions [#5418](https://github.com/hyperledger/besu/pull/5418)
@@ -12,11 +26,17 @@
 - New optional feature to save the txpool content to file on shutdown and reloading it on startup [#5434](https://github.com/hyperledger/besu/pull/5434)
 - New option to send SNI header in TLS ClientHello message [#5439](https://github.com/hyperledger/besu/pull/5439)
 - Early access - layered transaction pool implementation [#5290](https://github.com/hyperledger/besu/pull/5290)
+- New RPC method `debug_getRawReceipts` [#5476](https://github.com/hyperledger/besu/pull/5476)
+- Add TrieLogFactory plugin support [#5440](https://github.com/hyperledger/besu/pull/5440)
 
 ### Bug Fixes
 - Fix eth_feeHistory response for the case in which blockCount is higher than highestBlock requested. [#5397](https://github.com/hyperledger/besu/pull/5397)
+- Fix Besu Docker image failing to start due to NoClassDefFoundError with org.xerial.snappy.Snappy library. [#5462](https://github.com/hyperledger/besu/pull/5462)
 
 ### Download Links
+
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.1/besu-23.4.1.tar.gz / sha256: 49d3a7a069cae307497093d834f873ce7804a46dd59207d5e8321459532d318e
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.1/besu-23.4.1.zip / sha256: 1d82ed83a816968aa9366d9310b275ca6438100f5d3eb1ec03d3474b2a5f5e76
 
 ## 23.4.0
 
@@ -28,6 +48,7 @@
 - Remove launcher command line utility [#5355](https://github.com/hyperledger/besu/pull/5355)
 - Remove deprecated `tx-pool-future-max-by-account` option, see instead: `tx-pool-limit-by-account-percentage` [#5361](https://github.com/hyperledger/besu/pull/5361)
 - Default configuration for the deprecated ECIP-1049 network has been removed from the CLI network list [#5371](https://github.com/hyperledger/besu/pull/5371)
+- Besu now requires glibc 2.32 or later to run. Ubuntu 20.04 users will need to update to a newer version of Ubuntu, 22.04 or later to run Besu
 
 ### Additions and Improvements
 - An alternate build target for the EVM using GraalVM AOT compilation was added.  [#5192](https://github.com/hyperledger/besu/pull/5192)

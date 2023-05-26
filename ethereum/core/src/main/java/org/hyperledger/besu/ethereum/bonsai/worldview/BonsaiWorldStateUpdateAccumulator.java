@@ -16,23 +16,23 @@
 
 package org.hyperledger.besu.ethereum.bonsai.worldview;
 
+import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactory;
-import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
-import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.worldstate.AbstractWorldUpdater;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogAccumulator;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -55,7 +55,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class BonsaiWorldStateUpdateAccumulator
-    extends AbstractWorldUpdater<BonsaiWorldView, BonsaiAccount> implements BonsaiWorldView {
+    extends AbstractWorldUpdater<BonsaiWorldView, BonsaiAccount>
+    implements BonsaiWorldView, TrieLogAccumulator {
   private static final Logger LOG =
       LoggerFactory.getLogger(BonsaiWorldStateUpdateAccumulator.class);
   private final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader;
@@ -70,9 +71,6 @@ public class BonsaiWorldStateUpdateAccumulator
   // alternative was to keep a giant pre-image cache of the entire trie.
   private final Map<Address, StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>>
       storageToUpdate = new ConcurrentHashMap<>();
-
-  // todo plumb me from plugin service:
-  TrieLogFactory<TrieLogLayer> trieLogFactory = new TrieLogFactoryImpl();
 
   private boolean isAccumulatorStateChanged;
 
@@ -146,10 +144,12 @@ public class BonsaiWorldStateUpdateAccumulator
     return new WrappedEvmAccount(track(new UpdateTrackingAccount<>(newAccount)));
   }
 
+  @Override
   public Map<Address, BonsaiValue<BonsaiAccount>> getAccountsToUpdate() {
     return accountsToUpdate;
   }
 
+  @Override
   public Map<Address, BonsaiValue<Bytes>> getCodeToUpdate() {
     return codeToUpdate;
   }
@@ -158,6 +158,7 @@ public class BonsaiWorldStateUpdateAccumulator
     return storageToClear;
   }
 
+  @Override
   public Map<Address, StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>>
       getStorageToUpdate() {
     return storageToUpdate;
@@ -477,7 +478,8 @@ public class BonsaiWorldStateUpdateAccumulator
         storageToUpdate.get(address);
     if (bonsaiValueStorage != null) {
       // hash the key to match the implied storage interface of hashed slotKey
-      bonsaiValueStorage.forEach((key, value) -> results.put(key.slotHash(), value.getUpdated()));
+      bonsaiValueStorage.forEach(
+          (key, value) -> results.put(key.getSlotHash(), value.getUpdated()));
     }
     return results;
   }
@@ -492,25 +494,18 @@ public class BonsaiWorldStateUpdateAccumulator
     return wrappedWorldView().getWorldStateStorage();
   }
 
-  public TrieLogLayer generateTrieLog(final Hash blockHash) {
-    return trieLogFactory.create(this, blockHash);
-  }
-
-  public void rollForward(final TrieLogLayer layer) {
-    layer
-        .streamAccountChanges()
+  public void rollForward(final TrieLog layer) {
+    layer.getAccountChanges().entrySet().stream()
         .forEach(
             entry ->
                 rollAccountChange(
                     entry.getKey(), entry.getValue().getPrior(), entry.getValue().getUpdated()));
-    layer
-        .streamCodeChanges()
+    layer.getCodeChanges().entrySet().stream()
         .forEach(
             entry ->
                 rollCodeChange(
                     entry.getKey(), entry.getValue().getPrior(), entry.getValue().getUpdated()));
-    layer
-        .streamStorageChanges()
+    layer.getStorageChanges().entrySet().stream()
         .forEach(
             entry ->
                 entry
@@ -524,21 +519,18 @@ public class BonsaiWorldStateUpdateAccumulator
                                 value.getUpdated())));
   }
 
-  public void rollBack(final TrieLogLayer layer) {
-    layer
-        .streamAccountChanges()
+  public void rollBack(final TrieLog layer) {
+    layer.getAccountChanges().entrySet().stream()
         .forEach(
             entry ->
                 rollAccountChange(
                     entry.getKey(), entry.getValue().getUpdated(), entry.getValue().getPrior()));
-    layer
-        .streamCodeChanges()
+    layer.getCodeChanges().entrySet().stream()
         .forEach(
             entry ->
                 rollCodeChange(
                     entry.getKey(), entry.getValue().getUpdated(), entry.getValue().getPrior()));
-    layer
-        .streamStorageChanges()
+    layer.getStorageChanges().entrySet().stream()
         .forEach(
             entry ->
                 entry
@@ -554,8 +546,8 @@ public class BonsaiWorldStateUpdateAccumulator
 
   private void rollAccountChange(
       final Address address,
-      final StateTrieAccountValue expectedValue,
-      final StateTrieAccountValue replacementValue) {
+      final AccountValue expectedValue,
+      final AccountValue replacementValue) {
     if (Objects.equals(expectedValue, replacementValue)) {
       // non-change, a cached read.
       return;
