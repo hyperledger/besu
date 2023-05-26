@@ -17,9 +17,9 @@ package org.hyperledger.besu.ethereum.bonsai.cache;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
-import org.hyperledger.besu.ethereum.bonsai.worldview.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
@@ -122,7 +122,7 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
                           Hash.hash(storageRoot),
                           Function.identity(),
                           Function.identity());
-                  storageTrie.get(slotKey.slotHash());
+                  storageTrie.get(slotKey.getSlotHash());
                 } catch (MerkleTrieException e) {
                   // ignore exception for the cache
                 }

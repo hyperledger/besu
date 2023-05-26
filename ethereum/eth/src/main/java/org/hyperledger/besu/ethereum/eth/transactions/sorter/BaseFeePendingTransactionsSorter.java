@@ -18,7 +18,6 @@ import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toUnmodifiableList;
 
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
@@ -74,7 +73,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                           .orElse(Wei.ZERO)
                           .getAsBigInteger()
                           .longValue())
-              .thenComparing(PendingTransaction::getAddedToPoolAt)
+              .thenComparing(PendingTransaction::getAddedAt)
               .thenComparing(PendingTransaction::getSequence)
               .reversed());
 
@@ -88,7 +87,7 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
                           .getMaxFeePerGas()
                           .map(maxFeePerGas -> maxFeePerGas.getAsBigInteger().longValue())
                           .orElse(pendingTx.getGasPrice().toLong()))
-              .thenComparing(PendingTransaction::getAddedToPoolAt)
+              .thenComparing(PendingTransaction::getAddedAt)
               .thenComparing(PendingTransaction::getSequence)
               .reversed());
 
@@ -100,8 +99,8 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
   }
 
   @Override
-  public void manageBlockAdded(final Block block) {
-    block.getHeader().getBaseFee().ifPresent(this::updateBaseFee);
+  public void manageBlockAdded(final BlockHeader blockHeader) {
+    blockHeader.getBaseFee().ifPresent(this::updateBaseFee);
   }
 
   @Override

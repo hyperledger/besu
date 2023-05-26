@@ -79,7 +79,7 @@ public class TransactionPoolFactoryTest {
   @Mock EthMessages ethMessages;
   @Mock EthScheduler ethScheduler;
 
-  @Mock GasPricePendingTransactionsSorter pendingTransactions;
+  @Mock PendingTransactions pendingTransactions;
   @Mock PeerTransactionTracker peerTransactionTracker;
   @Mock TransactionsMessageSender transactionsMessageSender;
 
@@ -243,7 +243,7 @@ public class TransactionPoolFactoryTest {
             schedule,
             context,
             ethContext,
-            new NoOpMetricsSystem(),
+            new TransactionPoolMetrics(new NoOpMetricsSystem()),
             syncState,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             ImmutableTransactionPoolConfiguration.builder()

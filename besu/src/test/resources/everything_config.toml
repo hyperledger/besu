@@ -85,6 +85,7 @@ rpc-ws-authentication-jwt-algorithm="RS256"
 rpc-http-tls-protocols=["TLSv1.2,TlSv1.1"]
 rpc-http-tls-cipher-suites=["TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384","TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"]
 rpc-http-max-batch-size=1
+rpc-http-max-request-content-length = 5242880
 rpc-max-logs-range=100
 
 # PRIVACY TLS
@@ -175,6 +176,9 @@ tx-pool-limit-by-account-percentage=0.017
 Xincoming-tx-messages-keep-alive-seconds=60
 rpc-tx-feecap=2000000000000000000
 strict-tx-replay-protection-enabled=true
+tx-pool-disable-locals=false
+tx-pool-enable-save-restore=true
+tx-pool-save-file="txpool.dump"
 
 # Revert Reason
 revert-reason-enabled=false
@@ -213,6 +217,7 @@ Xp2p-tls-truststore-type="none"
 Xp2p-tls-truststore-file="none.file"
 Xp2p-tls-keystore-password-file="none"
 Xp2p-tls-crl-file="none.file"
+Xp2p-tls-clienthello-sni=false
 
 #contracts
 Xevm-jumpdest-cache-weight-kb=32000
