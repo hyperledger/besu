@@ -1,11 +1,9 @@
 {
-  "request":     
-    "{ block { number } }",
-
-  "response":  {
-    "data" : {
-      "block" : {
-        "number" : 33
+  "request": "{ block { number } }",
+  "response": {
+    "data": {
+      "block": {
+        "number": "0x21"
       }
     }
   },

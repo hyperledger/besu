@@ -299,20 +299,19 @@ public class Scalars {
         }
       };
 
-  private static final Coercing<Number, Number> LONG_COERCING =
+  private static final Coercing<Number, String> LONG_COERCING =
       new Coercing<>() {
         @Override
-        public Number serialize(
+        public String serialize(
             final Object input, final GraphQLContext graphQLContext, final Locale locale)
             throws CoercingSerializeException {
           if (input instanceof Number number) {
-            return number;
+              return Bytes.ofUnsignedLong(number.longValue()).toQuantityHexString();
           } else if (input instanceof String string) {
-            final String value = string.toLowerCase();
-            if (value.startsWith("0x")) {
-              return Bytes.fromHexStringLenient(value).toLong();
+            if (string.startsWith("0x")) {
+              return string;
             } else {
-              return Long.parseLong(value);
+              return "0x" + string;
             }
           }
           throw new CoercingSerializeException("Unable to serialize " + input + " as an Long");
