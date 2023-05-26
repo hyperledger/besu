@@ -155,7 +155,7 @@ task acceptanceTestMainnet(type: Test) {
   doFirst { mkdir "${buildDir}/jvmErrorLogs" }
 }
 
-task acceptanceTestBftClique(type: Test) {
+task acceptanceTestCliqueBft(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
   include '**/bft/**'
   include '**/clique/**'
