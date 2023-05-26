@@ -307,6 +307,9 @@ public class BlockTransactionSelector {
       if (blockOccupancyAboveThreshold()) {
         LOG.trace("Block occupancy above threshold, completing operation");
         return TransactionSelectionResult.COMPLETE_OPERATION;
+      } else if (blockFull()) {
+        LOG.trace("Block full, completing operation");
+        return TransactionSelectionResult.COMPLETE_OPERATION;
       } else {
         return TransactionSelectionResult.CONTINUE;
       }
@@ -458,15 +461,34 @@ public class BlockTransactionSelector {
   }
 
   private boolean blockOccupancyAboveThreshold() {
-    final double gasAvailable = processableBlockHeader.getGasLimit();
-    final double gasUsed = transactionSelectionResult.getCumulativeGasUsed();
-    final double occupancyRatio = gasUsed / gasAvailable;
+    final long gasAvailable = processableBlockHeader.getGasLimit();
+    final long gasUsed = transactionSelectionResult.getCumulativeGasUsed();
+    final long gasRemaining = gasAvailable - gasUsed;
+
+    final double occupancyRatio = (double) gasUsed / (double) gasAvailable;
     LOG.trace(
-        "Min block occupancy ratio {}, gas used {}, available {}, used/available {}",
+        "Min block occupancy ratio {}, gas used {}, available {}, remaining {}, used/available {}",
         minBlockOccupancyRatio,
         gasUsed,
         gasAvailable,
+        gasRemaining,
         occupancyRatio);
+
     return occupancyRatio >= minBlockOccupancyRatio;
+  }
+
+  private boolean blockFull() {
+    final long gasAvailable = processableBlockHeader.getGasLimit();
+    final long gasUsed = transactionSelectionResult.getCumulativeGasUsed();
+    final long gasRemaining = gasAvailable - gasUsed;
+
+    if (gasRemaining < gasCalculator.getMinimumTransactionCost()) {
+      LOG.trace(
+          "Block full, remaining gas {} is less than minimum transaction gas cost {}",
+          gasRemaining,
+          gasCalculator.getMinimumTransactionCost());
+      return true;
+    }
+    return false;
   }
 }
