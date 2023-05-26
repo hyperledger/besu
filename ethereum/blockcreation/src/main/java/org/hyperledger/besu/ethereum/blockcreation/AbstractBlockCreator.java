@@ -203,15 +203,12 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final DepositsValidator depositsValidator = newProtocolSpec.getDepositsValidator();
       Optional<List<Deposit>> maybeDeposits = Optional.empty();
 
-      if (depositsValidator instanceof DepositsValidator.AllowedDeposits && depositContractAddress.isPresent()) {
+      if (depositsValidator instanceof DepositsValidator.AllowedDeposits
+          && depositContractAddress.isPresent()) {
         final List<Deposit> depositsFromReceipts =
             transactionResults.getReceipts().stream()
                 .flatMap(receipt -> receipt.getLogsList().stream())
-                .filter(
-                    log ->
-                        depositContractAddress
-                            .get()
-                            .equals(log.getLogger()))
+                .filter(log -> depositContractAddress.get().equals(log.getLogger()))
                 .map(DepositDecoder::decodeFromLog)
                 .toList();
         maybeDeposits = Optional.of(depositsFromReceipts);
