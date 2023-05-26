@@ -13,7 +13,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.besu.plugin.data;
+package org.hyperledger.besu.ethereum.eth.transactions;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -26,6 +26,7 @@ public class TransactionSelectionResult {
 
   private enum Status {
     SELECTED,
+    BLOCK_FULL(true, false),
     BLOCK_OCCUPANCY_ABOVE_THRESHOLD(true, false),
     INVALID_TRANSIENT(false, false),
     INVALID(false, true);
@@ -52,6 +53,9 @@ public class TransactionSelectionResult {
   /** The transaction has been selected to be included in the new block */
   public static final TransactionSelectionResult SELECTED =
       new TransactionSelectionResult(Status.SELECTED);
+  /** The transaction has not been selected since the block is full. */
+  public static final TransactionSelectionResult BLOCK_FULL =
+      new TransactionSelectionResult(Status.BLOCK_FULL);
   /**
    * The transaction has not been selected since too large and the occupancy of the block is enough
    * to stop the selection.

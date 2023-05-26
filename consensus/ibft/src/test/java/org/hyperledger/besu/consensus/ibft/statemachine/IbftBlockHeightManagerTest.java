@@ -151,8 +151,7 @@ public class IbftBlockHeightManagerTest {
         .thenReturn(futureRoundProposalMessageValidator);
     when(messageValidatorFactory.createMessageValidator(any(), any())).thenReturn(messageValidator);
 
-    protocolContext =
-        new ProtocolContext(null, null, setupContextWithValidators(validators), Optional.empty());
+    protocolContext = new ProtocolContext(null, null, setupContextWithValidators(validators));
 
     // Ensure the created IbftRound has the valid ConsensusRoundIdentifier;
     when(roundFactory.createNewRound(any(), anyInt()))
