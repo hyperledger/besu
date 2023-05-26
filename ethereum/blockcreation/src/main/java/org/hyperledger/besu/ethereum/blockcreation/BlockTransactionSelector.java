@@ -493,7 +493,7 @@ public class BlockTransactionSelector {
 
     if (gasRemaining < gasCalculator.getMinimumTransactionCost()) {
       LOG.trace(
-          "Block full, remaining gas {} is less that minimum transaction gas cost {}",
+          "Block full, remaining gas {} is less than minimum transaction gas cost {}",
           gasRemaining,
           gasCalculator.getMinimumTransactionCost());
       return true;
