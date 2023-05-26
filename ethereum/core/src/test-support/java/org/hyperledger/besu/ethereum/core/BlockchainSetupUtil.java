@@ -48,7 +48,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -152,8 +151,7 @@ public class BlockchainSetupUtil {
           public <C extends ConsensusContext> C as(final Class<C> klass) {
             return null;
           }
-        },
-        Optional.empty());
+        });
   }
 
   private static BlockchainSetupUtil create(
