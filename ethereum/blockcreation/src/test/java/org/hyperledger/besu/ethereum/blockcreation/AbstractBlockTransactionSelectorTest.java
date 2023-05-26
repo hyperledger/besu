@@ -57,10 +57,8 @@ import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.txselection.TransactionSelector;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
@@ -85,15 +83,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected static final double MIN_OCCUPANCY_100_PERCENT = 1;
   protected static final KeyPair keyPair =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
-  public static final TransactionSelector DO_NOTHING_TRANSACTION_SELECTOR =
-      new TransactionSelector() {
-        @Override
-        public TransactionSelectionResult selectTransaction(
-            final org.hyperledger.besu.plugin.data.Transaction transaction,
-            final org.hyperledger.besu.plugin.data.TransactionReceipt receipt) {
-          return TransactionSelectionResult.SELECTED;
-        }
-      };
+
   protected final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   protected final Blockchain blockchain = new ReferenceTestBlockchain();
@@ -296,8 +286,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             Wei.ZERO,
             FeeMarket.london(0L),
             new LondonGasCalculator(),
-            GasLimitCalculator.constant(),
-            Optional.empty());
+            GasLimitCalculator.constant());
 
     // this should fill up all the block space
     final Transaction fillingLegacyTx =
@@ -455,11 +444,11 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final long minTxGasCost = getGasCalculator().getMinimumTransactionCost();
 
     // Add 4 transactions to the Pending Transactions
-    // 1) 90% of block (selected)
-    // 2) 90% of block (skipped since too large)
-    // 3) enough gas to only leave space for a transaction with the min gas cost (selected)
-    // 4) min gas cost (selected and 100% block gas used)
-    // 5) min gas cost (not selected since selection stopped after tx 4)
+    // 0) 90% of block (selected)
+    // 1) 90% of block (skipped since too large)
+    // 2) enough gas to only leave space for a transaction with the min gas cost (selected)
+    // 3) min gas cost (selected and 100% block gas used)
+    // 4) min gas cost (not selected since selection stopped after tx 3)
     // NOTE - PendingTransactions outputs these in nonce order
 
     final long gasLimit0 = (long) (blockHeader.getGasLimit() * 0.9);
@@ -507,10 +496,10 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final long minTxGasCost = getGasCalculator().getMinimumTransactionCost();
 
     // Add 4 transactions to the Pending Transactions
-    // 1) 90% of block (selected)
-    // 2) 90% of block (skipped since too large)
-    // 3) dot not fill the block, but leaves less gas than the min for a tx (selected)
-    // 4) min gas cost (skipped since not enough gas remaining)
+    // 0) 90% of block (selected)
+    // 1) 90% of block (skipped since too large)
+    // 2) do not fill the block, but leaves less gas than the min for a tx (selected)
+    // 3) min gas cost (skipped since not enough gas remaining)
     // NOTE - PendingTransactions outputs these in nonce order
 
     final long gasLimit0 = (long) (blockHeader.getGasLimit() * 0.9);
@@ -623,8 +612,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             dataGasPrice,
             getFeeMarket(),
             getGasCalculator(),
-            GasLimitCalculator.constant(),
-            Optional.empty());
+            GasLimitCalculator.constant());
     return selector;
   }
 

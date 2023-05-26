@@ -113,8 +113,7 @@ public class BftBlockCreatorTest {
         new ProtocolContext(
             blockchain,
             createInMemoryWorldStateArchive(),
-            setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder),
-            Optional.empty());
+            setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder));
 
     final GasPricePendingTransactionsSorter pendingTransactions =
         new GasPricePendingTransactionsSorter(
