@@ -509,7 +509,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     // Add 4 transactions to the Pending Transactions
     // 1) 90% of block (selected)
     // 2) 90% of block (skipped since too large)
-    // 3) dot not fill the block, but leaves less gas than the min for a tx (selected)
+    // 3) do not fill the block, but leaves less gas than the min for a tx (selected)
     // 4) min gas cost (skipped since not enough gas remaining)
     // NOTE - PendingTransactions outputs these in nonce order
 
