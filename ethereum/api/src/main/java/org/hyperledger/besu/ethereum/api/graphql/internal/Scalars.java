@@ -306,7 +306,7 @@ public class Scalars {
             final Object input, final GraphQLContext graphQLContext, final Locale locale)
             throws CoercingSerializeException {
           if (input instanceof Number number) {
-              return Bytes.ofUnsignedLong(number.longValue()).toQuantityHexString();
+            return Bytes.ofUnsignedLong(number.longValue()).toQuantityHexString();
           } else if (input instanceof String string) {
             if (string.startsWith("0x")) {
               return string;
