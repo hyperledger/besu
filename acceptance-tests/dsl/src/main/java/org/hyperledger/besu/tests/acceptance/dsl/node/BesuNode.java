@@ -386,7 +386,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     return LOCALHOST;
   }
 
-  private NodeRequests nodeRequests() {
+  public NodeRequests nodeRequests() {
     Optional<WebSocketService> websocketService = Optional.empty();
     if (nodeRequests == null) {
       final Web3jService web3jService;
