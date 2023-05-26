@@ -446,6 +446,8 @@ workflows:
             - integrationTests
             - unitTests
             - acceptanceTests
+            - acceptanceTestsCliqueBft
+            - acceptanceTestsPrivacyPermissioning
             - referenceTests
             - buildDocker
       - publishDocker:
