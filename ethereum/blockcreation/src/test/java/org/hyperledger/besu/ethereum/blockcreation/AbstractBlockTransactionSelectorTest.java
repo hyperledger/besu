@@ -455,11 +455,11 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final long minTxGasCost = getGasCalculator().getMinimumTransactionCost();
 
     // Add 4 transactions to the Pending Transactions
-    // 1) 90% of block (selected)
-    // 2) 90% of block (skipped since too large)
-    // 3) enough gas to only leave space for a transaction with the min gas cost (selected)
-    // 4) min gas cost (selected and 100% block gas used)
-    // 5) min gas cost (not selected since selection stopped after tx 4)
+    // 0) 90% of block (selected)
+    // 1) 90% of block (skipped since too large)
+    // 2) enough gas to only leave space for a transaction with the min gas cost (selected)
+    // 3) min gas cost (selected and 100% block gas used)
+    // 4) min gas cost (not selected since selection stopped after tx 3)
     // NOTE - PendingTransactions outputs these in nonce order
 
     final long gasLimit0 = (long) (blockHeader.getGasLimit() * 0.9);
@@ -507,10 +507,10 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final long minTxGasCost = getGasCalculator().getMinimumTransactionCost();
 
     // Add 4 transactions to the Pending Transactions
-    // 1) 90% of block (selected)
-    // 2) 90% of block (skipped since too large)
-    // 3) do not fill the block, but leaves less gas than the min for a tx (selected)
-    // 4) min gas cost (skipped since not enough gas remaining)
+    // 0) 90% of block (selected)
+    // 1) 90% of block (skipped since too large)
+    // 2) do not fill the block, but leaves less gas than the min for a tx (selected)
+    // 3) min gas cost (skipped since not enough gas remaining)
     // NOTE - PendingTransactions outputs these in nonce order
 
     final long gasLimit0 = (long) (blockHeader.getGasLimit() * 0.9);
