@@ -240,7 +240,7 @@ jobs:
       - capture_test_results
       - capture_test_logs
 
-  acceptanceTestsNonMainnet:
+  acceptanceTestsCliqueBft:
     parallelism: 6
     executor: xl_machine_executor
     steps:
@@ -258,7 +258,29 @@ jobs:
               | circleci tests split --split-by=timings --timings-type=classname)
             # Format the arguments to "./gradlew test"
             GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
-            ./gradlew --no-daemon acceptanceTestNonMainnet $GRADLE_ARGS
+            ./gradlew --no-daemon acceptanceTestsCliqueBft $GRADLE_ARGS
+      - capture_test_results
+      - capture_test_logs
+
+  acceptanceTestsPrivacyPermissioning:
+    parallelism: 6
+    executor: xl_machine_executor
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: AcceptanceTests (Non-Mainnet)
+          no_output_timeout: 20m
+          command: |
+            CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
+              | sed 's@.*/src/test/java/@@' \
+              | sed 's@/@.@g' \
+              | sed 's/.\{5\}$//' \
+              | circleci tests split --split-by=timings --timings-type=classname)
+            # Format the arguments to "./gradlew test"
+            GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
+            ./gradlew --no-daemon acceptanceTestsPrivacyPermissioning $GRADLE_ARGS
       - capture_test_results
       - capture_test_logs
 
@@ -401,6 +423,12 @@ workflows:
       - acceptanceTests:
           requires:
             - assemble
+      - acceptanceTestsCliqueBft:
+          requires:
+            - assemble
+      - acceptanceTestsPrivacyPermissioning:
+          requires:
+            - assemble
       - buildDocker:
           requires:
             - assemble
@@ -472,4 +500,3 @@ workflows:
     jobs:
       - assemble
       - dockerScan
-      - acceptanceTestsNonMainnet

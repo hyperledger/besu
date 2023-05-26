@@ -155,10 +155,36 @@ task acceptanceTestMainnet(type: Test) {
   doFirst { mkdir "${buildDir}/jvmErrorLogs" }
 }
 
-task acceptanceTestNonMainnet(type: Test) {
+task acceptanceTestBftClique(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
   include '**/bft/**'
   include '**/clique/**'
+
+  useJUnitPlatform {}
+
+  dependsOn(rootProject.installDist)
+  setSystemProperties(test.getSystemProperties())
+  systemProperty 'acctests.runBesuAsProcess', 'true'
+  systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
+  mustRunAfter rootProject.subprojects*.test
+  description = 'Runs Clique and BFT Besu acceptance tests.'
+  group = 'verification'
+
+  jvmArgs "-XX:ErrorFile=${buildDir}/jvmErrorLogs/java_err_pid%p.log"
+
+  testLogging {
+    exceptionFormat = 'full'
+    showStackTraces = true
+    showStandardStreams = Boolean.getBoolean('acctests.showStandardStreams')
+    showExceptions = true
+    showCauses = true
+  }
+
+  doFirst { mkdir "${buildDir}/jvmErrorLogs" }
+}
+
+task acceptanceTestPrivacyPermissioning(type: Test) {
+  inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
   include '**/permissioning/**'
   include '**/privacy/**'
 
@@ -169,7 +195,7 @@ task acceptanceTestNonMainnet(type: Test) {
   systemProperty 'acctests.runBesuAsProcess', 'true'
   systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
   mustRunAfter rootProject.subprojects*.test
-  description = 'Runs NON-MAINNET Besu acceptance tests for permissioning and privacy (excluding mainnet features).'
+  description = 'Runs Permissioning and Privacy Besu acceptance tests.'
   group = 'verification'
 
   jvmArgs "-XX:ErrorFile=${buildDir}/jvmErrorLogs/java_err_pid%p.log"
