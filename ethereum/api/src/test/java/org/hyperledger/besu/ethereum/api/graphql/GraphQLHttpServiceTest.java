@@ -344,8 +344,8 @@ public class GraphQLHttpServiceTest {
       final String jsonStr = resp.body().string();
       final JsonObject json = new JsonObject(jsonStr);
       testHelper.assertValidGraphQLResult(json);
-      final int result = json.getJsonObject("data").getJsonObject("block").getInteger("ommerCount");
-      Assertions.assertThat(result).isEqualTo(uncleCount);
+      final String result = json.getJsonObject("data").getJsonObject("block").getString("ommerCount");
+      Assertions.assertThat(Bytes.fromHexStringLenient(result).toInt()).isEqualTo(uncleCount);
     }
   }
 
@@ -370,8 +370,8 @@ public class GraphQLHttpServiceTest {
       final String jsonStr = resp.body().string();
       final JsonObject json = new JsonObject(jsonStr);
       testHelper.assertValidGraphQLResult(json);
-      final int result = json.getJsonObject("data").getJsonObject("block").getInteger("ommerCount");
-      Assertions.assertThat(result).isEqualTo(uncleCount);
+      final String result = json.getJsonObject("data").getJsonObject("block").getString("ommerCount");
+      Assertions.assertThat(Bytes.fromHexStringLenient(result).toInt()).isEqualTo(uncleCount);
     }
   }
 
@@ -395,8 +395,8 @@ public class GraphQLHttpServiceTest {
       final String jsonStr = resp.body().string();
       final JsonObject json = new JsonObject(jsonStr);
       testHelper.assertValidGraphQLResult(json);
-      final int result = json.getJsonObject("data").getJsonObject("block").getInteger("ommerCount");
-      Assertions.assertThat(result).isEqualTo(uncleCount);
+      final String result = json.getJsonObject("data").getJsonObject("block").getString("ommerCount");
+      Assertions.assertThat(Bytes.fromHexStringLenient(result).toInt()).isEqualTo(uncleCount);
     }
   }
 
