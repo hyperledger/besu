@@ -331,8 +331,7 @@ public class GraphQLHttpServiceTest {
     @SuppressWarnings("unchecked")
     final List<Hash> list = Mockito.mock(List.class);
 
-    Mockito.when(blockchainQueries.blockByHash(blockHash))
-        .thenReturn(Optional.of(block));
+    Mockito.when(blockchainQueries.blockByHash(blockHash)).thenReturn(Optional.of(block));
     Mockito.when(block.getOmmers()).thenReturn(list);
     Mockito.when(list.size()).thenReturn(uncleCount);
 
@@ -344,7 +343,8 @@ public class GraphQLHttpServiceTest {
       final String jsonStr = resp.body().string();
       final JsonObject json = new JsonObject(jsonStr);
       testHelper.assertValidGraphQLResult(json);
-      final String result = json.getJsonObject("data").getJsonObject("block").getString("ommerCount");
+      final String result =
+          json.getJsonObject("data").getJsonObject("block").getString("ommerCount");
       Assertions.assertThat(Bytes.fromHexStringLenient(result).toInt()).isEqualTo(uncleCount);
     }
   }
@@ -370,7 +370,8 @@ public class GraphQLHttpServiceTest {
       final String jsonStr = resp.body().string();
       final JsonObject json = new JsonObject(jsonStr);
       testHelper.assertValidGraphQLResult(json);
-      final String result = json.getJsonObject("data").getJsonObject("block").getString("ommerCount");
+      final String result =
+          json.getJsonObject("data").getJsonObject("block").getString("ommerCount");
       Assertions.assertThat(Bytes.fromHexStringLenient(result).toInt()).isEqualTo(uncleCount);
     }
   }
@@ -395,7 +396,8 @@ public class GraphQLHttpServiceTest {
       final String jsonStr = resp.body().string();
       final JsonObject json = new JsonObject(jsonStr);
       testHelper.assertValidGraphQLResult(json);
-      final String result = json.getJsonObject("data").getJsonObject("block").getString("ommerCount");
+      final String result =
+          json.getJsonObject("data").getJsonObject("block").getString("ommerCount");
       Assertions.assertThat(Bytes.fromHexStringLenient(result).toInt()).isEqualTo(uncleCount);
     }
   }
