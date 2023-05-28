@@ -45,9 +45,7 @@ import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
-import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
-import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
@@ -56,7 +54,6 @@ import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
-import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -66,7 +63,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -95,22 +91,14 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     besuPluginContext.addService(StorageService.class, storageService);
     besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
     besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
-    besuPluginContext.addService(
-        TransactionSelectionService.class, new TransactionSelectionServiceImpl());
 
-    final Path pluginsPath;
-    final String pluginDirEnv = System.getenv("besu.plugins.dir");
-    if (pluginDirEnv == null || pluginDirEnv.isEmpty()) {
-      pluginsPath = node.homeDirectory().resolve("plugins");
-      final File pluginsDirFile = pluginsPath.toFile();
-      if (!pluginsDirFile.isDirectory()) {
-        pluginsDirFile.mkdirs();
-        pluginsDirFile.deleteOnExit();
-      }
-    } else {
-      pluginsPath = Path.of(pluginDirEnv);
-      System.setProperty("besu.plugins.dir", pluginsPath.toString());
+    final Path pluginsPath = node.homeDirectory().resolve("plugins");
+    final File pluginsDirFile = pluginsPath.toFile();
+    if (!pluginsDirFile.isDirectory()) {
+      pluginsDirFile.mkdirs();
+      pluginsDirFile.deleteOnExit();
     }
+    System.setProperty("besu.plugins.dir", pluginsPath.toString());
     besuPluginContext.registerPlugins(pluginsPath);
 
     commandLine.parseArgs(node.getConfiguration().getExtraCLIOptions().toArray(new String[0]));
@@ -181,9 +169,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     final int maxPeers = 25;
 
-    final Optional<TransactionSelectorFactory> transactionSelectorFactory =
-        getTransactionSelectorFactory(besuPluginContext);
-
     builder
         .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
         .dataDirectory(node.homeDirectory())
@@ -205,8 +190,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .lowerBoundPeers(maxPeers)
         .maxRemotelyInitiatedPeers(15)
         .networkConfiguration(node.getNetworkingConfiguration())
-        .randomPeerPriority(false)
-        .transactionSelectorFactory(transactionSelectorFactory);
+        .randomPeerPriority(false);
 
     node.getGenesisConfig()
         .map(GenesisConfigFile::fromConfig)
@@ -314,12 +298,5 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   @Override
   public String getConsoleContents() {
     throw new RuntimeException("Console contents can only be captured in process execution");
-  }
-
-  private Optional<TransactionSelectorFactory> getTransactionSelectorFactory(
-      final BesuPluginContextImpl besuPluginContext) {
-    final Optional<TransactionSelectionService> txSelectionService =
-        besuPluginContext.getService(TransactionSelectionService.class);
-    return txSelectionService.isPresent() ? txSelectionService.get().get() : Optional.empty();
   }
 }

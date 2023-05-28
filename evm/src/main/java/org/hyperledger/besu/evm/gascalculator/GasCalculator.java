@@ -489,6 +489,13 @@ public interface GasCalculator {
   long getMaximumTransactionCost(int size);
 
   /**
+   * Minimum gas cost of a transaction.
+   *
+   * @return the minimum gas cost
+   */
+  long getMinimumTransactionCost();
+
+  /**
    * Returns the cost of a loading from Transient Storage
    *
    * @return the cost of a TLOAD from a storage slot

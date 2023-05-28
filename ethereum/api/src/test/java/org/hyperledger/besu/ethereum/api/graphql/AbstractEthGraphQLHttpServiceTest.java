@@ -156,7 +156,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
 
     final MutableBlockchain blockchain =
         InMemoryKeyValueStorageProvider.createInMemoryBlockchain(GENESIS_BLOCK);
-    context = new ProtocolContext(blockchain, stateArchive, null, Optional.empty());
+    context = new ProtocolContext(blockchain, stateArchive, null);
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
             context.getBlockchain(),

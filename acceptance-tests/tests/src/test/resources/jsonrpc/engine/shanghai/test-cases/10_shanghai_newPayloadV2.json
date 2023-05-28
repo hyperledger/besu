@@ -1,0 +1,49 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "engine_newPayloadV2",
+    "params": [
+      {
+        "parentHash": "0x9392d866ef80eb0d7a1700362326e3396cc9550b757bda2191548fb1447f5d26",
+        "feeRecipient": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+        "stateRoot": "0xb478b6884d890760bb1abc5e0c4df9973df70c39f32c8e7a9e7d11cf4b0a0c7e",
+        "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "gasLimit": "0x1c9c380",
+        "gasUsed": "0x0",
+        "timestamp": "0x10",
+        "extraData": "0x",
+        "baseFeePerGas": "0x7",
+        "transactions": [],
+        "withdrawals": [
+          {
+            "index": "0x0",
+            "validatorIndex": "0x0",
+            "address": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "amount": "0x1"
+          },
+          {
+            "index": "0x1",
+            "validatorIndex": "0x1",
+            "address": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+            "amount": "0x2"
+          }
+        ],
+        "blockNumber": "0x2",
+        "blockHash": "0xa6df103af38454a1b423d1d66444a60be92bc0b2dd9c4f0977b4d8a840cc20d8",
+        "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
+      }
+    ],
+    "id": 67
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 67,
+    "result": {
+      "status": "VALID",
+      "latestValidHash": "0xa6df103af38454a1b423d1d66444a60be92bc0b2dd9c4f0977b4d8a840cc20d8",
+      "validationError": null
+    }
+  },
+  "statusCode": 200
+}
