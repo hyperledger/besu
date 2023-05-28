@@ -62,7 +62,7 @@ public interface EthStatsConnectOptions {
       if (scheme != null) {
         // make sure that scheme is either ws or wss
         if (!scheme.equalsIgnoreCase("ws") && !scheme.equalsIgnoreCase("wss")) {
-          throw new IllegalArgumentException("EthStats URI only support ws:// or wss:// scheme.");
+          throw new IllegalArgumentException("Ethstats URI only support ws:// or wss:// scheme.");
         }
       }
 
