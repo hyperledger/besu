@@ -54,7 +54,7 @@ public interface EthStatsConnectOptions {
         uri = URI.create(url);
         scheme = uri.getScheme();
       } else {
-        // append ws:// to make a valid URI while keeping scheme as null
+        // prepend ws:// to make a valid URI while keeping scheme as null
         uri = URI.create("ws://" + url);
         scheme = null;
       }
