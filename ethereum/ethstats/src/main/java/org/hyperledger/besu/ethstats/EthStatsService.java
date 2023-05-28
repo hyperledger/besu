@@ -166,7 +166,7 @@ public class EthStatsService {
       final EthStatsConnectOptions ethStatsConnectOptions) {
     // if user specified scheme is null, default ssl to true, otherwise set ssl to true for wss
     // scheme.
-    boolean isSSL =
+    final boolean isSSL =
         ethStatsConnectOptions.getScheme() == null
             || ethStatsConnectOptions.getScheme().equalsIgnoreCase("wss");
     return new WebSocketConnectOptions()
