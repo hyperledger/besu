@@ -270,7 +270,7 @@ public class EthStatsService {
     if (retryInProgress.getAndSet(true) == FALSE) {
       stop();
       updateSSLProtocol(); // switch from ssl:true to ssl:false and vice-versa
-      LOG.info("Attempting to reconnect to EthStats service in approximately 10 seconds.");
+      LOG.info("Attempting to reconnect to ethstats server in approximately 10 seconds.");
       protocolManager
           .ethContext()
           .getScheduler()
