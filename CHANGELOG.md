@@ -5,7 +5,8 @@
 ### Breaking Changes
 
 ### Additions and Improvements
-
+- Allow Ethstats connection url to specify ws:// or wss:// scheme. [#5494](https://github.com/hyperledger/besu/issues/5494)
+- 
 ### Bug Fixes
 
 ### Download Links
