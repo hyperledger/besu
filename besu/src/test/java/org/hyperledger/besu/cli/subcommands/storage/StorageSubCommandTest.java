@@ -12,20 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli;
+package org.hyperledger.besu.cli.subcommands.storage;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.BesuInfo;
 
+import org.hyperledger.besu.cli.CommandTestAbstract;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import picocli.CommandLine.Model.CommandSpec;
 
 @RunWith(MockitoJUnitRunner.class)
-public class PasswordSubCommandTest extends CommandTestAbstract {
+public class StorageSubCommandTest extends CommandTestAbstract {
 
   @Test
   public void passwordSubCommandExistsWithHashSubCommand() {

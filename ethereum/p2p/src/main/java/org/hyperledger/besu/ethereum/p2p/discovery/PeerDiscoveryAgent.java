@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.SEQ_NO_STORE;
 
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -35,7 +34,6 @@ import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -129,28 +127,9 @@ public abstract class PeerDiscoveryAgent {
     this.id = nodeKey.getPublicKey().getEncodedBytes();
 
     this.variablesStorage = storageProvider.createVariablesStorage();
-    migrateVariablesIfNeeded(storageProvider);
     this.forkIdManager = forkIdManager;
     this.forkIdSupplier = () -> forkIdManager.getForkIdForChainHead().getForkIdAsBytesList();
     this.rlpxAgent = rlpxAgent;
-  }
-
-  private void migrateVariablesIfNeeded(final StorageProvider storageProvider) {
-    final var blockchainStorage =
-        storageProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.BLOCKCHAIN);
-
-    blockchainStorage
-        .get(SEQ_NO_STORE.toByteArray())
-        .map(Bytes::wrap)
-        .ifPresent(
-            nodeRecord -> {
-              final var variablesUpdater = variablesStorage.updater();
-              final var blockchainUpdater = blockchainStorage.startTransaction();
-              variablesUpdater.setLocalEnrSeqno(nodeRecord);
-              blockchainUpdater.remove(SEQ_NO_STORE.toByteArray());
-              variablesUpdater.commit();
-              blockchainUpdater.commit();
-            });
   }
 
   protected abstract TimerUtil createTimer();

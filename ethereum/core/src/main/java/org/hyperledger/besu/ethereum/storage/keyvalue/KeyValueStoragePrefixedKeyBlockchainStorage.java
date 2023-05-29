@@ -60,7 +60,6 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
     this.blockchainStorage = blockchainStorage;
     this.variablesStorage = variablesStorage;
     this.blockHeaderFunctions = blockHeaderFunctions;
-    migrateVariablesIfNeeded();
   }
 
   @Override
@@ -131,49 +130,6 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
   Optional<Bytes> get(final Bytes prefix, final Bytes key) {
     return blockchainStorage.get(Bytes.concatenate(prefix, key).toArrayUnsafe()).map(Bytes::wrap);
-  }
-
-  private void migrateVariablesIfNeeded() {
-    final var blockchainUpdater = updater();
-    final var variablesUpdater = variablesStorage.updater();
-
-    get(VARIABLES_PREFIX, CHAIN_HEAD_HASH.getBytes())
-        .map(Bytes::wrap)
-        .map(this::bytesToHash)
-        .ifPresent(
-            chainHead -> {
-              variablesUpdater.setChainHead(chainHead);
-              blockchainUpdater.remove(VARIABLES_PREFIX, CHAIN_HEAD_HASH.getBytes());
-            });
-
-    get(VARIABLES_PREFIX, FORK_HEADS.getBytes())
-        .map(Bytes::wrap)
-        .map(bytes -> RLP.input(bytes).readList(in -> this.bytesToHash(in.readBytes32())))
-        .ifPresent(
-            forkHeads -> {
-              variablesUpdater.setForkHeads(forkHeads);
-              blockchainUpdater.remove(VARIABLES_PREFIX, FORK_HEADS.getBytes());
-            });
-
-    get(VARIABLES_PREFIX, FINALIZED_BLOCK_HASH.getBytes())
-        .map(Bytes::wrap)
-        .map(this::bytesToHash)
-        .ifPresent(
-            finalizedHash -> {
-              variablesUpdater.setFinalized(finalizedHash);
-              blockchainUpdater.remove(VARIABLES_PREFIX, FINALIZED_BLOCK_HASH.getBytes());
-            });
-
-    get(VARIABLES_PREFIX, SAFE_BLOCK_HASH.getBytes())
-        .map(Bytes::wrap)
-        .map(this::bytesToHash)
-        .ifPresent(
-            safeHash -> {
-              variablesUpdater.setSafeBlock(safeHash);
-              blockchainUpdater.remove(VARIABLES_PREFIX, SAFE_BLOCK_HASH.getBytes());
-            });
-    variablesUpdater.commit();
-    blockchainUpdater.commit();
   }
 
   public static class Updater implements BlockchainStorage.Updater {
@@ -280,6 +236,14 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
     public void rollback() {
       variablesUpdater.rollback();
       blockchainTransaction.rollback();
+    }
+
+    @Override
+    public void removeVariables() {
+      remove(VARIABLES_PREFIX, CHAIN_HEAD_HASH.getBytes());
+      remove(VARIABLES_PREFIX, FINALIZED_BLOCK_HASH.getBytes());
+      remove(VARIABLES_PREFIX, SAFE_BLOCK_HASH.getBytes());
+      remove(VARIABLES_PREFIX, FORK_HEADS.getBytes());
     }
 
     void set(final Bytes prefix, final Bytes key, final Bytes value) {
