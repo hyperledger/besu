@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
-import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.evm.log.LogTopic;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
@@ -240,23 +239,20 @@ public class BlockAdapterBase extends AdapterBase {
             data,
             Optional.empty());
 
-    final Optional<TransactionSimulatorResult> opt =
-        transactionSimulator.process(
-            param,
-            TransactionValidationParams.transactionSimulator(),
-            OperationTracer.NO_TRACING,
-            bn);
-    if (opt.isPresent()) {
-      final TransactionSimulatorResult result = opt.get();
-      long status = 0;
-      if (result.isSuccessful()) {
-        status = 1;
-      }
-      final CallResult callResult =
-          new CallResult(status, result.getGasEstimate(), result.getOutput());
-      return Optional.of(callResult);
-    }
-    return Optional.empty();
+    return transactionSimulator.process(
+        param,
+        TransactionValidationParams.transactionSimulator(),
+        OperationTracer.NO_TRACING,
+        (mutableWorldState, transactionSimulatorResult) ->
+            transactionSimulatorResult.map(
+                result -> {
+                  long status = 0;
+                  if (result.isSuccessful()) {
+                    status = 1;
+                  }
+                  return new CallResult(status, result.getGasEstimate(), result.getOutput());
+                }),
+        header);
   }
 
   Optional<Bytes> getRawHeader() {

@@ -48,6 +48,7 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -107,47 +108,34 @@ public class TransactionSimulator {
       final OperationTracer operationTracer,
       final long blockNumber) {
     final BlockHeader header = blockchain.getBlockHeader(blockNumber).orElse(null);
-    return process(callParams, transactionValidationParams, operationTracer, header);
-  }
-
-  public Optional<TransactionSimulatorResult> process(
-      final CallParameter callParams, final Hash blockHeaderHash) {
-    final BlockHeader header = blockchain.getBlockHeader(blockHeaderHash).orElse(null);
-    return process(
-        callParams,
-        TransactionValidationParams.transactionSimulator(),
-        OperationTracer.NO_TRACING,
-        header);
-  }
-
-  public Optional<TransactionSimulatorResult> process(
-      final CallParameter callParams, final long blockNumber) {
-    return process(
-        callParams,
-        TransactionValidationParams.transactionSimulator(),
-        OperationTracer.NO_TRACING,
-        blockNumber);
-  }
-
-  public Optional<TransactionSimulatorResult> processAtHead(final CallParameter callParams) {
-    return process(
-        callParams,
-        TransactionValidationParams.transactionSimulator(),
-        OperationTracer.NO_TRACING,
-        blockchain.getChainHeadHeader());
-  }
-
-  public Optional<TransactionSimulatorResult> process(
-      final CallParameter callParams,
-      final TransactionValidationParams transactionValidationParams,
-      final OperationTracer operationTracer,
-      final BlockHeader header) {
     return process(
         callParams,
         transactionValidationParams,
         operationTracer,
         (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
         header);
+  }
+
+  public <U> Optional<TransactionSimulatorResult> processAtHead(final CallParameter callParams) {
+    return process(
+        callParams,
+        TransactionValidationParams.transactionSimulator(),
+        OperationTracer.NO_TRACING,
+        (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
+        blockchain.getChainHeadHeader());
+  }
+
+  public <U> Optional<U> processAtHead(
+      final CallParameter callParams,
+      final BiFunction<
+              MutableWorldState, Optional<TransactionSimulatorResult>, ? extends Optional<U>>
+          mapper) {
+    return process(
+        callParams,
+        TransactionValidationParams.transactionSimulator(),
+        OperationTracer.NO_TRACING,
+        mapper,
+        blockchain.getChainHeadHeader());
   }
 
   public <U> Optional<U> process(
@@ -180,6 +168,28 @@ public class TransactionSimulator {
     } catch (final Exception e) {
       return Optional.empty();
     }
+  }
+
+  @VisibleForTesting
+  public Optional<TransactionSimulatorResult> process(
+      final CallParameter callParams, final Hash blockHeaderHash) {
+    final BlockHeader header = blockchain.getBlockHeader(blockHeaderHash).orElse(null);
+    return process(
+        callParams,
+        TransactionValidationParams.transactionSimulator(),
+        OperationTracer.NO_TRACING,
+        (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
+        header);
+  }
+
+  @VisibleForTesting
+  public Optional<TransactionSimulatorResult> process(
+      final CallParameter callParams, final long blockNumber) {
+    return process(
+        callParams,
+        TransactionValidationParams.transactionSimulator(),
+        OperationTracer.NO_TRACING,
+        blockNumber);
   }
 
   private MutableWorldState getWorldState(final BlockHeader header) {

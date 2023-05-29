@@ -71,8 +71,10 @@ public class EthEstimateGas extends AbstractEstimateGas {
                 .isAllowExceedingBalance(!callParams.isMaybeStrict().orElse(Boolean.FALSE))
                 .build(),
             operationTracer,
-            blockHeader.getNumber())
-        .map(gasEstimateResponse(requestContext, operationTracer))
+            (mutableWorldState, transactionSimulatorResult) ->
+                transactionSimulatorResult.map(
+                    gasEstimateResponse(requestContext, operationTracer)),
+            blockHeader)
         .orElse(errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR));
   }
 

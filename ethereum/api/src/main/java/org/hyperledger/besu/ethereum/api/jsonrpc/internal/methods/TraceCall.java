@@ -83,37 +83,35 @@ public class TraceCall extends AbstractTraceByBlock implements JsonRpcMethod {
             callParams,
             buildTransactionValidationParams(),
             tracer,
-            (mutableWorldState, maybeSimulatorResult) -> {
-              if (maybeSimulatorResult.isEmpty()) {
-                LOG.error(
-                    "Empty simulator result. call params: {}, blockHeader: {} ",
-                    callParams,
-                    maybeBlockHeader.get());
-                return Optional.of(
-                    new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
-              }
-              final TransactionSimulatorResult simulatorResult = maybeSimulatorResult.get();
+            (mutableWorldState, maybeSimulatorResult) ->
+                maybeSimulatorResult.map(
+                    result -> {
+                      final TransactionSimulatorResult simulatorResult = maybeSimulatorResult.get();
 
-              if (simulatorResult.isInvalid()) {
-                LOG.error(String.format("Invalid simulator result %s", maybeSimulatorResult));
-                return Optional.of(
-                    new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
-              }
+                      if (simulatorResult.isInvalid()) {
+                        LOG.error(
+                            String.format("Invalid simulator result %s", maybeSimulatorResult));
+                        return Optional.of(
+                            new JsonRpcErrorResponse(
+                                requestContext.getRequest().getId(), INTERNAL_ERROR));
+                      }
 
-              final TransactionTrace transactionTrace =
-                  new TransactionTrace(
-                      simulatorResult.getTransaction(),
-                      simulatorResult.getResult(),
-                      tracer.getTraceFrames());
+                      final TransactionTrace transactionTrace =
+                          new TransactionTrace(
+                              simulatorResult.getTransaction(),
+                              simulatorResult.getResult(),
+                              tracer.getTraceFrames());
 
-              final Block block =
-                  blockchainQueriesSupplier.get().getBlockchain().getChainHeadBlock();
+                      final Block block =
+                          blockchainQueriesSupplier.get().getBlockchain().getChainHeadBlock();
 
-              return Optional.of(
-                  getTraceCallResult(
-                      protocolSchedule, traceTypes, maybeSimulatorResult, transactionTrace, block));
-            },
+                      return Optional.of(
+                          getTraceCallResult(
+                              protocolSchedule, traceTypes, result, transactionTrace, block));
+                    }),
             maybeBlockHeader.get())
-        .orElseThrow();
+        .orElse(
+            Optional.of(
+                new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR)));
   }
 }
