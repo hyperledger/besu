@@ -474,7 +474,7 @@ public class BlockTransactionSelector {
 
     final long gasUsed = transactionSelectionResults.getCumulativeGasUsed();
     final long gasRemaining = gasAvailable - gasUsed;
-    final double occupancyRatio = gasUsed / gasAvailable;
+    final double occupancyRatio = (double) gasUsed / (double) gasAvailable;
 
     LOG.trace(
         "Min block occupancy ratio {}, gas used {}, available {}, remaining {}, used/available {}",
