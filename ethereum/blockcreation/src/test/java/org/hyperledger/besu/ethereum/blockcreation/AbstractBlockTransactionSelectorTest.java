@@ -625,6 +625,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             new LondonGasCalculator(),
             GasLimitCalculator.constant(),
             Optional.empty());
+
     return selector;
   }
 
