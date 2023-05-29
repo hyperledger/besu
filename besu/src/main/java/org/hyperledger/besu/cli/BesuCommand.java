@@ -125,7 +125,6 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.FrontierTargetingGasLimitCalculator;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
@@ -189,7 +188,6 @@ import org.hyperledger.besu.util.LogConfigurator;
 import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.PermissioningConfigurationValidator;
 import org.hyperledger.besu.util.number.Fraction;
-import org.hyperledger.besu.util.number.Percentage;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.io.File;
@@ -812,7 +810,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     @Option(
         names = {"--rpc-ws-max-frame-size"},
-        description =
+        description =q
             "Maximum size in bytes for JSON-RPC WebSocket frames (default: ${DEFAULT-VALUE}). If this limit is exceeded, the websocket will be disconnected.",
         arity = "1")
     private final Integer rpcWsMaxFrameSize = DEFAULT_WS_MAX_FRAME_SIZE;
@@ -1100,13 +1098,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Wei minTransactionGasPrice = DEFAULT_MIN_TRANSACTION_GAS_PRICE;
 
   @Option(
-      names = {"--rpc-tx-feecap"},
-      description =
-          "Maximum transaction fees (in Wei) accepted for transaction submitted through RPC (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Wei txFeeCap = DEFAULT_RPC_TX_FEE_CAP;
-
-  @Option(
       names = {"--min-block-occupancy-ratio"},
       description = "Minimum occupancy ratio for a mined block (default: ${DEFAULT-VALUE})",
       arity = "1")
@@ -1196,39 +1187,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "Sets target gas limit per block. If set, each block's gas limit will approach this setting over time if the current gas limit is different.")
   private final Long targetGasLimit = null;
-
-  // Tx Pool Option Group
-  @CommandLine.ArgGroup(validate = false, heading = "@|bold Tx Pool Options|@%n")
-  TxPoolOptionGroup txPoolOptionGroup = new TxPoolOptionGroup();
-
-  static class TxPoolOptionGroup {
-    @Option(
-        names = {"--tx-pool-max-size"},
-        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-        description =
-            "Maximum number of pending transactions that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    private final Integer txPoolMaxSize =
-        TransactionPoolConfiguration.DEFAULT_MAX_PENDING_TRANSACTIONS;
-
-    @Option(
-        names = {"--tx-pool-retention-hours"},
-        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-        description =
-            "Maximum retention period of pending transactions in hours (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    private final Integer pendingTxRetentionPeriod =
-        TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
-
-    @Option(
-        names = {"--tx-pool-price-bump"},
-        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-        converter = PercentageConverter.class,
-        description =
-            "Price bump percentage to replace an already existing transaction  (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    private final Integer priceBump = TransactionPoolConfiguration.DEFAULT_PRICE_BUMP.getValue();
-  }
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
@@ -2268,7 +2226,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 .posBlockCreationRepetitionMinDuration(
                     unstableMiningOptions.getPosBlockCreationRepetitionMinDuration())
                 .build())
-        .transactionPoolConfiguration(buildTransactionPoolConfiguration())
+        .transactionPoolConfiguration(
+            unstableTransactionPoolOptions.buildTransactionPoolConfiguration(dataPath))
         .nodeKey(new NodeKey(securityModule()))
         .metricsSystem(metricsSystem.get())
         .messagePermissioningProviders(permissioningService.getMessagePermissioningProviders())
@@ -2931,18 +2890,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .toDomainObject()
         .syncMode(syncMode)
         .fastSyncMinimumPeerCount(fastSyncMinPeerCount)
-        .build();
-  }
-
-  private TransactionPoolConfiguration buildTransactionPoolConfiguration() {
-    final File saveFile = unstableTransactionPoolOptions.getSaveFile();
-    return unstableTransactionPoolOptions
-        .toDomainObject()
-        .txPoolMaxSize(txPoolOptionGroup.txPoolMaxSize)
-        .pendingTxRetentionPeriod(txPoolOptionGroup.pendingTxRetentionPeriod)
-        .priceBump(Percentage.fromInt(txPoolOptionGroup.priceBump))
-        .txFeeCap(txFeeCap)
-        .saveFile(dataPath.resolve(saveFile.getPath()).toFile())
         .build();
   }
 
