@@ -4570,56 +4570,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void pendingTransactionRetentionPeriod() {
-    final int pendingTxRetentionHours = 999;
-    parseCommand("--tx-pool-retention-hours", String.valueOf(pendingTxRetentionHours));
-    verify(mockControllerBuilder)
-        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
-    assertThat(transactionPoolConfigCaptor.getValue().getPendingTxRetentionPeriod())
-        .isEqualTo(pendingTxRetentionHours);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void transactionPoolPriceBump() {
-    final Percentage priceBump = Percentage.fromInt(13);
-    parseCommand("--tx-pool-price-bump", priceBump.toString());
-    verify(mockControllerBuilder)
-        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
-    assertThat(transactionPoolConfigCaptor.getValue().getPriceBump()).isEqualTo(priceBump);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void invalidTansactionPoolPriceBumpShouldFail() {
-    parseCommand("--tx-pool-price-bump", "101");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "Invalid value for option '--tx-pool-price-bump'",
-            "should be a number between 0 and 100 inclusive");
-  }
-
-  @Test
-  public void transactionPoolTxFeeCap() {
-    final Wei txFeeCap = Wei.fromEth(2);
-    parseCommand("--rpc-tx-feecap", txFeeCap.toDecimalString());
-    verify(mockControllerBuilder)
-        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
-    assertThat(transactionPoolConfigCaptor.getValue().getTxFeeCap()).isEqualTo(txFeeCap);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void invalidTansactionPoolTxFeeCapShouldFail() {
-    parseCommand("--rpc-tx-feecap", "abcd");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Invalid value for option '--rpc-tx-feecap'", "cannot convert 'abcd' to Wei");
-  }
-
-  @Test
   public void txMessageKeepAliveSecondsWithInvalidInputShouldFail() {
     parseCommand("--Xincoming-tx-messages-keep-alive-seconds", "acbd");
 

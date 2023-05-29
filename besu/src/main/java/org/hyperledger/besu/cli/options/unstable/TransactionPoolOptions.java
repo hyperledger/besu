@@ -14,13 +14,20 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
+import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_RPC_TX_FEE_CAP;
+
+import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.converter.FractionConverter;
+import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.options.OptionParser;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.util.number.Percentage;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
@@ -163,6 +170,40 @@ public class TransactionPoolOptions
       arity = "1")
   private File saveFile = TransactionPoolConfiguration.DEFAULT_SAVE_FILE;
 
+  @CommandLine.Option(
+      names = {"--tx-pool-max-size"},
+      paramLabel = DefaultCommandValues.MANDATORY_INTEGER_FORMAT_HELP,
+      description =
+          "Maximum number of pending transactions that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Integer txPoolMaxSize =
+      TransactionPoolConfiguration.DEFAULT_MAX_PENDING_TRANSACTIONS;
+
+  @CommandLine.Option(
+      names = {"--tx-pool-retention-hours"},
+      paramLabel = DefaultCommandValues.MANDATORY_INTEGER_FORMAT_HELP,
+      description =
+          "Maximum retention period of pending transactions in hours (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Integer pendingTxRetentionPeriod =
+      TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
+
+  @CommandLine.Option(
+      names = {"--tx-pool-price-bump"},
+      paramLabel = DefaultCommandValues.MANDATORY_INTEGER_FORMAT_HELP,
+      converter = PercentageConverter.class,
+      description =
+          "Price bump percentage to replace an already existing transaction  (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Integer priceBump = TransactionPoolConfiguration.DEFAULT_PRICE_BUMP.getValue();
+
+  @CommandLine.Option(
+      names = {"--rpc-tx-feecap"},
+      description =
+          "Maximum transaction fees (in Wei) accepted for transaction submitted through RPC (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Wei txFeeCap = DEFAULT_RPC_TX_FEE_CAP;
+
   private TransactionPoolOptions() {}
 
   /**
@@ -249,5 +290,16 @@ public class TransactionPoolOptions
    */
   public File getSaveFile() {
     return saveFile;
+  }
+
+  public TransactionPoolConfiguration buildTransactionPoolConfiguration(final Path dataPath) {
+    final File saveFile = this.getSaveFile();
+    return this.toDomainObject()
+        .txPoolMaxSize(txPoolMaxSize)
+        .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
+        .priceBump(Percentage.fromInt(priceBump))
+        .txFeeCap(txFeeCap)
+        .saveFile(dataPath.resolve(saveFile.getPath()).toFile())
+        .build();
   }
 }
