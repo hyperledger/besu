@@ -470,7 +470,7 @@ public class BlockTransactionSelector {
   Responsible for updating the state maintained between transaction validation (i.e. receipts,
   cumulative gas, world state root hash.).
    */
-  private void updateTransactionResultTracking(
+  /*  private void updateTransactionResultTracking(
       final Transaction transaction, final TransactionProcessingResult result) {
 
     final long gasUsedByTransaction = transaction.getGasLimit() - result.getGasRemaining();
@@ -486,7 +486,7 @@ public class BlockTransactionSelector {
             transaction.getType(), result, worldState, cumulativeGasUsed),
         gasUsedByTransaction,
         dataGasUsed);
-  }
+  }*/
 
   private boolean isIncorrectNonce(final ValidationResult<TransactionInvalidReason> result) {
     return result.getInvalidReason().equals(TransactionInvalidReason.NONCE_TOO_HIGH);

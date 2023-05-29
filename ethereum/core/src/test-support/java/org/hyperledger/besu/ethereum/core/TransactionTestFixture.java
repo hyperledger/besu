@@ -16,10 +16,12 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -45,6 +47,7 @@ public class TransactionTestFixture {
 
   private Optional<Wei> maxPriorityFeePerGas = Optional.empty();
   private Optional<Wei> maxFeePerGas = Optional.empty();
+  private Optional<List<Hash>> versionedHashes = Optional.empty();
 
   public Transaction createTransaction(final KeyPair keys) {
     final Transaction.Builder builder = Transaction.builder();
@@ -62,6 +65,7 @@ public class TransactionTestFixture {
 
     maxPriorityFeePerGas.ifPresent(builder::maxPriorityFeePerGas);
     maxFeePerGas.ifPresent(builder::maxFeePerGas);
+    versionedHashes.ifPresent(builder::versionedHashes);
 
     return builder.signAndBuild(keys);
   }
@@ -118,6 +122,11 @@ public class TransactionTestFixture {
 
   public TransactionTestFixture maxFeePerGas(final Optional<Wei> maxFeePerGas) {
     this.maxFeePerGas = maxFeePerGas;
+    return this;
+  }
+
+  public TransactionTestFixture versionedHashes(final Optional<List<Hash>> versionedHashes) {
+    this.versionedHashes = versionedHashes;
     return this;
   }
 }

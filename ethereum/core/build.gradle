@@ -27,22 +27,6 @@ jar {
   }
 }
 
-//repositories {
-//  mavenLocal()
-//}
-//
-//sourceControl {
-//  gitRepository("https://github.com/apache/incubator-tuweni.git") {
-//    producesModule("org.apache.tuweni:ssz")
-//  }
-//}
-//
-//
-//includeBuild('tuweni-library') {
-//  dependencySubstitution {
-//    substitute module('org.apache.tuweni:tuweni-ssz') using project(':')
-//  }
-//}
 
 
 dependencies {
@@ -78,8 +62,6 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-concurrent'
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.apache.tuweni:tuweni-rlp'
-  implementation 'org.apache.tuweni:tuweni-ssz'
-  implementation files('libs/tuweni-ssz-2.4.0-SNAPSHOT.jar')
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.immutables:value-annotations'
   implementation 'tech.pegasys:jc-kzg-4844'
