@@ -78,31 +78,42 @@ public class TraceCall extends AbstractTraceByBlock implements JsonRpcMethod {
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
 
     final DebugOperationTracer tracer = new DebugOperationTracer(buildTraceOptions(traceTypes));
-    final Optional<TransactionSimulatorResult> maybeSimulatorResult =
-        transactionSimulator.process(
-            callParams, buildTransactionValidationParams(), tracer, maybeBlockHeader.get());
+    return transactionSimulator
+        .process(
+            callParams,
+            buildTransactionValidationParams(),
+            tracer,
+            (mutableWorldState, maybeSimulatorResult) -> {
+              if (maybeSimulatorResult.isEmpty()) {
+                LOG.error(
+                    "Empty simulator result. call params: {}, blockHeader: {} ",
+                    callParams,
+                    maybeBlockHeader.get());
+                return Optional.of(
+                    new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
+              }
+              final TransactionSimulatorResult simulatorResult = maybeSimulatorResult.get();
 
-    if (maybeSimulatorResult.isEmpty()) {
-      LOG.error(
-          "Empty simulator result. call params: {}, blockHeader: {} ",
-          callParams,
-          maybeBlockHeader.get());
-      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
-    }
-    final TransactionSimulatorResult simulatorResult = maybeSimulatorResult.get();
+              if (simulatorResult.isInvalid()) {
+                LOG.error(String.format("Invalid simulator result %s", maybeSimulatorResult));
+                return Optional.of(
+                    new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
+              }
 
-    if (simulatorResult.isInvalid()) {
-      LOG.error(String.format("Invalid simulator result %s", maybeSimulatorResult));
-      return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR);
-    }
+              final TransactionTrace transactionTrace =
+                  new TransactionTrace(
+                      simulatorResult.getTransaction(),
+                      simulatorResult.getResult(),
+                      tracer.getTraceFrames());
 
-    final TransactionTrace transactionTrace =
-        new TransactionTrace(
-            simulatorResult.getTransaction(), simulatorResult.getResult(), tracer.getTraceFrames());
+              final Block block =
+                  blockchainQueriesSupplier.get().getBlockchain().getChainHeadBlock();
 
-    final Block block = blockchainQueriesSupplier.get().getBlockchain().getChainHeadBlock();
-
-    return getTraceCallResult(
-        protocolSchedule, traceTypes, maybeSimulatorResult, transactionTrace, block);
+              return Optional.of(
+                  getTraceCallResult(
+                      protocolSchedule, traceTypes, maybeSimulatorResult, transactionTrace, block));
+            },
+            maybeBlockHeader.get())
+        .orElseThrow();
   }
 }

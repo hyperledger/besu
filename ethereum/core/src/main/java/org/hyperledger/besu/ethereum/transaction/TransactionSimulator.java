@@ -44,6 +44,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 
@@ -141,6 +142,22 @@ public class TransactionSimulator {
       final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,
       final BlockHeader header) {
+    return process(
+        callParams,
+        transactionValidationParams,
+        operationTracer,
+        (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
+        header);
+  }
+
+  public <U> Optional<U> process(
+      final CallParameter callParams,
+      final TransactionValidationParams transactionValidationParams,
+      final OperationTracer operationTracer,
+      final BiFunction<
+              MutableWorldState, Optional<TransactionSimulatorResult>, ? extends Optional<U>>
+          mapper,
+      final BlockHeader header) {
     if (header == null) {
       return Optional.empty();
     }
@@ -155,8 +172,10 @@ public class TransactionSimulator {
         updater = updater.parentUpdater().isPresent() ? updater : updater.updater();
       }
 
-      return processWithWorldUpdater(
-          callParams, transactionValidationParams, operationTracer, header, updater);
+      return mapper.apply(
+          ws,
+          processWithWorldUpdater(
+              callParams, transactionValidationParams, operationTracer, header, updater));
 
     } catch (final Exception e) {
       return Optional.empty();
