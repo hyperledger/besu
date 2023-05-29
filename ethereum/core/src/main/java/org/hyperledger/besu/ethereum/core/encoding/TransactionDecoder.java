@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
 import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -36,21 +35,16 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import java.math.BigInteger;
 import java.util.Optional;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.ssz.SSZ;
-import org.apache.tuweni.ssz.SSZReader;
-import org.apache.tuweni.units.bigints.UInt32;
-import org.slf4j.Logger;
 
 public class TransactionDecoder {
 
-  private static final UInt32 BLOB_TRANSACTION_OFFSET = UInt32.fromHexString("0x3c000000");
+  // private static final UInt32 BLOB_TRANSACTION_OFFSET = UInt32.fromHexString("0x3c000000");
 
-  private static final Logger LOG = getLogger(TransactionDecoder.class);
+  // private static final Logger LOG = getLogger(TransactionDecoder.class);
 
   @FunctionalInterface
   interface Decoder {
@@ -62,58 +56,9 @@ public class TransactionDecoder {
           TransactionType.ACCESS_LIST,
           TransactionDecoder::decodeAccessList,
           TransactionType.EIP1559,
-          Decoder.rlpDecoder(TransactionDecoder::decodeEIP1559),
+          TransactionDecoder::decodeEIP1559,
           TransactionType.BLOB,
-          Decoder.sszDecoder(TransactionDecoder::decodeBlob));
-
-  public static Transaction decodeBlob(final SSZReader input, final UInt32 firstOffset) {
-    Transaction.Builder builder = Transaction.builder();
-    TransactionNetworkPayload.SingedBlobTransaction signedBlobTransaction;
-
-    if (firstOffset.equals(BLOB_TRANSACTION_OFFSET)) {
-      LOG.trace("Decoding TransactionNetworkPayload");
-
-      TransactionNetworkPayload payload = new TransactionNetworkPayload();
-      payload.populateFromReader(input);
-      signedBlobTransaction = payload.getSignedBlobTransaction();
-
-      builder.kzgBlobs(payload.getKzgCommitments(), payload.getBlobs(), payload.getKzgProof());
-    } else {
-      LOG.trace("Decoding TransactionNetworkPayload.SingedBlobTransaction");
-      signedBlobTransaction = new TransactionNetworkPayload.SingedBlobTransaction();
-      signedBlobTransaction.populateFromReader(input);
-    }
-
-    var blobTransaction = signedBlobTransaction.getMessage();
-
-    return builder
-        .type(TransactionType.BLOB)
-        .chainId(blobTransaction.getChainId().toUnsignedBigInteger())
-        .nonce(blobTransaction.getNonce())
-        .maxPriorityFeePerGas(Wei.of(blobTransaction.getMaxPriorityFeePerGas()))
-        .maxFeePerGas(Wei.of(blobTransaction.getMaxFeePerGas()))
-        .gasLimit(blobTransaction.getGas())
-        .to(blobTransaction.getAddress().orElse(null))
-        .value(Wei.of(blobTransaction.getValue()))
-        .payload(blobTransaction.getData())
-        .accessList(
-            blobTransaction.getAccessList().stream()
-                .map(
-                    accessListEntry ->
-                        new AccessListEntry(
-                            accessListEntry.getAddress(), accessListEntry.getStorageKeys()))
-                .collect(Collectors.toList()))
-        .signature(
-            SIGNATURE_ALGORITHM
-                .get()
-                .createSignature(
-                    signedBlobTransaction.getSignature().getR().toUnsignedBigInteger(),
-                    signedBlobTransaction.getSignature().getS().toUnsignedBigInteger(),
-                    signedBlobTransaction.getSignature().isParity() ? (byte) 1 : 0))
-        .maxFeePerDataGas(Wei.of(blobTransaction.getMaxFeePerDataGas()))
-        .versionedHashes(blobTransaction.getBlobVersionedHashes())
-        .build();
-  }
+          BlobTransactionDecoder::decode);
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
