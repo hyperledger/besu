@@ -23,7 +23,10 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
-import org.hyperledger.besu.ethereum.core.encoding.ssz.TransactionNetworkPayload;
+import org.hyperledger.besu.ethereum.core.blobs.Blob;
+import org.hyperledger.besu.ethereum.core.blobs.BlobsWithCommitments;
+import org.hyperledger.besu.ethereum.core.blobs.KZGCommitment;
+import org.hyperledger.besu.ethereum.core.blobs.KZGProof;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.account.Account;
@@ -346,29 +349,26 @@ public class MainnetTransactionValidator {
           "transaction blobs are empty, cannot verify without blobs");
     }
 
-    Transaction.BlobsWithCommitments blobsWithCommitments =
-        transaction.getBlobsWithCommitments().get();
+    BlobsWithCommitments blobsWithCommitments = transaction.getBlobsWithCommitments().get();
 
     final long blobsLimit = gasLimitCalculator.currentDataGasLimit() / gasCalculator.dataGasCost(1);
-    if (blobsWithCommitments.blobs.getElements().size() > blobsLimit) {
+    if (blobsWithCommitments.getBlobs().size() > blobsLimit) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_BLOBS,
           "Too many transaction blobs ("
-              + blobsWithCommitments.blobs.getElements().size()
+              + blobsWithCommitments.getBlobs().size()
               + ") in transaction, max is "
               + blobsLimit);
     }
 
-    if (blobsWithCommitments.blobs.getElements().size()
-        != blobsWithCommitments.kzgCommitments.getElements().size()) {
+    if (blobsWithCommitments.getBlobs().size() != blobsWithCommitments.getKzgCommitments().size()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_BLOBS,
           "transaction blobs and commitments are not the same size");
     }
 
-    List<TransactionNetworkPayload.KZGCommitment> commitments =
-        blobsWithCommitments.kzgCommitments.getElements();
-    for (TransactionNetworkPayload.KZGCommitment commitment : commitments) {
+    List<KZGCommitment> commitments = blobsWithCommitments.getKzgCommitments();
+    for (KZGCommitment commitment : commitments) {
       if (commitment.getData().get(0) != BLOB_COMMITMENT_VERSION_KZG) {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_BLOBS,
@@ -383,8 +383,7 @@ public class MainnetTransactionValidator {
     final List<Hash> versionedHashes = transaction.getVersionedHashes().get();
 
     for (int i = 0; i < versionedHashes.size(); i++) {
-      final TransactionNetworkPayload.KZGCommitment commitment =
-          blobsWithCommitments.kzgCommitments.getElements().get(i);
+      final KZGCommitment commitment = blobsWithCommitments.getKzgCommitments().get(i);
       final Hash versionedHash = versionedHashes.get(i);
 
       if (versionedHash.get(0) != BLOB_COMMITMENT_VERSION_KZG) {
@@ -405,20 +404,20 @@ public class MainnetTransactionValidator {
     }
 
     final Bytes blobs =
-        blobsWithCommitments.blobs.getElements().stream()
-            .map(TransactionNetworkPayload.Blob::getBytes)
+        blobsWithCommitments.getBlobs().stream()
+            .map(Blob::getData)
             .reduce(Bytes::concatenate)
             .orElseThrow();
 
     final Bytes kzgCommitments =
-        blobsWithCommitments.kzgCommitments.getElements().stream()
-            .map(commitment -> commitment.getData())
+        blobsWithCommitments.getKzgCommitments().stream()
+            .map(KZGCommitment::getData)
             .reduce(Bytes::concatenate)
             .orElseThrow();
 
     final Bytes kzgProofs =
-        blobsWithCommitments.kzgProofs.getElements().stream()
-            .map(TransactionNetworkPayload.KZGProof::getBytes)
+        blobsWithCommitments.getKzgProofs().stream()
+            .map(KZGProof::getData)
             .reduce(Bytes::concatenate)
             .orElseThrow();
 
@@ -426,7 +425,7 @@ public class MainnetTransactionValidator {
         CKZG4844JNI.verifyAggregateKzgProof(
             blobs.toArrayUnsafe(),
             kzgCommitments.toArrayUnsafe(),
-            blobsWithCommitments.blobs.getElements().size(),
+            blobsWithCommitments.getBlobs().size(),
             kzgProofs.toArrayUnsafe());
 
     if (!kzgVerification) {
@@ -438,7 +437,7 @@ public class MainnetTransactionValidator {
     return ValidationResult.valid();
   }
 
-  private Hash hashCommitment(final TransactionNetworkPayload.KZGCommitment commitment) {
+  private Hash hashCommitment(final KZGCommitment commitment) {
     final SHA256Digest digest = new SHA256Digest();
     digest.update(commitment.getData().toArrayUnsafe(), 0, commitment.getData().size());
 
