@@ -36,7 +36,7 @@ dependencies {
   implementation 'org.immutables:value-annotations'
   implementation 'com.google.guava:guava'
   implementation 'io.opentelemetry:opentelemetry-api'
-  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'io.tmio:tuweni-bytes'
   implementation 'org.bouncycastle:bcprov-jdk15on'
 
   annotationProcessor 'org.immutables:value'
@@ -46,7 +46,7 @@ dependencies {
 
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation 'junit:junit'
-  testImplementation 'org.apache.tuweni:tuweni-units'
+  testimplementation 'io.tmio:tuweni-units'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
