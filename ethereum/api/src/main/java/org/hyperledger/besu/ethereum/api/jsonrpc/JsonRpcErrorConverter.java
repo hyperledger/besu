@@ -68,7 +68,7 @@ public class JsonRpcErrorConverter {
       case TOTAL_DATA_GAS_TOO_HIGH:
         return JsonRpcError.TOTAL_DATA_GAS_TOO_HIGH;
       default:
-        return JsonRpcError.INVALID_PARAMS;
+        return JsonRpcError.INTERNAL_ERROR;
     }
   }
 }
