@@ -810,7 +810,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     @Option(
         names = {"--rpc-ws-max-frame-size"},
-        description =q
+        description =
             "Maximum size in bytes for JSON-RPC WebSocket frames (default: ${DEFAULT-VALUE}). If this limit is exceeded, the websocket will be disconnected.",
         arity = "1")
     private final Integer rpcWsMaxFrameSize = DEFAULT_WS_MAX_FRAME_SIZE;
