@@ -470,8 +470,9 @@ public class BlockTransactionSelector {
   }
 
   private boolean blockOccupancyAboveThreshold() {
-    final double gasAvailable = processableBlockHeader.getGasLimit();
-    final double gasUsed = transactionSelectionResults.getCumulativeGasUsed();
+    final long gasAvailable = processableBlockHeader.getGasLimit();
+    final long gasUsed = transactionSelectionResults.getCumulativeGasUsed();
+    final long gasRemaining = gasAvailable - gasUsed;
     final double occupancyRatio = gasUsed / gasAvailable;
     LOG.trace(
         "Min block occupancy ratio {}, gas used {}, available {}, remaining {}, used/available {}",
@@ -486,7 +487,7 @@ public class BlockTransactionSelector {
 
   private boolean blockFull() {
     final long gasAvailable = processableBlockHeader.getGasLimit();
-    final long gasUsed = transactionSelectionResult.getCumulativeGasUsed();
+    final long gasUsed = transactionSelectionResults.getCumulativeGasUsed();
     final long gasRemaining = gasAvailable - gasUsed;
 
     if (gasRemaining < gasCalculator.getMinimumTransactionCost()) {
