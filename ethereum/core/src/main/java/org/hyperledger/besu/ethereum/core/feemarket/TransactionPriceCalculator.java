@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.core.feemarket;
 
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.math.BigInteger;
@@ -46,21 +45,6 @@ public interface TransactionPriceCalculator {
     };
   }
 
-  static TransactionPriceCalculator dataGas(
-      final int minDataGasPrice,
-      final int dataGasPriceUpdateFraction,
-      final DataGas excessDataGas) {
-    return ((transaction, baseFee) -> {
-      final var dataGasPrice =
-          Wei.of(
-              fakeExponential(
-                  BigInteger.valueOf(minDataGasPrice),
-                  excessDataGas.toBigInteger(),
-                  BigInteger.valueOf(dataGasPriceUpdateFraction)));
-      return dataGasPrice;
-    });
-  }
-
   private static BigInteger fakeExponential(
       final BigInteger factor, final BigInteger numerator, final BigInteger denominator) {
     int i = 1;
@@ -89,50 +73,5 @@ public interface TransactionPriceCalculator {
                   BigInteger.valueOf(dataGasPriceUpdateFraction)));
       return dataGasPrice;
     });
-  }
-
-  private static BigInteger fakeExponential(
-      final BigInteger factor, final BigInteger numerator, final BigInteger denominator) {
-    int i = 1;
-    BigInteger output = BigInteger.ZERO;
-    BigInteger numeratorAccumulator = factor.multiply(denominator);
-    while (numeratorAccumulator.signum() > 0) {
-      output = output.add(numeratorAccumulator);
-      numeratorAccumulator =
-          (numeratorAccumulator.multiply(numerator))
-              .divide(denominator.multiply(BigInteger.valueOf(i)));
-      ++i;
-    }
-    return output.divide(denominator);
-  }
-
-  static TransactionPriceCalculator dataGas(
-      final int minDataGasPrice,
-      final int dataGasPriceUpdateFraction,
-      final DataGas excessDataGas) {
-    return ((transaction, baseFee) -> {
-      final var dataGasPrice =
-          Wei.of(
-              fakeExponential(
-                  BigInteger.valueOf(minDataGasPrice),
-                  excessDataGas.toBigInteger(),
-                  BigInteger.valueOf(dataGasPriceUpdateFraction)));
-      return dataGasPrice;
-    });
-  }
-
-  private static BigInteger fakeExponential(
-      final BigInteger factor, final BigInteger numerator, final BigInteger denominator) {
-    int i = 1;
-    BigInteger output = BigInteger.ZERO;
-    BigInteger numeratorAccumulator = factor.multiply(denominator);
-    while (numeratorAccumulator.signum() > 0) {
-      output = output.add(numeratorAccumulator);
-      numeratorAccumulator =
-          (numeratorAccumulator.multiply(numerator))
-              .divide(denominator.multiply(BigInteger.valueOf(i)));
-      ++i;
-    }
-    return output.divide(denominator);
   }
 }

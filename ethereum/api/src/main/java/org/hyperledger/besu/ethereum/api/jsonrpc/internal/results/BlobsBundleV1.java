@@ -16,6 +16,10 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.blobs.Blob;
+import org.hyperledger.besu.ethereum.core.blobs.BlobsWithCommitments;
+import org.hyperledger.besu.ethereum.core.blobs.KZGCommitment;
+import org.hyperledger.besu.ethereum.core.blobs.KZGProof;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,28 +39,31 @@ public class BlobsBundleV1 {
   private final List<String> blobs;
 
   public BlobsBundleV1(final List<Transaction> transactions) {
-    final List<Transaction.BlobsWithCommitments> blobsWithCommitments =
+    final List<BlobsWithCommitments> blobsWithCommitments =
         transactions.stream()
             .map(Transaction::getBlobsWithCommitments)
             .filter(Optional::isPresent)
             .map(Optional::get)
-            .collect(Collectors.toList());
+            .toList();
 
     this.commitments =
         blobsWithCommitments.stream()
             .flatMap(b -> b.getKzgCommitments().stream())
+            .map(KZGCommitment::getData)
             .map(Bytes::toString)
             .collect(Collectors.toList());
 
     this.proofs =
         blobsWithCommitments.stream()
             .flatMap(b -> b.getKzgProofs().stream())
+            .map(KZGProof::getData)
             .map(Bytes::toString)
             .collect(Collectors.toList());
 
     this.blobs =
         blobsWithCommitments.stream()
             .flatMap(b -> b.getBlobs().stream())
+            .map(Blob::getData)
             .map(Bytes::toString)
             .collect(Collectors.toList());
   }

@@ -15,13 +15,10 @@
 package org.hyperledger.besu.ethereum.core.encoding;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.ssz.TransactionNetworkPayload;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.evm.AccessListEntry;
@@ -33,13 +30,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.ssz.SSZ;
-import org.apache.tuweni.ssz.SSZWriter;
-import org.apache.tuweni.units.bigints.UInt256;
-import org.slf4j.Logger;
 
 public class TransactionEncoder {
-  private static final Logger LOG = getLogger(Encoder.class);
 
   @FunctionalInterface
   interface Encoder {
@@ -51,13 +43,15 @@ public class TransactionEncoder {
           TransactionType.ACCESS_LIST,
           TransactionEncoder::encodeAccessList,
           TransactionType.EIP1559,
-          TransactionEncoder::encodeEIP1559);
+          TransactionEncoder::encodeEIP1559,
+          TransactionType.BLOB,
+          BlobTransactionEncoder::encodeEIP4844);
 
   public static void encodeForWire(final Transaction transaction, final RLPOutput rlpOutput) {
     final TransactionType transactionType =
         checkNotNull(
             transaction.getType(), "Transaction type for %s was not specified.", transaction);
-    encodeForWire(transactionType, encodeOpaqueBytesForNetwork(transaction), rlpOutput);
+    encodeForWire(transactionType, encodeOpaqueBytes(transaction), rlpOutput);
   }
 
   public static void encodeForWire(
@@ -173,45 +167,6 @@ public class TransactionEncoder {
     out.endList();
   }
 
-  public static void encodeEIP4844(final Transaction transaction, final RLPOutput out) {
-    out.startList();
-    out.writeBigIntegerScalar(transaction.getChainId().orElseThrow());
-    out.writeLongScalar(transaction.getNonce());
-    out.writeUInt256Scalar(transaction.getMaxPriorityFeePerGas().orElseThrow());
-    out.writeUInt256Scalar(transaction.getMaxFeePerGas().orElseThrow());
-    out.writeLongScalar(transaction.getGasLimit());
-    out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
-    out.writeUInt256Scalar(transaction.getValue());
-    out.writeBytes(transaction.getPayload());
-    writeAccessList(out, transaction.getAccessList());
-    out.writeUInt256Scalar(transaction.getMaxFeePerDataGas().orElseThrow());
-    out.startList();
-    transaction.getVersionedHashes().get().forEach(out::writeBytes);
-    out.endList();
-    writeSignatureAndRecoveryId(transaction, out);
-    out.endList();
-  }
-
-  public static void encodeEIP4844Network(final Transaction transaction, final RLPOutput out) {
-    LOG.trace("Encoding transaction with blobs {}", transaction);
-    var blobsWithCommitments = transaction.getBlobsWithCommitments().orElseThrow();
-    encodeEIP4844(transaction, out);
-    out.startList();
-    blobsWithCommitments.getKzgCommitments().forEach(com -> {
-      out.writeBytes(com);
-    });
-    out.endList();
-    out.startList();
-    blobsWithCommitments.getBlobs().forEach(blob -> {
-      out.startList();
-      out.writeUInt256Scalar(UInt256.fromBytes(blob));
-      out.endList();
-    });
-    out.writeBytes(blobsWithCommitments.kzgProof.getBytes());
-    out.endList();
-
-  }
-
   public static void writeAccessList(
       final RLPOutput out, final Optional<List<AccessListEntry>> accessListEntries) {
     if (accessListEntries.isEmpty()) {
@@ -231,17 +186,12 @@ public class TransactionEncoder {
     }
   }
 
-  public static void writeBlobVersionedHashes(
-      final RLPOutput rlpOutput, final List<Hash> versionedHashes) {
-    // ToDo 4844: implement
-  }
-
   private static void writeSignatureAndV(final Transaction transaction, final RLPOutput out) {
     out.writeBigIntegerScalar(transaction.getV());
     writeSignature(transaction, out);
   }
 
-  private static void writeSignatureAndRecoveryId(
+  public static void writeSignatureAndRecoveryId(
       final Transaction transaction, final RLPOutput out) {
     out.writeIntScalar(transaction.getSignature().getRecId());
     writeSignature(transaction, out);

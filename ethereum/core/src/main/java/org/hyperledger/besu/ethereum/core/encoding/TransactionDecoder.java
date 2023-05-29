@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
 import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -36,21 +35,16 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 import java.math.BigInteger;
 import java.util.Optional;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.ssz.SSZ;
-import org.apache.tuweni.ssz.SSZReader;
-import org.apache.tuweni.units.bigints.UInt32;
-import org.slf4j.Logger;
 
 public class TransactionDecoder {
 
-  private static final UInt32 BLOB_TRANSACTION_OFFSET = UInt32.fromHexString("0x3c000000");
+  // private static final UInt32 BLOB_TRANSACTION_OFFSET = UInt32.fromHexString("0x3c000000");
 
-  private static final Logger LOG = getLogger(TransactionDecoder.class);
+  // private static final Logger LOG = getLogger(TransactionDecoder.class);
 
   @FunctionalInterface
   interface Decoder {
@@ -62,7 +56,9 @@ public class TransactionDecoder {
           TransactionType.ACCESS_LIST,
           TransactionDecoder::decodeAccessList,
           TransactionType.EIP1559,
-          TransactionDecoder::decodeEIP1559);
+          TransactionDecoder::decodeEIP1559,
+          TransactionType.BLOB,
+          BlobTransactionDecoder::decode);
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
