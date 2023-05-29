@@ -13,7 +13,7 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-package org.hyperledger.besu.ethereum.bonsai.storage.flat;
+package org.hyperledger.besu.ethereum.worldstate;
 
 import java.util.stream.Stream;
 
@@ -33,6 +33,7 @@ import org.apache.tuweni.bytes.Bytes;
  * the flat database encompasses all the necessary data.
  */
 public enum FlatDbMode {
+  NO_FLATTENED(Bytes.EMPTY),
   PARTIAL(Bytes.of(0x00)),
   FULL(Bytes.of(0x01));
 

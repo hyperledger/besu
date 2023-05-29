@@ -38,8 +38,8 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -59,6 +59,7 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
   private final Bytes32 endKeyHash;
   private TreeMap<Bytes32, Bytes> accounts;
 
+  private TreeMap<Bytes32, Bytes> deletedAccounts;
   private boolean isProofValid;
 
   public AccountFlatDatabaseHealingRangeRequest(
@@ -67,6 +68,7 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
     this.startKeyHash = startKeyHash;
     this.endKeyHash = endKeyHash;
     this.accounts = new TreeMap<>();
+    this.deletedAccounts = new TreeMap<>();
     this.isProofValid = false;
   }
 
@@ -93,23 +95,24 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       downloadState.getMetricsManager().notifyRangeProgress(HEAL_FLAT, endKeyHash, endKeyHash);
     }
 
-    // find storages to heal
-    for (Map.Entry<Bytes32, Bytes> account : accounts.entrySet()) {
-      // we maintain a list of storages that need to be healed. no need to try to heal everything
-      if (downloadState
-          .getAccountsToBeRepaired()
-          .contains(CompactEncoding.bytesToPath(account.getKey()))) {
-        final StateTrieAccountValue accountValue =
-            StateTrieAccountValue.readFrom(RLP.input(account.getValue()));
-        childRequests.add(
-            createStorageFlatHealingRangeRequest(
-                getRootHash(),
-                account.getKey(),
-                accountValue.getStorageRoot(),
-                MIN_RANGE,
-                MAX_RANGE));
-      }
-    }
+    Stream.of(accounts.entrySet(), deletedAccounts.entrySet())
+        .flatMap(Collection::stream)
+        .forEach(
+            account -> {
+              if (downloadState
+                  .getAccountsToBeRepaired()
+                  .contains(CompactEncoding.bytesToPath(account.getKey()))) {
+                final StateTrieAccountValue accountValue =
+                    StateTrieAccountValue.readFrom(RLP.input(account.getValue()));
+                childRequests.add(
+                    createStorageFlatHealingRangeRequest(
+                        getRootHash(),
+                        account.getKey(),
+                        accountValue.getStorageRoot(),
+                        MIN_RANGE,
+                        MAX_RANGE));
+              }
+            });
     return childRequests.stream();
   }
 
@@ -169,7 +172,7 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
                   : Integer.MAX_VALUE,
               Integer.MAX_VALUE);
 
-      Map<Bytes32, Bytes> remainingKeys = new TreeMap<>(accounts);
+      TreeMap<Bytes32, Bytes> remainingKeys = new TreeMap<>(accounts);
 
       final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
       accounts =
@@ -199,6 +202,7 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
             downloadState.addAccountsToBeRepaired(CompactEncoding.bytesToPath(accountHash));
             bonsaiUpdater.removeAccountInfoState(accountHash);
           });
+      deletedAccounts = remainingKeys;
     }
     return accounts.size();
   }

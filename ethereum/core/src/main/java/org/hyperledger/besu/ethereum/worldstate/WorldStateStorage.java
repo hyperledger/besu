@@ -35,6 +35,8 @@ public interface WorldStateStorage {
 
   Optional<Bytes> getNodeData(Bytes location, Bytes32 hash);
 
+  FlatDbMode getFlatDbMode();
+
   boolean isWorldStateAvailable(Bytes32 rootHash, Hash blockHash);
 
   default boolean contains(final Bytes32 hash) {

@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.bonsai.storage;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.bonsai.storage.flat.FlatDbMode;
 import org.hyperledger.besu.ethereum.bonsai.storage.flat.FlatDbReaderStrategy;
 import org.hyperledger.besu.ethereum.bonsai.storage.flat.FullFlatDbReaderStrategy;
 import org.hyperledger.besu.ethereum.bonsai.storage.flat.PartialFlatDbReaderStrategy;
@@ -24,6 +23,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -38,6 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -57,7 +58,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   // 0x666C61744462537461747573
   public static final byte[] FLAT_DB_MODE = "flatDbStatus".getBytes(StandardCharsets.UTF_8);
 
-  protected FlatDbReaderStrategy flatDbReaderStrategy;
+  protected Supplier<FlatDbMode> flatDbMode;
+  protected Supplier<FlatDbReaderStrategy> flatDbReaderStrategy;
 
   protected final KeyValueStorage accountStorage;
   protected final KeyValueStorage codeStorage;
@@ -97,6 +99,34 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     this.trieBranchStorage = trieBranchStorage;
     this.trieLogStorage = trieLogStorage;
     this.metricsSystem = metricsSystem;
+    this.initFlatDbSuppliers();
+  }
+
+  public void initFlatDbSuppliers() {
+    this.flatDbMode =
+        Suppliers.memoize(
+            () -> {
+              return FlatDbMode.fromVersion(
+                  trieBranchStorage
+                      .get(FLAT_DB_MODE)
+                      .map(Bytes::wrap)
+                      .orElse(
+                          FlatDbMode.PARTIAL
+                              .getVersion())); // for backward compatibility we use partial as
+              // default
+            });
+    this.flatDbReaderStrategy =
+        Suppliers.memoize(
+            () -> {
+              final FlatDbMode flatDbMode = getFlatDbMode();
+              LOG.trace("Bonsai flat db mode found {}", flatDbMode);
+              if (flatDbMode == FlatDbMode.FULL) {
+                return new FullFlatDbReaderStrategy(
+                    metricsSystem, accountStorage, codeStorage, storageStorage);
+              }
+              return new PartialFlatDbReaderStrategy(
+                  metricsSystem, accountStorage, codeStorage, storageStorage);
+            });
   }
 
   @Override
@@ -105,27 +135,11 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   public FlatDbMode getFlatDbMode() {
-    return FlatDbMode.fromVersion(
-        trieBranchStorage
-            .get(FLAT_DB_MODE)
-            .map(Bytes::wrap)
-            .orElse(
-                FlatDbMode.PARTIAL
-                    .getVersion())); // for backward compatibility we use partial as default
+    return flatDbMode.get();
   }
 
   public FlatDbReaderStrategy getFlatDbReaderStrategy() {
-    if (flatDbReaderStrategy == null) {
-      final FlatDbMode flatDbMode = getFlatDbMode();
-      LOG.trace("Bonsai flat db mode found {}", flatDbMode);
-      if (flatDbMode == FlatDbMode.FULL) {
-        return new FullFlatDbReaderStrategy(
-            metricsSystem, accountStorage, codeStorage, storageStorage);
-      }
-      return new PartialFlatDbReaderStrategy(
-          metricsSystem, accountStorage, codeStorage, storageStorage);
-    }
-    return flatDbReaderStrategy;
+    return flatDbReaderStrategy.get();
   }
 
   @Override
@@ -256,7 +270,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     final KeyValueStorageTransaction transaction = trieBranchStorage.startTransaction();
     transaction.put(FLAT_DB_MODE, FlatDbMode.FULL.getVersion().toArrayUnsafe());
     transaction.commit();
-    flatDbReaderStrategy = null; // force reload of flat db reader strategy
+    initFlatDbSuppliers(); // force reload of flat db reader strategy
   }
 
   @Override

@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
@@ -81,7 +82,10 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
       snapContext.clear();
       syncState
           .getAccountToRepair()
-          .ifPresent(address -> snapContext.addAccountsToBeRepaired(Hash.hash(address)));
+          .ifPresent(
+              address ->
+                  snapContext.addAccountsToBeRepaired(
+                      CompactEncoding.bytesToPath(Hash.hash(address))));
     } else if (fastSyncState.getPivotBlockHeader().isEmpty()
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
             != BlockHeader.GENESIS_BLOCK_NUMBER) {
