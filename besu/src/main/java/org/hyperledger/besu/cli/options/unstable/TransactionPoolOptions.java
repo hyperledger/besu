@@ -298,7 +298,6 @@ public class TransactionPoolOptions
    */
   public TransactionPoolConfiguration buildTransactionPoolConfiguration(final Path dataPath) {
     final File saveFile = this.getSaveFile();
-
     return this.toDomainObject()
         .txPoolMaxSize(txPoolMaxSize)
         .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
