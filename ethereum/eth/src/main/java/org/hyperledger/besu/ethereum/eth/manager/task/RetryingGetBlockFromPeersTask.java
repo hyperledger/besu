@@ -18,12 +18,10 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.exceptions.IncompleteResultsException;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -46,7 +44,7 @@ public class RetryingGetBlockFromPeersTask
       final int maxRetries,
       final Optional<Hash> maybeBlockHash,
       final long blockNumber) {
-    super(ethContext, metricsSystem, Objects::isNull, maxRetries);
+    super(ethContext, metricsSystem, maxRetries);
     this.protocolSchedule = protocolSchedule;
     this.maybeBlockHash = maybeBlockHash;
     this.blockNumber = blockNumber;
@@ -80,14 +78,8 @@ public class RetryingGetBlockFromPeersTask
                   .addArgument(peerResult.getPeer())
                   .addArgument(this::getRetryCount)
                   .log();
-              result.complete(peerResult);
               return peerResult;
             });
-  }
-
-  @Override
-  protected boolean isRetryableError(final Throwable error) {
-    return super.isRetryableError(error) || error instanceof IncompleteResultsException;
   }
 
   @Override
@@ -107,6 +99,16 @@ public class RetryingGetBlockFromPeersTask
           .log();
     }
     super.handleTaskError(error);
+  }
+
+  @Override
+  protected boolean emptyResult(final PeerTaskResult<Block> peerResult) {
+    return peerResult.getResult() == null;
+  }
+
+  @Override
+  protected boolean successfulResult(final PeerTaskResult<Block> peerResult) {
+    return !emptyResult(peerResult);
   }
 
   private String logBlockNumberMaybeHash() {

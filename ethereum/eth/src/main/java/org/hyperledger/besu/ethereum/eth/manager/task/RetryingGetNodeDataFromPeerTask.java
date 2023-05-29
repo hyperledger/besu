@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Collection;
@@ -41,7 +42,7 @@ public class RetryingGetNodeDataFromPeerTask
       final long pivotBlockNumber,
       final MetricsSystem metricsSystem,
       final int maxRetries) {
-    super(ethContext, metricsSystem, data -> false, maxRetries);
+    super(ethContext, metricsSystem, maxRetries);
     this.ethContext = ethContext;
     this.hashes = new HashSet<>(hashes);
     this.pivotBlockNumber = pivotBlockNumber;
@@ -63,11 +64,16 @@ public class RetryingGetNodeDataFromPeerTask
     final GetNodeDataFromPeerTask task =
         GetNodeDataFromPeerTask.forHashes(ethContext, hashes, pivotBlockNumber, metricsSystem);
     task.assignPeer(peer);
-    return executeSubTask(task::run)
-        .thenApply(
-            peerResult -> {
-              result.complete(peerResult.getResult());
-              return peerResult.getResult();
-            });
+    return executeSubTask(task::run).thenApply(PeerTaskResult::getResult);
+  }
+
+  @Override
+  protected boolean emptyResult(final Map<Hash, Bytes> peerResult) {
+    return false;
+  }
+
+  @Override
+  protected boolean successfulResult(final Map<Hash, Bytes> peerResult) {
+    return !emptyResult(peerResult);
   }
 }

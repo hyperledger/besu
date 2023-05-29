@@ -18,20 +18,16 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.exceptions.IncompleteResultsException;
-import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RetryingGetBlocksFromPeersTask
-    extends AbstractRetryingSwitchingPeerTask<PeerTaskResult<List<Block>>> {
+public class RetryingGetBlocksFromPeersTask extends AbstractRetryingSwitchingPeerTask<List<Block>> {
 
   private static final Logger LOG = LoggerFactory.getLogger(RetryingGetBlocksFromPeersTask.class);
 
@@ -44,7 +40,7 @@ public class RetryingGetBlocksFromPeersTask
       final MetricsSystem metricsSystem,
       final int maxRetries,
       final List<BlockHeader> headers) {
-    super(ethContext, metricsSystem, Objects::isNull, maxRetries);
+    super(ethContext, metricsSystem, maxRetries);
     this.protocolSchedule = protocolSchedule;
     this.headers = headers;
   }
@@ -60,8 +56,7 @@ public class RetryingGetBlocksFromPeersTask
   }
 
   @Override
-  protected CompletableFuture<PeerTaskResult<List<Block>>> executeTaskOnCurrentPeer(
-      final EthPeer currentPeer) {
+  protected CompletableFuture<List<Block>> executeTaskOnCurrentPeer(final EthPeer currentPeer) {
     final GetBodiesFromPeerTask getBodiesTask =
         GetBodiesFromPeerTask.forHeaders(
             protocolSchedule, getEthContext(), headers, getMetricsSystem());
@@ -76,21 +71,8 @@ public class RetryingGetBlocksFromPeersTask
                   .addArgument(peerResult.getPeer())
                   .addArgument(this::getRetryCount)
                   .log();
-
-              if (peerResult.getResult().isEmpty()) {
-                currentPeer.recordUselessResponse("GetBodiesFromPeerTask");
-                throw new IncompleteResultsException(
-                    "No blocks returned by peer " + currentPeer.getShortNodeId());
-              }
-
-              result.complete(peerResult);
-              return peerResult;
+              return peerResult.getResult();
             });
-  }
-
-  @Override
-  protected boolean isRetryableError(final Throwable error) {
-    return super.isRetryableError(error) || error instanceof IncompleteResultsException;
   }
 
   @Override
@@ -106,5 +88,15 @@ public class RetryingGetBlocksFromPeersTask
       LOG.debug("Failed to get {} blocks after {} retries", headers.size(), getRetryCount());
     }
     super.handleTaskError(error);
+  }
+
+  @Override
+  protected boolean emptyResult(final List<Block> peerResult) {
+    return peerResult.isEmpty();
+  }
+
+  @Override
+  protected boolean successfulResult(final List<Block> peerResult) {
+    return !emptyResult(peerResult);
   }
 }

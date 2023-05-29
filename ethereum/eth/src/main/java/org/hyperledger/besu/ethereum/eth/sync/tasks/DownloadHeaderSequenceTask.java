@@ -39,7 +39,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -78,7 +77,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
       final int maxRetries,
       final ValidationPolicy validationPolicy,
       final MetricsSystem metricsSystem) {
-    super(ethContext, maxRetries, Collection::isEmpty, metricsSystem);
+    super(ethContext, maxRetries, metricsSystem);
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
@@ -139,17 +138,28 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
         "Downloading headers from {} to {}.", startingBlockNumber, referenceHeader.getNumber());
     final CompletableFuture<List<BlockHeader>> task =
         downloadHeaders(assignedPeer).thenCompose(this::processHeaders);
-    return task.whenComplete(
-        (r, t) -> {
-          // We're done if we've filled all requested headers
-          if (lastFilledHeaderIndex == 0) {
+    return task.thenApply(
+        r -> {
+          if (successfulResult(r)) {
             LOG.debug(
                 "Finished downloading headers from {} to {}.",
                 headers[0].getNumber(),
                 headers[segmentLength - 1].getNumber());
-            result.complete(Arrays.asList(headers));
+            return Arrays.asList(headers);
           }
+          return r;
         });
+  }
+
+  @Override
+  protected boolean emptyResult(final List<BlockHeader> peerResult) {
+    return peerResult.isEmpty();
+  }
+
+  @Override
+  protected boolean successfulResult(final List<BlockHeader> peerResult) {
+    // We're done if we've filled all requested headers
+    return lastFilledHeaderIndex == 0;
   }
 
   private CompletableFuture<PeerTaskResult<List<BlockHeader>>> downloadHeaders(

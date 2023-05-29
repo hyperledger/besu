@@ -55,7 +55,7 @@ public class GetReceiptsForHeadersTask
       final List<BlockHeader> headers,
       final int maxRetries,
       final MetricsSystem metricsSystem) {
-    super(ethContext, maxRetries, Map::isEmpty, metricsSystem);
+    super(ethContext, maxRetries, metricsSystem);
     checkArgument(headers.size() > 0, "Must supply a non-empty headers list");
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
@@ -92,6 +92,16 @@ public class GetReceiptsForHeadersTask
     return requestReceipts(assignedPeer).thenCompose(this::processResponse);
   }
 
+  @Override
+  protected boolean emptyResult(final Map<BlockHeader, List<TransactionReceipt>> peerResult) {
+    return peerResult.isEmpty();
+  }
+
+  @Override
+  protected boolean successfulResult(final Map<BlockHeader, List<TransactionReceipt>> peerResult) {
+    return isComplete();
+  }
+
   private CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>> requestReceipts(
       final Optional<EthPeer> assignedPeer) {
     final List<BlockHeader> incompleteHeaders = incompleteHeaders();
@@ -115,8 +125,8 @@ public class GetReceiptsForHeadersTask
       final Map<BlockHeader, List<TransactionReceipt>> responseData) {
     receipts.putAll(responseData);
 
-    if (isComplete()) {
-      result.complete(receipts);
+    if (successfulResult(responseData)) {
+      return CompletableFuture.completedFuture(receipts);
     }
 
     return CompletableFuture.completedFuture(responseData);
