@@ -57,9 +57,9 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
   private final Bytes32 startKeyHash;
   private final Bytes32 endKeyHash;
-  private TreeMap<Bytes32, Bytes> accounts;
+  private TreeMap<Bytes32, Bytes> existingAccounts;
 
-  private TreeMap<Bytes32, Bytes> deletedAccounts;
+  private TreeMap<Bytes32, Bytes> removedAccounts;
   private boolean isProofValid;
 
   public AccountFlatDatabaseHealingRangeRequest(
@@ -67,8 +67,8 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
     super(RequestType.ACCOUNT_RANGE, originalRootHash);
     this.startKeyHash = startKeyHash;
     this.endKeyHash = endKeyHash;
-    this.accounts = new TreeMap<>();
-    this.deletedAccounts = new TreeMap<>();
+    this.existingAccounts = new TreeMap<>();
+    this.removedAccounts = new TreeMap<>();
     this.isProofValid = false;
   }
 
@@ -78,10 +78,10 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       final WorldStateStorage worldStateStorage,
       final SnapSyncProcessState snapSyncState) {
     final List<SnapDataRequest> childRequests = new ArrayList<>();
-    if (!accounts.isEmpty()) {
+    if (!existingAccounts.isEmpty()) {
       // new request is added if the response does not match all the requested range
       RangeManager.generateRanges(
-              accounts.lastKey().toUnsignedBigInteger().add(BigInteger.ONE),
+              existingAccounts.lastKey().toUnsignedBigInteger().add(BigInteger.ONE),
               endKeyHash.toUnsignedBigInteger(),
               1)
           .forEach(
@@ -95,7 +95,7 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       downloadState.getMetricsManager().notifyRangeProgress(HEAL_FLAT, endKeyHash, endKeyHash);
     }
 
-    Stream.of(accounts.entrySet(), deletedAccounts.entrySet())
+    Stream.of(existingAccounts.entrySet(), removedAccounts.entrySet())
         .flatMap(Collection::stream)
         .forEach(
             account -> {
@@ -138,7 +138,7 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       isProofValid =
           worldStateProofProvider.isValidRangeProof(
               startKeyHash, endKeyHash, getRootHash(), proofs, accounts);
-      this.accounts = accounts;
+      this.existingAccounts = accounts;
     }
   }
 
@@ -166,16 +166,18 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       final RangeStorageEntriesCollector collector =
           RangeStorageEntriesCollector.createCollector(
               startKeyHash,
-              accounts.isEmpty() ? endKeyHash : accounts.lastKey(),
-              accounts.isEmpty()
+              existingAccounts.isEmpty() ? endKeyHash : existingAccounts.lastKey(),
+              existingAccounts.isEmpty()
                   ? syncConfig.getLocalFlatAccountCountToHealPerRequest()
                   : Integer.MAX_VALUE,
               Integer.MAX_VALUE);
 
-      TreeMap<Bytes32, Bytes> remainingKeys = new TreeMap<>(accounts);
+      // put all flat accounts in the list, and gradually keep only those that are not in the trie
+      // to remove and heal them.
+      removedAccounts = new TreeMap<>(existingAccounts);
 
       final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
-      accounts =
+      existingAccounts =
           (TreeMap<Bytes32, Bytes>)
               accountTrie.entriesFrom(
                   root ->
@@ -183,10 +185,10 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
                           collector, visitor, root, startKeyHash));
 
       // doing the fix
-      accounts.forEach(
+      existingAccounts.forEach(
           (key, value) -> {
-            if (remainingKeys.containsKey(key)) {
-              remainingKeys.remove(key);
+            if (removedAccounts.containsKey(key)) {
+              removedAccounts.remove(key);
             } else {
               final Hash accountHash = Hash.wrap(key);
               // if the account was missing in the flat db we need to heal the storage
@@ -195,15 +197,14 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
             }
           });
 
-      remainingKeys.forEach(
+      removedAccounts.forEach(
           (key, value) -> {
             final Hash accountHash = Hash.wrap(key);
             // if the account was removed we will have to heal the storage
             downloadState.addAccountsToBeRepaired(CompactEncoding.bytesToPath(accountHash));
             bonsaiUpdater.removeAccountInfoState(accountHash);
           });
-      deletedAccounts = remainingKeys;
     }
-    return accounts.size();
+    return existingAccounts.size() + removedAccounts.size();
   }
 }
