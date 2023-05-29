@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
-import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Optional;
@@ -86,32 +85,23 @@ public class TraceCall extends AbstractTraceByBlock implements JsonRpcMethod {
             (mutableWorldState, maybeSimulatorResult) ->
                 maybeSimulatorResult.map(
                     result -> {
-                      final TransactionSimulatorResult simulatorResult = maybeSimulatorResult.get();
-
-                      if (simulatorResult.isInvalid()) {
-                        LOG.error(
-                            String.format("Invalid simulator result %s", maybeSimulatorResult));
-                        return Optional.of(
-                            new JsonRpcErrorResponse(
-                                requestContext.getRequest().getId(), INTERNAL_ERROR));
+                      if (result.isInvalid()) {
+                        LOG.error(String.format("Invalid simulator result %s", result));
+                        return new JsonRpcErrorResponse(
+                            requestContext.getRequest().getId(), INTERNAL_ERROR);
                       }
 
                       final TransactionTrace transactionTrace =
                           new TransactionTrace(
-                              simulatorResult.getTransaction(),
-                              simulatorResult.getResult(),
-                              tracer.getTraceFrames());
+                              result.getTransaction(), result.getResult(), tracer.getTraceFrames());
 
                       final Block block =
                           blockchainQueriesSupplier.get().getBlockchain().getChainHeadBlock();
 
-                      return Optional.of(
-                          getTraceCallResult(
-                              protocolSchedule, traceTypes, result, transactionTrace, block));
+                      return getTraceCallResult(
+                          protocolSchedule, traceTypes, result, transactionTrace, block);
                     }),
             maybeBlockHeader.get())
-        .orElse(
-            Optional.of(
-                new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR)));
+        .orElse(new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
   }
 }

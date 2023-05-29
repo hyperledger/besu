@@ -48,7 +48,6 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -170,7 +169,6 @@ public class TransactionSimulator {
     }
   }
 
-  @VisibleForTesting
   public Optional<TransactionSimulatorResult> process(
       final CallParameter callParams, final Hash blockHeaderHash) {
     final BlockHeader header = blockchain.getBlockHeader(blockHeaderHash).orElse(null);
@@ -182,7 +180,6 @@ public class TransactionSimulator {
         header);
   }
 
-  @VisibleForTesting
   public Optional<TransactionSimulatorResult> process(
       final CallParameter callParams, final long blockNumber) {
     return process(
