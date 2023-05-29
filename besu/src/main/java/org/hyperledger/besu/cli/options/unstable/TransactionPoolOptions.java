@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
-import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_RPC_TX_FEE_CAP;
-
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.converter.FractionConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
@@ -202,7 +200,7 @@ public class TransactionPoolOptions
       description =
           "Maximum transaction fees (in Wei) accepted for transaction submitted through RPC (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private final Wei txFeeCap = DEFAULT_RPC_TX_FEE_CAP;
+  private final Wei txFeeCap = DefaultCommandValues.DEFAULT_RPC_TX_FEE_CAP;
 
   private TransactionPoolOptions() {}
 
