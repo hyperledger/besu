@@ -57,9 +57,7 @@ public class TransactionBuilderTest {
 
     assertThat(guessedTypes)
         .containsExactlyInAnyOrder(
-            new TransactionType[] {
-              TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
-            });
+            TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559);
   }
 
   @Test
@@ -68,7 +66,7 @@ public class TransactionBuilderTest {
       new TransactionTestFixture()
           .type(TransactionType.BLOB)
           .chainId(Optional.of(BigInteger.ONE))
-          .versionedHashes(List.of())
+          .versionedHashes(Optional.of(List.of()))
           .createTransaction(senderKeys);
       fail();
     } catch (IllegalArgumentException iea) {
