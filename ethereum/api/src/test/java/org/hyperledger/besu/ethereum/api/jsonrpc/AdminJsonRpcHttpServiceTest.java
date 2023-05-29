@@ -79,7 +79,8 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
             List.of(),
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
             TestClock.fixed(),
-            Collections.emptyList()));
+            Collections.emptyList(),
+            Bytes.random(64)));
     peerList.add(
         new EthPeer(
             MockPeerConnection.create(info2, addr30301, addr60302),
@@ -88,7 +89,8 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
             List.of(),
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
             TestClock.fixed(),
-            Collections.emptyList()));
+            Collections.emptyList(),
+            Bytes.random(64)));
     peerList.add(
         new EthPeer(
             MockPeerConnection.create(info3, addr30301, addr60303),
@@ -97,7 +99,8 @@ public class AdminJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
             List.of(),
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
             TestClock.fixed(),
-            Collections.emptyList()));
+            Collections.emptyList(),
+            Bytes.random(64)));
 
     when(ethPeersMock.streamAllPeers()).thenReturn(peerList.stream());
     when(peerDiscoveryMock.getPeerCount()).thenReturn(peerList.size());

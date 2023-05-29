@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.p2p.config;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.util.NetworkUtility;
 
@@ -29,10 +27,6 @@ public class RlpxConfiguration {
   private String clientId = "TestClient/1.0.0";
   private String bindHost = NetworkUtility.INADDR_ANY;
   private int bindPort = 30303;
-  private int peerUpperBound = 100;
-  private int peerLowerBound = 64;
-  private boolean limitRemoteWireConnectionsEnabled = false;
-  private float fractionRemoteWireConnectionsAllowed = DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED;
   private List<SubProtocol> supportedProtocols = Collections.emptyList();
 
   public static RlpxConfiguration create() {
@@ -71,15 +65,6 @@ public class RlpxConfiguration {
     return this;
   }
 
-  public RlpxConfiguration setPeerUpperBound(final int peers) {
-    peerUpperBound = peers;
-    return this;
-  }
-
-  public int getPeerUpperBound() {
-    return peerUpperBound;
-  }
-
   public String getClientId() {
     return clientId;
   }
@@ -87,29 +72,6 @@ public class RlpxConfiguration {
   public RlpxConfiguration setClientId(final String clientId) {
     this.clientId = clientId;
     return this;
-  }
-
-  public RlpxConfiguration setLimitRemoteWireConnectionsEnabled(
-      final boolean limitRemoteWireConnectionsEnabled) {
-    this.limitRemoteWireConnectionsEnabled = limitRemoteWireConnectionsEnabled;
-    return this;
-  }
-
-  public RlpxConfiguration setFractionRemoteWireConnectionsAllowed(
-      final float fractionRemoteWireConnectionsAllowed) {
-    checkState(
-        fractionRemoteWireConnectionsAllowed >= 0.0 && fractionRemoteWireConnectionsAllowed <= 1.0,
-        "Fraction of remote connections allowed must be between 0.0 and 1.0 (inclusive).");
-    this.fractionRemoteWireConnectionsAllowed = fractionRemoteWireConnectionsAllowed;
-    return this;
-  }
-
-  public int getMaxRemotelyInitiatedConnections() {
-    if (!limitRemoteWireConnectionsEnabled) {
-      return peerUpperBound;
-    }
-
-    return (int) Math.floor(peerUpperBound * fractionRemoteWireConnectionsAllowed);
   }
 
   @Override
@@ -136,14 +98,5 @@ public class RlpxConfiguration {
     sb.append(", bindPort=").append(bindPort);
     sb.append('}');
     return sb.toString();
-  }
-
-  public RlpxConfiguration setPeerLowerBound(final int peers) {
-    peerLowerBound = peers;
-    return this;
-  }
-
-  public int getPeerLowerBound() {
-    return peerLowerBound;
   }
 }

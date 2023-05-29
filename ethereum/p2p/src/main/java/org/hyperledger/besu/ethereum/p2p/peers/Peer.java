@@ -15,9 +15,13 @@
 package org.hyperledger.besu.ethereum.p2p.peers;
 
 import org.hyperledger.besu.crypto.SecureRandomProvider;
+import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
+import org.ethereum.beacon.discovery.schema.NodeRecord;
 
 public interface Peer extends PeerId {
 
@@ -47,4 +51,29 @@ public interface Peer extends PeerId {
   default String getEnodeURLString() {
     return this.getEnodeURL().toString();
   }
+
+  /**
+   * Returns the node record
+   *
+   * @return The node record wrapped in an Optional
+   */
+  default Optional<NodeRecord> getNodeRecord() {
+    return Optional.empty();
+  }
+
+  /**
+   * Returns the fork id
+   *
+   * @return The fork id wrapped in an Optional
+   */
+  default Optional<ForkId> getForkId() {
+    return Optional.empty();
+  }
+
+  /**
+   * Sets the fork id
+   *
+   * @param forkId The fork id
+   */
+  void setForkId(ForkId forkId);
 }

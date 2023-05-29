@@ -147,7 +147,7 @@ dependencies {
   referenceTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 }
 
-task referenceTests(type: Test) {
+tasks.register('referenceTests', Test) {
   useJUnitPlatform()
   doFirst {
     if (!file("src/reference-test/external-resources/README.md").exists()) {
@@ -159,12 +159,12 @@ task referenceTests(type: Test) {
   classpath = sourceSets.referenceTest.runtimeClasspath
 }
 
-task ('validateReferenceTestSubmodule') {
+tasks.register('validateReferenceTestSubmodule') {
   description = "Checks that the reference tests submodule is not accidentally changed"
   doLast {
     def result = new ByteArrayOutputStream()
-    def expectedHash = 'a380655e5ffab1a5ea0f4d860224bdb19013f06a'
-    def submodulePath = java.nio.file.Path.of("${rootProject.projectDir}", "ethereum/referencetests/src/test/resources").toAbsolutePath()
+    def expectedHash = '04f338a6e673a6b4d906ec9d6d2bc939309357a5'
+    def submodulePath = java.nio.file.Path.of("${rootProject.projectDir}", "ethereum/referencetests/src/reference-test/external-resources").toAbsolutePath()
     try {
       exec {
         commandLine 'git', 'submodule', 'status', submodulePath
@@ -199,7 +199,7 @@ following commands:
 processResources.dependsOn('validateReferenceTestSubmodule')
 
 def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, String destination, String namePrefix, String ... excludedPath) {
-  def pep = mkdir(destination)
+  mkdir(destination)
   def referenceTestTemplate = templateFile.text
 
   // This is how many json files to include in each test file

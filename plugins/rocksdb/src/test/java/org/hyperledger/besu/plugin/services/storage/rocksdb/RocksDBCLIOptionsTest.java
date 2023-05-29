@@ -19,10 +19,8 @@ import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_BACKGROUND_THREAD_COUNT;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_IS_HIGH_SPEC;
-import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_BACKGROUND_COMPACTIONS;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_OPEN_FILES;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.IS_HIGH_SPEC;
-import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.MAX_BACKGROUND_COMPACTIONS_FLAG;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.MAX_OPEN_FILES_FLAG;
 
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions;
@@ -43,8 +41,6 @@ public class RocksDBCLIOptionsTest {
     assertThat(configuration).isNotNull();
     assertThat(configuration.getBackgroundThreadCount()).isEqualTo(DEFAULT_BACKGROUND_THREAD_COUNT);
     assertThat(configuration.getCacheCapacity()).isEqualTo(DEFAULT_CACHE_CAPACITY);
-    assertThat(configuration.getMaxBackgroundCompactions())
-        .isEqualTo(DEFAULT_MAX_BACKGROUND_COMPACTIONS);
     assertThat(configuration.getMaxOpenFiles()).isEqualTo(DEFAULT_MAX_OPEN_FILES);
     assertThat(configuration.isHighSpec()).isEqualTo(DEFAULT_IS_HIGH_SPEC);
   }
@@ -62,8 +58,6 @@ public class RocksDBCLIOptionsTest {
     assertThat(configuration).isNotNull();
     assertThat(configuration.getBackgroundThreadCount()).isEqualTo(expectedBackgroundThreadCount);
     assertThat(configuration.getCacheCapacity()).isEqualTo(DEFAULT_CACHE_CAPACITY);
-    assertThat(configuration.getMaxBackgroundCompactions())
-        .isEqualTo(DEFAULT_MAX_BACKGROUND_COMPACTIONS);
     assertThat(configuration.getMaxOpenFiles()).isEqualTo(DEFAULT_MAX_OPEN_FILES);
     assertThat(configuration.isHighSpec()).isEqualTo(DEFAULT_IS_HIGH_SPEC);
   }
@@ -79,26 +73,6 @@ public class RocksDBCLIOptionsTest {
     assertThat(configuration).isNotNull();
     assertThat(configuration.getBackgroundThreadCount()).isEqualTo(DEFAULT_BACKGROUND_THREAD_COUNT);
     assertThat(configuration.getCacheCapacity()).isEqualTo(expectedCacheCapacity);
-    assertThat(configuration.getMaxBackgroundCompactions())
-        .isEqualTo(DEFAULT_MAX_BACKGROUND_COMPACTIONS);
-    assertThat(configuration.getMaxOpenFiles()).isEqualTo(DEFAULT_MAX_OPEN_FILES);
-    assertThat(configuration.isHighSpec()).isEqualTo(DEFAULT_IS_HIGH_SPEC);
-  }
-
-  @Test
-  public void customMaxBackgroundCompactions() {
-    final RocksDBCLIOptions options = RocksDBCLIOptions.create();
-    final int expectedMaxBackgroundCompactions = 223344;
-
-    new CommandLine(options)
-        .parseArgs(MAX_BACKGROUND_COMPACTIONS_FLAG, "" + expectedMaxBackgroundCompactions);
-
-    final RocksDBFactoryConfiguration configuration = options.toDomainObject();
-    assertThat(configuration).isNotNull();
-    assertThat(configuration.getBackgroundThreadCount()).isEqualTo(DEFAULT_BACKGROUND_THREAD_COUNT);
-    assertThat(configuration.getCacheCapacity()).isEqualTo(DEFAULT_CACHE_CAPACITY);
-    assertThat(configuration.getMaxBackgroundCompactions())
-        .isEqualTo(expectedMaxBackgroundCompactions);
     assertThat(configuration.getMaxOpenFiles()).isEqualTo(DEFAULT_MAX_OPEN_FILES);
     assertThat(configuration.isHighSpec()).isEqualTo(DEFAULT_IS_HIGH_SPEC);
   }
@@ -114,8 +88,6 @@ public class RocksDBCLIOptionsTest {
     assertThat(configuration).isNotNull();
     assertThat(configuration.getBackgroundThreadCount()).isEqualTo(DEFAULT_BACKGROUND_THREAD_COUNT);
     assertThat(configuration.getCacheCapacity()).isEqualTo(DEFAULT_CACHE_CAPACITY);
-    assertThat(configuration.getMaxBackgroundCompactions())
-        .isEqualTo(DEFAULT_MAX_BACKGROUND_COMPACTIONS);
     assertThat(configuration.getMaxOpenFiles()).isEqualTo(expectedMaxOpenFiles);
     assertThat(configuration.isHighSpec()).isEqualTo(DEFAULT_IS_HIGH_SPEC);
   }
@@ -130,8 +102,6 @@ public class RocksDBCLIOptionsTest {
     assertThat(configuration).isNotNull();
     assertThat(configuration.getBackgroundThreadCount()).isEqualTo(DEFAULT_BACKGROUND_THREAD_COUNT);
     assertThat(configuration.getCacheCapacity()).isEqualTo(DEFAULT_CACHE_CAPACITY);
-    assertThat(configuration.getMaxBackgroundCompactions())
-        .isEqualTo(DEFAULT_MAX_BACKGROUND_COMPACTIONS);
     assertThat(configuration.isHighSpec()).isEqualTo(Boolean.TRUE);
   }
 }

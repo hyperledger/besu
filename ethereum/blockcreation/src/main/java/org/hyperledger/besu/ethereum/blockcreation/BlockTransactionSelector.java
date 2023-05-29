@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
-import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -34,13 +33,11 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
-import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +47,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
-import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -264,10 +260,9 @@ public class BlockTransactionSelector {
   in this throwing an CancellationException).
    */
   public TransactionSelectionResults buildTransactionListForBlock() {
-    LOG.debug("Transaction pool size {}", pendingTransactions.size());
-    LOG.atTrace()
-        .setMessage("Transaction pool content {}")
-        .addArgument(() -> pendingTransactions.toTraceLog(false, false))
+    LOG.atDebug()
+        .setMessage("Transaction pool stats {}")
+        .addArgument(pendingTransactions.logStats())
         .log();
     pendingTransactions.selectTransactions(
         pendingTransaction -> evaluateTransaction(pendingTransaction, false));
@@ -312,6 +307,9 @@ public class BlockTransactionSelector {
       if (blockOccupancyAboveThreshold()) {
         LOG.trace("Block occupancy above threshold, completing operation");
         return TransactionSelectionResult.COMPLETE_OPERATION;
+      } else if (blockFull()) {
+        LOG.trace("Block full, completing operation");
+        return TransactionSelectionResult.COMPLETE_OPERATION;
       } else {
         return TransactionSelectionResult.CONTINUE;
       }
@@ -327,40 +325,18 @@ public class BlockTransactionSelector {
     final WorldUpdater worldStateUpdater = worldState.updater();
     final BlockHashLookup blockHashLookup =
         new CachingBlockHashLookup(processableBlockHeader, blockchain);
-    final boolean isGoQuorumPrivateTransaction =
-        transaction.isGoQuorumPrivateTransaction(
-            transactionProcessor.getTransactionValidator().getGoQuorumCompatibilityMode());
 
-    TransactionProcessingResult effectiveResult;
-
-    if (isGoQuorumPrivateTransaction) {
-      final ValidationResult<TransactionInvalidReason> validationResult =
-          validateTransaction(processableBlockHeader, transaction, worldStateUpdater);
-      if (!validationResult.isValid()) {
-        LOG.warn(
-            "Invalid transaction: {}. Block {} Transaction {}",
-            validationResult.getErrorMessage(),
-            processableBlockHeader.getParentHash().toHexString(),
-            transaction.getHash().toHexString());
-        return transactionSelectionResultForInvalidResult(transaction, validationResult);
-      } else {
-        // valid GoQuorum private tx, we need to handcraft the receipt and increment the nonce
-        effectiveResult = publicResultForWhenWeHaveAPrivateTransaction(transaction);
-        worldStateUpdater.getOrCreate(transaction.getSender()).getMutable().incrementNonce();
-      }
-    } else {
-      effectiveResult =
-          transactionProcessor.processTransaction(
-              blockchain,
-              worldStateUpdater,
-              processableBlockHeader,
-              transaction,
-              miningBeneficiary,
-              blockHashLookup,
-              false,
-              TransactionValidationParams.mining(),
-              dataGasPrice);
-    }
+    final TransactionProcessingResult effectiveResult =
+        transactionProcessor.processTransaction(
+            blockchain,
+            worldStateUpdater,
+            processableBlockHeader,
+            transaction,
+            miningBeneficiary,
+            blockHashLookup,
+            false,
+            TransactionValidationParams.mining(),
+            dataGasPrice);
 
     if (!effectiveResult.isInvalid()) {
       worldStateUpdater.commit();
@@ -445,42 +421,14 @@ public class BlockTransactionSelector {
         || invalidReason.equals(TransactionInvalidReason.NONCE_TOO_HIGH);
   }
 
-  private ValidationResult<TransactionInvalidReason> validateTransaction(
-      final ProcessableBlockHeader blockHeader,
-      final Transaction transaction,
-      final WorldUpdater publicWorldStateUpdater) {
-    final TransactionValidationParams transactionValidationParams =
-        TransactionValidationParams.processingBlock();
-    final MainnetTransactionValidator transactionValidator =
-        transactionProcessor.getTransactionValidator();
-    ValidationResult<TransactionInvalidReason> validationResult =
-        transactionValidator.validate(
-            transaction, blockHeader.getBaseFee(), transactionValidationParams);
-    if (!validationResult.isValid()) {
-      return validationResult;
-    }
-
-    final Address senderAddress = transaction.getSender();
-
-    final EvmAccount sender = publicWorldStateUpdater.getOrCreate(senderAddress);
-    validationResult =
-        transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
-
-    return validationResult;
-  }
-
   /*
   Responsible for updating the state maintained between transaction validation (i.e. receipts,
   cumulative gas, world state root hash.).
    */
   private void updateTransactionResultTracking(
       final Transaction transaction, final TransactionProcessingResult result) {
-    final boolean isGoQuorumPrivateTransaction =
-        transaction.isGoQuorumPrivateTransaction(
-            transactionProcessor.getTransactionValidator().getGoQuorumCompatibilityMode());
 
-    final long gasUsedByTransaction =
-        isGoQuorumPrivateTransaction ? 0 : transaction.getGasLimit() - result.getGasRemaining();
+    final long gasUsedByTransaction = transaction.getGasLimit() - result.getGasRemaining();
 
     final long cumulativeGasUsed =
         transactionSelectionResult.getCumulativeGasUsed() + gasUsedByTransaction;
@@ -499,16 +447,6 @@ public class BlockTransactionSelector {
     return result.getInvalidReason().equals(TransactionInvalidReason.NONCE_TOO_HIGH);
   }
 
-  private TransactionProcessingResult publicResultForWhenWeHaveAPrivateTransaction(
-      final Transaction transaction) {
-    return TransactionProcessingResult.successful(
-        Collections.emptyList(),
-        0,
-        transaction.getGasLimit(),
-        Bytes.EMPTY,
-        ValidationResult.valid());
-  }
-
   private boolean transactionTooLargeForBlock(final Transaction transaction) {
     final long dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount());
 
@@ -523,15 +461,34 @@ public class BlockTransactionSelector {
   }
 
   private boolean blockOccupancyAboveThreshold() {
-    final double gasAvailable = processableBlockHeader.getGasLimit();
-    final double gasUsed = transactionSelectionResult.getCumulativeGasUsed();
-    final double occupancyRatio = gasUsed / gasAvailable;
+    final long gasAvailable = processableBlockHeader.getGasLimit();
+    final long gasUsed = transactionSelectionResult.getCumulativeGasUsed();
+    final long gasRemaining = gasAvailable - gasUsed;
+
+    final double occupancyRatio = (double) gasUsed / (double) gasAvailable;
     LOG.trace(
-        "Min block occupancy ratio {}, gas used {}, available {}, used/available {}",
+        "Min block occupancy ratio {}, gas used {}, available {}, remaining {}, used/available {}",
         minBlockOccupancyRatio,
         gasUsed,
         gasAvailable,
+        gasRemaining,
         occupancyRatio);
+
     return occupancyRatio >= minBlockOccupancyRatio;
+  }
+
+  private boolean blockFull() {
+    final long gasAvailable = processableBlockHeader.getGasLimit();
+    final long gasUsed = transactionSelectionResult.getCumulativeGasUsed();
+    final long gasRemaining = gasAvailable - gasUsed;
+
+    if (gasRemaining < gasCalculator.getMinimumTransactionCost()) {
+      LOG.trace(
+          "Block full, remaining gas {} is less than minimum transaction gas cost {}",
+          gasRemaining,
+          gasCalculator.getMinimumTransactionCost());
+      return true;
+    }
+    return false;
   }
 }

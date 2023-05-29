@@ -80,13 +80,20 @@ public class EnodeURLImpl implements EnodeURL {
       checkStringArgumentNotEmpty(value, "Invalid empty value.");
       return fromURI(URI.create(value), enodeDnsConfiguration);
     } catch (final IllegalArgumentException e) {
-      String message =
-          String.format(
-              "Invalid enode URL syntax '%s'. Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.",
-              value);
-      if (e.getMessage() != null) {
-        message += " " + e.getMessage();
+      String message = "";
+      if (enodeDnsConfiguration.dnsEnabled() && !enodeDnsConfiguration.updateEnabled()) {
+        message =
+            "Invalid IP address (or DNS query resolved an invalid IP). --Xdns-enabled is true but --Xdns-update-enabled flag is false.";
+      } else {
+        message =
+            String.format(
+                "Invalid enode URL syntax '%s'. Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.",
+                value);
+        if (e.getMessage() != null) {
+          message += " " + e.getMessage();
+        }
       }
+
       throw new IllegalArgumentException(message, e);
     }
   }
@@ -273,6 +280,24 @@ public class EnodeURLImpl implements EnodeURL {
   @Override
   public int getDiscoveryPortOrZero() {
     return discoveryPort.orElse(0);
+  }
+
+  @Override
+  public String getHost() {
+    final URI uriWithoutDiscoveryPort = toURIWithoutDiscoveryPort();
+    String host = uriWithoutDiscoveryPort.getHost();
+    if (host == null) {
+      host = "";
+      final String uriString = uriWithoutDiscoveryPort.toString();
+      int indexOfAt = uriString.indexOf("@");
+      if (indexOfAt > -1) {
+        int lastIndexOfColon = uriString.lastIndexOf(":");
+        if (lastIndexOfColon > indexOfAt) {
+          host = uriString.substring(indexOfAt + 1, lastIndexOfColon);
+        }
+      }
+    }
+    return host;
   }
 
   @Override

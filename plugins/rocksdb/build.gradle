@@ -47,6 +47,7 @@ dependencies {
   implementation 'io.prometheus:simpleclient'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.rocksdb:rocksdbjni'
+  implementation project(path: ':ethereum:core')
 
   testImplementation project(':testutil')
 

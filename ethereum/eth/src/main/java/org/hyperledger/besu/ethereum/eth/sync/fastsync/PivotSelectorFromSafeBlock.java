@@ -44,6 +44,8 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
   private final Supplier<Optional<ForkchoiceEvent>> forkchoiceStateSupplier;
   private final Runnable cleanupAction;
 
+  private long lastNoFcuReceivedInfoLog = System.currentTimeMillis();
+  private static final long NO_FCU_RECEIVED_LOGGING_THRESHOLD = 60000L;
   private volatile Optional<BlockHeader> maybeCachedHeadBlockHeader = Optional.empty();
 
   public PivotSelectorFromSafeBlock(
@@ -68,6 +70,11 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
     final Optional<ForkchoiceEvent> maybeForkchoice = forkchoiceStateSupplier.get();
     if (maybeForkchoice.isPresent() && maybeForkchoice.get().hasValidSafeBlockHash()) {
       return Optional.of(selectLastSafeBlockAsPivot(maybeForkchoice.get().getSafeBlockHash()));
+    }
+    if (lastNoFcuReceivedInfoLog + NO_FCU_RECEIVED_LOGGING_THRESHOLD < System.currentTimeMillis()) {
+      lastNoFcuReceivedInfoLog = System.currentTimeMillis();
+      LOG.info(
+          "Waiting for consensus client, this may be because your consensus client is still syncing");
     }
     LOG.debug("No finalized block hash announced yet");
     return Optional.empty();

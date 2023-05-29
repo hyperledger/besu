@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.FlexiblePrivacyPrecompiledContract;
@@ -58,7 +57,7 @@ public class ProtocolSpecBuilder {
       transactionValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> ommerHeaderValidatorBuilder;
-  private Function<HeaderBasedProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder;
+  private Function<ProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder;
   private BiFunction<GasCalculator, EVM, AbstractMessageProcessor> contractCreationProcessorBuilder;
   private Function<PrecompiledContractConfiguration, PrecompileContractRegistry>
       precompileContractRegistryBuilder;
@@ -145,7 +144,7 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder blockBodyValidatorBuilder(
-      final Function<HeaderBasedProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder) {
+      final Function<ProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder) {
     this.blockBodyValidatorBuilder = blockBodyValidatorBuilder;
     return this;
   }
@@ -271,7 +270,7 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpec build(final HeaderBasedProtocolSchedule protocolSchedule) {
+  public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculator, "Missing gasLimitCalculator");
     checkNotNull(evmBuilder, "Missing operation registry");
@@ -346,11 +345,7 @@ public class ProtocolSpecBuilder {
 
     final BlockValidator blockValidator =
         blockValidatorBuilder.apply(
-            blockHeaderValidator,
-            blockBodyValidator,
-            blockProcessor,
-            badBlockManager,
-            privacyParameters.getGoQuorumPrivacyParameters());
+            blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
     final BlockImporter blockImporter = blockImporterBuilder.apply(blockValidator);
     return new ProtocolSpec(
         name,
@@ -419,14 +414,13 @@ public class ProtocolSpecBuilder {
 
   private BlockProcessor createBlockProcessor(
       final MainnetTransactionProcessor transactionProcessor,
-      final HeaderBasedProtocolSchedule protocolSchedule) {
+      final ProtocolSchedule protocolSchedule) {
     return blockProcessorBuilder.apply(
         transactionProcessor,
         transactionReceiptFactory,
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
-        privacyParameters.getGoQuorumPrivacyParameters(),
         protocolSchedule);
   }
 
@@ -465,8 +459,7 @@ public class ProtocolSpecBuilder {
         Wei blockReward,
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         boolean skipZeroBlockRewards,
-        Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters,
-        HeaderBasedProtocolSchedule protocolSchedule);
+        ProtocolSchedule protocolSchedule);
   }
 
   public interface BlockValidatorBuilder {
@@ -474,8 +467,7 @@ public class ProtocolSpecBuilder {
         BlockHeaderValidator blockHeaderValidator,
         BlockBodyValidator blockBodyValidator,
         BlockProcessor blockProcessor,
-        BadBlockManager badBlockManager,
-        Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters);
+        BadBlockManager badBlockManager);
   }
 
   public interface BlockImporterBuilder {

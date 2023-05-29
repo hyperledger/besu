@@ -47,7 +47,8 @@ public class MockPeerConnection extends AbstractPeerConnection {
       final String connectionId,
       final CapabilityMultiplexer multiplexer,
       final PeerConnectionEventDispatcher connectionEventDispatcher,
-      final LabelledMetric<Counter> outboundMessagesCounter) {
+      final LabelledMetric<Counter> outboundMessagesCounter,
+      final boolean inboundInitiated) {
     super(
         peer,
         peerInfo,
@@ -56,7 +57,8 @@ public class MockPeerConnection extends AbstractPeerConnection {
         connectionId,
         multiplexer,
         connectionEventDispatcher,
-        outboundMessagesCounter);
+        outboundMessagesCounter,
+        inboundInitiated);
   }
 
   public static MockPeerConnection create() {
@@ -64,11 +66,13 @@ public class MockPeerConnection extends AbstractPeerConnection {
   }
 
   public static MockPeerConnection create(final Peer peer) {
-    return create(peer, mock(PeerConnectionEventDispatcher.class));
+    return create(peer, mock(PeerConnectionEventDispatcher.class), true);
   }
 
   public static MockPeerConnection create(
-      final Peer peer, final PeerConnectionEventDispatcher eventDispatcher) {
+      final Peer peer,
+      final PeerConnectionEventDispatcher eventDispatcher,
+      final boolean inboundInitiated) {
     final List<SubProtocol> subProtocols = Arrays.asList(MockSubProtocol.create("eth"));
     final List<Capability> caps = Arrays.asList(Capability.create("eth", 63));
     final CapabilityMultiplexer multiplexer = new CapabilityMultiplexer(subProtocols, caps, caps);
@@ -83,7 +87,8 @@ public class MockPeerConnection extends AbstractPeerConnection {
         Integer.toString(connectionId.incrementAndGet()),
         multiplexer,
         eventDispatcher,
-        NoOpMetricsSystem.NO_OP_LABELLED_3_COUNTER);
+        NoOpMetricsSystem.NO_OP_LABELLED_3_COUNTER,
+        inboundInitiated);
   }
 
   @Override

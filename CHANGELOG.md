@@ -1,23 +1,56 @@
 # Changelog
 
-## 23.4-RC
+## 23.4.2
 
 ### Breaking Changes
-- Removed IBFT1 feature [#5302](https://github.com/hyperledger/besu/pull/5302)
 
 ### Additions and Improvements
-- Update most dependencies to latest version [#5269](https://github.com/hyperledger/besu/pull/5269)
-- If jemalloc is used, print its version in the configuration overview [#4738](https://github.com/hyperledger/besu/pull/4738)
-- Add metrics for accounts and storage reads (Flat database vs Merkle Patricia Trie) [#5315](https://github.com/hyperledger/besu/pull/5315)
-
+- Allow Ethstats connection url to specify ws:// or wss:// scheme. [#5494](https://github.com/hyperledger/besu/issues/5494)
+- 
 ### Bug Fixes
 
-## 23.1.3 
+### Download Links
+
+---
+
+## 23.4.1
 
 ### Breaking Changes
+- Add request content length limit for the JSON-RPC API (5MB) [#5467](https://github.com/hyperledger/besu/pull/5467)
+- `min-block-occupancy-ratio` options is now ignored on PoS networks [#5491](https://github.com/hyperledger/besu/pull/5491)
 
+### Additions and Improvements
+- Set the retention policy for RocksDB log files to maintain only the logs from the last week [#5428](https://github.com/hyperledger/besu/pull/5428)
+- "Big-EOF" (the EOF version initially slotted for Shanghai) has been moved from Cancun to FutureEIPs [#5429](https://github.com/hyperledger/besu/pull/5429)
+- EIP-4844: Zero blob transactions are invalid [#5425](https://github.com/hyperledger/besu/pull/5425)
+- Transaction pool flag to disable specific behaviors for locally submitted transactions [#5418](https://github.com/hyperledger/besu/pull/5418)
+- New optional feature to save the txpool content to file on shutdown and reloading it on startup [#5434](https://github.com/hyperledger/besu/pull/5434)
+- New option to send SNI header in TLS ClientHello message [#5439](https://github.com/hyperledger/besu/pull/5439)
+- Early access - layered transaction pool implementation [#5290](https://github.com/hyperledger/besu/pull/5290)
+- New RPC method `debug_getRawReceipts` [#5476](https://github.com/hyperledger/besu/pull/5476)
+- Add TrieLogFactory plugin support [#5440](https://github.com/hyperledger/besu/pull/5440)
+- Ignore `min-block-occupancy-ratio` option when on PoS networks, since in some cases, it prevents to have full blocks even if enough transactions are present [#5491](https://github.com/hyperledger/besu/pull/5491) 
+
+### Bug Fixes
+- Fix eth_feeHistory response for the case in which blockCount is higher than highestBlock requested. [#5397](https://github.com/hyperledger/besu/pull/5397)
+- Fix Besu Docker image failing to start due to NoClassDefFoundError with org.xerial.snappy.Snappy library. [#5462](https://github.com/hyperledger/besu/pull/5462)
+
+### Download Links
+
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.1/besu-23.4.1.tar.gz / sha256: 49d3a7a069cae307497093d834f873ce7804a46dd59207d5e8321459532d318e
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.1/besu-23.4.1.zip / sha256: 1d82ed83a816968aa9366d9310b275ca6438100f5d3eb1ec03d3474b2a5f5e76
+
+## 23.4.0
+
+### Breaking Changes
 - In `evmtool` (an offline EVM executor tool principally used for reference tests), the `--prestate` and `--genesis` options no longer parse genesis files containing IBFT, QBFT, and Clique network definitions. The same genesis files will work with those json entries removed. [#5192](https://github.com/hyperledger/besu/pull/5192)
 - In `--ethstats`, if the port is not specified in the URI, it will default to 443 and 80 for ssl and non-ssl connections respectively instead of 3000. [#5301](https://github.com/hyperledger/besu/pull/5301)
+- Remove IBFT 1.0 feature [#5302](https://github.com/hyperledger/besu/pull/5302)
+- Remove GoQuorum-compatible privacy feature [#5303](https://github.com/hyperledger/besu/pull/5303)
+- Remove launcher command line utility [#5355](https://github.com/hyperledger/besu/pull/5355)
+- Remove deprecated `tx-pool-future-max-by-account` option, see instead: `tx-pool-limit-by-account-percentage` [#5361](https://github.com/hyperledger/besu/pull/5361)
+- Default configuration for the deprecated ECIP-1049 network has been removed from the CLI network list [#5371](https://github.com/hyperledger/besu/pull/5371)
+- Besu now requires glibc 2.32 or later to run. Ubuntu 20.04 users will need to update to a newer version of Ubuntu, 22.04 or later to run Besu
 
 ### Additions and Improvements
 - An alternate build target for the EVM using GraalVM AOT compilation was added.  [#5192](https://github.com/hyperledger/besu/pull/5192)
@@ -25,6 +58,19 @@
 - Upgrade RocksDB version from 7.7.3 to 8.0.0. Besu Team [contributed](https://github.com/facebook/rocksdb/pull/11099) to this release to make disabling checksum verification work. 
 - Log an error with stacktrace when RPC responds with internal error [#5288](https://github.com/hyperledger/besu/pull/5288)
 - `--ethstats-cacert` to specify root CA of ethstats server (useful for non-production environments). [#5301](https://github.com/hyperledger/besu/pull/5301)
+- Update most dependencies to latest version [#5269](https://github.com/hyperledger/besu/pull/5269)
+- If jemalloc is used, print its version in the configuration overview [#4738](https://github.com/hyperledger/besu/pull/4738)
+- Add metrics for accounts and storage reads (Flat database vs Merkle Patricia Trie) [#5315](https://github.com/hyperledger/besu/pull/5315)
+- Offload LogBloom cache generation to computation executor, to avoid interfere with other scheduled tasks [#4530](https://github.com/hyperledger/besu/pull/4530)
+- Reference tests are upgraded to use v12.1 of the ethereum tests [#5343](https://github.com/hyperledger/besu/pull/5343)
+- Add new sepolia bootnodes, which should improve peering in the testnet. [#5352](https://github.com/hyperledger/besu/pull/5352)
+- Renamed --bonsai-maximum-back-layers-to-load option to --bonsai-historical-block-limit for clarity. Removed --Xbonsai-use-snapshots option as it is no longer functional [#5337](https://github.com/hyperledger/besu/pull/5337)
+- Change Forest to use TransactionDB instead of OptimisticTransactionDB [#5328](https://github.com/hyperledger/besu/pull/5328)
+- Performance: Reduced usage of UInt256 in EVM operations [#5331](https://github.com/hyperledger/besu/pull/5331)
+- Changed wrong error message "Invalid params" when private tx is reverted to "Execution reverted" with correct revert reason in data. [#5369](https://github.com/hyperledger/besu/pull/5369)
+- Changes to the way gas is estimated to provide an exact gas estimate [#5142](https://github.com/hyperledger/besu/pull/5142)
+- Add zero reads to Bonsai TrieLogs [#5317](https://github.com/hyperledger/besu/pull/5317) 
+- Bonsai TrieLog serialization interface and default implementation [#5372](https://github.com/hyperledger/besu/pull/5372) 
 
 ### Bug Fixes
 - Fix eth_getBlockByNumber cache error for latest block when called during syncing [#5292](https://github.com/hyperledger/besu/pull/5292)
@@ -35,6 +81,17 @@
 - Add withdrawals to payloadId calculation to avoid collisions [#5321](https://github.com/hyperledger/besu/pull/5321) 
 
 ### Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.0/besu-23.4.0.zip / sha256: 023a267ee07ed6e069cb15020c1c0262efc5ea0a3e32adc6596068cff7fd0be5
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.0/besu-23.4.0.tar.gz / sha256: 821695b3255c9f646f4d527e374219c96416f498231520f2eec2bebedc53f5a0
+
+## 23.1.3 - Nimbus Hotfix
+This update is strongly recommended for anyone running Nimbus with Besu. Due to the way Nimbus send request data, this can lead to a missed block proposal in certain circumstances.
+
+### Bug Fixes
+Add withdrawals to payloadId calculation to avoid collisions #5321
+Download Links
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.3/besu-23.1.3.tar.gz / sha256: 36898932a7535c4d126c1980443b33c9a4971f9354112992a18ee134c1777aa3
+https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.3/besu-23.1.3.zip / sha256: adb3b17e45217f86a56f07f09faba2e5d8a0eb8a585ad5307696d6cc58ee2f73
 
 ## 23.1.2
 This update is a mainnet-compatible Shanghai/Capella upgrade and is recommended for all Mainnet users.

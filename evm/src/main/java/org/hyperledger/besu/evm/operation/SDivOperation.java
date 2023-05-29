@@ -19,10 +19,9 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** The SDiv operation. */
 public class SDivOperation extends AbstractFixedCostOperation {
@@ -55,7 +54,7 @@ public class SDivOperation extends AbstractFixedCostOperation {
     final Bytes value1 = frame.popStackItem();
 
     if (value1.isZero()) {
-      frame.pushStackItem(UInt256.ZERO);
+      frame.pushStackItem(Bytes.EMPTY);
     } else {
       final BigInteger b1 =
           value0.size() < 32
@@ -71,10 +70,7 @@ public class SDivOperation extends AbstractFixedCostOperation {
         resultBytes = resultBytes.slice(resultBytes.size() - 32, 32);
       }
 
-      final byte[] padding = new byte[32 - resultBytes.size()];
-      Arrays.fill(padding, result.signum() < 0 ? (byte) 0xFF : 0x00);
-
-      frame.pushStackItem(UInt256.fromBytes(Bytes.concatenate(Bytes.wrap(padding), resultBytes)));
+      frame.pushStackItem(Bytes32.leftPad(resultBytes, result.signum() < 0 ? (byte) 0xFF : 0x00));
     }
 
     return sdivSuccess;

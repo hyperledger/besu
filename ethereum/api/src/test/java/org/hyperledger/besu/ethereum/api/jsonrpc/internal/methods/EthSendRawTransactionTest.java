@@ -41,6 +41,7 @@ public class EthSendRawTransactionTest {
 
   private static final String VALID_TRANSACTION =
       "0xf86d0485174876e800830222e0945aae326516b4f8fe08074b7e972e40a713048d62880de0b6b3a7640000801ba05d4e7998757264daab67df2ce6f7e7a0ae36910778a406ca73898c9899a32b9ea0674700d5c3d1d27f2e6b4469957dfd1a1c49bf92383d80717afc84eb05695d5b";
+
   @Mock private TransactionPool transactionPool;
   private EthSendRawTransaction method;
 
@@ -108,7 +109,7 @@ public class EthSendRawTransactionTest {
 
   @Test
   public void validTransactionIsSentToTransactionPool() {
-    when(transactionPool.addLocalTransaction(any(Transaction.class)))
+    when(transactionPool.addTransactionViaApi(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
 
     final JsonRpcRequestContext request =
@@ -123,7 +124,7 @@ public class EthSendRawTransactionTest {
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionPool).addLocalTransaction(any(Transaction.class));
+    verify(transactionPool).addTransactionViaApi(any(Transaction.class));
   }
 
   @Test
@@ -171,20 +172,20 @@ public class EthSendRawTransactionTest {
   }
 
   @Test
+  public void transactionWithIncorrectTransactionTypeIsRejected() {
+    verifyErrorForInvalidTransaction(
+        TransactionInvalidReason.INVALID_TRANSACTION_FORMAT, JsonRpcError.INVALID_TRANSACTION_TYPE);
+  }
+
+  @Test
   public void transactionWithFeeCapExceededIsRejected() {
     verifyErrorForInvalidTransaction(
         TransactionInvalidReason.TX_FEECAP_EXCEEDED, JsonRpcError.TX_FEECAP_EXCEEDED);
   }
 
-  @Test
-  public void transactionWithNonZeroGasWithGoQuorumCompatibilityIsRejected() {
-    verifyErrorForInvalidTransaction(
-        TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO, JsonRpcError.GAS_PRICE_MUST_BE_ZERO);
-  }
-
   private void verifyErrorForInvalidTransaction(
       final TransactionInvalidReason transactionInvalidReason, final JsonRpcError expectedError) {
-    when(transactionPool.addLocalTransaction(any(Transaction.class)))
+    when(transactionPool.addTransactionViaApi(any(Transaction.class)))
         .thenReturn(ValidationResult.invalid(transactionInvalidReason));
 
     final JsonRpcRequestContext request =
@@ -197,7 +198,7 @@ public class EthSendRawTransactionTest {
     final JsonRpcResponse actualResponse = method.response(request);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-    verify(transactionPool).addLocalTransaction(any(Transaction.class));
+    verify(transactionPool).addTransactionViaApi(any(Transaction.class));
   }
 
   @Test

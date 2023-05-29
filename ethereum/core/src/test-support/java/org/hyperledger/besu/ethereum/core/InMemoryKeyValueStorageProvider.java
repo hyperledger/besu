@@ -38,7 +38,6 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
     super(
         segmentIdentifier -> new InMemoryKeyValueStorage(),
         new InMemoryKeyValueStorage(),
-        new InMemoryKeyValueStorage(),
         SEGMENT_ISOLATION_SUPPORTED,
         SNAPSHOT_ISOLATION_UNSUPPORTED,
         new NoOpMetricsSystem());
@@ -74,7 +73,8 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         inMemoryKeyValueStorageProvider,
         blockchain,
         cachedMerkleTrieLoader,
-        new NoOpMetricsSystem());
+        new NoOpMetricsSystem(),
+        null);
   }
 
   public static MutableWorldState createInMemoryWorldState() {

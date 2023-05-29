@@ -20,10 +20,11 @@ import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
+import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
-import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
@@ -66,24 +67,20 @@ public abstract class BaseBftProtocolScheduleBuilder {
             forkSpec ->
                 specMap.put(
                     forkSpec.getBlock(),
-                    builder ->
-                        applyBftChanges(
-                            builder, forkSpec.getValue(), config.isQuorum(), bftExtraDataCodec)));
+                    builder -> applyBftChanges(builder, forkSpec.getValue(), bftExtraDataCodec)));
 
     final ProtocolSpecAdapters specAdapters = new ProtocolSpecAdapters(specMap);
 
-    final MutableProtocolSchedule mutableProtocolSchedule =
-        (MutableProtocolSchedule)
-            new ProtocolScheduleBuilder(
-                    config,
-                    DEFAULT_CHAIN_ID,
-                    specAdapters,
-                    privacyParameters,
-                    isRevertReasonEnabled,
-                    config.isQuorum(),
-                    evmConfiguration)
-                .createProtocolSchedule();
-    return new BftProtocolSchedule(mutableProtocolSchedule);
+    final ProtocolSchedule protocolSchedule =
+        new ProtocolScheduleBuilder(
+                config,
+                DEFAULT_CHAIN_ID,
+                specAdapters,
+                privacyParameters,
+                isRevertReasonEnabled,
+                evmConfiguration)
+            .createProtocolSchedule();
+    return new BftProtocolSchedule((DefaultProtocolSchedule) protocolSchedule);
   }
 
   /**
@@ -99,7 +96,6 @@ public abstract class BaseBftProtocolScheduleBuilder {
   private ProtocolSpecBuilder applyBftChanges(
       final ProtocolSpecBuilder builder,
       final BftConfigOptions configOptions,
-      final boolean goQuorumMode,
       final BftExtraDataCodec bftExtraDataCodec) {
     if (configOptions.getEpochLength() <= 0) {
       throw new IllegalArgumentException("Epoch length in config must be greater than zero");
@@ -114,7 +110,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
         .ommerHeaderValidatorBuilder(
             feeMarket -> createBlockHeaderRuleset(configOptions, feeMarket))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
-        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder(goQuorumMode))
+        .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
         .blockImporterBuilder(MainnetBlockImporter::new)
         .difficultyCalculator((time, parent, protocolContext) -> BigInteger.ONE)
         .skipZeroBlockRewards(true)

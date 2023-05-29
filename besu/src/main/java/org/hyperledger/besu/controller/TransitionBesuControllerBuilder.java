@@ -179,8 +179,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
         new TransitionProtocolSchedule(
             preMergeBesuControllerBuilder.createProtocolSchedule(),
             mergeBesuControllerBuilder.createProtocolSchedule(),
-            PostMergeContext.get(),
-            mergeBesuControllerBuilder.createTimestampProtocolSchedule());
+            PostMergeContext.get());
     return transitionProtocolSchedule;
   }
 
@@ -287,7 +286,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   public BesuController build() {
-    BesuController controller = super.build();
+    final BesuController controller = super.build();
     PostMergeContext.get().setSyncState(controller.getSyncState());
     return controller;
   }

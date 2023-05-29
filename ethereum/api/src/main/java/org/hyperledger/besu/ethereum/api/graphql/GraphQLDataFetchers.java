@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.enclave.GoQuorumEnclave;
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.AccountAdapter;
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.EmptyAccountAdapter;
 import org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.LogAdapter;
@@ -33,7 +32,6 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.core.GoQuorumPrivacyParameters;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -63,21 +61,10 @@ import graphql.GraphQLContext;
 import graphql.schema.DataFetcher;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class GraphQLDataFetchers {
 
-  private static final Logger LOG = LoggerFactory.getLogger(GraphQLDataFetchers.class);
   private final Integer highestEthVersion;
-  private Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters = Optional.empty();
-
-  public GraphQLDataFetchers(
-      final Set<Capability> supportedCapabilities,
-      final Optional<GoQuorumPrivacyParameters> goQuorumPrivacyParameters) {
-    this(supportedCapabilities);
-    this.goQuorumPrivacyParameters = goQuorumPrivacyParameters;
-  }
 
   public GraphQLDataFetchers(final Set<Capability> supportedCapabilities) {
     final OptionalInt version =
@@ -101,7 +88,7 @@ public class GraphQLDataFetchers {
 
         final Transaction transaction = Transaction.readFrom(RLP.input(rawTran));
         final ValidationResult<TransactionInvalidReason> validationResult =
-            transactionPool.addLocalTransaction(transaction);
+            transactionPool.addTransactionViaApi(transaction);
         if (validationResult.isValid()) {
           return Optional.of(transaction.getHash());
         } else {
@@ -312,46 +299,6 @@ public class GraphQLDataFetchers {
 
   private TransactionAdapter getTransactionAdapter(
       final TransactionWithMetadata transactionWithMetadata) {
-    final Transaction transaction = transactionWithMetadata.getTransaction();
-    final boolean isGoQuorumCompatbilityMode = goQuorumPrivacyParameters.isPresent();
-    final boolean isGoQuorumPrivateTransaction =
-        isGoQuorumCompatbilityMode
-            && transaction.isGoQuorumPrivateTransaction(isGoQuorumCompatbilityMode);
-    return isGoQuorumPrivateTransaction
-        ? updatePrivatePayload(transaction)
-        : new TransactionAdapter(transactionWithMetadata);
-  }
-
-  private TransactionAdapter updatePrivatePayload(final Transaction transaction) {
-    final GoQuorumEnclave enclave = goQuorumPrivacyParameters.get().enclave();
-    Bytes enclavePayload;
-
-    try {
-      // Retrieve the payload from the enclave
-      enclavePayload =
-          Bytes.wrap(enclave.receive(transaction.getPayload().toBase64String()).getPayload());
-    } catch (final Exception ex) {
-      LOG.debug("An error occurred while retrieving the GoQuorum transaction payload: ", ex);
-      enclavePayload = Bytes.EMPTY;
-    }
-
-    // Return a new transaction containing the retrieved payload
-    return new TransactionAdapter(
-        new TransactionWithMetadata(
-            new Transaction(
-                transaction.getNonce(),
-                transaction.getGasPrice(),
-                transaction.getMaxPriorityFeePerGas(),
-                transaction.getMaxFeePerGas(),
-                transaction.getMaxFeePerDataGas(),
-                transaction.getGasLimit(),
-                transaction.getTo(),
-                transaction.getValue(),
-                transaction.getSignature(),
-                enclavePayload,
-                transaction.getSender(),
-                transaction.getChainId(),
-                Optional.ofNullable(transaction.getV()),
-                transaction.getVersionedHashes())));
+    return new TransactionAdapter(transactionWithMetadata);
   }
 }

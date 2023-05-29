@@ -28,7 +28,6 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -38,6 +37,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.quality.Strictness.LENIENT;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -76,15 +76,19 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
 
 @SuppressWarnings("unchecked")
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = LENIENT)
 public abstract class AbstractTransactionPoolTest {
 
   protected static final int MAX_TRANSACTIONS = 5;
@@ -94,7 +98,7 @@ public abstract class AbstractTransactionPoolTest {
   private static final KeyPair KEY_PAIR2 =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
   @Mock protected MainnetTransactionValidator transactionValidator;
-  @Mock protected PendingTransactionListener listener;
+  @Mock protected PendingTransactionAddedListener listener;
   @Mock protected MiningParameters miningParameters;
   @Mock protected TransactionsMessageSender transactionsMessageSender;
   @Mock protected NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
@@ -126,7 +130,7 @@ public abstract class AbstractTransactionPoolTest {
 
   protected abstract FeeMarket getFeeMarket();
 
-  @Before
+  @BeforeEach
   public void setUp() {
     executionContext = createExecutionContextTestFixture();
     protocolContext = executionContext.getProtocolContext();
@@ -178,34 +182,39 @@ public abstract class AbstractTransactionPoolTest {
         transactionBroadcaster,
         ethContext,
         miningParameters,
-        metricsSystem,
+        new TransactionPoolMetrics(metricsSystem),
         config);
   }
 
-  @Test
-  public void localTransactionHappyPath() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void localTransactionHappyPath(final boolean disableLocalTxs) {
+    this.transactionPool = createTransactionPool(b -> b.disableLocalTransactions(disableLocalTxs));
     final Transaction transaction = createTransaction(0);
 
     givenTransactionIsValid(transaction);
 
-    assertLocalTransactionValid(transaction);
+    assertTransactionViaApiValid(transaction, disableLocalTxs);
   }
 
-  @Test
-  public void shouldReturnExclusivelyLocalTransactionsWhenAppropriate() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void shouldReturnExclusivelyLocalTransactionsWhenAppropriate(
+      final boolean disableLocalTxs) {
+    this.transactionPool = createTransactionPool(b -> b.disableLocalTransactions(disableLocalTxs));
     final Transaction localTransaction0 = createTransaction(0);
 
     givenTransactionIsValid(localTransaction0);
     givenTransactionIsValid(transaction1);
     givenTransactionIsValid(transaction2);
 
-    assertLocalTransactionValid(localTransaction0);
+    assertTransactionViaApiValid(localTransaction0, disableLocalTxs);
     assertRemoteTransactionValid(transaction1);
     assertRemoteTransactionValid(transaction2);
 
     assertThat(transactions.size()).isEqualTo(3);
     List<Transaction> localTransactions = transactions.getLocalTransactions();
-    assertThat(localTransactions.size()).isEqualTo(1);
+    assertThat(localTransactions.size()).isEqualTo(disableLocalTxs ? 0 : 1);
   }
 
   @Test
@@ -320,14 +329,20 @@ public abstract class AbstractTransactionPoolTest {
     assertTransactionPending(transaction2);
   }
 
-  @Test
-  public void addLocalTransaction_strictReplayProtectionOn_txWithChainId_chainIdIsConfigured() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void addLocalTransaction_strictReplayProtectionOn_txWithChainId_chainIdIsConfigured(
+      final boolean disableLocalTxs) {
     protocolSupportsTxReplayProtection(1337, true);
-    transactionPool = createTransactionPool(b -> b.strictTransactionReplayProtectionEnabled(true));
+    transactionPool =
+        createTransactionPool(
+            b ->
+                b.strictTransactionReplayProtectionEnabled(true)
+                    .disableLocalTransactions(disableLocalTxs));
     final Transaction tx = createTransaction(1);
     givenTransactionIsValid(tx);
 
-    assertLocalTransactionValid(tx);
+    assertTransactionViaApiValid(tx, disableLocalTxs);
   }
 
   @Test
@@ -346,7 +361,6 @@ public abstract class AbstractTransactionPoolTest {
     transactionPool.addRemoteTransactions(singletonList(transaction));
 
     assertTransactionNotPending(transaction);
-    verify(transactionValidator).getGoQuorumCompatibilityMode();
     verifyNoMoreInteractions(transactionValidator);
   }
 
@@ -380,12 +394,14 @@ public abstract class AbstractTransactionPoolTest {
         .validateForSender(eq(transaction1), eq(null), any(TransactionValidationParams.class));
     verify(transactionValidator).validate(eq(transaction2), any(Optional.class), any());
     verify(transactionValidator).validateForSender(eq(transaction2), any(), any());
-    verify(transactionValidator, atLeastOnce()).getGoQuorumCompatibilityMode();
     verifyNoMoreInteractions(transactionValidator);
   }
 
-  @Test
-  public void shouldAllowSequenceOfTransactionsWithIncreasingNonceFromSameSender() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void shouldAllowSequenceOfTransactionsWithIncreasingNonceFromSameSender(
+      final boolean disableLocalTxs) {
+    transactionPool = createTransactionPool(b -> b.disableLocalTransactions(disableLocalTxs));
     final Transaction transaction1 = createTransaction(1);
     final Transaction transaction2 = createTransaction(2);
     final Transaction transaction3 = createTransaction(3);
@@ -394,9 +410,9 @@ public abstract class AbstractTransactionPoolTest {
     givenTransactionIsValid(transaction2);
     givenTransactionIsValid(transaction3);
 
-    assertLocalTransactionValid(transaction1);
-    assertLocalTransactionValid(transaction2);
-    assertLocalTransactionValid(transaction3);
+    assertTransactionViaApiValid(transaction1, disableLocalTxs);
+    assertTransactionViaApiValid(transaction2, disableLocalTxs);
+    assertTransactionViaApiValid(transaction3, disableLocalTxs);
   }
 
   @Test
@@ -417,10 +433,10 @@ public abstract class AbstractTransactionPoolTest {
 
   @Test
   public void shouldDiscardRemoteTransactionThatAlreadyExistsBeforeValidation() {
-    doReturn(true).when(transactions).containsTransaction(transaction1.getHash());
+    doReturn(true).when(transactions).containsTransaction(transaction1);
     transactionPool.addRemoteTransactions(singletonList(transaction1));
 
-    verify(transactions).containsTransaction(transaction1.getHash());
+    verify(transactions).containsTransaction(transaction1);
     verifyNoInteractions(transactionValidator);
     verifyNoMoreInteractions(transactions);
   }
@@ -437,16 +453,19 @@ public abstract class AbstractTransactionPoolTest {
     assertRemoteTransactionInvalid(transaction2);
   }
 
-  @Test
-  public void shouldNotNotifyBatchListenerWhenLocalTransactionDoesNotReplaceExisting() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void shouldNotNotifyBatchListenerWhenLocalTransactionDoesNotReplaceExisting(
+      final boolean disableLocalTxs) {
+    transactionPool = createTransactionPool(b -> b.disableLocalTransactions(disableLocalTxs));
     final Transaction transaction1 = createTransaction(1, Wei.of(10));
     final Transaction transaction2 = createTransaction(1, Wei.of(9));
 
     givenTransactionIsValid(transaction1);
     givenTransactionIsValid(transaction2);
 
-    assertLocalTransactionValid(transaction1);
-    assertLocalTransactionInvalid(transaction2, TRANSACTION_REPLACEMENT_UNDERPRICED);
+    assertTransactionViaApiValid(transaction1, disableLocalTxs);
+    assertTransactionViaApiInvalid(transaction2, TRANSACTION_REPLACEMENT_UNDERPRICED);
   }
 
   @Test
@@ -456,7 +475,7 @@ public abstract class AbstractTransactionPoolTest {
 
     givenTransactionIsValid(transaction1);
 
-    assertLocalTransactionInvalid(transaction1, EXCEEDS_BLOCK_GAS_LIMIT);
+    assertTransactionViaApiInvalid(transaction1, EXCEEDS_BLOCK_GAS_LIMIT);
   }
 
   @Test
@@ -485,6 +504,7 @@ public abstract class AbstractTransactionPoolTest {
 
   @Test
   public void shouldAcceptLocalTransactionsEvenIfAnInvalidTransactionWithLowerNonceExists() {
+    transactionPool = createTransactionPool(b -> b.disableLocalTransactions(false));
     final Transaction invalidTx =
         createBaseTransaction(0).gasLimit(blockGasLimit + 1).createTransaction(KEY_PAIR1);
 
@@ -493,17 +513,19 @@ public abstract class AbstractTransactionPoolTest {
     givenTransactionIsValid(invalidTx);
     givenTransactionIsValid(nextTx);
 
-    assertLocalTransactionInvalid(invalidTx, EXCEEDS_BLOCK_GAS_LIMIT);
-    assertLocalTransactionValid(nextTx);
+    assertTransactionViaApiInvalid(invalidTx, EXCEEDS_BLOCK_GAS_LIMIT);
+    assertTransactionViaApiValid(nextTx, false);
   }
 
-  @Test
-  public void shouldRejectLocalTransactionsWhenNonceTooFarInFuture() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void shouldRejectLocalTransactionsWhenNonceTooFarInFuture(final boolean disableLocalTxs) {
+    transactionPool = createTransactionPool(b -> b.disableLocalTransactions(disableLocalTxs));
     final Transaction transaction1 = createTransaction(Integer.MAX_VALUE);
 
     givenTransactionIsValid(transaction1);
 
-    assertLocalTransactionInvalid(transaction1, NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER);
+    assertTransactionViaApiInvalid(transaction1, NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER);
   }
 
   @Test
@@ -575,38 +597,43 @@ public abstract class AbstractTransactionPoolTest {
         .isEqualTo(expectedValidationParams);
   }
 
-  @Test
-  public void shouldIgnoreFeeCapIfSetZero() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void shouldIgnoreFeeCapIfSetZero(final boolean disableLocalTxs) {
     final Wei twoEthers = Wei.fromEth(2);
-    transactionPool = createTransactionPool(b -> b.txFeeCap(Wei.ZERO));
+    transactionPool =
+        createTransactionPool(b -> b.txFeeCap(Wei.ZERO).disableLocalTransactions(disableLocalTxs));
     final Transaction transaction = createTransaction(1, twoEthers.add(Wei.of(1)));
 
     givenTransactionIsValid(transaction);
 
-    assertLocalTransactionValid(transaction);
+    assertTransactionViaApiValid(transaction, disableLocalTxs);
   }
 
   @Test
   public void shouldRejectLocalTransactionIfFeeCapExceeded() {
     final Wei twoEthers = Wei.fromEth(2);
-    transactionPool = createTransactionPool(b -> b.txFeeCap(twoEthers));
+    transactionPool =
+        createTransactionPool(b -> b.txFeeCap(twoEthers).disableLocalTransactions(false));
 
     final Transaction transactionLocal = createTransaction(1, twoEthers.add(1));
 
     givenTransactionIsValid(transactionLocal);
 
-    assertLocalTransactionInvalid(transactionLocal, TX_FEECAP_EXCEEDED);
+    assertTransactionViaApiInvalid(transactionLocal, TX_FEECAP_EXCEEDED);
   }
 
-  @Test
-  public void shouldRejectZeroGasPriceTransactionWhenNotMining() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void shouldRejectZeroGasPriceLocalTransactionWhenNotMining(final boolean disableLocalTxs) {
+    transactionPool = createTransactionPool(b -> b.disableLocalTransactions(disableLocalTxs));
     when(miningParameters.isMiningEnabled()).thenReturn(false);
 
     final Transaction transaction = createTransaction(0, Wei.ZERO);
 
     givenTransactionIsValid(transaction);
 
-    assertLocalTransactionInvalid(transaction, GAS_PRICE_TOO_LOW);
+    assertTransactionViaApiInvalid(transaction, GAS_PRICE_TOO_LOW);
   }
 
   private void assertTransactionPending(final Transaction t) {
@@ -663,10 +690,10 @@ public abstract class AbstractTransactionPoolTest {
         .thenReturn(valid());
   }
 
-  protected void assertLocalTransactionInvalid(
+  protected void assertTransactionViaApiInvalid(
       final Transaction tx, final TransactionInvalidReason invalidReason) {
     final ValidationResult<TransactionInvalidReason> result =
-        transactionPool.addLocalTransaction(tx);
+        transactionPool.addTransactionViaApi(tx);
 
     assertThat(result.isValid()).isFalse();
     assertThat(result.getInvalidReason()).isEqualTo(invalidReason);
@@ -674,14 +701,18 @@ public abstract class AbstractTransactionPoolTest {
     verify(transactionBroadcaster, never()).onTransactionsAdded(singletonList(tx));
   }
 
-  protected void assertLocalTransactionValid(final Transaction tx) {
+  protected void assertTransactionViaApiValid(final Transaction tx, final boolean disableLocals) {
     final ValidationResult<TransactionInvalidReason> result =
-        transactionPool.addLocalTransaction(tx);
+        transactionPool.addTransactionViaApi(tx);
 
     assertThat(result.isValid()).isTrue();
     assertTransactionPending(tx);
     verify(transactionBroadcaster).onTransactionsAdded(singletonList(tx));
-    assertThat(transactions.getLocalTransactions()).contains(tx);
+    if (disableLocals) {
+      assertThat(transactions.getLocalTransactions()).doesNotContain(tx);
+    } else {
+      assertThat(transactions.getLocalTransactions()).contains(tx);
+    }
   }
 
   protected void assertRemoteTransactionValid(final Transaction tx) {

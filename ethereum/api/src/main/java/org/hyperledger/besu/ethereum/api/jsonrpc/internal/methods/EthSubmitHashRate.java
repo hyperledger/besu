@@ -42,6 +42,6 @@ public class EthSubmitHashRate implements JsonRpcMethod {
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(),
         miningCoordinator.submitHashRate(
-            id, Bytes.fromHexString(hashRate).toBigInteger().longValue()));
+            id, Bytes.fromHexStringLenient(hashRate).toBigInteger().longValue()));
   }
 }

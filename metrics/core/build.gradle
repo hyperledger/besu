@@ -39,6 +39,8 @@ dependencies {
   api 'org.slf4j:slf4j-api'
 
   implementation 'com.google.guava:guava'
+  implementation 'com.google.dagger:dagger'
+  implementation 'info.picocli:picocli'
   implementation 'io.grpc:grpc-netty'
   implementation 'io.grpc:grpc-core'
   implementation 'io.netty:netty-tcnative-boringssl-static'
@@ -71,6 +73,8 @@ dependencies {
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 
   testSupportImplementation 'org.mockito:mockito-core'
+
+  annotationProcessor 'com.google.dagger:dagger-compiler'
 }
 
 
