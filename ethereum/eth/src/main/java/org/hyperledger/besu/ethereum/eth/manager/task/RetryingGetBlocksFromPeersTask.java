@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.exceptions.IncompleteResultsException;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -44,7 +43,11 @@ public class RetryingGetBlocksFromPeersTask
       final MetricsSystem metricsSystem,
       final int maxRetries,
       final List<BlockHeader> headers) {
-    super(ethContext, metricsSystem, Objects::isNull, maxRetries);
+    super(
+        ethContext,
+        metricsSystem,
+        res -> Objects.isNull(res) || res.getResult().isEmpty(),
+        maxRetries);
     this.protocolSchedule = protocolSchedule;
     this.headers = headers;
   }
@@ -77,20 +80,9 @@ public class RetryingGetBlocksFromPeersTask
                   .addArgument(this::getRetryCount)
                   .log();
 
-              if (peerResult.getResult().isEmpty()) {
-                currentPeer.recordUselessResponse("GetBodiesFromPeerTask");
-                throw new IncompleteResultsException(
-                    "No blocks returned by peer " + currentPeer.getShortNodeId());
-              }
-
               result.complete(peerResult);
               return peerResult;
             });
-  }
-
-  @Override
-  protected boolean isRetryableError(final Throwable error) {
-    return super.isRetryableError(error) || error instanceof IncompleteResultsException;
   }
 
   @Override

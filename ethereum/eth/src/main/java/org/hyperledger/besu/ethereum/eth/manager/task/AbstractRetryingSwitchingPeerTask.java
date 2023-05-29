@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -106,11 +105,6 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
     super.handleTaskError(error);
   }
 
-  @Override
-  protected boolean isRetryableError(final Throwable error) {
-    return error instanceof TimeoutException || isPeerFailure(error);
-  }
-
   private Optional<EthPeer> selectNextPeer() {
     final Optional<EthPeer> maybeNextPeer = remainingPeersToTry().findFirst();
 
@@ -136,7 +130,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
     // If we are at max connections, then refresh peers disconnecting one of the failed peers,
     // or the least useful
 
-    if (peers.peerCount() >= peers.getMaxPeers()) {
+    if (peers.peerCount() >= peers.getPeerLowerBound()) {
       failedPeers.stream()
           .filter(peer -> !peer.isDisconnected())
           .findAny()

@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.exceptions.IncompleteResultsException;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -98,21 +97,8 @@ public class RetryingGetHeadersEndingAtFromPeerByHashTask
                   referenceHash,
                   currentPeer,
                   peerResult.getResult());
-              if (peerResult.getResult().isEmpty()) {
-                currentPeer.recordUselessResponse("GetHeadersFromPeerByHashTask");
-                throw new IncompleteResultsException(
-                    "No block headers for hash "
-                        + referenceHash
-                        + " returned by peer "
-                        + currentPeer.getShortNodeId());
-              }
               result.complete(peerResult.getResult());
               return peerResult.getResult();
             });
-  }
-
-  @Override
-  protected boolean isRetryableError(final Throwable error) {
-    return super.isRetryableError(error) || error instanceof IncompleteResultsException;
   }
 }

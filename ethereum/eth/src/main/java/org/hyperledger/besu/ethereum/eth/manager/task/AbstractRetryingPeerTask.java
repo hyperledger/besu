@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.IncompleteResultsException;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.PeerBreachedProtocolException;
@@ -93,9 +94,19 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
               if (error != null) {
                 handleTaskError(error);
               } else {
-                // If we get a partial success, reset the retry counter.
-                if (!isEmptyResponse.test(peerResult)) {
+                // If we get a partial success, reset the retry counter, otherwise demote the peer
+                if (isEmptyResponse.test(peerResult)) {
+                  // record this empty response, so that the peer will be disconnected if there were
+                  // too many
+                  assignedPeer.ifPresent(
+                      peer -> {
+                        peer.recordUselessResponse(getClass().getSimpleName());
+                        throw new IncompleteResultsException(
+                            "Empty response from peer " + peer.getShortNodeId());
+                      });
+                } else {
                   retryCount = 0;
+                  assignedPeer.ifPresent(EthPeer::recordUsefulResponse);
                 }
                 executeTaskTimed();
               }
@@ -140,7 +151,9 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
   }
 
   protected boolean isRetryableError(final Throwable error) {
-    return error instanceof TimeoutException || (!assignedPeer.isPresent() && isPeerFailure(error));
+    return error instanceof IncompleteResultsException
+        || error instanceof TimeoutException
+        || (!assignedPeer.isPresent() && isPeerFailure(error));
   }
 
   protected boolean isPeerFailure(final Throwable error) {
