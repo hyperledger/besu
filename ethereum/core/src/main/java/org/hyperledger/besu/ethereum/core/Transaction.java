@@ -27,9 +27,13 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Quantity;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.blobs.Blob;
+import org.hyperledger.besu.ethereum.core.blobs.BlobsWithCommitments;
+import org.hyperledger.besu.ethereum.core.blobs.KZGCommitment;
+import org.hyperledger.besu.ethereum.core.blobs.KZGProof;
+import org.hyperledger.besu.ethereum.core.encoding.BlobTransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
-import org.hyperledger.besu.ethereum.core.encoding.ssz.TransactionNetworkPayload;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -48,8 +52,6 @@ import java.util.stream.Collectors;
 import com.google.common.primitives.Longs;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.ssz.SSZ;
-import org.apache.tuweni.ssz.SSZFixedSizeTypeList;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.apache.tuweni.units.bigints.UInt256s;
 
@@ -685,7 +687,7 @@ public class Transaction
 
     if (transactionType.supportsBlob()) {
       if (getBlobsWithCommitments().isPresent()) {
-        size = TransactionEncoder.encodeOpaqueBytesForNetwork(this).size();
+        size = TransactionEncoder.encodeOpaqueBytes(this).size();
       }
     } else {
       final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
@@ -998,29 +1000,25 @@ public class Transaction
       final Optional<List<AccessListEntry>> accessList,
       final List<Hash> versionedHashes) {
 
-    var blobTransaction = new TransactionNetworkPayload.SingedBlobTransaction.BlobTransaction();
-    chainId.ifPresent(id -> blobTransaction.setChainId(UInt256.valueOf(id)));
-    blobTransaction.setNonce(nonce);
-    blobTransaction.setMaxPriorityFeePerGas(maxPriorityFeePerGas.toUInt256());
-    blobTransaction.setMaxFeePerGas(maxFeePerGas.toUInt256());
-    blobTransaction.setMaxFeePerDataGas(maxFeePerDataGas.toUInt256());
-    blobTransaction.setGas(gasLimit);
-    blobTransaction.setAddress(to);
-    blobTransaction.setValue(value.toUInt256());
-    blobTransaction.setData(payload);
-    accessList.ifPresent(
-        al -> {
-          var list = blobTransaction.getAccessList();
-          al.forEach(
-              accessListEntry -> {
-                var tuple = new TransactionNetworkPayload.SingedBlobTransaction.AccessTuple();
-                tuple.setAddress(accessListEntry.getAddress());
-                tuple.setStorageKeys(accessListEntry.getStorageKeys());
-                list.add(tuple);
-              });
-        });
-    blobTransaction.setBlobVersionedHashes(versionedHashes);
-    Bytes encoded = SSZ.encode(blobTransaction::writeTo);
+    final Bytes encoded =
+        RLP.encode(
+            rlpOutput -> {
+              rlpOutput.startList();
+              eip1559PreimageFields(
+                  nonce,
+                  maxPriorityFeePerGas,
+                  maxFeePerGas,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  chainId,
+                  accessList,
+                  rlpOutput);
+              rlpOutput.writeUInt256Scalar(maxFeePerDataGas);
+              BlobTransactionDecoder.writeBlobVersionedHashes(rlpOutput, versionedHashes);
+              rlpOutput.endList();
+            });
     return Bytes.concatenate(Bytes.of(TransactionType.BLOB.getSerializedType()), encoded);
   }
 
@@ -1331,44 +1329,11 @@ public class Transaction
     }
 
     public Builder kzgBlobs(
-        final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGCommitment> kzgCommitments,
-        final SSZFixedSizeTypeList<TransactionNetworkPayload.Blob> blobs,
-        final TransactionNetworkPayload.KZGProof kzgProof) {
-      this.blobsWithCommitments = new BlobsWithCommitments(kzgCommitments, blobs, kzgProof);
+        final List<KZGCommitment> kzgCommitments,
+        final List<Blob> blobs,
+        final List<KZGProof> kzgProofs) {
+      this.blobsWithCommitments = new BlobsWithCommitments(kzgCommitments, blobs, kzgProofs);
       return this;
-    }
-  }
-
-  public static class BlobsWithCommitments {
-    public final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGCommitment> kzgCommitments;
-    public final SSZFixedSizeTypeList<TransactionNetworkPayload.Blob> blobs;
-    public final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGProof> kzgProofs;
-
-    public BlobsWithCommitments(
-        final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGCommitment> kzgCommitments,
-        final SSZFixedSizeTypeList<TransactionNetworkPayload.Blob> blobs,
-        final SSZFixedSizeTypeList<TransactionNetworkPayload.KZGProof> kzgProofs) {
-      this.kzgCommitments = kzgCommitments;
-      this.blobs = blobs;
-      this.kzgProofs = kzgProofs;
-    }
-
-    public List<Bytes> getBlobs() {
-      return blobs.getElements().stream()
-          .map(TransactionNetworkPayload.Blob::getBytes)
-          .collect(Collectors.toList());
-    }
-
-    public List<Bytes> getKzgCommitments() {
-      return kzgCommitments.getElements().stream()
-          .map(TransactionNetworkPayload.KZGCommitment::getData)
-          .collect(Collectors.toList());
-    }
-
-    public List<Bytes> getKzgProofs() {
-      return kzgProofs.getElements().stream()
-          .map(TransactionNetworkPayload.KZGProof::getBytes)
-          .collect(Collectors.toList());
     }
   }
 }
