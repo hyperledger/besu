@@ -293,6 +293,7 @@ public class TransactionPoolOptions
   /**
    * Return the configuration object for the txpool.
    *
+   * @param dataPath The path to Besu data directory
    * @return the configuration object
    */
   public TransactionPoolConfiguration buildTransactionPoolConfiguration(final Path dataPath) {
