@@ -290,6 +290,11 @@ public class TransactionPoolOptions
     return saveFile;
   }
 
+  /**
+   * Return the configuration object for the txpool.
+   *
+   * @return the configuration object
+   */
   public TransactionPoolConfiguration buildTransactionPoolConfiguration(final Path dataPath) {
     final File saveFile = this.getSaveFile();
     return this.toDomainObject()
