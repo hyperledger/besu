@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -40,11 +39,8 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
   private final Set<EthPeer> failedPeers = new HashSet<>();
 
   protected AbstractRetryingSwitchingPeerTask(
-      final EthContext ethContext,
-      final MetricsSystem metricsSystem,
-      final Predicate<T> isEmptyResponse,
-      final int maxRetries) {
-    super(ethContext, maxRetries, isEmptyResponse, metricsSystem);
+      final EthContext ethContext, final MetricsSystem metricsSystem, final int maxRetries) {
+    super(ethContext, maxRetries, metricsSystem);
   }
 
   @Override
@@ -92,7 +88,6 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
                   .addArgument(peerToUse)
                   .addArgument(this::getRetryCount)
                   .log();
-              result.complete(peerResult);
               return peerResult;
             });
   }
@@ -100,7 +95,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
   @Override
   protected void handleTaskError(final Throwable error) {
     if (isPeerFailure(error)) {
-      getAssignedPeer().ifPresent(peer -> failedPeers.add(peer));
+      getAssignedPeer().ifPresent(failedPeers::add);
     }
     super.handleTaskError(error);
   }

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -40,7 +41,7 @@ public class RetryingGetTrieNodeFromPeerTask extends AbstractRetryingPeerTask<Ma
       final Map<Bytes, List<Bytes>> paths,
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
-    super(ethContext, 4, Map::isEmpty, metricsSystem);
+    super(ethContext, 4, metricsSystem);
     this.ethContext = ethContext;
     this.paths = paths;
     this.blockHeader = blockHeader;
@@ -61,11 +62,16 @@ public class RetryingGetTrieNodeFromPeerTask extends AbstractRetryingPeerTask<Ma
     final GetTrieNodeFromPeerTask task =
         GetTrieNodeFromPeerTask.forTrieNodes(ethContext, paths, blockHeader, metricsSystem);
     assignedPeer.ifPresent(task::assignPeer);
-    return executeSubTask(task::run)
-        .thenApply(
-            peerResult -> {
-              result.complete(peerResult.getResult());
-              return peerResult.getResult();
-            });
+    return executeSubTask(task::run).thenApply(PeerTaskResult::getResult);
+  }
+
+  @Override
+  protected boolean emptyResult(final Map<Bytes, Bytes> peerResult) {
+    return peerResult.isEmpty();
+  }
+
+  @Override
+  protected boolean successfulResult(final Map<Bytes, Bytes> peerResult) {
+    return !emptyResult(peerResult);
   }
 }

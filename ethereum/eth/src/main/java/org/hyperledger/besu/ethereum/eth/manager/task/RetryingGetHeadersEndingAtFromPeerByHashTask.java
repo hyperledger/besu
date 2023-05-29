@@ -50,7 +50,7 @@ public class RetryingGetHeadersEndingAtFromPeerByHashTask
       final int count,
       final MetricsSystem metricsSystem,
       final int maxRetries) {
-    super(ethContext, metricsSystem, List::isEmpty, maxRetries);
+    super(ethContext, metricsSystem, maxRetries);
     this.protocolSchedule = protocolSchedule;
     this.minimumRequiredBlockNumber = minimumRequiredBlockNumber;
     this.count = count;
@@ -91,14 +91,24 @@ public class RetryingGetHeadersEndingAtFromPeerByHashTask
     return executeSubTask(task::run)
         .thenApply(
             peerResult -> {
+              final var res = peerResult.getResult();
               LOG.debug(
                   "Get {} block headers by hash {} from peer {} has result {}",
                   count,
                   referenceHash,
                   currentPeer,
-                  peerResult.getResult());
-              result.complete(peerResult.getResult());
-              return peerResult.getResult();
+                  res);
+              return res;
             });
+  }
+
+  @Override
+  protected boolean emptyResult(final List<BlockHeader> peerResult) {
+    return peerResult.isEmpty();
+  }
+
+  @Override
+  protected boolean successfulResult(final List<BlockHeader> peerResult) {
+    return !emptyResult(peerResult);
   }
 }
