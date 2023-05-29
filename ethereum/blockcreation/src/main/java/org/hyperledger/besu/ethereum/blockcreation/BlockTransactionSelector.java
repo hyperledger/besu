@@ -346,6 +346,7 @@ public class BlockTransactionSelector {
             dataGasPrice);
 
     if (!effectiveResult.isInvalid()) {
+        worldStateUpdater.commit();
 
       final long gasUsedByTransaction =
           transaction.getGasLimit() - effectiveResult.getGasRemaining();
@@ -365,7 +366,6 @@ public class BlockTransactionSelector {
 
         transactionSelectionResults.update(transaction, receipt, gasUsedByTransaction, dataGasUsed);
 
-        worldStateUpdater.commit();
         LOG.atTrace()
             .setMessage("Selected {} for block creation")
             .addArgument(transaction::toTraceLog)
