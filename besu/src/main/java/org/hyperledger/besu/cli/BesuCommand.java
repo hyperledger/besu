@@ -1727,9 +1727,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 besuController.getProtocolContext().getWorldStateArchive()),
             besuController.getProtocolSchedule()));
 
-    besuPluginContext.addService(
-        TransactionSelectionService.class, new TransactionSelectionServiceImpl());
-
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
   }
