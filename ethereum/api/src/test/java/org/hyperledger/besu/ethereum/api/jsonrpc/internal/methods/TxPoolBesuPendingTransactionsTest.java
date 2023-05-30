@@ -26,9 +26,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionPendingResult;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -45,7 +44,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class TxPoolBesuPendingTransactionsTest {
 
-  @Mock private GasPricePendingTransactionsSorter pendingTransactions;
+  @Mock private PendingTransactions pendingTransactions;
   private TxPoolBesuPendingTransactions method;
   private final String JSON_RPC_VERSION = "2.0";
   private final String TXPOOL_PENDING_TRANSACTIONS_METHOD = "txpool_besuPendingTransactions";
@@ -258,9 +257,7 @@ public class TxPoolBesuPendingTransactionsTest {
 
     final BlockDataGenerator gen = new BlockDataGenerator();
     return gen.transactionsWithAllTypes(4).stream()
-        .map(
-            transaction ->
-                new PendingTransaction(transaction, true, Instant.ofEpochSecond(Integer.MAX_VALUE)))
+        .map(transaction -> new PendingTransaction.Local(transaction))
         .collect(Collectors.toUnmodifiableSet());
   }
 }

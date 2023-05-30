@@ -14,54 +14,35 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql;
 
-import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
-
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
-import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.DefaultSyncStatus;
-import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
-import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
-import org.hyperledger.besu.ethereum.util.RawBlockIterator;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
-import java.net.URL;
-import java.nio.file.Paths;
-import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
 import graphql.GraphQL;
 import io.vertx.core.Vertx;
 import okhttp3.MediaType;
@@ -77,13 +58,7 @@ import org.mockito.Mockito;
 public abstract class AbstractEthGraphQLHttpServiceTest {
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
 
-  private static ProtocolSchedule PROTOCOL_SCHEDULE;
-
-  static List<Block> BLOCKS;
-
-  private static Block GENESIS_BLOCK;
-
-  private static GenesisState GENESIS_CONFIG;
+  private static BlockchainSetupUtil blockchainSetupUtil;
 
   private final Vertx vertx = Vertx.vertx();
 
@@ -96,30 +71,12 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
   final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
   protected static final MediaType GRAPHQL = MediaType.parse("application/graphql; charset=utf-8");
 
-  private ProtocolContext context;
-
   @BeforeClass
-  public static void setupConstants() throws Exception {
-    PROTOCOL_SCHEDULE = ProtocolScheduleFixture.MAINNET;
-
-    final URL blocksUrl = BlockTestUtil.getTestBlockchainUrl();
-
-    final URL genesisJsonUrl = BlockTestUtil.getTestGenesisUrl();
-
-    BLOCKS = new ArrayList<>();
-    try (final RawBlockIterator iterator =
-        new RawBlockIterator(
-            Paths.get(blocksUrl.toURI()),
-            rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()))) {
-      while (iterator.hasNext()) {
-        BLOCKS.add(iterator.next());
-      }
-    }
-
-    final String genesisJson = Resources.toString(genesisJsonUrl, Charsets.UTF_8);
-
-    GENESIS_BLOCK = BLOCKS.get(0);
-    GENESIS_CONFIG = GenesisState.fromJson(genesisJson, PROTOCOL_SCHEDULE);
+  public static void setupConstants() {
+    blockchainSetupUtil =
+        BlockchainSetupUtil.createForEthashChain(
+            BlockTestUtil.getHiveTestChainResources(), DataStorageFormat.FOREST);
+    blockchainSetupUtil.importAllBlocks();
   }
 
   @Before
@@ -140,28 +97,22 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
             transactionPoolMock.addTransactionViaApi(
                 ArgumentMatchers.argThat(tx -> tx.getNonce() == 16)))
         .thenReturn(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW));
-    final GasPricePendingTransactionsSorter pendingTransactionsMock =
-        Mockito.mock(GasPricePendingTransactionsSorter.class);
+    final PendingTransactions pendingTransactionsMock = Mockito.mock(PendingTransactions.class);
     Mockito.when(transactionPoolMock.getPendingTransactions()).thenReturn(pendingTransactionsMock);
     Mockito.when(pendingTransactionsMock.getPendingTransactions())
         .thenReturn(
             Collections.singleton(
-                new PendingTransaction(
+                new PendingTransaction.Local(
                     Transaction.builder()
                         .type(TransactionType.FRONTIER)
                         .nonce(42)
                         .gasLimit(654321)
                         .gasPrice(Wei.ONE)
-                        .build(),
-                    true,
-                    Instant.ofEpochSecond(Integer.MAX_VALUE))));
+                        .build())));
 
-    final WorldStateArchive stateArchive = createInMemoryWorldStateArchive();
-    GENESIS_CONFIG.writeStateTo(stateArchive.getMutable());
-
-    final MutableBlockchain blockchain =
-        InMemoryKeyValueStorageProvider.createInMemoryBlockchain(GENESIS_BLOCK);
-    context = new ProtocolContext(blockchain, stateArchive, null);
+    final MutableBlockchain blockchain = blockchainSetupUtil.getBlockchain();
+    ProtocolContext context =
+        new ProtocolContext(blockchain, blockchainSetupUtil.getWorldArchive(), null);
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
             context.getBlockchain(),
@@ -190,7 +141,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
                 GraphQLContextType.BLOCKCHAIN_QUERIES,
                 blockchainQueries,
                 GraphQLContextType.PROTOCOL_SCHEDULE,
-                PROTOCOL_SCHEDULE,
+                blockchainSetupUtil.getProtocolSchedule(),
                 GraphQLContextType.TRANSACTION_POOL,
                 transactionPoolMock,
                 GraphQLContextType.MINING_COORDINATOR,
@@ -210,12 +161,5 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
     client.connectionPool().evictAll();
     service.stop().join();
     vertx.close();
-  }
-
-  void importBlock(final int n) {
-    final Block block = BLOCKS.get(n);
-    final ProtocolSpec protocolSpec = PROTOCOL_SCHEDULE.getByBlockHeader(block.getHeader());
-    final BlockImporter blockImporter = protocolSpec.getBlockImporter();
-    blockImporter.importBlock(context, block, HeaderValidationMode.FULL);
   }
 }

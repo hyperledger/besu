@@ -33,10 +33,9 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.plugin.data.Transaction;
 
-import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -59,7 +58,7 @@ public class EthGetTransactionByHashTest {
   private final String JSON_RPC_VERSION = "2.0";
   private final String ETH_METHOD = "eth_getTransactionByHash";
 
-  @Mock private GasPricePendingTransactionsSorter pendingTransactions;
+  @Mock private PendingTransactions pendingTransactions;
 
   @Before
   public void setUp() {
@@ -195,9 +194,7 @@ public class EthGetTransactionByHashTest {
     Transaction pendingTransaction = gen.transaction();
     System.out.println(pendingTransaction.getHash());
     return gen.transactionsWithAllTypes(4).stream()
-        .map(
-            transaction ->
-                new PendingTransaction(transaction, true, Instant.ofEpochSecond(Integer.MAX_VALUE)))
+        .map(transaction -> new PendingTransaction.Local(transaction))
         .collect(Collectors.toUnmodifiableSet());
   }
 }

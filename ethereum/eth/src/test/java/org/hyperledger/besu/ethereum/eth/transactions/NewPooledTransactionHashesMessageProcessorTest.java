@@ -93,7 +93,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
             transactionPool,
             transactionPoolConfiguration,
             ethContext,
-            metricsSystem);
+            new TransactionPoolMetrics(metricsSystem));
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
   }
 
@@ -150,7 +150,9 @@ public class NewPooledTransactionHashesMessageProcessorTest {
         ofMillis(1));
     verifyNoInteractions(transactionTracker);
     assertThat(
-            metricsSystem.getCounterValue("new_pooled_transaction_hashes_messages_skipped_total"))
+            metricsSystem.getCounterValue(
+                TransactionPoolMetrics.EXPIRED_MESSAGES_COUNTER_NAME,
+                NewPooledTransactionHashesMessageProcessor.METRIC_LABEL))
         .isEqualTo(1);
   }
 
@@ -163,7 +165,9 @@ public class NewPooledTransactionHashesMessageProcessorTest {
         ofMillis(1));
     verifyNoInteractions(transactionPool);
     assertThat(
-            metricsSystem.getCounterValue("new_pooled_transaction_hashes_messages_skipped_total"))
+            metricsSystem.getCounterValue(
+                TransactionPoolMetrics.EXPIRED_MESSAGES_COUNTER_NAME,
+                NewPooledTransactionHashesMessageProcessor.METRIC_LABEL))
         .isEqualTo(1);
   }
 

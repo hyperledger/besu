@@ -54,7 +54,8 @@ public class TransactionsMessageProcessorTest {
     metricsSystem = new StubMetricsSystem();
 
     messageHandler =
-        new TransactionsMessageProcessor(transactionTracker, transactionPool, metricsSystem);
+        new TransactionsMessageProcessor(
+            transactionTracker, transactionPool, new TransactionPoolMetrics(metricsSystem));
   }
 
   @Test
@@ -87,7 +88,11 @@ public class TransactionsMessageProcessorTest {
         now().minus(ofMinutes(1)),
         ofMillis(1));
     verifyNoInteractions(transactionTracker);
-    assertThat(metricsSystem.getCounterValue("transactions_messages_skipped_total")).isEqualTo(1);
+    assertThat(
+            metricsSystem.getCounterValue(
+                TransactionPoolMetrics.EXPIRED_MESSAGES_COUNTER_NAME,
+                TransactionsMessageProcessor.METRIC_LABEL))
+        .isEqualTo(1);
   }
 
   @Test
@@ -98,6 +103,10 @@ public class TransactionsMessageProcessorTest {
         now().minus(ofMinutes(1)),
         ofMillis(1));
     verifyNoInteractions(transactionPool);
-    assertThat(metricsSystem.getCounterValue("transactions_messages_skipped_total")).isEqualTo(1);
+    assertThat(
+            metricsSystem.getCounterValue(
+                TransactionPoolMetrics.EXPIRED_MESSAGES_COUNTER_NAME,
+                TransactionsMessageProcessor.METRIC_LABEL))
+        .isEqualTo(1);
   }
 }

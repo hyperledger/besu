@@ -136,7 +136,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 protocolSchedule,
                 this.miningParameters.getMinTransactionGasPrice(),
                 address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
-                this.miningParameters.getMinBlockOccupancyRatio(),
                 parentHeader);
 
     this.backwardSyncContext.subscribeBadChainListener(this);
@@ -278,11 +277,10 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     if (result.isSuccessful()) {
       mergeContext.putPayloadById(
           payloadIdentifier, new BlockWithReceipts(emptyBlock, result.getReceipts()));
-      LOG.atDebug()
-          .setMessage("Built empty block proposal {} for payload {}")
-          .addArgument(emptyBlock::toLogString)
-          .addArgument(payloadIdentifier)
-          .log();
+      LOG.info(
+          "Start building proposals for block {} identified by {}",
+          emptyBlock.getHeader().getNumber(),
+          payloadIdentifier);
     } else {
       LOG.warn(
           "failed to validate empty block proposal {}, reason {}",
