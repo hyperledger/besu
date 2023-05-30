@@ -101,8 +101,7 @@ public class TransactionSelectionResult {
    * @return the selection result
    */
   public static TransactionSelectionResult invalidTransient(final String invalidReason) {
-    return new TransactionSelectionResult(
-        TransactionSelectionResult.Status.INVALID_TRANSIENT, invalidReason);
+    return new TransactionSelectionResult(Status.INVALID_TRANSIENT, invalidReason);
   }
 
   /**
@@ -113,7 +112,7 @@ public class TransactionSelectionResult {
    * @return the selection result
    */
   public static TransactionSelectionResult invalid(final String invalidReason) {
-    return new TransactionSelectionResult(TransactionSelectionResult.Status.INVALID, invalidReason);
+    return new TransactionSelectionResult(Status.INVALID, invalidReason);
   }
 
   /**
@@ -141,7 +140,7 @@ public class TransactionSelectionResult {
    * @return true if the candidate transaction is included in the new block, false otherwise
    */
   public boolean selected() {
-    return TransactionSelectionResult.Status.SELECTED.equals(status);
+    return Status.SELECTED.equals(status);
   }
 
   @Override
