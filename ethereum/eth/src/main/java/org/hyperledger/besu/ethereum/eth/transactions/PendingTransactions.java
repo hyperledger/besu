@@ -85,12 +85,6 @@ public interface PendingTransactions {
 
   boolean isLocalSender(Address sender);
 
-  enum TransactionSelectionResult {
-    DELETE_TRANSACTION_AND_CONTINUE,
-    CONTINUE,
-    COMPLETE_OPERATION
-  }
-
   @FunctionalInterface
   interface TransactionSelector {
     TransactionSelectionResult evaluateTransaction(Transaction transaction);
