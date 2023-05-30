@@ -61,6 +61,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -1629,6 +1630,22 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getMaxBatchSize())
         .isEqualTo(rpcHttpMaxBatchSize);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void rpcHttpMaxRequestContentLengthOptionMustBeUsed() {
+    final int rpcHttpMaxRequestContentLength = 1;
+    parseCommand(
+        "--rpc-http-max-request-content-length", Long.toString(rpcHttpMaxRequestContentLength));
+
+    verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(jsonRpcConfigArgumentCaptor.getValue().getMaxRequestContentLength())
+        .isEqualTo(rpcHttpMaxRequestContentLength);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -4551,6 +4568,118 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--permissions-nodes-config-file=" + permissioningConfig.getPath());
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(staticNodeURI.toString(), "not in nodes-allowlist");
+  }
+
+  @Test
+  public void disableLocalsDefault() {
+    parseCommand();
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getDisableLocalTransactions()).isFalse();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void disableLocalsOn() {
+    parseCommand("--tx-pool-disable-locals=true");
+
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getDisableLocalTransactions()).isTrue();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void disableLocalsOff() {
+    parseCommand("--tx-pool-disable-locals=false");
+
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getDisableLocalTransactions()).isFalse();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void saveToFileDisabledByDefault() {
+    parseCommand();
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getEnableSaveRestore()).isFalse();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void saveToFileEnabledDefaultPath() {
+    parseCommand("--tx-pool-enable-save-restore=true");
+
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getEnableSaveRestore()).isTrue();
+    assertThat(transactionPoolConfigCaptor.getValue().getSaveFile())
+        .hasName(TransactionPoolConfiguration.DEFAULT_SAVE_FILE_NAME);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void saveToFileEnabledCustomPath() {
+    parseCommand("--tx-pool-enable-save-restore=true", "--tx-pool-save-file=my.save.file");
+
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getEnableSaveRestore()).isTrue();
+    assertThat(transactionPoolConfigCaptor.getValue().getSaveFile()).hasName("my.save.file");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void senderLimitedTxPool_derived() {
+    parseCommand("--tx-pool-limit-by-account-percentage=0.002");
+
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getTxPoolMaxFutureTransactionByAccount())
+        .isEqualTo(9);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void senderLimitedTxPoolFloor_derived() {
+    parseCommand("--tx-pool-limit-by-account-percentage=0.0001");
+
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getTxPoolMaxFutureTransactionByAccount())
+        .isEqualTo(1);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void senderLimitedTxPoolCeiling_violated() {
+    TestBesuCommand commandTest = parseCommand("--tx-pool-limit-by-account-percentage=1.00002341");
+
+    TransactionPoolOptions txPoolOption = commandTest.getTransactionPoolOptions();
+
+    final TransactionPoolConfiguration config = txPoolOption.toDomainObject().build();
+    assertThat(config.getTxPoolLimitByAccountPercentage())
+        .isEqualTo(TransactionPoolConfiguration.DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Invalid value for option '--tx-pool-limit-by-account-percentage'");
   }
 
   @Test

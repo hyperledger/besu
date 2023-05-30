@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
 import graphql.schema.DataFetchingEnvironment;
@@ -58,35 +57,37 @@ public class TransactionAdapter extends AdapterBase {
     return transactionReceiptWithMetadata;
   }
 
-  public Optional<Hash> getHash() {
-    return Optional.of(transactionWithMetadata.getTransaction().getHash());
+  public Hash getHash() {
+    return transactionWithMetadata.getTransaction().getHash();
   }
 
   public Optional<Integer> getType() {
     return Optional.of(transactionWithMetadata.getTransaction().getType().ordinal());
   }
 
-  public Optional<Long> getNonce() {
-    final long nonce = transactionWithMetadata.getTransaction().getNonce();
-    return Optional.of(nonce);
+  public Long getNonce() {
+    return transactionWithMetadata.getTransaction().getNonce();
   }
 
   public Optional<Integer> getIndex() {
     return transactionWithMetadata.getTransactionIndex();
   }
 
-  public Optional<AccountAdapter> getFrom(final DataFetchingEnvironment environment) {
+  public AccountAdapter getFrom(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     Long blockNumber = environment.getArgument("block");
     if (blockNumber == null) {
       blockNumber = transactionWithMetadata.getBlockNumber().orElseGet(query::headBlockNumber);
     }
-    return query.getAndMapWorldState(
-        blockNumber,
-        mutableWorldState ->
-            Optional.of(
-                new AccountAdapter(
-                    mutableWorldState.get(transactionWithMetadata.getTransaction().getSender()))));
+    return query
+        .getAndMapWorldState(
+            blockNumber,
+            mutableWorldState ->
+                Optional.of(
+                    new AccountAdapter(
+                        mutableWorldState.get(
+                            transactionWithMetadata.getTransaction().getSender()))))
+        .get();
   }
 
   public Optional<AccountAdapter> getTo(final DataFetchingEnvironment environment) {
@@ -105,12 +106,12 @@ public class TransactionAdapter extends AdapterBase {
                 .map(address -> new AccountAdapter(address, ws.get(address))));
   }
 
-  public Optional<Wei> getValue() {
-    return Optional.of(transactionWithMetadata.getTransaction().getValue());
+  public Wei getValue() {
+    return transactionWithMetadata.getTransaction().getValue();
   }
 
-  public Optional<Wei> getGasPrice() {
-    return transactionWithMetadata.getTransaction().getGasPrice();
+  public Wei getGasPrice() {
+    return transactionWithMetadata.getTransaction().getGasPrice().orElse(Wei.ZERO);
   }
 
   public Optional<Wei> getMaxPriorityFeePerGas() {
@@ -126,12 +127,17 @@ public class TransactionAdapter extends AdapterBase {
         .map(rwm -> rwm.getTransaction().getEffectiveGasPrice(rwm.getBaseFee()));
   }
 
-  public Optional<Long> getGas() {
-    return Optional.of(transactionWithMetadata.getTransaction().getGasLimit());
+  public Optional<Wei> getEffectiveTip(final DataFetchingEnvironment environment) {
+    return getReceipt(environment)
+        .map(rwm -> rwm.getTransaction().getEffectivePriorityFeePerGas(rwm.getBaseFee()));
   }
 
-  public Optional<Bytes> getInputData() {
-    return Optional.of(transactionWithMetadata.getTransaction().getPayload());
+  public Long getGas() {
+    return transactionWithMetadata.getTransaction().getGasLimit();
+  }
+
+  public Bytes getInputData() {
+    return transactionWithMetadata.getTransaction().getPayload();
   }
 
   public Optional<NormalBlockAdapter> getBlock(final DataFetchingEnvironment environment) {
@@ -212,7 +218,7 @@ public class TransactionAdapter extends AdapterBase {
     return transactionWithMetadata
         .getTransaction()
         .getAccessList()
-        .map(l -> l.stream().map(AccessListEntryAdapter::new).collect(Collectors.toList()))
+        .map(l -> l.stream().map(AccessListEntryAdapter::new).toList())
         .orElse(List.of());
   }
 

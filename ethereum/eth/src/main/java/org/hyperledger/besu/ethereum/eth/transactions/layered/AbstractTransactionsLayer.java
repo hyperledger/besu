@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REORG_SENDER;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.TRY_NEXT_LAYER;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.CONFIRMED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.CROSS_LAYER_REPLACED;
@@ -274,9 +273,6 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       nextLayerDistance = distance;
     } else {
       nextLayerDistance = (int) (pendingTransaction.getNonce() - (senderTxs.lastKey() + 1));
-      if (nextLayerDistance < 0) {
-        return REORG_SENDER;
-      }
     }
     return nextLayer.add(pendingTransaction, nextLayerDistance);
   }

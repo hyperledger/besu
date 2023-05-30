@@ -875,6 +875,10 @@ public class BlockchainQueries {
               } catch (Exception ex) {
                 LOG.error("failed worldstate query for " + blockHash.toShortHexString(), ex);
               }
+              LOG.atDebug()
+                  .setMessage("Failed to find worldstate for {}")
+                  .addArgument(blockHeader.toLogString())
+                  .log();
               return Optional.empty();
             });
   }
