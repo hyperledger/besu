@@ -75,7 +75,7 @@ public class LongScalarTest {
             scalar
                 .getCoercing()
                 .serialize(value, GraphQLContext.newContext().build(), Locale.ENGLISH))
-        .isEqualTo(value);
+        .isEqualTo(str);
   }
 
   @Test
@@ -84,7 +84,7 @@ public class LongScalarTest {
             scalar
                 .getCoercing()
                 .serialize(str, GraphQLContext.newContext().build(), Locale.ENGLISH))
-        .isEqualTo(value);
+        .isEqualTo(str);
   }
 
   @Test
