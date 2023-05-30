@@ -116,14 +116,14 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
   protected abstract CompletableFuture<T> executePeerTask(Optional<EthPeer> assignedPeer);
 
   protected void handleTaskError(final Throwable error) {
-    final Throwable cause = ExceptionUtils.rootCause(error);
-    if (!isRetryableError(cause)) {
+    final Throwable rootCause = ExceptionUtils.rootCause(error);
+    if (!isRetryableError(rootCause)) {
       // Complete exceptionally
-      result.completeExceptionally(cause);
+      result.completeExceptionally(rootCause);
       return;
     }
 
-    if (cause instanceof NoAvailablePeersException) {
+    if (rootCause instanceof NoAvailablePeersException) {
       LOG.debug(
           "No useful peer found, wait max 5 seconds for new peer to connect: current peers {}",
           ethContext.getEthPeers().peerCount());
@@ -141,7 +141,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
     LOG.debug(
         "Retrying after recoverable failure from peer task {}: {}",
         this.getClass().getSimpleName(),
-        cause.getMessage());
+        rootCause.getMessage());
     // Wait before retrying on failure
     executeSubTask(
         () ->
@@ -150,16 +150,16 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
                 .scheduleFutureTask(this::executeTaskTimed, Duration.ofSeconds(1)));
   }
 
-  protected boolean isRetryableError(final Throwable error) {
-    return error instanceof IncompleteResultsException
-        || error instanceof TimeoutException
-        || (!assignedPeer.isPresent() && isPeerFailure(error));
+  protected boolean isRetryableError(final Throwable rootCause) {
+    return rootCause instanceof IncompleteResultsException
+        || rootCause instanceof TimeoutException
+        || (!assignedPeer.isPresent() && isPeerFailure(rootCause));
   }
 
-  protected boolean isPeerFailure(final Throwable error) {
-    return error instanceof PeerBreachedProtocolException
-        || error instanceof PeerDisconnectedException
-        || error instanceof NoAvailablePeersException;
+  protected boolean isPeerFailure(final Throwable rootCause) {
+    return rootCause instanceof PeerBreachedProtocolException
+        || rootCause instanceof PeerDisconnectedException
+        || rootCause instanceof NoAvailablePeersException;
   }
 
   protected EthContext getEthContext() {
