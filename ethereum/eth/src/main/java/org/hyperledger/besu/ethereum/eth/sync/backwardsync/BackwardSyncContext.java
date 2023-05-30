@@ -101,7 +101,6 @@ public class BackwardSyncContext {
   }
 
   public synchronized void maybeUpdateTargetHeight(final Hash headHash) {
-    LOG.atTrace().setMessage("maybeUpdateTargetHeight with {}").addArgument(headHash).log();
     if (!Hash.ZERO.equals(headHash)) {
       Optional<Status> maybeCurrentStatus = Optional.ofNullable(currentBackwardSyncStatus.get());
       maybeCurrentStatus.ifPresent(
