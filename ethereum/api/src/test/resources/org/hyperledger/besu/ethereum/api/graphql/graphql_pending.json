@@ -1,24 +1,22 @@
 {
-  "request":
-    "{ pending { transactionCount transactions { nonce gas } account(address:\"0x6295ee1b4f6dd65047762f924ecd367c17eabf8f\") { balance} estimateGas(data:{}) call (data : {from : \"0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b\", to: \"0x6295ee1b4f6dd65047762f924ecd367c17eabf8f\", data :\"0x12a7b914\"}){data status}} }",
-
+  "request": "{ pending { transactionCount transactions { nonce gas } account(address:\"0x6295ee1b4f6dd65047762f924ecd367c17eabf8f\") { balance} estimateGas(data:{}) call (data : {from : \"0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b\", to: \"0x6295ee1b4f6dd65047762f924ecd367c17eabf8f\", data :\"0x12a7b914\"}){data status}} }",
   "response": {
     "data": {
       "pending": {
-        "transactionCount": 0,
+        "transactionCount": "0x0",
         "transactions": [
           {
-            "nonce": 42,
-            "gas": 654321
+            "nonce": "0x2a",
+            "gas": "0x9fbf1"
           }
         ],
         "account": {
           "balance": "0x140"
         },
-        "estimateGas": 21000,
+        "estimateGas": "0xcf08",
         "call": {
           "data": "0x0000000000000000000000000000000000000000000000000000000000000001",
-          "status": 1
+          "status": "0x1"
         }
       }
     }

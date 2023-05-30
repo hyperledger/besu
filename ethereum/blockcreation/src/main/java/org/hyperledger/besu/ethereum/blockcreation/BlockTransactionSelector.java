@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionSelectionResult;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionSelectionResult;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -71,43 +72,9 @@ import org.slf4j.LoggerFactory;
  * not cleared between executions of buildTransactionListForBlock().
  */
 public class BlockTransactionSelector {
-  public static class TransactionValidationResult {
-    private final Transaction transaction;
-    private final ValidationResult<TransactionInvalidReason> validationResult;
 
-    public TransactionValidationResult(
-        final Transaction transaction,
-        final ValidationResult<TransactionInvalidReason> validationResult) {
-      this.transaction = transaction;
-      this.validationResult = validationResult;
-    }
-
-    public Transaction getTransaction() {
-      return transaction;
-    }
-
-    public ValidationResult<TransactionInvalidReason> getValidationResult() {
-      return validationResult;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      TransactionValidationResult that = (TransactionValidationResult) o;
-      return Objects.equals(transaction, that.transaction)
-          && Objects.equals(validationResult, that.validationResult);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(transaction, validationResult);
-    }
-  }
+  public record TransactionValidationResult(
+      Transaction transaction, ValidationResult<TransactionInvalidReason> validationResult) {}
 
   public static class TransactionSelectionResults {
     private final List<Transaction> transactions = Lists.newArrayList();
@@ -115,6 +82,7 @@ public class BlockTransactionSelector {
         new EnumMap<>(TransactionType.class);
     private final List<TransactionReceipt> receipts = Lists.newArrayList();
     private final List<TransactionValidationResult> invalidTransactions = Lists.newArrayList();
+    private final List<TransactionSelectionResult> selectionResults = Lists.newArrayList();
     private long cumulativeGasUsed = 0;
     private long cumulativeDataGasUsed = 0;
 
@@ -168,6 +136,41 @@ public class BlockTransactionSelector {
 
     public List<TransactionValidationResult> getInvalidTransactions() {
       return invalidTransactions;
+    }
+
+    public void addSelectionResult(final TransactionSelectionResult res) {
+      selectionResults.add(res);
+    }
+
+    public void logSelectionStats() {
+      if (LOG.isDebugEnabled()) {
+        final Map<TransactionSelectionResult, Long> selectionStats =
+            selectionResults.stream()
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+        LOG.debug(
+            "Selection stats: Totals[Evaluated={}, Selected={}, Skipped={}, Dropped={}]; Detailed[{}]",
+            selectionResults.size(),
+            selectionStats.entrySet().stream()
+                .filter(e -> e.getKey().selected())
+                .map(Map.Entry::getValue)
+                .mapToInt(Long::intValue)
+                .sum(),
+            selectionStats.entrySet().stream()
+                .filter(e -> !e.getKey().selected())
+                .map(Map.Entry::getValue)
+                .mapToInt(Long::intValue)
+                .sum(),
+            selectionStats.entrySet().stream()
+                .filter(e -> e.getKey().discard())
+                .map(Map.Entry::getValue)
+                .mapToInt(Long::intValue)
+                .sum(),
+            selectionStats.entrySet().stream()
+                .map(e -> e.getKey().toString() + "=" + e.getValue())
+                .sorted()
+                .collect(Collectors.joining(", ")));
+      }
     }
 
     @Override
@@ -265,9 +268,13 @@ public class BlockTransactionSelector {
         .addArgument(pendingTransactions.logStats())
         .log();
     pendingTransactions.selectTransactions(
-        pendingTransaction -> evaluateTransaction(pendingTransaction, false));
+        pendingTransaction -> {
+          final var res = evaluateTransaction(pendingTransaction, false);
+          transactionSelectionResult.addSelectionResult(res);
+          return res;
+        });
     LOG.atTrace()
-        .setMessage("Transaction selection result result {}")
+        .setMessage("Transaction selection result {}")
         .addArgument(transactionSelectionResult::toTraceLog)
         .log();
     return transactionSelectionResult;
@@ -280,7 +287,9 @@ public class BlockTransactionSelector {
    * @return The {@code TransactionSelectionResults} results of transaction evaluation.
    */
   public TransactionSelectionResults evaluateTransactions(final List<Transaction> transactions) {
-    transactions.forEach(transaction -> evaluateTransaction(transaction, true));
+    transactions.forEach(
+        transaction ->
+            transactionSelectionResult.addSelectionResult(evaluateTransaction(transaction, true)));
     return transactionSelectionResult;
   }
 
@@ -306,20 +315,20 @@ public class BlockTransactionSelector {
           .log();
       if (blockOccupancyAboveThreshold()) {
         LOG.trace("Block occupancy above threshold, completing operation");
-        return TransactionSelectionResult.COMPLETE_OPERATION;
+        return TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
       } else if (blockFull()) {
         LOG.trace("Block full, completing operation");
-        return TransactionSelectionResult.COMPLETE_OPERATION;
+        return TransactionSelectionResult.BLOCK_FULL;
       } else {
-        return TransactionSelectionResult.CONTINUE;
+        return TransactionSelectionResult.TX_TOO_LARGE_FOR_REMAINING_GAS;
       }
     }
 
     if (transactionCurrentPriceBelowMin(transaction)) {
-      return TransactionSelectionResult.CONTINUE;
+      return TransactionSelectionResult.CURRENT_TX_PRICE_BELOW_MIN;
     }
     if (transactionDataPriceBelowMin(transaction)) {
-      return TransactionSelectionResult.CONTINUE;
+      return TransactionSelectionResult.DATA_PRICE_BELOW_CURRENT_MIN;
     }
 
     final WorldUpdater worldStateUpdater = worldState.updater();
@@ -354,7 +363,7 @@ public class BlockTransactionSelector {
       return transactionSelectionResultForInvalidResult(
           transaction, effectiveResult.getValidationResult());
     }
-    return TransactionSelectionResult.CONTINUE;
+    return TransactionSelectionResult.SELECTED;
   }
 
   private boolean transactionDataPriceBelowMin(final Transaction transaction) {
@@ -405,7 +414,7 @@ public class BlockTransactionSelector {
           .addArgument(invalidReason)
           .addArgument(transaction::toTraceLog)
           .log();
-      return TransactionSelectionResult.CONTINUE;
+      return TransactionSelectionResult.invalidTransient(invalidReason.name());
     }
     // If the transaction was invalid for any other reason, delete it, and continue.
     LOG.atTrace()
@@ -413,7 +422,7 @@ public class BlockTransactionSelector {
         .addArgument(transaction::toTraceLog)
         .addArgument(invalidReason)
         .log();
-    return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
+    return TransactionSelectionResult.invalid(invalidReason.name());
   }
 
   private boolean isTransientValidationError(final TransactionInvalidReason invalidReason) {
