@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
@@ -73,7 +73,7 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
                 Bytes32.wrap(
                     CompactEncoding.pathToBytes(
                         Bytes.concatenate(getLocation().orElse(Bytes.EMPTY), path)))));
-    if (worldStateStorage.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
+    if (!worldStateStorage.getFlatDbMode().equals(FlatDbMode.NO_FLATTENED)) {
       ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
           .putAccountInfoState(accountHash.get(), value)
           .commit();
