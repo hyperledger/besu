@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionSelectionResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
@@ -263,19 +264,16 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
                 highestPriorityPendingTransaction.getTransaction())) {
           final TransactionSelectionResult result =
               selector.evaluateTransaction(transactionToProcess);
-          switch (result) {
-            case DELETE_TRANSACTION_AND_CONTINUE:
-              transactionsToRemove.add(transactionToProcess);
-              transactionsToRemove.addAll(
-                  signalInvalidAndGetDependentTransactions(transactionToProcess));
-              break;
-            case CONTINUE:
-              break;
-            case COMPLETE_OPERATION:
-              transactionsToRemove.forEach(this::removeTransaction);
-              return;
-            default:
-              throw new RuntimeException("Illegal value for TransactionSelectionResult.");
+
+          if (result.discard()) {
+            transactionsToRemove.add(transactionToProcess);
+            transactionsToRemove.addAll(
+                signalInvalidAndGetDependentTransactions(transactionToProcess));
+          }
+
+          if (result.stop()) {
+            transactionsToRemove.forEach(this::removeTransaction);
+            return;
           }
         }
       }

@@ -1552,7 +1552,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.addSubcommand(
         ValidateConfigSubCommand.COMMAND_NAME,
         new ValidateConfigSubCommand(commandLine, commandLine.getOut()));
-    commandLine.addSubcommand(StorageSubCommand.COMMAND_NAME, new StorageSubCommand(commandLine.getOut()));
+    commandLine.addSubcommand(
+        StorageSubCommand.COMMAND_NAME, new StorageSubCommand(commandLine.getOut()));
     final String generateCompletionSubcommandName = "generate-completion";
     commandLine.addSubcommand(
         generateCompletionSubcommandName, AutoComplete.GenerateCompletion.class);
