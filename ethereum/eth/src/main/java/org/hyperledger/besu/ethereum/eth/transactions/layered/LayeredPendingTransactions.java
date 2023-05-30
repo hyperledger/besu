@@ -349,29 +349,22 @@ public class LayeredPendingTransactions implements PendingTransactions {
                     .forEach(
                         candidatePendingTx -> {
                           alreadyChecked.add(candidatePendingTx.getHash());
-                          switch (selector.evaluateTransaction(
-                              candidatePendingTx.getTransaction())) {
-                            case CONTINUE:
-                              LOG.atTrace()
-                                  .setMessage("CONTINUE: Transaction {}")
-                                  .addArgument(candidatePendingTx::toTraceLog)
-                                  .log();
-                              break;
-                            case DELETE_TRANSACTION_AND_CONTINUE:
-                              invalidTransactions.add(candidatePendingTx);
-                              LOG.atTrace()
-                                  .setMessage("DELETE_TRANSACTION_AND_CONTINUE: Transaction {}")
-                                  .addArgument(candidatePendingTx::toTraceLog)
-                                  .log();
-                              logTransactionForReplayDelete(candidatePendingTx);
-                              break;
-                            case COMPLETE_OPERATION:
-                              completed.set(true);
-                              LOG.atTrace()
-                                  .setMessage("COMPLETE_OPERATION: Transaction {}")
-                                  .addArgument(candidatePendingTx::toTraceLog)
-                                  .log();
-                              break;
+                          final var res =
+                              selector.evaluateTransaction(candidatePendingTx.getTransaction());
+
+                          LOG.atTrace()
+                              .setMessage("Selection result {} for transaction {}")
+                              .addArgument(res)
+                              .addArgument(candidatePendingTx::toTraceLog)
+                              .log();
+
+                          if (res.discard()) {
+                            invalidTransactions.add(candidatePendingTx);
+                            logTransactionForReplayDelete(candidatePendingTx);
+                          }
+
+                          if (res.stop()) {
+                            completed.set(true);
                           }
                         }));
 
