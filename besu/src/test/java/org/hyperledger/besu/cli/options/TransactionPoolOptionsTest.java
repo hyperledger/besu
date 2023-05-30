@@ -16,16 +16,11 @@ package org.hyperledger.besu.cli.options;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE;
-import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.util.number.Percentage;
 
-import java.io.File;
 import java.time.Duration;
 
 import org.junit.Test;
@@ -74,44 +69,6 @@ public class TransactionPoolOptionsTest
   }
 
   @Test
-  public void senderLimitedTxPool_derived() {
-    final TestBesuCommand cmd = parseCommand("--tx-pool-limit-by-account-percentage=0.002");
-
-    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
-    final TransactionPoolConfiguration config = options.toDomainObject().build();
-    assertThat(config.getTxPoolMaxFutureTransactionByAccount()).isEqualTo(9);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void senderLimitedTxPoolFloor_derived() {
-    final TestBesuCommand cmd = parseCommand("--tx-pool-limit-by-account-percentage=0.0001");
-
-    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
-    final TransactionPoolConfiguration config = options.toDomainObject().build();
-    assertThat(config.getTxPoolMaxFutureTransactionByAccount()).isEqualTo(1);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void senderLimitedTxPoolCeiling_violated() {
-    final TestBesuCommand cmd = parseCommand("--tx-pool-limit-by-account-percentage=1.00002341");
-
-    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
-    final TransactionPoolConfiguration config = options.toDomainObject().build();
-    assertThat(config.getTxPoolLimitByAccountPercentage())
-        .isEqualTo(DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Invalid value for option '--tx-pool-limit-by-account-percentage'");
-  }
-
-  @Test
   public void strictTxReplayProtection_default() {
     final TestBesuCommand cmd = parseCommand();
 
@@ -156,131 +113,6 @@ public class TransactionPoolOptionsTest
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
-  @Test
-  public void disableLocalsDefault() {
-    final TestBesuCommand cmd = parseCommand();
-
-    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
-    final TransactionPoolConfiguration config = options.toDomainObject().build();
-    assertThat(config.getDisableLocalTransactions()).isFalse();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void disableLocalsOn() {
-    final TestBesuCommand cmd = parseCommand("--tx-pool-disable-locals=true");
-
-    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
-    final TransactionPoolConfiguration config = options.toDomainObject().build();
-    assertThat(config.getDisableLocalTransactions()).isTrue();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void disableLocalsOff() {
-    final TestBesuCommand cmd = parseCommand("--tx-pool-disable-locals=false");
-
-    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
-    final TransactionPoolConfiguration config = options.toDomainObject().build();
-    assertThat(config.getDisableLocalTransactions()).isFalse();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void saveToFileDisabledByDefault() {
-    final TestBesuCommand cmd = parseCommand();
-
-    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
-    final TransactionPoolConfiguration config = options.toDomainObject().build();
-    assertThat(config.getEnableSaveRestore()).isFalse();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void saveToFileEnabledDefaultPath() {
-    final TestBesuCommand cmd = parseCommand("--tx-pool-enable-save-restore=true");
-
-    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
-    final TransactionPoolConfiguration config = options.toDomainObject().build();
-    assertThat(config.getEnableSaveRestore()).isTrue();
-    assertThat(config.getSaveFile()).hasName(TransactionPoolConfiguration.DEFAULT_SAVE_FILE_NAME);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void saveToFileEnabledCustomPath() {
-    final TestBesuCommand cmd =
-        parseCommand("--tx-pool-enable-save-restore=true", "--tx-pool-save-file=my.save.file");
-
-    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
-    final TransactionPoolConfiguration config = options.toDomainObject().build();
-    assertThat(config.getEnableSaveRestore()).isTrue();
-    assertThat(config.getSaveFile()).hasName("my.save.file");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void pendingTransactionRetentionPeriod() {
-    final int pendingTxRetentionHours = 999;
-    parseCommand("--tx-pool-retention-hours", String.valueOf(pendingTxRetentionHours));
-    verify(mockControllerBuilder)
-        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
-    assertThat(transactionPoolConfigCaptor.getValue().getPendingTxRetentionPeriod())
-        .isEqualTo(pendingTxRetentionHours);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void invalidTansactionPoolPriceBumpShouldFail() {
-    parseCommand("--tx-pool-price-bump", "101");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "Invalid value for option '--tx-pool-price-bump'",
-            "should be a number between 0 and 100 inclusive");
-  }
-
-  @Test
-  public void transactionPoolPriceBump() {
-    final Percentage priceBump = Percentage.fromInt(13);
-    parseCommand("--tx-pool-price-bump", priceBump.toString());
-    verify(mockControllerBuilder)
-        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
-    assertThat(transactionPoolConfigCaptor.getValue().getPriceBump()).isEqualTo(priceBump);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void transactionPoolTxFeeCap() {
-    final Wei txFeeCap = Wei.fromEth(2);
-    parseCommand("--rpc-tx-feecap", txFeeCap.toDecimalString());
-    verify(mockControllerBuilder)
-        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
-    assertThat(transactionPoolConfigCaptor.getValue().getTxFeeCap()).isEqualTo(txFeeCap);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void invalidTansactionPoolTxFeeCapShouldFail() {
-    parseCommand("--rpc-tx-feecap", "abcd");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Invalid value for option '--rpc-tx-feecap'", "cannot convert 'abcd' to Wei");
-  }
-
   @Override
   ImmutableTransactionPoolConfiguration.Builder createDefaultDomainObject() {
     final ImmutableTransactionPoolConfiguration defaultValue =
@@ -289,11 +121,6 @@ public class TransactionPoolOptionsTest
         .strictTransactionReplayProtectionEnabled(false)
         .txMessageKeepAliveSeconds(defaultValue.getTxMessageKeepAliveSeconds())
         .eth65TrxAnnouncedBufferingPeriod(defaultValue.getEth65TrxAnnouncedBufferingPeriod())
-        .txPoolLimitByAccountPercentage(defaultValue.getTxPoolLimitByAccountPercentage())
-        .disableLocalTransactions(defaultValue.getDisableLocalTransactions())
-        .enableSaveRestore(defaultValue.getEnableSaveRestore())
-        .saveFile(defaultValue.getSaveFile())
-        .txPoolLimitByAccountPercentage(defaultValue.getTxPoolLimitByAccountPercentage())
         .layeredTxPoolEnabled(defaultValue.getLayeredTxPoolEnabled())
         .pendingTransactionsLayerMaxCapacityBytes(
             defaultValue.getPendingTransactionsLayerMaxCapacityBytes())
@@ -309,11 +136,6 @@ public class TransactionPoolOptionsTest
         .eth65TrxAnnouncedBufferingPeriod(
             TransactionPoolConfiguration.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD.plus(
                 Duration.ofMillis(100)))
-        .txPoolLimitByAccountPercentage(0.5f)
-        .disableLocalTransactions(true)
-        .enableSaveRestore(true)
-        .saveFile(new File("abc.xyz"))
-        .txPoolLimitByAccountPercentage(0.5f)
         .layeredTxPoolEnabled(true)
         .pendingTransactionsLayerMaxCapacityBytes(1_000_000L)
         .maxPrioritizedTransactions(1000)

@@ -14,18 +14,11 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
-import org.hyperledger.besu.cli.DefaultCommandValues;
-import org.hyperledger.besu.cli.converter.FractionConverter;
-import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.options.OptionParser;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.util.number.Percentage;
 
-import java.io.File;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
@@ -47,14 +40,6 @@ public class TransactionPoolOptions
 
   private static final String STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG =
       "--strict-tx-replay-protection-enabled";
-
-  private static final String TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE =
-      "--tx-pool-limit-by-account-percentage";
-
-  private static final String DISABLE_LOCAL_TXS_FLAG = "--tx-pool-disable-locals";
-
-  private static final String SAVE_RESTORE_FLAG = "--tx-pool-enable-save-restore";
-  private static final String SAVE_FILE = "--tx-pool-save-file";
 
   private static final String LAYERED_TX_POOL_ENABLED_FLAG = "--Xlayered-tx-pool";
   private static final String LAYERED_TX_POOL_LAYER_MAX_CAPACITY =
@@ -92,16 +77,6 @@ public class TransactionPoolOptions
       arity = "1")
   private long eth65TrxAnnouncedBufferingPeriod =
       TransactionPoolConfiguration.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD.toMillis();
-
-  @CommandLine.Option(
-      names = {TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE},
-      paramLabel = "<DOUBLE>",
-      converter = FractionConverter.class,
-      description =
-          "Maximum portion of the transaction pool which a single account may occupy with future transactions (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private Float txPoolLimitByAccountPercentage =
-      TransactionPoolConfiguration.DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE;
 
   @CommandLine.Option(
       names = {LAYERED_TX_POOL_ENABLED_FLAG},
@@ -142,66 +117,6 @@ public class TransactionPoolOptions
   private int layeredTxPoolMaxFutureBySender =
       TransactionPoolConfiguration.DEFAULT_MAX_FUTURE_BY_SENDER;
 
-  @CommandLine.Option(
-      names = {DISABLE_LOCAL_TXS_FLAG},
-      paramLabel = "<Boolean>",
-      description =
-          "Set to true if transactions sent via RPC should have the same checks and not be prioritized over remote ones (default: ${DEFAULT-VALUE})",
-      fallbackValue = "true",
-      arity = "0..1")
-  private Boolean disableLocalTxs = TransactionPoolConfiguration.DEFAULT_DISABLE_LOCAL_TXS;
-
-  @CommandLine.Option(
-      names = {SAVE_RESTORE_FLAG},
-      paramLabel = "<Boolean>",
-      description =
-          "Set to true to enable saving the txpool content to file on shutdown and reloading it on startup (default: ${DEFAULT-VALUE})",
-      fallbackValue = "true",
-      arity = "0..1")
-  private Boolean saveRestoreEnabled = TransactionPoolConfiguration.DEFAULT_ENABLE_SAVE_RESTORE;
-
-  @CommandLine.Option(
-      names = {SAVE_FILE},
-      paramLabel = "<STRING>",
-      description =
-          "If saving the txpool content is enabled, define a custom path for the save file (default: ${DEFAULT-VALUE} in the data-dir)",
-      arity = "1")
-  private File saveFile = TransactionPoolConfiguration.DEFAULT_SAVE_FILE;
-
-  @CommandLine.Option(
-      names = {"--tx-pool-max-size"},
-      paramLabel = DefaultCommandValues.MANDATORY_INTEGER_FORMAT_HELP,
-      description =
-          "Maximum number of pending transactions that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Integer txPoolMaxSize =
-      TransactionPoolConfiguration.DEFAULT_MAX_PENDING_TRANSACTIONS;
-
-  @CommandLine.Option(
-      names = {"--tx-pool-retention-hours"},
-      paramLabel = DefaultCommandValues.MANDATORY_INTEGER_FORMAT_HELP,
-      description =
-          "Maximum retention period of pending transactions in hours (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Integer pendingTxRetentionPeriod =
-      TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
-
-  @CommandLine.Option(
-      names = {"--tx-pool-price-bump"},
-      paramLabel = DefaultCommandValues.MANDATORY_INTEGER_FORMAT_HELP,
-      converter = PercentageConverter.class,
-      description =
-          "Price bump percentage to replace an already existing transaction  (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Integer priceBump = TransactionPoolConfiguration.DEFAULT_PRICE_BUMP.getValue();
-
-  @CommandLine.Option(
-      names = {"--rpc-tx-feecap"},
-      description =
-          "Maximum transaction fees (in Wei) accepted for transaction submitted through RPC (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Wei txFeeCap = DefaultCommandValues.DEFAULT_RPC_TX_FEE_CAP;
-
   private TransactionPoolOptions() {}
 
   /**
@@ -225,10 +140,6 @@ public class TransactionPoolOptions
     options.eth65TrxAnnouncedBufferingPeriod =
         config.getEth65TrxAnnouncedBufferingPeriod().toMillis();
     options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
-    options.txPoolLimitByAccountPercentage = config.getTxPoolLimitByAccountPercentage();
-    options.disableLocalTxs = config.getDisableLocalTransactions();
-    options.saveRestoreEnabled = config.getEnableSaveRestore();
-    options.saveFile = config.getSaveFile();
     options.layeredTxPoolEnabled = config.getLayeredTxPoolEnabled();
     options.layeredTxPoolLayerMaxCapacity = config.getPendingTransactionsLayerMaxCapacityBytes();
     options.layeredTxPoolMaxPrioritized = config.getMaxPrioritizedTransactions();
@@ -248,11 +159,6 @@ public class TransactionPoolOptions
         .strictTransactionReplayProtectionEnabled(strictTxReplayProtectionEnabled)
         .txMessageKeepAliveSeconds(txMessageKeepAliveSeconds)
         .eth65TrxAnnouncedBufferingPeriod(Duration.ofMillis(eth65TrxAnnouncedBufferingPeriod))
-        .txPoolLimitByAccountPercentage(txPoolLimitByAccountPercentage)
-        .disableLocalTransactions(disableLocalTxs)
-        .enableSaveRestore(saveRestoreEnabled)
-        .saveFile(saveFile)
-        .txPoolLimitByAccountPercentage(txPoolLimitByAccountPercentage)
         .layeredTxPoolEnabled(layeredTxPoolEnabled)
         .pendingTransactionsLayerMaxCapacityBytes(layeredTxPoolLayerMaxCapacity)
         .maxPrioritizedTransactions(layeredTxPoolMaxPrioritized)
@@ -263,11 +169,6 @@ public class TransactionPoolOptions
   public List<String> getCLIOptions() {
     return Arrays.asList(
         STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG + "=" + strictTxReplayProtectionEnabled,
-        DISABLE_LOCAL_TXS_FLAG + "=" + disableLocalTxs,
-        SAVE_RESTORE_FLAG + "=" + saveRestoreEnabled,
-        SAVE_FILE + "=" + saveFile,
-        TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE,
-        OptionParser.format(txPoolLimitByAccountPercentage),
         TX_MESSAGE_KEEP_ALIVE_SEC_FLAG,
         OptionParser.format(txMessageKeepAliveSeconds),
         ETH65_TX_ANNOUNCED_BUFFERING_PERIOD_FLAG,
@@ -279,31 +180,5 @@ public class TransactionPoolOptions
         OptionParser.format(layeredTxPoolMaxPrioritized),
         LAYERED_TX_POOL_MAX_FUTURE_BY_SENDER,
         OptionParser.format(layeredTxPoolMaxFutureBySender));
-  }
-
-  /**
-   * Return the file where to save txpool content if the relative option is enabled.
-   *
-   * @return the save file
-   */
-  public File getSaveFile() {
-    return saveFile;
-  }
-
-  /**
-   * Return the configuration object for the txpool.
-   *
-   * @param dataPath The path to Besu data directory
-   * @return the configuration object
-   */
-  public TransactionPoolConfiguration buildTransactionPoolConfiguration(final Path dataPath) {
-    final File saveFile = this.getSaveFile();
-    return this.toDomainObject()
-        .txPoolMaxSize(txPoolMaxSize)
-        .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
-        .priceBump(Percentage.fromInt(priceBump))
-        .txFeeCap(txFeeCap)
-        .saveFile(dataPath.resolve(saveFile.getPath()).toFile())
-        .build();
   }
 }
