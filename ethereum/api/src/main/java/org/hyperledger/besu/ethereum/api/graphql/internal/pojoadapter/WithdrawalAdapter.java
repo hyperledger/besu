@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,25 +14,30 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
-import org.hyperledger.besu.plugin.data.SyncStatus;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.plugin.data.Withdrawal;
 
-@SuppressWarnings("unused") // reflected by GraphQL
-public class SyncStateAdapter {
-  private final SyncStatus syncStatus;
+public class WithdrawalAdapter {
 
-  public SyncStateAdapter(final SyncStatus syncStatus) {
-    this.syncStatus = syncStatus;
+  Withdrawal withdrawal;
+
+  public WithdrawalAdapter(final Withdrawal withdrawal) {
+    this.withdrawal = withdrawal;
   }
 
-  public Long getStartingBlock() {
-    return syncStatus.getStartingBlock();
+  public Long getIndex() {
+    return withdrawal.getIndex().toLong();
   }
 
-  public Long getCurrentBlock() {
-    return syncStatus.getCurrentBlock();
+  public Long getValidator() {
+    return withdrawal.getValidatorIndex().toLong();
   }
 
-  public Long getHighestBlock() {
-    return syncStatus.getHighestBlock();
+  public Address getAddress() {
+    return withdrawal.getAddress();
+  }
+
+  public Long getAmount() {
+    return withdrawal.getAmount().getAsBigInteger().longValue();
   }
 }
