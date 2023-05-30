@@ -291,6 +291,12 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     return persistedState;
   }
 
+  /**
+   * Prepares the state healing process for a given address and location. It prepares the state
+   * healing, including retrieving data from storage, identifying invalid slots or nodes, removing
+   * account and slot from the state trie, and committing the changes. Finally, it downgrades the
+   * world state storage to partial flat database mode.
+   */
   public void prepareStateHealing(final Address address, final Bytes location) {
     final Set<Bytes> keysToDelete = new HashSet<>();
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = worldStateStorage.updater();
@@ -340,6 +346,8 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     }
     keysToDelete.forEach(bytes -> updater.removeAccountStateTrieNode(bytes, null));
     updater.commit();
+
+    worldStateStorage.downgradeToPartialFlatDbMode();
   }
 
   public TrieLogManager getTrieLogManager() {

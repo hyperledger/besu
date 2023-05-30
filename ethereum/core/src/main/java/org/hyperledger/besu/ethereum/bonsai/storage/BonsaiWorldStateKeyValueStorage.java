@@ -274,6 +274,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     initFlatDbSuppliers(); // force reload of flat db reader strategy
   }
 
+  public void downgradeToPartialFlatDbMode() {
+    final KeyValueStorageTransaction transaction = trieBranchStorage.startTransaction();
+    transaction.put(FLAT_DB_MODE, FlatDbMode.PARTIAL.getVersion().toArrayUnsafe());
+    transaction.commit();
+    initFlatDbSuppliers(); // force reload of flat db reader strategy
+  }
+
   @Override
   public void clear() {
     subscribers.forEach(BonsaiStorageSubscriber::onClearStorage);

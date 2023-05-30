@@ -49,6 +49,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.mockito.Mockito;
 
 @RunWith(Parameterized.class)
 public class BonsaiWorldStateKeyValueStorageTest {
@@ -186,27 +187,9 @@ public class BonsaiWorldStateKeyValueStorageTest {
   public void getAccount_notLoadFromTrieWhenEmptyAndFlatDbFullMode() {
     Assume.assumeTrue(flatDbMode == FlatDbMode.FULL);
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
-    storage.upgradeToFullFlatDbMode();
-    MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
 
-    // save world state root hash
-    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
-    updater
-        .getTrieBranchStorageTransaction()
-        .put(WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
-    updater.commit();
+    final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
 
-    // remove flat database
-    storage.clearFlatDatabase();
-
-    verify(storage, times(0)).getAccountStateTrieNode(any(), eq(trie.getRootHash()));
-  }
-
-  @Test
-  public void getAccount_loadFromTrieWhenEmptyAndFlatDbPartialMode() {
-    Assume.assumeTrue(flatDbMode == FlatDbMode.PARTIAL);
-    final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
-    MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
@@ -221,10 +204,70 @@ public class BonsaiWorldStateKeyValueStorageTest {
     // remove flat database
     storage.clearFlatDatabase();
 
+    storage.upgradeToFullFlatDbMode();
+
+    Mockito.reset(storage);
+
+    assertThat(storage.getAccount(Hash.wrap(accounts.firstKey()))).isEmpty();
+
+    verify(storage, times(0)).getAccountStateTrieNode(any(), eq(trie.getRootHash()));
+  }
+
+  @Test
+  public void getAccount_loadFromTrieWhenEmptyAndFlatDbPartialMode() {
+    Assume.assumeTrue(flatDbMode == FlatDbMode.PARTIAL);
+    final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
+    final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
+    final TreeMap<Bytes32, Bytes> accounts =
+        (TreeMap<Bytes32, Bytes>)
+            trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
+
+    // save world state root hash
+    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
+    updater
+        .getTrieBranchStorageTransaction()
+        .put(WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
+    updater.commit();
+
+    // remove flat database
+    storage.clearFlatDatabase();
+
+    Mockito.reset(storage);
+
     assertThat(storage.getAccount(Hash.wrap(accounts.firstKey())))
         .contains(accounts.firstEntry().getValue());
 
-    verify(storage, times(2)).getAccountStateTrieNode(any(), eq(trie.getRootHash()));
+    verify(storage, times(1)).getAccountStateTrieNode(any(), eq(trie.getRootHash()));
+  }
+
+  @Test
+  public void shouldUsePartialDBStrategyAfterDowngradingMode() {
+    Assume.assumeTrue(flatDbMode == FlatDbMode.PARTIAL);
+    final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
+
+    final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
+    final TreeMap<Bytes32, Bytes> accounts =
+        (TreeMap<Bytes32, Bytes>)
+            trie.entriesFrom(root -> StorageEntriesCollector.collectEntries(root, Hash.ZERO, 1));
+
+    // save world state root hash
+    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
+    updater
+        .getTrieBranchStorageTransaction()
+        .put(WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
+    updater.commit();
+
+    Mockito.reset(storage);
+
+    // remove flat database
+    storage.clearFlatDatabase();
+
+    storage.upgradeToFullFlatDbMode();
+    assertThat(storage.getAccount(Hash.wrap(accounts.firstKey()))).isEmpty();
+
+    storage.downgradeToPartialFlatDbMode();
+    assertThat(storage.getAccount(Hash.wrap(accounts.firstKey())))
+        .contains(accounts.firstEntry().getValue());
   }
 
   @Test
