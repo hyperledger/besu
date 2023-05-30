@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -94,7 +95,8 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
 
   @Override
   protected void handleTaskError(final Throwable error) {
-    if (isPeerFailure(error)) {
+    final Throwable rootCause = ExceptionUtils.rootCause(error);
+    if (isPeerFailure(rootCause)) {
       getAssignedPeer().ifPresent(failedPeers::add);
     }
     super.handleTaskError(error);
