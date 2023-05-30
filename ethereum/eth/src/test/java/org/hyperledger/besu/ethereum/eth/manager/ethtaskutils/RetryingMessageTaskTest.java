@@ -36,7 +36,7 @@ import org.junit.Test;
  */
 public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest<T, T> {
   protected static final int DEFAULT_MAX_RETRIES = 4;
-  protected int maxRetries;
+  private int maxRetries;
 
   @Before
   public void resetMaxRetries() {
@@ -47,6 +47,17 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
   protected void assertResultMatchesExpectation(
       final T requestedData, final T response, final EthPeer respondingPeer) {
     assertThat(response).isEqualTo(requestedData);
+  }
+
+  @Override
+  protected EthTask<T> createTask(final T requestedData) {
+    return createTask(requestedData, getMaxRetries());
+  }
+
+  protected abstract EthTask<T> createTask(T requestedData, int maxRetries);
+
+  protected int getMaxRetries() {
+    return maxRetries;
   }
 
   @Test
@@ -79,7 +90,7 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
     assertThat(future.isDone()).isFalse();
 
     // Respond max times - 1 with no data
-    respondingPeer.respondTimes(emptyResponder, maxRetries - 1);
+    respondingPeer.respondTimes(emptyResponder, getMaxRetries() - 1);
     assertThat(future).isNotDone();
 
     // Next retry should fail
@@ -142,7 +153,7 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
     // Setup data to be requested
     final T requestedData = generateDataToBeRequested();
 
-    final EthTask<T> task = createTask(requestedData);
+    final EthTask<T> task = createTask(requestedData, getMaxRetries() + 1);
     final CompletableFuture<T> future = task.run();
 
     assertThat(future.isDone()).isFalse();
@@ -155,7 +166,8 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
     final T requestedData = generateDataToBeRequested();
 
     // Execute task and wait for response
-    final EthTask<T> task = createTask(requestedData);
+    // +2 is required for switching peers tasks where the max retries = number of peers
+    final EthTask<T> task = createTask(requestedData, getMaxRetries() + 2);
     final CompletableFuture<T> future = task.run();
 
     assertThat(future.isDone()).isFalse();
@@ -182,7 +194,7 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
     final T requestedData = generateDataToBeRequested();
 
-    final EthTask<T> task = createTask(requestedData);
+    final EthTask<T> task = createTask(requestedData, ethPeers.peerCount() + 1);
     final CompletableFuture<T> future = task.run();
 
     assertThat(future.isDone()).isFalse();
@@ -208,7 +220,7 @@ public abstract class RetryingMessageTaskTest<T> extends AbstractMessageTaskTest
     assertThat(future.isDone()).isFalse();
 
     // Respond max times - 1
-    respondingPeer.respondTimes(responder, maxRetries - 1);
+    respondingPeer.respondTimes(responder, getMaxRetries() - 1);
     assertThat(future).isNotDone();
 
     // Next retry should fail

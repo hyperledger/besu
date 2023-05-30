@@ -21,7 +21,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.RetryingMessageTaskTest;
+import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.RetryingSwitchingPeerMessageTaskTest;
 
 import java.util.List;
 import java.util.Map;
@@ -34,7 +34,8 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.Ignore;
 import org.junit.Test;
 
-public class RetryingGetNodeDataFromPeerTaskTest extends RetryingMessageTaskTest<Map<Hash, Bytes>> {
+public class RetryingGetNodeDataFromPeerTaskTest
+    extends RetryingSwitchingPeerMessageTaskTest<Map<Hash, Bytes>> {
 
   @Override
   protected Map<Hash, Bytes> generateDataToBeRequested() {
@@ -50,10 +51,11 @@ public class RetryingGetNodeDataFromPeerTaskTest extends RetryingMessageTaskTest
   }
 
   @Override
-  protected EthTask<Map<Hash, Bytes>> createTask(final Map<Hash, Bytes> requestedData) {
+  protected EthTask<Map<Hash, Bytes>> createTask(
+      final Map<Hash, Bytes> requestedData, final int maxRetries) {
     final List<Hash> hashes = Lists.newArrayList(requestedData.keySet());
     return RetryingGetNodeDataFromPeerTask.forHashes(
-        ethContext, hashes, GENESIS_BLOCK_NUMBER, metricsSystem, ethPeers.peerCount());
+        ethContext, hashes, GENESIS_BLOCK_NUMBER, metricsSystem, maxRetries);
   }
 
   @Test
@@ -95,4 +97,9 @@ public class RetryingGetNodeDataFromPeerTaskTest extends RetryingMessageTaskTest
   @Override
   @Ignore("Empty responses count as valid when requesting node data")
   public void failsWhenPeersSendEmptyResponses() {}
+
+  @Test
+  @Override
+  @Ignore("Empty responses count as valid when requesting node data")
+  public void completesWhenBestPeerEmptyAndSecondPeerIsResponsive() {}
 }

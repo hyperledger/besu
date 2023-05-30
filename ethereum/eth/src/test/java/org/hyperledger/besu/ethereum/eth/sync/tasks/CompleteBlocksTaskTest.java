@@ -73,7 +73,7 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
   }
 
   @Override
-  protected CompleteBlocksTask createTask(final List<Block> requestedData) {
+  protected CompleteBlocksTask createTask(final List<Block> requestedData, final int maxRetries) {
     final List<BlockHeader> headersToComplete =
         requestedData.stream().map(Block::getHeader).collect(Collectors.toList());
     return CompleteBlocksTask.forHeaders(
@@ -136,7 +136,7 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
             mockProtocolSchedule,
             ethContext,
             List.of(header1, header2),
-            maxRetries,
+            getMaxRetries(),
             new NoOpMetricsSystem());
     assertThat(task.run()).isCompletedWithValue(expectedBlocks);
   }
@@ -193,7 +193,7 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
             mockProtocolSchedule,
             ethContext,
             List.of(header1, header2, header3),
-            maxRetries,
+            getMaxRetries(),
             new NoOpMetricsSystem());
 
     final CompletableFuture<List<Block>> runningTask = task.run();
@@ -220,7 +220,7 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
 
     final List<Block> requestedData = generateDataToBeRequested(10);
 
-    final CompleteBlocksTask task = createTask(requestedData);
+    final EthTask<List<Block>> task = createTask(requestedData);
     final CompletableFuture<List<Block>> future = task.run();
 
     final List<MessageData> messageCollector = new ArrayList<>(4);

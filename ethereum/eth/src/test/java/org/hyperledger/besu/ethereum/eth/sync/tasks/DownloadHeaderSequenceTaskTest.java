@@ -54,7 +54,8 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
   }
 
   @Override
-  protected EthTask<List<BlockHeader>> createTask(final List<BlockHeader> requestedData) {
+  protected EthTask<List<BlockHeader>> createTask(
+      final List<BlockHeader> requestedData, final int maxRetries) {
     final BlockHeader lastHeader = requestedData.get(requestedData.size() - 1);
     final BlockHeader referenceHeader = blockchain.getBlockHeader(lastHeader.getNumber() + 1).get();
     return DownloadHeaderSequenceTask.endingAtHeader(
@@ -82,7 +83,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             ethContext,
             referenceHeader,
             10,
-            maxRetries,
+            getMaxRetries(),
             validationPolicy,
             metricsSystem);
     final CompletableFuture<List<BlockHeader>> future = task.run();
@@ -112,7 +113,7 @@ public class DownloadHeaderSequenceTaskTest extends RetryingMessageTaskTest<List
             ethContext,
             referenceHeader,
             10,
-            maxRetries,
+            getMaxRetries(),
             validationPolicy,
             metricsSystem);
     final CompletableFuture<List<BlockHeader>> future = task.run();

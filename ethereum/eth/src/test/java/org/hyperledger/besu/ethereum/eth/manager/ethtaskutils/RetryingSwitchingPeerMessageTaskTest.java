@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.manager.ethtaskutils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
@@ -25,7 +24,6 @@ import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -37,13 +35,15 @@ import org.junit.Test;
  * @param <T> The type of data being requested from the network
  */
 public abstract class RetryingSwitchingPeerMessageTaskTest<T> extends RetryingMessageTaskTest<T> {
-  protected Optional<EthPeer> responsivePeer = Optional.empty();
 
   @Override
-  protected void assertResultMatchesExpectation(
-      final T requestedData, final T response, final EthPeer respondingPeer) {
-    assertThat(response).isEqualTo(requestedData);
-    responsivePeer.ifPresent(rp -> assertThat(rp).isEqualByComparingTo(respondingPeer));
+  protected EthTask<T> createTask(final T requestedData) {
+    return createTask(requestedData, getMaxRetries());
+  }
+
+  @Override
+  protected int getMaxRetries() {
+    return ethPeers.peerCount();
   }
 
   @Test
@@ -70,8 +70,6 @@ public abstract class RetryingSwitchingPeerMessageTaskTest<T> extends RetryingMe
             blockchain, protocolContext.getWorldStateArchive(), transactionPool),
         2);
 
-    responsivePeer = Optional.of(secondPeer.getEthPeer());
-
     assertThat(future.isDone()).isTrue();
     assertResultMatchesExpectation(requestedData, future.get(), secondPeer.getEthPeer());
   }
@@ -80,31 +78,25 @@ public abstract class RetryingSwitchingPeerMessageTaskTest<T> extends RetryingMe
   public void completesWhenBestPeerTimeoutsAndSecondPeerIsResponsive()
       throws ExecutionException, InterruptedException {
     // Setup first unresponsive peer
-    final RespondingEthPeer firstPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 10);
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 10);
 
     // Setup second responsive peer
     final RespondingEthPeer secondPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 9);
+
+    // First peer timeouts
+    peerCountToTimeout.set(1);
 
     // Execute task and wait for response
     final T requestedData = generateDataToBeRequested();
     final EthTask<T> task = createTask(requestedData);
     final CompletableFuture<T> future = task.run();
 
-    // First peer timeouts
-    peerCountToTimeout.set(1);
-    firstPeer.respondTimes(
-        RespondingEthPeer.blockchainResponder(
-            blockchain, protocolContext.getWorldStateArchive(), transactionPool),
-        2);
     // Second peer is responsive
     secondPeer.respondTimes(
         RespondingEthPeer.blockchainResponder(
             blockchain, protocolContext.getWorldStateArchive(), transactionPool),
         2);
-
-    responsivePeer = Optional.of(secondPeer.getEthPeer());
 
     assertThat(future.isDone()).isTrue();
     assertResultMatchesExpectation(requestedData, future.get(), secondPeer.getEthPeer());
@@ -113,25 +105,18 @@ public abstract class RetryingSwitchingPeerMessageTaskTest<T> extends RetryingMe
   @Test
   public void failsWhenAllPeersFail() {
     // Setup first unresponsive peer
-    final RespondingEthPeer firstPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 10);
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 10);
 
     // Setup second unresponsive peer
-    final RespondingEthPeer secondPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 9);
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 9);
+
+    // all peers timeout
+    peerCountToTimeout.set(2);
 
     // Execute task and wait for response
     final T requestedData = generateDataToBeRequested();
     final EthTask<T> task = createTask(requestedData);
     final CompletableFuture<T> future = task.run();
-
-    for (int i = 0; i < maxRetries && !future.isDone(); i++) {
-      // First peer is unresponsive
-      firstPeer.respondWhile(RespondingEthPeer.emptyResponder(), firstPeer::hasOutstandingRequests);
-      // Second peer is unresponsive
-      secondPeer.respondWhile(
-          RespondingEthPeer.emptyResponder(), secondPeer::hasOutstandingRequests);
-    }
 
     assertThat(future.isDone()).isTrue();
     assertThat(future.isCompletedExceptionally()).isTrue();
@@ -140,23 +125,74 @@ public abstract class RetryingSwitchingPeerMessageTaskTest<T> extends RetryingMe
 
   @Test
   public void disconnectAPeerWhenAllPeersTried() {
-    maxRetries = MAX_PEERS + 1;
     final int numPeers = MAX_PEERS;
     final List<RespondingEthPeer> respondingPeers = new ArrayList<>(numPeers);
     for (int i = 0; i < numPeers; i++) {
       respondingPeers.add(EthProtocolManagerTestUtil.createPeer(ethProtocolManager, numPeers - i));
     }
 
+    // all peers timeout
+    peerCountToTimeout.set(numPeers);
+
     // Execute task and wait for response
     final T requestedData = generateDataToBeRequested();
-    final EthTask<T> task = createTask(requestedData);
+    final EthTask<T> task = createTask(requestedData, MAX_PEERS + 1);
     task.run();
 
-    respondingPeers.forEach(
-        respondingPeer ->
-            respondingPeer.respondWhile(
-                RespondingEthPeer.emptyResponder(), respondingPeer::hasOutstandingRequests));
-
     assertThat(respondingPeers.get(numPeers - 1).getEthPeer().isDisconnected()).isTrue();
+  }
+
+  @Test
+  @Override
+  public void failsWhenPeersSendEmptyResponses() {
+    // Setup unresponsive peers
+    final RespondingEthPeer.Responder responder = RespondingEthPeer.emptyResponder();
+    final RespondingEthPeer respondingPeer1 =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 2);
+    final RespondingEthPeer respondingPeer2 =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1);
+
+    // Setup data to be requested
+    final T requestedData = generateDataToBeRequested();
+
+    // Setup and run task
+    final EthTask<T> task = createTask(requestedData);
+    final CompletableFuture<T> future = task.run();
+
+    assertThat(future.isDone()).isFalse();
+
+    // Respond max times - 1
+    respondingPeer1.respondTimes(responder, getMaxRetries() - 1);
+    assertThat(future).isNotDone();
+
+    // Next retry should fail
+    respondingPeer2.respond(responder);
+    assertThat(future).isDone();
+    assertThat(future).isCompletedExceptionally();
+    assertThatThrownBy(future::get).hasCauseInstanceOf(MaxRetriesReachedException.class);
+  }
+
+  @Test
+  @Override
+  public void completesWhenPeersAreTemporarilyUnavailable()
+      throws ExecutionException, InterruptedException {
+    // Setup data to be requested
+    final T requestedData = generateDataToBeRequested();
+
+    // Execute task and wait for response
+    final EthTask<T> task = createTask(requestedData, 2);
+    final CompletableFuture<T> future = task.run();
+
+    assertThat(future.isDone()).isFalse();
+
+    // Setup a peer
+    final RespondingEthPeer.Responder responder =
+        RespondingEthPeer.blockchainResponder(
+            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
+    final RespondingEthPeer respondingPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
+    respondingPeer.respondWhile(responder, () -> !future.isDone());
+
+    assertResultMatchesExpectation(requestedData, future.get(), respondingPeer.getEthPeer());
   }
 }

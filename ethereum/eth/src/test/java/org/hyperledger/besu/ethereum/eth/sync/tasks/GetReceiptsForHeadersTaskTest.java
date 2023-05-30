@@ -48,7 +48,7 @@ public class GetReceiptsForHeadersTaskTest
 
   @Override
   protected EthTask<Map<BlockHeader, List<TransactionReceipt>>> createTask(
-      final Map<BlockHeader, List<TransactionReceipt>> requestedData) {
+      final Map<BlockHeader, List<TransactionReceipt>> requestedData, final int maxRetries) {
     final List<BlockHeader> headersToComplete = new ArrayList<>(requestedData.keySet());
     return GetReceiptsForHeadersTask.forHeaders(
         ethContext, headersToComplete, maxRetries, metricsSystem);
