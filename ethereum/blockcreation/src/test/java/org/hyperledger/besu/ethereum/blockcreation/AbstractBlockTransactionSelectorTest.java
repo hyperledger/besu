@@ -82,6 +82,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected static final double MIN_OCCUPANCY_100_PERCENT = 1;
   protected static final KeyPair keyPair =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
+
   protected final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   protected final Blockchain blockchain = new ReferenceTestBlockchain();

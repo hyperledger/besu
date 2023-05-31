@@ -140,7 +140,7 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
     // be decided according to the provided parameters
     if (callParams.isMaybeStrict().isEmpty()) {
       transactionValidationParams.isAllowExceedingBalance(
-          isAllowExeedingBalanceAutoSelection(header, callParams));
+          isAllowExceedingBalanceAutoSelection(header, callParams));
     } else {
       transactionValidationParams.isAllowExceedingBalance(
           !callParams.isMaybeStrict().orElse(Boolean.FALSE));
@@ -148,7 +148,7 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
     return transactionValidationParams.build();
   }
 
-  private boolean isAllowExeedingBalanceAutoSelection(
+  private boolean isAllowExceedingBalanceAutoSelection(
       final BlockHeader header, final JsonCallParameter callParams) {
 
     boolean isZeroGasPrice =
