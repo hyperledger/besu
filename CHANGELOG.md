@@ -6,7 +6,9 @@
 
 ### Additions and Improvements
 - Allow Ethstats connection url to specify ws:// or wss:// scheme. [#5494](https://github.com/hyperledger/besu/issues/5494)
-- 
+- Add support for Shanghai changes to the GraphQL service [#5496](https://github.com/hyperledger/besu/pull/5496)
+- Unite the tx-pool CLI options under the same Tx Pool Options group in UX. [#5466](https://github.com/hyperledger/besu/issues/5466)
+
 ### Bug Fixes
 
 ### Download Links
