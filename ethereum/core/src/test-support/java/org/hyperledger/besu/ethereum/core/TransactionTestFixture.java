@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import com.google.common.base.Strings;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -32,7 +33,7 @@ public class TransactionTestFixture {
   private static final Hash DEFAULT_VERSIONED_HASH =
       Hash.wrap(
           Bytes32.wrap(
-              Bytes.concatenate(Bytes.fromHexString("0x01"), Bytes.repeat((byte) 42, 31))));
+              Bytes.concatenate(Bytes.fromHexString("0x01"), Bytes.fromHexString("2a".repeat(31)))));
 
   private TransactionType transactionType = TransactionType.FRONTIER;
 
