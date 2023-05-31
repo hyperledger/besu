@@ -150,8 +150,8 @@ public class BonsaiWorldState
 
     // This must be done before updating the accounts so
     // that we can get the storage state hash
-    Stream<Map.Entry<Address, StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>>>
-        storageStream = worldStateUpdater.getStorageToUpdate().entrySet().stream();
+    Stream<Map.Entry<Address, StorageConsumingMap<StorageSlotKey>>> storageStream =
+        worldStateUpdater.getStorageToUpdate().entrySet().stream();
     if (maybeStateUpdater.isEmpty()) {
       storageStream =
           storageStream
@@ -240,8 +240,7 @@ public class BonsaiWorldState
   private void updateAccountStorageState(
       final Optional<BonsaiWorldStateKeyValueStorage.BonsaiUpdater> maybeStateUpdater,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater,
-      final Map.Entry<Address, StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>>
-          storageAccountUpdate) {
+      final Map.Entry<Address, StorageConsumingMap<StorageSlotKey>> storageAccountUpdate) {
     final Address updatedAddress = storageAccountUpdate.getKey();
     final Hash updatedAddressHash = Hash.hash(updatedAddress);
     if (worldStateUpdater.getAccountsToUpdate().containsKey(updatedAddress)) {

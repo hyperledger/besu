@@ -62,15 +62,15 @@ public class BonsaiWorldStateUpdateAccumulator
   private final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader;
   private final Consumer<StorageSlotKey> storagePreloader;
 
-  private final AccountConsumingMap<BonsaiValue<BonsaiAccount>> accountsToUpdate;
+  private final AccountConsumingMap accountsToUpdate;
   private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
   private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
 
   // storage sub mapped by _hashed_ key.  This is because in self_destruct calls we need to
   // enumerate the old storage and delete it.  Those are trie stored by hashed key by spec and the
   // alternative was to keep a giant pre-image cache of the entire trie.
-  private final Map<Address, StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>>
-      storageToUpdate = new ConcurrentHashMap<>();
+  private final Map<Address, StorageConsumingMap<StorageSlotKey>> storageToUpdate =
+      new ConcurrentHashMap<>();
 
   private boolean isAccumulatorStateChanged;
 
@@ -79,7 +79,7 @@ public class BonsaiWorldStateUpdateAccumulator
       final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader,
       final Consumer<StorageSlotKey> storagePreloader) {
     super(world);
-    this.accountsToUpdate = new AccountConsumingMap<>(new ConcurrentHashMap<>(), accountPreloader);
+    this.accountsToUpdate = new AccountConsumingMap(new ConcurrentHashMap<>(), accountPreloader);
     this.accountPreloader = accountPreloader;
     this.storagePreloader = storagePreloader;
     this.isAccumulatorStateChanged = false;
@@ -159,8 +159,7 @@ public class BonsaiWorldStateUpdateAccumulator
   }
 
   @Override
-  public Map<Address, StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>>
-      getStorageToUpdate() {
+  public Map<Address, StorageConsumingMap<StorageSlotKey>> getStorageToUpdate() {
     return storageToUpdate;
   }
 
@@ -336,13 +335,12 @@ public class BonsaiWorldStateUpdateAccumulator
                 return;
               }
 
-              final StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>
-                  pendingStorageUpdates =
-                      storageToUpdate.computeIfAbsent(
-                          updatedAddress,
-                          __ ->
-                              new StorageConsumingMap<>(
-                                  updatedAddress, new ConcurrentHashMap<>(), storagePreloader));
+              final StorageConsumingMap<StorageSlotKey> pendingStorageUpdates =
+                  storageToUpdate.computeIfAbsent(
+                      updatedAddress,
+                      __ ->
+                          new StorageConsumingMap<>(
+                              updatedAddress, new ConcurrentHashMap<>(), storagePreloader));
 
               if (tracked.getStorageWasCleared()) {
                 storageToClear.add(updatedAddress);
@@ -474,8 +472,7 @@ public class BonsaiWorldStateUpdateAccumulator
   @Override
   public Map<Bytes32, Bytes> getAllAccountStorage(final Address address, final Hash rootHash) {
     final Map<Bytes32, Bytes> results = wrappedWorldView().getAllAccountStorage(address, rootHash);
-    final StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>> bonsaiValueStorage =
-        storageToUpdate.get(address);
+    final StorageConsumingMap<StorageSlotKey> bonsaiValueStorage = storageToUpdate.get(address);
     if (bonsaiValueStorage != null) {
       // hash the key to match the implied storage interface of hashed slotKey
       bonsaiValueStorage.forEach(
@@ -666,7 +663,7 @@ public class BonsaiWorldStateUpdateAccumulator
   private Map<StorageSlotKey, BonsaiValue<UInt256>> maybeCreateStorageMap(
       final Map<StorageSlotKey, BonsaiValue<UInt256>> storageMap, final Address address) {
     if (storageMap == null) {
-      final StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>> newMap =
+      final StorageConsumingMap<StorageSlotKey> newMap =
           new StorageConsumingMap<>(address, new ConcurrentHashMap<>(), storagePreloader);
       storageToUpdate.put(address, newMap);
       return newMap;
@@ -770,50 +767,60 @@ public class BonsaiWorldStateUpdateAccumulator
     super.reset();
   }
 
-  public static class AccountConsumingMap<T> extends ForwardingMap<Address, T> {
+  public static class AccountConsumingMap
+      extends ForwardingMap<Address, BonsaiValue<BonsaiAccount>> {
 
-    private final ConcurrentHashMap<Address, T> accounts;
-    private final Consumer<T> consumer;
+    private final ConcurrentHashMap<Address, BonsaiValue<BonsaiAccount>> accounts;
+    private final Consumer<BonsaiValue<BonsaiAccount>> consumer;
 
     public AccountConsumingMap(
-        final ConcurrentHashMap<Address, T> accounts, final Consumer<T> consumer) {
+        final ConcurrentHashMap<Address, BonsaiValue<BonsaiAccount>> accounts,
+        final Consumer<BonsaiValue<BonsaiAccount>> consumer) {
       this.accounts = accounts;
       this.consumer = consumer;
     }
 
     @Override
-    public T put(@NotNull final Address address, @NotNull final T value) {
-      consumer.process(address, value);
+    public BonsaiValue<BonsaiAccount> put(
+        @NotNull final Address address, @NotNull final BonsaiValue<BonsaiAccount> value) {
+      if (!value.isUnchanged() || value.isCleared()) {
+        consumer.process(address, value);
+      }
       return accounts.put(address, value);
     }
 
-    public Consumer<T> getConsumer() {
+    public Consumer<BonsaiValue<BonsaiAccount>> getConsumer() {
       return consumer;
     }
 
     @Override
-    protected Map<Address, T> delegate() {
+    protected Map<Address, BonsaiValue<BonsaiAccount>> delegate() {
       return accounts;
     }
   }
 
-  public static class StorageConsumingMap<K, T> extends ForwardingMap<K, T> {
+  public static class StorageConsumingMap<K> extends ForwardingMap<K, BonsaiValue<UInt256>> {
 
     private final Address address;
 
-    private final ConcurrentHashMap<K, T> storages;
+    private final ConcurrentHashMap<K, BonsaiValue<UInt256>> storages;
     private final Consumer<K> consumer;
 
     public StorageConsumingMap(
-        final Address address, final ConcurrentHashMap<K, T> storages, final Consumer<K> consumer) {
+        final Address address,
+        final ConcurrentHashMap<K, BonsaiValue<UInt256>> storages,
+        final Consumer<K> consumer) {
       this.address = address;
       this.storages = storages;
       this.consumer = consumer;
     }
 
     @Override
-    public T put(@NotNull final K slotKey, @NotNull final T value) {
-      consumer.process(address, slotKey);
+    public BonsaiValue<UInt256> put(
+        @NotNull final K slotKey, @NotNull final BonsaiValue<UInt256> value) {
+      if (!value.isUnchanged() || value.isCleared()) {
+        consumer.process(address, slotKey);
+      }
       return storages.put(slotKey, value);
     }
 
@@ -822,7 +829,7 @@ public class BonsaiWorldStateUpdateAccumulator
     }
 
     @Override
-    protected Map<K, T> delegate() {
+    protected Map<K, BonsaiValue<UInt256>> delegate() {
       return storages;
     }
   }
