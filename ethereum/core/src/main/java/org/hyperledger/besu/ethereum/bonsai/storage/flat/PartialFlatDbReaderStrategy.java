@@ -49,12 +49,8 @@ public class PartialFlatDbReaderStrategy extends FlatDbReaderStrategy {
   protected final Counter getStorageValueMerkleTrieCounter;
   protected final Counter getStorageValueMissingMerkleTrieCounter;
 
-  public PartialFlatDbReaderStrategy(
-      final MetricsSystem metricsSystem,
-      final KeyValueStorage accountStorage,
-      final KeyValueStorage codeStorage,
-      final KeyValueStorage storageStorage) {
-    super(metricsSystem, accountStorage, codeStorage, storageStorage);
+  public PartialFlatDbReaderStrategy(final MetricsSystem metricsSystem) {
+    super(metricsSystem);
     getAccountMerkleTrieCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.BLOCKCHAIN,
@@ -84,7 +80,8 @@ public class PartialFlatDbReaderStrategy extends FlatDbReaderStrategy {
   public Optional<Bytes> getAccount(
       final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
       final NodeLoader nodeLoader,
-      final Hash accountHash) {
+      final Hash accountHash,
+      final KeyValueStorage accountStorage) {
     getAccountCounter.inc();
     Optional<Bytes> response = accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
     if (response.isEmpty()) {
@@ -115,13 +112,13 @@ public class PartialFlatDbReaderStrategy extends FlatDbReaderStrategy {
       final Supplier<Optional<Hash>> storageRootSupplier,
       final NodeLoader nodeLoader,
       final Hash accountHash,
-      final StorageSlotKey storageSlotKey) {
+      final StorageSlotKey storageSlotKey,
+      final KeyValueStorage storageStorage) {
     getStorageValueCounter.inc();
     Optional<Bytes> response =
         storageStorage
             .get(Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
             .map(Bytes::wrap);
-    ;
     if (response.isEmpty()) {
       final Optional<Hash> storageRoot = storageRootSupplier.get();
       final Optional<Bytes> worldStateRootHash = worldStateRootHashSupplier.get();

@@ -43,25 +43,14 @@ import org.apache.tuweni.rlp.RLP;
 public abstract class FlatDbReaderStrategy {
 
   protected final MetricsSystem metricsSystem;
-  protected final KeyValueStorage accountStorage;
-  protected final KeyValueStorage codeStorage;
-  protected final KeyValueStorage storageStorage;
-
   protected final Counter getAccountCounter;
   protected final Counter getAccountFoundInFlatDatabaseCounter;
 
   protected final Counter getStorageValueCounter;
   protected final Counter getStorageValueFlatDatabaseCounter;
 
-  public FlatDbReaderStrategy(
-      final MetricsSystem metricsSystem,
-      final KeyValueStorage accountStorage,
-      final KeyValueStorage codeStorage,
-      final KeyValueStorage storageStorage) {
+  public FlatDbReaderStrategy(final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
-    this.accountStorage = accountStorage;
-    this.codeStorage = codeStorage;
-    this.storageStorage = storageStorage;
 
     getAccountCounter =
         metricsSystem.createCounter(
@@ -94,22 +83,26 @@ public abstract class FlatDbReaderStrategy {
   public abstract Optional<Bytes> getAccount(
       Supplier<Optional<Bytes>> worldStateRootHashSupplier,
       NodeLoader nodeLoader,
-      Hash accountHash);
+      Hash accountHash,
+      KeyValueStorage accountStorage);
 
   /*
    * Retrieves the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
    */
+
   public abstract Optional<Bytes> getStorageValueByStorageSlotKey(
       Supplier<Optional<Bytes>> worldStateRootHashSupplier,
       Supplier<Optional<Hash>> storageRootSupplier,
       NodeLoader nodeLoader,
       Hash accountHash,
-      StorageSlotKey storageSlotKey);
+      StorageSlotKey storageSlotKey,
+      KeyValueStorage storageStorage);
 
   /*
    * Retrieves the code data for the given code hash and account hash.
    */
-  public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
+  public Optional<Bytes> getCode(
+      final Bytes32 codeHash, final Hash accountHash, final KeyValueStorage codeStorage) {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
@@ -120,19 +113,26 @@ public abstract class FlatDbReaderStrategy {
     }
   }
 
-  public void clearAll() {
+  public void clearAll(
+      final KeyValueStorage accountStorage,
+      final KeyValueStorage storageStorage,
+      final KeyValueStorage codeStorage) {
     accountStorage.clear();
     storageStorage.clear();
     codeStorage.clear();
   }
 
-  public void resetOnResync() {
+  public void resetOnResync(
+      final KeyValueStorage accountStorage, final KeyValueStorage storageStorage) {
     accountStorage.clear();
     storageStorage.clear();
   }
 
   public Map<Bytes32, Bytes> streamAccountFlatDatabase(
-      final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
+      final KeyValueStorage accountStorage,
+      final Bytes startKeyHash,
+      final Bytes32 endKeyHash,
+      final long max) {
     final Stream<Pair<Bytes32, Bytes>> pairStream =
         accountStorage
             .streamFromKey(startKeyHash.toArrayUnsafe())
@@ -148,7 +148,11 @@ public abstract class FlatDbReaderStrategy {
   }
 
   public Map<Bytes32, Bytes> streamStorageFlatDatabase(
-      final Hash accountHash, final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
+      final KeyValueStorage storageStorage,
+      final Hash accountHash,
+      final Bytes startKeyHash,
+      final Bytes32 endKeyHash,
+      final long max) {
     final Stream<Pair<Bytes32, Bytes>> pairStream =
         storageStorage
             .streamFromKey(Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe())

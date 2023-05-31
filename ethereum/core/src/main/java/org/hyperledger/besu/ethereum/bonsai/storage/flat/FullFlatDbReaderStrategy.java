@@ -34,12 +34,8 @@ public class FullFlatDbReaderStrategy extends FlatDbReaderStrategy {
 
   protected final Counter getStorageValueNotFoundInFlatDatabaseCounter;
 
-  public FullFlatDbReaderStrategy(
-      final MetricsSystem metricsSystem,
-      final KeyValueStorage accountStorage,
-      final KeyValueStorage codeStorage,
-      final KeyValueStorage storageStorage) {
-    super(metricsSystem, accountStorage, codeStorage, storageStorage);
+  public FullFlatDbReaderStrategy(final MetricsSystem metricsSystem) {
+    super(metricsSystem);
 
     getAccountNotFoundInFlatDatabaseCounter =
         metricsSystem.createCounter(
@@ -50,7 +46,7 @@ public class FullFlatDbReaderStrategy extends FlatDbReaderStrategy {
     getStorageValueNotFoundInFlatDatabaseCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.BLOCKCHAIN,
-            "get_storagevalue_missing flat_database",
+            "get_storagevalue_missing_flat_database",
             "Number of storage slots not found in the flat database");
   }
 
@@ -58,7 +54,8 @@ public class FullFlatDbReaderStrategy extends FlatDbReaderStrategy {
   public Optional<Bytes> getAccount(
       final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
       final NodeLoader nodeLoader,
-      final Hash accountHash) {
+      final Hash accountHash,
+      final KeyValueStorage accountStorage) {
     getAccountCounter.inc();
     final Optional<Bytes> accountFound =
         accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
@@ -76,7 +73,8 @@ public class FullFlatDbReaderStrategy extends FlatDbReaderStrategy {
       final Supplier<Optional<Hash>> storageRootSupplier,
       final NodeLoader nodeLoader,
       final Hash accountHash,
-      final StorageSlotKey storageSlotKey) {
+      final StorageSlotKey storageSlotKey,
+      final KeyValueStorage storageStorage) {
     getStorageValueCounter.inc();
     final Optional<Bytes> storageFound =
         storageStorage
@@ -92,7 +90,8 @@ public class FullFlatDbReaderStrategy extends FlatDbReaderStrategy {
   }
 
   @Override
-  public void resetOnResync() {
+  public void resetOnResync(
+      final KeyValueStorage accountStorage, final KeyValueStorage storageStorage) {
     // NOOP
     // not need to reset anything in full mode
   }
