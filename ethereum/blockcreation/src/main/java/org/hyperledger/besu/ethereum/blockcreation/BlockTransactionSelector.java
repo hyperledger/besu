@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.LogsWrapper;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -33,6 +34,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -258,9 +260,7 @@ public class BlockTransactionSelector {
     this.gasCalculator = gasCalculator;
     this.gasLimitCalculator = gasLimitCalculator;
     this.transactionSelector =
-        transactionSelectorFactory.isPresent()
-            ? transactionSelectorFactory.get().create()
-            : new TransactionSelector() {};
+        transactionSelectorFactory.map(TransactionSelectorFactory::create).orElse(null);
   }
 
   /*
@@ -349,7 +349,6 @@ public class BlockTransactionSelector {
             dataGasPrice);
 
     if (!effectiveResult.isInvalid()) {
-      worldStateUpdater.commit();
 
       final long gasUsedByTransaction =
           transaction.getGasLimit() - effectiveResult.getGasRemaining();
@@ -357,14 +356,24 @@ public class BlockTransactionSelector {
       final long cumulativeGasUsed =
           transactionSelectionResults.getCumulativeGasUsed() + gasUsedByTransaction;
 
-      final TransactionReceipt receipt =
-          transactionReceiptFactory.create(
-              transaction.getType(), effectiveResult, worldState, cumulativeGasUsed);
+      TransactionSelectionResult txSelectionResult = TransactionSelectionResult.CONTINUE;
 
-      final TransactionSelectionResult transactionSelectionResult =
-          transactionSelector.selectTransaction(transaction, receipt);
+      if (transactionSelector != null) {
+        txSelectionResult =
+            transactionSelector.selectTransaction(
+                transaction,
+                effectiveResult.getStatus() == TransactionProcessingResult.Status.SUCCESSFUL,
+                getLogs(effectiveResult.getLogs()),
+                cumulativeGasUsed);
+      }
 
-      if (transactionSelectionResult == TransactionSelectionResult.CONTINUE) {
+      if (txSelectionResult == TransactionSelectionResult.CONTINUE) {
+
+        worldStateUpdater.commit();
+        final TransactionReceipt receipt =
+            transactionReceiptFactory.create(
+                transaction.getType(), effectiveResult, worldState, cumulativeGasUsed);
+
         final long dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount());
 
         transactionSelectionResults.update(transaction, receipt, gasUsedByTransaction, dataGasUsed);
@@ -374,8 +383,7 @@ public class BlockTransactionSelector {
             .addArgument(transaction::toTraceLog)
             .log();
       }
-
-      return transactionSelectionResult;
+      return txSelectionResult;
     } else {
 
       final boolean isIncorrectNonce = isIncorrectNonce(effectiveResult.getValidationResult());
@@ -386,6 +394,10 @@ public class BlockTransactionSelector {
       return transactionSelectionResultForInvalidResult(
           transaction, effectiveResult.getValidationResult());
     }
+  }
+
+  private List<org.hyperledger.besu.plugin.data.Log> getLogs(final List<Log> logs) {
+    return logs.stream().map(LogsWrapper::new).collect(Collectors.toList());
   }
 
   private boolean transactionDataPriceBelowMin(final Transaction transaction) {

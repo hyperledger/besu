@@ -16,9 +16,11 @@
 package org.hyperledger.besu.plugin.services.txselection;
 
 import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.data.Log;
 import org.hyperledger.besu.plugin.data.Transaction;
-import org.hyperledger.besu.plugin.data.TransactionReceipt;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
+
+import java.util.List;
 
 /** Interface for the transaction selector */
 @Unstable
@@ -29,11 +31,14 @@ public interface TransactionSelector {
    * that no further transactions can be added to the block.
    *
    * @param transaction candidate transaction
-   * @param receipt receipt for the candidate transaction
+   * @param success true, if the transaction executed successfully
+   * @param logs the logs created by this transaction
+   * @param cumulativeGasUsed gas used by this and all previous transaction in the block
    * @return TransactionSelectionResult that indicates whether to include the transaction
    */
-  default TransactionSelectionResult selectTransaction(
-      final Transaction transaction, final TransactionReceipt receipt) {
-    return TransactionSelectionResult.CONTINUE;
-  }
+  TransactionSelectionResult selectTransaction(
+      final Transaction transaction,
+      final boolean success,
+      final List<Log> logs,
+      final long cumulativeGasUsed);
 }
