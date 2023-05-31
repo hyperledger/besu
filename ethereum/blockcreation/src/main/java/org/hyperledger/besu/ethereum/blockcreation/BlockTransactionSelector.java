@@ -48,6 +48,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -76,43 +77,9 @@ import org.slf4j.LoggerFactory;
  * not cleared between executions of buildTransactionListForBlock().
  */
 public class BlockTransactionSelector {
-  public static class TransactionValidationResult {
-    private final Transaction transaction;
-    private final ValidationResult<TransactionInvalidReason> validationResult;
 
-    public TransactionValidationResult(
-        final Transaction transaction,
-        final ValidationResult<TransactionInvalidReason> validationResult) {
-      this.transaction = transaction;
-      this.validationResult = validationResult;
-    }
-
-    public Transaction getTransaction() {
-      return transaction;
-    }
-
-    public ValidationResult<TransactionInvalidReason> getValidationResult() {
-      return validationResult;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      TransactionValidationResult that = (TransactionValidationResult) o;
-      return Objects.equals(transaction, that.transaction)
-          && Objects.equals(validationResult, that.validationResult);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(transaction, validationResult);
-    }
-  }
+  public record TransactionValidationResult(
+      Transaction transaction, ValidationResult<TransactionInvalidReason> validationResult) {}
 
   public static class TransactionSelectionResults {
     private final List<Transaction> transactions = Lists.newArrayList();
@@ -120,6 +87,7 @@ public class BlockTransactionSelector {
         new EnumMap<>(TransactionType.class);
     private final List<TransactionReceipt> receipts = Lists.newArrayList();
     private final List<TransactionValidationResult> invalidTransactions = Lists.newArrayList();
+    private final List<TransactionSelectionResult> selectionResults = Lists.newArrayList();
     private long cumulativeGasUsed = 0;
     private long cumulativeDataGasUsed = 0;
 
@@ -173,6 +141,41 @@ public class BlockTransactionSelector {
 
     public List<TransactionValidationResult> getInvalidTransactions() {
       return invalidTransactions;
+    }
+
+    public void addSelectionResult(final TransactionSelectionResult res) {
+      selectionResults.add(res);
+    }
+
+    public void logSelectionStats() {
+      if (LOG.isDebugEnabled()) {
+        final Map<TransactionSelectionResult, Long> selectionStats =
+            selectionResults.stream()
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+        LOG.debug(
+            "Selection stats: Totals[Evaluated={}, Selected={}, Skipped={}, Dropped={}]; Detailed[{}]",
+            selectionResults.size(),
+            selectionStats.entrySet().stream()
+                .filter(e -> e.getKey().selected())
+                .map(Map.Entry::getValue)
+                .mapToInt(Long::intValue)
+                .sum(),
+            selectionStats.entrySet().stream()
+                .filter(e -> !e.getKey().selected())
+                .map(Map.Entry::getValue)
+                .mapToInt(Long::intValue)
+                .sum(),
+            selectionStats.entrySet().stream()
+                .filter(e -> e.getKey().discard())
+                .map(Map.Entry::getValue)
+                .mapToInt(Long::intValue)
+                .sum(),
+            selectionStats.entrySet().stream()
+                .map(e -> e.getKey().toString() + "=" + e.getValue())
+                .sorted()
+                .collect(Collectors.joining(", ")));
+      }
     }
 
     @Override
@@ -469,7 +472,7 @@ public class BlockTransactionSelector {
   Responsible for updating the state maintained between transaction validation (i.e. receipts,
   cumulative gas, world state root hash.).
    */
-  /*  private void updateTransactionResultTracking(
+  private void updateTransactionResultTracking(
       final Transaction transaction, final TransactionProcessingResult result) {
 
     final long gasUsedByTransaction = transaction.getGasLimit() - result.getGasRemaining();
@@ -485,7 +488,7 @@ public class BlockTransactionSelector {
             transaction.getType(), result, worldState, cumulativeGasUsed),
         gasUsedByTransaction,
         dataGasUsed);
-  }*/
+  }
 
   private boolean isIncorrectNonce(final ValidationResult<TransactionInvalidReason> result) {
     return result.getInvalidReason().equals(TransactionInvalidReason.NONCE_TOO_HIGH);
@@ -520,5 +523,20 @@ public class BlockTransactionSelector {
         occupancyRatio);
 
     return occupancyRatio >= minBlockOccupancyRatio;
+  }
+
+  private boolean blockFull() {
+    final long gasAvailable = processableBlockHeader.getGasLimit();
+    final long gasUsed = transactionSelectionResult.getCumulativeGasUsed();
+    final long gasRemaining = gasAvailable - gasUsed;
+
+    if (gasRemaining < gasCalculator.getMinimumTransactionCost()) {
+      LOG.trace(
+          "Block full, remaining gas {} is less than minimum transaction gas cost {}",
+          gasRemaining,
+          gasCalculator.getMinimumTransactionCost());
+      return true;
+    }
+    return false;
   }
 }
