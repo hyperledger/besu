@@ -280,8 +280,8 @@ public class GraphQLHttpServiceTest {
   @Test
   public void getSocketAddressWhenActive() {
     final InetSocketAddress socketAddress = service.socketAddress();
-    Assertions.assertThat("127.0.0.1").isEqualTo(socketAddress.getAddress().getHostAddress());
-    Assertions.assertThat(socketAddress.getPort() > 0).isTrue();
+    Assertions.assertThat(socketAddress.getAddress().getHostAddress()).isEqualTo("127.0.0.1");
+    Assertions.assertThat(socketAddress.getPort()).isPositive();
   }
 
   @Test
@@ -289,9 +289,9 @@ public class GraphQLHttpServiceTest {
     final GraphQLHttpService service = createGraphQLHttpService();
 
     final InetSocketAddress socketAddress = service.socketAddress();
-    Assertions.assertThat("0.0.0.0").isEqualTo(socketAddress.getAddress().getHostAddress());
-    Assertions.assertThat(0).isEqualTo(socketAddress.getPort());
-    Assertions.assertThat("").isEqualTo(service.url());
+    Assertions.assertThat(socketAddress.getAddress().getHostAddress()).isEqualTo("0.0.0.0");
+    Assertions.assertThat(socketAddress.getPort()).isZero();
+    Assertions.assertThat(service.url()).isEmpty();
   }
 
   @Test
@@ -303,8 +303,8 @@ public class GraphQLHttpServiceTest {
 
     try {
       final InetSocketAddress socketAddress = service.socketAddress();
-      Assertions.assertThat("0.0.0.0").isEqualTo(socketAddress.getAddress().getHostAddress());
-      Assertions.assertThat(socketAddress.getPort() > 0).isTrue();
+      Assertions.assertThat(socketAddress.getAddress().getHostAddress()).isEqualTo("0.0.0.0");
+      Assertions.assertThat(socketAddress.getPort()).isPositive();
       Assertions.assertThat(!service.url().contains("0.0.0.0")).isTrue();
     } finally {
       service.stop().join();
@@ -331,12 +331,11 @@ public class GraphQLHttpServiceTest {
     @SuppressWarnings("unchecked")
     final List<Hash> list = Mockito.mock(List.class);
 
-    Mockito.when(blockchainQueries.blockByHash(ArgumentMatchers.eq(blockHash)))
-        .thenReturn(Optional.of(block));
+    Mockito.when(blockchainQueries.blockByHash(blockHash)).thenReturn(Optional.of(block));
     Mockito.when(block.getOmmers()).thenReturn(list);
     Mockito.when(list.size()).thenReturn(uncleCount);
 
-    final String query = "{block(hash:\"" + blockHash.toString() + "\") {ommerCount}}";
+    final String query = "{block(hash:\"" + blockHash + "\") {ommerCount}}";
 
     final RequestBody body = RequestBody.create(query, GRAPHQL);
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
@@ -344,8 +343,9 @@ public class GraphQLHttpServiceTest {
       final String jsonStr = resp.body().string();
       final JsonObject json = new JsonObject(jsonStr);
       testHelper.assertValidGraphQLResult(json);
-      final int result = json.getJsonObject("data").getJsonObject("block").getInteger("ommerCount");
-      Assertions.assertThat(result).isEqualTo(uncleCount);
+      final String result =
+          json.getJsonObject("data").getJsonObject("block").getString("ommerCount");
+      Assertions.assertThat(Bytes.fromHexStringLenient(result).toInt()).isEqualTo(uncleCount);
     }
   }
 
@@ -370,8 +370,9 @@ public class GraphQLHttpServiceTest {
       final String jsonStr = resp.body().string();
       final JsonObject json = new JsonObject(jsonStr);
       testHelper.assertValidGraphQLResult(json);
-      final int result = json.getJsonObject("data").getJsonObject("block").getInteger("ommerCount");
-      Assertions.assertThat(result).isEqualTo(uncleCount);
+      final String result =
+          json.getJsonObject("data").getJsonObject("block").getString("ommerCount");
+      Assertions.assertThat(Bytes.fromHexStringLenient(result).toInt()).isEqualTo(uncleCount);
     }
   }
 
@@ -395,8 +396,9 @@ public class GraphQLHttpServiceTest {
       final String jsonStr = resp.body().string();
       final JsonObject json = new JsonObject(jsonStr);
       testHelper.assertValidGraphQLResult(json);
-      final int result = json.getJsonObject("data").getJsonObject("block").getInteger("ommerCount");
-      Assertions.assertThat(result).isEqualTo(uncleCount);
+      final String result =
+          json.getJsonObject("data").getJsonObject("block").getString("ommerCount");
+      Assertions.assertThat(Bytes.fromHexStringLenient(result).toInt()).isEqualTo(uncleCount);
     }
   }
 
