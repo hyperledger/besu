@@ -406,6 +406,7 @@ public class SnapWorldDownloadStateTest {
   public void shouldNotCompleteReturnedFutureWhenNoPendingTasksRemainAndFlatDBHealNeeded() {
     Assume.assumeTrue(storageFormat == DataStorageFormat.BONSAI);
     Assume.assumeTrue(isFlatDbHealingEnabled);
+    ((BonsaiWorldStateKeyValueStorage) worldStateStorage).upgradeToFullFlatDbMode();
     when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
     downloadState.checkCompletion(header);
 

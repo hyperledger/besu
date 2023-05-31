@@ -47,6 +47,8 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final KeyValueStorage trieLogStorage,
       final ObservableMetricsSystem metricsSystem) {
     super(
+        parentWorldStateStorage.flatDbMode,
+        parentWorldStateStorage.flatDbReaderStrategy,
         accountStorage,
         codeStorage,
         storageStorage,
