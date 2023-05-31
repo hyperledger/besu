@@ -193,6 +193,41 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           "Block already present in bad block manager.");
     }
 
+    final List<Hash> transactionVersionedHashes = new ArrayList<>();
+    // get versioned hashes, in order, from all blob tx
+    transactions.stream()
+        .filter(tx -> tx.getBlobCount() > 0)
+        .map(tx -> transactionVersionedHashes.addAll(tx.getVersionedHashes().get()));
+    // and compare with expected versioned hashes param
+    final Optional<List<Hash>> maybeVersionedHashes =
+        Optional.ofNullable(blockParam.getVersionedHashes());
+    // check if one is empty
+    if (maybeVersionedHashes.isPresent() && transactionVersionedHashes.isEmpty()) {
+      return respondWithInvalid(
+          reqId,
+          blockParam,
+          null,
+          INVALID,
+          "Versioned hashes from blob transactions (empty) do not match expected values");
+    }
+    if (maybeVersionedHashes.isEmpty() && !transactionVersionedHashes.isEmpty()) {
+      return respondWithInvalid(
+          reqId,
+          blockParam,
+          null,
+          INVALID,
+          "Versioned hashes from blob transactions do not match expected values (empty)");
+    }
+    // otherwise, check list contents
+    if (!maybeVersionedHashes.get().equals(transactionVersionedHashes)) {
+      return respondWithInvalid(
+          reqId,
+          blockParam,
+          null,
+          INVALID,
+          "Versioned hashes from blob transactions do not match expected values (empty)");
+    }
+
     final Optional<BlockHeader> maybeParentHeader =
         protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
     if (maybeParentHeader.isPresent()
