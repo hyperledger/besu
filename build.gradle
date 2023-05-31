@@ -751,6 +751,7 @@ task dockerUpload {
         def archVariantImage = "${variantImage}-${architecture}"
         def cmd = "docker tag '${variantImage}' '${archVariantImage}' && docker push '${archVariantImage}'"
         additionalTags.each { tag -> cmd += " && docker tag '${variantImage}' '${dockerImageName}:${tag.trim()}-${variant}-${architecture}' && docker push '${dockerImageName}:${tag.trim()}-${variant}-${architecture}'" }
+        println "Executing '${cmd}'"
         executable "sh"
         args "-c", cmd
       }
@@ -760,6 +761,7 @@ task dockerUpload {
       def archImage = "${image}-${architecture}"
       def cmd = "docker tag ${image} ${archImage} && docker push '${archImage}'"
       additionalTags.each { tag -> cmd += " && docker tag '${image}' '${dockerImageName}:${tag.trim()}-${architecture}' && docker push '${dockerImageName}:${tag.trim()}-${architecture}'" }
+      println "Executing '${cmd}'"
       executable "sh"
       args "-c", cmd
     }
@@ -776,6 +778,7 @@ task dockerUploadRelease {
         def variantImage = "${image}-${variant}"
         exec {
           def cmd = "docker pull '${variantImage}-${architecture}' && docker tag '${variantImage}-${architecture}' '${dockerImageName}:latest-${variant}-${architecture}' && docker push '${dockerImageName}:latest-${variant}-${architecture}'"
+          println "Executing '${cmd}'"
           executable "sh"
           args "-c", cmd
         }
@@ -784,6 +787,7 @@ task dockerUploadRelease {
       exec {
         def archImage = "${image}-${architecture}"
         def cmd = "docker pull '${archImage}' && docker tag ${archImage} '${dockerImageName}:latest-${architecture}' && docker push '${dockerImageName}:latest-${architecture}'"
+        println "Executing '${cmd}'"
         executable "sh"
         args "-c", cmd
       }
@@ -813,6 +817,7 @@ task manifestDocker {
 
         exec {
           def cmd = "docker manifest create '${variantImage}' ${targets} && docker manifest push '${variantImage}'"
+          println "Executing '${cmd}'"
           executable "sh"
           args "-c", cmd
         }
@@ -822,6 +827,7 @@ task manifestDocker {
         def targets = ""
         archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
         def cmd = "docker manifest create '${baseTag}' ${targets} && docker manifest push '${baseTag}'"
+        println "Executing '${cmd}'"
         executable "sh"
         args "-c", cmd
       }
@@ -841,6 +847,7 @@ task manifestDockerRelease {
 
       exec {
         def cmd = "docker manifest create '${variantImage}' ${targets} && docker manifest push '${variantImage}'"
+        println "Executing '${cmd}'"
         executable "sh"
         args "-c", cmd
       }
@@ -850,6 +857,7 @@ task manifestDockerRelease {
       def targets = ""
       archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
       def cmd = "docker manifest create '${baseTag}' ${targets} && docker manifest push '${baseTag}'"
+      println "Executing '${cmd}'"
       executable "sh"
       args "-c", cmd
     }
