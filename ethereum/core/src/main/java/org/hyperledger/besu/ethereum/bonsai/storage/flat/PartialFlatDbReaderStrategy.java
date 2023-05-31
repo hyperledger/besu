@@ -103,7 +103,7 @@ public class PartialFlatDbReaderStrategy extends FlatDbReaderStrategy {
         }
       }
     } else {
-      getAccountFlatDatabaseCounter.inc();
+      getAccountFoundInFlatDatabaseCounter.inc();
     }
 
     return response;

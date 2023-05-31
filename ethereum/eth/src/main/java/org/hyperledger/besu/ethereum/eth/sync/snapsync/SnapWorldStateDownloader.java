@@ -145,7 +145,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               snapTaskCollection,
               maxNodeRequestsWithoutProgress,
               minMillisBeforeStalling,
-              snapSyncConfiguration.isFlatDbHealingEnabled(),
               snapsyncMetricsManager,
               clock);
 

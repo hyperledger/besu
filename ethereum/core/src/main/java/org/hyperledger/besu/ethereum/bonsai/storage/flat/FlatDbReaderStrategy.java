@@ -48,7 +48,7 @@ public abstract class FlatDbReaderStrategy {
   protected final KeyValueStorage storageStorage;
 
   protected final Counter getAccountCounter;
-  protected final Counter getAccountFlatDatabaseCounter;
+  protected final Counter getAccountFoundInFlatDatabaseCounter;
 
   protected final Counter getStorageValueCounter;
   protected final Counter getStorageValueFlatDatabaseCounter;
@@ -69,7 +69,7 @@ public abstract class FlatDbReaderStrategy {
             "get_account_total",
             "Total number of calls to getAccount");
 
-    getAccountFlatDatabaseCounter =
+    getAccountFoundInFlatDatabaseCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.BLOCKCHAIN,
             "get_account_flat_database",
@@ -91,18 +91,20 @@ public abstract class FlatDbReaderStrategy {
   /*
    * Retrieves the account data for the given account hash, using the world state root hash supplier and node loader.
    */
-  public Optional<Bytes> getAccount(
-      final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
-      final NodeLoader nodeLoader,
-      final Hash accountHash) {
-    getAccountCounter.inc();
-    final Optional<Bytes> accountFound =
-        accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
-    if (accountFound.isPresent()) {
-      getAccountFlatDatabaseCounter.inc();
-    }
-    return accountFound;
-  }
+  public abstract Optional<Bytes> getAccount(
+      Supplier<Optional<Bytes>> worldStateRootHashSupplier,
+      NodeLoader nodeLoader,
+      Hash accountHash);
+
+  /*
+   * Retrieves the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
+   */
+  public abstract Optional<Bytes> getStorageValueByStorageSlotKey(
+      Supplier<Optional<Bytes>> worldStateRootHashSupplier,
+      Supplier<Optional<Hash>> storageRootSupplier,
+      NodeLoader nodeLoader,
+      Hash accountHash,
+      StorageSlotKey storageSlotKey);
 
   /*
    * Retrieves the code data for the given code hash and account hash.
@@ -116,26 +118,6 @@ public abstract class FlatDbReaderStrategy {
           .map(Bytes::wrap)
           .filter(b -> Hash.hash(b).equals(codeHash));
     }
-  }
-
-  /*
-   * Retrieves the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
-   */
-  public Optional<Bytes> getStorageValueByStorageSlotKey(
-      final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
-      final Supplier<Optional<Hash>> storageRootSupplier,
-      final NodeLoader nodeLoader,
-      final Hash accountHash,
-      final StorageSlotKey storageSlotKey) {
-    getStorageValueCounter.inc();
-    final Optional<Bytes> storageFound =
-        storageStorage
-            .get(Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
-            .map(Bytes::wrap);
-    if (storageFound.isPresent()) {
-      getStorageValueFlatDatabaseCounter.inc();
-    }
-    return storageFound;
   }
 
   public void clearAll() {

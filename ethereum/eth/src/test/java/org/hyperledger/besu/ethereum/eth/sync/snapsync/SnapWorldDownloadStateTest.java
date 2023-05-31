@@ -132,7 +132,6 @@ public class SnapWorldDownloadStateTest {
             pendingRequests,
             MAX_REQUESTS_WITHOUT_PROGRESS,
             MIN_MILLIS_BEFORE_STALLING,
-            isFlatDbHealingEnabled,
             metricsManager,
             clock);
     final DynamicPivotBlockSelector dynamicPivotBlockManager =

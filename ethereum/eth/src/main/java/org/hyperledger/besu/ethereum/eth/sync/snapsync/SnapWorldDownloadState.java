@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.AccountFlatD
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.StorageFlatDatabaseHealingRangeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
@@ -81,8 +82,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   private final Blockchain blockchain;
   private OptionalLong blockObserverId;
 
-  private final boolean isFlatDbHealingEnabled; // TODO remove when no more experimental feature
-
   // metrics around the snapsync
   private final SnapsyncMetricsManager metricsManager;
 
@@ -94,7 +93,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       final InMemoryTasksPriorityQueues<SnapDataRequest> pendingRequests,
       final int maxRequestsWithoutProgress,
       final long minMillisBeforeStalling,
-      final boolean isFlatDbHealingEnabled,
       final SnapsyncMetricsManager metricsManager,
       final Clock clock) {
     super(
@@ -106,7 +104,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     this.snapContext = snapContext;
     this.blockchain = blockchain;
     this.snapSyncState = snapSyncState;
-    this.isFlatDbHealingEnabled = isFlatDbHealingEnabled;
     this.metricsManager = metricsManager;
     this.blockObserverId = OptionalLong.empty();
     metricsManager
@@ -175,8 +172,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
           blockObserverId = OptionalLong.of(blockchain.observeBlockAdded(getBlockAddedListener()));
         snapSyncState.setWaitingBlockchain(true);
       } else if (!snapSyncState.isHealFlatDatabaseInProgress()
-          && isBonsaiStorageFormat()
-          && isFlatDbHealingEnabled) {
+          && worldStateStorage.getFlatDbMode().equals(FlatDbMode.FULL)) {
         // only doing a flat db heal for bonsai
         startFlatDatabaseHeal(header);
       } else {
