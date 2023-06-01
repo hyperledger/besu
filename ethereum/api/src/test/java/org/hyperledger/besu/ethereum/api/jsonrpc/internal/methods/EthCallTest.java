@@ -45,11 +45,11 @@ import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParam
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.PreWorldStateCloseGuard;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 
 import java.util.Optional;
-import java.util.function.BiFunction;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
@@ -72,11 +72,7 @@ public class EthCallTest {
 
   @Mock private BlockHeader blockHeader;
 
-  @Captor
-  ArgumentCaptor<
-          BiFunction<
-              MutableWorldState, Optional<TransactionSimulatorResult>, Optional<JsonRpcResponse>>>
-      mapperCaptor;
+  @Captor ArgumentCaptor<PreWorldStateCloseGuard<Optional<JsonRpcResponse>>> mapperCaptor;
 
   @Before
   public void setUp() {
