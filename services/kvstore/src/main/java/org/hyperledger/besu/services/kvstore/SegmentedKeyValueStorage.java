@@ -123,6 +123,8 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
    */
   void clear(S segmentHandle);
 
+  boolean isClosed();
+
   /**
    * Represents a set of changes to be committed atomically. A single transaction is not
    * thread-safe, but multiple transactions can execute concurrently.

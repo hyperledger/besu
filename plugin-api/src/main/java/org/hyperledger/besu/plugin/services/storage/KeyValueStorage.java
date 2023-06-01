@@ -114,4 +114,11 @@ public interface KeyValueStorage extends Closeable {
    * @throws StorageException problem encountered when starting a new transaction.
    */
   KeyValueStorageTransaction startTransaction() throws StorageException;
+
+  /**
+   * Return Whether the underlying storage is closed or not.
+   *
+   * @return boolean indicating whether the storage is closed.
+   */
+  boolean isClosed();
 }

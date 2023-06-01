@@ -328,6 +328,11 @@ public abstract class RocksDBColumnarKeyValueStorage
     }
   }
 
+  @Override
+  public boolean isClosed() {
+    return closed.get();
+  }
+
   void throwIfClosed() {
     if (closed.get()) {
       LOG.error("Attempting to use a closed RocksDbKeyValueStorage");

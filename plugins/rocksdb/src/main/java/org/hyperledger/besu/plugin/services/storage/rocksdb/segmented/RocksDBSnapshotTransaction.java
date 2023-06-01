@@ -93,10 +93,7 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
    * @return the optional data
    */
   public Optional<byte[]> get(final byte[] key) {
-    if (isClosed.get()) {
-      LOG.debug("Attempted to access closed snapshot");
-      return Optional.empty();
-    }
+    throwIfClosed();
 
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
       return Optional.ofNullable(snapTx.get(columnFamilyHandle, readOptions, key));
@@ -107,10 +104,7 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
 
   @Override
   public void put(final byte[] key, final byte[] value) {
-    if (isClosed.get()) {
-      LOG.debug("Attempted to access closed snapshot");
-      return;
-    }
+    throwIfClosed();
 
     try (final OperationTimer.TimingContext ignored = metrics.getWriteLatency().startTimer()) {
       snapTx.put(columnFamilyHandle, key, value);
@@ -125,10 +119,7 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
 
   @Override
   public void remove(final byte[] key) {
-    if (isClosed.get()) {
-      LOG.debug("Attempted to access closed snapshot");
-      return;
-    }
+    throwIfClosed();
     try (final OperationTimer.TimingContext ignored = metrics.getRemoveLatency().startTimer()) {
       snapTx.delete(columnFamilyHandle, key);
     } catch (final RocksDBException e) {
@@ -212,5 +203,12 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
     readOptions.close();
     snapshot.unMarkSnapshot();
     isClosed.set(true);
+  }
+
+  private void throwIfClosed() {
+    if (isClosed.get()) {
+      LOG.error("Attempting to use a closed RocksDBSnapshotTransaction");
+      throw new IllegalStateException("Storage has been closed");
+    }
   }
 }
