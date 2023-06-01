@@ -87,7 +87,7 @@ public abstract class RocksDBColumnarKeyValueStorage
     RocksDbUtil.loadNativeLibrary();
   }
 
-  private final AtomicBoolean closed = new AtomicBoolean(false);
+  protected final AtomicBoolean closed = new AtomicBoolean(false);
   private final WriteOptions tryDeleteOptions =
       new WriteOptions().setNoSlowdown(true).setIgnoreMissingColumnFamilies(true);
   private final ReadOptions readOptions = new ReadOptions().setVerifyChecksums(false);
