@@ -153,7 +153,7 @@ public class BlockAdapterBase extends AdapterBase {
             bn,
             ws -> {
               Account account = ws.get(address);
-              account.getCode();
+              if (account != null) account.getCode();
               return Optional.of(new AccountAdapter(account));
             })
         .get();
