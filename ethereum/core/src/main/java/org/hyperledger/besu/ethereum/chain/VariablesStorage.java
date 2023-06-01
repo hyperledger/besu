@@ -31,18 +31,20 @@ public interface VariablesStorage {
     SAFE_BLOCK_HASH("safeBlockHash"),
     SEQ_NO_STORE("local-enr-seqno");
 
-    private final String name;
+    private final byte[] byteArray;
+    private final Bytes bytes;
 
-    Keys(final String name) {
-      this.name = name;
+    Keys(final String key) {
+      this.byteArray = key.getBytes(UTF_8);
+      this.bytes = Bytes.wrap(byteArray);
     }
 
     public byte[] toByteArray() {
-      return name.getBytes(UTF_8);
+      return byteArray;
     }
 
     public Bytes getBytes() {
-      return Bytes.wrap(toByteArray());
+      return bytes;
     }
   }
 
@@ -69,6 +71,8 @@ public interface VariablesStorage {
     void setSafeBlock(Hash blockHash);
 
     void setLocalEnrSeqno(Bytes nodeRecord);
+
+    void removeAll();
 
     void commit();
 

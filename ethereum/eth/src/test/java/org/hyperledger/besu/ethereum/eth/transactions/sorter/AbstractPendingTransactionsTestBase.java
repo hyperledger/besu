@@ -18,8 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
-import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.CONTINUE;
-import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionSelectionResult.SELECTED;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -41,9 +40,10 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedLis
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionSelectionResult;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
-import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.Clock;
@@ -315,7 +315,7 @@ public abstract class AbstractPendingTransactionsTestBase {
     transactions.selectTransactions(
         transaction -> {
           parsedTransactions.add(transaction);
-          return TransactionSelectionResult.COMPLETE_OPERATION;
+          return TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
         });
 
     assertThat(parsedTransactions.size()).isEqualTo(1);
@@ -331,7 +331,7 @@ public abstract class AbstractPendingTransactionsTestBase {
     transactions.selectTransactions(
         transaction -> {
           parsedTransactions.add(transaction);
-          return CONTINUE;
+          return SELECTED;
         });
 
     assertThat(parsedTransactions.size()).isEqualTo(2);
@@ -351,7 +351,7 @@ public abstract class AbstractPendingTransactionsTestBase {
     transactions.selectTransactions(
         transaction -> {
           parsedTransactions.add(transaction);
-          return CONTINUE;
+          return SELECTED;
         });
 
     assertThat(parsedTransactions).containsExactly(transaction2);
@@ -366,7 +366,8 @@ public abstract class AbstractPendingTransactionsTestBase {
     transactions.selectTransactions(
         transaction -> {
           parsedTransactions.add(transaction);
-          return DELETE_TRANSACTION_AND_CONTINUE;
+          return TransactionSelectionResult.invalid(
+              TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE.name());
         });
 
     assertThat(parsedTransactions.size()).isEqualTo(2);
@@ -534,7 +535,7 @@ public abstract class AbstractPendingTransactionsTestBase {
     transactions.selectTransactions(
         transaction -> {
           iterationOrder.add(transaction);
-          return CONTINUE;
+          return SELECTED;
         });
 
     assertThat(iterationOrder).containsExactly(transaction1, transaction2, transaction3);
@@ -552,7 +553,7 @@ public abstract class AbstractPendingTransactionsTestBase {
     transactions.selectTransactions(
         transaction -> {
           iterationOrder.add(transaction);
-          return CONTINUE;
+          return SELECTED;
         });
 
     assertThat(iterationOrder).containsExactly(transaction2, transaction1);
@@ -574,7 +575,7 @@ public abstract class AbstractPendingTransactionsTestBase {
     transactions.selectTransactions(
         transaction -> {
           iterationOrder.add(transaction);
-          return CONTINUE;
+          return SELECTED;
         });
 
     // Ignoring nonces, the order would be 3, 2, 4, 1 but we have to delay 3 and 2 until after 1.

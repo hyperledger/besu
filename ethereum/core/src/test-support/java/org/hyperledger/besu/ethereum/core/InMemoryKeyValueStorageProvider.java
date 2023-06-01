@@ -46,14 +46,26 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
   }
 
   public static MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
-    return createInMemoryBlockchain(genesisBlock, new MainnetBlockHeaderFunctions());
+    return createInMemoryBlockchain(genesisBlock, createInMemoryVariablesStorage());
+  }
+
+  public static MutableBlockchain createInMemoryBlockchain(
+      final Block genesisBlock, final VariablesStorage variablesStorage) {
+    return createInMemoryBlockchain(
+        genesisBlock, new MainnetBlockHeaderFunctions(), variablesStorage);
   }
 
   public static MutableBlockchain createInMemoryBlockchain(
       final Block genesisBlock, final BlockHeaderFunctions blockHeaderFunctions) {
+    return createInMemoryBlockchain(
+        genesisBlock, blockHeaderFunctions, createInMemoryVariablesStorage());
+  }
+
+  public static MutableBlockchain createInMemoryBlockchain(
+      final Block genesisBlock,
+      final BlockHeaderFunctions blockHeaderFunctions,
+      final VariablesStorage variablesStorage) {
     final InMemoryKeyValueStorage keyValueStorage = new InMemoryKeyValueStorage();
-    final VariablesStorage variablesStorage =
-        new VariablesKeyValueStorage(new InMemoryKeyValueStorage());
     return DefaultBlockchain.createMutable(
         genesisBlock,
         new KeyValueStoragePrefixedKeyBlockchainStorage(
@@ -91,5 +103,9 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
 
   public static PrivateStateStorage createInMemoryPrivateStateStorage() {
     return new PrivateStateKeyValueStorage(new InMemoryKeyValueStorage());
+  }
+
+  public static VariablesStorage createInMemoryVariablesStorage() {
+    return new VariablesKeyValueStorage(new InMemoryKeyValueStorage());
   }
 }

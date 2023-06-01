@@ -116,6 +116,15 @@ public class VariablesKeyValueStorage implements VariablesStorage {
     }
 
     @Override
+    public void removeAll() {
+      removeVariable(CHAIN_HEAD_HASH);
+      removeVariable(FINALIZED_BLOCK_HASH);
+      removeVariable(SAFE_BLOCK_HASH);
+      removeVariable(FORK_HEADS);
+      removeVariable(SEQ_NO_STORE);
+    }
+
+    @Override
     public void commit() {
       variablesTransaction.commit();
     }
@@ -127,6 +136,10 @@ public class VariablesKeyValueStorage implements VariablesStorage {
 
     void setVariable(final Keys key, final Bytes value) {
       variablesTransaction.put(key.toByteArray(), value.toArrayUnsafe());
+    }
+
+    void removeVariable(final Keys key) {
+      variablesTransaction.remove(key.toByteArray());
     }
   }
 }

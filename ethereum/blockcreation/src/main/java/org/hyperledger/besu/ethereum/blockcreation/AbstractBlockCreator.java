@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -172,7 +173,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final List<BlockHeader> ommers = maybeOmmers.orElse(selectOmmers());
 
       throwIfStopped();
-      final BlockTransactionSelector.TransactionSelectionResults transactionResults =
+      final TransactionSelectionResults transactionResults =
           selectTransactions(
               processableBlockHeader,
               disposableWorldState,
@@ -180,6 +181,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               miningBeneficiary,
               dataGasPrice,
               newProtocolSpec);
+
+      transactionResults.logSelectionStats();
 
       throwIfStopped();
 
@@ -257,8 +260,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   }
 
   private DataGas computeExcessDataGas(
-      BlockTransactionSelector.TransactionSelectionResults transactionResults,
-      ProtocolSpec newProtocolSpec) {
+      TransactionSelectionResults transactionResults, ProtocolSpec newProtocolSpec) {
 
     if (newProtocolSpec.getFeeMarket().implementsDataFee()) {
       final var gasCalculator = newProtocolSpec.getGasCalculator();
@@ -276,7 +278,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     return null;
   }
 
-  private BlockTransactionSelector.TransactionSelectionResults selectTransactions(
+  private TransactionSelectionResults selectTransactions(
       final ProcessableBlockHeader processableBlockHeader,
       final MutableWorldState disposableWorldState,
       final Optional<List<Transaction>> transactions,
@@ -304,8 +306,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             dataGasPrice,
             protocolSpec.getFeeMarket(),
             protocolSpec.getGasCalculator(),
-            protocolSpec.getGasLimitCalculator(),
-            protocolContext.getTransactionSelectorFactory());
+            protocolSpec.getGasLimitCalculator());
 
     if (transactions.isPresent()) {
       return selector.evaluateTransactions(transactions.get());
