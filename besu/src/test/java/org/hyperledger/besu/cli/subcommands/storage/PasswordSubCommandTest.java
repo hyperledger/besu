@@ -26,7 +26,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import picocli.CommandLine.Model.CommandSpec;
 
 @RunWith(MockitoJUnitRunner.class)
-public class StorageSubCommandTest extends CommandTestAbstract {
+public class PasswordSubCommandTest extends CommandTestAbstract {
 
   @Test
   public void passwordSubCommandExistsWithHashSubCommand() {

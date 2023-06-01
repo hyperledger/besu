@@ -141,6 +141,7 @@ import org.hyperledger.besu.ethereum.permissioning.PermissioningConfigurationBui
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
@@ -2958,6 +2959,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               .build();
     }
     return this.keyValueStorageProvider;
+  }
+
+  public StorageProvider getStorageProvider() {
+    return keyValueStorageProvider(keyValueStorageName);
   }
 
   private Optional<PkiBlockCreationConfiguration> maybePkiBlockCreationConfiguration() {

@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.CHAIN_HE
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.FINALIZED_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.FORK_HEADS;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.SAFE_BLOCK_HASH;
+import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.SEQ_NO_STORE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
@@ -60,6 +61,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
     this.blockchainStorage = blockchainStorage;
     this.variablesStorage = variablesStorage;
     this.blockHeaderFunctions = blockHeaderFunctions;
+    migrateVariables();
   }
 
   @Override
@@ -130,6 +132,34 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
   Optional<Bytes> get(final Bytes prefix, final Bytes key) {
     return blockchainStorage.get(Bytes.concatenate(prefix, key).toArrayUnsafe()).map(Bytes::wrap);
+  }
+
+  public void migrateVariables() {
+    final var blockchainUpdater = updater();
+    final var variablesUpdater = variablesStorage.updater();
+
+    get(VARIABLES_PREFIX, CHAIN_HEAD_HASH.getBytes())
+        .map(this::bytesToHash)
+        .ifPresent(variablesUpdater::setChainHead);
+
+    get(VARIABLES_PREFIX, FINALIZED_BLOCK_HASH.getBytes())
+        .map(this::bytesToHash)
+        .ifPresent(variablesUpdater::setChainHead);
+
+    get(VARIABLES_PREFIX, SAFE_BLOCK_HASH.getBytes())
+        .map(this::bytesToHash)
+        .ifPresent(variablesUpdater::setChainHead);
+
+    get(VARIABLES_PREFIX, FORK_HEADS.getBytes())
+        .map(bytes -> RLP.input(bytes).readList(in -> this.bytesToHash(in.readBytes32())))
+        .ifPresent(variablesUpdater::setForkHeads);
+
+    get(Bytes.EMPTY, SEQ_NO_STORE.getBytes()).ifPresent(variablesUpdater::setLocalEnrSeqno);
+
+    blockchainUpdater.removeVariables();
+
+    variablesUpdater.commit();
+    blockchainUpdater.commit();
   }
 
   public static class Updater implements BlockchainStorage.Updater {
@@ -238,14 +268,6 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
       blockchainTransaction.rollback();
     }
 
-    @Override
-    public void removeVariables() {
-      remove(VARIABLES_PREFIX, CHAIN_HEAD_HASH.getBytes());
-      remove(VARIABLES_PREFIX, FINALIZED_BLOCK_HASH.getBytes());
-      remove(VARIABLES_PREFIX, SAFE_BLOCK_HASH.getBytes());
-      remove(VARIABLES_PREFIX, FORK_HEADS.getBytes());
-    }
-
     void set(final Bytes prefix, final Bytes key, final Bytes value) {
       blockchainTransaction.put(
           Bytes.concatenate(prefix, key).toArrayUnsafe(), value.toArrayUnsafe());
@@ -257,6 +279,14 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
     private Bytes rlpEncode(final List<TransactionReceipt> receipts) {
       return RLP.encode(o -> o.writeList(receipts, TransactionReceipt::writeToWithRevertReason));
+    }
+
+    private void removeVariables() {
+      remove(VARIABLES_PREFIX, CHAIN_HEAD_HASH.getBytes());
+      remove(VARIABLES_PREFIX, FINALIZED_BLOCK_HASH.getBytes());
+      remove(VARIABLES_PREFIX, SAFE_BLOCK_HASH.getBytes());
+      remove(VARIABLES_PREFIX, FORK_HEADS.getBytes());
+      remove(Bytes.EMPTY, SEQ_NO_STORE.getBytes());
     }
   }
 }

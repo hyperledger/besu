@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.chain;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -61,10 +59,6 @@ public interface VariablesStorage {
   Optional<Bytes> getLocalEnrSeqno();
 
   Updater updater();
-
-  void migrate(ProtocolSchedule protocolSchedule, StorageProvider blockchainStorage);
-
-  void revert(ProtocolSchedule protocolSchedule, StorageProvider blockchainStorage);
 
   interface Updater {
 

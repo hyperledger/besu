@@ -85,7 +85,5 @@ public interface BlockchainStorage {
     void commit();
 
     void rollback();
-
-    void removeVariables();
   }
 }
