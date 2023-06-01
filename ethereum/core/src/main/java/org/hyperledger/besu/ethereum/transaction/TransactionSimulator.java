@@ -40,7 +40,6 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
 import java.util.Optional;
-import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 
@@ -98,7 +97,7 @@ public class TransactionSimulator {
         header);
   }
 
-  public <U> Optional<TransactionSimulatorResult> processAtHead(final CallParameter callParams) {
+  public Optional<TransactionSimulatorResult> processAtHead(final CallParameter callParams) {
     return process(
         callParams,
         TransactionValidationParams.transactionSimulator(),
@@ -107,26 +106,22 @@ public class TransactionSimulator {
         blockchain.getChainHeadHeader());
   }
 
-  public <U> Optional<U> processAtHead(
-      final CallParameter callParams,
-      final BiFunction<
-              MutableWorldState, Optional<TransactionSimulatorResult>, ? extends Optional<U>>
-          mapper) {
-    return process(
-        callParams,
-        TransactionValidationParams.transactionSimulator(),
-        OperationTracer.NO_TRACING,
-        mapper,
-        blockchain.getChainHeadHeader());
-  }
-
+  /**
+   * Processes a transaction simulation with the provided parameters and executes pre-worldstate
+   * close actions.
+   *
+   * @param callParams The call parameters for the transaction.
+   * @param transactionValidationParams The validation parameters for the transaction.
+   * @param operationTracer The tracer for capturing operations during processing.
+   * @param preWorldStateCloseGuard The pre-worldstate close guard for executing pre-close actions.
+   * @param header The block header.
+   * @return An Optional containing the result of the processing.
+   */
   public <U> Optional<U> process(
       final CallParameter callParams,
       final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,
-      final BiFunction<
-              MutableWorldState, Optional<TransactionSimulatorResult>, ? extends Optional<U>>
-          mapper,
+      final PreWorldStateCloseGuard<U> preWorldStateCloseGuard,
       final BlockHeader header) {
     if (header == null) {
       return Optional.empty();
@@ -142,7 +137,7 @@ public class TransactionSimulator {
         updater = updater.parentUpdater().isPresent() ? updater : updater.updater();
       }
 
-      return mapper.apply(
+      return preWorldStateCloseGuard.apply(
           ws,
           processWithWorldUpdater(
               callParams, transactionValidationParams, operationTracer, header, updater));
