@@ -142,6 +142,7 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
   @Override
   public KeyValueStorageTransaction startTransaction() {
     throwIfClosed();
+
     return new KeyValueStorageTransactionTransitionValidatorDecorator(
         new InMemoryTransaction() {
           @Override
