@@ -123,6 +123,10 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
    */
   void clear(S segmentHandle);
 
+  /**
+   * Whether the underlying storage is closed or not.
+   * @return boolean indicating whether the underlying storage is closed or not.
+   */
   boolean isClosed();
 
   /**
