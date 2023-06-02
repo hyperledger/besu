@@ -176,7 +176,7 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
   private void throwIfClosed() {
     if (parent.isClosed()) {
       LOG.error("Attempting to use a closed RocksDBKeyValueStorage");
-      throw new IllegalStateException("Storage has been closed");
+      throw new StorageException("Storage has been closed");
     }
   }
 }

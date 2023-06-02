@@ -144,7 +144,7 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
   private void throwIfClosed() {
     if (storage.isClosed()) {
       LOG.error("Attempting to use a closed Storage instance.");
-      throw new IllegalStateException("Storage has been closed");
+      throw new StorageException("Storage has been closed");
     }
   }
 }

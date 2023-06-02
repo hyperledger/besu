@@ -116,7 +116,7 @@ public interface KeyValueStorage extends Closeable {
   KeyValueStorageTransaction startTransaction() throws StorageException;
 
   /**
-   * Return Whether the underlying storage is closed or not.
+   * Return Whether the underlying storage is closed.
    *
    * @return boolean indicating whether the storage is closed.
    */
