@@ -56,8 +56,10 @@ import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
@@ -561,6 +563,74 @@ public abstract class AbstractBlockTransactionSelectorTest {
   }
 
   @Test
+  public void transactionSelectionPluginShouldWork() {
+    final ProcessableBlockHeader blockHeader = createBlock(300);
+
+    final TransactionTestFixture txTestFixture = new TransactionTestFixture();
+    final Transaction selected =
+        txTestFixture
+            .nonce(1)
+            .gasLimit(1)
+            .createTransaction(SignatureAlgorithmFactory.getInstance().generateKeyPair());
+    ensureTransactionIsValid(selected, 2000, 10000);
+
+    final Transaction notSelectedTransient =
+        txTestFixture
+            .nonce(1)
+            .gasLimit(1)
+            .createTransaction(SignatureAlgorithmFactory.getInstance().generateKeyPair());
+    ensureTransactionIsValid(notSelectedTransient, 2000, 10000);
+
+    final Transaction notSelectedInvalid =
+        txTestFixture
+            .nonce(1)
+            .gasLimit(1)
+            .createTransaction(SignatureAlgorithmFactory.getInstance().generateKeyPair());
+    ensureTransactionIsValid(notSelectedInvalid, 2000, 10000);
+
+    final TransactionSelectorFactory transactionSelectorFactory =
+        (TransactionSelectorFactory)
+            () ->
+                (tx, s, logs, cg) -> {
+                  if (tx.equals(notSelectedTransient))
+                    return TransactionSelectionResult.invalidTransient("transient");
+                  if (tx.equals(notSelectedInvalid))
+                    return TransactionSelectionResult.invalid("invalid");
+                  return TransactionSelectionResult.SELECTED;
+                };
+
+    final Address miningBeneficiary = AddressHelpers.ofValue(1);
+    final BlockTransactionSelector selector =
+        createBlockSelectorWithTxSelPlugin(
+            transactionProcessor,
+            blockHeader,
+            Wei.ZERO,
+            miningBeneficiary,
+            Wei.ZERO,
+            MIN_OCCUPANCY_80_PERCENT,
+            transactionSelectorFactory);
+
+    pendingTransactions.addRemoteTransaction(selected, Optional.empty());
+    pendingTransactions.addRemoteTransaction(notSelectedTransient, Optional.empty());
+    pendingTransactions.addRemoteTransaction(notSelectedInvalid, Optional.empty());
+
+    final BlockTransactionSelector.TransactionSelectionResults transactionSelectionResults =
+        selector.buildTransactionListForBlock();
+
+    Assertions.assertThat(pendingTransactions.getTransactionByHash(notSelectedTransient.getHash()))
+        .isPresent();
+    Assertions.assertThat(pendingTransactions.getTransactionByHash(notSelectedInvalid.getHash()))
+        .isNotPresent();
+    //    Assertions.assertThat(pendingTransactions.getTransactionByHash(selected.getHash()))
+    //            .isNotPresent(); // TODO check with Fabio what should happen with selected txs
+    Assertions.assertThat(transactionSelectionResults.getTransactions()).contains(selected);
+    Assertions.assertThat(transactionSelectionResults.getTransactions())
+        .doesNotContain(notSelectedTransient);
+    Assertions.assertThat(transactionSelectionResults.getTransactions())
+        .doesNotContain(notSelectedInvalid);
+  }
+
+  @Test
   public void transactionWithIncorrectNonceRemainsInPoolAndNotSelected() {
     final ProcessableBlockHeader blockHeader = createBlock(5000);
 
@@ -613,6 +683,35 @@ public abstract class AbstractBlockTransactionSelectorTest {
             new LondonGasCalculator(),
             GasLimitCalculator.constant(),
             Optional.empty());
+
+    return selector;
+  }
+
+  protected BlockTransactionSelector createBlockSelectorWithTxSelPlugin(
+      final MainnetTransactionProcessor transactionProcessor,
+      final ProcessableBlockHeader blockHeader,
+      final Wei minGasPrice,
+      final Address miningBeneficiary,
+      final Wei dataGasPrice,
+      final double minBlockOccupancyRatio,
+      final TransactionSelectorFactory transactionSelectorFactory) {
+    final BlockTransactionSelector selector =
+        new BlockTransactionSelector(
+            transactionProcessor,
+            blockchain,
+            worldState,
+            pendingTransactions,
+            blockHeader,
+            this::createReceipt,
+            minGasPrice,
+            minBlockOccupancyRatio,
+            this::isCancelled,
+            miningBeneficiary,
+            dataGasPrice,
+            getFeeMarket(),
+            new LondonGasCalculator(),
+            GasLimitCalculator.constant(),
+            Optional.of(transactionSelectorFactory));
 
     return selector;
   }
