@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -147,7 +148,7 @@ public final class GenesisStateTest {
   }
 
   private void assertStorageValue(final Account contract, final String key, final String value) {
-    assertThat(contract.getStorageValue(UInt256.fromHexString(key)))
+    assertThat(contract.getStorageValue(new StorageSlotKey(UInt256.fromHexString(key))))
         .isEqualTo(UInt256.fromHexString(value));
   }
 }

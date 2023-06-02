@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -1868,7 +1869,8 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBlockHash()).thenReturn(Hash.ZERO);
     when(chainHead.getBlockHeader()).thenReturn(blockHeader);
-    when(blockchainQueries.storageAt(eq(address), eq(UInt256.ZERO), eq(Hash.ZERO)))
+    when(blockchainQueries.storageAt(
+            eq(address), eq(new StorageSlotKey(UInt256.ZERO)), eq(Hash.ZERO)))
         .thenReturn(Optional.of(UInt256.fromHexString(mockStorage)));
 
     final String id = "88";
@@ -1907,7 +1909,8 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBlockHash()).thenReturn(Hash.ZERO);
     when(chainHead.getBlockHeader()).thenReturn(blockHeader);
-    when(blockchainQueries.storageAt(eq(address), eq(UInt256.ONE), eq(Hash.ZERO)))
+    when(blockchainQueries.storageAt(
+            eq(address), eq(new StorageSlotKey(UInt256.ONE)), eq(Hash.ZERO)))
         .thenReturn(Optional.of(UInt256.fromHexString(mockStorage)));
 
     final String id = "88";
@@ -1943,7 +1946,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     final String mockStorage = "0x0000000000000000000000000000000000000000000000000000000000000006";
     final Hash blockHash =
         Hash.fromHexString("0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
-    when(blockchainQueries.storageAt(address, UInt256.ONE, blockHash))
+    when(blockchainQueries.storageAt(address, new StorageSlotKey(UInt256.ONE), blockHash))
         .thenReturn(Optional.of(UInt256.fromHexString(mockStorage)));
 
     final String id = "88";
@@ -1979,7 +1982,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
     final String mockStorage = "0x0000000000000000000000000000000000000000000000000000000000000002";
     final Hash blockHash =
         Hash.fromHexString("0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
-    when(blockchainQueries.storageAt(address, UInt256.ZERO, blockHash))
+    when(blockchainQueries.storageAt(address, new StorageSlotKey(UInt256.ZERO), blockHash))
         .thenReturn(Optional.of(UInt256.fromHexString(mockStorage)));
 
     final String id = "999";

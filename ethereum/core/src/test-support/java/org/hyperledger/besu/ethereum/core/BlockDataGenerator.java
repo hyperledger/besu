@@ -123,7 +123,7 @@ public class BlockDataGenerator {
       final Hash parent,
       final WorldStateArchive worldStateArchive,
       final List<Address> accountsToSetup,
-      final List<UInt256> storageKeys) {
+      final List<StorageSlotKey> storageKeys) {
     final List<Block> seq = new ArrayList<>(count);
 
     final MutableWorldState worldState = worldStateArchive.getMutable();
@@ -144,7 +144,7 @@ public class BlockDataGenerator {
               final MutableAccount a = stateUpdater.getAccount(hash).getMutable();
               a.incrementNonce();
               a.setBalance(Wei.of(positiveLong()));
-              storageKeys.forEach(key -> a.setStorageValue(new StorageSlotKey(key), UInt256.ONE));
+              storageKeys.forEach(key -> a.setStorageValue(key, UInt256.ONE));
             });
         stateUpdater.commit();
       }
@@ -225,7 +225,7 @@ public class BlockDataGenerator {
       final int count,
       final WorldStateArchive worldStateArchive,
       final List<Address> accountsToSetup,
-      final List<UInt256> storageKeys) {
+      final List<StorageSlotKey> storageKeys) {
     final long blockNumber = BlockHeader.GENESIS_BLOCK_NUMBER;
     final Hash parentHash = Hash.ZERO;
     return blockSequence(
@@ -523,8 +523,8 @@ public class BlockDataGenerator {
         transactionType(), random.nextInt(2), positiveLong(), logs, Optional.empty());
   }
 
-  public UInt256 storageKey() {
-    return uint256();
+  public StorageSlotKey storageKey() {
+    return new StorageSlotKey(uint256());
   }
 
   public List<TransactionReceipt> receipts(final Block block) {

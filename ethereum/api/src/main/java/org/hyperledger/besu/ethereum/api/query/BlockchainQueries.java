@@ -175,33 +175,30 @@ public class BlockchainQueries {
    * Determines the block header for the address associated with this storage index.
    *
    * @param address The address of the account that owns the storage being queried.
-   * @param storageIndex The storage index whose value is being retrieved.
+   * @param slotKey The storage slot key whose value is being retrieved.
    * @param blockNumber The blockNumber that is being queried.
    * @return The value at the storage index being queried.
    */
   public Optional<UInt256> storageAt(
-      final Address address, final UInt256 storageIndex, final long blockNumber) {
+      final Address address, final StorageSlotKey slotKey, final long blockNumber) {
     final Hash blockHash =
         getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
 
-    return storageAt(address, storageIndex, blockHash);
+    return storageAt(address, slotKey, blockHash);
   }
 
   /**
    * Determines the block header for the address associated with this storage index.
    *
    * @param address The address of the account that owns the storage being queried.
-   * @param storageIndex The storage index whose value is being retrieved.
+   * @param slotKey The storage slot key whose value is being retrieved.
    * @param blockHash The blockHash that is being queried.
    * @return The value at the storage index being queried.
    */
   public Optional<UInt256> storageAt(
-      final Address address, final UInt256 storageIndex, final Hash blockHash) {
+      final Address address, final StorageSlotKey slotKey, final Hash blockHash) {
     return fromAccount(
-        address,
-        blockHash,
-        account -> account.getStorageValue(new StorageSlotKey(storageIndex)),
-        UInt256.ZERO);
+        address, blockHash, account -> account.getStorageValue(slotKey), UInt256.ZERO);
   }
 
   /**

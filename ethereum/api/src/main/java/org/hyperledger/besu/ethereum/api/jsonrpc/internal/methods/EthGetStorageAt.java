@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
@@ -46,7 +47,7 @@ public class EthGetStorageAt extends AbstractBlockParameterOrBlockHashMethod {
     final UInt256 position = request.getRequiredParameter(1, UInt256Parameter.class).getValue();
     return blockchainQueries
         .get()
-        .storageAt(address, position, blockHash)
+        .storageAt(address, new StorageSlotKey(position), blockHash)
         .map(UInt256::toHexString)
         .orElse(null);
   }

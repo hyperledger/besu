@@ -23,6 +23,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -210,7 +211,7 @@ public class BlockchainQueriesTest {
   @Test
   public void getAccountStorageBlockNumber() {
     final List<Address> addresses = Arrays.asList(gen.address(), gen.address(), gen.address());
-    final List<UInt256> storageKeys =
+    final List<StorageSlotKey> storageKeys =
         Arrays.asList(gen.storageKey(), gen.storageKey(), gen.storageKey());
     final BlockchainWithData data = setupBlockchain(3, addresses, storageKeys);
     final BlockchainQueries queries = data.blockchainQueries;
@@ -551,7 +552,9 @@ public class BlockchainQueriesTest {
   }
 
   private BlockchainWithData setupBlockchain(
-      final int blocksToAdd, final List<Address> accountsToSetup, final List<UInt256> storageKeys) {
+      final int blocksToAdd,
+      final List<Address> accountsToSetup,
+      final List<StorageSlotKey> storageKeys) {
     checkArgument(blocksToAdd >= 1, "Must add at least one block to the queries");
 
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();

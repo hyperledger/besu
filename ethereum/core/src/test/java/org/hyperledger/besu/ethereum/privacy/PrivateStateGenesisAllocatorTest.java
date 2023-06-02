@@ -24,6 +24,7 @@ import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagemen
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Quantity;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -146,7 +147,7 @@ public class PrivateStateGenesisAllocatorTest {
   private void assertManagementContractApplied() {
     Account managementProxy = worldState.get(FLEXIBLE_PRIVACY_PROXY);
     assertThat(managementProxy.getCode()).isEqualTo(PROXY_RUNTIME_BYTECODE);
-    assertThat(managementProxy.getStorageValue(UInt256.ZERO))
+    assertThat(managementProxy.getStorageValue(new StorageSlotKey(UInt256.ZERO)))
         .isEqualTo(UInt256.fromBytes(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT));
 
     Account managementContract = worldState.get(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT);
