@@ -57,7 +57,8 @@ public class QbftProtocolScheduleTest {
         null,
         null,
         setupContextWithBftExtraDataEncoder(
-            QbftContext.class, validators, new QbftExtraDataCodec()));
+            QbftContext.class, validators, new QbftExtraDataCodec()),
+        Optional.empty());
   }
 
   @Test

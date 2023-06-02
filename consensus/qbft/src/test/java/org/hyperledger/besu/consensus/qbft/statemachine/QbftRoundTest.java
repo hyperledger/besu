@@ -117,7 +117,8 @@ public class QbftRoundTest {
             blockChain,
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(
-                QbftContext.class, emptyList(), new QbftExtraDataCodec()));
+                QbftContext.class, emptyList(), new QbftExtraDataCodec()),
+            Optional.empty());
 
     when(messageValidator.validateProposal(any())).thenReturn(true);
     when(messageValidator.validatePrepare(any())).thenReturn(true);

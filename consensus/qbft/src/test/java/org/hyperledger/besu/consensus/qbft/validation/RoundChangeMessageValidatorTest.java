@@ -81,7 +81,8 @@ public class RoundChangeMessageValidatorTest {
             blockChain,
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(
-                QbftContext.class, emptyList(), bftExtraDataEncoder));
+                QbftContext.class, emptyList(), bftExtraDataEncoder),
+            Optional.empty());
   }
 
   @Test
