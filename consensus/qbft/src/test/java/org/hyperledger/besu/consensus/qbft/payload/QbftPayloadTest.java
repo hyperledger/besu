@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class QbftPayloadTest {
 

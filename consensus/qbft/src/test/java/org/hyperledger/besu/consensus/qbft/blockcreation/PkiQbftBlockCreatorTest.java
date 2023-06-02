@@ -42,8 +42,8 @@ import org.hyperledger.besu.pki.cms.CmsCreator;
 import java.util.Collections;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PkiQbftBlockCreatorTest {
 
@@ -54,7 +54,7 @@ public class PkiQbftBlockCreatorTest {
   private PkiQbftBlockCreator pkiQbftBlockCreator;
   private BlockHeaderTestFixture blockHeaderBuilder;
 
-  @Before
+  @BeforeEach
   public void before() {
     blockCreator = mock(BlockCreator.class);
     cmsCreator = mock(CmsCreator.class);
