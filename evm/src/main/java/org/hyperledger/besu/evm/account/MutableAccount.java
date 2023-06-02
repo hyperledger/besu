@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.account;
 
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.util.Map;
@@ -91,10 +92,10 @@ public interface MutableAccount extends Account {
    *
    * <p>Note that setting the value of an entry to 0 is basically equivalent to deleting that entry.
    *
-   * @param key the key to set.
+   * @param storageSlotKey the key to set.
    * @param value the value to set {@code key} to.
    */
-  void setStorageValue(UInt256 key, UInt256 value);
+  void setStorageValue(StorageSlotKey storageSlotKey, UInt256 value);
 
   /** Clears out an account's storage. */
   void clearStorage();
@@ -104,5 +105,5 @@ public interface MutableAccount extends Account {
    *
    * @return a map of storage that has been modified.
    */
-  Map<UInt256, UInt256> getUpdatedStorage();
+  Map<StorageSlotKey, UInt256> getUpdatedStorage();
 }

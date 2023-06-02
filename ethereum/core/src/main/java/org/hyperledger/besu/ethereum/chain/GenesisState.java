@@ -20,6 +20,7 @@ import org.hyperledger.besu.config.GenesisAllocation;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -126,7 +127,8 @@ public final class GenesisState {
           account.setNonce(genesisAccount.nonce);
           account.setBalance(genesisAccount.balance);
           account.setCode(genesisAccount.code);
-          genesisAccount.storage.forEach(account::setStorageValue);
+          genesisAccount.storage.forEach(
+              (key, value) -> account.setStorageValue(new StorageSlotKey(key), value));
         });
     updater.commit();
     target.persist(rootHeader);

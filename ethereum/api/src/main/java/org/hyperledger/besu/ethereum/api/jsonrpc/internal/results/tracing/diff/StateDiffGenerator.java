@@ -17,6 +17,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TracingUtils;
@@ -59,7 +60,7 @@ public class StateDiffGenerator {
 
       // calculate storage diff
       final Map<String, DiffNode> storageDiff = new TreeMap<>();
-      for (final Map.Entry<UInt256, UInt256> entry :
+      for (final Map.Entry<StorageSlotKey, UInt256> entry :
           ((UpdateTrackingAccount<?>) updatedAccount)
               .getUpdatedStorage()
               .entrySet()) { // FIXME cast
@@ -67,13 +68,14 @@ public class StateDiffGenerator {
         if (rootAccount == null) {
           if (!UInt256.ZERO.equals(newValue)) {
             storageDiff.put(
-                entry.getKey().toHexString(), new DiffNode(null, newValue.toHexString()));
+                entry.getKey().getSlotKey().orElseThrow().toHexString(),
+                new DiffNode(null, newValue.toHexString()));
           }
         } else {
           final UInt256 originalValue = rootAccount.getStorageValue(entry.getKey());
           if (!originalValue.equals(newValue)) {
             storageDiff.put(
-                entry.getKey().toHexString(),
+                entry.getKey().getSlotKey().orElseThrow().toHexString(),
                 new DiffNode(originalValue.toHexString(), newValue.toHexString()));
           }
         }

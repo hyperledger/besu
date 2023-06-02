@@ -25,6 +25,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -143,7 +144,7 @@ public class BlockDataGenerator {
               final MutableAccount a = stateUpdater.getAccount(hash).getMutable();
               a.incrementNonce();
               a.setBalance(Wei.of(positiveLong()));
-              storageKeys.forEach(key -> a.setStorageValue(key, UInt256.ONE));
+              storageKeys.forEach(key -> a.setStorageValue(new StorageSlotKey(key), UInt256.ONE));
             });
         stateUpdater.commit();
       }
@@ -188,7 +189,7 @@ public class BlockDataGenerator {
           // Add some storage for contract accounts
           final int storageValues = random.nextInt(20) + 10;
           for (int j = 0; j < storageValues; j++) {
-            account.setStorageValue(uint256(), uint256());
+            account.setStorageValue(new StorageSlotKey(uint256()), uint256());
           }
         }
       }

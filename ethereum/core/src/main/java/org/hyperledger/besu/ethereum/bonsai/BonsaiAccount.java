@@ -19,6 +19,7 @@ package org.hyperledger.besu.ethereum.bonsai;
 import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldView;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -53,7 +54,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
   private Hash storageRoot;
   private Bytes code;
 
-  private final Map<UInt256, UInt256> updatedStorage = new HashMap<>();
+  private final Map<StorageSlotKey, UInt256> updatedStorage = new HashMap<>();
 
   public BonsaiAccount(
       final BonsaiWorldView context,
@@ -208,13 +209,13 @@ public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
   }
 
   @Override
-  public UInt256 getStorageValue(final UInt256 key) {
-    return context.getStorageValue(address, key);
+  public UInt256 getStorageValue(final StorageSlotKey storageSlotKey) {
+    return context.getStorageValue(address, storageSlotKey);
   }
 
   @Override
-  public UInt256 getOriginalStorageValue(final UInt256 key) {
-    return context.getPriorStorageValue(address, key);
+  public UInt256 getOriginalStorageValue(final StorageSlotKey storageSlotKey) {
+    return context.getPriorStorageValue(address, storageSlotKey);
   }
 
   @Override
@@ -242,11 +243,11 @@ public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
   }
 
   @Override
-  public void setStorageValue(final UInt256 key, final UInt256 value) {
+  public void setStorageValue(final StorageSlotKey storageSlotKey, final UInt256 value) {
     if (!mutable) {
       throw new UnsupportedOperationException("Account is immutable");
     }
-    updatedStorage.put(key, value);
+    updatedStorage.put(storageSlotKey, value);
   }
 
   @Override
@@ -255,7 +256,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
   }
 
   @Override
-  public Map<UInt256, UInt256> getUpdatedStorage() {
+  public Map<StorageSlotKey, UInt256> getUpdatedStorage() {
     return updatedStorage;
   }
 

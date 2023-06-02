@@ -16,6 +16,7 @@
 package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
@@ -86,7 +87,7 @@ public class ReferenceTestWorldState extends DefaultMutableWorldState {
     account.setBalance(toCopy.getBalance());
     account.setCode(toCopy.getCode());
     for (final Map.Entry<UInt256, UInt256> entry : toCopy.getStorage().entrySet()) {
-      account.setStorageValue(entry.getKey(), entry.getValue());
+      account.setStorageValue(new StorageSlotKey(entry.getKey()), entry.getValue());
     }
   }
 

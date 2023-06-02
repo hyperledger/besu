@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 
 import java.util.Arrays;
@@ -59,11 +60,13 @@ public class StructLog {
     reason = traceFrame.getRevertReason().map(Bytes::toShortHexString).orElse(null);
   }
 
-  private static Map<String, String> formatStorage(final Map<UInt256, UInt256> storage) {
+  private static Map<String, String> formatStorage(final Map<StorageSlotKey, UInt256> storage) {
     final Map<String, String> formattedStorage = new TreeMap<>();
     storage.forEach(
         (key, value) ->
-            formattedStorage.put(key.toUnprefixedHexString(), value.toUnprefixedHexString()));
+            formattedStorage.put(
+                key.getSlotKey().orElseThrow().toUnprefixedHexString(),
+                value.toUnprefixedHexString()));
     return formattedStorage;
   }
 

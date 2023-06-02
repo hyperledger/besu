@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomC
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
@@ -197,7 +198,10 @@ public class BlockchainQueries {
   public Optional<UInt256> storageAt(
       final Address address, final UInt256 storageIndex, final Hash blockHash) {
     return fromAccount(
-        address, blockHash, account -> account.getStorageValue(storageIndex), UInt256.ZERO);
+        address,
+        blockHash,
+        account -> account.getStorageValue(new StorageSlotKey(storageIndex)),
+        UInt256.ZERO);
   }
 
   /**

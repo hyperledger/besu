@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.account;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.util.NavigableMap;
@@ -96,21 +97,21 @@ public interface AccountState {
   /**
    * Retrieves a value in the account storage given its key.
    *
-   * @param key the key to retrieve in the account storage.
+   * @param storageSlotKey the key to retrieve in the account storage.
    * @return the value associated to {@code key} in the account storage. Note that this is never
    *     {@code null}, but 0 acts as a default value.
    */
-  UInt256 getStorageValue(UInt256 key);
+  UInt256 getStorageValue(StorageSlotKey storageSlotKey);
 
   /**
    * Retrieves the original value from before the current transaction in the account storage given
    * its key.
    *
-   * @param key the key to retrieve in the account storage.
+   * @param storageSlotKey the key to retrieve in the account storage.
    * @return the original value associated to {@code key} in the account storage. Note that this is
    *     never {@code null}, but 0 acts as a default value.
    */
-  UInt256 getOriginalStorageValue(UInt256 key);
+  UInt256 getOriginalStorageValue(StorageSlotKey storageSlotKey);
 
   /**
    * Whether the account is "empty".

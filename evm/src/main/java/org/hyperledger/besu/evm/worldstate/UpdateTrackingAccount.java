@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.Account;
@@ -61,7 +62,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
 
   // Only contains updated storage entries, but may contains entry with a value of 0 to signify
   // deletion.
-  private final NavigableMap<UInt256, UInt256> updatedStorage;
+  private final NavigableMap<StorageSlotKey, UInt256> updatedStorage;
   private boolean storageWasCleared = false;
   private boolean transactionBoundary = false;
 
@@ -144,7 +145,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
    *     with a value of 0 to signify deletion.
    */
   @Override
-  public Map<UInt256, UInt256> getUpdatedStorage() {
+  public Map<StorageSlotKey, UInt256> getUpdatedStorage() {
     return updatedStorage;
   }
 
@@ -217,8 +218,8 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   }
 
   @Override
-  public UInt256 getStorageValue(final UInt256 key) {
-    final UInt256 value = updatedStorage.get(key);
+  public UInt256 getStorageValue(final StorageSlotKey storageSlotKey) {
+    final UInt256 value = updatedStorage.get(storageSlotKey);
     if (value != null) {
       return value;
     }
@@ -228,17 +229,17 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
 
     // We haven't updated the key-value yet, so either it's a new account and it doesn't have the
     // key, or we should query the underlying storage for its existing value (which might be 0).
-    return account == null ? UInt256.ZERO : account.getStorageValue(key);
+    return account == null ? UInt256.ZERO : account.getStorageValue(storageSlotKey);
   }
 
   @Override
-  public UInt256 getOriginalStorageValue(final UInt256 key) {
+  public UInt256 getOriginalStorageValue(final StorageSlotKey storageSlotKey) {
     if (transactionBoundary) {
-      return getStorageValue(key);
+      return getStorageValue(storageSlotKey);
     } else if (storageWasCleared || account == null) {
       return UInt256.ZERO;
     } else {
-      return account.getOriginalStorageValue(key);
+      return account.getOriginalStorageValue(storageSlotKey);
     }
   }
 
@@ -253,7 +254,10 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
       entries = new TreeMap<>();
     }
     updatedStorage.entrySet().stream()
-        .map(entry -> AccountStorageEntry.forKeyAndValue(entry.getKey(), entry.getValue()))
+        .map(
+            entry ->
+                AccountStorageEntry.forKeyAndValue(
+                    entry.getKey().getSlotKey().orElseThrow(), entry.getValue()))
         .filter(entry -> entry.getKeyHash().compareTo(startKeyHash) >= 0)
         .forEach(entry -> entries.put(entry.getKeyHash(), entry));
 
@@ -264,7 +268,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   }
 
   @Override
-  public void setStorageValue(final UInt256 key, final UInt256 value) {
+  public void setStorageValue(final StorageSlotKey key, final UInt256 value) {
     updatedStorage.put(key, value);
   }
 

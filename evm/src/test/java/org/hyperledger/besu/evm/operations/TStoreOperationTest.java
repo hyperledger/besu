@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.evm.frame.ExceptionalHaltReason.INSUFFICIENT_GAS;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.frame.BlockValues;
@@ -574,7 +575,8 @@ class TStoreOperationTest {
     // Pre-deploy the contract if it's specified
     WorldUpdater worldUpdater =
         TestCodeExecutor.createInitialWorldState(
-            account -> account.setStorageValue(UInt256.ZERO, UInt256.valueOf(0)));
+            account ->
+                account.setStorageValue(new StorageSlotKey(UInt256.ZERO), UInt256.valueOf(0)));
     if (contractByteCodeBuilder != null) {
       WorldUpdater updater = worldUpdater.updater();
       TestCodeExecutor.deployContract(updater, contractAddress, contractByteCodeBuilder.toString());

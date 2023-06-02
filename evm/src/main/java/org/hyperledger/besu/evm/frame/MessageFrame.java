@@ -19,6 +19,7 @@ import static java.util.Collections.emptySet;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.code.CodeSection;
@@ -341,7 +342,8 @@ public class MessageFrame {
                             .get(address)
                             .forEach(
                                 storageKeyBytes ->
-                                    account.getStorageValue(UInt256.fromBytes(storageKeyBytes)))));
+                                    account.getStorageValue(
+                                        new StorageSlotKey(UInt256.fromBytes(storageKeyBytes))))));
   }
 
   /**

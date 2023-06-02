@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
@@ -67,7 +68,9 @@ public class ConstantinopleSStoreOperationGasCostTest {
         codeExecutor.executeCode(
             code,
             gasLimit,
-            account -> account.setStorageValue(UInt256.ZERO, UInt256.valueOf(originalValue)));
+            account ->
+                account.setStorageValue(
+                    new StorageSlotKey(UInt256.ZERO), UInt256.valueOf(originalValue)));
     assertThat(frame.getState()).isEqualTo(State.COMPLETED_SUCCESS);
     System.out.println(gasLimit - frame.getRemainingGas());
     assertThat(frame.getRemainingGas()).isEqualTo(gasLimit - expectedGasUsed);

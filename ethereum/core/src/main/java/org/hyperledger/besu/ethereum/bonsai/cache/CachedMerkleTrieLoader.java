@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
-import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -34,7 +34,6 @@ import java.util.function.Function;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import io.prometheus.client.guava.cache.CacheMetricsCollector;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -43,18 +42,45 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
   private static final int ACCOUNT_CACHE_SIZE = 100_000;
   private static final int STORAGE_CACHE_SIZE = 200_000;
   private final Cache<Bytes, Bytes> accountNodes =
-      CacheBuilder.newBuilder().recordStats().maximumSize(ACCOUNT_CACHE_SIZE).build();
+      CacheBuilder.newBuilder().maximumSize(ACCOUNT_CACHE_SIZE).build();
   private final Cache<Bytes, Bytes> storageNodes =
-      CacheBuilder.newBuilder().recordStats().maximumSize(STORAGE_CACHE_SIZE).build();
+      CacheBuilder.newBuilder().maximumSize(STORAGE_CACHE_SIZE).build();
+
+  private final Counter accountCacheTotal,
+      accountCacheHits,
+      accountCacheMisses,
+      storageCacheTotal,
+      storageCacheHits,
+      storageCacheMisses;
 
   public CachedMerkleTrieLoader(final ObservableMetricsSystem metricsSystem) {
+    accountCacheHits =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN, "accountCacheHits", "accountCacheHits");
+    accountCacheMisses =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN, "accountCacheMisses", "accountCacheMisses");
 
-    CacheMetricsCollector cacheMetrics = new CacheMetricsCollector();
+    accountCacheTotal =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN, "accountCacheTotal", "accountCacheTotal");
+
+    storageCacheHits =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN, "storageCacheHits", "storageCacheHits");
+    storageCacheMisses =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN, "storageCacheMisses", "storageCacheMisses");
+    storageCacheTotal =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN, "storageCacheTotal", "storageCacheTotal");
+
+    /*CacheMetricsCollector cacheMetrics = new CacheMetricsCollector();
     cacheMetrics.addCache("accountsNodes", accountNodes);
     cacheMetrics.addCache("storageNodes", storageNodes);
     if (metricsSystem instanceof PrometheusMetricsSystem)
       ((PrometheusMetricsSystem) metricsSystem)
-          .addCollector(BesuMetricCategory.BLOCKCHAIN, () -> cacheMetrics);
+          .addCollector(BesuMetricCategory.BLOCKCHAIN, () -> cacheMetrics);*/
   }
 
   public void preLoadAccount(
@@ -157,6 +183,45 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
               () ->
                   worldStateKeyValueStorage.getAccountStorageTrieNode(
                       accountHash, location, nodeHash));
+    }
+  }
+
+  public Optional<Bytes> getAccountStateTrieNodeWithMetrics(
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
+      final Bytes location,
+      final Bytes32 nodeHash) {
+    if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
+      return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
+    } else {
+      accountCacheTotal.inc();
+      Bytes ifPresent = accountNodes.getIfPresent(nodeHash);
+      if (ifPresent == null) {
+        accountCacheMisses.inc();
+        return worldStateKeyValueStorage.getAccountStateTrieNode(location, nodeHash);
+      } else {
+        accountCacheHits.inc();
+        return Optional.of(ifPresent);
+      }
+    }
+  }
+
+  public Optional<Bytes> getAccountStorageTrieNodeMetrics(
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
+      final Hash accountHash,
+      final Bytes location,
+      final Bytes32 nodeHash) {
+    if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
+      return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
+    } else {
+      storageCacheTotal.inc();
+      Bytes ifPresent = storageNodes.getIfPresent(nodeHash);
+      if (ifPresent == null) {
+        storageCacheMisses.inc();
+        return worldStateKeyValueStorage.getAccountStorageTrieNode(accountHash, location, nodeHash);
+      } else {
+        storageCacheHits.inc();
+        return Optional.of(ifPresent);
+      }
     }
   }
 }

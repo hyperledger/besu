@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_FLEXI
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY_PROXY;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagement;
@@ -83,7 +84,10 @@ public class PrivateStateGenesisAllocator {
                 account.setBalance(Wei.fromQuantity(genesisAccount.getBalance()));
                 account.setCode(genesisAccount.getCode());
 
-                genesisAccount.getStorage().forEach(account::setStorageValue);
+                genesisAccount
+                    .getStorage()
+                    .forEach(
+                        (key, value) -> account.setStorageValue(new StorageSlotKey(key), value));
               });
     }
 
@@ -103,7 +107,8 @@ public class PrivateStateGenesisAllocator {
       procyContract.setCode(FlexibleGroupManagement.PROXY_RUNTIME_BYTECODE);
       // manually set the management contract address so the proxy can trust it
       procyContract.setStorageValue(
-          UInt256.ZERO, UInt256.fromBytes(Bytes32.leftPad(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT)));
+          new StorageSlotKey(UInt256.ZERO),
+          UInt256.fromBytes(Bytes32.leftPad(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT)));
     }
 
     privateWorldStateUpdater.commit();

@@ -170,7 +170,7 @@ public class BonsaiWorldState
             (location, hash) ->
                 archive
                     .getCachedMerkleTrieLoader()
-                    .getAccountStateTrieNode(worldStateStorage, location, hash),
+                    .getAccountStateTrieNodeWithMetrics(worldStateStorage, location, hash),
             worldStateRootHash);
 
     // for manicured tries and composting, collect branches here (not implemented)
@@ -198,18 +198,20 @@ public class BonsaiWorldState
       final BonsaiValue<BonsaiAccount> bonsaiValue = accountUpdate.getValue();
       final BonsaiAccount updatedAccount = bonsaiValue.getUpdated();
       try {
-        if (updatedAccount == null) {
-          final Hash addressHash = Hash.hash(accountKey);
-          accountTrie.remove(addressHash);
-          maybeStateUpdater.ifPresent(
-              bonsaiUpdater -> bonsaiUpdater.removeAccountInfoState(addressHash));
-        } else {
-          final Hash addressHash = updatedAccount.getAddressHash();
-          final Bytes accountValue = updatedAccount.serializeAccount();
-          maybeStateUpdater.ifPresent(
-              bonsaiUpdater ->
-                  bonsaiUpdater.putAccountInfoState(Hash.hash(accountKey), accountValue));
-          accountTrie.put(addressHash, accountValue);
+        if (!bonsaiValue.isUnchanged()) {
+          if (updatedAccount == null) {
+            final Hash addressHash = Hash.hash(accountKey);
+            accountTrie.remove(addressHash);
+            maybeStateUpdater.ifPresent(
+                bonsaiUpdater -> bonsaiUpdater.removeAccountInfoState(addressHash));
+          } else {
+            final Hash addressHash = updatedAccount.getAddressHash();
+            final Bytes accountValue = updatedAccount.serializeAccount();
+            maybeStateUpdater.ifPresent(
+                bonsaiUpdater ->
+                    bonsaiUpdater.putAccountInfoState(Hash.hash(accountKey), accountValue));
+            accountTrie.put(addressHash, accountValue);
+          }
         }
       } catch (MerkleTrieException e) {
         // need to throw to trigger the heal
@@ -228,10 +230,12 @@ public class BonsaiWorldState
               worldStateUpdater.getCodeToUpdate().entrySet()) {
             final Bytes updatedCode = codeUpdate.getValue().getUpdated();
             final Hash accountHash = Hash.hash(codeUpdate.getKey());
-            if (updatedCode == null || updatedCode.size() == 0) {
-              bonsaiUpdater.removeCode(accountHash);
-            } else {
-              bonsaiUpdater.putCode(accountHash, null, updatedCode);
+            if (!codeUpdate.getValue().isUnchanged()) {
+              if (updatedCode == null || updatedCode.size() == 0) {
+                bonsaiUpdater.removeCode(accountHash);
+              } else {
+                bonsaiUpdater.putCode(accountHash, null, updatedCode);
+              }
             }
           }
         });
@@ -254,7 +258,7 @@ public class BonsaiWorldState
               (location, key) ->
                   archive
                       .getCachedMerkleTrieLoader()
-                      .getAccountStorageTrieNode(
+                      .getAccountStorageTrieNodeMetrics(
                           worldStateStorage, updatedAddressHash, location, key),
               storageRoot);
 
@@ -264,17 +268,19 @@ public class BonsaiWorldState
         final Hash slotHash = storageUpdate.getKey().getSlotHash();
         final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
         try {
-          if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
-            maybeStateUpdater.ifPresent(
-                bonsaiUpdater ->
-                    bonsaiUpdater.removeStorageValueBySlotHash(updatedAddressHash, slotHash));
-            storageTrie.remove(slotHash);
-          } else {
-            maybeStateUpdater.ifPresent(
-                bonsaiUpdater ->
-                    bonsaiUpdater.putStorageValueBySlotHash(
-                        updatedAddressHash, slotHash, updatedStorage));
-            storageTrie.put(slotHash, BonsaiWorldView.encodeTrieValue(updatedStorage));
+          if (!storageUpdate.getValue().isUnchanged()) {
+            if (updatedStorage == null || updatedStorage.equals(UInt256.ZERO)) {
+              maybeStateUpdater.ifPresent(
+                  bonsaiUpdater ->
+                      bonsaiUpdater.removeStorageValueBySlotHash(updatedAddressHash, slotHash));
+              storageTrie.remove(slotHash);
+            } else {
+              maybeStateUpdater.ifPresent(
+                  bonsaiUpdater ->
+                      bonsaiUpdater.putStorageValueBySlotHash(
+                          updatedAddressHash, slotHash, updatedStorage));
+              storageTrie.put(slotHash, BonsaiWorldView.encodeTrieValue(updatedStorage));
+            }
           }
         } catch (MerkleTrieException e) {
           // need to throw to trigger the heal
@@ -502,9 +508,8 @@ public class BonsaiWorldState
   }
 
   @Override
-  public UInt256 getStorageValue(final Address address, final UInt256 storageKey) {
-    return getStorageValueByStorageSlotKey(address, new StorageSlotKey(storageKey))
-        .orElse(UInt256.ZERO);
+  public UInt256 getStorageValue(final Address address, final StorageSlotKey storageKey) {
+    return getStorageValueByStorageSlotKey(address, storageKey).orElse(UInt256.ZERO);
   }
 
   @Override
@@ -525,7 +530,7 @@ public class BonsaiWorldState
   }
 
   @Override
-  public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
+  public UInt256 getPriorStorageValue(final Address address, final StorageSlotKey storageKey) {
     return getStorageValue(address, storageKey);
   }
 

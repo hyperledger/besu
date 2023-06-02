@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.entry;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -269,7 +270,7 @@ public class TraceTransactionIntegrationTest {
   private void assertStorageContainsExactly(
       final TraceFrame frame, final Map.Entry<String, String>... memoryEntriesAsHex) {
     assertThat(frame.getMemory()).isPresent();
-    final Map.Entry<UInt256, UInt256>[] memoryEntries =
+    final Map.Entry<StorageSlotKey, UInt256>[] memoryEntries =
         Stream.of(memoryEntriesAsHex)
             .map(
                 entry ->

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.debug;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -46,7 +47,7 @@ public class TraceFrame {
   private final Bytes outputData;
   private final Optional<Bytes32[]> stack;
   private final Optional<Bytes[]> memory;
-  private final Optional<Map<UInt256, UInt256>> storage;
+  private final Optional<Map<StorageSlotKey, UInt256>> storage;
 
   private final WorldUpdater worldUpdater;
   private final Optional<Bytes> revertReason;
@@ -75,7 +76,7 @@ public class TraceFrame {
       final Bytes outputData,
       final Optional<Bytes32[]> stack,
       final Optional<Bytes[]> memory,
-      final Optional<Map<UInt256, UInt256>> storage,
+      final Optional<Map<StorageSlotKey, UInt256>> storage,
       final WorldUpdater worldUpdater,
       final Optional<Bytes> revertReason,
       final Optional<Map<Address, Wei>> maybeRefunds,
@@ -167,7 +168,7 @@ public class TraceFrame {
     return memory;
   }
 
-  public Optional<Map<UInt256, UInt256>> getStorage() {
+  public Optional<Map<StorageSlotKey, UInt256>> getStorage() {
     return storage;
   }
 

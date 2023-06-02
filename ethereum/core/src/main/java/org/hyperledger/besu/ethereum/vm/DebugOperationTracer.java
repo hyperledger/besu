@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.vm;
 import static org.apache.tuweni.bytes.Bytes32.leftPad;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
@@ -77,7 +78,7 @@ public class DebugOperationTracer implements OperationTracer {
     if (lastFrame != null) {
       lastFrame.setGasRemainingPostExecution(gasRemaining);
     }
-    final Optional<Map<UInt256, UInt256>> storage = captureStorage(frame);
+    final Optional<Map<StorageSlotKey, UInt256>> storage = captureStorage(frame);
     final Optional<Map<Address, Wei>> maybeRefunds =
         frame.getRefunds().isEmpty() ? Optional.empty() : Optional.of(frame.getRefunds());
     lastFrame =
@@ -191,12 +192,12 @@ public class DebugOperationTracer implements OperationTracer {
         });
   }
 
-  private Optional<Map<UInt256, UInt256>> captureStorage(final MessageFrame frame) {
+  private Optional<Map<StorageSlotKey, UInt256>> captureStorage(final MessageFrame frame) {
     if (!options.isStorageEnabled()) {
       return Optional.empty();
     }
     try {
-      final Map<UInt256, UInt256> storageContents =
+      final Map<StorageSlotKey, UInt256> storageContents =
           new TreeMap<>(
               frame
                   .getWorldUpdater()
