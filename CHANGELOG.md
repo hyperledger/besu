@@ -11,6 +11,7 @@
 - Tidy DEBUG logs by moving engine API full logging to TRACE [#5529](https://github.com/hyperledger/besu/pull/5529)
 
 ### Bug Fixes
+- check to ensure storage and transactions are not closed prior to reading/writing [#5527](https://github.com/hyperledger/besu/pull/5527) 
 
 ### Download Links
 
