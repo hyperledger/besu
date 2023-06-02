@@ -21,6 +21,7 @@ import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -193,7 +194,7 @@ public class LogRollingTests {
     final MutableAccount mutableAccount =
         updater.createAccount(addressOne, 1, Wei.of(1L)).getMutable();
     mutableAccount.setCode(Bytes.of(0, 1, 2));
-    mutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
+    mutableAccount.setStorageValue(new StorageSlotKey(UInt256.ONE), UInt256.ONE);
     updater.commit();
     worldState.persist(headerOne);
 
@@ -248,14 +249,14 @@ public class LogRollingTests {
     final MutableAccount mutableAccount =
         updater.createAccount(addressOne, 1, Wei.of(1L)).getMutable();
     mutableAccount.setCode(Bytes.of(0, 1, 2));
-    mutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
+    mutableAccount.setStorageValue(new StorageSlotKey(UInt256.ONE), UInt256.ONE);
     updater.commit();
 
     worldState.persist(headerOne);
 
     final WorldUpdater updater2 = worldState.updater();
     final MutableAccount mutableAccount2 = updater2.getAccount(addressOne).getMutable();
-    mutableAccount2.setStorageValue(UInt256.ONE, UInt256.valueOf(2));
+    mutableAccount2.setStorageValue(new StorageSlotKey(UInt256.ONE), UInt256.valueOf(2));
     updater2.commit();
 
     worldState.persist(headerTwo);
@@ -312,14 +313,14 @@ public class LogRollingTests {
     final MutableAccount mutableAccount =
         updater.createAccount(addressOne, 1, Wei.of(1L)).getMutable();
     mutableAccount.setCode(Bytes.of(0, 1, 2));
-    mutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
+    mutableAccount.setStorageValue(new StorageSlotKey(UInt256.ONE), UInt256.ONE);
     updater.commit();
 
     worldState.persist(headerOne);
 
     final WorldUpdater updater2 = worldState.updater();
     final MutableAccount mutableAccount2 = updater2.getAccount(addressOne).getMutable();
-    mutableAccount2.setStorageValue(UInt256.ONE, UInt256.valueOf(2));
+    mutableAccount2.setStorageValue(new StorageSlotKey(UInt256.ONE), UInt256.valueOf(2));
     updater2.commit();
 
     worldState.persist(headerTwo);
@@ -346,7 +347,7 @@ public class LogRollingTests {
     final MutableAccount secondMutableAccount =
         secondUpdater.createAccount(addressOne, 1, Wei.of(1L)).getMutable();
     secondMutableAccount.setCode(Bytes.of(0, 1, 2));
-    secondMutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
+    secondMutableAccount.setStorageValue(new StorageSlotKey(UInt256.ONE), UInt256.ONE);
     secondUpdater.commit();
 
     secondWorldState.persist(null);
