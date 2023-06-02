@@ -10,6 +10,7 @@
 - Unite the tx-pool CLI options under the same Tx Pool Options group in UX. [#5466](https://github.com/hyperledger/besu/issues/5466)
 
 ### Bug Fixes
+- check to ensure storage and transactions are not closed prior to reading/writing [#5527](https://github.com/hyperledger/besu/pull/5527) 
 
 ### Download Links
 
