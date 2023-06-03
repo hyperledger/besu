@@ -30,7 +30,7 @@ import java.util.function.BiFunction;
  * before the worldstate is closed, ensuring that we can generate our objects without any issues.
  * Then, the simulator will properly close the copy of the worldstate.
  */
-public interface PreWorldStateCloseGuard<U>
+public interface PreCloseStateHandler<U>
     extends BiFunction<
         MutableWorldState, Optional<TransactionSimulatorResult>, Optional<? extends U>> {
 

@@ -121,7 +121,7 @@ public class TransactionSimulator {
       final CallParameter callParams,
       final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,
-      final PreWorldStateCloseGuard<U> preWorldStateCloseGuard,
+      final PreCloseStateHandler<U> preWorldStateCloseGuard,
       final BlockHeader header) {
     if (header == null) {
       return Optional.empty();
