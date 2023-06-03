@@ -110,7 +110,7 @@ public class BaseTransactionPoolTest {
             .nonce(nonce)
             .type(type);
     if (payloadSize > 0) {
-      var payloadBytes = Bytes.repeat((byte) 1, payloadSize);
+      var payloadBytes = Bytes.fromHexString("01".repeat(payloadSize));
       tx.payload(payloadBytes);
     }
     if (type.supports1559FeeMarket()) {
