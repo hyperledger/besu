@@ -174,7 +174,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     final Block block = blockchainQueriesSupplier.get().getBlockchain().getChainHeadBlock();
 
     return getTraceCallResult(
-        protocolSchedule, traceTypes, maybeSimulatorResult, transactionTrace, block);
+        protocolSchedule, traceTypes, maybeSimulatorResult.get(), transactionTrace, block);
   }
 
   private static class TransactionInvalidException extends RuntimeException {
