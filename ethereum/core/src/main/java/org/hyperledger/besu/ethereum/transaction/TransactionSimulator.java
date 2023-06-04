@@ -89,26 +89,12 @@ public class TransactionSimulator {
       final OperationTracer operationTracer,
       final long blockNumber) {
     final BlockHeader header = blockchain.getBlockHeader(blockNumber).orElse(null);
-    return process(callParams, transactionValidationParams, operationTracer, header);
-  }
-
-  public Optional<TransactionSimulatorResult> process(
-      final CallParameter callParams, final Hash blockHeaderHash) {
-    final BlockHeader header = blockchain.getBlockHeader(blockHeaderHash).orElse(null);
     return process(
         callParams,
-        TransactionValidationParams.transactionSimulator(),
-        OperationTracer.NO_TRACING,
+        transactionValidationParams,
+        operationTracer,
+        (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
         header);
-  }
-
-  public Optional<TransactionSimulatorResult> process(
-      final CallParameter callParams, final long blockNumber) {
-    return process(
-        callParams,
-        TransactionValidationParams.transactionSimulator(),
-        OperationTracer.NO_TRACING,
-        blockNumber);
   }
 
   public Optional<TransactionSimulatorResult> processAtHead(final CallParameter callParams) {
@@ -116,13 +102,26 @@ public class TransactionSimulator {
         callParams,
         TransactionValidationParams.transactionSimulator(),
         OperationTracer.NO_TRACING,
+        (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
         blockchain.getChainHeadHeader());
   }
 
-  public Optional<TransactionSimulatorResult> process(
+  /**
+   * Processes a transaction simulation with the provided parameters and executes pre-worldstate
+   * close actions.
+   *
+   * @param callParams The call parameters for the transaction.
+   * @param transactionValidationParams The validation parameters for the transaction.
+   * @param operationTracer The tracer for capturing operations during processing.
+   * @param preWorldStateCloseGuard The pre-worldstate close guard for executing pre-close actions.
+   * @param header The block header.
+   * @return An Optional containing the result of the processing.
+   */
+  public <U> Optional<U> process(
       final CallParameter callParams,
       final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,
+      final PreCloseStateHandler<U> preWorldStateCloseGuard,
       final BlockHeader header) {
     if (header == null) {
       return Optional.empty();
@@ -138,12 +137,34 @@ public class TransactionSimulator {
         updater = updater.parentUpdater().isPresent() ? updater : updater.updater();
       }
 
-      return processWithWorldUpdater(
-          callParams, transactionValidationParams, operationTracer, header, updater);
+      return preWorldStateCloseGuard.apply(
+          ws,
+          processWithWorldUpdater(
+              callParams, transactionValidationParams, operationTracer, header, updater));
 
     } catch (final Exception e) {
       return Optional.empty();
     }
+  }
+
+  public Optional<TransactionSimulatorResult> process(
+      final CallParameter callParams, final Hash blockHeaderHash) {
+    final BlockHeader header = blockchain.getBlockHeader(blockHeaderHash).orElse(null);
+    return process(
+        callParams,
+        TransactionValidationParams.transactionSimulator(),
+        OperationTracer.NO_TRACING,
+        (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
+        header);
+  }
+
+  public Optional<TransactionSimulatorResult> process(
+      final CallParameter callParams, final long blockNumber) {
+    return process(
+        callParams,
+        TransactionValidationParams.transactionSimulator(),
+        OperationTracer.NO_TRACING,
+        blockNumber);
   }
 
   private MutableWorldState getWorldState(final BlockHeader header) {
