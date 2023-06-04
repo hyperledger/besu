@@ -46,6 +46,7 @@ import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.cli.converter.FractionConverter;
 import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
@@ -167,12 +168,14 @@ import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.TraceService;
+import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
+import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
@@ -183,6 +186,7 @@ import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.TraceServiceImpl;
+import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.LogConfigurator;
@@ -234,6 +238,7 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.metrics.MetricsOptions;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import picocli.AutoComplete;
 import picocli.CommandLine;
@@ -359,6 +364,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   // P2P Discovery Option Group
   @CommandLine.ArgGroup(validate = false, heading = "@|bold P2P Discovery Options|@%n")
   P2PDiscoveryOptionGroup p2PDiscoveryOptionGroup = new P2PDiscoveryOptionGroup();
+
+  private final TransactionSelectionServiceImpl transactionSelectionServiceImpl;
 
   static class P2PDiscoveryOptionGroup {
 
@@ -1202,6 +1209,42 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   TxPoolOptionGroup txPoolOptionGroup = new TxPoolOptionGroup();
 
   static class TxPoolOptionGroup {
+    @CommandLine.Option(
+        names = {"--tx-pool-disable-locals"},
+        paramLabel = "<Boolean>",
+        description =
+            "Set to true if transactions sent via RPC should have the same checks and not be prioritized over remote ones (default: ${DEFAULT-VALUE})",
+        fallbackValue = "true",
+        arity = "0..1")
+    private Boolean disableLocalTxs = TransactionPoolConfiguration.DEFAULT_DISABLE_LOCAL_TXS;
+
+    @CommandLine.Option(
+        names = {"--tx-pool-enable-save-restore"},
+        paramLabel = "<Boolean>",
+        description =
+            "Set to true to enable saving the txpool content to file on shutdown and reloading it on startup (default: ${DEFAULT-VALUE})",
+        fallbackValue = "true",
+        arity = "0..1")
+    private Boolean saveRestoreEnabled = TransactionPoolConfiguration.DEFAULT_ENABLE_SAVE_RESTORE;
+
+    @CommandLine.Option(
+        names = {"--tx-pool-limit-by-account-percentage"},
+        paramLabel = "<DOUBLE>",
+        converter = FractionConverter.class,
+        description =
+            "Maximum portion of the transaction pool which a single account may occupy with future transactions (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private Float txPoolLimitByAccountPercentage =
+        TransactionPoolConfiguration.DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE;
+
+    @CommandLine.Option(
+        names = {"--tx-pool-save-file"},
+        paramLabel = "<STRING>",
+        description =
+            "If saving the txpool content is enabled, define a custom path for the save file (default: ${DEFAULT-VALUE} in the data-dir)",
+        arity = "1")
+    private File saveFile = TransactionPoolConfiguration.DEFAULT_SAVE_FILE;
+
     @Option(
         names = {"--tx-pool-max-size"},
         paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
@@ -1380,7 +1423,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new PermissioningServiceImpl(),
         new PrivacyPluginServiceImpl(),
         new PkiBlockCreationConfigurationProvider(),
-        new RpcEndpointServiceImpl());
+        new RpcEndpointServiceImpl(),
+        new TransactionSelectionServiceImpl());
   }
 
   /**
@@ -1400,6 +1444,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param privacyPluginService instance of PrivacyPluginServiceImpl
    * @param pkiBlockCreationConfigProvider instance of PkiBlockCreationConfigurationProvider
    * @param rpcEndpointServiceImpl instance of RpcEndpointServiceImpl
+   * @param transactionSelectionServiceImpl instance of TransactionSelectionServiceImpl
    */
   @VisibleForTesting
   protected BesuCommand(
@@ -1416,7 +1461,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final PermissioningServiceImpl permissioningService,
       final PrivacyPluginServiceImpl privacyPluginService,
       final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
-      final RpcEndpointServiceImpl rpcEndpointServiceImpl) {
+      final RpcEndpointServiceImpl rpcEndpointServiceImpl,
+      final TransactionSelectionServiceImpl transactionSelectionServiceImpl) {
     this.besuComponent = besuComponent;
     this.logger = besuComponent.getBesuCommandLogger();
     this.rlpBlockImporter = rlpBlockImporter;
@@ -1434,6 +1480,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
     this.pkiBlockCreationConfigProvider = pkiBlockCreationConfigProvider;
     this.rpcEndpointServiceImpl = rpcEndpointServiceImpl;
+    this.transactionSelectionServiceImpl = transactionSelectionServiceImpl;
   }
 
   /**
@@ -1614,6 +1661,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(PermissioningService.class, permissioningService);
     besuPluginContext.addService(PrivacyPluginService.class, privacyPluginService);
     besuPluginContext.addService(RpcEndpointService.class, rpcEndpointServiceImpl);
+    besuPluginContext.addService(
+        TransactionSelectionService.class, transactionSelectionServiceImpl);
 
     // register built-in plugins
     rocksDBPlugin = new RocksDBPlugin();
@@ -2241,12 +2290,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   public BesuControllerBuilder getControllerBuilder() {
     final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
+    final Optional<TransactionSelectorFactory> transactionSelectorFactory =
+        getTransactionSelectorFactory();
     return controllerBuilderFactory
         .fromEthNetworkConfig(
             updateNetworkConfig(network), genesisConfigOverrides, getDefaultSyncModeIfNotSet())
         .synchronizerConfiguration(buildSyncConfig())
         .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
         .networkConfiguration(unstableNetworkingOptions.toDomainObject())
+        .transactionSelectorFactory(transactionSelectorFactory)
         .dataDirectory(dataDir())
         .miningParameters(
             new MiningParameters.Builder()
@@ -2294,6 +2346,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .maxRemotelyInitiatedPeers(maxRemoteInitiatedPeers)
         .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
         .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject());
+  }
+
+  @NotNull
+  private Optional<TransactionSelectorFactory> getTransactionSelectorFactory() {
+    final Optional<TransactionSelectionService> txSelectionService =
+        besuPluginContext.getService(TransactionSelectionService.class);
+    return txSelectionService.isPresent() ? txSelectionService.get().get() : Optional.empty();
   }
 
   private GraphQLConfiguration graphQLConfiguration() {
@@ -2935,15 +2994,26 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private TransactionPoolConfiguration buildTransactionPoolConfiguration() {
-    final File saveFile = unstableTransactionPoolOptions.getSaveFile();
     return unstableTransactionPoolOptions
         .toDomainObject()
+        .enableSaveRestore(txPoolOptionGroup.saveRestoreEnabled)
+        .disableLocalTransactions(txPoolOptionGroup.disableLocalTxs)
+        .txPoolLimitByAccountPercentage(txPoolOptionGroup.txPoolLimitByAccountPercentage)
         .txPoolMaxSize(txPoolOptionGroup.txPoolMaxSize)
         .pendingTxRetentionPeriod(txPoolOptionGroup.pendingTxRetentionPeriod)
         .priceBump(Percentage.fromInt(txPoolOptionGroup.priceBump))
         .txFeeCap(txFeeCap)
-        .saveFile(dataPath.resolve(saveFile.getPath()).toFile())
+        .saveFile(dataPath.resolve(txPoolOptionGroup.saveFile.getPath()).toFile())
         .build();
+  }
+
+  /**
+   * Return the file where to save txpool content if the relative option is enabled.
+   *
+   * @return the save file
+   */
+  public File getSaveFile() {
+    return txPoolOptionGroup.saveFile;
   }
 
   private boolean isPruningEnabled() {

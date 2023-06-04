@@ -138,7 +138,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 protocolSchedule,
                 this.miningParameters.getMinTransactionGasPrice(),
                 address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
-                this.miningParameters.getMinBlockOccupancyRatio(),
                 parentHeader,
                 depositContractAddress);
 

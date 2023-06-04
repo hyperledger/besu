@@ -48,7 +48,10 @@ public class IbftBlockHeaderValidationRulesetFactoryTest {
 
   private ProtocolContext protocolContext(final Collection<Address> validators) {
     return new ProtocolContext(
-        null, null, setupContextWithBftExtraDataEncoder(validators, new IbftExtraDataCodec()));
+        null,
+        null,
+        setupContextWithBftExtraDataEncoder(validators, new IbftExtraDataCodec()),
+        Optional.empty());
   }
 
   @Test

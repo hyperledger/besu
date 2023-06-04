@@ -321,62 +321,67 @@ public class LayeredPendingTransactions implements PendingTransactions {
       final PendingTransactions.TransactionSelector selector) {
     final List<PendingTransaction> invalidTransactions = new ArrayList<>();
     final Set<Hash> alreadyChecked = new HashSet<>();
+    final Set<Address> skipSenders = new HashSet<>();
     final AtomicBoolean completed = new AtomicBoolean(false);
 
     prioritizedTransactions.stream()
         .takeWhile(unused -> !completed.get())
-        .peek(
-            highPrioPendingTx ->
-                LOG.atTrace()
-                    .setMessage("highPrioPendingTx {}, senderTxs {}")
-                    .addArgument(highPrioPendingTx::toTraceLog)
-                    .addArgument(
-                        () ->
-                            prioritizedTransactions.stream(highPrioPendingTx.getSender())
-                                .map(PendingTransaction::toTraceLog)
-                                .collect(Collectors.joining(", ")))
-                    .log())
+        .filter(highPrioPendingTx -> !skipSenders.contains(highPrioPendingTx.getSender()))
+        .peek(this::logSenderTxs)
         .forEach(
             highPrioPendingTx ->
                 prioritizedTransactions.stream(highPrioPendingTx.getSender())
-                    .takeWhile(unused -> !completed.get())
+                    .takeWhile(
+                        candidatePendingTx ->
+                            !skipSenders.contains(candidatePendingTx.getSender())
+                                && !completed.get())
                     .filter(
                         candidatePendingTx ->
-                            !alreadyChecked.contains(candidatePendingTx.getHash()))
-                    .filter(
-                        candidatePendingTx ->
-                            candidatePendingTx.getNonce() <= highPrioPendingTx.getNonce())
+                            !alreadyChecked.contains(candidatePendingTx.getHash())
+                                && candidatePendingTx.getNonce() <= highPrioPendingTx.getNonce())
                     .forEach(
                         candidatePendingTx -> {
                           alreadyChecked.add(candidatePendingTx.getHash());
-                          switch (selector.evaluateTransaction(
-                              candidatePendingTx.getTransaction())) {
-                            case CONTINUE:
-                              LOG.atTrace()
-                                  .setMessage("CONTINUE: Transaction {}")
-                                  .addArgument(candidatePendingTx::toTraceLog)
-                                  .log();
-                              break;
-                            case DELETE_TRANSACTION_AND_CONTINUE:
-                              invalidTransactions.add(candidatePendingTx);
-                              LOG.atTrace()
-                                  .setMessage("DELETE_TRANSACTION_AND_CONTINUE: Transaction {}")
-                                  .addArgument(candidatePendingTx::toTraceLog)
-                                  .log();
-                              logTransactionForReplayDelete(candidatePendingTx);
-                              break;
-                            case COMPLETE_OPERATION:
-                              completed.set(true);
-                              LOG.atTrace()
-                                  .setMessage("COMPLETE_OPERATION: Transaction {}")
-                                  .addArgument(candidatePendingTx::toTraceLog)
-                                  .log();
-                              break;
+                          final var res =
+                              selector.evaluateTransaction(candidatePendingTx.getTransaction());
+
+                          LOG.atTrace()
+                              .setMessage("Selection result {} for transaction {}")
+                              .addArgument(res)
+                              .addArgument(candidatePendingTx::toTraceLog)
+                              .log();
+
+                          if (res.discard()) {
+                            invalidTransactions.add(candidatePendingTx);
+                            logTransactionForReplayDelete(candidatePendingTx);
+                          }
+
+                          if (res.stop()) {
+                            completed.set(true);
+                          }
+
+                          if (!res.selected()) {
+                            // avoid processing other txs from this sender if this one is skipped
+                            // since the following will not be selected due to the nonce gap
+                            skipSenders.add(candidatePendingTx.getSender());
+                            LOG.trace("Skipping tx from sender {}", candidatePendingTx.getSender());
                           }
                         }));
 
     invalidTransactions.forEach(
         invalidTx -> prioritizedTransactions.remove(invalidTx, INVALIDATED));
+  }
+
+  private void logSenderTxs(final PendingTransaction highPrioPendingTx) {
+    LOG.atTrace()
+        .setMessage("highPrioPendingTx {}, senderTxs {}")
+        .addArgument(highPrioPendingTx::toTraceLog)
+        .addArgument(
+            () ->
+                prioritizedTransactions.stream(highPrioPendingTx.getSender())
+                    .map(PendingTransaction::toTraceLog)
+                    .collect(Collectors.joining(", ")))
+        .log();
   }
 
   @Override
