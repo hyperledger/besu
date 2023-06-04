@@ -111,11 +111,6 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
 
     final BlockBodiesMessage bodiesMessage = BlockBodiesMessage.readFrom(message);
     final List<BlockBody> bodies = bodiesMessage.bodies(protocolSchedule);
-    LOG.atTrace()
-        .setMessage("Received {} bodies: {}")
-        .addArgument(bodies.size())
-        .addArgument(bodies)
-        .log();
     if (bodies.size() == 0) {
       // Message contains no data - nothing to do
       LOG.debug("Message contains no data. Peer: {}", peer);
@@ -138,7 +133,7 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
       // Clear processed headers
       headers.clear();
     }
-    LOG.atDebug()
+    LOG.atTrace()
         .setMessage("Associated {} bodies with {} headers to get {} blocks with these hashes: {}")
         .addArgument(bodies.size())
         .addArgument(headers.size())
