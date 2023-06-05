@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.blobs.VersionedHash;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -81,7 +81,7 @@ public class TransactionPendingResult implements TransactionResult {
   private final String s;
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  private final List<Hash> versionedHashes;
+  private final List<VersionedHash> versionedHashes;
 
   public TransactionPendingResult(final Transaction transaction) {
     final TransactionType transactionType = transaction.getType();
@@ -223,7 +223,7 @@ public class TransactionPendingResult implements TransactionResult {
   }
 
   @JsonGetter(value = "blobVersionedHashes")
-  public List<Hash> getVersionedHashes() {
+  public List<VersionedHash> getVersionedHashes() {
     return versionedHashes;
   }
 }

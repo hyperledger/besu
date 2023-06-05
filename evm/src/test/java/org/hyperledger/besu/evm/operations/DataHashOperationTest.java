@@ -43,7 +43,7 @@ public class DataHashOperationTest {
   @Test
   public void putsHashOnStack() {
     Hash version0Hash = Hash.fromHexStringLenient("0xcafebabeb0b0facedeadbeef");
-    List<Hash> versionedHashes = Arrays.asList(version0Hash);
+    List<Bytes32> versionedHashes = Arrays.asList(version0Hash);
     DataHashOperation getHash = new DataHashOperation(new LondonGasCalculator());
     MessageFrame frame = mock(MessageFrame.class);
     when(frame.popStackItem()).thenReturn(Bytes.of(0));
@@ -80,7 +80,7 @@ public class DataHashOperationTest {
   @Test
   public void pushZeroOnVersionIndexOutOFBounds() {
     Hash version0Hash = Hash.fromHexStringLenient("0xcafebabeb0b0facedeadbeef");
-    List<Hash> versionedHashes = Arrays.asList(version0Hash);
+    List<Bytes32> versionedHashes = Arrays.asList(version0Hash);
     DataHashOperation getHash = new DataHashOperation(new ShanghaiGasCalculator());
     MessageFrame frame = mock(MessageFrame.class);
     when(frame.popStackItem()).thenReturn(Bytes.of(1));
@@ -95,7 +95,7 @@ public class DataHashOperationTest {
   @Test
   public void pushZeroWhenPopsMissingUint256SizedIndex() {
     Hash version0Hash = Hash.fromHexStringLenient("0xcafebabeb0b0facedeadbeef");
-    List<Hash> versionedHashes = Arrays.asList(version0Hash);
+    List<Bytes32> versionedHashes = Arrays.asList(version0Hash);
     DataHashOperation getHash = new DataHashOperation(new ShanghaiGasCalculator());
     MessageFrame frame = mock(MessageFrame.class);
     when(frame.popStackItem()).thenReturn(Bytes32.repeat((byte) 0x2C));
