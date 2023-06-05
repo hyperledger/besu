@@ -43,14 +43,14 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.SoftAssertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ForkingValidatorProviderTest {
 
   private static final Address CONTRACT_ADDRESS_1 = Address.fromHexString("0x888");
@@ -71,7 +71,7 @@ public class ForkingValidatorProviderTest {
   private BlockHeader header2;
   private final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 
-  @Before
+  @BeforeEach
   public void setup() {
     headerBuilder.extraData(Bytes.wrap(new byte[32]));
     Block genesisBlock = createEmptyBlock(0, Hash.ZERO);
@@ -84,10 +84,6 @@ public class ForkingValidatorProviderTest {
     blockChain = createInMemoryBlockchain(genesisBlock);
     blockChain.appendBlock(block_1, emptyList());
     blockChain.appendBlock(block_2, emptyList());
-
-    when(blockValidatorProvider.getValidatorsForBlock(any())).thenReturn(BLOCK_ADDRESSES);
-    when(contractValidatorProvider.getValidatorsForBlock(header1)).thenReturn(CONTRACT_ADDRESSES_1);
-    when(contractValidatorProvider.getValidatorsForBlock(header2)).thenReturn(CONTRACT_ADDRESSES_2);
   }
 
   private Block createEmptyBlock(final long blockNumber, final Hash parentHash) {
@@ -106,6 +102,7 @@ public class ForkingValidatorProviderTest {
 
     when(blockValidatorProvider.getValidatorsAfterBlock(header2)).thenReturn(BLOCK_ADDRESSES);
     when(blockValidatorProvider.getValidatorsAfterBlock(header1)).thenReturn(BLOCK_ADDRESSES);
+    when(blockValidatorProvider.getValidatorsForBlock(any())).thenReturn(BLOCK_ADDRESSES);
 
     assertThat(validatorProvider.getValidatorsAtHead()).isEqualTo(BLOCK_ADDRESSES);
     assertThat(validatorProvider.getValidatorsForBlock(header1)).isEqualTo(BLOCK_ADDRESSES);
@@ -114,6 +111,9 @@ public class ForkingValidatorProviderTest {
 
   @Test
   public void migratesFromBlockToContractValidatorProvider() {
+    when(blockValidatorProvider.getValidatorsForBlock(any())).thenReturn(BLOCK_ADDRESSES);
+    when(contractValidatorProvider.getValidatorsForBlock(header1)).thenReturn(CONTRACT_ADDRESSES_1);
+
     final ForksSchedule<QbftConfigOptions> forksSchedule =
         new ForksSchedule<>(
             List.of(createBlockForkSpec(0), createContractForkSpec(1L, CONTRACT_ADDRESS_1)));
@@ -127,6 +127,8 @@ public class ForkingValidatorProviderTest {
 
   @Test
   public void migratesFromContractToBlockValidatorProvider() {
+    when(blockValidatorProvider.getValidatorsForBlock(any())).thenReturn(BLOCK_ADDRESSES);
+
     final ForksSchedule<QbftConfigOptions> forksSchedule =
         new ForksSchedule<>(
             List.of(createContractForkSpec(0, CONTRACT_ADDRESS_1), createBlockForkSpec(1)));
@@ -145,6 +147,10 @@ public class ForkingValidatorProviderTest {
 
   @Test
   public void migratesFromContractToContractValidatorProvider() {
+    when(blockValidatorProvider.getValidatorsForBlock(any())).thenReturn(BLOCK_ADDRESSES);
+    when(contractValidatorProvider.getValidatorsForBlock(header1)).thenReturn(CONTRACT_ADDRESSES_1);
+    when(contractValidatorProvider.getValidatorsForBlock(header2)).thenReturn(CONTRACT_ADDRESSES_2);
+
     final ForksSchedule<QbftConfigOptions> forksSchedule =
         new ForksSchedule<>(
             List.of(
