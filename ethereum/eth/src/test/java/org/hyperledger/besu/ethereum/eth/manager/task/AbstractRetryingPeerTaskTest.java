@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedExc
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -80,7 +79,7 @@ public class AbstractRetryingPeerTaskTest {
     int failures = 0;
 
     protected TaskThatFailsSometimes(final int initialFailures, final int maxRetries) {
-      super(ethContext, maxRetries, Objects::isNull, metricsSystem);
+      super(ethContext, maxRetries, metricsSystem);
       this.initialFailures = initialFailures;
     }
 
@@ -91,9 +90,18 @@ public class AbstractRetryingPeerTaskTest {
         failures++;
         return CompletableFuture.completedFuture(null);
       } else {
-        result.complete(Boolean.TRUE);
         return CompletableFuture.completedFuture(Boolean.TRUE);
       }
+    }
+
+    @Override
+    protected boolean emptyResult(final Boolean peerResult) {
+      return peerResult == null;
+    }
+
+    @Override
+    protected boolean successfulResult(final Boolean peerResult) {
+      return !emptyResult(peerResult);
     }
   }
 }

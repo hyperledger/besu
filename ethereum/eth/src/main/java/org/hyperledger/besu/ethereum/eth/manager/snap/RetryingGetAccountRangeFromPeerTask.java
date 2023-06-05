@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
@@ -42,8 +43,7 @@ public class RetryingGetAccountRangeFromPeerTask
       final Bytes32 endKeyHash,
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
-    super(
-        ethContext, 4, data -> data.accounts().isEmpty() && data.proofs().isEmpty(), metricsSystem);
+    super(ethContext, 4, metricsSystem);
     this.ethContext = ethContext;
     this.startKeyHash = startKeyHash;
     this.endKeyHash = endKeyHash;
@@ -68,11 +68,16 @@ public class RetryingGetAccountRangeFromPeerTask
         GetAccountRangeFromPeerTask.forAccountRange(
             ethContext, startKeyHash, endKeyHash, blockHeader, metricsSystem);
     assignedPeer.ifPresent(task::assignPeer);
-    return executeSubTask(task::run)
-        .thenApply(
-            peerResult -> {
-              result.complete(peerResult.getResult());
-              return peerResult.getResult();
-            });
+    return executeSubTask(task::run).thenApply(PeerTaskResult::getResult);
+  }
+
+  @Override
+  protected boolean emptyResult(final AccountRangeMessage.AccountRangeData data) {
+    return data.accounts().isEmpty() && data.proofs().isEmpty();
+  }
+
+  @Override
+  protected boolean successfulResult(final AccountRangeMessage.AccountRangeData peerResult) {
+    return !emptyResult(peerResult);
   }
 }

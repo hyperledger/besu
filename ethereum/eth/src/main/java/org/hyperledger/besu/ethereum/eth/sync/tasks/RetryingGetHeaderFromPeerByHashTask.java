@@ -20,7 +20,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.exceptions.IncompleteResultsException;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractGetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingSwitchingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
@@ -50,7 +49,7 @@ public class RetryingGetHeaderFromPeerByHashTask
       final long minimumRequiredBlockNumber,
       final MetricsSystem metricsSystem,
       final int maxRetries) {
-    super(ethContext, metricsSystem, List::isEmpty, maxRetries);
+    super(ethContext, metricsSystem, maxRetries);
     this.protocolSchedule = protocolSchedule;
     this.minimumRequiredBlockNumber = minimumRequiredBlockNumber;
     checkNotNull(referenceHash);
@@ -90,24 +89,21 @@ public class RetryingGetHeaderFromPeerByHashTask
                   referenceHash,
                   peer,
                   peerResult.getResult());
-              if (peerResult.getResult().isEmpty()) {
-                throw new IncompleteResultsException(
-                    "No block header for hash "
-                        + referenceHash
-                        + " returned by peer "
-                        + peer.getShortNodeId());
-              }
-              result.complete(peerResult.getResult());
               return peerResult.getResult();
             });
   }
 
-  @Override
-  protected boolean isRetryableError(final Throwable error) {
-    return super.isRetryableError(error) || error instanceof IncompleteResultsException;
-  }
-
   public CompletableFuture<BlockHeader> getHeader() {
     return run().thenApply(singletonList -> singletonList.get(0));
+  }
+
+  @Override
+  protected boolean emptyResult(final List<BlockHeader> peerResult) {
+    return peerResult.isEmpty();
+  }
+
+  @Override
+  protected boolean successfulResult(final List<BlockHeader> peerResult) {
+    return !emptyResult(peerResult);
   }
 }

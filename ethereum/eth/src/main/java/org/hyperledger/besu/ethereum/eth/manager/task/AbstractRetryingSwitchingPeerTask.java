@@ -20,13 +20,12 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -41,11 +40,8 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
   private final Set<EthPeer> failedPeers = new HashSet<>();
 
   protected AbstractRetryingSwitchingPeerTask(
-      final EthContext ethContext,
-      final MetricsSystem metricsSystem,
-      final Predicate<T> isEmptyResponse,
-      final int maxRetries) {
-    super(ethContext, maxRetries, isEmptyResponse, metricsSystem);
+      final EthContext ethContext, final MetricsSystem metricsSystem, final int maxRetries) {
+    super(ethContext, maxRetries, metricsSystem);
   }
 
   @Override
@@ -93,22 +89,17 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
                   .addArgument(peerToUse)
                   .addArgument(this::getRetryCount)
                   .log();
-              result.complete(peerResult);
               return peerResult;
             });
   }
 
   @Override
   protected void handleTaskError(final Throwable error) {
-    if (isPeerFailure(error)) {
-      getAssignedPeer().ifPresent(peer -> failedPeers.add(peer));
+    final Throwable rootCause = ExceptionUtils.rootCause(error);
+    if (isPeerFailure(rootCause)) {
+      getAssignedPeer().ifPresent(failedPeers::add);
     }
     super.handleTaskError(error);
-  }
-
-  @Override
-  protected boolean isRetryableError(final Throwable error) {
-    return error instanceof TimeoutException || isPeerFailure(error);
   }
 
   private Optional<EthPeer> selectNextPeer() {
@@ -136,7 +127,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
     // If we are at max connections, then refresh peers disconnecting one of the failed peers,
     // or the least useful
 
-    if (peers.peerCount() >= peers.getMaxPeers()) {
+    if (peers.peerCount() >= peers.getPeerLowerBound()) {
       failedPeers.stream()
           .filter(peer -> !peer.isDisconnected())
           .findAny()
