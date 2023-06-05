@@ -443,7 +443,7 @@ public class BlockDataGenerator {
         .payload(payload)
         .chainId(BigInteger.ONE)
         .maxFeePerDataGas(Wei.of(1))
-        .versionedHashes(List.of(new VersionedHash(Bytes32.fromHexStringLenient("0x29"))))
+        .versionedHashes(List.of(VersionedHash.DEFAULT_VERSIONED_HASH))
         .signAndBuild(generateKeyPair());
   }
 
