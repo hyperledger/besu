@@ -41,7 +41,13 @@ public class BlobTransactionEncoder {
     TransactionEncoder.writeAccessList(out, transaction.getAccessList());
     out.writeUInt256Scalar(transaction.getMaxFeePerDataGas().orElseThrow());
     out.startList();
-    transaction.getVersionedHashes().get().forEach(out::writeBytes);
+    transaction
+        .getVersionedHashes()
+        .get()
+        .forEach(
+            vh -> {
+              out.writeBytes(vh.toBytes());
+            });
     out.endList();
     TransactionEncoder.writeSignatureAndRecoveryId(transaction, out);
     out.endList();

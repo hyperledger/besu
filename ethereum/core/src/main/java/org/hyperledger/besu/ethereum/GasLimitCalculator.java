@@ -23,6 +23,6 @@ public interface GasLimitCalculator {
   }
 
   default long currentDataGasLimit() {
-    return 0L;
+    return 1 << 19;
   }
 }

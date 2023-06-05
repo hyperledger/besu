@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -22,6 +21,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /**
@@ -50,9 +50,9 @@ public class DataHashOperation extends AbstractOperation {
     Bytes blobIndex = frame.popStackItem();
     UInt256 blobIndexUInt256 = UInt256.fromBytes(blobIndex);
     if (frame.getVersionedHashes().isPresent()) {
-      List<Hash> versionedHashes = frame.getVersionedHashes().get();
+      List<Bytes32> versionedHashes = frame.getVersionedHashes().get();
       if (blobIndexUInt256.lessThan(UInt256.valueOf(versionedHashes.size()))) {
-        Hash requested = versionedHashes.get(blobIndexUInt256.toBigInteger().intValue());
+        Bytes32 requested = versionedHashes.get(blobIndexUInt256.toBigInteger().intValue());
         frame.pushStackItem(requested);
       } else {
         frame.pushStackItem(Bytes.EMPTY);

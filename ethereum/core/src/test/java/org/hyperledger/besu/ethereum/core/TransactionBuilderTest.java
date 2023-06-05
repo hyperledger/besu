@@ -67,6 +67,9 @@ public class TransactionBuilderTest {
           .type(TransactionType.BLOB)
           .chainId(Optional.of(BigInteger.ONE))
           .versionedHashes(Optional.of(List.of()))
+          .maxFeePerGas(Optional.of(Wei.of(5)))
+          .maxPriorityFeePerGas(Optional.of(Wei.of(5)))
+          .maxFeePerDataGas(Optional.of(Wei.of(5)))
           .createTransaction(senderKeys);
       fail();
     } catch (IllegalArgumentException iea) {
