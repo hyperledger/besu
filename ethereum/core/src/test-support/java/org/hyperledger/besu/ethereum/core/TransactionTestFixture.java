@@ -34,7 +34,7 @@ public class TransactionTestFixture {
 
   private long nonce = 0;
 
-  private Wei gasPrice = Wei.of(5000);
+  private Optional<Wei> gasPrice = Optional.empty();
 
   private long gasLimit = 5000;
 
@@ -52,7 +52,7 @@ public class TransactionTestFixture {
 
   private Optional<Wei> maxFeePerDataGas = Optional.empty();
 
-  private List<AccessListEntry> accessList = null;
+  private Optional<List<AccessListEntry>> accessListEntries = Optional.empty();
   private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
 
   private Optional<BlobsWithCommitments> blobs = Optional.empty();
@@ -62,24 +62,41 @@ public class TransactionTestFixture {
     builder
         .type(transactionType)
         .gasLimit(gasLimit)
-        .gasPrice(gasPrice)
         .nonce(nonce)
         .payload(payload)
         .value(value)
-        .sender(sender)
-        .accessList(accessList);
+        .sender(sender);
+
+    switch (transactionType) {
+      case FRONTIER:
+        builder.gasPrice(gasPrice.orElse(Wei.of(5000)));
+        break;
+      case ACCESS_LIST:
+        builder.gasPrice(gasPrice.orElse(Wei.of(5000)));
+        builder.accessList(accessListEntries.orElse(List.of()));
+        break;
+      case EIP1559:
+        builder.maxPriorityFeePerGas(maxPriorityFeePerGas.orElse(Wei.of(500)));
+        builder.maxFeePerGas(maxFeePerGas.orElse(Wei.of(5000)));
+        builder.accessList(accessListEntries.orElse(List.of()));
+        break;
+      case BLOB:
+        builder.maxPriorityFeePerGas(maxPriorityFeePerGas.orElse(Wei.of(500)));
+        builder.maxFeePerGas(maxFeePerGas.orElse(Wei.of(5000)));
+        builder.accessList(accessListEntries.orElse(List.of()));
+        builder.maxFeePerDataGas(maxFeePerDataGas.orElse(Wei.ONE));
+        builder.versionedHashes(
+            versionedHashes.orElse(List.of(VersionedHash.DEFAULT_VERSIONED_HASH)));
+        blobs.ifPresent(
+            bwc -> {
+              builder.kzgBlobs(bwc.getKzgCommitments(), bwc.getBlobs(), bwc.getKzgProofs());
+            });
+        break;
+    }
 
     to.ifPresent(builder::to);
     chainId.ifPresent(builder::chainId);
 
-    maxPriorityFeePerGas.ifPresent(builder::maxPriorityFeePerGas);
-    maxFeePerGas.ifPresent(builder::maxFeePerGas);
-    maxFeePerDataGas.ifPresent(builder::maxFeePerDataGas);
-    versionedHashes.ifPresent(builder::versionedHashes);
-    blobs.ifPresent(
-        bwc -> {
-          builder.kzgBlobs(bwc.getKzgCommitments(), bwc.getBlobs(), bwc.getKzgProofs());
-        });
     return builder.signAndBuild(keys);
   }
 
@@ -94,7 +111,7 @@ public class TransactionTestFixture {
   }
 
   public TransactionTestFixture gasPrice(final Wei gasPrice) {
-    this.gasPrice = gasPrice;
+    this.gasPrice = Optional.ofNullable(gasPrice);
     return this;
   }
 
@@ -143,19 +160,19 @@ public class TransactionTestFixture {
     return this;
   }
 
-  public TransactionTestFixture blobsWithCommitments(final Optional<BlobsWithCommitments> blobs) {
-    this.blobs = blobs;
-    return this;
-  }
-
-  public TransactionTestFixture accessList(final List<AccessListEntry> accessList) {
-    this.accessList = accessList;
+  public TransactionTestFixture accessList(final List<AccessListEntry> accessListEntries) {
+    this.accessListEntries = Optional.ofNullable(accessListEntries);
     return this;
   }
 
   public TransactionTestFixture versionedHashes(
       final Optional<List<VersionedHash>> versionedHashes) {
     this.versionedHashes = versionedHashes;
+    return this;
+  }
+
+  public TransactionTestFixture blobsWithCommitments(final Optional<BlobsWithCommitments> blobs) {
+    this.blobs = blobs;
     return this;
   }
 }
