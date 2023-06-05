@@ -240,7 +240,7 @@ public class MessageFrame {
   private Optional<Bytes> revertReason;
 
   private final Map<String, Object> contextVariables;
-  private final Optional<List<Hash>> versionedHashes;
+  private final Optional<List<Bytes32>> versionedHashes;
 
   private final Table<Address, Bytes32, Bytes32> transientStorage = HashBasedTable.create();
 
@@ -285,7 +285,7 @@ public class MessageFrame {
       final int maxStackSize,
       final Set<Address> accessListWarmAddresses,
       final Multimap<Address, Bytes32> accessListWarmStorage,
-      final Optional<List<Hash>> versionedHashes) {
+      final Optional<List<Bytes32>> versionedHashes) {
     this.type = type;
     this.messageFrameStack = messageFrameStack;
     this.parentMessageFrame = messageFrameStack.peek();
@@ -1379,7 +1379,7 @@ public class MessageFrame {
    *
    * @return optional list of hashes
    */
-  public Optional<List<Hash>> getVersionedHashes() {
+  public Optional<List<Bytes32>> getVersionedHashes() {
     return versionedHashes;
   }
 
@@ -1417,7 +1417,7 @@ public class MessageFrame {
     private Set<Address> accessListWarmAddresses = emptySet();
     private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
 
-    private Optional<List<Hash>> versionedHashes;
+    private Optional<List<Bytes32>> versionedHashes;
 
     /**
      * Sets Type.
@@ -1689,7 +1689,7 @@ public class MessageFrame {
      * @param versionedHashes the Optional list of versioned hashes
      * @return the builder
      */
-    public Builder versionedHashes(final Optional<List<Hash>> versionedHashes) {
+    public Builder versionedHashes(final Optional<List<Bytes32>> versionedHashes) {
       this.versionedHashes = versionedHashes;
       return this;
     }
