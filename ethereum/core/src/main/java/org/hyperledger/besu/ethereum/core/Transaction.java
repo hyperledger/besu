@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.blobs.Blob;
 import org.hyperledger.besu.ethereum.core.blobs.BlobsWithCommitments;
 import org.hyperledger.besu.ethereum.core.blobs.KZGCommitment;
 import org.hyperledger.besu.ethereum.core.blobs.KZGProof;
+import org.hyperledger.besu.ethereum.core.blobs.VersionedHash;
 import org.hyperledger.besu.ethereum.core.encoding.BlobTransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
@@ -112,7 +113,7 @@ public class Transaction
   private final TransactionType transactionType;
 
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
-  private final Optional<List<Hash>> versionedHashes;
+  private final Optional<List<VersionedHash>> versionedHashes;
 
   private final Optional<BlobsWithCommitments> blobsWithCommitments;
 
@@ -166,7 +167,7 @@ public class Transaction
       final Optional<List<AccessListEntry>> maybeAccessList,
       final Address sender,
       final Optional<BigInteger> chainId,
-      final Optional<List<Hash>> versionedHashes,
+      final Optional<List<VersionedHash>> versionedHashes,
       final Optional<BlobsWithCommitments> blobsWithCommitments) {
 
     if (transactionType.requiresChainId()) {
@@ -235,7 +236,7 @@ public class Transaction
       final Bytes payload,
       final Address sender,
       final Optional<BigInteger> chainId,
-      final Optional<List<Hash>> versionedHashes,
+      final Optional<List<VersionedHash>> versionedHashes,
       final Optional<BlobsWithCommitments> blobsWithCommitments) {
     this(
         TransactionType.FRONTIER,
@@ -265,7 +266,7 @@ public class Transaction
       final SECPSignature signature,
       final Bytes payload,
       final Optional<BigInteger> chainId,
-      final Optional<List<Hash>> versionedHashes,
+      final Optional<List<VersionedHash>> versionedHashes,
       final Optional<BlobsWithCommitments> blobsWithCommitments) {
     this(
         TransactionType.FRONTIER,
@@ -313,7 +314,7 @@ public class Transaction
       final Bytes payload,
       final Address sender,
       final Optional<BigInteger> chainId,
-      final Optional<List<Hash>> versionedHashes) {
+      final Optional<List<VersionedHash>> versionedHashes) {
     this(
         nonce,
         Optional.of(gasPrice),
@@ -359,7 +360,7 @@ public class Transaction
       final Address sender,
       final Optional<BigInteger> chainId,
       final Optional<Wei> maxFeePerDataGas,
-      final Optional<List<Hash>> versionedHashes,
+      final Optional<List<VersionedHash>> versionedHashes,
       final Optional<BlobsWithCommitments> blobsWithCommitments) {
     this(
         nonce,
@@ -805,7 +806,7 @@ public class Transaction
     return this.transactionType;
   }
 
-  public Optional<List<Hash>> getVersionedHashes() {
+  public Optional<List<VersionedHash>> getVersionedHashes() {
     return versionedHashes;
   }
 
@@ -849,7 +850,7 @@ public class Transaction
       final Wei value,
       final Bytes payload,
       final Optional<List<AccessListEntry>> accessList,
-      final List<Hash> versionedHashes,
+      final List<VersionedHash> versionedHashes,
       final Optional<BigInteger> chainId) {
     if (transactionType.requiresChainId()) {
       checkArgument(chainId.isPresent(), "Transaction type %s requires chainId", transactionType);
@@ -998,7 +999,7 @@ public class Transaction
       final Bytes payload,
       final Optional<BigInteger> chainId,
       final Optional<List<AccessListEntry>> accessList,
-      final List<Hash> versionedHashes) {
+      final List<VersionedHash> versionedHashes) {
 
     final Bytes encoded =
         RLP.encode(
@@ -1181,7 +1182,7 @@ public class Transaction
 
     protected Optional<BigInteger> chainId = Optional.empty();
 
-    protected List<Hash> versionedHashes = null;
+    protected List<VersionedHash> versionedHashes = null;
     private BlobsWithCommitments blobsWithCommitments;
 
     public Builder type(final TransactionType transactionType) {
@@ -1257,7 +1258,7 @@ public class Transaction
       return this;
     }
 
-    public Builder versionedHashes(final List<Hash> versionedHashes) {
+    public Builder versionedHashes(final List<VersionedHash> versionedHashes) {
       this.versionedHashes = versionedHashes;
       return this;
     }
