@@ -306,7 +306,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             dataGasPrice,
             protocolSpec.getFeeMarket(),
             protocolSpec.getGasCalculator(),
-            protocolSpec.getGasLimitCalculator());
+            protocolSpec.getGasLimitCalculator(),
+            protocolContext.getTransactionSelectorFactory());
 
     if (transactions.isPresent()) {
       return selector.evaluateTransactions(transactions.get());

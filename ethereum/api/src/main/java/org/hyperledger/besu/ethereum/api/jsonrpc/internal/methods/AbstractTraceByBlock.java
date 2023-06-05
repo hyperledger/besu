@@ -75,7 +75,7 @@ public abstract class AbstractTraceByBlock extends AbstractBlockParameterMethod
   protected JsonNode getTraceCallResult(
       final ProtocolSchedule protocolSchedule,
       final Set<TraceTypeParameter.TraceType> traceTypes,
-      final Optional<TransactionSimulatorResult> maybeSimulatorResult,
+      final TransactionSimulatorResult simulatorResult,
       final TransactionTrace transactionTrace,
       final Block block) {
     final TraceCallResult.Builder builder = TraceCallResult.builder();
@@ -85,7 +85,7 @@ public abstract class AbstractTraceByBlock extends AbstractBlockParameterMethod
         .getRevertReason()
         .ifPresentOrElse(
             revertReason -> builder.output(revertReason.toHexString()),
-            () -> builder.output(maybeSimulatorResult.get().getOutput().toString()));
+            () -> builder.output(simulatorResult.getOutput().toString()));
 
     if (traceTypes.contains(TraceType.STATE_DIFF)) {
       new StateDiffGenerator()
