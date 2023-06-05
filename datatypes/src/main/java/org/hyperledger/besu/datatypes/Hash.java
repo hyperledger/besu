@@ -63,6 +63,7 @@ public class Hash extends DelegatingBytes32 {
 
   /**
    * Convert value to sha256 hash.
+   *
    * @param value the bytes to hash
    * @return the hash of those bytes
    */
