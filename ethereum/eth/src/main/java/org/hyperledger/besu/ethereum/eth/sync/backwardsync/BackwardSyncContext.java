@@ -336,7 +336,7 @@ public class BackwardSyncContext {
     final MutableBlockchain blockchain = getProtocolContext().getBlockchain();
 
     if (blockchain.getChainHead().getHash().equals(lastSavedBlock.getHash())) {
-      LOG.debug("Head is already properly set to {}", lastSavedBlock.toLogString());
+      LOG.atDebug().setMessage("Head is already properly set to {}").addArgument(lastSavedBlock::toLogString).log();
       return;
     }
 
