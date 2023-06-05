@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
-import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.List;
@@ -118,23 +117,19 @@ public class PendingStateAdapter extends AdapterBase {
             .from(TransactionValidationParams.transactionSimulator());
     transactionValidationParams.isAllowExceedingBalance(true);
 
-    final Optional<TransactionSimulatorResult> opt =
-        transactionSimulator.process(
-            param,
-            transactionValidationParams.build(),
-            OperationTracer.NO_TRACING,
-            query.getBlockchain().getChainHeadHeader());
-
-    if (opt.isPresent()) {
-      final TransactionSimulatorResult result = opt.get();
-      long status = 0;
-      if (result.isSuccessful()) {
-        status = 1;
-      }
-      final CallResult callResult =
-          new CallResult(status, result.getGasEstimate(), result.getOutput());
-      return Optional.of(callResult);
-    }
-    return Optional.empty();
+    return transactionSimulator.process(
+        param,
+        transactionValidationParams.build(),
+        OperationTracer.NO_TRACING,
+        (mutableWorldState, transactionSimulatorResult) ->
+            transactionSimulatorResult.map(
+                result -> {
+                  long status = 0;
+                  if (result.isSuccessful()) {
+                    status = 1;
+                  }
+                  return new CallResult(status, result.getGasEstimate(), result.getOutput());
+                }),
+        query.getBlockchain().getChainHeadHeader());
   }
 }

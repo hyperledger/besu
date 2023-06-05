@@ -95,7 +95,10 @@ public class MessageValidatorTest {
 
     protocolContext =
         new ProtocolContext(
-            mock(MutableBlockchain.class), mock(WorldStateArchive.class), mockBftCtx);
+            mock(MutableBlockchain.class),
+            mock(WorldStateArchive.class),
+            mockBftCtx,
+            Optional.empty());
 
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
         .thenReturn(new BlockProcessingResult(Optional.empty()));

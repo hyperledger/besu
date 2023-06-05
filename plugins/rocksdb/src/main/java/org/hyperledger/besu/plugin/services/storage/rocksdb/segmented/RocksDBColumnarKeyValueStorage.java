@@ -87,7 +87,9 @@ public abstract class RocksDBColumnarKeyValueStorage
     RocksDbUtil.loadNativeLibrary();
   }
 
-  private final AtomicBoolean closed = new AtomicBoolean(false);
+  /** atomic boolean to track if the storage is closed */
+  protected final AtomicBoolean closed = new AtomicBoolean(false);
+
   private final WriteOptions tryDeleteOptions =
       new WriteOptions().setNoSlowdown(true).setIgnoreMissingColumnFamilies(true);
   private final ReadOptions readOptions = new ReadOptions().setVerifyChecksums(false);
@@ -320,6 +322,11 @@ public abstract class RocksDBColumnarKeyValueStorage
           .forEach(ColumnFamilyHandle::close);
       getDB().close();
     }
+  }
+
+  @Override
+  public boolean isClosed() {
+    return closed.get();
   }
 
   void throwIfClosed() {
