@@ -190,13 +190,13 @@ public class StateTestSubCommand implements Runnable {
 
     for (final GeneralStateTestCaseEipSpec spec : specs) {
       if (dataIndex != null && spec.getDataIndex() != dataIndex) {
-          continue;
+        continue;
       }
       if (gasIndex != null && spec.getGasIndex() != gasIndex) {
-          continue;
+        continue;
       }
       if (valueIndex != null && spec.getValueIndex() != valueIndex) {
-          continue;
+        continue;
       }
 
       final BlockHeader blockHeader = spec.getBlockHeader();
