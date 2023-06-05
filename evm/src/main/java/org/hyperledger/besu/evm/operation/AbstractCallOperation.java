@@ -178,7 +178,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     final Wei balance = account == null ? Wei.ZERO : account.getBalance();
     // If the call is sending more value than the account has or the message frame is to deep
     // return a failed call
-    if (value(frame).compareTo(balance) > 0 || frame.getMessageStackDepth() >= 1024) {
+    if (value(frame).compareTo(balance) > 0 || frame.getMessageStackDepth() > 1024) {
       frame.expandMemory(inputDataOffset(frame), inputDataLength(frame));
       frame.expandMemory(outputDataOffset(frame), outputDataLength(frame));
       frame.incrementRemainingGas(gasAvailableForChildCall(frame) + cost);
@@ -197,26 +197,18 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     if (code.isValid()) {
       final MessageFrame childFrame =
           MessageFrame.builder()
+              .parentMessageFrame(frame)
               .type(MessageFrame.Type.MESSAGE_CALL)
-              .messageFrameStack(frame.getMessageFrameStack())
-              .worldUpdater(frame.getWorldUpdater().updater())
               .initialGas(gasAvailableForChildCall(frame))
               .address(address(frame))
-              .originator(frame.getOriginatorAddress())
               .contract(to)
-              .gasPrice(frame.getGasPrice())
               .inputData(inputData)
               .sender(sender(frame))
               .value(value(frame))
               .apparentValue(apparentValue(frame))
               .code(code)
-              .blockValues(frame.getBlockValues())
-              .depth(frame.getMessageStackDepth() + 1)
               .isStatic(isStatic(frame))
               .completer(child -> complete(frame, child))
-              .miningBeneficiary(frame.getMiningBeneficiary())
-              .blockHashLookup(frame.getBlockHashLookup())
-              .maxStackSize(frame.getMaxStackSize())
               .build();
       frame.incrementRemainingGas(cost);
 
@@ -266,7 +258,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     frame.popStackItems(getStackItemsConsumed());
     if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-      frame.mergeWarmedUpFields(childFrame);
       frame.pushStackItem(SUCCESS_STACK_ITEM);
     } else {
       frame.pushStackItem(FAILURE_STACK_ITEM);

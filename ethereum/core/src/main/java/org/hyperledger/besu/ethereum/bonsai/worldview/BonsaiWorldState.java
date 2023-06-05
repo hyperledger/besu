@@ -124,7 +124,7 @@ public class BonsaiWorldState
 
   @Override
   public Optional<Bytes> getCode(@Nonnull final Address address, final Hash codeHash) {
-    return worldStateStorage.getCode(codeHash, Hash.hash(address));
+    return worldStateStorage.getCode(codeHash, address.addressHash());
   }
 
   /**
@@ -313,7 +313,7 @@ public class BonsaiWorldState
             // because we are clearing persisted values we need the account root as persisted
             final BonsaiAccount oldAccount =
                 worldStateStorage
-                    .getAccount(Hash.hash(address))
+                    .getAccount(address.addressHash())
                     .map(bytes -> fromRLP(BonsaiWorldState.this, address, bytes, true))
                     .orElse(null);
             if (oldAccount == null) {
@@ -321,7 +321,7 @@ public class BonsaiWorldState
               // block.  A not-uncommon DeFi bot pattern.
               continue;
             }
-            final Hash addressHash = Hash.hash(address);
+            final Hash addressHash = address.addressHash();
             final MerkleTrie<Bytes, Bytes> storageTrie =
                 createTrie(
                     (location, key) -> getStorageTrieNode(addressHash, location, key),
@@ -334,7 +334,7 @@ public class BonsaiWorldState
                     .forEach(
                         k ->
                             bonsaiUpdater.removeStorageValueBySlotHash(
-                                Hash.hash(address), Hash.wrap(k)));
+                                address.addressHash(), Hash.wrap(k)));
                 entriesToDelete.keySet().forEach(storageTrie::remove);
                 if (entriesToDelete.size() == 256) {
                   entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
@@ -474,7 +474,7 @@ public class BonsaiWorldState
   @Override
   public Account get(final Address address) {
     return worldStateStorage
-        .getAccount(Hash.hash(address))
+        .getAccount(address.addressHash())
         .map(bytes -> fromRLP(accumulator, address, bytes, true))
         .orElse(null);
   }
@@ -512,7 +512,7 @@ public class BonsaiWorldState
   public Optional<UInt256> getStorageValueByStorageSlotKey(
       final Address address, final StorageSlotKey storageSlotKey) {
     return worldStateStorage
-        .getStorageValueByStorageSlotKey(Hash.hash(address), storageSlotKey)
+        .getStorageValueByStorageSlotKey(address.addressHash(), storageSlotKey)
         .map(UInt256::fromBytes);
   }
 
@@ -521,7 +521,7 @@ public class BonsaiWorldState
       final Address address,
       final StorageSlotKey storageSlotKey) {
     return worldStateStorage
-        .getStorageValueByStorageSlotKey(storageRootSupplier, Hash.hash(address), storageSlotKey)
+        .getStorageValueByStorageSlotKey(storageRootSupplier, address.addressHash(), storageSlotKey)
         .map(UInt256::fromBytes);
   }
 
@@ -534,7 +534,7 @@ public class BonsaiWorldState
   public Map<Bytes32, Bytes> getAllAccountStorage(final Address address, final Hash rootHash) {
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         createTrie(
-            (location, key) -> getStorageTrieNode(Hash.hash(address), location, key), rootHash);
+            (location, key) -> getStorageTrieNode(address.addressHash(), location, key), rootHash);
     return storageTrie.entriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
   }
 

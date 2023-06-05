@@ -22,7 +22,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
- * Block Header Values used by various EVM Opcodes. This is not a complete BlocHeader, just the
+ * Block Header Values used by various EVM Opcodes. This is not a complete BlockHeader, just the
  * values that are returned or accessed by various operations.
  */
 public interface BlockValues {

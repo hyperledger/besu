@@ -117,6 +117,8 @@ public abstract class AbstractMessageProcessor {
     frame.clearLogs();
     frame.clearSelfDestructs();
     frame.clearGasRefund();
+
+    frame.rollback();
   }
 
   /**
@@ -148,7 +150,6 @@ public abstract class AbstractMessageProcessor {
    */
   private void completedSuccess(final MessageFrame frame) {
     frame.getWorldUpdater().commit();
-    frame.commitTransientStorage();
     frame.getMessageFrameStack().removeFirst();
     frame.notifyCompletion();
   }

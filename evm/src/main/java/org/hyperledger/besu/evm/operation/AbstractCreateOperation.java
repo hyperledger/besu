@@ -87,7 +87,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     }
 
     if (value.compareTo(account.getBalance()) > 0
-        || frame.getMessageStackDepth() >= 1024
+        || frame.getMessageStackDepth() > 1024
         || account.getNonce() == -1) {
       fail(frame);
     } else {
@@ -145,25 +145,17 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     final MessageFrame childFrame =
         MessageFrame.builder()
+            .parentMessageFrame(frame)
             .type(MessageFrame.Type.CONTRACT_CREATION)
-            .messageFrameStack(frame.getMessageFrameStack())
-            .worldUpdater(frame.getWorldUpdater().updater())
             .initialGas(childGasStipend)
             .address(contractAddress)
-            .originator(frame.getOriginatorAddress())
             .contract(contractAddress)
-            .gasPrice(frame.getGasPrice())
             .inputData(Bytes.EMPTY)
             .sender(frame.getRecipientAddress())
             .value(value)
             .apparentValue(value)
             .code(code)
-            .blockValues(frame.getBlockValues())
-            .depth(frame.getMessageStackDepth() + 1)
             .completer(child -> complete(frame, child, evm))
-            .miningBeneficiary(frame.getMiningBeneficiary())
-            .blockHashLookup(frame.getBlockHashLookup())
-            .maxStackSize(frame.getMaxStackSize())
             .build();
 
     frame.getMessageFrameStack().addFirst(childFrame);
@@ -184,7 +176,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       frame.incrementGasRefund(childFrame.getGasRefund());
 
       if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-        frame.mergeWarmedUpFields(childFrame);
         frame.pushStackItem(Words.fromAddress(childFrame.getContractAddress()));
       } else {
         frame.setReturnData(childFrame.getOutputData());

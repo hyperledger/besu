@@ -294,7 +294,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
   public void prepareStateHealing(final Address address, final Bytes location) {
     final Set<Bytes> keysToDelete = new HashSet<>();
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = worldStateStorage.updater();
-    final Hash accountHash = Hash.hash(address);
+    final Hash accountHash = address.addressHash();
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         new StoredMerklePatriciaTrie<>(
             (l, h) -> {

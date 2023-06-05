@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -85,7 +84,7 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
       snapContext.clear();
       syncState
           .getAccountToRepair()
-          .ifPresent(address -> snapContext.addInconsistentAccount(Hash.hash(address)));
+          .ifPresent(address -> snapContext.addInconsistentAccount(address.addressHash()));
     } else if (fastSyncState.getPivotBlockHeader().isEmpty()
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
             != BlockHeader.GENESIS_BLOCK_NUMBER) {
