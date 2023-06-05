@@ -3410,10 +3410,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     addPortIfEnabled(
         effectivePorts, metricsOptionGroup.metricsPort, metricsOptionGroup.isMetricsEnabled);
     addPortIfEnabled(
-        effectivePorts,
-        metricsOptionGroup.metricsPushPort,
-        metricsOptionGroup.isMetricsPushEnabled);
-    addPortIfEnabled(
         effectivePorts, minerOptionGroup.stratumPort, minerOptionGroup.iStratumMiningEnabled);
     return effectivePorts;
   }
