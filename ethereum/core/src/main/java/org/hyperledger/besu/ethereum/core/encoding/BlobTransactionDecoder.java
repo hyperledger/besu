@@ -17,12 +17,12 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.blobs.Blob;
 import org.hyperledger.besu.ethereum.core.blobs.KZGCommitment;
 import org.hyperledger.besu.ethereum.core.blobs.KZGProof;
+import org.hyperledger.besu.ethereum.core.blobs.VersionedHash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.evm.AccessListEntry;
@@ -82,7 +82,7 @@ public class BlobTransactionDecoder {
                 }))
         .maxFeePerDataGas(Wei.of(input.readUInt256Scalar()))
         .versionedHashes(
-            input.readList(versionedHashes -> Hash.wrap(versionedHashes.readBytes32())));
+            input.readList(versionedHashes -> new VersionedHash(versionedHashes.readBytes32())));
 
     final byte recId = (byte) input.readIntScalar();
     builder.signature(
@@ -109,7 +109,7 @@ public class BlobTransactionDecoder {
   }
 
   public static void writeBlobVersionedHashes(
-      final RLPOutput rlpOutput, final List<Hash> versionedHashes) {
-    rlpOutput.writeList(versionedHashes, (h, out) -> out.writeBytes(h));
+      final RLPOutput rlpOutput, final List<VersionedHash> versionedHashes) {
+    rlpOutput.writeList(versionedHashes, (h, out) -> out.writeBytes(h.toBytes()));
   }
 }
