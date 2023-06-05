@@ -138,7 +138,7 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
         .addArgument(bodies.size())
         .addArgument(headers.size())
         .addArgument(blocks.size())
-        .addArgument(blocks.stream().map(Block::getHash).collect(Collectors.toList()))
+        .addArgument(() -> blocks.stream().map(Block::toLogString).toList())
         .log();
     return Optional.of(blocks);
   }
