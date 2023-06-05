@@ -111,7 +111,7 @@ public class BackwardSyncContext {
                       block -> {
                         LOG.atTrace()
                             .setMessage("updateTargetHeight to {}")
-                            .addArgument(block.getHeader().getNumber())
+                            .addArgument(block::toLogString)
                             .log();
                         status.updateTargetHeight(block.getHeader().getNumber());
                       }));
