@@ -16,8 +16,9 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.blobs.BlobsWithCommitments;
+import org.hyperledger.besu.ethereum.core.blobs.VersionedHash;
 import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
@@ -49,8 +50,12 @@ public class TransactionTestFixture {
   private Optional<Wei> maxPriorityFeePerGas = Optional.empty();
   private Optional<Wei> maxFeePerGas = Optional.empty();
 
+  private Optional<Wei> maxFeePerDataGas = Optional.empty();
+
   private List<AccessListEntry> accessList = null;
-  private Optional<List<Hash>> versionedHashes = Optional.empty();
+  private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
+
+  private Optional<BlobsWithCommitments> blobs = Optional.empty();
 
   public Transaction createTransaction(final KeyPair keys) {
     final Transaction.Builder builder = Transaction.builder();
@@ -69,8 +74,12 @@ public class TransactionTestFixture {
 
     maxPriorityFeePerGas.ifPresent(builder::maxPriorityFeePerGas);
     maxFeePerGas.ifPresent(builder::maxFeePerGas);
+    maxFeePerDataGas.ifPresent(builder::maxFeePerDataGas);
     versionedHashes.ifPresent(builder::versionedHashes);
-
+    blobs.ifPresent(
+        bwc -> {
+          builder.kzgBlobs(bwc.getKzgCommitments(), bwc.getBlobs(), bwc.getKzgProofs());
+        });
     return builder.signAndBuild(keys);
   }
 
@@ -129,12 +138,23 @@ public class TransactionTestFixture {
     return this;
   }
 
+  public TransactionTestFixture maxFeePerDataGas(final Optional<Wei> maxFeePerDataGas) {
+    this.maxFeePerDataGas = maxFeePerDataGas;
+    return this;
+  }
+
+  public TransactionTestFixture blobsWithCommitments(final Optional<BlobsWithCommitments> blobs) {
+    this.blobs = blobs;
+    return this;
+  }
+
   public TransactionTestFixture accessList(final List<AccessListEntry> accessList) {
     this.accessList = accessList;
     return this;
   }
 
-  public TransactionTestFixture versionedHashes(final Optional<List<Hash>> versionedHashes) {
+  public TransactionTestFixture versionedHashes(
+      final Optional<List<VersionedHash>> versionedHashes) {
     this.versionedHashes = versionedHashes;
     return this;
   }
