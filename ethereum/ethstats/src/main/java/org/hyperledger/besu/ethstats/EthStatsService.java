@@ -439,7 +439,7 @@ public class EthStatsService {
       final EthStatsRequest message,
       final Consumer<Boolean> handlerResult) {
     try {
-      LOG.debug("Send ethstats request {}", message.generateCommand());
+      LOG.trace("Send ethstats request {}", message.generateCommand());
       webSocket.writeTextMessage(
           message.generateCommand(),
           handler -> {

@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class QbftValidatorsValidationRuleTest {
   private final BftExtraData bftExtraData = mock(BftExtraData.class);
@@ -46,7 +46,8 @@ public class QbftValidatorsValidationRuleTest {
         new ProtocolContext(
             null,
             null,
-            setupContextWithBftExtraData(QbftContext.class, Collections.emptyList(), bftExtraData));
+            setupContextWithBftExtraData(QbftContext.class, Collections.emptyList(), bftExtraData),
+            Optional.empty());
     when(bftExtraData.getValidators()).thenReturn(Collections.emptyList());
     when(bftExtraData.getVote()).thenReturn(Optional.empty());
     assertThat(qbftValidatorsValidationRule.validate(blockHeader, null, context)).isTrue();
@@ -62,7 +63,10 @@ public class QbftValidatorsValidationRuleTest {
 
     final ProtocolContext context =
         new ProtocolContext(
-            null, null, setupContextWithBftExtraData(QbftContext.class, validators, bftExtraData));
+            null,
+            null,
+            setupContextWithBftExtraData(QbftContext.class, validators, bftExtraData),
+            Optional.empty());
     when(bftExtraData.getValidators()).thenReturn(validators);
     assertThat(qbftValidatorsValidationRule.validate(blockHeader, null, context)).isTrue();
   }
@@ -77,7 +81,10 @@ public class QbftValidatorsValidationRuleTest {
 
     final ProtocolContext context =
         new ProtocolContext(
-            null, null, setupContextWithBftExtraData(QbftContext.class, validators, bftExtraData));
+            null,
+            null,
+            setupContextWithBftExtraData(QbftContext.class, validators, bftExtraData),
+            Optional.empty());
     when(bftExtraData.getValidators()).thenReturn(validators);
     assertThat(qbftValidatorsValidationRule.validate(blockHeader, null, context)).isFalse();
   }
@@ -90,7 +97,8 @@ public class QbftValidatorsValidationRuleTest {
         new ProtocolContext(
             null,
             null,
-            setupContextWithBftExtraData(QbftContext.class, Collections.emptyList(), bftExtraData));
+            setupContextWithBftExtraData(QbftContext.class, Collections.emptyList(), bftExtraData),
+            Optional.empty());
     when(bftExtraData.getValidators()).thenReturn(Collections.emptyList());
     when(bftExtraData.getVote()).thenReturn(Optional.of(mock(Vote.class)));
     assertThat(qbftValidatorsValidationRule.validate(blockHeader, null, context)).isFalse();

@@ -21,7 +21,7 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Prepare;
 import org.hyperledger.besu.datatypes.Hash;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PrepareValidatorTest {
 

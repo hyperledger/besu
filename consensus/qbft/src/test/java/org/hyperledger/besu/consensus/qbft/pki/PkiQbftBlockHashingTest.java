@@ -32,15 +32,15 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PkiQbftBlockHashingTest {
 
   private PkiQbftExtraDataCodec pkiExtraDataCodec = new PkiQbftExtraDataCodec();
   private PkiQbftBlockHashing pkiQbftBlockHashing;
 
-  @Before
+  @BeforeEach
   public void before() {
     pkiExtraDataCodec = spy(new PkiQbftExtraDataCodec());
     pkiQbftBlockHashing = new PkiQbftBlockHashing(pkiExtraDataCodec);

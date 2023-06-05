@@ -37,14 +37,14 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class QbftBlockCreatorFactoryTest {
   private final QbftExtraDataCodec extraDataCodec = new QbftExtraDataCodec();
   private QbftBlockCreatorFactory qbftBlockCreatorFactory;
 
-  @Before
+  @BeforeEach
   @SuppressWarnings("unchecked")
   public void setUp() throws Exception {
     final MiningParameters miningParams = mock(MiningParameters.class);
