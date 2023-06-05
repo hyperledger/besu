@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.Objects;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class VersionedHash {
@@ -66,4 +67,7 @@ public class VersionedHash {
   public int hashCode() {
     return Objects.hash(getVersionId(), hashish);
   }
+
+  public static final VersionedHash DEFAULT_VERSIONED_HASH =
+      new VersionedHash((byte) 0x01, Hash.wrap(Bytes32.wrap(Bytes.repeat((byte) 42, 32))));
 }

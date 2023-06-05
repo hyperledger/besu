@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -471,28 +472,6 @@ public class BlockTransactionSelector {
         || invalidReason.equals(TransactionInvalidReason.NONCE_TOO_HIGH);
   }
 
-  /*
-  Responsible for updating the state maintained between transaction validation (i.e. receipts,
-  cumulative gas, world state root hash.).
-   */
-  private void updateTransactionResultTracking(
-      final Transaction transaction, final TransactionProcessingResult result) {
-
-    final long gasUsedByTransaction = transaction.getGasLimit() - result.getGasRemaining();
-
-    final long cumulativeGasUsed =
-        transactionSelectionResult.getCumulativeGasUsed() + gasUsedByTransaction;
-
-    final long dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount());
-
-    transactionSelectionResult.update(
-        transaction,
-        transactionReceiptFactory.create(
-            transaction.getType(), result, worldState, cumulativeGasUsed),
-        gasUsedByTransaction,
-        dataGasUsed);
-  }
-
   private boolean isIncorrectNonce(final ValidationResult<TransactionInvalidReason> result) {
     return result.getInvalidReason().equals(TransactionInvalidReason.NONCE_TOO_HIGH);
   }
@@ -530,7 +509,8 @@ public class BlockTransactionSelector {
 
   private boolean blockFull() {
     final long gasAvailable = processableBlockHeader.getGasLimit();
-    final long gasUsed = transactionSelectionResult.getCumulativeGasUsed();
+    final long gasUsed = transactionSelectionResults.getCumulativeGasUsed();
+
     final long gasRemaining = gasAvailable - gasUsed;
 
     if (gasRemaining < gasCalculator.getMinimumTransactionCost()) {
