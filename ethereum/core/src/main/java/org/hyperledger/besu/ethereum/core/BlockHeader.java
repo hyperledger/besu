@@ -241,7 +241,9 @@ public class BlockHeader extends SealableBlockHeader
     final long nonce = input.readLong();
     final Wei baseFee = !input.isEndOfCurrentList() ? Wei.of(input.readUInt256Scalar()) : null;
     final Hash withdrawalHashRoot =
-        !(input.isEndOfCurrentList() || input.isZeroLengthString() )? Hash.wrap(input.readBytes32()) : null;
+        !(input.isEndOfCurrentList() || input.isZeroLengthString())
+            ? Hash.wrap(input.readBytes32())
+            : null;
     final DataGas excessDataGas =
         !input.isEndOfCurrentList() ? DataGas.of(input.readUInt256Scalar()) : null;
     final Hash depositHashRoot =
