@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
-import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AttachedComposedFromDetachedRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.BaseFeeMarketBlockHeaderGasPriceValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.CalculatedDifficultyValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
@@ -148,17 +147,13 @@ public final class MainnetBlockHeaderValidator {
             .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
             .addRule((new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket)));
 
-    // if merge is enabled, use the attached version of the proof of work validation rule
-    var powValidationRule =
-        new ProofOfWorkValidationRule(
-            new EpochCalculator.DefaultEpochCalculator(),
-            PoWHasher.ETHASH_LIGHT,
-            Optional.of(baseFeeMarket));
-
-    if (isMergeEnabled) {
-      builder.addRule(new AttachedComposedFromDetachedRule(powValidationRule));
-    } else {
-      builder.addRule(powValidationRule);
+    // if this is not a merged PoS network, add the proof of work validation rule:
+    if (!isMergeEnabled) {
+      builder.addRule(
+          new ProofOfWorkValidationRule(
+              new EpochCalculator.DefaultEpochCalculator(),
+              PoWHasher.ETHASH_LIGHT,
+              Optional.of(baseFeeMarket)));
     }
     return builder;
   }
