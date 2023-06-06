@@ -158,7 +158,10 @@ public abstract class RocksDBColumnarKeyValueStorage
                           segment.getId(),
                           new ColumnFamilyOptions()
                               .setTtl(0)
-                                  .setNumLevels(0)
+                                  .setLevelCompactionDynamicLevelBytes(true)
+                                  .setNumLevels(6)
+                                  .setMaxBytesForLevelBase(10 * 1024 * 1024) // 10 MB
+                                  .setMaxBytesForLevelMultiplier(10)
                               .setCompressionType(CompressionType.LZ4_COMPRESSION)
                               .setTableFormatConfig(createBlockBasedTableConfig(configuration))))
               .collect(Collectors.toList());
@@ -167,7 +170,10 @@ public abstract class RocksDBColumnarKeyValueStorage
               DEFAULT_COLUMN.getBytes(StandardCharsets.UTF_8),
               columnFamilyOptions
                   .setTtl(0)
-                      .setNumLevels(0)
+                      .setLevelCompactionDynamicLevelBytes(true)
+                      .setNumLevels(6)
+                      .setMaxBytesForLevelBase(10 * 1024 * 1024) // 10 MB
+                      .setMaxBytesForLevelMultiplier(10)
                   .setCompressionType(CompressionType.LZ4_COMPRESSION)
                   .setTableFormatConfig(createBlockBasedTableConfig(configuration))));
 
