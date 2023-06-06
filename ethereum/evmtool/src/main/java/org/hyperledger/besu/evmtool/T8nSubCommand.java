@@ -68,8 +68,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.concurrent.TimeUnit;
 
@@ -255,6 +257,51 @@ public class T8nSubCommand implements Runnable {
       return;
     }
 
+    TracerManager tracerManager;
+    if (parentCommand.showJsonResults) {
+      tracerManager =
+          new TracerManager() {
+            private final Map<OperationTracer, FileOutputStream> outputStreams = new HashMap<>();
+
+            @Override
+            public OperationTracer getManagedTracer(final int txIndex, final Hash txHash)
+                throws Exception {
+              var traceDest =
+                  new FileOutputStream(
+                      outDir
+                          .resolve(
+                              String.format("trace-%d-%s.jsonl", txIndex, txHash.toHexString()))
+                          .toFile());
+
+              var jsonTracer =
+                  new StandardJsonTracer(
+                      new PrintStream(traceDest),
+                      parentCommand.showMemory,
+                      !parentCommand.hideStack,
+                      parentCommand.showReturnData);
+              outputStreams.put(jsonTracer, traceDest);
+              return jsonTracer;
+            }
+
+            @Override
+            public void disposeTracer(final OperationTracer tracer) throws IOException {
+              if (outputStreams.containsKey(tracer)) {
+                outputStreams.remove(tracer).close();
+              }
+            }
+          };
+    } else {
+      tracerManager =
+          new TracerManager() {
+            @Override
+            public OperationTracer getManagedTracer(final int txIndex, final Hash txHash) {
+              return OperationTracer.NO_TRACING;
+            }
+
+            @Override
+            public void disposeTracer(final OperationTracer tracer) {}
+          };
+    }
     final T8nResult result =
         t8nTestRunner(
             chainId,
@@ -263,7 +310,8 @@ public class T8nSubCommand implements Runnable {
             objectMapper,
             referenceTestEnv,
             initialWorldState,
-            transactions);
+            transactions,
+            tracerManager);
 
     try {
       ObjectWriter writer = objectMapper.writerWithDefaultPrettyPrinter();
@@ -311,7 +359,8 @@ public class T8nSubCommand implements Runnable {
       final ObjectMapper objectMapper,
       final ReferenceTestEnv referenceTestEnv,
       final MutableWorldState initialWorldState,
-      final List<Transaction> transactions) {
+      final List<Transaction> transactions,
+      final TracerManager tracerManager) {
 
     final ReferenceTestProtocolSchedules referenceTestProtocolSchedules =
         ReferenceTestProtocolSchedules.create(
@@ -345,26 +394,8 @@ public class T8nSubCommand implements Runnable {
       final OperationTracer tracer; // You should have picked Mercy.
 
       final TransactionProcessingResult result;
-      try (FileOutputStream traceDest =
-          parentCommand.showJsonResults
-              ? new FileOutputStream(
-                  outDir
-                      .resolve(
-                          String.format(
-                              "trace-%d-%s.jsonl", i, transaction.getHash().toHexString()))
-                      .toFile())
-              : null) {
-        if (parentCommand.showJsonResults) {
-          tracer =
-              new StandardJsonTracer(
-                  new PrintStream(traceDest),
-                  parentCommand.showMemory,
-                  !parentCommand.hideStack,
-                  parentCommand.showReturnData);
-        } else {
-          tracer = OperationTracer.NO_TRACING;
-        }
-
+      try {
+        tracer = tracerManager.getManagedTracer(i, transaction.getHash());
         result =
             processor.processTransaction(
                 blockchain,
@@ -377,7 +408,8 @@ public class T8nSubCommand implements Runnable {
                 TransactionValidationParams.processingBlock(),
                 tracer,
                 dataGasPrice);
-      } catch (IOException e) {
+        tracerManager.disposeTracer(tracer);
+      } catch (Exception e) {
         throw new RuntimeException(e);
       }
       timer.stop();
@@ -606,4 +638,10 @@ public class T8nSubCommand implements Runnable {
 
   @SuppressWarnings("unused")
   private record T8nResult(ObjectNode allocObject, TextNode bodyBytes, ObjectNode resultObject) {}
+
+  private interface TracerManager {
+    OperationTracer getManagedTracer(int txIndex, Hash txHash) throws Exception;
+
+    void disposeTracer(OperationTracer tracer) throws IOException;
+  }
 }
