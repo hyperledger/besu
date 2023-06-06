@@ -2983,6 +2983,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return this.keyValueStorageProvider;
   }
 
+  /**
+   * Get the storage provider
+   *
+   * @return the storage provider
+   */
   public StorageProvider getStorageProvider() {
     return keyValueStorageProvider(keyValueStorageName);
   }

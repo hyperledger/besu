@@ -224,6 +224,11 @@ public class BesuController implements java.io.Closeable {
     return ethPeers;
   }
 
+  /**
+   * Get the storage provider
+   *
+   * @return the storage provider
+   */
   public StorageProvider getStorageProvider() {
     return storageProvider;
   }
