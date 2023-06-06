@@ -255,6 +255,64 @@ public class T8nSubCommand implements Runnable {
       return;
     }
 
+    final T8nResult result =
+        t8nTestRunner(
+            chainId,
+            fork,
+            rewardString,
+            objectMapper,
+            referenceTestEnv,
+            initialWorldState,
+            transactions);
+
+    try {
+      ObjectWriter writer = objectMapper.writerWithDefaultPrettyPrinter();
+      ObjectNode outputObject = objectMapper.createObjectNode();
+
+      if (outAlloc.equals(stdoutPath)) {
+        outputObject.set("alloc", result.allocObject());
+      } else {
+        try (PrintStream fileOut =
+            new PrintStream(new FileOutputStream(outDir.resolve(outAlloc).toFile()))) {
+          fileOut.println(writer.writeValueAsString(result.allocObject()));
+        }
+      }
+
+      if (outBody.equals((stdoutPath))) {
+        outputObject.set("body", result.bodyBytes());
+      } else {
+        try (PrintStream fileOut =
+            new PrintStream(new FileOutputStream(outDir.resolve(outBody).toFile()))) {
+          fileOut.println(result.bodyBytes());
+        }
+      }
+
+      if (outResult.equals(stdoutPath)) {
+        outputObject.set("result", result.resultObject());
+      } else {
+        try (PrintStream fileOut =
+            new PrintStream(new FileOutputStream(outDir.resolve(outResult).toFile()))) {
+          fileOut.println(writer.writeValueAsString(result.resultObject()));
+        }
+      }
+
+      if (outputObject.size() > 0) {
+        parentCommand.out.println(writer.writeValueAsString(outputObject));
+      }
+    } catch (IOException ioe) {
+      LOG.error("Could not write results", ioe);
+    }
+  }
+
+  private T8nResult t8nTestRunner(
+      final Long chainId,
+      final String fork,
+      final String rewardString,
+      final ObjectMapper objectMapper,
+      final ReferenceTestEnv referenceTestEnv,
+      final MutableWorldState initialWorldState,
+      final List<Transaction> transactions) {
+
     final ReferenceTestProtocolSchedules referenceTestProtocolSchedules =
         ReferenceTestProtocolSchedules.create(
             new StubGenesisConfigOptions().chainId(BigInteger.valueOf(chainId)));
@@ -272,15 +330,14 @@ public class T8nSubCommand implements Runnable {
     final MainnetTransactionProcessor processor = protocolSpec.getTransactionProcessor();
     final WorldUpdater worldStateUpdater = worldState.updater();
     final ReferenceTestBlockchain blockchain = new ReferenceTestBlockchain(blockHeader.getNumber());
+    // Todo: EIP-4844 use the excessDataGas of the parent instead of DataGas.ZERO
+    final Wei dataGasPrice = protocolSpec.getFeeMarket().dataPrice(DataGas.ZERO);
 
     List<TransactionReceipt> receipts = new ArrayList<>();
     List<RejectedTransaction> invalidTransactions = new ArrayList<>();
     List<Transaction> validTransactions = new ArrayList<>();
     ArrayNode receiptsArray = objectMapper.createArrayNode();
     long gasUsed = 0;
-    // Todo: EIP-4844 use the excessDataGas of the parent instead of DataGas.ZERO
-    final Wei dataGasPrice = protocolSpec.getFeeMarket().dataPrice(DataGas.ZERO);
-
     for (int i = 0; i < transactions.size(); i++) {
       Transaction transaction = transactions.get(i);
 
@@ -472,47 +529,10 @@ public class T8nSubCommand implements Runnable {
               }
             });
 
-    try {
-      ObjectWriter writer = objectMapper.writerWithDefaultPrettyPrinter();
-      ObjectNode outputObject = objectMapper.createObjectNode();
-
-      if (outAlloc.equals(stdoutPath)) {
-        outputObject.set("alloc", allocObject);
-      } else {
-        try (PrintStream fileOut =
-            new PrintStream(new FileOutputStream(outDir.resolve(outAlloc).toFile()))) {
-          fileOut.println(writer.writeValueAsString(allocObject));
-        }
-      }
-
-      BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
-      rlpOut.writeList(transactions, Transaction::writeTo);
-      TextNode bodyBytes = TextNode.valueOf(rlpOut.encoded().toHexString());
-
-      if (outBody.equals((stdoutPath))) {
-        outputObject.set("body", bodyBytes);
-      } else {
-        try (PrintStream fileOut =
-            new PrintStream(new FileOutputStream(outDir.resolve(outBody).toFile()))) {
-          fileOut.println(bodyBytes);
-        }
-      }
-
-      if (outResult.equals(stdoutPath)) {
-        outputObject.set("result", resultObject);
-      } else {
-        try (PrintStream fileOut =
-            new PrintStream(new FileOutputStream(outDir.resolve(outResult).toFile()))) {
-          fileOut.println(writer.writeValueAsString(resultObject));
-        }
-      }
-
-      if (outputObject.size() > 0) {
-        parentCommand.out.println(writer.writeValueAsString(outputObject));
-      }
-    } catch (IOException ioe) {
-      LOG.error("Could not write results", ioe);
-    }
+    BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
+    rlpOut.writeList(transactions, Transaction::writeTo);
+    TextNode bodyBytes = TextNode.valueOf(rlpOut.encoded().toHexString());
+    return new T8nResult(allocObject, bodyBytes, resultObject);
   }
 
   private List<Transaction> extractTransactions(final Iterator<JsonNode> it) {
@@ -583,4 +603,7 @@ public class T8nSubCommand implements Runnable {
     }
     return transactions;
   }
+
+  @SuppressWarnings("unused")
+  private record T8nResult(ObjectNode allocObject, TextNode bodyBytes, ObjectNode resultObject) {}
 }
