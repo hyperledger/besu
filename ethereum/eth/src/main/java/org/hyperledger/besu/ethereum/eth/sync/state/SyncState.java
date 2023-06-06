@@ -74,6 +74,7 @@ public class SyncState {
       final Optional<Checkpoint> checkpoint) {
     this.blockchain = blockchain;
     this.ethPeers = ethPeers;
+    this.maybeAccountToRepair = Optional.empty();
     isInitialSyncPhaseDone = !hasInitialSyncPhase;
 
     blockchain.observeBlockAdded(
