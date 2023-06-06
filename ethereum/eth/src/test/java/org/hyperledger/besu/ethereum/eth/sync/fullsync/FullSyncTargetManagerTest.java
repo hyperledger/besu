@@ -40,6 +40,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.After;
@@ -80,7 +81,7 @@ public class FullSyncTargetManagerTest {
 
     final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
     final ProtocolContext protocolContext =
-        new ProtocolContext(localBlockchain, localWorldState, null);
+        new ProtocolContext(localBlockchain, localWorldState, null, Optional.empty());
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             protocolSchedule,
