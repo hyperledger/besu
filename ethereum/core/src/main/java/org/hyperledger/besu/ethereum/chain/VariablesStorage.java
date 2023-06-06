@@ -31,10 +31,12 @@ public interface VariablesStorage {
     SAFE_BLOCK_HASH("safeBlockHash"),
     SEQ_NO_STORE("local-enr-seqno");
 
+    private final String key;
     private final byte[] byteArray;
     private final Bytes bytes;
 
     Keys(final String key) {
+      this.key = key;
       this.byteArray = key.getBytes(UTF_8);
       this.bytes = Bytes.wrap(byteArray);
     }
@@ -45,6 +47,11 @@ public interface VariablesStorage {
 
     public Bytes getBytes() {
       return bytes;
+    }
+
+    @Override
+    public String toString() {
+      return key;
     }
   }
 
