@@ -158,10 +158,6 @@ public abstract class RocksDBColumnarKeyValueStorage
                           segment.getId(),
                           new ColumnFamilyOptions()
                               .setTtl(0)
-                                  .setLevelCompactionDynamicLevelBytes(true)
-                                  .setNumLevels(6)
-                                  .setMaxBytesForLevelBase(10 * 1024 * 1024) // 10 MB
-                                  .setMaxBytesForLevelMultiplier(10)
                               .setCompressionType(CompressionType.LZ4_COMPRESSION)
                               .setTableFormatConfig(createBlockBasedTableConfig(configuration))))
               .collect(Collectors.toList());
@@ -170,10 +166,6 @@ public abstract class RocksDBColumnarKeyValueStorage
               DEFAULT_COLUMN.getBytes(StandardCharsets.UTF_8),
               columnFamilyOptions
                   .setTtl(0)
-                      .setLevelCompactionDynamicLevelBytes(true)
-                      .setNumLevels(6)
-                      .setMaxBytesForLevelBase(10 * 1024 * 1024) // 10 MB
-                      .setMaxBytesForLevelMultiplier(10)
                   .setCompressionType(CompressionType.LZ4_COMPRESSION)
                   .setTableFormatConfig(createBlockBasedTableConfig(configuration))));
 
@@ -193,6 +185,7 @@ public abstract class RocksDBColumnarKeyValueStorage
         .setMaxOpenFiles(configuration.getMaxOpenFiles())
         .setStatistics(stats)
         .setCreateMissingColumnFamilies(true)
+        .setMaxBackgroundJobs(6)
         .setLogFileTimeToRoll(TIME_TO_ROLL_LOG_FILE)
         .setKeepLogFileNum(NUMBER_OF_LOG_FILES_TO_KEEP)
         .setEnv(Env.getDefault().setBackgroundThreads(configuration.getBackgroundThreadCount()));
