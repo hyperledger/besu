@@ -40,9 +40,12 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainStorage {
-
+  private static final Logger LOG =
+      LoggerFactory.getLogger(KeyValueStoragePrefixedKeyBlockchainStorage.class);
   private static final Bytes VARIABLES_PREFIX = Bytes.of(1);
   private static final Bytes BLOCK_HEADER_PREFIX = Bytes.of(2);
   private static final Bytes BLOCK_BODY_PREFIX = Bytes.of(3);
@@ -140,21 +143,42 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
     get(VARIABLES_PREFIX, CHAIN_HEAD_HASH.getBytes())
         .map(this::bytesToHash)
-        .ifPresent(variablesUpdater::setChainHead);
+        .ifPresent(
+            ch -> {
+              variablesUpdater.setChainHead(ch);
+              LOG.info("Migrated key {} to variables storage", CHAIN_HEAD_HASH);
+            });
 
     get(VARIABLES_PREFIX, FINALIZED_BLOCK_HASH.getBytes())
         .map(this::bytesToHash)
-        .ifPresent(variablesUpdater::setChainHead);
+        .ifPresent(
+            fh -> {
+              variablesUpdater.setFinalized(fh);
+              LOG.info("Migrated key {} to variables storage", FINALIZED_BLOCK_HASH);
+            });
 
     get(VARIABLES_PREFIX, SAFE_BLOCK_HASH.getBytes())
         .map(this::bytesToHash)
-        .ifPresent(variablesUpdater::setChainHead);
+        .ifPresent(
+            sh -> {
+              variablesUpdater.setSafeBlock(sh);
+              LOG.info("Migrated key {} to variables storage", SAFE_BLOCK_HASH);
+            });
 
     get(VARIABLES_PREFIX, FORK_HEADS.getBytes())
         .map(bytes -> RLP.input(bytes).readList(in -> this.bytesToHash(in.readBytes32())))
-        .ifPresent(variablesUpdater::setForkHeads);
+        .ifPresent(
+            fh -> {
+              variablesUpdater.setForkHeads(fh);
+              LOG.info("Migrated key {} to variables storage", FORK_HEADS);
+            });
 
-    get(Bytes.EMPTY, SEQ_NO_STORE.getBytes()).ifPresent(variablesUpdater::setLocalEnrSeqno);
+    get(Bytes.EMPTY, SEQ_NO_STORE.getBytes())
+        .ifPresent(
+            sns -> {
+              variablesUpdater.setLocalEnrSeqno(sns);
+              LOG.info("Migrated key {} to variables storage", SEQ_NO_STORE);
+            });
 
     blockchainUpdater.removeVariables();
 

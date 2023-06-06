@@ -32,6 +32,8 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import java.io.PrintWriter;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.ParentCommand;
@@ -80,6 +82,7 @@ public class StorageSubCommand implements Runnable {
       mixinStandardHelpOptions = true,
       versionProvider = VersionProvider.class)
   static class RevertVariablesStorage implements Runnable {
+    private static final Logger LOG = LoggerFactory.getLogger(RevertVariablesStorage.class);
     private static final Bytes VARIABLES_PREFIX = Bytes.of(1);
 
     @SuppressWarnings("unused")
@@ -109,23 +112,29 @@ public class StorageSubCommand implements Runnable {
       variablesStorage
           .getChainHead()
           .ifPresent(
-              v ->
-                  setBlockchainVariable(
-                      blockchainUpdater, VARIABLES_PREFIX, CHAIN_HEAD_HASH.getBytes(), v));
+              v -> {
+                setBlockchainVariable(
+                    blockchainUpdater, VARIABLES_PREFIX, CHAIN_HEAD_HASH.getBytes(), v);
+                LOG.info("Reverted variable storage for key {}", CHAIN_HEAD_HASH);
+              });
 
       variablesStorage
           .getFinalized()
           .ifPresent(
-              v ->
-                  setBlockchainVariable(
-                      blockchainUpdater, VARIABLES_PREFIX, FINALIZED_BLOCK_HASH.getBytes(), v));
+              v -> {
+                setBlockchainVariable(
+                    blockchainUpdater, VARIABLES_PREFIX, FINALIZED_BLOCK_HASH.getBytes(), v);
+                LOG.info("Reverted variable storage for key {}", FINALIZED_BLOCK_HASH);
+              });
 
       variablesStorage
           .getSafeBlock()
           .ifPresent(
-              v ->
-                  setBlockchainVariable(
-                      blockchainUpdater, VARIABLES_PREFIX, SAFE_BLOCK_HASH.getBytes(), v));
+              v -> {
+                setBlockchainVariable(
+                    blockchainUpdater, VARIABLES_PREFIX, SAFE_BLOCK_HASH.getBytes(), v);
+                LOG.info("Reverted variable storage for key {}", SAFE_BLOCK_HASH);
+              });
 
       setBlockchainVariable(
           blockchainUpdater,
@@ -134,13 +143,15 @@ public class StorageSubCommand implements Runnable {
           RLP.encode(
               o ->
                   o.writeList(variablesStorage.getForkHeads(), (val, out) -> out.writeBytes(val))));
+      LOG.info("Reverted variable storage for key {}", FORK_HEADS);
 
       variablesStorage
           .getLocalEnrSeqno()
           .ifPresent(
-              v ->
-                  setBlockchainVariable(
-                      blockchainUpdater, Bytes.EMPTY, SEQ_NO_STORE.getBytes(), v));
+              v -> {
+                setBlockchainVariable(blockchainUpdater, Bytes.EMPTY, SEQ_NO_STORE.getBytes(), v);
+                LOG.info("Reverted variable storage for key {}", SEQ_NO_STORE);
+              });
 
       variablesUpdater.removeAll();
 
