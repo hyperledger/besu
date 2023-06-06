@@ -155,9 +155,7 @@ public final class MainnetBlockHeaderValidator {
             PoWHasher.ETHASH_LIGHT,
             Optional.of(baseFeeMarket));
 
-    if (isMergeEnabled) {
-      builder.addRule(new AttachedComposedFromDetachedRule(powValidationRule));
-    } else {
+    if (!isMergeEnabled) {
       builder.addRule(powValidationRule);
     }
     return builder;
