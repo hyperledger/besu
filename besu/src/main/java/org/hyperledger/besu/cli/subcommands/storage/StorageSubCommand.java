@@ -15,7 +15,7 @@
 package org.hyperledger.besu.cli.subcommands.storage;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.cli.subcommands.PasswordSubCommand.COMMAND_NAME;
+import static org.hyperledger.besu.cli.subcommands.storage.StorageSubCommand.COMMAND_NAME;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.CHAIN_HEAD_HASH;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.FINALIZED_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.FORK_HEADS;
@@ -136,14 +136,15 @@ public class StorageSubCommand implements Runnable {
                 LOG.info("Reverted variable storage for key {}", SAFE_BLOCK_HASH);
               });
 
-      setBlockchainVariable(
-          blockchainUpdater,
-          VARIABLES_PREFIX,
-          FORK_HEADS.getBytes(),
-          RLP.encode(
-              o ->
-                  o.writeList(variablesStorage.getForkHeads(), (val, out) -> out.writeBytes(val))));
-      LOG.info("Reverted variable storage for key {}", FORK_HEADS);
+      final var forkHeads = variablesStorage.getForkHeads();
+      if (!forkHeads.isEmpty()) {
+        setBlockchainVariable(
+            blockchainUpdater,
+            VARIABLES_PREFIX,
+            FORK_HEADS.getBytes(),
+            RLP.encode(o -> o.writeList(forkHeads, (val, out) -> out.writeBytes(val))));
+        LOG.info("Reverted variable storage for key {}", FORK_HEADS);
+      }
 
       variablesStorage
           .getLocalEnrSeqno()
