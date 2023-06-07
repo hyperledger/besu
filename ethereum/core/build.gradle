@@ -35,8 +35,6 @@ dependencies {
 
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
 
-  //  implementation fileTree(dir: '/Users/jiripeinlich/consensys/src/incubator-tuweni/ssz/build/classes', include: '*.class')
-
   implementation project(':config')
   implementation project(':crypto:algorithms')
   implementation project(':datatypes')
