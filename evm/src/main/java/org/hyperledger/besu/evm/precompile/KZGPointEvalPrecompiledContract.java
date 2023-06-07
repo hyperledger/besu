@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.precompile;
 
+import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
@@ -108,11 +109,28 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
           MessageFrame.State.COMPLETED_FAILED,
           Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
+    Bytes32 versionedHash = Bytes32.wrap(input.slice(0, 32));
     Bytes z = input.slice(32, 32);
     Bytes y = input.slice(64, 32);
     Bytes commitment = input.slice(96, 48);
     Bytes proof = input.slice(144, 48);
-
+    if(versionedHash.get(0) != 0x01) { // unsupported hash version
+      return new PrecompileContractResult(
+          Bytes.EMPTY,
+          false,
+          MessageFrame.State.COMPLETED_FAILED,
+          Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+    } else {
+        byte[] hash = Hash.sha256(commitment).toArray();
+        hash[0] = 0x01;
+        if(!versionedHash.equals(Bytes32.wrap(hash))) {
+          return new PrecompileContractResult(
+              Bytes.EMPTY,
+              false,
+              MessageFrame.State.COMPLETED_FAILED,
+              Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+        }
+    }
     PrecompileContractResult result;
     try {
       boolean proved =

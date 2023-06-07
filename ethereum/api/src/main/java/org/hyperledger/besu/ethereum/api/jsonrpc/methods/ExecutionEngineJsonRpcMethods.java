@@ -38,6 +38,8 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -79,8 +81,9 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
   protected Map<String, JsonRpcMethod> create() {
     final EngineQosTimer engineQosTimer = new EngineQosTimer(consensusEngineServer);
     if (mergeCoordinator.isPresent()) {
-      List<JsonRpcMethod> executionEngineApisSupported =
-          List.of(
+      List<JsonRpcMethod> executionEngineApisSupported = new ArrayList<>();
+        executionEngineApisSupported.addAll(
+          Arrays.asList(
               new EngineGetPayloadV1(
                   consensusEngineServer,
                   protocolContext,
@@ -144,7 +147,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
               new EngineExchangeCapabilities(
                   consensusEngineServer, protocolContext, engineQosTimer),
               new EnginePreparePayloadDebug(
-                  consensusEngineServer, protocolContext, engineQosTimer, mergeCoordinator.get()));
+                  consensusEngineServer, protocolContext, engineQosTimer, mergeCoordinator.get())));
 
       if (protocolSchedule.anyMatch(p -> p.spec().getName().equalsIgnoreCase("cancun"))) {
         executionEngineApisSupported.add(
