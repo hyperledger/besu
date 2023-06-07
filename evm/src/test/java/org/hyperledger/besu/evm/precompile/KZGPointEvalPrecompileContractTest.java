@@ -16,12 +16,15 @@ package org.hyperledger.besu.evm.precompile;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -54,6 +57,7 @@ public class KZGPointEvalPrecompileContractTest {
   @ParameterizedTest(name = "{index}")
   @MethodSource("getPointEvaluationPrecompileTestVectors")
   public void testComputePrecompile(final PrecompileTestParameters parameters) {
+    when(toRun.getVersionedHashes()).thenReturn(Optional.of(List.of(parameters.versionedHash)));
     PrecompiledContract.PrecompileContractResult result =
         contract.computePrecompile(parameters.input, toRun);
     if (parameters.valid) {
@@ -80,10 +84,10 @@ public class KZGPointEvalPrecompileContractTest {
               final JsonNode testCase = testCases.get(i);
               final Bytes input = Bytes.fromHexString(testCase.get("Input").asText());
               final boolean valid = testCase.get("Valid").asBoolean();
-              return new PrecompileTestParameters(input, valid, returnValue);
+              return new PrecompileTestParameters(input, valid, returnValue, Bytes32.wrap(input.slice(0, 32)));
             })
         .collect(Collectors.toList());
   }
 
-  record PrecompileTestParameters(Bytes input, boolean valid, Bytes returnValue) {}
+  record PrecompileTestParameters(Bytes input, boolean valid, Bytes returnValue, Bytes32 versionedHash) {}
 }

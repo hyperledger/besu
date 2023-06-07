@@ -1571,6 +1571,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       runner.awaitStop();
 
     } catch (final Exception e) {
+      logger.warn("Failed to start Besu", e);
       throw new ParameterException(this.commandLine, e.getMessage(), e);
     }
   }
