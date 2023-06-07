@@ -96,6 +96,11 @@ final class ApiHandler extends SimpleChannelInboundHandler<MessageData> {
       }
       return;
     }
+    LOG.trace(
+        "Received {} from {} via protocol {}",
+        message,
+        connection.getPeerInfo(),
+        demultiplexed.getCapability());
     connectionEventDispatcher.dispatchMessage(demultiplexed.getCapability(), connection, message);
   }
 

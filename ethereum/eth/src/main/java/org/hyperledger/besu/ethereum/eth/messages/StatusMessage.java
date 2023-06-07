@@ -218,7 +218,7 @@ public final class StatusMessage extends AbstractMessageData {
 
     @Override
     public String toString() {
-      return "EthStatus{"
+      return "{"
           + "protocolVersion="
           + protocolVersion
           + ", networkId="
@@ -236,7 +236,7 @@ public final class StatusMessage extends AbstractMessageData {
   }
 
   @Override
-  public String toString() {
+  protected String toStringDecoded() {
     return status().toString();
   }
 }

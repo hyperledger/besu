@@ -26,7 +26,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** A P2P Network Message's Data. */
 public interface MessageData {
-
+  int MAX_DATA_FOR_TO_STRING = 1000;
   /**
    * Returns the size of the message.
    *
