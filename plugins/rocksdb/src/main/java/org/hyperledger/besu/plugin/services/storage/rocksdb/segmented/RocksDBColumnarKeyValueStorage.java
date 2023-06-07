@@ -17,6 +17,7 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -153,14 +154,24 @@ public abstract class RocksDBColumnarKeyValueStorage
       columnDescriptors =
           trimmedSegments.stream()
               .map(
-                  segment ->
-                      new ColumnFamilyDescriptor(
-                          segment.getId(),
-                          new ColumnFamilyOptions()
-                              .setTtl(0)
-                              .setCompressionType(CompressionType.LZ4_COMPRESSION)
-                              .setTableFormatConfig(createBlockBasedTableConfig(configuration))))
+                  segment -> {
+                    ColumnFamilyOptions columnFamilyOptions1 =
+                        new ColumnFamilyOptions()
+                            .setTtl(0)
+                            .setCompressionType(CompressionType.LZ4_COMPRESSION)
+                            .setTableFormatConfig(createBlockBasedTableConfig(configuration));
+                    if (segment
+                            .getName()
+                            .equals(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE.getName())
+                        || segment
+                            .getName()
+                            .equals(KeyValueSegmentIdentifier.CODE_STORAGE.getName())) {
+                      columnFamilyOptions1.setOptimizeFiltersForHits(true);
+                    }
+                    return new ColumnFamilyDescriptor(segment.getId(), columnFamilyOptions1);
+                  })
               .collect(Collectors.toList());
+
       columnDescriptors.add(
           new ColumnFamilyDescriptor(
               DEFAULT_COLUMN.getBytes(StandardCharsets.UTF_8),
