@@ -55,7 +55,7 @@ public class UndoList<V> implements List<V>, UndoableCollection {
     }
   }
 
-  class ReadOnlyListIterator implements ListIterator<V> {
+  static class ReadOnlyListIterator<V> implements ListIterator<V> {
     ListIterator<V> iterDelegate;
 
     public ReadOnlyListIterator(final ListIterator<V> iterDelegate) {
@@ -287,12 +287,12 @@ public class UndoList<V> implements List<V>, UndoableCollection {
 
   @Override
   public ListIterator<V> listIterator() {
-    return new ReadOnlyListIterator(delegate.listIterator());
+    return new ReadOnlyListIterator<>(delegate.listIterator());
   }
 
   @Override
   public ListIterator<V> listIterator(final int index) {
-    return new ReadOnlyListIterator(delegate.listIterator(index));
+    return new ReadOnlyListIterator<>(delegate.listIterator(index));
   }
 
   @Override
