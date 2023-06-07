@@ -51,6 +51,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
+import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
@@ -119,10 +120,12 @@ public class MergeBesuControllerBuilderTest {
     when(genesisConfigOptions.getThanosBlockNumber()).thenReturn(OptionalLong.empty());
     when(genesisConfigOptions.getTerminalBlockHash()).thenReturn(Optional.of(Hash.ZERO));
     when(genesisConfigOptions.getTerminalBlockNumber()).thenReturn(OptionalLong.of(1L));
-    when(storageProvider.createBlockchainStorage(any()))
+    when(storageProvider.createBlockchainStorage(any(), any()))
         .thenReturn(
             new KeyValueStoragePrefixedKeyBlockchainStorage(
-                new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions()));
+                new InMemoryKeyValueStorage(),
+                new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
+                new MainnetBlockHeaderFunctions()));
     when(storageProvider.getStorageBySegmentIdentifier(any()))
         .thenReturn(new InMemoryKeyValueStorage());
     when(synchronizerConfiguration.getDownloaderParallelism()).thenReturn(1);
