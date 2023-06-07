@@ -126,7 +126,7 @@ public class StandardJsonTracer implements OperationTracer {
     } else {
       memory = null;
     }
-    depth = messageFrame.getMessageStackDepth();
+    depth = messageFrame.getMessageStackSize();
   }
 
   @Override

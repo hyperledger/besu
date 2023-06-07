@@ -27,9 +27,7 @@ import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -41,7 +39,6 @@ public class TestMessageFrameBuilder {
   public static final Address DEFAUT_ADDRESS = Address.fromHexString("0xe8f1b89");
   private static final int maxStackSize = DEFAULT_MAX_STACK_SIZE;
 
-  private Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
   private Optional<BlockValues> blockValues = Optional.empty();
   private Optional<WorldUpdater> worldUpdater = Optional.empty();
   private long initialGas = Long.MAX_VALUE;
@@ -56,13 +53,7 @@ public class TestMessageFrameBuilder {
   private int pc = 0;
   private int section = 0;
   private final List<Bytes> stackItems = new ArrayList<>();
-  private int depth = 0;
   private Optional<Function<Long, Hash>> blockHashLookup = Optional.empty();
-
-  TestMessageFrameBuilder messageFrameStack(final Deque<MessageFrame> messageFrameStack) {
-    this.messageFrameStack = messageFrameStack;
-    return this;
-  }
 
   public TestMessageFrameBuilder worldUpdater(final WorldUpdater worldUpdater) {
     this.worldUpdater = Optional.of(worldUpdater);
@@ -129,11 +120,6 @@ public class TestMessageFrameBuilder {
     return this;
   }
 
-  public TestMessageFrameBuilder depth(final int depth) {
-    this.depth = depth;
-    return this;
-  }
-
   public TestMessageFrameBuilder pushStackItem(final Bytes item) {
     stackItems.add(item);
     return this;
@@ -148,7 +134,6 @@ public class TestMessageFrameBuilder {
     final MessageFrame frame =
         MessageFrame.builder()
             .type(MessageFrame.Type.MESSAGE_CALL)
-            .messageFrameStack(messageFrameStack)
             .worldUpdater(worldUpdater.orElseGet(this::createDefaultWorldUpdater))
             .initialGas(initialGas)
             .address(address)
@@ -161,7 +146,6 @@ public class TestMessageFrameBuilder {
             .contract(contract)
             .code(code)
             .blockValues(blockValues.orElseGet(() -> new FakeBlockValues(1337)))
-            .depth(depth)
             .completer(c -> {})
             .miningBeneficiary(Address.ZERO)
             .blockHashLookup(blockHashLookup.orElse(number -> Hash.hash(Words.longBytes(number))))

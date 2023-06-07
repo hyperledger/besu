@@ -43,7 +43,6 @@ import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
@@ -349,7 +348,6 @@ public class MainnetTransactionProcessor {
           accessListGas);
 
       final WorldUpdater worldUpdater = worldState.updater();
-      final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
       final ImmutableMap.Builder<String, Object> contextVariablesBuilder =
           ImmutableMap.<String, Object>builder()
               .put(KEY_IS_PERSISTING_PRIVATE_STATE, isPersistingPrivateState)
@@ -361,7 +359,6 @@ public class MainnetTransactionProcessor {
 
       final MessageFrame.Builder commonMessageFrameBuilder =
           MessageFrame.builder()
-              .messageFrameStack(messageFrameStack)
               .maxStackSize(maxStackSize)
               .worldUpdater(worldUpdater.updater())
               .initialGas(gasAvailable)
@@ -371,7 +368,6 @@ public class MainnetTransactionProcessor {
               .value(transaction.getValue())
               .apparentValue(transaction.getValue())
               .blockValues(blockHeader)
-              .depth(0)
               .completer(__ -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
@@ -411,8 +407,7 @@ public class MainnetTransactionProcessor {
                         .orElse(CodeV0.EMPTY_CODE))
                 .build();
       }
-
-      messageFrameStack.addFirst(initialFrame);
+      Deque<MessageFrame> messageFrameStack = initialFrame.getMessageFrameStack();
 
       if (initialFrame.getCode().isValid()) {
         while (!messageFrameStack.isEmpty()) {

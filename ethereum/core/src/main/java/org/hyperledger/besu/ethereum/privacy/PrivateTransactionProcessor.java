@@ -34,7 +34,6 @@ import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
 import java.util.Optional;
@@ -112,10 +111,8 @@ public class PrivateTransactionProcessor {
 
       final WorldUpdater mutablePrivateWorldStateUpdater =
           new DefaultMutablePrivateWorldStateUpdater(publicWorldState, privateWorldState);
-      final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
       final MessageFrame.Builder commonMessageFrameBuilder =
           MessageFrame.builder()
-              .messageFrameStack(messageFrameStack)
               .maxStackSize(maxStackSize)
               .worldUpdater(mutablePrivateWorldStateUpdater)
               .initialGas(Long.MAX_VALUE)
@@ -125,7 +122,6 @@ public class PrivateTransactionProcessor {
               .value(transaction.getValue())
               .apparentValue(transaction.getValue())
               .blockValues(blockHeader)
-              .depth(0)
               .completer(__ -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
@@ -169,8 +165,7 @@ public class PrivateTransactionProcessor {
                 .build();
       }
 
-      messageFrameStack.addFirst(initialFrame);
-
+      final Deque<MessageFrame> messageFrameStack = initialFrame.getMessageFrameStack();
       while (!messageFrameStack.isEmpty()) {
         process(messageFrameStack.peekFirst(), operationTracer);
       }
@@ -211,13 +206,9 @@ public class PrivateTransactionProcessor {
   }
 
   private AbstractMessageProcessor getMessageProcessor(final MessageFrame.Type type) {
-    switch (type) {
-      case MESSAGE_CALL:
-        return messageCallProcessor;
-      case CONTRACT_CREATION:
-        return contractCreationProcessor;
-      default:
-        throw new IllegalStateException("Request for unsupported message processor type " + type);
-    }
+    return switch (type) {
+      case MESSAGE_CALL -> messageCallProcessor;
+      case CONTRACT_CREATION -> contractCreationProcessor;
+    };
   }
 }

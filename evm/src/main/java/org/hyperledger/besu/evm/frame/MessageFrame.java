@@ -33,6 +33,7 @@ import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
@@ -1013,14 +1014,22 @@ public class MessageFrame {
   }
 
   /**
-   * Returns the message stack depth.
+   * Returns the message stack size.
    *
-   * @return the message stack depth
+   * @return the message stack size
    */
-  public int getMessageStackDepth() {
+  public int getMessageStackSize() {
     return txValues.messageFrameStack().size();
   }
 
+  /**
+   * Returns the Call Depth, where the rootmost call is depth 0
+   *
+   * @return the call depth
+   */
+  public int getDepth() {
+    return getMessageStackSize() - 1;
+  }
   /**
    * Returns the recipient that originated the message.
    *
@@ -1273,7 +1282,6 @@ public class MessageFrame {
 
     private MessageFrame parentMessageFrame;
     private Type type;
-    private Deque<MessageFrame> messageFrameStack;
     private WorldUpdater worldUpdater;
     private Long initialGas;
     private Address address;
@@ -1286,7 +1294,6 @@ public class MessageFrame {
     private Wei apparentValue;
     private Code code;
     private BlockValues blockValues;
-    private int depth = -1;
     private int maxStackSize = DEFAULT_MAX_STACK_SIZE;
     private boolean isStatic = false;
     private Consumer<MessageFrame> completer;
@@ -1319,17 +1326,6 @@ public class MessageFrame {
      */
     public Builder type(final Type type) {
       this.type = type;
-      return this;
-    }
-
-    /**
-     * Sets Message frame stack.
-     *
-     * @param messageFrameStack the message frame stack
-     * @return the builder
-     */
-    public Builder messageFrameStack(final Deque<MessageFrame> messageFrameStack) {
-      this.messageFrameStack = messageFrameStack;
       return this;
     }
 
@@ -1466,17 +1462,6 @@ public class MessageFrame {
     }
 
     /**
-     * Sets Depth.
-     *
-     * @param depth the depth
-     * @return the builder
-     */
-    public Builder depth(final int depth) {
-      this.depth = depth;
-      return this;
-    }
-
-    /**
      * Sets Is static.
      *
      * @param isStatic the is static
@@ -1588,12 +1573,10 @@ public class MessageFrame {
 
     private void validate() {
       if (parentMessageFrame == null) {
-        checkState(messageFrameStack != null, "Missing message frame message frame stack");
         checkState(worldUpdater != null, "Missing message frame world updater");
         checkState(originator != null, "Missing message frame originator");
         checkState(gasPrice != null, "Missing message frame getGasRemaining price");
         checkState(blockValues != null, "Missing message frame block header");
-        checkState(depth > -1, "Missing message frame depth");
         checkState(miningBeneficiary != null, "Missing mining beneficiary");
         checkState(blockHashLookup != null, "Missing block hash lookup");
       }
@@ -1630,7 +1613,7 @@ public class MessageFrame {
                 originator,
                 gasPrice,
                 blockValues,
-                messageFrameStack,
+                new ArrayDeque<>(),
                 miningBeneficiary,
                 versionedHashes,
                 UndoTable.of(HashBasedTable.create()));
@@ -1659,6 +1642,7 @@ public class MessageFrame {
               contextVariables == null ? Map.of() : contextVariables,
               reason,
               newTxValues);
+      newTxValues.messageFrameStack().addFirst(messageFrame);
       messageFrame.warmUpAddress(sender);
       messageFrame.warmUpAddress(contract);
       for (Address a : accessListWarmAddresses) {

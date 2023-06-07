@@ -34,7 +34,6 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import java.io.PrintStream;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 
@@ -168,11 +167,9 @@ public class EvmToyCommand implements Runnable {
               ? new StandardJsonTracer(System.out, showMemory, showStack, showReturnData)
               : OperationTracer.NO_TRACING;
 
-      final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
-      messageFrameStack.add(
+      MessageFrame initialMessageFrame =
           MessageFrame.builder()
               .type(MessageFrame.Type.MESSAGE_CALL)
-              .messageFrameStack(messageFrameStack)
               .worldUpdater(worldUpdater.updater())
               .initialGas(gas)
               .contract(Address.ZERO)
@@ -185,25 +182,21 @@ public class EvmToyCommand implements Runnable {
               .apparentValue(ethValue)
               .code(code)
               .blockValues(new ToyBlockValues())
-              .depth(0)
               .completer(c -> {})
               .miningBeneficiary(Address.ZERO)
               .blockHashLookup(h -> null)
-              .build());
+              .build();
 
       final MessageCallProcessor mcp = new MessageCallProcessor(evm, precompileContractRegistry);
       final ContractCreationProcessor ccp =
           new ContractCreationProcessor(evm.getGasCalculator(), evm, false, List.of(), 0);
       stopwatch.start();
+      Deque<MessageFrame> messageFrameStack = initialMessageFrame.getMessageFrameStack();
       while (!messageFrameStack.isEmpty()) {
         final MessageFrame messageFrame = messageFrameStack.peek();
         switch (messageFrame.getType()) {
-          case CONTRACT_CREATION:
-            ccp.process(messageFrame, tracer);
-            break;
-          case MESSAGE_CALL:
-            mcp.process(messageFrame, tracer);
-            break;
+          case CONTRACT_CREATION -> ccp.process(messageFrame, tracer);
+          case MESSAGE_CALL -> mcp.process(messageFrame, tracer);
         }
         if (lastLoop) {
           if (messageFrame.getExceptionalHaltReason().isPresent()) {

@@ -52,7 +52,6 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.time.Instant;
-import java.util.ArrayDeque;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.NavigableMap;
@@ -334,11 +333,9 @@ public class EvmToolCommand implements Runnable {
         updater.getOrCreate(sender);
         updater.getOrCreate(receiver);
 
-        final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
-        messageFrameStack.add(
+        MessageFrame initialMessageFrame =
             MessageFrame.builder()
                 .type(MessageFrame.Type.MESSAGE_CALL)
-                .messageFrameStack(messageFrameStack)
                 .worldUpdater(updater)
                 .initialGas(txGas)
                 .contract(Address.ZERO)
@@ -351,13 +348,13 @@ public class EvmToolCommand implements Runnable {
                 .apparentValue(ethValue)
                 .code(code)
                 .blockValues(blockHeader)
-                .depth(0)
                 .completer(c -> {})
                 .miningBeneficiary(blockHeader.getCoinbase())
                 .blockHashLookup(new CachingBlockHashLookup(blockHeader, component.getBlockchain()))
-                .build());
+                .build();
 
         final MessageCallProcessor mcp = new MessageCallProcessor(evm, precompileContractRegistry);
+        final Deque<MessageFrame> messageFrameStack = initialMessageFrame.getMessageFrameStack();
         stopwatch.start();
         while (!messageFrameStack.isEmpty()) {
           final MessageFrame messageFrame = messageFrameStack.peek();
