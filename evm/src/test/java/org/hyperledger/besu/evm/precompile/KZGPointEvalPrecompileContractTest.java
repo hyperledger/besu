@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.io.IOException;
@@ -32,6 +31,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -84,10 +84,12 @@ public class KZGPointEvalPrecompileContractTest {
               final JsonNode testCase = testCases.get(i);
               final Bytes input = Bytes.fromHexString(testCase.get("Input").asText());
               final boolean valid = testCase.get("Valid").asBoolean();
-              return new PrecompileTestParameters(input, valid, returnValue, Bytes32.wrap(input.slice(0, 32)));
+              return new PrecompileTestParameters(
+                  input, valid, returnValue, Bytes32.wrap(input.slice(0, 32)));
             })
         .collect(Collectors.toList());
   }
 
-  record PrecompileTestParameters(Bytes input, boolean valid, Bytes returnValue, Bytes32 versionedHash) {}
+  record PrecompileTestParameters(
+      Bytes input, boolean valid, Bytes returnValue, Bytes32 versionedHash) {}
 }
