@@ -82,7 +82,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final EngineQosTimer engineQosTimer = new EngineQosTimer(consensusEngineServer);
     if (mergeCoordinator.isPresent()) {
       List<JsonRpcMethod> executionEngineApisSupported = new ArrayList<>();
-        executionEngineApisSupported.addAll(
+      executionEngineApisSupported.addAll(
           Arrays.asList(
               new EngineGetPayloadV1(
                   consensusEngineServer,
