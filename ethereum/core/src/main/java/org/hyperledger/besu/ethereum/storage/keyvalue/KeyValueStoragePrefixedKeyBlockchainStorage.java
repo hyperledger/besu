@@ -46,7 +46,10 @@ import org.slf4j.LoggerFactory;
 public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainStorage {
   private static final Logger LOG =
       LoggerFactory.getLogger(KeyValueStoragePrefixedKeyBlockchainStorage.class);
+
+  @Deprecated(since = "23.4.2", forRemoval = true)
   private static final Bytes VARIABLES_PREFIX = Bytes.of(1);
+
   private static final Bytes BLOCK_HEADER_PREFIX = Bytes.of(2);
   private static final Bytes BLOCK_BODY_PREFIX = Bytes.of(3);
   private static final Bytes TRANSACTION_RECEIPTS_PREFIX = Bytes.of(4);

@@ -11,6 +11,7 @@ and in case a rollback is needed, before installing a previous version, the migr
 - Add support for Shanghai changes to the GraphQL service [#5496](https://github.com/hyperledger/besu/pull/5496)
 - Unite the tx-pool CLI options under the same Tx Pool Options group in UX. [#5466](https://github.com/hyperledger/besu/issues/5466)
 - Tidy DEBUG logs by moving engine API full logging to TRACE [#5529](https://github.com/hyperledger/besu/pull/5529)
+- remove PoW validation if merge is enabled as it is not needed anymore [#5538](https://github.com/hyperledger/besu/pull/5538)
 - Use BlobDB for blockchain storage to reduce initial sync time and write amplification [#5475](https://github.com/hyperledger/besu/pull/5475)
 
 ### Bug Fixes
