@@ -330,124 +330,6 @@ public class ForkIdTest {
             Optional.of(ForkIds.SEPOLIA),
             empty()
           },
-          // Rinkeby test cases
-          {
-            "Rinkeby // Unsynced, last Frontier block",
-            Network.RINKEBY,
-            0L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x3b8e0691", 1L),
-            Optional.of(ForkIds.RINKEBY),
-            empty()
-          },
-          {
-            "Rinkeby // First and last Homestead block",
-            Network.RINKEBY,
-            1L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x60949295", 2L),
-            Optional.of(ForkIds.RINKEBY),
-            empty()
-          },
-          {
-            "Rinkeby // First and last Tangerine block",
-            Network.RINKEBY,
-            2L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x8bde40dd", 3L),
-            Optional.of(ForkIds.RINKEBY),
-            empty()
-          },
-          {
-            "Rinkeby // First Spurious block",
-            Network.RINKEBY,
-            3L,
-            0L,
-            ForkIdTestUtil.wantForkId("0xcb3a64bb", 1035301L),
-            Optional.of(ForkIds.RINKEBY),
-            empty()
-          },
-          {
-            "Rinkeby // Last Spurious block",
-            Network.RINKEBY,
-            1035300L,
-            0L,
-            ForkIdTestUtil.wantForkId("0xcb3a64bb", 1035301L),
-            Optional.of(ForkIds.RINKEBY),
-            empty()
-          },
-          {
-            "Rinkeby // First Byzantium block",
-            Network.RINKEBY,
-            1035301L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x8d748b57", 3660663L),
-            Optional.of(ForkIds.RINKEBY),
-            empty()
-          },
-          {
-            "Rinkeby // Last Byzantium block",
-            Network.RINKEBY,
-            3660662L,
-            0L,
-            ForkIdTestUtil.wantForkId("0x8d748b57", 3660663L),
-            Optional.of(ForkIds.RINKEBY),
-            empty()
-          },
-          {
-            "Rinkeby // First Constantinople block",
-            Network.RINKEBY,
-            3660663L,
-            0L,
-            ForkIdTestUtil.wantForkId("0xe49cab14", 4321234L),
-            Optional.of(ForkIds.RINKEBY),
-            empty()
-          },
-          {
-            "Rinkeby // Last Constantinople block",
-            Network.RINKEBY,
-            4321233L,
-            0L,
-            ForkIdTestUtil.wantForkId("0xe49cab14", 4321234L),
-            Optional.of(ForkIds.RINKEBY),
-            empty()
-          },
-          {
-            "Rinkeby // First Petersburg block",
-            Network.RINKEBY,
-            4321234L,
-            0L,
-            ForkIdTestUtil.wantForkId("0xafec6b27", 5435345L),
-            Optional.of(ForkIds.RINKEBY),
-            empty()
-          },
-          {
-            "Rinkeby // Last Petersburg block",
-            Network.RINKEBY,
-            5435344L,
-            0L,
-            ForkIdTestUtil.wantForkId("0xafec6b27", 5435345L),
-            Optional.of(ForkIds.RINKEBY),
-            empty()
-          },
-          {
-            "Rinkeby // First Istanbul block",
-            Network.RINKEBY,
-            5435345L,
-            0L,
-            ForkIdTestUtil.wantForkId("0xcbdb8838", 0L),
-            Optional.of(ForkIds.RINKEBY),
-            empty()
-          },
-          {
-            "Rinkeby // Future Istanbul block",
-            Network.RINKEBY,
-            6000000L,
-            0L,
-            ForkIdTestUtil.wantForkId("0xcbdb8838", 0L),
-            Optional.of(ForkIds.RINKEBY),
-            empty()
-          },
           // Goerli test cases
           {
             "Goerli  // Unsynced, last Frontier, Homestead, Tangerine, Spurious, Byzantium, Constantinople and first Petersburg block",
@@ -631,18 +513,6 @@ public class ForkIdTest {
             empty(),
             wantPeerCheck("0x5cddc0e1", 0L, false)
           },
-          {
-            "check13ByzantiumWithRemoteAnnouncingRinkebyPetersburg",
-            Network.network(
-                GenesisHash.MAINNET,
-                asList(1150000L, 1920000L, 2463000L, 2675000L, 4370000L, 7280000L),
-                emptyList()),
-            7987396L,
-            0L,
-            empty(),
-            empty(),
-            wantPeerCheck("0xafec6b27", 0L, false)
-          },
           // Timestamp based peer check cases adapted from EIP-6122 test cases
           {
             "withdrawalsCheck1ShanghaiWithRemoteAnnouncingTheSame",
@@ -751,15 +621,6 @@ public class ForkIdTest {
             empty(),
             empty(),
             wantPeerCheck("0x5cddc0e1", 0L, false)
-          },
-          {
-            "withdrawalsCheck13ShanghaiWithRemoteAnnouncingRinkebyPetersburg",
-            Network.MAINNET_WITH_SHANGHAI,
-            20000000L,
-            1668000001L,
-            empty(),
-            empty(),
-            wantPeerCheck("0xafec6b27", 0L, false)
           },
           {
             "withdrawalsCheck14ShanghaiWithRemoteAnnouncingUnknownFork",
