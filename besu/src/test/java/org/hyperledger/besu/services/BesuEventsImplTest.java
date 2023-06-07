@@ -17,7 +17,6 @@ package org.hyperledger.besu.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -125,15 +124,14 @@ public class BesuEventsImplTest {
     when(mockEthPeers.streamAvailablePeers()).thenAnswer(z -> Stream.empty());
     when(mockProtocolContext.getBlockchain()).thenReturn(blockchain);
     when(mockProtocolContext.getWorldStateArchive()).thenReturn(mockWorldStateArchive);
-    when(mockProtocolSchedule.getByBlockNumber(anyLong())).thenReturn(mockProtocolSpec);
+    when(mockProtocolSchedule.getByBlockHeader(any())).thenReturn(mockProtocolSpec);
     when(mockProtocolSpec.getTransactionValidator()).thenReturn(mockTransactionValidator);
     when(mockProtocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0L));
     when(mockTransactionValidator.validate(any(), any(Optional.class), any()))
         .thenReturn(ValidationResult.valid());
     when(mockTransactionValidator.validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
-    when(mockWorldState.copy()).thenReturn(mockWorldState);
-    when(mockWorldStateArchive.getMutable(any(), any(), anyBoolean()))
+    when(mockWorldStateArchive.getMutable(any(), anyBoolean()))
         .thenReturn(Optional.of(mockWorldState));
 
     blockBroadcaster = new BlockBroadcaster(mockEthContext);
@@ -194,7 +192,7 @@ public class BesuEventsImplTest {
         mock(EthPeer.class),
         new org.hyperledger.besu.ethereum.core.BlockHeader(
             null, null, null, null, null, null, null, null, 1, 1, 1, 1, null, null, null, 1, null,
-            null, null));
+            null, null, null));
   }
 
   private void clearSyncTarget() {
@@ -386,7 +384,7 @@ public class BesuEventsImplTest {
     serviceImpl.addTransactionAddedListener(result::set);
 
     assertThat(result.get()).isNull();
-    transactionPool.addLocalTransaction(TX1);
+    transactionPool.addTransactionViaApi(TX1);
 
     assertThat(result.get()).isNotNull();
   }
@@ -397,13 +395,13 @@ public class BesuEventsImplTest {
     final long id = serviceImpl.addTransactionAddedListener(result::set);
 
     assertThat(result.get()).isNull();
-    transactionPool.addLocalTransaction(TX1);
+    transactionPool.addTransactionViaApi(TX1);
     assertThat(result.get()).isNotNull();
 
     serviceImpl.removeTransactionAddedListener(id);
     result.set(null);
 
-    transactionPool.addLocalTransaction(TX2);
+    transactionPool.addTransactionViaApi(TX2);
     assertThat(result.get()).isNull();
   }
 
@@ -420,8 +418,8 @@ public class BesuEventsImplTest {
 
     assertThat(result.get()).isNull();
     // sending a replacement with higher gas should drop the previous one
-    transactionPool.addLocalTransaction(TX1);
-    transactionPool.addLocalTransaction(
+    transactionPool.addTransactionViaApi(TX1);
+    transactionPool.addTransactionViaApi(
         bumpTransactionGasPrice(TX1, TX1.getGasPrice().get().multiply(2)));
 
     assertThat(result.get()).isNotNull();
@@ -433,9 +431,9 @@ public class BesuEventsImplTest {
     final long id = serviceImpl.addTransactionDroppedListener(result::set);
 
     assertThat(result.get()).isNull();
-    transactionPool.addLocalTransaction(TX1);
+    transactionPool.addTransactionViaApi(TX1);
     // first replacement with higher gas should drop the previous one
-    transactionPool.addLocalTransaction(
+    transactionPool.addTransactionViaApi(
         bumpTransactionGasPrice(TX1, TX1.getGasPrice().get().multiply(2)));
 
     assertThat(result.get()).isNotNull();
@@ -443,7 +441,7 @@ public class BesuEventsImplTest {
     result.set(null);
 
     // second replacement with higher gas should drop the previous one
-    transactionPool.addLocalTransaction(
+    transactionPool.addTransactionViaApi(
         bumpTransactionGasPrice(TX1, TX1.getGasPrice().get().multiply(4)));
     assertThat(result.get()).isNull();
   }

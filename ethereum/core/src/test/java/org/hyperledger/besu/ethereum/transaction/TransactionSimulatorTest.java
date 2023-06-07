@@ -31,12 +31,12 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
-import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -57,7 +57,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -74,9 +73,6 @@ public class TransactionSimulatorTest {
   private static final Address DEFAULT_FROM =
       Address.fromHexString("0x0000000000000000000000000000000000000000");
 
-  private static final Hash DEFAULT_BLOCK_HEADER_HASH =
-      Hash.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
-
   private TransactionSimulator transactionSimulator;
 
   @Mock private Blockchain blockchain;
@@ -85,15 +81,13 @@ public class TransactionSimulatorTest {
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private MainnetTransactionProcessor transactionProcessor;
-  @Mock private MainnetTransactionValidator transactionValidator;
+
+  private final BlockHeaderTestFixture blockHeaderTestFixture = new BlockHeaderTestFixture();
 
   @Before
   public void setUp() {
     this.transactionSimulator =
         new TransactionSimulator(blockchain, worldStateArchive, protocolSchedule);
-
-    when(transactionProcessor.getTransactionValidator()).thenReturn(transactionValidator);
-    when(transactionValidator.getGoQuorumCompatibilityMode()).thenReturn(false);
   }
 
   @Test
@@ -110,8 +104,11 @@ public class TransactionSimulatorTest {
   public void shouldReturnSuccessfulResultWhenProcessingIsSuccessful() {
     final CallParameter callParameter = legacyTransactionCallParameter();
 
-    mockBlockchainForBlockHeader(Hash.ZERO, 1L);
-    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
+    final BlockHeader blockHeader =
+        blockHeaderTestFixture.number(1L).stateRoot(Hash.ZERO).buildHeader();
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, callParameter.getFrom(), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -125,7 +122,7 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     final Optional<TransactionSimulatorResult> result =
         transactionSimulator.process(callParameter, 1L);
@@ -138,8 +135,11 @@ public class TransactionSimulatorTest {
   public void shouldSetGasPriceToZeroWhenExceedingBalanceAllowed() {
     final CallParameter callParameter = legacyTransactionCallParameter(Wei.ONE);
 
-    mockBlockchainForBlockHeader(Hash.ZERO, 1L);
-    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
+    final BlockHeader blockHeader =
+        blockHeaderTestFixture.number(1L).stateRoot(Hash.ZERO).buildHeader();
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, callParameter.getFrom(), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -154,7 +154,7 @@ public class TransactionSimulatorTest {
             .signature(FAKE_SIGNATURE)
             .build();
 
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     transactionSimulator.process(
         callParameter,
@@ -169,8 +169,10 @@ public class TransactionSimulatorTest {
   public void shouldSetFeePerGasToZeroWhenExceedingBalanceAllowed() {
     final CallParameter callParameter = eip1559TransactionCallParameter(Wei.ONE, Wei.ONE);
 
-    mockBlockchainForBlockHeader(Hash.ZERO, 1L, Wei.ONE);
-    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
+    final BlockHeader blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE);
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, callParameter.getFrom(), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -187,7 +189,7 @@ public class TransactionSimulatorTest {
             .signature(FAKE_SIGNATURE)
             .build();
 
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     transactionSimulator.process(
         callParameter,
@@ -202,8 +204,11 @@ public class TransactionSimulatorTest {
   public void shouldNotSetGasPriceToZeroWhenExceedingBalanceIsNotAllowed() {
     final CallParameter callParameter = legacyTransactionCallParameter(Wei.ONE);
 
-    mockBlockchainForBlockHeader(Hash.ZERO, 1L);
-    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
+    final BlockHeader blockHeader =
+        blockHeaderTestFixture.number(1L).stateRoot(Hash.ZERO).buildHeader();
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, callParameter.getFrom(), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -218,7 +223,7 @@ public class TransactionSimulatorTest {
             .signature(FAKE_SIGNATURE)
             .build();
 
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     transactionSimulator.process(
         callParameter,
@@ -233,8 +238,10 @@ public class TransactionSimulatorTest {
   public void shouldNotSetFeePerGasToZeroWhenExceedingBalanceIsNotAllowed() {
     final CallParameter callParameter = eip1559TransactionCallParameter(Wei.ONE, Wei.ONE);
 
-    mockBlockchainForBlockHeader(Hash.ZERO, 1L, Wei.ONE);
-    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
+    final BlockHeader blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE);
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, callParameter.getFrom(), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -251,7 +258,7 @@ public class TransactionSimulatorTest {
             .signature(FAKE_SIGNATURE)
             .build();
 
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     transactionSimulator.process(
         callParameter,
@@ -266,8 +273,11 @@ public class TransactionSimulatorTest {
   public void shouldUseDefaultValuesWhenMissingOptionalFields() {
     final CallParameter callParameter = legacyTransactionCallParameter();
 
-    mockBlockchainForBlockHeader(Hash.ZERO, 1L);
-    mockWorldStateForAccount(Hash.ZERO, Address.fromHexString("0x0"), 1L);
+    final BlockHeader blockHeader =
+        blockHeaderTestFixture.number(1L).stateRoot(Hash.ZERO).buildHeader();
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, Address.fromHexString("0x0"), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -281,7 +291,7 @@ public class TransactionSimulatorTest {
             .payload(Bytes.EMPTY)
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     transactionSimulator.process(callParameter, 1L);
 
@@ -292,8 +302,11 @@ public class TransactionSimulatorTest {
   public void shouldUseZeroNonceWhenAccountDoesNotExist() {
     final CallParameter callParameter = legacyTransactionCallParameter();
 
-    mockBlockchainForBlockHeader(Hash.ZERO, 1L);
-    mockWorldStateForAbsentAccount(Hash.ZERO);
+    final BlockHeader blockHeader =
+        blockHeaderTestFixture.number(1L).stateRoot(Hash.ZERO).buildHeader();
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAbsentAccount(blockHeader);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -307,7 +320,7 @@ public class TransactionSimulatorTest {
             .payload(Bytes.EMPTY)
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     transactionSimulator.process(callParameter, 1L);
 
@@ -318,8 +331,11 @@ public class TransactionSimulatorTest {
   public void shouldReturnFailureResultWhenProcessingFails() {
     final CallParameter callParameter = legacyTransactionCallParameter();
 
-    mockBlockchainForBlockHeader(Hash.ZERO, 1L);
-    mockWorldStateForAccount(Hash.ZERO, Address.fromHexString("0x0"), 1L);
+    final BlockHeader blockHeader =
+        blockHeaderTestFixture.number(1L).stateRoot(Hash.ZERO).buildHeader();
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, Address.fromHexString("0x0"), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -333,7 +349,7 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.FAILED);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.FAILED);
 
     final Optional<TransactionSimulatorResult> result =
         transactionSimulator.process(callParameter, 1L);
@@ -356,8 +372,11 @@ public class TransactionSimulatorTest {
   public void shouldReturnSuccessfulResultWhenProcessingIsSuccessfulByHash() {
     final CallParameter callParameter = legacyTransactionCallParameter();
 
-    mockBlockchainForBlockHeader(Hash.ZERO, 1L, DEFAULT_BLOCK_HEADER_HASH);
-    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
+    final BlockHeader blockHeader =
+        blockHeaderTestFixture.number(1L).stateRoot(Hash.ZERO).buildHeader();
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, callParameter.getFrom(), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -371,10 +390,10 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     final Optional<TransactionSimulatorResult> result =
-        transactionSimulator.process(callParameter, DEFAULT_BLOCK_HEADER_HASH);
+        transactionSimulator.process(callParameter, blockHeader.getBlockHash());
 
     assertThat(result.get().isSuccessful()).isTrue();
     verifyTransactionWasProcessed(expectedTransaction);
@@ -384,8 +403,11 @@ public class TransactionSimulatorTest {
   public void shouldUseDefaultValuesWhenMissingOptionalFieldsByHash() {
     final CallParameter callParameter = legacyTransactionCallParameter();
 
-    mockBlockchainForBlockHeader(Hash.ZERO, 1L, DEFAULT_BLOCK_HEADER_HASH);
-    mockWorldStateForAccount(Hash.ZERO, Address.fromHexString("0x0"), 1L);
+    final BlockHeader blockHeader =
+        blockHeaderTestFixture.number(1L).stateRoot(Hash.ZERO).buildHeader();
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, Address.fromHexString("0x0"), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -399,9 +421,9 @@ public class TransactionSimulatorTest {
             .payload(Bytes.EMPTY)
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
-    transactionSimulator.process(callParameter, DEFAULT_BLOCK_HEADER_HASH);
+    transactionSimulator.process(callParameter, blockHeader.getBlockHash());
 
     verifyTransactionWasProcessed(expectedTransaction);
   }
@@ -410,8 +432,11 @@ public class TransactionSimulatorTest {
   public void shouldUseZeroNonceWhenAccountDoesNotExistByHash() {
     final CallParameter callParameter = legacyTransactionCallParameter();
 
-    mockBlockchainForBlockHeader(Hash.ZERO, 1L, DEFAULT_BLOCK_HEADER_HASH);
-    mockWorldStateForAbsentAccount(Hash.ZERO);
+    final BlockHeader blockHeader =
+        blockHeaderTestFixture.number(1L).stateRoot(Hash.ZERO).buildHeader();
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAbsentAccount(blockHeader);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -425,9 +450,9 @@ public class TransactionSimulatorTest {
             .payload(Bytes.EMPTY)
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
-    transactionSimulator.process(callParameter, DEFAULT_BLOCK_HEADER_HASH);
+    transactionSimulator.process(callParameter, blockHeader.getBlockHash());
 
     verifyTransactionWasProcessed(expectedTransaction);
   }
@@ -436,8 +461,11 @@ public class TransactionSimulatorTest {
   public void shouldReturnFailureResultWhenProcessingFailsByHash() {
     final CallParameter callParameter = legacyTransactionCallParameter();
 
-    mockBlockchainForBlockHeader(Hash.ZERO, 1L, DEFAULT_BLOCK_HEADER_HASH);
-    mockWorldStateForAccount(Hash.ZERO, Address.fromHexString("0x0"), 1L);
+    final BlockHeader blockHeader =
+        blockHeaderTestFixture.number(1L).stateRoot(Hash.ZERO).buildHeader();
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, Address.fromHexString("0x0"), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -451,10 +479,10 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.FAILED);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.FAILED);
 
     final Optional<TransactionSimulatorResult> result =
-        transactionSimulator.process(callParameter, DEFAULT_BLOCK_HEADER_HASH);
+        transactionSimulator.process(callParameter, blockHeader.getBlockHash());
 
     assertThat(result.get().isSuccessful()).isFalse();
     verifyTransactionWasProcessed(expectedTransaction);
@@ -464,8 +492,10 @@ public class TransactionSimulatorTest {
   public void shouldReturnSuccessfulResultWhenEip1559TransactionProcessingIsSuccessful() {
     final CallParameter callParameter = eip1559TransactionCallParameter();
 
-    mockBlockchainForBlockHeader(Hash.ZERO, 1L, Wei.ONE);
-    mockWorldStateForAccount(Hash.ZERO, callParameter.getFrom(), 1L);
+    final BlockHeader blockHeader = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE);
+
+    mockBlockchainForBlockHeader(blockHeader);
+    mockWorldStateForAccount(blockHeader, callParameter.getFrom(), 1L);
 
     final Transaction expectedTransaction =
         Transaction.builder()
@@ -481,7 +511,7 @@ public class TransactionSimulatorTest {
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
             .build();
-    mockProcessorStatusForTransaction(1L, expectedTransaction, Status.SUCCESSFUL);
+    mockProcessorStatusForTransaction(expectedTransaction, Status.SUCCESSFUL);
 
     final Optional<TransactionSimulatorResult> result =
         transactionSimulator.process(callParameter, 1L);
@@ -491,52 +521,45 @@ public class TransactionSimulatorTest {
   }
 
   private void mockWorldStateForAccount(
-      final Hash stateRoot, final Address address, final long nonce) {
+      final BlockHeader blockHeader, final Address address, final long nonce) {
     final Account account = mock(Account.class);
     when(account.getNonce()).thenReturn(nonce);
-    when(worldStateArchive.getMutable(eq(stateRoot), any(), anyBoolean()))
+    when(worldStateArchive.getMutable(eq(blockHeader), anyBoolean()))
         .thenReturn(Optional.of(worldState));
     final WorldUpdater updater = mock(WorldUpdater.class);
     when(updater.get(address)).thenReturn(account);
     when(worldState.updater()).thenReturn(updater);
   }
 
-  private void mockWorldStateForAbsentAccount(final Hash stateRoot) {
-    when(worldStateArchive.getMutable(eq(stateRoot), any(), anyBoolean()))
+  private void mockWorldStateForAbsentAccount(final BlockHeader blockHeader) {
+    when(worldStateArchive.getMutable(eq(blockHeader), anyBoolean()))
         .thenReturn(Optional.of(worldState));
     final WorldUpdater updater = mock(WorldUpdater.class);
     when(updater.get(any())).thenReturn(null);
     when(worldState.updater()).thenReturn(updater);
   }
 
-  private void mockBlockchainForBlockHeader(final Hash stateRoot, final long blockNumber) {
-    mockBlockchainForBlockHeader(stateRoot, blockNumber, Hash.ZERO);
-  }
-
-  private void mockBlockchainForBlockHeader(
-      final Hash stateRoot, final long blockNumber, final Hash headerHash) {
-    final BlockHeader blockHeader = mock(BlockHeader.class);
-    when(blockHeader.getStateRoot()).thenReturn(stateRoot);
-    when(blockHeader.getNumber()).thenReturn(blockNumber);
-    when(blockchain.getBlockHeader(blockNumber)).thenReturn(Optional.of(blockHeader));
-    when(blockchain.getBlockHeader(headerHash)).thenReturn(Optional.of(blockHeader));
-  }
-
-  private void mockBlockchainForBlockHeader(
+  private BlockHeader mockBlockHeader(
       final Hash stateRoot, final long blockNumber, final Wei baseFee) {
-    final BlockHeader blockHeader = mock(BlockHeader.class, Answers.RETURNS_MOCKS);
-    when(blockHeader.getStateRoot()).thenReturn(stateRoot);
-    when(blockHeader.getNumber()).thenReturn(blockNumber);
-    when(blockHeader.getBaseFee()).thenReturn(Optional.of(baseFee));
-    when(blockHeader.getDifficulty()).thenReturn(Difficulty.ONE);
-    when(blockchain.getBlockHeader(blockNumber)).thenReturn(Optional.of(blockHeader));
+    return blockHeaderTestFixture
+        .stateRoot(stateRoot)
+        .number(blockNumber)
+        .baseFeePerGas(baseFee)
+        .difficulty(Difficulty.ONE)
+        .buildHeader();
+  }
+
+  private void mockBlockchainForBlockHeader(final BlockHeader blockHeader) {
+    when(blockchain.getBlockHeader(blockHeader.getNumber())).thenReturn(Optional.of(blockHeader));
+    when(blockchain.getBlockHeader(blockHeader.getBlockHash()))
+        .thenReturn(Optional.of(blockHeader));
   }
 
   private void mockProcessorStatusForTransaction(
-      final long blockNumber, final Transaction transaction, final Status status) {
+      final Transaction transaction, final Status status) {
     final BlockHeaderFunctions blockHeaderFunctions = mock(BlockHeaderFunctions.class);
     when(protocolSchedule.getChainId()).thenReturn(Optional.of(BigInteger.ONE));
-    when(protocolSchedule.getByBlockNumber(eq(blockNumber))).thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionProcessor()).thenReturn(transactionProcessor);
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(BlockHeader::getCoinbase);
     when(protocolSpec.getBlockHeaderFunctions()).thenReturn(blockHeaderFunctions);
@@ -552,6 +575,7 @@ public class TransactionSimulatorTest {
         when(result.isSuccessful()).thenReturn(false);
         break;
     }
+
     when(transactionProcessor.processTransaction(
             any(),
             any(),

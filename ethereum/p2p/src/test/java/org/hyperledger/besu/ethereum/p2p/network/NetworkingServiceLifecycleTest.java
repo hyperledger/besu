@@ -23,8 +23,8 @@ import static org.junit.Assume.assumeThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -39,6 +39,7 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.stream.Stream;
 
 import io.vertx.core.Vertx;
 import org.assertj.core.api.Assertions;
@@ -81,9 +82,12 @@ public class NetworkingServiceLifecycleTest {
     final Block blockMock = mock(Block.class);
     when(blockMock.getHash()).thenReturn(Hash.ZERO);
     when(blockchainMock.getGenesisBlock()).thenReturn(blockMock);
-    builder.blockchain(blockchainMock);
-    builder.blockNumberForks(Collections.emptyList());
-    builder.timestampForks(Collections.emptyList());
+    builder
+        .blockchain(blockchainMock)
+        .blockNumberForks(Collections.emptyList())
+        .timestampForks(Collections.emptyList())
+        .allConnectionsSupplier(Stream::empty)
+        .allActiveConnectionsSupplier(Stream::empty);
     return builder;
   }
 

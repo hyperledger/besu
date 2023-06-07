@@ -25,10 +25,10 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
@@ -83,7 +83,7 @@ public final class GenesisState {
    * @return A new {@link GenesisState}.
    */
   public static GenesisState fromConfig(
-      final GenesisConfigFile config, final HeaderBasedProtocolSchedule protocolSchedule) {
+      final GenesisConfigFile config, final ProtocolSchedule protocolSchedule) {
     final List<GenesisAccount> genesisAccounts =
         parseAllocations(config).collect(Collectors.toList());
     final Block block =
@@ -96,7 +96,10 @@ public final class GenesisState {
   private static BlockBody buildBody(final GenesisConfigFile config) {
     final Optional<List<Withdrawal>> withdrawals =
         isShanghaiAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
-    return new BlockBody(emptyList(), emptyList(), withdrawals);
+    final Optional<List<Deposit>> deposits =
+        isExperimentalEipsTimeAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
+
+    return new BlockBody(emptyList(), emptyList(), withdrawals, deposits);
   }
 
   public Block getBlock() {
@@ -143,7 +146,7 @@ public final class GenesisState {
   private static BlockHeader buildHeader(
       final GenesisConfigFile genesis,
       final Hash genesisRootHash,
-      final HeaderBasedProtocolSchedule protocolSchedule) {
+      final ProtocolSchedule protocolSchedule) {
 
     return BlockHeaderBuilder.create()
         .parentHash(parseParentHash(genesis))
@@ -164,6 +167,7 @@ public final class GenesisState {
         .blockHeaderFunctions(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule))
         .baseFee(genesis.getGenesisBaseFeePerGas().orElse(null))
         .withdrawalsRoot(isShanghaiAtGenesis(genesis) ? Hash.EMPTY_TRIE_HASH : null)
+        .depositsRoot(isExperimentalEipsTimeAtGenesis(genesis) ? Hash.EMPTY_TRIE_HASH : null)
         .buildBlockHeader();
   }
 
@@ -225,6 +229,14 @@ public final class GenesisState {
     final OptionalLong shanghaiTimestamp = genesis.getConfigOptions().getShanghaiTime();
     if (shanghaiTimestamp.isPresent()) {
       return shanghaiTimestamp.getAsLong() == genesis.getTimestamp();
+    }
+    return false;
+  }
+
+  private static boolean isExperimentalEipsTimeAtGenesis(final GenesisConfigFile genesis) {
+    final OptionalLong experimentalEipsTime = genesis.getConfigOptions().getExperimentalEipsTime();
+    if (experimentalEipsTime.isPresent()) {
+      return experimentalEipsTime.getAsLong() == genesis.getTimestamp();
     }
     return false;
   }

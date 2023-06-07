@@ -112,7 +112,7 @@ sourceSets {
 
 dependencies {
   implementation project(':config')
-  implementation project(':crypto')
+  implementation project(':crypto:algorithms')
   implementation project(':datatypes')
   implementation project(':ethereum:core')
   implementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
@@ -131,6 +131,7 @@ dependencies {
   referenceTestImplementation project(path: ':ethereum:rlp', configuration: 'testSupportArtifacts')
   referenceTestImplementation project(path: ':ethereum:trie')
   referenceTestImplementation project(path: ':evm')
+  referenceTestImplementation project(path: ':plugin-api')
   referenceTestImplementation project(path: ':testutil')
   referenceTestImplementation project(path: ':util')
   // the following will be resolved via custom ivy repository declared in root build.gradle
@@ -138,6 +139,7 @@ dependencies {
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
   referenceTestImplementation 'org.apache.tuweni:tuweni-bytes'
+  referenceTestImplementation 'org.apache.tuweni:tuweni-units'
   referenceTestImplementation 'org.assertj:assertj-core'
   referenceTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   referenceTestImplementation 'org.junit.jupiter:junit-jupiter-params'
@@ -145,7 +147,7 @@ dependencies {
   referenceTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 }
 
-task referenceTests(type: Test) {
+tasks.register('referenceTests', Test) {
   useJUnitPlatform()
   doFirst {
     if (!file("src/reference-test/external-resources/README.md").exists()) {
@@ -157,12 +159,12 @@ task referenceTests(type: Test) {
   classpath = sourceSets.referenceTest.runtimeClasspath
 }
 
-task ('validateReferenceTestSubmodule') {
+tasks.register('validateReferenceTestSubmodule') {
   description = "Checks that the reference tests submodule is not accidentally changed"
   doLast {
     def result = new ByteArrayOutputStream()
-    def expectedHash = 'a380655e5ffab1a5ea0f4d860224bdb19013f06a'
-    def submodulePath = java.nio.file.Path.of("${rootProject.projectDir}", "ethereum/referencetests/src/test/resources").toAbsolutePath()
+    def expectedHash = '04f338a6e673a6b4d906ec9d6d2bc939309357a5'
+    def submodulePath = java.nio.file.Path.of("${rootProject.projectDir}", "ethereum/referencetests/src/reference-test/external-resources").toAbsolutePath()
     try {
       exec {
         commandLine 'git', 'submodule', 'status', submodulePath
@@ -197,7 +199,7 @@ following commands:
 processResources.dependsOn('validateReferenceTestSubmodule')
 
 def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, String destination, String namePrefix, String ... excludedPath) {
-  def pep = mkdir(destination)
+  mkdir(destination)
   def referenceTestTemplate = templateFile.text
 
   // This is how many json files to include in each test file

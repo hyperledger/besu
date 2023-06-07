@@ -28,7 +28,6 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Abstract create operation. */
 public abstract class AbstractCreateOperation extends AbstractOperation {
@@ -132,7 +131,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     final long inputSize = clampedToLong(frame.getStackItem(2));
     frame.readMutableMemory(inputOffset, inputSize);
     frame.popStackItems(getStackItemsConsumed());
-    frame.pushStackItem(UInt256.ZERO);
+    frame.pushStackItem(FAILURE_STACK_ITEM);
   }
 
   private void spawnChildMessage(final MessageFrame frame, final Code code, final EVM evm) {
@@ -189,12 +188,12 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         frame.pushStackItem(Words.fromAddress(childFrame.getContractAddress()));
       } else {
         frame.setReturnData(childFrame.getOutputData());
-        frame.pushStackItem(UInt256.ZERO);
+        frame.pushStackItem(FAILURE_STACK_ITEM);
       }
     } else {
       frame.getWorldUpdater().deleteAccount(childFrame.getRecipientAddress());
       frame.setReturnData(childFrame.getOutputData());
-      frame.pushStackItem(UInt256.ZERO);
+      frame.pushStackItem(FAILURE_STACK_ITEM);
     }
 
     final int currentPC = frame.getPC();

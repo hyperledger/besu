@@ -28,19 +28,28 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
+import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.EndLayer;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.GasPricePrioritizedTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredPendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -56,11 +65,11 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -72,7 +81,7 @@ import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 
 public abstract class AbstractIsolationTests {
-  protected BonsaiWorldStateArchive archive;
+  protected BonsaiWorldStateProvider archive;
   protected BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorage;
   protected ProtocolContext protocolContext;
   final Function<String, KeyPair> asKeyPair =
@@ -84,12 +93,30 @@ public abstract class AbstractIsolationTests {
   protected final GenesisState genesisState =
       GenesisState.fromConfig(GenesisConfigFile.development(), protocolSchedule);
   protected final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
+
+  protected final TransactionPoolConfiguration poolConfiguration =
+      ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(100).build();
+
+  protected final TransactionPoolReplacementHandler transactionReplacementHandler =
+      new TransactionPoolReplacementHandler(poolConfiguration.getPriceBump());
+
+  protected final BiFunction<PendingTransaction, PendingTransaction, Boolean>
+      transactionReplacementTester =
+          (t1, t2) ->
+              transactionReplacementHandler.shouldReplace(
+                  t1, t2, protocolContext.getBlockchain().getChainHeadHeader());
+
+  protected TransactionPoolMetrics txPoolMetrics =
+      new TransactionPoolMetrics(new NoOpMetricsSystem());
+
   protected final PendingTransactions sorter =
-      new GasPricePendingTransactionsSorter(
-          ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(100).build(),
-          Clock.systemUTC(),
-          new NoOpMetricsSystem(),
-          blockchain::getChainHeadHeader);
+      new LayeredPendingTransactions(
+          poolConfiguration,
+          new GasPricePrioritizedTransactions(
+              poolConfiguration,
+              new EndLayer(txPoolMetrics),
+              txPoolMetrics,
+              transactionReplacementTester));
 
   protected final List<GenesisAllocation> accounts =
       GenesisConfigFile.development()
@@ -101,27 +128,22 @@ public abstract class AbstractIsolationTests {
 
   @Rule public final TemporaryFolder tempData = new TemporaryFolder();
 
-  protected boolean shouldUseSnapshots() {
-    // override for layered worldstate
-    return true;
-  }
-
   @Before
   public void createStorage() {
     bonsaiWorldStateStorage =
         (BonsaiWorldStateKeyValueStorage)
             createKeyValueStorageProvider().createWorldStateStorage(DataStorageFormat.BONSAI);
     archive =
-        new BonsaiWorldStateArchive(
+        new BonsaiWorldStateProvider(
             bonsaiWorldStateStorage,
             blockchain,
             Optional.of(16L),
-            shouldUseSnapshots(),
-            new CachedMerkleTrieLoader(new NoOpMetricsSystem()));
+            new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
+            new NoOpMetricsSystem(),
+            null);
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
-    ws.persist(blockchain.getChainHeadHeader());
-    protocolContext = new ProtocolContext(blockchain, archive, null);
+    protocolContext = new ProtocolContext(blockchain, archive, null, Optional.empty());
   }
 
   // storage provider which uses a temporary directory based rocksdb
@@ -134,7 +156,6 @@ public abstract class AbstractIsolationTests {
                   () ->
                       new RocksDBFactoryConfiguration(
                           1024 /* MAX_OPEN_FILES*/,
-                          4 /*MAX_BACKGROUND_COMPACTIONS*/,
                           4 /*BACKGROUND_THREAD_COUNT*/,
                           8388608 /*CACHE_CAPACITY*/,
                           false),
@@ -246,10 +267,14 @@ public abstract class AbstractIsolationTests {
   protected BlockProcessingResult executeBlock(final MutableWorldState ws, final Block block) {
     var res =
         protocolSchedule
-            .getByBlockNumber(0)
+            .getByBlockHeader(blockHeader(0))
             .getBlockProcessor()
             .processBlock(blockchain, ws, block);
     blockchain.appendBlock(block, res.getReceipts());
     return res;
+  }
+
+  private BlockHeader blockHeader(final long number) {
+    return new BlockHeaderTestFixture().number(number).buildHeader();
   }
 }

@@ -79,21 +79,24 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
             callParams,
             buildTransactionValidationParams(header, callParams),
             OperationTracer.NO_TRACING,
+            (mutableWorldState, transactionSimulatorResult) ->
+                transactionSimulatorResult.map(
+                    result ->
+                        result
+                            .getValidationResult()
+                            .either(
+                                (() ->
+                                    result.isSuccessful()
+                                        ? new JsonRpcSuccessResponse(
+                                            request.getRequest().getId(),
+                                            result.getOutput().toString())
+                                        : errorResponse(request, result)),
+                                reason ->
+                                    new JsonRpcErrorResponse(
+                                        request.getRequest().getId(),
+                                        JsonRpcErrorConverter.convertTransactionInvalidReason(
+                                            reason)))),
             header)
-        .map(
-            result ->
-                result
-                    .getValidationResult()
-                    .either(
-                        (() ->
-                            result.isSuccessful()
-                                ? new JsonRpcSuccessResponse(
-                                    request.getRequest().getId(), result.getOutput().toString())
-                                : errorResponse(request, result)),
-                        reason ->
-                            new JsonRpcErrorResponse(
-                                request.getRequest().getId(),
-                                JsonRpcErrorConverter.convertTransactionInvalidReason(reason))))
         .orElse(errorResponse(request, INTERNAL_ERROR));
   }
 
@@ -140,7 +143,7 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
     // be decided according to the provided parameters
     if (callParams.isMaybeStrict().isEmpty()) {
       transactionValidationParams.isAllowExceedingBalance(
-          isAllowExeedingBalanceAutoSelection(header, callParams));
+          isAllowExceedingBalanceAutoSelection(header, callParams));
     } else {
       transactionValidationParams.isAllowExceedingBalance(
           !callParams.isMaybeStrict().orElse(Boolean.FALSE));
@@ -148,7 +151,7 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
     return transactionValidationParams.build();
   }
 
-  private boolean isAllowExeedingBalanceAutoSelection(
+  private boolean isAllowExceedingBalanceAutoSelection(
       final BlockHeader header, final JsonCallParameter callParams) {
 
     boolean isZeroGasPrice =

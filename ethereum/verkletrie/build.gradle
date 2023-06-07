@@ -28,7 +28,7 @@ jar {
 }
 
 dependencies {
-  implementation project(':crypto')
+  implementation project(':crypto:algorithms')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:trie')
 
@@ -36,6 +36,7 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.bouncycastle:bcprov-jdk15on'
   implementation 'org.hyperledger.besu:ipa-multipoint'
 

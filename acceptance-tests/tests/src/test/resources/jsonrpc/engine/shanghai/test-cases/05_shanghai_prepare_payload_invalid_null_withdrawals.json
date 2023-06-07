@@ -1,0 +1,28 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "engine_forkchoiceUpdatedV2",
+    "params": [
+      {
+        "headBlockHash": "0x9392d866ef80eb0d7a1700362326e3396cc9550b757bda2191548fb1447f5d26",
+        "safeBlockHash": "0x9392d866ef80eb0d7a1700362326e3396cc9550b757bda2191548fb1447f5d26",
+        "finalizedBlockHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      {
+        "timestamp": "0x10",
+        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "suggestedFeeRecipient": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"
+      }
+    ],
+    "id": 67
+  },
+  "response": {
+    "jsonrpc" : "2.0",
+    "id" : 67,
+    "error" : {
+      "code" : -32602,
+      "message" : "Invalid params"
+    }
+  },
+  "statusCode" : 200
+}

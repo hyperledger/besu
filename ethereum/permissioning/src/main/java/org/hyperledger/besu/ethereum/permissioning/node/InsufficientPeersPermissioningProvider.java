@@ -63,7 +63,7 @@ public class InsufficientPeersPermissioningProvider implements ContextualNodePer
   @Override
   public Optional<Boolean> isPermitted(
       final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
-    Optional<EnodeURL> maybeSelfEnode = p2pNetwork.getLocalEnode();
+    final Optional<EnodeURL> maybeSelfEnode = p2pNetwork.getLocalEnode();
     if (nonBootnodePeerConnections > 0) {
       return Optional.empty();
     } else if (!maybeSelfEnode.isPresent()) {

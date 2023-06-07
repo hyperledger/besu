@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
-import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
@@ -138,7 +138,7 @@ public class NettyConnectionInitializer
 
   @Override
   public CompletableFuture<Void> stop() {
-    CompletableFuture<Void> stoppedFuture = new CompletableFuture<>();
+    final CompletableFuture<Void> stoppedFuture = new CompletableFuture<>();
     if (!started.get() || !stopped.compareAndSet(false, true)) {
       stoppedFuture.completeExceptionally(
           new IllegalStateException("Illegal attempt to stop " + this.getClass().getSimpleName()));
@@ -207,7 +207,7 @@ public class NettyConnectionInitializer
                 timeoutHandler(
                     connectionFuture,
                     "Timed out waiting to establish connection with peer: " + peer.getId()));
-        addAdditionalOutboundHandlers(ch);
+        addAdditionalOutboundHandlers(ch, peer);
         ch.pipeline().addLast(outboundHandler(peer, connectionFuture));
       }
     };
@@ -271,7 +271,7 @@ public class NettyConnectionInitializer
         () -> connectionFuture.completeExceptionally(new TimeoutException(s)));
   }
 
-  void addAdditionalOutboundHandlers(final Channel ch)
+  void addAdditionalOutboundHandlers(final Channel ch, final Peer peer)
       throws GeneralSecurityException, IOException {}
 
   void addAdditionalInboundHandlers(final Channel ch)

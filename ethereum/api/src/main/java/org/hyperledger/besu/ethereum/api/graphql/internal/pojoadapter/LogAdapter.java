@@ -35,8 +35,8 @@ public class LogAdapter extends AdapterBase {
     this.logWithMetadata = logWithMetadata;
   }
 
-  public Optional<Integer> getIndex() {
-    return Optional.of(logWithMetadata.getLogIndex());
+  public Integer getIndex() {
+    return logWithMetadata.getLogIndex();
   }
 
   public List<LogTopic> getTopics() {
@@ -44,18 +44,18 @@ public class LogAdapter extends AdapterBase {
     return new ArrayList<>(topics);
   }
 
-  public Optional<Bytes> getData() {
-    return Optional.of(logWithMetadata.getData());
+  public Bytes getData() {
+    return logWithMetadata.getData();
   }
 
-  public Optional<TransactionAdapter> getTransaction(final DataFetchingEnvironment environment) {
+  public TransactionAdapter getTransaction(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final Hash hash = logWithMetadata.getTransactionHash();
     final Optional<TransactionWithMetadata> tran = query.transactionByHash(hash);
-    return tran.map(TransactionAdapter::new);
+    return tran.map(TransactionAdapter::new).orElseThrow();
   }
 
-  public Optional<AccountAdapter> getAccount(final DataFetchingEnvironment environment) {
+  public AccountAdapter getAccount(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     long blockNumber = logWithMetadata.getBlockNumber();
     final Long bn = environment.getArgument("block");
@@ -63,7 +63,9 @@ public class LogAdapter extends AdapterBase {
       blockNumber = bn;
     }
 
-    return query.getAndMapWorldState(
-        blockNumber, ws -> new AccountAdapter(ws.get(logWithMetadata.getLogger())));
+    return query
+        .getAndMapWorldState(
+            blockNumber, ws -> Optional.of(new AccountAdapter(ws.get(logWithMetadata.getLogger()))))
+        .get();
   }
 }

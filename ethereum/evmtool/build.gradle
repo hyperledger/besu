@@ -14,6 +14,10 @@
  *
  */
 
+plugins {
+  id 'org.graalvm.buildtools.native' version '0.9.17'
+}
+
 apply plugin: 'java-library'
 apply plugin: 'application'
 apply plugin: 'idea'
@@ -31,16 +35,11 @@ jar {
 }
 
 dependencies {
-  api 'org.slf4j:slf4j-api'
 
   implementation project(':besu')
   implementation project(':config')
-  implementation project(':crypto')
+  implementation project(':crypto:algorithms')
   implementation project(':datatypes')
-  implementation project(':consensus:clique')
-  implementation project(':consensus:common')
-  implementation project(':consensus:ibft')
-  implementation project(':consensus:qbft')
   implementation project(':ethereum:api')
   implementation project(':ethereum:core')
   implementation project(':ethereum:referencetests')
@@ -56,9 +55,9 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'info.picocli:picocli'
   implementation 'io.vertx:vertx-core'
-  implementation 'org.apache.logging.log4j:log4j-core'
 
   annotationProcessor 'com.google.dagger:dagger-compiler'
+  annotationProcessor 'info.picocli:picocli-codegen'
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
@@ -66,6 +65,9 @@ dependencies {
   testImplementation 'org.mockito:mockito-core'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+
+  // No logging in grallvm EvmTool
+  nativeImageClasspath 'org.slf4j:slf4j-nop'
 }
 
 mainClassName = 'org.hyperledger.besu.evmtool.EvmTool'
@@ -144,4 +146,33 @@ task dockerUpload(type: Exec) {
   additionalTags.each { tag -> cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'" }
   executable "sh"
   args "-c", cmd
+}
+
+graalvmNative {
+  binaries {
+    main {
+      sharedLibrary = false
+      buildArgs.addAll(
+        "-H:ReflectionConfigurationFiles=${projectDir}/src/main/graal/reflection-config.json",
+        "-H:AdditionalSecurityProviders=org.bouncycastle.jce.provider.BouncyCastleProvider",
+        '-H:+TraceSecurityServices'
+        )
+
+
+      // Netty drags in older versions of bouncy castle, exclude it so there are no conflicts
+      excludeConfig.put("io.netty:netty-buffer:4.1.74.Final", [".*"])
+    }
+  }
+}
+
+
+configurations.nativeImageClasspath {
+  // netty statically allocates some problematic classes
+  exclude group: 'io.netty', module: 'netty-buffer'
+  exclude group: 'io.netty', module: 'netty-transport'
+
+  // keep log4j from sneaking in.  GraalVM has an aleric reaction if it sees even one class
+  exclude group: 'org.slf4j', module: 'log4j-over-slf4j:1.7.36'
+  exclude group: "log4j", module: "log4j"
+  exclude group: "org.apache.logging.log4j"
 }

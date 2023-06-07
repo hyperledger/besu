@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.plugin.data;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Quantity;
 import org.hyperledger.besu.plugin.Unstable;
 
 import java.util.Optional;
@@ -187,6 +190,16 @@ public interface BlockHeader {
    *     withdrawal in the withdrawal list portion of the block.
    */
   Optional<? extends Hash> getWithdrawalsRoot();
+
+  /**
+   * The Keccak 256-bit hash of the root node of the trie structure populated with each deposit in
+   * the deposits list portion of the block.
+   *
+   * @return The Keccak 256-bit hash of the root node of the trie structure populated with each
+   *     deposit in the deposit list portion of the block.
+   */
+  @Unstable
+  Optional<? extends Hash> getDepositsRoot();
 
   /**
    * The excess_data_gas of this header.

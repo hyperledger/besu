@@ -25,10 +25,23 @@ plugins {
   id 'com.github.hierynomus.license' version '0.16.1-fix'
   id 'com.jfrog.artifactory' version '4.28.3'
   id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-  id 'me.champeau.jmh' version '0.6.6' apply false
+  id 'me.champeau.jmh' version '0.7.0' apply false
   id 'net.ltgt.errorprone' version '2.0.2'
   id 'maven-publish'
+  id 'org.sonarqube' version '3.4.0.2513'
 }
+
+sonarqube {
+  properties {
+    property "sonar.projectKey", "hyperledger_besu"
+    property "sonar.organization", "hyperledger"
+    property "sonar.host.url", "https://sonarcloud.io"
+    property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
+    property "sonar.coverage.exclusions", "acceptance-tests/**/*"
+  }
+}
+
+project.tasks["sonarqube"].dependsOn "jacocoRootReport"
 
 if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
   throw new GradleException("Java 17 or later is required to build Besu.\n" +
@@ -110,10 +123,6 @@ allprojects {
     maven {
       url 'https://artifacts.consensys.net/public/maven/maven/'
       content { includeGroupByRegex('tech\\.pegasys(\\..*)?') }
-    }
-    maven {
-      url 'https://dl.cloudsmith.io/public/consensys/quorum-mainnet-launcher/maven/'
-      content { includeGroupByRegex('net\\.consensys\\..*') }
     }
     maven {
       url 'https://splunk.jfrog.io/splunk/ext-releases-local'
@@ -639,6 +648,7 @@ def dockerImageName = "${dockerOrgName}/${dockerArtifactName}"
 def dockerVariants = project.hasProperty("dockerVariants") ? project.getProperty("dockerVariants").split(",") : [
   "openjdk-17",
   "openjdk-17-debug",
+  "openj9-jdk-17",
   "graalvm",
   "openjdk-latest"
 ]
@@ -741,6 +751,7 @@ task dockerUpload {
         def archVariantImage = "${variantImage}-${architecture}"
         def cmd = "docker tag '${variantImage}' '${archVariantImage}' && docker push '${archVariantImage}'"
         additionalTags.each { tag -> cmd += " && docker tag '${variantImage}' '${dockerImageName}:${tag.trim()}-${variant}-${architecture}' && docker push '${dockerImageName}:${tag.trim()}-${variant}-${architecture}'" }
+        println "Executing '${cmd}'"
         executable "sh"
         args "-c", cmd
       }
@@ -750,6 +761,7 @@ task dockerUpload {
       def archImage = "${image}-${architecture}"
       def cmd = "docker tag ${image} ${archImage} && docker push '${archImage}'"
       additionalTags.each { tag -> cmd += " && docker tag '${image}' '${dockerImageName}:${tag.trim()}-${architecture}' && docker push '${dockerImageName}:${tag.trim()}-${architecture}'" }
+      println "Executing '${cmd}'"
       executable "sh"
       args "-c", cmd
     }
@@ -765,7 +777,14 @@ task dockerUploadRelease {
       for (def variant in dockerVariants) {
         def variantImage = "${image}-${variant}"
         exec {
-          def cmd = "docker pull '${variantImage}-${architecture}' && docker tag '${variantImage}-${architecture}' '${dockerImageName}:latest-${variant}-${architecture}' && docker push '${dockerImageName}:latest-${variant}-${architecture}'"
+          def cmd = "docker pull '${variantImage}-${architecture}' && docker tag '${variantImage}-${architecture}' '${dockerImageName}:latest-${variant}-${architecture}'"
+          println "Executing '${cmd}'"
+          executable "sh"
+          args "-c", cmd
+        }
+        exec {
+          def cmd = "docker push '${dockerImageName}:latest-${variant}-${architecture}'"
+          println "Executing '${cmd}'"
           executable "sh"
           args "-c", cmd
         }
@@ -773,7 +792,14 @@ task dockerUploadRelease {
 
       exec {
         def archImage = "${image}-${architecture}"
-        def cmd = "docker pull '${archImage}' && docker tag ${archImage} '${dockerImageName}:latest-${architecture}' && docker push '${dockerImageName}:latest-${architecture}'"
+        def cmd = "docker pull '${archImage}' && docker tag ${archImage} '${dockerImageName}:latest-${architecture}'"
+        println "Executing '${cmd}'"
+        executable "sh"
+        args "-c", cmd
+      }
+      exec {
+        def cmd = "docker push '${dockerImageName}:latest-${architecture}'"
+        println "Executing '${cmd}'"
         executable "sh"
         args "-c", cmd
       }
@@ -802,7 +828,14 @@ task manifestDocker {
         archs.forEach { arch -> targets += "'${variantImage}-${arch}' " }
 
         exec {
-          def cmd = "docker manifest create '${variantImage}' ${targets} && docker manifest push '${variantImage}'"
+          def cmd = "docker manifest create '${variantImage}' ${targets}"
+          println "Executing '${cmd}'"
+          executable "sh"
+          args "-c", cmd
+        }
+        exec {
+          def cmd = "docker manifest push '${variantImage}'"
+          println "Executing '${cmd}'"
           executable "sh"
           args "-c", cmd
         }
@@ -811,7 +844,14 @@ task manifestDocker {
       exec {
         def targets = ""
         archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
-        def cmd = "docker manifest create '${baseTag}' ${targets} && docker manifest push '${baseTag}'"
+        def cmd = "docker manifest create '${baseTag}' ${targets}"
+        println "Executing '${cmd}'"
+        executable "sh"
+        args "-c", cmd
+      }
+      exec {
+        def cmd = "docker manifest push '${baseTag}'"
+        println "Executing '${cmd}'"
         executable "sh"
         args "-c", cmd
       }
@@ -830,7 +870,14 @@ task manifestDockerRelease {
       archs.forEach { arch -> targets += "'${variantImage}-${arch}' " }
 
       exec {
-        def cmd = "docker manifest create '${variantImage}' ${targets} && docker manifest push '${variantImage}'"
+        def cmd = "docker manifest create '${variantImage}' ${targets}"
+        println "Executing '${cmd}'"
+        executable "sh"
+        args "-c", cmd
+      }
+      exec {
+        def cmd = "docker manifest push '${variantImage}'"
+        println "Executing '${cmd}'"
         executable "sh"
         args "-c", cmd
       }
@@ -839,7 +886,14 @@ task manifestDockerRelease {
     exec {
       def targets = ""
       archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
-      def cmd = "docker manifest create '${baseTag}' ${targets} && docker manifest push '${baseTag}'"
+      def cmd = "docker manifest create '${baseTag}' ${targets}"
+      println "Executing '${cmd}'"
+      executable "sh"
+      args "-c", cmd
+    }
+    exec {
+      def cmd = "docker manifest push '${baseTag}'"
+      println "Executing '${cmd}'"
       executable "sh"
       args "-c", cmd
     }
@@ -862,7 +916,7 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
     "(.*/.idea/.*)",
     "(.*/out/.*)",
     "(.*/build/.*)",
-    "(.*/src/[^/]+/generated/.*)",
+    "(.*/src/[^/]+/generated/.*)"
   ].join("|")
 
 }

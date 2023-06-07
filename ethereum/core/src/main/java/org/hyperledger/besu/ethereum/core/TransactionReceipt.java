@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
-import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.List;
@@ -33,7 +32,6 @@ import java.util.stream.Collectors;
 
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * A transaction receipt, containing information pertaining a transaction execution.
@@ -368,29 +366,5 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
         .add("status", status)
         .add("transactionReceiptType", transactionReceiptType)
         .toString();
-  }
-}
-
-class LogsWrapper implements org.hyperledger.besu.plugin.data.Log {
-
-  final Log delegate;
-
-  LogsWrapper(final Log delegate) {
-    this.delegate = delegate;
-  }
-
-  @Override
-  public Address getLogger() {
-    return delegate.getLogger();
-  }
-
-  @Override
-  public List<? extends Bytes32> getTopics() {
-    return delegate.getTopics();
-  }
-
-  @Override
-  public Bytes getData() {
-    return delegate.getData();
   }
 }

@@ -50,7 +50,7 @@ abstract class AbstractBlockProcessorTest {
 
   @Mock private MainnetTransactionProcessor transactionProcessor;
   @Mock private AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
-  @Mock private HeaderBasedProtocolSchedule protocolSchedule;
+  @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private WithdrawalsProcessor withdrawalsProcessor;
 
@@ -80,7 +80,14 @@ abstract class AbstractBlockProcessorTest {
   void withProcessorAndEmptyWithdrawals_WithdrawalsAreNotProcessed() {
     when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
     blockProcessor.processBlock(
-        blockchain, worldState, emptyBlockHeader, emptyList(), emptyList(), Optional.empty(), null);
+        blockchain,
+        worldState,
+        emptyBlockHeader,
+        emptyList(),
+        emptyList(),
+        Optional.empty(),
+        Optional.empty(),
+        null);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
   }
 
@@ -88,7 +95,14 @@ abstract class AbstractBlockProcessorTest {
   void withNoProcessorAndEmptyWithdrawals_WithdrawalsAreNotProcessed() {
     when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
     blockProcessor.processBlock(
-        blockchain, worldState, emptyBlockHeader, emptyList(), emptyList(), Optional.empty(), null);
+        blockchain,
+        worldState,
+        emptyBlockHeader,
+        emptyList(),
+        emptyList(),
+        Optional.empty(),
+        Optional.empty(),
+        null);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
   }
 
@@ -104,6 +118,7 @@ abstract class AbstractBlockProcessorTest {
         emptyList(),
         emptyList(),
         Optional.of(withdrawals),
+        Optional.empty(),
         null);
     verify(withdrawalsProcessor).processWithdrawals(eq(withdrawals), any());
   }
@@ -121,6 +136,7 @@ abstract class AbstractBlockProcessorTest {
         emptyList(),
         emptyList(),
         Optional.of(withdrawals),
+        Optional.empty(),
         null);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
   }
@@ -133,7 +149,7 @@ abstract class AbstractBlockProcessorTest {
         final Wei blockReward,
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         final boolean skipZeroBlockRewards,
-        final HeaderBasedProtocolSchedule protocolSchedule) {
+        final ProtocolSchedule protocolSchedule) {
       super(
           transactionProcessor,
           transactionReceiptFactory,

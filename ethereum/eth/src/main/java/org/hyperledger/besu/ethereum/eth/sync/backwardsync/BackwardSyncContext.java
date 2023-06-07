@@ -153,7 +153,7 @@ public class BackwardSyncContext {
     if (backwardChain.isTrusted(hash)) {
       LOG.atDebug()
           .setMessage(
-              "not fetching or appending hash {} to backwards sync since it is present in successors")
+              "Not fetching or appending hash {} to backward sync since it is present in successors")
           .addArgument(hash::toHexString)
           .log();
       return true;
@@ -237,7 +237,7 @@ public class BackwardSyncContext {
   @VisibleForTesting
   CompletableFuture<Void> prepareBackwardSyncFuture() {
     final MutableBlockchain blockchain = getProtocolContext().getBlockchain();
-    return new BackwardsSyncAlgorithm(
+    return new BackwardSyncAlgorithm(
             this,
             FinalBlockConfirmation.confirmationChain(
                 FinalBlockConfirmation.genesisConfirmation(blockchain),
@@ -261,12 +261,12 @@ public class BackwardSyncContext {
     return protocolContext;
   }
 
-  public BlockValidator getBlockValidator(final long blockNumber) {
-    return protocolSchedule.getByBlockNumber(blockNumber).getBlockValidator();
+  public BlockValidator getBlockValidator(final BlockHeader blockHeader) {
+    return protocolSchedule.getByBlockHeader(blockHeader).getBlockValidator();
   }
 
   public BlockValidator getBlockValidatorForBlock(final Block block) {
-    return getBlockValidator(block.getHeader().getNumber());
+    return getBlockValidator(block.getHeader());
   }
 
   public boolean isReady() {

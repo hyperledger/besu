@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceTransacti
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 
@@ -37,15 +36,11 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockchainQueries blockchainQueries;
   private final ProtocolSchedule protocolSchedule;
-  private final PrivacyParameters privacyParameters;
 
   TraceJsonRpcMethods(
-      final BlockchainQueries blockchainQueries,
-      final ProtocolSchedule protocolSchedule,
-      final PrivacyParameters privacyParameters) {
+      final BlockchainQueries blockchainQueries, final ProtocolSchedule protocolSchedule) {
     this.blockchainQueries = blockchainQueries;
     this.protocolSchedule = protocolSchedule;
-    this.privacyParameters = privacyParameters;
   }
 
   @Override
@@ -56,41 +51,34 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
   @Override
   protected Map<String, JsonRpcMethod> create() {
     final BlockReplay blockReplay =
-        new BlockReplay(
-            protocolSchedule,
-            blockchainQueries.getBlockchain(),
-            blockchainQueries.getWorldStateArchive());
+        new BlockReplay(protocolSchedule, blockchainQueries.getBlockchain());
     return mapOf(
-        new TraceReplayBlockTransactions(
-            () -> new BlockTracer(blockReplay), protocolSchedule, blockchainQueries),
+        new TraceReplayBlockTransactions(protocolSchedule, blockchainQueries),
         new TraceFilter(() -> new BlockTracer(blockReplay), protocolSchedule, blockchainQueries),
         new TraceGet(() -> new BlockTracer(blockReplay), blockchainQueries, protocolSchedule),
         new TraceTransaction(
             () -> new BlockTracer(blockReplay), protocolSchedule, blockchainQueries),
-        new TraceBlock(() -> new BlockTracer(blockReplay), protocolSchedule, blockchainQueries),
+        new TraceBlock(protocolSchedule, blockchainQueries),
         new TraceCall(
             blockchainQueries,
             protocolSchedule,
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                privacyParameters)),
+                protocolSchedule)),
         new TraceCallMany(
             blockchainQueries,
             protocolSchedule,
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                privacyParameters)),
+                protocolSchedule)),
         new TraceRawTransaction(
             protocolSchedule,
             blockchainQueries,
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
-                protocolSchedule,
-                privacyParameters)));
+                protocolSchedule)));
   }
 }

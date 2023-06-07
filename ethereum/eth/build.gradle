@@ -64,8 +64,8 @@ dependencies {
 
   testImplementation project(':config')
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
-  testImplementation project(':crypto')
-  testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
+  testImplementation project(':crypto:services')
+  testImplementation project(path: ':crypto:services', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   testImplementation project(':ethereum:mock-p2p')
@@ -80,6 +80,7 @@ dependencies {
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
+  testImplementation 'org.openjdk.jol:jol-core'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 

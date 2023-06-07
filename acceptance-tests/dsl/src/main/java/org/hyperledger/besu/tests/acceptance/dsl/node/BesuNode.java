@@ -98,7 +98,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final boolean revertReasonEnabled;
 
   private final String name;
-  private final MiningParameters miningParameters;
+  private MiningParameters miningParameters;
   private final List<String> runCommand;
   private PrivacyParameters privacyParameters = PrivacyParameters.DEFAULT;
   private final JsonRpcConfiguration jsonRpcConfiguration;
@@ -386,7 +386,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     return LOCALHOST;
   }
 
-  private NodeRequests nodeRequests() {
+  public NodeRequests nodeRequests() {
     Optional<WebSocketService> websocketService = Optional.empty();
     if (nodeRequests == null) {
       final Web3jService web3jService;
@@ -659,6 +659,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   MiningParameters getMiningParameters() {
     return miningParameters;
+  }
+
+  public void setMiningParameters(final MiningParameters miningParameters) {
+    this.miningParameters = miningParameters;
   }
 
   public PrivacyParameters getPrivacyParameters() {

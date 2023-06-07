@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Quantity;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.plugin.data.Quantity;
 
 import java.math.BigInteger;
 
@@ -100,7 +100,7 @@ public abstract class MainnetDifficultyCalculators {
 
   // Proof-of-Stake difficulty must not be altered
   static final DifficultyCalculator PROOF_OF_STAKE_DIFFICULTY =
-      (time, parent, protocolContext) -> parent.getDifficulty().getAsBigInteger();
+      (time, parent, protocolContext) -> BigInteger.ZERO;
 
   private static BigInteger calculateThawedDifficulty(
       final long time, final BlockHeader parent, final long fakeBlockOffset) {

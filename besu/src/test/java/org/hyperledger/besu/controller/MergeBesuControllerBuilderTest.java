@@ -27,7 +27,8 @@ import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
-import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -47,6 +48,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
+import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
@@ -79,6 +81,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class MergeBesuControllerBuilderTest {
 
   private MergeBesuControllerBuilder besuControllerBuilder;
+  private static final NodeKey nodeKey = NodeKeyUtils.generate();
 
   @Mock GenesisConfigFile genesisConfigFile;
   @Mock GenesisConfigOptions genesisConfigOptions;
@@ -90,7 +93,6 @@ public class MergeBesuControllerBuilderTest {
   @Mock PrivacyParameters privacyParameters;
   @Mock Clock clock;
   @Mock TransactionPoolConfiguration poolConfiguration;
-  @Mock NodeKey nodeKey;
   @Mock StorageProvider storageProvider;
   @Mock GasLimitCalculator gasLimitCalculator;
   @Mock WorldStateStorage worldStateStorage;
@@ -121,6 +123,8 @@ public class MergeBesuControllerBuilderTest {
         .thenReturn(
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions()));
+    when(storageProvider.getStorageBySegmentIdentifier(any()))
+        .thenReturn(new InMemoryKeyValueStorage());
     when(synchronizerConfiguration.getDownloaderParallelism()).thenReturn(1);
     when(synchronizerConfiguration.getTransactionsParallelism()).thenReturn(1);
     when(synchronizerConfiguration.getComputationParallelism()).thenReturn(1);
@@ -159,6 +163,7 @@ public class MergeBesuControllerBuilderTest {
             .nodeKey(nodeKey)
             .storageProvider(storageProvider)
             .evmConfiguration(EvmConfiguration.DEFAULT)
+            .networkConfiguration(NetworkingConfiguration.create())
             .networkId(networkId);
   }
 
@@ -167,7 +172,7 @@ public class MergeBesuControllerBuilderTest {
     when(genesisConfigOptions.getTerminalTotalDifficulty())
         .thenReturn(Optional.of(UInt256.valueOf(1500L)));
 
-    Difficulty terminalTotalDifficulty =
+    final Difficulty terminalTotalDifficulty =
         visitWithMockConfigs(new MergeBesuControllerBuilder())
             .build()
             .getProtocolContext()
@@ -179,9 +184,9 @@ public class MergeBesuControllerBuilderTest {
 
   @Test
   public void assertConfiguredBlock() {
-    Blockchain mockChain = mock(Blockchain.class);
+    final Blockchain mockChain = mock(Blockchain.class);
     when(mockChain.getBlockHeader(anyLong())).thenReturn(Optional.of(mock(BlockHeader.class)));
-    MergeContext mergeContext =
+    final MergeContext mergeContext =
         besuControllerBuilder.createConsensusContext(
             mockChain,
             mock(WorldStateArchive.class),
@@ -203,10 +208,10 @@ public class MergeBesuControllerBuilderTest {
                 mock(WorldStateArchive.class),
                 this.besuControllerBuilder.createProtocolSchedule()));
     assertThat(mergeContext).isNotNull();
-    Difficulty over = Difficulty.of(10000L);
-    Difficulty under = Difficulty.of(10L);
+    final Difficulty over = Difficulty.of(10000L);
+    final Difficulty under = Difficulty.of(10L);
 
-    BlockHeader parent =
+    final BlockHeader parent =
         headerGenerator
             .difficulty(under)
             .parentHash(genesisState.getBlock().getHash())
@@ -216,7 +221,7 @@ public class MergeBesuControllerBuilderTest {
             .buildHeader();
     blockchain.appendBlock(new Block(parent, BlockBody.empty()), Collections.emptyList());
 
-    BlockHeader terminal =
+    final BlockHeader terminal =
         headerGenerator
             .difficulty(over)
             .parentHash(parent.getHash())
@@ -231,9 +236,9 @@ public class MergeBesuControllerBuilderTest {
 
   @Test
   public void assertNoFinalizedBlockWhenNotStored() {
-    Blockchain mockChain = mock(Blockchain.class);
+    final Blockchain mockChain = mock(Blockchain.class);
     when(mockChain.getFinalized()).thenReturn(Optional.empty());
-    MergeContext mergeContext =
+    final MergeContext mergeContext =
         besuControllerBuilder.createConsensusContext(
             mockChain,
             mock(WorldStateArchive.class),
@@ -250,7 +255,7 @@ public class MergeBesuControllerBuilderTest {
     when(mockChain.getFinalized()).thenReturn(Optional.of(finalizedHeader.getHash()));
     when(mockChain.getBlockHeader(finalizedHeader.getHash()))
         .thenReturn(Optional.of(finalizedHeader));
-    MergeContext mergeContext =
+    final MergeContext mergeContext =
         besuControllerBuilder.createConsensusContext(
             mockChain,
             mock(WorldStateArchive.class),

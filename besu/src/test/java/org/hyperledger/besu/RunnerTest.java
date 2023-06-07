@@ -20,7 +20,6 @@ import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_BACKGROUND_THREAD_COUNT;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_IS_HIGH_SPEC;
-import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_BACKGROUND_COMPACTIONS;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_OPEN_FILES;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
@@ -30,8 +29,8 @@ import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.MainnetBesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
@@ -52,6 +51,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -73,6 +73,7 @@ import org.hyperledger.besu.testutil.TestClock;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -96,32 +97,31 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.awaitility.Awaitility;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /** Tests for {@link Runner}. */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public final class RunnerTest {
 
   public static final BigInteger NETWORK_ID = BigInteger.valueOf(2929);
   private Vertx vertx;
 
-  @Before
+  @BeforeEach
   public void initVertx() {
     vertx = Vertx.vertx();
   }
 
-  @After
+  @AfterEach
   public void stopVertx() {
     vertx.close();
   }
 
-  @Rule public final TemporaryFolder temp = new TemporaryFolder();
+  @TempDir private static Path temp;
 
   @Test
   public void getFixedNodes() {
@@ -159,7 +159,7 @@ public final class RunnerTest {
 
   private void syncFromGenesis(final SyncMode mode, final GenesisConfigFile genesisConfig)
       throws Exception {
-    final Path dataDirAhead = temp.newFolder().toPath();
+    final Path dataDirAhead = Files.createTempDirectory(temp, "db-ahead");
     final Path dbAhead = dataDirAhead.resolve("database");
     final int blockCount = 500;
     final NodeKey aheadDbNodeKey = NodeKeyUtils.createFrom(KeyPairUtil.loadKeyPair(dbAhead));
@@ -181,14 +181,13 @@ public final class RunnerTest {
         blockCount, controllerAhead.getProtocolSchedule(), controllerAhead.getProtocolContext());
 
     final String listenHost = InetAddress.getLoopbackAddress().getHostAddress();
-    final Path pidPath = temp.getRoot().toPath().resolve("pid");
+    final Path pidPath = dataDirAhead.resolve("pid");
     final RunnerBuilder runnerBuilder =
         new RunnerBuilder()
             .vertx(vertx)
             .discovery(true)
             .p2pAdvertisedHost(listenHost)
             .p2pListenPort(0)
-            .maxPeers(3)
             .metricsSystem(noOpMetricsSystem)
             .permissioningService(new PermissioningServiceImpl())
             .staticNodes(emptySet())
@@ -221,7 +220,7 @@ public final class RunnerTest {
               .fastSyncPivotDistance(5)
               .fastSyncMinimumPeerCount(1)
               .build();
-      final Path dataDirBehind = temp.newFolder().toPath();
+      final Path dataDirBehind = Files.createTempDirectory(temp, "db-behind");
 
       // Setup runner with no block data
       final BesuController controllerBehind =
@@ -381,7 +380,6 @@ public final class RunnerTest {
                 () ->
                     new RocksDBFactoryConfiguration(
                         DEFAULT_MAX_OPEN_FILES,
-                        DEFAULT_MAX_BACKGROUND_COMPACTIONS,
                         DEFAULT_BACKGROUND_THREAD_COUNT,
                         DEFAULT_CACHE_CAPACITY,
                         DEFAULT_IS_HIGH_SPEC),
@@ -427,8 +425,7 @@ public final class RunnerTest {
 
     for (int i = 1; i < count + 1; ++i) {
       final Block block = blocks.get(i);
-      final ProtocolSpec protocolSpec =
-          protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
+      final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       final BlockImportResult result =
           blockImporter.importBlock(protocolContext, block, HeaderValidationMode.FULL);
@@ -460,6 +457,11 @@ public final class RunnerTest {
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
         .gasLimitCalculator(GasLimitCalculator.constant())
         .evmConfiguration(EvmConfiguration.DEFAULT)
+        .networkConfiguration(NetworkingConfiguration.create())
+        .randomPeerPriority(Boolean.FALSE)
+        .maxPeers(25)
+        .lowerBoundPeers(25)
+        .maxRemotelyInitiatedPeers(15)
         .build();
   }
 }

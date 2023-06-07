@@ -19,11 +19,13 @@ import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -34,7 +36,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
-import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -156,13 +157,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
     try (final MutableWorldState disposableWorldState = duplicateWorldStateAtParent()) {
       final ProtocolSpec newProtocolSpec =
-          protocolSchedule.getByBlockHeader(
-              BlockHeaderBuilder.fromHeader(parentHeader)
-                  .number(parentHeader.getNumber() + 1)
-                  .timestamp(timestamp)
-                  .parentHash(parentHeader.getHash())
-                  .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
-                  .buildBlockHeader());
+          protocolSchedule.getForNextBlockHeader(parentHeader, timestamp);
 
       final ProcessableBlockHeader processableBlockHeader =
           createPendingBlockHeader(timestamp, maybePrevRandao, newProtocolSpec);
@@ -178,7 +173,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final List<BlockHeader> ommers = maybeOmmers.orElse(selectOmmers());
 
       throwIfStopped();
-      final BlockTransactionSelector.TransactionSelectionResults transactionResults =
+      final TransactionSelectionResults transactionResults =
           selectTransactions(
               processableBlockHeader,
               disposableWorldState,
@@ -186,6 +181,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               miningBeneficiary,
               dataGasPrice,
               newProtocolSpec);
+
+      transactionResults.logSelectionStats();
 
       throwIfStopped();
 
@@ -200,6 +197,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       }
 
       throwIfStopped();
+
+      final Optional<List<Deposit>> maybeDeposits =
+          Optional.empty(); // TODO 6110: Extract deposits from transaction receipts
 
       if (rewardCoinbase
           && !rewardBeneficiary(
@@ -235,6 +235,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   withdrawalsCanBeProcessed
                       ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
                       : null)
+              .depositsRoot(null) // TODO 6110: Derive deposit roots from deposits
               .excessDataGas(newExcessDataGas)
               .buildSealableBlockHeader();
 
@@ -245,7 +246,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Block block =
           new Block(
               blockHeader,
-              new BlockBody(transactionResults.getTransactions(), ommers, withdrawals));
+              new BlockBody(
+                  transactionResults.getTransactions(), ommers, withdrawals, maybeDeposits));
       return new BlockCreationResult(block, transactionResults);
     } catch (final SecurityModuleException ex) {
       throw new IllegalStateException("Failed to create block signature", ex);
@@ -258,8 +260,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   }
 
   private DataGas computeExcessDataGas(
-      BlockTransactionSelector.TransactionSelectionResults transactionResults,
-      ProtocolSpec newProtocolSpec) {
+      TransactionSelectionResults transactionResults, ProtocolSpec newProtocolSpec) {
 
     if (newProtocolSpec.getFeeMarket().implementsDataFee()) {
       final var gasCalculator = newProtocolSpec.getGasCalculator();
@@ -277,7 +278,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     return null;
   }
 
-  private BlockTransactionSelector.TransactionSelectionResults selectTransactions(
+  private TransactionSelectionResults selectTransactions(
       final ProcessableBlockHeader processableBlockHeader,
       final MutableWorldState disposableWorldState,
       final Optional<List<Transaction>> transactions,
@@ -305,7 +306,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             dataGasPrice,
             protocolSpec.getFeeMarket(),
             protocolSpec.getGasCalculator(),
-            protocolSpec.getGasLimitCalculator());
+            protocolSpec.getGasLimitCalculator(),
+            protocolContext.getTransactionSelectorFactory());
 
     if (transactions.isPresent()) {
       return selector.evaluateTransactions(transactions.get());
@@ -318,16 +320,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     final Hash parentStateRoot = parentHeader.getStateRoot();
     return protocolContext
         .getWorldStateArchive()
-        .getMutable(parentStateRoot, parentHeader.getHash(), false)
-        .map(
-            ws -> {
-              if (ws.isPersistable()) {
-                return ws;
-              } else {
-                // non-persistable worldstates should return a copy which is persistable:
-                return ws.copy();
-              }
-            })
+        .getMutable(parentHeader, false)
         .orElseThrow(
             () -> {
               LOG.info("Unable to create block because world state is not available");

@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
-import org.hyperledger.besu.ethereum.bonsai.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -38,9 +38,9 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
     super(
         segmentIdentifier -> new InMemoryKeyValueStorage(),
         new InMemoryKeyValueStorage(),
-        new InMemoryKeyValueStorage(),
         SEGMENT_ISOLATION_SUPPORTED,
-        SNAPSHOT_ISOLATION_UNSUPPORTED);
+        SNAPSHOT_ISOLATION_UNSUPPORTED,
+        new NoOpMetricsSystem());
   }
 
   public static MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
@@ -63,14 +63,18 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
   }
 
-  public static BonsaiWorldStateArchive createBonsaiInMemoryWorldStateArchive(
+  public static BonsaiWorldStateProvider createBonsaiInMemoryWorldStateArchive(
       final Blockchain blockchain) {
     final InMemoryKeyValueStorageProvider inMemoryKeyValueStorageProvider =
         new InMemoryKeyValueStorageProvider();
     final CachedMerkleTrieLoader cachedMerkleTrieLoader =
         new CachedMerkleTrieLoader(new NoOpMetricsSystem());
-    return new BonsaiWorldStateArchive(
-        inMemoryKeyValueStorageProvider, blockchain, cachedMerkleTrieLoader);
+    return new BonsaiWorldStateProvider(
+        inMemoryKeyValueStorageProvider,
+        blockchain,
+        cachedMerkleTrieLoader,
+        new NoOpMetricsSystem(),
+        null);
   }
 
   public static MutableWorldState createInMemoryWorldState() {

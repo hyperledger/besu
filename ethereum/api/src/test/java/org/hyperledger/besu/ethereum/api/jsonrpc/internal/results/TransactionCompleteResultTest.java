@@ -41,6 +41,7 @@ public class TransactionCompleteResultTest {
         new TransactionCompleteResult(
             new TransactionWithMetadata(
                 new TransactionTestFixture()
+                    .type(TransactionType.EIP1559)
                     .maxFeePerGas(Optional.of(Wei.ONE))
                     .maxPriorityFeePerGas(Optional.of(Wei.ZERO))
                     .createTransaction(gen.generateKeyPair()),

@@ -21,15 +21,16 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
-import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import graphql.schema.DataFetchingEnvironment;
 import org.apache.tuweni.bytes.Bytes;
@@ -53,21 +54,21 @@ public class PendingStateAdapter extends AdapterBase {
         .map(PendingTransaction::getTransaction)
         .map(TransactionWithMetadata::new)
         .map(TransactionAdapter::new)
-        .collect(Collectors.toList());
+        .toList();
   }
 
   // until the miner can expose the current "proposed block" we have no
   // speculative environment, so estimate against latest.
-  public Optional<AccountAdapter> getAccount(
-      final DataFetchingEnvironment dataFetchingEnvironment) {
+  public AccountAdapter getAccount(final DataFetchingEnvironment dataFetchingEnvironment) {
     final BlockchainQueries blockchainQuery =
         dataFetchingEnvironment.getGraphQlContext().get(GraphQLContextType.BLOCKCHAIN_QUERIES);
     final Address addr = dataFetchingEnvironment.getArgument("address");
     final Long blockNumber = dataFetchingEnvironment.getArgument("blockNumber");
     final long latestBlockNumber = blockchainQuery.latestBlock().get().getHeader().getNumber();
     return blockchainQuery
-        .getAndMapWorldState(latestBlockNumber, ws -> ws.get(addr))
-        .map(AccountAdapter::new);
+        .getAndMapWorldState(latestBlockNumber, ws -> Optional.ofNullable(ws.get(addr)))
+        .map(AccountAdapter::new)
+        .orElseGet(() -> new AccountAdapter(null));
   }
 
   // until the miner can expose the current "proposed block" we have no
@@ -111,17 +112,24 @@ public class PendingStateAdapter extends AdapterBase {
     final CallParameter param =
         new CallParameter(from, to, gasParam, gasPriceParam, valueParam, data);
 
-    final Optional<TransactionSimulatorResult> opt = transactionSimulator.processAtHead(param);
-    if (opt.isPresent()) {
-      final TransactionSimulatorResult result = opt.get();
-      long status = 0;
-      if (result.isSuccessful()) {
-        status = 1;
-      }
-      final CallResult callResult =
-          new CallResult(status, result.getGasEstimate(), result.getOutput());
-      return Optional.of(callResult);
-    }
-    return Optional.empty();
+    ImmutableTransactionValidationParams.Builder transactionValidationParams =
+        ImmutableTransactionValidationParams.builder()
+            .from(TransactionValidationParams.transactionSimulator());
+    transactionValidationParams.isAllowExceedingBalance(true);
+
+    return transactionSimulator.process(
+        param,
+        transactionValidationParams.build(),
+        OperationTracer.NO_TRACING,
+        (mutableWorldState, transactionSimulatorResult) ->
+            transactionSimulatorResult.map(
+                result -> {
+                  long status = 0;
+                  if (result.isSuccessful()) {
+                    status = 1;
+                  }
+                  return new CallResult(status, result.getGasEstimate(), result.getOutput());
+                }),
+        query.getBlockchain().getChainHeadHeader());
   }
 }

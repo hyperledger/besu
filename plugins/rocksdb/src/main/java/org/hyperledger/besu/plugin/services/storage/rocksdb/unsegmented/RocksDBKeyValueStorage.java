@@ -84,7 +84,6 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
               .setCreateIfMissing(true)
               .setMaxOpenFiles(configuration.getMaxOpenFiles())
               .setTableFormatConfig(createBlockBasedTableConfig(configuration))
-              .setMaxBackgroundCompactions(configuration.getMaxBackgroundCompactions())
               .setStatistics(stats);
       options.getEnv().setBackgroundThreads(configuration.getBackgroundThreadCount());
 
@@ -97,6 +96,8 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
 
   @Override
   public void clear() throws StorageException {
+    throwIfClosed();
+
     try (final RocksIterator rocksIterator = db.newIterator()) {
       rocksIterator.seekToFirst();
       if (rocksIterator.isValid()) {
@@ -140,6 +141,8 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
 
   @Override
   public Stream<Pair<byte[], byte[]>> stream() {
+    throwIfClosed();
+
     final RocksIterator rocksIterator = db.newIterator();
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStream();
@@ -147,6 +150,8 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
 
   @Override
   public Stream<byte[]> streamKeys() {
+    throwIfClosed();
+
     final RocksIterator rocksIterator = db.newIterator();
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStreamKeys();
@@ -162,6 +167,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
 
   @Override
   public boolean tryDelete(final byte[] key) {
+    throwIfClosed();
     try {
       db.delete(tryDeleteOptions, key);
       return true;
@@ -181,6 +187,11 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
     options.setIgnoreMissingColumnFamilies(true);
     return new KeyValueStorageTransactionTransitionValidatorDecorator(
         new RocksDBTransaction(db.beginTransaction(options), options, rocksDBMetrics));
+  }
+
+  @Override
+  public boolean isClosed() {
+    return closed.get();
   }
 
   @Override

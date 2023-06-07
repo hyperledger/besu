@@ -31,7 +31,7 @@ import org.hyperledger.besu.consensus.qbft.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.qbft.support.TestContext;
 import org.hyperledger.besu.consensus.qbft.support.TestContextBuilder;
 import org.hyperledger.besu.consensus.qbft.support.ValidatorPeer;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -83,6 +83,52 @@ public class ValidatorContractTest {
             .clock(TestClock.fixed())
             .genesisFile(Resources.getResource("genesis_validator_contract.json").getFile())
             .useValidatorContract(true)
+            .buildAndStart();
+
+    createNewBlockAsProposer(context, 1);
+
+    final ValidatorProvider validatorProvider = context.getValidatorProvider();
+    final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
+    final BlockHeader block1 = context.getBlockchain().getBlockHeader(1).get();
+    assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).containsExactly(NODE_ADDRESS);
+    assertThat(validatorProvider.getValidatorsForBlock(block1)).containsExactly(NODE_ADDRESS);
+  }
+
+  @Test
+  public void retrievesValidatorsFromValidatorContract_LondonFork() {
+    final TestContext context =
+        new TestContextBuilder()
+            .indexOfFirstLocallyProposedBlock(0)
+            .nodeParams(
+                List.of(new NodeParams(NODE_ADDRESS, NodeKeyUtils.createFrom(NODE_PRIVATE_KEY))))
+            .clock(TestClock.fixed())
+            .genesisFile(Resources.getResource("genesis_validator_contract_london.json").getFile())
+            .useValidatorContract(true)
+            .useLondonMilestone(true)
+            .buildAndStart();
+
+    createNewBlockAsProposer(context, 1);
+
+    final ValidatorProvider validatorProvider = context.getValidatorProvider();
+    final BlockHeader genesisBlock = context.getBlockchain().getBlockHeader(0).get();
+    final BlockHeader block1 = context.getBlockchain().getBlockHeader(1).get();
+    assertThat(validatorProvider.getValidatorsForBlock(genesisBlock)).containsExactly(NODE_ADDRESS);
+    assertThat(validatorProvider.getValidatorsForBlock(block1)).containsExactly(NODE_ADDRESS);
+  }
+
+  @Test
+  public void retrievesValidatorsFromValidatorContract_LondonFork_ZeroBaseFee() {
+    // Using London on a free gas network
+    final TestContext context =
+        new TestContextBuilder()
+            .indexOfFirstLocallyProposedBlock(0)
+            .nodeParams(
+                List.of(new NodeParams(NODE_ADDRESS, NodeKeyUtils.createFrom(NODE_PRIVATE_KEY))))
+            .clock(TestClock.fixed())
+            .genesisFile(Resources.getResource("genesis_validator_contract_london.json").getFile())
+            .useValidatorContract(true)
+            .useLondonMilestone(true)
+            .useZeroBaseFee(true)
             .buildAndStart();
 
     createNewBlockAsProposer(context, 1);

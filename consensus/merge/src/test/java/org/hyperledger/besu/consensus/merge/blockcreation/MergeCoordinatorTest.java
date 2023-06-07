@@ -181,9 +181,10 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
               return spec;
             })
         .when(protocolSchedule)
-        .getByBlockNumber(anyLong());
+        .getByBlockHeader(any(BlockHeader.class));
 
-    protocolContext = new ProtocolContext(blockchain, worldStateArchive, mergeContext);
+    protocolContext =
+        new ProtocolContext(blockchain, worldStateArchive, mergeContext, Optional.empty());
     var mutable = worldStateArchive.getMutable();
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
@@ -254,7 +255,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                       protocolSchedule,
                       this.miningParameters.getMinTransactionGasPrice(),
                       address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
-                      this.miningParameters.getMinBlockOccupancyRatio(),
                       parentHeader));
 
           doCallRealMethod()
@@ -613,6 +613,65 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
           .hasSize(i);
       assertThat(blockWithReceipts.getAllValues().get(i).getReceipts()).hasSize(i);
     }
+  }
+
+  @Test
+  public void shouldCancelPreviousBlockCreationJobIfCalledAgainWithNewPayloadId() {
+
+    final long timestamp = System.currentTimeMillis() / 1000;
+
+    var payloadId1 =
+        coordinator.preparePayload(
+            genesisState.getBlock().getHeader(),
+            timestamp,
+            Bytes32.ZERO,
+            suggestedFeeRecipient,
+            Optional.empty());
+
+    assertThat(coordinator.isBlockCreationCancelled(payloadId1)).isFalse();
+
+    var payloadId2 =
+        coordinator.preparePayload(
+            genesisState.getBlock().getHeader(),
+            timestamp + 1,
+            Bytes32.ZERO,
+            suggestedFeeRecipient,
+            Optional.empty());
+
+    assertThat(payloadId1).isNotEqualTo(payloadId2);
+    assertThat(coordinator.isBlockCreationCancelled(payloadId1)).isTrue();
+    assertThat(coordinator.isBlockCreationCancelled(payloadId2)).isFalse();
+  }
+
+  @Test
+  public void shouldUseExtraDataFromMiningParameters() {
+    final Bytes extraData = Bytes.fromHexString("0x1234");
+
+    miningParameters = new MiningParameters.Builder().extraData(extraData).build();
+
+    this.coordinator =
+        new MergeCoordinator(
+            protocolContext,
+            protocolSchedule,
+            proposalBuilderExecutor,
+            transactions,
+            miningParameters,
+            backwardSyncContext);
+
+    final PayloadIdentifier payloadId =
+        this.coordinator.preparePayload(
+            genesisState.getBlock().getHeader(),
+            1L,
+            Bytes32.ZERO,
+            suggestedFeeRecipient,
+            Optional.empty());
+
+    ArgumentCaptor<BlockWithReceipts> blockWithReceipts =
+        ArgumentCaptor.forClass(BlockWithReceipts.class);
+
+    verify(mergeContext, atLeastOnce()).putPayloadById(eq(payloadId), blockWithReceipts.capture());
+
+    assertThat(blockWithReceipts.getValue().getHeader().getExtraData()).isEqualTo(extraData);
   }
 
   @Test

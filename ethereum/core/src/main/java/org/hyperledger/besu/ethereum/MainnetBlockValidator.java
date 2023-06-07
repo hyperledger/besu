@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.goquorum.GoQuorumBlockProcessingResult;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
@@ -29,7 +28,6 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -122,19 +120,8 @@ public class MainnetBlockValidator implements BlockValidator {
       handleAndLogImportFailure(block, retval, shouldRecordBadBlock);
       return retval;
     }
-
     try (final var worldState =
-        context
-            .getWorldStateArchive()
-            .getMutable(parentHeader.getStateRoot(), parentHeader.getBlockHash(), shouldPersist)
-            .map(
-                ws -> {
-                  if (!ws.isPersistable()) {
-                    return ws.copy();
-                  }
-                  return ws;
-                })
-            .orElse(null)) {
+        context.getWorldStateArchive().getMutable(parentHeader, shouldPersist).orElse(null)) {
 
       if (worldState == null) {
         var retval =
@@ -156,25 +143,6 @@ public class MainnetBlockValidator implements BlockValidator {
             context, block, receipts, worldState.rootHash(), ommerValidationMode)) {
           handleAndLogImportFailure(block, result, shouldRecordBadBlock);
           return new BlockProcessingResult("failed to validate output of imported block");
-        }
-        if (result instanceof GoQuorumBlockProcessingResult) {
-          var privateOutput = (GoQuorumBlockProcessingResult) result;
-          if (!privateOutput.getPrivateReceipts().isEmpty()) {
-            // replace the public receipts for marker transactions with the private receipts if we
-            // are in goQuorumCompatibilityMode. That can be done now because we have validated the
-            // block.
-            final List<TransactionReceipt> privateTransactionReceipts =
-                privateOutput.getPrivateReceipts();
-            final ArrayList<TransactionReceipt> resultingList = new ArrayList<>(receipts.size());
-            for (int i = 0; i < receipts.size(); i++) {
-              if (privateTransactionReceipts.get(i) != null) {
-                resultingList.add(privateTransactionReceipts.get(i));
-              } else {
-                resultingList.add(receipts.get(i));
-              }
-            }
-            receipts = Collections.unmodifiableList(resultingList);
-          }
         }
 
         return new BlockProcessingResult(

@@ -36,6 +36,14 @@ import org.apache.tuweni.bytes.Bytes32;
 
 /** The Merge block creator. */
 class MergeBlockCreator extends AbstractBlockCreator {
+  /**
+   * On PoS you do not need to compete with other nodes for block production, since you have an
+   * allocated slot for that, so in this case make sense to always try to fill the block, if there
+   * are enough pending transactions, until the remaining gas is less than the minimum needed for
+   * the smaller transaction. So for PoS the min-block-occupancy-ratio option is set to always try
+   * to fill 100% of the block.
+   */
+  private static final double TRY_FILL_BLOCK = 1.0;
 
   /**
    * Instantiates a new Merge block creator.
@@ -48,7 +56,6 @@ class MergeBlockCreator extends AbstractBlockCreator {
    * @param protocolSchedule the protocol schedule
    * @param minTransactionGasPrice the min transaction gas price
    * @param miningBeneficiary the mining beneficiary
-   * @param minBlockOccupancyRatio the min block occupancy ratio
    * @param parentHeader the parent header
    */
   public MergeBlockCreator(
@@ -60,7 +67,6 @@ class MergeBlockCreator extends AbstractBlockCreator {
       final ProtocolSchedule protocolSchedule,
       final Wei minTransactionGasPrice,
       final Address miningBeneficiary,
-      final Double minBlockOccupancyRatio,
       final BlockHeader parentHeader) {
     super(
         miningBeneficiary,
@@ -71,7 +77,7 @@ class MergeBlockCreator extends AbstractBlockCreator {
         protocolContext,
         protocolSchedule,
         minTransactionGasPrice,
-        minBlockOccupancyRatio,
+        TRY_FILL_BLOCK,
         parentHeader);
   }
 
@@ -89,6 +95,7 @@ class MergeBlockCreator extends AbstractBlockCreator {
       final Bytes32 random,
       final long timestamp,
       final Optional<List<Withdrawal>> withdrawals) {
+
     return createBlock(
         maybeTransactions,
         Optional.of(Collections.emptyList()),

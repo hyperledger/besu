@@ -21,6 +21,9 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 /** The Jump dest operation. */
 public class JumpDestOperation extends AbstractFixedCostOperation {
 
+  /** constant for a successful jumpdest * */
+  public static final OperationResult JUMPDEST_SUCCESS = new OperationResult(1L, null);
+
   /** The constant OPCODE. */
   public static final int OPCODE = 0x5B;
 

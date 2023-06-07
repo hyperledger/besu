@@ -76,14 +76,13 @@ public class JsonRpcTestMethodsFactory {
     this.blockchain = createInMemoryBlockchain(importer.getGenesisBlock());
     this.stateArchive = createInMemoryWorldStateArchive();
     this.importer.getGenesisState().writeStateTo(stateArchive.getMutable());
-    this.context = new ProtocolContext(blockchain, stateArchive, null);
+    this.context = new ProtocolContext(blockchain, stateArchive, null, Optional.empty());
 
     final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
     this.synchronizer = mock(Synchronizer.class);
 
     for (final Block block : importer.getBlocks()) {
-      final ProtocolSpec protocolSpec =
-          protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
+      final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       blockImporter.importBlock(context, block, HeaderValidationMode.FULL);
     }

@@ -67,12 +67,11 @@ public class EthGetBlockByNumberLatestDesyncIntegrationTest {
         InMemoryKeyValueStorageProvider.createInMemoryBlockchain(importer.getGenesisBlock());
     WorldStateArchive state = InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive();
     importer.getGenesisState().writeStateTo(state.getMutable());
-    ProtocolContext context = new ProtocolContext(chain, state, null);
+    ProtocolContext context = new ProtocolContext(chain, state, null, Optional.empty());
 
     for (final Block block : importer.getBlocks()) {
       final ProtocolSchedule protocolSchedule = importer.getProtocolSchedule();
-      final ProtocolSpec protocolSpec =
-          protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
+      final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       blockImporter.importBlock(context, block, HeaderValidationMode.FULL);
     }

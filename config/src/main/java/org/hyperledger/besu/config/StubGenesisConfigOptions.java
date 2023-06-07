@@ -65,7 +65,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   private OptionalLong thanosBlockNumber = OptionalLong.empty();
   private OptionalLong magnetoBlockNumber = OptionalLong.empty();
   private OptionalLong mystiqueBlockNumber = OptionalLong.empty();
-  private OptionalLong ecip1049BlockNumber = OptionalLong.empty();
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
   private OptionalInt stackSizeLimit = OptionalInt.empty();
@@ -75,6 +74,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   private BftConfigOptions bftConfigOptions = JsonBftConfigOptions.DEFAULT;
   private TransitionsConfigOptions transitions = TransitionsConfigOptions.DEFAULT;
   private static final DiscoveryOptions DISCOVERY_OPTIONS = DiscoveryOptions.DEFAULT;
+  private boolean zeroBaseFee = false;
 
   @Override
   public StubGenesisConfigOptions clone() {
@@ -96,11 +96,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   @Override
-  public boolean isKeccak256() {
-    return false;
-  }
-
-  @Override
   public boolean isIbftLegacy() {
     return false;
   }
@@ -118,11 +113,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   @Override
   public boolean isQbft() {
     return false;
-  }
-
-  @Override
-  public IbftLegacyConfigOptions getIbftLegacyConfigOptions() {
-    return IbftLegacyConfigOptions.DEFAULT;
   }
 
   @Override
@@ -153,11 +143,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   @Override
   public EthashConfigOptions getEthashConfigOptions() {
     return EthashConfigOptions.DEFAULT;
-  }
-
-  @Override
-  public Keccak256ConfigOptions getKeccak256ConfigOptions() {
-    return Keccak256ConfigOptions.DEFAULT;
   }
 
   @Override
@@ -326,11 +311,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   @Override
-  public OptionalLong getEcip1049BlockNumber() {
-    return ecip1049BlockNumber;
-  }
-
-  @Override
   public OptionalInt getContractSizeLimit() {
     return contractSizeLimit;
   }
@@ -388,7 +368,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
     getThanosBlockNumber().ifPresent(l -> builder.put("thanosBlock", l));
     getMagnetoBlockNumber().ifPresent(l -> builder.put("magnetoBlock", l));
     getMystiqueBlockNumber().ifPresent(l -> builder.put("mystiqueBlock", l));
-    getEcip1049BlockNumber().ifPresent(l -> builder.put("ecip1049Block", l));
 
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmStackSize", l));
@@ -397,12 +376,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
     }
     if (isEthHash()) {
       builder.put("ethash", getEthashConfigOptions().asMap());
-    }
-    if (isKeccak256()) {
-      builder.put("keccak256", getKeccak256ConfigOptions().asMap());
-    }
-    if (isIbftLegacy()) {
-      builder.put("ibft", getIbftLegacyConfigOptions().asMap());
     }
     if (isIbft2()) {
       builder.put("ibft2", getBftConfigOptions().asMap());
@@ -427,9 +400,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
 
   @Override
   public PowAlgorithm getPowAlgorithm() {
-    return isEthHash()
-        ? PowAlgorithm.ETHASH
-        : isKeccak256() ? PowAlgorithm.KECCAK256 : PowAlgorithm.UNSUPPORTED;
+    return isEthHash() ? PowAlgorithm.ETHASH : PowAlgorithm.UNSUPPORTED;
   }
 
   @Override
@@ -439,7 +410,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
 
   @Override
   public boolean isZeroBaseFee() {
-    return false;
+    return zeroBaseFee;
   }
 
   @Override
@@ -696,6 +667,17 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   /**
+   * Zero base fee per gas stub genesis config options.
+   *
+   * @param zeroBaseFee the zero base fee override
+   * @return the stub genesis config options
+   */
+  public StubGenesisConfigOptions zeroBaseFee(final boolean zeroBaseFee) {
+    this.zeroBaseFee = zeroBaseFee;
+    return this;
+  }
+
+  /**
    * Classic fork block stub genesis config options.
    *
    * @param blockNumber the block number
@@ -813,17 +795,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    */
   public StubGenesisConfigOptions mystique(final long blockNumber) {
     mystiqueBlockNumber = OptionalLong.of(blockNumber);
-    return this;
-  }
-
-  /**
-   * Ecip 1049 stub genesis config options.
-   *
-   * @param blockNumber the block number
-   * @return the stub genesis config options
-   */
-  public StubGenesisConfigOptions ecip1049(final long blockNumber) {
-    ecip1049BlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 

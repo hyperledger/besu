@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -23,15 +23,15 @@ import static org.hyperledger.besu.ethereum.privacy.group.FlexibleGroupManagemen
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Quantity;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.PrivacyGenesis;
 import org.hyperledger.besu.plugin.data.PrivacyGenesisAccount;
-import org.hyperledger.besu.plugin.data.Quantity;
 
 import java.util.Collections;
 import java.util.List;
@@ -42,7 +42,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class PrivateStateGenesisAllocatorTest {
-  public static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+  public static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
   private final MutableWorldState worldState =
       InMemoryKeyValueStorageProvider.createInMemoryWorldState();
@@ -56,7 +56,7 @@ public class PrivateStateGenesisAllocatorTest {
           List.of(
               new PrivacyGenesisAccount() {
                 @Override
-                public org.hyperledger.besu.plugin.data.Address getAddress() {
+                public Address getAddress() {
                   return genesisAddress;
                 }
 

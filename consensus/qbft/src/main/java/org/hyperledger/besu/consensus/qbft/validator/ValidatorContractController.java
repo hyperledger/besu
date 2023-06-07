@@ -15,9 +15,12 @@
 package org.hyperledger.besu.consensus.qbft.validator;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Collection;
 import java.util.List;
@@ -89,7 +92,13 @@ public class ValidatorContractController {
     final Bytes payload = Bytes.fromHexString(FunctionEncoder.encode(function));
     final CallParameter callParams =
         new CallParameter(null, contractAddress, -1, null, null, payload);
-    return transactionSimulator.process(callParams, blockNumber);
+    final TransactionValidationParams transactionValidationParams =
+        ImmutableTransactionValidationParams.builder()
+            .from(TransactionValidationParams.transactionSimulator())
+            .isAllowExceedingBalance(true)
+            .build();
+    return transactionSimulator.process(
+        callParams, transactionValidationParams, OperationTracer.NO_TRACING, blockNumber);
   }
 
   @SuppressWarnings("rawtypes")
@@ -107,7 +116,8 @@ public class ValidatorContractController {
 
       return decodedList;
     } else {
-      throw new IllegalStateException("Failed validator smart contract call");
+      throw new IllegalStateException(
+          "Failed validator smart contract call: " + result.getValidationResult());
     }
   }
 }

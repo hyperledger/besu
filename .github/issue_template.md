@@ -24,6 +24,9 @@ As an [Actor], I want [feature] so that [why].
 
 **Frequency:** [What percentage of the time does it occur?]
 
+### Logs (if a bug)
+Please post relevant logs from Besu (and the consensus client, if running proof of stake) from before and after the issue. 
+
 ### Versions (Add all that apply)
 * Software version: [`besu --version`]
 * Java version: [`java -version`]
@@ -32,6 +35,7 @@ As an [Actor], I want [feature] so that [why].
 * Virtual Machine software & version: [`vmware -v`]
 * Docker Version: [`docker version`]
 * Cloud VM, type, size: [Amazon Web Services I3-large]
+* Consensus Client & Version if using Proof of Stake: [e.g. Teku, Lighthouse, Prysm, Nimbus, Lodestar]
 
 ### Smart contract information (If you're reporting an issue arising from deploying or calling a smart contract, please supply related information)
 * Solidity version [`solc --version`]

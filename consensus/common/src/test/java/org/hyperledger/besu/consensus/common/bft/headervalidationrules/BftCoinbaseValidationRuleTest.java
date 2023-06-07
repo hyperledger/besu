@@ -17,8 +17,8 @@ package org.hyperledger.besu.consensus.common.bft.headervalidationrules;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithValidators;
 
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.junit.Test;
@@ -50,7 +51,7 @@ public class BftCoinbaseValidationRuleTest {
     final List<Address> validators = Lists.newArrayList(proposerAddress);
 
     final ProtocolContext context =
-        new ProtocolContext(null, null, setupContextWithValidators(validators));
+        new ProtocolContext(null, null, setupContextWithValidators(validators), Optional.empty());
 
     final BftCoinbaseValidationRule coinbaseValidationRule = new BftCoinbaseValidationRule();
 
@@ -70,7 +71,7 @@ public class BftCoinbaseValidationRuleTest {
     final List<Address> validators = Lists.newArrayList(otherValidatorNodeAddress);
 
     final ProtocolContext context =
-        new ProtocolContext(null, null, setupContextWithValidators(validators));
+        new ProtocolContext(null, null, setupContextWithValidators(validators), Optional.empty());
 
     final BftCoinbaseValidationRule coinbaseValidationRule = new BftCoinbaseValidationRule();
 

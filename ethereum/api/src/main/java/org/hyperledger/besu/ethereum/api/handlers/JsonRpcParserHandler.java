@@ -38,7 +38,7 @@ public class JsonRpcParserHandler {
       } else {
         try {
           ctx.put(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name(), ctx.getBodyAsJson());
-        } catch (DecodeException jsonObjectDecodeException) {
+        } catch (DecodeException | ClassCastException jsonObjectDecodeException) {
           try {
             final JsonArray batchRequest = ctx.getBodyAsJsonArray();
             if (batchRequest.isEmpty()) {
@@ -47,7 +47,7 @@ public class JsonRpcParserHandler {
             } else {
               ctx.put(ContextKey.REQUEST_BODY_AS_JSON_ARRAY.name(), batchRequest);
             }
-          } catch (DecodeException jsonArrayDecodeException) {
+          } catch (DecodeException | ClassCastException jsonArrayDecodeException) {
             errorResponse(response, JsonRpcError.PARSE_ERROR);
             return;
           }

@@ -37,9 +37,9 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
   private static final int MAX_OMMERS = 2;
 
   private static final int MAX_GENERATION = 6;
-  protected final HeaderBasedProtocolSchedule protocolSchedule;
+  protected final ProtocolSchedule protocolSchedule;
 
-  public MainnetBlockBodyValidator(final HeaderBasedProtocolSchedule protocolSchedule) {
+  public MainnetBlockBodyValidator(final ProtocolSchedule protocolSchedule) {
     this.protocolSchedule = protocolSchedule;
   }
 
@@ -101,6 +101,10 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     }
 
     if (!validateWithdrawals(block)) {
+      return false;
+    }
+
+    if (!validateDeposits(block)) {
       return false;
     }
 
@@ -303,5 +307,9 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     }
 
     return true;
+  }
+
+  private boolean validateDeposits(final Block unusedBlock) {
+    return true; // TODO 6110: Implement deposit validation
   }
 }

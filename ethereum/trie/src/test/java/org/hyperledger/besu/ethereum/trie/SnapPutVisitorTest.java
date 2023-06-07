@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -19,7 +19,11 @@ import static org.mockito.ArgumentMatchers.anyByte;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.plugin.data.Hash;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
+import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
+import org.hyperledger.besu.ethereum.trie.patricia.LeafNode;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 
 import java.util.ArrayList;
 import java.util.Optional;
@@ -40,7 +44,7 @@ public class SnapPutVisitorTest {
             new LeafNode<Bytes>(
                 Bytes.EMPTY, Bytes.of(0x00), storedNodeFactory, Function.identity()));
     final ArrayList<Node<Bytes>> children = new ArrayList<>();
-    for (int i = 0; i < BranchNode.RADIX; i++) {
+    for (int i = 0; i < 16; i++) {
       children.add(new StoredNode<>(storedNodeFactory, Bytes.EMPTY, Hash.ZERO));
     }
     final BranchNode<Bytes> invalidBranchNode =
@@ -63,7 +67,7 @@ public class SnapPutVisitorTest {
     when(storedNodeFactory.createBranch(any(), any()))
         .thenReturn(new MissingNode<>(Hash.ZERO, Bytes.EMPTY));
     final ArrayList<Node<Bytes>> children = new ArrayList<>();
-    for (int i = 0; i < BranchNode.RADIX; i++) {
+    for (int i = 0; i < 16; i++) {
       children.add(new StoredNode<>(storedNodeFactory, Bytes.EMPTY, Hash.ZERO));
     }
     final BranchNode<Bytes> invalidBranchNode =
@@ -87,7 +91,7 @@ public class SnapPutVisitorTest {
         .thenReturn(
             new LeafNode<>(Bytes.EMPTY, Bytes.of(0x00), storedNodeFactory, Function.identity()));
     final ArrayList<Node<Bytes>> children = new ArrayList<>();
-    for (int i = 0; i < BranchNode.RADIX; i++) {
+    for (int i = 0; i < 16; i++) {
       children.add(new StoredNode<>(storedNodeFactory, Bytes.EMPTY, Hash.ZERO));
     }
     final BranchNode<Bytes> invalidBranchNode =

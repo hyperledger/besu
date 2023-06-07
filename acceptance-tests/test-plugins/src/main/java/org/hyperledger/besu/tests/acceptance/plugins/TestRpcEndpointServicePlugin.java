@@ -28,6 +28,8 @@ import com.google.auto.service.AutoService;
 @AutoService(BesuPlugin.class)
 public class TestRpcEndpointServicePlugin implements BesuPlugin {
 
+  private static final String NAMESPACE_ENABLED = "tests";
+  private static final String NAMESPACE_NOT_ENABLED = "notEnabled";
   private final AtomicReference<String> stringStorage = new AtomicReference<>("InitialValue");
   private final AtomicReference<Object[]> arrayStorage = new AtomicReference<>();
 
@@ -54,13 +56,14 @@ public class TestRpcEndpointServicePlugin implements BesuPlugin {
         .getService(RpcEndpointService.class)
         .ifPresent(
             rpcEndpointService -> {
-              rpcEndpointService.registerRPCEndpoint("tests", "getValue", this::getValue);
-              rpcEndpointService.registerRPCEndpoint("tests", "setValue", this::setValue);
+              rpcEndpointService.registerRPCEndpoint(NAMESPACE_ENABLED, "getValue", this::getValue);
+              rpcEndpointService.registerRPCEndpoint(NAMESPACE_ENABLED, "setValue", this::setValue);
               rpcEndpointService.registerRPCEndpoint(
-                  "tests", "replaceValueList", this::replaceValueList);
+                  NAMESPACE_ENABLED, "replaceValueList", this::replaceValueList);
               rpcEndpointService.registerRPCEndpoint(
-                  "tests", "throwException", this::throwException);
-              rpcEndpointService.registerRPCEndpoint("notEnabled", "getValue", this::getValue);
+                  NAMESPACE_ENABLED, "throwException", this::throwException);
+              rpcEndpointService.registerRPCEndpoint(
+                  NAMESPACE_NOT_ENABLED, "getValue", this::getValue);
             });
   }
 

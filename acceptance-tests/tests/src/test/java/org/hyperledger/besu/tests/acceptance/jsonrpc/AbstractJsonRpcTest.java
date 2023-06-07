@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -91,8 +92,13 @@ abstract class AbstractJsonRpcTest {
     final Response response = testRequest.execute();
 
     assertThat(response.code()).isEqualTo(testCase.getStatusCode());
-    assertThat(JsonUtil.objectNodeFromString(response.body().string()))
-        .isEqualTo(JsonUtil.objectNodeFromString(testCase.getResponse().toString()));
+    final ObjectNode actualBody = JsonUtil.objectNodeFromString(response.body().string());
+    final ObjectNode expectedBody =
+        JsonUtil.objectNodeFromString(testCase.getResponse().toString());
+    assertThat(actualBody)
+        .withFailMessage(
+            "%s\ndid not equal\n %s", actualBody.toPrettyString(), expectedBody.toPrettyString())
+        .isEqualTo(expectedBody);
   }
 
   private String getRpcUrl(final String rpcMethod) {

@@ -31,21 +31,23 @@ import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -76,22 +78,23 @@ public class IbftProtocolScheduleTest {
         IbftBlockHeaderUtils.createPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader)
             .buildHeader();
 
-    final ProtocolSchedule schedule =
+    final BftProtocolSchedule schedule =
         createProtocolSchedule(
             JsonGenesisConfigOptions.fromJsonObject(JsonUtil.createEmptyObjectNode()),
             List.of(
                 new ForkSpec<>(0, JsonQbftConfigOptions.DEFAULT),
                 new ForkSpec<>(1, arbitraryTransition),
                 new ForkSpec<>(2, JsonQbftConfigOptions.DEFAULT)));
-    assertThat(schedule.streamMilestoneBlocks().count()).isEqualTo(3);
+    assertThat(new MilestoneStreamingProtocolSchedule(schedule).streamMilestoneBlocks().count())
+        .isEqualTo(3);
     assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 0)).isTrue();
     assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 1)).isTrue();
     assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 2)).isTrue();
   }
 
-  private ProtocolSchedule createProtocolSchedule(
+  private BftProtocolSchedule createProtocolSchedule(
       final GenesisConfigOptions genesisConfig, final List<ForkSpec<BftConfigOptions>> forks) {
-    return IbftProtocolSchedule.create(
+    return IbftProtocolScheduleBuilder.create(
         genesisConfig,
         new ForksSchedule<>(forks),
         PrivacyParameters.DEFAULT,
@@ -101,7 +104,7 @@ public class IbftProtocolScheduleTest {
   }
 
   private boolean validateHeader(
-      final ProtocolSchedule schedule,
+      final BftProtocolSchedule schedule,
       final List<Address> validators,
       final BlockHeader parentHeader,
       final BlockHeader blockHeader,
@@ -117,6 +120,7 @@ public class IbftProtocolScheduleTest {
     return new ProtocolContext(
         null,
         null,
-        setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec));
+        setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec),
+        Optional.empty());
   }
 }

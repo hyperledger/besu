@@ -130,20 +130,20 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
                         });
               } catch (final TransactionInvalidException e) {
                 LOG.error("Invalid transaction simulator result");
-                return new JsonRpcErrorResponse(
-                    requestContext.getRequest().getId(), INTERNAL_ERROR);
+                return Optional.of(
+                    new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
               } catch (final EmptySimulatorResultException e) {
                 LOG.error(
                     "Empty simulator result, call params: {}, blockHeader: {} ",
                     JsonCallParameterUtil.validateAndGetCallParams(requestContext),
                     blockHeader);
-                return new JsonRpcErrorResponse(
-                    requestContext.getRequest().getId(), INTERNAL_ERROR);
+                return Optional.of(
+                    new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
               } catch (final Exception e) {
-                return new JsonRpcErrorResponse(
-                    requestContext.getRequest().getId(), INTERNAL_ERROR);
+                return Optional.of(
+                    new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
               }
-              return traceCallResults;
+              return Optional.of(traceCallResults);
             });
   }
 
@@ -174,7 +174,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     final Block block = blockchainQueriesSupplier.get().getBlockchain().getChainHeadBlock();
 
     return getTraceCallResult(
-        protocolSchedule, traceTypes, maybeSimulatorResult, transactionTrace, block);
+        protocolSchedule, traceTypes, maybeSimulatorResult.get(), transactionTrace, block);
   }
 
   private static class TransactionInvalidException extends RuntimeException {

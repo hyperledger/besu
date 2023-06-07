@@ -30,7 +30,7 @@ jar {
 dependencies {
   api 'org.slf4j:slf4j-api'
 
-  implementation project(':crypto')
+  implementation project(':crypto:services')
   implementation project(':datatypes')
   implementation project(':ethereum:core')
   implementation project(':ethereum:rlp')
@@ -66,7 +66,7 @@ dependencies {
   // test dependencies.
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
-  testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':crypto:services', configuration: 'testSupportArtifacts')
   testImplementation project(':testutil')
 
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'

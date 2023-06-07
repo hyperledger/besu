@@ -4,7 +4,6 @@
 *~.nib
 *.iml
 *.launch
-*.swp
 *.log
 .classpath
 .DS_Store
@@ -30,3 +29,4 @@ site/
 /kubernetes/besu-*.tar.gz
 **/src/*/generated
 jitpack.yml
+/ethereum/eth/src/test/resources/tx.csv.gz

@@ -239,7 +239,7 @@ public class ContractCreationProcessorTest {
 
   @Test
   public void shouldThrowAnExceptionWhenDeployingInvalidContract() {
-    EvmSpecVersion evmSpecVersion = EvmSpecVersion.CANCUN;
+    EvmSpecVersion evmSpecVersion = EvmSpecVersion.FUTURE_EIPS;
     processor =
         new ContractCreationProcessor(
             gasCalculator,

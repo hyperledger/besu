@@ -36,10 +36,10 @@ import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftRound;
 import org.hyperledger.besu.consensus.qbft.statemachine.RoundState;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidator;
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
@@ -55,6 +55,7 @@ import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleExcepti
 import org.hyperledger.besu.util.Subscribers;
 
 import java.math.BigInteger;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
@@ -121,7 +122,8 @@ public class QbftRoundIntegrationTest {
             blockChain,
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(
-                QbftContext.class, emptyList(), qbftExtraDataEncoder));
+                QbftContext.class, emptyList(), qbftExtraDataEncoder),
+            Optional.empty());
   }
 
   @Test

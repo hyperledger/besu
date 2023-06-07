@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,14 +18,16 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.encoding.DepositEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.WithdrawalEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.SimpleMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.List;
@@ -45,7 +47,7 @@ public final class BodyValidation {
     return RLP.encodeOne(UInt256.valueOf(i).trimLeadingZeros());
   }
 
-  private static MerklePatriciaTrie<Bytes, Bytes> trie() {
+  private static MerkleTrie<Bytes, Bytes> trie() {
     return new SimpleMerklePatriciaTrie<>(b -> b);
   }
 
@@ -56,7 +58,7 @@ public final class BodyValidation {
    * @return the transaction root
    */
   public static Hash transactionsRoot(final List<Transaction> transactions) {
-    final MerklePatriciaTrie<Bytes, Bytes> trie = trie();
+    final MerkleTrie<Bytes, Bytes> trie = trie();
 
     IntStream.range(0, transactions.size())
         .forEach(
@@ -72,11 +74,26 @@ public final class BodyValidation {
    * @return the transaction root
    */
   public static Hash withdrawalsRoot(final List<Withdrawal> withdrawals) {
-    final MerklePatriciaTrie<Bytes, Bytes> trie = trie();
+    final MerkleTrie<Bytes, Bytes> trie = trie();
 
     IntStream.range(0, withdrawals.size())
         .forEach(
             i -> trie.put(indexKey(i), WithdrawalEncoder.encodeOpaqueBytes(withdrawals.get(i))));
+
+    return Hash.wrap(trie.getRootHash());
+  }
+
+  /**
+   * Generates the deposits root for a list of deposits
+   *
+   * @param deposits the transactions
+   * @return the transaction root
+   */
+  public static Hash depositsRoot(final List<Deposit> deposits) {
+    final MerkleTrie<Bytes, Bytes> trie = trie();
+
+    IntStream.range(0, deposits.size())
+        .forEach(i -> trie.put(indexKey(i), DepositEncoder.encodeOpaqueBytes(deposits.get(i))));
 
     return Hash.wrap(trie.getRootHash());
   }
@@ -88,7 +105,7 @@ public final class BodyValidation {
    * @return the receipt root
    */
   public static Hash receiptsRoot(final List<TransactionReceipt> receipts) {
-    final MerklePatriciaTrie<Bytes, Bytes> trie = trie();
+    final MerkleTrie<Bytes, Bytes> trie = trie();
 
     IntStream.range(0, receipts.size())
         .forEach(

@@ -197,6 +197,17 @@ public class BlockchainQueriesTest {
   }
 
   @Test
+  public void getHeadBlockHeader() {
+    final BlockchainWithData data = setupBlockchain(3);
+    final BlockchainQueries queries = data.blockchainQueries;
+
+    final BlockHeader targetBlockHeader = data.blockData.get(2).block.getHeader();
+
+    BlockHeader result = queries.headBlockHeader();
+    assertThat(targetBlockHeader).isEqualTo(result);
+  }
+
+  @Test
   public void getAccountStorageBlockNumber() {
     final List<Address> addresses = Arrays.asList(gen.address(), gen.address(), gen.address());
     final List<UInt256> storageKeys =

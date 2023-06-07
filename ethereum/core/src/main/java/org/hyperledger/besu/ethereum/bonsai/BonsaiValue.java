@@ -16,32 +16,34 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
-import java.util.Objects;
-import java.util.function.BiConsumer;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-public class BonsaiValue<T> {
+public class BonsaiValue<T> implements TrieLog.LogTuple<T> {
   private T prior;
   private T updated;
   private boolean cleared;
 
-  BonsaiValue(final T prior, final T updated) {
+  public BonsaiValue(final T prior, final T updated) {
     this.prior = prior;
     this.updated = updated;
     this.cleared = false;
   }
 
-  BonsaiValue(final T prior, final T updated, final boolean cleared) {
+  public BonsaiValue(final T prior, final T updated, final boolean cleared) {
     this.prior = prior;
     this.updated = updated;
     this.cleared = cleared;
   }
 
+  @Override
   public T getPrior() {
     return prior;
   }
 
+  @Override
   public T getUpdated() {
     return updated;
   }
@@ -57,29 +59,11 @@ public class BonsaiValue<T> {
     return this;
   }
 
-  void writeRlp(final RLPOutput output, final BiConsumer<RLPOutput, T> writer) {
-    output.startList();
-    writeInnerRlp(output, writer);
-    output.endList();
+  public void setCleared() {
+    this.cleared = true;
   }
 
-  void writeInnerRlp(final RLPOutput output, final BiConsumer<RLPOutput, T> writer) {
-    if (prior == null) {
-      output.writeNull();
-    } else {
-      writer.accept(output, prior);
-    }
-    if (updated == null) {
-      output.writeNull();
-    } else {
-      writer.accept(output, updated);
-    }
-  }
-
-  boolean isUnchanged() {
-    return Objects.equals(updated, prior);
-  }
-
+  @Override
   public boolean isCleared() {
     return cleared;
   }
@@ -94,5 +78,26 @@ public class BonsaiValue<T> {
         + ", cleared="
         + cleared
         + '}';
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    BonsaiValue<?> that = (BonsaiValue<?>) o;
+    return new EqualsBuilder()
+        .append(cleared, that.cleared)
+        .append(prior, that.prior)
+        .append(updated, that.updated)
+        .isEquals();
+  }
+
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder(17, 37).append(prior).append(updated).append(cleared).toHashCode();
   }
 }

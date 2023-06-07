@@ -65,6 +65,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
@@ -83,6 +84,7 @@ public class RetestethContext {
   private static final PoWHasher NO_WORK_HASHER =
       (final long nonce, final long number, EpochCalculator epochCalc, final Bytes headerHash) ->
           new PoWSolution(nonce, Hash.ZERO, UInt256.ZERO, Hash.ZERO);
+  public static final int MAX_PEERS = 25;
 
   private final ReentrantLock contextLock = new ReentrantLock();
   private Address coinbase;
@@ -166,7 +168,7 @@ public class RetestethContext {
     genesisState.writeStateTo(worldState);
 
     blockchain = createInMemoryBlockchain(genesisState.getBlock());
-    protocolContext = new ProtocolContext(blockchain, worldStateArchive, null);
+    protocolContext = new ProtocolContext(blockchain, worldStateArchive, null, Optional.empty());
 
     blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive, ethScheduler);
 
@@ -196,11 +198,9 @@ public class RetestethContext {
                 1000,
                 8);
 
-    blockReplay =
-        new BlockReplay(
-            protocolSchedule,
-            blockchainQueries.getBlockchain(),
-            blockchainQueries.getWorldStateArchive());
+    blockReplay = new BlockReplay(protocolSchedule, blockchainQueries.getBlockchain());
+
+    final Bytes localNodeKey = Bytes.wrap(new byte[64]);
 
     // mining support
 
@@ -212,8 +212,13 @@ public class RetestethContext {
             currentProtocolSpecSupplier,
             retestethClock,
             metricsSystem,
-            0,
-            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+            Collections.emptyList(),
+            localNodeKey,
+            MAX_PEERS,
+            MAX_PEERS,
+            MAX_PEERS,
+            false);
     final SyncState syncState = new SyncState(blockchain, ethPeers);
 
     ethScheduler = new EthScheduler(1, 1, 1, 1, metricsSystem);
@@ -272,8 +277,8 @@ public class RetestethContext {
     return blockchain.getChainHeadBlockNumber();
   }
 
-  public ProtocolSpec getProtocolSpec(final long blockNumber) {
-    return getProtocolSchedule().getByBlockNumber(blockNumber);
+  public ProtocolSpec getProtocolSpec(final BlockHeader blockHeader) {
+    return getProtocolSchedule().getByBlockHeader(blockHeader);
   }
 
   public BlockHeader getBlockHeader(final long blockNumber) {

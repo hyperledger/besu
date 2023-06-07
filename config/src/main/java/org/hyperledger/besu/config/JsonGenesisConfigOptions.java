@@ -38,7 +38,6 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   private static final String ETHASH_CONFIG_KEY = "ethash";
-  private static final String KECCAK256_CONFIG_KEY = "keccak256";
   private static final String IBFT_LEGACY_CONFIG_KEY = "ibft";
   private static final String IBFT2_CONFIG_KEY = "ibft2";
   private static final String QBFT_CONFIG_KEY = "qbft";
@@ -109,12 +108,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   public String getConsensusEngine() {
     if (isEthHash()) {
       return ETHASH_CONFIG_KEY;
-    } else if (isKeccak256()) {
-      return KECCAK256_CONFIG_KEY;
     } else if (isIbft2()) {
       return IBFT2_CONFIG_KEY;
-    } else if (isIbftLegacy()) {
-      return IBFT_LEGACY_CONFIG_KEY;
     } else if (isQbft()) {
       return QBFT_CONFIG_KEY;
     } else if (isClique()) {
@@ -127,11 +122,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public boolean isEthHash() {
     return configRoot.has(ETHASH_CONFIG_KEY);
-  }
-
-  @Override
-  public boolean isKeccak256() {
-    return configRoot.has(KECCAK256_CONFIG_KEY);
   }
 
   @Override
@@ -152,13 +142,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public boolean isQbft() {
     return configRoot.has(QBFT_CONFIG_KEY);
-  }
-
-  @Override
-  public IbftLegacyConfigOptions getIbftLegacyConfigOptions() {
-    return JsonUtil.getObjectNode(configRoot, IBFT_LEGACY_CONFIG_KEY)
-        .map(IbftLegacyConfigOptions::new)
-        .orElse(IbftLegacyConfigOptions.DEFAULT);
   }
 
   @Override
@@ -202,13 +185,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     return JsonUtil.getObjectNode(configRoot, ETHASH_CONFIG_KEY)
         .map(EthashConfigOptions::new)
         .orElse(EthashConfigOptions.DEFAULT);
-  }
-
-  @Override
-  public Keccak256ConfigOptions getKeccak256ConfigOptions() {
-    return JsonUtil.getObjectNode(configRoot, KECCAK256_CONFIG_KEY)
-        .map(Keccak256ConfigOptions::new)
-        .orElse(Keccak256ConfigOptions.DEFAULT);
   }
 
   @Override
@@ -398,11 +374,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getEcip1049BlockNumber() {
-    return getOptionalLong("ecip1049block");
-  }
-
-  @Override
   public Optional<BigInteger> getChainId() {
     return getOptionalBigInteger("chainid");
   }
@@ -434,9 +405,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
   @Override
   public PowAlgorithm getPowAlgorithm() {
-    return isEthHash()
-        ? PowAlgorithm.ETHASH
-        : isKeccak256() ? PowAlgorithm.KECCAK256 : PowAlgorithm.UNSUPPORTED;
+    return isEthHash() ? PowAlgorithm.ETHASH : PowAlgorithm.UNSUPPORTED;
   }
 
   @Override
@@ -488,7 +457,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getThanosBlockNumber().ifPresent(l -> builder.put("thanosBlock", l));
     getMagnetoBlockNumber().ifPresent(l -> builder.put("magnetoBlock", l));
     getMystiqueBlockNumber().ifPresent(l -> builder.put("mystiqueBlock", l));
-    getEcip1049BlockNumber().ifPresent(l -> builder.put("ecip1049Block", l));
 
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmstacksize", l));
@@ -499,12 +467,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     }
     if (isEthHash()) {
       builder.put("ethash", getEthashConfigOptions().asMap());
-    }
-    if (isKeccak256()) {
-      builder.put("keccak256", getKeccak256ConfigOptions().asMap());
-    }
-    if (isIbftLegacy()) {
-      builder.put("ibft", getIbftLegacyConfigOptions().asMap());
     }
     if (isIbft2()) {
       builder.put("ibft2", getBftConfigOptions().asMap());
@@ -605,8 +567,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getPhoenixBlockNumber(),
             getThanosBlockNumber(),
             getMagnetoBlockNumber(),
-            getMystiqueBlockNumber(),
-            getEcip1049BlockNumber());
+            getMystiqueBlockNumber());
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
 
     return forkBlockNumbers

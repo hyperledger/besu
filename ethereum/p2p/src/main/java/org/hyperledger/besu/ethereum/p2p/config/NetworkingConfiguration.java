@@ -22,12 +22,14 @@ import java.util.Optional;
 public class NetworkingConfiguration {
   public static final int DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC = 30;
   public static final int DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_SEC = 60;
+  public static final int DEFAULT_PEER_LOWER_BOUND = 25;
 
   private DiscoveryConfiguration discovery = new DiscoveryConfiguration();
   private RlpxConfiguration rlpx = new RlpxConfiguration();
   private int initiateConnectionsFrequencySec = DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC;
   private int checkMaintainedConnectionsFrequencySec =
       DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_SEC;
+  private Integer peerLowerBound = DEFAULT_PEER_LOWER_BOUND;
   private Optional<String> dnsDiscoveryServerOverride = Optional.empty();
 
   public static NetworkingConfiguration create() {
@@ -81,6 +83,16 @@ public class NetworkingConfiguration {
       final int checkMaintainedConnectionsFrequency) {
     checkArgument(checkMaintainedConnectionsFrequency > 0);
     this.checkMaintainedConnectionsFrequencySec = checkMaintainedConnectionsFrequency;
+    return this;
+  }
+
+  public Integer getPeerLowerBound() {
+    return peerLowerBound;
+  }
+
+  public NetworkingConfiguration setPeerLowerBound(final Integer peerLowerBoundConfig) {
+    checkArgument(peerLowerBoundConfig > 0);
+    this.peerLowerBound = peerLowerBoundConfig;
     return this;
   }
 

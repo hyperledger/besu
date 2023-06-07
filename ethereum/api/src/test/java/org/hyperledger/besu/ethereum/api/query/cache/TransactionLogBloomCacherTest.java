@@ -40,6 +40,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
@@ -65,7 +66,7 @@ public class TransactionLogBloomCacherTest {
   private TransactionLogBloomCacher transactionLogBloomCacher;
 
   @BeforeClass
-  public static void setupClass() throws IOException {
+  public static void setupClass() {
     final Address testAddress = Address.fromHexString("0x123456");
     final Bytes testMessage = Bytes.fromHexString("0x9876");
     final Log testLog = new Log(testAddress, testMessage, List.of());
@@ -102,13 +103,20 @@ public class TransactionLogBloomCacherTest {
             0,
             null,
             null,
+            null,
             new MainnetBlockHeaderFunctions());
     testHash = fakeHeader.getHash();
     when(blockchain.getBlockHeader(anyLong())).thenReturn(Optional.of(fakeHeader));
-    when(scheduler.scheduleFutureTask(any(Runnable.class), any(Duration.class)))
+    when(scheduler.scheduleFutureTask(any(Supplier.class), any(Duration.class)))
         .thenAnswer(
             invocation -> {
-              invocation.getArgument(0, Runnable.class).run();
+              invocation.getArgument(0, Supplier.class).get();
+              return null;
+            });
+    when(scheduler.scheduleComputationTask(any(Supplier.class)))
+        .thenAnswer(
+            invocation -> {
+              invocation.getArgument(0, Supplier.class).get();
               return null;
             });
     transactionLogBloomCacher =
@@ -266,6 +274,7 @@ public class TransactionLogBloomCacherTest {
             null,
             Hash.EMPTY,
             0,
+            null,
             null,
             null,
             new MainnetBlockHeaderFunctions());

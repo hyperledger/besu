@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
-import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec;
@@ -80,7 +80,7 @@ public class BlockchainReferenceTestTools {
     // Inconclusive fork choice rule, since in merge CL should be choosing forks and setting the
     // chain head.
     // Perfectly valid test pre-merge.
-    params.ignore("UncleFromSideChain_Merge");
+    params.ignore("UncleFromSideChain_(Merge|Shanghai|Cancun|Prague|Osaka|Bogota)");
 
     // EIP tests are explicitly meant to be works-in-progress with known failing tests
     // We want to however include withdrawals even though they are EIP tests
@@ -103,7 +103,7 @@ public class BlockchainReferenceTestTools {
             .get();
     assertThat(worldState.rootHash()).isEqualTo(genesisBlockHeader.getStateRoot());
 
-    final HeaderBasedProtocolSchedule schedule =
+    final ProtocolSchedule schedule =
         REFERENCE_TEST_PROTOCOL_SCHEDULES.getByName(spec.getNetwork());
 
     final MutableBlockchain blockchain = spec.getBlockchain();

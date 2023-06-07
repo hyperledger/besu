@@ -23,10 +23,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiPersistedWorldState;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateArchive;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.bonsai.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -38,11 +38,11 @@ import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
-import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -63,8 +63,7 @@ public class BlockImportExceptionHandlingTest {
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
       mock(AbstractBlockProcessor.TransactionReceiptFactory.class);
 
-  private final HeaderBasedProtocolSchedule protocolSchedule =
-      mock(HeaderBasedProtocolSchedule.class);
+  private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
   private final BlockProcessor blockProcessor =
       new MainnetBlockProcessor(
           transactionProcessor,
@@ -72,7 +71,6 @@ public class BlockImportExceptionHandlingTest {
           Wei.ZERO,
           BlockHeader::getCoinbase,
           true,
-          Optional.empty(),
           protocolSchedule);
   private final BlockHeaderValidator blockHeaderValidator = mock(BlockHeaderValidator.class);
   private final BlockBodyValidator blockBodyValidator = mock(BlockBodyValidator.class);
@@ -82,19 +80,21 @@ public class BlockImportExceptionHandlingTest {
   private final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
 
   private final WorldStateStorage worldStateStorage =
-      new BonsaiWorldStateKeyValueStorage(storageProvider);
+      new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
 
   private CachedMerkleTrieLoader cachedMerkleTrieLoader;
 
   private final WorldStateArchive worldStateArchive =
-      // contains a BonsaiPersistedWorldState which we need to spy on.
+      // contains a BonsaiWorldState which we need to spy on.
       // do we need to also test with a DefaultWorldStateArchive?
-      spy(new BonsaiWorldStateArchive(storageProvider, blockchain, cachedMerkleTrieLoader));
-
-  private final BonsaiPersistedWorldState persisted =
       spy(
-          new BonsaiPersistedWorldState(
-              (BonsaiWorldStateArchive) worldStateArchive,
+          new BonsaiWorldStateProvider(
+              storageProvider, blockchain, cachedMerkleTrieLoader, new NoOpMetricsSystem(), null));
+
+  private final BonsaiWorldState persisted =
+      spy(
+          new BonsaiWorldState(
+              (BonsaiWorldStateProvider) worldStateArchive,
               (BonsaiWorldStateKeyValueStorage) worldStateStorage));
 
   private final BadBlockManager badBlockManager = new BadBlockManager();

@@ -44,7 +44,9 @@ import org.slf4j.LoggerFactory;
 public class EngineAuthService implements AuthenticationService {
 
   private static final Logger LOG = LoggerFactory.getLogger(EngineAuthService.class);
-  private static final int JWT_EXPIRATION_TIME = 60;
+  private static final int JWT_EXPIRATION_TIME_IN_SECONDS = 60;
+
+  public static final String EPHEMERAL_JWT_FILE = "jwt.hex";
 
   private final JWTAuth jwtAuthProvider;
 
@@ -64,7 +66,7 @@ public class EngineAuthService implements AuthenticationService {
       final JwtAlgorithm jwtAlgorithm, final Optional<File> keyFile, final Path datadir) {
     byte[] signingKey = null;
     if (!keyFile.isPresent()) {
-      final File jwtFile = new File(datadir.toFile(), "jwt.hex");
+      final File jwtFile = new File(datadir.toFile(), EPHEMERAL_JWT_FILE);
       jwtFile.deleteOnExit();
       final byte[] ephemeralKey = Bytes32.random().toArray();
       try {
@@ -169,6 +171,7 @@ public class EngineAuthService implements AuthenticationService {
   private boolean issuedRecently(final long iat) {
     long iatSecondsSinceEpoch = iat;
     long nowSecondsSinceEpoch = System.currentTimeMillis() / 1000;
-    return (Math.abs((nowSecondsSinceEpoch - iatSecondsSinceEpoch)) <= JWT_EXPIRATION_TIME);
+    return (Math.abs((nowSecondsSinceEpoch - iatSecondsSinceEpoch))
+        <= JWT_EXPIRATION_TIME_IN_SECONDS);
   }
 }

@@ -16,14 +16,16 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
+import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldView;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.account.EvmAccount;
@@ -39,7 +41,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class BonsaiAccount implements MutableAccount, EvmAccount {
+public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
   private final BonsaiWorldView context;
   private final boolean mutable;
 
@@ -53,7 +55,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
 
   private final Map<UInt256, UInt256> updatedStorage = new HashMap<>();
 
-  BonsaiAccount(
+  public BonsaiAccount(
       final BonsaiWorldView context,
       final Address address,
       final Hash addressHash,
@@ -73,10 +75,10 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.mutable = mutable;
   }
 
-  BonsaiAccount(
+  public BonsaiAccount(
       final BonsaiWorldView context,
       final Address address,
-      final StateTrieAccountValue stateTrieAccount,
+      final AccountValue stateTrieAccount,
       final boolean mutable) {
     this(
         context,
@@ -89,11 +91,12 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
         mutable);
   }
 
-  BonsaiAccount(final BonsaiAccount toCopy) {
+  public BonsaiAccount(final BonsaiAccount toCopy) {
     this(toCopy, toCopy.context, false);
   }
 
-  BonsaiAccount(final BonsaiAccount toCopy, final BonsaiWorldView context, final boolean mutable) {
+  public BonsaiAccount(
+      final BonsaiAccount toCopy, final BonsaiWorldView context, final boolean mutable) {
     this.context = context;
     this.address = toCopy.address;
     this.addressHash = toCopy.addressHash;
@@ -107,7 +110,8 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.mutable = mutable;
   }
 
-  BonsaiAccount(final BonsaiWorldView context, final UpdateTrackingAccount<BonsaiAccount> tracked) {
+  public BonsaiAccount(
+      final BonsaiWorldView context, final UpdateTrackingAccount<BonsaiAccount> tracked) {
     this.context = context;
     this.address = tracked.getAddress();
     this.addressHash = tracked.getAddressHash();
@@ -121,7 +125,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.mutable = true;
   }
 
-  static BonsaiAccount fromRLP(
+  public static BonsaiAccount fromRLP(
       final BonsaiWorldView context,
       final Address address,
       final Bytes encoded,
@@ -219,8 +223,14 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     throw new RuntimeException("Bonsai Tries does not currently support enumerating storage");
   }
 
-  Bytes serializeAccount() {
+  public Bytes serializeAccount() {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    writeTo(out);
+    return out.encoded();
+  }
+
+  @Override
+  public void writeTo(final RLPOutput out) {
     out.startList();
 
     out.writeLongScalar(nonce);
@@ -229,7 +239,6 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     out.writeBytes(codeHash);
 
     out.endList();
-    return out.encoded();
   }
 
   @Override
@@ -259,6 +268,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     }
   }
 
+  @Override
   public Hash getStorageRoot() {
     return storageRoot;
   }
@@ -294,8 +304,8 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
    * @param context a description to be added to the thrown exceptions
    * @throws IllegalStateException if the stored values differ
    */
-  static void assertCloseEnoughForDiffing(
-      final BonsaiAccount source, final StateTrieAccountValue account, final String context) {
+  public static void assertCloseEnoughForDiffing(
+      final BonsaiAccount source, final AccountValue account, final String context) {
     if (source == null) {
       throw new IllegalStateException(context + ": source is null but target isn't");
     } else {

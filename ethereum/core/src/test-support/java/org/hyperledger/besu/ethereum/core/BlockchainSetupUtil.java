@@ -48,6 +48,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -151,7 +152,8 @@ public class BlockchainSetupUtil {
           public <C extends ConsensusContext> C as(final Class<C> klass) {
             return null;
           }
-        });
+        },
+        Optional.empty());
   }
 
   private static BlockchainSetupUtil create(
@@ -184,8 +186,7 @@ public class BlockchainSetupUtil {
       final BlockHeaderFunctions blockHeaderFunctions =
           ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
       try (final RawBlockIterator iterator =
-          new RawBlockIterator(
-              blocksPath, rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions))) {
+          new RawBlockIterator(blocksPath, blockHeaderFunctions)) {
         while (iterator.hasNext()) {
           blocks.add(iterator.next());
         }
@@ -243,8 +244,7 @@ public class BlockchainSetupUtil {
       if (block.getHeader().getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
         continue;
       }
-      final ProtocolSpec protocolSpec =
-          protocolSchedule.getByBlockNumber(block.getHeader().getNumber());
+      final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       final BlockImportResult result =
           blockImporter.importBlock(protocolContext, block, HeaderValidationMode.FULL);

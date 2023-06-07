@@ -15,30 +15,30 @@
 package org.hyperledger.besu.services.kvstore;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
-import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The type Segmented key value storage adapter.
  *
  * @param <S> the type parameter
  */
-public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStorage {
+public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
 
+  private static final Logger LOG = LoggerFactory.getLogger(SegmentedKeyValueStorageAdapter.class);
   private final S segmentHandle;
   private final SegmentedKeyValueStorage<S> storage;
-  private final Supplier<SnappedKeyValueStorage> snapshotSupplier;
 
   /**
    * Instantiates a new Segmented key value storage adapter.
@@ -48,67 +48,55 @@ public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStor
    */
   public SegmentedKeyValueStorageAdapter(
       final SegmentIdentifier segment, final SegmentedKeyValueStorage<S> storage) {
-    this(
-        segment,
-        storage,
-        () -> {
-          throw new UnsupportedOperationException("Snapshot not supported");
-        });
-  }
-
-  /**
-   * Instantiates a new Segmented key value storage adapter.
-   *
-   * @param segment the segment
-   * @param storage the storage
-   * @param snapshotSupplier the snapshot supplier
-   */
-  public SegmentedKeyValueStorageAdapter(
-      final SegmentIdentifier segment,
-      final SegmentedKeyValueStorage<S> storage,
-      final Supplier<SnappedKeyValueStorage> snapshotSupplier) {
     segmentHandle = storage.getSegmentIdentifierByName(segment);
     this.storage = storage;
-    this.snapshotSupplier = snapshotSupplier;
   }
 
   @Override
   public void clear() {
+    throwIfClosed();
     storage.clear(segmentHandle);
   }
 
   @Override
   public boolean containsKey(final byte[] key) throws StorageException {
+    throwIfClosed();
     return storage.containsKey(segmentHandle, key);
   }
 
   @Override
   public Optional<byte[]> get(final byte[] key) throws StorageException {
+    throwIfClosed();
     return storage.get(segmentHandle, key);
   }
 
   @Override
   public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
+    throwIfClosed();
     return storage.getAllKeysThat(segmentHandle, returnCondition);
   }
 
   @Override
   public Set<byte[]> getAllValuesFromKeysThat(final Predicate<byte[]> returnCondition) {
+    throwIfClosed();
     return storage.getAllValuesFromKeysThat(segmentHandle, returnCondition);
   }
 
   @Override
   public Stream<Pair<byte[], byte[]>> stream() {
+    throwIfClosed();
     return storage.stream(segmentHandle);
   }
 
   @Override
   public Stream<byte[]> streamKeys() {
+    throwIfClosed();
     return storage.streamKeys(segmentHandle);
   }
 
   @Override
   public boolean tryDelete(final byte[] key) {
+    throwIfClosed();
     return storage.tryDelete(segmentHandle, key);
   }
 
@@ -124,28 +112,39 @@ public class SegmentedKeyValueStorageAdapter<S> implements SnappableKeyValueStor
 
       @Override
       public void put(final byte[] key, final byte[] value) {
+        throwIfClosed();
         transaction.put(segmentHandle, key, value);
       }
 
       @Override
       public void remove(final byte[] key) {
+        throwIfClosed();
         transaction.remove(segmentHandle, key);
       }
 
       @Override
       public void commit() throws StorageException {
+        throwIfClosed();
         transaction.commit();
       }
 
       @Override
       public void rollback() {
+        throwIfClosed();
         transaction.rollback();
       }
     };
   }
 
   @Override
-  public SnappedKeyValueStorage takeSnapshot() {
-    return snapshotSupplier.get();
+  public boolean isClosed() {
+    return storage.isClosed();
+  }
+
+  private void throwIfClosed() {
+    if (storage.isClosed()) {
+      LOG.error("Attempting to use a closed Storage instance.");
+      throw new StorageException("Storage has been closed");
+    }
   }
 }

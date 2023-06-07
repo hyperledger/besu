@@ -18,7 +18,7 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.DETACHED_ONLY;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -38,13 +38,12 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RangeHeadersValidationStepTest {
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
@@ -52,6 +51,7 @@ public class RangeHeadersValidationStepTest {
   @Mock private BlockHeaderValidator headerValidator;
   @Mock private ValidationPolicy validationPolicy;
   @Mock private EthPeer syncTarget;
+
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private RangeHeadersValidationStep validationStep;
 
@@ -63,9 +63,8 @@ public class RangeHeadersValidationStepTest {
           new SyncTargetRange(syncTarget, rangeStart, rangeEnd),
           asList(firstHeader, gen.header(12), rangeEnd));
 
-  @Before
   public void setUp() {
-    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(any(BlockHeader.class))).thenReturn(protocolSpec);
     when(protocolSpec.getBlockHeaderValidator()).thenReturn(headerValidator);
     when(validationPolicy.getValidationModeForNextBlock()).thenReturn(DETACHED_ONLY);
 
@@ -75,11 +74,12 @@ public class RangeHeadersValidationStepTest {
 
   @Test
   public void shouldValidateFirstHeaderAgainstRangeStartHeader() {
+    setUp();
     when(headerValidator.validateHeader(firstHeader, rangeStart, protocolContext, DETACHED_ONLY))
         .thenReturn(true);
     final Stream<BlockHeader> result = validationStep.apply(rangeHeaders);
 
-    verify(protocolSchedule).getByBlockNumber(firstHeader.getNumber());
+    verify(protocolSchedule).getByBlockHeader(firstHeader);
     verify(validationPolicy).getValidationModeForNextBlock();
     verify(headerValidator).validateHeader(firstHeader, rangeStart, protocolContext, DETACHED_ONLY);
     verifyNoMoreInteractions(headerValidator, validationPolicy);
@@ -89,6 +89,7 @@ public class RangeHeadersValidationStepTest {
 
   @Test
   public void shouldThrowExceptionWhenValidationFails() {
+    setUp();
     when(headerValidator.validateHeader(firstHeader, rangeStart, protocolContext, DETACHED_ONLY))
         .thenReturn(false);
     assertThatThrownBy(() -> validationStep.apply(rangeHeaders))
@@ -110,7 +111,10 @@ public class RangeHeadersValidationStepTest {
   }
 
   @Test
-  public void acceptResponseWithNoHeaders() {
+  public void acceptResponseWithNoHeadersAndNoSetUp() {
+    // don't run the setUp
+    validationStep =
+        new RangeHeadersValidationStep(protocolSchedule, protocolContext, validationPolicy);
     var emptyRangeHeaders =
         new RangeHeaders(new SyncTargetRange(syncTarget, rangeStart, rangeEnd), List.of());
 

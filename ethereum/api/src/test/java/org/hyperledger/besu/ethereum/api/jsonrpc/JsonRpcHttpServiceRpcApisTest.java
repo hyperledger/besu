@@ -21,7 +21,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
@@ -64,6 +64,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
@@ -280,6 +281,8 @@ public class JsonRpcHttpServiceRpcApisTest {
             .blockchain(blockchain)
             .blockNumberForks(Collections.emptyList())
             .timestampForks(Collections.emptyList())
+            .allConnectionsSupplier(Stream::empty)
+            .allActiveConnectionsSupplier(Stream::empty)
             .build();
 
     p2pNetwork.start();

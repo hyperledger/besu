@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugBatchSend
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugGetBadBlocks;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugGetRawBlock;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugGetRawHeader;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugGetRawReceipts;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugMetrics;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugResyncWorldstate;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugSetHead;
@@ -85,10 +86,7 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
   @Override
   protected Map<String, JsonRpcMethod> create() {
     final BlockReplay blockReplay =
-        new BlockReplay(
-            protocolSchedule,
-            blockchainQueries.getBlockchain(),
-            blockchainQueries.getWorldStateArchive());
+        new BlockReplay(protocolSchedule, blockchainQueries.getBlockchain());
 
     return mapOf(
         new DebugTraceTransaction(blockchainQueries, new TransactionTracer(blockReplay)),
@@ -103,7 +101,7 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new DebugSetHead(blockchainQueries, protocolContext),
         new DebugReplayBlock(blockchainQueries, protocolContext, protocolSchedule),
         new DebugTraceBlockByNumber(() -> new BlockTracer(blockReplay), blockchainQueries),
-        new DebugTraceBlockByHash(() -> new BlockTracer(blockReplay)),
+        new DebugTraceBlockByHash(() -> new BlockTracer(blockReplay), () -> blockchainQueries),
         new DebugBatchSendRawTransaction(transactionPool),
         new DebugGetBadBlocks(blockchainQueries, protocolSchedule, blockResult),
         new DebugStandardTraceBlockToFile(
@@ -112,6 +110,7 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
             () -> new TransactionTracer(blockReplay), blockchainQueries, protocolSchedule, dataDir),
         new DebugAccountAt(blockchainQueries, () -> new BlockTracer(blockReplay)),
         new DebugGetRawHeader(blockchainQueries),
-        new DebugGetRawBlock(blockchainQueries));
+        new DebugGetRawBlock(blockchainQueries),
+        new DebugGetRawReceipts(blockchainQueries));
   }
 }

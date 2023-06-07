@@ -16,7 +16,6 @@ package org.hyperledger.besu.cli.options;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.LIMIT_TXPOOL_BY_ACCOUNT_PERCENTAGE;
 
 import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -67,44 +66,6 @@ public class TransactionPoolOptionsTest
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void senderLimitedTxPool_derived() {
-    final TestBesuCommand cmd = parseCommand("--tx-pool-limit-by-account-percentage=0.002");
-
-    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
-    final TransactionPoolConfiguration config = options.toDomainObject().build();
-    assertThat(config.getTxPoolMaxFutureTransactionByAccount()).isEqualTo(9);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void senderLimitedTxPoolFloor_derived() {
-    final TestBesuCommand cmd = parseCommand("--tx-pool-limit-by-account-percentage=0.0001");
-
-    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
-    final TransactionPoolConfiguration config = options.toDomainObject().build();
-    assertThat(config.getTxPoolMaxFutureTransactionByAccount()).isEqualTo(1);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void senderLimitedTxPoolCeiling_violated() {
-    final TestBesuCommand cmd = parseCommand("--tx-pool-limit-by-account-percentage=1.00002341");
-
-    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
-    final TransactionPoolConfiguration config = options.toDomainObject().build();
-    assertThat(config.getTxPoolLimitByAccountPercentage())
-        .isEqualTo(LIMIT_TXPOOL_BY_ACCOUNT_PERCENTAGE);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Invalid value for option '--tx-pool-limit-by-account-percentage'");
   }
 
   @Test
@@ -160,7 +121,11 @@ public class TransactionPoolOptionsTest
         .strictTransactionReplayProtectionEnabled(false)
         .txMessageKeepAliveSeconds(defaultValue.getTxMessageKeepAliveSeconds())
         .eth65TrxAnnouncedBufferingPeriod(defaultValue.getEth65TrxAnnouncedBufferingPeriod())
-        .txPoolLimitByAccountPercentage(defaultValue.getTxPoolLimitByAccountPercentage());
+        .layeredTxPoolEnabled(defaultValue.getLayeredTxPoolEnabled())
+        .pendingTransactionsLayerMaxCapacityBytes(
+            defaultValue.getPendingTransactionsLayerMaxCapacityBytes())
+        .maxPrioritizedTransactions(defaultValue.getMaxPrioritizedTransactions())
+        .maxFutureBySender(defaultValue.getMaxFutureBySender());
   }
 
   @Override
@@ -171,7 +136,10 @@ public class TransactionPoolOptionsTest
         .eth65TrxAnnouncedBufferingPeriod(
             TransactionPoolConfiguration.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD.plus(
                 Duration.ofMillis(100)))
-        .txPoolLimitByAccountPercentage(0.5f);
+        .layeredTxPoolEnabled(true)
+        .pendingTransactionsLayerMaxCapacityBytes(1_000_000L)
+        .maxPrioritizedTransactions(1000)
+        .maxFutureBySender(10);
   }
 
   @Override

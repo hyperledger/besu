@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PendingTransactionResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PendingTransactionsResult;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 
 import java.time.Instant;
 
@@ -39,7 +39,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class TxPoolBesuTransactionsTest {
 
-  @Mock private GasPricePendingTransactionsSorter pendingTransactions;
+  @Mock private PendingTransactions pendingTransactions;
   private TxPoolBesuTransactions method;
   private final String JSON_RPC_VERSION = "2.0";
   private final String TXPOOL_PENDING_TRANSACTIONS_METHOD = "txpool_besuTransactions";
@@ -58,7 +58,7 @@ public class TxPoolBesuTransactionsTest {
 
   @Test
   public void shouldReturnPendingTransactions() {
-    Instant addedAt = Instant.ofEpochMilli(10_000_000);
+    long addedAt = 10_000_000;
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest(
@@ -67,7 +67,7 @@ public class TxPoolBesuTransactionsTest {
     PendingTransaction pendingTransaction = mock(PendingTransaction.class);
     when(pendingTransaction.getHash()).thenReturn(Hash.fromHexString(TRANSACTION_HASH));
     when(pendingTransaction.isReceivedFromLocalSource()).thenReturn(true);
-    when(pendingTransaction.getAddedToPoolAt()).thenReturn(addedAt);
+    when(pendingTransaction.getAddedAt()).thenReturn(addedAt);
     when(pendingTransactions.getPendingTransactions())
         .thenReturn(Sets.newHashSet(pendingTransaction));
 
@@ -78,6 +78,6 @@ public class TxPoolBesuTransactionsTest {
 
     assertThat(actualResult.getHash()).isEqualTo(TRANSACTION_HASH);
     assertThat(actualResult.isReceivedFromLocalSource()).isTrue();
-    assertThat(actualResult.getAddedToPoolAt()).isEqualTo(addedAt.toString());
+    assertThat(actualResult.getAddedToPoolAt()).isEqualTo(Instant.ofEpochMilli(addedAt).toString());
   }
 }

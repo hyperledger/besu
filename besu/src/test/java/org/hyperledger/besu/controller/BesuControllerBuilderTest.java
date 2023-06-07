@@ -16,8 +16,10 @@ package org.hyperledger.besu.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -25,17 +27,21 @@ import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.EthashConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.Keccak256ConfigOptions;
-import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
@@ -43,11 +49,11 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
@@ -61,6 +67,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
+import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -68,12 +75,12 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class BesuControllerBuilderTest {
 
   private BesuControllerBuilder besuControllerBuilder;
+  private static final NodeKey nodeKey = NodeKeyUtils.generate();
 
   @Mock GenesisConfigFile genesisConfigFile;
   @Mock GenesisConfigOptions genesisConfigOptions;
   @Mock EthashConfigOptions ethashConfigOptions;
   @Mock CheckpointConfigOptions checkpointConfigOptions;
-  @Mock Keccak256ConfigOptions keccak256ConfigOptions;
   @Mock SynchronizerConfiguration synchronizerConfiguration;
   @Mock EthProtocolConfiguration ethProtocolConfiguration;
   @Mock MiningParameters miningParameters;
@@ -81,10 +88,10 @@ public class BesuControllerBuilderTest {
   @Mock PrivacyParameters privacyParameters;
   @Mock Clock clock;
   @Mock TransactionPoolConfiguration poolConfiguration;
-  @Mock NodeKey nodeKey;
   @Mock StorageProvider storageProvider;
   @Mock GasLimitCalculator gasLimitCalculator;
   @Mock WorldStateStorage worldStateStorage;
+  @Mock WorldStateArchive worldStateArchive;
   @Mock BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorage;
   @Mock WorldStatePreimageStorage worldStatePreimageStorage;
 
@@ -105,8 +112,6 @@ public class BesuControllerBuilderTest {
     when(genesisConfigOptions.getEthashConfigOptions()).thenReturn(ethashConfigOptions);
     when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
     when(ethashConfigOptions.getFixedDifficulty()).thenReturn(OptionalLong.empty());
-    when(genesisConfigOptions.getKeccak256ConfigOptions()).thenReturn(keccak256ConfigOptions);
-    when(keccak256ConfigOptions.getFixedDifficulty()).thenReturn(OptionalLong.empty());
     when(storageProvider.getStorageBySegmentIdentifier(any()))
         .thenReturn(new InMemoryKeyValueStorage());
     when(storageProvider.createBlockchainStorage(any()))
@@ -132,14 +137,7 @@ public class BesuControllerBuilderTest {
     when(worldStatePreimageStorage.updater())
         .thenReturn(mock(WorldStatePreimageStorage.Updater.class));
     when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorage.Updater.class));
-    BonsaiWorldStateKeyValueStorage.BonsaiUpdater bonsaiUpdater =
-        mock(BonsaiWorldStateKeyValueStorage.BonsaiUpdater.class);
-    when(bonsaiUpdater.getTrieLogStorageTransaction())
-        .thenReturn(mock(KeyValueStorageTransaction.class));
-    when(bonsaiUpdater.getTrieBranchStorageTransaction())
-        .thenReturn(mock(KeyValueStorageTransaction.class));
-    when(bonsaiWorldStateStorage.updater()).thenReturn(bonsaiUpdater);
-    besuControllerBuilder = visitWithMockConfigs(new MainnetBesuControllerBuilder());
+    besuControllerBuilder = spy(visitWithMockConfigs(new MainnetBesuControllerBuilder()));
   }
 
   BesuControllerBuilder visitWithMockConfigs(final BesuControllerBuilder builder) {
@@ -157,11 +155,19 @@ public class BesuControllerBuilderTest {
         .nodeKey(nodeKey)
         .storageProvider(storageProvider)
         .evmConfiguration(EvmConfiguration.DEFAULT)
+        .networkConfiguration(NetworkingConfiguration.create())
         .networkId(networkId);
   }
 
   @Test
   public void shouldDisablePruningIfBonsaiIsEnabled() {
+    BonsaiWorldState mockWorldState = mock(BonsaiWorldState.class, Answers.RETURNS_DEEP_STUBS);
+    doReturn(worldStateArchive)
+        .when(besuControllerBuilder)
+        .createWorldStateArchive(
+            any(WorldStateStorage.class), any(Blockchain.class), any(CachedMerkleTrieLoader.class));
+    doReturn(mockWorldState).when(worldStateArchive).getMutable();
+
     when(storageProvider.createWorldStateStorage(DataStorageFormat.BONSAI))
         .thenReturn(bonsaiWorldStateStorage);
     besuControllerBuilder
@@ -170,7 +176,6 @@ public class BesuControllerBuilderTest {
             ImmutableDataStorageConfiguration.builder()
                 .dataStorageFormat(DataStorageFormat.BONSAI)
                 .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
-                .useBonsaiSnapshots(DataStorageConfiguration.DEFAULT_BONSAI_USE_SNAPSHOTS)
                 .build());
     besuControllerBuilder.build();
 
@@ -187,7 +192,6 @@ public class BesuControllerBuilderTest {
             ImmutableDataStorageConfiguration.builder()
                 .dataStorageFormat(DataStorageFormat.FOREST)
                 .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
-                .useBonsaiSnapshots(DataStorageConfiguration.DEFAULT_BONSAI_USE_SNAPSHOTS)
                 .build());
     besuControllerBuilder.build();
 

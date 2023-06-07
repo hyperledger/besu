@@ -52,9 +52,9 @@ import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidator;
 import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -78,15 +78,18 @@ import java.util.Optional;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class QbftBlockHeightManagerTest {
 
   private final NodeKey nodeKey = NodeKeyUtils.generate();
@@ -126,7 +129,7 @@ public class QbftBlockHeightManagerTest {
     createdBlock = new Block(header, new BlockBody(emptyList(), emptyList()));
   }
 
-  @Before
+  @BeforeEach
   public void setup() {
     for (int i = 0; i < 3; i++) {
       final NodeKey nodeKey = NodeKeyUtils.generate();
@@ -157,7 +160,8 @@ public class QbftBlockHeightManagerTest {
             null,
             null,
             setupContextWithBftExtraDataEncoder(
-                QbftContext.class, validators, new QbftExtraDataCodec()));
+                QbftContext.class, validators, new QbftExtraDataCodec()),
+            Optional.empty());
 
     // Ensure the created QbftRound has the valid ConsensusRoundIdentifier;
     when(roundFactory.createNewRound(any(), anyInt()))

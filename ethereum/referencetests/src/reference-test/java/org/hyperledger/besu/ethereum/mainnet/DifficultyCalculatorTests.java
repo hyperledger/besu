@@ -48,10 +48,11 @@ public class DifficultyCalculatorTests {
   public static Stream<Arguments> getTestParametersForConfig() throws IOException {
     return Stream.of(
         Arguments.of(
-          "/BasicTests/difficultyMainNetwork.json",
-          MainnetProtocolSchedule.fromConfig(
-              GenesisConfigFile.mainnet().getConfigOptions(), EvmConfiguration.DEFAULT)
-        ),
+            "/BasicTests/difficultyMainNetwork.json",
+            MainnetProtocolSchedule.fromConfig(
+                GenesisConfigFile.mainnet()
+                    .getConfigOptions(Map.of("shanghaiTime", "999999999999")),
+                EvmConfiguration.DEFAULT)),
         Arguments.of(
           "/DifficultyTests/dfGrayGlacier/difficultyGrayGlacierForkBlock.json",
           MainnetProtocolSchedule.fromConfig(
@@ -171,7 +172,7 @@ public class DifficultyCalculatorTests {
       final long currentTime = extractLong(value, "currentTimestamp");
       final UInt256 currentDifficulty =
           UInt256.fromHexString(value.get("currentDifficulty").asText());
-      final var spec = protocolSchedule.getByBlockNumber(currentBlockNumber);
+      final var spec = protocolSchedule.getByBlockHeader(testHeader);
       final var calculator = spec.getDifficultyCalculator();
       assertThat(UInt256.valueOf(calculator.nextDifficulty(currentTime, testHeader, null)))
           .describedAs("File %s Test %s", testFile, entry.getKey())

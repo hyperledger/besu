@@ -33,6 +33,7 @@ import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.CreateOperation;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
@@ -141,7 +142,7 @@ class CreateOperationTest {
     final EVM evm = MainnetEVMs.london(EvmConfiguration.DEFAULT);
     operation.execute(messageFrame, evm);
 
-    assertThat(messageFrame.getStackItem(0)).isEqualTo(UInt256.ZERO);
+    assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 
   @Test
@@ -160,7 +161,7 @@ class CreateOperationTest {
     final EVM evm = MainnetEVMs.london(EvmConfiguration.DEFAULT);
     operation.execute(messageFrame, evm);
 
-    assertThat(messageFrame.getStackItem(0)).isEqualTo(UInt256.ZERO);
+    assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 
   @Test
@@ -182,7 +183,7 @@ class CreateOperationTest {
     final EVM evm = MainnetEVMs.london(EvmConfiguration.DEFAULT);
     operation.execute(messageFrame, evm);
 
-    assertThat(messageFrame.getStackItem(0)).isEqualTo(UInt256.ZERO);
+    assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 
   @Test
@@ -262,7 +263,7 @@ class CreateOperationTest {
     final EVM evm = MainnetEVMs.cancun(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
     var result = operation.execute(messageFrame, evm);
     assertThat(result.getHaltReason()).isNull();
-    assertThat(messageFrame.getStackItem(0)).isEqualTo(UInt256.ZERO);
+    assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 
   @Test
@@ -290,7 +291,7 @@ class CreateOperationTest {
     final EVM evm = MainnetEVMs.cancun(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
     var result = operation.execute(messageFrame, evm);
     assertThat(result.getHaltReason()).isNull();
-    assertThat(messageFrame.getStackItem(0)).isNotEqualTo(UInt256.ZERO);
+    assertThat(messageFrame.getState()).isEqualTo(MessageFrame.State.CODE_SUSPENDED);
   }
 
   @NotNull
@@ -312,7 +313,7 @@ class CreateOperationTest {
             .depth(depth)
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
-            .blockHashLookup(n -> Hash.hash(Bytes.ofUnsignedLong(n)))
+            .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
             .blockValues(mock(BlockValues.class))
             .gasPrice(Wei.ZERO)
             .messageFrameStack(messageFrameStack)

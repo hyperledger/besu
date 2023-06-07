@@ -33,7 +33,7 @@ dependencies {
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
 
   implementation project(':config')
-  implementation project(':crypto')
+  implementation project(':crypto:algorithms')
   implementation project(':datatypes')
   implementation project(':enclave')
   implementation project(':ethereum:rlp')
@@ -46,8 +46,11 @@ dependencies {
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
+  implementation 'com.google.dagger:dagger'
+  annotationProcessor 'com.google.dagger:dagger-compiler'
   implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'io.vertx:vertx-core'
+
   implementation 'net.java.dev.jna:jna'
   implementation 'org.apache.commons:commons-lang3'
   implementation 'org.apache.tuweni:tuweni-bytes'
@@ -105,7 +108,7 @@ dependencies {
   testSupportImplementation 'org.mockito:mockito-core'
 
   jmhImplementation project(path: ':config', configuration: 'testSupportArtifacts')
-  jmhImplementation project(':crypto')
+  jmhImplementation project(':crypto:algorithms')
   jmhImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   jmhImplementation project(':ethereum:rlp')
   jmhImplementation project(':ethereum:trie')

@@ -28,26 +28,32 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
       new BlockBody(Collections.emptyList(), Collections.emptyList());
   /**
    * Adding a new field with a corresponding root hash in the block header will require a change in
-   * {@link org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask.BodyIdentifier }
+   * {@link org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask.BodyIdentifier}
+   * Also requires adding the new field to the constructor used in the {@link
+   * org.hyperledger.besu.ethereum.util.RawBlockIterator }
    */
   private final List<Transaction> transactions;
 
   private final List<BlockHeader> ommers;
   private final Optional<List<Withdrawal>> withdrawals;
+  private final Optional<List<Deposit>> deposits;
 
   public BlockBody(final List<Transaction> transactions, final List<BlockHeader> ommers) {
     this.transactions = transactions;
     this.ommers = ommers;
     this.withdrawals = Optional.empty();
+    this.deposits = Optional.empty();
   }
 
   public BlockBody(
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
-      final Optional<List<Withdrawal>> withdrawals) {
+      final Optional<List<Withdrawal>> withdrawals,
+      final Optional<List<Deposit>> deposits) {
     this.transactions = transactions;
     this.ommers = ommers;
     this.withdrawals = withdrawals;
+    this.deposits = deposits;
   }
 
   public static BlockBody empty() {
@@ -81,33 +87,83 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   }
 
   /**
+   * Returns the deposits of the block.
+   *
+   * @return The optional list of deposits included in the block.
+   */
+  @Override
+  public Optional<List<Deposit>> getDeposits() {
+    return deposits;
+  }
+
+  /**
    * Writes Block to {@link RLPOutput}.
    *
    * @param output Output to write to
    */
-  public void writeTo(final RLPOutput output) {
+  public void writeWrappedBodyTo(final RLPOutput output) {
     output.startList();
-
-    output.writeList(getTransactions(), Transaction::writeTo);
-    output.writeList(getOmmers(), BlockHeader::writeTo);
-    withdrawals.ifPresent(withdrawals -> output.writeList(withdrawals, Withdrawal::writeTo));
-
+    writeTo(output);
     output.endList();
   }
 
-  public static BlockBody readFrom(
+  public void writeTo(final RLPOutput output) {
+    output.writeList(getTransactions(), Transaction::writeTo);
+    output.writeList(getOmmers(), BlockHeader::writeTo);
+    withdrawals.ifPresent(withdrawals -> output.writeList(withdrawals, Withdrawal::writeTo));
+    deposits.ifPresent(deposits -> output.writeList(deposits, Deposit::writeTo));
+  }
+
+  public static BlockBody readWrappedBodyFrom(
       final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
+    return readWrappedBodyFrom(input, blockHeaderFunctions, false);
+  }
+
+  /**
+   * Read all fields from the block body expecting a list wrapping them An example of valid body
+   * structure that this method would be able to read is: [[txs],[ommers],[withdrawals]] This is
+   * used for decoding list of bodies
+   *
+   * @param input The RLP-encoded input
+   * @param blockHeaderFunctions The block header functions used for parsing block headers
+   * @param allowEmptyBody A flag indicating whether an empty body is allowed
+   * @return the decoded BlockBody from the RLP
+   */
+  public static BlockBody readWrappedBodyFrom(
+      final RLPInput input,
+      final BlockHeaderFunctions blockHeaderFunctions,
+      final boolean allowEmptyBody) {
     input.enterList();
-    // TODO: Support multiple hard fork transaction formats.
-    final BlockBody body =
-        new BlockBody(
-            input.readList(Transaction::readFrom),
-            input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)),
-            input.isEndOfCurrentList()
-                ? Optional.empty()
-                : Optional.of(input.readList(Withdrawal::readFrom)));
+    if (input.isEndOfCurrentList() && allowEmptyBody) {
+      // empty block [] -> Return empty body.
+      input.leaveList();
+      return empty();
+    }
+    final BlockBody body = readFrom(input, blockHeaderFunctions);
     input.leaveList();
     return body;
+  }
+
+  /**
+   * Read all fields from the block body expecting no list wrapping them. An example of a valid body
+   * would be: [txs],[ommers],[withdrawals],[deposits] this method is called directly when importing
+   * a single block
+   *
+   * @param input The RLP-encoded input
+   * @param blockHeaderFunctions The block header functions used for parsing block headers
+   * @return the BlockBody decoded from the RLP
+   */
+  public static BlockBody readFrom(
+      final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
+    return new BlockBody(
+        input.readList(Transaction::readFrom),
+        input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)),
+        input.isEndOfCurrentList()
+            ? Optional.empty()
+            : Optional.of(input.readList(Withdrawal::readFrom)),
+        input.isEndOfCurrentList()
+            ? Optional.empty()
+            : Optional.of(input.readList(Deposit::readFrom)));
   }
 
   @Override
@@ -117,12 +173,20 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     BlockBody blockBody = (BlockBody) o;
     return Objects.equals(transactions, blockBody.transactions)
         && Objects.equals(ommers, blockBody.ommers)
-        && Objects.equals(withdrawals, blockBody.withdrawals);
+        && Objects.equals(withdrawals, blockBody.withdrawals)
+        && Objects.equals(deposits, blockBody.deposits);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(transactions, ommers, withdrawals);
+    return Objects.hash(transactions, ommers, withdrawals, deposits);
+  }
+
+  public boolean isEmpty() {
+    return transactions.isEmpty()
+        && ommers.isEmpty()
+        && withdrawals.isEmpty()
+        && deposits.isEmpty();
   }
 
   @Override
@@ -134,6 +198,8 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
         + ommers
         + ", withdrawals="
         + withdrawals
+        + ", deposits="
+        + deposits
         + '}';
   }
 }

@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.worldstate.GoQuorumMutablePrivateWorldStateUpdater;
 import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.EvmAccount;
@@ -446,32 +445,30 @@ public class MainnetTransactionProcessor {
 
       final long gasUsedByTransaction = transaction.getGasLimit() - initialFrame.getRemainingGas();
 
-      if (!worldState.getClass().equals(GoQuorumMutablePrivateWorldStateUpdater.class)) {
-        // if this is not a private GoQuorum transaction we have to update the coinbase
-        final var coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
-        final long usedGas = transaction.getGasLimit() - refundedGas;
-        final CoinbaseFeePriceCalculator coinbaseCalculator;
-        if (blockHeader.getBaseFee().isPresent()) {
-          final Wei baseFee = blockHeader.getBaseFee().get();
-          if (transactionGasPrice.compareTo(baseFee) < 0) {
-            return TransactionProcessingResult.failed(
-                gasUsedByTransaction,
-                refundedGas,
-                ValidationResult.invalid(
-                    TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
-                    "transaction price must be greater than base fee"),
-                Optional.empty());
-          }
-          coinbaseCalculator = coinbaseFeePriceCalculator;
-        } else {
-          coinbaseCalculator = CoinbaseFeePriceCalculator.frontier();
+      // update the coinbase
+      final var coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
+      final long usedGas = transaction.getGasLimit() - refundedGas;
+      final CoinbaseFeePriceCalculator coinbaseCalculator;
+      if (blockHeader.getBaseFee().isPresent()) {
+        final Wei baseFee = blockHeader.getBaseFee().get();
+        if (transactionGasPrice.compareTo(baseFee) < 0) {
+          return TransactionProcessingResult.failed(
+              gasUsedByTransaction,
+              refundedGas,
+              ValidationResult.invalid(
+                  TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
+                  "transaction price must be greater than base fee"),
+              Optional.empty());
         }
-
-        final Wei coinbaseWeiDelta =
-            coinbaseCalculator.price(usedGas, transactionGasPrice, blockHeader.getBaseFee());
-
-        coinbase.incrementBalance(coinbaseWeiDelta);
+        coinbaseCalculator = coinbaseFeePriceCalculator;
+      } else {
+        coinbaseCalculator = CoinbaseFeePriceCalculator.frontier();
       }
+
+      final Wei coinbaseWeiDelta =
+          coinbaseCalculator.price(usedGas, transactionGasPrice, blockHeader.getBaseFee());
+
+      coinbase.incrementBalance(coinbaseWeiDelta);
 
       initialFrame.getSelfDestructs().forEach(worldState::deleteAccount);
 

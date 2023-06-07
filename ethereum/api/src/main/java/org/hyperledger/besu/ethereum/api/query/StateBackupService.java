@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.config.JsonUtil;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -28,12 +29,11 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.Node;
-import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.TrieIterator.State;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.plugin.data.Hash;
 import org.hyperledger.besu.util.io.RollingFileWriter;
 
 import java.io.IOException;
@@ -307,7 +307,7 @@ public class StateBackupService {
         headerWriter.writeBytes(headerOutput.encoded().toArrayUnsafe());
 
         final BytesValueRLPOutput bodyOutput = new BytesValueRLPOutput();
-        block.get().getBody().writeTo(bodyOutput);
+        block.get().getBody().writeWrappedBodyTo(bodyOutput);
         bodyWriter.writeBytes(bodyOutput.encoded().toArrayUnsafe());
 
         final BytesValueRLPOutput receiptsOutput = new BytesValueRLPOutput();

@@ -87,15 +87,15 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
             id, convertTransactionInvalidReason(validationResult.getInvalidReason()));
       }
 
-      final org.hyperledger.besu.plugin.data.Address sender =
+      final Address sender =
           privateMarkerTransactionFactory.getSender(
               privateTransaction, privacyIdProvider.getPrivacyUserId(user));
 
       final Transaction privateMarkerTransaction =
-          createPrivateMarkerTransaction(Address.fromPlugin(sender), privateTransaction, user);
+          createPrivateMarkerTransaction(sender, privateTransaction, user);
 
       return transactionPool
-          .addLocalTransaction(privateMarkerTransaction)
+          .addTransactionViaApi(privateMarkerTransaction)
           .either(
               () -> new JsonRpcSuccessResponse(id, privateMarkerTransaction.getHash().toString()),
               errorReason -> getJsonRpcErrorResponse(id, errorReason));

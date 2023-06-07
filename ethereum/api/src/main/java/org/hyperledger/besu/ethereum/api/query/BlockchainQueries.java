@@ -67,6 +67,7 @@ public class BlockchainQueries {
   private final Blockchain blockchain;
   private final Optional<Path> cachePath;
   private final Optional<TransactionLogBloomCacher> transactionLogBloomCacher;
+  private final Optional<EthScheduler> ethScheduler;
   private final ApiConfiguration apiConfig;
 
   public BlockchainQueries(final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
@@ -102,6 +103,7 @@ public class BlockchainQueries {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.cachePath = cachePath;
+    this.ethScheduler = scheduler;
     this.transactionLogBloomCacher =
         (cachePath.isPresent() && scheduler.isPresent())
             ? Optional.of(
@@ -139,6 +141,15 @@ public class BlockchainQueries {
    */
   public long headBlockNumber() {
     return blockchain.getChainHeadBlockNumber();
+  }
+
+  /**
+   * Return the header of the head of the chain.
+   *
+   * @return The header of the head of the chain.
+   */
+  public BlockHeader headBlockHeader() {
+    return blockchain.getChainHeadHeader();
   }
 
   /**
@@ -294,7 +305,8 @@ public class BlockchainQueries {
    * @return The number of transactions sent from the given address.
    */
   public long getTransactionCount(final Address address, final Hash blockHash) {
-    return getAndMapWorldState(blockHash, worldState -> worldState.get(address))
+    return getAndMapWorldState(
+            blockHash, worldState -> Optional.ofNullable(worldState.get(address)))
         .map(Account::getNonce)
         .orElse(0L);
   }
@@ -712,7 +724,7 @@ public class BlockchainQueries {
         // handles the case when fromBlockNumber is past chain head.
         .takeWhile(Optional::isPresent)
         .map(Optional::get)
-        .filter(header -> query.couldMatch(header.getLogsBloom(true)))
+        .filter(header -> query.couldMatch(header.getLogsBloom()))
         .flatMap(header -> matchingLogs(header.getHash(), query, isQueryAlive).stream())
         .collect(Collectors.toList());
   }
@@ -850,28 +862,23 @@ public class BlockchainQueries {
    * @return the world state at the block number
    */
   public <U> Optional<U> getAndMapWorldState(
-      final Hash blockHash, final Function<MutableWorldState, ? extends U> mapper) {
+      final Hash blockHash, final Function<MutableWorldState, ? extends Optional<U>> mapper) {
+
     return blockchain
         .getBlockHeader(blockHash)
         .flatMap(
             blockHeader -> {
-              try (final var worldState =
-                  worldStateArchive
-                      .getMutable(blockHeader.getStateRoot(), blockHeader.getHash(), false)
-                      .map(
-                          ws -> {
-                            if (!ws.isPersistable()) {
-                              return ws.copy();
-                            }
-                            return ws;
-                          })
-                      .orElse(null)) {
-                if (worldState != null) {
-                  return Optional.ofNullable(mapper.apply(worldState));
+              try (var ws = worldStateArchive.getMutable(blockHeader, false).orElse(null)) {
+                if (ws != null) {
+                  return mapper.apply(ws);
                 }
               } catch (Exception ex) {
                 LOG.error("failed worldstate query for " + blockHash.toShortHexString(), ex);
               }
+              LOG.atDebug()
+                  .setMessage("Failed to find worldstate for {}")
+                  .addArgument(blockHeader.toLogString())
+                  .log();
               return Optional.empty();
             });
   }
@@ -885,7 +892,7 @@ public class BlockchainQueries {
    * @return the world state at the block number
    */
   public <U> Optional<U> getAndMapWorldState(
-      final long blockNumber, final Function<MutableWorldState, ? extends U> mapper) {
+      final long blockNumber, final Function<MutableWorldState, ? extends Optional<U>> mapper) {
     final Hash blockHash =
         getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
     return getAndMapWorldState(blockHash, mapper);
@@ -956,7 +963,9 @@ public class BlockchainQueries {
     return getAndMapWorldState(
         blockHash,
         worldState ->
-            Optional.ofNullable(worldState.get(address)).map(getter).orElse(noAccountValue));
+            Optional.ofNullable(worldState.get(address))
+                .map(getter)
+                .or(() -> Optional.ofNullable(noAccountValue)));
   }
 
   private List<TransactionWithMetadata> formatTransactions(
@@ -1020,5 +1029,9 @@ public class BlockchainQueries {
     }
 
     return logIndexOffset;
+  }
+
+  public Optional<EthScheduler> getEthScheduler() {
+    return ethScheduler;
   }
 }

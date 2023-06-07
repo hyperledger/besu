@@ -22,7 +22,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameterTestFixture.WITHDRAWAL_PARAM_1;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -58,8 +57,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TimestampSchedule;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -87,7 +86,7 @@ public abstract class AbstractEngineNewPayloadTest {
   interface MethodFactory {
     AbstractEngineNewPayload create(
         final Vertx vertx,
-        final TimestampSchedule timestampSchedule,
+        final ProtocolSchedule protocolSchedule,
         final ProtocolContext protocolContext,
         final MergeMiningCoordinator mergeCoordinator,
         final EthPeers ethPeers,
@@ -105,7 +104,7 @@ public abstract class AbstractEngineNewPayloadTest {
   private static final Hash mockHash = Hash.hash(Bytes32.fromHexStringLenient("0x1337deadbeef"));
 
   @Mock private ProtocolSpec protocolSpec;
-  @Mock private TimestampSchedule timestampSchedule;
+  @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolContext protocolContext;
 
   @Mock private MergeContext mergeContext;
@@ -124,12 +123,12 @@ public abstract class AbstractEngineNewPayloadTest {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(protocolSpec.getWithdrawalsValidator())
         .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
-    when(timestampSchedule.getByTimestamp(anyLong())).thenReturn(Optional.of(protocolSpec));
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(ethPeers.peerCount()).thenReturn(1);
     this.method =
         methodFactory.create(
             vertx,
-            timestampSchedule,
+            protocolSchedule,
             protocolContext,
             mergeCoordinator,
             ethPeers,
@@ -461,8 +460,8 @@ public abstract class AbstractEngineNewPayloadTest {
   }
 
   @Test
-  public void shouldReturnValidIfTimestampScheduleIsEmpty() {
-    when(timestampSchedule.getByTimestamp(anyLong())).thenReturn(Optional.empty());
+  public void shouldReturnValidIfProtocolScheduleIsEmpty() {
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(null);
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
@@ -477,7 +476,7 @@ public abstract class AbstractEngineNewPayloadTest {
     return method.response(
         new JsonRpcRequestContext(
             new JsonRpcRequest(
-                "2.0", RpcMethod.ENGINE_EXECUTE_PAYLOAD.getMethodName(), new Object[] {payload})));
+                "2.0", RpcMethod.ENGINE_NEW_PAYLOAD_V2.getMethodName(), new Object[] {payload})));
   }
 
   protected EnginePayloadParameter mockPayload(final BlockHeader header, final List<String> txs) {

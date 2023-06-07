@@ -31,8 +31,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
+import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-import org.hyperledger.besu.ethereum.mainnet.MutableProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.util.Subscribers;
@@ -54,7 +54,7 @@ public class BlockMinerTest {
         new Block(
             headerBuilder.buildHeader(), new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
 
-    final ProtocolContext protocolContext = new ProtocolContext(null, null, null);
+    final ProtocolContext protocolContext = new ProtocolContext(null, null, null, Optional.empty());
 
     final PoWBlockCreator blockCreator = mock(PoWBlockCreator.class);
     final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =
@@ -95,7 +95,7 @@ public class BlockMinerTest {
         new Block(
             headerBuilder.buildHeader(), new BlockBody(Lists.newArrayList(), Lists.newArrayList()));
 
-    final ProtocolContext protocolContext = new ProtocolContext(null, null, null);
+    final ProtocolContext protocolContext = new ProtocolContext(null, null, null, Optional.empty());
 
     final PoWBlockCreator blockCreator = mock(PoWBlockCreator.class);
     final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =
@@ -142,9 +142,9 @@ public class BlockMinerTest {
   }
 
   private ProtocolSchedule singleSpecSchedule(final ProtocolSpec protocolSpec) {
-    final MutableProtocolSchedule protocolSchedule =
-        new MutableProtocolSchedule(Optional.of(BigInteger.valueOf(1234)));
-    protocolSchedule.putMilestone(0, protocolSpec);
+    final DefaultProtocolSchedule protocolSchedule =
+        new DefaultProtocolSchedule(Optional.of(BigInteger.valueOf(1234)));
+    protocolSchedule.putBlockNumberMilestone(0, protocolSpec);
     return protocolSchedule;
   }
 }

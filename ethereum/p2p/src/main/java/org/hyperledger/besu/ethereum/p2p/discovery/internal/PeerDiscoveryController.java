@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
@@ -797,12 +797,14 @@ public class PeerDiscoveryController {
                       execute();
                     }));
       } else {
-        final Map<PacketType, PeerInteractionState> peerInteractionStateMap =
-            inflightInteractions.get(peerId);
-        peerInteractionStateMap.remove(expectedType);
-        if (peerInteractionStateMap.isEmpty()) {
-          inflightInteractions.remove(peerId);
-        }
+        Optional.ofNullable(inflightInteractions.get(peerId))
+            .ifPresent(
+                peerInterationStateMap -> {
+                  peerInterationStateMap.remove(expectedType);
+                  if (peerInterationStateMap.isEmpty()) {
+                    inflightInteractions.remove(peerId);
+                  }
+                });
       }
     }
 

@@ -52,9 +52,9 @@ import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.consensus.ibft.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidator;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -151,7 +151,8 @@ public class IbftBlockHeightManagerTest {
         .thenReturn(futureRoundProposalMessageValidator);
     when(messageValidatorFactory.createMessageValidator(any(), any())).thenReturn(messageValidator);
 
-    protocolContext = new ProtocolContext(null, null, setupContextWithValidators(validators));
+    protocolContext =
+        new ProtocolContext(null, null, setupContextWithValidators(validators), Optional.empty());
 
     // Ensure the created IbftRound has the valid ConsensusRoundIdentifier;
     when(roundFactory.createNewRound(any(), anyInt()))

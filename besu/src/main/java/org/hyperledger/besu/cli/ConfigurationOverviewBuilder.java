@@ -22,13 +22,20 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
+import org.slf4j.Logger;
 import oshi.PlatformEnum;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 
 /** The Configuration overview builder. */
 public class ConfigurationOverviewBuilder {
+  @SuppressWarnings("PrivateStaticFinalLoggers")
+  private final Logger logger;
+
   private String network;
   private BigInteger networkId;
   private boolean hasCustomGenesis;
@@ -38,7 +45,16 @@ public class ConfigurationOverviewBuilder {
   private Collection<String> rpcHttpApis;
   private Integer enginePort;
   private Collection<String> engineApis;
+  private String engineJwtFilePath;
   private boolean isHighSpec = false;
+  private Map<String, String> environment;
+
+  /**
+   * @param logger the logger
+   */
+  public ConfigurationOverviewBuilder(final Logger logger) {
+    this.logger = logger;
+  }
 
   /**
    * Sets network.
@@ -77,7 +93,7 @@ public class ConfigurationOverviewBuilder {
    * Sets data storage.
    *
    * @param dataStorage the data storage
-   * @return the data storage
+   * @return the builder
    */
   public ConfigurationOverviewBuilder setDataStorage(final String dataStorage) {
     this.dataStorage = dataStorage;
@@ -88,7 +104,7 @@ public class ConfigurationOverviewBuilder {
    * Sets sync mode.
    *
    * @param syncMode the sync mode
-   * @return the sync mode
+   * @return the builder
    */
   public ConfigurationOverviewBuilder setSyncMode(final String syncMode) {
     this.syncMode = syncMode;
@@ -99,7 +115,7 @@ public class ConfigurationOverviewBuilder {
    * Sets rpc port.
    *
    * @param rpcPort the rpc port
-   * @return the rpc port
+   * @return the builder
    */
   public ConfigurationOverviewBuilder setRpcPort(final Integer rpcPort) {
     this.rpcPort = rpcPort;
@@ -110,7 +126,7 @@ public class ConfigurationOverviewBuilder {
    * Sets rpc http apis.
    *
    * @param rpcHttpApis the rpc http apis
-   * @return the rpc http apis
+   * @return the builder
    */
   public ConfigurationOverviewBuilder setRpcHttpApis(final Collection<String> rpcHttpApis) {
     this.rpcHttpApis = rpcHttpApis;
@@ -121,7 +137,7 @@ public class ConfigurationOverviewBuilder {
    * Sets engine port.
    *
    * @param enginePort the engine port
-   * @return the engine port
+   * @return the builder
    */
   public ConfigurationOverviewBuilder setEnginePort(final Integer enginePort) {
     this.enginePort = enginePort;
@@ -132,7 +148,7 @@ public class ConfigurationOverviewBuilder {
    * Sets engine apis.
    *
    * @param engineApis the engine apis
-   * @return the engine apis
+   * @return the builder
    */
   public ConfigurationOverviewBuilder setEngineApis(final Collection<String> engineApis) {
     this.engineApis = engineApis;
@@ -142,10 +158,32 @@ public class ConfigurationOverviewBuilder {
   /**
    * Sets high spec enabled.
    *
-   * @return the high spec enabled
+   * @return the builder
    */
   public ConfigurationOverviewBuilder setHighSpecEnabled() {
     isHighSpec = true;
+    return this;
+  }
+
+  /**
+   * Sets the engine jwt file path.
+   *
+   * @param engineJwtFilePath the engine apis
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setEngineJwtFile(final String engineJwtFilePath) {
+    this.engineJwtFilePath = engineJwtFilePath;
+    return this;
+  }
+
+  /**
+   * Sets the environment variables.
+   *
+   * @param environment the enveironment variables
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setEnvironment(final Map<String, String> environment) {
+    this.environment = environment;
     return this;
   }
 
@@ -156,7 +194,7 @@ public class ConfigurationOverviewBuilder {
    */
   public String build() {
     final List<String> lines = new ArrayList<>();
-    lines.add("Besu " + BesuInfo.class.getPackage().getImplementationVersion());
+    lines.add("Besu version " + BesuInfo.class.getPackage().getImplementationVersion());
     lines.add("");
     lines.add("Configuration:");
 
@@ -194,6 +232,9 @@ public class ConfigurationOverviewBuilder {
     if (enginePort != null) {
       lines.add("Engine port: " + enginePort);
     }
+    if (engineJwtFilePath != null) {
+      lines.add("Engine JWT: " + engineJwtFilePath);
+    }
 
     if (isHighSpec) {
       lines.add("High spec configuration enabled");
@@ -211,6 +252,8 @@ public class ConfigurationOverviewBuilder {
       if (glibcVersion != null) {
         lines.add("glibc: " + glibcVersion);
       }
+
+      detectJemalloc(lines);
     }
 
     final HardwareAbstractionLayer hardwareInfo = new SystemInfo().getHardware();
@@ -219,6 +262,31 @@ public class ConfigurationOverviewBuilder {
     lines.add("CPU cores: " + hardwareInfo.getProcessor().getLogicalProcessorCount());
 
     return FramedLogMessage.generate(lines);
+  }
+
+  private void detectJemalloc(final List<String> lines) {
+    Optional.ofNullable(Objects.isNull(environment) ? null : environment.get("BESU_USING_JEMALLOC"))
+        .ifPresentOrElse(
+            t -> {
+              try {
+                final String version = PlatformDetector.getJemalloc();
+                lines.add("jemalloc: " + version);
+              } catch (final Throwable throwable) {
+                logger.warn(
+                    "BESU_USING_JEMALLOC is present but we failed to load jemalloc library to get the version",
+                    throwable);
+              }
+            },
+            () -> {
+              // in case the user is using jemalloc without BESU_USING_JEMALLOC env var
+              try {
+                final String version = PlatformDetector.getJemalloc();
+                lines.add("jemalloc: " + version);
+              } catch (final Throwable throwable) {
+                logger.info(
+                    "jemalloc library not found, memory usage may be reduced by installing it");
+              }
+            });
   }
 
   private String normalizeSize(final long size) {

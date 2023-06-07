@@ -23,8 +23,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MockSubProtocol;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -58,6 +59,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
@@ -89,6 +91,8 @@ public class P2PPlainNetworkTest {
     final NodeKey nodeKey = NodeKeyUtils.generate();
     try (final P2PNetwork listener = builder("partner1client1").nodeKey(nodeKey).build();
         final P2PNetwork connector = builder("partner2client1").build()) {
+      listener.getRlpxAgent().subscribeConnectRequest(testCallback);
+      connector.getRlpxAgent().subscribeConnectRequest(testCallback);
 
       listener.start();
       connector.start();
@@ -111,6 +115,8 @@ public class P2PPlainNetworkTest {
     final NodeKey listenNodeKey = NodeKeyUtils.generate();
     try (final P2PNetwork listener = builder("partner1client1").nodeKey(listenNodeKey).build();
         final P2PNetwork connector = builder("partner2client1").build()) {
+      listener.getRlpxAgent().subscribeConnectRequest(testCallback);
+      connector.getRlpxAgent().subscribeConnectRequest(testCallback);
 
       listener.start();
       connector.start();
@@ -142,19 +148,20 @@ public class P2PPlainNetworkTest {
   @Test
   public void limitMaxPeers() throws Exception {
     final NodeKey nodeKey = NodeKeyUtils.generate();
-    final int maxPeers = 1;
     final NetworkingConfiguration listenerConfig =
         NetworkingConfiguration.create()
             .setDiscovery(DiscoveryConfiguration.create().setActive(false))
             .setRlpx(
                 RlpxConfiguration.create()
                     .setBindPort(0)
-                    .setPeerUpperBound(maxPeers)
                     .setSupportedProtocols(MockSubProtocol.create()));
     try (final P2PNetwork listener =
             builder("partner1client1").nodeKey(nodeKey).config(listenerConfig).build();
         final P2PNetwork connector1 = builder("partner1client1").build();
         final P2PNetwork connector2 = builder("partner2client1").build()) {
+      listener.getRlpxAgent().subscribeConnectRequest(testCallback);
+      connector1.getRlpxAgent().subscribeConnectRequest(testCallback);
+      connector2.getRlpxAgent().subscribeConnectRequest((p, d) -> false);
 
       // Setup listener and first connection
       listener.start();
@@ -181,17 +188,7 @@ public class P2PPlainNetworkTest {
             reasonFuture.complete(reason);
           });
       connector2.start();
-      Assertions.assertThat(
-              connector2
-                  .connect(listeningPeer)
-                  .get(30L, TimeUnit.SECONDS)
-                  .getPeerInfo()
-                  .getNodeId())
-          .isEqualTo(listenId);
-      Assertions.assertThat(peerFuture.get(30L, TimeUnit.SECONDS).getPeerInfo().getNodeId())
-          .isEqualTo(listenId);
-      assertThat(reasonFuture.get(30L, TimeUnit.SECONDS))
-          .isEqualByComparingTo(DisconnectReason.TOO_MANY_PEERS);
+      Assertions.assertThat(connector2.connect(listeningPeer)).isCompletedExceptionally();
     }
   }
 
@@ -214,6 +211,9 @@ public class P2PPlainNetworkTest {
                 .nodeKey(connectorNodeKey)
                 .supportedCapabilities(cap2)
                 .build()) {
+      listener.getRlpxAgent().subscribeConnectRequest(testCallback);
+      connector.getRlpxAgent().subscribeConnectRequest(testCallback);
+
       listener.start();
       connector.start();
       final EnodeURL listenerEnode = listener.getLocalEnode().get();
@@ -233,6 +233,8 @@ public class P2PPlainNetworkTest {
     try (final P2PNetwork localNetwork =
             builder("partner1client1").peerPermissions(localDenylist).build();
         final P2PNetwork remoteNetwork = builder("partner2client1").build()) {
+      localNetwork.getRlpxAgent().subscribeConnectRequest(testCallback);
+      remoteNetwork.getRlpxAgent().subscribeConnectRequest(testCallback);
 
       localNetwork.start();
       remoteNetwork.start();
@@ -281,6 +283,8 @@ public class P2PPlainNetworkTest {
     try (final P2PNetwork localNetwork =
             builder("partner1client1").peerPermissions(peerPermissions).build();
         final P2PNetwork remoteNetwork = builder("partner2client1").build()) {
+      localNetwork.getRlpxAgent().subscribeConnectRequest(testCallback);
+      remoteNetwork.getRlpxAgent().subscribeConnectRequest(testCallback);
 
       localNetwork.start();
       remoteNetwork.start();
@@ -330,6 +334,8 @@ public class P2PPlainNetworkTest {
     final NodeKey nodeKey = NodeKeyUtils.generate();
     try (final P2PNetwork listener = builder("partner1client1").nodeKey(nodeKey).build();
         final P2PNetwork connector = builder("partner2client1").build()) {
+      listener.getRlpxAgent().subscribeConnectRequest(testCallback);
+      connector.getRlpxAgent().subscribeConnectRequest(testCallback);
 
       final CompletableFuture<DisconnectReason> disconnectReasonFuture = new CompletableFuture<>();
       listener.subscribeDisconnect(
@@ -378,6 +384,8 @@ public class P2PPlainNetworkTest {
     }
   }
 
+  private final ShouldConnectCallback testCallback = (p, d) -> true;
+
   private static class LargeMessageData extends AbstractMessageData {
 
     public static final int VALID_ETH_MESSAGE_CODE = 0x07;
@@ -410,7 +418,7 @@ public class P2PPlainNetworkTest {
   private static Path toPath(final String path) {
     try {
       return Path.of(Objects.requireNonNull(P2PPlainNetworkTest.class.getResource(path)).toURI());
-    } catch (URISyntaxException e) {
+    } catch (final URISyntaxException e) {
       throw new RuntimeException("Error converting to URI.", e);
     }
   }
@@ -429,7 +437,8 @@ public class P2PPlainNetworkTest {
         .withTrustStoreType(KEYSTORE_TYPE_PKCS12)
         .withTrustStorePath(toPath(String.format(truststorePath, clientDirName)))
         .withTrustStorePasswordSupplier(() -> "test123")
-        .withCrlPath(toPath(crl));
+        .withCrlPath(toPath(crl))
+        .withClientHelloSniEnabled(false);
 
     return Optional.of(builder.build());
   }
@@ -449,6 +458,8 @@ public class P2PPlainNetworkTest {
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .blockNumberForks(Collections.emptyList())
         .timestampForks(Collections.emptyList())
-        .blockchain(blockchainMock);
+        .blockchain(blockchainMock)
+        .allConnectionsSupplier(Stream::empty)
+        .allActiveConnectionsSupplier(Stream::empty);
   }
 }

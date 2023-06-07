@@ -24,13 +24,18 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
+import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionProtocolSchedule;
+import org.hyperledger.besu.consensus.merge.TransitionUtils;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 
 import java.util.Collection;
 import java.util.List;
@@ -97,8 +102,9 @@ public class ForkIdsNetworkConfigTest {
                 new ForkId(Bytes.ofUnsignedInt(0xa3f5ab08L), 1561651L),
                 new ForkId(Bytes.ofUnsignedInt(0xc25efa5cL), 4460644L),
                 new ForkId(Bytes.ofUnsignedInt(0x757a1c47L), 5062605L),
-                new ForkId(Bytes.ofUnsignedInt(0xb8c6299dL), 0L),
-                new ForkId(Bytes.ofUnsignedInt(0xb8c6299dL), 0L))
+                new ForkId(Bytes.ofUnsignedInt(0xb8c6299dL), 1678832736L),
+                new ForkId(Bytes.ofUnsignedInt(0xf9843abfL), 0L),
+                new ForkId(Bytes.ofUnsignedInt(0xf9843abfL), 0L))
           },
           new Object[] {
             NetworkName.MAINNET,
@@ -117,8 +123,9 @@ public class ForkIdsNetworkConfigTest {
                 new ForkId(Bytes.ofUnsignedInt(0xeb440f6L), 12965000L),
                 new ForkId(Bytes.ofUnsignedInt(0xb715077dL), 13773000L),
                 new ForkId(Bytes.ofUnsignedInt(0x20c327fcL), 15050000L),
-                new ForkId(Bytes.ofUnsignedInt(0xf0afd0e3L), 0L),
-                new ForkId(Bytes.ofUnsignedInt(0xf0afd0e3L), 0L))
+                new ForkId(Bytes.ofUnsignedInt(0xf0afd0e3L), 1681338455L),
+                new ForkId(Bytes.ofUnsignedInt(0xdce96c2dL), 0L),
+                new ForkId(Bytes.ofUnsignedInt(0xdce96c2dL), 0L))
           },
           new Object[] {
             NetworkName.MORDOR,
@@ -167,8 +174,8 @@ public class ForkIdsNetworkConfigTest {
     public void testForkId() {
       final GenesisConfigFile genesisConfigFile =
           GenesisConfigFile.fromConfig(EthNetworkConfig.jsonConfig(chainName));
-      final GenesisConfigOptions configOptions = genesisConfigFile.getConfigOptions();
-      final ProtocolSchedule schedule = TransitionProtocolSchedule.fromConfig(configOptions);
+      final MilestoneStreamingTransitionProtocolSchedule schedule =
+          createSchedule(genesisConfigFile);
       final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, schedule);
       final Blockchain mockBlockchain = mock(Blockchain.class);
       final BlockHeader mockBlockHeader = mock(BlockHeader.class);
@@ -197,6 +204,41 @@ public class ForkIdsNetworkConfigTest {
               .collect(Collectors.toList());
 
       assertThat(actualForkIds).containsExactlyElementsOf(expectedForkIds);
+    }
+
+    private static MilestoneStreamingTransitionProtocolSchedule createSchedule(
+        final GenesisConfigFile genesisConfigFile) {
+      final GenesisConfigOptions configOptions = genesisConfigFile.getConfigOptions();
+      MilestoneStreamingProtocolSchedule preMergeProtocolSchedule =
+          new MilestoneStreamingProtocolSchedule(
+              (DefaultProtocolSchedule) MainnetProtocolSchedule.fromConfig(configOptions));
+      MilestoneStreamingProtocolSchedule postMergeProtocolSchedule =
+          new MilestoneStreamingProtocolSchedule(
+              (DefaultProtocolSchedule) MergeProtocolSchedule.create(configOptions, false));
+      final MilestoneStreamingTransitionProtocolSchedule schedule =
+          new MilestoneStreamingTransitionProtocolSchedule(
+              preMergeProtocolSchedule, postMergeProtocolSchedule);
+      return schedule;
+    }
+
+    public static class MilestoneStreamingTransitionProtocolSchedule
+        extends TransitionProtocolSchedule {
+
+      private final TransitionUtils<MilestoneStreamingProtocolSchedule> transitionUtils;
+
+      public MilestoneStreamingTransitionProtocolSchedule(
+          final MilestoneStreamingProtocolSchedule preMergeProtocolSchedule,
+          final MilestoneStreamingProtocolSchedule postMergeProtocolSchedule) {
+        super(preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
+        transitionUtils =
+            new TransitionUtils<>(
+                preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
+      }
+
+      public Stream<Long> streamMilestoneBlocks() {
+        return transitionUtils.dispatchFunctionAccordingToMergeState(
+            MilestoneStreamingProtocolSchedule::streamMilestoneBlocks);
+      }
     }
   }
 }

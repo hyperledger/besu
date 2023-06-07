@@ -14,16 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.storage.keyvalue;
 
-import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
-import org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateKeyValueStorage;
-import org.hyperledger.besu.ethereum.goquorum.GoQuorumPrivateStorage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
@@ -40,33 +39,34 @@ public class KeyValueStorageProvider implements StorageProvider {
 
   protected final Function<SegmentIdentifier, KeyValueStorage> storageCreator;
   private final KeyValueStorage worldStatePreimageStorage;
-  private final KeyValueStorage privateWorldStatePreimageStorage;
   private final boolean isWorldStateIterable;
   private final boolean isWorldStateSnappable;
   protected final Map<SegmentIdentifier, KeyValueStorage> storageInstances = new HashMap<>();
+  private final ObservableMetricsSystem metricsSystem;
 
   public KeyValueStorageProvider(
       final Function<SegmentIdentifier, KeyValueStorage> storageCreator,
       final KeyValueStorage worldStatePreimageStorage,
-      final boolean segmentIsolationSupported) {
+      final boolean segmentIsolationSupported,
+      final ObservableMetricsSystem metricsSystem) {
     this.storageCreator = storageCreator;
     this.worldStatePreimageStorage = worldStatePreimageStorage;
-    this.privateWorldStatePreimageStorage = null;
     this.isWorldStateIterable = segmentIsolationSupported;
     this.isWorldStateSnappable = SNAPSHOT_ISOLATION_UNSUPPORTED;
+    this.metricsSystem = metricsSystem;
   }
 
   public KeyValueStorageProvider(
       final Function<SegmentIdentifier, KeyValueStorage> storageCreator,
       final KeyValueStorage worldStatePreimageStorage,
-      final KeyValueStorage privateWorldStatePreimageStorage,
       final boolean segmentIsolationSupported,
-      final boolean storageSnapshotIsolationSupported) {
+      final boolean storageSnapshotIsolationSupported,
+      final ObservableMetricsSystem metricsSystem) {
     this.storageCreator = storageCreator;
     this.worldStatePreimageStorage = worldStatePreimageStorage;
-    this.privateWorldStatePreimageStorage = privateWorldStatePreimageStorage;
     this.isWorldStateIterable = segmentIsolationSupported;
     this.isWorldStateSnappable = storageSnapshotIsolationSupported;
+    this.metricsSystem = metricsSystem;
   }
 
   @Override
@@ -79,7 +79,7 @@ public class KeyValueStorageProvider implements StorageProvider {
   @Override
   public WorldStateStorage createWorldStateStorage(final DataStorageFormat dataStorageFormat) {
     if (dataStorageFormat.equals(DataStorageFormat.BONSAI)) {
-      return new BonsaiWorldStateKeyValueStorage(this);
+      return new BonsaiWorldStateKeyValueStorage(this, metricsSystem);
     } else {
       return new WorldStateKeyValueStorage(
           getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.WORLD_STATE));
@@ -100,23 +100,6 @@ public class KeyValueStorageProvider implements StorageProvider {
   public SnappableKeyValueStorage getSnappableStorageBySegmentIdentifier(
       final SegmentIdentifier segment) {
     return (SnappableKeyValueStorage) getStorageBySegmentIdentifier(segment);
-  }
-
-  @Override
-  public WorldStateStorage createPrivateWorldStateStorage() {
-    return new WorldStateKeyValueStorage(
-        getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.GOQUORUM_PRIVATE_WORLD_STATE));
-  }
-
-  @Override
-  public WorldStatePreimageStorage createPrivateWorldStatePreimageStorage() {
-    return new WorldStatePreimageKeyValueStorage(privateWorldStatePreimageStorage);
-  }
-
-  @Override
-  public GoQuorumPrivateStorage createGoQuorumPrivateStorage() {
-    return new GoQuorumPrivateKeyValueStorage(
-        getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.GOQUORUM_PRIVATE_STORAGE));
   }
 
   @Override

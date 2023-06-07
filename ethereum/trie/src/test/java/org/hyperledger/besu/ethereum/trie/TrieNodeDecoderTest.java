@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.trie;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.patricia.TrieNodeDecoder;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -38,7 +40,7 @@ public class TrieNodeDecoderTest {
     final InMemoryKeyValueStorage storage = new InMemoryKeyValueStorage();
 
     // Build a small trie
-    final MerklePatriciaTrie<Bytes, Bytes> trie =
+    final MerkleTrie<Bytes, Bytes> trie =
         new StoredMerklePatriciaTrie<>(
             new BytesToByteNodeLoader(storage), Function.identity(), Function.identity());
     trie.put(Bytes.fromHexString("0x100000"), Bytes.of(1));
@@ -82,7 +84,7 @@ public class TrieNodeDecoderTest {
     final InMemoryKeyValueStorage storage = new InMemoryKeyValueStorage();
 
     // Build a small trie
-    final MerklePatriciaTrie<Bytes, Bytes> trie =
+    final MerkleTrie<Bytes, Bytes> trie =
         new StoredMerklePatriciaTrie<>(
             new BytesToByteNodeLoader(storage), Function.identity(), Function.identity());
     trie.put(Bytes.fromHexString("0x100000"), Bytes.of(1));
@@ -153,7 +155,7 @@ public class TrieNodeDecoderTest {
     final InMemoryKeyValueStorage partialStorage = new InMemoryKeyValueStorage();
 
     // Build a small trie
-    final MerklePatriciaTrie<Bytes, Bytes> trie =
+    final MerkleTrie<Bytes, Bytes> trie =
         new StoredMerklePatriciaTrie<>(
             new BytesToByteNodeLoader(fullStorage), Function.identity(), Function.identity());
     final Random random = new Random(1);
@@ -177,7 +179,7 @@ public class TrieNodeDecoderTest {
 
     // Decode partially available trie
     final KeyValueStorageTransaction partialTx = partialStorage.startTransaction();
-    partialTx.put(trie.getRootHash().toArrayUnsafe(), rootNode.getRlp().toArrayUnsafe());
+    partialTx.put(trie.getRootHash().toArrayUnsafe(), rootNode.getEncodedBytes().toArrayUnsafe());
     partialTx.commit();
     final List<Node<Bytes>> allDecodableNodes =
         TrieNodeDecoder.breadthFirstDecoder(
@@ -191,7 +193,7 @@ public class TrieNodeDecoderTest {
   public void breadthFirstDecode_emptyTrie() {
     final List<Node<Bytes>> result =
         TrieNodeDecoder.breadthFirstDecoder(
-                (l, h) -> Optional.empty(), MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)
+                (l, h) -> Optional.empty(), MerkleTrie.EMPTY_TRIE_NODE_HASH)
             .collect(Collectors.toList());
     assertThat(result.size()).isEqualTo(0);
   }
@@ -200,7 +202,7 @@ public class TrieNodeDecoderTest {
   public void breadthFirstDecode_singleNodeTrie() {
     final InMemoryKeyValueStorage storage = new InMemoryKeyValueStorage();
 
-    final MerklePatriciaTrie<Bytes, Bytes> trie =
+    final MerkleTrie<Bytes, Bytes> trie =
         new StoredMerklePatriciaTrie<>(
             new BytesToByteNodeLoader(storage), Function.identity(), Function.identity());
     trie.put(Bytes.fromHexString("0x100000"), Bytes.of(1));

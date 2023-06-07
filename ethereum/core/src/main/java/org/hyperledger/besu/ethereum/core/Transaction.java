@@ -25,6 +25,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Quantity;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
@@ -32,9 +33,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.ethereum.transaction.GoQuorumPrivateTransactionDetector;
 import org.hyperledger.besu.evm.AccessListEntry;
-import org.hyperledger.besu.plugin.data.Quantity;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
@@ -62,9 +61,6 @@ public class Transaction
   public static final BigInteger REPLAY_UNPROTECTED_V_BASE_PLUS_1 = BigInteger.valueOf(28);
 
   public static final BigInteger REPLAY_PROTECTED_V_BASE = BigInteger.valueOf(35);
-
-  public static final BigInteger GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MIN = BigInteger.valueOf(37);
-  public static final BigInteger GO_QUORUM_PRIVATE_TRANSACTION_V_VALUE_MAX = BigInteger.valueOf(38);
 
   // The v signature parameter starts at 36 because 1 is the first valid chainId so:
   // chainId > 1 implies that 2 * chainId + V_BASE > 36.
@@ -94,8 +90,6 @@ public class Transaction
   private final Optional<List<AccessListEntry>> maybeAccessList;
 
   private final Optional<BigInteger> chainId;
-
-  private final Optional<BigInteger> v;
 
   // Caches a "hash" of a portion of the transaction used for sender recovery.
   // Note that this hash does not include the transaction signature so it does not
@@ -145,9 +139,6 @@ public class Transaction
    *     preload
    * @param sender the transaction sender
    * @param chainId the chain id to apply the transaction to
-   * @param v the v value. This is only passed in directly for GoQuorum private transactions
-   *     (v=37|38). For all other transactions, the v value is derived from the signature. If v is
-   *     provided here, the chain id must be empty.
    *     <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
    *     otherwise it should contain an address.
    *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
@@ -168,12 +159,7 @@ public class Transaction
       final Optional<List<AccessListEntry>> maybeAccessList,
       final Address sender,
       final Optional<BigInteger> chainId,
-      final Optional<BigInteger> v,
       final Optional<List<Hash>> versionedHashes) {
-    if (v.isPresent() && chainId.isPresent()) {
-      throw new IllegalArgumentException(
-          String.format("chainId '%s' and v '%s' cannot both be provided", chainId.get(), v.get()));
-    }
 
     if (transactionType.requiresChainId()) {
       checkArgument(
@@ -201,6 +187,8 @@ public class Transaction
       checkArgument(
           versionedHashes.isPresent(), "Must specify blob versioned hashes for blob transaction");
       checkArgument(
+          !versionedHashes.get().isEmpty(), "Blob transaction must have at least one blob");
+      checkArgument(
           maxFeePerDataGas.isPresent(), "Must specify max fee per data gas for blob transaction");
     }
 
@@ -218,7 +206,6 @@ public class Transaction
     this.maybeAccessList = maybeAccessList;
     this.sender = sender;
     this.chainId = chainId;
-    this.v = v;
     this.versionedHashes = versionedHashes;
 
     if (isUpfrontGasCostTooHigh()) {
@@ -239,7 +226,6 @@ public class Transaction
       final Bytes payload,
       final Address sender,
       final Optional<BigInteger> chainId,
-      final Optional<BigInteger> v,
       final Optional<List<Hash>> versionedHashes) {
     this(
         TransactionType.FRONTIER,
@@ -256,7 +242,6 @@ public class Transaction
         Optional.empty(),
         sender,
         chainId,
-        v,
         versionedHashes);
   }
 
@@ -269,7 +254,6 @@ public class Transaction
       final SECPSignature signature,
       final Bytes payload,
       final Optional<BigInteger> chainId,
-      final Optional<BigInteger> v,
       final Optional<List<Hash>> versionedHashes) {
     this(
         TransactionType.FRONTIER,
@@ -286,7 +270,6 @@ public class Transaction
         Optional.empty(),
         null,
         chainId,
-        v,
         versionedHashes);
   }
 
@@ -331,54 +314,6 @@ public class Transaction
         payload,
         sender,
         chainId,
-        Optional.empty(),
-        versionedHashes);
-  }
-
-  /**
-   * Instantiates a transaction instance.
-   *
-   * @param nonce the nonce
-   * @param gasPrice the gas price
-   * @param gasLimit the gas limit
-   * @param to the transaction recipient
-   * @param value the value being transferred to the recipient
-   * @param signature the signature
-   * @param payload the payload
-   * @param sender the transaction sender
-   * @param chainId the chain id to apply the transaction to
-   * @param v the v value (only passed in directly for GoQuorum private transactions)
-   *     <p>The {@code to} will be an {@code Optional.empty()} for a contract creation transaction;
-   *     otherwise it should contain an address.
-   *     <p>The {@code chainId} must be greater than 0 to be applied to a specific chain; otherwise
-   *     it will default to any chain.
-   */
-  public Transaction(
-      final long nonce,
-      final Wei gasPrice,
-      final long gasLimit,
-      final Optional<Address> to,
-      final Wei value,
-      final SECPSignature signature,
-      final Bytes payload,
-      final Address sender,
-      final Optional<BigInteger> chainId,
-      final Optional<BigInteger> v,
-      final Optional<List<Hash>> versionedHashes) {
-    this(
-        nonce,
-        Optional.of(gasPrice),
-        Optional.empty(),
-        Optional.empty(),
-        Optional.empty(),
-        gasLimit,
-        to,
-        value,
-        signature,
-        payload,
-        sender,
-        chainId,
-        v,
         versionedHashes);
   }
 
@@ -638,9 +573,6 @@ public class Transaction
 
   @Override
   public BigInteger getV() {
-    if (this.v.isPresent()) {
-      return this.v.get();
-    }
 
     final BigInteger recId = BigInteger.valueOf(signature.getRecId());
 
@@ -813,16 +745,7 @@ public class Transaction
    * @return true if GoQuorum private transaction, false otherwise
    */
   public boolean isGoQuorumPrivateTransaction(final boolean goQuorumCompatibilityMode) {
-    if (!goQuorumCompatibilityMode) {
-      return false;
-    }
-    if (chainId.isPresent()) {
-      return false;
-    }
-    if (!v.isPresent()) {
-      return false;
-    }
-    return GoQuorumPrivateTransactionDetector.isGoQuorumPrivateTransactionV(v.get());
+    return false;
   }
 
   /**
@@ -1073,8 +996,7 @@ public class Transaction
         value,
         payload,
         signature,
-        chainId,
-        v);
+        chainId);
   }
 
   @Override
@@ -1102,7 +1024,6 @@ public class Transaction
     sb.append("value=").append(getValue()).append(", ");
     sb.append("sig=").append(getSignature()).append(", ");
     if (chainId.isPresent()) sb.append("chainId=").append(getChainId().get()).append(", ");
-    if (v.isPresent()) sb.append("v=").append(v.get()).append(", ");
     sb.append("payload=").append(getPayload());
     if (transactionType.equals(TransactionType.ACCESS_LIST)) {
       sb.append(", ").append("accessList=").append(maybeAccessList);
@@ -1112,19 +1033,27 @@ public class Transaction
 
   public String toTraceLog() {
     final StringBuilder sb = new StringBuilder();
+    sb.append(getHash()).append("={");
     sb.append(isContractCreation() ? "ContractCreation" : "MessageCall").append(", ");
+    sb.append(getNonce()).append(", ");
     sb.append(getSender()).append(", ");
     sb.append(getType()).append(", ");
-    sb.append(getNonce()).append(", ");
-    getGasPrice().ifPresent(gasPrice -> sb.append(gasPrice.toBigInteger()).append(", "));
+    getGasPrice()
+        .ifPresent(
+            gasPrice -> sb.append("gp: ").append(gasPrice.toHumanReadableString()).append(", "));
     if (getMaxPriorityFeePerGas().isPresent() && getMaxFeePerGas().isPresent()) {
-      sb.append(getMaxPriorityFeePerGas().map(Wei::toBigInteger).get()).append(", ");
-      sb.append(getMaxFeePerGas().map(Wei::toBigInteger).get()).append(", ");
-      getMaxFeePerDataGas().ifPresent(wei -> sb.append(wei.toShortHexString()).append(", "));
+      sb.append("mf: ")
+          .append(getMaxFeePerGas().map(Wei::toHumanReadableString).get())
+          .append(", ");
+      sb.append("pf: ")
+          .append(getMaxPriorityFeePerGas().map(Wei::toHumanReadableString).get())
+          .append(", ");
+      getMaxFeePerDataGas()
+          .ifPresent(wei -> sb.append("df: ").append(wei.toHumanReadableString()).append(", "));
     }
-    sb.append(getGasLimit()).append(", ");
-    sb.append(getValue().toBigInteger()).append(", ");
-    if (getTo().isPresent()) sb.append(getTo().get()).append(", ");
+    sb.append("gl: ").append(getGasLimit()).append(", ");
+    sb.append("v: ").append(getValue().toHumanReadableString()).append(", ");
+    getTo().ifPresent(to -> sb.append(to));
     return sb.append("}").toString();
   }
 
@@ -1136,6 +1065,7 @@ public class Transaction
   }
 
   public static class Builder {
+    private static final Optional<List<AccessListEntry>> EMPTY_ACCESS_LIST = Optional.of(List.of());
 
     protected TransactionType transactionType;
 
@@ -1228,7 +1158,10 @@ public class Transaction
     }
 
     public Builder accessList(final List<AccessListEntry> accessList) {
-      this.accessList = Optional.ofNullable(accessList);
+      this.accessList =
+          accessList == null
+              ? Optional.empty()
+              : accessList.isEmpty() ? EMPTY_ACCESS_LIST : Optional.of(accessList);
       return this;
     }
 
@@ -1281,7 +1214,6 @@ public class Transaction
           accessList,
           sender,
           chainId,
-          v,
           Optional.ofNullable(versionedHashes));
     }
 

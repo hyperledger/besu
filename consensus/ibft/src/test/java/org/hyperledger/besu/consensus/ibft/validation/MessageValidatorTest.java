@@ -32,8 +32,8 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.BlockValidator;
@@ -95,7 +95,10 @@ public class MessageValidatorTest {
 
     protocolContext =
         new ProtocolContext(
-            mock(MutableBlockchain.class), mock(WorldStateArchive.class), mockBftCtx);
+            mock(MutableBlockchain.class),
+            mock(WorldStateArchive.class),
+            mockBftCtx,
+            Optional.empty());
 
     when(blockValidator.validateAndProcessBlock(any(), any(), any(), any()))
         .thenReturn(new BlockProcessingResult(Optional.empty()));

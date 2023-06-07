@@ -22,8 +22,8 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -57,10 +57,10 @@ public class CliqueProtocolScheduleTest {
     final ProtocolSchedule protocolSchedule =
         CliqueProtocolSchedule.create(config, NODE_KEY, false, EvmConfiguration.DEFAULT);
 
-    final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockNumber(1);
-    final ProtocolSpec tangerineWhistleSpec = protocolSchedule.getByBlockNumber(2);
-    final ProtocolSpec spuriousDragonSpec = protocolSchedule.getByBlockNumber(3);
-    final ProtocolSpec byzantiumSpec = protocolSchedule.getByBlockNumber(1035301);
+    final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockHeader(blockHeader(1));
+    final ProtocolSpec tangerineWhistleSpec = protocolSchedule.getByBlockHeader(blockHeader(2));
+    final ProtocolSpec spuriousDragonSpec = protocolSchedule.getByBlockHeader(blockHeader(3));
+    final ProtocolSpec byzantiumSpec = protocolSchedule.getByBlockHeader(blockHeader(1035301));
 
     assertThat(homesteadSpec.equals(tangerineWhistleSpec)).isFalse();
     assertThat(tangerineWhistleSpec.equals(spuriousDragonSpec)).isFalse();
@@ -75,7 +75,7 @@ public class CliqueProtocolScheduleTest {
                 NODE_KEY,
                 false,
                 EvmConfiguration.DEFAULT)
-            .getByBlockNumber(0);
+            .getByBlockHeader(blockHeader(0));
 
     assertThat(homestead.getName()).isEqualTo("Frontier");
     assertThat(homestead.getBlockReward()).isEqualTo(Wei.ZERO);
@@ -176,8 +176,12 @@ public class CliqueProtocolScheduleTest {
       final BlockHeader parentBlockHeader) {
 
     return schedule
-        .getByBlockNumber(blockHeader.getNumber())
+        .getByBlockHeader(blockHeader)
         .getBlockHeaderValidator()
         .validateHeader(blockHeader, parentBlockHeader, null, HeaderValidationMode.LIGHT);
+  }
+
+  private BlockHeader blockHeader(final long number) {
+    return new BlockHeaderTestFixture().number(number).buildHeader();
   }
 }

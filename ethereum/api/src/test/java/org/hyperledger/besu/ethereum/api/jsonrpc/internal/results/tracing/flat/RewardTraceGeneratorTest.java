@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -72,7 +71,7 @@ public class RewardTraceGeneratorTest {
     final BlockHeader blockHeader =
         gen.header(0x0A, blockBody, new BlockDataGenerator.BlockOptions());
     block = new Block(blockHeader, blockBody);
-    when(protocolSchedule.getByBlockNumber(block.getHeader().getNumber())).thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(block.getHeader())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockReward()).thenReturn(blockReward);
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(miningBeneficiaryCalculator);
     when(miningBeneficiaryCalculator.calculateBeneficiary(block.getHeader()))
@@ -92,7 +91,6 @@ public class RewardTraceGeneratorTest {
             blockReward,
             BlockHeader::getCoinbase,
             true,
-            Optional.empty(),
             protocolSchedule);
     when(protocolSpec.getBlockProcessor()).thenReturn(blockProcessor);
 

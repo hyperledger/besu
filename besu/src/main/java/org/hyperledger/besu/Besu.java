@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,13 +14,9 @@
  */
 package org.hyperledger.besu;
 
-import org.hyperledger.besu.chainexport.RlpBlockExporter;
-import org.hyperledger.besu.chainimport.JsonBlockImporter;
-import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.logging.BesuLoggingConfigurationFactory;
-import org.hyperledger.besu.controller.BesuController;
-import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.components.DaggerBesuComponent;
 
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Log4J2LoggerFactory;
@@ -37,19 +33,8 @@ public final class Besu {
    * @param args command line arguments.
    */
   public static void main(final String... args) {
-    final Logger logger = setupLogging();
-
-    final BesuCommand besuCommand =
-        new BesuCommand(
-            logger,
-            RlpBlockImporter::new,
-            JsonBlockImporter::new,
-            RlpBlockExporter::new,
-            new RunnerBuilder(),
-            new BesuController.Builder(),
-            new BesuPluginContextImpl(),
-            System.getenv());
-
+    setupLogging();
+    final BesuCommand besuCommand = DaggerBesuComponent.create().getBesuCommand();
     int exitCode =
         besuCommand.parse(
             new RunLast(),
@@ -61,8 +46,18 @@ public final class Besu {
     System.exit(exitCode);
   }
 
-  private static Logger setupLogging() {
-    InternalLoggerFactory.setDefaultFactory(Log4J2LoggerFactory.INSTANCE);
+  /**
+   * a Logger setup for handling any exceptions during the bootstrap process, to indicate to users
+   * their CLI configuration had problems.
+   */
+  public static void setupLogging() {
+    try {
+      InternalLoggerFactory.setDefaultFactory(Log4J2LoggerFactory.INSTANCE);
+    } catch (Throwable t) {
+      System.out.printf(
+          "Could not set netty log4j logger factory: %s - %s%n",
+          t.getClass().getSimpleName(), t.getMessage());
+    }
     try {
       System.setProperty(
           "vertx.logger-delegate-factory-class-name",
@@ -70,11 +65,19 @@ public final class Besu {
       System.setProperty(
           "log4j.configurationFactory", BesuLoggingConfigurationFactory.class.getName());
       System.setProperty("log4j.skipJansi", String.valueOf(false));
-    } catch (SecurityException e) {
-      System.out.println(
-          "Could not set logging system property as the security manager prevented it:"
-              + e.getMessage());
+    } catch (Throwable t) {
+      System.out.printf(
+          "Could not set logging system property: %s - %s%n",
+          t.getClass().getSimpleName(), t.getMessage());
     }
+  }
+
+  /**
+   * Returns the first logger to be created. This is used to set the default uncaught exception
+   *
+   * @return Logger
+   */
+  public static Logger getFirstLogger() {
     final Logger logger = LoggerFactory.getLogger(Besu.class);
     Thread.setDefaultUncaughtExceptionHandler(slf4jExceptionHandler(logger));
     Thread.currentThread().setUncaughtExceptionHandler(slf4jExceptionHandler(logger));

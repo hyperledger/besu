@@ -22,7 +22,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.HeaderBasedProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,10 +40,6 @@ import io.vertx.core.json.JsonObject;
 public class GenesisFileModule {
 
   private final String genesisConfig;
-
-  protected GenesisFileModule(final File genesisFile) throws IOException {
-    this.genesisConfig = Files.readString(genesisFile.toPath(), Charset.defaultCharset());
-  }
 
   protected GenesisFileModule(final String genesisConfig) {
     this.genesisConfig = genesisConfig;
@@ -64,7 +60,7 @@ public class GenesisFileModule {
   @Singleton
   @Provides
   @SuppressWarnings("UnusedVariable")
-  HeaderBasedProtocolSchedule provideProtocolSchedule(
+  ProtocolSchedule provideProtocolSchedule(
       final GenesisConfigOptions configOptions,
       @Named("Fork") final Optional<String> fork,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
@@ -74,8 +70,7 @@ public class GenesisFileModule {
   @Singleton
   @Provides
   GenesisState provideGenesisState(
-      final GenesisConfigFile genesisConfigFile,
-      final HeaderBasedProtocolSchedule protocolSchedule) {
+      final GenesisConfigFile genesisConfigFile, final ProtocolSchedule protocolSchedule) {
     return GenesisState.fromConfig(genesisConfigFile, protocolSchedule);
   }
 
@@ -101,20 +96,11 @@ public class GenesisFileModule {
   }
 
   private static GenesisFileModule createGenesisModule(final String genesisConfig) {
-    // duplicating work from JsonGenesisConfigOptions, but in a refactoring this goes away.
     final JsonObject genesis = new JsonObject(genesisConfig);
     final JsonObject config = genesis.getJsonObject("config");
-    if (config.containsKey("ethash")) {
-      return new MainnetGenesisFileModule(genesisConfig);
-    } else if (config.containsKey("ibft")) {
-      return new IBFTGenesisFileModule(genesisConfig);
-    } else if (config.containsKey("clique")) {
-      return new CliqueGenesisFileModule(genesisConfig);
-    } else if (config.containsKey("qbft")) {
-      return new QBFTGenesisFileModule(genesisConfig);
-    } else {
-      // default is mainnet
-      return new MainnetGenesisFileModule(genesisConfig);
+    if (config.containsKey("clique") || config.containsKey("qbft")) {
+      throw new RuntimeException("Only Ethash and Merge configs accepted as genesis files");
     }
+    return new MainnetGenesisFileModule(genesisConfig);
   }
 }

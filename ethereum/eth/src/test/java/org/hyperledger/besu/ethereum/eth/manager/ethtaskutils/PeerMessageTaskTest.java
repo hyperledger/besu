@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 /**
@@ -166,6 +167,7 @@ public abstract class PeerMessageTaskTest<T>
         Collections.emptyList(),
         EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
         TestClock.fixed(),
-        Collections.emptyList());
+        Collections.emptyList(),
+        Bytes.random(64));
   }
 }
