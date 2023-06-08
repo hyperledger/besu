@@ -388,7 +388,7 @@ public class EthPeers {
         .findFirst()
         .ifPresent(
             peer -> {
-              LOG.atInfo()
+              LOG.atDebug()
                   .setMessage(
                       "disconnecting peer {}. Waiting for better peers. Current {} of max {}")
                   .addArgument(peer)

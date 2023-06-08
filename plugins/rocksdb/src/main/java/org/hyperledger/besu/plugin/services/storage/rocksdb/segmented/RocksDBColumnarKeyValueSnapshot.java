@@ -109,6 +109,11 @@ public class RocksDBColumnarKeyValueSnapshot implements SnappedKeyValueStorage {
   }
 
   @Override
+  public boolean isClosed() {
+    return closed.get();
+  }
+
+  @Override
   public void clear() {
     throw new UnsupportedOperationException(
         "RocksDBColumnarKeyValueSnapshot does not support clear");

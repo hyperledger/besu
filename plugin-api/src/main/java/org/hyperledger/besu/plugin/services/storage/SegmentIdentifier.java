@@ -47,4 +47,13 @@ public interface SegmentIdentifier {
   default boolean includeInDatabaseVersion(final int version) {
     return true;
   }
+
+  /**
+   * Define if this segment contains data that is never updated, but only added and optionally
+   * deleted. Example is append only data like the blockchain. This information can be used by the
+   * underlying implementation to apply specific optimization for this use case.
+   *
+   * @return true if the segment contains only static data
+   */
+  boolean containsStaticData();
 }
