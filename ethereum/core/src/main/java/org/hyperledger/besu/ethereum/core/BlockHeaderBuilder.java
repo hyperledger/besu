@@ -73,6 +73,8 @@ public class BlockHeaderBuilder {
   // instead of an invalid identifier such as -1.
   private OptionalLong nonce = OptionalLong.empty();
 
+  private long dataGasUsed;
+
   private DataGas excessDataGas = null;
 
   public static BlockHeaderBuilder create() {
@@ -119,6 +121,7 @@ public class BlockHeaderBuilder {
         .nonce(header.getNonce())
         .prevRandao(header.getPrevRandao().orElse(null))
         .withdrawalsRoot(header.getWithdrawalsRoot().orElse(null))
+        .dataGasUsed(header.getDataGasUsed())
         .excessDataGas(header.getExcessDataGas().orElse(null))
         .depositsRoot(header.getDepositsRoot().orElse(null));
   }
@@ -170,6 +173,7 @@ public class BlockHeaderBuilder {
         mixHashOrPrevRandao,
         nonce.getAsLong(),
         withdrawalsRoot,
+        dataGasUsed,
         excessDataGas,
         depositsRoot,
         blockHeaderFunctions);
@@ -210,6 +214,7 @@ public class BlockHeaderBuilder {
         baseFee,
         mixHashOrPrevRandao,
         withdrawalsRoot,
+        dataGasUsed,
         excessDataGas,
         depositsRoot);
   }
@@ -397,6 +402,11 @@ public class BlockHeaderBuilder {
 
   public BlockHeaderBuilder excessDataGas(final DataGas excessDataGas) {
     this.excessDataGas = excessDataGas;
+    return this;
+  }
+
+  public BlockHeaderBuilder dataGasUsed(final long dataGasUsed) {
+    this.dataGasUsed = dataGasUsed;
     return this;
   }
 }

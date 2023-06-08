@@ -96,6 +96,7 @@ public class LogRollingTests {
           Hash.ZERO,
           0,
           null,
+          0,
           null,
           null,
           new MainnetBlockHeaderFunctions());
@@ -118,6 +119,7 @@ public class LogRollingTests {
           Hash.ZERO,
           0,
           null,
+          0,
           null,
           null,
           new MainnetBlockHeaderFunctions());
