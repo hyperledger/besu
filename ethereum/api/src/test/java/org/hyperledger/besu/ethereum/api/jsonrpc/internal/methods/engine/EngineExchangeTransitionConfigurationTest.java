@@ -250,6 +250,7 @@ public class EngineExchangeTransitionConfigurationTest {
         Bytes32.ZERO,
         0,
         null,
+        0,
         null,
         null,
         new BlockHeaderFunctions() {
