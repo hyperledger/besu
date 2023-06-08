@@ -32,7 +32,7 @@ public class DupNOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public DupNOperation(final GasCalculator gasCalculator) {
-    super(0xb5, "DUPN", 0, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0xe6, "DUPN", 0, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override

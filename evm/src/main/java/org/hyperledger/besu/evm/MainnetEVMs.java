@@ -53,9 +53,15 @@ import org.hyperledger.besu.evm.operation.CodeSizeOperation;
 import org.hyperledger.besu.evm.operation.CoinbaseOperation;
 import org.hyperledger.besu.evm.operation.Create2Operation;
 import org.hyperledger.besu.evm.operation.CreateOperation;
+import org.hyperledger.besu.evm.operation.DataCopyOperation;
+import org.hyperledger.besu.evm.operation.DataHashOperation;
+import org.hyperledger.besu.evm.operation.DataLoadNOperation;
+import org.hyperledger.besu.evm.operation.DataLoadOperation;
+import org.hyperledger.besu.evm.operation.DataSizeOperation;
 import org.hyperledger.besu.evm.operation.DelegateCallOperation;
 import org.hyperledger.besu.evm.operation.DifficultyOperation;
 import org.hyperledger.besu.evm.operation.DivOperation;
+import org.hyperledger.besu.evm.operation.DupNOperation;
 import org.hyperledger.besu.evm.operation.DupOperation;
 import org.hyperledger.besu.evm.operation.EqOperation;
 import org.hyperledger.besu.evm.operation.ExpOperation;
@@ -115,6 +121,7 @@ import org.hyperledger.besu.evm.operation.SignExtendOperation;
 import org.hyperledger.besu.evm.operation.StaticCallOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SubOperation;
+import org.hyperledger.besu.evm.operation.SwapNOperation;
 import org.hyperledger.besu.evm.operation.SwapOperation;
 import org.hyperledger.besu.evm.operation.TLoadOperation;
 import org.hyperledger.besu.evm.operation.TStoreOperation;
@@ -1148,12 +1155,18 @@ public class MainnetEVMs {
       final BigInteger chainID) {
     registerBogotaOperations(registry, gasCalculator, chainID);
 
-    // "big" EOF
+    // "mega" EOF
     registry.put(new RelativeJumpOperation(gasCalculator));
     registry.put(new RelativeJumpIfOperation(gasCalculator));
     registry.put(new RelativeJumpVectorOperation(gasCalculator));
     registry.put(new CallFOperation(gasCalculator));
     registry.put(new RetFOperation(gasCalculator));
+    registry.put(new DupNOperation(gasCalculator));
+    registry.put(new SwapNOperation(gasCalculator));
+    registry.put(new DataLoadOperation(gasCalculator));
+    registry.put(new DataLoadNOperation(gasCalculator));
+    registry.put(new DataSizeOperation(gasCalculator));
+    registry.put(new DataCopyOperation(gasCalculator));
   }
 
   /**

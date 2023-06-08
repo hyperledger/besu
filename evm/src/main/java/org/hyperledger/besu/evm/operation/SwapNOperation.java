@@ -34,7 +34,7 @@ public class SwapNOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public SwapNOperation(final GasCalculator gasCalculator) {
-    super(0xb6, "SWAPN", 0, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0xe7, "SWAPN", 0, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override
