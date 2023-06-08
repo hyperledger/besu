@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.log.LogTopic;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
@@ -144,13 +145,15 @@ public class BlockAdapterBase extends AdapterBase {
   public AccountAdapter getAccount(final DataFetchingEnvironment environment) {
 
     final BlockchainQueries query = getBlockchainQueries(environment);
+    final Address address = environment.getArgument("address");
     final long bn = header.getNumber();
     return query
         .getAndMapWorldState(
             bn,
             ws -> {
-              final Address address = environment.getArgument("address");
-              return Optional.of(new AccountAdapter(ws.get(address)));
+              Account account = ws.get(address);
+              if (account != null) account.getCode();
+              return Optional.of(new AccountAdapter(account));
             })
         .get();
   }
