@@ -66,6 +66,7 @@ import java.util.stream.Collectors;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -204,6 +205,50 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               .orElse(Hash.ZERO),
           INVALID,
           "Block already present in bad block manager.");
+    }
+
+    final List<Bytes32> transactionVersionedHashes = new ArrayList<>();
+    // get versioned hashes, in order, from all blob tx
+    transactions.stream()
+        .filter(tx -> tx.getBlobCount() > 0)
+        .forEachOrdered(
+            tx ->
+                transactionVersionedHashes.addAll(
+                    tx.getVersionedHashes().get().stream()
+                        .map(vh -> vh.toBytes())
+                        .collect(toList())));
+    // and compare with expected versioned hashes param
+    final Optional<List<Bytes32>> maybeVersionedHashes =
+        Optional.ofNullable(blockParam.getVersionedHashes());
+    // check if one is empty
+    if (maybeVersionedHashes.isPresent() && transactionVersionedHashes.isEmpty()) {
+      return respondWithInvalid(
+          reqId,
+          blockParam,
+          null,
+          INVALID,
+          "Versioned hashes from blob transactions (empty) do not match expected values");
+    }
+    if (maybeVersionedHashes.isEmpty() && !transactionVersionedHashes.isEmpty()) {
+      return respondWithInvalid(
+          reqId,
+          blockParam,
+          null,
+          INVALID,
+          "Versioned hashes from blob transactions do not match expected values (empty)");
+    }
+    if (maybeVersionedHashes.isEmpty() && transactionVersionedHashes.isEmpty()) {
+      LOG.trace("Versioned hashes from blob tx (empty) matches expected values (empty)");
+    } else {
+      // otherwise, check list contents
+      if (!maybeVersionedHashes.get().equals(transactionVersionedHashes)) {
+        return respondWithInvalid(
+            reqId,
+            blockParam,
+            null,
+            INVALID,
+            "Versioned hashes from blob transactions do not match expected values (empty)");
+      }
     }
 
     final Optional<BlockHeader> maybeParentHeader =
