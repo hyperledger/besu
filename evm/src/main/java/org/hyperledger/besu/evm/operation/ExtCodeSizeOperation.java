@@ -49,7 +49,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
    */
   protected long cost(final boolean accountIsWarm) {
     return gasCalculator().getExtCodeSizeOperationGasCost()
-            + (accountIsWarm
+        + (accountIsWarm
             ? gasCalculator().getWarmStorageReadCost()
             : gasCalculator().getColdAccountAccessCost());
   }
@@ -59,7 +59,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
     try {
       final Address address = Words.toAddress(frame.popStackItem());
       final boolean accountIsWarm =
-              frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
+          frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
       final long cost = cost(accountIsWarm);
       if (frame.getRemainingGas() < cost) {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
