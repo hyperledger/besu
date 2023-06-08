@@ -510,8 +510,7 @@ public abstract class AbstractEngineNewPayloadTest {
         txs,
         withdrawals,
         new UnsignedLongParameter(header.getDataGasUsed()),
-        header.getExcessDataGas().map(DataGas::toHexString).orElse(null),
-        List.of(VersionedHash.DEFAULT_VERSIONED_HASH.toBytes()));
+        header.getExcessDataGas().map(DataGas::toHexString).orElse(null));
   }
 
   @NotNull

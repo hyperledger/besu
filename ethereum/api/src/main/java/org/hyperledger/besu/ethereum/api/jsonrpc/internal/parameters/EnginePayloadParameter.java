@@ -47,7 +47,6 @@ public class EnginePayloadParameter {
   private final LogsBloomFilter logsBloom;
   private final List<String> transactions;
   private final List<WithdrawalParameter> withdrawals;
-  private final List<Bytes32> versionedHashes;
   private final long dataGasUsed;
   private final String excessDataGas;
 
@@ -69,8 +68,7 @@ public class EnginePayloadParameter {
       @JsonProperty("transactions") final List<String> transactions,
       @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals,
       @JsonProperty("dataGasUsed") final UnsignedLongParameter dataGasUsed,
-      @JsonProperty("excessDataGas") final String excessDataGas,
-      @JsonProperty("versionedHashes") final List<Bytes32> versionedHashes) {
+      @JsonProperty("excessDataGas") final String excessDataGas) {
     this.blockHash = blockHash;
     this.parentHash = parentHash;
     this.feeRecipient = feeRecipient;
@@ -88,7 +86,6 @@ public class EnginePayloadParameter {
     this.withdrawals = withdrawals;
     this.dataGasUsed = dataGasUsed.getValue();
     this.excessDataGas = excessDataGas;
-    this.versionedHashes = versionedHashes;
   }
 
   public Hash getBlockHash() {
@@ -159,7 +156,4 @@ public class EnginePayloadParameter {
     return excessDataGas;
   }
 
-  public List<Bytes32> getVersionedHashes() {
-    return versionedHashes;
-  }
 }
