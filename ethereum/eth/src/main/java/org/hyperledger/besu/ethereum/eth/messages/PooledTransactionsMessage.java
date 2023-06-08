@@ -45,7 +45,7 @@ public final class PooledTransactionsMessage extends AbstractMessageData {
         transactions,
         (transaction, rlpOutput) -> {
           if (transaction.getType().supportsBlob()) {
-            BlobTransactionEncoder.encodeEIP4844Network(transaction, rlpOutput);
+            BlobTransactionEncoder.encodeForWireNetwork(transaction, rlpOutput);
           } else {
             transaction.writeTo(rlpOutput);
           }

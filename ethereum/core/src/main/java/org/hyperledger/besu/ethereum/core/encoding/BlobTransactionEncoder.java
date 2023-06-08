@@ -17,12 +17,13 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.blobs.Blob;
 import org.hyperledger.besu.ethereum.core.blobs.KZGCommitment;
 import org.hyperledger.besu.ethereum.core.blobs.KZGProof;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 
 public class BlobTransactionEncoder {
@@ -53,17 +54,26 @@ public class BlobTransactionEncoder {
     out.endList();
   }
 
-  public static void encodeEIP4844Network(final Transaction transaction, final RLPOutput out) {
+  private static void encodeEIP4844Network(final Transaction transaction, final RLPOutput out) {
     LOG.trace("Encoding transaction with blobs {}", transaction);
     out.startList();
     var blobsWithCommitments = transaction.getBlobsWithCommitments().orElseThrow();
     encodeEIP4844(transaction, out);
 
+    out.writeList(blobsWithCommitments.getBlobs(), Blob::writeTo);
     out.writeList(blobsWithCommitments.getKzgCommitments(), KZGCommitment::writeTo);
-    out.writeList(
-        blobsWithCommitments.getBlobs(),
-        (blob, rlpOutput) -> rlpOutput.writeUInt256Scalar(UInt256.fromBytes(blob.getData())));
     out.writeList(blobsWithCommitments.getKzgProofs(), KZGProof::writeTo);
     out.endList();
+  }
+
+  public static void encodeForWireNetwork(
+      final Transaction transaction, final RLPOutput rlpOutput) {
+    rlpOutput.writeBytes(encodeOpaqueBytesNetwork(transaction));
+  }
+
+  private static Bytes encodeOpaqueBytesNetwork(final Transaction transaction) {
+    return Bytes.concatenate(
+        Bytes.of(transaction.getType().getSerializedType()),
+        RLP.encode(rlpOutput -> encodeEIP4844Network(transaction, rlpOutput)));
   }
 }
