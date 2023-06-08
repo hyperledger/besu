@@ -69,6 +69,6 @@ public abstract class AbstractMessageData implements MessageData {
   }
 
   protected String toStringDecoded() {
-    return "non implemented yet";
+    return "Not implemented yet";
   }
 }
