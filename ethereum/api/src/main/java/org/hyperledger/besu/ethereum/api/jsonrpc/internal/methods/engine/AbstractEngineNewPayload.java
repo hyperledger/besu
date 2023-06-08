@@ -48,6 +48,8 @@ import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.blobs.VersionedHash;
+import org.hyperledger.besu.ethereum.core.blobs.VersionedHashList;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
@@ -58,7 +60,6 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -100,20 +101,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     final EnginePayloadParameter blockParam =
         requestContext.getRequiredParameter(0, EnginePayloadParameter.class);
 
-    Optional<List<Bytes32>> maybeVersionedHashes = Optional.empty();
-
-    Optional<String> maybeVersionedHashParam = requestContext.getOptionalParameter(1, String.class);
-    if(maybeVersionedHashParam.isPresent()) {
-      Bytes versionedHashArray = Bytes.fromHexString(maybeVersionedHashParam.get());
-      if(versionedHashArray.size() % 32 != 0) {
-        LOG.info("CL sent versionedHash array indivisible by 32");
-        return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INVALID_PARAMS);
-      } else {
-        Bytes32[] versionedHashes = Bytes.segment(versionedHashArray);
-        maybeVersionedHashes = Optional.of(Arrays.stream(versionedHashes).toList());
-      }
-    }
-
+    Optional<List<Bytes32>> maybeVersionedHashes = requestContext.getOptionalList(1, Bytes32.class);
     Object reqId = requestContext.getRequest().getId();
 
     LOG.atTrace()
