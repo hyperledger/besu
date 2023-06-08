@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
 
@@ -31,14 +32,25 @@ public class AccountAdapter extends AdapterBase {
 
   private final Optional<Account> account;
   private final Address address;
+  private final Optional<Long> blockNumber;
 
   public AccountAdapter(final Account account) {
-    this(account == null ? null : account.getAddress(), account);
+    this(account == null ? null : account.getAddress(), account, Optional.empty());
+  }
+
+  public AccountAdapter(final Account account, final Optional<Long> blockNumber) {
+    this(account == null ? null : account.getAddress(), account, blockNumber);
   }
 
   public AccountAdapter(final Address address, final Account account) {
+    this(address, account, Optional.empty());
+  }
+
+  public AccountAdapter(
+      final Address address, final Account account, final Optional<Long> blockNumber) {
     this.account = Optional.ofNullable(account);
     this.address = address;
+    this.blockNumber = blockNumber;
   }
 
   public Address getAddress() {
@@ -58,9 +70,23 @@ public class AccountAdapter extends AdapterBase {
   }
 
   public Bytes32 getStorage(final DataFetchingEnvironment environment) {
+    final BlockchainQueries query = getBlockchainQueries(environment);
     final Bytes32 slot = environment.getArgument("slot");
-    return account
-        .map(a -> (Bytes32) a.getStorageValue(UInt256.fromBytes(slot)))
-        .orElse(Bytes32.ZERO);
+
+    Bytes32 storage =
+        account.map(a -> (Bytes32) a.getStorageValue(UInt256.fromBytes(slot))).orElse(Bytes32.ZERO);
+
+    if (storage.isZero()) {
+      storage =
+          query
+              .getAndMapWorldState(
+                  blockNumber.get(),
+                  ws -> {
+                    Account account = ws.get(address);
+                    return Optional.of((Bytes32) account.getStorageValue(UInt256.fromBytes(slot)));
+                  })
+              .get();
+    }
+    return storage;
   }
 }
