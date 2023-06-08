@@ -121,7 +121,7 @@ public abstract class AbstractEngineGetPayloadTest {
     when(mergeContext.retrieveBlockById(mockPid)).thenReturn(Optional.of(mockBlockWithReceipts));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     when(protocolSchedule.hardforkFor(any()))
-        .thenReturn(new ScheduledProtocolSpec.Hardfork("shanghai", SHANGHAI_AT));
+        .thenReturn(Optional.of(new ScheduledProtocolSpec.Hardfork("shanghai", SHANGHAI_AT)));
     this.method =
         methodFactory.create(
             vertx,
