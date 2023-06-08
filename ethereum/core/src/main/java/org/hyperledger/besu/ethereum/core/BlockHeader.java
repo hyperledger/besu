@@ -62,6 +62,7 @@ public class BlockHeader extends SealableBlockHeader
       final Bytes32 mixHashOrPrevRandao,
       final long nonce,
       final Hash withdrawalsRoot,
+      final long dataGasUsed,
       final DataGas excessDataGas,
       final Hash depositsRoot,
       final BlockHeaderFunctions blockHeaderFunctions,
@@ -83,6 +84,7 @@ public class BlockHeader extends SealableBlockHeader
         baseFee,
         mixHashOrPrevRandao,
         withdrawalsRoot,
+        dataGasUsed,
         excessDataGas,
         depositsRoot);
     this.nonce = nonce;
@@ -108,6 +110,7 @@ public class BlockHeader extends SealableBlockHeader
       final Bytes32 mixHashOrPrevRandao,
       final long nonce,
       final Hash withdrawalsRoot,
+      final long dataGasUsed,
       final DataGas excessDataGas,
       final Hash depositsRoot,
       final BlockHeaderFunctions blockHeaderFunctions) {
@@ -128,6 +131,7 @@ public class BlockHeader extends SealableBlockHeader
         baseFee,
         mixHashOrPrevRandao,
         withdrawalsRoot,
+        dataGasUsed,
         excessDataGas,
         depositsRoot);
     this.nonce = nonce;
@@ -213,6 +217,7 @@ public class BlockHeader extends SealableBlockHeader
       out.writeBytes(withdrawalsRoot);
     }
     if (excessDataGas != null) {
+      out.writeLongScalar(dataGasUsed);
       out.writeUInt256Scalar(excessDataGas);
     }
     if (depositsRoot != null) {
@@ -244,6 +249,7 @@ public class BlockHeader extends SealableBlockHeader
         !(input.isEndOfCurrentList() || input.isZeroLengthString())
             ? Hash.wrap(input.readBytes32())
             : null;
+    final long dataGasUsed = !input.isEndOfCurrentList() ? input.readUInt256Scalar().toLong() : 0;
     final DataGas excessDataGas =
         !input.isEndOfCurrentList() ? DataGas.of(input.readUInt256Scalar()) : null;
     final Hash depositHashRoot =
@@ -267,6 +273,7 @@ public class BlockHeader extends SealableBlockHeader
         mixHashOrPrevRandao,
         nonce,
         withdrawalHashRoot,
+        dataGasUsed,
         excessDataGas,
         depositHashRoot,
         blockHeaderFunctions);
@@ -346,6 +353,7 @@ public class BlockHeader extends SealableBlockHeader
             .getWithdrawalsRoot()
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
+        pluginBlockHeader.getDataGasUsed(),
         pluginBlockHeader.getExcessDataGas().map(DataGas::fromQuantity).orElse(null),
         pluginBlockHeader
             .getDepositsRoot()
