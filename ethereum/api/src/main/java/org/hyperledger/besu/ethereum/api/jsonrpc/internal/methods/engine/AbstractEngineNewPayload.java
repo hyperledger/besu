@@ -55,6 +55,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -95,6 +96,20 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     final EnginePayloadParameter blockParam =
         requestContext.getRequiredParameter(0, EnginePayloadParameter.class);
+
+    Optional<List<Bytes32>> maybeVersionedHashes = Optional.empty();
+
+    Optional<String> maybeVersionedHashParam = requestContext.getOptionalParameter(1, String.class);
+    if(maybeVersionedHashParam.isPresent()) {
+      Bytes versionedHashArray = Bytes.fromHexString(maybeVersionedHashParam.get());
+      if(versionedHashArray.size() % 32 != 0) {
+        LOG.info("CL sent versionedHash array indivisible by 32");
+        return new JsonRpcErrorResponse(requestContext.getRequest().getId(), INVALID_PARAMS);
+      } else {
+        Bytes32[] versionedHashes = Bytes.segment(versionedHashArray);
+        maybeVersionedHashes = Optional.of(Arrays.stream(versionedHashes).toList());
+      }
+    }
 
     Object reqId = requestContext.getRequest().getId();
 
@@ -206,8 +221,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                         .map(vh -> vh.toBytes())
                         .collect(toList())));
     // and compare with expected versioned hashes param
-    final Optional<List<Bytes32>> maybeVersionedHashes =
-        Optional.ofNullable(blockParam.getVersionedHashes());
+
     // check if one is empty
     if (maybeVersionedHashes.isPresent() && transactionVersionedHashes.isEmpty()) {
       return respondWithInvalid(
