@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
 
@@ -76,7 +77,7 @@ public class AccountAdapter extends AdapterBase {
     Bytes32 storage =
         account.map(a -> (Bytes32) a.getStorageValue(UInt256.fromBytes(slot))).orElse(Bytes32.ZERO);
 
-    if (storage.isZero()) {
+    if (account.get() instanceof BonsaiAccount) {
       storage =
           query
               .getAndMapWorldState(
