@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -135,6 +136,10 @@ public class JsonRpcRequest {
 
   public <T> Optional<T> getOptionalParameter(final int index, final Class<T> paramClass) {
     return parameterAccessor.optional(params, index, paramClass);
+  }
+
+  public <T> Optional<List<T>> getOptionalList(final int index, final Class<T> paramClass) {
+    return parameterAccessor.optionalList(params, index, paramClass);
   }
 
   @Override
