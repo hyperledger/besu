@@ -55,20 +55,6 @@ public abstract class AbstractMessageData implements MessageData {
 
   @Override
   public String toString() {
-    return getClass().getSimpleName()
-        + "{ code="
-        + getCode()
-        + ", size="
-        + getSize()
-        + ", rawdata="
-        + getData().slice(0, Math.min(getSize(), MAX_DATA_FOR_TO_STRING))
-        + (getSize() > MAX_DATA_FOR_TO_STRING ? "…" : "")
-        + ", decoded="
-        + toStringDecoded()
-        + "}";
-  }
-
-  protected String toStringDecoded() {
-    return "Not implemented yet";
+    return getClass().getSimpleName() + "{ code=" + getCode() + ", size=" + getSize() + "}";
   }
 }

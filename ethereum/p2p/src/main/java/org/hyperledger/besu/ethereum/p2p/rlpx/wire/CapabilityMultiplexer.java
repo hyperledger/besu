@@ -110,14 +110,7 @@ public class CapabilityMultiplexer {
 
       @Override
       public String toString() {
-        return "Message{ code="
-            + getCode()
-            + ", size="
-            + getSize()
-            + ", rawdata="
-            + getData().slice(0, Math.min(getSize(), MAX_DATA_FOR_TO_STRING))
-            + (getSize() > MAX_DATA_FOR_TO_STRING ? "…" : "")
-            + "}";
+        return "Message{ code=" + getCode() + ", size=" + getSize() + "}";
       }
     };
   }

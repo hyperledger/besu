@@ -236,7 +236,7 @@ public final class StatusMessage extends AbstractMessageData {
   }
 
   @Override
-  protected String toStringDecoded() {
+  public String toStringDecoded() {
     return status().toString();
   }
 }
