@@ -96,7 +96,14 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     final EnginePayloadParameter blockParam =
         requestContext.getRequiredParameter(0, EnginePayloadParameter.class);
 
-    Optional<List<Bytes32>> maybeVersionedHashes = requestContext.getOptionalList(1, Bytes32.class);
+    Optional<List<String>> maybeVersionedHashParam = requestContext.getOptionalList(1, String.class);
+    Optional<List<Bytes32>> maybeVersionedHashes =
+        maybeVersionedHashParam.map(
+            strings ->
+                strings.stream()
+                    .map(Bytes32::fromHexStringStrict)
+                    .collect(Collectors.toList()));
+
     Object reqId = requestContext.getRequest().getId();
 
     LOG.atTrace()
