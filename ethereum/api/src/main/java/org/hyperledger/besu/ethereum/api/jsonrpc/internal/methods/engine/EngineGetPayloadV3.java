@@ -28,6 +28,8 @@ import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
+import java.util.Optional;
+
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,8 +37,8 @@ import org.slf4j.LoggerFactory;
 public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
 
   private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadV3.class);
-  private final ScheduledProtocolSpec.Hardfork shanghai;
-  private final ScheduledProtocolSpec.Hardfork cancun;
+  private final Optional<ScheduledProtocolSpec.Hardfork> shanghai;
+  private final Optional<ScheduledProtocolSpec.Hardfork> cancun;
 
   public EngineGetPayloadV3(
       final Vertx vertx,
@@ -70,19 +72,21 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
     try {
       long builtAt = blockWithReceipts.getHeader().getTimestamp();
 
-      if (builtAt < this.shanghai.milestone()) {
-        return new JsonRpcSuccessResponse(
-            request.getRequest().getId(),
-            blockResultFactory.payloadTransactionCompleteV1(blockWithReceipts.getBlock()));
-      } else if (builtAt >= this.shanghai.milestone() && builtAt < this.cancun.milestone()) {
-        return new JsonRpcSuccessResponse(
-            request.getRequest().getId(),
-            blockResultFactory.payloadTransactionCompleteV2(blockWithReceipts));
-      } else {
+      if (cancun.isPresent() && builtAt >= cancun.get().milestone()) {
         return new JsonRpcSuccessResponse(
             request.getRequest().getId(),
             blockResultFactory.payloadTransactionCompleteV3(blockWithReceipts));
       }
+
+      if (shanghai.isPresent() && builtAt >= this.shanghai.get().milestone()) {
+        return new JsonRpcSuccessResponse(
+            request.getRequest().getId(),
+            blockResultFactory.payloadTransactionCompleteV2(blockWithReceipts));
+      }
+
+      return new JsonRpcSuccessResponse(
+          request.getRequest().getId(),
+          blockResultFactory.payloadTransactionCompleteV1(blockWithReceipts.getBlock()));
 
     } catch (ClassCastException e) {
       LOG.error("configuration error, can't call V3 endpoint with non-default protocol schedule");

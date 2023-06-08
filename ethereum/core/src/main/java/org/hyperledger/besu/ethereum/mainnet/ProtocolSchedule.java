@@ -47,7 +47,7 @@ public interface ProtocolSchedule extends PrivacySupportingProtocolSchedule {
 
   void putTimestampMilestone(final long timestamp, final ProtocolSpec protocolSpec);
 
-  default ScheduledProtocolSpec.Hardfork hardforkFor(
+  default Optional<ScheduledProtocolSpec.Hardfork> hardforkFor(
       final Predicate<ScheduledProtocolSpec> predicate) {
     throw new UnsupportedOperationException("Not implemented");
   }

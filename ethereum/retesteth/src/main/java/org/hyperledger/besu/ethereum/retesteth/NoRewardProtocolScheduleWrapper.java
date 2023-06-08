@@ -115,7 +115,7 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
   }
 
   @Override
-  public ScheduledProtocolSpec.Hardfork hardforkFor(
+  public Optional<ScheduledProtocolSpec.Hardfork> hardforkFor(
       final Predicate<ScheduledProtocolSpec> predicate) {
     return delegate.hardforkFor(predicate);
   }
