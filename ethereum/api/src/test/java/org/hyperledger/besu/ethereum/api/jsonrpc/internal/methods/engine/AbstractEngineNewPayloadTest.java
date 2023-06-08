@@ -56,6 +56,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.blobs.VersionedHash;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -508,9 +509,9 @@ public abstract class AbstractEngineNewPayloadTest {
         header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
         txs,
         withdrawals,
-        null,
         new UnsignedLongParameter(header.getDataGasUsed()),
-        header.getExcessDataGas().map(DataGas::toHexString).orElse(null));
+        header.getExcessDataGas().map(DataGas::toHexString).orElse(null),
+        List.of(VersionedHash.DEFAULT_VERSIONED_HASH.toBytes()));
   }
 
   @NotNull
