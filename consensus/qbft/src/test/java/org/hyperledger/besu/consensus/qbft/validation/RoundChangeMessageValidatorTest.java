@@ -49,13 +49,13 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RoundChangeMessageValidatorTest {
 
   @Mock private RoundChangePayloadValidator payloadValidator;
@@ -74,14 +74,15 @@ public class RoundChangeMessageValidatorTest {
       ConsensusRoundHelpers.createFrom(targetRound, 0, -1);
   private final QbftExtraDataCodec bftExtraDataEncoder = new QbftExtraDataCodec();
 
-  @Before
+  @BeforeEach
   public void setup() {
     protocolContext =
         new ProtocolContext(
             blockChain,
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(
-                QbftContext.class, emptyList(), bftExtraDataEncoder));
+                QbftContext.class, emptyList(), bftExtraDataEncoder),
+            Optional.empty());
   }
 
   @Test

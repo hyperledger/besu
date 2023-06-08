@@ -13,7 +13,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.besu.ethereum.eth.transactions;
+package org.hyperledger.besu.plugin.data;
 
 import java.util.Objects;
 import java.util.Optional;

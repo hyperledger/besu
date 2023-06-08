@@ -19,7 +19,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.bouncycastle.util.Arrays;
 
 public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
-  BLOCKCHAIN(new byte[] {1}),
+  BLOCKCHAIN(new byte[] {1}, true),
   WORLD_STATE(new byte[] {2}, new int[] {0, 1}),
   PRIVATE_TRANSACTIONS(new byte[] {3}),
   PRIVATE_STATE(new byte[] {4}),
@@ -29,10 +29,10 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   ACCOUNT_STORAGE_STORAGE(new byte[] {8}, new int[] {2}),
   TRIE_BRANCH_STORAGE(new byte[] {9}, new int[] {2}),
   TRIE_LOG_STORAGE(new byte[] {10}, new int[] {2}),
+  VARIABLES(new byte[] {11}), // formerly GOQUORUM_PRIVATE_WORLD_STATE
 
   // previously supported GoQuorum private states
   // no longer used but need to be retained for db backward compatibility
-  GOQUORUM_PRIVATE_WORLD_STATE(new byte[] {11}),
   GOQUORUM_PRIVATE_STORAGE(new byte[] {12}),
 
   BACKWARD_SYNC_HEADERS(new byte[] {13}),
@@ -44,14 +44,25 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
 
   private final byte[] id;
   private final int[] versionList;
+  private final boolean containsStaticData;
 
   KeyValueSegmentIdentifier(final byte[] id) {
     this(id, new int[] {0, 1, 2});
   }
 
+  KeyValueSegmentIdentifier(final byte[] id, final boolean containsStaticData) {
+    this(id, new int[] {0, 1, 2}, containsStaticData);
+  }
+
   KeyValueSegmentIdentifier(final byte[] id, final int[] versionList) {
+    this(id, versionList, false);
+  }
+
+  KeyValueSegmentIdentifier(
+      final byte[] id, final int[] versionList, final boolean containsStaticData) {
     this.id = id;
     this.versionList = versionList;
+    this.containsStaticData = containsStaticData;
   }
 
   @Override
@@ -62,6 +73,11 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   @Override
   public byte[] getId() {
     return id;
+  }
+
+  @Override
+  public boolean containsStaticData() {
+    return containsStaticData;
   }
 
   @Override
