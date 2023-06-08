@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
+import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -60,7 +61,9 @@ public class NewBlockHeadersSubscriptionServiceTest {
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private final BlockchainStorage blockchainStorage =
       new KeyValueStoragePrefixedKeyBlockchainStorage(
-          new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
+          new InMemoryKeyValueStorage(),
+          new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
+          new MainnetBlockHeaderFunctions());
   private final Block genesisBlock = gen.genesisBlock();
   private final MutableBlockchain blockchain =
       DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, new NoOpMetricsSystem(), 0);
