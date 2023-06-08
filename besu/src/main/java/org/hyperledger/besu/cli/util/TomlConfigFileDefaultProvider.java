@@ -104,11 +104,12 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
   private Optional<String> getKeyName(final OptionSpec spec) {
     // If any of the names of the option are used as key in the toml results
     // then returns the value of first one.
-    Optional<String> keyName = Arrays.stream(spec.names())
-        // remove leading dashes on option name as we can have "--" or "-" options
-        .map(name -> name.replaceFirst("^-+", ""))
-        .filter(result::contains)
-        .findFirst();
+    Optional<String> keyName =
+        Arrays.stream(spec.names())
+            // remove leading dashes on option name as we can have "--" or "-" options
+            .map(name -> name.replaceFirst("^-+", ""))
+            .filter(result::contains)
+            .findFirst();
 
     if (keyName.isEmpty()) {
       // If the base key name doesn't exist in the file it may be under a TOML table heading
@@ -120,27 +121,30 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
   }
 
   /*
-    For all spec names, look to see if any of the TOML keyPathSet entries contain
-    the name. A key path set might look like ["TxPool", "tx-max-pool-size"] where
-    "TxPool" is the TOML table heading (which we ignore) and "tx-max-pool-size" is
-    the name of the option being requested. For a request for "tx-max-pool-size" this
-    function will return "TxPool.tx-max-pool-size" which can then be used directly
-    as a query on the TOML result structure.
-   */
+   For all spec names, look to see if any of the TOML keyPathSet entries contain
+   the name. A key path set might look like ["TxPool", "tx-max-pool-size"] where
+   "TxPool" is the TOML table heading (which we ignore) and "tx-max-pool-size" is
+   the name of the option being requested. For a request for "tx-max-pool-size" this
+   function will return "TxPool.tx-max-pool-size" which can then be used directly
+   as a query on the TOML result structure.
+  */
   private Optional<String> getDottedKeyName(final OptionSpec spec) {
     List<String> foundNames = new ArrayList<>();
 
-    Arrays.stream(spec.names()).forEach(nextSpecName ->
-       {
-         String specName = result.keyPathSet()
-              .stream()
-              .filter(option -> option.contains(nextSpecName.replaceFirst("^-+", "")))
-              .findFirst().orElse(new ArrayList<>()).stream().collect(Collectors.joining("."));
-         if (specName.length() > 0) {
-           foundNames.add(specName);
-         }
-       }
-    );
+    Arrays.stream(spec.names())
+        .forEach(
+            nextSpecName -> {
+              String specName =
+                  result.keyPathSet().stream()
+                      .filter(option -> option.contains(nextSpecName.replaceFirst("^-+", "")))
+                      .findFirst()
+                      .orElse(new ArrayList<>())
+                      .stream()
+                      .collect(Collectors.joining("."));
+              if (specName.length() > 0) {
+                foundNames.add(specName);
+              }
+            });
 
     return foundNames.stream().findFirst();
   }
@@ -223,23 +227,31 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
 
     // Besu ignores TOML table headings (e.g. [TxPool]) so we use keyPathSet() and take the
     // last element in each one. For a TOML parameter that's not defined inside a table, the lists
-    // returned in keyPathSet() will contain a single entry - the config parameter itself. For a TOML
-    // entry that is in a table the list will contain N entries, the last one being the config parameter itself.
+    // returned in keyPathSet() will contain a single entry - the config parameter itself. For a
+    // TOML
+    // entry that is in a table the list will contain N entries, the last one being the config
+    // parameter itself.
     final Set<String> optionsWithoutTables = new HashSet<String>();
-    result.keyPathSet().stream().forEach(strings -> {optionsWithoutTables.add(strings.get(strings.size()-1));});
+    result.keyPathSet().stream()
+        .forEach(
+            strings -> {
+              optionsWithoutTables.add(strings.get(strings.size() - 1));
+            });
 
-    // Once we've stripped TOML table headings from the lists, we can check that the remaining options are valid
-    final Set<String> unknownOptionsList = optionsWithoutTables.stream()
+    // Once we've stripped TOML table headings from the lists, we can check that the remaining
+    // options are valid
+    final Set<String> unknownOptionsList =
+        optionsWithoutTables.stream()
             .filter(option -> !commandSpec.optionsMap().containsKey("--" + option))
             .collect(Collectors.toSet());
 
     if (!unknownOptionsList.isEmpty()) {
       final String options = unknownOptionsList.size() > 1 ? "options" : "option";
       final String csvUnknownOptions =
-              unknownOptionsList.stream().collect(Collectors.joining(", "));
+          unknownOptionsList.stream().collect(Collectors.joining(", "));
       throw new ParameterException(
-              commandLine,
-              String.format("Unknown %s in TOML configuration file: %s", options, csvUnknownOptions));
+          commandLine,
+          String.format("Unknown %s in TOML configuration file: %s", options, csvUnknownOptions));
     }
   }
 }
