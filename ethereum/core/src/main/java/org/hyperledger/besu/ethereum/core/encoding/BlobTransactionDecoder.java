@@ -100,11 +100,10 @@ public class BlobTransactionDecoder {
     readTransactionPayloadInner(builder, input);
     input.leaveList();
 
-    List<KZGCommitment> commitments = input.readList(KZGCommitment::readFrom);
     List<Blob> blobs = input.readList(Blob::readFrom);
+    List<KZGCommitment> commitments = input.readList(KZGCommitment::readFrom);
     List<KZGProof> proofs = input.readList(KZGProof::readFrom);
     builder.kzgBlobs(commitments, blobs, proofs);
-    input.leaveList();
     return builder.build();
   }
 
