@@ -25,6 +25,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
@@ -49,7 +51,7 @@ public class EngineNewPayloadV3Test extends AbstractEngineNewPayloadTest {
     JsonRpcResponse badParam =  method.response(
             new JsonRpcRequestContext(
                     new JsonRpcRequest(
-                            "2.0", RpcMethod.ENGINE_NEW_PAYLOAD_V2.getMethodName(), new Object[] {payload, shortHash})));
+                            "2.0", RpcMethod.ENGINE_NEW_PAYLOAD_V2.getMethodName(), new Object[] {payload, List.of(shortHash)})));
     assertThat(badParam.getType()).isEqualTo(JsonRpcResponseType.ERROR);
   }
 }
