@@ -81,9 +81,9 @@ public class AccountAdapter extends AdapterBase {
       storage =
           query
               .getAndMapWorldState(
-                  blockNumber.get(),
+                  blockNumber.orElse(query.headBlockNumber()),
                   ws -> {
-                    Account account = ws.get(address);
+                    final Account account = ws.get(address);
                     return Optional.of((Bytes32) account.getStorageValue(UInt256.fromBytes(slot)));
                   })
               .get();
