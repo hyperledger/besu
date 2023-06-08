@@ -195,7 +195,7 @@ public class BesuEventsImplTest {
         mock(EthPeer.class),
         new org.hyperledger.besu.ethereum.core.BlockHeader(
             null, null, null, null, null, null, null, null, 1, 1, 1, 1, null, null, null, 1, null,
-            null, null, null));
+            0, null, null, null));
   }
 
   private void clearSyncTarget() {
