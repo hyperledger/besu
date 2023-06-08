@@ -118,7 +118,8 @@ public class IbftRoundIntegrationTest {
         new ProtocolContext(
             blockChain,
             worldStateArchive,
-            setupContextWithBftExtraDataEncoder(emptyList(), bftExtraDataEncoder));
+            setupContextWithBftExtraDataEncoder(emptyList(), bftExtraDataEncoder),
+            Optional.empty());
   }
 
   @Test

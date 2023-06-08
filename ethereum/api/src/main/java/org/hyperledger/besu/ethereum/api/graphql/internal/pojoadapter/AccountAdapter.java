@@ -41,24 +41,26 @@ public class AccountAdapter extends AdapterBase {
     this.address = address;
   }
 
-  public Optional<Address> getAddress() {
-    return Optional.of(address);
+  public Address getAddress() {
+    return address;
   }
 
-  public Optional<Wei> getBalance() {
-    return account.map(AccountState::getBalance).or(() -> Optional.of(Wei.ZERO));
+  public Wei getBalance() {
+    return account.map(AccountState::getBalance).orElse(Wei.ZERO);
   }
 
-  public Optional<Long> getTransactionCount() {
-    return account.map(AccountState::getNonce).or(() -> Optional.of(0L));
+  public Long getTransactionCount() {
+    return account.map(AccountState::getNonce).orElse(0L);
   }
 
-  public Optional<Bytes> getCode() {
-    return account.map(AccountState::getCode);
+  public Bytes getCode() {
+    return account.map(AccountState::getCode).orElse(Bytes.EMPTY);
   }
 
-  public Optional<Bytes32> getStorage(final DataFetchingEnvironment environment) {
+  public Bytes32 getStorage(final DataFetchingEnvironment environment) {
     final Bytes32 slot = environment.getArgument("slot");
-    return account.map(account -> account.getStorageValue(UInt256.fromBytes(slot)));
+    return account
+        .map(a -> (Bytes32) a.getStorageValue(UInt256.fromBytes(slot)))
+        .orElse(Bytes32.ZERO);
   }
 }

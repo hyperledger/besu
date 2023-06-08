@@ -27,7 +27,7 @@ import java.util.function.UnaryOperator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class EthSendRawTransactionTest extends AcceptanceTestBase {
+public class EthSendRawTransactionAcceptanceTest extends AcceptanceTestBase {
   private static final long CHAIN_ID = 20211;
 
   private Account sender;
