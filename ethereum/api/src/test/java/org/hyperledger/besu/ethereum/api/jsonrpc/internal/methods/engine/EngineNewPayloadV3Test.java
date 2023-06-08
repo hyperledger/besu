@@ -46,13 +46,15 @@ public class EngineNewPayloadV3Test extends AbstractEngineNewPayloadTest {
 
   @Test
   public void shouldInvalidParamsOnShortVersionedHash() {
-    Bytes shortHash = Bytes.repeat((byte)0x69, 31);
+    Bytes shortHash = Bytes.repeat((byte) 0x69, 31);
     EnginePayloadParameter payload = mock(EnginePayloadParameter.class);
     JsonRpcResponse badParam =
         method.response(
             new JsonRpcRequestContext(
-                    new JsonRpcRequest(
-                            "2.0", RpcMethod.ENGINE_NEW_PAYLOAD_V2.getMethodName(), new Object[] {payload, List.of(shortHash.toHexString())})));
+                new JsonRpcRequest(
+                    "2.0",
+                    RpcMethod.ENGINE_NEW_PAYLOAD_V2.getMethodName(),
+                    new Object[] {payload, List.of(shortHash.toHexString())})));
     assertThat(badParam.getType()).isEqualTo(JsonRpcResponseType.ERROR);
   }
 }
