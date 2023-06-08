@@ -122,15 +122,12 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
   }
 
   @Override
-  public ScheduledProtocolSpec.Hardfork hardforkFor(
+  public Optional<ScheduledProtocolSpec.Hardfork> hardforkFor(
       final Predicate<ScheduledProtocolSpec> predicate) {
-    ScheduledProtocolSpec spec =
-        this.protocolSpecs.stream()
-            .filter(predicate)
-            .findFirst()
-            .orElseThrow(
-                () -> new IllegalStateException("No hardfork found for predicate " + predicate));
-    return spec.fork();
+    return this.protocolSpecs.stream()
+        .filter(predicate)
+        .findFirst()
+        .map(ScheduledProtocolSpec::fork);
   }
 
   @Override
