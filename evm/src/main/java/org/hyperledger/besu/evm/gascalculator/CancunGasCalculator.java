@@ -47,13 +47,10 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
   }
 
   @Override
-  public long computeExcessDataGas(final long parentExcessDataGas, final int newBlobs) {
-    final long consumedDataGas = dataGasCost(newBlobs);
-    final long currentExcessDataGas = parentExcessDataGas + consumedDataGas;
-
-    if (currentExcessDataGas < TARGET_DATA_GAS_PER_BLOCK) {
+  public long computeExcessDataGas(final long parentExcessDataGas, final long parentDataGasUsed) {
+    if (parentExcessDataGas + parentDataGasUsed < TARGET_DATA_GAS_PER_BLOCK) {
       return 0L;
     }
-    return currentExcessDataGas - TARGET_DATA_GAS_PER_BLOCK;
+    return parentDataGasUsed + parentDataGasUsed - TARGET_DATA_GAS_PER_BLOCK;
   }
 }
