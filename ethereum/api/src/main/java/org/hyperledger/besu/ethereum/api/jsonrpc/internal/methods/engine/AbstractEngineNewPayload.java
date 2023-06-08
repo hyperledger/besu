@@ -98,10 +98,16 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     Optional<List<String>> maybeVersionedHashParam =
         requestContext.getOptionalList(1, String.class);
-    Optional<List<Bytes32>> maybeVersionedHashes =
-        maybeVersionedHashParam.map(
-            strings ->
-                strings.stream().map(Bytes32::fromHexStringStrict).collect(Collectors.toList()));
+    Optional<List<Bytes32>> maybeVersionedHashes = Optional.empty();
+    if (maybeVersionedHashParam.isPresent()) {
+      List<Bytes32> versionedHashes =
+          maybeVersionedHashParam.get().stream()
+              .map(Bytes32::fromHexStringStrict)
+              .collect(Collectors.toList());
+      if (versionedHashes.size() > 0) {
+        maybeVersionedHashes = Optional.of(versionedHashes);
+      }
+    }
 
     Object reqId = requestContext.getRequest().getId();
 
