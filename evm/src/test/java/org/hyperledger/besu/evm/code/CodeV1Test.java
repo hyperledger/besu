@@ -157,11 +157,12 @@ class CodeV1Test {
             IntStream.of(0x1e, 0x1f),
             IntStream.rangeClosed(0x21, 0x2f),
             IntStream.rangeClosed(0x49, 0x4f),
+            IntStream.of(0x5e),
             IntStream.rangeClosed(0xa5, 0xaf),
             IntStream.rangeClosed(0xb0, 0xbf),
             IntStream.rangeClosed(0xc0, 0xcf),
             IntStream.rangeClosed(0xd0, 0xdf),
-            IntStream.rangeClosed(0xe5, 0xef),
+            IntStream.of(0xe5, 0xe6, 0xec, 0xed, 0xee, 0xef),
             IntStream.of(0xf6, 0xf7, 0xf8, 0xf9, 0xfb, 0xfc))
         .flatMapToInt(i -> i)
         .mapToObj(i -> String.format("%02x", i) + ZERO_HEX)
