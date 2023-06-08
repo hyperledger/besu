@@ -67,7 +67,7 @@ public class EnginePayloadParameter {
       @JsonProperty("prevRandao") final String prevRandao,
       @JsonProperty("transactions") final List<String> transactions,
       @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals,
-      @JsonProperty("dataGasUsed") final UnsignedLongParameter dataGasUsed,
+      @JsonProperty("dataGasUsed") final String dataGasUsed,
       @JsonProperty("excessDataGas") final String excessDataGas) {
     this.blockHash = blockHash;
     this.parentHash = parentHash;
@@ -84,7 +84,7 @@ public class EnginePayloadParameter {
     this.prevRandao = Bytes32.fromHexString(prevRandao);
     this.transactions = transactions;
     this.withdrawals = withdrawals;
-    this.dataGasUsed = dataGasUsed.getValue();
+    this.dataGasUsed = dataGasUsed == null ? 0 : Long.parseLong(dataGasUsed);
     this.excessDataGas = excessDataGas;
   }
 
