@@ -134,7 +134,7 @@ public class ReferenceTestEnv extends BlockHeader {
         Optional.ofNullable(random).map(Difficulty::fromHexString).orElse(Difficulty.ZERO),
         0L,
         null, // withdrawalsRoot
-        currentExcessDataGas == null ? null : DataGas.fromHexString(currentExcessDataGas),
+        0,
         null, // depositsRoot
         new MainnetBlockHeaderFunctions());
     this.parentDifficulty = parentDifficulty;

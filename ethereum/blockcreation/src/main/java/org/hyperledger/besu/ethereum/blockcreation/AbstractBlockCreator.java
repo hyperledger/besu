@@ -228,7 +228,26 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      final DataGas newExcessDataGas = computeExcessDataGas(transactionResults, newProtocolSpec);
+      DataGas newExcessDataGas = null;
+      long newDataGasUsed = 0;
+      if (newProtocolSpec.getFeeMarket().implementsDataFee()) {
+        final var gasCalculator = newProtocolSpec.getGasCalculator();
+        newExcessDataGas =
+            DataGas.of(
+                gasCalculator.computeExcessDataGas(
+                    // casting parent excess data gas to long since for the moment it should be well
+                    // below that limit
+                    parentHeader.getExcessDataGas().map(DataGas::toLong).orElse(0L),
+                    parentHeader.getDataGasUsed()));
+
+        final int newBlobsCount =
+            transactionResults.getTransactionsByType(TransactionType.BLOB).stream()
+                .map(tx -> tx.getVersionedHashes().orElseThrow())
+                .mapToInt(List::size)
+                .sum();
+
+        newDataGasUsed = gasCalculator.dataGasCost(newBlobsCount);
+      }
 
       throwIfStopped();
 
@@ -248,6 +267,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                       ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
                       : null)
               .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
+              .dataGasUsed(newDataGasUsed)
               .excessDataGas(newExcessDataGas)
               .buildSealableBlockHeader();
 
