@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.discovery;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.apache.tuweni.bytes.Bytes.wrapBuffer;
 
+import org.ethereum.beacon.discovery.util.DecodeException;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
@@ -262,7 +263,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
    * @param exception the exception that was raised
    */
   private void handleException(final Throwable exception) {
-    if (exception instanceof IOException) {
+    if (exception instanceof IOException || exception instanceof DecodeException) {
       LOG.debug("Packet handler exception", exception);
     } else {
       LOG.error("Packet handler exception", exception);
