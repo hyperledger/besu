@@ -508,6 +508,7 @@ public abstract class AbstractEngineNewPayloadTest {
         header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
         txs,
         withdrawals,
+        new UnsignedLongParameter(header.getDataGasUsed()),
         header.getExcessDataGas().map(DataGas::toHexString).orElse(null));
   }
 
