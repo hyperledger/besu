@@ -19,7 +19,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.bouncycastle.util.Arrays;
 
 public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
-  BLOCKCHAIN(new byte[] {1}),
+  BLOCKCHAIN(new byte[] {1}, true),
   WORLD_STATE(new byte[] {2}, new int[] {0, 1}),
   PRIVATE_TRANSACTIONS(new byte[] {3}),
   PRIVATE_STATE(new byte[] {4}),
@@ -44,14 +44,25 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
 
   private final byte[] id;
   private final int[] versionList;
+  private final boolean containsStaticData;
 
   KeyValueSegmentIdentifier(final byte[] id) {
     this(id, new int[] {0, 1, 2});
   }
 
+  KeyValueSegmentIdentifier(final byte[] id, final boolean containsStaticData) {
+    this(id, new int[] {0, 1, 2}, containsStaticData);
+  }
+
   KeyValueSegmentIdentifier(final byte[] id, final int[] versionList) {
+    this(id, versionList, false);
+  }
+
+  KeyValueSegmentIdentifier(
+      final byte[] id, final int[] versionList, final boolean containsStaticData) {
     this.id = id;
     this.versionList = versionList;
+    this.containsStaticData = containsStaticData;
   }
 
   @Override
@@ -62,6 +73,11 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   @Override
   public byte[] getId() {
     return id;
+  }
+
+  @Override
+  public boolean containsStaticData() {
+    return containsStaticData;
   }
 
   @Override
