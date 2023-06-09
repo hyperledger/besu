@@ -21,12 +21,12 @@ import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class LogsBloomFilterTest {
+class LogsBloomFilterTest {
 
   @Test
-  public void logsBloomFilter() {
+  void logsBloomFilter() {
     final Address address = Address.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d87");
     final Bytes data = Bytes.fromHexString("0x0102");
     final List<LogTopic> topics = new ArrayList<>();
