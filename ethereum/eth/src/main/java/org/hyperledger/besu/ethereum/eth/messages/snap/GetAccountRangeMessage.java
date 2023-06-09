@@ -92,11 +92,6 @@ public final class GetAccountRangeMessage extends AbstractSnapMessageData {
     return range;
   }
 
-  @Override
-  public String toString() {
-    return "GetAccountRangeMessage{" + "data=" + data + '}';
-  }
-
   @Value.Immutable
   public interface Range {
 

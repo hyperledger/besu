@@ -57,6 +57,7 @@ dependencies {
   implementation 'io.tmio:tuweni-rlp'
   implementation 'io.tmio:tuweni-units'
   implementation 'org.jetbrains.kotlin:kotlin-stdlib'
+  implementation 'org.owasp.encoder:encoder'
   implementation 'org.xerial.snappy:snappy-java'
 
   annotationProcessor "org.immutables:value"
