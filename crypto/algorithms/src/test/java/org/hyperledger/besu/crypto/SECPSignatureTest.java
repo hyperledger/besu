@@ -22,15 +22,15 @@ import java.math.BigInteger;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.crypto.params.ECDomainParameters;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class SECPSignatureTest {
   public static final String CURVE_NAME = "secp256k1";
 
   public static BigInteger curveOrder;
 
-  @BeforeClass
+  @BeforeAll
   public static void setUp() {
     final X9ECParameters params = SECNamedCurves.getByName(CURVE_NAME);
     final ECDomainParameters curve =

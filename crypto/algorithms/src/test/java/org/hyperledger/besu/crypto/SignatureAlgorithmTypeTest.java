@@ -17,7 +17,7 @@ package org.hyperledger.besu.crypto;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class SignatureAlgorithmTypeTest {
   @Test

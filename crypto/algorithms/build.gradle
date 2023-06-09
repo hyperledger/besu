@@ -40,7 +40,7 @@ dependencies {
   implementation 'org.hyperledger.besu:blake2bf'
   implementation 'com.google.guava:guava'
 
-  testImplementation 'junit:junit'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
 
