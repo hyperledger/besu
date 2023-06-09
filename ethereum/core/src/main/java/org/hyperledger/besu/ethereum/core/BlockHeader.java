@@ -218,7 +218,7 @@ public class BlockHeader extends SealableBlockHeader
     }
     if (excessDataGas != null) {
       out.writeLongScalar(dataGasUsed);
-      out.writeUInt256Scalar(excessDataGas);
+      out.writeUInt64Scalar(excessDataGas);
     }
     if (depositsRoot != null) {
       out.writeBytes(depositsRoot);
@@ -249,9 +249,9 @@ public class BlockHeader extends SealableBlockHeader
         !(input.isEndOfCurrentList() || input.isZeroLengthString())
             ? Hash.wrap(input.readBytes32())
             : null;
-    final long dataGasUsed = !input.isEndOfCurrentList() ? input.readUInt256Scalar().toLong() : 0;
+    final long dataGasUsed = !input.isEndOfCurrentList() ? input.readLongScalar() : 0;
     final DataGas excessDataGas =
-        !input.isEndOfCurrentList() ? DataGas.of(input.readUInt256Scalar()) : null;
+        !input.isEndOfCurrentList() ? DataGas.of(input.readLongScalar()) : null;
     final Hash depositHashRoot =
         !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
     input.leaveList();
