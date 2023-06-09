@@ -31,8 +31,8 @@ jar {
 dependencies {
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
 
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'io.tmio:tuweni-bytes'
+  implementation 'io.tmio:tuweni-units'
   implementation 'com.google.guava:guava'
 
 
