@@ -55,9 +55,9 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
   implementation 'org.apache.commons:commons-lang3'
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.apache.tuweni:tuweni-units'
-  implementation 'org.apache.tuweni:tuweni-rlp'
+  implementation 'io.tmio:tuweni-bytes'
+  implementation 'io.tmio:tuweni-units'
+  implementation 'io.tmio:tuweni-rlp'
 
   annotationProcessor "org.immutables:value"
   implementation "org.immutables:value-annotations"
