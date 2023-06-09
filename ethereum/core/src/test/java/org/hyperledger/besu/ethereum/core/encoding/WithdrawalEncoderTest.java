@@ -29,8 +29,7 @@ class WithdrawalEncoderTest {
       "0xd8808094000000000000000000000000000000000000000080";
   public static final String WITHDRAWAL_MAX_VALUE =
       "0xf088ffffffffffffffff88ffffffffffffffff94ffffffffffffffffffffffffffffffffffffffff88ffffffffffffffff";
-  public static final Address MAX_ADDRESS =
-      Address.fromHexString(Bytes.repeat((byte) 0xff, 20).toHexString());
+  public static final Address MAX_ADDRESS = Address.fromHexString("ff".repeat(20));
 
   @Test
   void shouldEncodeWithdrawalForZeroCase() {
