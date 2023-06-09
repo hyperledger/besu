@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,27 +12,29 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages;
+package org.hyperledger.besu.ethereum.p2p.rlpx.wire;
 
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Test;
 
-/** A message without a body. */
-abstract class EmptyMessage implements MessageData {
+class PeerInfoTest {
 
-  @Override
-  public final int getSize() {
-    return 0;
-  }
+  @Test
+  public void toStringIsSanitized() {
+    final PeerInfo maliciousPeer =
+        new PeerInfo(
+            1,
+            "ab\nc",
+            List.of(Capability.create("c\ba\rp", 4)),
+            30303,
+            Bytes.fromHexStringLenient("0x1234"));
 
-  @Override
-  public Bytes getData() {
-    return Bytes.EMPTY;
-  }
+    final String toString = maliciousPeer.toString();
 
-  @Override
-  public String toString() {
-    return getClass().getSimpleName() + "{ code=" + getCode() + ", size=0}";
+    assertThat(toString).doesNotContain(List.of("\n", "\b", "\r"));
   }
 }
