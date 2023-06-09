@@ -35,7 +35,8 @@ import org.junit.jupiter.api.io.TempDir;
 public class KeyPairSecurityModuleTest {
 
   @TempDir 
-  public Path keyDirectory;
+  public 
+  Path keyDirectory;
 
   @Test
   public void validatePublicKeyFromECPointCanBeConstructed() throws IOException {
