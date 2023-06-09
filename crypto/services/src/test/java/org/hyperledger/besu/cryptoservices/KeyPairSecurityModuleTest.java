@@ -20,23 +20,18 @@ import org.hyperledger.besu.crypto.KeyPairUtil;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-
 import java.security.spec.ECPoint;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 public class KeyPairSecurityModuleTest {
 
-  @TempDir 
-  public 
-  Path keyDirectory;
+  @TempDir public Path keyDirectory;
 
   @Test
   public void validatePublicKeyFromECPointCanBeConstructed() throws IOException {
