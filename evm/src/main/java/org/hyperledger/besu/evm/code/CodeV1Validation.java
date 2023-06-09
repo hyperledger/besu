@@ -400,7 +400,7 @@ public final class CodeV1Validation {
     {0, 0, 1}, // 0x5b - NOOP (née JUMPDEST)
     {1, 1, 1}, // 0x5c - TLOAD
     {2, 0, 1}, // 0x5d - TSTORE
-    {0, 0, 0}, // 0x5e
+    {4, 0, 1}, // 0x5e - MCOPY
     {0, 1, 1}, // 0x5f - PUSH0
     {0, 1, 2}, // 0x60 - PUSH1
     {0, 1, 3}, // 0x61 - PUSH2
