@@ -58,6 +58,7 @@ public class TestMessageFrameBuilder {
   private final List<Bytes> stackItems = new ArrayList<>();
   private int depth = 0;
   private Optional<Function<Long, Hash>> blockHashLookup = Optional.empty();
+  private Bytes memory = Bytes.EMPTY;
 
   TestMessageFrameBuilder messageFrameStack(final Deque<MessageFrame> messageFrameStack) {
     this.messageFrameStack = messageFrameStack;
@@ -144,6 +145,11 @@ public class TestMessageFrameBuilder {
     return this;
   }
 
+  public TestMessageFrameBuilder memory(final Bytes memory) {
+    this.memory = memory;
+    return this;
+  }
+
   public MessageFrame build() {
     final MessageFrame frame =
         MessageFrame.builder()
@@ -170,6 +176,7 @@ public class TestMessageFrameBuilder {
     frame.setPC(pc);
     frame.setSection(section);
     stackItems.forEach(frame::pushStackItem);
+    frame.writeMemory(0, memory.size(), memory);
     return frame;
   }
 
