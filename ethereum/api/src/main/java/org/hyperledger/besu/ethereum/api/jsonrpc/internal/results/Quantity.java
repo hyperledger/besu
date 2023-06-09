@@ -21,6 +21,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.apache.tuweni.units.bigints.UInt256Value;
+import org.apache.tuweni.units.bigints.UInt64Value;
 
 /**
  * Utility for formatting "quantity" fields and results to be returned. Quantity fields are
@@ -36,6 +37,10 @@ public class Quantity {
 
   public static String create(final UInt256Value<?> value) {
     return uint256ToHex(value);
+  }
+
+  public static String create(final UInt64Value<?> value) {
+    return value != null ? value.toMinimalBytes().toShortHexString() : null;
   }
 
   public static String create(final int value) {

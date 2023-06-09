@@ -17,11 +17,11 @@ package org.hyperledger.besu.datatypes;
 import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.BaseUInt256Value;
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.units.bigints.BaseUInt64Value;
+import org.apache.tuweni.units.bigints.UInt64;
 
 /** A particular quantity of DataGas */
-public final class DataGas extends BaseUInt256Value<DataGas> implements Quantity {
+public final class DataGas extends BaseUInt64Value<DataGas> implements Quantity {
 
   /** The constant ZERO. */
   public static final DataGas ZERO = of(0);
@@ -30,27 +30,27 @@ public final class DataGas extends BaseUInt256Value<DataGas> implements Quantity
   public static final DataGas ONE = of(1);
 
   /** The constant MAX_DATA_GAS. */
-  public static final DataGas MAX_DATA_GAS = of(UInt256.MAX_VALUE);
+  public static final DataGas MAX_DATA_GAS = of(UInt64.MAX_VALUE);
 
   /**
    * Instantiates a new DataGas.
    *
    * @param value the value
    */
-  DataGas(final UInt256 value) {
+  DataGas(final UInt64 value) {
     super(value, DataGas::new);
   }
 
   private DataGas(final long v) {
-    this(UInt256.valueOf(v));
+    this(UInt64.valueOf(v));
   }
 
   private DataGas(final BigInteger v) {
-    this(UInt256.valueOf(v));
+    this(UInt64.valueOf(v));
   }
 
   private DataGas(final String hexString) {
-    this(UInt256.fromHexString(hexString));
+    this(UInt64.fromHexString(hexString));
   }
 
   /**
@@ -79,7 +79,7 @@ public final class DataGas extends BaseUInt256Value<DataGas> implements Quantity
    * @param value the value
    * @return the data gas
    */
-  public static DataGas of(final UInt256 value) {
+  public static DataGas of(final UInt64 value) {
     return new DataGas(value);
   }
 
@@ -100,7 +100,7 @@ public final class DataGas extends BaseUInt256Value<DataGas> implements Quantity
    * @return the data gas
    */
   public static DataGas wrap(final Bytes value) {
-    return new DataGas(UInt256.fromBytes(value));
+    return new DataGas(UInt64.fromBytes(value));
   }
 
   /**
