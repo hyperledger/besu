@@ -20,7 +20,7 @@ import java.math.BigInteger;
 import java.security.spec.ECPoint;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ECPointUtilTest {
 

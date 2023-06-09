@@ -29,9 +29,9 @@ import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SECP256R1Test {
 
@@ -103,7 +103,7 @@ public class SECP256R1Test {
   protected static String suiteStartTime = null;
   protected static String suiteName = null;
 
-  @BeforeClass
+  @BeforeAll
   public static void setTestSuiteStartTime() {
     suiteStartTime =
         LocalDateTime.now(ZoneId.systemDefault())
@@ -113,7 +113,7 @@ public class SECP256R1Test {
     SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create("secp256r1"));
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     secp256R1 = new SECP256R1();
   }
