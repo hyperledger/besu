@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,18 +12,29 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.datatypes;
+package org.hyperledger.besu.ethereum.p2p.rlpx.wire;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
-public class HashTest {
+class PeerInfoTest {
 
   @Test
-  public void shouldGetExpectedValueForEmptyHash() {
-    assertThat(Hash.EMPTY)
-        .isEqualTo(
-            Hash.fromHexString("c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"));
+  public void toStringIsSanitized() {
+    final PeerInfo maliciousPeer =
+        new PeerInfo(
+            1,
+            "ab\nc",
+            List.of(Capability.create("c\ba\rp", 4)),
+            30303,
+            Bytes.fromHexStringLenient("0x1234"));
+
+    final String toString = maliciousPeer.toString();
+
+    assertThat(toString).doesNotContain(List.of("\n", "\b", "\r"));
   }
 }

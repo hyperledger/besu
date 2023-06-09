@@ -35,10 +35,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 public abstract class AbstractPeerConnection implements PeerConnection {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractPeerConnection.class);
-
+  private static final Marker P2P_MESSAGE_MARKER = MarkerFactory.getMarker("P2PMSG");
   private final Peer peer;
   private final PeerInfo peerInfo;
   private final InetSocketAddress localAddress;
@@ -120,7 +122,15 @@ public abstract class AbstractPeerConnection implements PeerConnection {
           .inc();
     }
 
-    LOG.trace("Writing {} to {} via protocol {}", message, peerInfo, capability);
+    LOG.atTrace()
+        .addMarker(P2P_MESSAGE_MARKER)
+        .setMessage("Writing {} to {} via protocol {}")
+        .addArgument(message)
+        .addArgument(peerInfo)
+        .addArgument(capability)
+        .addKeyValue("rawData", message.getData())
+        .addKeyValue("decodedData", message::toStringDecoded)
+        .log();
     doSendMessage(capability, message);
   }
 
