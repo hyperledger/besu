@@ -66,28 +66,34 @@ public class AccountAdapter extends AdapterBase {
     return account.map(AccountState::getNonce).orElse(0L);
   }
 
-  public Bytes getCode() {
-    return account.map(AccountState::getCode).orElse(Bytes.EMPTY);
+  public Bytes getCode(final DataFetchingEnvironment environment) {
+
+    if (account.get() instanceof BonsaiAccount) {
+      final BlockchainQueries query = getBlockchainQueries(environment);
+      return query
+          .getAndMapWorldState(
+              blockNumber.orElse(query.headBlockNumber()),
+              ws -> Optional.of(ws.get(account.get().getAddress()).getCode()))
+          .get();
+    } else {
+      return account.map(AccountState::getCode).orElse(Bytes.EMPTY);
+    }
   }
 
   public Bytes32 getStorage(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final Bytes32 slot = environment.getArgument("slot");
 
-    Bytes32 storage =
-        account.map(a -> (Bytes32) a.getStorageValue(UInt256.fromBytes(slot))).orElse(Bytes32.ZERO);
-
     if (account.get() instanceof BonsaiAccount) {
-      storage =
-          query
-              .getAndMapWorldState(
-                  blockNumber.orElse(query.headBlockNumber()),
-                  ws -> {
-                    final Account account = ws.get(address);
-                    return Optional.of((Bytes32) account.getStorageValue(UInt256.fromBytes(slot)));
-                  })
-              .get();
+      return query
+          .getAndMapWorldState(
+              blockNumber.orElse(query.headBlockNumber()),
+              ws -> Optional.of((Bytes32) ws.get(address).getStorageValue(UInt256.fromBytes(slot))))
+          .get();
+    } else {
+      return account
+          .map(a -> (Bytes32) a.getStorageValue(UInt256.fromBytes(slot)))
+          .orElse(Bytes32.ZERO);
     }
-    return storage;
   }
 }

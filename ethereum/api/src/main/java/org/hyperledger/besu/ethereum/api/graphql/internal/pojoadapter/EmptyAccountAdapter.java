@@ -45,7 +45,7 @@ public class EmptyAccountAdapter extends AccountAdapter {
   }
 
   @Override
-  public Bytes getCode() {
+  public Bytes getCode(final DataFetchingEnvironment environment) {
     return Bytes.EMPTY;
   }
 
