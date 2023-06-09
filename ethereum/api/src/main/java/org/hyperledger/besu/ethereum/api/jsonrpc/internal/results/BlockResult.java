@@ -132,7 +132,8 @@ public class BlockResult implements JsonRpcResult {
             .map(w -> w.stream().map(WithdrawalParameter::fromWithdrawal).collect(toList()))
             .orElse(null);
 
-    this.dataGasUsed = Quantity.create(header.getDataGasUsed());
+    this.dataGasUsed =
+        header.getExcessDataGas().isPresent() ? Quantity.create(header.getDataGasUsed()) : null;
     this.excessDataGas = header.getExcessDataGas().map(Quantity::create).orElse(null);
   }
 
