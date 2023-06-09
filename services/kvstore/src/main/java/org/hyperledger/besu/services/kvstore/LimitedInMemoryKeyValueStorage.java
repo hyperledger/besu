@@ -149,6 +149,11 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
     return new KeyValueStorageTransactionTransitionValidatorDecorator(new MemoryTransaction());
   }
 
+  @Override
+  public boolean isClosed() {
+    return false;
+  }
+
   private class MemoryTransaction implements KeyValueStorageTransaction {
 
     private Map<Bytes, byte[]> updatedValues = new HashMap<>();

@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.LogsWrapper;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -33,6 +34,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -46,6 +48,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -75,43 +78,8 @@ import org.slf4j.LoggerFactory;
  */
 public class BlockTransactionSelector {
 
-  public static class TransactionValidationResult {
-    private final Transaction transaction;
-    private final ValidationResult<TransactionInvalidReason> validationResult;
-
-    public TransactionValidationResult(
-        final Transaction transaction,
-        final ValidationResult<TransactionInvalidReason> validationResult) {
-      this.transaction = transaction;
-      this.validationResult = validationResult;
-    }
-
-    public Transaction getTransaction() {
-      return transaction;
-    }
-
-    public ValidationResult<TransactionInvalidReason> getValidationResult() {
-      return validationResult;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      TransactionValidationResult that = (TransactionValidationResult) o;
-      return Objects.equals(transaction, that.transaction)
-          && Objects.equals(validationResult, that.validationResult);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(transaction, validationResult);
-    }
-  }
+  public record TransactionValidationResult(
+      Transaction transaction, ValidationResult<TransactionInvalidReason> validationResult) {}
 
   public static class TransactionSelectionResults {
     private final List<Transaction> transactions = Lists.newArrayList();
@@ -119,6 +87,7 @@ public class BlockTransactionSelector {
         new EnumMap<>(TransactionType.class);
     private final List<TransactionReceipt> receipts = Lists.newArrayList();
     private final List<TransactionValidationResult> invalidTransactions = Lists.newArrayList();
+    private final List<TransactionSelectionResult> selectionResults = Lists.newArrayList();
     private long cumulativeGasUsed = 0;
     private long cumulativeDataGasUsed = 0;
 
@@ -172,6 +141,41 @@ public class BlockTransactionSelector {
 
     public List<TransactionValidationResult> getInvalidTransactions() {
       return invalidTransactions;
+    }
+
+    public void addSelectionResult(final TransactionSelectionResult res) {
+      selectionResults.add(res);
+    }
+
+    public void logSelectionStats() {
+      if (LOG.isDebugEnabled()) {
+        final Map<TransactionSelectionResult, Long> selectionStats =
+            selectionResults.stream()
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+        LOG.debug(
+            "Selection stats: Totals[Evaluated={}, Selected={}, Skipped={}, Dropped={}]; Detailed[{}]",
+            selectionResults.size(),
+            selectionStats.entrySet().stream()
+                .filter(e -> e.getKey().selected())
+                .map(Map.Entry::getValue)
+                .mapToInt(Long::intValue)
+                .sum(),
+            selectionStats.entrySet().stream()
+                .filter(e -> !e.getKey().selected())
+                .map(Map.Entry::getValue)
+                .mapToInt(Long::intValue)
+                .sum(),
+            selectionStats.entrySet().stream()
+                .filter(e -> e.getKey().discard())
+                .map(Map.Entry::getValue)
+                .mapToInt(Long::intValue)
+                .sum(),
+            selectionStats.entrySet().stream()
+                .map(e -> e.getKey().toString() + "=" + e.getValue())
+                .sorted()
+                .collect(Collectors.joining(", ")));
+      }
     }
 
     @Override
@@ -258,9 +262,7 @@ public class BlockTransactionSelector {
     this.gasCalculator = gasCalculator;
     this.gasLimitCalculator = gasLimitCalculator;
     this.transactionSelector =
-        transactionSelectorFactory.isPresent()
-            ? transactionSelectorFactory.get().create()
-            : new TransactionSelector() {};
+        transactionSelectorFactory.map(TransactionSelectorFactory::create).orElse(null);
   }
 
   /*
@@ -275,7 +277,11 @@ public class BlockTransactionSelector {
         .addArgument(pendingTransactions.logStats())
         .log();
     pendingTransactions.selectTransactions(
-        pendingTransaction -> evaluateTransaction(pendingTransaction, false));
+        pendingTransaction -> {
+          final var res = evaluateTransaction(pendingTransaction, false);
+          transactionSelectionResults.addSelectionResult(res);
+          return res;
+        });
     LOG.atTrace()
         .setMessage("Transaction selection result result {}")
         .addArgument(transactionSelectionResults::toTraceLog)
@@ -290,7 +296,9 @@ public class BlockTransactionSelector {
    * @return The {@code TransactionSelectionResults} results of transaction evaluation.
    */
   public TransactionSelectionResults evaluateTransactions(final List<Transaction> transactions) {
-    transactions.forEach(transaction -> evaluateTransaction(transaction, true));
+    transactions.forEach(
+        transaction ->
+            transactionSelectionResults.addSelectionResult(evaluateTransaction(transaction, true)));
     return transactionSelectionResults;
   }
 
@@ -316,17 +324,20 @@ public class BlockTransactionSelector {
           .log();
       if (blockOccupancyAboveThreshold()) {
         LOG.trace("Block occupancy above threshold, completing operation");
-        return TransactionSelectionResult.COMPLETE_OPERATION;
+        return TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
+      } else if (blockFull()) {
+        LOG.trace("Block full, completing operation");
+        return TransactionSelectionResult.BLOCK_FULL;
       } else {
-        return TransactionSelectionResult.CONTINUE;
+        return TransactionSelectionResult.TX_TOO_LARGE_FOR_REMAINING_GAS;
       }
     }
 
     if (transactionCurrentPriceBelowMin(transaction)) {
-      return TransactionSelectionResult.CONTINUE;
+      return TransactionSelectionResult.CURRENT_TX_PRICE_BELOW_MIN;
     }
     if (transactionDataPriceBelowMin(transaction)) {
-      return TransactionSelectionResult.CONTINUE;
+      return TransactionSelectionResult.DATA_PRICE_BELOW_CURRENT_MIN;
     }
 
     final WorldUpdater worldStateUpdater = worldState.updater();
@@ -353,26 +364,34 @@ public class BlockTransactionSelector {
       final long cumulativeGasUsed =
           transactionSelectionResults.getCumulativeGasUsed() + gasUsedByTransaction;
 
-      final TransactionReceipt receipt =
-          transactionReceiptFactory.create(
-              transaction.getType(), effectiveResult, worldState, cumulativeGasUsed);
+      TransactionSelectionResult txSelectionResult = TransactionSelectionResult.SELECTED;
 
-      final TransactionSelectionResult transactionSelectionResult =
-          transactionSelector.selectTransaction(transaction, receipt);
+      if (transactionSelector != null) {
+        txSelectionResult =
+            transactionSelector.selectTransaction(
+                transaction,
+                effectiveResult.getStatus() == TransactionProcessingResult.Status.SUCCESSFUL,
+                getLogs(effectiveResult.getLogs()),
+                cumulativeGasUsed);
+      }
 
-      if (transactionSelectionResult == TransactionSelectionResult.CONTINUE) {
+      if (txSelectionResult.equals(TransactionSelectionResult.SELECTED)) {
+
+        worldStateUpdater.commit();
+        final TransactionReceipt receipt =
+            transactionReceiptFactory.create(
+                transaction.getType(), effectiveResult, worldState, cumulativeGasUsed);
+
         final long dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount());
 
         transactionSelectionResults.update(transaction, receipt, gasUsedByTransaction, dataGasUsed);
 
-        worldStateUpdater.commit();
         LOG.atTrace()
             .setMessage("Selected {} for block creation")
             .addArgument(transaction::toTraceLog)
             .log();
       }
-
-      return transactionSelectionResult;
+      return txSelectionResult;
     } else {
 
       final boolean isIncorrectNonce = isIncorrectNonce(effectiveResult.getValidationResult());
@@ -383,6 +402,10 @@ public class BlockTransactionSelector {
       return transactionSelectionResultForInvalidResult(
           transaction, effectiveResult.getValidationResult());
     }
+  }
+
+  private List<org.hyperledger.besu.plugin.data.Log> getLogs(final List<Log> logs) {
+    return logs.stream().map(LogsWrapper::new).collect(Collectors.toList());
   }
 
   private boolean transactionDataPriceBelowMin(final Transaction transaction) {
@@ -433,7 +456,7 @@ public class BlockTransactionSelector {
           .addArgument(invalidReason)
           .addArgument(transaction::toTraceLog)
           .log();
-      return TransactionSelectionResult.CONTINUE;
+      return TransactionSelectionResult.invalidTransient(invalidReason.name());
     }
     // If the transaction was invalid for any other reason, delete it, and continue.
     LOG.atTrace()
@@ -441,7 +464,7 @@ public class BlockTransactionSelector {
         .addArgument(transaction::toTraceLog)
         .addArgument(invalidReason)
         .log();
-    return TransactionSelectionResult.DELETE_TRANSACTION_AND_CONTINUE;
+    return TransactionSelectionResult.invalid(invalidReason.name());
   }
 
   private boolean isTransientValidationError(final TransactionInvalidReason invalidReason) {
@@ -467,15 +490,36 @@ public class BlockTransactionSelector {
   }
 
   private boolean blockOccupancyAboveThreshold() {
-    final double gasAvailable = processableBlockHeader.getGasLimit();
-    final double gasUsed = transactionSelectionResults.getCumulativeGasUsed();
-    final double occupancyRatio = gasUsed / gasAvailable;
+    final long gasAvailable = processableBlockHeader.getGasLimit();
+
+    final long gasUsed = transactionSelectionResults.getCumulativeGasUsed();
+    final long gasRemaining = gasAvailable - gasUsed;
+    final double occupancyRatio = (double) gasUsed / (double) gasAvailable;
+
     LOG.trace(
-        "Min block occupancy ratio {}, gas used {}, available {}, used/available {}",
+        "Min block occupancy ratio {}, gas used {}, available {}, remaining {}, used/available {}",
         minBlockOccupancyRatio,
         gasUsed,
         gasAvailable,
+        gasRemaining,
         occupancyRatio);
+
     return occupancyRatio >= minBlockOccupancyRatio;
+  }
+
+  private boolean blockFull() {
+    final long gasAvailable = processableBlockHeader.getGasLimit();
+    final long gasUsed = transactionSelectionResults.getCumulativeGasUsed();
+
+    final long gasRemaining = gasAvailable - gasUsed;
+
+    if (gasRemaining < gasCalculator.getMinimumTransactionCost()) {
+      LOG.trace(
+          "Block full, remaining gas {} is less than minimum transaction gas cost {}",
+          gasRemaining,
+          gasCalculator.getMinimumTransactionCost());
+      return true;
+    }
+    return false;
   }
 }

@@ -15,12 +15,149 @@
 
 package org.hyperledger.besu.plugin.data;
 
-/** Enum for the transaction selection result */
-public enum TransactionSelectionResult {
-  /** remove transaction from pool and continue block building */
-  DELETE_TRANSACTION_AND_CONTINUE,
-  /** continue block building */
-  CONTINUE,
-  /** stop block building */
-  COMPLETE_OPERATION
+import java.util.Objects;
+import java.util.Optional;
+
+/**
+ * Represent the result of the selection process of a candidate transaction, during the block
+ * creation phase.
+ */
+public class TransactionSelectionResult {
+
+  private enum Status {
+    SELECTED,
+    BLOCK_FULL(true, false),
+    BLOCK_OCCUPANCY_ABOVE_THRESHOLD(true, false),
+    INVALID_TRANSIENT(false, false),
+    INVALID(false, true);
+
+    private final boolean stop;
+    private final boolean discard;
+
+    Status() {
+      this.stop = false;
+      this.discard = false;
+    }
+
+    Status(final boolean stop, final boolean discard) {
+      this.stop = stop;
+      this.discard = discard;
+    }
+
+    @Override
+    public String toString() {
+      return name() + " (stop=" + stop + ", discard=" + discard + ")";
+    }
+  }
+
+  /** The transaction has been selected to be included in the new block */
+  public static final TransactionSelectionResult SELECTED =
+      new TransactionSelectionResult(Status.SELECTED);
+  /** The transaction has not been selected since the block is full. */
+  public static final TransactionSelectionResult BLOCK_FULL =
+      new TransactionSelectionResult(Status.BLOCK_FULL);
+  /**
+   * The transaction has not been selected since too large and the occupancy of the block is enough
+   * to stop the selection.
+   */
+  public static final TransactionSelectionResult BLOCK_OCCUPANCY_ABOVE_THRESHOLD =
+      new TransactionSelectionResult(Status.BLOCK_OCCUPANCY_ABOVE_THRESHOLD);
+  /**
+   * The transaction has not been selected since its gas limit is greater than the block remaining
+   * gas, but the selection should continue.
+   */
+  public static final TransactionSelectionResult TX_TOO_LARGE_FOR_REMAINING_GAS =
+      TransactionSelectionResult.invalidTransient("TX_TOO_LARGE_FOR_REMAINING_GAS");
+  /**
+   * The transaction has not been selected since its current price is below the configured min
+   * price, but the selection should continue.
+   */
+  public static final TransactionSelectionResult CURRENT_TX_PRICE_BELOW_MIN =
+      TransactionSelectionResult.invalidTransient("CURRENT_TX_PRICE_BELOW_MIN");
+  /**
+   * The transaction has not been selected since its data price is below the current network data
+   * price, but the selection should continue.
+   */
+  public static final TransactionSelectionResult DATA_PRICE_BELOW_CURRENT_MIN =
+      TransactionSelectionResult.invalidTransient("DATA_PRICE_BELOW_CURRENT_MIN");
+
+  private final Status status;
+  private final Optional<String> maybeInvalidReason;
+
+  private TransactionSelectionResult(final Status status) {
+    this(status, null);
+  }
+
+  private TransactionSelectionResult(final Status status, final String invalidReason) {
+    this.status = status;
+    this.maybeInvalidReason = Optional.ofNullable(invalidReason);
+  }
+
+  /**
+   * Return a selection result that identify the candidate transaction as temporarily invalid, this
+   * means that the transaction could become valid at a later time.
+   *
+   * @param invalidReason the reason why transaction is invalid
+   * @return the selection result
+   */
+  public static TransactionSelectionResult invalidTransient(final String invalidReason) {
+    return new TransactionSelectionResult(Status.INVALID_TRANSIENT, invalidReason);
+  }
+
+  /**
+   * Return a selection result that identify the candidate transaction as permanently invalid, this
+   * means that it could be removed safely from the transaction pool.
+   *
+   * @param invalidReason the reason why transaction is invalid
+   * @return the selection result
+   */
+  public static TransactionSelectionResult invalid(final String invalidReason) {
+    return new TransactionSelectionResult(Status.INVALID, invalidReason);
+  }
+
+  /**
+   * Is the block creation done and the selection process should stop?
+   *
+   * @return true if the selection process should stop, false otherwise
+   */
+  public boolean stop() {
+    return status.stop;
+  }
+
+  /**
+   * Should the candidate transaction removed from the transaction pool?
+   *
+   * @return true if the candidate transaction should be removed from transaction pool, false
+   *     otherwise
+   */
+  public boolean discard() {
+    return status.discard;
+  }
+
+  /**
+   * Is the candidate transaction selected for block inclusion?
+   *
+   * @return true if the candidate transaction is included in the new block, false otherwise
+   */
+  public boolean selected() {
+    return Status.SELECTED.equals(status);
+  }
+
+  @Override
+  public String toString() {
+    return status.name() + maybeInvalidReason.map(ir -> "(" + ir + ")").orElse("");
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final TransactionSelectionResult that = (TransactionSelectionResult) o;
+    return status == that.status && Objects.equals(maybeInvalidReason, that.maybeInvalidReason);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(status, maybeInvalidReason);
+  }
 }

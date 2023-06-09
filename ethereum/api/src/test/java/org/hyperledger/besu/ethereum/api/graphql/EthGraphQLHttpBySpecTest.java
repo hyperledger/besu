@@ -118,6 +118,11 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
     specs.add("graphql_variable_bytes32");
     specs.add("graphql_variable_long");
 
+    specs.add("block_withdrawals_pre_shanghai");
+    specs.add("block_withdrawals");
+    specs.add("eth_getTransaction_type2");
+    specs.add("eth_getBlock_shanghai");
+
     return specs;
   }
 
@@ -142,7 +147,6 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
                 JSON);
     final Request request = new Request.Builder().post(requestBody).url(baseUrl).build();
 
-    importBlocks(1, BLOCKS.size());
     try (final Response resp = client.newCall(request).execute()) {
       final JsonObject expectedRespBody = spec.getJsonObject("response");
       final String resultStr = resp.body().string();
@@ -152,12 +156,6 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
 
       final int expectedStatusCode = spec.getInteger("statusCode");
       Assertions.assertThat(resp.code()).isEqualTo(expectedStatusCode);
-    }
-  }
-
-  private void importBlocks(final int from, final int to) {
-    for (int i = from; i < to; ++i) {
-      importBlock(i);
     }
   }
 }

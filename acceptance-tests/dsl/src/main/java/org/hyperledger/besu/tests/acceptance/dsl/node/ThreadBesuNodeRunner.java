@@ -99,17 +99,17 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         TransactionSelectionService.class, new TransactionSelectionServiceImpl());
 
     final Path pluginsPath;
-    final String pluginDirEnv = System.getenv("besu.plugins.dir");
-    if (pluginDirEnv == null || pluginDirEnv.isEmpty()) {
+    final String pluginDir = System.getProperty("besu.plugins.dir");
+    if (pluginDir == null || pluginDir.isEmpty()) {
       pluginsPath = node.homeDirectory().resolve("plugins");
       final File pluginsDirFile = pluginsPath.toFile();
       if (!pluginsDirFile.isDirectory()) {
         pluginsDirFile.mkdirs();
         pluginsDirFile.deleteOnExit();
       }
-    } else {
-      pluginsPath = Path.of(pluginDirEnv);
       System.setProperty("besu.plugins.dir", pluginsPath.toString());
+    } else {
+      pluginsPath = Path.of(pluginDir);
     }
     besuPluginContext.registerPlugins(pluginsPath);
 

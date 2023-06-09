@@ -98,6 +98,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   @Override
   public void clear() throws StorageException {
     throwIfClosed();
+
     try (final RocksIterator rocksIterator = db.newIterator()) {
       rocksIterator.seekToFirst();
       if (rocksIterator.isValid()) {
@@ -142,6 +143,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   @Override
   public Stream<Pair<byte[], byte[]>> stream() {
     throwIfClosed();
+
     final RocksIterator rocksIterator = db.newIterator();
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStream();
@@ -155,6 +157,7 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
   @Override
   public Stream<byte[]> streamKeys() {
     throwIfClosed();
+
     final RocksIterator rocksIterator = db.newIterator();
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStreamKeys();
@@ -190,6 +193,11 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
     options.setIgnoreMissingColumnFamilies(true);
     return new KeyValueStorageTransactionTransitionValidatorDecorator(
         new RocksDBTransaction(db.beginTransaction(options), options, rocksDBMetrics));
+  }
+
+  @Override
+  public boolean isClosed() {
+    return closed.get();
   }
 
   @Override

@@ -46,6 +46,7 @@ import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.cli.converter.FractionConverter;
 import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
@@ -82,6 +83,7 @@ import org.hyperledger.besu.cli.subcommands.ValidateConfigSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
 import org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommand;
 import org.hyperledger.besu.cli.subcommands.rlp.RLPSubCommand;
+import org.hyperledger.besu.cli.subcommands.storage.StorageSubCommand;
 import org.hyperledger.besu.cli.util.BesuCommandCustomFactory;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
@@ -139,6 +141,7 @@ import org.hyperledger.besu.ethereum.permissioning.PermissioningConfigurationBui
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
@@ -1208,6 +1211,42 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   TxPoolOptionGroup txPoolOptionGroup = new TxPoolOptionGroup();
 
   static class TxPoolOptionGroup {
+    @CommandLine.Option(
+        names = {"--tx-pool-disable-locals"},
+        paramLabel = "<Boolean>",
+        description =
+            "Set to true if transactions sent via RPC should have the same checks and not be prioritized over remote ones (default: ${DEFAULT-VALUE})",
+        fallbackValue = "true",
+        arity = "0..1")
+    private Boolean disableLocalTxs = TransactionPoolConfiguration.DEFAULT_DISABLE_LOCAL_TXS;
+
+    @CommandLine.Option(
+        names = {"--tx-pool-enable-save-restore"},
+        paramLabel = "<Boolean>",
+        description =
+            "Set to true to enable saving the txpool content to file on shutdown and reloading it on startup (default: ${DEFAULT-VALUE})",
+        fallbackValue = "true",
+        arity = "0..1")
+    private Boolean saveRestoreEnabled = TransactionPoolConfiguration.DEFAULT_ENABLE_SAVE_RESTORE;
+
+    @CommandLine.Option(
+        names = {"--tx-pool-limit-by-account-percentage"},
+        paramLabel = "<DOUBLE>",
+        converter = FractionConverter.class,
+        description =
+            "Maximum portion of the transaction pool which a single account may occupy with future transactions (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private Float txPoolLimitByAccountPercentage =
+        TransactionPoolConfiguration.DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE;
+
+    @CommandLine.Option(
+        names = {"--tx-pool-save-file"},
+        paramLabel = "<STRING>",
+        description =
+            "If saving the txpool content is enabled, define a custom path for the save file (default: ${DEFAULT-VALUE} in the data-dir)",
+        arity = "1")
+    private File saveFile = TransactionPoolConfiguration.DEFAULT_SAVE_FILE;
+
     @Option(
         names = {"--tx-pool-max-size"},
         paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
@@ -1561,6 +1600,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.addSubcommand(
         ValidateConfigSubCommand.COMMAND_NAME,
         new ValidateConfigSubCommand(commandLine, commandLine.getOut()));
+    commandLine.addSubcommand(
+        StorageSubCommand.COMMAND_NAME, new StorageSubCommand(commandLine.getOut()));
     final String generateCompletionSubcommandName = "generate-completion";
     commandLine.addSubcommand(
         generateCompletionSubcommandName, AutoComplete.GenerateCompletion.class);
@@ -1726,9 +1767,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 besuController.getProtocolContext().getBlockchain(),
                 besuController.getProtocolContext().getWorldStateArchive()),
             besuController.getProtocolSchedule()));
-
-    besuPluginContext.addService(
-        TransactionSelectionService.class, new TransactionSelectionServiceImpl());
 
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
@@ -2953,6 +2991,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return this.keyValueStorageProvider;
   }
 
+  /**
+   * Get the storage provider
+   *
+   * @return the storage provider
+   */
+  public StorageProvider getStorageProvider() {
+    return keyValueStorageProvider(keyValueStorageName);
+  }
+
   private Optional<PkiBlockCreationConfiguration> maybePkiBlockCreationConfiguration() {
     return pkiBlockCreationOptions
         .asDomainConfig(commandLine)
@@ -2968,15 +3015,26 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private TransactionPoolConfiguration buildTransactionPoolConfiguration() {
-    final File saveFile = unstableTransactionPoolOptions.getSaveFile();
     return unstableTransactionPoolOptions
         .toDomainObject()
+        .enableSaveRestore(txPoolOptionGroup.saveRestoreEnabled)
+        .disableLocalTransactions(txPoolOptionGroup.disableLocalTxs)
+        .txPoolLimitByAccountPercentage(txPoolOptionGroup.txPoolLimitByAccountPercentage)
         .txPoolMaxSize(txPoolOptionGroup.txPoolMaxSize)
         .pendingTxRetentionPeriod(txPoolOptionGroup.pendingTxRetentionPeriod)
         .priceBump(Percentage.fromInt(txPoolOptionGroup.priceBump))
         .txFeeCap(txFeeCap)
-        .saveFile(dataPath.resolve(saveFile.getPath()).toFile())
+        .saveFile(dataPath.resolve(txPoolOptionGroup.saveFile.getPath()).toFile())
         .build();
+  }
+
+  /**
+   * Return the file where to save txpool content if the relative option is enabled.
+   *
+   * @return the save file
+   */
+  public File getSaveFile() {
+    return txPoolOptionGroup.saveFile;
   }
 
   private boolean isPruningEnabled() {
@@ -3372,10 +3430,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     addPortIfEnabled(effectivePorts, engineRPCOptionGroup.engineRpcPort, isEngineApiEnabled());
     addPortIfEnabled(
         effectivePorts, metricsOptionGroup.metricsPort, metricsOptionGroup.isMetricsEnabled);
-    addPortIfEnabled(
-        effectivePorts,
-        metricsOptionGroup.metricsPushPort,
-        metricsOptionGroup.isMetricsPushEnabled);
     addPortIfEnabled(
         effectivePorts, minerOptionGroup.stratumPort, minerOptionGroup.iStratumMiningEnabled);
     return effectivePorts;

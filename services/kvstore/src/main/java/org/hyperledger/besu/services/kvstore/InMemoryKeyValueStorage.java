@@ -159,6 +159,11 @@ public class InMemoryKeyValueStorage
     return new KeyValueStorageTransactionTransitionValidatorDecorator(new InMemoryTransaction());
   }
 
+  @Override
+  public boolean isClosed() {
+    return false;
+  }
+
   /**
    * Key set.
    *

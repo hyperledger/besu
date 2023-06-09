@@ -41,8 +41,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.LongStream;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class QbftGetSignerMetricsTest {
 
@@ -58,7 +58,7 @@ public class QbftGetSignerMetricsTest {
   private BlockchainQueries blockchainQueries;
   private BlockInterface blockInterface;
 
-  @Before
+  @BeforeEach
   public void setup() {
     validatorProvider = mock(ValidatorProvider.class);
     blockchainQueries = mock(BlockchainQueries.class);
