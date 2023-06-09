@@ -24,7 +24,7 @@ public class UnsignedLongParameter {
 
   @JsonCreator
   public UnsignedLongParameter(final String value) {
-    this.value = Long.decode(value);
+    this.value = value != null ? Long.decode(value) : 0;
     checkArgument(this.value >= 0);
   }
 
