@@ -82,21 +82,6 @@ public class ForkIdsNetworkConfigTest {
                 new ForkId(Bytes.ofUnsignedInt(0xf7f9bc08L), 0L))
           },
           new Object[] {
-            NetworkName.RINKEBY,
-            List.of(
-                new ForkId(Bytes.ofUnsignedInt(0x3b8e0691L), 1L),
-                new ForkId(Bytes.ofUnsignedInt(0x60949295L), 2L),
-                new ForkId(Bytes.ofUnsignedInt(0x8bde40ddL), 3L),
-                new ForkId(Bytes.ofUnsignedInt(0xcb3a64bbL), 1035301L),
-                new ForkId(Bytes.ofUnsignedInt(0x8d748b57L), 3660663L),
-                new ForkId(Bytes.ofUnsignedInt(0xe49cab14L), 4321234L),
-                new ForkId(Bytes.ofUnsignedInt(0xafec6b27L), 5435345L),
-                new ForkId(Bytes.ofUnsignedInt(0xcbdb8838L), 8290928L),
-                new ForkId(Bytes.ofUnsignedInt(0x6910c8bdL), 8897988L),
-                new ForkId(Bytes.ofUnsignedInt(0x8e29f2f3L), 0L),
-                new ForkId(Bytes.ofUnsignedInt(0x8e29f2f3L), 0L))
-          },
-          new Object[] {
             NetworkName.GOERLI,
             List.of(
                 new ForkId(Bytes.ofUnsignedInt(0xa3f5ab08L), 1561651L),
