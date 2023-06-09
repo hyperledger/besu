@@ -137,7 +137,7 @@ public final class CodeV1Validation {
     VALID, // 0x5b - NOOOP (née JUMPDEST)
     VALID, // 0X5c - TLOAD
     VALID, // 0X5d - TSTORE
-    INVALID, // 0X5e
+    VALID, // 0X5e - MCOPY
     VALID, // 0X5f - PUSH0
     VALID, // 0x60 - PUSH1
     VALID, // 0x61 - PUSH2

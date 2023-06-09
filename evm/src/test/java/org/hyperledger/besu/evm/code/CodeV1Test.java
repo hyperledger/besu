@@ -157,7 +157,6 @@ class CodeV1Test {
             IntStream.of(0x1e, 0x1f),
             IntStream.rangeClosed(0x21, 0x2f),
             IntStream.rangeClosed(0x49, 0x4f),
-            IntStream.of(0x5e),
             IntStream.rangeClosed(0xa5, 0xaf),
             IntStream.rangeClosed(0xb0, 0xbf),
             IntStream.rangeClosed(0xc0, 0xcf),
