@@ -84,7 +84,7 @@ public class EnginePayloadParameter {
     this.prevRandao = Bytes32.fromHexString(prevRandao);
     this.transactions = transactions;
     this.withdrawals = withdrawals;
-    this.dataGasUsed = dataGasUsed == null ? 0 : Long.parseLong(dataGasUsed);
+    this.dataGasUsed = dataGasUsed == null ? 0 : Long.decode(dataGasUsed);
     this.excessDataGas = excessDataGas;
   }
 
