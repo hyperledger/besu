@@ -63,6 +63,10 @@ import org.hyperledger.besu.evm.operation.DifficultyOperation;
 import org.hyperledger.besu.evm.operation.DivOperation;
 import org.hyperledger.besu.evm.operation.DupNOperation;
 import org.hyperledger.besu.evm.operation.DupOperation;
+import org.hyperledger.besu.evm.operation.Call2Operation;
+import org.hyperledger.besu.evm.operation.DelegateCall2Operation;
+import org.hyperledger.besu.evm.operation.JumpFOperation;
+import org.hyperledger.besu.evm.operation.StaticCall2Operation;
 import org.hyperledger.besu.evm.operation.EqOperation;
 import org.hyperledger.besu.evm.operation.ExpOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeCopyOperation;
@@ -1155,18 +1159,34 @@ public class MainnetEVMs {
       final BigInteger chainID) {
     registerBogotaOperations(registry, gasCalculator, chainID);
 
-    // "mega" EOF
+    // EIP=4200 relative jumo
     registry.put(new RelativeJumpOperation(gasCalculator));
     registry.put(new RelativeJumpIfOperation(gasCalculator));
     registry.put(new RelativeJumpVectorOperation(gasCalculator));
+
+    //EIP-4750 EOF Code Sections
     registry.put(new CallFOperation(gasCalculator));
     registry.put(new RetFOperation(gasCalculator));
+
+    // EIP-6209 JUMPF Instruction
+    registry.put(new JumpFOperation(gasCalculator));
+
+    //EIP-663 Unlimited Swap and Dup
     registry.put(new DupNOperation(gasCalculator));
     registry.put(new SwapNOperation(gasCalculator));
+
+    // "mega" EOF
     registry.put(new DataLoadOperation(gasCalculator));
     registry.put(new DataLoadNOperation(gasCalculator));
     registry.put(new DataSizeOperation(gasCalculator));
     registry.put(new DataCopyOperation(gasCalculator));
+
+    //TODO CREATE3, CREATE4, RETURNCONTRACT
+
+    // EIP-7069 Reworked Call Operations
+    registry.put(new Call2Operation(gasCalculator));
+    registry.put(new DelegateCall2Operation(gasCalculator));
+    registry.put(new StaticCall2Operation(gasCalculator));
   }
 
   /**

@@ -23,16 +23,16 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
-/** The Delegate call operation. */
-public class EOFDelegateCallOperation extends AbstractCallOperation {
+/** The Static call operation. */
+public class StaticCall2Operation extends AbstractCallOperation {
 
   /**
-   * Instantiates a new Delegate call operation.
+   * Instantiates a new Static call operation.
    *
    * @param gasCalculator the gas calculator
    */
-  public EOFDelegateCallOperation(final GasCalculator gasCalculator) {
-    super(0xF4, "DELEGATECALL", 3, 1, gasCalculator);
+  public StaticCall2Operation(final GasCalculator gasCalculator) {
+    super(0xFB, "STATICCALL", 3, 1, gasCalculator);
   }
 
   @Override
@@ -52,7 +52,7 @@ public class EOFDelegateCallOperation extends AbstractCallOperation {
 
   @Override
   protected Wei apparentValue(final MessageFrame frame) {
-    return frame.getApparentValue();
+    return value(frame);
   }
 
   @Override
@@ -77,27 +77,27 @@ public class EOFDelegateCallOperation extends AbstractCallOperation {
 
   @Override
   protected Address address(final MessageFrame frame) {
-    return frame.getRecipientAddress();
+    return to(frame);
   }
 
   @Override
   protected Address sender(final MessageFrame frame) {
-    return frame.getSenderAddress();
+    return frame.getRecipientAddress();
   }
 
   @Override
   public long gasAvailableForChildCall(final MessageFrame frame) {
-    return gasCalculator().gasAvailableForChildCall(frame, gas(frame), false);
+    return gasCalculator().gasAvailableForChildCall(frame, gas(frame), !value(frame).isZero());
   }
 
   @Override
   protected boolean isStatic(final MessageFrame frame) {
-    return frame.isStatic();
+    return true;
   }
 
   @Override
   protected boolean isDelegate() {
-    return true;
+    return false;
   }
 
   @Override
@@ -114,7 +114,7 @@ public class EOFDelegateCallOperation extends AbstractCallOperation {
             inputDataLength,
             0,
             0,
-            Wei.ZERO,
+            value(frame),
             recipient,
             to(frame));
   }

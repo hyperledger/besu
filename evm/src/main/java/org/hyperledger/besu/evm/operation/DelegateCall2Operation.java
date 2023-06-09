@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,23 +18,21 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
-/** The Call operation. */
-public class EOFCallOperation extends AbstractCallOperation {
+/** The Delegate call operation. */
+public class DelegateCall2Operation extends AbstractCallOperation {
 
   /**
-   * Instantiates a new Call operation.
+   * Instantiates a new Delegate call operation.
    *
    * @param gasCalculator the gas calculator
    */
-  public EOFCallOperation(final GasCalculator gasCalculator) {
-    super(0xF1, "CALL", 4, 1, gasCalculator);
+  public DelegateCall2Operation(final GasCalculator gasCalculator) {
+    super(0xF9, "DELEGATECALL", 3, 1, gasCalculator);
   }
 
   @Override
@@ -49,22 +47,22 @@ public class EOFCallOperation extends AbstractCallOperation {
 
   @Override
   protected Wei value(final MessageFrame frame) {
-    return Wei.wrap(frame.getStackItem(1));
+    return Wei.ZERO;
   }
 
   @Override
   protected Wei apparentValue(final MessageFrame frame) {
-    return value(frame);
+    return frame.getApparentValue();
   }
 
   @Override
   protected long inputDataOffset(final MessageFrame frame) {
-    return clampedToLong(frame.getStackItem(2));
+    return clampedToLong(frame.getStackItem(1));
   }
 
   @Override
   protected long inputDataLength(final MessageFrame frame) {
-    return clampedToLong(frame.getStackItem(3));
+    return clampedToLong(frame.getStackItem(2));
   }
 
   @Override
@@ -79,17 +77,17 @@ public class EOFCallOperation extends AbstractCallOperation {
 
   @Override
   protected Address address(final MessageFrame frame) {
-    return to(frame);
-  }
-
-  @Override
-  protected Address sender(final MessageFrame frame) {
     return frame.getRecipientAddress();
   }
 
   @Override
+  protected Address sender(final MessageFrame frame) {
+    return frame.getSenderAddress();
+  }
+
+  @Override
   public long gasAvailableForChildCall(final MessageFrame frame) {
-    return gasCalculator().gasAvailableForChildCall(frame, gas(frame), !value(frame).isZero());
+    return gasCalculator().gasAvailableForChildCall(frame, gas(frame), false);
   }
 
   @Override
@@ -99,7 +97,7 @@ public class EOFCallOperation extends AbstractCallOperation {
 
   @Override
   protected boolean isDelegate() {
-    return false;
+    return true;
   }
 
   @Override
@@ -116,17 +114,8 @@ public class EOFCallOperation extends AbstractCallOperation {
             inputDataLength,
             0,
             0,
-            value(frame),
+            Wei.ZERO,
             recipient,
             to(frame));
-  }
-
-  @Override
-  public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.isStatic() && !value(frame).isZero()) {
-      return new OperationResult(cost(frame), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
-    } else {
-      return super.execute(frame, evm);
-    }
   }
 }
