@@ -162,7 +162,7 @@ class CodeV1Test {
             IntStream.rangeClosed(0xc0, 0xcf),
             IntStream.rangeClosed(0xd0, 0xdf),
             IntStream.rangeClosed(0xec, 0xef),
-            IntStream.of(0xf6, 0xf7, 0xf8, 0xf9, 0xfb, 0xfc))
+            IntStream.of(0xf6, 0xf7, 0xfc))
         .flatMapToInt(i -> i)
         .mapToObj(i -> String.format("%02x", i) + ZERO_HEX)
         .map(Arguments::arguments);

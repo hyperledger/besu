@@ -49,12 +49,15 @@ public class DataCopyOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    Code code = frame.getCode();
+    if (code.getEofVersion() == 0) {
+      return InvalidOperation.INVALID_RESULT;
+    }
     final int memOffset = clampedToInt(frame.popStackItem());
     final int sourceOffset = clampedToInt(frame.popStackItem());
     final int length = clampedToInt(frame.popStackItem());
     final long cost = cost(frame, memOffset, length);
 
-    final Code code = frame.getCode();
     final Bytes data = code.getData(sourceOffset, length);
     frame.writeMemory(memOffset, length, data);
 

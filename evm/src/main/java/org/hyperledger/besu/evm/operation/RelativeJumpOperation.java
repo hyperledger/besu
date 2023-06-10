@@ -15,6 +15,7 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -59,9 +60,13 @@ public class RelativeJumpOperation extends AbstractFixedCostOperation {
 
   @Override
   protected OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final Bytes code = frame.getCode().getBytes();
+    Code code = frame.getCode();
+    if (code.getEofVersion() == 0) {
+      return InvalidOperation.INVALID_RESULT;
+    }
+    final Bytes byteCode = code.getBytes();
     final int pcPostInstruction = frame.getPC() + 1;
     return new OperationResult(
-        gasCost, null, 2 + Words.readBigEndianI16(pcPostInstruction, code.toArrayUnsafe()) + 1);
+        gasCost, null, 2 + Words.readBigEndianI16(pcPostInstruction, byteCode.toArrayUnsafe()) + 1);
   }
 }

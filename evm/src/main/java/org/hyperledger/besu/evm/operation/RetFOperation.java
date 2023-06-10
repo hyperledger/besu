@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -37,6 +38,10 @@ public class RetFOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    Code code = frame.getCode();
+    if (code.getEofVersion() == 0) {
+      return InvalidOperation.INVALID_RESULT;
+    }
     var exception = frame.returnFunction();
     if (exception == null) {
       return retfSuccess;

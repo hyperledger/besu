@@ -37,9 +37,12 @@ public class DataLoadNOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final Code code = frame.getCode();
-    final byte[] codeBytes = code.getBytes().toArrayUnsafe();
-    int index = readBigEndianU16(frame.getPC() + 1, codeBytes);
+    Code code = frame.getCode();
+    if (code.getEofVersion() == 0) {
+      return InvalidOperation.INVALID_RESULT;
+    }
+    final byte[] byteCode = code.getBytes().toArrayUnsafe();
+    int index = readBigEndianU16(frame.getPC() + 1, byteCode);
 
     final Bytes data = code.getData(index, 32);
     frame.pushStackItem(data);

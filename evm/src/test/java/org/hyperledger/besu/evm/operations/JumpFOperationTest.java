@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.evm.testutils.OperationsTestUtils.mockCode;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -36,9 +37,7 @@ class JumpFOperationTest {
   @Test
   void jumpFHappyPath() {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
-    final Code mockCode = mock(Code.class);
-    final Bytes code = Bytes.fromHexString("00" + "b2" + "0001" + "00");
-    when(mockCode.getBytes()).thenReturn(code);
+    final Code mockCode = mockCode("00" + "b2" + "0001" + "00");
 
     final CodeSection codeSection = new CodeSection(0, 1, 2, 3, 0);
     when(mockCode.getCodeSection(1)).thenReturn(codeSection);
@@ -67,9 +66,7 @@ class JumpFOperationTest {
   @Test
   void jumpFMissingCodeSection() {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
-    final Code mockCode = mock(Code.class);
-    final Bytes code = Bytes.fromHexString("00" + "b2" + "03ff" + "00");
-    when(mockCode.getBytes()).thenReturn(code);
+    final Code mockCode = mockCode("00" + "b2" + "03ff" + "00");
 
     final CodeSection codeSection = new CodeSection(0, 1, 2, 3, 0);
     when(mockCode.getCodeSection(1)).thenReturn(codeSection);
@@ -97,9 +94,7 @@ class JumpFOperationTest {
   @Test
   void jumpFTooMuchStack() {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
-    final Code mockCode = mock(Code.class);
-    final Bytes code = Bytes.fromHexString("00" + "b2" + "0001" + "00");
-    when(mockCode.getBytes()).thenReturn(code);
+    final Code mockCode = mockCode("00" + "b2" + "0001" + "00");
 
     final CodeSection codeSection1 = new CodeSection(0, 1, 2, 3, 0);
     when(mockCode.getCodeSection(1)).thenReturn(codeSection1);

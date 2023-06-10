@@ -16,6 +16,7 @@
 package org.hyperledger.besu.evm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.evm.testutils.OperationsTestUtils.mockCode;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -42,13 +43,11 @@ class RelativeJumpOperationTest {
   void rjumpOperation(final int jumpLength) {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
     final MessageFrame messageFrame = mock(MessageFrame.class, Mockito.RETURNS_DEEP_STUBS);
-    final Code mockCode = mock(Code.class);
     final String twosComplementJump = String.format("%08x", jumpLength).substring(4);
     final int rjumpOperationIndex = 3;
-    final Bytes code = Bytes.fromHexString("00".repeat(3) + "5c" + twosComplementJump);
+    final Code mockCode = mockCode("00".repeat(3) + "5c" + twosComplementJump);
 
     when(messageFrame.getCode()).thenReturn(mockCode);
-    when(mockCode.getBytes()).thenReturn(code);
     when(messageFrame.getRemainingGas()).thenReturn(3L);
     when(messageFrame.getPC()).thenReturn(rjumpOperationIndex);
 
@@ -56,15 +55,14 @@ class RelativeJumpOperationTest {
     Operation.OperationResult rjumpResult = rjump.execute(messageFrame, null);
 
     assertThat(rjumpResult.getPcIncrement())
-        .isEqualTo(code.size() - rjumpOperationIndex + jumpLength);
+        .isEqualTo(mockCode.getBytes().size() - rjumpOperationIndex + jumpLength);
   }
 
   @Test
   void rjumpiOperation() {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
-    final Code mockCode = mock(Code.class);
     final int rjumpOperationIndex = 3;
-    final Bytes code = Bytes.fromHexString("00".repeat(rjumpOperationIndex) + "5d0004");
+    final Code mockCode = mockCode("00".repeat(rjumpOperationIndex) + "5d0004");
 
     MessageFrame messageFrame =
         new TestMessageFrameBuilder()
@@ -73,7 +71,6 @@ class RelativeJumpOperationTest {
             .initialGas(5L)
             .pushStackItem(Bytes.EMPTY)
             .build();
-    when(mockCode.getBytes()).thenReturn(code);
 
     RelativeJumpIfOperation rjumpi = new RelativeJumpIfOperation(gasCalculator);
     Operation.OperationResult rjumpResult = rjumpi.execute(messageFrame, null);
@@ -84,9 +81,8 @@ class RelativeJumpOperationTest {
   @Test
   void rjumpiHitOperation() {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
-    final Code mockCode = mock(Code.class);
     final int rjumpOperationIndex = 3;
-    final Bytes code = Bytes.fromHexString("00".repeat(rjumpOperationIndex) + "5dfffc00");
+    final Code mockCode = mockCode("00".repeat(rjumpOperationIndex) + "5dfffc00");
 
     MessageFrame messageFrame =
         new TestMessageFrameBuilder()
@@ -95,7 +91,6 @@ class RelativeJumpOperationTest {
             .initialGas(5L)
             .pushStackItem(Words.intBytes(1))
             .build();
-    when(mockCode.getBytes()).thenReturn(code);
 
     RelativeJumpIfOperation rjumpi = new RelativeJumpIfOperation(gasCalculator);
     Operation.OperationResult rjumpResult = rjumpi.execute(messageFrame, null);
@@ -106,12 +101,11 @@ class RelativeJumpOperationTest {
   @Test
   void rjumpvOperation() {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
-    final Code mockCode = mock(Code.class);
     final int rjumpOperationIndex = 3;
     final int jumpVectorSize = 1;
     final int jumpLength = 4;
-    final Bytes code =
-        Bytes.fromHexString(
+    final Code mockCode =
+        mockCode(
             "00".repeat(rjumpOperationIndex)
                 + String.format("5e%02x%04x", jumpVectorSize, jumpLength));
 
@@ -122,7 +116,6 @@ class RelativeJumpOperationTest {
             .initialGas(5L)
             .pushStackItem(Bytes.of(jumpVectorSize))
             .build();
-    when(mockCode.getBytes()).thenReturn(code);
 
     RelativeJumpVectorOperation rjumpv = new RelativeJumpVectorOperation(gasCalculator);
     Operation.OperationResult rjumpResult = rjumpv.execute(messageFrame, null);
@@ -157,17 +150,15 @@ class RelativeJumpOperationTest {
       })
   void rjumpvOverflowOperation(final String stackValue) {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
-    final Code mockCode = mock(Code.class);
     final int rjumpOperationIndex = 3;
     final int jumpVectorSize = 255;
     final int jumpLength = 400;
-    final Bytes code =
-        Bytes.fromHexString(
+    final Code mockCode =
+        mockCode(
             "00".repeat(rjumpOperationIndex)
                 + String.format("5e%02x", jumpVectorSize)
                 + String.format("%04x", jumpLength).repeat(jumpVectorSize));
 
-    when(mockCode.getBytes()).thenReturn(code);
     RelativeJumpVectorOperation rjumpv = new RelativeJumpVectorOperation(gasCalculator);
     MessageFrame messageFrame =
         new TestMessageFrameBuilder()
@@ -186,17 +177,15 @@ class RelativeJumpOperationTest {
   @ValueSource(strings = {"0x7f", "0xf5", "0x5f", "0xfe"})
   void rjumpvIndexOperation(final String stackValue) {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
-    final Code mockCode = mock(Code.class);
     final int rjumpOperationIndex = 3;
     final int jumpVectorSize = 255;
     final int jumpLength = 400;
-    final Bytes code =
-        Bytes.fromHexString(
+    final Code mockCode =
+        mockCode(
             "00".repeat(rjumpOperationIndex)
                 + String.format("5e%02x", jumpVectorSize)
                 + String.format("%04x", jumpLength).repeat(jumpVectorSize));
 
-    when(mockCode.getBytes()).thenReturn(code);
     RelativeJumpVectorOperation rjumpv = new RelativeJumpVectorOperation(gasCalculator);
     MessageFrame messageFrame =
         new TestMessageFrameBuilder()
@@ -214,11 +203,10 @@ class RelativeJumpOperationTest {
   @Test
   void rjumpvHitOperation() {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
-    final Code mockCode = mock(Code.class);
     final int rjumpOperationIndex = 3;
     final int jumpVectorSize = 2;
-    final Bytes code =
-        Bytes.fromHexString("00".repeat(rjumpOperationIndex) + "5e" + "02" + "1234" + "5678");
+    final Code mockCode =
+        mockCode("00".repeat(rjumpOperationIndex) + "5e" + "02" + "1234" + "5678");
 
     MessageFrame messageFrame =
         new TestMessageFrameBuilder()
@@ -227,7 +215,6 @@ class RelativeJumpOperationTest {
             .initialGas(5L)
             .pushStackItem(Bytes.of(jumpVectorSize - 1))
             .build();
-    when(mockCode.getBytes()).thenReturn(code);
 
     RelativeJumpVectorOperation rjumpv = new RelativeJumpVectorOperation(gasCalculator);
     Operation.OperationResult rjumpResult = rjumpv.execute(messageFrame, null);
