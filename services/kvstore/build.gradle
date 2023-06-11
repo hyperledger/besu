@@ -33,7 +33,7 @@ dependencies {
   implementation 'com.google.guava:guava'
 
   testImplementation project(':testutil')
-  testImplementation 'junit:junit'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
   testImplementation 'org.assertj:assertj-core'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
