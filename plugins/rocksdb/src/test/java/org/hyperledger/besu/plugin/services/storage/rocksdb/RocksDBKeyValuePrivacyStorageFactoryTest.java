@@ -30,7 +30,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.junit.jupiter.api.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -50,8 +50,8 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
 
   @Test
   public void shouldDetectVersion0DatabaseIfNoMetadataFileFound() throws Exception {
-    final Path tempDataDir = temporaryFolder.newFolder().toPath().resolve("data");
-    final Path tempDatabaseDir = temporaryFolder.newFolder().toPath().resolve("db");
+    final Path tempDataDir = temporaryFolder.resolve("data");
+    final Path tempDatabaseDir = temporaryFolder.resolve("db");
     final Path tempPrivateDatabaseDir = tempDatabaseDir.resolve("private");
     Files.createDirectories(tempPrivateDatabaseDir);
     Files.createDirectories(tempDataDir);
@@ -77,8 +77,8 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
 
   @Test
   public void shouldCreateCorrectMetadataFileForLatestVersion() throws Exception {
-    final Path tempDataDir = temporaryFolder.newFolder().toPath().resolve("data");
-    final Path tempDatabaseDir = temporaryFolder.newFolder().toPath().resolve("db");
+    final Path tempDataDir = temporaryFolder.resolve("data");
+    final Path tempDatabaseDir = temporaryFolder.resolve("db");
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
     when(commonConfiguration.getDatabaseVersion()).thenReturn(DEFAULT_VERSION);
@@ -103,8 +103,8 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
 
   @Test
   public void shouldUpdateCorrectMetadataFileForLatestVersion() throws Exception {
-    final Path tempDataDir = temporaryFolder.newFolder().toPath().resolve("data");
-    final Path tempDatabaseDir = temporaryFolder.newFolder().toPath().resolve("db");
+    final Path tempDataDir = temporaryFolder.resolve("data");
+    final Path tempDatabaseDir = temporaryFolder.resolve("db");
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
     when(commonConfiguration.getDatabaseVersion()).thenReturn(DEFAULT_VERSION);

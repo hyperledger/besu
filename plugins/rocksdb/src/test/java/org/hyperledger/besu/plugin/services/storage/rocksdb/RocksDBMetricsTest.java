@@ -34,13 +34,15 @@ import java.util.function.LongSupplier;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.junit.jupiter.api.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.rocksdb.OptimisticTransactionDB;
 import org.rocksdb.Statistics;
+
+import java.nio.file.Path;
 
 @ExtendWith(MockitoExtension.class)
 public class RocksDBMetricsTest {
@@ -53,7 +55,7 @@ public class RocksDBMetricsTest {
   @Mock private Statistics stats;
 
   @TempDir
-  public final Path temporaryFolder;
+  public final Path folder;
 
   @Test
   public void createStoreMustCreateMetrics() throws Exception {
@@ -121,6 +123,6 @@ public class RocksDBMetricsTest {
   }
 
   private RocksDBConfiguration config() throws Exception {
-    return new RocksDBConfigurationBuilder().databaseDir(folder.newFolder().toPath()).build();
+    return new RocksDBConfigurationBuilder().databaseDir(folder).build();
   }
 }

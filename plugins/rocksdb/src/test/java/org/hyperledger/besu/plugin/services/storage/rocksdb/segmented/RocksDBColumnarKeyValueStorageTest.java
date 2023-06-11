@@ -41,7 +41,7 @@ import org.junit.jupiter.api.io.TempDir;
 public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageTest {
 
   @TempDir
-  public final path folder;
+  public final Path folder;
 
   @Test
   public void assertClear() throws Exception {
@@ -178,8 +178,8 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
   }
 
   @Test
-  public void dbShouldIgnoreExperimentalSegmentsIfNotExisted() throws Exception {
-    final Path testPath = folder.newFolder().toPath();
+  public void dbShouldIgnoreExperimentalSegmentsIfNotExisted(@TempDir Path tempDir) throws Exception {
+    final Path testPath = tempDir.resolve("testdb");
     // Create new db should ignore experimental column family
     SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store =
         createSegmentedStore(
@@ -195,8 +195,8 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
   }
 
   @Test
-  public void dbShouldNotIgnoreExperimentalSegmentsIfExisted() throws Exception {
-    final Path testPath = folder.newFolder().toPath();
+  public void dbShouldNotIgnoreExperimentalSegmentsIfExisted(@TempDir Path tempDir) throws Exception {
+    final Path testPath = tempDir.resolve("testdb");
     // Create new db with experimental column family
     SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store =
         createSegmentedStore(
@@ -225,8 +225,8 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
   }
 
   @Test
-  public void dbWillBeBackwardIncompatibleAfterExperimentalSegmentsAreAdded() throws Exception {
-    final Path testPath = folder.newFolder().toPath();
+  public void dbWillBeBackwardIncompatibleAfterExperimentalSegmentsAreAdded(@TempDir Path tempDir) throws Exception {
+    final Path testPath = tempDir.resolve("testdb");
     // Create new db should ignore experimental column family
     SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store =
         createSegmentedStore(

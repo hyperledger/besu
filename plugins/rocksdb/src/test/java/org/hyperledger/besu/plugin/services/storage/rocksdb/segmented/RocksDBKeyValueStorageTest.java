@@ -40,15 +40,15 @@ import java.util.function.LongSupplier;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.mockito.junit.jupiter.api.MockitoExtension;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.api.io.TempDir;
+
 
 @ExtendWith(MockitoExtension.class)
-public class RocksDBKeyValueStorageTest extends AbstractKeyValueStorageTest {
+class RocksDBKeyValueStorageTest extends AbstractKeyValueStorageTest {
 
   @Mock private ObservableMetricsSystem metricsSystemMock;
   @Mock private LabelledMetric<OperationTimer> labelledMetricOperationTimerMock;
@@ -64,7 +64,7 @@ public class RocksDBKeyValueStorageTest extends AbstractKeyValueStorageTest {
   }
 
   @Test
-  public void createStoreMustCreateMetrics() throws Exception {
+  void createStoreMustCreateMetrics() throws Exception {
     // Prepare mocks
     when(labelledMetricOperationTimerMock.labels(any())).thenReturn(operationTimerMock);
     when(metricsSystemMock.createLabelledTimer(
@@ -134,6 +134,6 @@ public class RocksDBKeyValueStorageTest extends AbstractKeyValueStorageTest {
   }
 
   private RocksDBConfiguration config() throws Exception {
-    return new RocksDBConfigurationBuilder().databaseDir(folder.newFolder().toPath()).build();
+    return new RocksDBConfigurationBuilder().databaseDir(folder).build();
   }
 }
