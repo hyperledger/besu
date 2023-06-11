@@ -298,4 +298,78 @@ public class TomlConfigFileDefaultProviderTest {
         .isInstanceOf(ParameterException.class)
         .hasMessage("Unknown option in TOML configuration file: invalid_option");
   }
+
+  @Test
+  public void tomlTableHeadingsMustBeIgnored() throws IOException {
+
+    when(mockCommandLine.getCommandSpec()).thenReturn(mockCommandSpec);
+
+    Map<String, OptionSpec> validOptionsMap = new HashMap<>();
+    validOptionsMap.put("--a-valid-option", null);
+    validOptionsMap.put("--another-valid-option", null);
+    validOptionsMap.put("--onemore-valid-option", null);
+    when(mockCommandSpec.optionsMap()).thenReturn(validOptionsMap);
+
+    final File tempConfigFile = temp.newFile("config.toml");
+    final BufferedWriter fileWriter = Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8);
+
+    fileWriter.write("a-valid-option=123");
+    fileWriter.newLine();
+    fileWriter.write("[ignoreme]");
+    fileWriter.newLine();
+    fileWriter.write("another-valid-option=456");
+    fileWriter.newLine();
+    fileWriter.write("onemore-valid-option=789");
+    fileWriter.newLine();
+    fileWriter.flush();
+
+    final TomlConfigFileDefaultProvider providerUnderTest =
+        new TomlConfigFileDefaultProvider(mockCommandLine, tempConfigFile);
+
+    assertThat(
+            providerUnderTest.defaultValue(
+                OptionSpec.builder("a-valid-option").type(Integer.class).build()))
+        .isEqualTo("123");
+
+    assertThat(
+            providerUnderTest.defaultValue(
+                OptionSpec.builder("another-valid-option").type(Integer.class).build()))
+        .isEqualTo("456");
+
+    assertThat(
+            providerUnderTest.defaultValue(
+                OptionSpec.builder("onemore-valid-option").type(Integer.class).build()))
+        .isEqualTo("789");
+  }
+
+  @Test
+  public void tomlTableHeadingsMustNotSkipValidationOfUnknownOptions() throws IOException {
+
+    when(mockCommandLine.getCommandSpec()).thenReturn(mockCommandSpec);
+
+    Map<String, OptionSpec> validOptionsMap = new HashMap<>();
+    validOptionsMap.put("--a-valid-option", null);
+    when(mockCommandSpec.optionsMap()).thenReturn(validOptionsMap);
+
+    final File tempConfigFile = temp.newFile("config.toml");
+    final BufferedWriter fileWriter = Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8);
+
+    fileWriter.write("[ignoreme]");
+    fileWriter.newLine();
+    fileWriter.write("a-valid-option=123");
+    fileWriter.newLine();
+    fileWriter.write("invalid-option=789");
+    fileWriter.newLine();
+    fileWriter.flush();
+
+    final TomlConfigFileDefaultProvider providerUnderTest =
+        new TomlConfigFileDefaultProvider(mockCommandLine, tempConfigFile);
+
+    assertThatThrownBy(
+            () ->
+                providerUnderTest.defaultValue(
+                    OptionSpec.builder("an-option").type(String.class).build()))
+        .isInstanceOf(ParameterException.class)
+        .hasMessage("Unknown option in TOML configuration file: invalid-option");
+  }
 }

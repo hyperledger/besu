@@ -71,6 +71,7 @@ import org.hyperledger.besu.evm.operation.JumpiOperation;
 import org.hyperledger.besu.evm.operation.Keccak256Operation;
 import org.hyperledger.besu.evm.operation.LogOperation;
 import org.hyperledger.besu.evm.operation.LtOperation;
+import org.hyperledger.besu.evm.operation.MCopyOperation;
 import org.hyperledger.besu.evm.operation.MLoadOperation;
 import org.hyperledger.besu.evm.operation.MSizeOperation;
 import org.hyperledger.besu.evm.operation.MStore8Operation;
@@ -793,12 +794,15 @@ public class MainnetEVMs {
       final BigInteger chainID) {
     registerShanghaiOperations(registry, gasCalculator, chainID);
 
-    // EIP-4844
+    // EIP-4844 DATAHASH
     registry.put(new DataHashOperation(gasCalculator));
 
-    // TSTORE/TLOAD
+    // EIP-1153 TSTORE/TLOAD
     registry.put(new TStoreOperation(gasCalculator));
     registry.put(new TLoadOperation(gasCalculator));
+
+    // EIP-5656 MCOPY
+    registry.put(new MCopyOperation(gasCalculator));
   }
 
   /**

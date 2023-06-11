@@ -26,7 +26,6 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** A P2P Network Message's Data. */
 public interface MessageData {
-
   /**
    * Returns the size of the message.
    *
@@ -64,5 +63,14 @@ public interface MessageData {
     final Bytes message = messageDataRLP.readAsRlp().raw();
     messageDataRLP.leaveList();
     return new AbstractMap.SimpleImmutableEntry<>(requestId, new RawMessage(getCode(), message));
+  }
+
+  /**
+   * Subclasses can implement this method to return a human-readable version of the raw data.
+   *
+   * @return return a human-readable version of the raw data
+   */
+  default String toStringDecoded() {
+    return "N/A";
   }
 }

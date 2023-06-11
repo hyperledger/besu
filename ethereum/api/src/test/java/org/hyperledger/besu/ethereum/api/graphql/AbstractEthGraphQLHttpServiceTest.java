@@ -75,7 +75,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
   public static void setupConstants() {
     blockchainSetupUtil =
         BlockchainSetupUtil.createForEthashChain(
-            BlockTestUtil.getHiveTestChainResources(), DataStorageFormat.FOREST);
+            BlockTestUtil.getHiveTestChainResources(), DataStorageFormat.BONSAI);
     blockchainSetupUtil.importAllBlocks();
   }
 
