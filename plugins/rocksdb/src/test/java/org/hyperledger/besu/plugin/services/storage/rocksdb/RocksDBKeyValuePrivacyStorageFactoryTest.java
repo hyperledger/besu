@@ -28,21 +28,22 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.junit.jupiter.api.MockitoExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RocksDBKeyValuePrivacyStorageFactoryTest {
   private static final int DEFAULT_VERSION = 1;
   private static final int DEFAULT_PRIVACY_VERSION = 1;
 
   @Mock private RocksDBFactoryConfiguration rocksDbConfiguration;
   @Mock private BesuConfiguration commonConfiguration;
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir
+  public final Path temporaryFolder;
   private final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final List<SegmentIdentifier> segments = List.of();
   @Mock private SegmentIdentifier segment;

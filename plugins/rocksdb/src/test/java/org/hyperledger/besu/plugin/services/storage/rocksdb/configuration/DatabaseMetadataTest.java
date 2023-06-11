@@ -21,12 +21,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class DatabaseMetadataTest {
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir
+  public final Path temporaryFolder;
 
   @Test
   public void getVersion() {

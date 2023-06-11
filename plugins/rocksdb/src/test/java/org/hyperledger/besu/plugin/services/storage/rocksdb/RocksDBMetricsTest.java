@@ -32,17 +32,17 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 
 import java.util.function.LongSupplier;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.junit.jupiter.api.MockitoExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.rocksdb.OptimisticTransactionDB;
 import org.rocksdb.Statistics;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RocksDBMetricsTest {
 
   @Mock private ObservableMetricsSystem metricsSystemMock;
@@ -52,7 +52,8 @@ public class RocksDBMetricsTest {
   @Mock private OptimisticTransactionDB db;
   @Mock private Statistics stats;
 
-  @Rule public final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir
+  public final Path temporaryFolder;
 
   @Test
   public void createStoreMustCreateMetrics() throws Exception {

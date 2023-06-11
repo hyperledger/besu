@@ -35,13 +35,13 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageTest {
 
-  @Rule public final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir
+  public final path folder;
 
   @Test
   public void assertClear() throws Exception {
