@@ -24,13 +24,13 @@ import static org.mockito.Mockito.when;
 
 import java.util.Locale;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoJUnitRunner.class)
 public class ProcessingStageTest {
 
   private final Pipe<String> inputPipe =
@@ -40,7 +40,7 @@ public class ProcessingStageTest {
   @Mock private Processor<String, String> singleStep;
   private ProcessingStage<String, String> stage;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     stage = new ProcessingStage<>("name", inputPipe, outputPipe, singleStep);
     doAnswer(
