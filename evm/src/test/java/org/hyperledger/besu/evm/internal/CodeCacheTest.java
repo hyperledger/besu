@@ -22,14 +22,14 @@ import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class CodeCacheTest {
+class CodeCacheTest {
 
   private final String op = Bytes.of(JumpDestOperation.OPCODE).toUnprefixedHexString();
 
   @Test
-  public void testScale() {
+  void testScale() {
     final Bytes contractBytes =
         Bytes.fromHexString("0xDEAD" + op + "BEEF" + op + "B0B0" + op + "C0DE" + op + "FACE");
     final CodeScale scale = new CodeScale();
