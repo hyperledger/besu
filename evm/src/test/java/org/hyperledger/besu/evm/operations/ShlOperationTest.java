@@ -28,104 +28,82 @@ import java.util.Arrays;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
-public class ShlOperationTest {
-
-  private final String number;
-  private final String shift;
-  private final String expectedResult;
+class ShlOperationTest {
 
   private final GasCalculator gasCalculator = new SpuriousDragonGasCalculator();
   private final ShlOperation operation = new ShlOperation(gasCalculator);
 
-  private static final String[][] testData = {
-    {
-      "0x0000000000000000000000000000000000000000000000000000000000000001",
-      "0x00",
-      "0x0000000000000000000000000000000000000000000000000000000000000001"
-    },
-    {
-      "0x0000000000000000000000000000000000000000000000000000000000000001",
-      "0x01",
-      "0x0000000000000000000000000000000000000000000000000000000000000002"
-    },
-    {
-      "0x0000000000000000000000000000000000000000000000000000000000000002",
-      "0x01",
-      "0x0000000000000000000000000000000000000000000000000000000000000004"
-    },
-    {
-      "0x0000000000000000000000000000000000000000000000000000000000000004",
-      "0x01",
-      "0x0000000000000000000000000000000000000000000000000000000000000008"
-    },
-    {
-      "0x000000000000000000000000000000000000000000000000000000000000000f",
-      "0x01",
-      "0x000000000000000000000000000000000000000000000000000000000000001e"
-    },
-    {
-      "0x0000000000000000000000000000000000000000000000000000000000000008",
-      "0x01",
-      "0x0000000000000000000000000000000000000000000000000000000000000010"
-    },
-    {"0x0000000000000000000000000000000000000000000000000000000000000001", "0x100", "0x"},
-    {
-      "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-      "0x01",
-      "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe"
-    },
-    {
-      "0x0000000000000000000000000000000000000000000000000000000000000000",
-      "0x01",
-      "0x0000000000000000000000000000000000000000000000000000000000000000"
-    },
-    {
-      "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-      "0x01",
-      "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe"
-    },
-    {
-      "0x0000000000000000000000000000000000000000000000000000000000000400",
-      "0x80",
-      "0x0000000000000000000000000000040000000000000000000000000000000000"
-    },
-    {"0x0000000000000000000000000000000000000000000000000000000000000400", "0x8000", "0x"},
-    {"0x0000000000000000000000000000000000000000000000000000000000000400", "0x80000000", "0x"},
-    {
-      "0x0000000000000000000000000000000000000000000000000000000000000400",
-      "0x8000000000000000",
-      "0x"
-    },
-    {
-      "0x0000000000000000000000000000000000000000000000000000000000000400",
-      "0x80000000000000000000000000000000",
-      "0x"
-    },
-    {
-      "0x0000000000000000000000000000000000000000000000000000000000000400",
-      "0x8000000000000000000000000000000000000000000000000000000000000000",
-      "0x"
-    }
-  };
-
-  @Parameterized.Parameters(name = "{index}: {0}, {1}, {2}")
-  public static Iterable<String[]> data() {
-    return Arrays.asList(testData);
+  static Iterable<Arguments> data() {
+    return Arrays.asList(
+        Arguments.of(
+            "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "0x00",
+            "0x0000000000000000000000000000000000000000000000000000000000000001"),
+        Arguments.of(
+            "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "0x01",
+            "0x0000000000000000000000000000000000000000000000000000000000000002"),
+        Arguments.of(
+            "0x0000000000000000000000000000000000000000000000000000000000000002",
+            "0x01",
+            "0x0000000000000000000000000000000000000000000000000000000000000004"),
+        Arguments.of(
+            "0x0000000000000000000000000000000000000000000000000000000000000004",
+            "0x01",
+            "0x0000000000000000000000000000000000000000000000000000000000000008"),
+        Arguments.of(
+            "0x000000000000000000000000000000000000000000000000000000000000000f",
+            "0x01",
+            "0x000000000000000000000000000000000000000000000000000000000000001e"),
+        Arguments.of(
+            "0x0000000000000000000000000000000000000000000000000000000000000008",
+            "0x01",
+            "0x0000000000000000000000000000000000000000000000000000000000000010"),
+        Arguments.of(
+            "0x0000000000000000000000000000000000000000000000000000000000000001", "0x100", "0x"),
+        Arguments.of(
+            "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            "0x01",
+            "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe"),
+        Arguments.of(
+            "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "0x01",
+            "0x0000000000000000000000000000000000000000000000000000000000000000"),
+        Arguments.of(
+            "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            "0x01",
+            "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe"),
+        Arguments.of(
+            "0x0000000000000000000000000000000000000000000000000000000000000400",
+            "0x80",
+            "0x0000000000000000000000000000040000000000000000000000000000000000"),
+        Arguments.of(
+            "0x0000000000000000000000000000000000000000000000000000000000000400", "0x8000", "0x"),
+        Arguments.of(
+            "0x0000000000000000000000000000000000000000000000000000000000000400",
+            "0x80000000",
+            "0x"),
+        Arguments.of(
+            "0x0000000000000000000000000000000000000000000000000000000000000400",
+            "0x8000000000000000",
+            "0x"),
+        Arguments.of(
+            "0x0000000000000000000000000000000000000000000000000000000000000400",
+            "0x80000000000000000000000000000000",
+            "0x"),
+        Arguments.of(
+            "0x0000000000000000000000000000000000000000000000000000000000000400",
+            "0x8000000000000000000000000000000000000000000000000000000000000000",
+            "0x"));
   }
 
-  public ShlOperationTest(final String number, final String shift, final String expectedResult) {
-    this.number = number;
-    this.shift = shift;
-    this.expectedResult = expectedResult;
-  }
-
-  @Test
-  public void shiftOperation() {
+  @ParameterizedTest
+  @MethodSource("data")
+  void shiftOperation(final String number, final String shift, final String expectedResult) {
     final MessageFrame frame = mock(MessageFrame.class);
     when(frame.stackSize()).thenReturn(2);
     when(frame.getRemainingGas()).thenReturn(100L);
