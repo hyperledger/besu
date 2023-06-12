@@ -29,19 +29,18 @@ import org.hyperledger.besu.evm.operation.DataHashOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class DataHashOperationTest {
+class DataHashOperationTest {
 
   @Test
-  public void putsHashOnStack() {
+  void putsHashOnStack() {
     Hash version0Hash = Hash.fromHexStringLenient("0xcafebabeb0b0facedeadbeef");
-    List<Hash> versionedHashes = Arrays.asList(version0Hash);
+    List<Hash> versionedHashes = List.of(version0Hash);
     DataHashOperation getHash = new DataHashOperation(new LondonGasCalculator());
     MessageFrame frame = mock(MessageFrame.class);
     when(frame.popStackItem()).thenReturn(Bytes.of(0));
@@ -49,12 +48,12 @@ public class DataHashOperationTest {
     EVM fakeEVM = mock(EVM.class);
     Operation.OperationResult r = getHash.execute(frame, fakeEVM);
     assertThat(r.getGasCost()).isEqualTo(3);
-    assertThat(r.getHaltReason()).isEqualTo(null);
+    assertThat(r.getHaltReason()).isNull();
     verify(frame).pushStackItem(version0Hash);
   }
 
   @Test
-  public void pushesZeroOnBloblessTx() {
+  void pushesZeroOnBloblessTx() {
 
     EVM fakeEVM = mock(EVM.class);
 
@@ -76,9 +75,9 @@ public class DataHashOperationTest {
   }
 
   @Test
-  public void pushZeroOnVersionIndexOutOFBounds() {
+  void pushZeroOnVersionIndexOutOFBounds() {
     Hash version0Hash = Hash.fromHexStringLenient("0xcafebabeb0b0facedeadbeef");
-    List<Hash> versionedHashes = Arrays.asList(version0Hash);
+    List<Hash> versionedHashes = List.of(version0Hash);
     DataHashOperation getHash = new DataHashOperation(new LondonGasCalculator());
     MessageFrame frame = mock(MessageFrame.class);
     when(frame.popStackItem()).thenReturn(Bytes.of(1));
