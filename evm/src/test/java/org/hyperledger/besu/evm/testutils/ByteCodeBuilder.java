@@ -38,8 +38,8 @@ public class ByteCodeBuilder {
     RETURNDATACOPY("3e"),
     REVERT("fd"),
     STATICCALL("fa"),
-    TLOAD("b3"),
-    TSTORE("b4");
+    TLOAD("5c"),
+    TSTORE("5d");
 
     private final String value;
 
@@ -53,18 +53,11 @@ public class ByteCodeBuilder {
     }
   }
 
-  StringBuilder byteCode = new StringBuilder("0x");
+  final StringBuilder byteCode = new StringBuilder("0x");
 
   @Override
   public String toString() {
     return byteCode.toString();
-  }
-
-  /**
-   * @return Bytecode as Bytes
-   */
-  public Bytes toBytes() {
-    return Bytes.fromHexString(byteCode.toString());
   }
 
   /**
@@ -106,8 +99,10 @@ public class ByteCodeBuilder {
 
   private String standardizeByteString(final UInt256 value) {
     String byteString = value.toMinimalBytes().toUnprefixedHexString();
-    while (byteString.length() < 2) {
+    if (byteString.length() % 2 == 1) {
       byteString = "0" + byteString;
+    } else if (byteString.length() == 0) {
+      byteString = "00";
     }
     return byteString;
   }
@@ -120,8 +115,7 @@ public class ByteCodeBuilder {
    * @return this
    */
   public ByteCodeBuilder tstore(final int key, final int value) {
-    this.push(value);
-    this.push(key);
+    this.push(value).push(key);
     byteCode.append(Operation.TSTORE);
     return this;
   }
@@ -145,8 +139,7 @@ public class ByteCodeBuilder {
    * @return this
    */
   public ByteCodeBuilder dataOnStackToMemory(final int key) {
-    this.push(key);
-    this.op(Operation.MSTORE);
+    this.push(key).op(Operation.MSTORE);
     return this;
   }
 
@@ -158,9 +151,7 @@ public class ByteCodeBuilder {
    * @return this
    */
   public ByteCodeBuilder returnValueAtMemory(final int size, final int key) {
-    this.push(size);
-    this.push(key);
-    this.op(Operation.RETURN);
+    this.push(size).push(key).op(Operation.RETURN);
     return this;
   }
 
@@ -175,14 +166,14 @@ public class ByteCodeBuilder {
   public ByteCodeBuilder call(
       final Operation callType, final Address address, final UInt256 gasLimit) {
     callTypeCheck(callType);
-    this.push(0);
-    this.push(0);
-    this.push(0);
-    this.push(0);
-    this.push(0);
-    this.push(Bytes.fromHexString(address.toHexString()));
-    this.push(gasLimit.toMinimalBytes());
-    this.op(callType);
+    this.push(0)
+        .push(0)
+        .push(0)
+        .push(0)
+        .push(0)
+        .push(Bytes.fromHexString(address.toHexString()))
+        .push(gasLimit.toMinimalBytes())
+        .op(callType);
     return this;
   }
 
@@ -233,14 +224,14 @@ public class ByteCodeBuilder {
       dataOnStackToMemory(0);
     }
 
-    this.push(0);
-    this.push(0);
-    this.push(32);
-    this.push(0);
-    this.push(0);
-    this.push(Bytes.fromHexString(address.toHexString()));
-    this.push(gasLimit.toMinimalBytes());
-    this.op(callType);
+    this.push(0)
+        .push(0)
+        .push(32)
+        .push(0)
+        .push(0)
+        .push(Bytes.fromHexString(address.toHexString()))
+        .push(gasLimit.toMinimalBytes())
+        .op(callType);
     return this;
   }
 
@@ -250,9 +241,7 @@ public class ByteCodeBuilder {
    * @return this
    */
   public ByteCodeBuilder returnInnerCallResults() {
-    this.push(32);
-    this.push(0);
-    this.push(0);
+    this.push(32).push(0).push(0);
     byteCode.append(Operation.RETURNDATACOPY);
     this.returnValueAtMemory(32, 0);
     return this;
