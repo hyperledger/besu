@@ -35,13 +35,13 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import java.util.Collections;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
-public class ContractCreationProcessorTest {
+@ExtendWith(MockitoExtension.class)
+class ContractCreationProcessorTest {
 
   @Mock GasCalculator gasCalculator;
   @Mock EVM evm;
@@ -49,7 +49,7 @@ public class ContractCreationProcessorTest {
   private ContractCreationProcessor processor;
 
   @Test
-  public void shouldThrowAnExceptionWhenCodeContractFormatInvalidPreEOF() {
+  void shouldThrowAnExceptionWhenCodeContractFormatInvalidPreEOF() {
     processor =
         new ContractCreationProcessor(
             gasCalculator,
@@ -71,7 +71,7 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void shouldNotThrowAnExceptionWhenCodeContractIsValid() {
+  void shouldNotThrowAnExceptionWhenCodeContractIsValid() {
     processor =
         new ContractCreationProcessor(
             gasCalculator,
@@ -91,7 +91,7 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void shouldNotThrowAnExceptionWhenPrefixCodeRuleNotAdded() {
+  void shouldNotThrowAnExceptionWhenPrefixCodeRuleNotAdded() {
     processor =
         new ContractCreationProcessor(
             gasCalculator, evm, true, Collections.emptyList(), 1, Collections.emptyList());
@@ -106,7 +106,7 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void shouldThrowAnExceptionWhenCodeContractFormatInvalidPostEOF() {
+  void shouldThrowAnExceptionWhenCodeContractFormatInvalidPostEOF() {
     processor =
         new ContractCreationProcessor(
             gasCalculator,
@@ -128,7 +128,7 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void eofValidationShouldAllowLegacyCode() {
+  void eofValidationShouldAllowLegacyCode() {
     processor =
         new ContractCreationProcessor(
             gasCalculator,
@@ -148,7 +148,7 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void eofValidationShouldAllowEOFCode() {
+  void eofValidationShouldAllowEOFCode() {
     processor =
         new ContractCreationProcessor(
             gasCalculator,
@@ -170,7 +170,7 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void eofValidationShouldPreventLegacyCodeDeployment() {
+  void eofValidationShouldPreventLegacyCodeDeployment() {
     processor =
         new ContractCreationProcessor(
             gasCalculator,
@@ -194,7 +194,7 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void eofValidationPreventsInvalidEOFCode() {
+  void eofValidationPreventsInvalidEOFCode() {
     processor =
         new ContractCreationProcessor(
             gasCalculator,
@@ -216,7 +216,7 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void shouldThrowAnExceptionWhenCodeContractTooLarge() {
+  void shouldThrowAnExceptionWhenCodeContractTooLarge() {
     processor =
         new ContractCreationProcessor(
             gasCalculator,
@@ -238,7 +238,7 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void shouldThrowAnExceptionWhenDeployingInvalidContract() {
+  void shouldThrowAnExceptionWhenDeployingInvalidContract() {
     EvmSpecVersion evmSpecVersion = EvmSpecVersion.FUTURE_EIPS;
     processor =
         new ContractCreationProcessor(
@@ -261,7 +261,7 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void shouldNotThrowAnExceptionWhenCodeContractTooLarge() {
+  void shouldNotThrowAnExceptionWhenCodeContractTooLarge() {
     processor =
         new ContractCreationProcessor(
             gasCalculator,
@@ -281,7 +281,7 @@ public class ContractCreationProcessorTest {
   }
 
   @Test
-  public void shouldNotThrowAnExceptionWhenCodeSizeRuleNotAdded() {
+  void shouldNotThrowAnExceptionWhenCodeSizeRuleNotAdded() {
     processor =
         new ContractCreationProcessor(
             gasCalculator, evm, true, Collections.emptyList(), 1, Collections.emptyList());
