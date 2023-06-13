@@ -86,7 +86,8 @@ public class EthGetMinerDataByBlockHash implements JsonRpcMethod {
             .map(
                 t ->
                     blockchainQueries
-                        .transactionReceiptByTransactionHash(t.getTransaction().getHash())
+                        .transactionReceiptByTransactionHash(
+                            t.getTransaction().getHash(), protocolSchedule)
                         .map(
                             receipt ->
                                 receipt
