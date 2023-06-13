@@ -31,7 +31,7 @@ import org.apache.tuweni.units.bigints.UInt64Value;
 public class Quantity {
 
   private static final String HEX_PREFIX = "0x";
-  private static final String HEX_ZERO = "0x0";
+  public static final String HEX_ZERO = "0x0";
 
   private Quantity() {}
 
@@ -40,7 +40,7 @@ public class Quantity {
   }
 
   public static String create(final UInt64Value<?> value) {
-    return value != null ? value.toMinimalBytes().toShortHexString() : null;
+    return value != null ? value.toMinimalBytes().toShortHexString() : HEX_ZERO;
   }
 
   public static String create(final int value) {
