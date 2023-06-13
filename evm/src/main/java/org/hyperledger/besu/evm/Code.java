@@ -102,4 +102,16 @@ public interface Code {
   default Bytes getData(final int offset, final int length) {
     return Bytes.EMPTY;
   }
+
+  default int readBigEndianI16(final int startIndex) {
+    return 0;
+  }
+
+  default int readBigEndianU16(final int startIndex) {
+    return 0;
+  }
+
+  default int readU8(final int startIndex) {
+    return 0;
+  }
 }

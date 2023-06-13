@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.internal.Words;
 
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -109,5 +110,20 @@ public class CodeV1 implements Code {
     } else {
       return data.slice(offset, length);
     }
+  }
+
+  @Override
+  public int readBigEndianI16(final int index) {
+    return Words.readBigEndianI16(index, eofLayout.data().toArrayUnsafe());
+  }
+
+  @Override
+  public int readBigEndianU16(final int index) {
+    return Words.readBigEndianU16(index, eofLayout.data().toArrayUnsafe());
+  }
+
+  @Override
+  public int readU8(final int index) {
+    return eofLayout.data().toArrayUnsafe()[index] & 0xff;
   }
 }

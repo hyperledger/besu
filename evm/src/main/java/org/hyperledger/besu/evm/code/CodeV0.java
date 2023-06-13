@@ -18,6 +18,7 @@ package org.hyperledger.besu.evm.code;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
 
 import java.util.function.Supplier;
@@ -65,9 +66,8 @@ public class CodeV0 implements Code {
   public boolean equals(final Object other) {
     if (other == null) return false;
     if (other == this) return true;
-    if (!(other instanceof CodeV0)) return false;
+    if (!(other instanceof CodeV0 that)) return false;
 
-    final CodeV0 that = (CodeV0) other;
     return this.bytes.equals(that.bytes);
   }
 
@@ -296,5 +296,20 @@ public class CodeV0 implements Code {
       bitmap[entryPos] = thisEntry;
     }
     return bitmap;
+  }
+
+  @Override
+  public int readBigEndianI16(final int index) {
+    return Words.readBigEndianI16(index, bytes.toArrayUnsafe());
+  }
+
+  @Override
+  public int readBigEndianU16(final int index) {
+    return Words.readBigEndianU16(index, bytes.toArrayUnsafe());
+  }
+
+  @Override
+  public int readU8(final int index) {
+    return bytes.toArrayUnsafe()[index] & 0xff;
   }
 }

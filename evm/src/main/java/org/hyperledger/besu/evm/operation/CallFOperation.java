@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.internal.Words.readBigEndianU16;
-
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -44,21 +42,10 @@ public class CallFOperation extends AbstractOperation {
     if (code.getEofVersion() == 0) {
       return InvalidOperation.INVALID_RESULT;
     }
-    final byte[] byteCode = code.getBytes().toArrayUnsafe();
-    return staticOperation(frame, byteCode, frame.getPC());
-  }
 
-  /**
-   * Performs Call F operation.
-   *
-   * @param frame the frame
-   * @param code the code
-   * @param pc the pc
-   * @return the successful operation result
-   */
-  public static OperationResult staticOperation(
-      final MessageFrame frame, final byte[] code, final int pc) {
-    int section = readBigEndianU16(pc + 1, code);
+    int pc = frame.getPC();
+    int section = code.readBigEndianU16(pc + 1);
+
     var exception = frame.callFunction(section);
     if (exception == null) {
       return callfSuccess;

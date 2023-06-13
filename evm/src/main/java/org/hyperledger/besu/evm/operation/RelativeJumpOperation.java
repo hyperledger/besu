@@ -19,9 +19,6 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.Words;
-
-import org.apache.tuweni.bytes.Bytes;
 
 /** The type Relative jump operation. */
 public class RelativeJumpOperation extends AbstractFixedCostOperation {
@@ -64,9 +61,7 @@ public class RelativeJumpOperation extends AbstractFixedCostOperation {
     if (code.getEofVersion() == 0) {
       return InvalidOperation.INVALID_RESULT;
     }
-    final Bytes byteCode = code.getBytes();
     final int pcPostInstruction = frame.getPC() + 1;
-    return new OperationResult(
-        gasCost, null, 2 + Words.readBigEndianI16(pcPostInstruction, byteCode.toArrayUnsafe()) + 1);
+    return new OperationResult(gasCost, null, 2 + code.readBigEndianI16(pcPostInstruction) + 1);
   }
 }

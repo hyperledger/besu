@@ -15,8 +15,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.internal.Words.readBigEndianI16;
-
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -45,7 +43,6 @@ public class RelativeJumpVectorOperation extends AbstractFixedCostOperation {
     if (code.getEofVersion() == 0) {
       return InvalidOperation.INVALID_RESULT;
     }
-    final Bytes byteCode = code.getBytes();
     int offsetCase;
     try {
       offsetCase = frame.popStackItem().toInt();
@@ -55,7 +52,7 @@ public class RelativeJumpVectorOperation extends AbstractFixedCostOperation {
     } catch (ArithmeticException | IllegalArgumentException ae) {
       offsetCase = Integer.MAX_VALUE;
     }
-    final int vectorSize = getVectorSize(byteCode, frame.getPC() + 1);
+    final int vectorSize = code.readU8(frame.getPC() + 1);
     return new OperationResult(
         gasCost,
         null,
@@ -63,7 +60,7 @@ public class RelativeJumpVectorOperation extends AbstractFixedCostOperation {
             + 2 * vectorSize
             + ((offsetCase >= vectorSize)
                 ? 0
-                : readBigEndianI16(frame.getPC() + 2 + offsetCase * 2, byteCode.toArrayUnsafe()))
+                : code.readBigEndianI16(frame.getPC() + 2 + offsetCase * 2))
             + 1);
   }
 

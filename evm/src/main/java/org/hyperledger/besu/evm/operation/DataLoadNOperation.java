@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.internal.Words.readBigEndianU16;
-
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -41,9 +39,9 @@ public class DataLoadNOperation extends AbstractFixedCostOperation {
     if (code.getEofVersion() == 0) {
       return InvalidOperation.INVALID_RESULT;
     }
-    final byte[] byteCode = code.getBytes().toArrayUnsafe();
-    int index = readBigEndianU16(frame.getPC() + 1, byteCode);
 
+    int pc = frame.getPC();
+    int index = code.readBigEndianU16(pc + 1);
     final Bytes data = code.getData(index, 32);
     frame.pushStackItem(data);
 

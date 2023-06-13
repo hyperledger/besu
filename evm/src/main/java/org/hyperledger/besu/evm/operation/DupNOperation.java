@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.internal.Words.readBigEndianU16;
-
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -43,21 +41,9 @@ public class DupNOperation extends AbstractFixedCostOperation {
     if (code.getEofVersion() == 0) {
       return InvalidOperation.INVALID_RESULT;
     }
-    final byte[] byteCode = code.getBytes().toArrayUnsafe();
-    return staticOperation(frame, byteCode, frame.getPC());
-  }
+    int pc = frame.getPC();
 
-  /**
-   * Performs Dup N operation.
-   *
-   * @param frame the frame
-   * @param code the code
-   * @param pc the pc
-   * @return the operation result
-   */
-  public static OperationResult staticOperation(
-      final MessageFrame frame, final byte[] code, final int pc) {
-    int depth = readBigEndianU16(pc + 1, code);
+    int depth = code.readBigEndianU16(pc + 1);
     frame.pushStackItem(frame.getStackItem(depth - 1));
 
     return dupSuccess;

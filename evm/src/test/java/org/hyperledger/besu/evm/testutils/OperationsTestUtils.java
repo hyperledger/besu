@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.evm.testutils;
 
+import static org.hyperledger.besu.evm.internal.Words.readBigEndianI16;
+import static org.hyperledger.besu.evm.internal.Words.readBigEndianU16;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -28,6 +31,18 @@ public class OperationsTestUtils {
     final Bytes codeBytes = Bytes.fromHexString(codeString);
     when(mockCode.getBytes()).thenReturn(codeBytes);
     when(mockCode.getEofVersion()).thenReturn(1);
+    when(mockCode.readBigEndianI16(anyInt()))
+        .thenAnswer(
+            invocationOnMock ->
+                readBigEndianI16(invocationOnMock.getArgument(0), codeBytes.toArrayUnsafe()));
+    when(mockCode.readBigEndianU16(anyInt()))
+        .thenAnswer(
+            invocationOnMock ->
+                readBigEndianU16(invocationOnMock.getArgument(0), codeBytes.toArrayUnsafe()));
+    when(mockCode.readU8(anyInt()))
+        .thenAnswer(
+            invocationOnMock ->
+                codeBytes.toArrayUnsafe()[(int) invocationOnMock.getArgument(0)] & 0xff);
     return mockCode;
   }
 }

@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.internal.Words.readBigEndianU16;
-
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -45,21 +43,8 @@ public class SwapNOperation extends AbstractFixedCostOperation {
     if (code.getEofVersion() == 0) {
       return InvalidOperation.INVALID_RESULT;
     }
-    final byte[] byteCode = code.getBytes().toArrayUnsafe();
-    return staticOperation(frame, byteCode, frame.getPC());
-  }
-
-  /**
-   * Performs swap N operation.
-   *
-   * @param frame the frame
-   * @param code the code
-   * @param pc the pc
-   * @return the operation result
-   */
-  public static OperationResult staticOperation(
-      final MessageFrame frame, final byte[] code, final int pc) {
-    int index = readBigEndianU16(pc + 1, code);
+    int pc = frame.getPC();
+    int index = code.readBigEndianU16(pc + 1);
 
     final Bytes tmp = frame.getStackItem(0);
     frame.setStackItem(0, frame.getStackItem(index));
