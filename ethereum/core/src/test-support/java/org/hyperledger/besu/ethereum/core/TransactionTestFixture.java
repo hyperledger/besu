@@ -32,8 +32,7 @@ public class TransactionTestFixture {
   private static final Hash DEFAULT_VERSIONED_HASH =
       Hash.wrap(
           Bytes32.wrap(
-              Bytes.concatenate(
-                  Bytes.fromHexString("0x01"), Bytes.fromHexString("2a".repeat(31)))));
+              Bytes.concatenate(Bytes.fromHexString("0x01"), Bytes.repeat((byte) 42, 31))));
 
   private TransactionType transactionType = TransactionType.FRONTIER;
 

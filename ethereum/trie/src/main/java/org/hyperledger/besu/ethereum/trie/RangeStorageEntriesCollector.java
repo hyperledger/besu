@@ -73,9 +73,7 @@ public class RangeStorageEntriesCollector extends StorageEntriesCollector<Bytes>
         if (currentSize > maxResponseBytes) {
           return TrieIterator.State.STOP;
         }
-        if (endKeyHash.isPresent()
-            && !values.isEmpty()
-            && keyHash.compareTo(endKeyHash.get()) > 0) {
+        if (endKeyHash.isPresent() && keyHash.compareTo(endKeyHash.get()) > 0) {
           return TrieIterator.State.STOP;
         }
 
