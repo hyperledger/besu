@@ -145,7 +145,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               clock);
 
       final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
-      snapsyncMetricsManager.initRange(ranges);
+      snapsyncMetricsManager.initRange();
 
       final List<AccountRangeDataRequest> currentAccountRange =
           snapContext.getCurrentAccountRange();

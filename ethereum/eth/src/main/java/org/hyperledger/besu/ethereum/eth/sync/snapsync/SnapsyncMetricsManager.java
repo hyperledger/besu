@@ -14,19 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import static io.netty.util.internal.ObjectUtil.checkNonEmpty;
-
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -50,8 +45,6 @@ public class SnapsyncMetricsManager {
   private final AtomicLong nbNodesGenerated;
   private final AtomicLong nbNodesHealed;
   private long startSyncTime;
-
-  private final Map<Bytes32, BigInteger> lastRangeIndex = new HashMap<>();
 
   private long lastNotifyTimestamp;
 
@@ -92,29 +85,22 @@ public class SnapsyncMetricsManager {
         nbCodes::get);
   }
 
-  public void initRange(final Map<Bytes32, Bytes32> ranges) {
-    for (Map.Entry<Bytes32, Bytes32> entry : ranges.entrySet()) {
-      lastRangeIndex.put(entry.getValue(), entry.getKey().toUnsignedBigInteger());
-    }
+  public void initRange() {
     startSyncTime = System.currentTimeMillis();
     lastNotifyTimestamp = startSyncTime;
   }
 
   public void notifyStateDownloaded(final Bytes32 startKeyHash, final Bytes32 endKeyHash) {
-    checkNonEmpty(lastRangeIndex, "snapsync range collection");
-    if (lastRangeIndex.containsKey(endKeyHash)) {
-      final BigInteger lastPos = lastRangeIndex.get(endKeyHash);
-      final BigInteger newPos = startKeyHash.toUnsignedBigInteger();
-      percentageDownloaded.getAndAccumulate(
-          BigDecimal.valueOf(100)
-              .multiply(new BigDecimal(newPos.subtract(lastPos)))
-              .divide(
-                  new BigDecimal(RangeManager.MAX_RANGE.toUnsignedBigInteger()),
-                  MathContext.DECIMAL32),
-          BigDecimal::add);
-      lastRangeIndex.put(endKeyHash, newPos);
-      print(false);
-    }
+    percentageDownloaded.getAndAccumulate(
+        BigDecimal.valueOf(100)
+            .multiply(
+                new BigDecimal(endKeyHash.toUnsignedBigInteger())
+                    .subtract(new BigDecimal(startKeyHash.toUnsignedBigInteger())))
+            .divide(
+                new BigDecimal(RangeManager.MAX_RANGE.toUnsignedBigInteger()),
+                MathContext.DECIMAL32),
+        BigDecimal::add);
+    print(false);
   }
 
   public void notifyAccountsDownloaded(final long nbAccounts) {

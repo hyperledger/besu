@@ -104,6 +104,11 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       final SnapWorldDownloadState downloadState,
       final SnapSyncState snapSyncState) {
 
+    if (pendingChildren.get() > 0) {
+      // we do nothing. Our last child will eventually persist us.
+      return 0;
+    }
+
     if (startStorageRange.isPresent() && endStorageRange.isPresent()) {
       // not store the new account if we just want to complete the account thanks to another
       // rootHash
@@ -120,7 +125,25 @@ public class AccountRangeDataRequest extends SnapDataRequest {
 
     stackTrie.commit(nodeUpdater);
 
-    downloadState.getMetricsManager().notifyAccountsDownloaded(stackTrie.getElementsCount().get());
+    // new request is added if the response does not match all the requested range
+    findNewBeginElementInRange(
+            getRootHash(),
+            stackTrie.getElement(startKeyHash).proofs(),
+            stackTrie.getElement(startKeyHash).keys(),
+            endKeyHash)
+        .ifPresentOrElse(
+            missingRightElement -> {
+              System.out.println(startKeyHash + " " + missingRightElement + " " + endKeyHash);
+
+              downloadState
+                  .getMetricsManager()
+                  .notifyStateDownloaded(startKeyHash, missingRightElement);
+              downloadState.enqueueRequest(
+                  createAccountRangeDataRequest(getRootHash(), missingRightElement, endKeyHash));
+            },
+            () -> {
+              downloadState.getMetricsManager().notifyStateDownloaded(startKeyHash, endKeyHash);
+            });
 
     return nbNodesSaved.get();
   }
@@ -153,17 +176,6 @@ public class AccountRangeDataRequest extends SnapDataRequest {
     final List<SnapDataRequest> childRequests = new ArrayList<>();
 
     final StackTrie.TaskElement taskElement = stackTrie.getElement(startKeyHash);
-    // new request is added if the response does not match all the requested range
-    findNewBeginElementInRange(getRootHash(), taskElement.proofs(), taskElement.keys(), endKeyHash)
-        .ifPresentOrElse(
-            missingRightElement -> {
-              downloadState
-                  .getMetricsManager()
-                  .notifyStateDownloaded(missingRightElement, endKeyHash);
-              childRequests.add(
-                  createAccountRangeDataRequest(getRootHash(), missingRightElement, endKeyHash));
-            },
-            () -> downloadState.getMetricsManager().notifyStateDownloaded(endKeyHash, endKeyHash));
 
     // find missing storages and code
     for (Map.Entry<Bytes32, Bytes> account : taskElement.keys().entrySet()) {
@@ -183,7 +195,12 @@ public class AccountRangeDataRequest extends SnapDataRequest {
             createBytecodeRequest(account.getKey(), getRootHash(), accountValue.getCodeHash()));
       }
     }
-    return childRequests.stream();
+    return childRequests.stream()
+        .peek(
+            snapDataRequest -> {
+              snapDataRequest.priority = this.priority;
+              snapDataRequest.registerParent(this);
+            });
   }
 
   public Bytes32 getStartKeyHash() {

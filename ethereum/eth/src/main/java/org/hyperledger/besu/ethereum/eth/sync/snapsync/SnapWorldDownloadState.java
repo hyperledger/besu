@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataR
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 import org.hyperledger.besu.services.tasks.Task;
 import org.hyperledger.besu.services.tasks.TaskCollection;
@@ -36,6 +35,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.OptionalLong;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -48,14 +48,14 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapWorldDownloadState.class);
 
-  protected final InMemoryTaskQueue<SnapDataRequest> pendingAccountRequests =
-      new InMemoryTaskQueue<>();
-  protected final InMemoryTaskQueue<SnapDataRequest> pendingStorageRequests =
-      new InMemoryTaskQueue<>();
-  protected final InMemoryTaskQueue<SnapDataRequest> pendingBigStorageRequests =
-      new InMemoryTaskQueue<>();
-  protected final InMemoryTaskQueue<SnapDataRequest> pendingCodeRequests =
-      new InMemoryTaskQueue<>();
+  protected final InMemoryTasksPriorityQueues<SnapDataRequest> pendingAccountRequests =
+      new InMemoryTasksPriorityQueues<>();
+  protected final InMemoryTasksPriorityQueues<SnapDataRequest> pendingStorageRequests =
+      new InMemoryTasksPriorityQueues<>();
+  protected final InMemoryTasksPriorityQueues<SnapDataRequest> pendingBigStorageRequests =
+      new InMemoryTasksPriorityQueues<>();
+  protected final InMemoryTasksPriorityQueues<SnapDataRequest> pendingCodeRequests =
+      new InMemoryTasksPriorityQueues<>();
   protected final InMemoryTasksPriorityQueues<SnapDataRequest> pendingTrieNodeRequests =
       new InMemoryTasksPriorityQueues<>();
   public HashSet<Bytes> inconsistentAccounts = new HashSet<>();
@@ -205,6 +205,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     checkCompletion(snapSyncState.getPivotBlockHeader().orElseThrow());
   }
 
+  AtomicInteger priority = new AtomicInteger(0);
+
   @Override
   public synchronized void enqueueRequest(final SnapDataRequest request) {
     if (!internalFuture.isDone()) {
@@ -217,6 +219,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
           pendingStorageRequests.add(request);
         }
       } else if (request instanceof AccountRangeDataRequest) {
+        request.setPriority(priority.incrementAndGet());
         pendingAccountRequests.add(request);
       } else {
         pendingTrieNodeRequests.add(request);
@@ -283,7 +286,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     return dequeueRequestBlocking(
         List.of(pendingStorageRequests, pendingBigStorageRequests, pendingCodeRequests),
         pendingAccountRequests,
-        unused -> snapContext.updatePersistedTasks(pendingAccountRequests.asList()));
+        unused -> {});
   }
 
   public synchronized Task<SnapDataRequest> dequeueBigStorageRequestBlocking() {

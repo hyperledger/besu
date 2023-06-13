@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
+import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloaderException;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
@@ -103,6 +104,10 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
     updaterTmp.get().commit();
 
+    possibleParent.ifPresent(
+        snapDataRequest ->
+            snapDataRequest.saveParent(worldStateStorage, updater, downloadState, snapSyncState));
+
     downloadState.getMetricsManager().notifySlotsDownloaded(stackTrie.getElementsCount().get());
 
     return nbNodesSaved.get();
@@ -171,7 +176,23 @@ public class StorageRangeDataRequest extends SnapDataRequest {
               }
             });
 
-    return childRequests.stream();
+    return childRequests.stream()
+        .peek(
+            snapDataRequest -> {
+              snapDataRequest.priority = this.priority;
+              snapDataRequest.registerParent(this.possibleParent.orElseThrow());
+            });
+  }
+
+  @Override
+  protected void registerParent(final SnapDataRequest parent) {
+    if (this.possibleParent.isPresent()) {
+      throw new WorldStateDownloaderException("Cannot set parent twice");
+    }
+    this.possibleParent = Optional.of(parent);
+    this.depth = parent.depth;
+    this.priority = parent.priority;
+    parent.incrementChildren();
   }
 
   private int findNbRanges(final TreeMap<Bytes32, Bytes> slots) {
