@@ -94,7 +94,8 @@ public class EngineGetPayloadResultV3 {
       this.receiptsRoot = header.getReceiptsRoot().toString();
       this.extraData = header.getExtraData().toString();
       this.baseFeePerGas = header.getBaseFee().map(Quantity::create).orElse(null);
-      this.excessDataGas = header.getExcessDataGas().map(Quantity::create).orElse(null);
+      this.excessDataGas =
+          header.getExcessDataGas().map(Quantity::create).orElse(Quantity.HEX_ZERO);
       this.gasLimit = Quantity.create(header.getGasLimit());
       this.gasUsed = Quantity.create(header.getGasUsed());
       this.dataGasUsed = Quantity.create(header.getDataGasUsed());
