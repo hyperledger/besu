@@ -41,9 +41,9 @@ dependencies {
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
-  implementation 'io.tmio:tuweni-bytes'
-  implementation 'io.tmio:tuweni-toml'
-  implementation 'io.tmio:tuweni-units'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-toml'
+  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.web3j:abi'
 
   testImplementation project(':config')
