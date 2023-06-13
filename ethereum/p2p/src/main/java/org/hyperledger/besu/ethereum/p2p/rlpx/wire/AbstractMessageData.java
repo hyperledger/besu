@@ -52,4 +52,9 @@ public abstract class AbstractMessageData implements MessageData {
   public int hashCode() {
     return Objects.hashCode(data);
   }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + "{code=" + getCode() + ", size=" + getSize() + "}";
+  }
 }

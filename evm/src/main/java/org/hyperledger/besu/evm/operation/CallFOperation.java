@@ -24,7 +24,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 public class CallFOperation extends AbstractOperation {
 
   /** The constant OPCODE. */
-  public static final int OPCODE = 0xb0;
+  public static final int OPCODE = 0xe3;
   /** The Call F success. */
   static final OperationResult callfSuccess = new OperationResult(5, null);
 
