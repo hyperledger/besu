@@ -88,6 +88,7 @@ https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.1/besu-23.4.1.z
 - Try to connect to EthStats server by default with ssl followed by non-ssl. [#5301](https://github.com/hyperledger/besu/pull/5301)
 - Allow --miner-extra-data to be used in Proof-of-Stake block production [#5291](https://github.com/hyperledger/besu/pull/5291)
 - Add withdrawals to payloadId calculation to avoid collisions [#5321](https://github.com/hyperledger/besu/pull/5321) 
+- Re-implement trace_block, trace_filter and trace_replayBlockTransactions RPC endpoints to fix memory issues and improve performance [#5131](https://github.com/hyperledger/besu/pull/5131)
 
 ### Download Links
 https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.4.0/besu-23.4.0.zip / sha256: 023a267ee07ed6e069cb15020c1c0262efc5ea0a3e32adc6596068cff7fd0be5
@@ -115,7 +116,6 @@ This update is a mainnet-compatible Shanghai/Capella upgrade and is recommended 
 
 ### Bug Fixes
 - Persist backward sync status to support resuming across restarts [#5182](https://github.com/hyperledger/besu/pull/5182)
-- Re-implement trace_block, trace_filter and trace_replayBlockTransactions RPC endpoints to fix memory issues and improve performance [#5131](https://github.com/hyperledger/besu/pull/5131) 
 
 ### Download Links
 https://hyperledger.jfrog.io/hyperledger/besu-binaries/besu/23.1.2/besu-23.1.2.tar.gz / sha256: 3d3a709a3aab993a0801b412a4719d74e319f942ddc13fb0f30b3c4a54d12538
