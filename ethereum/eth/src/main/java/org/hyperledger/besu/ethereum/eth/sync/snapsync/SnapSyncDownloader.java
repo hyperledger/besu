@@ -61,6 +61,6 @@ public class SnapSyncDownloader extends FastSyncDownloader<SnapDataRequest> {
   protected FastSyncState storeState(final FastSyncState fastSyncState) {
     initialFastSyncState = fastSyncState;
     fastSyncStateStorage.storeState(fastSyncState);
-    return new SnapSyncState(fastSyncState);
+    return new SnapSyncProcessState(fastSyncState);
   }
 }

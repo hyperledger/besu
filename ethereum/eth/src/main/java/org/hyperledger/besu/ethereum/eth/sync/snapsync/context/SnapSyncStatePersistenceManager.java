@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.snapsync;
+package org.hyperledger.besu.ethereum.eth.sync.snapsync.context;
 
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.GenericKeyValueStorageFacade;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.ValueConvertor;
@@ -34,16 +34,21 @@ import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class SnapPersistedContext {
+/**
+ * Manages the persistence of the SnapSync state, allowing it to be saved and retrieved from the
+ * database. The SnapSync state includes the current progress, downloaded data, and other relevant
+ * information needed to resume SnapSync from where it left off after a client restart.
+ */
+public class SnapSyncStatePersistenceManager {
 
-  private final byte[] SNAP_INCONSISTENT_ACCOUNT_INDEX =
+  private final byte[] SNAP_ACCOUNT_TO_BE_REPAIRED_INDEX =
       "snapInconsistentAccountsStorageIndex".getBytes(StandardCharsets.UTF_8);
 
   private final GenericKeyValueStorageFacade<BigInteger, AccountRangeDataRequest>
       accountRangeToDownload;
   private final GenericKeyValueStorageFacade<BigInteger, Bytes> healContext;
 
-  public SnapPersistedContext(final StorageProvider storageProvider) {
+  public SnapSyncStatePersistenceManager(final StorageProvider storageProvider) {
     this.accountRangeToDownload =
         new GenericKeyValueStorageFacade<>(
             BigInteger::toByteArray,
@@ -79,6 +84,11 @@ public class SnapPersistedContext {
                 KeyValueSegmentIdentifier.SNAPSYNC_ACCOUNT_TO_FIX));
   }
 
+  /**
+   * Persists the current account range tasks to the database.
+   *
+   * @param accountRangeDataRequests The current account range tasks to persist.
+   */
   public void updatePersistedTasks(final List<? extends SnapDataRequest> accountRangeDataRequests) {
     accountRangeToDownload.clear();
     accountRangeToDownload.putAll(
@@ -93,16 +103,21 @@ public class SnapPersistedContext {
                                 .toArrayUnsafe())));
   }
 
-  public void addInconsistentAccount(final Bytes inconsistentAccount) {
+  /**
+   * Persists the current accounts to be repaired in the database.
+   *
+   * @param accountsToBeRepaired The current list of accounts to persist.
+   */
+  public void addAccountsToBeRepaired(final Bytes accountsToBeRepaired) {
     final BigInteger index =
         healContext
-            .get(SNAP_INCONSISTENT_ACCOUNT_INDEX)
+            .get(SNAP_ACCOUNT_TO_BE_REPAIRED_INDEX)
             .map(bytes -> new BigInteger(bytes.toArrayUnsafe()).add(BigInteger.ONE))
             .orElse(BigInteger.ZERO);
     healContext.putAll(
         keyValueStorageTransaction -> {
-          keyValueStorageTransaction.put(SNAP_INCONSISTENT_ACCOUNT_INDEX, index.toByteArray());
-          keyValueStorageTransaction.put(index.toByteArray(), inconsistentAccount.toArrayUnsafe());
+          keyValueStorageTransaction.put(SNAP_ACCOUNT_TO_BE_REPAIRED_INDEX, index.toByteArray());
+          keyValueStorageTransaction.put(index.toByteArray(), accountsToBeRepaired.toArrayUnsafe());
         });
   }
 
@@ -112,9 +127,9 @@ public class SnapPersistedContext {
         .collect(Collectors.toList());
   }
 
-  public HashSet<Bytes> getInconsistentAccounts() {
+  public HashSet<Bytes> getAccountsToBeRepaired() {
     return healContext
-        .streamValuesFromKeysThat(notEqualsTo(SNAP_INCONSISTENT_ACCOUNT_INDEX))
+        .streamValuesFromKeysThat(notEqualsTo(SNAP_ACCOUNT_TO_BE_REPAIRED_INDEX))
         .collect(Collectors.toCollection(HashSet::new));
   }
 
