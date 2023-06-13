@@ -40,7 +40,7 @@ public class Quantity {
   }
 
   public static String create(final UInt64Value<?> value) {
-    return value != null ? value.toMinimalBytes().toShortHexString() : HEX_ZERO;
+    return (value == null || value.isZero()) ? HEX_ZERO : value.toMinimalBytes().toShortHexString();
   }
 
   public static String create(final int value) {
