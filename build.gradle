@@ -686,14 +686,14 @@ task distDocker {
       }
       exec {
         def image = "${dockerImageName}:${dockerBuildVersion}-${jvmVariant}"
-        def dockerPlatform = ""
-        if (project.hasProperty('docker-platform')){
-          dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
-          println "Building for platform ${project.getProperty('docker-platform')}"
-        }
+        //def dockerPlatform = ""
+        //if (project.hasProperty('docker-platform')){
+        //dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
+        //println "Building for platform ${project.getProperty('docker-platform')}"
+        //}
         executable "sh"
         workingDir dockerBuildDir
-        args "-c", "docker build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
+        args "-c", "docker buildx build --platform linux/arm64,linux/amd64 -o type=image --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
       }
     }
 

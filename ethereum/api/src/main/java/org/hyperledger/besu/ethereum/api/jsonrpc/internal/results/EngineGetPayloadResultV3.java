@@ -77,6 +77,8 @@ public class EngineGetPayloadResultV3 {
 
     private final String excessDataGas;
 
+    private final String dataGasUsed;
+
     protected final List<String> transactions;
     private final List<WithdrawalParameter> withdrawals;
 
@@ -95,6 +97,7 @@ public class EngineGetPayloadResultV3 {
       this.excessDataGas = header.getExcessDataGas().map(Quantity::create).orElse(null);
       this.gasLimit = Quantity.create(header.getGasLimit());
       this.gasUsed = Quantity.create(header.getGasUsed());
+      this.dataGasUsed = Quantity.create(header.getDataGasUsed());
       this.timestamp = Quantity.create(header.getTimestamp());
       this.transactions = transactions;
       this.feeRecipient = header.getCoinbase().toString();
@@ -188,6 +191,11 @@ public class EngineGetPayloadResultV3 {
     @JsonGetter(value = "excessDataGas")
     public String getExcessDataGas() {
       return excessDataGas;
+    }
+
+    @JsonGetter(value = "dataGasUsed")
+    public String getDataGasUseds() {
+      return dataGasUsed;
     }
   }
 }
