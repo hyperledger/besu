@@ -1,3 +1,143 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor;
 
-public class PrivateBlockReplay {}
+import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
+import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
+
+import java.util.List;
+import java.util.Optional;
+
+public class PrivateBlockReplay {
+
+  private final ProtocolSchedule protocolSchedule;
+  private final Blockchain blockchain;
+
+  private final PrivacyQueries privacyQueries;
+
+  private final PrivacyController privacyController;
+  ;
+
+  public PrivateBlockReplay(
+      final ProtocolSchedule protocolSchedule,
+      final Blockchain blockchain,
+      final PrivacyQueries privacyQueries,
+      final PrivacyController privacyController) {
+    this.protocolSchedule = protocolSchedule;
+    this.blockchain = blockchain;
+    this.privacyQueries = privacyQueries;
+    this.privacyController = privacyController;
+  }
+
+  public Optional<PrivateBlockTrace> block(
+      final Block block,
+      final PrivateBlockMetadata privateBlockMetadata,
+      final String enclaveKey,
+      final TransactionAction<PrivateTransactionTrace> action) {
+    return performActionWithBlock(
+        block.getHeader(),
+        block.getBody(),
+        (body, header, blockchain, transactionProcessor, protocolSpec) -> {
+          final Wei dataGasPrice =
+              protocolSpec
+                  .getFeeMarket()
+                  .dataPrice(
+                      blockchain
+                          .getBlockHeader(header.getParentHash())
+                          .flatMap(BlockHeader::getExcessDataGas)
+                          .orElse(DataGas.ZERO));
+
+          final List<PrivateTransactionTrace> transactionTraces =
+              privateBlockMetadata.getPrivateTransactionMetadataList().stream()
+                  .map(
+                      privateTransactionMetadata ->
+                          privacyController
+                              .findPrivateTransactionByPmtHash(
+                                  privateTransactionMetadata.getPrivateMarkerTransactionHash(),
+                                  enclaveKey)
+                              .map(
+                                  executedPrivateTransaction ->
+                                      action.performAction(
+                                          executedPrivateTransaction,
+                                          header,
+                                          blockchain,
+                                          transactionProcessor,
+                                          dataGasPrice))
+                              .orElse(null))
+                  .toList();
+
+          return Optional.of(new PrivateBlockTrace(transactionTraces));
+        });
+  }
+
+  public <T> Optional<T> performActionWithBlock(final Hash blockHash, final BlockAction<T> action) {
+    Optional<Block> maybeBlock = getBlock(blockHash);
+    if (maybeBlock.isEmpty()) {
+      maybeBlock = getBadBlock(blockHash);
+    }
+    return maybeBlock.flatMap(
+        block -> performActionWithBlock(block.getHeader(), block.getBody(), action));
+  }
+
+  private <T> Optional<T> performActionWithBlock(
+      final BlockHeader header, final BlockBody body, final BlockAction<T> action) {
+    if (header == null) {
+      return Optional.empty();
+    }
+    if (body == null) {
+      return Optional.empty();
+    }
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
+    final PrivateTransactionProcessor transactionProcessor =
+        protocolSpec.getPrivateTransactionProcessor();
+
+    return action.perform(body, header, blockchain, transactionProcessor, protocolSpec);
+  }
+
+  private Optional<Block> getBadBlock(final Hash blockHash) {
+    final ProtocolSpec protocolSpec =
+        protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader());
+    return protocolSpec.getBadBlocksManager().getBadBlock(blockHash);
+  }
+
+  private Optional<Block> getBlock(final Hash blockHash) {
+    final BlockHeader blockHeader = blockchain.getBlockHeader(blockHash).orElse(null);
+    if (blockHeader != null) {
+      final BlockBody blockBody = blockchain.getBlockBody(blockHeader.getHash()).orElse(null);
+      if (blockBody != null) {
+        return Optional.of(new Block(blockHeader, blockBody));
+      }
+    }
+    return Optional.empty();
+  }
+
+  @FunctionalInterface
+  public interface BlockAction<T> {
+    Optional<T> perform(
+        BlockBody body,
+        BlockHeader blockHeader,
+        Blockchain blockchain,
+        PrivateTransactionProcessor transactionProcessor,
+        ProtocolSpec protocolSpec);
+  }
+
+  @FunctionalInterface
+  public interface TransactionAction<T> {
+    T performAction(
+        PrivateTransaction transaction,
+        BlockHeader blockHeader,
+        Blockchain blockchain,
+        PrivateTransactionProcessor transactionProcessor,
+        Wei dataGasPrice);
+  }
+}

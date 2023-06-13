@@ -8,15 +8,18 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor.PrivateTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.ExecutedPrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Collections;
@@ -32,6 +35,7 @@ public abstract class PrivateAbstractTraceByHash implements JsonRpcMethod {
 
   protected final Supplier<BlockTracer> blockTracerSupplier;
   protected final BlockchainQueries blockchainQueries;
+  protected final PrivacyQueries privacyQueries;
   protected final ProtocolSchedule protocolSchedule;
   protected final PrivacyController privacyController;
   protected final PrivacyIdProvider privacyIdProvider;
@@ -39,11 +43,13 @@ public abstract class PrivateAbstractTraceByHash implements JsonRpcMethod {
   protected PrivateAbstractTraceByHash(
       final Supplier<BlockTracer> blockTracerSupplier,
       final BlockchainQueries blockchainQueries,
+      final PrivacyQueries privacyQueries,
       final ProtocolSchedule protocolSchedule,
       final PrivacyController privacyController,
       final PrivacyIdProvider privacyIdProvider) {
     this.blockTracerSupplier = blockTracerSupplier;
     this.blockchainQueries = blockchainQueries;
+    this.privacyQueries = privacyQueries;
     this.protocolSchedule = protocolSchedule;
     this.privacyController = privacyController;
     this.privacyIdProvider = privacyIdProvider;
@@ -62,18 +68,23 @@ public abstract class PrivateAbstractTraceByHash implements JsonRpcMethod {
     return privacyController
         .findPrivateTransactionByPmtHash(transactionHash, enclaveKey)
         .map(ExecutedPrivateTransaction::getBlockNumber)
-        .flatMap(blockNumber -> blockchainQueries.getBlockchain().getBlockByNumber(blockNumber))
-        .map(block -> getTraceBlock(block, transactionHash))
+        .flatMap(blockNumber -> blockchainQueries.getBlockchain().getBlockHashByNumber(blockNumber))
+        .map(blockHash -> privacyQueries.getPrivateBlockMetaData(privacyGroupId, blockHash))
+        .map(
+            blockMetadata -> getTraceBlock(blockMetadata.orElse(null), transactionHash, enclaveKey))
         .orElse(Stream.empty());
   }
 
-  private Stream<FlatTrace> getTraceBlock(final Block block, final Hash transactionHash) {
-    if (block == null || block.getBody().getTransactions().isEmpty()) {
+  private Stream<FlatTrace> getTraceBlock(
+      final PrivateBlockMetadata blockMetadata,
+      final Hash transactionHash,
+      final String enclaveKey) {
+    if (blockMetadata == null || blockMetadata.getPrivateTransactionMetadataList().isEmpty()) {
       return Stream.empty();
     }
-    return Tracer.processTracing(
+    return PrivateTracer.processTracing(
             blockchainQueries,
-            Optional.of(block.getHeader()),
+            blockMetadata,
             mutableWorldState -> {
               final TransactionTrace transactionTrace = getTransactionTrace(block, transactionHash);
               return Optional.ofNullable(getTraceStream(transactionTrace, block));

@@ -32,6 +32,7 @@ public class PrivTraceTransaction extends PrivateAbstractTraceByHash implements 
     super(
         blockTracerSupplier,
         blockchainQueries,
+        privacyQueries,
         protocolSchedule,
         privacyController,
         privacyIdProvider);
