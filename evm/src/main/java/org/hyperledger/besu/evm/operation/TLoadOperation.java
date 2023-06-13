@@ -33,7 +33,7 @@ public class TLoadOperation extends AbstractOperation {
    * @param gasCalculator gas calculator for costing
    */
   public TLoadOperation(final GasCalculator gasCalculator) {
-    super(0xb3, "TLOAD", 1, 1, gasCalculator);
+    super(0x5C, "TLOAD", 1, 1, gasCalculator);
   }
 
   @Override

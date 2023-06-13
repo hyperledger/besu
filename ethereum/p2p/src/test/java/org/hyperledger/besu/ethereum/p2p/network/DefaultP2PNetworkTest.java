@@ -58,8 +58,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.vertx.core.Vertx;
-import io.vertx.core.dns.DnsClient;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.crypto.SECP256K1;
 import org.assertj.core.api.Assertions;
@@ -350,12 +348,8 @@ public final class DefaultP2PNetworkTest {
     final NetworkingConfiguration dnsConfig =
         when(spy(config).getDiscovery()).thenReturn(disco).getMock();
 
-    Vertx vertx = mock(Vertx.class);
-    when(vertx.createDnsClient(any())).thenReturn(mock(DnsClient.class));
-
     // spy on DefaultP2PNetwork
-    final DefaultP2PNetwork testClass =
-        (DefaultP2PNetwork) builder().vertx(vertx).config(dnsConfig).build();
+    final DefaultP2PNetwork testClass = (DefaultP2PNetwork) builder().config(dnsConfig).build();
 
     testClass.start();
     assertThat(testClass.getDnsDaemon()).isPresent();
@@ -372,11 +366,7 @@ public final class DefaultP2PNetworkTest {
     doReturn(disco).when(dnsConfig).getDiscovery();
     doReturn(Optional.of("localhost")).when(dnsConfig).getDnsDiscoveryServerOverride();
 
-    Vertx vertx = mock(Vertx.class);
-    when(vertx.createDnsClient(any())).thenReturn(mock(DnsClient.class));
-
-    final DefaultP2PNetwork testClass =
-        (DefaultP2PNetwork) builder().config(dnsConfig).vertx(vertx).build();
+    final DefaultP2PNetwork testClass = (DefaultP2PNetwork) builder().config(dnsConfig).build();
     testClass.start();
 
     // ensure we used the dns server override config when building DNSDaemon:
