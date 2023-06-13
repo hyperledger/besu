@@ -338,6 +338,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
 
   /**
    * Flag to know whether the flat db healing feature is enabled or disabled.
+   *
    * @return true is the flat db healing is enabled
    */
   public boolean isSnapsyncFlatDbHealingEnabled() {
