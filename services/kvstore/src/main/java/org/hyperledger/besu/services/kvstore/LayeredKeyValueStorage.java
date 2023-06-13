@@ -111,6 +111,11 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
   }
 
   @Override
+  public Stream<Pair<byte[], byte[]>> streamFromKey(final byte[] startKey) {
+    return stream().filter(e -> Bytes.wrap(startKey).compareTo(Bytes.wrap(e.getKey())) <= 0);
+  }
+
+  @Override
   public Stream<byte[]> streamKeys() {
     throwIfClosed();
 
