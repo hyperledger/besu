@@ -592,11 +592,9 @@ public class RunnerBuilder {
    * @param enodeDnsConfiguration the DNS configuration for enodes
    * @return the runner builder
    */
-  public RunnerBuilder enodeDnsConfiguration(
-      final Optional<EnodeDnsConfiguration> enodeDnsConfiguration) {
-    if (null != enodeDnsConfiguration) {
-      this.enodeDnsConfiguration = enodeDnsConfiguration;
-    }
+  public RunnerBuilder enodeDnsConfiguration(final EnodeDnsConfiguration enodeDnsConfiguration) {
+    this.enodeDnsConfiguration =
+        enodeDnsConfiguration != null ? Optional.of(enodeDnsConfiguration) : Optional.empty();
     return this;
   }
 

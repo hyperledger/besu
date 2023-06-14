@@ -18,7 +18,8 @@ and in case a rollback is needed, before installing a previous version, the migr
 - Add healing flat db mechanism with experimental CLI options `--Xsnapsync-synchronizer-flat-db-healing-enabled=true` [#5319](https://github.com/hyperledger/besu/pull/5319)
 
 ### Bug Fixes
-- check to ensure storage and transactions are not closed prior to reading/writing [#5527](https://github.com/hyperledger/besu/pull/5527) 
+- check to ensure storage and transactions are not closed prior to reading/writing [#5527](https://github.com/hyperledger/besu/pull/5527)
+- use the node's configuration to determine if DNS enode URLs are allowed in calls to `admin_addPeer` [#5584](https://github.com/hyperledger/besu/pull/5584)
 
 ### Download Links
 
