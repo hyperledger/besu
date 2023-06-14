@@ -200,7 +200,7 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
         privCall(privacyGroupId, eventEmitter, true, false, false);
 
     final String errorMessage = priv_call.send().getError().getMessage();
-    assertThat(errorMessage).isEqualTo("Internal error");
+    assertThat(errorMessage).isEqualTo("Private transaction failed");
   }
 
   @Test
