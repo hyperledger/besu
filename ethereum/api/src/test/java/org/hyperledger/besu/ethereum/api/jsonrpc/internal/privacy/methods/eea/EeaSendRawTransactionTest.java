@@ -143,7 +143,8 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            validPrivateForTransactionRequest.getRequest().getId(), JsonRpcError.PRIVATE_TRANSACTION_FAILED);
+            validPrivateForTransactionRequest.getRequest().getId(),
+            JsonRpcError.PRIVATE_TRANSACTION_FAILED);
 
     final JsonRpcResponse actualResponse = method.response(validPrivateForTransactionRequest);
 

@@ -160,7 +160,7 @@ public enum JsonRpcError {
   PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY(
       -50100, "Private from does not match enclave public key"),
   VALUE_NOT_ZERO(-50100, "We cannot transfer ether in a private transaction yet."),
-  PRIVATE_TRANSACTION_FAILED(-50100,"Private transaction failed"),
+  PRIVATE_TRANSACTION_FAILED(-50100, "Private transaction failed"),
 
   CANT_CONNECT_TO_LOCAL_PEER(-32100, "Cannot add local node as peer."),
 

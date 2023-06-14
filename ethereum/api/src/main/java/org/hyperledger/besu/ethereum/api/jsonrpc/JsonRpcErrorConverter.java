@@ -47,6 +47,8 @@ public class JsonRpcErrorConverter {
         // Private Transaction Invalid Reasons
       case PRIVATE_TRANSACTION_FAILED:
         return JsonRpcError.PRIVATE_TRANSACTION_FAILED;
+      case PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE:
+        return JsonRpcError.UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE;
       case CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE:
         return JsonRpcError.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
       case GAS_PRICE_TOO_LOW:
