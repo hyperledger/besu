@@ -12,16 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
+package org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal;
+
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
@@ -35,11 +40,12 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
+/** Represents a healing request for an account trie node. */
+public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
 
   private final HashSet<Bytes> inconsistentAccounts;
 
-  AccountTrieNodeDataRequest(
+  public AccountTrieNodeHealingRequest(
       final Hash hash,
       final Hash originalRootHash,
       final Bytes location,
@@ -53,7 +59,8 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
       final WorldStateStorage worldStateStorage,
       final WorldStateStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncState snapSyncState) {
+      final SnapSyncProcessState snapSyncState,
+      final SnapSyncConfiguration snapSyncConfiguration) {
     if (isRoot()) {
       downloadState.setRootNodeData(data);
     }
@@ -62,7 +69,8 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
   }
 
   @Override
-  public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
+  public Optional<Bytes> getExistingData(
+      final SnapWorldDownloadState downloadState, final WorldStateStorage worldStateStorage) {
     return worldStateStorage
         .getAccountStateTrieNode(getLocation(), getNodeHash())
         .filter(data -> !getLocation().isEmpty());
@@ -131,7 +139,9 @@ public class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
     final Hash accountHash =
         Hash.wrap(
             Bytes32.wrap(CompactEncoding.pathToBytes(Bytes.concatenate(getLocation(), path))));
-    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
+
+    // update the flat db only for bonsai
+    if (!worldStateStorage.getFlatDbMode().equals(FlatDbMode.NO_FLATTENED)) {
       ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
           .putAccountInfoState(accountHash, value)
           .commit();
