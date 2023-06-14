@@ -3103,7 +3103,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .storageProvider(keyValueStorageProvider(keyValueStorageName))
             .rpcEndpointService(rpcEndpointServiceImpl)
             .rpcMaxLogsRange(rpcMaxLogsRange)
-            .enodeDnsConfiguration(Optional.of(getEnodeDnsConfiguration()))
+            .enodeDnsConfiguration(getEnodeDnsConfiguration())
             .build();
 
     addShutdownHook(runner);
