@@ -274,6 +274,16 @@ public class SparseTransactions extends AbstractTransactionsLayer {
   }
 
   @Override
+  public OptionalLong getCurrentNonceFor(final Address sender) {
+    final var senderTxs = txsBySender.get(sender);
+    if (senderTxs != null) {
+      final var gap = gapBySender.get(sender);
+      return OptionalLong.of(senderTxs.firstKey() - gap);
+    }
+    return nextLayer.getCurrentNonceFor(sender);
+  }
+
+  @Override
   protected void internalNotifyAdded(
       final NavigableMap<Long, PendingTransaction> senderTxs,
       final PendingTransaction pendingTransaction) {

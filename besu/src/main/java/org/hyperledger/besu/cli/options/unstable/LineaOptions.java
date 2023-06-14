@@ -9,9 +9,7 @@ import java.util.Optional;
 
 import picocli.CommandLine;
 
-/**
- * Linea CLI options.
- */
+/** Linea CLI options. */
 public class LineaOptions implements CLIOptions<LineaParameters> {
   private static final String TRANSACTION_MAX_CALLDATA_SIZE = "--Xtransaction-max-calldata-size";
   private static final String BLOCK_MAX_CALLDATA_SIZE = "--Xblock-max-calldata-size";

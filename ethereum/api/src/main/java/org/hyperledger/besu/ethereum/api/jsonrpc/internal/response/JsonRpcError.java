@@ -55,6 +55,7 @@ public enum JsonRpcError {
   // Transaction validation failures
   NONCE_TOO_LOW(-32001, "Nonce too low"),
   INVALID_TRANSACTION_SIGNATURE(-32002, "Invalid signature"),
+  INVALID_TRANSACTION_TYPE(-32602, "Invalid transaction type"),
   INTRINSIC_GAS_EXCEEDS_LIMIT(-32003, "Intrinsic gas exceeds gas limit"),
   TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE(-32004, "Upfront cost exceeds account balance"),
   EXCEEDS_BLOCK_GAS_LIMIT(-32005, "Transaction gas limit exceeds block gas limit"),

@@ -17,7 +17,7 @@ package org.hyperledger.besu.util.number;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PercentageTest {
 

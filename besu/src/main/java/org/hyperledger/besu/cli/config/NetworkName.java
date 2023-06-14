@@ -23,8 +23,6 @@ import org.apache.commons.lang3.StringUtils;
 public enum NetworkName {
   /** Mainnet network name. */
   MAINNET("/mainnet.json", BigInteger.valueOf(1)),
-  /** Rinkeby network name. */
-  RINKEBY("/rinkeby.json", BigInteger.valueOf(4)),
   /** Sepolia network name. */
   SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111)),
   /** Goerli network name. */
@@ -57,21 +55,8 @@ public enum NetworkName {
     this.genesisFile = genesisFile;
     this.networkId = networkId;
     this.canFastSync = canFastSync;
-
-    // https://blog.ethereum.org/2022/06/21/testnet-deprecation/
-    switch (networkId.intValue()) {
-      case 3:
-        deprecationDate = "in Q4 2022";
-        break;
-      case 4:
-        deprecationDate = "in Q2/Q3 2023";
-        break;
-      case 1337802:
-        deprecationDate = "after the Mainnet Merge";
-        break;
-      default:
-        deprecationDate = null;
-    }
+    // no deprecations planned
+    this.deprecationDate = null;
   }
 
   /**

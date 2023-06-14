@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.chain.ChainPrunerConfiguration;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -95,6 +96,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
+import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
 
 import java.io.Closeable;
 import java.math.BigInteger;
@@ -182,8 +184,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   private NetworkingConfiguration networkingConfiguration;
   private Boolean randomPeerPriority;
+  private Optional<TransactionSelectorFactory> transactionSelectorFactory = Optional.empty();
   /** the Dagger configured context that can provide dependencies */
-  protected BesuComponent besuComponent = null;
+  protected Optional<BesuComponent> besuComponent = Optional.empty();
 
   /**
    * Provide a BesuComponent which can be used to get other dependencies
@@ -192,7 +195,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @return the besu controller builder
    */
   public BesuControllerBuilder besuComponent(final BesuComponent besuComponent) {
-    this.besuComponent = besuComponent;
+    this.besuComponent = Optional.ofNullable(besuComponent);
     return this;
   }
 
@@ -526,6 +529,18 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
+   * sets the transactionSelectorFactory in the builder
+   *
+   * @param transactionSelectorFactory the optional transaction selector factory
+   * @return the besu controller builder
+   */
+  public BesuControllerBuilder transactionSelectorFactory(
+      final Optional<TransactionSelectorFactory> transactionSelectorFactory) {
+    this.transactionSelectorFactory = transactionSelectorFactory;
+    return this;
+  }
+
+  /**
    * Build besu controller.
    *
    * @return the besu controller
@@ -551,11 +566,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
+
+    final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
+
     final WorldStateStorage worldStateStorage =
         storageProvider.createWorldStateStorage(dataStorageConfiguration.getDataStorageFormat());
 
     final BlockchainStorage blockchainStorage =
-        storageProvider.createBlockchainStorage(protocolSchedule);
+        storageProvider.createBlockchainStorage(protocolSchedule, variablesStorage);
 
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(
@@ -566,9 +584,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             dataDirectory.toString());
 
     final CachedMerkleTrieLoader cachedMerkleTrieLoader =
-        besuComponent == null
-            ? new CachedMerkleTrieLoader(metricsSystem)
-            : besuComponent.getCachedMerkleTrieLoader();
+        besuComponent
+            .map(BesuComponent::getCachedMerkleTrieLoader)
+            .orElseGet(() -> new CachedMerkleTrieLoader(metricsSystem));
 
     final WorldStateArchive worldStateArchive =
         createWorldStateArchive(worldStateStorage, blockchain, cachedMerkleTrieLoader);
@@ -579,7 +597,11 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final ProtocolContext protocolContext =
         createProtocolContext(
-            blockchain, worldStateArchive, protocolSchedule, this::createConsensusContext);
+            blockchain,
+            worldStateArchive,
+            protocolSchedule,
+            this::createConsensusContext,
+            transactionSelectorFactory);
     validateContext(protocolContext);
 
     if (chainPrunerConfiguration.getChainPruningEnabled()) {
@@ -760,6 +782,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         closeables,
         additionalPluginServices,
         ethPeers,
+        storageProvider,
         lineaParameters);
   }
 
@@ -996,15 +1019,21 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param worldStateArchive the world state archive
    * @param protocolSchedule the protocol schedule
    * @param consensusContextFactory the consensus context factory
+   * @param transactionSelectorFactory optional transaction selector factory
    * @return the protocol context
    */
   protected ProtocolContext createProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory) {
+      final ConsensusContextFactory consensusContextFactory,
+      final Optional<TransactionSelectorFactory> transactionSelectorFactory) {
     return ProtocolContext.init(
-        blockchain, worldStateArchive, protocolSchedule, consensusContextFactory);
+        blockchain,
+        worldStateArchive,
+        protocolSchedule,
+        consensusContextFactory,
+        transactionSelectorFactory);
   }
 
   private Optional<SnapProtocolManager> createSnapProtocolManager(
@@ -1028,7 +1057,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
             cachedMerkleTrieLoader,
             metricsSystem,
-            besuComponent.getBesuPluginContext());
+            besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null));
 
       case FOREST:
       default:
@@ -1109,6 +1138,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   /**
    * Setter for LineaParameters .
+   *
    * @param lineaParameters linea params to add to controller builder.
    * @return the controller builder.
    */

@@ -15,12 +15,12 @@
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
@@ -34,12 +34,9 @@ import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.net.InetSocketAddress;
@@ -70,7 +67,6 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class PeerDiscoveryAgent {
   private static final Logger LOG = LoggerFactory.getLogger(PeerDiscoveryAgent.class);
-  private static final String SEQ_NO_STORE_KEY = "local-enr-seqno";
   private static final com.google.common.base.Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
@@ -101,7 +97,7 @@ public abstract class PeerDiscoveryAgent {
 
   /* Is discovery enabled? */
   private boolean isActive = false;
-  private final StorageProvider storageProvider;
+  private final VariablesStorage variablesStorage;
   private final Supplier<List<Bytes>> forkIdSupplier;
   private String advertisedAddress;
 
@@ -130,7 +126,7 @@ public abstract class PeerDiscoveryAgent {
 
     this.id = nodeKey.getPublicKey().getEncodedBytes();
 
-    this.storageProvider = storageProvider;
+    this.variablesStorage = storageProvider.createVariablesStorage();
     this.forkIdManager = forkIdManager;
     this.forkIdSupplier = () -> forkIdManager.getForkIdForChainHead().getForkIdAsBytesList();
     this.rlpxAgent = rlpxAgent;
@@ -187,14 +183,9 @@ public abstract class PeerDiscoveryAgent {
       return;
     }
 
-    final KeyValueStorage keyValueStorage =
-        storageProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.BLOCKCHAIN);
     final NodeRecordFactory nodeRecordFactory = NodeRecordFactory.DEFAULT;
     final Optional<NodeRecord> existingNodeRecord =
-        keyValueStorage
-            .get(Bytes.of(SEQ_NO_STORE_KEY.getBytes(UTF_8)).toArray())
-            .map(Bytes::of)
-            .map(nodeRecordFactory::fromBytes);
+        variablesStorage.getLocalEnrSeqno().map(nodeRecordFactory::fromBytes);
 
     final Bytes addressBytes = Bytes.of(InetAddresses.forString(advertisedAddress).getAddress());
     final Optional<EnodeURL> maybeEnodeURL = localNode.map(DiscoveryPeer::getEnodeURL);
@@ -236,12 +227,10 @@ public abstract class PeerDiscoveryAgent {
                           .slice(0, 64));
 
                   LOG.info("Writing node record to disk. {}", nodeRecord);
-                  final KeyValueStorageTransaction keyValueStorageTransaction =
-                      keyValueStorage.startTransaction();
-                  keyValueStorageTransaction.put(
-                      Bytes.wrap(SEQ_NO_STORE_KEY.getBytes(UTF_8)).toArray(),
-                      nodeRecord.serialize().toArray());
-                  keyValueStorageTransaction.commit();
+                  final var variablesUpdater = variablesStorage.updater();
+                  variablesUpdater.setLocalEnrSeqno(nodeRecord.serialize());
+                  variablesUpdater.commit();
+
                   return nodeRecord;
                 });
     localNode

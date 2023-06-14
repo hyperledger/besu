@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -76,6 +77,7 @@ public class BesuController implements java.io.Closeable {
   private final PluginServiceFactory additionalPluginServices;
   private final SyncState syncState;
   private final EthPeers ethPeers;
+  private final StorageProvider storageProvider;
   private final LineaParameters lineaParameters;
 
   /**
@@ -114,6 +116,7 @@ public class BesuController implements java.io.Closeable {
       final List<Closeable> closeables,
       final PluginServiceFactory additionalPluginServices,
       final EthPeers ethPeers,
+      final StorageProvider storageProvider,
       final LineaParameters lineaParameters) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -131,6 +134,7 @@ public class BesuController implements java.io.Closeable {
     this.miningParameters = miningParameters;
     this.additionalPluginServices = additionalPluginServices;
     this.ethPeers = ethPeers;
+    this.storageProvider = storageProvider;
     this.lineaParameters = lineaParameters;
   }
 
@@ -222,6 +226,15 @@ public class BesuController implements java.io.Closeable {
    */
   public EthPeers getEthPeers() {
     return ethPeers;
+  }
+
+  /**
+   * Get the storage provider
+   *
+   * @return the storage provider
+   */
+  public StorageProvider getStorageProvider() {
+    return storageProvider;
   }
 
   @Override

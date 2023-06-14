@@ -1,0 +1,46 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "engine_forkchoiceUpdatedV2",
+    "params": [
+      {
+        "headBlockHash": "0x9392d866ef80eb0d7a1700362326e3396cc9550b757bda2191548fb1447f5d26",
+        "safeBlockHash": "0x9392d866ef80eb0d7a1700362326e3396cc9550b757bda2191548fb1447f5d26",
+        "finalizedBlockHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      {
+        "timestamp": "0x10",
+        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "suggestedFeeRecipient": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+        "withdrawals": [
+          {
+            "index": "0x0",
+            "validatorIndex": "0x0",
+            "address": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+            "amount": "0x1"
+          },
+          {
+            "index": "0x1",
+            "validatorIndex": "0x1",
+            "address": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+            "amount": "0x2"
+          }
+        ]
+      }
+    ],
+    "id": 67
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 67,
+    "result": {
+      "payloadStatus": {
+        "status": "VALID",
+        "latestValidHash": "0x9392d866ef80eb0d7a1700362326e3396cc9550b757bda2191548fb1447f5d26",
+        "validationError": null
+      },
+      "payloadId": "0x0065bd547ba05dd9"
+    }
+  },
+  "statusCode" : 200
+}

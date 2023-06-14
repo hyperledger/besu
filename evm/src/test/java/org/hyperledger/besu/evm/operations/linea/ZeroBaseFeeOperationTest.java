@@ -31,7 +31,7 @@ import org.hyperledger.besu.evm.operation.linea.ZeroBaseFeeOperation;
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ZeroBaseFeeOperationTest {
   private final GasCalculator gasCalculator = new BerlinGasCalculator();

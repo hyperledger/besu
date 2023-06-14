@@ -143,17 +143,32 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
                   new BonsaiWorldState(
                       archive, new BonsaiWorldStateLayerStorage(cached.getWorldStateStorage())));
     }
+    LOG.atDebug()
+        .setMessage("did not find worldstate in cache for {}")
+        .addArgument(blockHash.toShortHexString())
+        .log();
+
     return Optional.empty();
   }
 
   @Override
   public Optional<BonsaiWorldState> getNearestWorldState(final BlockHeader blockHeader) {
+    LOG.atDebug()
+        .setMessage("getting nearest worldstate for {}")
+        .addArgument(blockHeader.toLogString())
+        .log();
+
     return Optional.ofNullable(
             cachedWorldStatesByHash.get(blockHeader.getParentHash())) // search parent block
         .map(CachedBonsaiWorldView::getWorldStateStorage)
         .or(
             () -> {
               // or else search the nearest state in the cache
+              LOG.atDebug()
+                  .setMessage("searching cache for nearest worldstate for {}")
+                  .addArgument(blockHeader.toLogString())
+                  .log();
+
               final List<CachedBonsaiWorldView> cachedBonsaiWorldViews =
                   new ArrayList<>(cachedWorldStatesByHash.values());
               return cachedBonsaiWorldViews.stream()
@@ -172,6 +187,8 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
   @Override
   public Optional<BonsaiWorldState> getHeadWorldState(
       final Function<Hash, Optional<BlockHeader>> hashBlockHeaderFunction) {
+
+    LOG.atDebug().setMessage("getting head worldstate").log();
 
     return rootWorldStateStorage
         .getWorldStateBlockHash()

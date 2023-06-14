@@ -1,12 +1,9 @@
 {
-  "request": 
-    
-  "{ block(number: \"0x1e\") { transactionAt(index: 1) {block{hash}  hash} } }",
-
-  "response":{
-    "data" : {
-      "block" : {
-        "transactionAt" : null
+  "request": "{ block(number: \"0x1e\") { transactionAt(index: 1) {block{hash}  hash} } }",
+  "response": {
+    "data": {
+      "block": {
+        "transactionAt": null
       }
     }
   },

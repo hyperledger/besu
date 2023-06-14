@@ -31,6 +31,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.tuweni.bytes.Bytes;
 import org.rocksdb.OptimisticTransactionDB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,6 +77,11 @@ public class RocksDBColumnarKeyValueSnapshot implements SnappedKeyValueStorage {
   }
 
   @Override
+  public Stream<Pair<byte[], byte[]>> streamFromKey(final byte[] startKey) {
+    return stream().filter(e -> Bytes.wrap(startKey).compareTo(Bytes.wrap(e.getKey())) <= 0);
+  }
+
+  @Override
   public Stream<byte[]> streamKeys() {
     throwIfClosed();
     return snapTx.streamKeys();
@@ -106,6 +112,11 @@ public class RocksDBColumnarKeyValueSnapshot implements SnappedKeyValueStorage {
     // The use of a transaction on a transaction based key value store is dubious
     // at best.  return our snapshot transaction instead.
     return snapTx;
+  }
+
+  @Override
+  public boolean isClosed() {
+    return closed.get();
   }
 
   @Override

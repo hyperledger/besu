@@ -45,19 +45,21 @@ import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolCo
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
-import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
@@ -78,15 +80,17 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public abstract class AbstractBlockTransactionSelectorTest {
+  protected static final double MIN_OCCUPANCY_80_PERCENT = 0.8;
+  protected static final double MIN_OCCUPANCY_100_PERCENT = 1;
   protected static final KeyPair keyPair =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
+
   protected final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   protected final Blockchain blockchain = new ReferenceTestBlockchain();
   protected PendingTransactions pendingTransactions;
   protected MutableWorldState worldState;
   @Mock protected MainnetTransactionProcessor transactionProcessor;
-  @Mock protected MainnetTransactionValidator transactionValidator;
 
   @Before
   public void setup() {
@@ -131,7 +135,12 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final BlockTransactionSelector selector =
         createBlockSelector(
-            mainnetTransactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary, Wei.ZERO);
+            mainnetTransactionProcessor,
+            blockHeader,
+            Wei.ZERO,
+            miningBeneficiary,
+            Wei.ZERO,
+            MIN_OCCUPANCY_80_PERCENT);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -155,7 +164,12 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final BlockTransactionSelector selector =
         createBlockSelector(
-            transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary, Wei.ZERO);
+            transactionProcessor,
+            blockHeader,
+            Wei.ZERO,
+            miningBeneficiary,
+            Wei.ZERO,
+            MIN_OCCUPANCY_80_PERCENT);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -187,7 +201,12 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final BlockTransactionSelector selector =
         createBlockSelector(
-            transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary, Wei.ZERO);
+            transactionProcessor,
+            blockHeader,
+            Wei.ZERO,
+            miningBeneficiary,
+            Wei.ZERO,
+            MIN_OCCUPANCY_80_PERCENT);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -215,7 +234,12 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final BlockTransactionSelector selector =
         createBlockSelector(
-            transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary, Wei.ZERO);
+            transactionProcessor,
+            blockHeader,
+            Wei.ZERO,
+            miningBeneficiary,
+            Wei.ZERO,
+            MIN_OCCUPANCY_80_PERCENT);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -263,7 +287,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             FeeMarket.london(0L),
             new LondonGasCalculator(),
             GasLimitCalculator.constant(),
-            -1);
+            Optional.empty());
 
     // this should fill up all the block space
     final Transaction fillingLegacyTx =
@@ -307,12 +331,17 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
   @Test
   public void transactionTooLargeForBlockDoesNotPreventMoreBeingAddedIfBlockOccupancyNotReached() {
-    final ProcessableBlockHeader blockHeader = createBlock(300);
+    final ProcessableBlockHeader blockHeader = createBlock(300_000);
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
         createBlockSelector(
-            transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary, Wei.ZERO);
+            transactionProcessor,
+            blockHeader,
+            Wei.ZERO,
+            miningBeneficiary,
+            Wei.ZERO,
+            MIN_OCCUPANCY_80_PERCENT);
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     // Add 3 transactions to the Pending Transactions, 79% of block, 100% of block and 10% of block
@@ -352,7 +381,12 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
         createBlockSelector(
-            transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary, Wei.ZERO);
+            transactionProcessor,
+            blockHeader,
+            Wei.ZERO,
+            miningBeneficiary,
+            Wei.ZERO,
+            MIN_OCCUPANCY_80_PERCENT);
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     // Add 4 transactions to the Pending Transactions 15% (ok), 79% (ok), 25% (too large), 10%
@@ -395,13 +429,118 @@ public abstract class AbstractBlockTransactionSelectorTest {
   }
 
   @Test
+  public void transactionSelectionStopsWhenBlockIsFull() {
+    final ProcessableBlockHeader blockHeader = createBlock(3_000_000);
+
+    final Address miningBeneficiary = AddressHelpers.ofValue(1);
+    final BlockTransactionSelector selector =
+        createBlockSelector(
+            transactionProcessor,
+            blockHeader,
+            Wei.ZERO,
+            miningBeneficiary,
+            Wei.ZERO,
+            MIN_OCCUPANCY_100_PERCENT);
+
+    final long minTxGasCost = getGasCalculator().getMinimumTransactionCost();
+
+    // Add 4 transactions to the Pending Transactions
+    // 0) 90% of block (selected)
+    // 1) 90% of block (skipped since too large)
+    // 2) enough gas to only leave space for a transaction with the min gas cost (selected)
+    // 3) min gas cost (selected and 100% block gas used)
+    // 4) min gas cost (not selected since selection stopped after tx 3)
+    // NOTE - PendingTransactions outputs these in nonce order
+
+    final long gasLimit0 = (long) (blockHeader.getGasLimit() * 0.9);
+    final long gasLimit1 = (long) (blockHeader.getGasLimit() * 0.9);
+    final long gasLimit2 = blockHeader.getGasLimit() - gasLimit0 - minTxGasCost;
+    final long gasLimit3 = minTxGasCost;
+    final long gasLimit4 = minTxGasCost;
+
+    final TransactionTestFixture txTestFixture = new TransactionTestFixture();
+    final List<Transaction> transactionsToInject = Lists.newArrayList();
+    transactionsToInject.add(txTestFixture.gasLimit(gasLimit0).nonce(0).createTransaction(keyPair));
+    transactionsToInject.add(txTestFixture.gasLimit(gasLimit1).nonce(1).createTransaction(keyPair));
+    transactionsToInject.add(txTestFixture.gasLimit(gasLimit2).nonce(2).createTransaction(keyPair));
+    transactionsToInject.add(txTestFixture.gasLimit(gasLimit3).nonce(3).createTransaction(keyPair));
+    transactionsToInject.add(txTestFixture.gasLimit(gasLimit4).nonce(4).createTransaction(keyPair));
+
+    for (final Transaction tx : transactionsToInject) {
+      pendingTransactions.addRemoteTransaction(tx, Optional.empty());
+      ensureTransactionIsValid(tx);
+    }
+
+    final BlockTransactionSelector.TransactionSelectionResults results =
+        selector.buildTransactionListForBlock();
+
+    assertThat(results.getTransactions())
+        .containsExactly(
+            transactionsToInject.get(0), transactionsToInject.get(2), transactionsToInject.get(3));
+    assertThat(results.getCumulativeGasUsed()).isEqualTo(blockHeader.getGasLimit());
+  }
+
+  @Test
+  public void transactionSelectionStopsWhenRemainingGasIsNotEnoughForAnyMoreTransaction() {
+    final ProcessableBlockHeader blockHeader = createBlock(3_000_000);
+
+    final Address miningBeneficiary = AddressHelpers.ofValue(1);
+    final BlockTransactionSelector selector =
+        createBlockSelector(
+            transactionProcessor,
+            blockHeader,
+            Wei.ZERO,
+            miningBeneficiary,
+            Wei.ZERO,
+            MIN_OCCUPANCY_100_PERCENT);
+
+    final long minTxGasCost = getGasCalculator().getMinimumTransactionCost();
+
+    // Add 4 transactions to the Pending Transactions
+    // 0) 90% of block (selected)
+    // 1) 90% of block (skipped since too large)
+    // 2) do not fill the block, but leaves less gas than the min for a tx (selected)
+    // 3) min gas cost (skipped since not enough gas remaining)
+    // NOTE - PendingTransactions outputs these in nonce order
+
+    final long gasLimit0 = (long) (blockHeader.getGasLimit() * 0.9);
+    final long gasLimit1 = (long) (blockHeader.getGasLimit() * 0.9);
+    final long gasLimit2 = blockHeader.getGasLimit() - gasLimit0 - (minTxGasCost - 1);
+    final long gasLimit3 = minTxGasCost;
+
+    final TransactionTestFixture txTestFixture = new TransactionTestFixture();
+    final List<Transaction> transactionsToInject = Lists.newArrayList();
+    transactionsToInject.add(txTestFixture.gasLimit(gasLimit0).nonce(0).createTransaction(keyPair));
+    transactionsToInject.add(txTestFixture.gasLimit(gasLimit1).nonce(1).createTransaction(keyPair));
+    transactionsToInject.add(txTestFixture.gasLimit(gasLimit2).nonce(2).createTransaction(keyPair));
+    transactionsToInject.add(txTestFixture.gasLimit(gasLimit3).nonce(3).createTransaction(keyPair));
+
+    for (final Transaction tx : transactionsToInject) {
+      pendingTransactions.addRemoteTransaction(tx, Optional.empty());
+      ensureTransactionIsValid(tx);
+    }
+
+    final BlockTransactionSelector.TransactionSelectionResults results =
+        selector.buildTransactionListForBlock();
+
+    assertThat(results.getTransactions())
+        .containsExactly(transactionsToInject.get(0), transactionsToInject.get(2));
+    assertThat(blockHeader.getGasLimit() - results.getCumulativeGasUsed()).isLessThan(minTxGasCost);
+  }
+
+  @Test
   public void shouldDiscardTransactionsThatFailValidation() {
     final ProcessableBlockHeader blockHeader = createBlock(300);
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
         createBlockSelector(
-            transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary, Wei.ZERO);
+            transactionProcessor,
+            blockHeader,
+            Wei.ZERO,
+            miningBeneficiary,
+            Wei.ZERO,
+            MIN_OCCUPANCY_80_PERCENT);
 
     final TransactionTestFixture txTestFixture = new TransactionTestFixture();
     final Transaction validTransaction =
@@ -424,6 +563,74 @@ public abstract class AbstractBlockTransactionSelectorTest {
   }
 
   @Test
+  public void transactionSelectionPluginShouldWork() {
+    final ProcessableBlockHeader blockHeader = createBlock(300);
+
+    final TransactionTestFixture txTestFixture = new TransactionTestFixture();
+    final Transaction selected =
+        txTestFixture
+            .nonce(1)
+            .gasLimit(1)
+            .createTransaction(SignatureAlgorithmFactory.getInstance().generateKeyPair());
+    ensureTransactionIsValid(selected, 2000, 10000);
+
+    final Transaction notSelectedTransient =
+        txTestFixture
+            .nonce(1)
+            .gasLimit(1)
+            .createTransaction(SignatureAlgorithmFactory.getInstance().generateKeyPair());
+    ensureTransactionIsValid(notSelectedTransient, 2000, 10000);
+
+    final Transaction notSelectedInvalid =
+        txTestFixture
+            .nonce(1)
+            .gasLimit(1)
+            .createTransaction(SignatureAlgorithmFactory.getInstance().generateKeyPair());
+    ensureTransactionIsValid(notSelectedInvalid, 2000, 10000);
+
+    final TransactionSelectorFactory transactionSelectorFactory =
+        (TransactionSelectorFactory)
+            () ->
+                (tx, s, logs, cg) -> {
+                  if (tx.equals(notSelectedTransient))
+                    return TransactionSelectionResult.invalidTransient("transient");
+                  if (tx.equals(notSelectedInvalid))
+                    return TransactionSelectionResult.invalid("invalid");
+                  return TransactionSelectionResult.SELECTED;
+                };
+
+    final Address miningBeneficiary = AddressHelpers.ofValue(1);
+    final BlockTransactionSelector selector =
+        createBlockSelectorWithTxSelPlugin(
+            transactionProcessor,
+            blockHeader,
+            Wei.ZERO,
+            miningBeneficiary,
+            Wei.ZERO,
+            MIN_OCCUPANCY_80_PERCENT,
+            transactionSelectorFactory);
+
+    pendingTransactions.addRemoteTransaction(selected, Optional.empty());
+    pendingTransactions.addRemoteTransaction(notSelectedTransient, Optional.empty());
+    pendingTransactions.addRemoteTransaction(notSelectedInvalid, Optional.empty());
+
+    final BlockTransactionSelector.TransactionSelectionResults transactionSelectionResults =
+        selector.buildTransactionListForBlock();
+
+    Assertions.assertThat(pendingTransactions.getTransactionByHash(notSelectedTransient.getHash()))
+        .isPresent();
+    Assertions.assertThat(pendingTransactions.getTransactionByHash(notSelectedInvalid.getHash()))
+        .isNotPresent();
+    //    Assertions.assertThat(pendingTransactions.getTransactionByHash(selected.getHash()))
+    //            .isNotPresent(); // TODO check with Fabio what should happen with selected txs
+    Assertions.assertThat(transactionSelectionResults.getTransactions()).contains(selected);
+    Assertions.assertThat(transactionSelectionResults.getTransactions())
+        .doesNotContain(notSelectedTransient);
+    Assertions.assertThat(transactionSelectionResults.getTransactions())
+        .doesNotContain(notSelectedInvalid);
+  }
+
+  @Test
   public void transactionWithIncorrectNonceRemainsInPoolAndNotSelected() {
     final ProcessableBlockHeader blockHeader = createBlock(5000);
 
@@ -437,7 +644,12 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
         createBlockSelector(
-            transactionProcessor, blockHeader, Wei.ZERO, miningBeneficiary, Wei.ZERO);
+            transactionProcessor,
+            blockHeader,
+            Wei.ZERO,
+            miningBeneficiary,
+            Wei.ZERO,
+            MIN_OCCUPANCY_80_PERCENT);
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
@@ -452,19 +664,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final ProcessableBlockHeader blockHeader,
       final Wei minGasPrice,
       final Address miningBeneficiary,
-      final Wei dataGasPrice) {
-
-    return createBlockSelector(
-        transactionProcessor, blockHeader, minGasPrice, miningBeneficiary, dataGasPrice, -1);
-  }
-
-  protected BlockTransactionSelector createBlockSelector(
-      final MainnetTransactionProcessor transactionProcessor,
-      final ProcessableBlockHeader blockHeader,
-      final Wei minGasPrice,
-      final Address miningBeneficiary,
       final Wei dataGasPrice,
-      final int blockMaxCalldataSize) {
+      final double minBlockOccupancyRatio) {
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
             transactionProcessor,
@@ -474,16 +675,48 @@ public abstract class AbstractBlockTransactionSelectorTest {
             blockHeader,
             this::createReceipt,
             minGasPrice,
-            0.8,
+            minBlockOccupancyRatio,
             this::isCancelled,
             miningBeneficiary,
             dataGasPrice,
             getFeeMarket(),
             new LondonGasCalculator(),
             GasLimitCalculator.constant(),
-            blockMaxCalldataSize);
+            Optional.empty());
+
     return selector;
   }
+
+  protected BlockTransactionSelector createBlockSelectorWithTxSelPlugin(
+      final MainnetTransactionProcessor transactionProcessor,
+      final ProcessableBlockHeader blockHeader,
+      final Wei minGasPrice,
+      final Address miningBeneficiary,
+      final Wei dataGasPrice,
+      final double minBlockOccupancyRatio,
+      final TransactionSelectorFactory transactionSelectorFactory) {
+    final BlockTransactionSelector selector =
+        new BlockTransactionSelector(
+            transactionProcessor,
+            blockchain,
+            worldState,
+            pendingTransactions,
+            blockHeader,
+            this::createReceipt,
+            minGasPrice,
+            minBlockOccupancyRatio,
+            this::isCancelled,
+            miningBeneficiary,
+            dataGasPrice,
+            getFeeMarket(),
+            new LondonGasCalculator(),
+            GasLimitCalculator.constant(),
+            Optional.of(transactionSelectorFactory));
+
+    return selector;
+  }
+
+  protected abstract GasCalculator getGasCalculator();
 
   protected abstract FeeMarket getFeeMarket();
 
