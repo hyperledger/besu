@@ -467,7 +467,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           .setMessage("Appending new head block hash {} to backward sync")
           .addArgument(headHash::toHexString)
           .log();
-      backwardSyncContext.updateHead(headHash);
+      backwardSyncContext.maybeUpdateTargetHeight(headHash);
       backwardSyncContext
           .syncBackwardsUntil(headHash)
           .thenRun(() -> updateFinalized(finalizedHash));
