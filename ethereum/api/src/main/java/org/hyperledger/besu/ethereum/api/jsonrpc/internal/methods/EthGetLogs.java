@@ -53,6 +53,7 @@ public class EthGetLogs implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final FilterParameter filter = requestContext.getRequiredParameter(0, FilterParameter.class);
+    LOG.atTrace().setMessage("eth_getLogs FilterParameter: {}").addArgument(filter).log();
 
     if (!filter.isValid()) {
       return new JsonRpcErrorResponse(
