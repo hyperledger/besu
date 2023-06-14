@@ -148,7 +148,7 @@ public class EthCallIntegrationTest {
             null);
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(null, JsonRpcError.INTERNAL_ERROR);
 
     final JsonRpcResponse response = method.response(request);
 
