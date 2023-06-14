@@ -79,6 +79,7 @@ import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
+import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.io.ByteArrayOutputStream;
@@ -237,6 +238,7 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.lowerBoundPeers(anyInt())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.maxRemotelyInitiatedPeers(anyInt()))
         .thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.transactionSelectorFactory(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.besuComponent(any(BesuComponent.class)))
         .thenReturn(mockControllerBuilder);
     // doReturn used because of generic BesuController
@@ -484,7 +486,8 @@ public abstract class CommandTestAbstract {
           new PermissioningServiceImpl(),
           privacyPluginService,
           pkiBlockCreationConfigProvider,
-          rpcEndpointServiceImpl);
+          rpcEndpointServiceImpl,
+          new TransactionSelectionServiceImpl());
     }
 
     @Override

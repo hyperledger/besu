@@ -30,10 +30,14 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Key value storage which stores in memory all updates to a parent worldstate storage. */
 public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
     implements SnappedKeyValueStorage {
+
+  private static final Logger LOG = LoggerFactory.getLogger(LayeredKeyValueStorage.class);
 
   private final KeyValueStorage parent;
 
@@ -65,6 +69,8 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
 
   @Override
   public Optional<byte[]> get(final byte[] key) throws StorageException {
+    throwIfClosed();
+
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
@@ -82,6 +88,8 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
 
   @Override
   public Stream<Pair<byte[], byte[]>> stream() {
+    throwIfClosed();
+
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
@@ -103,7 +111,14 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
   }
 
   @Override
+  public Stream<Pair<byte[], byte[]>> streamFromKey(final byte[] startKey) {
+    return stream().filter(e -> Bytes.wrap(startKey).compareTo(Bytes.wrap(e.getKey())) <= 0);
+  }
+
+  @Override
   public Stream<byte[]> streamKeys() {
+    throwIfClosed();
+
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
@@ -131,6 +146,8 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
 
   @Override
   public KeyValueStorageTransaction startTransaction() {
+    throwIfClosed();
+
     return new KeyValueStorageTransactionTransitionValidatorDecorator(
         new InMemoryTransaction() {
           @Override
@@ -152,7 +169,19 @@ public class LayeredKeyValueStorage extends InMemoryKeyValueStorage
   }
 
   @Override
+  public boolean isClosed() {
+    return parent.isClosed();
+  }
+
+  @Override
   public SnappedKeyValueStorage clone() {
     return new LayeredKeyValueStorage(hashValueStore, parent);
+  }
+
+  private void throwIfClosed() {
+    if (parent.isClosed()) {
+      LOG.error("Attempting to use a closed RocksDBKeyValueStorage");
+      throw new StorageException("Storage has been closed");
+    }
   }
 }

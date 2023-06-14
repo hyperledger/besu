@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
 import org.hyperledger.besu.plugin.data.SyncStatus;
 
-import java.util.Optional;
-
 @SuppressWarnings("unused") // reflected by GraphQL
 public class SyncStateAdapter {
   private final SyncStatus syncStatus;
@@ -26,15 +24,15 @@ public class SyncStateAdapter {
     this.syncStatus = syncStatus;
   }
 
-  public Optional<Long> getStartingBlock() {
-    return Optional.of(syncStatus.getStartingBlock());
+  public Long getStartingBlock() {
+    return syncStatus.getStartingBlock();
   }
 
-  public Optional<Long> getCurrentBlock() {
-    return Optional.of(syncStatus.getCurrentBlock());
+  public Long getCurrentBlock() {
+    return syncStatus.getCurrentBlock();
   }
 
-  public Optional<Long> getHighestBlock() {
-    return Optional.of(syncStatus.getHighestBlock());
+  public Long getHighestBlock() {
+    return syncStatus.getHighestBlock();
   }
 }

@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class QbftForksSchedulesFactoryTest
     extends BaseForksSchedulesFactoryTest<QbftConfigOptions, MutableQbftConfigOptions> {

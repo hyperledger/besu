@@ -41,7 +41,7 @@ public class CompleteTaskStepTest {
 
   private static final Hash HASH = Hash.hash(Bytes.of(1, 2, 3));
 
-  private final SnapSyncState snapSyncState = mock(SnapSyncState.class);
+  private final SnapSyncProcessState snapSyncState = mock(SnapSyncProcessState.class);
   private final SnapWorldDownloadState downloadState = mock(SnapWorldDownloadState.class);
 
   private final BlockHeader blockHeader =

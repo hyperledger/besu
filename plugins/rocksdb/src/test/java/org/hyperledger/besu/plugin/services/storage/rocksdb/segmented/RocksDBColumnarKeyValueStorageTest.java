@@ -261,14 +261,22 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
   public enum TestSegment implements SegmentIdentifier {
     FOO(new byte[] {1}),
     BAR(new byte[] {2}),
-    EXPERIMENTAL(new byte[] {3});
+    EXPERIMENTAL(new byte[] {3}),
+
+    STATIC_DATA(new byte[] {4}, true);
 
     private final byte[] id;
     private final String nameAsUtf8;
+    private final boolean containsStaticData;
 
     TestSegment(final byte[] id) {
+      this(id, false);
+    }
+
+    TestSegment(final byte[] id, final boolean containsStaticData) {
       this.id = id;
       this.nameAsUtf8 = new String(id, StandardCharsets.UTF_8);
+      this.containsStaticData = containsStaticData;
     }
 
     @Override
@@ -279,6 +287,11 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     @Override
     public byte[] getId() {
       return id;
+    }
+
+    @Override
+    public boolean containsStaticData() {
+      return containsStaticData;
     }
   }
 

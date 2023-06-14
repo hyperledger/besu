@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
+import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -52,6 +53,20 @@ public class DataStoreModule {
                   RocksDBCLIOptions.create()::toDomainObject,
                   List.of(KeyValueSegmentIdentifier.values()),
                   RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS));
+
+  @Provides
+  @Singleton
+  @Named("variables")
+  KeyValueStorage provideVariablesKeyValueStorage(
+      @Named("KeyValueStorageName") final String keyValueStorageName,
+      final BesuConfiguration commonConfiguration,
+      final MetricsSystem metricsSystem) {
+    return constructKeyValueStorage(
+        keyValueStorageName,
+        commonConfiguration,
+        metricsSystem,
+        KeyValueSegmentIdentifier.VARIABLES);
+  }
 
   @Provides
   @Singleton
@@ -127,7 +142,9 @@ public class DataStoreModule {
   @Singleton
   static BlockchainStorage provideBlockchainStorage(
       @Named("blockchain") final KeyValueStorage keyValueStorage,
+      @Named("variables") final KeyValueStorage variablesKeyValueStorage,
       final BlockHeaderFunctions blockHashFunction) {
-    return new KeyValueStoragePrefixedKeyBlockchainStorage(keyValueStorage, blockHashFunction);
+    return new KeyValueStoragePrefixedKeyBlockchainStorage(
+        keyValueStorage, new VariablesKeyValueStorage(variablesKeyValueStorage), blockHashFunction);
   }
 }
