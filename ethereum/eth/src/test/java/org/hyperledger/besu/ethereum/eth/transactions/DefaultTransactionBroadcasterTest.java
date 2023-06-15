@@ -51,7 +51,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class TransactionBroadcasterTest {
+public class DefaultTransactionBroadcasterTest {
 
   @Mock private EthContext ethContext;
   @Mock private EthPeers ethPeers;
@@ -68,7 +68,7 @@ public class TransactionBroadcasterTest {
   private final EthPeer ethPeerWithEth65_3 = mock(EthPeer.class);
   private final BlockDataGenerator generator = new BlockDataGenerator();
 
-  private TransactionBroadcaster txBroadcaster;
+  private DefaultTransactionBroadcaster txBroadcaster;
   private ArgumentCaptor<Runnable> sendTaskCapture;
 
   @Before
@@ -91,7 +91,7 @@ public class TransactionBroadcasterTest {
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
 
     txBroadcaster =
-        new TransactionBroadcaster(
+        new DefaultTransactionBroadcaster(
             ethContext,
             pendingTransactions,
             transactionTracker,

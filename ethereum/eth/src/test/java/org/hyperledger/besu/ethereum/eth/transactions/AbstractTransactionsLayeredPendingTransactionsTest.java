@@ -104,7 +104,7 @@ public abstract class AbstractTransactionsLayeredPendingTransactionsTest {
 
   protected final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   protected MutableBlockchain blockchain;
-  private TransactionBroadcaster transactionBroadcaster;
+  private DefaultTransactionBroadcaster transactionBroadcaster;
 
   protected PendingTransactions transactions;
   private final Transaction transaction0 = createTransaction(0);
@@ -179,7 +179,7 @@ public abstract class AbstractTransactionsLayeredPendingTransactionsTest {
 
     transactionBroadcaster =
         spy(
-            new TransactionBroadcaster(
+            new DefaultTransactionBroadcaster(
                 ethContext,
                 transactions,
                 peerTransactionTracker,

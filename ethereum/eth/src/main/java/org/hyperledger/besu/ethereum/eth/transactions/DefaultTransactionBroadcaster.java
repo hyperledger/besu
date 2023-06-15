@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool.TransactionBatchAddedListener;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool.TransactionBroadcaster;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayList;
@@ -35,8 +35,8 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TransactionBroadcaster implements TransactionBatchAddedListener {
-  private static final Logger LOG = LoggerFactory.getLogger(TransactionBroadcaster.class);
+public class DefaultTransactionBroadcaster implements TransactionBroadcaster {
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultTransactionBroadcaster.class);
 
   private static final EnumSet<TransactionType> ANNOUNCE_HASH_ONLY_TX_TYPES = EnumSet.of(BLOB);
 
@@ -49,7 +49,7 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
   private final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
   private final EthContext ethContext;
 
-  public TransactionBroadcaster(
+  public DefaultTransactionBroadcaster(
       final EthContext ethContext,
       final PendingTransactions pendingTransactions,
       final PeerTransactionTracker transactionTracker,
@@ -62,6 +62,7 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
     this.ethContext = ethContext;
   }
 
+  @Override
   public void relayTransactionPoolTo(final EthPeer peer) {
     final Collection<PendingTransaction> allPendingTransactions =
         pendingTransactions.getPendingTransactions();

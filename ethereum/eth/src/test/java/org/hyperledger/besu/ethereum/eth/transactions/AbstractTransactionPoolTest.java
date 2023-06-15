@@ -108,7 +108,7 @@ public abstract class AbstractTransactionPoolTest {
 
   protected final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   protected MutableBlockchain blockchain;
-  private TransactionBroadcaster transactionBroadcaster;
+  private DefaultTransactionBroadcaster transactionBroadcaster;
 
   protected PendingTransactions transactions;
   private final Transaction transaction1 = createTransaction(1);
@@ -152,7 +152,7 @@ public abstract class AbstractTransactionPoolTest {
     peerTransactionTracker = new PeerTransactionTracker();
     transactionBroadcaster =
         spy(
-            new TransactionBroadcaster(
+            new DefaultTransactionBroadcaster(
                 ethContext,
                 transactions,
                 peerTransactionTracker,

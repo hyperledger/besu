@@ -34,7 +34,6 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
   private static final String MAX_GET_POOLED_TRANSACTIONS = "--Xewp-max-get-pooled-transactions";
   private static final String LEGACY_ETH_64_FORK_ID_ENABLED =
       "--compatibility-eth64-forkid-enabled";
-
   private static final String MAX_CAPABILITY = "--Xeth-capability-max";
   private static final String MIN_CAPABILITY = "--Xeth-capability-min";
 

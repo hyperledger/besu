@@ -16,10 +16,13 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool.TransactionBroadcaster;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.AbstractPrioritizedTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.BaseFeePrioritizedTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.EndLayer;
@@ -36,6 +39,7 @@ import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Clock;
+import java.util.Collection;
 import java.util.function.BiFunction;
 
 import org.slf4j.Logger;
@@ -94,74 +98,83 @@ public class TransactionPoolFactory {
       final TransactionsMessageSender transactionsMessageSender,
       final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender) {
 
+    final TransactionBroadcaster transactionBroadcaster =
+        transactionPoolConfiguration.getEnabled()
+            ? new DefaultTransactionBroadcaster(
+                ethContext,
+                pendingTransactions,
+                transactionTracker,
+                transactionsMessageSender,
+                newPooledTransactionHashesMessageSender)
+            : doNotBroadcastTransactions();
+
     final TransactionPool transactionPool =
         new TransactionPool(
             pendingTransactions,
             protocolSchedule,
             protocolContext,
-            new TransactionBroadcaster(
-                ethContext,
-                pendingTransactions,
-                transactionTracker,
-                transactionsMessageSender,
-                newPooledTransactionHashesMessageSender),
+            transactionBroadcaster,
             ethContext,
             miningParameters,
             metrics,
             transactionPoolConfiguration);
 
-    final TransactionsMessageHandler transactionsMessageHandler =
-        new TransactionsMessageHandler(
-            ethContext.getScheduler(),
-            new TransactionsMessageProcessor(transactionTracker, transactionPool, metrics),
-            transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
+    if (transactionPoolConfiguration.getEnabled()) {
+      final TransactionsMessageHandler transactionsMessageHandler =
+          new TransactionsMessageHandler(
+              ethContext.getScheduler(),
+              new TransactionsMessageProcessor(transactionTracker, transactionPool, metrics),
+              transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
 
-    final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler =
-        new NewPooledTransactionHashesMessageHandler(
-            ethContext.getScheduler(),
-            new NewPooledTransactionHashesMessageProcessor(
-                transactionTracker,
-                transactionPool,
-                transactionPoolConfiguration,
-                ethContext,
-                metrics),
-            transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
+      final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler =
+          new NewPooledTransactionHashesMessageHandler(
+              ethContext.getScheduler(),
+              new NewPooledTransactionHashesMessageProcessor(
+                  transactionTracker,
+                  transactionPool,
+                  transactionPoolConfiguration,
+                  ethContext,
+                  metrics),
+              transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
 
-    subscribeTransactionHandlers(
-        protocolContext,
-        ethContext,
-        transactionTracker,
-        transactionPool,
-        transactionsMessageHandler,
-        pooledTransactionsMessageHandler);
+      subscribeTransactionHandlers(
+          protocolContext,
+          ethContext,
+          transactionTracker,
+          transactionPool,
+          transactionsMessageHandler,
+          pooledTransactionsMessageHandler);
 
-    if (!syncState.isInitialSyncPhaseDone()) {
-      LOG.info("Disabling transaction handling during initial sync");
-      pooledTransactionsMessageHandler.setDisabled();
-      transactionsMessageHandler.setDisabled();
-      transactionPool.setDisabled();
+      if (!syncState.isInitialSyncPhaseDone()) {
+        LOG.info("Disabling transaction handling during initial sync");
+        pooledTransactionsMessageHandler.setDisabled();
+        transactionsMessageHandler.setDisabled();
+        transactionPool.setDisabled();
+      }
+
+      syncState.subscribeCompletionReached(
+          new BesuEvents.InitialSyncCompletionListener() {
+            @Override
+            public void onInitialSyncCompleted() {
+              LOG.info("Enabling transaction handling following initial sync");
+              transactionPool.reset();
+              transactionTracker.reset();
+              transactionPool.setEnabled();
+              transactionsMessageHandler.setEnabled();
+              pooledTransactionsMessageHandler.setEnabled();
+            }
+
+            @Override
+            public void onInitialSyncRestart() {
+              LOG.info("Disabling transaction handling during re-sync");
+              pooledTransactionsMessageHandler.setDisabled();
+              transactionsMessageHandler.setDisabled();
+              transactionPool.setDisabled();
+            }
+          });
+    } else {
+      LOG.info("Transaction pool disabled by configuration");
     }
-
-    syncState.subscribeCompletionReached(
-        new BesuEvents.InitialSyncCompletionListener() {
-          @Override
-          public void onInitialSyncCompleted() {
-            LOG.info("Enabling transaction handling following initial sync");
-            transactionPool.reset();
-            transactionTracker.reset();
-            transactionPool.setEnabled();
-            transactionsMessageHandler.setEnabled();
-            pooledTransactionsMessageHandler.setEnabled();
-          }
-
-          @Override
-          public void onInitialSyncRestart() {
-            LOG.info("Disabling transaction handling during re-sync");
-            pooledTransactionsMessageHandler.setDisabled();
-            transactionsMessageHandler.setDisabled();
-            transactionPool.setDisabled();
-          }
-        });
 
     return transactionPool;
   }
@@ -286,5 +299,15 @@ public class TransactionPoolFactory {
     }
 
     return new LayeredPendingTransactions(transactionPoolConfiguration, pendingTransactionsSorter);
+  }
+
+  private static TransactionBroadcaster doNotBroadcastTransactions() {
+    return new TransactionBroadcaster() {
+      @Override
+      public void relayTransactionPoolTo(final EthPeer peer) {}
+
+      @Override
+      public void onTransactionsAdded(final Collection<Transaction> transactions) {}
+    };
   }
 }

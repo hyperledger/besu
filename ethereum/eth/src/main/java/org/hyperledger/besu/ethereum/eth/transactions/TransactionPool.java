@@ -100,9 +100,11 @@ public class TransactionPool implements BlockAddedObserver {
     this.miningParameters = miningParameters;
     this.metrics = metrics;
     this.configuration = configuration;
-    ethContext.getEthPeers().subscribeConnect(this::handleConnect);
-    initLogForReplay();
-    CompletableFuture.runAsync(this::loadFromDisk);
+    if (configuration.getEnabled()) {
+      ethContext.getEthPeers().subscribeConnect(this::handleConnect);
+      initLogForReplay();
+      CompletableFuture.runAsync(this::loadFromDisk);
+    }
   }
 
   private void initLogForReplay() {
@@ -122,7 +124,7 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   public void saveToDisk() {
-    if (configuration.getEnableSaveRestore()) {
+    if (configuration.getEnabled() && configuration.getEnableSaveRestore()) {
       final File saveFile = configuration.getSaveFile();
       LOG.info("Saving transaction pool content to file {}", saveFile);
       try (final BufferedWriter bw =
@@ -361,10 +363,11 @@ public class TransactionPool implements BlockAddedObserver {
 
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
-    LOG.trace("Block added event {}", event);
-    if (event.getEventType().equals(BlockAddedEvent.EventType.HEAD_ADVANCED)
-        || event.getEventType().equals(BlockAddedEvent.EventType.CHAIN_REORG)) {
-      if (isPoolEnabled.get()) {
+    if (isPoolEnabled.get()) {
+      LOG.trace("Block added event {}", event);
+      if (event.getEventType().equals(BlockAddedEvent.EventType.HEAD_ADVANCED)
+          || event.getEventType().equals(BlockAddedEvent.EventType.CHAIN_REORG)) {
+
         pendingTransactions.manageBlockAdded(
             event.getBlock().getHeader(),
             event.getAddedTransactions(),
@@ -548,7 +551,8 @@ public class TransactionPool implements BlockAddedObserver {
     return blockchain.getBlockHeader(blockchain.getChainHeadHash());
   }
 
-  public interface TransactionBatchAddedListener {
+  public interface TransactionBroadcaster {
+    void relayTransactionPoolTo(EthPeer peer);
 
     void onTransactionsAdded(Collection<Transaction> transactions);
   }

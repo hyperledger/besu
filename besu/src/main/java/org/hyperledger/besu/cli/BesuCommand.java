@@ -1212,6 +1212,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   static class TxPoolOptionGroup {
     @CommandLine.Option(
+        names = {"--tx-pool-enabled"},
+        paramLabel = "<Boolean>",
+        description = "Set to false to disable the txpool (default: ${DEFAULT-VALUE})",
+        fallbackValue = "true",
+        arity = "0..1")
+    private Boolean txpoolEnabled = TransactionPoolConfiguration.DEFAULT_TX_POOL_ENABLED;
+
+    @CommandLine.Option(
         names = {"--tx-pool-disable-locals"},
         paramLabel = "<Boolean>",
         description =
@@ -3017,6 +3025,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private TransactionPoolConfiguration buildTransactionPoolConfiguration() {
     return unstableTransactionPoolOptions
         .toDomainObject()
+        .enabled(txPoolOptionGroup.txpoolEnabled)
         .enableSaveRestore(txPoolOptionGroup.saveRestoreEnabled)
         .disableLocalTransactions(txPoolOptionGroup.disableLocalTxs)
         .txPoolLimitByAccountPercentage(txPoolOptionGroup.txPoolLimitByAccountPercentage)
