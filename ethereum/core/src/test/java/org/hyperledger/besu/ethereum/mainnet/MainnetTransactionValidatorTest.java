@@ -527,7 +527,7 @@ public class MainnetTransactionValidatorTest {
   @Test
   @Ignore("This test is ignored because it requires a native library to be loaded")
   public void shouldAcceptTransactionWithAtLeastOneBlob() {
-    when(gasCalculator.dataGasCost(anyInt())).thenReturn(2L);
+    when(gasCalculator.dataGasUsed(anyInt())).thenReturn(2L);
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator,
