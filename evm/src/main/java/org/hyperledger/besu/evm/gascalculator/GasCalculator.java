@@ -519,7 +519,7 @@ public interface GasCalculator {
    * @param blobCount the number of blobs
    * @return the total gas cost
    */
-  default long dataGasCost(final int blobCount) {
+  default long dataGasUsed(final int blobCount) {
     return 0L;
   }
 

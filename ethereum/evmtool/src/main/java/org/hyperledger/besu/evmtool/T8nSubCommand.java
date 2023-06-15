@@ -279,7 +279,7 @@ public class T8nSubCommand implements Runnable {
     ArrayNode receiptsArray = objectMapper.createArrayNode();
     long gasUsed = 0;
     // Todo: EIP-4844 use the excessDataGas of the parent instead of DataGas.ZERO
-    final Wei dataGasPrice = protocolSpec.getFeeMarket().dataPrice(DataGas.ZERO);
+    final Wei dataGasPrice = protocolSpec.getFeeMarket().dataPricePerGas(DataGas.ZERO);
 
     for (int i = 0; i < transactions.size(); i++) {
       Transaction transaction = transactions.get(i);

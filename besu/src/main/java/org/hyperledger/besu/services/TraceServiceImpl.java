@@ -110,7 +110,7 @@ public class TraceServiceImpl implements TraceService {
                     final Wei dataGasPrice =
                         protocolSpec
                             .getFeeMarket()
-                            .dataPrice(
+                            .dataPricePerGas(
                                 maybeParentHeader
                                     .flatMap(BlockHeader::getExcessDataGas)
                                     .orElse(DataGas.ZERO));
