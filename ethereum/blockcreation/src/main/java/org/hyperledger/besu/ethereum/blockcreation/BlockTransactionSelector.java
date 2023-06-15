@@ -382,7 +382,7 @@ public class BlockTransactionSelector {
             transactionReceiptFactory.create(
                 transaction.getType(), effectiveResult, worldState, cumulativeGasUsed);
 
-        final long dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount());
+        final long dataGasUsed = gasCalculator.dataGasUsed(transaction.getBlobCount());
 
         transactionSelectionResults.update(transaction, receipt, gasUsedByTransaction, dataGasUsed);
 
@@ -477,7 +477,7 @@ public class BlockTransactionSelector {
   }
 
   private boolean transactionTooLargeForBlock(final Transaction transaction) {
-    final long dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount());
+    final long dataGasUsed = gasCalculator.dataGasUsed(transaction.getBlobCount());
 
     if (dataGasUsed
         > gasLimitCalculator.currentDataGasLimit()

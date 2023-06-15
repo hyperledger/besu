@@ -195,7 +195,7 @@ public class MainnetTransactionValidator {
     }
 
     if (transaction.getType().supportsBlob()) {
-      final long txTotalDataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
+      final long txTotalDataGas = gasCalculator.dataGasUsed(transaction.getBlobCount());
       if (txTotalDataGas > gasLimitCalculator.currentDataGasLimit()) {
         return ValidationResult.invalid(
             TransactionInvalidReason.TOTAL_DATA_GAS_TOO_HIGH,
@@ -206,7 +206,7 @@ public class MainnetTransactionValidator {
     }
 
     if (transaction.getType().supportsBlob()) {
-      final long txTotalDataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
+      final long txTotalDataGas = gasCalculator.dataGasUsed(transaction.getBlobCount());
       if (txTotalDataGas > gasLimitCalculator.currentDataGasLimit()) {
         return ValidationResult.invalid(
             TransactionInvalidReason.TOTAL_DATA_GAS_TOO_HIGH,
@@ -246,7 +246,7 @@ public class MainnetTransactionValidator {
     }
 
     final Wei upfrontCost =
-        transaction.getUpfrontCost(gasCalculator.dataGasCost(transaction.getBlobCount()));
+        transaction.getUpfrontCost(gasCalculator.dataGasUsed(transaction.getBlobCount()));
     if (upfrontCost.compareTo(senderBalance) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
@@ -342,7 +342,7 @@ public class MainnetTransactionValidator {
 
     BlobsWithCommitments blobsWithCommitments = transaction.getBlobsWithCommitments().get();
 
-    final long blobsLimit = gasLimitCalculator.currentDataGasLimit() / gasCalculator.dataGasCost(1);
+    final long blobsLimit = gasLimitCalculator.currentDataGasLimit() / gasCalculator.dataGasUsed(1);
     if (blobsWithCommitments.getBlobs().size() > blobsLimit) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_BLOBS,
