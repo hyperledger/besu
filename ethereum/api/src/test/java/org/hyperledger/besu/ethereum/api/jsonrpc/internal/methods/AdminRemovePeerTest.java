@@ -1,5 +1,5 @@
 /*
- * Copyright © 2023 Kaleido, Inc.
+ * Copyright © 2022 Kaleido, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -37,12 +37,12 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
-public class AdminAddPeerTest {
+public class AdminRemovePeerTest {
 
   @Mock private P2PNetwork p2pNetwork;
 
-  private AdminAddPeer method;
-  private AdminAddPeer methodDNSDisabled;
+  private AdminRemovePeer method;
+  private AdminRemovePeer methodDNSDisabled;
 
   final String validEnode =
       "enode://"
@@ -62,16 +62,16 @@ public class AdminAddPeerTest {
 
   final JsonRpcRequestContext validRequest =
       new JsonRpcRequestContext(
-          new JsonRpcRequest("2.0", "admin_addPeer", new String[] {validEnode}));
+          new JsonRpcRequest("2.0", "admin_removePeer", new String[] {validEnode}));
 
   final JsonRpcRequestContext validDNSRequest =
       new JsonRpcRequestContext(
-          new JsonRpcRequest("2.0", "admin_addPeer", new String[] {validDNSEnode}));
+          new JsonRpcRequest("2.0", "admin_removePeer", new String[] {validDNSEnode}));
 
   @Before
   public void setup() {
     method =
-        new AdminAddPeer(
+        new AdminRemovePeer(
             p2pNetwork,
             Optional.of(
                 ImmutableEnodeDnsConfiguration.builder()
@@ -79,7 +79,7 @@ public class AdminAddPeerTest {
                     .updateEnabled(true)
                     .build()));
     methodDNSDisabled =
-        new AdminAddPeer(
+        new AdminRemovePeer(
             p2pNetwork,
             Optional.of(
                 ImmutableEnodeDnsConfiguration.builder()
@@ -91,7 +91,7 @@ public class AdminAddPeerTest {
   @Test
   public void requestIsMissingParameter() {
     final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "admin_addPeer", new String[] {}));
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "admin_removePeer", new String[] {}));
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
 
@@ -103,7 +103,7 @@ public class AdminAddPeerTest {
   @Test
   public void requestHasNullObjectParameter() {
     final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "admin_addPeer", null));
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "admin_removePeer", null));
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
 
@@ -115,7 +115,8 @@ public class AdminAddPeerTest {
   @Test
   public void requestHasNullArrayParameter() {
     final JsonRpcRequestContext request =
-        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "admin_addPeer", new String[] {null}));
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "admin_removePeer", new String[] {null}));
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
 
@@ -128,7 +129,7 @@ public class AdminAddPeerTest {
   public void requestHasInvalidEnode() {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
-            new JsonRpcRequest("2.0", "admin_addPeer", new String[] {"asdf"}));
+            new JsonRpcRequest("2.0", "admin_removePeer", new String[] {"asdf"}));
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.PARSE_ERROR);
 
@@ -148,7 +149,7 @@ public class AdminAddPeerTest {
             + "@127.0.0.1:30303";
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
-            new JsonRpcRequest("2.0", "admin_addPeer", new String[] {invalidLengthEnode}));
+            new JsonRpcRequest("2.0", "admin_removePeer", new String[] {invalidLengthEnode}));
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.ENODE_ID_INVALID);
 
@@ -158,8 +159,8 @@ public class AdminAddPeerTest {
   }
 
   @Test
-  public void requestAddsValidEnode() {
-    when(p2pNetwork.addMaintainedConnectionPeer(any())).thenReturn(true);
+  public void requestRemovesValidEnode() {
+    when(p2pNetwork.removeMaintainedConnectionPeer(any())).thenReturn(true);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(validRequest.getRequest().getId(), true);
@@ -170,8 +171,8 @@ public class AdminAddPeerTest {
   }
 
   @Test
-  public void requestAddsValidDNSEnode() {
-    when(p2pNetwork.addMaintainedConnectionPeer(any())).thenReturn(true);
+  public void requestRemovesValidDNSEnode() {
+    when(p2pNetwork.removeMaintainedConnectionPeer(any())).thenReturn(true);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(
@@ -184,7 +185,7 @@ public class AdminAddPeerTest {
   }
 
   @Test
-  public void requestAddsDNSEnodeButDNSDisabled() {
+  public void requestRemovesDNSEnodeButDNSDisabled() {
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(validDNSRequest.getRequest().getId(), JsonRpcError.PARSE_ERROR);
 
@@ -197,7 +198,7 @@ public class AdminAddPeerTest {
   public void requestRefusesListOfNodes() {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
-            new JsonRpcRequest("2.0", "admin_addPeer", new String[] {validEnode, validEnode}));
+            new JsonRpcRequest("2.0", "admin_removePeer", new String[] {validEnode, validEnode}));
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
@@ -208,8 +209,8 @@ public class AdminAddPeerTest {
   }
 
   @Test
-  public void requestReturnsFalseIfAddFails() {
-    when(p2pNetwork.addMaintainedConnectionPeer(any())).thenReturn(false);
+  public void requestReturnsFalseIfRemoveFails() {
+    when(p2pNetwork.removeMaintainedConnectionPeer(any())).thenReturn(false);
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(validRequest.getRequest().getId(), false);
@@ -221,9 +222,10 @@ public class AdminAddPeerTest {
 
   @Test
   public void requestReturnsErrorWhenP2pDisabled() {
-    when(p2pNetwork.addMaintainedConnectionPeer(any()))
+    when(p2pNetwork.removeMaintainedConnectionPeer(any()))
         .thenThrow(
-            new P2PDisabledException("P2P networking disabled.  Unable to connect to add peer."));
+            new P2PDisabledException(
+                "P2P networking disabled.  Unable to connect to remove peer."));
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(validRequest.getRequest().getId(), JsonRpcError.P2P_DISABLED);

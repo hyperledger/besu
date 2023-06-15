@@ -32,12 +32,10 @@ import org.slf4j.LoggerFactory;
 public class AdminAddPeer extends AdminModifyPeer {
 
   private static final Logger LOG = LoggerFactory.getLogger(AdminAddPeer.class);
-  private final Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
 
   public AdminAddPeer(
       final P2PNetwork peerNetwork, final Optional<EnodeDnsConfiguration> enodeDnsConfiguration) {
-    super(peerNetwork);
-    this.enodeDnsConfiguration = enodeDnsConfiguration;
+    super(peerNetwork, enodeDnsConfiguration);
   }
 
   @Override

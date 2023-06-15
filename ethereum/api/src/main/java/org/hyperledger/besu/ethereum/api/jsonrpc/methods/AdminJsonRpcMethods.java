@@ -79,7 +79,7 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
   protected Map<String, JsonRpcMethod> create() {
     return mapOf(
         new AdminAddPeer(p2pNetwork, enodeDnsConfiguration),
-        new AdminRemovePeer(p2pNetwork),
+        new AdminRemovePeer(p2pNetwork, enodeDnsConfiguration),
         new AdminNodeInfo(
             clientVersion,
             networkId,

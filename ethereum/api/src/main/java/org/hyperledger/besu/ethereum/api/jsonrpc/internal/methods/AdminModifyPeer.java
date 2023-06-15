@@ -21,13 +21,19 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.P2PDisabledException;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
+
+import java.util.Optional;
 
 public abstract class AdminModifyPeer implements JsonRpcMethod {
 
   protected final P2PNetwork peerNetwork;
+  protected final Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
 
-  protected AdminModifyPeer(final P2PNetwork peerNetwork) {
+  protected AdminModifyPeer(
+      final P2PNetwork peerNetwork, final Optional<EnodeDnsConfiguration> enodeDnsConfiguration) {
     this.peerNetwork = peerNetwork;
+    this.enodeDnsConfiguration = enodeDnsConfiguration;
   }
 
   @Override
