@@ -474,14 +474,6 @@ public interface GenesisConfigOptions {
   boolean isQuorum();
 
   /**
-   * Block number to activate Quorum Permissioning. This option is used on Quorum-compatibility
-   * mode.
-   *
-   * @return block number to activate Quorum Permissioning
-   */
-  OptionalLong getQip714BlockNumber();
-
-  /**
    * The PoW algorithm associated with the genesis file.
    *
    * @return the PoW algorithm in use.

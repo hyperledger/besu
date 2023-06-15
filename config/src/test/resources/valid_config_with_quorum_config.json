@@ -5,7 +5,6 @@
   "eip158Block": 3,
   "byzantiumBlock": 1035301,
   "isQuorum": true,
-  "qip714block": 99999,
   "ibft2": {
     "blockperiodseconds": 2,
     "epochlength": 30000,

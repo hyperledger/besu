@@ -271,16 +271,13 @@ public class GenesisConfigOptionsTest {
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig("{}").getConfigOptions();
 
     assertThat(config.isQuorum()).isFalse();
-    assertThat(config.getQip714BlockNumber()).isEmpty();
   }
 
   @Test
   public void isQuorumConfigParsedCorrectly() {
-    final GenesisConfigOptions config =
-        fromConfigOptions(Map.of("isQuorum", true, "qip714block", 99999L));
+    final GenesisConfigOptions config = fromConfigOptions(Map.of("isQuorum", true));
 
     assertThat(config.isQuorum()).isTrue();
-    assertThat(config.getQip714BlockNumber()).hasValue(99999L);
   }
 
   @Test

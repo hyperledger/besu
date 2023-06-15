@@ -401,11 +401,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   @Override
-  public OptionalLong getQip714BlockNumber() {
-    return OptionalLong.empty();
-  }
-
-  @Override
   public PowAlgorithm getPowAlgorithm() {
     return isEthHash() ? PowAlgorithm.ETHASH : PowAlgorithm.UNSUPPORTED;
   }

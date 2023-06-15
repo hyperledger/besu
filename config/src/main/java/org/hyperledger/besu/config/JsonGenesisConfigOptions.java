@@ -406,11 +406,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getQip714BlockNumber() {
-    return getOptionalLong("qip714block");
-  }
-
-  @Override
   public PowAlgorithm getPowAlgorithm() {
     return isEthHash() ? PowAlgorithm.ETHASH : PowAlgorithm.UNSUPPORTED;
   }
@@ -492,7 +487,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
     if (isQuorum()) {
       builder.put("isQuorum", true);
-      getQip714BlockNumber().ifPresent(blockNumber -> builder.put("qip714block", blockNumber));
     }
 
     if (isZeroBaseFee()) {
