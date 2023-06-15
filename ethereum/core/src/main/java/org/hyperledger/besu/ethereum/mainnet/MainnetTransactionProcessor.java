@@ -306,7 +306,7 @@ public class MainnetTransactionProcessor {
       final Wei transactionGasPrice =
           feeMarket.getTransactionPriceCalculator().price(transaction, blockHeader.getBaseFee());
 
-      final long dataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
+      final long dataGas = gasCalculator.dataGasUsed(transaction.getBlobCount());
 
       final Wei upfrontGasCost =
           transaction.getUpfrontGasCost(transactionGasPrice, dataGasPrice, dataGas);
@@ -420,7 +420,6 @@ public class MainnetTransactionProcessor {
       }
 
       messageFrameStack.addFirst(initialFrame);
-
       if (initialFrame.getCode().isValid()) {
         while (!messageFrameStack.isEmpty()) {
           process(messageFrameStack.peekFirst(), operationTracer);
@@ -448,8 +447,15 @@ public class MainnetTransactionProcessor {
       final long baseRefundGas = initialFrame.getGasRefund() + selfDestructRefund;
       final long refundedGas = refunded(transaction, initialFrame.getRemainingGas(), baseRefundGas);
       final Wei refundedWei = transactionGasPrice.multiply(refundedGas);
+      final Wei balancePriorToRefund = sender.getBalance();
       senderMutableAccount.incrementBalance(refundedWei);
-
+      LOG.atTrace()
+          .setMessage("refunded sender {}  {} wei ({} -> {})")
+          .addArgument(senderAddress)
+          .addArgument(refundedWei)
+          .addArgument(balancePriorToRefund)
+          .addArgument(sender.getBalance())
+          .log();
       final long gasUsedByTransaction = transaction.getGasLimit() - initialFrame.getRemainingGas();
 
       // update the coinbase

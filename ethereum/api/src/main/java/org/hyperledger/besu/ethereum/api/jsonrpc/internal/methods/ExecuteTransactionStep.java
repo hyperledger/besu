@@ -89,7 +89,7 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
       final Wei dataGasPrice =
           protocolSpec
               .getFeeMarket()
-              .dataPrice(
+              .dataPricePerGas(
                   maybeParentHeader.flatMap(BlockHeader::getExcessDataGas).orElse(DataGas.ZERO));
       final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(header, blockchain);
       result =
