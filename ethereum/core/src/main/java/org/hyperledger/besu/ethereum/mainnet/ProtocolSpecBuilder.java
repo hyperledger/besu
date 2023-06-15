@@ -53,7 +53,7 @@ public class ProtocolSpecBuilder {
   private DifficultyCalculator difficultyCalculator;
   private EvmConfiguration evmConfiguration;
   private BiFunction<GasCalculator, EvmConfiguration, EVM> evmBuilder;
-  private BiFunction<GasCalculator, GasLimitCalculator, MainnetTransactionValidator>
+  private BiFunction<GasCalculator, GasLimitCalculator, TransactionValidator>
       transactionValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> ommerHeaderValidatorBuilder;
@@ -125,7 +125,7 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder transactionValidatorBuilder(
-      final BiFunction<GasCalculator, GasLimitCalculator, MainnetTransactionValidator>
+      final BiFunction<GasCalculator, GasLimitCalculator, TransactionValidator>
           transactionValidatorBuilder) {
     this.transactionValidatorBuilder = transactionValidatorBuilder;
     return this;
@@ -302,7 +302,7 @@ public class ProtocolSpecBuilder {
     final EVM evm = evmBuilder.apply(gasCalculator, evmConfiguration);
     final PrecompiledContractConfiguration precompiledContractConfiguration =
         new PrecompiledContractConfiguration(gasCalculator, privacyParameters);
-    final MainnetTransactionValidator transactionValidator =
+    final TransactionValidator transactionValidator =
         transactionValidatorBuilder.apply(gasCalculator, gasLimitCalculator);
     final AbstractMessageProcessor contractCreationProcessor =
         contractCreationProcessorBuilder.apply(gasCalculator, evm);
@@ -378,7 +378,7 @@ public class ProtocolSpecBuilder {
   }
 
   private PrivateTransactionProcessor createPrivateTransactionProcessor(
-      final MainnetTransactionValidator transactionValidator,
+      final TransactionValidator transactionValidator,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
       final PrecompileContractRegistry precompileContractRegistry) {
@@ -435,14 +435,14 @@ public class ProtocolSpecBuilder {
   public interface TransactionProcessorBuilder {
     MainnetTransactionProcessor apply(
         GasCalculator gasCalculator,
-        MainnetTransactionValidator transactionValidator,
+        TransactionValidator transactionValidator,
         AbstractMessageProcessor contractCreationProcessor,
         AbstractMessageProcessor messageCallProcessor);
   }
 
   public interface PrivateTransactionProcessorBuilder {
     PrivateTransactionProcessor apply(
-        MainnetTransactionValidator transactionValidator,
+        TransactionValidator transactionValidator,
         AbstractMessageProcessor contractCreationProcessor,
         AbstractMessageProcessor messageCallProcessor,
         PrivateTransactionValidator privateTransactionValidator);

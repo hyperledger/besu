@@ -39,7 +39,7 @@ import java.util.Set;
  * <p>The {@link MainnetTransactionValidator} performs the intrinsic gas cost check on the given
  * {@link Transaction}.
  */
-public class MainnetTransactionValidator {
+public class MainnetTransactionValidator implements TransactionValidator {
 
   private final GasCalculator gasCalculator;
   private final GasLimitCalculator gasLimitCalculator;
@@ -110,6 +110,7 @@ public class MainnetTransactionValidator {
    *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
    *     is invalid.
    */
+  @Override
   public ValidationResult<TransactionInvalidReason> validate(
       final Transaction transaction,
       final Optional<Wei> baseFee,
@@ -199,6 +200,7 @@ public class MainnetTransactionValidator {
     return ValidationResult.valid();
   }
 
+  @Override
   public ValidationResult<TransactionInvalidReason> validateForSender(
       final Transaction transaction,
       final Account sender,
@@ -256,10 +258,12 @@ public class MainnetTransactionValidator {
     return ValidationResult.valid();
   }
 
+  @Override
   public boolean isReplayProtectionSupported() {
     return chainId.isPresent();
   }
 
+  @Override
   public ValidationResult<TransactionInvalidReason> validateTransactionSignature(
       final Transaction transaction) {
     if (chainId.isPresent()
@@ -315,6 +319,7 @@ public class MainnetTransactionValidator {
     }
   }
 
+  @Override
   public void setTransactionFilter(final TransactionFilter transactionFilter) {
     this.transactionFilter = Optional.of(transactionFilter);
   }
