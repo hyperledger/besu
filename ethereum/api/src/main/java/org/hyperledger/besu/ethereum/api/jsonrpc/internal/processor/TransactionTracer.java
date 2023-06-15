@@ -118,7 +118,7 @@ public class TransactionTracer {
               final Wei dataGasPrice =
                   protocolSpec
                       .getFeeMarket()
-                      .dataPrice(
+                      .dataPricePerGas(
                           blockchain
                               .getBlockHeader(header.getParentHash())
                               .flatMap(BlockHeader::getExcessDataGas)
