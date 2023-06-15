@@ -115,7 +115,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Wei dataGasPrice =
           protocolSpec
               .getFeeMarket()
-              .dataPrice(
+              .dataPricePerGas(
                   blockchain
                       .getBlockHeader(blockHeader.getParentHash())
                       .flatMap(BlockHeader::getExcessDataGas)
@@ -154,6 +154,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           transactionReceiptFactory.create(
               transaction.getType(), result, worldState, currentGasUsed);
       receipts.add(transactionReceipt);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("warning, intermittent state root debugging on, performance hit");
+        LOG.trace("intermittent state root: {}", worldState.rootHash());
+      }
     }
 
     final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
