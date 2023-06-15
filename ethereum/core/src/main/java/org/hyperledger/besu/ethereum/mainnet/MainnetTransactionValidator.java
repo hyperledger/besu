@@ -53,8 +53,6 @@ import org.bouncycastle.crypto.digests.SHA256Digest;
  */
 public class MainnetTransactionValidator implements TransactionValidator {
 
-  // private final long MAX_DATA_GAS_PER_BLOCK = 524_288; // 2**19
-  // private final long DATA_GAS_PER_BLOB = 131_072; // 2**17
   private final byte BLOB_COMMITMENT_VERSION_KZG = 0x01;
 
   private final GasCalculator gasCalculator;
