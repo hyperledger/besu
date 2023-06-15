@@ -230,7 +230,7 @@ public class TransactionSimulator {
     final Wei dataGasPrice =
         protocolSpec
             .getFeeMarket()
-            .dataPrice(
+            .dataPricePerGas(
                 maybeParentHeader.flatMap(BlockHeader::getExcessDataGas).orElse(DataGas.ZERO));
 
     final Transaction transaction = maybeTransaction.get();

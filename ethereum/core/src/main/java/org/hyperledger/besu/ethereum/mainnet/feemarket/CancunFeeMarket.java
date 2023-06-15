@@ -39,7 +39,7 @@ public class CancunFeeMarket extends LondonFeeMarket {
   }
 
   @Override
-  public Wei dataPrice(final DataGas excessDataGas) {
+  public Wei dataPricePerGas(final DataGas excessDataGas) {
     final var dataGasPrice =
         Wei.of(
             fakeExponential(

@@ -673,7 +673,7 @@ public class BlockchainQueries {
   private Optional<Long> getDataGasUsed(
       final Transaction transaction, final ProtocolSpec protocolSpec) {
     return transaction.getType().supportsBlob()
-        ? Optional.of(protocolSpec.getGasCalculator().dataGasCost(transaction.getBlobCount()))
+        ? Optional.of(protocolSpec.getGasCalculator().dataGasUsed(transaction.getBlobCount()))
         : Optional.empty();
   }
 
@@ -695,7 +695,7 @@ public class BlockchainQueries {
               parentHeader ->
                   protocolSpec
                       .getFeeMarket()
-                      .dataPrice(parentHeader.getExcessDataGas().orElse(DataGas.ZERO)));
+                      .dataPricePerGas(parentHeader.getExcessDataGas().orElse(DataGas.ZERO)));
     }
     return Optional.empty();
   }

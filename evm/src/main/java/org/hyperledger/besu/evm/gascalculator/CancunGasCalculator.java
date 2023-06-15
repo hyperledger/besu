@@ -42,7 +42,7 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
   }
 
   @Override
-  public long dataGasCost(final int blobCount) {
+  public long dataGasUsed(final int blobCount) {
     return DATA_GAS_PER_BLOB * blobCount;
   }
 

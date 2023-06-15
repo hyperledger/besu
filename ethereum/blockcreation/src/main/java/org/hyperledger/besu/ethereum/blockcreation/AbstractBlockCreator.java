@@ -166,7 +166,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Wei dataGasPrice =
           newProtocolSpec
               .getFeeMarket()
-              .dataPrice(parentHeader.getExcessDataGas().orElse(DataGas.ZERO));
+              .dataPricePerGas(parentHeader.getExcessDataGas().orElse(DataGas.ZERO));
 
       throwIfStopped();
 
@@ -234,7 +234,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                 .mapToInt(List::size)
                 .sum();
 
-        newDataGasUsed = gasCalculator.dataGasCost(newBlobsCount);
+        newDataGasUsed = gasCalculator.dataGasUsed(newBlobsCount);
       }
 
       throwIfStopped();
