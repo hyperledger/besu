@@ -58,6 +58,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -205,16 +206,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       final DepositsValidator depositsValidator = newProtocolSpec.getDepositsValidator();
       Optional<List<Deposit>> maybeDeposits = Optional.empty();
-
       if (depositsValidator instanceof DepositsValidator.AllowedDeposits
           && depositContractAddress.isPresent()) {
-        final List<Deposit> depositsFromReceipts =
-            transactionResults.getReceipts().stream()
-                .flatMap(receipt -> receipt.getLogsList().stream())
-                .filter(log -> depositContractAddress.get().equals(log.getLogger()))
-                .map(DepositDecoder::decodeFromLog)
-                .toList();
-        maybeDeposits = Optional.of(depositsFromReceipts);
+        maybeDeposits = findDepositsFromReceipts(transactionResults);
       }
 
       throwIfStopped();
@@ -275,6 +269,20 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       throw new IllegalStateException(
           "Block creation failed unexpectedly. Will restart on next block added to chain.", ex);
     }
+  }
+
+  @VisibleForTesting
+  Optional<List<Deposit>> findDepositsFromReceipts(
+      final TransactionSelectionResults transactionResults) {
+    Optional<List<Deposit>> maybeDeposits;
+    final List<Deposit> depositsFromReceipts =
+        transactionResults.getReceipts().stream()
+            .flatMap(receipt -> receipt.getLogsList().stream())
+            .filter(log -> depositContractAddress.get().equals(log.getLogger()))
+            .map(DepositDecoder::decodeFromLog)
+            .toList();
+    maybeDeposits = Optional.of(depositsFromReceipts);
+    return maybeDeposits;
   }
 
   private DataGas computeExcessDataGas(

@@ -98,7 +98,7 @@ public abstract class MainnetProtocolSpecs {
 
   private static final Wei CONSTANTINOPLE_BLOCK_REWARD = Wei.fromEth(2);
 
-  private static final Address DEFAULT_DEPOSIT_CONTRACT_ADDRESS =
+  public static final Address DEFAULT_DEPOSIT_CONTRACT_ADDRESS =
       Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
 
   private MainnetProtocolSpecs() {}
