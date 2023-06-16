@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.core.blobs.KZGCommitment;
 import org.hyperledger.besu.ethereum.core.blobs.KZGProof;
 import org.hyperledger.besu.ethereum.core.blobs.VersionedHash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
@@ -105,10 +104,5 @@ public class BlobTransactionDecoder {
     List<KZGProof> proofs = input.readList(KZGProof::readFrom);
     builder.kzgBlobs(commitments, blobs, proofs);
     return builder.build();
-  }
-
-  public static void writeBlobVersionedHashes(
-      final RLPOutput rlpOutput, final List<VersionedHash> versionedHashes) {
-    rlpOutput.writeList(versionedHashes, (h, out) -> out.writeBytes(h.toBytes()));
   }
 }
