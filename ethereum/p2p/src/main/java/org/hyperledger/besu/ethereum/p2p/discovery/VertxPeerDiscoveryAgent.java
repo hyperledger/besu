@@ -297,7 +297,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
             final Endpoint endpoint = new Endpoint(host, port, Optional.empty());
             handleIncomingPacket(endpoint, event.result());
           } else {
-            if (event.cause() instanceof PeerDiscoveryPacketDecodingException) {
+            if (event.cause() instanceof PeerDiscoveryPacketDecodingException || event.cause() instanceof DecodeException) {
               LOG.debug(
                   "Discarding invalid peer discovery packet: {}, {}",
                   event.cause().getMessage(),
