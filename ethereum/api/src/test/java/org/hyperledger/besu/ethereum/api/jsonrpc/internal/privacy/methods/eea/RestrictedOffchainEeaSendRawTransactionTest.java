@@ -108,7 +108,7 @@ public class RestrictedOffchainEeaSendRawTransactionTest extends BaseEeaSendRawT
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
             validPrivacyGroupTransactionRequest.getRequest().getId(),
-            JsonRpcError.UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE);
+            JsonRpcError.UNSUPPORTED_PRIVATE_TRANSACTION_TYPE);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
@@ -122,7 +122,7 @@ public class RestrictedOffchainEeaSendRawTransactionTest extends BaseEeaSendRawT
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
             validPrivacyGroupTransactionRequest.getRequest().getId(),
-            JsonRpcError.UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE);
+            JsonRpcError.UNSUPPORTED_PRIVATE_TRANSACTION_TYPE);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }

@@ -65,6 +65,7 @@ public enum JsonRpcError {
   TX_SENDER_NOT_AUTHORIZED(-32007, "Sender account not authorized to send transactions"),
   CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE(-32008, "Initial sync is still in progress"),
   GAS_PRICE_TOO_LOW(-32009, "Gas price below configured minimum gas price"),
+  GAS_PRICE_BELOW_CURRENT_BASE_FEE(-32009, "Gas price below current base fee"),
   WRONG_CHAIN_ID(-32000, "Wrong chainId"),
   REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED(-32000, "ChainId not supported"),
   REPLAY_PROTECTED_SIGNATURE_REQUIRED(-32000, "ChainId is required"),
@@ -139,7 +140,7 @@ public enum JsonRpcError {
 
   // Private transaction errors
   ENCLAVE_ERROR(-50100, "Error communicating with enclave"),
-  UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE(-50100, "Unimplemented private transaction type"),
+  UNSUPPORTED_PRIVATE_TRANSACTION_TYPE(-50100, "Unsupported private transaction type"),
   PRIVACY_NOT_ENABLED(-50100, "Privacy is not enabled"),
   CREATE_PRIVACY_GROUP_ERROR(-50100, "Error creating privacy group"),
   DECODE_ERROR(-50100, "Unable to decode the private signed raw transaction"),
@@ -160,6 +161,7 @@ public enum JsonRpcError {
   PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY(
       -50100, "Private from does not match enclave public key"),
   VALUE_NOT_ZERO(-50100, "We cannot transfer ether in a private transaction yet."),
+  PRIVATE_TRANSACTION_INVALID(-50100, "Private transaction invalid"),
   PRIVATE_TRANSACTION_FAILED(-50100, "Private transaction failed"),
 
   CANT_CONNECT_TO_LOCAL_PEER(-32100, "Cannot add local node as peer."),
