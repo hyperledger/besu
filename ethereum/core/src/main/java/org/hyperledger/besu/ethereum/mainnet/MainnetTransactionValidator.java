@@ -342,7 +342,9 @@ public class MainnetTransactionValidator {
 
     BlobsWithCommitments blobsWithCommitments = transaction.getBlobsWithCommitments().get();
 
-    final long blobsLimit = gasLimitCalculator.currentDataGasLimit() / gasCalculator.dataGasUsed(1);
+    final long blobsLimit =
+        gasLimitCalculator.currentDataGasLimit()
+            / gasCalculator.dataGasUsed(blobsWithCommitments.getBlobs().size());
     if (blobsWithCommitments.getBlobs().size() > blobsLimit) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_BLOBS,
