@@ -88,13 +88,13 @@ public class AdminAddPeerTest {
                     .updateEnabled(true)
                     .build()));
     methodDNSUpdateDisabled =
-            new AdminAddPeer(
-                    p2pNetwork,
-                    Optional.of(
-                            ImmutableEnodeDnsConfiguration.builder()
-                                    .dnsEnabled(true)
-                                    .updateEnabled(false)
-                                    .build()));
+        new AdminAddPeer(
+            p2pNetwork,
+            Optional.of(
+                ImmutableEnodeDnsConfiguration.builder()
+                    .dnsEnabled(true)
+                    .updateEnabled(false)
+                    .build()));
   }
 
   @Test
@@ -206,8 +206,8 @@ public class AdminAddPeerTest {
   @Test
   public void requestAddsDNSEnodeButDNSNotResolved() {
     final JsonRpcResponse expectedResponse =
-            new JsonRpcErrorResponse(
-                    validDNSRequest.getRequest().getId(), JsonRpcError.CANT_RESOLVE_PEER_ENODE_DNS);
+        new JsonRpcErrorResponse(
+            validDNSRequest.getRequest().getId(), JsonRpcError.CANT_RESOLVE_PEER_ENODE_DNS);
 
     final JsonRpcResponse actualResponse = methodDNSUpdateDisabled.response(validDNSRequest);
 

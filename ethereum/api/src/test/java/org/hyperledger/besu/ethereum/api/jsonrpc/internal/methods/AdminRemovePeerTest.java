@@ -88,13 +88,13 @@ public class AdminRemovePeerTest {
                     .updateEnabled(true)
                     .build()));
     methodDNSUpdateDisabled =
-            new AdminRemovePeer(
-                    p2pNetwork,
-                    Optional.of(
-                            ImmutableEnodeDnsConfiguration.builder()
-                                    .dnsEnabled(true)
-                                    .updateEnabled(false)
-                                    .build()));
+        new AdminRemovePeer(
+            p2pNetwork,
+            Optional.of(
+                ImmutableEnodeDnsConfiguration.builder()
+                    .dnsEnabled(true)
+                    .updateEnabled(false)
+                    .build()));
   }
 
   @Test
@@ -196,7 +196,8 @@ public class AdminRemovePeerTest {
   @Test
   public void requestRemovesDNSEnodeButDNSDisabled() {
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(validDNSRequest.getRequest().getId(), JsonRpcError.CANT_USE_PEER_ENODE_DNS);
+        new JsonRpcErrorResponse(
+            validDNSRequest.getRequest().getId(), JsonRpcError.CANT_USE_PEER_ENODE_DNS);
 
     final JsonRpcResponse actualResponse = methodDNSDisabled.response(validDNSRequest);
 
@@ -206,7 +207,8 @@ public class AdminRemovePeerTest {
   @Test
   public void requestRemovesDNSEnodeButDNSNotResolved() {
     final JsonRpcResponse expectedResponse =
-            new JsonRpcErrorResponse(validDNSRequest.getRequest().getId(), JsonRpcError.CANT_RESOLVE_PEER_ENODE_DNS);
+        new JsonRpcErrorResponse(
+            validDNSRequest.getRequest().getId(), JsonRpcError.CANT_RESOLVE_PEER_ENODE_DNS);
 
     final JsonRpcResponse actualResponse = methodDNSUpdateDisabled.response(validDNSRequest);
 
