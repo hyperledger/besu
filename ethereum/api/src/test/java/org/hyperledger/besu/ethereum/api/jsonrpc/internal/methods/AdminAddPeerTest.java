@@ -43,6 +43,7 @@ public class AdminAddPeerTest {
 
   private AdminAddPeer method;
   private AdminAddPeer methodDNSDisabled;
+  private AdminAddPeer methodDNSUpdateDisabled;
 
   final String validEnode =
       "enode://"
@@ -86,6 +87,14 @@ public class AdminAddPeerTest {
                     .dnsEnabled(false)
                     .updateEnabled(true)
                     .build()));
+    methodDNSUpdateDisabled =
+            new AdminAddPeer(
+                    p2pNetwork,
+                    Optional.of(
+                            ImmutableEnodeDnsConfiguration.builder()
+                                    .dnsEnabled(true)
+                                    .updateEnabled(false)
+                                    .build()));
   }
 
   @Test
@@ -186,9 +195,21 @@ public class AdminAddPeerTest {
   @Test
   public void requestAddsDNSEnodeButDNSDisabled() {
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(validDNSRequest.getRequest().getId(), JsonRpcError.PARSE_ERROR);
+        new JsonRpcErrorResponse(
+            validDNSRequest.getRequest().getId(), JsonRpcError.CANT_USE_PEER_ENODE_DNS);
 
     final JsonRpcResponse actualResponse = methodDNSDisabled.response(validDNSRequest);
+
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
+  @Test
+  public void requestAddsDNSEnodeButDNSNotResolved() {
+    final JsonRpcResponse expectedResponse =
+            new JsonRpcErrorResponse(
+                    validDNSRequest.getRequest().getId(), JsonRpcError.CANT_RESOLVE_PEER_ENODE_DNS);
+
+    final JsonRpcResponse actualResponse = methodDNSUpdateDisabled.response(validDNSRequest);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
