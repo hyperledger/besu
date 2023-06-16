@@ -17,16 +17,20 @@ package org.hyperledger.besu.ethereum.core;
 
 import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.blobs.BlobsWithCommitments;
+import org.hyperledger.besu.ethereum.core.blobs.KZGCommitment;
 import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
+import java.security.InvalidParameterException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -34,6 +38,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class TransactionBuilderTest {
@@ -75,5 +80,18 @@ public class TransactionBuilderTest {
     } catch (IllegalArgumentException iea) {
       assertThat(iea).hasMessage("Blob transaction must have at least one blob");
     }
+  }
+
+  @Test
+  public void blobsWithCommitmentsMustHaveSameNumberOfElements() {
+    String actualMessage =
+        assertThrows(
+                InvalidParameterException.class,
+                () ->
+                    new BlobsWithCommitments(
+                        List.of(new KZGCommitment(Bytes.of(1))), List.of(), List.of()))
+            .getMessage();
+    String expectedMessage = "There must be an equal number of blobs, commitments and proofs";
+    assertThat(actualMessage).isEqualTo(expectedMessage);
   }
 }

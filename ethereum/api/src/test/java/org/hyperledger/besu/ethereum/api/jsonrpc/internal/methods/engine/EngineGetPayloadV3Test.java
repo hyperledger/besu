@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,6 +26,7 @@ import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobsBundleV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV3;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -33,7 +35,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 
+import java.security.InvalidParameterException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -114,8 +118,19 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
+  @Test
+  public void blobsBundleV1MustHaveSameNumberOfElements() {
+    String actualMessage =
+        assertThrows(
+                InvalidParameterException.class,
+                () -> new BlobsBundleV1(List.of(""), List.of(""), List.of()))
+            .getMessage();
+    String expectedMessage = "There must be an equal number of blobs, commitments and proofs";
+    assertThat(actualMessage).isEqualTo(expectedMessage);
+  }
+
   @Override
   protected String getMethodName() {
-    return RpcMethod.ENGINE_GET_PAYLOAD_V2.getMethodName();
+    return RpcMethod.ENGINE_GET_PAYLOAD_V3.getMethodName();
   }
 }
