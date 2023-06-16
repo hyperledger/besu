@@ -125,7 +125,7 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
                 InvalidParameterException.class,
                 () -> new BlobsBundleV1(List.of(""), List.of(""), List.of()))
             .getMessage();
-    String expectedMessage = "There must be an equal number of blobs, commitments and proofs";
+    final String expectedMessage = "There must be an equal number of blobs, commitments and proofs";
     assertThat(actualMessage).isEqualTo(expectedMessage);
   }
 
