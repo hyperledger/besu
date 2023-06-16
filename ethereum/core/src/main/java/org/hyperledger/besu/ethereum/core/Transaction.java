@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.core.blobs.BlobsWithCommitments;
 import org.hyperledger.besu.ethereum.core.blobs.KZGCommitment;
 import org.hyperledger.besu.ethereum.core.blobs.KZGProof;
 import org.hyperledger.besu.ethereum.core.blobs.VersionedHash;
-import org.hyperledger.besu.ethereum.core.encoding.BlobTransactionDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.BlobTransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -1017,7 +1017,7 @@ public class Transaction
                   accessList,
                   rlpOutput);
               rlpOutput.writeUInt256Scalar(maxFeePerDataGas);
-              BlobTransactionDecoder.writeBlobVersionedHashes(rlpOutput, versionedHashes);
+              BlobTransactionEncoder.writeBlobVersionedHashes(rlpOutput, versionedHashes);
               rlpOutput.endList();
             });
     return Bytes.concatenate(Bytes.of(TransactionType.BLOB.getSerializedType()), encoded);

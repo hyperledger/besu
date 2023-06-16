@@ -193,4 +193,24 @@ task lazyDownloadLicenses() {
 task checkLicenses {
   description "Verify that all dependencies use accepted licenses."
   dependsOn ':lazyDownloadLicenses'
+
+  def bads = ""
+  doLast {
+    def xml = new XmlParser().parse("${rootProject.buildDir}/reports/license/license-dependency.xml")
+    xml.each { license ->
+      if (!acceptedLicenses.contains((license.@name).toLowerCase())) {
+        def depStrings = []
+        license.dependency.each { depStrings << it.text() }
+        bads = bads + depStrings + " => ${license.@name} \n"
+      }
+    }
+    if (bads != "") {
+      throw new GradleException("Some 3rd parties are using licenses not in our accepted licenses list:\n" +
+        bads +
+        "If it's a license acceptable for us, add it in the file check-licenses.gradle\n" +
+        "Be careful, some 3rd parties may accept multiple licenses.\n" +
+        "In this case, select the one you want to use by changing downloadLicenses.licenses\n"
+      )
+    }
+  }
 }
