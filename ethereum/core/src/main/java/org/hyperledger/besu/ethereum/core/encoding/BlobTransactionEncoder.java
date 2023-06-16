@@ -20,8 +20,11 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.blobs.Blob;
 import org.hyperledger.besu.ethereum.core.blobs.KZGCommitment;
 import org.hyperledger.besu.ethereum.core.blobs.KZGProof;
+import org.hyperledger.besu.ethereum.core.blobs.VersionedHash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+
+import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -75,5 +78,10 @@ public class BlobTransactionEncoder {
     return Bytes.concatenate(
         Bytes.of(transaction.getType().getSerializedType()),
         RLP.encode(rlpOutput -> encodeEIP4844Network(transaction, rlpOutput)));
+  }
+
+  public static void writeBlobVersionedHashes(
+      final RLPOutput rlpOutput, final List<VersionedHash> versionedHashes) {
+    rlpOutput.writeList(versionedHashes, (h, out) -> out.writeBytes(h.toBytes()));
   }
 }
