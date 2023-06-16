@@ -112,10 +112,10 @@ abstract class AbstractBlockCreatorTest {
             UInt64.valueOf(539967));
     final List<Deposit> expectedDeposits = List.of(expectedDeposit);
 
-    final Optional<List<Deposit>> depositsFromReceipts =
+    final List<Deposit> depositsFromReceipts =
         blockCreator.findDepositsFromReceipts(transactionResults);
 
-    assertThat(depositsFromReceipts).hasValue(expectedDeposits);
+    assertThat(depositsFromReceipts).isEqualTo(expectedDeposits);
   }
 
   @Test

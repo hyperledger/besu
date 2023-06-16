@@ -208,7 +208,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       Optional<List<Deposit>> maybeDeposits = Optional.empty();
       if (depositsValidator instanceof DepositsValidator.AllowedDeposits
           && depositContractAddress.isPresent()) {
-        maybeDeposits = findDepositsFromReceipts(transactionResults);
+        maybeDeposits = Optional.of(findDepositsFromReceipts(transactionResults));
       }
 
       throwIfStopped();
@@ -272,17 +272,12 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   }
 
   @VisibleForTesting
-  Optional<List<Deposit>> findDepositsFromReceipts(
-      final TransactionSelectionResults transactionResults) {
-    Optional<List<Deposit>> maybeDeposits;
-    final List<Deposit> depositsFromReceipts =
-        transactionResults.getReceipts().stream()
-            .flatMap(receipt -> receipt.getLogsList().stream())
-            .filter(log -> depositContractAddress.get().equals(log.getLogger()))
-            .map(DepositDecoder::decodeFromLog)
-            .toList();
-    maybeDeposits = Optional.of(depositsFromReceipts);
-    return maybeDeposits;
+  List<Deposit> findDepositsFromReceipts(final TransactionSelectionResults transactionResults) {
+    return transactionResults.getReceipts().stream()
+        .flatMap(receipt -> receipt.getLogsList().stream())
+        .filter(log -> depositContractAddress.get().equals(log.getLogger()))
+        .map(DepositDecoder::decodeFromLog)
+        .toList();
   }
 
   private DataGas computeExcessDataGas(
