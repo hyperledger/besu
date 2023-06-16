@@ -19,11 +19,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.hyperledger.besu.datatypes.DataGas;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
 class CancunFeeMarketTest {
+
+  private static final int DATA_GAS_PER_BLOB = 131072;
 
   @Test
   void dataPricePerGas() {
@@ -31,30 +35,33 @@ class CancunFeeMarketTest {
     // when no excess data gas, data price per gas is 1
     assertEquals(1, cancunFeeMarket.dataPricePerGas(DataGas.ZERO).getAsBigInteger().intValue());
 
-    // when excess data doubles, price is log
-    assertEquals(
-        2,
-        cancunFeeMarket
-            .dataPricePerGas(DataGas.fromHexString("0x180000"))
-            .getAsBigInteger()
-            .intValue());
-    assertEquals(
-        3,
-        cancunFeeMarket
-            .dataPricePerGas(DataGas.fromHexString("0x280000"))
-            .getAsBigInteger()
-            .intValue());
-    assertEquals(
-        5,
-        cancunFeeMarket
-            .dataPricePerGas(DataGas.fromHexString("0x380000"))
-            .getAsBigInteger()
-            .intValue());
-    assertEquals(
-        8,
-        cancunFeeMarket
-            .dataPricePerGas(DataGas.fromHexString("0x480000"))
-            .getAsBigInteger()
-            .intValue());
+    record DataGasPricing(long excess, long price) {}
+    List<DataGasPricing> testVector = new ArrayList<>();
+
+    int numBlobs = 1;
+    long price = 1;
+    while (price <= 1000) {
+      price = dataGasPrice(DataGas.of(numBlobs * DATA_GAS_PER_BLOB));
+      var testCase = new DataGasPricing(numBlobs * DATA_GAS_PER_BLOB, price);
+      testVector.add(testCase);
+      numBlobs++;
+    }
+
+    testVector.stream()
+        .forEach(
+            dataGasPricing -> {
+              assertEquals(
+                  dataGasPricing.price,
+                  cancunFeeMarket
+                      .dataPricePerGas(DataGas.of(dataGasPricing.excess))
+                      .getAsBigInteger()
+                      .intValue());
+            });
+  }
+
+  private long dataGasPrice(final DataGas excess) {
+    double dgufDenominator = 3338477;
+    double fakeExpo = excess.getValue().longValue() / dgufDenominator;
+    return (long) (1 * Math.exp(fakeExpo));
   }
 }
