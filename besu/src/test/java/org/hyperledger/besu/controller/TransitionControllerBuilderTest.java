@@ -20,6 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.clique.BlockHeaderValidationRulesetFactory;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.common.EpochManager;
@@ -53,7 +54,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /**
@@ -73,10 +73,10 @@ public class TransitionControllerBuilderTest {
   @Mock PostMergeContext mergeContext;
   StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
 
-  @Spy CliqueBesuControllerBuilder cliqueBuilder = new CliqueBesuControllerBuilder();
-  @Spy BesuControllerBuilder powBuilder = new MainnetBesuControllerBuilder();
-  @Spy MergeBesuControllerBuilder postMergeBuilder = new MergeBesuControllerBuilder();
-  @Spy MiningParameters miningParameters = new MiningParameters.Builder().build();
+  CliqueBesuControllerBuilder cliqueBuilder = new CliqueBesuControllerBuilder();
+  BesuControllerBuilder powBuilder = new MainnetBesuControllerBuilder();
+  MergeBesuControllerBuilder postMergeBuilder = new MergeBesuControllerBuilder();
+  MiningParameters miningParameters;
 
   TransitionProtocolSchedule transitionProtocolSchedule;
 
@@ -88,6 +88,9 @@ public class TransitionControllerBuilderTest {
                 preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext));
     transitionProtocolSchedule.setProtocolContext(protocolContext);
     cliqueBuilder.nodeKey(NodeKeyUtils.generate());
+    cliqueBuilder.genesisConfigFile(GenesisConfigFile.DEFAULT);
+    powBuilder.genesisConfigFile(GenesisConfigFile.DEFAULT);
+    postMergeBuilder.genesisConfigFile(GenesisConfigFile.DEFAULT);
     postMergeBuilder.storageProvider(storageProvider);
     when(protocolContext.getBlockchain()).thenReturn(mockBlockchain);
     when(transitionProtocolSchedule.getPostMergeSchedule()).thenReturn(postMergeProtocolSchedule);
@@ -96,6 +99,7 @@ public class TransitionControllerBuilderTest {
         .thenReturn(mock(CliqueContext.class));
     when(protocolContext.getConsensusContext(PostMergeContext.class)).thenReturn(mergeContext);
     when(protocolContext.getConsensusContext(MergeContext.class)).thenReturn(mergeContext);
+    miningParameters = new MiningParameters.Builder().miningEnabled(false).build();
   }
 
   @Test
@@ -114,7 +118,7 @@ public class TransitionControllerBuilderTest {
 
   @Test
   public void assertPowMiningPreMerge() {
-    when(miningParameters.isMiningEnabled()).thenReturn(Boolean.TRUE);
+    miningParameters = new MiningParameters.Builder().miningEnabled(true).build();
     var transCoordinator = buildTransitionCoordinator(powBuilder, postMergeBuilder);
     assertThat(transCoordinator.isMiningBeforeMerge()).isTrue();
   }
@@ -239,6 +243,7 @@ public class TransitionControllerBuilderTest {
   TransitionCoordinator buildTransitionCoordinator(
       final BesuControllerBuilder preMerge, final MergeBesuControllerBuilder postMerge) {
     var builder = new TransitionBesuControllerBuilder(preMerge, postMerge);
+    builder.genesisConfigFile(GenesisConfigFile.mainnet());
     builder.storageProvider(storageProvider);
     builder.metricsSystem(new NoOpMetricsSystem());
     var coordinator =
