@@ -113,7 +113,9 @@ public class PendingTransactionsForSender {
   }
 
   public Stream<PendingTransaction> streamPendingTransactions() {
-    return pendingTransactions.values().stream();
+    synchronized (pendingTransactions) {
+      return List.copyOf(pendingTransactions.values()).stream();
+    }
   }
 
   public PendingTransaction getPendingTransactionForNonce(final long nonce) {
