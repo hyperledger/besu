@@ -59,6 +59,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nonnull;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -256,11 +257,43 @@ public class BackwardSyncContextTest {
   }
 
   @Test
-  public void testUpdatingHead() {
-    context.updateHead(localBlockchain.getBlockByNumber(4).orElseThrow().getHash());
-    context.possiblyMoveHead(null);
+  public void shouldMoveHead() {
+    final Block lastSavedBlock = localBlockchain.getBlockByNumber(4).orElseThrow();
+    context.possiblyMoveHead(lastSavedBlock);
 
     assertThat(localBlockchain.getChainHeadBlock().getHeader().getNumber()).isEqualTo(4);
+  }
+
+  @Test
+  public void shouldNotMoveHeadWhenAlreadyHead() {
+    final Block lastSavedBlock = localBlockchain.getBlockByNumber(25).orElseThrow();
+    context.possiblyMoveHead(lastSavedBlock);
+
+    assertThat(localBlockchain.getChainHeadBlock().getHeader().getNumber()).isEqualTo(25);
+  }
+
+  @Test
+  public void shouldUpdateTargetHeightWhenStatusPresent() {
+    // Given
+    BlockHeader blockHeader = Mockito.mock(BlockHeader.class);
+    when(blockHeader.getParentHash()).thenReturn(Hash.fromHexStringLenient("0x41"));
+    when(blockHeader.getHash()).thenReturn(Hash.fromHexStringLenient("0x42"));
+    when(blockHeader.getNumber()).thenReturn(42L);
+    Block unknownBlock = Mockito.mock(Block.class);
+    when(unknownBlock.getHeader()).thenReturn(blockHeader);
+    when(unknownBlock.getHash()).thenReturn(Hash.fromHexStringLenient("0x42"));
+    when(unknownBlock.toRlp()).thenReturn(Bytes.EMPTY);
+    context.syncBackwardsUntil(unknownBlock); // set the status
+    assertThat(context.getStatus().getTargetChainHeight()).isEqualTo(42);
+    final Hash backwardChainHash =
+        remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 4).get().getHash();
+    final Block backwardChainBlock = backwardChain.getTrustedBlock(backwardChainHash);
+
+    // When
+    context.maybeUpdateTargetHeight(backwardChainBlock.getHash());
+
+    // Then
+    assertThat(context.getStatus().getTargetChainHeight()).isEqualTo(29);
   }
 
   @Test
