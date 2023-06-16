@@ -589,7 +589,6 @@ public abstract class AbstractKeyValueStorageTest {
    * a way to create a new tmp folder.
    *
    * @param folder the folder in which to create the sub folder
-   *
    * @return the path representing the sub folder
    */
   @NotNull
