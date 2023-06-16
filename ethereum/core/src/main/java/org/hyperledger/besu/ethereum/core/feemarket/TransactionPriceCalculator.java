@@ -45,6 +45,8 @@ public interface TransactionPriceCalculator {
     };
   }
 
+  // curiously named as in the spec
+  // https://eips.ethereum.org/EIPS/eip-4844#cryptographic-helpers
   private static BigInteger fakeExponential(
       final BigInteger factor, final BigInteger numerator, final BigInteger denominator) {
     int i = 1;
