@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -70,4 +71,10 @@ public class VersionedHash {
 
   public static final VersionedHash DEFAULT_VERSIONED_HASH =
       new VersionedHash((byte) 0x01, Hash.wrap(Bytes32.wrap(Bytes.repeat((byte) 42, 32))));
+
+  @JsonValue
+  @Override
+  public String toString() {
+    return this.toBytes().toHexString();
+  }
 }
