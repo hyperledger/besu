@@ -42,10 +42,6 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionDecoder {
 
-  // private static final UInt32 BLOB_TRANSACTION_OFFSET = UInt32.fromHexString("0x3c000000");
-
-  // private static final Logger LOG = getLogger(TransactionDecoder.class);
-
   @FunctionalInterface
   interface Decoder {
     Transaction decode(RLPInput input);
