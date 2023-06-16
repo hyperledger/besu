@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core.blobs;
 
+import java.security.InvalidParameterException;
 import java.util.List;
 
 public class BlobsWithCommitments {
@@ -25,6 +26,10 @@ public class BlobsWithCommitments {
       final List<KZGCommitment> kzgCommitments,
       final List<Blob> blobs,
       final List<KZGProof> kzgProofs) {
+    if (blobs.size() != kzgCommitments.size() || blobs.size() != kzgProofs.size()) {
+      throw new InvalidParameterException(
+          "There must be an equal number of blobs, commitments and proofs");
+    }
     this.kzgCommitments = kzgCommitments;
     this.blobs = blobs;
     this.kzgProofs = kzgProofs;

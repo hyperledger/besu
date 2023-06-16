@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.blobs.BlobsWithCommitments;
 import org.hyperledger.besu.ethereum.core.blobs.KZGCommitment;
 import org.hyperledger.besu.ethereum.core.blobs.KZGProof;
 
+import java.security.InvalidParameterException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -70,6 +71,10 @@ public class BlobsBundleV1 {
 
   public BlobsBundleV1(
       final List<String> commitments, final List<String> proofs, final List<String> blobs) {
+    if (blobs.size() != commitments.size() || blobs.size() != proofs.size()) {
+      throw new InvalidParameterException(
+          "There must be an equal number of blobs, commitments and proofs");
+    }
     this.commitments = commitments;
     this.proofs = proofs;
     this.blobs = blobs;
