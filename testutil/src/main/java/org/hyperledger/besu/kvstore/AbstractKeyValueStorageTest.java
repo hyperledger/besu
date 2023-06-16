@@ -588,6 +588,8 @@ public abstract class AbstractKeyValueStorageTest {
    * This is needed because we're using Path via Junit 5 @TempDir annotation, and Path doesn't have
    * a way to create a new tmp folder.
    *
+   * @param folder the folder in which to create the sub folder
+   *
    * @return the path representing the sub folder
    */
   @NotNull
