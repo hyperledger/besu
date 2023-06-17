@@ -34,7 +34,6 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -584,15 +583,12 @@ public abstract class AbstractKeyValueStorageTest {
   }
 
   /**
-   * Use random to get a sub folder from the given path, that will not conflict with other folders.
-   * This is needed because we're using Path via Junit 5 @TempDir annotation, and Path doesn't have
-   * a way to create a new tmp folder.
+   * Create a sub folder from the given path, that will not conflict with other folders.
    *
    * @param folder the folder in which to create the sub folder
    * @return the path representing the sub folder
    */
-  @NotNull
-  protected Path getTempSubFolder(final Path folder) {
-    return folder.resolve(Bytes.random(9).toString());
+  protected Path getTempSubFolder(final Path folder) throws Exception {
+    return java.nio.file.Files.createTempDirectory(folder, null);
   }
 }
