@@ -587,6 +587,7 @@ public abstract class AbstractKeyValueStorageTest {
    *
    * @param folder the folder in which to create the sub folder
    * @return the path representing the sub folder
+   * @throws Exception if the folder cannot be created
    */
   protected Path getTempSubFolder(final Path folder) throws Exception {
     return java.nio.file.Files.createTempDirectory(folder, null);
