@@ -31,33 +31,28 @@ import java.util.function.BiConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * DynamicPivotBlockSelector is responsible for dynamically selecting the pivot block for Snapsync.
- * It uses an algorithm to find the most suitable pivot block based on the current network
- * conditions.
- */
-public class DynamicPivotBlockSelector {
+public class DynamicPivotBlockManager {
 
   private static final Duration DEFAULT_CHECK_INTERVAL = Duration.ofSeconds(60);
   public static final BiConsumer<BlockHeader, Boolean> doNothingOnPivotChange = (___, __) -> {};
 
-  private static final Logger LOG = LoggerFactory.getLogger(DynamicPivotBlockSelector.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DynamicPivotBlockManager.class);
 
   private final AtomicBoolean isTimeToCheckAgain = new AtomicBoolean(true);
 
   private final EthContext ethContext;
   private final FastSyncActions syncActions;
 
-  private final SnapSyncProcessState syncState;
+  private final SnapSyncState syncState;
   private final int pivotBlockWindowValidity;
   private final int pivotBlockDistanceBeforeCaching;
 
   private Optional<BlockHeader> lastPivotBlockFound;
 
-  public DynamicPivotBlockSelector(
+  public DynamicPivotBlockManager(
       final EthContext ethContext,
       final FastSyncActions fastSyncActions,
-      final SnapSyncProcessState fastSyncState,
+      final SnapSyncState fastSyncState,
       final int pivotBlockWindowValidity,
       final int pivotBlockDistanceBeforeCaching) {
     this.ethContext = ethContext;

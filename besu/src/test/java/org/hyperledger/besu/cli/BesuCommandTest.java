@@ -5725,30 +5725,4 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
-
-  @Test
-  public void snapsyncHealingOptionShouldBeDisabledByDefault() {
-    final TestBesuCommand besuCommand = parseCommand();
-    assertThat(besuCommand.unstableSynchronizerOptions.isSnapsyncFlatDbHealingEnabled()).isFalse();
-  }
-
-  @Test
-  public void snapsyncHealingOptionShouldWork() {
-    final TestBesuCommand besuCommand =
-        parseCommand("--Xsnapsync-synchronizer-flat-db-healing-enabled", "true");
-    assertThat(besuCommand.unstableSynchronizerOptions.isSnapsyncFlatDbHealingEnabled()).isTrue();
-  }
-
-  @Test
-  public void snapsyncForHealingFeaturesShouldFailWhenHealingIsNotEnabled() {
-    parseCommand("--Xsnapsync-synchronizer-flat-account-healed-count-per-request", "100");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "--Xsnapsync-synchronizer-flat option can only be used when -Xsnapsync-synchronizer-flat-db-healing-enabled is true");
-
-    parseCommand("--Xsnapsync-synchronizer-flat-slot-healed-count-per-request", "100");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "--Xsnapsync-synchronizer-flat option can only be used when -Xsnapsync-synchronizer-flat-db-healing-enabled is true");
-  }
 }

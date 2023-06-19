@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.TrieNodeDataRequest;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -32,20 +32,16 @@ public class LoadLocalDataStep {
 
   private final WorldStateStorage worldStateStorage;
   private final SnapWorldDownloadState downloadState;
-  private final SnapSyncProcessState snapSyncState;
-
-  private final SnapSyncConfiguration snapSyncConfiguration;
+  private final SnapSyncState snapSyncState;
   private final Counter existingNodeCounter;
 
   public LoadLocalDataStep(
       final WorldStateStorage worldStateStorage,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncConfiguration snapSyncConfiguration,
       final MetricsSystem metricsSystem,
-      final SnapSyncProcessState snapSyncState) {
+      final SnapSyncState snapSyncState) {
     this.worldStateStorage = worldStateStorage;
     this.downloadState = downloadState;
-    this.snapSyncConfiguration = snapSyncConfiguration;
     existingNodeCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.SYNCHRONIZER,
@@ -56,17 +52,16 @@ public class LoadLocalDataStep {
 
   public Stream<Task<SnapDataRequest>> loadLocalDataTrieNode(
       final Task<SnapDataRequest> task, final Pipe<Task<SnapDataRequest>> completedTasks) {
-    final TrieNodeHealingRequest request = (TrieNodeHealingRequest) task.getData();
+    final TrieNodeDataRequest request = (TrieNodeDataRequest) task.getData();
     // check if node is already stored in the worldstate
     if (snapSyncState.hasPivotBlockHeader()) {
-      Optional<Bytes> existingData = request.getExistingData(downloadState, worldStateStorage);
+      Optional<Bytes> existingData = request.getExistingData(worldStateStorage);
       if (existingData.isPresent()) {
         existingNodeCounter.inc();
         request.setData(existingData.get());
         request.setRequiresPersisting(false);
         final WorldStateStorage.Updater updater = worldStateStorage.updater();
-        request.persist(
-            worldStateStorage, updater, downloadState, snapSyncState, snapSyncConfiguration);
+        request.persist(worldStateStorage, updater, downloadState, snapSyncState);
         updater.commit();
         downloadState.enqueueRequests(request.getRootStorageRequests(worldStateStorage));
         completedTasks.put(task);

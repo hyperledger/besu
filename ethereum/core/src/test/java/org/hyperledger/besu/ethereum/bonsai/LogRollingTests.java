@@ -57,15 +57,12 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class LogRollingTests {
 
   private BonsaiWorldStateProvider archive;
-
-  private InMemoryKeyValueStorageProvider provider;
   private InMemoryKeyValueStorage accountStorage;
   private InMemoryKeyValueStorage codeStorage;
   private InMemoryKeyValueStorage storageStorage;
   private InMemoryKeyValueStorage trieBranchStorage;
   private InMemoryKeyValueStorage trieLogStorage;
 
-  private InMemoryKeyValueStorageProvider secondProvider;
   private BonsaiWorldStateProvider secondArchive;
   private InMemoryKeyValueStorage secondAccountStorage;
   private InMemoryKeyValueStorage secondCodeStorage;
@@ -124,7 +121,7 @@ public class LogRollingTests {
 
   @Before
   public void createStorage() {
-    provider = new InMemoryKeyValueStorageProvider();
+    final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
     final CachedMerkleTrieLoader cachedMerkleTrieLoader =
         new CachedMerkleTrieLoader(new NoOpMetricsSystem());
     archive =
@@ -147,7 +144,7 @@ public class LogRollingTests {
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
 
-    secondProvider = new InMemoryKeyValueStorageProvider();
+    final InMemoryKeyValueStorageProvider secondProvider = new InMemoryKeyValueStorageProvider();
     final CachedMerkleTrieLoader secondOptimizedMerkleTrieLoader =
         new CachedMerkleTrieLoader(new NoOpMetricsSystem());
     secondArchive =
@@ -183,7 +180,14 @@ public class LogRollingTests {
 
     final BonsaiWorldState worldState =
         new BonsaiWorldState(
-            archive, new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()));
+            archive,
+            new BonsaiWorldStateKeyValueStorage(
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                trieBranchStorage,
+                trieLogStorage,
+                new NoOpMetricsSystem()));
     final WorldUpdater updater = worldState.updater();
 
     final MutableAccount mutableAccount =
@@ -196,7 +200,13 @@ public class LogRollingTests {
     final BonsaiWorldState secondWorldState =
         new BonsaiWorldState(
             secondArchive,
-            new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()));
+            new BonsaiWorldStateKeyValueStorage(
+                secondAccountStorage,
+                secondCodeStorage,
+                secondStorageStorage,
+                secondTrieBranchStorage,
+                secondTrieLogStorage,
+                new NoOpMetricsSystem()));
     final BonsaiWorldStateUpdateAccumulator secondUpdater =
         (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
 
@@ -225,7 +235,14 @@ public class LogRollingTests {
   public void rollForwardTwice() {
     final BonsaiWorldState worldState =
         new BonsaiWorldState(
-            archive, new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()));
+            archive,
+            new BonsaiWorldStateKeyValueStorage(
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                trieBranchStorage,
+                trieLogStorage,
+                new NoOpMetricsSystem()));
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount =
@@ -246,7 +263,13 @@ public class LogRollingTests {
     final BonsaiWorldState secondWorldState =
         new BonsaiWorldState(
             secondArchive,
-            new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()));
+            new BonsaiWorldStateKeyValueStorage(
+                secondAccountStorage,
+                secondCodeStorage,
+                secondStorageStorage,
+                secondTrieBranchStorage,
+                secondTrieLogStorage,
+                new NoOpMetricsSystem()));
     final BonsaiWorldStateUpdateAccumulator secondUpdater =
         (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
 
@@ -276,7 +299,14 @@ public class LogRollingTests {
   public void rollBackOnce() {
     final BonsaiWorldState worldState =
         new BonsaiWorldState(
-            archive, new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()));
+            archive,
+            new BonsaiWorldStateKeyValueStorage(
+                accountStorage,
+                codeStorage,
+                storageStorage,
+                trieBranchStorage,
+                trieLogStorage,
+                new NoOpMetricsSystem()));
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount =
@@ -304,7 +334,13 @@ public class LogRollingTests {
     final BonsaiWorldState secondWorldState =
         new BonsaiWorldState(
             secondArchive,
-            new BonsaiWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()));
+            new BonsaiWorldStateKeyValueStorage(
+                secondAccountStorage,
+                secondCodeStorage,
+                secondStorageStorage,
+                secondTrieBranchStorage,
+                secondTrieLogStorage,
+                new NoOpMetricsSystem()));
 
     final WorldUpdater secondUpdater = secondWorldState.updater();
     final MutableAccount secondMutableAccount =

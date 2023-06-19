@@ -16,7 +16,6 @@
 package org.hyperledger.besu.ethereum.bonsai.storage;
 
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
-import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
@@ -52,11 +51,6 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
         trieBranchStorage,
         trieLogStorage,
         metricsSystem);
-  }
-
-  @Override
-  public FlatDbMode getFlatDbMode() {
-    return parentWorldStateStorage.getFlatDbMode();
   }
 
   @Override

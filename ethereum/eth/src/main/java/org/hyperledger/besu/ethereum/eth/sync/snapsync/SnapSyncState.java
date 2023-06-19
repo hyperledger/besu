@@ -21,38 +21,25 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Represents the state of the SnapSync process, including the current progress, healing status, and
- * other relevant information.
- */
-public class SnapSyncProcessState extends FastSyncState {
-  private static final Logger LOG = LoggerFactory.getLogger(SnapSyncProcessState.class);
+public class SnapSyncState extends FastSyncState {
+  private static final Logger LOG = LoggerFactory.getLogger(SnapSyncState.class);
 
-  private boolean isHealTrieInProgress;
-  private boolean isHealFlatDatabaseInProgress;
+  private boolean isHealInProgress;
   private boolean isWaitingBlockchain;
 
-  public SnapSyncProcessState(final FastSyncState fastSyncState) {
+  public SnapSyncState(final FastSyncState fastSyncState) {
     super(
         fastSyncState.getPivotBlockNumber(),
         fastSyncState.getPivotBlockHash(),
         fastSyncState.getPivotBlockHeader());
   }
 
-  public boolean isHealTrieInProgress() {
-    return isHealTrieInProgress;
+  public boolean isHealInProgress() {
+    return isHealInProgress;
   }
 
-  public void setHealTrieStatus(final boolean healTrieStatus) {
-    isHealTrieInProgress = healTrieStatus;
-  }
-
-  public boolean isHealFlatDatabaseInProgress() {
-    return isHealFlatDatabaseInProgress;
-  }
-
-  public void setHealFlatDatabaseInProgress(final boolean healFlatDatabaseInProgress) {
-    isHealFlatDatabaseInProgress = healFlatDatabaseInProgress;
+  public void setHealStatus(final boolean healStatus) {
+    isHealInProgress = healStatus;
   }
 
   public boolean isWaitingBlockchain() {

@@ -16,34 +16,33 @@ package org.hyperledger.besu.ethereum.bonsai.storage;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.bonsai.storage.flat.FlatDbReaderStrategy;
-import org.hyperledger.besu.ethereum.bonsai.storage.flat.FullFlatDbReaderStrategy;
-import org.hyperledger.besu.ethereum.bonsai.storage.flat.PartialFlatDbReaderStrategy;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.rlp.RLP;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SuppressWarnings("unused")
 public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateKeyValueStorage.class);
@@ -54,17 +53,21 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   public static final byte[] WORLD_BLOCK_HASH_KEY =
       "worldBlockHash".getBytes(StandardCharsets.UTF_8);
 
-  // 0x666C61744462537461747573
-  public static final byte[] FLAT_DB_MODE = "flatDbStatus".getBytes(StandardCharsets.UTF_8);
-
-  protected FlatDbMode flatDbMode;
-  protected FlatDbReaderStrategy flatDbReaderStrategy;
-
   protected final KeyValueStorage accountStorage;
   protected final KeyValueStorage codeStorage;
   protected final KeyValueStorage storageStorage;
   protected final KeyValueStorage trieBranchStorage;
   protected final KeyValueStorage trieLogStorage;
+
+  private final Counter getAccountCounter;
+  private final Counter getAccountFlatDatabaseCounter;
+  private final Counter getAccountMerkleTrieCounter;
+  private final Counter getAccountMissingMerkleTrieCounter;
+
+  private final Counter getStorageValueCounter;
+  private final Counter getStorageValueFlatDatabaseCounter;
+  private final Counter getStorageValueMerkleTrieCounter;
+  private final Counter getStorageValueMissingMerkleTrieCounter;
 
   protected final ObservableMetricsSystem metricsSystem;
 
@@ -76,69 +79,76 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   public BonsaiWorldStateKeyValueStorage(
       final StorageProvider provider, final ObservableMetricsSystem metricsSystem) {
-    this.accountStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
-    this.codeStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
-    this.storageStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE);
-    this.trieBranchStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
-    this.trieLogStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
-    this.metricsSystem = metricsSystem;
-    initFlatDbStrategy();
+    this(
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE),
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE),
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE),
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE),
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE),
+        metricsSystem);
   }
 
   public BonsaiWorldStateKeyValueStorage(
-      final FlatDbMode flatDbMode,
-      final FlatDbReaderStrategy flatDbReaderStrategy,
       final KeyValueStorage accountStorage,
       final KeyValueStorage codeStorage,
       final KeyValueStorage storageStorage,
       final KeyValueStorage trieBranchStorage,
       final KeyValueStorage trieLogStorage,
       final ObservableMetricsSystem metricsSystem) {
-    this.flatDbMode = flatDbMode;
-    this.flatDbReaderStrategy = flatDbReaderStrategy;
     this.accountStorage = accountStorage;
     this.codeStorage = codeStorage;
     this.storageStorage = storageStorage;
     this.trieBranchStorage = trieBranchStorage;
     this.trieLogStorage = trieLogStorage;
     this.metricsSystem = metricsSystem;
-  }
 
-  public void initFlatDbStrategy() {
-    this.flatDbMode =
-        FlatDbMode.fromVersion(
-            trieBranchStorage
-                .get(FLAT_DB_MODE)
-                .map(Bytes::wrap)
-                .orElse(
-                    FlatDbMode.PARTIAL
-                        .getVersion())); // for backward compatibility we use partial as
-    // default
-    LOG.info("Bonsai flat db mode found {}", flatDbMode);
-    if (flatDbMode == FlatDbMode.FULL) {
-      this.flatDbReaderStrategy = new FullFlatDbReaderStrategy(metricsSystem);
-    } else {
-      this.flatDbReaderStrategy = new PartialFlatDbReaderStrategy(metricsSystem);
-    }
-  }
+    getAccountCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "get_account_total",
+            "Total number of calls to getAccount");
 
-  @Override
-  public DataStorageFormat getDataStorageFormat() {
-    return DataStorageFormat.BONSAI;
-  }
+    getAccountFlatDatabaseCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "get_account_flat_database",
+            "Number of accounts found in the flat database");
 
-  @Override
-  public FlatDbMode getFlatDbMode() {
-    return flatDbMode;
-  }
+    getAccountMerkleTrieCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "get_account_merkle_trie",
+            "Number of accounts not found in the flat database, but found in the merkle trie");
 
-  public FlatDbReaderStrategy getFlatDbReaderStrategy() {
-    return flatDbReaderStrategy;
+    getAccountMissingMerkleTrieCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "get_account_missing_merkle_trie",
+            "Number of accounts not found (either in the flat database or the merkle trie)");
+
+    getStorageValueCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "get_storagevalue_total",
+            "Total number of calls to getStorageValueBySlotHash");
+
+    getStorageValueFlatDatabaseCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "get_storagevalue_flat_database",
+            "Number of storage slots found in the flat database");
+
+    getStorageValueMerkleTrieCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "get_storagevalue_merkle_trie",
+            "Number of storage slots not found in the flat database, but found in the merkle trie");
+
+    getStorageValueMissingMerkleTrieCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "get_storagevalue_missing_merkle_trie",
+            "Number of storage slots not found (either in the flat database or in the merkle trie)");
   }
 
   @Override
@@ -146,17 +156,40 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
-      return getFlatDbReaderStrategy().getCode(codeHash, accountHash, codeStorage);
+      return codeStorage
+          .get(accountHash.toArrayUnsafe())
+          .map(Bytes::wrap)
+          .filter(b -> Hash.hash(b).equals(codeHash));
     }
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    return getFlatDbReaderStrategy()
-        .getAccount(
-            this::getWorldStateRootHash,
-            this::getAccountStateTrieNode,
-            accountHash,
-            accountStorage);
+    getAccountCounter.inc();
+    Optional<Bytes> response = accountStorage.get(accountHash.toArrayUnsafe()).map(Bytes::wrap);
+    if (response.isEmpty()) {
+      // after a snapsync/fastsync we only have the trie branches.
+      final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
+      if (worldStateRootHash.isPresent()) {
+        response =
+            new StoredMerklePatriciaTrie<>(
+                    new StoredNodeFactory<>(
+                        this::getAccountStateTrieNode, Function.identity(), Function.identity()),
+                    Bytes32.wrap(worldStateRootHash.get()))
+                .get(accountHash);
+        if (response.isEmpty()) getAccountMissingMerkleTrieCounter.inc();
+        else getAccountMerkleTrieCounter.inc();
+      }
+    } else {
+      getAccountFlatDatabaseCounter.inc();
+    }
+
+    return response;
+  }
+
+  @Override
+  public Optional<Bytes> getAccountTrieNodeData(final Bytes location, final Bytes32 hash) {
+    // for Bonsai trie fast sync this method should return an empty
+    return Optional.empty();
   }
 
   @Override
@@ -171,32 +204,17 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     }
   }
 
-  /**
-   * Retrieves the storage trie node associated with the specified account and location, if
-   * available.
-   *
-   * @param accountHash The hash of the account.
-   * @param location The location within the storage trie.
-   * @param maybeNodeHash The optional hash of the storage trie node to validate the retrieved data
-   *     against.
-   * @return The optional bytes of the storage trie node.
-   */
+  @Override
   public Optional<Bytes> getAccountStorageTrieNode(
-      final Hash accountHash, final Bytes location, final Optional<Bytes32> maybeNodeHash) {
-    if (maybeNodeHash.filter(hash -> hash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)).isPresent()) {
+      final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
+    if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else {
       return trieBranchStorage
           .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
           .map(Bytes::wrap)
-          .filter(data -> maybeNodeHash.map(hash -> Hash.hash(data).equals(hash)).orElse(true));
+          .filter(b -> Hash.hash(b).equals(nodeHash));
     }
-  }
-
-  @Override
-  public Optional<Bytes> getAccountStorageTrieNode(
-      final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
-    return getAccountStorageTrieNode(accountHash, location, Optional.ofNullable(nodeHash));
   }
 
   public Optional<byte[]> getTrieLog(final Hash blockHash) {
@@ -233,28 +251,31 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       final Supplier<Optional<Hash>> storageRootSupplier,
       final Hash accountHash,
       final StorageSlotKey storageSlotKey) {
-    return getFlatDbReaderStrategy()
-        .getStorageValueByStorageSlotKey(
-            this::getWorldStateRootHash,
-            storageRootSupplier,
-            (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
-            accountHash,
-            storageSlotKey,
-            storageStorage);
-  }
-
-  @Override
-  public Map<Bytes32, Bytes> streamFlatAccounts(
-      final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
-    return getFlatDbReaderStrategy()
-        .streamAccountFlatDatabase(accountStorage, startKeyHash, endKeyHash, max);
-  }
-
-  @Override
-  public Map<Bytes32, Bytes> streamFlatStorages(
-      final Hash accountHash, final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
-    return getFlatDbReaderStrategy()
-        .streamStorageFlatDatabase(storageStorage, accountHash, startKeyHash, endKeyHash, max);
+    getStorageValueCounter.inc();
+    Optional<Bytes> response =
+        storageStorage
+            .get(Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
+            .map(Bytes::wrap);
+    if (response.isEmpty()) {
+      final Optional<Hash> storageRoot = storageRootSupplier.get();
+      final Optional<Bytes> worldStateRootHash = getWorldStateRootHash();
+      if (storageRoot.isPresent() && worldStateRootHash.isPresent()) {
+        response =
+            new StoredMerklePatriciaTrie<>(
+                    new StoredNodeFactory<>(
+                        (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
+                        Function.identity(),
+                        Function.identity()),
+                    storageRoot.get())
+                .get(storageSlotKey.getSlotHash())
+                .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
+        if (response.isEmpty()) getStorageValueMissingMerkleTrieCounter.inc();
+        else getStorageValueMerkleTrieCounter.inc();
+      }
+    } else {
+      getStorageValueFlatDatabaseCounter.inc();
+    }
+    return response;
   }
 
   @Override
@@ -271,27 +292,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         .orElse(false);
   }
 
-  public void upgradeToFullFlatDbMode() {
-    final KeyValueStorageTransaction transaction = trieBranchStorage.startTransaction();
-    transaction.put(FLAT_DB_MODE, FlatDbMode.FULL.getVersion().toArrayUnsafe());
-    transaction.commit();
-    initFlatDbStrategy(); // force reload of flat db reader strategy
-  }
-
-  public void downgradeToPartialFlatDbMode() {
-    final KeyValueStorageTransaction transaction = trieBranchStorage.startTransaction();
-    transaction.put(FLAT_DB_MODE, FlatDbMode.PARTIAL.getVersion().toArrayUnsafe());
-    transaction.commit();
-    initFlatDbStrategy(); // force reload of flat db reader strategy
-  }
-
   @Override
   public void clear() {
     subscribers.forEach(BonsaiStorageSubscriber::onClearStorage);
-    getFlatDbReaderStrategy().clearAll(accountStorage, storageStorage, codeStorage);
+    accountStorage.clear();
+    codeStorage.clear();
+    storageStorage.clear();
     trieBranchStorage.clear();
     trieLogStorage.clear();
-    flatDbReaderStrategy = null; // force reload of flat db reader strategy
   }
 
   @Override
@@ -303,7 +311,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   @Override
   public void clearFlatDatabase() {
     subscribers.forEach(BonsaiStorageSubscriber::onClearFlatDatabaseStorage);
-    getFlatDbReaderStrategy().resetOnResync(accountStorage, storageStorage);
+    accountStorage.clear();
+    storageStorage.clear();
   }
 
   @Override

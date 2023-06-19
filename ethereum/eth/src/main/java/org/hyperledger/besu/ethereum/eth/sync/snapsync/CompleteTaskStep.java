@@ -15,19 +15,18 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.TrieNodeDataRequest;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.services.tasks.Task;
 
 public class CompleteTaskStep {
-  private final SnapSyncProcessState snapSyncState;
+  private final SnapSyncState snapSyncState;
   private final Counter completedRequestsCounter;
   private final Counter retriedRequestsCounter;
 
-  public CompleteTaskStep(
-      final SnapSyncProcessState snapSyncState, final MetricsSystem metricsSystem) {
+  public CompleteTaskStep(final SnapSyncState snapSyncState, final MetricsSystem metricsSystem) {
     this.snapSyncState = snapSyncState;
     completedRequestsCounter =
         metricsSystem.createCounter(
@@ -44,7 +43,7 @@ public class CompleteTaskStep {
   public synchronized void markAsCompleteOrFailed(
       final SnapWorldDownloadState downloadState, final Task<SnapDataRequest> task) {
     if (task.getData().isResponseReceived()
-        || (task.getData() instanceof TrieNodeHealingRequest
+        || (task.getData() instanceof TrieNodeDataRequest
             && task.getData().isExpired(snapSyncState))) {
       completedRequestsCounter.inc();
       task.markCompleted();

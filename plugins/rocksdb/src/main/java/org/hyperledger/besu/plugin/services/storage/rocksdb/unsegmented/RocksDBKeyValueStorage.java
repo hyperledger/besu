@@ -35,7 +35,6 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.tuweni.bytes.Bytes;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.LRUCache;
 import org.rocksdb.OptimisticTransactionDB;
@@ -147,11 +146,6 @@ public class RocksDBKeyValueStorage implements KeyValueStorage {
     final RocksIterator rocksIterator = db.newIterator();
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStream();
-  }
-
-  @Override
-  public Stream<Pair<byte[], byte[]>> streamFromKey(final byte[] startKey) {
-    return stream().filter(e -> Bytes.wrap(startKey).compareTo(Bytes.wrap(e.getKey())) <= 0);
   }
 
   @Override

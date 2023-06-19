@@ -18,8 +18,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.BYTECO
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
@@ -54,19 +53,14 @@ public class BytecodeRequest extends SnapDataRequest {
       final WorldStateStorage worldStateStorage,
       final Updater updater,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncProcessState snapSyncState,
-      final SnapSyncConfiguration snapSyncConfiguration) {
+      final SnapSyncState snapSyncState) {
     updater.putCode(Hash.wrap(accountHash), code);
     downloadState.getMetricsManager().notifyCodeDownloaded();
     return possibleParent
         .map(
             trieNodeDataRequest ->
                 trieNodeDataRequest.saveParent(
-                        worldStateStorage,
-                        updater,
-                        downloadState,
-                        snapSyncState,
-                        snapSyncConfiguration)
+                        worldStateStorage, updater, downloadState, snapSyncState)
                     + 1)
         .orElse(1);
   }
@@ -80,7 +74,7 @@ public class BytecodeRequest extends SnapDataRequest {
   public Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
       final WorldStateStorage worldStateStorage,
-      final SnapSyncProcessState snapSyncState) {
+      final SnapSyncState snapSyncState) {
     return Stream.empty();
   }
 

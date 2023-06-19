@@ -47,7 +47,6 @@ public class TrieIteratorTest {
       Bytes32.fromHexString("0x5555555555555555555555555555555555555555555555555555555555555555");
   private static final Bytes32 KEY_HASH2 =
       Bytes32.fromHexString("0x5555555555555555555555555555555555555555555555555555555555555556");
-
   private static final Bytes PATH1 = bytesToPath(KEY_HASH1);
   private static final Bytes PATH2 = bytesToPath(KEY_HASH2);
 

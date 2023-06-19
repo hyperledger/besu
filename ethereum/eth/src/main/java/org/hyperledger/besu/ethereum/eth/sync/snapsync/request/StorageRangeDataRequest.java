@@ -17,21 +17,17 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MAX_RANGE;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MIN_RANGE;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findNewBeginElementInRange;
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.getRangeCount;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAGE_RANGE;
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie.FlatDatabaseUpdater.noop;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie;
+import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
-import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
@@ -40,13 +36,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.rlp.RLP;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,27 +85,23 @@ public class StorageRangeDataRequest extends SnapDataRequest {
       final WorldStateStorage worldStateStorage,
       final Updater updater,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncProcessState snapSyncState,
-      final SnapSyncConfiguration snapSyncConfiguration) {
+      final SnapSyncState snapSyncState) {
 
     // search incomplete nodes in the range
     final AtomicInteger nbNodesSaved = new AtomicInteger();
+    final AtomicReference<Updater> updaterTmp = new AtomicReference<>(worldStateStorage.updater());
     final NodeUpdater nodeUpdater =
         (location, hash, value) -> {
-          updater.putAccountStorageTrieNode(accountHash, location, hash, value);
+          updaterTmp.get().putAccountStorageTrieNode(accountHash, location, hash, value);
+          if (nbNodesSaved.getAndIncrement() % 1000 == 0) {
+            updaterTmp.get().commit();
+            updaterTmp.set(worldStateStorage.updater());
+          }
         };
 
-    StackTrie.FlatDatabaseUpdater flatDatabaseUpdater = noop();
-    if (worldStateStorage.getFlatDbMode().equals(FlatDbMode.FULL)) {
-      // we have a flat DB only with Bonsai
-      flatDatabaseUpdater =
-          (key, value) ->
-              ((BonsaiWorldStateKeyValueStorage.Updater) updater)
-                  .putStorageValueBySlotHash(
-                      accountHash, Hash.wrap(key), Bytes32.leftPad(RLP.decodeValue(value)));
-    }
+    stackTrie.commit(nodeUpdater);
 
-    stackTrie.commit(flatDatabaseUpdater, nodeUpdater);
+    updaterTmp.get().commit();
 
     downloadState.getMetricsManager().notifySlotsDownloaded(stackTrie.getElementsCount().get());
 
@@ -117,7 +109,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   }
 
   public void addResponse(
-      final SnapWorldDownloadState downloadState,
+      final WorldDownloadState<SnapDataRequest> downloadState,
       final WorldStateProofProvider worldStateProofProvider,
       final TreeMap<Bytes32, Bytes> slots,
       final ArrayDeque<Bytes> proofs) {
@@ -141,7 +133,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   }
 
   @Override
-  public boolean isExpired(final SnapSyncProcessState snapSyncState) {
+  public boolean isExpired(final SnapSyncState snapSyncState) {
     return snapSyncState.isExpired(this);
   }
 
@@ -149,7 +141,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   public Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
       final WorldStateStorage worldStateStorage,
-      final SnapSyncProcessState snapSyncState) {
+      final SnapSyncState snapSyncState) {
     final List<SnapDataRequest> childRequests = new ArrayList<>();
 
     if (!isProofValid.orElse(false)) {
@@ -161,7 +153,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     findNewBeginElementInRange(storageRoot, taskElement.proofs(), taskElement.keys(), endKeyHash)
         .ifPresent(
             missingRightElement -> {
-              final int nbRanges = getRangeCount(startKeyHash, endKeyHash, taskElement.keys());
+              final int nbRanges = findNbRanges(taskElement.keys());
               RangeManager.generateRanges(missingRightElement, endKeyHash, nbRanges)
                   .forEach(
                       (key, value) -> {
@@ -171,13 +163,26 @@ public class StorageRangeDataRequest extends SnapDataRequest {
                         storageRangeDataRequest.addStackTrie(Optional.of(stackTrie));
                         childRequests.add(storageRangeDataRequest);
                       });
-              if (startKeyHash.equals(MIN_RANGE) && endKeyHash.equals(MAX_RANGE)) {
+              if (!snapSyncState.isHealInProgress()
+                  && startKeyHash.equals(MIN_RANGE)
+                  && endKeyHash.equals(MAX_RANGE)) {
                 // need to heal this account storage
-                downloadState.addAccountsToBeRepaired(CompactEncoding.bytesToPath(accountHash));
+                downloadState.addInconsistentAccount(CompactEncoding.bytesToPath(accountHash));
               }
             });
 
     return childRequests.stream();
+  }
+
+  private int findNbRanges(final TreeMap<Bytes32, Bytes> slots) {
+    if (startKeyHash.equals(MIN_RANGE) && endKeyHash.equals(MAX_RANGE)) {
+      return MAX_RANGE
+          .toUnsignedBigInteger()
+          .divide(
+              slots.lastKey().toUnsignedBigInteger().subtract(startKeyHash.toUnsignedBigInteger()))
+          .intValue();
+    }
+    return 1;
   }
 
   public Bytes32 getAccountHash() {

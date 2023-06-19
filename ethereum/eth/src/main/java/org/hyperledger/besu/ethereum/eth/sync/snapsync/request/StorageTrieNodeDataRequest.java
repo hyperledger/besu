@@ -12,17 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal;
+package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
-import org.hyperledger.besu.ethereum.trie.MerkleTrie;
-import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
@@ -34,12 +30,11 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
 
-/** Represents a healing request for a storage trie node. */
-public class StorageTrieNodeHealingRequest extends TrieNodeHealingRequest {
+public class StorageTrieNodeDataRequest extends TrieNodeDataRequest {
 
   final Hash accountHash;
 
-  public StorageTrieNodeHealingRequest(
+  StorageTrieNodeDataRequest(
       final Hash nodeHash, final Hash accountHash, final Hash rootHash, final Bytes location) {
     super(nodeHash, rootHash, location);
     this.accountHash = accountHash;
@@ -50,42 +45,20 @@ public class StorageTrieNodeHealingRequest extends TrieNodeHealingRequest {
       final WorldStateStorage worldStateStorage,
       final Updater updater,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncProcessState snapSyncState,
-      final SnapSyncConfiguration snapSyncConfiguration) {
+      final SnapSyncState snapSyncState) {
     updater.putAccountStorageTrieNode(getAccountHash(), getLocation(), getNodeHash(), data);
     return 1;
   }
 
   @Override
-  public Optional<Bytes> getExistingData(
-      final SnapWorldDownloadState downloadState, final WorldStateStorage worldStateStorage) {
-    Optional<Bytes> accountStorageTrieNode =
-        worldStateStorage.getAccountStorageTrieNode(
-            getAccountHash(),
-            getLocation(),
-            null); // push null to not check the hash in the getAccountStorageTrieNode method
-    if (accountStorageTrieNode.isPresent()) {
-      return accountStorageTrieNode
-          .filter(node -> Hash.hash(node).equals(getNodeHash()))
-          .or(
-              () -> { // if we have a storage in database but not the good one we will need to fix
-                // the account later
-                downloadState.addAccountsToBeRepaired(
-                    CompactEncoding.bytesToPath(getAccountHash()));
-                return Optional.empty();
-              });
-    } else {
-      if (getNodeHash().equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
-        return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
-      }
-      return Optional.empty();
-    }
+  public Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage) {
+    return worldStateStorage.getAccountStorageTrieNode(
+        getAccountHash(), getLocation(), getNodeHash());
   }
 
   @Override
   protected SnapDataRequest createChildNodeDataRequest(final Hash childHash, final Bytes location) {
-    return SnapDataRequest.createStorageTrieNodeDataRequest(
-        childHash, getAccountHash(), getRootHash(), location);
+    return createStorageTrieNodeDataRequest(childHash, getAccountHash(), getRootHash(), location);
   }
 
   @Override
@@ -94,7 +67,7 @@ public class StorageTrieNodeHealingRequest extends TrieNodeHealingRequest {
       final Bytes location,
       final Bytes path,
       final Bytes value) {
-    if (!worldStateStorage.getFlatDbMode().equals(FlatDbMode.NO_FLATTENED)) {
+    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
       ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
           .putStorageValueBySlotHash(
               accountHash, getSlotHash(location, path), Bytes32.leftPad(RLP.decodeValue(value)))

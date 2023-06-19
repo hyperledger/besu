@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
-import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
@@ -66,6 +65,7 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
       final Bytes value) {
     final Stream.Builder<NodeDataRequest> builder = Stream.builder();
     final StateTrieAccountValue accountValue = StateTrieAccountValue.readFrom(RLP.input(value));
+    // Add code, if appropriate
 
     final Optional<Hash> accountHash =
         Optional.of(
@@ -73,13 +73,12 @@ class AccountTrieNodeDataRequest extends TrieNodeDataRequest {
                 Bytes32.wrap(
                     CompactEncoding.pathToBytes(
                         Bytes.concatenate(getLocation().orElse(Bytes.EMPTY), path)))));
-    if (!worldStateStorage.getFlatDbMode().equals(FlatDbMode.NO_FLATTENED)) {
+    if (worldStateStorage instanceof BonsaiWorldStateKeyValueStorage) {
       ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
           .putAccountInfoState(accountHash.get(), value)
           .commit();
     }
 
-    // Add code, if appropriate
     if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
       builder.add(createCodeRequest(accountValue.getCodeHash(), accountHash));
     }
