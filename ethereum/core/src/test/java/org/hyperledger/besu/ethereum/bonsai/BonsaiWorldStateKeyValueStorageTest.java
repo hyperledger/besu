@@ -337,7 +337,6 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
   @Test
   public void clear_reloadFlatDbStrategy() {
-    Assume.assumeTrue(flatDbMode == FlatDbMode.FULL);
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
 
     // save world state root hash
@@ -348,6 +347,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
     // clear
     storage.clear();
+
+    assertThat(storage.getFlatDbReaderStrategy()).isNotNull();
 
     assertThat(storage.getAccount(Hash.ZERO)).isEmpty();
   }
