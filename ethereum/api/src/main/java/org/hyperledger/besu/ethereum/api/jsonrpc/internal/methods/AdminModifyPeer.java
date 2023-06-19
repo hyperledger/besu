@@ -57,7 +57,7 @@ public abstract class AdminModifyPeer implements JsonRpcMethod {
       } else {
         if (e.getMessage().endsWith("Invalid ip address.")) {
           return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.CANT_USE_PEER_ENODE_DNS);
+              requestContext.getRequest().getId(), JsonRpcError.DNS_NOT_ENABLED);
         } else if (e.getMessage().endsWith("dns-update-enabled flag is false.")) {
           return new JsonRpcErrorResponse(
               requestContext.getRequest().getId(), JsonRpcError.CANT_RESOLVE_PEER_ENODE_DNS);

@@ -1,5 +1,18 @@
 # Changelog
 
+## 23.4.3
+
+### Breaking Changes
+
+### Additions and Improvements
+
+### Bug Fixes
+- Use the node's configuration to determine if DNS enode URLs are allowed in calls to `admin_addPeer` and `admin_removePeer` [#5584](https://github.com/hyperledger/besu/pull/5584)
+
+### Download Links
+
+---
+
 ## 23.4.2
 
 ### Breaking Changes
@@ -21,7 +34,6 @@ and in case a rollback is needed, before installing a previous version, the migr
 - Fix backwards sync bug where chain is rolled back too far, especially when restarting Nimbus [#5497](https://github.com/hyperledger/besu/pull/5497)
 - Check to ensure storage and transactions are not closed prior to reading/writing [#5527](https://github.com/hyperledger/besu/pull/5527) 
 - Fix the unavailability of account code and storage on GraphQl/Bonsai [#5548](https://github.com/hyperledger/besu/pull/5548)
-- Use the node's configuration to determine if DNS enode URLs are allowed in calls to `admin_addPeer` and `admin_removePeer` [#5584](https://github.com/hyperledger/besu/pull/5584)
 
 ### Download Links
 

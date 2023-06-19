@@ -197,7 +197,7 @@ public class AdminRemovePeerTest {
   public void requestRemovesDNSEnodeButDNSDisabled() {
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            validDNSRequest.getRequest().getId(), JsonRpcError.CANT_USE_PEER_ENODE_DNS);
+            validDNSRequest.getRequest().getId(), JsonRpcError.DNS_NOT_ENABLED);
 
     final JsonRpcResponse actualResponse = methodDNSDisabled.response(validDNSRequest);
 
