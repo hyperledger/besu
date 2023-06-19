@@ -344,10 +344,12 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
     updater.putAccountInfoState(Hash.ZERO, Bytes32.random()).commit();
 
+    assertThat(storage.getAccount(Hash.ZERO)).isNotEmpty();
+
     // clear
     storage.clear();
 
-    storage.getAccount(Hash.ZERO);
+    assertThat(storage.getAccount(Hash.ZERO)).isEmpty();
   }
 
   @Test
