@@ -336,6 +336,24 @@ public class BonsaiWorldStateKeyValueStorageTest {
   }
 
   @Test
+  public void clear_reloadFlatDbStrategy() {
+    final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
+
+    // save world state root hash
+    final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
+    updater.putAccountInfoState(Hash.ZERO, Bytes32.random()).commit();
+
+    assertThat(storage.getAccount(Hash.ZERO)).isNotEmpty();
+
+    // clear
+    storage.clear();
+
+    assertThat(storage.getFlatDbReaderStrategy()).isNotNull();
+
+    assertThat(storage.getAccount(Hash.ZERO)).isEmpty();
+  }
+
+  @Test
   public void reconcilesNonConflictingUpdaters() {
     final Hash accountHashA = Hash.hash(Address.fromHexString("0x1"));
     final Hash accountHashB = Hash.hash(Address.fromHexString("0x2"));
