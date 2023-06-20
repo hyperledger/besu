@@ -1,6 +1,6 @@
 # Changelog
 
-## 23.4.3
+## 23.4.4
 
 ### Breaking Changes
 
@@ -13,7 +13,7 @@
 
 ---
 
-## 23.4.2
+## 23.4.3
 
 ### Breaking Changes
 - Move blockchain related variables in a dedicated storage, to pave the way to future optimizations [#5471](https://github.com/hyperledger/besu/pull/5471). The migration is performed automatically at startup,
@@ -36,6 +36,10 @@ and in case a rollback is needed, before installing a previous version, the migr
 - Fix the unavailability of account code and storage on GraphQl/Bonsai [#5548](https://github.com/hyperledger/besu/pull/5548)
 
 ### Download Links
+
+## 23.4.2
+
+- Was not released (failed burn-in test)
 
 ---
 
