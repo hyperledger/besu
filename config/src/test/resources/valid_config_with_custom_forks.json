@@ -6,6 +6,7 @@
   "byzantiumBlock": 1035301,
   "londonBlock": 2222222,
   "zeroBaseFee": true,
+  "depositContractAddress": "0x00000000219ab540356cbb839cbe05303d7705fa",
   "ibft2": {
     "blockperiodseconds": 2,
     "epochlength": 30000,

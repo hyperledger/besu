@@ -3,7 +3,7 @@
     "jsonrpc": "2.0",
     "method": "engine_getPayloadV2",
     "params": [
-      "0x0065bd2db6663ed9"
+      "0x0065bd63871ad606"
     ],
     "id": 67
   },
@@ -12,14 +12,14 @@
     "id": 67,
     "result": {
       "executionPayload": {
-        "parentHash": "0xf4a1d287dd3bb7e877c57476912e6a6052bc4eed8ea70d032b55d77f26ee985f",
+        "parentHash": "0xfdd94e3620a88f08927bffb318981a36b663a26e6fd62ab273eb800b90723c13",
         "feeRecipient": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
-        "stateRoot": "0xa61c2a422a4f7d7d7f456c1a83d5484eaf0d49e2b6b6d5716f875e782c66a9f0",
+        "stateRoot": "0x21395692fae33414143728c9ffc0aed8dcc76eb6731dd0f5a3239977478ca969",
         "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
         "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "gasLimit": "0x1c9c380",
         "gasUsed": "0x0",
-        "timestamp": "0x10",
+        "timestamp": "0x20",
         "extraData": "0x",
         "baseFeePerGas": "0x7",
         "transactions": [],
@@ -32,14 +32,14 @@
           },
           {
             "index": "0x1",
-            "validatorIndex": "0x1",
+            "validatorIndex": "0x0",
             "address": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
             "amount": "0x2"
           }
         ],
-        "deposits": null,
+        "deposits" : [],
         "blockNumber": "0x2",
-        "blockHash": "0x612abd8615f544759d4aeb3dbab32f5f198a8b818e9c5436e9f7a674ef3b0f20",
+        "blockHash": "0x58ea3e01b03ac17c68ed3e3d724a021408273fac8a86f42cb30a26be8e93fbe9",
         "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
       },
       "blockValue": "0x0"
