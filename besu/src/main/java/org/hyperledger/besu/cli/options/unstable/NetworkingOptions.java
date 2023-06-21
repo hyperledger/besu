@@ -76,9 +76,9 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
   @CommandLine.Option(
       names = FILTER_ON_ENR_FORK_ID,
       hidden = true,
-      defaultValue = "false",
+      defaultValue = "true",
       description = "Whether to enable filtering of peers based on the ENR field ForkId)")
-  private final Boolean filterOnEnrForkId = false;
+  private final Boolean filterOnEnrForkId = true;
 
   @CommandLine.Option(
       hidden = true,

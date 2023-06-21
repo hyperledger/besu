@@ -846,10 +846,6 @@ public class PeerDiscoveryController {
     public PeerDiscoveryController build() {
       validate();
 
-      if (peerTable == null) {
-        peerTable = new PeerTable(this.nodeKey.getPublicKey().getEncodedBytes(), 16);
-      }
-
       return new PeerDiscoveryController(
           nodeKey,
           localPeer,
@@ -877,6 +873,7 @@ public class PeerDiscoveryController {
       validateRequiredDependency(metricsSystem, "MetricsSystem");
       validateRequiredDependency(forkIdManager, "ForkIdManager");
       validateRequiredDependency(rlpxAgent, "RlpxAgent");
+      validateRequiredDependency(peerTable, "PeerTable");
     }
 
     private void validateRequiredDependency(final Object object, final String name) {

@@ -56,24 +56,19 @@ public class PeerTable {
    * Builds a new peer table, where distance is calculated using the provided nodeId as a baseline.
    *
    * @param nodeId The ID of the node where this peer table is stored.
-   * @param bucketSize The maximum length of each k-bucket.
    */
-  public PeerTable(final Bytes nodeId, final int bucketSize) {
+  public PeerTable(final Bytes nodeId) {
     this.keccak256 = Hash.keccak256(nodeId);
     this.table =
         Stream.generate(() -> new Bucket(DEFAULT_BUCKET_SIZE))
             .limit(N_BUCKETS + 1)
             .toArray(Bucket[]::new);
     this.distanceCache = new ConcurrentHashMap<>();
-    this.maxEntriesCnt = N_BUCKETS * bucketSize;
+    this.maxEntriesCnt = N_BUCKETS * DEFAULT_BUCKET_SIZE;
 
     // A bloom filter with 4096 expected insertions of 64-byte keys with a 0.1% false positive
     // probability yields a memory footprint of ~7.5kb.
     buildBloomFilter();
-  }
-
-  public PeerTable(final Bytes nodeId) {
-    this(nodeId, DEFAULT_BUCKET_SIZE);
   }
 
   /**
@@ -83,11 +78,12 @@ public class PeerTable {
    * @return The stored representation.
    */
   public Optional<DiscoveryPeer> get(final PeerId peer) {
-    if (!idBloom.mightContain(peer.getId())) {
+    final Bytes peerId = peer.getId();
+    if (!idBloom.mightContain(peerId)) {
       return Optional.empty();
     }
-    final int distance = distanceFrom(peer);
-    return table[distance].getAndTouch(peer.getId());
+    final int distance = distanceFrom(peerId);
+    return table[distance].getAndTouch(peerId);
   }
 
   /**
@@ -109,7 +105,7 @@ public class PeerTable {
    */
   public AddResult tryAdd(final DiscoveryPeer peer) {
     final Bytes id = peer.getId();
-    final int distance = distanceFrom(peer);
+    final int distance = distanceFrom(peer.getId());
 
     // Safeguard against adding ourselves to the peer table.
     if (distance == 0) {
@@ -147,7 +143,7 @@ public class PeerTable {
    */
   public EvictResult tryEvict(final PeerId peer) {
     final Bytes id = peer.getId();
-    final int distance = distanceFrom(peer);
+    final int distance = distanceFrom(peer.getId());
 
     if (distance == 0) {
       return EvictResult.self();
@@ -208,13 +204,13 @@ public class PeerTable {
    * Calculates the XOR distance between the keccak-256 hashes of our node ID and the provided
    * {@link DiscoveryPeer}.
    *
-   * @param peer The target peer.
+   * @param peerId The node id of the target peer.
    * @return The distance.
    */
-  private int distanceFrom(final PeerId peer) {
-    final Integer distance = distanceCache.get(peer.getId());
+  private int distanceFrom(final Bytes peerId) {
+    final Integer distance = distanceCache.get(peerId);
     return distance == null
-        ? PeerDistanceCalculator.distance(keccak256, peer.keccak256())
+        ? PeerDistanceCalculator.distance(keccak256, Hash.keccak256(peerId))
         : distance;
   }
 

@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.p2p.rlpx.RlpxFrameConstants.LENGTH_M
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
+import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.plain.PlainFramer;
@@ -55,7 +56,8 @@ public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
       final LocalNode localNode,
       final PeerConnectionEventDispatcher eventDispatcher,
       final MetricsSystem metricsSystem,
-      final TLSConfiguration p2pTLSConfiguration) {
+      final TLSConfiguration p2pTLSConfiguration,
+      final PeerTable peerTable) {
     this(
         nodeKey,
         config,
@@ -63,7 +65,8 @@ public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
         eventDispatcher,
         metricsSystem,
         defaultTlsContextFactorySupplier(p2pTLSConfiguration),
-        p2pTLSConfiguration.getClientHelloSniHeaderEnabled());
+        p2pTLSConfiguration.getClientHelloSniHeaderEnabled(),
+        peerTable);
   }
 
   @VisibleForTesting
@@ -74,8 +77,9 @@ public class NettyTLSConnectionInitializer extends NettyConnectionInitializer {
       final PeerConnectionEventDispatcher eventDispatcher,
       final MetricsSystem metricsSystem,
       final Supplier<TLSContextFactory> tlsContextFactorySupplier,
-      final Boolean clientHelloSniHeaderEnabled) {
-    super(nodeKey, config, localNode, eventDispatcher, metricsSystem);
+      final Boolean clientHelloSniHeaderEnabled,
+      final PeerTable peerTable) {
+    super(nodeKey, config, localNode, eventDispatcher, metricsSystem, peerTable);
     if (tlsContextFactorySupplier != null) {
       this.tlsContextFactorySupplier =
           Optional.of(Suppliers.memoize(tlsContextFactorySupplier::get));
