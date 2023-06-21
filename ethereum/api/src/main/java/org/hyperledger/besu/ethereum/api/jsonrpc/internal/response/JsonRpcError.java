@@ -165,6 +165,8 @@ public enum JsonRpcError {
   PRIVATE_TRANSACTION_FAILED(-50100, "Private transaction failed"),
 
   CANT_CONNECT_TO_LOCAL_PEER(-32100, "Cannot add local node as peer."),
+  CANT_RESOLVE_PEER_ENODE_DNS(-32100, "Cannot resolve enode DNS hostname"),
+  DNS_NOT_ENABLED(-32100, "Enode DNS support is disabled"),
 
   // Invalid input errors
   ENODE_ID_INVALID(

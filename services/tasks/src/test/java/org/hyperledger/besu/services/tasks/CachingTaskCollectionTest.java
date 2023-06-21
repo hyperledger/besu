@@ -23,13 +23,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CachingTaskCollectionTest {
   private TaskCollection<Bytes> wrappedTaskCollection;
 
-  @Before
+  @BeforeEach
   public void setup() {
     wrappedTaskCollection = new InMemoryTaskQueue<>();
   }
