@@ -19,6 +19,8 @@ import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+import org.hyperledger.besu.datatypes.Address;
+
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
@@ -289,6 +291,30 @@ public class GenesisConfigOptionsTest {
     final GenesisConfigOptions config = fromConfigOptions(Map.of("zerobasefee", true));
 
     assertThat(config.asMap()).containsOnlyKeys("zeroBaseFee").containsValue(true);
+  }
+
+  @Test
+  public void shouldGetDepositContractAddress() {
+    final GenesisConfigOptions config =
+        fromConfigOptions(
+            singletonMap("depositContractAddress", "0x00000000219ab540356cbb839cbe05303d7705fa"));
+    assertThat(config.getDepositContractAddress())
+        .hasValue(Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa"));
+  }
+
+  @Test
+  public void shouldNotHaveDepositContractAddressWhenEmpty() {
+    final GenesisConfigOptions config = fromConfigOptions(emptyMap());
+    assertThat(config.getDepositContractAddress()).isEmpty();
+  }
+
+  @Test
+  public void asMapIncludesDepositContractAddress() {
+    final GenesisConfigOptions config = fromConfigOptions(Map.of("depositContractAddress", "0x0"));
+
+    assertThat(config.asMap())
+        .containsOnlyKeys("depositContractAddress")
+        .containsValue(Address.ZERO);
   }
 
   private GenesisConfigOptions fromConfigOptions(final Map<String, Object> configOptions) {

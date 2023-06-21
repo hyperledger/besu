@@ -29,6 +29,7 @@ jar {
 
 dependencies {
   api 'org.slf4j:slf4j-api'
+  api 'org.web3j:core'
 
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
 

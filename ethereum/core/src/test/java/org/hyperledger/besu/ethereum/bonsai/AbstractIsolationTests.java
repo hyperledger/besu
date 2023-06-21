@@ -210,7 +210,8 @@ public abstract class AbstractIsolationTests {
           protocolSchedule,
           minTransactionGasPrice,
           minBlockOccupancyRatio,
-          parentHeader);
+          parentHeader,
+          Optional.empty());
     }
 
     static TestBlockCreator forHeader(

@@ -35,13 +35,12 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageTest {
 
-  @Rule public final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir public Path folder;
 
   @Test
   public void assertClear() throws Exception {
@@ -178,8 +177,8 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
   }
 
   @Test
-  public void dbShouldIgnoreExperimentalSegmentsIfNotExisted() throws Exception {
-    final Path testPath = folder.newFolder().toPath();
+  public void dbShouldIgnoreExperimentalSegmentsIfNotExisted(@TempDir final Path testPath)
+      throws Exception {
     // Create new db should ignore experimental column family
     SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store =
         createSegmentedStore(
@@ -195,8 +194,8 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
   }
 
   @Test
-  public void dbShouldNotIgnoreExperimentalSegmentsIfExisted() throws Exception {
-    final Path testPath = folder.newFolder().toPath();
+  public void dbShouldNotIgnoreExperimentalSegmentsIfExisted(@TempDir final Path testPath)
+      throws Exception {
     // Create new db with experimental column family
     SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store =
         createSegmentedStore(
@@ -225,8 +224,8 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
   }
 
   @Test
-  public void dbWillBeBackwardIncompatibleAfterExperimentalSegmentsAreAdded() throws Exception {
-    final Path testPath = folder.newFolder().toPath();
+  public void dbWillBeBackwardIncompatibleAfterExperimentalSegmentsAreAdded(
+      @TempDir final Path testPath) throws Exception {
     // Create new db should ignore experimental column family
     SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store =
         createSegmentedStore(

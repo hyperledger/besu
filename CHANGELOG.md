@@ -25,15 +25,14 @@ and in case a rollback is needed, before installing a previous version, the migr
 - Add support for Shanghai changes to the GraphQL service [#5496](https://github.com/hyperledger/besu/pull/5496)
 - Unite the tx-pool CLI options under the same Tx Pool Options group in UX. [#5466](https://github.com/hyperledger/besu/issues/5466)
 - Tidy DEBUG logs by moving engine API full logging to TRACE [#5529](https://github.com/hyperledger/besu/pull/5529)
-- Remove PoW validation if merge is enabled as it is not needed anymore [#5538](https://github.com/hyperledger/besu/pull/5538)
+- Remove PoW validation if merge is enabled as it is not needed any more [#5538](https://github.com/hyperledger/besu/pull/5538)
 - Use BlobDB for blockchain storage to reduce initial sync time and write amplification [#5475](https://github.com/hyperledger/besu/pull/5475)
-- Update to Tuweni 2.4.1. [#5513](https://github.com/hyperledger/besu/pull/5513)
-- Add healing flat db mechanism with experimental CLI options `--Xsnapsync-synchronizer-flat-db-healing-enabled=true` [#5319](https://github.com/hyperledger/besu/pull/5319)
+- Add healing flat db mechanism with early access CLI options `--Xsnapsync-synchronizer-flat-db-healing-enabled=true` [#5319](https://github.com/hyperledger/besu/pull/5319)
 
 ### Bug Fixes
 - Fix backwards sync bug where chain is rolled back too far, especially when restarting Nimbus [#5497](https://github.com/hyperledger/besu/pull/5497)
 - Check to ensure storage and transactions are not closed prior to reading/writing [#5527](https://github.com/hyperledger/besu/pull/5527) 
-- Fix the unavailability of account code and storage on GraphQl/Bonsai [#5548](https://github.com/hyperledger/besu/pull/5548)
+- Fix the unavailability of account code and storage on GraphQL/Bonsai [#5548](https://github.com/hyperledger/besu/pull/5548)
 
 ### Download Links
 
@@ -54,6 +53,7 @@ and in case a rollback is needed, before installing a previous version, the migr
 - "Big-EOF" (the EOF version initially slotted for Shanghai) has been moved from Cancun to FutureEIPs [#5429](https://github.com/hyperledger/besu/pull/5429)
 - EIP-4844: Zero blob transactions are invalid [#5425](https://github.com/hyperledger/besu/pull/5425)
 - Transaction pool flag to disable specific behaviors for locally submitted transactions [#5418](https://github.com/hyperledger/besu/pull/5418)
+- Added In-Protocol Deposit prototype (EIP-6110) in the experimental eip. [#5005](https://github.com/hyperledger/besu/pull/5055) [#5295](https://github.com/hyperledger/besu/pull/5295)
 - New optional feature to save the txpool content to file on shutdown and reloading it on startup [#5434](https://github.com/hyperledger/besu/pull/5434)
 - New option to send SNI header in TLS ClientHello message [#5439](https://github.com/hyperledger/besu/pull/5439)
 - Early access - layered transaction pool implementation [#5290](https://github.com/hyperledger/besu/pull/5290)
