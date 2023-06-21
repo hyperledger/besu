@@ -51,7 +51,7 @@ public class EngineNewPayloadV1Test extends AbstractEngineNewPayloadTest {
 
   @Test
   public void shouldReturnInvalidOnBadTerminalBlock() {
-    BlockHeader mockHeader = createBlockHeader(Optional.empty());
+    BlockHeader mockHeader = createBlockHeader(Optional.empty(), Optional.empty());
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
     when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));

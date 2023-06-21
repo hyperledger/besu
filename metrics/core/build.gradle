@@ -70,8 +70,6 @@ dependencies {
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
 
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
-
   testSupportImplementation 'org.mockito:mockito-core'
 
   annotationProcessor 'com.google.dagger:dagger-compiler'

@@ -32,7 +32,7 @@ public class TransactionDBRocksDBColumnarKeyValueStorageTest
   protected SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore()
       throws Exception {
     return new TransactionDBRocksDBColumnarKeyValueStorage(
-        new RocksDBConfigurationBuilder().databaseDir(folder.newFolder().toPath()).build(),
+        new RocksDBConfigurationBuilder().databaseDir(getTempSubFolder(folder)).build(),
         Arrays.asList(TestSegment.FOO, TestSegment.BAR),
         List.of(),
         new NoOpMetricsSystem(),
