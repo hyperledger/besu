@@ -148,7 +148,7 @@ public class EthCallIntegrationTest {
             null);
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(null, JsonRpcError.GAS_PRICE_BELOW_CURRENT_BASE_FEE);
 
     final JsonRpcResponse response = method.response(request);
 
@@ -219,7 +219,7 @@ public class EthCallIntegrationTest {
             null);
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(null, JsonRpcError.GAS_PRICE_BELOW_CURRENT_BASE_FEE);
 
     final JsonRpcResponse response = method.response(request);
 
