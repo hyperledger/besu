@@ -408,6 +408,20 @@ public class Memory {
     System.arraycopy(bytes.toArrayUnsafe(), 0, memBytes, start, Bytes32.SIZE);
   }
 
+  /**
+   * Copies one length of bytes to a new memory location, growing memory if needed.
+   *
+   * <p>Copying behaves as if the values are copied to an intermediate buffer before writing.
+   *
+   * @param dst where to copy they bytes _to_
+   * @param src where to copy the bytes _from_
+   * @param length the number of bytes to copy.
+   */
+  public void copy(final long dst, final long src, final long length) {
+    ensureCapacityForBytes(Math.max(dst, src), length);
+    System.arraycopy(memBytes, asByteIndex(src), memBytes, asByteIndex(dst), asByteLength(length));
+  }
+
   @Override
   public String toString() {
     return Bytes.wrap(memBytes).toHexString();
