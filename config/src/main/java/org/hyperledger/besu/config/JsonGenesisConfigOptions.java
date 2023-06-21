@@ -401,11 +401,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public boolean isQuorum() {
-    return getOptionalBoolean("isquorum").orElse(false);
-  }
-
-  @Override
   public PowAlgorithm getPowAlgorithm() {
     return isEthHash() ? PowAlgorithm.ETHASH : PowAlgorithm.UNSUPPORTED;
   }
@@ -483,10 +478,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     }
     if (isQbft()) {
       builder.put("qbft", getQbftConfigOptions().asMap());
-    }
-
-    if (isQuorum()) {
-      builder.put("isQuorum", true);
     }
 
     if (isZeroBaseFee()) {

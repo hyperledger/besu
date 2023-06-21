@@ -467,13 +467,6 @@ public interface GenesisConfigOptions {
   TransitionsConfigOptions getTransitions();
 
   /**
-   * Set Besu in Quorum-compatibility mode
-   *
-   * @return true, if Besu is running on Quorum-compatibility mode, false, otherwise.
-   */
-  boolean isQuorum();
-
-  /**
    * The PoW algorithm associated with the genesis file.
    *
    * @return the PoW algorithm in use.

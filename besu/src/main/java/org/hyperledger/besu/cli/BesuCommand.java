@@ -1384,8 +1384,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Vertx vertx;
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
-  /** Sets GoQuorum compatibility mode. */
-  protected Boolean isGoQuorumCompatibilityMode = false;
 
   /**
    * Besu command constructor.
@@ -1528,13 +1526,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     try {
       configureLogging(true);
-      // Set the goquorum compatibility mode based on the genesis file
+
       if (genesisFile != null) {
         genesisConfigOptions = readGenesisConfigOptions();
-
-        if (genesisConfigOptions.isQuorum()) {
-          enableGoQuorumCompatibilityMode();
-        }
       }
 
       // set merge config on the basis of genesis config
@@ -2197,8 +2191,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     ethNetworkConfig = updateNetworkConfig(network);
 
-    checkGoQuorumCompatibilityConfig(ethNetworkConfig);
-
     jsonRpcConfiguration =
         jsonRpcConfiguration(
             jsonRPCHttpOptionGroup.rpcHttpPort, jsonRPCHttpOptionGroup.rpcHttpApis, hostsAllowlist);
@@ -2835,8 +2827,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     CommandLineUtils.checkMultiOptionDependencies(
         logger,
         commandLine,
-        "--privacy-url and/or --privacy-public-key-file ignored because none of --privacy-enabled or isQuorum (in genesis file) was defined.",
-        List.of(!privacyOptionGroup.isPrivacyEnabled, !isGoQuorumCompatibilityMode),
+        "--privacy-url and/or --privacy-public-key-file ignored because none of --privacy-enabled was defined.",
+        List.of(!privacyOptionGroup.isPrivacyEnabled),
         List.of("--privacy-url", "--privacy-public-key-file"));
 
     checkPrivacyTlsOptionsDependencies();
@@ -2849,10 +2841,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
       if (isPruningEnabled()) {
         throw new ParameterException(commandLine, String.format("%s %s", "Pruning", errorSuffix));
-      }
-      if (isGoQuorumCompatibilityMode) {
-        throw new ParameterException(
-            commandLine, String.format("GoQuorum privacy is no longer supported in Besu"));
       }
 
       if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyMultiTenancyEnabled)
@@ -3432,34 +3420,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private void checkGoQuorumCompatibilityConfig(final EthNetworkConfig ethNetworkConfig) {
-    if (isGoQuorumCompatibilityMode) {
-
-      logger.warn(
-          DEPRECATION_WARNING_MSG,
-          "isQuorum mode in genesis file (GoQuorum-compatible privacy mode)",
-          "--privacy-enabled");
-      if (!minTransactionGasPrice.isZero()) {
-        throw new ParameterException(
-            this.commandLine,
-            "--min-gas-price must be set to zero if isQuorum mode is enabled in the genesis file.");
-      }
-
-      if (ensureGoQuorumCompatibilityModeNotUsedOnMainnet(genesisConfigOptions, ethNetworkConfig)) {
-        throw new ParameterException(this.commandLine, "isQuorum mode cannot be used on Mainnet.");
-      }
-    }
-  }
-
-  private static boolean ensureGoQuorumCompatibilityModeNotUsedOnMainnet(
-      final GenesisConfigOptions genesisConfigOptions, final EthNetworkConfig ethNetworkConfig) {
-    return ethNetworkConfig.getNetworkId().equals(MAINNET.getNetworkId())
-        || genesisConfigOptions
-            .getChainId()
-            .map(chainId -> chainId.equals(MAINNET.getNetworkId()))
-            .orElse(false);
-  }
-
   @VisibleForTesting
   String getLogLevel() {
     return loggingLevelOption.getLogLevel();
@@ -3511,13 +3471,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       return Optional.empty();
     }
     return genesisConfigOptions.getEcCurve();
-  }
-
-  /** Enables Go Quorum Compatibility mode. Visible for testing. */
-  @VisibleForTesting
-  protected void enableGoQuorumCompatibilityMode() {
-    // this static flag is still used for GoQuorum permissioning compatibility
-    isGoQuorumCompatibilityMode = true;
   }
 
   private GenesisConfigOptions getActualGenesisConfigOptions() {

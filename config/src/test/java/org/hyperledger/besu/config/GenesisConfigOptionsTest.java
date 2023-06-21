@@ -267,20 +267,6 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
-  public void isQuorumShouldDefaultToFalse() {
-    final GenesisConfigOptions config = GenesisConfigFile.fromConfig("{}").getConfigOptions();
-
-    assertThat(config.isQuorum()).isFalse();
-  }
-
-  @Test
-  public void isQuorumConfigParsedCorrectly() {
-    final GenesisConfigOptions config = fromConfigOptions(Map.of("isQuorum", true));
-
-    assertThat(config.isQuorum()).isTrue();
-  }
-
-  @Test
   public void isZeroBaseFeeShouldDefaultToFalse() {
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig("{}").getConfigOptions();
 
