@@ -251,7 +251,7 @@ public class EthEstimateGasTest {
     mockTransientProcessorResultGasEstimate(1L, false, true);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.REVERT_ERROR);
+        new JsonRpcErrorResponse(null, JsonRpcError.REVERT_ERROR, "0x00");
 
     Assertions.assertThat(method.response(request))
         .usingRecursiveComparison()

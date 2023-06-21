@@ -54,9 +54,8 @@ public class PluginJsonRpcMethod implements JsonRpcMethod {
       return new JsonRpcSuccessResponse(request.getRequest().getId(), result);
     } catch (final PluginRpcEndpointException ex) {
       final JsonRpcError error = PLUGIN_INTERNAL_ERROR;
-      error.setData(ex.getMessage());
       LOG.error("Error calling plugin JSON-RPC endpoint", ex);
-      return new JsonRpcErrorResponse(request.getRequest().getId(), error);
+      return new JsonRpcErrorResponse(request.getRequest().getId(), error, ex.getMessage());
     } catch (final Exception ex) {
       LOG.error("Error calling plugin JSON-RPC endpoint", ex);
       return new JsonRpcErrorResponse(request.getRequest().getId(), INTERNAL_ERROR);

@@ -21,15 +21,22 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.base.MoreObjects;
 
-@JsonPropertyOrder({"jsonrpc", "id", "error"})
+@JsonPropertyOrder({"jsonrpc", "id", "error", "data"})
 public class JsonRpcErrorResponse implements JsonRpcResponse {
 
   private final Object id;
   private final JsonRpcError error;
+  private final String data;
 
-  public JsonRpcErrorResponse(final Object id, final JsonRpcError error) {
+  public JsonRpcErrorResponse(
+      final Object id, final JsonRpcError error, final String revertReason) {
     this.id = id;
     this.error = error;
+    this.data = revertReason;
+  }
+
+  public JsonRpcErrorResponse(final Object id, final JsonRpcError error) {
+    this(id, error, null);
   }
 
   @JsonGetter("id")
@@ -40,6 +47,11 @@ public class JsonRpcErrorResponse implements JsonRpcResponse {
   @JsonGetter("error")
   public JsonRpcError getError() {
     return error;
+  }
+
+  @JsonGetter("data")
+  public String getData() {
+    return data;
   }
 
   @Override
@@ -57,16 +69,20 @@ public class JsonRpcErrorResponse implements JsonRpcResponse {
       return false;
     }
     final JsonRpcErrorResponse that = (JsonRpcErrorResponse) o;
-    return Objects.equals(id, that.id) && error == that.error;
+    return Objects.equals(id, that.id) && error == that.error && Objects.equals(data, that.data);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, error);
+    return Objects.hash(id, error, data);
   }
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this).add("id", id).add("error", error).toString();
+    return MoreObjects.toStringHelper(this)
+        .add("id", id)
+        .add("error", error)
+        .add("data", data)
+        .toString();
   }
 }

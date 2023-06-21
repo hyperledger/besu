@@ -119,7 +119,10 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
       final TransactionProcessingResult resultTrx = result.getResult();
       if (resultTrx != null && resultTrx.getRevertReason().isPresent()) {
         jsonRpcError = JsonRpcError.REVERT_ERROR;
-        jsonRpcError.setData(resultTrx.getRevertReason().get().toHexString());
+        return new JsonRpcErrorResponse(
+            request.getRequest().getId(),
+            jsonRpcError,
+            resultTrx.getRevertReason().get().toHexString());
       } else {
         jsonRpcError = JsonRpcError.INTERNAL_ERROR;
       }

@@ -108,7 +108,8 @@ public abstract class AbstractEstimateGas implements JsonRpcMethod {
       final TransactionProcessingResult resultTrx = result.getResult();
       if (resultTrx != null && resultTrx.getRevertReason().isPresent()) {
         jsonRpcError = JsonRpcError.REVERT_ERROR;
-        jsonRpcError.setData(resultTrx.getRevertReason().get().toHexString());
+        return errorResponse(
+            request, jsonRpcError, resultTrx.getRevertReason().get().toHexString());
       } else {
         jsonRpcError = JsonRpcError.INTERNAL_ERROR;
       }
@@ -117,7 +118,14 @@ public abstract class AbstractEstimateGas implements JsonRpcMethod {
   }
 
   protected JsonRpcErrorResponse errorResponse(
+      final JsonRpcRequestContext request,
+      final JsonRpcError jsonRpcError,
+      final String revertReason) {
+    return new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError, revertReason);
+  }
+
+  protected JsonRpcErrorResponse errorResponse(
       final JsonRpcRequestContext request, final JsonRpcError jsonRpcError) {
-    return new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);
+    return errorResponse(request, jsonRpcError, null);
   }
 }

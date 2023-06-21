@@ -74,8 +74,7 @@ public class PrivCall extends AbstractBlockParameterMethod {
                             new JsonRpcSuccessResponse(
                                 request.getRequest().getId(), result.getOutput().toString())),
                         reason ->
-                            new JsonRpcErrorResponse(
-                                request.getRequest().getId(), errorResponse(result, reason))))
+                            jsonRpcErrorResponse(request.getRequest().getId(), result, reason)))
         .orElse(validRequestBlockNotFound(request));
   }
 
@@ -88,17 +87,20 @@ public class PrivCall extends AbstractBlockParameterMethod {
     return (JsonRpcResponse) findResultByParamType(requestContext);
   }
 
-  private JsonRpcError errorResponse(
-      final TransactionProcessingResult result, final TransactionInvalidReason reason) {
+  private JsonRpcErrorResponse jsonRpcErrorResponse(
+      final Object id,
+      final TransactionProcessingResult result,
+      final TransactionInvalidReason reason) {
     final JsonRpcError jsonRpcError;
     if (result.getRevertReason().isPresent() && result.getRevertReason().get().size() >= 4) {
       jsonRpcError = JsonRpcError.REVERT_ERROR;
-      jsonRpcError.setData(result.getRevertReason().get().toHexString());
+      return new JsonRpcErrorResponse(
+          id, jsonRpcError, result.getRevertReason().get().toHexString());
     } else {
       jsonRpcError = JsonRpcErrorConverter.convertTransactionInvalidReason(reason);
     }
 
-    return jsonRpcError;
+    return new JsonRpcErrorResponse(id, jsonRpcError);
   }
 
   private JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {

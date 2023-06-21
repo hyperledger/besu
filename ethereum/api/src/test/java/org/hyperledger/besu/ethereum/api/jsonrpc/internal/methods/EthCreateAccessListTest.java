@@ -157,7 +157,7 @@ public class EthCreateAccessListTest {
     mockTransactionSimulatorResult(false, true, 1L);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.REVERT_ERROR);
+        new JsonRpcErrorResponse(null, JsonRpcError.REVERT_ERROR, "0x00");
 
     Assertions.assertThat(method.response(request))
         .usingRecursiveComparison()
