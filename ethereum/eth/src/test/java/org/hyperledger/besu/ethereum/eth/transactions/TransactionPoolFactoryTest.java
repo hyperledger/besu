@@ -243,6 +243,7 @@ public class TransactionPoolFactoryTest {
             schedule,
             context,
             ethContext,
+            TestClock.fixed(),
             new TransactionPoolMetrics(new NoOpMetricsSystem()),
             syncState,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
@@ -251,7 +252,6 @@ public class TransactionPoolFactoryTest {
                 .txMessageKeepAliveSeconds(1)
                 .pendingTxRetentionPeriod(1)
                 .build(),
-            pendingTransactions,
             peerTransactionTracker,
             transactionsMessageSender,
             newPooledTransactionHashesMessageSender);
@@ -311,18 +311,22 @@ public class TransactionPoolFactoryTest {
   }
 
   private TransactionPool createTransactionPool() {
-    return TransactionPoolFactory.createTransactionPool(
-        schedule,
-        protocolContext,
-        ethContext,
-        TestClock.fixed(),
-        new NoOpMetricsSystem(),
-        syncState,
-        new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
-        ImmutableTransactionPoolConfiguration.builder()
-            .txPoolMaxSize(1)
-            .txMessageKeepAliveSeconds(1)
-            .pendingTxRetentionPeriod(1)
-            .build());
+    final TransactionPool txPool =
+        TransactionPoolFactory.createTransactionPool(
+            schedule,
+            protocolContext,
+            ethContext,
+            TestClock.fixed(),
+            new NoOpMetricsSystem(),
+            syncState,
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
+            ImmutableTransactionPoolConfiguration.builder()
+                .txPoolMaxSize(1)
+                .txMessageKeepAliveSeconds(1)
+                .pendingTxRetentionPeriod(1)
+                .build());
+
+    txPool.setEnabled();
+    return txPool;
   }
 }

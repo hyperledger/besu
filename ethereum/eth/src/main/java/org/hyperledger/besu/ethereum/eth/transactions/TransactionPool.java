@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.fluent.SimpleAccount;
 import org.hyperledger.besu.plugin.data.TransactionType;
+import org.hyperledger.besu.util.Subscribers;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -56,11 +57,14 @@ import java.util.Comparator;
 import java.util.IntSummaryStatistics;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,17 +79,22 @@ import org.slf4j.LoggerFactory;
 public class TransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPool.class);
   private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
-  private final PendingTransactions pendingTransactions;
+  private final Supplier<PendingTransactions> pendingTransactionsSupplier;
+  private volatile PendingTransactions pendingTransactions;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
+  private final EthContext ethContext;
   private final TransactionBroadcaster transactionBroadcaster;
   private final MiningParameters miningParameters;
   private final TransactionPoolMetrics metrics;
   private final TransactionPoolConfiguration configuration;
-  private final AtomicBoolean isPoolEnabled = new AtomicBoolean(true);
+  private final AtomicBoolean isPoolEnabled = new AtomicBoolean(false);
+  private final PendingTransactionsListenersProxy pendingTransactionsListenersProxy =
+      new PendingTransactionsListenersProxy();
+  private volatile OptionalLong subscribeConnectId = OptionalLong.empty();
 
   public TransactionPool(
-      final PendingTransactions pendingTransactions,
+      final Supplier<PendingTransactions> pendingTransactionsSupplier,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionBroadcaster transactionBroadcaster,
@@ -93,16 +102,15 @@ public class TransactionPool implements BlockAddedObserver {
       final MiningParameters miningParameters,
       final TransactionPoolMetrics metrics,
       final TransactionPoolConfiguration configuration) {
-    this.pendingTransactions = pendingTransactions;
+    this.pendingTransactionsSupplier = pendingTransactionsSupplier;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
+    this.ethContext = ethContext;
     this.transactionBroadcaster = transactionBroadcaster;
     this.miningParameters = miningParameters;
     this.metrics = metrics;
     this.configuration = configuration;
-    ethContext.getEthPeers().subscribeConnect(this::handleConnect);
     initLogForReplay();
-    CompletableFuture.runAsync(this::loadFromDisk);
   }
 
   private void initLogForReplay() {
@@ -121,13 +129,13 @@ public class TransactionPool implements BlockAddedObserver {
         .log();
   }
 
-  public void saveToDisk() {
+  private synchronized void saveToDisk(final PendingTransactions pendingTransactionsToSave) {
     if (configuration.getEnableSaveRestore()) {
       final File saveFile = configuration.getSaveFile();
       LOG.info("Saving transaction pool content to file {}", saveFile);
       try (final BufferedWriter bw =
           new BufferedWriter(new FileWriter(saveFile, StandardCharsets.US_ASCII))) {
-        final var allTxs = pendingTransactions.getPendingTransactions();
+        final var allTxs = pendingTransactionsToSave.getPendingTransactions();
         allTxs.parallelStream()
             .map(
                 ptx -> {
@@ -154,7 +162,7 @@ public class TransactionPool implements BlockAddedObserver {
     }
   }
 
-  public void loadFromDisk() {
+  private synchronized void loadFromDisk() {
     if (configuration.getEnableSaveRestore()) {
       final File saveFile = configuration.getSaveFile();
       if (saveFile.exists()) {
@@ -192,12 +200,10 @@ public class TransactionPool implements BlockAddedObserver {
     }
   }
 
+  @VisibleForTesting
   void handleConnect(final EthPeer peer) {
-    transactionBroadcaster.relayTransactionPoolTo(peer);
-  }
-
-  public void reset() {
-    pendingTransactions.reset();
+    transactionBroadcaster.relayTransactionPoolTo(
+        peer, pendingTransactions.getPendingTransactions());
   }
 
   public ValidationResult<TransactionInvalidReason> addTransactionViaApi(
@@ -344,27 +350,28 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   public long subscribePendingTransactions(final PendingTransactionAddedListener listener) {
-    return pendingTransactions.subscribePendingTransactions(listener);
+    return pendingTransactionsListenersProxy.onAddedListeners.subscribe(listener);
   }
 
   public void unsubscribePendingTransactions(final long id) {
-    pendingTransactions.unsubscribePendingTransactions(id);
+    pendingTransactionsListenersProxy.onAddedListeners.unsubscribe(id);
   }
 
   public long subscribeDroppedTransactions(final PendingTransactionDroppedListener listener) {
-    return pendingTransactions.subscribeDroppedTransactions(listener);
+    return pendingTransactionsListenersProxy.onDroppedListeners.subscribe(listener);
   }
 
   public void unsubscribeDroppedTransactions(final long id) {
-    pendingTransactions.unsubscribeDroppedTransactions(id);
+    pendingTransactionsListenersProxy.onDroppedListeners.unsubscribe(id);
   }
 
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
-    LOG.trace("Block added event {}", event);
-    if (event.getEventType().equals(BlockAddedEvent.EventType.HEAD_ADVANCED)
-        || event.getEventType().equals(BlockAddedEvent.EventType.CHAIN_REORG)) {
-      if (isPoolEnabled.get()) {
+    if (isPoolEnabled.get()) {
+      LOG.trace("Block added event {}", event);
+      if (event.getEventType().equals(BlockAddedEvent.EventType.HEAD_ADVANCED)
+          || event.getEventType().equals(BlockAddedEvent.EventType.CHAIN_REORG)) {
+
         pendingTransactions.manageBlockAdded(
             event.getBlock().getHeader(),
             event.getAddedTransactions(),
@@ -582,14 +589,55 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   public void setEnabled() {
-    isPoolEnabled.set(true);
+    if (!isEnabled()) {
+      pendingTransactions = pendingTransactionsSupplier.get();
+      pendingTransactionsListenersProxy.subscribe();
+      isPoolEnabled.set(true);
+      subscribeConnectId =
+          OptionalLong.of(ethContext.getEthPeers().subscribeConnect(this::handleConnect));
+      CompletableFuture.runAsync(this::loadFromDisk);
+    }
   }
 
   public void setDisabled() {
-    isPoolEnabled.set(false);
+    if (isEnabled()) {
+      isPoolEnabled.set(false);
+      subscribeConnectId.ifPresent(ethContext.getEthPeers()::unsubscribeConnect);
+      pendingTransactionsListenersProxy.unsubscribe();
+      saveToDisk(pendingTransactions);
+      pendingTransactions = new DisabledPendingTransactions();
+    }
   }
 
   public boolean isEnabled() {
     return isPoolEnabled.get();
+  }
+
+  class PendingTransactionsListenersProxy {
+    private final Subscribers<PendingTransactionAddedListener> onAddedListeners =
+        Subscribers.create();
+    private final Subscribers<PendingTransactionDroppedListener> onDroppedListeners =
+        Subscribers.create();
+
+    private volatile long onAddedListenerId;
+    private volatile long onDroppedListenerId;
+
+    void subscribe() {
+      onAddedListenerId = pendingTransactions.subscribePendingTransactions(this::onAdded);
+      onDroppedListenerId = pendingTransactions.subscribeDroppedTransactions(this::onDropped);
+    }
+
+    void unsubscribe() {
+      pendingTransactions.unsubscribePendingTransactions(onAddedListenerId);
+      pendingTransactions.unsubscribeDroppedTransactions(onDroppedListenerId);
+    }
+
+    private void onDropped(final Transaction transaction) {
+      onDroppedListeners.forEach(listener -> listener.onTransactionDropped(transaction));
+    }
+
+    private void onAdded(final Transaction transaction) {
+      onAddedListeners.forEach(listener -> listener.onTransactionAdded(transaction));
+    }
   }
 }

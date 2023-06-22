@@ -56,10 +56,6 @@ public class TransactionPoolFactory {
 
     final TransactionPoolMetrics metrics = new TransactionPoolMetrics(metricsSystem);
 
-    final PendingTransactions pendingTransactions =
-        createPendingTransactions(
-            protocolSchedule, protocolContext, clock, metrics, transactionPoolConfiguration);
-
     final PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
     final TransactionsMessageSender transactionsMessageSender =
         new TransactionsMessageSender(transactionTracker);
@@ -71,11 +67,11 @@ public class TransactionPoolFactory {
         protocolSchedule,
         protocolContext,
         ethContext,
+        clock,
         metrics,
         syncState,
         miningParameters,
         transactionPoolConfiguration,
-        pendingTransactions,
         transactionTracker,
         transactionsMessageSender,
         newPooledTransactionHashesMessageSender);
@@ -85,23 +81,28 @@ public class TransactionPoolFactory {
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
+      final Clock clock,
       final TransactionPoolMetrics metrics,
       final SyncState syncState,
       final MiningParameters miningParameters,
       final TransactionPoolConfiguration transactionPoolConfiguration,
-      final PendingTransactions pendingTransactions,
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
       final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender) {
 
     final TransactionPool transactionPool =
         new TransactionPool(
-            pendingTransactions,
+            () ->
+                createPendingTransactions(
+                    protocolSchedule,
+                    protocolContext,
+                    clock,
+                    metrics,
+                    transactionPoolConfiguration),
             protocolSchedule,
             protocolContext,
             new TransactionBroadcaster(
                 ethContext,
-                pendingTransactions,
                 transactionTracker,
                 transactionsMessageSender,
                 newPooledTransactionHashesMessageSender),
@@ -135,11 +136,11 @@ public class TransactionPoolFactory {
         transactionsMessageHandler,
         pooledTransactionsMessageHandler);
 
-    if (!syncState.isInitialSyncPhaseDone()) {
-      LOG.info("Disabling transaction handling during initial sync");
-      pooledTransactionsMessageHandler.setDisabled();
-      transactionsMessageHandler.setDisabled();
-      transactionPool.setDisabled();
+    if (syncState.isInitialSyncPhaseDone()) {
+      LOG.info("Enabling transaction pool");
+      pooledTransactionsMessageHandler.setEnabled();
+      transactionsMessageHandler.setEnabled();
+      transactionPool.setEnabled();
     }
 
     syncState.subscribeCompletionReached(
@@ -147,7 +148,6 @@ public class TransactionPoolFactory {
           @Override
           public void onInitialSyncCompleted() {
             LOG.info("Enabling transaction handling following initial sync");
-            transactionPool.reset();
             transactionTracker.reset();
             transactionPool.setEnabled();
             transactionsMessageHandler.setEnabled();
@@ -173,7 +173,6 @@ public class TransactionPoolFactory {
       final TransactionPool transactionPool,
       final TransactionsMessageHandler transactionsMessageHandler,
       final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler) {
-    LOG.info("Enabling transaction pool");
     ethContext.getEthPeers().subscribeDisconnect(transactionTracker);
     protocolContext.getBlockchain().observeBlockAdded(transactionPool);
     ethContext.getEthMessages().subscribe(EthPV62.TRANSACTIONS, transactionsMessageHandler);

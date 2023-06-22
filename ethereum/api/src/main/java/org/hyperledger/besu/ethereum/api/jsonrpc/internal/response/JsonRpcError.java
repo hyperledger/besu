@@ -30,8 +30,10 @@ public enum JsonRpcError {
   INVALID_PARAMS(-32602, "Invalid params"),
   INTERNAL_ERROR(-32603, "Internal error"),
   TIMEOUT_ERROR(-32603, "Timeout expired"),
-
   METHOD_NOT_ENABLED(-32604, "Method not enabled"),
+
+  // Resource unavailable error
+  TX_POOL_DISABLED(-32002, "Transaction pool not enabled"),
 
   // eth_getBlockByNumber specific error message
   UNKNOWN_BLOCK(-39001, "Unknown block"),
