@@ -413,7 +413,7 @@ public class Memory {
    *
    * <p>Copying behaves as if the values are copied to an intermediate buffer before writing.
    *
-   * @param dst where to copy they bytes _to_
+   * @param dst where to copy the bytes _to_
    * @param src where to copy the bytes _from_
    * @param length the number of bytes to copy.
    */
