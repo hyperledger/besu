@@ -78,10 +78,13 @@ public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipel
     final CheckpointDownloadBlockStep checkPointDownloadBlockStep =
         new CheckpointDownloadBlockStep(protocolSchedule, ethContext, checkpoint, metricsSystem);
 
+    final CheckpointDownloadReceiptsStep checkPointDownloadReceiptsStep =
+            new CheckpointDownloadReceiptsStep(ethContext, metricsSystem);
+
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",
             checkPointSource,
-            1,
+            100,
             metricsSystem.createLabelledCounter(
                 BesuMetricCategory.SYNCHRONIZER,
                 "chain_download_pipeline_processed_total",
@@ -90,8 +93,9 @@ public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipel
                 "action"),
             true,
             "checkpointSync")
-        .thenProcessAsyncOrdered("downloadBlock", checkPointDownloadBlockStep::downloadBlock, 1)
-        .andFinishWith("importBlock", checkPointBlockImportStep);
+            .thenProcessAsyncOrdered("downloadBlock", checkPointDownloadBlockStep, 10)
+            .thenProcessAsyncOrdered("downloadReceipts", checkPointDownloadReceiptsStep, 10)
+            .andFinishWith("importBlock", checkPointBlockImportStep);
   }
 
   @Override

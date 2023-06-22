@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.ethereum.eth.sync.range.SyncTargetRange;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.Iterator;
