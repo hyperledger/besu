@@ -43,8 +43,8 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("DirectInvocationOnMock")
 public class RoundChangeCertificateValidatorTest {
@@ -67,7 +67,7 @@ public class RoundChangeCertificateValidatorTest {
 
   private Block proposedBlock;
 
-  @Before
+  @BeforeEach
   public void setup() {
     validators.add(Util.publicKeyToAddress(proposerKey.getPublicKey()));
     validators.add(Util.publicKeyToAddress(validatorKey.getPublicKey()));
