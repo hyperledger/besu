@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -137,19 +138,24 @@ public class IbftBlockHeightManagerTest {
     buildCreatedBlock();
 
     final MessageValidator messageValidator = mock(MessageValidator.class);
-    when(messageValidator.validateProposal(any())).thenReturn(true);
-    when(messageValidator.validateCommit(any())).thenReturn(true);
-    when(messageValidator.validatePrepare(any())).thenReturn(true);
+    lenient().when(messageValidator.validateProposal(any())).thenReturn(true);
+    lenient().when(messageValidator.validateCommit(any())).thenReturn(true);
+    lenient().when(messageValidator.validatePrepare(any())).thenReturn(true);
     when(finalState.getBlockTimer()).thenReturn(blockTimer);
-    when(finalState.getQuorum()).thenReturn(3);
+    lenient().when(finalState.getQuorum()).thenReturn(3);
     when(finalState.getValidatorMulticaster()).thenReturn(validatorMulticaster);
-    when(blockCreator.createBlock(anyLong()))
+    lenient()
+        .when(blockCreator.createBlock(anyLong()))
         .thenReturn(new BlockCreationResult(createdBlock, new TransactionSelectionResults()));
 
-    when(futureRoundProposalMessageValidator.validateProposalMessage(any())).thenReturn(true);
+    lenient()
+        .when(futureRoundProposalMessageValidator.validateProposalMessage(any()))
+        .thenReturn(true);
     when(messageValidatorFactory.createFutureRoundProposalMessageValidator(anyLong(), any()))
         .thenReturn(futureRoundProposalMessageValidator);
-    when(messageValidatorFactory.createMessageValidator(any(), any())).thenReturn(messageValidator);
+    lenient()
+        .when(messageValidatorFactory.createMessageValidator(any(), any()))
+        .thenReturn(messageValidator);
 
     protocolContext =
         new ProtocolContext(null, null, setupContextWithValidators(validators), Optional.empty());
@@ -174,7 +180,8 @@ public class IbftBlockHeightManagerTest {
                   bftExtraDataCodec);
             });
 
-    when(roundFactory.createNewRoundWithState(any(), any()))
+    lenient()
+        .when(roundFactory.createNewRoundWithState(any(), any()))
         .thenAnswer(
             invocation -> {
               final RoundState providedRoundState = invocation.getArgument(1);

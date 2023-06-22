@@ -18,6 +18,7 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -91,7 +92,7 @@ public class MessageValidatorTest {
         .thenReturn(true);
 
     BftContext mockBftCtx = mock(BftContext.class);
-    when(mockBftCtx.as(Mockito.any())).thenReturn(mockBftCtx);
+    lenient().when(mockBftCtx.as(Mockito.any())).thenReturn(mockBftCtx);
 
     protocolContext =
         new ProtocolContext(
