@@ -62,7 +62,4 @@ dependencies {
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
   testImplementation project(':ethereum:core')
-
-  testSupportImplementation 'org.mockito:mockito-core'
-  testSupportImplementation 'org.mockito:mockito-junit-jupiter'
 }
