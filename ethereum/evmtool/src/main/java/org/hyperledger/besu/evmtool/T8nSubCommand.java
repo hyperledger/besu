@@ -16,44 +16,22 @@
 
 package org.hyperledger.besu.evmtool;
 
-import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules.shouldClearEmptyAccounts;
 import static org.hyperledger.besu.evmtool.T8nSubCommand.COMMAND_ALIAS;
 import static org.hyperledger.besu.evmtool.T8nSubCommand.COMMAND_NAME;
 
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
-import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
-import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
-import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.AccountStorageEntry;
-import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
 import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.util.LogConfigurator;
 
@@ -67,11 +45,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NavigableMap;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -81,13 +58,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-import com.google.common.base.Stopwatch;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
@@ -255,255 +228,90 @@ public class T8nSubCommand implements Runnable {
       return;
     }
 
-    final ReferenceTestProtocolSchedules referenceTestProtocolSchedules =
-        ReferenceTestProtocolSchedules.create(
-            new StubGenesisConfigOptions().chainId(BigInteger.valueOf(chainId)));
+    T8nExecutor.TracerManager tracerManager;
+    if (parentCommand.showJsonResults) {
+      tracerManager =
+          new T8nExecutor.TracerManager() {
+            private final Map<OperationTracer, FileOutputStream> outputStreams = new HashMap<>();
 
-    final MutableWorldState worldState = new DefaultMutableWorldState(initialWorldState);
+            @Override
+            public OperationTracer getManagedTracer(final int txIndex, final Hash txHash)
+                throws Exception {
+              var traceDest =
+                  new FileOutputStream(
+                      outDir
+                          .resolve(
+                              String.format("trace-%d-%s.jsonl", txIndex, txHash.toHexString()))
+                          .toFile());
 
-    final ProtocolSchedule protocolSchedule = referenceTestProtocolSchedules.getByName(fork);
-    if (protocolSchedule == null) {
-      throw new UnsupportedForkException(fork);
-    }
+              var jsonTracer =
+                  new StandardJsonTracer(
+                      new PrintStream(traceDest),
+                      parentCommand.showMemory,
+                      !parentCommand.hideStack,
+                      parentCommand.showReturnData);
+              outputStreams.put(jsonTracer, traceDest);
+              return jsonTracer;
+            }
 
-    ProtocolSpec protocolSpec =
-        protocolSchedule.getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader());
-    final BlockHeader blockHeader = referenceTestEnv.updateFromParentValues(protocolSpec);
-    final MainnetTransactionProcessor processor = protocolSpec.getTransactionProcessor();
-    final WorldUpdater worldStateUpdater = worldState.updater();
-    final ReferenceTestBlockchain blockchain = new ReferenceTestBlockchain(blockHeader.getNumber());
-
-    List<TransactionReceipt> receipts = new ArrayList<>();
-    List<RejectedTransaction> invalidTransactions = new ArrayList<>();
-    List<Transaction> validTransactions = new ArrayList<>();
-    ArrayNode receiptsArray = objectMapper.createArrayNode();
-    long gasUsed = 0;
-    // Todo: EIP-4844 use the excessDataGas of the parent instead of DataGas.ZERO
-    final Wei dataGasPrice = protocolSpec.getFeeMarket().dataPrice(DataGas.ZERO);
-
-    for (int i = 0; i < transactions.size(); i++) {
-      Transaction transaction = transactions.get(i);
-
-      final Stopwatch timer = Stopwatch.createStarted();
-      final OperationTracer tracer; // You should have picked Mercy.
-
-      final TransactionProcessingResult result;
-      try (FileOutputStream traceDest =
-          parentCommand.showJsonResults
-              ? new FileOutputStream(
-                  outDir
-                      .resolve(
-                          String.format(
-                              "trace-%d-%s.jsonl", i, transaction.getHash().toHexString()))
-                      .toFile())
-              : null) {
-        if (parentCommand.showJsonResults) {
-          tracer =
-              new StandardJsonTracer(
-                  new PrintStream(traceDest),
-                  parentCommand.showMemory,
-                  !parentCommand.hideStack,
-                  parentCommand.showReturnData);
-        } else {
-          tracer = OperationTracer.NO_TRACING;
-        }
-
-        result =
-            processor.processTransaction(
-                blockchain,
-                worldStateUpdater,
-                blockHeader,
-                transaction,
-                blockHeader.getCoinbase(),
-                blockNumber -> referenceTestEnv.getBlockhashByNumber(blockNumber).orElse(Hash.ZERO),
-                false,
-                TransactionValidationParams.processingBlock(),
-                tracer,
-                dataGasPrice);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-      timer.stop();
-
-      if (shouldClearEmptyAccounts(fork)) {
-        final Account coinbase = worldStateUpdater.getOrCreate(blockHeader.getCoinbase());
-        if (coinbase != null && coinbase.isEmpty()) {
-          worldStateUpdater.deleteAccount(coinbase.getAddress());
-        }
-        final Account txSender = worldStateUpdater.getAccount(transaction.getSender());
-        if (txSender != null && txSender.isEmpty()) {
-          worldStateUpdater.deleteAccount(txSender.getAddress());
-        }
-      }
-      if (result.isInvalid()) {
-        invalidTransactions.add(
-            new RejectedTransaction(i, result.getValidationResult().getErrorMessage()));
-      } else {
-        validTransactions.add(transaction);
-
-        long transactionGasUsed = transaction.getGasLimit() - result.getGasRemaining();
-
-        gasUsed += transactionGasUsed;
-        long intrinsicGas =
-            protocolSpec
-                .getGasCalculator()
-                .transactionIntrinsicGasCost(
-                    transaction.getPayload(), transaction.getTo().isEmpty());
-        tracer.traceEndTransaction(
-            result.getOutput(), gasUsed - intrinsicGas, timer.elapsed(TimeUnit.NANOSECONDS));
-        TransactionReceipt receipt =
-            protocolSpec
-                .getTransactionReceiptFactory()
-                .create(transaction.getType(), result, worldState, gasUsed);
-        Bytes gasUsedInTransaction = Bytes.ofUnsignedLong(transactionGasUsed);
-        receipts.add(receipt);
-        ObjectNode receiptObject = receiptsArray.addObject();
-        receiptObject.put(
-            "root", receipt.getStateRoot() == null ? "0x" : receipt.getStateRoot().toHexString());
-        receiptObject.put("status", "0x" + receipt.getStatus());
-        receiptObject.put("cumulativeGasUsed", Bytes.ofUnsignedLong(gasUsed).toQuantityHexString());
-        receiptObject.put("logsBloom", receipt.getBloomFilter().toHexString());
-        if (result.getLogs().isEmpty()) {
-          receiptObject.putNull("logs");
-        } else {
-          ArrayNode logsArray = receiptObject.putArray("logs");
-          for (Log log : result.getLogs()) {
-            logsArray.addPOJO(log);
-          }
-        }
-        receiptObject.put("transactionHash", transaction.getHash().toHexString());
-        receiptObject.put(
-            "contractAddress", transaction.contractAddress().orElse(Address.ZERO).toHexString());
-        receiptObject.put("gasUsed", gasUsedInTransaction.toQuantityHexString());
-        receiptObject.put("blockHash", Hash.ZERO.toHexString());
-        receiptObject.put("transactionIndex", Bytes.ofUnsignedLong(i).toQuantityHexString());
-      }
-    }
-
-    final ObjectNode resultObject = objectMapper.createObjectNode();
-
-    // block reward
-    // The max production reward was 5 Eth, longs can hold over 18 Eth.
-    if (!validTransactions.isEmpty() && (rewardString == null || Long.decode(rewardString) > 0)) {
-      Wei reward =
-          (rewardString == null)
-              ? protocolSpec.getBlockReward()
-              : Wei.of(Long.decode(rewardString));
-      worldStateUpdater
-          .getOrCreateSenderAccount(blockHeader.getCoinbase())
-          .getMutable()
-          .incrementBalance(reward);
-    }
-
-    // Invoke the withdrawal processor to handle CL withdrawals.
-    if (!referenceTestEnv.getWithdrawals().isEmpty()) {
-      try {
-        protocolSpec
-            .getWithdrawalsProcessor()
-            .ifPresent(
-                p -> p.processWithdrawals(referenceTestEnv.getWithdrawals(), worldStateUpdater));
-      } catch (RuntimeException re) {
-        resultObject.put("exception", re.getMessage());
-      }
-    }
-
-    worldStateUpdater.commit();
-    worldState.persist(blockHeader);
-
-    resultObject.put("stateRoot", worldState.rootHash().toHexString());
-    resultObject.put("txRoot", BodyValidation.transactionsRoot(validTransactions).toHexString());
-    resultObject.put("receiptsRoot", BodyValidation.receiptsRoot(receipts).toHexString());
-    resultObject.put(
-        "logsHash",
-        Hash.hash(
-                RLP.encode(
-                    out ->
-                        out.writeList(
-                            receipts.stream().flatMap(r -> r.getLogsList().stream()).toList(),
-                            Log::writeTo)))
-            .toHexString());
-    resultObject.put("logsBloom", BodyValidation.logsBloom(receipts).toHexString());
-    resultObject.set("receipts", receiptsArray);
-    if (!invalidTransactions.isEmpty()) {
-      resultObject.putPOJO("rejected", invalidTransactions);
-    }
-
-    resultObject.put(
-        "currentDifficulty",
-        blockHeader.getDifficultyBytes().trimLeadingZeros().size() > 0
-            ? blockHeader.getDifficultyBytes().toShortHexString()
-            : null);
-    resultObject.put("gasUsed", Bytes.ofUnsignedLong(gasUsed).toQuantityHexString());
-    blockHeader
-        .getBaseFee()
-        .ifPresent(bf -> resultObject.put("currentBaseFee", bf.toQuantityHexString()));
-    blockHeader
-        .getWithdrawalsRoot()
-        .ifPresent(wr -> resultObject.put("withdrawalsRoot", wr.toHexString()));
-
-    ObjectNode allocObject = objectMapper.createObjectNode();
-    worldState
-        .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
-        .sorted(Comparator.comparing(o -> o.getAddress().get().toHexString()))
-        .forEach(
-            account -> {
-              ObjectNode accountObject =
-                  allocObject.putObject(
-                      account.getAddress().map(Address::toHexString).orElse("0x"));
-              if (account.getCode() != null && account.getCode().size() > 0) {
-                accountObject.put("code", account.getCode().toHexString());
+            @Override
+            public void disposeTracer(final OperationTracer tracer) throws IOException {
+              if (outputStreams.containsKey(tracer)) {
+                outputStreams.remove(tracer).close();
               }
-              NavigableMap<Bytes32, AccountStorageEntry> storageEntries =
-                  account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
-              if (!storageEntries.isEmpty()) {
-                ObjectNode storageObject = accountObject.putObject("storage");
-                storageEntries.values().stream()
-                    .sorted(Comparator.comparing(a -> a.getKey().get()))
-                    .forEach(
-                        accountStorageEntry ->
-                            storageObject.put(
-                                accountStorageEntry.getKey().map(UInt256::toHexString).orElse("0x"),
-                                accountStorageEntry.getValue().toHexString()));
-              }
-              accountObject.put("balance", account.getBalance().toShortHexString());
-              if (account.getNonce() > 0) {
-                accountObject.put(
-                    "nonce", Bytes.ofUnsignedLong(account.getNonce()).toShortHexString());
-              }
-            });
+            }
+          };
+    } else {
+      tracerManager =
+          new T8nExecutor.TracerManager() {
+            @Override
+            public OperationTracer getManagedTracer(final int txIndex, final Hash txHash) {
+              return OperationTracer.NO_TRACING;
+            }
+
+            @Override
+            public void disposeTracer(final OperationTracer tracer) {}
+          };
+    }
+    final T8nExecutor.T8nResult result =
+        T8nExecutor.runTest(
+            chainId,
+            fork,
+            rewardString,
+            objectMapper,
+            referenceTestEnv,
+            initialWorldState,
+            transactions,
+            tracerManager);
 
     try {
       ObjectWriter writer = objectMapper.writerWithDefaultPrettyPrinter();
       ObjectNode outputObject = objectMapper.createObjectNode();
 
       if (outAlloc.equals(stdoutPath)) {
-        outputObject.set("alloc", allocObject);
+        outputObject.set("alloc", result.allocObject());
       } else {
         try (PrintStream fileOut =
             new PrintStream(new FileOutputStream(outDir.resolve(outAlloc).toFile()))) {
-          fileOut.println(writer.writeValueAsString(allocObject));
+          fileOut.println(writer.writeValueAsString(result.allocObject()));
         }
       }
 
-      BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
-      rlpOut.writeList(transactions, Transaction::writeTo);
-      TextNode bodyBytes = TextNode.valueOf(rlpOut.encoded().toHexString());
-
       if (outBody.equals((stdoutPath))) {
-        outputObject.set("body", bodyBytes);
+        outputObject.set("body", result.bodyBytes());
       } else {
         try (PrintStream fileOut =
             new PrintStream(new FileOutputStream(outDir.resolve(outBody).toFile()))) {
-          fileOut.println(bodyBytes);
+          fileOut.println(result.bodyBytes());
         }
       }
 
       if (outResult.equals(stdoutPath)) {
-        outputObject.set("result", resultObject);
+        outputObject.set("result", result.resultObject());
       } else {
         try (PrintStream fileOut =
             new PrintStream(new FileOutputStream(outDir.resolve(outResult).toFile()))) {
-          fileOut.println(writer.writeValueAsString(resultObject));
+          fileOut.println(writer.writeValueAsString(result.resultObject()));
         }
       }
 
