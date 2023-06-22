@@ -47,14 +47,14 @@ import java.util.List;
 import java.util.Optional;
 
 import org.assertj.core.util.Lists;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class MessageValidatorTest {
 
   private final NodeKey nodeKey = NodeKeyUtils.generate();
@@ -81,7 +81,7 @@ public class MessageValidatorTest {
 
   private final Block block = ProposedBlockHelpers.createProposalBlock(validators, roundIdentifier);
 
-  @Before
+  @BeforeEach
   public void setup() {
     when(signedDataValidator.validateProposal(any())).thenReturn(true);
     when(signedDataValidator.validatePrepare(any())).thenReturn(true);
