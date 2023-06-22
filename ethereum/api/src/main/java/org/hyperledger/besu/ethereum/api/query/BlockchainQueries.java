@@ -642,7 +642,7 @@ public class BlockchainQueries {
               - transactionReceipts.get(location.getTransactionIndex() - 1).getCumulativeGasUsed();
     }
 
-    Optional<Long> maybeDataGasUsed =
+    Optional<DataGas> maybeDataGasUsed =
         getDataGasUsed(transaction, protocolSchedule.getByBlockHeader(header));
 
     Optional<Wei> maybeDataGasPrice =
@@ -670,7 +670,7 @@ public class BlockchainQueries {
    * @return an Optional containing the data gas used for data if the transaction type supports
    *     blobs, otherwise returns an empty Optional
    */
-  private Optional<Long> getDataGasUsed(
+  private Optional<DataGas> getDataGasUsed(
       final Transaction transaction, final ProtocolSpec protocolSpec) {
     return transaction.getType().supportsBlob()
         ? Optional.of(protocolSpec.getGasCalculator().dataGasUsed(transaction.getBlobCount()))

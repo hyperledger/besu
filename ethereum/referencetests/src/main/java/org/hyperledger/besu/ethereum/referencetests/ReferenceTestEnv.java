@@ -125,7 +125,7 @@ public class ReferenceTestEnv extends BlockHeader {
         Optional.ofNullable(random).map(Difficulty::fromHexString).orElse(Difficulty.ZERO),
         0L,
         null, // withdrawalsRoot
-        0,
+        null,
         null, // depositsRoot
         null,
         new MainnetBlockHeaderFunctions());

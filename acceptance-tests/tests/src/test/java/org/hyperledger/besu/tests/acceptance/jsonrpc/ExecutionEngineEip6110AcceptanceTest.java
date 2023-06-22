@@ -41,6 +41,7 @@ public class ExecutionEngineEip6110AcceptanceTest extends AbstractJsonRpcTest {
 
   @Parameterized.Parameters(name = "{0}")
   public static Iterable<Object[]> testCases() throws URISyntaxException {
+    // return testCase(TEST_CASE_PATH+"/06_eip6110_get_payload.json");
     return testCases(TEST_CASE_PATH);
   }
 

@@ -619,7 +619,7 @@ public abstract class AbstractEngineNewPayloadTest {
         header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
         txs,
         withdrawals,
-        new UnsignedLongParameter(header.getDataGasUsed()),
+        new UnsignedLongParameter(header.getDataGasUsed().map(DataGas::toLong).orElse(0L)),
         deposits,
         header.getExcessDataGas().map(DataGas::toHexString).orElse(null),
         List.of(VersionedHash.DEFAULT_VERSIONED_HASH.toBytes()));

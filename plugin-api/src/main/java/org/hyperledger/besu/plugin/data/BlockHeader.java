@@ -215,5 +215,5 @@ public interface BlockHeader {
    * @return The data_gas_used of this header.
    */
   @Unstable
-  long getDataGasUsed();
+  Optional<? extends Quantity> getDataGasUsed();
 }

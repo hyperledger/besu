@@ -229,16 +229,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       throwIfStopped();
 
       DataGas newExcessDataGas = null;
-      long newDataGasUsed = 0;
+      DataGas newDataGasUsed = DataGas.ZERO;
       if (newProtocolSpec.getFeeMarket().implementsDataFee()) {
         final var gasCalculator = newProtocolSpec.getGasCalculator();
         newExcessDataGas =
-            DataGas.of(
-                gasCalculator.computeExcessDataGas(
-                    // casting parent excess data gas to long since for the moment it should be well
-                    // below that limit
-                    parentHeader.getExcessDataGas().map(DataGas::toLong).orElse(0L),
-                    parentHeader.getDataGasUsed()));
+            gasCalculator.computeExcessDataGas(
+                parentHeader.getExcessDataGas().orElse(DataGas.ZERO),
+                parentHeader.getDataGasUsed().orElse(DataGas.ZERO));
 
         final int newBlobsCount =
             transactionResults.getTransactionsByType(TransactionType.BLOB).stream()
@@ -251,26 +248,26 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      final SealableBlockHeader sealableBlockHeader =
-          BlockHeaderBuilder.create()
-              .populateFrom(processableBlockHeader)
-              .ommersHash(BodyValidation.ommersHash(ommers))
-              .stateRoot(disposableWorldState.rootHash())
-              .transactionsRoot(
-                  BodyValidation.transactionsRoot(transactionResults.getTransactions()))
-              .receiptsRoot(BodyValidation.receiptsRoot(transactionResults.getReceipts()))
-              .logsBloom(BodyValidation.logsBloom(transactionResults.getReceipts()))
-              .gasUsed(transactionResults.getCumulativeGasUsed())
-              .extraData(extraDataCalculator.get(parentHeader))
-              .withdrawalsRoot(
-                  withdrawalsCanBeProcessed
-                      ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
-                      : null)
-              .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
-              .dataGasUsed(newDataGasUsed)
-              .excessDataGas(newExcessDataGas)
-              .buildSealableBlockHeader();
+      BlockHeaderBuilder blockHeaderBuilder = BlockHeaderBuilder.create();
 
+      blockHeaderBuilder
+          .populateFrom(processableBlockHeader)
+          .ommersHash(BodyValidation.ommersHash(ommers))
+          .stateRoot(disposableWorldState.rootHash())
+          .transactionsRoot(BodyValidation.transactionsRoot(transactionResults.getTransactions()))
+          .receiptsRoot(BodyValidation.receiptsRoot(transactionResults.getReceipts()))
+          .logsBloom(BodyValidation.logsBloom(transactionResults.getReceipts()))
+          .gasUsed(transactionResults.getCumulativeGasUsed())
+          .extraData(extraDataCalculator.get(parentHeader))
+          .withdrawalsRoot(
+              withdrawalsCanBeProcessed
+                  ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
+                  : null)
+          .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null));
+      if (newProtocolSpec.getFeeMarket().implementsDataFee()) {
+        blockHeaderBuilder.dataGasUsed(newDataGasUsed).excessDataGas(newExcessDataGas);
+      }
+      final SealableBlockHeader sealableBlockHeader = blockHeaderBuilder.buildSealableBlockHeader();
       final BlockHeader blockHeader = createFinalBlockHeader(sealableBlockHeader);
 
       final Optional<List<Withdrawal>> withdrawals =

@@ -18,6 +18,7 @@ import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -195,24 +196,24 @@ public class MainnetTransactionValidator {
     }
 
     if (transaction.getType().supportsBlob()) {
-      final long txTotalDataGas = gasCalculator.dataGasUsed(transaction.getBlobCount());
-      if (txTotalDataGas > gasLimitCalculator.currentDataGasLimit()) {
+      final DataGas txTotalDataGas = gasCalculator.dataGasUsed(transaction.getBlobCount());
+      if (gasLimitCalculator.blockDataGasLimit().compareTo(txTotalDataGas) > 0) {
         return ValidationResult.invalid(
             TransactionInvalidReason.TOTAL_DATA_GAS_TOO_HIGH,
             String.format(
                 "total data gas %d exceeds max data gas per block %d",
-                txTotalDataGas, gasLimitCalculator.currentDataGasLimit()));
+                txTotalDataGas.toLong(), gasLimitCalculator.blockDataGasLimit().toLong()));
       }
     }
 
     if (transaction.getType().supportsBlob()) {
-      final long txTotalDataGas = gasCalculator.dataGasUsed(transaction.getBlobCount());
-      if (txTotalDataGas > gasLimitCalculator.currentDataGasLimit()) {
+      final DataGas txTotalDataGas = gasCalculator.dataGasUsed(transaction.getBlobCount());
+      if (gasLimitCalculator.blockDataGasLimit().compareTo(txTotalDataGas) > 0) {
         return ValidationResult.invalid(
             TransactionInvalidReason.TOTAL_DATA_GAS_TOO_HIGH,
             String.format(
                 "total data gas %d exceeds max data gas per block %d",
-                txTotalDataGas, gasLimitCalculator.currentDataGasLimit()));
+                txTotalDataGas.toLong(), gasLimitCalculator.blockDataGasLimit().toLong()));
       }
     }
 
@@ -341,17 +342,14 @@ public class MainnetTransactionValidator {
     }
 
     BlobsWithCommitments blobsWithCommitments = transaction.getBlobsWithCommitments().get();
-
-    final long blobsLimit =
-        gasLimitCalculator.currentDataGasLimit()
-            / gasCalculator.dataGasUsed(blobsWithCommitments.getBlobs().size());
-    if (blobsWithCommitments.getBlobs().size() > blobsLimit) {
+    DataGas used = gasCalculator.dataGasUsed(blobsWithCommitments.getBlobs().size());
+    if (used.compareTo(gasLimitCalculator.blockDataGasLimit()) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_BLOBS,
-          "Too many transaction blobs ("
-              + blobsWithCommitments.getBlobs().size()
+          "data gas used("
+              + used.toLong()
               + ") in transaction, max is "
-              + blobsLimit);
+              + gasLimitCalculator.blockDataGasLimit().toLong());
     }
 
     if (blobsWithCommitments.getBlobs().size() != blobsWithCommitments.getKzgCommitments().size()) {

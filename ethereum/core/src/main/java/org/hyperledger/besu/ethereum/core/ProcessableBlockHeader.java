@@ -45,6 +45,7 @@ public class ProcessableBlockHeader implements BlockValues {
   // prevRandao is included for post-merge blocks
   protected final Bytes32 mixHashOrPrevRandao;
   protected final DataGas excessDataGas;
+  protected final DataGas dataGasUsed;
 
   protected ProcessableBlockHeader(
       final Hash parentHash,
@@ -55,7 +56,8 @@ public class ProcessableBlockHeader implements BlockValues {
       final long timestamp,
       final Wei baseFee,
       final Bytes32 mixHashOrPrevRandao,
-      final DataGas excessDataGas) {
+      final DataGas excessDataGas,
+      final DataGas dataGasUsed) {
     this.parentHash = parentHash;
     this.coinbase = coinbase;
     this.difficulty = difficulty;
@@ -65,6 +67,7 @@ public class ProcessableBlockHeader implements BlockValues {
     this.baseFee = baseFee;
     this.mixHashOrPrevRandao = mixHashOrPrevRandao;
     this.excessDataGas = excessDataGas;
+    this.dataGasUsed = dataGasUsed;
   }
 
   /**
@@ -163,8 +166,22 @@ public class ProcessableBlockHeader implements BlockValues {
     return Optional.ofNullable(mixHashOrPrevRandao);
   }
 
+  /**
+   * Returns the excess data gas of the network so far.
+   *
+   * @return the excess data gas of the network so far.
+   */
   public Optional<DataGas> getExcessDataGas() {
     return Optional.ofNullable(excessDataGas);
+  }
+
+  /**
+   * Returns the data gas used by this block.
+   *
+   * @return the data gas used by this block
+   */
+  public Optional<DataGas> getDataGasUsed() {
+    return Optional.ofNullable(dataGasUsed);
   }
 
   public String toLogString() {

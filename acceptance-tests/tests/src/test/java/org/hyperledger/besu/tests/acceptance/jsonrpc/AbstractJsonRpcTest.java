@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -118,5 +119,14 @@ abstract class AbstractJsonRpcTest {
         .sorted()
         .map(file -> new Object[] {file.getName(), file.toURI()})
         .collect(Collectors.toList());
+  }
+
+  public static Iterable<Object[]> testCase(final String testCasePath) throws URISyntaxException {
+
+    final File testCaseList = new File(AbstractJsonRpcTest.class.getResource(testCasePath).toURI());
+    Object[] testCase = {testCaseList.getName(), testCaseList.toURI()};
+    ArrayList<Object[]> retval = new ArrayList<>();
+    retval.add(testCase);
+    return retval;
   }
 }

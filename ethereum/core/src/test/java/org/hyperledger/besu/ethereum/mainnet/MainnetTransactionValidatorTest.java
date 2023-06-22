@@ -32,6 +32,7 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -205,7 +206,7 @@ public class MainnetTransactionValidatorTest {
     validator.setTransactionFilter(transactionFilter(false));
 
     Account invalidEOA =
-        when(account(basicTransaction.getUpfrontCost(0L), basicTransaction.getNonce())
+        when(account(basicTransaction.getUpfrontCost(DataGas.ZERO), basicTransaction.getNonce())
                 .getCodeHash())
             .thenReturn(Hash.fromHexStringLenient("0xdeadbeef"))
             .getMock();
@@ -519,7 +520,7 @@ public class MainnetTransactionValidatorTest {
   @Test
   @Ignore("This test is ignored because it requires a native library to be loaded")
   public void shouldAcceptTransactionWithAtLeastOneBlob() {
-    when(gasCalculator.dataGasUsed(anyInt())).thenReturn(2L);
+    when(gasCalculator.dataGasUsed(anyInt())).thenReturn(DataGas.of(2));
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator,
@@ -578,7 +579,7 @@ public class MainnetTransactionValidatorTest {
   }
 
   private Account accountWithNonce(final long nonce) {
-    return account(basicTransaction.getUpfrontCost(0L), nonce);
+    return account(basicTransaction.getUpfrontCost(DataGas.ZERO), nonce);
   }
 
   private Account account(final Wei balance, final long nonce) {

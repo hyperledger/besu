@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.query;
 
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -30,7 +31,7 @@ public class TransactionReceiptWithMetadata {
   private final long blockNumber;
   private final Hash blockHash;
   private final Transaction transaction;
-  private final Optional<Long> dataGasUsed;
+  private final Optional<DataGas> dataGasUsed;
   private final Optional<Wei> dataGasPrice;
 
   private TransactionReceiptWithMetadata(
@@ -42,7 +43,7 @@ public class TransactionReceiptWithMetadata {
       final Optional<Wei> baseFee,
       final Hash blockHash,
       final long blockNumber,
-      final Optional<Long> dataGasUsed,
+      final Optional<DataGas> dataGasUsed,
       final Optional<Wei> dataGasPrice) {
     this.receipt = receipt;
     this.transactionHash = transactionHash;
@@ -65,7 +66,7 @@ public class TransactionReceiptWithMetadata {
       final Optional<Wei> baseFee,
       final Hash blockHash,
       final long blockNumber,
-      final Optional<Long> dataGasUsed,
+      final Optional<DataGas> dataGasUsed,
       final Optional<Wei> dataGasPrice) {
     return new TransactionReceiptWithMetadata(
         receipt,
@@ -114,7 +115,7 @@ public class TransactionReceiptWithMetadata {
     return baseFee;
   }
 
-  public Optional<Long> getDataGasUsed() {
+  public Optional<DataGas> getDataGasUsed() {
     return dataGasUsed;
   }
 

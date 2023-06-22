@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
+import org.hyperledger.besu.datatypes.DataGas;
+
 /**
  * Gas Calculator for Cancun
  *
@@ -28,7 +30,7 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
   private static final long TSTORE_GAS = WARM_STORAGE_READ_COST;
 
   private static final long DATA_GAS_PER_BLOB = 1 << 17;
-  private static final long TARGET_DATA_GAS_PER_BLOCK = 393216L;
+  private static final DataGas TARGET_DATA_GAS_PER_BLOCK = DataGas.of(393216L);
 
   // EIP-1153
   @Override
@@ -42,15 +44,17 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
   }
 
   @Override
-  public long dataGasUsed(final int blobCount) {
-    return DATA_GAS_PER_BLOB * blobCount;
+  public DataGas dataGasUsed(final int blobCount) {
+    return DataGas.of(DATA_GAS_PER_BLOB * blobCount);
   }
 
   @Override
-  public long computeExcessDataGas(final long parentExcessDataGas, final long parentDataGasUsed) {
-    if (parentExcessDataGas + parentDataGasUsed < TARGET_DATA_GAS_PER_BLOCK) {
-      return 0L;
+  public DataGas computeExcessDataGas(
+      final DataGas parentExcessDataGas, final DataGas parentDataGasUsed) {
+    DataGas currentGasUsage = parentExcessDataGas.add(parentDataGasUsed);
+    if (currentGasUsage.compareTo(TARGET_DATA_GAS_PER_BLOCK) <= 0) {
+      return DataGas.ZERO;
     }
-    return parentDataGasUsed + parentDataGasUsed - TARGET_DATA_GAS_PER_BLOCK;
+    return currentGasUsage.subtract(TARGET_DATA_GAS_PER_BLOCK);
   }
 }

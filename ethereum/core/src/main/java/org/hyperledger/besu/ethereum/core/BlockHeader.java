@@ -62,7 +62,7 @@ public class BlockHeader extends SealableBlockHeader
       final Bytes32 mixHashOrPrevRandao,
       final long nonce,
       final Hash withdrawalsRoot,
-      final long dataGasUsed,
+      final DataGas dataGasUsed,
       final DataGas excessDataGas,
       final Hash depositsRoot,
       final BlockHeaderFunctions blockHeaderFunctions,
@@ -110,7 +110,7 @@ public class BlockHeader extends SealableBlockHeader
       final Bytes32 mixHashOrPrevRandao,
       final long nonce,
       final Hash withdrawalsRoot,
-      final long dataGasUsed,
+      final DataGas dataGasUsed,
       final DataGas excessDataGas,
       final Hash depositsRoot,
       final BlockHeaderFunctions blockHeaderFunctions) {
@@ -216,8 +216,12 @@ public class BlockHeader extends SealableBlockHeader
     if (withdrawalsRoot != null) {
       out.writeBytes(withdrawalsRoot);
     }
+
+    if (dataGasUsed != null) {
+      out.writeUInt64Scalar(dataGasUsed);
+    }
+
     if (excessDataGas != null) {
-      out.writeLongScalar(dataGasUsed);
       out.writeUInt64Scalar(excessDataGas);
     }
     if (depositsRoot != null) {
@@ -249,7 +253,8 @@ public class BlockHeader extends SealableBlockHeader
         !(input.isEndOfCurrentList() || input.isZeroLengthString())
             ? Hash.wrap(input.readBytes32())
             : null;
-    final long dataGasUsed = !input.isEndOfCurrentList() ? input.readLongScalar() : 0;
+    final DataGas dataGasUsed =
+        !input.isEndOfCurrentList() ? DataGas.of(input.readLongScalar()) : null;
     final DataGas excessDataGas =
         !input.isEndOfCurrentList() ? DataGas.of(input.readLongScalar()) : null;
     final Hash depositHashRoot =
@@ -353,7 +358,7 @@ public class BlockHeader extends SealableBlockHeader
             .getWithdrawalsRoot()
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
-        pluginBlockHeader.getDataGasUsed(),
+        pluginBlockHeader.getDataGasUsed().map(DataGas::fromQuantity).orElse(null),
         pluginBlockHeader.getExcessDataGas().map(DataGas::fromQuantity).orElse(null),
         pluginBlockHeader
             .getDepositsRoot()

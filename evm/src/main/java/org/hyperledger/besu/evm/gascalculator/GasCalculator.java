@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.gascalculator;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.evm.account.Account;
@@ -519,8 +520,8 @@ public interface GasCalculator {
    * @param blobCount the number of blobs
    * @return the total gas cost
    */
-  default long dataGasUsed(final int blobCount) {
-    return 0L;
+  default DataGas dataGasUsed(final int blobCount) {
+    return DataGas.ZERO;
   }
 
   /**
@@ -531,7 +532,8 @@ public interface GasCalculator {
    * @param parentDataGasUsed data gas used from the parent
    * @return the new excess data gas value
    */
-  default long computeExcessDataGas(final long parentExcessDataGas, final long parentDataGasUsed) {
-    return 0L;
+  default DataGas computeExcessDataGas(
+      final DataGas parentExcessDataGas, final DataGas parentDataGasUsed) {
+    return DataGas.ZERO;
   }
 }

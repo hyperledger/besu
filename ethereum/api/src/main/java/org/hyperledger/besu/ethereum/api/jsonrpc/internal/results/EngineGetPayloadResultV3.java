@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
@@ -98,7 +99,7 @@ public class EngineGetPayloadResultV3 {
           header.getExcessDataGas().map(Quantity::create).orElse(Quantity.HEX_ZERO);
       this.gasLimit = Quantity.create(header.getGasLimit());
       this.gasUsed = Quantity.create(header.getGasUsed());
-      this.dataGasUsed = Quantity.create(header.getDataGasUsed());
+      this.dataGasUsed = Quantity.create(header.getDataGasUsed().orElse(DataGas.ZERO));
       this.timestamp = Quantity.create(header.getTimestamp());
       this.transactions = transactions;
       this.feeRecipient = header.getCoinbase().toString();

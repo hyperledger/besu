@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -382,9 +383,10 @@ public class BlockTransactionSelector {
             transactionReceiptFactory.create(
                 transaction.getType(), effectiveResult, worldState, cumulativeGasUsed);
 
-        final long dataGasUsed = gasCalculator.dataGasUsed(transaction.getBlobCount());
+        final DataGas dataGasUsed = gasCalculator.dataGasUsed(transaction.getBlobCount());
 
-        transactionSelectionResults.update(transaction, receipt, gasUsedByTransaction, dataGasUsed);
+        transactionSelectionResults.update(
+            transaction, receipt, gasUsedByTransaction, dataGasUsed.toLong());
 
         LOG.atTrace()
             .setMessage("Selected {} for block creation")
@@ -477,15 +479,17 @@ public class BlockTransactionSelector {
   }
 
   private boolean transactionTooLargeForBlock(final Transaction transaction) {
-    final long dataGasUsed = gasCalculator.dataGasUsed(transaction.getBlobCount());
+    final DataGas dataGasUsed = gasCalculator.dataGasUsed(transaction.getBlobCount());
 
-    if (dataGasUsed
-        > gasLimitCalculator.currentDataGasLimit()
-            - transactionSelectionResults.getCumulativeDataGasUsed()) {
+    if (dataGasUsed.compareTo(
+            gasLimitCalculator
+                .blockDataGasLimit()
+                .subtract(transactionSelectionResults.getCumulativeDataGasUsed()))
+        > 0) {
       return true;
     }
 
-    return transaction.getGasLimit() + dataGasUsed
+    return transaction.getGasLimit() + dataGasUsed.toLong()
         > processableBlockHeader.getGasLimit() - transactionSelectionResults.getCumulativeGasUsed();
   }
 
