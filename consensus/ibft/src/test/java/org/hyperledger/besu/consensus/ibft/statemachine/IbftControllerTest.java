@@ -18,6 +18,7 @@ import static org.assertj.core.util.Lists.newArrayList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -55,13 +56,13 @@ import java.util.Collections;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class IbftControllerTest {
   @Mock private Blockchain blockChain;
   @Mock private BftFinalState bftFinalState;
@@ -96,23 +97,23 @@ public class IbftControllerTest {
   @Mock private FutureMessageBuffer futureMessageBuffer;
   private IbftController ibftController;
 
-  @Before
+  @BeforeEach
   public void setup() {
     when(blockChain.getChainHeadHeader()).thenReturn(chainHeadBlockHeader);
-    when(blockChain.getChainHeadBlockNumber()).thenReturn(3L);
-    when(blockHeightManagerFactory.create(any())).thenReturn(blockHeightManager);
-    when(bftFinalState.getValidators()).thenReturn(ImmutableList.of(validator));
+    lenient().when(blockChain.getChainHeadBlockNumber()).thenReturn(3L);
+    lenient().when(blockHeightManagerFactory.create(any())).thenReturn(blockHeightManager);
+    lenient().when(bftFinalState.getValidators()).thenReturn(ImmutableList.of(validator));
 
-    when(chainHeadBlockHeader.getNumber()).thenReturn(3L);
-    when(chainHeadBlockHeader.getHash()).thenReturn(Hash.ZERO);
+    lenient().when(chainHeadBlockHeader.getNumber()).thenReturn(3L);
+    lenient().when(chainHeadBlockHeader.getHash()).thenReturn(Hash.ZERO);
 
-    when(blockHeightManager.getParentBlockHeader()).thenReturn(chainHeadBlockHeader);
-    when(blockHeightManager.getChainHeight()).thenReturn(4L); // one great than blockchain
+    lenient().when(blockHeightManager.getParentBlockHeader()).thenReturn(chainHeadBlockHeader);
+    when(blockHeightManager.getChainHeight()).thenReturn(4L); // one greater than blockchain
 
-    when(nextBlock.getNumber()).thenReturn(5L);
+    lenient().when(nextBlock.getNumber()).thenReturn(5L);
 
-    when(bftFinalState.isLocalNodeValidator()).thenReturn(true);
-    when(messageTracker.hasSeenMessage(any())).thenReturn(false);
+    lenient().when(bftFinalState.isLocalNodeValidator()).thenReturn(true);
+    lenient().when(messageTracker.hasSeenMessage(any())).thenReturn(false);
   }
 
   private void constructIbftController() {
@@ -139,9 +140,7 @@ public class IbftControllerTest {
 
   @Test
   public void startsNewBlockHeightManagerAndReplaysFutureMessages() {
-    final ConsensusRoundIdentifier roundIdentifierHeight6 = new ConsensusRoundIdentifier(6, 0);
     setupPrepare(futureRoundIdentifier, validator);
-    setupProposal(roundIdentifierHeight6, validator);
     setupCommit(futureRoundIdentifier, validator);
     setupRoundChange(futureRoundIdentifier, validator);
 
@@ -446,16 +445,16 @@ public class IbftControllerTest {
 
   private void setupProposal(
       final ConsensusRoundIdentifier roundIdentifier, final Address validator) {
-    when(proposal.getAuthor()).thenReturn(validator);
-    when(proposal.getRoundIdentifier()).thenReturn(roundIdentifier);
-    when(proposalMessageData.getCode()).thenReturn(IbftV2.PROPOSAL);
-    when(proposalMessageData.decode()).thenReturn(proposal);
+    lenient().when(proposal.getAuthor()).thenReturn(validator);
+    lenient().when(proposal.getRoundIdentifier()).thenReturn(roundIdentifier);
+    lenient().when(proposalMessageData.getCode()).thenReturn(IbftV2.PROPOSAL);
+    lenient().when(proposalMessageData.decode()).thenReturn(proposal);
     proposalMessage = new DefaultMessage(null, proposalMessageData);
   }
 
   private void setupPrepare(
       final ConsensusRoundIdentifier roundIdentifier, final Address validator) {
-    when(prepare.getAuthor()).thenReturn(validator);
+    lenient().when(prepare.getAuthor()).thenReturn(validator);
     when(prepare.getRoundIdentifier()).thenReturn(roundIdentifier);
     when(prepareMessageData.getCode()).thenReturn(IbftV2.PREPARE);
     when(prepareMessageData.decode()).thenReturn(prepare);
@@ -464,7 +463,7 @@ public class IbftControllerTest {
 
   private void setupCommit(
       final ConsensusRoundIdentifier roundIdentifier, final Address validator) {
-    when(commit.getAuthor()).thenReturn(validator);
+    lenient().when(commit.getAuthor()).thenReturn(validator);
     when(commit.getRoundIdentifier()).thenReturn(roundIdentifier);
     when(commitMessageData.getCode()).thenReturn(IbftV2.COMMIT);
     when(commitMessageData.decode()).thenReturn(commit);
@@ -473,7 +472,7 @@ public class IbftControllerTest {
 
   private void setupRoundChange(
       final ConsensusRoundIdentifier roundIdentifier, final Address validator) {
-    when(roundChange.getAuthor()).thenReturn(validator);
+    lenient().when(roundChange.getAuthor()).thenReturn(validator);
     when(roundChange.getRoundIdentifier()).thenReturn(roundIdentifier);
     when(roundChangeMessageData.getCode()).thenReturn(IbftV2.ROUND_CHANGE);
     when(roundChangeMessageData.decode()).thenReturn(roundChange);

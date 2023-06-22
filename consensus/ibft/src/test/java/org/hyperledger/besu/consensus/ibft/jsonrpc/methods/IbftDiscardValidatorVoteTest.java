@@ -31,8 +31,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class IbftDiscardValidatorVoteTest {
   private final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
@@ -41,7 +41,7 @@ public class IbftDiscardValidatorVoteTest {
   private final String JSON_RPC_VERSION = "2.0";
   private IbftDiscardValidatorVote method;
 
-  @Before
+  @BeforeEach
   public void setup() {
     method = new IbftDiscardValidatorVote(validatorProvider);
     when(validatorProvider.getVoteProviderAtHead()).thenReturn(Optional.of(voteProvider));
