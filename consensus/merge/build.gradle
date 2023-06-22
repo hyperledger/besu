@@ -57,11 +57,12 @@ dependencies {
   testImplementation project(path: ':metrics:core', configuration: 'testSupportArtifacts')
   testImplementation project(':testutil')
 
-  testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
   testImplementation project(':ethereum:core')
 
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+  testSupportImplementation 'org.mockito:mockito-core'
+  testSupportImplementation 'org.mockito:mockito-junit-jupiter'
 }
