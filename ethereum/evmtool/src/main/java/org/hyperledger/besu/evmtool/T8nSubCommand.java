@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
+import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.plugin.data.TransactionType;
@@ -49,6 +50,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.Stack;
+import java.util.stream.StreamSupport;
 
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -63,6 +68,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
@@ -146,6 +152,26 @@ public class T8nSubCommand implements Runnable {
   private String rewardString = null;
 
   @ParentCommand private final EvmToolCommand parentCommand;
+
+  @CommandLine.Parameters(parameterConsumer = B11rSubCommand.OnlyEmptyParams.class)
+  @SuppressWarnings("UnusedVariable")
+  private final List<String> parameters = new ArrayList<>();
+
+  static class OnlyEmptyParams implements CommandLine.IParameterConsumer {
+    @Override
+    public void consumeParameters(
+        final Stack<String> args,
+        final CommandLine.Model.ArgSpec argSpec,
+        final CommandLine.Model.CommandSpec commandSpec) {
+      while (!args.isEmpty()) {
+        if (!args.pop().isEmpty()) {
+          throw new CommandLine.ParameterException(
+              argSpec.command().commandLine(),
+              "The transition command does not accept any non-empty parameters");
+        }
+      }
+    }
+  }
 
   @SuppressWarnings("unused")
   public T8nSubCommand() {
@@ -270,7 +296,9 @@ public class T8nSubCommand implements Runnable {
             }
 
             @Override
-            public void disposeTracer(final OperationTracer tracer) {}
+            public void disposeTracer(final OperationTracer tracer) {
+              // single-test mode doesn't need to track tracers
+            }
           };
     }
     final T8nExecutor.T8nResult result =
@@ -302,7 +330,7 @@ public class T8nSubCommand implements Runnable {
       } else {
         try (PrintStream fileOut =
             new PrintStream(new FileOutputStream(outDir.resolve(outBody).toFile()))) {
-          fileOut.println(result.bodyBytes());
+          fileOut.print(result.bodyBytes().textValue());
         }
       }
 
@@ -362,6 +390,29 @@ public class T8nSubCommand implements Runnable {
                 new BigInteger(
                     1,
                     Bytes.fromHexStringLenient(txNode.get("chainId").textValue()).toArrayUnsafe()));
+          }
+
+          if (txNode.has("accessList")) {
+            JsonNode accessList = txNode.get("accessList");
+            if (!accessList.isArray()) {
+              parentCommand.out.printf(
+                  "TX json node unparseable: expected accessList to be an array - %s%n", txNode);
+              continue;
+            }
+            List<AccessListEntry> entries = new ArrayList<>(accessList.size());
+            for (JsonNode entryAsJson : accessList) {
+              Address address = Address.fromHexString(entryAsJson.get("address").textValue());
+              List<String> storageKeys =
+                  StreamSupport.stream(
+                          Spliterators.spliteratorUnknownSize(
+                              entryAsJson.get("storageKeys").elements(), Spliterator.ORDERED),
+                          false)
+                      .map(JsonNode::textValue)
+                      .toList();
+              var accessListEntry = AccessListEntry.createAccessListEntry(address, storageKeys);
+              entries.add(accessListEntry);
+            }
+            builder.accessList(entries);
           }
 
           if (txNode.has("secretKey")) {
