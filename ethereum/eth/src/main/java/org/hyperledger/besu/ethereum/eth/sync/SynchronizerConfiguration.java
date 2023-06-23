@@ -42,7 +42,7 @@ public class SynchronizerConfiguration {
   public static final int DEFAULT_DOWNLOADER_HEADER_REQUEST_SIZE = 200;
   public static final int DEFAULT_DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED = 5;
   public static final int DEFAULT_DOWNLOADER_CHAIN_SEGMENT_SIZE = 200;
-  public static final int DEFAULT_DOWNLOADER_PARALLELISM = 40;
+  public static final int DEFAULT_DOWNLOADER_PARALLELISM = 4;
   public static final int DEFAULT_TRANSACTIONS_PARALLELISM = 2;
   public static final int DEFAULT_COMPUTATION_PARALLELISM = 2;
   public static final int DEFAULT_WORLD_STATE_TASK_CACHE_SIZE =
