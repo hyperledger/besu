@@ -29,9 +29,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.parameters.CreatePrivacyGroupParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
@@ -270,8 +270,8 @@ public class PrivCreatePrivacyGroupTest {
     final JsonRpcErrorResponse response =
         (JsonRpcErrorResponse) privCreatePrivacyGroup.response(request);
 
-    final JsonRpcError result = response.getError();
+    final RpcErrorType result = response.getError();
 
-    assertThat(result).isEqualTo(JsonRpcError.ENCLAVE_ERROR);
+    assertThat(result).isEqualTo(RpcErrorType.ENCLAVE_ERROR);
   }
 }

@@ -27,10 +27,10 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.FeeHistory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableFeeHistory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ImmutableFeeHistoryResult;
@@ -109,7 +109,7 @@ public class EthFeeHistoryTest {
     assertThat(
             ((JsonRpcErrorResponse) feeHistoryRequest("0x2", "11", new double[] {100.0}))
                 .getError())
-        .isEqualTo(JsonRpcError.INVALID_PARAMS);
+        .isEqualTo(RpcErrorType.INVALID_PARAMS);
   }
 
   @Test
@@ -117,11 +117,11 @@ public class EthFeeHistoryTest {
     assertThat(
             ((JsonRpcErrorResponse) feeHistoryRequest("0x0", "latest", new double[] {100.0}))
                 .getError())
-        .isEqualTo(JsonRpcError.INVALID_PARAMS);
+        .isEqualTo(RpcErrorType.INVALID_PARAMS);
     assertThat(
             ((JsonRpcErrorResponse) feeHistoryRequest("0x401", "latest", new double[] {100.0}))
                 .getError())
-        .isEqualTo(JsonRpcError.INVALID_PARAMS);
+        .isEqualTo(RpcErrorType.INVALID_PARAMS);
   }
 
   @Test

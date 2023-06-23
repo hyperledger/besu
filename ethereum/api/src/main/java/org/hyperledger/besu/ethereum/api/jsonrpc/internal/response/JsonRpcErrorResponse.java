@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.response;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -21,22 +22,19 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.base.MoreObjects;
 
-@JsonPropertyOrder({"jsonrpc", "id", "error", "data"})
+@JsonPropertyOrder({"jsonrpc", "id", "error"})
 public class JsonRpcErrorResponse implements JsonRpcResponse {
 
   private final Object id;
   private final JsonRpcError error;
-  private final String data;
-
-  public JsonRpcErrorResponse(
-      final Object id, final JsonRpcError error, final String revertReason) {
-    this.id = id;
-    this.error = error;
-    this.data = revertReason;
-  }
 
   public JsonRpcErrorResponse(final Object id, final JsonRpcError error) {
-    this(id, error, null);
+    this.id = id;
+    this.error = error;
+  }
+
+  public JsonRpcErrorResponse(final Object id, final RpcErrorType error) {
+    this(id, new JsonRpcError(error));
   }
 
   @JsonGetter("id")
@@ -47,11 +45,6 @@ public class JsonRpcErrorResponse implements JsonRpcResponse {
   @JsonGetter("error")
   public JsonRpcError getError() {
     return error;
-  }
-
-  @JsonGetter("data")
-  public String getData() {
-    return data;
   }
 
   @Override
@@ -69,20 +62,24 @@ public class JsonRpcErrorResponse implements JsonRpcResponse {
       return false;
     }
     final JsonRpcErrorResponse that = (JsonRpcErrorResponse) o;
-    return Objects.equals(id, that.id) && error == that.error && Objects.equals(data, that.data);
+    return Objects.equals(id, that.id) && Objects.equals(error, that.error);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, error, data);
+    return Objects.hash(id, error);
   }
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("id", id)
-        .add("error", error)
-        .add("data", data)
-        .toString();
+    return MoreObjects.toStringHelper(this).add("id", id).add("error", error).toString();
+  }
+
+  @JsonIgnore
+  public RpcErrorType getErrorType() {
+    return Arrays.stream(RpcErrorType.values())
+        .filter(e -> e.getCode() == error.getCode() && e.getMessage().equals(error.getMessage()))
+        .findFirst()
+        .get();
   }
 }

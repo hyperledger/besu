@@ -20,10 +20,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonResponseStreamer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.context.ContextKey;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import java.io.IOException;
 
@@ -97,7 +97,7 @@ public class JsonRpcObjectExecutor extends AbstractJsonRpcExecutor {
         .with(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
   }
 
-  private static HttpResponseStatus statusCodeFromError(final JsonRpcError error) {
+  private static HttpResponseStatus statusCodeFromError(final RpcErrorType error) {
     return switch (error) {
       case INVALID_REQUEST, PARSE_ERROR -> HttpResponseStatus.BAD_REQUEST;
       default -> HttpResponseStatus.OK;

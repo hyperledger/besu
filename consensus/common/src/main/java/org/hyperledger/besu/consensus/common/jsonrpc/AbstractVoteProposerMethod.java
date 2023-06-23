@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.common.jsonrpc;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.VoteType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -57,7 +57,7 @@ public class AbstractVoteProposerMethod {
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), proposals);
     } else {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.METHOD_NOT_ENABLED);
+          requestContext.getRequest().getId(), RpcErrorType.METHOD_NOT_ENABLED);
     }
   }
 }

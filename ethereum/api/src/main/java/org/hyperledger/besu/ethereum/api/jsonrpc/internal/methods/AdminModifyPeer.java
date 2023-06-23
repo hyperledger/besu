@@ -16,9 +16,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.P2PDisabledException;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
@@ -40,35 +40,35 @@ public abstract class AdminModifyPeer implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     if (requestContext.getRequest().getParamLength() != 1) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
     }
     try {
       final String enodeString = requestContext.getRequiredParameter(0, String.class);
       return performOperation(requestContext.getRequest().getId(), enodeString);
     } catch (final InvalidJsonRpcParameters e) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
     } catch (final IllegalArgumentException e) {
       if (e.getMessage()
           .endsWith(
               "Invalid node ID: node ID must have exactly 128 hexadecimal characters and should not include any '0x' hex prefix.")) {
         return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), JsonRpcError.ENODE_ID_INVALID);
+            requestContext.getRequest().getId(), RpcErrorType.ENODE_ID_INVALID);
       } else {
         if (e.getMessage().endsWith("Invalid ip address.")) {
           return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.DNS_NOT_ENABLED);
+              requestContext.getRequest().getId(), RpcErrorType.DNS_NOT_ENABLED);
         } else if (e.getMessage().endsWith("dns-update-enabled flag is false.")) {
           return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.CANT_RESOLVE_PEER_ENODE_DNS);
+              requestContext.getRequest().getId(), RpcErrorType.CANT_RESOLVE_PEER_ENODE_DNS);
         } else {
           return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(), JsonRpcError.PARSE_ERROR);
+              requestContext.getRequest().getId(), RpcErrorType.PARSE_ERROR);
         }
       }
     } catch (final P2PDisabledException e) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.P2P_DISABLED);
+          requestContext.getRequest().getId(), RpcErrorType.P2P_DISABLED);
     }
   }
 

@@ -16,7 +16,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.condition.priv;
 
 import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
@@ -27,9 +27,9 @@ import org.web3j.protocol.exceptions.ClientConnectionException;
 public class ExpectJsonRpcError implements Condition {
 
   private final Transaction<?> transaction;
-  private final JsonRpcError error;
+  private final RpcErrorType error;
 
-  public ExpectJsonRpcError(final Transaction<?> transaction, final JsonRpcError error) {
+  public ExpectJsonRpcError(final Transaction<?> transaction, final RpcErrorType error) {
     this.transaction = transaction;
     this.error = error;
   }

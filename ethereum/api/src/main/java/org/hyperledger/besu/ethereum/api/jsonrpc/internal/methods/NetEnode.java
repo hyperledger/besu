@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
@@ -54,11 +54,11 @@ public class NetEnode implements JsonRpcMethod {
   }
 
   private JsonRpcErrorResponse p2pDisabledResponse(final JsonRpcRequestContext requestContext) {
-    return new JsonRpcErrorResponse(requestContext.getRequest().getId(), JsonRpcError.P2P_DISABLED);
+    return new JsonRpcErrorResponse(requestContext.getRequest().getId(), RpcErrorType.P2P_DISABLED);
   }
 
   private JsonRpcErrorResponse enodeUrlNotAvailable(final JsonRpcRequestContext requestContext) {
     return new JsonRpcErrorResponse(
-        requestContext.getRequest().getId(), JsonRpcError.P2P_NETWORK_NOT_RUNNING);
+        requestContext.getRequest().getId(), RpcErrorType.P2P_NETWORK_NOT_RUNNING);
   }
 }

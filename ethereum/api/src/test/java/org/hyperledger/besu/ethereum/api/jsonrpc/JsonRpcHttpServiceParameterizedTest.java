@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -62,7 +62,7 @@ public class JsonRpcHttpServiceParameterizedTest extends JsonRpcHttpServiceTestB
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(400);
       final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.PARSE_ERROR;
+      final RpcErrorType expectedError = RpcErrorType.PARSE_ERROR;
       testHelper.assertValidJsonRpcError(
           json, null, expectedError.getCode(), expectedError.getMessage());
     }

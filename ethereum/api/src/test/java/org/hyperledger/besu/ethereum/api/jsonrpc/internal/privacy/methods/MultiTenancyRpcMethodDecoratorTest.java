@@ -20,12 +20,12 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
@@ -75,7 +75,7 @@ public class MultiTenancyRpcMethodDecoratorTest {
     final JsonRpcResponse response = tokenRpcDecorator.response(rpcRequestContext);
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.UNAUTHORIZED);
     final JsonRpcUnauthorizedResponse errorResponse = (JsonRpcUnauthorizedResponse) response;
-    assertThat(errorResponse.getError()).isEqualTo(JsonRpcError.UNAUTHORIZED);
+    assertThat(errorResponse.getError()).isEqualTo(RpcErrorType.UNAUTHORIZED);
   }
 
   @Test
@@ -91,6 +91,6 @@ public class MultiTenancyRpcMethodDecoratorTest {
     final JsonRpcResponse response = tokenRpcDecorator.response(rpcRequestContext);
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
-    assertThat(errorResponse.getError()).isEqualTo(JsonRpcError.INVALID_REQUEST);
+    assertThat(errorResponse.getError()).isEqualTo(RpcErrorType.INVALID_REQUEST);
   }
 }

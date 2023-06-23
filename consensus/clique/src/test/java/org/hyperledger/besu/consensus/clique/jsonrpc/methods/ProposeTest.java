@@ -25,7 +25,7 @@ import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidator
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
@@ -74,7 +74,7 @@ public class ProposeTest {
     assertThat(validatorProvider.getVoteProviderAtHead().get().getProposals().get(a0)).isNull();
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
-    assertThat(errorResponse.getError()).isEqualTo(JsonRpcError.INVALID_REQUEST);
+    assertThat(errorResponse.getError()).isEqualTo(RpcErrorType.INVALID_REQUEST);
   }
 
   @Test
@@ -101,7 +101,7 @@ public class ProposeTest {
     assertThat(validatorProvider.getVoteProviderAtHead().get().getProposals().get(a0)).isNull();
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
-    assertThat(errorResponse.getError()).isEqualTo(JsonRpcError.INVALID_REQUEST);
+    assertThat(errorResponse.getError()).isEqualTo(RpcErrorType.INVALID_REQUEST);
   }
 
   @Test

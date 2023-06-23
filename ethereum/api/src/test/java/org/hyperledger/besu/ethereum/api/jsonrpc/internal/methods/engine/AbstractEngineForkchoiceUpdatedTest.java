@@ -42,11 +42,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngin
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateForkchoiceResult;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -731,8 +731,8 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     return false;
   }
 
-  protected JsonRpcError expectedInvalidPayloadError() {
-    return JsonRpcError.INVALID_PARAMS;
+  protected RpcErrorType expectedInvalidPayloadError() {
+    return RpcErrorType.INVALID_PARAMS;
   }
 
   private JsonRpcResponse resp(
@@ -758,11 +758,11 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
   }
 
   private void assertInvalidForkchoiceState(final JsonRpcResponse resp) {
-    assertInvalidForkchoiceState(resp, JsonRpcError.INVALID_FORKCHOICE_STATE);
+    assertInvalidForkchoiceState(resp, RpcErrorType.INVALID_FORKCHOICE_STATE);
   }
 
   private void assertInvalidForkchoiceState(
-      final JsonRpcResponse resp, final JsonRpcError jsonRpcError) {
+      final JsonRpcResponse resp, final RpcErrorType jsonRpcError) {
     assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
 
     var errorResp = (JsonRpcErrorResponse) resp;

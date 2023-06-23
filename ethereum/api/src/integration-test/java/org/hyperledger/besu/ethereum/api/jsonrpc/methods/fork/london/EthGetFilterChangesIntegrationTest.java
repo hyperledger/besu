@@ -31,10 +31,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManagerBuilder;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetFilterChanges;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -135,7 +135,7 @@ public class EthGetFilterChangesIntegrationTest {
   public void shouldReturnErrorResponseIfFilterNotFound() {
     final JsonRpcRequestContext request = requestWithParams("0");
 
-    final JsonRpcResponse expected = new JsonRpcErrorResponse(null, JsonRpcError.FILTER_NOT_FOUND);
+    final JsonRpcResponse expected = new JsonRpcErrorResponse(null, RpcErrorType.FILTER_NOT_FOUND);
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
@@ -260,7 +260,7 @@ public class EthGetFilterChangesIntegrationTest {
     } else {
       assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
       assertThat(((JsonRpcErrorResponse) response).getError())
-          .isEqualTo(JsonRpcError.FILTER_NOT_FOUND);
+          .isEqualTo(RpcErrorType.FILTER_NOT_FOUND);
       return false;
     }
   }

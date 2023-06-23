@@ -14,18 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 public class JsonRpcErrorResponseException extends RuntimeException {
 
-  private final JsonRpcError jsonRpcError;
+  private final RpcErrorType jsonRpcError;
 
-  public JsonRpcErrorResponseException(final JsonRpcError error) {
+  public JsonRpcErrorResponseException(final RpcErrorType error) {
     super();
     this.jsonRpcError = error;
   }
 
-  public JsonRpcError getJsonRpcError() {
+  public RpcErrorType getJsonRpcError() {
     return jsonRpcError;
   }
 }

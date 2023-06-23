@@ -27,10 +27,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugAccountAtResult;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -98,7 +98,7 @@ class DebugAccountAtTest {
 
     Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
     Assertions.assertThat(((JsonRpcErrorResponse) response).getError())
-        .isEqualByComparingTo(JsonRpcError.BLOCK_NOT_FOUND);
+        .isEqualByComparingTo(RpcErrorType.BLOCK_NOT_FOUND);
   }
 
   @Test
@@ -113,7 +113,7 @@ class DebugAccountAtTest {
 
     Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
     Assertions.assertThat(((JsonRpcErrorResponse) response).getError())
-        .isEqualByComparingTo(JsonRpcError.INVALID_PARAMS);
+        .isEqualByComparingTo(RpcErrorType.INVALID_PARAMS);
   }
 
   @Test
@@ -129,7 +129,7 @@ class DebugAccountAtTest {
 
     Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
     Assertions.assertThat(((JsonRpcErrorResponse) response).getError())
-        .isEqualByComparingTo(JsonRpcError.INVALID_PARAMS);
+        .isEqualByComparingTo(RpcErrorType.INVALID_PARAMS);
   }
 
   @Test
@@ -145,7 +145,7 @@ class DebugAccountAtTest {
 
     Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
     Assertions.assertThat(((JsonRpcErrorResponse) response).getError())
-        .isEqualByComparingTo(JsonRpcError.INVALID_PARAMS);
+        .isEqualByComparingTo(RpcErrorType.INVALID_PARAMS);
   }
 
   @Test
@@ -170,7 +170,7 @@ class DebugAccountAtTest {
 
     Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
     Assertions.assertThat(((JsonRpcErrorResponse) response).getError())
-        .isEqualByComparingTo(JsonRpcError.TRANSACTION_NOT_FOUND);
+        .isEqualByComparingTo(RpcErrorType.TRANSACTION_NOT_FOUND);
   }
 
   @Test
@@ -195,7 +195,7 @@ class DebugAccountAtTest {
 
     Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
     Assertions.assertThat(((JsonRpcErrorResponse) response).getError())
-        .isEqualByComparingTo(JsonRpcError.NO_ACCOUNT_FOUND);
+        .isEqualByComparingTo(RpcErrorType.NO_ACCOUNT_FOUND);
   }
 
   @Test
