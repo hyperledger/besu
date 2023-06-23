@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AbstractBlockP
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -89,13 +88,17 @@ public class PrivCall extends AbstractBlockParameterMethod {
     return (JsonRpcResponse) findResultByParamType(requestContext);
   }
 
-  private JsonRpcError errorResponse(
+  private RpcErrorType errorResponse(
       final TransactionProcessingResult result, final TransactionInvalidReason reason) {
+    final RpcErrorType jsonRpcError;
     if (result.getRevertReason().isPresent() && result.getRevertReason().get().size() >= 4) {
-      return new JsonRpcError(
-          RpcErrorType.REVERT_ERROR, result.getRevertReason().get().toHexString());
+      jsonRpcError = RpcErrorType.REVERT_ERROR;
+      jsonRpcError.setData(result.getRevertReason().get().toHexString());
+    } else {
+      jsonRpcError = JsonRpcErrorConverter.convertTransactionInvalidReason(reason);
     }
-    return new JsonRpcError(JsonRpcErrorConverter.convertTransactionInvalidReason(reason));
+
+    return jsonRpcError;
   }
 
   private JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {

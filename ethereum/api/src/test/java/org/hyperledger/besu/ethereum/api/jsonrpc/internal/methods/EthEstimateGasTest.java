@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -252,7 +251,7 @@ public class EthEstimateGasTest {
     mockTransientProcessorResultGasEstimate(1L, false, true);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, new JsonRpcError(RpcErrorType.REVERT_ERROR, "0x00"));
+        new JsonRpcErrorResponse(null, RpcErrorType.REVERT_ERROR);
 
     Assertions.assertThat(method.response(request))
         .usingRecursiveComparison()
