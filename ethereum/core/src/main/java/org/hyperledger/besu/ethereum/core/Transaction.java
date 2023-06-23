@@ -596,7 +596,7 @@ public class Transaction
   @Override
   public Hash getHash() {
     if (hash == null) {
-      memoizeHashAndSize();
+      memoizeHash();
     }
     return hash;
   }
@@ -608,19 +608,29 @@ public class Transaction
    */
   public int getSize() {
     if (size == -1) {
-      memoizeHashAndSize();
+      memoizeSize();
     }
     return size;
   }
 
-  private void memoizeHashAndSize() {
+  /**
+   * Calculate and store the hash of a transaction
+   */
+  private void memoizeHash() {
     final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this);
     hash = Hash.hash(bytes);
+  }
 
+  /**
+   * Calculate and store the encoded size of a transaction
+   */
+  private void memoizeSize() {
+    final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this);
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     TransactionEncoder.encodeForWire(transactionType, bytes, rlpOutput);
     size = rlpOutput.encodedSize();
   }
+
 
   /**
    * Returns whether the transaction is a contract creation

@@ -80,7 +80,8 @@ public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipel
 
     final CheckpointDownloadReceiptsStep checkPointDownloadReceiptsStep =
             new CheckpointDownloadReceiptsStep(ethContext, metricsSystem);
-
+    // This is not the checkpoint sync pipeline, this pipeline only downloads the first block then
+    // triggers the snap sync pipeline in FastSyncDownloadPipelineFactory
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",
             checkPointSource,
