@@ -107,6 +107,9 @@ public class Transaction
   private final TransactionType transactionType;
 
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+
+  private Optional<Bytes> rlp = Optional.empty();
+
   private final Optional<List<Hash>> versionedHashes;
 
   public static Builder builder() {
@@ -518,6 +521,15 @@ public class Transaction
       sender = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
     }
     return sender;
+  }
+
+
+  public Optional<Bytes> getRlp() {
+    return rlp;
+  }
+
+  public void setRlp(final Optional<Bytes> rlp) {
+    this.rlp = rlp;
   }
 
   /**

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -37,6 +39,12 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   private final List<BlockHeader> ommers;
   private final Optional<List<Withdrawal>> withdrawals;
   private final Optional<List<Deposit>> deposits;
+
+  private Optional<Bytes> rlpTransactionReceipts = Optional.empty();
+  private Optional<Bytes32> transactionRoot = Optional.empty();
+  private Optional<Bytes32> ommerHash = Optional.empty();
+
+  private Optional<Bytes> rlp = Optional.empty();
 
   public BlockBody(final List<Transaction> transactions, final List<BlockHeader> ommers) {
     this.transactions = transactions;
@@ -108,10 +116,14 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   }
 
   public void writeTo(final RLPOutput output) {
-    output.writeList(getTransactions(), Transaction::writeTo);
-    output.writeList(getOmmers(), BlockHeader::writeTo);
-    withdrawals.ifPresent(withdrawals -> output.writeList(withdrawals, Withdrawal::writeTo));
-    deposits.ifPresent(deposits -> output.writeList(deposits, Deposit::writeTo));
+    if (getRlp().isPresent()) {
+      output.writeRaw(getRlp().get());
+    } else {
+      output.writeList(getTransactions(), Transaction::writeTo);
+      output.writeList(getOmmers(), BlockHeader::writeTo);
+      withdrawals.ifPresent(withdrawals -> output.writeList(withdrawals, Withdrawal::writeTo));
+      deposits.ifPresent(deposits -> output.writeList(deposits, Deposit::writeTo));
+    }
   }
 
   public static BlockBody readWrappedBodyFrom(
@@ -133,14 +145,19 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
       final RLPInput input,
       final BlockHeaderFunctions blockHeaderFunctions,
       final boolean allowEmptyBody) {
-    input.enterList();
-    if (input.isEndOfCurrentList() && allowEmptyBody) {
+    RLPInput rlpInput = input.readAsRlp();
+    Bytes raw = rlpInput.raw();
+    rlpInput.reset();
+
+    rlpInput.enterList();
+    if (rlpInput.isEndOfCurrentList() && allowEmptyBody) {
       // empty block [] -> Return empty body.
-      input.leaveList();
+      rlpInput.leaveList();
       return empty();
     }
-    final BlockBody body = readFrom(input, blockHeaderFunctions);
-    input.leaveList();
+    final BlockBody body = readFrom(rlpInput, blockHeaderFunctions);
+    body.setRlp(Optional.of(raw));
+    rlpInput.leaveList();
     return body;
   }
 
@@ -164,6 +181,38 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
         input.isEndOfCurrentList()
             ? Optional.empty()
             : Optional.of(input.readList(Deposit::readFrom)));
+  }
+
+  public Optional<Bytes32> getTransactionRoot() {
+    return transactionRoot;
+  }
+
+  public void setTransactionRoot(final Optional<Bytes32> transactionRoot) {
+    this.transactionRoot = transactionRoot;
+  }
+
+  public Optional<Bytes32> getOmmerHash() {
+    return ommerHash;
+  }
+
+  public void setOmmerHash(final Optional<Bytes32> ommerHash) {
+    this.ommerHash = ommerHash;
+  }
+
+  public Optional<Bytes> getRlpTransactionReceipts() {
+    return rlpTransactionReceipts;
+  }
+
+  public void setRlpTransactionReceipts(final Optional<Bytes> rlpTransactionReceipts) {
+    this.rlpTransactionReceipts = rlpTransactionReceipts;
+  }
+
+  public Optional<Bytes> getRlp() {
+    return rlp;
+  }
+
+  public void setRlp(final Optional<Bytes> rlp) {
+    this.rlp = rlp;
   }
 
   @Override

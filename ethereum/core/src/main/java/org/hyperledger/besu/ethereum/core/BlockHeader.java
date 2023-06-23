@@ -44,6 +44,8 @@ public class BlockHeader extends SealableBlockHeader
 
   private final Supplier<ParsedExtraData> parsedExtraData;
 
+  private Optional<Bytes> rlp = Optional.empty();
+
   public BlockHeader(
       final Hash parentHash,
       final Hash ommersHash,
@@ -189,65 +191,72 @@ public class BlockHeader extends SealableBlockHeader
    * @param out The RLP output to write to
    */
   public void writeTo(final RLPOutput out) {
-    out.startList();
+    if (getRlp().isPresent()) {
+      out.writeRaw(getRlp().get());
+    } else {
+      out.startList();
 
-    out.writeBytes(parentHash);
-    out.writeBytes(ommersHash);
-    out.writeBytes(coinbase);
-    out.writeBytes(stateRoot);
-    out.writeBytes(transactionsRoot);
-    out.writeBytes(receiptsRoot);
-    out.writeBytes(logsBloom);
-    out.writeUInt256Scalar(difficulty);
-    out.writeLongScalar(number);
-    out.writeLongScalar(gasLimit);
-    out.writeLongScalar(gasUsed);
-    out.writeLongScalar(timestamp);
-    out.writeBytes(extraData);
-    out.writeBytes(mixHashOrPrevRandao);
-    out.writeLong(nonce);
-    if (baseFee != null) {
-      out.writeUInt256Scalar(baseFee);
+      out.writeBytes(parentHash);
+      out.writeBytes(ommersHash);
+      out.writeBytes(coinbase);
+      out.writeBytes(stateRoot);
+      out.writeBytes(transactionsRoot);
+      out.writeBytes(receiptsRoot);
+      out.writeBytes(logsBloom);
+      out.writeUInt256Scalar(difficulty);
+      out.writeLongScalar(number);
+      out.writeLongScalar(gasLimit);
+      out.writeLongScalar(gasUsed);
+      out.writeLongScalar(timestamp);
+      out.writeBytes(extraData);
+      out.writeBytes(mixHashOrPrevRandao);
+      out.writeLong(nonce);
+      if (baseFee != null) {
+        out.writeUInt256Scalar(baseFee);
+      }
+      if (withdrawalsRoot != null) {
+        out.writeBytes(withdrawalsRoot);
+      }
+      if (excessDataGas != null) {
+        out.writeUInt256Scalar(excessDataGas);
+      }
+      if (depositsRoot != null) {
+        out.writeBytes(depositsRoot);
+      }
+      out.endList();
     }
-    if (withdrawalsRoot != null) {
-      out.writeBytes(withdrawalsRoot);
-    }
-    if (excessDataGas != null) {
-      out.writeUInt256Scalar(excessDataGas);
-    }
-    if (depositsRoot != null) {
-      out.writeBytes(depositsRoot);
-    }
-    out.endList();
   }
 
   public static BlockHeader readFrom(
       final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
-    input.enterList();
-    final Hash parentHash = Hash.wrap(input.readBytes32());
-    final Hash ommersHash = Hash.wrap(input.readBytes32());
-    final Address coinbase = Address.readFrom(input);
-    final Hash stateRoot = Hash.wrap(input.readBytes32());
-    final Hash transactionsRoot = Hash.wrap(input.readBytes32());
-    final Hash receiptsRoot = Hash.wrap(input.readBytes32());
-    final LogsBloomFilter logsBloom = LogsBloomFilter.readFrom(input);
-    final Difficulty difficulty = Difficulty.of(input.readUInt256Scalar());
-    final long number = input.readLongScalar();
-    final long gasLimit = input.readLongScalar();
-    final long gasUsed = input.readLongScalar();
-    final long timestamp = input.readLongScalar();
-    final Bytes extraData = input.readBytes();
-    final Bytes32 mixHashOrPrevRandao = input.readBytes32();
-    final long nonce = input.readLong();
-    final Wei baseFee = !input.isEndOfCurrentList() ? Wei.of(input.readUInt256Scalar()) : null;
+    RLPInput rlpInput = input.readAsRlp();
+    Bytes raw = rlpInput.raw();
+    rlpInput.reset();
+    rlpInput.enterList();
+    final Hash parentHash = Hash.wrap(rlpInput.readBytes32());
+    final Hash ommersHash = Hash.wrap(rlpInput.readBytes32());
+    final Address coinbase = Address.readFrom(rlpInput);
+    final Hash stateRoot = Hash.wrap(rlpInput.readBytes32());
+    final Hash transactionsRoot = Hash.wrap(rlpInput.readBytes32());
+    final Hash receiptsRoot = Hash.wrap(rlpInput.readBytes32());
+    final LogsBloomFilter logsBloom = LogsBloomFilter.readFrom(rlpInput);
+    final Difficulty difficulty = Difficulty.of(rlpInput.readUInt256Scalar());
+    final long number = rlpInput.readLongScalar();
+    final long gasLimit = rlpInput.readLongScalar();
+    final long gasUsed = rlpInput.readLongScalar();
+    final long timestamp = rlpInput.readLongScalar();
+    final Bytes extraData = rlpInput.readBytes();
+    final Bytes32 mixHashOrPrevRandao = rlpInput.readBytes32();
+    final long nonce = rlpInput.readLong();
+    final Wei baseFee = !rlpInput.isEndOfCurrentList() ? Wei.of(rlpInput.readUInt256Scalar()) : null;
     final Hash withdrawalHashRoot =
-        !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
+        !rlpInput.isEndOfCurrentList() ? Hash.wrap(rlpInput.readBytes32()) : null;
     final DataGas excessDataGas =
-        !input.isEndOfCurrentList() ? DataGas.of(input.readUInt256Scalar()) : null;
+        !rlpInput.isEndOfCurrentList() ? DataGas.of(rlpInput.readUInt256Scalar()) : null;
     final Hash depositHashRoot =
-        !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
-    input.leaveList();
-    return new BlockHeader(
+        !rlpInput.isEndOfCurrentList() ? Hash.wrap(rlpInput.readBytes32()) : null;
+    rlpInput.leaveList();
+    final BlockHeader blockHeader = new BlockHeader(
         parentHash,
         ommersHash,
         coinbase,
@@ -268,6 +277,8 @@ public class BlockHeader extends SealableBlockHeader
         excessDataGas,
         depositHashRoot,
         blockHeaderFunctions);
+    blockHeader.setRlp(Optional.of(raw));
+    return blockHeader;
   }
 
   @Override
@@ -350,6 +361,14 @@ public class BlockHeader extends SealableBlockHeader
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
         blockHeaderFunctions);
+  }
+
+  public Optional<Bytes> getRlp() {
+    return rlp;
+  }
+
+  public void setRlp(final Optional<Bytes> rlp) {
+    this.rlp = rlp;
   }
 
   @Override
