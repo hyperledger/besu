@@ -140,53 +140,113 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
     return blockchainStorage.get(Bytes.concatenate(prefix, key).toArrayUnsafe()).map(Bytes::wrap);
   }
 
-  public void migrateVariables() {
+  /**
+   * One time migration of variables from the blockchain storage to the dedicated variable storage.
+   * To avoid state inconsistency in case of a downgrade done without running the storage
+   * revert-variables subcommand it fails giving the possibility to retry the downgrade procedure.
+   */
+  private void migrateVariables() {
     final var blockchainUpdater = updater();
     final var variablesUpdater = variablesStorage.updater();
 
     get(VARIABLES_PREFIX, CHAIN_HEAD_HASH.getBytes())
         .map(this::bytesToHash)
         .ifPresent(
-            ch -> {
-              variablesUpdater.setChainHead(ch);
-              LOG.info("Migrated key {} to variables storage", CHAIN_HEAD_HASH);
-            });
+            bch ->
+                variablesStorage
+                    .getChainHead()
+                    .ifPresentOrElse(
+                        vch -> {
+                          if (!vch.equals(bch)) {
+                            logInconsistencyAndFail(CHAIN_HEAD_HASH, bch, vch);
+                          }
+                        },
+                        () -> {
+                          variablesUpdater.setChainHead(bch);
+                          LOG.info("Migrated key {} to variables storage", CHAIN_HEAD_HASH);
+                        }));
 
     get(VARIABLES_PREFIX, FINALIZED_BLOCK_HASH.getBytes())
         .map(this::bytesToHash)
         .ifPresent(
-            fh -> {
-              variablesUpdater.setFinalized(fh);
-              LOG.info("Migrated key {} to variables storage", FINALIZED_BLOCK_HASH);
+            bfh -> {
+              variablesStorage
+                  .getFinalized()
+                  .ifPresentOrElse(
+                      vfh -> {
+                        if (!vfh.equals(bfh)) {
+                          logInconsistencyAndFail(FINALIZED_BLOCK_HASH, bfh, vfh);
+                        }
+                      },
+                      () -> {
+                        variablesUpdater.setFinalized(bfh);
+                        LOG.info("Migrated key {} to variables storage", FINALIZED_BLOCK_HASH);
+                      });
             });
 
     get(VARIABLES_PREFIX, SAFE_BLOCK_HASH.getBytes())
         .map(this::bytesToHash)
         .ifPresent(
-            sh -> {
-              variablesUpdater.setSafeBlock(sh);
-              LOG.info("Migrated key {} to variables storage", SAFE_BLOCK_HASH);
+            bsh -> {
+              variablesStorage
+                  .getSafeBlock()
+                  .ifPresentOrElse(
+                      vsh -> {
+                        if (!vsh.equals(bsh)) {
+                          logInconsistencyAndFail(SAFE_BLOCK_HASH, bsh, vsh);
+                        }
+                      },
+                      () -> {
+                        variablesUpdater.setSafeBlock(bsh);
+                        LOG.info("Migrated key {} to variables storage", SAFE_BLOCK_HASH);
+                      });
             });
 
     get(VARIABLES_PREFIX, FORK_HEADS.getBytes())
         .map(bytes -> RLP.input(bytes).readList(in -> this.bytesToHash(in.readBytes32())))
         .ifPresent(
-            fh -> {
-              variablesUpdater.setForkHeads(fh);
-              LOG.info("Migrated key {} to variables storage", FORK_HEADS);
+            bfh -> {
+              final var vfh = variablesStorage.getForkHeads();
+              if (vfh.isEmpty()) {
+                variablesUpdater.setForkHeads(bfh);
+                LOG.info("Migrated key {} to variables storage", FORK_HEADS);
+              } else if (!List.copyOf(vfh).equals(bfh)) {
+                logInconsistencyAndFail(FORK_HEADS, bfh, vfh);
+              }
             });
 
     get(Bytes.EMPTY, SEQ_NO_STORE.getBytes())
         .ifPresent(
-            sns -> {
-              variablesUpdater.setLocalEnrSeqno(sns);
-              LOG.info("Migrated key {} to variables storage", SEQ_NO_STORE);
+            bsns -> {
+              variablesStorage
+                  .getLocalEnrSeqno()
+                  .ifPresentOrElse(
+                      vsns -> {
+                        if (!vsns.equals(bsns)) {
+                          logInconsistencyAndFail(SEQ_NO_STORE, bsns, vsns);
+                        }
+                      },
+                      () -> {
+                        variablesUpdater.setLocalEnrSeqno(bsns);
+                        LOG.info("Migrated key {} to variables storage", SEQ_NO_STORE);
+                      });
             });
 
     blockchainUpdater.removeVariables();
 
     variablesUpdater.commit();
     blockchainUpdater.commit();
+  }
+
+  private static void logInconsistencyAndFail(
+      final VariablesStorage.Keys key, final Object bch, final Object vch) {
+    LOG.error(
+        "Inconsistency found when migrating {} to variables storage,"
+            + " probably this is due to a downgrade done without running the `storage revert-variables`"
+            + " subcommand first, see https://github.com/hyperledger/besu/pull/5471",
+        key);
+    throw new IllegalStateException(
+        key + " mismatch: blockchain storage value=" + bch + ", variables storage value=" + vch);
   }
 
   public static class Updater implements BlockchainStorage.Updater {
