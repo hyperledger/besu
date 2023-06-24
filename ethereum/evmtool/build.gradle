@@ -50,6 +50,8 @@ dependencies {
   implementation project(':services:kvstore')
   implementation project(':util')
 
+  runtimeOnly 'org.slf4j:slf4j-nop'
+
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.dagger:dagger'
   implementation 'com.google.guava:guava'
@@ -65,9 +67,6 @@ dependencies {
   testImplementation 'org.mockito:mockito-core'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
-
-  // No logging in grallvm EvmTool
-  nativeImageClasspath 'org.slf4j:slf4j-nop'
 }
 
 mainClassName = 'org.hyperledger.besu.evmtool.EvmTool'
@@ -160,7 +159,7 @@ graalvmNative {
 
 
       // Netty drags in older versions of bouncy castle, exclude it so there are no conflicts
-      excludeConfig.put("io.netty:netty-buffer:4.1.74.Final", [".*"])
+      excludeConfig.put("io.netty:netty-buffer", [".*"])
     }
   }
 }
@@ -169,10 +168,12 @@ graalvmNative {
 configurations.nativeImageClasspath {
   // netty statically allocates some problematic classes
   exclude group: 'io.netty', module: 'netty-buffer'
+  exclude group: 'io.netty', module: 'netty-common'
   exclude group: 'io.netty', module: 'netty-transport'
 
   // keep log4j from sneaking in.  GraalVM has an aleric reaction if it sees even one class
   exclude group: 'org.slf4j', module: 'log4j-over-slf4j:1.7.36'
   exclude group: "log4j", module: "log4j"
   exclude group: "org.apache.logging.log4j"
+  exclude group: 'org.bouncycastle', module: 'bcprov-jdk18on'
 }

@@ -44,7 +44,6 @@ import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
-import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -63,8 +62,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
 import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -76,8 +73,6 @@ import picocli.CommandLine.ParentCommand;
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class StateTestSubCommand implements Runnable {
-  private static final Logger LOG = LoggerFactory.getLogger(StateTestSubCommand.class);
-
   public static final String COMMAND_NAME = "state-test";
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
@@ -106,7 +101,6 @@ public class StateTestSubCommand implements Runnable {
 
   @Override
   public void run() {
-    LogConfigurator.setLevel("", "OFF");
     final ObjectMapper stateTestMapper = new ObjectMapper();
     stateTestMapper.disable(Feature.AUTO_CLOSE_SOURCE);
     final JavaType javaType =
@@ -147,7 +141,8 @@ public class StateTestSubCommand implements Runnable {
     } catch (final JsonProcessingException jpe) {
       parentCommand.out.println("File content error: " + jpe);
     } catch (final IOException e) {
-      LOG.error("Unable to read state file", e);
+      System.err.println("Unable to read state file");
+      e.printStackTrace(System.err);
     }
   }
 

@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec.ReferenceTestBlockHeader;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -43,8 +42,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -56,8 +53,6 @@ import picocli.CommandLine.Option;
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class B11rSubCommand implements Runnable {
-  private static final Logger LOG = LoggerFactory.getLogger(B11rSubCommand.class);
-
   static final String COMMAND_NAME = "block-builder";
   static final String COMMAND_ALIAS = "b11r";
   private static final Path stdoutPath = Path.of("stdout");
@@ -130,7 +125,6 @@ public class B11rSubCommand implements Runnable {
 
   @Override
   public void run() {
-    LogConfigurator.setLevel("", "OFF");
     objectMapper.setDefaultPrettyPrinter(
         (new DefaultPrettyPrinter())
             .withSpacesInObjectEntries()
@@ -177,7 +171,8 @@ public class B11rSubCommand implements Runnable {
       jpe.printStackTrace();
       return;
     } catch (final IOException e) {
-      LOG.error("Unable to read state file", e);
+      System.err.println("Unable to read state file");
+      e.printStackTrace(System.err);
       return;
     }
 

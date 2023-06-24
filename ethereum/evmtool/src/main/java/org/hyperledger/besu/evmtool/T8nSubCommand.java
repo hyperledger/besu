@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.plugin.data.TransactionType;
-import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -61,8 +60,6 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
@@ -74,7 +71,6 @@ import picocli.CommandLine.ParentCommand;
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class T8nSubCommand implements Runnable {
-  private static final Logger LOG = LoggerFactory.getLogger(T8nSubCommand.class);
 
   record RejectedTransaction(int index, String error) {}
 
@@ -161,7 +157,6 @@ public class T8nSubCommand implements Runnable {
 
   @Override
   public void run() {
-    LogConfigurator.setLevel("", "OFF");
     final ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.setDefaultPrettyPrinter(
         (new DefaultPrettyPrinter())
@@ -224,7 +219,8 @@ public class T8nSubCommand implements Runnable {
       jpe.printStackTrace();
       return;
     } catch (final IOException e) {
-      LOG.error("Unable to read state file", e);
+      System.err.println("Unable to read state file");
+      e.printStackTrace(System.err);
       return;
     }
 
@@ -270,7 +266,9 @@ public class T8nSubCommand implements Runnable {
             }
 
             @Override
-            public void disposeTracer(final OperationTracer tracer) {}
+            public void disposeTracer(final OperationTracer tracer) {
+              // single-test mode doesn't need to track tracers
+            }
           };
     }
     final T8nExecutor.T8nResult result =
@@ -302,7 +300,7 @@ public class T8nSubCommand implements Runnable {
       } else {
         try (PrintStream fileOut =
             new PrintStream(new FileOutputStream(outDir.resolve(outBody).toFile()))) {
-          fileOut.println(result.bodyBytes());
+          fileOut.print(result.bodyBytes().textValue());
         }
       }
 
@@ -319,7 +317,8 @@ public class T8nSubCommand implements Runnable {
         parentCommand.out.println(writer.writeValueAsString(outputObject));
       }
     } catch (IOException ioe) {
-      LOG.error("Could not write results", ioe);
+      System.err.println("Could not write results");
+      ioe.printStackTrace(System.err);
     }
   }
 
