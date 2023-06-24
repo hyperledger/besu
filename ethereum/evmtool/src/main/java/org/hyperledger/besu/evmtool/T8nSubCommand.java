@@ -68,9 +68,13 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.IParameterConsumer;
+import picocli.CommandLine.Model.ArgSpec;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.ParameterException;
+import picocli.CommandLine.Parameters;
 import picocli.CommandLine.ParentCommand;
 
 @Command(
@@ -153,19 +157,17 @@ public class T8nSubCommand implements Runnable {
 
   @ParentCommand private final EvmToolCommand parentCommand;
 
-  @CommandLine.Parameters(parameterConsumer = B11rSubCommand.OnlyEmptyParams.class)
+  @Parameters(parameterConsumer = OnlyEmptyParams.class)
   @SuppressWarnings("UnusedVariable")
   private final List<String> parameters = new ArrayList<>();
 
-  static class OnlyEmptyParams implements CommandLine.IParameterConsumer {
+  static class OnlyEmptyParams implements IParameterConsumer {
     @Override
     public void consumeParameters(
-        final Stack<String> args,
-        final CommandLine.Model.ArgSpec argSpec,
-        final CommandLine.Model.CommandSpec commandSpec) {
+        final Stack<String> args, final ArgSpec argSpec, final CommandSpec commandSpec) {
       while (!args.isEmpty()) {
         if (!args.pop().isEmpty()) {
-          throw new CommandLine.ParameterException(
+          throw new ParameterException(
               argSpec.command().commandLine(),
               "The transition command does not accept any non-empty parameters");
         }

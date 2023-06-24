@@ -28,6 +28,7 @@ public enum EvmSpecVersion {
   BYZANTIUM(0, true, "Byzantium", "Finalized"),
   /** Constantinople evm spec version. */
   CONSTANTINOPLE(0, true, "Constantinople", "Did not reach Mainnet"),
+  /** Petersburg / ConstantinopleFix evm spec version. */
   PETERSBURG(0, true, "ConstantinopleFix", "Finalized (also called Petersburg)"),
   /** Istanbul evm spec version. */
   ISTANBUL(0, true, "Istanbul", "Finalized"),
