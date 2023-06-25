@@ -50,13 +50,13 @@ dependencies {
   implementation project(':services:kvstore')
   implementation project(':util')
 
-  runtimeOnly 'org.slf4j:slf4j-nop'
-
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.dagger:dagger'
   implementation 'com.google.guava:guava'
   implementation 'info.picocli:picocli'
   implementation 'io.vertx:vertx-core'
+
+  runtimeOnly 'org.slf4j:slf4j-nop'
 
   annotationProcessor 'com.google.dagger:dagger-compiler'
   annotationProcessor 'info.picocli:picocli-codegen'
