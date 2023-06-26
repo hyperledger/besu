@@ -147,7 +147,6 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
       final boolean allowEmptyBody) {
     RLPInput rlpInput = input.readAsRlp();
     Bytes raw = rlpInput.raw();
-    rlpInput.reset();
 
     rlpInput.enterList();
     if (rlpInput.isEndOfCurrentList() && allowEmptyBody) {

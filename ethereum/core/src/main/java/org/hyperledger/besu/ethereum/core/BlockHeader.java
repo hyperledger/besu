@@ -231,7 +231,6 @@ public class BlockHeader extends SealableBlockHeader
       final RLPInput input, final BlockHeaderFunctions blockHeaderFunctions) {
     RLPInput rlpInput = input.readAsRlp();
     Bytes raw = rlpInput.raw();
-    rlpInput.reset();
     rlpInput.enterList();
     final Hash parentHash = Hash.wrap(rlpInput.readBytes32());
     final Hash ommersHash = Hash.wrap(rlpInput.readBytes32());
