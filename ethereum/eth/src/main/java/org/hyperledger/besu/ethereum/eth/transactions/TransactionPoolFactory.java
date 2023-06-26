@@ -141,6 +141,8 @@ public class TransactionPoolFactory {
       pooledTransactionsMessageHandler.setEnabled();
       transactionsMessageHandler.setEnabled();
       transactionPool.setEnabled();
+    } else {
+      LOG.info("Transaction pool disabled while initial sync in progress");
     }
 
     syncState.subscribeCompletionReached(
