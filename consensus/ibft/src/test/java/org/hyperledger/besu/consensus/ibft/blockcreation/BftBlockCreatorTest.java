@@ -59,7 +59,7 @@ import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class BftBlockCreatorTest {
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
@@ -72,7 +72,7 @@ public class BftBlockCreatorTest {
     final BlockHeader parentHeader = blockHeaderBuilder.buildHeader();
     final Optional<BlockHeader> optionalHeader = Optional.of(parentHeader);
 
-    // Construct a block chain and world state
+    // Construct a blockchain and world state
     final MutableBlockchain blockchain = mock(MutableBlockchain.class);
     when(blockchain.getChainHeadHash()).thenReturn(parentHeader.getHash());
     when(blockchain.getBlockHeader(any())).thenReturn(optionalHeader);

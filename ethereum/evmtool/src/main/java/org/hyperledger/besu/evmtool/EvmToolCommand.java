@@ -87,7 +87,8 @@ import picocli.CommandLine.Option;
       B11rSubCommand.class,
       CodeValidateSubCommand.class,
       StateTestSubCommand.class,
-      T8nSubCommand.class
+      T8nSubCommand.class,
+      T8nServerSubCommand.class
     })
 public class EvmToolCommand implements Runnable {
 

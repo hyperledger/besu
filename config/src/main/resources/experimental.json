@@ -10,7 +10,8 @@
       "hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "number": 0,
       "totalDifficulty": "0x0"
-    }
+    },
+    "depositContractAddress": "0x00000000219ab540356cbb839cbe05303d7705fa"
   },
   "nonce": "0x42",
   "timestamp": "0x0",

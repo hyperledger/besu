@@ -49,8 +49,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class IbftProtocolScheduleTest {
   private final BftExtraDataCodec bftExtraDataCodec = mock(BftExtraDataCodec.class);
@@ -59,7 +59,7 @@ public class IbftProtocolScheduleTest {
   private final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
   private final List<Address> validators = singletonList(proposerAddress);
 
-  @Before
+  @BeforeEach
   public void setup() {
     when(bftExtraDataCodec.decode(any())).thenReturn(bftExtraData);
     when(bftExtraData.getValidators()).thenReturn(validators);
