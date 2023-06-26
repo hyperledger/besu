@@ -61,7 +61,7 @@ public class TransactionDecoder {
     if (rlpInput.nextIsList()) {
       RLPInput input = rlpInput.readAsRlp();
       Bytes raw = input.raw();
-      Transaction transaction = decodeFrontier(input);
+      Transaction transaction = decodeFrontier(rlpInput);
       transaction.setRlp(Optional.of(raw));
       return transaction;
     } else {
