@@ -3,15 +3,14 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProc
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.privacy.ExecutedPrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 
@@ -22,20 +21,14 @@ public class PrivateBlockReplay {
 
   private final ProtocolSchedule protocolSchedule;
   private final Blockchain blockchain;
-
-  private final PrivacyQueries privacyQueries;
-
   private final PrivacyController privacyController;
-  ;
 
   public PrivateBlockReplay(
       final ProtocolSchedule protocolSchedule,
       final Blockchain blockchain,
-      final PrivacyQueries privacyQueries,
       final PrivacyController privacyController) {
     this.protocolSchedule = protocolSchedule;
     this.blockchain = blockchain;
-    this.privacyQueries = privacyQueries;
     this.privacyController = privacyController;
   }
 
@@ -134,7 +127,7 @@ public class PrivateBlockReplay {
   @FunctionalInterface
   public interface TransactionAction<T> {
     T performAction(
-        PrivateTransaction transaction,
+        ExecutedPrivateTransaction transaction,
         BlockHeader blockHeader,
         Blockchain blockchain,
         PrivateTransactionProcessor transactionProcessor,

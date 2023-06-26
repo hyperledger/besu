@@ -2,7 +2,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProc
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
+import org.hyperledger.besu.ethereum.privacy.ExecutedPrivateTransaction;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 
 import java.util.List;
@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public class PrivateTransactionTrace {
 
-  private final PrivateTransaction privateTransaction;
+  private final ExecutedPrivateTransaction privateTransaction;
   private final TransactionProcessingResult result;
   private final List<TraceFrame> traceFrames;
   private final Optional<Block> block;
@@ -23,7 +23,7 @@ public class PrivateTransactionTrace {
   }
 
   public PrivateTransactionTrace(
-      final PrivateTransaction privateTransaction,
+      final ExecutedPrivateTransaction privateTransaction,
       final TransactionProcessingResult result,
       final List<TraceFrame> traceFrames) {
     this.privateTransaction = privateTransaction;
@@ -33,7 +33,7 @@ public class PrivateTransactionTrace {
   }
 
   public PrivateTransactionTrace(
-      final PrivateTransaction privateTransaction,
+      final ExecutedPrivateTransaction privateTransaction,
       final TransactionProcessingResult result,
       final List<TraceFrame> traceFrames,
       final Optional<Block> block) {
@@ -44,14 +44,14 @@ public class PrivateTransactionTrace {
   }
 
   public PrivateTransactionTrace(
-      final PrivateTransaction privateTransaction, final Optional<Block> block) {
+      final ExecutedPrivateTransaction privateTransaction, final Optional<Block> block) {
     this.privateTransaction = privateTransaction;
     this.result = null;
     this.traceFrames = null;
     this.block = block;
   }
 
-  public PrivateTransaction getPrivateTransaction() {
+  public ExecutedPrivateTransaction getPrivateTransaction() {
     return privateTransaction;
   }
 

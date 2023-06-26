@@ -6,11 +6,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor.PrivateBlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
@@ -23,11 +24,12 @@ public class PrivTraceTransaction extends PrivateAbstractTraceByHash implements 
   private static final Logger LOG = LoggerFactory.getLogger(TraceTransaction.class);
 
   public PrivTraceTransaction(
-      final Supplier<BlockTracer> blockTracerSupplier,
+      final Supplier<PrivateBlockTracer> blockTracerSupplier,
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final PrivacyQueries privacyQueries,
       final PrivacyController privacyController,
+      final PrivacyParameters privacyParameters,
       final PrivacyIdProvider privacyIdProvider) {
     super(
         blockTracerSupplier,
@@ -35,6 +37,7 @@ public class PrivTraceTransaction extends PrivateAbstractTraceByHash implements 
         privacyQueries,
         protocolSchedule,
         privacyController,
+        privacyParameters,
         privacyIdProvider);
   }
 

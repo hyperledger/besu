@@ -73,10 +73,7 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
 
     final PrivateBlockReplay blockReplay =
         new PrivateBlockReplay(
-            getProtocolSchedule(),
-            getBlockchainQueries().getBlockchain(),
-            getPrivacyQueries(),
-            privacyController);
+            getProtocolSchedule(), getBlockchainQueries().getBlockchain(), privacyController);
 
     final Map<String, JsonRpcMethod> RPC_METHODS =
         mapOf(
@@ -106,6 +103,7 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
                 getProtocolSchedule(),
                 getPrivacyQueries(),
                 privacyController,
+                getPrivacyParameters(),
                 privacyIdProvider));
 
     if (!getPrivacyParameters().isFlexiblePrivacyGroupsEnabled()) {
