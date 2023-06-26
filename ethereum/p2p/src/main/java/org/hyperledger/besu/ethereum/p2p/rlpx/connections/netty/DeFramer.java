@@ -140,21 +140,19 @@ final class DeFramer extends ByteToMessageDecoder {
           peer = expectedPeer;
 
         } else {
-          // If the expected peer is not set the connection was inbound initiated.
-          // There is a good chance that we have bonded with that peer, so
-          // try to find the peer in the PeerTable, as it might contain additional
-          // information, like the fork id.
+          // This is an inbound "Hello" message. Create peer from information from the Hello message
           peer = createPeer(peerInfo, ctx);
           if (peer.isEmpty()) {
             LOG.debug("Failed to create connection for peer {}", peerInfo);
             connectFuture.completeExceptionally(new PeerChannelClosedException(peerInfo));
             ctx.close();
             return;
-          } else {
-            final Optional<DiscoveryPeer> discoveryPeer = peerTable.get(peer.get());
-            if (discoveryPeer.isPresent()) {
-              peer = Optional.of(discoveryPeer.get());
-            }
+          }
+          // If we can find the DiscoveryPeer for the peer in the PeerTable we use it, because
+          // it could contains additional information, like the fork id.
+          final Optional<DiscoveryPeer> discoveryPeer = peerTable.get(peer.get());
+          if (discoveryPeer.isPresent()) {
+            peer = Optional.of(discoveryPeer.get());
           }
         }
 
