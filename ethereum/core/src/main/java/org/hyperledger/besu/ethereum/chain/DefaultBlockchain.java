@@ -222,7 +222,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public Block getChainHeadBlock() {
-    return new Block(chainHeader, blockchainStorage.getBlockBody(chainHeader.getHash()).get());
+    return new Block(chainHeader, blockchainStorage.getBlockBody(chainHeader.getHash()).get(), false);
   }
 
   @Override
@@ -723,7 +723,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private Optional<BlockWithReceipts> getBlockWithReceipts(final BlockHeader blockHeader) {
     return blockchainStorage
         .getBlockBody(blockHeader.getHash())
-        .map(body -> new Block(blockHeader, body))
+        .map(body -> new Block(blockHeader, body, false))
         .flatMap(
             block ->
                 blockchainStorage

@@ -155,7 +155,7 @@ public class RestoreState implements Runnable {
         }
         receiptsRlp.leaveList();
 
-        blockchain.appendBlock(new Block(header, body), receipts);
+        blockchain.appendBlock(new Block(header, body, false), receipts);
       }
     }
     LOG.info("Chain data loaded");

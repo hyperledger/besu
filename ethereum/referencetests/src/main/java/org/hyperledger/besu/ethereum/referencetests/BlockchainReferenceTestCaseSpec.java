@@ -86,7 +86,7 @@ public class BlockchainReferenceTestCaseSpec {
   }
 
   private static MutableBlockchain buildBlockchain(final BlockHeader genesisBlockHeader) {
-    final Block genesisBlock = new Block(genesisBlockHeader, BlockBody.empty());
+    final Block genesisBlock = new Block(genesisBlockHeader, BlockBody.empty(), false);
     return InMemoryKeyValueStorageProvider.createInMemoryBlockchain(genesisBlock);
   }
 
@@ -276,7 +276,7 @@ public class BlockchainReferenceTestCaseSpec {
               input.isEndOfCurrentList()
                   ? Optional.empty()
                   : Optional.of(input.readList(Deposit::readFrom)));
-      return new Block(header, body);
+      return new Block(header, body, false);
     }
   }
 }

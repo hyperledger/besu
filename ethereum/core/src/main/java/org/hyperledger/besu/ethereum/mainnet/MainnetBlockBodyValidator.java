@@ -76,14 +76,16 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     final BlockHeader header = block.getHeader();
     final BlockBody body = block.getBody();
 
-    final Bytes32 transactionsRoot = BodyValidation.transactionsRoot(body.getTransactions());
-    if (!validateTransactionsRoot(header, header.getTransactionsRoot(), transactionsRoot)) {
-      return false;
-    }
+    if (!block.isTransactionAndReceiptRootVerified()) {
+      final Bytes32 transactionsRoot = BodyValidation.transactionsRoot(body.getTransactions());
+      if (!validateTransactionsRoot(header, header.getTransactionsRoot(), transactionsRoot)) {
+        return false;
+      }
 
-    final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
-    if (!validateReceiptsRoot(header, header.getReceiptsRoot(), receiptsRoot)) {
-      return false;
+      final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
+      if (!validateReceiptsRoot(header, header.getReceiptsRoot(), receiptsRoot)) {
+        return false;
+      }
     }
 
     final long gasUsed =

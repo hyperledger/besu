@@ -31,7 +31,7 @@ public class UncleBlockResult {
    */
   public static BlockResult build(final BlockHeader header) {
     final BlockBody body = new BlockBody(Collections.emptyList(), Collections.emptyList());
-    final int size = new Block(header, body).calculateSize();
+    final int size = new Block(header, body, false).calculateSize();
     return new BlockResult(
         header, Collections.emptyList(), Collections.emptyList(), Difficulty.ZERO, size);
   }

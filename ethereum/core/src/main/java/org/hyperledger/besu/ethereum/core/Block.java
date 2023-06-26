@@ -27,10 +27,12 @@ public class Block {
 
   private final BlockHeader header;
   private final BlockBody body;
+  private final boolean transactionAndReceiptRootVerified;
 
-  public Block(final BlockHeader header, final BlockBody body) {
+  public Block(final BlockHeader header, final BlockBody body, final boolean verified) {
     this.header = header;
     this.body = body;
+    this.transactionAndReceiptRootVerified = verified;
   }
 
   public BlockHeader getHeader() {
@@ -53,6 +55,10 @@ public class Block {
     return toRlp().size();
   }
 
+  public boolean isTransactionAndReceiptRootVerified() {
+    return transactionAndReceiptRootVerified;
+  }
+
   public void writeTo(final RLPOutput out) {
     out.startList();
 
@@ -68,7 +74,7 @@ public class Block {
     final BlockBody body = BlockBody.readFrom(in, hashFunction);
     in.leaveList();
 
-    return new Block(header, body);
+    return new Block(header, body, false);
   }
 
   @Override
