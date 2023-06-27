@@ -29,6 +29,20 @@ public class LondonGasCalculator extends BerlinGasCalculator {
   // redefinitions for EIP-3529
   private static final int NEW_MAX_REFUND_QUOTIENT = 5;
 
+  /**
+   * Instantiates a new LondonGasCalculator
+   *
+   * @param maxPrecompile the max precompile
+   */
+  protected LondonGasCalculator(final int maxPrecompile) {
+    super(maxPrecompile);
+  }
+
+  /** Instantiates a new LondonGasCalculator */
+  public LondonGasCalculator() {
+    super();
+  }
+
   // Redefined refund amount from EIP-3529
   @Override
   public long getSelfDestructRefundAmount() {
