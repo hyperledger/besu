@@ -111,7 +111,7 @@ public class T8nServerSubCommand implements Runnable {
 
                                 @Override
                                 public void disposeTracer(final OperationTracer tracer) {
-                                    // No output streams to dispose of
+                                  // No output streams to dispose of
                                 }
                               });
 
