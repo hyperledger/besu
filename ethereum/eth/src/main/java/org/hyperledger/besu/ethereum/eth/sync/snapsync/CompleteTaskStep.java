@@ -41,7 +41,7 @@ public class CompleteTaskStep {
             "Total number of node data requests repeated as part of snap sync world state download");
   }
 
-  public synchronized void markAsCompleteOrFailed(
+  public void markAsCompleteOrFailed(
       final SnapWorldDownloadState downloadState, final Task<SnapDataRequest> task) {
     if (task.getData().isResponseReceived()
         || (task.getData() instanceof TrieNodeHealingRequest

@@ -258,7 +258,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
               .thenProcessAsync(
                   "batchDownloadAccountData",
                   requestTask -> requestDataStep.requestAccount(requestTask),
-                  maxOutstandingRequests)
+                  30)
               .thenProcess("batchPersistAccountData", task -> persistDataStep.persist(task))
               .andFinishWith("batchAccountDataDownloaded", requestsToComplete::put);
 
@@ -278,16 +278,21 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                     pivotBlockManager.check(doNothingOnPivotChange);
                     return tasks;
                   })
-              .thenProcessAsyncOrdered(
-                  "batchDownloadStorageData",
-                  requestTask -> requestDataStep.requestStorage(requestTask),
-                  maxOutstandingRequests)
-              .thenProcess("batchPersistStorageData", task -> persistDataStep.persist(task))
-              .andFinishWith(
-                  "batchStorageDataDownloaded",
-                  tasks -> {
-                    tasks.forEach(requestsToComplete::put);
-                  });
+                  .thenProcessAsync(
+                          "batchDownloadStorageData",
+                          requestTask -> requestDataStep.requestStorage(requestTask),
+                          30)
+                  .thenProcessAsync(
+                          "batchPersistStorageData",
+                          tasks -> {
+                            persistDataStep.persist(tasks);
+                            return CompletableFuture.completedFuture(tasks);
+                          },30)
+                  .andFinishWith(
+                          "batchStorageDataDownloaded",
+                          tasks -> {
+                            tasks.forEach(requestsToComplete::put);
+                          });
 
       final Pipeline<Task<SnapDataRequest>> fetchLargeStorageDataPipeline =
           createPipelineFrom(
@@ -304,19 +309,19 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                     pivotBlockManager.check(doNothingOnPivotChange);
                     return tasks;
                   })
-              .thenProcessAsyncOrdered(
-                  "batchDownloadLargeStorageData",
-                  requestTask -> requestDataStep.requestStorage(List.of(requestTask)),
-                  maxOutstandingRequests)
-              .thenProcess(
-                  "batchPersistLargeStorageData",
-                  task -> {
-                    persistDataStep.persist(task);
-                    return task;
-                  })
-              .andFinishWith(
-                  "batchLargeStorageDataDownloaded",
-                  tasks -> tasks.forEach(requestsToComplete::put));
+                  .thenProcessAsync(
+                          "batchDownloadLargeStorageData",
+                          requestTask -> requestDataStep.requestStorage(List.of(requestTask)),
+                          30)
+                  .thenProcessAsync(
+                          "batchPersistLargeStorageData",
+                          tasks -> {
+                            persistDataStep.persist(tasks);
+                            return CompletableFuture.completedFuture(tasks);
+                          },30)
+                  .andFinishWith(
+                          "batchLargeStorageDataDownloaded", tasks -> tasks.forEach(requestsToComplete::put));
+
 
       final Pipeline<Task<SnapDataRequest>> fetchCodePipeline =
           createPipelineFrom(
@@ -346,18 +351,18 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                             reloadHealWhenNeeded(snapSyncState, downloadState, newBlockFound));
                     return tasks;
                   })
-              .thenProcessAsyncOrdered(
-                  "batchDownloadCodeData",
-                  tasks -> requestDataStep.requestCode(tasks),
-                  maxOutstandingRequests)
-              .thenProcess(
-                  "batchPersistCodeData",
-                  tasks -> {
-                    persistDataStep.persist(tasks);
-                    return tasks;
-                  })
-              .andFinishWith(
-                  "batchCodeDataDownloaded", tasks -> tasks.forEach(requestsToComplete::put));
+                  .thenProcessAsync(
+                          "batchDownloadCodeData",
+                          tasks -> requestDataStep.requestCode(tasks),
+                          30)
+                  .thenProcessAsync(
+                          "batchPersistCodeData",
+                          tasks -> {
+                            persistDataStep.persist(tasks);
+                            return CompletableFuture.completedFuture(tasks);
+                          },30)
+                  .andFinishWith(
+                          "batchCodeDataDownloaded", tasks -> tasks.forEach(requestsToComplete::put));
 
       final Pipeline<Task<SnapDataRequest>> trieHealingPipeline =
           createPipelineFrom(

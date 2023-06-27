@@ -22,12 +22,9 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -74,8 +71,6 @@ public class SnapsyncMetricsManager {
   private final AtomicLong nbTrieNodesHealed;
 
   private long startSyncTime;
-
-  private final Map<Bytes32, BigInteger> lastRangeIndex = new HashMap<>();
 
   private long lastNotifyTimestamp;
 
@@ -127,30 +122,23 @@ public class SnapsyncMetricsManager {
         nbCodes::get);
   }
 
-  public void initRange(final Map<Bytes32, Bytes32> ranges) {
-    for (Map.Entry<Bytes32, Bytes32> entry : ranges.entrySet()) {
-      this.lastRangeIndex.put(entry.getValue(), entry.getKey().toUnsignedBigInteger());
-    }
+  public void initRange() {
     this.startSyncTime = System.currentTimeMillis();
     this.lastNotifyTimestamp = startSyncTime;
   }
 
-  public void notifyRangeProgress(
+  public void notifyStateDownloaded(
       final Step step, final Bytes32 startKeyHash, final Bytes32 endKeyHash) {
-    checkNonEmpty(lastRangeIndex, "snapsync range collection");
-    if (lastRangeIndex.containsKey(endKeyHash)) {
-      final BigInteger lastPos = lastRangeIndex.get(endKeyHash);
-      final BigInteger newPos = startKeyHash.toUnsignedBigInteger();
-      percentageProgress.getAndAccumulate(
-          BigDecimal.valueOf(100)
-              .multiply(new BigDecimal(newPos.subtract(lastPos)))
-              .divide(
-                  new BigDecimal(RangeManager.MAX_RANGE.toUnsignedBigInteger()),
-                  MathContext.DECIMAL32),
-          BigDecimal::add);
-      lastRangeIndex.put(endKeyHash, newPos);
-      print(step);
-    }
+    percentageProgress.getAndAccumulate(
+            BigDecimal.valueOf(100)
+                    .multiply(
+                            new BigDecimal(endKeyHash.toUnsignedBigInteger())
+                                    .subtract(new BigDecimal(startKeyHash.toUnsignedBigInteger())))
+                    .divide(
+                            new BigDecimal(RangeManager.MAX_RANGE.toUnsignedBigInteger()),
+                            MathContext.DECIMAL32),
+            BigDecimal::add);
+    print(step);
   }
 
   public void notifyAccountsDownloaded(final long nbAccounts) {

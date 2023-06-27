@@ -148,8 +148,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               snapsyncMetricsManager,
               clock);
 
-      final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
-      snapsyncMetricsManager.initRange(ranges);
+      final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(64);
+      snapsyncMetricsManager.initRange();
 
       final List<AccountRangeDataRequest> currentAccountRange =
           snapContext.getCurrentAccountRange();
@@ -161,7 +161,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
             .getCurrentAccountRange()
             .forEach(
                 snapDataRequest -> {
-                  snapsyncMetricsManager.notifyRangeProgress(
+                  snapsyncMetricsManager.notifyStateDownloaded(
                       DOWNLOAD, snapDataRequest.getStartKeyHash(), snapDataRequest.getEndKeyHash());
                   newDownloadState.enqueueRequest(snapDataRequest);
                 });

@@ -86,13 +86,13 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
               1)
           .forEach(
               (key, value) -> {
-                downloadState.getMetricsManager().notifyRangeProgress(HEAL_FLAT, key, endKeyHash);
+                downloadState.getMetricsManager().notifyStateDownloaded(HEAL_FLAT, key, endKeyHash);
                 final AccountFlatDatabaseHealingRangeRequest storageRangeDataRequest =
                     createAccountFlatHealingRangeRequest(getRootHash(), key, value);
                 childRequests.add(storageRangeDataRequest);
               });
     } else {
-      downloadState.getMetricsManager().notifyRangeProgress(HEAL_FLAT, endKeyHash, endKeyHash);
+      downloadState.getMetricsManager().notifyStateDownloaded(HEAL_FLAT, endKeyHash, endKeyHash);
     }
 
     Stream.of(existingAccounts.entrySet(), removedAccounts.entrySet())

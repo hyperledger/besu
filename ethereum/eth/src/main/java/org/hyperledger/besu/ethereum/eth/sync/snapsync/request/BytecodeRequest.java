@@ -21,9 +21,11 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
+import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloaderException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -84,6 +86,18 @@ public class BytecodeRequest extends SnapDataRequest {
     return Stream.empty();
   }
 
+  @Override
+  public void registerParent(final SnapDataRequest parent) {
+    if (this.possibleParent.isPresent()) {
+      throw new WorldStateDownloaderException("Cannot set parent twice");
+    }
+    this.possibleParent = Optional.of(parent);
+    this.depth = parent.depth;
+    this.priority = parent.priority;
+    parent.incrementChildren();
+  }
+
+
   public Bytes32 getAccountHash() {
     return accountHash;
   }
@@ -96,13 +110,4 @@ public class BytecodeRequest extends SnapDataRequest {
     this.code = code;
   }
 
-  @Override
-  public long getPriority() {
-    return 0;
-  }
-
-  @Override
-  public int getDepth() {
-    return 0;
-  }
 }

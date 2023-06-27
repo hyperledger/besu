@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStor
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapsyncMetricsManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -110,6 +111,11 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       final SnapSyncProcessState snapSyncState,
       final SnapSyncConfiguration snapSyncConfiguration) {
 
+    if (pendingChildren.get() > 0) {
+      // we do nothing. Our last child will eventually persist us.
+      return 0;
+    }
+
     if (startStorageRange.isPresent() && endStorageRange.isPresent()) {
       // not store the new account if we just want to complete the account thanks to another
       // rootHash
@@ -134,7 +140,26 @@ public class AccountRangeDataRequest extends SnapDataRequest {
     }
     stackTrie.commit(flatDatabaseUpdater, nodeUpdater);
 
-    downloadState.getMetricsManager().notifyAccountsDownloaded(stackTrie.getElementsCount().get());
+    new Exception().printStackTrace(System.out);
+    // new request is added if the response does not match all the requested range
+    findNewBeginElementInRange(
+            getRootHash(),
+            stackTrie.getElement(startKeyHash).proofs(),
+            stackTrie.getElement(startKeyHash).keys(),
+            endKeyHash)
+            .ifPresentOrElse(
+                    missingRightElement -> {
+                      System.out.println(startKeyHash + " " + missingRightElement + " " + endKeyHash);
+
+                      downloadState
+                              .getMetricsManager()
+                              .notifyStateDownloaded(DOWNLOAD, startKeyHash, missingRightElement);
+                      downloadState.enqueueRequest(
+                              createAccountRangeDataRequest(getRootHash(), missingRightElement, endKeyHash));
+                    },
+                    () -> {
+                      downloadState.getMetricsManager().notifyStateDownloaded(DOWNLOAD, startKeyHash, endKeyHash);
+                    });
 
     return nbNodesSaved.get();
   }
@@ -167,20 +192,6 @@ public class AccountRangeDataRequest extends SnapDataRequest {
     final List<SnapDataRequest> childRequests = new ArrayList<>();
 
     final StackTrie.TaskElement taskElement = stackTrie.getElement(startKeyHash);
-    // new request is added if the response does not match all the requested range
-    findNewBeginElementInRange(getRootHash(), taskElement.proofs(), taskElement.keys(), endKeyHash)
-        .ifPresentOrElse(
-            missingRightElement -> {
-              downloadState
-                  .getMetricsManager()
-                  .notifyRangeProgress(DOWNLOAD, missingRightElement, endKeyHash);
-              childRequests.add(
-                  createAccountRangeDataRequest(getRootHash(), missingRightElement, endKeyHash));
-            },
-            () ->
-                downloadState
-                    .getMetricsManager()
-                    .notifyRangeProgress(DOWNLOAD, endKeyHash, endKeyHash));
 
     // find missing storages and code
     for (Map.Entry<Bytes32, Bytes> account : taskElement.keys().entrySet()) {
@@ -196,11 +207,18 @@ public class AccountRangeDataRequest extends SnapDataRequest {
                 endStorageRange.orElse(MAX_RANGE)));
       }
       if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
-        childRequests.add(
-            createBytecodeRequest(account.getKey(), getRootHash(), accountValue.getCodeHash()));
+        if (worldStateStorage.getCode(accountValue.getCodeHash(), null).isEmpty()) {
+          childRequests.add(
+                  createBytecodeRequest(account.getKey(), getRootHash(), accountValue.getCodeHash()));
+        }
       }
     }
-    return childRequests.stream();
+    return childRequests.stream()
+            .peek(
+                    snapDataRequest -> {
+                      snapDataRequest.priority = this.priority;
+                      snapDataRequest.registerParent(this);
+                    });
   }
 
   public Bytes32 getStartKeyHash() {

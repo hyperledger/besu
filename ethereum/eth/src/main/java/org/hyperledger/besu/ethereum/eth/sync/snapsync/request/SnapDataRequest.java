@@ -40,7 +40,7 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public abstract class SnapDataRequest implements TasksPriorityProvider {
 
-  protected Optional<TrieNodeHealingRequest> possibleParent = Optional.empty();
+  protected Optional<SnapDataRequest> possibleParent = Optional.empty();
   protected int depth;
   protected long priority;
   protected final AtomicInteger pendingChildren = new AtomicInteger(0);
@@ -142,7 +142,7 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
       final WorldStateStorage worldStateStorage,
       final SnapSyncProcessState snapSyncState);
 
-  public void registerParent(final TrieNodeHealingRequest parent) {
+  public void registerParent(final SnapDataRequest parent) {
     if (this.possibleParent.isPresent()) {
       throw new WorldStateDownloaderException("Cannot set parent twice");
     }
@@ -155,7 +155,11 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
     return pendingChildren.incrementAndGet();
   }
 
-  protected int saveParent(
+  protected int decrementChildren() {
+    return pendingChildren.decrementAndGet();
+  }
+
+  public int saveParent(
       final WorldStateStorage worldStateStorage,
       final WorldStateStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
@@ -184,11 +188,15 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
 
   @Override
   public long getPriority() {
-    return 0;
+    return priority;
+  }
+
+  public void setPriority(final long priority) {
+    this.priority = priority;
   }
 
   @Override
   public int getDepth() {
-    return 0;
+    return depth;
   }
 }

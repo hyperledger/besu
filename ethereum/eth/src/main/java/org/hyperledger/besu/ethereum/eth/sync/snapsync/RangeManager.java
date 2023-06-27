@@ -44,11 +44,12 @@ public class RangeManager {
 
   public static int getRangeCount(
       final Bytes32 min, final Bytes32 max, final TreeMap<Bytes32, Bytes> items) {
-    if (min.equals(MIN_RANGE) && max.equals(MAX_RANGE)) {
-      return MAX_RANGE
-          .toUnsignedBigInteger()
-          .divide(items.lastKey().toUnsignedBigInteger().subtract(min.toUnsignedBigInteger()))
-          .intValue();
+    int i = max.toUnsignedBigInteger().subtract(min.toUnsignedBigInteger())
+            .divide(
+                    items.lastKey().toUnsignedBigInteger().subtract(min.toUnsignedBigInteger()))
+            .intValue();
+    if(i>3){
+      return i;
     }
     return 1;
   }

@@ -56,14 +56,14 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapWorldDownloadState.class);
 
-  protected final InMemoryTaskQueue<SnapDataRequest> pendingAccountRequests =
-      new InMemoryTaskQueue<>();
-  protected final InMemoryTaskQueue<SnapDataRequest> pendingStorageRequests =
-      new InMemoryTaskQueue<>();
-  protected final InMemoryTaskQueue<SnapDataRequest> pendingLargeStorageRequests =
-      new InMemoryTaskQueue<>();
-  protected final InMemoryTaskQueue<SnapDataRequest> pendingCodeRequests =
-      new InMemoryTaskQueue<>();
+  protected final InMemoryTasksPriorityQueues<SnapDataRequest> pendingAccountRequests =
+      new InMemoryTasksPriorityQueues<>();
+  protected final InMemoryTasksPriorityQueues<SnapDataRequest> pendingStorageRequests =
+      new InMemoryTasksPriorityQueues<>();
+  protected final InMemoryTasksPriorityQueues<SnapDataRequest> pendingLargeStorageRequests =
+      new InMemoryTasksPriorityQueues<>();
+  protected final InMemoryTasksPriorityQueues<SnapDataRequest> pendingCodeRequests =
+      new InMemoryTasksPriorityQueues<>();
   protected final InMemoryTasksPriorityQueues<SnapDataRequest> pendingTrieNodeRequests =
       new InMemoryTasksPriorityQueues<>();
 
@@ -296,23 +296,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       final List<TaskCollection<SnapDataRequest>> queueDependencies,
       final TaskCollection<SnapDataRequest> queue,
       final Consumer<Void> unBlocked) {
-    boolean isWaiting = false;
     while (!internalFuture.isDone()) {
-      while (queueDependencies.stream()
-          .map(TaskCollection::allTasksCompleted)
-          .anyMatch(Predicate.isEqual(false))) {
-        try {
-          isWaiting = true;
-          wait();
-        } catch (final InterruptedException e) {
-          Thread.currentThread().interrupt();
-          return null;
-        }
-      }
-      if (isWaiting) {
-        unBlocked.accept(null);
-      }
-      isWaiting = false;
       Task<SnapDataRequest> task = queue.remove();
       if (task != null) {
         return task;
@@ -332,7 +316,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     return dequeueRequestBlocking(
         List.of(pendingStorageRequests, pendingLargeStorageRequests, pendingCodeRequests),
         pendingAccountRequests,
-        unused -> snapContext.updatePersistedTasks(pendingAccountRequests.asList()));
+        unused -> {});
   }
 
   public synchronized Task<SnapDataRequest> dequeueLargeStorageRequestBlocking() {

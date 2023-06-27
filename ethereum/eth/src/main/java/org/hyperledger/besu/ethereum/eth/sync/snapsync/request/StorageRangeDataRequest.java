@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie;
+import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloaderException;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
@@ -111,6 +112,10 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
     stackTrie.commit(flatDatabaseUpdater, nodeUpdater);
 
+    possibleParent.ifPresent(
+            snapDataRequest ->
+                    snapDataRequest.saveParent(worldStateStorage, updater, downloadState, snapSyncState, snapSyncConfiguration));
+
     downloadState.getMetricsManager().notifySlotsDownloaded(stackTrie.getElementsCount().get());
 
     return nbNodesSaved.get();
@@ -124,9 +129,13 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     if (!slots.isEmpty() || !proofs.isEmpty()) {
       if (!worldStateProofProvider.isValidRangeProof(
           startKeyHash, endKeyHash, storageRoot, proofs, slots)) {
+        AccountRangeDataRequest accountDataRequest = createAccountDataRequest(
+                getRootHash(), Hash.wrap(accountHash), startKeyHash, endKeyHash);
+        accountDataRequest.setPriority(getPriority());
+        this.possibleParent.orElseThrow().decrementChildren();
+        accountDataRequest.registerParent(this.possibleParent.orElseThrow());
         downloadState.enqueueRequest(
-            createAccountDataRequest(
-                getRootHash(), Hash.wrap(accountHash), startKeyHash, endKeyHash));
+                accountDataRequest);
         isProofValid = Optional.of(false);
       } else {
         stackTrie.addElement(startKeyHash, proofs, slots);
@@ -177,7 +186,23 @@ public class StorageRangeDataRequest extends SnapDataRequest {
               }
             });
 
-    return childRequests.stream();
+    return childRequests.stream()
+            .peek(
+                    snapDataRequest -> {
+                      snapDataRequest.priority = this.priority;
+                      snapDataRequest.registerParent(this.possibleParent.orElseThrow());
+                    });
+  }
+
+  @Override
+  public void registerParent(final SnapDataRequest parent) {
+    if (this.possibleParent.isPresent()) {
+      throw new WorldStateDownloaderException("Cannot set parent twice");
+    }
+    this.possibleParent = Optional.of(parent);
+    this.depth = parent.depth;
+    this.priority = parent.priority;
+    parent.incrementChildren();
   }
 
   public Bytes32 getAccountHash() {
@@ -209,6 +234,6 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     stackTrie =
         maybeStackTrie
             .filter(StackTrie::addSegment)
-            .orElse(new StackTrie(Hash.wrap(getStorageRoot()), 1, 3, startKeyHash));
+            .orElse(new StackTrie(Hash.wrap(getStorageRoot()), 1, 1, startKeyHash));
   }
 }
