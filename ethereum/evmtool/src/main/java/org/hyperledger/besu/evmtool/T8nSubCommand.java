@@ -49,10 +49,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.util.DefaultIndenter;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
@@ -157,14 +154,8 @@ public class T8nSubCommand implements Runnable {
 
   @Override
   public void run() {
-    final ObjectMapper objectMapper = new ObjectMapper();
-    objectMapper.setDefaultPrettyPrinter(
-        (new DefaultPrettyPrinter())
-            .withSpacesInObjectEntries()
-            .withObjectIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE.withIndent("  "))
-            .withArrayIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE.withIndent("  ")));
+    final ObjectMapper objectMapper = JsonUtils.createObjectMapper();
     final ObjectReader t8nReader = objectMapper.reader();
-    objectMapper.disable(Feature.AUTO_CLOSE_SOURCE);
 
     MutableWorldState initialWorldState;
     ReferenceTestEnv referenceTestEnv;

@@ -33,10 +33,7 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
-import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.util.DefaultIndenter;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
@@ -107,8 +104,6 @@ public class B11rSubCommand implements Runnable {
       description = "The account state after the transition")
   private final Path outBlock = Path.of("block.json");
 
-  private static final ObjectMapper objectMapper = new ObjectMapper();
-
   @CommandLine.ParentCommand private final EvmToolCommand parentCommand;
 
   @SuppressWarnings("unused")
@@ -125,13 +120,8 @@ public class B11rSubCommand implements Runnable {
 
   @Override
   public void run() {
-    objectMapper.setDefaultPrettyPrinter(
-        (new DefaultPrettyPrinter())
-            .withSpacesInObjectEntries()
-            .withObjectIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE.withIndent("  "))
-            .withArrayIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE.withIndent("  ")));
+    ObjectMapper objectMapper = JsonUtils.createObjectMapper();
     final ObjectReader t8nReader = objectMapper.reader();
-    objectMapper.disable(Feature.AUTO_CLOSE_SOURCE);
 
     ObjectNode config;
     try {
@@ -176,7 +166,7 @@ public class B11rSubCommand implements Runnable {
       return;
     }
 
-    var testHeader = this.readHeader(config.get("header"));
+    var testHeader = this.readHeader(config.get("header"), objectMapper);
     Bytes txsBytes = null;
 
     if (config.has("txs")) {
@@ -233,7 +223,8 @@ public class B11rSubCommand implements Runnable {
     }
   }
 
-  private ReferenceTestBlockHeader readHeader(final JsonNode jsonObject) {
+  private ReferenceTestBlockHeader readHeader(
+      final JsonNode jsonObject, final ObjectMapper objectMapper) {
     ObjectNode objectNode = (ObjectNode) jsonObject;
     maybeMoveField(objectNode, "sha3Uncles", "uncleHash");
     maybeMoveField(objectNode, "miner", "coinbase");

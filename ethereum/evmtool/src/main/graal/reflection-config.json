@@ -107,5 +107,14 @@
     "queryAllPublicMethods": true,
     "allDeclaredConstructors": true,
     "allPublicMethods": true
+  },
+  {
+    "name": "org.hyperledger.besu.evm.log.Log",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   }
 ]

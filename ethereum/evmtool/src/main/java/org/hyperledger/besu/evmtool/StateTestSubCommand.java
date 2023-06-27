@@ -55,7 +55,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -87,8 +86,6 @@ public class StateTestSubCommand implements Runnable {
   @Parameters
   private final List<Path> stateTestFiles = new ArrayList<>();
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
-
   @SuppressWarnings("unused")
   public StateTestSubCommand() {
     // PicoCLI requires this
@@ -101,8 +98,8 @@ public class StateTestSubCommand implements Runnable {
 
   @Override
   public void run() {
-    final ObjectMapper stateTestMapper = new ObjectMapper();
-    stateTestMapper.disable(Feature.AUTO_CLOSE_SOURCE);
+    final ObjectMapper stateTestMapper = JsonUtils.createObjectMapper();
+
     final JavaType javaType =
         stateTestMapper
             .getTypeFactory()
@@ -168,6 +165,7 @@ public class StateTestSubCommand implements Runnable {
                 parentCommand.showReturnData)
             : OperationTracer.NO_TRACING;
 
+    final ObjectMapper objectMapper = JsonUtils.createObjectMapper();
     for (final GeneralStateTestCaseEipSpec spec : specs) {
 
       final BlockHeader blockHeader = spec.getBlockHeader();
