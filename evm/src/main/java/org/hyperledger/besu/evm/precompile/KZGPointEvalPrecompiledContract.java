@@ -81,7 +81,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
 
   /** free up resources. */
   @VisibleForTesting
-  void tearDown() {
+  public static void tearDown() {
     CKZG4844JNI.freeTrustedSetup();
     loaded.set(false);
   }

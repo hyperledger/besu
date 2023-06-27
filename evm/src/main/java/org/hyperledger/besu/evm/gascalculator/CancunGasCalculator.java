@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
+import static org.hyperledger.besu.datatypes.Address.KZG_POINT_EVAL;
+
 /**
  * Gas Calculator for Cancun
  *
@@ -23,6 +25,14 @@ package org.hyperledger.besu.evm.gascalculator;
  * </UL>
  */
 public class CancunGasCalculator extends ShanghaiGasCalculator {
+
+  public CancunGasCalculator() {
+    this(KZG_POINT_EVAL.toArrayUnsafe()[19]);
+  }
+
+  private CancunGasCalculator(final int maxPrecompile) {
+    super(maxPrecompile);
+  }
 
   private static final long TLOAD_GAS = WARM_STORAGE_READ_COST;
   private static final long TSTORE_GAS = WARM_STORAGE_READ_COST;
