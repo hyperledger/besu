@@ -14,14 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.storage.keyvalue;
 
+import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.CHAIN_HEAD_HASH;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.FINALIZED_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.SAFE_BLOCK_HASH;
+import static org.hyperledger.besu.ethereum.core.VariablesStorageHelper.SAMPLE_CHAIN_HEAD;
 import static org.hyperledger.besu.ethereum.core.VariablesStorageHelper.assertNoVariablesInStorage;
 import static org.hyperledger.besu.ethereum.core.VariablesStorageHelper.assertVariablesPresentInVariablesStorage;
 import static org.hyperledger.besu.ethereum.core.VariablesStorageHelper.assertVariablesReturnedByBlockchainStorage;
 import static org.hyperledger.besu.ethereum.core.VariablesStorageHelper.getSampleVariableValues;
 import static org.hyperledger.besu.ethereum.core.VariablesStorageHelper.populateBlockchainStorage;
 import static org.hyperledger.besu.ethereum.core.VariablesStorageHelper.populateVariablesStorage;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.chain.VariablesStorage;
@@ -99,5 +102,18 @@ public class KeyValueStoragePrefixedKeyBlockchainStorageTest {
     assertVariablesPresentInVariablesStorage(kvVariables, variableValues);
 
     assertVariablesReturnedByBlockchainStorage(blockchainStorage, variableValues);
+  }
+
+  @Test
+  public void failIfInconsistencyDetectedDuringVariablesMigration() {
+    populateBlockchainStorage(kvBlockchain, variableValues);
+    // create and inconsistency putting a different chain head in variables storage
+    variableValues.put(CHAIN_HEAD_HASH, SAMPLE_CHAIN_HEAD.shiftLeft(1));
+    populateVariablesStorage(kvVariables, variableValues);
+    assertThrows(
+        IllegalStateException.class,
+        () ->
+            new KeyValueStoragePrefixedKeyBlockchainStorage(
+                kvBlockchain, variablesStorage, blockHeaderFunctions));
   }
 }
