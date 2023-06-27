@@ -26,10 +26,16 @@ import static org.hyperledger.besu.datatypes.Address.KZG_POINT_EVAL;
  */
 public class CancunGasCalculator extends ShanghaiGasCalculator {
 
+  /** Instantiates a new Cancun Gas Calculator. */
   public CancunGasCalculator() {
     this(KZG_POINT_EVAL.toArrayUnsafe()[19]);
   }
 
+  /**
+   * Instantiates a new Cancun Gas Calculator
+   *
+   * @param maxPrecompile the max precompile
+   */
   private CancunGasCalculator(final int maxPrecompile) {
     super(maxPrecompile);
   }
