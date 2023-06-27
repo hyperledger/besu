@@ -49,7 +49,7 @@ public class KZGPointEvalPrecompileContractTest {
 
   @AfterAll
   public static void tearDown() {
-    KZGPointEvalPrecompiledContract.tearDown();
+    contract.tearDown();
   }
 
   @ParameterizedTest(name = "{index}")
