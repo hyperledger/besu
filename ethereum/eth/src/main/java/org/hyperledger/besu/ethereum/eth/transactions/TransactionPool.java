@@ -60,6 +60,8 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -522,25 +524,28 @@ public class TransactionPool implements BlockAddedObserver {
     }
   }
 
-  public void setEnabled() {
+  public CompletableFuture<Void> setEnabled() {
     if (!isEnabled()) {
       pendingTransactions = pendingTransactionsSupplier.get();
       pendingTransactionsListenersProxy.subscribe();
       isPoolEnabled.set(true);
       subscribeConnectId =
           OptionalLong.of(ethContext.getEthPeers().subscribeConnect(this::handleConnect));
-      saveRestoreManager.loadFromDisk();
+      return saveRestoreManager.loadFromDisk();
     }
+    return CompletableFuture.completedFuture(null);
   }
 
-  public void setDisabled() {
+  public CompletableFuture<Void> setDisabled() {
     if (isEnabled()) {
       isPoolEnabled.set(false);
       subscribeConnectId.ifPresent(ethContext.getEthPeers()::unsubscribeConnect);
       pendingTransactionsListenersProxy.unsubscribe();
-      saveRestoreManager.saveToDisk(pendingTransactions);
+      final PendingTransactions pendingTransactionsToSave = pendingTransactions;
       pendingTransactions = new DisabledPendingTransactions();
+      return saveRestoreManager.saveToDisk(pendingTransactionsToSave);
     }
+    return CompletableFuture.completedFuture(null);
   }
 
   public boolean isEnabled() {
@@ -583,46 +588,57 @@ public class TransactionPool implements BlockAddedObserver {
         new AtomicReference<>(CompletableFuture.completedFuture(null));
     private final AtomicBoolean isCancelled = new AtomicBoolean(false);
 
-    void saveToDisk(final PendingTransactions pendingTransactionsToSave) {
-      serializeAndDedupOperation(
+    CompletableFuture<Void> saveToDisk(final PendingTransactions pendingTransactionsToSave) {
+      return serializeAndDedupOperation(
           () -> executeSaveToDisk(pendingTransactionsToSave), writeInProgress);
     }
 
-    void loadFromDisk() {
-      serializeAndDedupOperation(this::executeLoadFromDisk, readInProgress);
+    CompletableFuture<Void> loadFromDisk() {
+      return serializeAndDedupOperation(this::executeLoadFromDisk, readInProgress);
     }
 
-    private void serializeAndDedupOperation(
+    private CompletableFuture<Void> serializeAndDedupOperation(
         final Runnable operation,
         final AtomicReference<CompletableFuture<Void>> operationInProgress) {
       if (configuration.getEnableSaveRestore()) {
-        diskAccessLock.lock();
         try {
-          if (!operationInProgress.get().isDone()) {
-            isCancelled.set(true);
+          if (diskAccessLock.tryLock(1, TimeUnit.MINUTES)) {
             try {
-              operationInProgress.get().get();
-            } catch (ExecutionException ee) {
-              // nothing to do
-            }
-          }
+              if (!operationInProgress.get().isDone()) {
+                isCancelled.set(true);
+                try {
+                  operationInProgress.get().get();
+                } catch (ExecutionException ee) {
+                  // nothing to do
+                }
+              }
 
-          isCancelled.set(false);
-          operationInProgress.set(CompletableFuture.runAsync(operation));
+              isCancelled.set(false);
+              operationInProgress.set(CompletableFuture.runAsync(operation));
+              return operationInProgress.get();
+            } catch (InterruptedException ie) {
+              isCancelled.set(false);
+            } finally {
+              diskAccessLock.unlock();
+            }
+          } else {
+            CompletableFuture.failedFuture(
+                new TimeoutException("Timeout waiting for disk access lock"));
+          }
         } catch (InterruptedException ie) {
-          isCancelled.set(false);
-        } finally {
-          diskAccessLock.unlock();
+          return CompletableFuture.failedFuture(ie);
         }
       }
+      return CompletableFuture.completedFuture(null);
     }
 
     private void executeSaveToDisk(final PendingTransactions pendingTransactionsToSave) {
       final File saveFile = configuration.getSaveFile();
-      LOG.info("Saving transaction pool content to file {}", saveFile);
       try (final BufferedWriter bw =
           new BufferedWriter(new FileWriter(saveFile, StandardCharsets.US_ASCII))) {
         final var allTxs = pendingTransactionsToSave.getPendingTransactions();
+        LOG.info("Saving {} transactions to file {}", allTxs.size(), saveFile);
+
         final long savedTxs =
             allTxs.parallelStream()
                 .takeWhile(unused -> !isCancelled.get())
@@ -633,7 +649,7 @@ public class TransactionPool implements BlockAddedObserver {
                       return (ptx.isReceivedFromLocalSource() ? "l" : "r")
                           + rlp.encoded().toBase64String();
                     })
-                .peek(
+                .mapToInt(
                     line -> {
                       synchronized (bw) {
                         try {
@@ -643,8 +659,9 @@ public class TransactionPool implements BlockAddedObserver {
                           throw new RuntimeException(e);
                         }
                       }
+                      return 1;
                     })
-                .count();
+                .sum();
         if (isCancelled.get()) {
           LOG.info(
               "Saved {} transactions to file {}, before operation was cancelled",

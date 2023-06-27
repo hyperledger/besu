@@ -197,7 +197,7 @@ public class Runner implements AutoCloseable {
         service ->
             waitForServiceToStop(
                 "ipcJsonRpc", service.stop().toCompletionStage().toCompletableFuture()));
-    waitForServiceToStop("Transaction Pool", besuController.getTransactionPool()::setDisabled);
+    waitForServiceToStop("Transaction Pool", besuController.getTransactionPool().setDisabled());
     metrics.ifPresent(service -> waitForServiceToStop("metrics", service.stop()));
     ethStatsService.ifPresent(EthStatsService::stop);
     besuController.getMiningCoordinator().stop();
