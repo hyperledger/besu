@@ -259,11 +259,6 @@ public class MainnetTransactionValidator implements TransactionValidator {
   }
 
   @Override
-  public boolean isReplayProtectionSupported() {
-    return chainId.isPresent();
-  }
-
-  @Override
   public ValidationResult<TransactionInvalidReason> validateTransactionSignature(
       final Transaction transaction) {
     if (chainId.isPresent()

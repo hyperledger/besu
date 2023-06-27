@@ -17,8 +17,6 @@ public interface TransactionValidator {
   ValidationResult<TransactionInvalidReason> validateForSender(
       Transaction transaction, Account sender, TransactionValidationParams validationParams);
 
-  boolean isReplayProtectionSupported();
-
   ValidationResult<TransactionInvalidReason> validateTransactionSignature(Transaction transaction);
 
   void setTransactionFilter(TransactionFilter transactionFilter);
