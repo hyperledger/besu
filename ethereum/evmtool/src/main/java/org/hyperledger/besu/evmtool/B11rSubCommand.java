@@ -168,7 +168,7 @@ public class B11rSubCommand implements Runnable {
             .withSpacesInObjectEntries()
             .withObjectIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE.withIndent("  "))
             .withArrayIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE.withIndent("  ")));
-    final ObjectReader t8nReader = objectMapper.reader();
+    final ObjectReader b11rReader = objectMapper.reader();
     objectMapper.disable(Feature.AUTO_CLOSE_SOURCE);
 
     ObjectNode config;
@@ -180,34 +180,35 @@ public class B11rSubCommand implements Runnable {
           || withdrawals.equals(stdinPath)) {
         config =
             (ObjectNode)
-                t8nReader.readTree(new InputStreamReader(parentCommand.in, StandardCharsets.UTF_8));
+                b11rReader.readTree(
+                    new InputStreamReader(parentCommand.in, StandardCharsets.UTF_8));
       } else {
         config = objectMapper.createObjectNode();
       }
 
       if (!header.equals(stdinPath)) {
         try (FileReader reader = new FileReader(header.toFile(), StandardCharsets.UTF_8)) {
-          config.set("header", t8nReader.readTree(reader));
+          config.set("header", b11rReader.readTree(reader));
         }
       }
       if (!txs.equals(stdinPath)) {
         try (FileReader reader = new FileReader(txs.toFile(), StandardCharsets.UTF_8)) {
-          config.set("txs", t8nReader.readTree(reader));
+          config.set("txs", b11rReader.readTree(reader));
         }
       }
       if (!withdrawals.equals(stdinPath)) {
         try (FileReader reader = new FileReader(withdrawals.toFile(), StandardCharsets.UTF_8)) {
-          config.set("withdrawals", t8nReader.readTree(reader));
+          config.set("withdrawals", b11rReader.readTree(reader));
         }
       }
       if (!ommers.equals(stdinPath)) {
         try (FileReader reader = new FileReader(ommers.toFile(), StandardCharsets.UTF_8)) {
-          config.set("ommers", t8nReader.readTree(reader));
+          config.set("ommers", b11rReader.readTree(reader));
         }
       }
       if (!sealClique.equals(stdinPath)) {
         try (FileReader reader = new FileReader(sealClique.toFile(), StandardCharsets.UTF_8)) {
-          config.set("clique", t8nReader.readTree(reader));
+          config.set("clique", b11rReader.readTree(reader));
         }
       }
     } catch (final JsonProcessingException jpe) {
