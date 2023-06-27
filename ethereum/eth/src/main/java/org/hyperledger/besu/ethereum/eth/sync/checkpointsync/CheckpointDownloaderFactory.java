@@ -14,16 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncDownloader;
@@ -35,7 +32,6 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
@@ -79,8 +75,8 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
     }
 
     ensureDirectoryExists(fastSyncDataDirectory.toFile());
-
-    final FastSyncState fastSyncState =
+    snapContext.clear();
+    /*final FastSyncState fastSyncState =
         fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
 
     if (syncState.isResyncNeeded()) {
@@ -97,7 +93,7 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
       LOG.info(
           "Checkpoint sync was requested, but cannot be enabled because the local blockchain is not empty.");
       return Optional.empty();
-    }
+    }*/
 
     final FastSyncActions fastSyncActions;
     if (syncState.getCheckpoint().isEmpty()) {

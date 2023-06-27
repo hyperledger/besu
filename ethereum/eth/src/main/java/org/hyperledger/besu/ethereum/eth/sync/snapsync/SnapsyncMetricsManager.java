@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import static io.netty.util.internal.ObjectUtil.checkNonEmpty;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapsyncMetricsManager.Step.HEAL_TRIE;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -130,14 +129,14 @@ public class SnapsyncMetricsManager {
   public void notifyStateDownloaded(
       final Step step, final Bytes32 startKeyHash, final Bytes32 endKeyHash) {
     percentageProgress.getAndAccumulate(
-            BigDecimal.valueOf(100)
-                    .multiply(
-                            new BigDecimal(endKeyHash.toUnsignedBigInteger())
-                                    .subtract(new BigDecimal(startKeyHash.toUnsignedBigInteger())))
-                    .divide(
-                            new BigDecimal(RangeManager.MAX_RANGE.toUnsignedBigInteger()),
-                            MathContext.DECIMAL32),
-            BigDecimal::add);
+        BigDecimal.valueOf(100)
+            .multiply(
+                new BigDecimal(endKeyHash.toUnsignedBigInteger())
+                    .subtract(new BigDecimal(startKeyHash.toUnsignedBigInteger())))
+            .divide(
+                new BigDecimal(RangeManager.MAX_RANGE.toUnsignedBigInteger()),
+                MathContext.DECIMAL32),
+        BigDecimal::add);
     print(step);
   }
 

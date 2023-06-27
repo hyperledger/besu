@@ -97,7 +97,6 @@ public class BytecodeRequest extends SnapDataRequest {
     parent.incrementChildren();
   }
 
-
   public Bytes32 getAccountHash() {
     return accountHash;
   }
@@ -109,5 +108,4 @@ public class BytecodeRequest extends SnapDataRequest {
   public void setCode(final Bytes code) {
     this.code = code;
   }
-
 }

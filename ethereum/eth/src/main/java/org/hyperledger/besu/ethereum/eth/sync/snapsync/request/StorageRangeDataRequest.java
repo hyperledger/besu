@@ -113,8 +113,9 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     stackTrie.commit(flatDatabaseUpdater, nodeUpdater);
 
     possibleParent.ifPresent(
-            snapDataRequest ->
-                    snapDataRequest.saveParent(worldStateStorage, updater, downloadState, snapSyncState, snapSyncConfiguration));
+        snapDataRequest ->
+            snapDataRequest.saveParent(
+                worldStateStorage, updater, downloadState, snapSyncState, snapSyncConfiguration));
 
     downloadState.getMetricsManager().notifySlotsDownloaded(stackTrie.getElementsCount().get());
 
@@ -129,13 +130,13 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     if (!slots.isEmpty() || !proofs.isEmpty()) {
       if (!worldStateProofProvider.isValidRangeProof(
           startKeyHash, endKeyHash, storageRoot, proofs, slots)) {
-        AccountRangeDataRequest accountDataRequest = createAccountDataRequest(
+        AccountRangeDataRequest accountDataRequest =
+            createAccountDataRequest(
                 getRootHash(), Hash.wrap(accountHash), startKeyHash, endKeyHash);
         accountDataRequest.setPriority(getPriority());
         this.possibleParent.orElseThrow().decrementChildren();
         accountDataRequest.registerParent(this.possibleParent.orElseThrow());
-        downloadState.enqueueRequest(
-                accountDataRequest);
+        downloadState.enqueueRequest(accountDataRequest);
         isProofValid = Optional.of(false);
       } else {
         stackTrie.addElement(startKeyHash, proofs, slots);
@@ -187,11 +188,11 @@ public class StorageRangeDataRequest extends SnapDataRequest {
             });
 
     return childRequests.stream()
-            .peek(
-                    snapDataRequest -> {
-                      snapDataRequest.priority = this.priority;
-                      snapDataRequest.registerParent(this.possibleParent.orElseThrow());
-                    });
+        .peek(
+            snapDataRequest -> {
+              snapDataRequest.priority = this.priority;
+              snapDataRequest.registerParent(this.possibleParent.orElseThrow());
+            });
   }
 
   @Override

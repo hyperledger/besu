@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStor
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapsyncMetricsManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -147,19 +146,21 @@ public class AccountRangeDataRequest extends SnapDataRequest {
             stackTrie.getElement(startKeyHash).proofs(),
             stackTrie.getElement(startKeyHash).keys(),
             endKeyHash)
-            .ifPresentOrElse(
-                    missingRightElement -> {
-                      System.out.println(startKeyHash + " " + missingRightElement + " " + endKeyHash);
+        .ifPresentOrElse(
+            missingRightElement -> {
+              System.out.println(startKeyHash + " " + missingRightElement + " " + endKeyHash);
 
-                      downloadState
-                              .getMetricsManager()
-                              .notifyStateDownloaded(DOWNLOAD, startKeyHash, missingRightElement);
-                      downloadState.enqueueRequest(
-                              createAccountRangeDataRequest(getRootHash(), missingRightElement, endKeyHash));
-                    },
-                    () -> {
-                      downloadState.getMetricsManager().notifyStateDownloaded(DOWNLOAD, startKeyHash, endKeyHash);
-                    });
+              downloadState
+                  .getMetricsManager()
+                  .notifyStateDownloaded(DOWNLOAD, startKeyHash, missingRightElement);
+              downloadState.enqueueRequest(
+                  createAccountRangeDataRequest(getRootHash(), missingRightElement, endKeyHash));
+            },
+            () -> {
+              downloadState
+                  .getMetricsManager()
+                  .notifyStateDownloaded(DOWNLOAD, startKeyHash, endKeyHash);
+            });
 
     return nbNodesSaved.get();
   }
@@ -209,16 +210,16 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
         if (worldStateStorage.getCode(accountValue.getCodeHash(), null).isEmpty()) {
           childRequests.add(
-                  createBytecodeRequest(account.getKey(), getRootHash(), accountValue.getCodeHash()));
+              createBytecodeRequest(account.getKey(), getRootHash(), accountValue.getCodeHash()));
         }
       }
     }
     return childRequests.stream()
-            .peek(
-                    snapDataRequest -> {
-                      snapDataRequest.priority = this.priority;
-                      snapDataRequest.registerParent(this);
-                    });
+        .peek(
+            snapDataRequest -> {
+              snapDataRequest.priority = this.priority;
+              snapDataRequest.registerParent(this);
+            });
   }
 
   public Bytes32 getStartKeyHash() {
