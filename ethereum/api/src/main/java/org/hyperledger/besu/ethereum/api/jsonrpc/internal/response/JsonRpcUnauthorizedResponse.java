@@ -25,9 +25,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class JsonRpcUnauthorizedResponse implements JsonRpcResponse {
 
   private final Object id;
-  private final RpcErrorType error;
+  private final JsonRpcError error;
 
-  public JsonRpcUnauthorizedResponse(final Object id, final RpcErrorType error) {
+  public JsonRpcUnauthorizedResponse(final Object id, final JsonRpcError error) {
     this.id = id;
     this.error = error;
   }
@@ -42,7 +42,7 @@ public class JsonRpcUnauthorizedResponse implements JsonRpcResponse {
   }
 
   @JsonGetter("error")
-  public RpcErrorType getError() {
+  public JsonRpcError getError() {
     return error;
   }
 

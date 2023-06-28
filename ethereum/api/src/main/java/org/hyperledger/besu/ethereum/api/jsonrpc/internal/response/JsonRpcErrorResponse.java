@@ -26,9 +26,9 @@ import com.google.common.base.MoreObjects;
 public class JsonRpcErrorResponse implements JsonRpcResponse {
 
   private final Object id;
-  private final RpcErrorType error;
+  private final JsonRpcError error;
 
-  public JsonRpcErrorResponse(final Object id, final RpcErrorType error) {
+  public JsonRpcErrorResponse(final Object id, final JsonRpcError error) {
     this.id = id;
     this.error = error;
   }
@@ -43,7 +43,7 @@ public class JsonRpcErrorResponse implements JsonRpcResponse {
   }
 
   @JsonGetter("error")
-  public RpcErrorType getError() {
+  public JsonRpcError getError() {
     return error;
   }
 
