@@ -531,7 +531,13 @@ public class TransactionPool implements BlockAddedObserver {
       isPoolEnabled.set(true);
       subscribeConnectId =
           OptionalLong.of(ethContext.getEthPeers().subscribeConnect(this::handleConnect));
-      return saveRestoreManager.loadFromDisk();
+      return saveRestoreManager
+          .loadFromDisk()
+          .exceptionally(
+              t -> {
+                LOG.error("Error while restoring transaction pool from disk", t);
+                return null;
+              });
     }
     return CompletableFuture.completedFuture(null);
   }
@@ -543,7 +549,13 @@ public class TransactionPool implements BlockAddedObserver {
       pendingTransactionsListenersProxy.unsubscribe();
       final PendingTransactions pendingTransactionsToSave = pendingTransactions;
       pendingTransactions = new DisabledPendingTransactions();
-      return saveRestoreManager.saveToDisk(pendingTransactionsToSave);
+      return saveRestoreManager
+          .saveToDisk(pendingTransactionsToSave)
+          .exceptionally(
+              t -> {
+                LOG.error("Error while saving transaction pool to disk", t);
+                return null;
+              });
     }
     return CompletableFuture.completedFuture(null);
   }
