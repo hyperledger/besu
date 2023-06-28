@@ -56,7 +56,6 @@ public class TransactionBroadcasterTest {
   @Mock private EthContext ethContext;
   @Mock private EthPeers ethPeers;
   @Mock private EthScheduler ethScheduler;
-  @Mock private PendingTransactions pendingTransactions;
   @Mock private PeerTransactionTracker transactionTracker;
   @Mock private TransactionsMessageSender transactionsMessageSender;
   @Mock private NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
@@ -93,7 +92,6 @@ public class TransactionBroadcasterTest {
     txBroadcaster =
         new TransactionBroadcaster(
             ethContext,
-            pendingTransactions,
             transactionTracker,
             transactionsMessageSender,
             newPooledTransactionHashesMessageSender);
@@ -101,19 +99,20 @@ public class TransactionBroadcasterTest {
 
   @Test
   public void doNotRelayTransactionsWhenPoolIsEmpty() {
-    setupTransactionPool(0, 0);
+    Collection<PendingTransaction> pendingTxs = setupTransactionPool(0, 0);
 
-    txBroadcaster.relayTransactionPoolTo(ethPeerNoEth65);
-    txBroadcaster.relayTransactionPoolTo(ethPeerWithEth65);
+    txBroadcaster.relayTransactionPoolTo(ethPeerNoEth65, pendingTxs);
+    txBroadcaster.relayTransactionPoolTo(ethPeerWithEth65, pendingTxs);
 
     verifyNothingSent();
   }
 
   @Test
   public void relayFullTransactionsFromPoolWhenPeerDoesNotSupportEth65() {
-    List<Transaction> txs = toTransactionList(setupTransactionPool(1, 1));
+    Collection<PendingTransaction> pendingTxs = setupTransactionPool(1, 1);
+    List<Transaction> txs = toTransactionList(pendingTxs);
 
-    txBroadcaster.relayTransactionPoolTo(ethPeerNoEth65);
+    txBroadcaster.relayTransactionPoolTo(ethPeerNoEth65, pendingTxs);
 
     verifyTransactionAddedToPeerSendingQueue(ethPeerNoEth65, txs);
 
@@ -125,9 +124,10 @@ public class TransactionBroadcasterTest {
 
   @Test
   public void relayTransactionHashesFromPoolWhenPeerSupportEth65() {
-    List<Transaction> txs = toTransactionList(setupTransactionPool(1, 1));
+    Collection<PendingTransaction> pendingTxs = setupTransactionPool(1, 1);
+    List<Transaction> txs = toTransactionList(pendingTxs);
 
-    txBroadcaster.relayTransactionPoolTo(ethPeerWithEth65);
+    txBroadcaster.relayTransactionPoolTo(ethPeerWithEth65, pendingTxs);
 
     verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65, txs);
 
@@ -308,8 +308,6 @@ public class TransactionBroadcasterTest {
     Set<PendingTransaction> pendingTxs = createPendingTransactionList(numLocalTransactions, true);
     pendingTxs.addAll(createPendingTransactionList(numRemoteTransactions, false));
 
-    when(pendingTransactions.getPendingTransactions()).thenReturn(pendingTxs);
-
     return pendingTxs;
   }
 
@@ -318,8 +316,6 @@ public class TransactionBroadcasterTest {
     Set<PendingTransaction> pendingTxs =
         createPendingTransactionList(type, numLocalTransactions, true);
     pendingTxs.addAll(createPendingTransactionList(type, numRemoteTransactions, false));
-
-    when(pendingTransactions.getPendingTransactions()).thenReturn(pendingTxs);
 
     return pendingTxs;
   }

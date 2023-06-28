@@ -181,20 +181,21 @@ public abstract class AbstractTransactionsLayeredPendingTransactionsTest {
         spy(
             new TransactionBroadcaster(
                 ethContext,
-                transactions,
                 peerTransactionTracker,
                 transactionsMessageSender,
                 newPooledTransactionHashesMessageSender));
-
-    return new TransactionPool(
-        transactions,
-        protocolSchedule,
-        protocolContext,
-        transactionBroadcaster,
-        ethContext,
-        miningParameters,
-        new TransactionPoolMetrics(metricsSystem),
-        poolConfig);
+    final TransactionPool txPool =
+        new TransactionPool(
+            () -> transactions,
+            protocolSchedule,
+            protocolContext,
+            transactionBroadcaster,
+            ethContext,
+            miningParameters,
+            new TransactionPoolMetrics(metricsSystem),
+            poolConfig);
+    txPool.setEnabled();
+    return txPool;
   }
 
   @Test
@@ -423,7 +424,6 @@ public abstract class AbstractTransactionsLayeredPendingTransactionsTest {
 
     verify(transactions).containsTransaction(transaction0);
     verifyNoInteractions(transactionValidator);
-    verifyNoMoreInteractions(transactions);
   }
 
   @Test
