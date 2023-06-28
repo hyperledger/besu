@@ -46,6 +46,20 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
     return DATA_GAS_PER_BLOB * blobCount;
   }
 
+  public static long getTargetDataGasPerBlock() {
+    return TARGET_DATA_GAS_PER_BLOCK;
+  }
+
+  /**
+   * Computes the excess data gas for a given block based on the parent's excess data gas and data
+   * gas used. If the sum of parent's excess data gas and parent's data gas used is less than the
+   * target data gas per block, the excess data gas is calculated as 0. Otherwise, it is computed as
+   * the difference between the sum and the target data gas per block.
+   *
+   * @param parentExcessDataGas The excess data gas of the parent block.
+   * @param parentDataGasUsed The data gas used in the parent block.
+   * @return The excess data gas for the current block.
+   */
   @Override
   public long computeExcessDataGas(final long parentExcessDataGas, final long parentDataGasUsed) {
     if (parentExcessDataGas + parentDataGasUsed < TARGET_DATA_GAS_PER_BLOCK) {
