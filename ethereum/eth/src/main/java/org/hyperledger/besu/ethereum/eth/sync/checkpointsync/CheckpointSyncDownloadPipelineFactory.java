@@ -36,75 +36,70 @@ import java.util.concurrent.CompletionStage;
 public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipelineFactory {
 
   public CheckpointSyncDownloadPipelineFactory(
-      final SynchronizerConfiguration syncConfig,
-      final ProtocolSchedule protocolSchedule,
-      final ProtocolContext protocolContext,
-      final EthContext ethContext,
-      final FastSyncState fastSyncState,
-      final MetricsSystem metricsSystem) {
+          final SynchronizerConfiguration syncConfig,
+          final ProtocolSchedule protocolSchedule,
+          final ProtocolContext protocolContext,
+          final EthContext ethContext,
+          final FastSyncState fastSyncState,
+          final MetricsSystem metricsSystem) {
     super(syncConfig, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem);
   }
 
   @Override
   public CompletionStage<Void> startPipeline(
-      final EthScheduler scheduler,
-      final SyncState syncState,
-      final SyncTarget syncTarget,
-      final Pipeline<?> pipeline) {
+          final EthScheduler scheduler,
+          final SyncState syncState,
+          final SyncTarget syncTarget,
+          final Pipeline<?> pipeline) {
     return scheduler
-        .startPipeline(createDownloadCheckPointPipeline(syncState, syncTarget))
-        .thenCompose(unused -> scheduler.startPipeline(pipeline));
+            .startPipeline(createDownloadCheckPointPipeline(syncState, syncTarget))
+            .thenCompose(unused -> scheduler.startPipeline(pipeline));
   }
 
   protected Pipeline<Hash> createDownloadCheckPointPipeline(
-      final SyncState syncState, final SyncTarget target) {
+          final SyncState syncState, final SyncTarget target) {
 
     final Checkpoint checkpoint = syncState.getCheckpoint().orElseThrow();
 
     final BlockHeader checkpointBlockHeader = target.peer().getCheckpointHeader().orElseThrow();
     final CheckpointSource checkPointSource =
-        new CheckpointSource(
-            syncState,
-            checkpointBlockHeader,
-            protocolSchedule
-                .getByBlockHeader(checkpointBlockHeader)
-                .getBlockHeaderFunctions()
-                .getCheckPointWindowSize(checkpointBlockHeader));
+            new CheckpointSource(
+                    syncState,
+                    checkpointBlockHeader,
+                    protocolSchedule
+                            .getByBlockHeader(checkpointBlockHeader)
+                            .getBlockHeaderFunctions()
+                            .getCheckPointWindowSize(checkpointBlockHeader));
 
     final CheckpointBlockImportStep checkPointBlockImportStep =
-        new CheckpointBlockImportStep(
-            checkPointSource, checkpoint, protocolContext.getBlockchain());
+            new CheckpointBlockImportStep(
+                    checkPointSource, checkpoint, protocolContext.getBlockchain());
 
     final CheckpointDownloadBlockStep checkPointDownloadBlockStep =
-        new CheckpointDownloadBlockStep(protocolSchedule, ethContext, checkpoint, metricsSystem);
+            new CheckpointDownloadBlockStep(protocolSchedule, ethContext, checkpoint, metricsSystem);
 
-    final CheckpointDownloadReceiptsStep checkPointDownloadReceiptsStep =
-        new CheckpointDownloadReceiptsStep(ethContext, metricsSystem);
-    // This is not the checkpoint sync pipeline, this pipeline only downloads the first block then
-    // triggers the snap sync pipeline in FastSyncDownloadPipelineFactory
     return PipelineBuilder.createPipelineFrom(
-            "fetchCheckpoints",
-            checkPointSource,
-            100,
-            metricsSystem.createLabelledCounter(
-                BesuMetricCategory.SYNCHRONIZER,
-                "chain_download_pipeline_processed_total",
-                "Number of header process by each chain download pipeline stage",
-                "step",
-                "action"),
-            true,
-            "checkpointSync")
-        .thenProcessAsyncOrdered("downloadBlock", checkPointDownloadBlockStep, 10)
-        .thenProcessAsyncOrdered("downloadReceipts", checkPointDownloadReceiptsStep, 10)
-        .andFinishWith("importBlock", checkPointBlockImportStep);
+                    "fetchCheckpoints",
+                    checkPointSource,
+                    1,
+                    metricsSystem.createLabelledCounter(
+                            BesuMetricCategory.SYNCHRONIZER,
+                            "chain_download_pipeline_processed_total",
+                            "Number of header process by each chain download pipeline stage",
+                            "step",
+                            "action"),
+                    true,
+                    "checkpointSync")
+            .thenProcessAsyncOrdered("downloadBlock", checkPointDownloadBlockStep::downloadBlock, 1)
+            .andFinishWith("importBlock", checkPointBlockImportStep);
   }
 
   @Override
   protected BlockHeader getCommonAncestor(final SyncTarget target) {
     return target
-        .peer()
-        .getCheckpointHeader()
-        .filter(checkpoint -> checkpoint.getNumber() > target.commonAncestor().getNumber())
-        .orElse(target.commonAncestor());
+            .peer()
+            .getCheckpointHeader()
+            .filter(checkpoint -> checkpoint.getNumber() > target.commonAncestor().getNumber())
+            .orElse(target.commonAncestor());
   }
 }
