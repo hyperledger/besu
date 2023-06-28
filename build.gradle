@@ -1021,7 +1021,6 @@ tasks.register("verifyDistributions") {
 
 dependencies {
   implementation project(':besu')
-  implementation project(':ethereum:evmtool')
   errorprone 'com.google.errorprone:error_prone_core'
 }
 
