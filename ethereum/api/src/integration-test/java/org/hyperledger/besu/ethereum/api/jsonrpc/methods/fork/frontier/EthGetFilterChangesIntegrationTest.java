@@ -259,7 +259,7 @@ public class EthGetFilterChangesIntegrationTest {
       return true;
     } else {
       assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
-      assertThat(((JsonRpcErrorResponse) response).getError())
+      assertThat(((JsonRpcErrorResponse) response).getErrorType())
           .isEqualTo(RpcErrorType.FILTER_NOT_FOUND);
       return false;
     }
