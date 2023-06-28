@@ -20,12 +20,12 @@ import org.junit.jupiter.api.Test;
 
 public class CancunGasCalculatorTest {
 
-  private final GasCalculator gasCalculator = new CancunGasCalculator();
+  private final CancunGasCalculator gasCalculator = new CancunGasCalculator();
 
   @Test
   public void shouldCalculateExcessDataGasCorrectly() {
 
-    long target = CancunGasCalculator.getTargetDataGasPerBlock();
+    long target = gasCalculator.getTargetDataGasPerBlock();
     long excess = 1L;
 
     assertThat(gasCalculator.computeExcessDataGas(0L, 0L)).isEqualTo(0);
