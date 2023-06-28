@@ -81,6 +81,6 @@ public class BftHelpers {
             .blockHeaderFunctions(BftBlockHeaderFunctions.forOnchainBlock(bftExtraDataCodec))
             .buildBlockHeader();
 
-    return new Block(sealedHeader, block.getBody(), false);
+    return new Block(sealedHeader, block.getBody());
   }
 }

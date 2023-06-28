@@ -523,7 +523,6 @@ public class Transaction
     return sender;
   }
 
-
   public Optional<Bytes> getRlp() {
     return rlp;
   }
@@ -625,24 +624,19 @@ public class Transaction
     return size;
   }
 
-  /**
-   * Calculate and store the hash of a transaction
-   */
+  /** Calculate and store the hash of a transaction */
   private void memoizeHash() {
     final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this);
     hash = Hash.hash(bytes);
   }
 
-  /**
-   * Calculate and store the encoded size of a transaction
-   */
+  /** Calculate and store the encoded size of a transaction */
   private void memoizeSize() {
     final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this);
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     TransactionEncoder.encodeForWire(transactionType, bytes, rlpOutput);
     size = rlpOutput.encodedSize();
   }
-
 
   /**
    * Returns whether the transaction is a contract creation

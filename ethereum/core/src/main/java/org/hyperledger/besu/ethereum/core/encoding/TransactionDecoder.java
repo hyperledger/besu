@@ -69,7 +69,7 @@ public class TransactionDecoder {
       final TransactionType transactionType =
           TransactionType.of(typedTransactionBytes.get(0) & 0xff);
       Transaction decode =
-              getDecoder(transactionType).decode(RLP.input(typedTransactionBytes.slice(1)));
+          getDecoder(transactionType).decode(RLP.input(typedTransactionBytes.slice(1)));
       decode.setRlp(Optional.of(typedTransactionBytes));
       return decode;
     }

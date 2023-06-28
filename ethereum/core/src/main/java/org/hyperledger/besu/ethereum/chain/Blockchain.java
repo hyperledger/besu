@@ -83,7 +83,7 @@ public interface Blockchain {
     final BlockBody body =
         getBlockBody(chainHeadHash)
             .orElseThrow(() -> new IllegalStateException("Missing chain head body."));
-    return new Block(header, body, false);
+    return new Block(header, body);
   }
 
   default Block getGenesisBlock() {
@@ -101,7 +101,7 @@ public interface Blockchain {
 
   default Optional<Block> getBlockByHash(final Hash blockHash) {
     return getBlockHeader(blockHash)
-        .flatMap(header -> getBlockBody(blockHash).map(body -> new Block(header, body, false)));
+        .flatMap(header -> getBlockBody(blockHash).map(body -> new Block(header, body)));
   }
 
   default Optional<Block> getBlockByNumber(final long number) {

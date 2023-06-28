@@ -135,7 +135,7 @@ public class PkiQbftBlockCreator implements BlockCreator {
     LOG.debug("Created CMS with signed hash {} for block {}", hashWithoutCms, newHeader.getHash());
 
     return new BlockCreationResult(
-        new Block(newHeader, block.getBody(), false),
+        new Block(newHeader, block.getBody()),
         blockCreationResult.getTransactionSelectionResults());
   }
 }

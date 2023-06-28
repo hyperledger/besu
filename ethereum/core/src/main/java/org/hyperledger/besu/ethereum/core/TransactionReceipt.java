@@ -271,13 +271,14 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     if (firstElement.raw().size() == 1) {
       final int status = firstElement.readIntScalar();
       input.leaveList();
-      transactionReceipt = new TransactionReceipt(
-          transactionType, status, cumulativeGas, logs, bloomFilter, revertReason);
+      transactionReceipt =
+          new TransactionReceipt(
+              transactionType, status, cumulativeGas, logs, bloomFilter, revertReason);
     } else {
       final Hash stateRoot = Hash.wrap(firstElement.readBytes32());
       input.leaveList();
       transactionReceipt =
-              new TransactionReceipt(
+          new TransactionReceipt(
               transactionType, stateRoot, cumulativeGas, logs, bloomFilter, revertReason);
     }
     transactionReceipt.setRlp(Optional.of(raw));
@@ -352,7 +353,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
   }
 
   public Optional<Bytes> getRlp() {
-      return rlp;
+    return rlp;
   }
 
   public void setRlp(final Optional<Bytes> rlp) {

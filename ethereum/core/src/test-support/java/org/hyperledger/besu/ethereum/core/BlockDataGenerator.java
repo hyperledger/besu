@@ -248,7 +248,7 @@ public class BlockDataGenerator {
     final BlockBody body =
         blockNumber == BlockHeader.GENESIS_BLOCK_NUMBER ? BlockBody.empty() : body(options);
     final BlockHeader header = header(blockNumber, body, options);
-    return new Block(header, body, false);
+    return new Block(header, body);
   }
 
   public Block block() {

@@ -79,7 +79,7 @@ public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipel
         new CheckpointDownloadBlockStep(protocolSchedule, ethContext, checkpoint, metricsSystem);
 
     final CheckpointDownloadReceiptsStep checkPointDownloadReceiptsStep =
-            new CheckpointDownloadReceiptsStep(ethContext, metricsSystem);
+        new CheckpointDownloadReceiptsStep(ethContext, metricsSystem);
     // This is not the checkpoint sync pipeline, this pipeline only downloads the first block then
     // triggers the snap sync pipeline in FastSyncDownloadPipelineFactory
     return PipelineBuilder.createPipelineFrom(
@@ -94,9 +94,9 @@ public class CheckpointSyncDownloadPipelineFactory extends FastSyncDownloadPipel
                 "action"),
             true,
             "checkpointSync")
-            .thenProcessAsyncOrdered("downloadBlock", checkPointDownloadBlockStep, 10)
-            .thenProcessAsyncOrdered("downloadReceipts", checkPointDownloadReceiptsStep, 10)
-            .andFinishWith("importBlock", checkPointBlockImportStep);
+        .thenProcessAsyncOrdered("downloadBlock", checkPointDownloadBlockStep, 10)
+        .thenProcessAsyncOrdered("downloadReceipts", checkPointDownloadReceiptsStep, 10)
+        .andFinishWith("importBlock", checkPointBlockImportStep);
   }
 
   @Override

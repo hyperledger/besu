@@ -102,7 +102,7 @@ public class BftBlockInterface implements BlockInterface {
 
     final BlockHeader newHeader = headerBuilder.buildBlockHeader();
 
-    return new Block(newHeader, block.getBody(), false);
+    return new Block(newHeader, block.getBody());
   }
 
   /**

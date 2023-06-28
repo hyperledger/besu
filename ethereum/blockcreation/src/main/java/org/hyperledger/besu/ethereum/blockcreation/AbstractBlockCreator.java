@@ -259,7 +259,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           new Block(
               blockHeader,
               new BlockBody(
-                  transactionResults.getTransactions(), ommers, withdrawals, maybeDeposits), true);
+                  transactionResults.getTransactions(), ommers, withdrawals, maybeDeposits),
+              true,
+              true);
       return new BlockCreationResult(block, transactionResults);
     } catch (final SecurityModuleException ex) {
       throw new IllegalStateException("Failed to create block signature", ex);

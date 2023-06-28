@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetReceiptsFromPeerTask;
-
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
@@ -28,32 +27,32 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-public class CheckpointDownloadReceiptsStep implements Function<PeerTaskResult<Block>, CompletableFuture<Optional<BlockWithReceipts>>> {
+public class CheckpointDownloadReceiptsStep
+    implements Function<PeerTaskResult<Block>, CompletableFuture<Optional<BlockWithReceipts>>> {
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
 
-  public CheckpointDownloadReceiptsStep(final EthContext ethContext,  final MetricsSystem metricsSystem)
-  {
+  public CheckpointDownloadReceiptsStep(
+      final EthContext ethContext, final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
   }
 
-
   @Override
-  public CompletableFuture<Optional<BlockWithReceipts>> apply(final PeerTaskResult<Block> peerTaskResult) {
+  public CompletableFuture<Optional<BlockWithReceipts>> apply(
+      final PeerTaskResult<Block> peerTaskResult) {
     final Block block = peerTaskResult.getResult();
     final GetReceiptsFromPeerTask getReceiptsFromPeerTask =
-            GetReceiptsFromPeerTask.forHeaders(ethContext, List.of(block.getHeader()), metricsSystem);
+        GetReceiptsFromPeerTask.forHeaders(ethContext, List.of(block.getHeader()), metricsSystem);
 
-      return getReceiptsFromPeerTask
-              .run()
-              .thenCompose(
-                      receiptTaskResult -> {
-                        final Optional<List<TransactionReceipt>> transactionReceipts =
-                                Optional.ofNullable(receiptTaskResult.getResult().get(block.getHeader()));
-                        return CompletableFuture.completedFuture(
-                                transactionReceipts.map(receipts -> new BlockWithReceipts(block, receipts)));
-                      });
-
+    return getReceiptsFromPeerTask
+        .run()
+        .thenCompose(
+            receiptTaskResult -> {
+              final Optional<List<TransactionReceipt>> transactionReceipts =
+                  Optional.ofNullable(receiptTaskResult.getResult().get(block.getHeader()));
+              return CompletableFuture.completedFuture(
+                  transactionReceipts.map(receipts -> new BlockWithReceipts(block, receipts)));
+            });
   }
 }

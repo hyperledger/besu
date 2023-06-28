@@ -89,7 +89,7 @@ public final class GenesisState {
     final Block block =
         new Block(
             buildHeader(config, calculateGenesisStateHash(genesisAccounts), protocolSchedule),
-            buildBody(config), false);
+            buildBody(config));
     return new GenesisState(block, genesisAccounts);
   }
 

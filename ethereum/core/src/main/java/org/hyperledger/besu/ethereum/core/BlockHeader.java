@@ -247,7 +247,8 @@ public class BlockHeader extends SealableBlockHeader
     final Bytes extraData = rlpInput.readBytes();
     final Bytes32 mixHashOrPrevRandao = rlpInput.readBytes32();
     final long nonce = rlpInput.readLong();
-    final Wei baseFee = !rlpInput.isEndOfCurrentList() ? Wei.of(rlpInput.readUInt256Scalar()) : null;
+    final Wei baseFee =
+        !rlpInput.isEndOfCurrentList() ? Wei.of(rlpInput.readUInt256Scalar()) : null;
     final Hash withdrawalHashRoot =
         !rlpInput.isEndOfCurrentList() ? Hash.wrap(rlpInput.readBytes32()) : null;
     final DataGas excessDataGas =
@@ -255,27 +256,28 @@ public class BlockHeader extends SealableBlockHeader
     final Hash depositHashRoot =
         !rlpInput.isEndOfCurrentList() ? Hash.wrap(rlpInput.readBytes32()) : null;
     rlpInput.leaveList();
-    final BlockHeader blockHeader = new BlockHeader(
-        parentHash,
-        ommersHash,
-        coinbase,
-        stateRoot,
-        transactionsRoot,
-        receiptsRoot,
-        logsBloom,
-        difficulty,
-        number,
-        gasLimit,
-        gasUsed,
-        timestamp,
-        extraData,
-        baseFee,
-        mixHashOrPrevRandao,
-        nonce,
-        withdrawalHashRoot,
-        excessDataGas,
-        depositHashRoot,
-        blockHeaderFunctions);
+    final BlockHeader blockHeader =
+        new BlockHeader(
+            parentHash,
+            ommersHash,
+            coinbase,
+            stateRoot,
+            transactionsRoot,
+            receiptsRoot,
+            logsBloom,
+            difficulty,
+            number,
+            gasLimit,
+            gasUsed,
+            timestamp,
+            extraData,
+            baseFee,
+            mixHashOrPrevRandao,
+            nonce,
+            withdrawalHashRoot,
+            excessDataGas,
+            depositHashRoot,
+            blockHeaderFunctions);
     blockHeader.setRlp(Optional.of(raw));
     return blockHeader;
   }

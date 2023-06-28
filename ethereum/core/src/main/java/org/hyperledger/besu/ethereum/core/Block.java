@@ -27,12 +27,25 @@ public class Block {
 
   private final BlockHeader header;
   private final BlockBody body;
-  private final boolean transactionAndReceiptRootVerified;
+  private final boolean transactionsRootVerified;
+  private boolean receiptsRootVerified;
 
-  public Block(final BlockHeader header, final BlockBody body, final boolean verified) {
+  public Block(final BlockHeader header, final BlockBody body) {
     this.header = header;
     this.body = body;
-    this.transactionAndReceiptRootVerified = verified;
+    this.transactionsRootVerified = false;
+    this.receiptsRootVerified = false;
+  }
+
+  public Block(
+      final BlockHeader header,
+      final BlockBody body,
+      final boolean transactionsRootVerified,
+      final boolean receiptsRootVerified) {
+    this.header = header;
+    this.body = body;
+    this.transactionsRootVerified = transactionsRootVerified;
+    this.receiptsRootVerified = receiptsRootVerified;
   }
 
   public BlockHeader getHeader() {
@@ -55,8 +68,16 @@ public class Block {
     return toRlp().size();
   }
 
-  public boolean isTransactionAndReceiptRootVerified() {
-    return transactionAndReceiptRootVerified;
+  public boolean isTransactionsRootVerified() {
+    return transactionsRootVerified;
+  }
+
+  public boolean isReceiptsRootVerified() {
+    return receiptsRootVerified;
+  }
+
+  public void setReceiptsRootVerified(final boolean receiptsRootVerified) {
+    this.receiptsRootVerified = receiptsRootVerified;
   }
 
   public void writeTo(final RLPOutput out) {
@@ -74,7 +95,7 @@ public class Block {
     final BlockBody body = BlockBody.readFrom(in, hashFunction);
     in.leaveList();
 
-    return new Block(header, body, false);
+    return new Block(header, body);
   }
 
   @Override

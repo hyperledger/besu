@@ -27,7 +27,8 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-public class CheckpointDownloadBlockStep implements Function<Hash, CompletableFuture<PeerTaskResult<Block>>> {
+public class CheckpointDownloadBlockStep
+    implements Function<Hash, CompletableFuture<PeerTaskResult<Block>>> {
 
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
@@ -48,15 +49,13 @@ public class CheckpointDownloadBlockStep implements Function<Hash, CompletableFu
   @Override
   public CompletableFuture<PeerTaskResult<Block>> apply(final Hash hash) {
     final GetBlockFromPeerTask getBlockFromPeerTask =
-            GetBlockFromPeerTask.create(
-                    protocolSchedule,
-                    ethContext,
-                    Optional.of(hash),
-                    checkpoint.blockNumber(),
-                    metricsSystem);
+        GetBlockFromPeerTask.create(
+            protocolSchedule,
+            ethContext,
+            Optional.of(hash),
+            checkpoint.blockNumber(),
+            metricsSystem);
 
-      return getBlockFromPeerTask
-              .run();
-
+    return getBlockFromPeerTask.run();
   }
 }

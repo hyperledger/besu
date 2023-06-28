@@ -82,7 +82,9 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
                     header ->
                         new Block(
                             header,
-                            createEmptyBodyBasedOnProtocolSchedule(protocolSchedule, header), false)));
+                            createEmptyBodyBasedOnProtocolSchedule(protocolSchedule, header),
+                            false,
+                            false)));
   }
 
   @NotNull

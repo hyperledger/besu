@@ -168,7 +168,7 @@ public class BlockReplay {
     if (blockHeader != null) {
       final BlockBody blockBody = blockchain.getBlockBody(blockHeader.getHash()).orElse(null);
       if (blockBody != null) {
-        return Optional.of(new Block(blockHeader, blockBody, false));
+        return Optional.of(new Block(blockHeader, blockBody));
       }
     }
     return Optional.empty();
