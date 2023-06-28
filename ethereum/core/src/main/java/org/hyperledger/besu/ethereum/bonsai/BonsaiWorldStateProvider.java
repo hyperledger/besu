@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
+import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -64,8 +65,8 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
   private final TrieLogManager trieLogManager;
   private final BonsaiWorldState persistedState;
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
-
   private final CachedMerkleTrieLoader cachedMerkleTrieLoader;
+  private final WorldStateProofProvider worldStateProof;
 
   public BonsaiWorldStateProvider(
       final StorageProvider provider,
@@ -110,6 +111,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
             blockHeader ->
                 this.trieLogManager.addCachedLayer(
                     blockHeader, persistedState.worldStateRootHash, persistedState));
+    this.worldStateProof = new WorldStateProofProvider(worldStateStorage);
   }
 
   @VisibleForTesting
@@ -129,6 +131,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
             blockHeader ->
                 this.trieLogManager.addCachedLayer(
                     blockHeader, persistedState.worldStateRootHash, persistedState));
+    this.worldStateProof = new WorldStateProofProvider(worldStateStorage);
   }
 
   @Override
@@ -372,8 +375,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
       final Hash worldStateRoot,
       final Address accountAddress,
       final List<UInt256> accountStorageKeys) {
-    // FIXME we can do proofs for layered tries and the persisted trie
-    return Optional.empty();
+    return worldStateProof.getAccountProof(worldStateRoot, accountAddress, accountStorageKeys);
   }
 
   @Override
