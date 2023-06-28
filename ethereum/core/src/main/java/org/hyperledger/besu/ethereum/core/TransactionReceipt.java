@@ -243,7 +243,6 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     } else {
       input = rlpInput.readAsRlp();
       raw = input.raw();
-      input.reset();
     }
 
     input.enterList();
