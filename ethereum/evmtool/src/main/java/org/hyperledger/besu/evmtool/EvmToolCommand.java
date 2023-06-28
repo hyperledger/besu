@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -52,10 +53,15 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.time.Instant;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Deque;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.NavigableMap;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
@@ -241,8 +247,38 @@ public class EvmToolCommand implements Runnable {
             .addPattern("^--trace.(\\w(-|\\w)*)$", "--trace.no$1", "--trace.[no]$1")
             .build());
 
+    // Enumerate forks to support execution-spec-tests
+    addForkHelp(commandLine.getSubcommands().get("t8n"));
+    addForkHelp(commandLine.getSubcommands().get("t8n-server"));
+
     commandLine.setExecutionStrategy(new CommandLine.RunLast());
     commandLine.execute(args);
+  }
+
+  private static void addForkHelp(final CommandLine subCommandLine) {
+    subCommandLine
+        .getHelpSectionMap()
+        .put("forks_header", help -> help.createHeading("%nKnown Forks:%n"));
+    subCommandLine
+        .getHelpSectionMap()
+        .put(
+            "forks",
+            help ->
+                help.createTextTable(
+                        Arrays.stream(EvmSpecVersion.values())
+                            .collect(
+                                Collectors.toMap(
+                                    EvmSpecVersion::getName,
+                                    EvmSpecVersion::getDescription,
+                                    (a, b) -> b,
+                                    LinkedHashMap::new)))
+                    .toString());
+    List<String> keys = new ArrayList<>(subCommandLine.getHelpSectionKeys());
+    int index = keys.indexOf(CommandLine.Model.UsageMessageSpec.SECTION_KEY_FOOTER_HEADING);
+    keys.add(index, "forks_header");
+    keys.add(index + 1, "forks");
+
+    subCommandLine.setHelpSectionKeys(keys);
   }
 
   @Override
