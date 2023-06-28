@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.response;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -24,11 +25,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class JsonRpcUnauthorizedResponse implements JsonRpcResponse {
 
   private final Object id;
-  private final RpcErrorType error;
+  private final JsonRpcError error;
 
-  public JsonRpcUnauthorizedResponse(final Object id, final RpcErrorType error) {
+  public JsonRpcUnauthorizedResponse(final Object id, final JsonRpcError error) {
     this.id = id;
     this.error = error;
+  }
+
+  public JsonRpcUnauthorizedResponse(final Object id, final RpcErrorType error) {
+    this(id, new JsonRpcError(error));
   }
 
   @JsonGetter("id")
@@ -37,7 +42,7 @@ public class JsonRpcUnauthorizedResponse implements JsonRpcResponse {
   }
 
   @JsonGetter("error")
-  public RpcErrorType getError() {
+  public JsonRpcError getError() {
     return error;
   }
 
@@ -56,11 +61,19 @@ public class JsonRpcUnauthorizedResponse implements JsonRpcResponse {
       return false;
     }
     final JsonRpcUnauthorizedResponse that = (JsonRpcUnauthorizedResponse) o;
-    return Objects.equals(id, that.id) && error == that.error;
+    return Objects.equals(id, that.id) && Objects.equals(error, that.error);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(id, error);
+  }
+
+  @JsonIgnore
+  public RpcErrorType getErrorType() {
+    return Arrays.stream(RpcErrorType.values())
+        .filter(e -> e.getCode() == error.getCode() && e.getMessage().equals(error.getMessage()))
+        .findFirst()
+        .get();
   }
 }

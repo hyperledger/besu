@@ -108,7 +108,7 @@ public class EthFeeHistoryTest {
   public void cantGetBlockHigherThanChainHead() {
     assertThat(
             ((JsonRpcErrorResponse) feeHistoryRequest("0x2", "11", new double[] {100.0}))
-                .getError())
+                .getErrorType())
         .isEqualTo(RpcErrorType.INVALID_PARAMS);
   }
 
@@ -116,11 +116,11 @@ public class EthFeeHistoryTest {
   public void blockCountBounds() {
     assertThat(
             ((JsonRpcErrorResponse) feeHistoryRequest("0x0", "latest", new double[] {100.0}))
-                .getError())
+                .getErrorType())
         .isEqualTo(RpcErrorType.INVALID_PARAMS);
     assertThat(
             ((JsonRpcErrorResponse) feeHistoryRequest("0x401", "latest", new double[] {100.0}))
-                .getError())
+                .getErrorType())
         .isEqualTo(RpcErrorType.INVALID_PARAMS);
   }
 

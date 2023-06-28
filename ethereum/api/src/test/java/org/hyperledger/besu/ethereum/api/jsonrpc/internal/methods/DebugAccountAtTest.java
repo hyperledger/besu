@@ -97,7 +97,7 @@ class DebugAccountAtTest {
     final JsonRpcResponse response = debugAccountAt.response(request);
 
     Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
-    Assertions.assertThat(((JsonRpcErrorResponse) response).getError())
+    Assertions.assertThat(((JsonRpcErrorResponse) response).getErrorType())
         .isEqualByComparingTo(RpcErrorType.BLOCK_NOT_FOUND);
   }
 
@@ -112,7 +112,7 @@ class DebugAccountAtTest {
     final JsonRpcResponse response = debugAccountAt.response(request);
 
     Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
-    Assertions.assertThat(((JsonRpcErrorResponse) response).getError())
+    Assertions.assertThat(((JsonRpcErrorResponse) response).getErrorType())
         .isEqualByComparingTo(RpcErrorType.INVALID_PARAMS);
   }
 
@@ -128,7 +128,7 @@ class DebugAccountAtTest {
     final JsonRpcResponse response = debugAccountAt.response(request);
 
     Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
-    Assertions.assertThat(((JsonRpcErrorResponse) response).getError())
+    Assertions.assertThat(((JsonRpcErrorResponse) response).getErrorType())
         .isEqualByComparingTo(RpcErrorType.INVALID_PARAMS);
   }
 
@@ -144,7 +144,7 @@ class DebugAccountAtTest {
     final JsonRpcResponse response = debugAccountAt.response(request);
 
     Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
-    Assertions.assertThat(((JsonRpcErrorResponse) response).getError())
+    Assertions.assertThat(((JsonRpcErrorResponse) response).getErrorType())
         .isEqualByComparingTo(RpcErrorType.INVALID_PARAMS);
   }
 
@@ -169,7 +169,7 @@ class DebugAccountAtTest {
     final JsonRpcResponse response = debugAccountAt.response(request);
 
     Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
-    Assertions.assertThat(((JsonRpcErrorResponse) response).getError())
+    Assertions.assertThat(((JsonRpcErrorResponse) response).getErrorType())
         .isEqualByComparingTo(RpcErrorType.TRANSACTION_NOT_FOUND);
   }
 
@@ -194,7 +194,7 @@ class DebugAccountAtTest {
     final JsonRpcResponse response = debugAccountAt.response(request);
 
     Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
-    Assertions.assertThat(((JsonRpcErrorResponse) response).getError())
+    Assertions.assertThat(((JsonRpcErrorResponse) response).getErrorType())
         .isEqualByComparingTo(RpcErrorType.NO_ACCOUNT_FOUND);
   }
 

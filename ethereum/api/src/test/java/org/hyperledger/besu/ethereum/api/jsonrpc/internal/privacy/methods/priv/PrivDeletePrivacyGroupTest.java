@@ -79,7 +79,7 @@ public class PrivDeletePrivacyGroupTest {
 
     final JsonRpcErrorResponse response =
         (JsonRpcErrorResponse) privDeletePrivacyGroup.response(request);
-    assertThat(response.getError()).isEqualTo(RpcErrorType.DELETE_PRIVACY_GROUP_ERROR);
+    assertThat(response.getErrorType()).isEqualTo(RpcErrorType.DELETE_PRIVACY_GROUP_ERROR);
     verify(privacyController).deletePrivacyGroup(PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY);
   }
 

@@ -75,7 +75,7 @@ public class MultiTenancyRpcMethodDecoratorTest {
     final JsonRpcResponse response = tokenRpcDecorator.response(rpcRequestContext);
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.UNAUTHORIZED);
     final JsonRpcUnauthorizedResponse errorResponse = (JsonRpcUnauthorizedResponse) response;
-    assertThat(errorResponse.getError()).isEqualTo(RpcErrorType.UNAUTHORIZED);
+    assertThat(errorResponse.getErrorType()).isEqualTo(RpcErrorType.UNAUTHORIZED);
   }
 
   @Test
@@ -91,6 +91,6 @@ public class MultiTenancyRpcMethodDecoratorTest {
     final JsonRpcResponse response = tokenRpcDecorator.response(rpcRequestContext);
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
-    assertThat(errorResponse.getError()).isEqualTo(RpcErrorType.INVALID_REQUEST);
+    assertThat(errorResponse.getErrorType()).isEqualTo(RpcErrorType.INVALID_REQUEST);
   }
 }

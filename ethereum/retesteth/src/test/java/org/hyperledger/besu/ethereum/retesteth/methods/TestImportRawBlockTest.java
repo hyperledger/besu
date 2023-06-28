@@ -72,7 +72,7 @@ public class TestImportRawBlockTest {
 
     final var response = test_importRawBlock.response(request);
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
-    assertThat(((JsonRpcErrorResponse) response).getError())
+    assertThat(((JsonRpcErrorResponse) response).getErrorType())
         .isEqualTo(RpcErrorType.BLOCK_IMPORT_ERROR);
   }
 
@@ -87,7 +87,7 @@ public class TestImportRawBlockTest {
 
     final var response = test_importRawBlock.response(request);
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
-    assertThat(((JsonRpcErrorResponse) response).getError())
+    assertThat(((JsonRpcErrorResponse) response).getErrorType())
         .isEqualTo(RpcErrorType.BLOCK_RLP_IMPORT_ERROR);
   }
 

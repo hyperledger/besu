@@ -85,7 +85,7 @@ public class JsonRpcObjectExecutor extends AbstractJsonRpcExecutor {
   private static HttpResponseStatus status(final JsonRpcResponse response) {
     return switch (response.getType()) {
       case UNAUTHORIZED -> HttpResponseStatus.UNAUTHORIZED;
-      case ERROR -> statusCodeFromError(((JsonRpcErrorResponse) response).getError());
+      case ERROR -> statusCodeFromError(((JsonRpcErrorResponse) response).getErrorType());
       default -> HttpResponseStatus.OK;
     };
   }

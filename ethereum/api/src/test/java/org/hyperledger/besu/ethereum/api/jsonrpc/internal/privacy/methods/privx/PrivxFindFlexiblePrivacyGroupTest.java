@@ -94,7 +94,7 @@ public class PrivxFindFlexiblePrivacyGroupTest {
 
     final JsonRpcErrorResponse response =
         (JsonRpcErrorResponse) privxFindFlexiblePrivacyGroup.response(request);
-    assertThat(response.getError()).isEqualTo(RpcErrorType.FIND_FLEXIBLE_PRIVACY_GROUP_ERROR);
+    assertThat(response.getErrorType()).isEqualTo(RpcErrorType.FIND_FLEXIBLE_PRIVACY_GROUP_ERROR);
     verify(privacyController).findPrivacyGroupByMembers(ADDRESSES, ENCLAVE_PUBLIC_KEY);
   }
 

@@ -139,7 +139,7 @@ public class EthGetBlockByNumberTest {
     JsonRpcResponse resp = method.response(requestWithParams("finalized", "false"));
     assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
     JsonRpcErrorResponse errorResp = (JsonRpcErrorResponse) resp;
-    assertThat(errorResp.getError()).isEqualTo(RpcErrorType.UNKNOWN_BLOCK);
+    assertThat(errorResp.getErrorType()).isEqualTo(RpcErrorType.UNKNOWN_BLOCK);
   }
 
   @Test
@@ -147,7 +147,7 @@ public class EthGetBlockByNumberTest {
     JsonRpcResponse resp = method.response(requestWithParams("safe", "false"));
     assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
     JsonRpcErrorResponse errorResp = (JsonRpcErrorResponse) resp;
-    assertThat(errorResp.getError()).isEqualTo(RpcErrorType.UNKNOWN_BLOCK);
+    assertThat(errorResp.getErrorType()).isEqualTo(RpcErrorType.UNKNOWN_BLOCK);
   }
 
   @Test

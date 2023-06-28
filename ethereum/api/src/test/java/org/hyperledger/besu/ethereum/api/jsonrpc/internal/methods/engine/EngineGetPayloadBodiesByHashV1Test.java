@@ -264,7 +264,7 @@ public class EngineGetPayloadBodiesByHashV1Test {
     assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
     return Optional.of(resp)
         .map(JsonRpcErrorResponse.class::cast)
-        .map(JsonRpcErrorResponse::getError)
+        .map(JsonRpcErrorResponse::getErrorType)
         .get();
   }
 }

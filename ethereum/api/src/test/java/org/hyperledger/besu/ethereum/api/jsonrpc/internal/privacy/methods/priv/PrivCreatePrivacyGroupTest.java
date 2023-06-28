@@ -270,7 +270,7 @@ public class PrivCreatePrivacyGroupTest {
     final JsonRpcErrorResponse response =
         (JsonRpcErrorResponse) privCreatePrivacyGroup.response(request);
 
-    final RpcErrorType result = response.getError();
+    final RpcErrorType result = response.getErrorType();
 
     assertThat(result).isEqualTo(RpcErrorType.ENCLAVE_ERROR);
   }

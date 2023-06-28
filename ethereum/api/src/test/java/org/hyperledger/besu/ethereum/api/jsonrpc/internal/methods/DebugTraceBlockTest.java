@@ -165,6 +165,6 @@ public class DebugTraceBlockTest {
     when(blockchainQueries.blockByHash(any())).thenReturn(Optional.empty());
 
     final JsonRpcErrorResponse response = (JsonRpcErrorResponse) debugTraceBlock.response(request);
-    assertThat(response.getError()).isEqualByComparingTo(RpcErrorType.PARENT_BLOCK_NOT_FOUND);
+    assertThat(response.getErrorType()).isEqualByComparingTo(RpcErrorType.PARENT_BLOCK_NOT_FOUND);
   }
 }

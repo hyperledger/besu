@@ -766,7 +766,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
 
     var errorResp = (JsonRpcErrorResponse) resp;
-    assertThat(errorResp.getError()).isEqualTo(jsonRpcError);
+    assertThat(errorResp.getErrorType()).isEqualTo(jsonRpcError);
     assertThat(errorResp.getError().getMessage()).isEqualTo(jsonRpcError.getMessage());
   }
 }

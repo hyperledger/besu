@@ -91,7 +91,7 @@ class PrivGetEeaTransactionCountTest {
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
 
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
-    assertThat(errorResponse.getError())
+    assertThat(errorResponse.getErrorType())
         .isEqualTo(RpcErrorType.GET_PRIVATE_TRANSACTION_NONCE_ERROR);
   }
 
@@ -107,7 +107,7 @@ class PrivGetEeaTransactionCountTest {
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
 
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
-    assertThat(errorResponse.getError())
+    assertThat(errorResponse.getErrorType())
         .isEqualTo(RpcErrorType.GET_PRIVATE_TRANSACTION_NONCE_ERROR);
   }
 
@@ -123,7 +123,7 @@ class PrivGetEeaTransactionCountTest {
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
 
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
-    assertThat(errorResponse.getError())
+    assertThat(errorResponse.getErrorType())
         .isEqualTo(RpcErrorType.GET_PRIVATE_TRANSACTION_NONCE_ERROR);
   }
 
