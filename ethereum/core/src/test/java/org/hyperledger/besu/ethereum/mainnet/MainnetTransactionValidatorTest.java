@@ -33,6 +33,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Sha256Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -42,7 +43,7 @@ import org.hyperledger.besu.ethereum.core.blobs.Blob;
 import org.hyperledger.besu.ethereum.core.blobs.BlobsWithCommitments;
 import org.hyperledger.besu.ethereum.core.blobs.KZGCommitment;
 import org.hyperledger.besu.ethereum.core.blobs.KZGProof;
-import org.hyperledger.besu.ethereum.core.blobs.VersionedHash;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.account.Account;
@@ -550,7 +551,7 @@ public class MainnetTransactionValidatorTest {
     }
     assertThat(commitment.size()).isEqualTo(48);
     Bytes proof = Bytes.wrap(CKZG4844JNI.computeBlobKzgProof(rawMaterial, commitment.toArray()));
-    VersionedHash versionedHash = new VersionedHash((byte) 1, Hash.sha256(commitment));
+    VersionedHash versionedHash = new VersionedHash((byte) 1, Sha256Hash.sha256(commitment));
     BlobsWithCommitments bwc =
         new BlobsWithCommitments(
             List.of(new KZGCommitment(commitment)),

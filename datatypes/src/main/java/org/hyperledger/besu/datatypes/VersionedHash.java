@@ -13,9 +13,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.besu.ethereum.core.blobs;
-
-import org.hyperledger.besu.datatypes.Hash;
+package org.hyperledger.besu.datatypes;
 
 import java.util.Objects;
 
