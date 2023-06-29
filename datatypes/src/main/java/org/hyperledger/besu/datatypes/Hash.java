@@ -61,7 +61,6 @@ public class Hash extends DelegatingBytes32 {
     return new Hash(keccak256(value));
   }
 
-
   /**
    * Wrap bytes to hash.
    *

@@ -22,8 +22,6 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * The DataHash operation. https://eips.ethereum.org/EIPS/eip-4844
@@ -52,8 +50,8 @@ public class DataHashOperation extends AbstractOperation {
     if (frame.getVersionedHashes().isPresent()) {
       List<VersionedHash> versionedHashes = frame.getVersionedHashes().get();
       Bytes trimmedIndex = versionedHashIndexParam.trimLeadingZeros();
-      if(trimmedIndex.size() > 4) {
-        //won't fit in an int
+      if (trimmedIndex.size() > 4) {
+        // won't fit in an int
         frame.pushStackItem(Bytes.EMPTY);
         return new OperationResult(3, null);
       }

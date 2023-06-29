@@ -21,13 +21,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
-import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.operation.DataHashOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 
@@ -42,7 +40,8 @@ import org.junit.jupiter.api.Test;
 
 class DataHashOperationTest {
 
-  private static final String testVersionedHash = "0x01cafebabeb0b0facedeadbeefbeef0001cafebabeb0b0facedeadbeefbeef00";
+  private static final String testVersionedHash =
+      "0x01cafebabeb0b0facedeadbeefbeef0001cafebabeb0b0facedeadbeefbeef00";
 
   @Test
   void putsHashOnStack() {
