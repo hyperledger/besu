@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class IbftForksSchedulesFactoryTest
     extends BaseForksSchedulesFactoryTest<BftConfigOptions, MutableBftConfigOptions> {

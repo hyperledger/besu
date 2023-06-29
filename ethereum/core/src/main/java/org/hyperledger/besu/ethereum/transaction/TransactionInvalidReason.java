@@ -46,6 +46,7 @@ public enum TransactionInvalidReason {
   MAX_FEE_PER_GAS_BELOW_CURRENT_BASE_FEE,
   TX_FEECAP_EXCEEDED,
   INTERNAL_ERROR,
+  TX_POOL_DISABLED,
 
   // Private Transaction Invalid Reasons
   PRIVATE_TRANSACTION_INVALID,
