@@ -18,12 +18,24 @@ package org.hyperledger.besu.datatypes;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
+/** A Sha256Hash is a Hash that has been generated using the SHA-256 algorithm. */
 public class Sha256Hash extends Hash {
 
+  /**
+   * Construct a Sha256Hash from a Bytes32 value.
+   *
+   * @param bytes raw bytes of the hash
+   */
   private Sha256Hash(final Bytes32 bytes) {
     super(bytes);
   }
 
+  /**
+   * Construct a Sha256Hash from a Bytes value.
+   *
+   * @param value The value to hash.
+   * @return The Sha256Hash of the value.
+   */
   public static Hash sha256(final Bytes value) {
     return new Sha256Hash(org.hyperledger.besu.crypto.Hash.sha256(value));
   }
