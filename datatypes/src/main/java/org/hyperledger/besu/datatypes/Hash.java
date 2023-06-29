@@ -47,7 +47,7 @@ public class Hash extends DelegatingBytes32 {
    */
   public static final Hash EMPTY = hash(Bytes.EMPTY);
 
-  private Hash(final Bytes32 bytes) {
+  protected Hash(final Bytes32 bytes) {
     super(bytes);
   }
 
@@ -61,15 +61,6 @@ public class Hash extends DelegatingBytes32 {
     return new Hash(keccak256(value));
   }
 
-  /**
-   * Convert value to sha256 hash.
-   *
-   * @param value the bytes to hash
-   * @return the hash of those bytes
-   */
-  public static Hash sha256(final Bytes value) {
-    return new Hash(org.hyperledger.besu.crypto.Hash.sha256(value));
-  }
 
   /**
    * Wrap bytes to hash.

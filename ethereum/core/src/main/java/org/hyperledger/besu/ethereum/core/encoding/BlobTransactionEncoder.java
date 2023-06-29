@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.blobs.Blob;
 import org.hyperledger.besu.ethereum.core.blobs.KZGCommitment;
 import org.hyperledger.besu.ethereum.core.blobs.KZGProof;
-import org.hyperledger.besu.ethereum.core.blobs.VersionedHash;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
