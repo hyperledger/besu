@@ -7,6 +7,7 @@
 ### Additions and Improvements
 - EvmTool now executes the `execution-spec-tests` via the `t8n` and `b11r`. See the [README](ethereum/evmtool/README.md) in EvmTool for more instructions.
 - Improve lifecycle management of the transaction pool [#5634](https://github.com/hyperledger/besu/pull/5634)
+- Decouple data filed from Enum JsonRpcError by creating new enum holder RpcErrorType[#5629](https://github.com/hyperledger/besu/pull/5629)
 
 ### Bug Fixes
 - Use the node's configuration to determine if DNS enode URLs are allowed in calls to `admin_addPeer` and `admin_removePeer` [#5584](https://github.com/hyperledger/besu/pull/5584)

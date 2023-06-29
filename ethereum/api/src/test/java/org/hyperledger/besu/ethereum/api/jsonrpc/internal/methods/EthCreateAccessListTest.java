@@ -157,8 +157,9 @@ public class EthCreateAccessListTest {
         ethCreateAccessListRequest(legacyTransactionCallParameter(Wei.ZERO));
     mockTransactionSimulatorResult(false, true, 1L);
 
+    final String errorReason = "0x00";
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, new JsonRpcError(RpcErrorType.REVERT_ERROR, "0x00"));
+        new JsonRpcErrorResponse(null, new JsonRpcError(RpcErrorType.REVERT_ERROR, errorReason));
 
     Assertions.assertThat(method.response(request))
         .usingRecursiveComparison()
