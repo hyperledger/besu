@@ -22,8 +22,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProce
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor.PrivateBlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor.PrivateTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor.PrivateTransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.privateTracing.PrivateTraceGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -153,9 +153,9 @@ public abstract class PrivateAbstractTraceByHash implements JsonRpcMethod {
 
   private Stream<FlatTrace> getTraceStream(
       final PrivateTransactionTrace transactionTrace, final Block block) {
-    transactionTrace.getTraceFrames();
-    return FlatTraceGenerator.generateFromTransactionTraceAndBlock(
-            this.protocolSchedule, null, block)
+
+    return PrivateTraceGenerator.generateFromTransactionTraceAndBlock(
+            this.protocolSchedule, transactionTrace, block)
         .map(FlatTrace.class::cast);
   }
 

@@ -356,6 +356,16 @@ public class PrivateTransaction implements org.hyperledger.besu.plugin.data.Priv
   }
 
   /**
+   * Returns the payload if this is a contract creation transaction.
+   *
+   * @return if present the init code
+   */
+  @Override
+  public Optional<Bytes> getInit() {
+    return getTo().isPresent() ? Optional.empty() : Optional.of(payload);
+  }
+
+  /**
    * Return the transaction chain id (if it exists)
    *
    * <p>The {@code OptionalInt} will be {@code OptionalInt.empty()} if the transaction is not tied
