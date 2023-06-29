@@ -44,7 +44,7 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
   private static final long TSTORE_GAS = WARM_STORAGE_READ_COST;
 
   private static final long DATA_GAS_PER_BLOB = 1 << 17;
-  private static final long TARGET_DATA_GAS_PER_BLOCK = 393216L;
+  private static final long TARGET_DATA_GAS_PER_BLOCK = 0x60000;
 
   // EIP-1153
   @Override

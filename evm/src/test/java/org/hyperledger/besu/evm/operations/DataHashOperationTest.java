@@ -22,8 +22,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.operation.DataHashOperation;
@@ -40,10 +42,12 @@ import org.junit.jupiter.api.Test;
 
 class DataHashOperationTest {
 
+  private static final String testVersionedHash = "0x01cafebabeb0b0facedeadbeefbeef0001cafebabeb0b0facedeadbeefbeef00";
+
   @Test
   void putsHashOnStack() {
-    Hash version0Hash = Hash.fromHexStringLenient("0xcafebabeb0b0facedeadbeef");
-    List<Bytes32> versionedHashes = Arrays.asList(version0Hash);
+    VersionedHash version0Hash = new VersionedHash(Bytes32.fromHexStringStrict(testVersionedHash));
+    List<VersionedHash> versionedHashes = Arrays.asList(version0Hash);
     DataHashOperation getHash = new DataHashOperation(new LondonGasCalculator());
     MessageFrame frame = mock(MessageFrame.class);
     when(frame.popStackItem()).thenReturn(Bytes.of(0));
@@ -52,7 +56,7 @@ class DataHashOperationTest {
     Operation.OperationResult r = getHash.execute(frame, fakeEVM);
     assertThat(r.getGasCost()).isEqualTo(3);
     assertThat(r.getHaltReason()).isNull();
-    verify(frame).pushStackItem(version0Hash);
+    verify(frame).pushStackItem(version0Hash.toBytes());
   }
 
   @Test
@@ -60,7 +64,7 @@ class DataHashOperationTest {
 
     EVM fakeEVM = mock(EVM.class);
 
-    DataHashOperation getHash = new DataHashOperation(new ShanghaiGasCalculator());
+    DataHashOperation getHash = new DataHashOperation(new CancunGasCalculator());
     MessageFrame frame = mock(MessageFrame.class);
     when(frame.popStackItem()).thenReturn(Bytes.of(0));
     when(frame.getVersionedHashes()).thenReturn(Optional.empty());
@@ -79,9 +83,9 @@ class DataHashOperationTest {
 
   @Test
   void pushZeroOnVersionIndexOutOFBounds() {
-    Hash version0Hash = Hash.fromHexStringLenient("0xcafebabeb0b0facedeadbeef");
-    List<Bytes32> versionedHashes = Arrays.asList(version0Hash);
-    DataHashOperation getHash = new DataHashOperation(new ShanghaiGasCalculator());
+    VersionedHash version0Hash = new VersionedHash(Bytes32.fromHexStringStrict(testVersionedHash));
+    List<VersionedHash> versionedHashes = Arrays.asList(version0Hash);
+    DataHashOperation getHash = new DataHashOperation(new CancunGasCalculator());
     MessageFrame frame = mock(MessageFrame.class);
     when(frame.popStackItem()).thenReturn(Bytes.of(1));
     when(frame.getVersionedHashes()).thenReturn(Optional.of(versionedHashes));
@@ -94,9 +98,9 @@ class DataHashOperationTest {
 
   @Test
   public void pushZeroWhenPopsMissingUint256SizedIndex() {
-    Hash version0Hash = Hash.fromHexStringLenient("0xcafebabeb0b0facedeadbeef");
-    List<Bytes32> versionedHashes = Arrays.asList(version0Hash);
-    DataHashOperation getHash = new DataHashOperation(new ShanghaiGasCalculator());
+    VersionedHash version0Hash = new VersionedHash(Bytes32.fromHexStringStrict(testVersionedHash));
+    List<VersionedHash> versionedHashes = Arrays.asList(version0Hash);
+    DataHashOperation getHash = new DataHashOperation(new CancunGasCalculator());
     MessageFrame frame = mock(MessageFrame.class);
     when(frame.popStackItem()).thenReturn(Bytes32.repeat((byte) 0x2C));
     when(frame.getVersionedHashes()).thenReturn(Optional.of(versionedHashes));

@@ -18,7 +18,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.blobs.BlobsWithCommitments;
-import org.hyperledger.besu.ethereum.core.blobs.VersionedHash;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.plugin.data.TransactionType;
 

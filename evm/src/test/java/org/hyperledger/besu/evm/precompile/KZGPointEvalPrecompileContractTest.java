@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.io.IOException;
@@ -83,11 +84,11 @@ public class KZGPointEvalPrecompileContractTest {
               final Bytes input = Bytes.fromHexString(testCase.get("Input").asText());
               final boolean valid = testCase.get("Valid").asBoolean();
               return new PrecompileTestParameters(
-                  input, valid, returnValue, Bytes32.wrap(input.slice(0, 32)));
+                  input, valid, returnValue, new VersionedHash(Bytes32.wrap(input.slice(0, 32))));
             })
         .collect(Collectors.toList());
   }
 
   record PrecompileTestParameters(
-      Bytes input, boolean valid, Bytes returnValue, Bytes32 versionedHash) {}
+      Bytes input, boolean valid, Bytes returnValue, VersionedHash versionedHash) {}
 }
