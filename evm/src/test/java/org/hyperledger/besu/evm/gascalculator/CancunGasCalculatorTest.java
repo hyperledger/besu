@@ -17,27 +17,33 @@ package org.hyperledger.besu.evm.gascalculator;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.List;
 
 public class CancunGasCalculatorTest {
 
   private final CancunGasCalculator gasCalculator = new CancunGasCalculator();
 
-  @Test
-  public void shouldCalculateExcessDataGasCorrectly() {
+  @ParameterizedTest(name = "{index} - target gas {0}, excess gas {1}")
+  @MethodSource("dataGasses")
+  public void shouldCalculateExcessDataGasCorrectly(final long target, final long excess, final long expected) {
+    assertThat(gasCalculator.computeExcessDataGas(target, excess)).isEqualTo(expected);
+  }
 
-    long target = gasCalculator.getTargetDataGasPerBlock();
+  static Iterable<Arguments> dataGasses() {
+    long targetGasPerBlock = 0x60000;
     long excess = 1L;
+    return List.of(
+            Arguments.of(0L,0L,0L),
+            Arguments.of(targetGasPerBlock,0L,0L),
+            Arguments.of(0L,targetGasPerBlock,0L),
+            Arguments.of(excess,targetGasPerBlock,excess),
+            Arguments.of(targetGasPerBlock,excess,excess),
+            Arguments.of(targetGasPerBlock,targetGasPerBlock,targetGasPerBlock)
+    );
 
-    assertThat(gasCalculator.computeExcessDataGas(0L, 0L)).isEqualTo(0);
-
-    assertThat(gasCalculator.computeExcessDataGas(target, 0L)).isEqualTo(0);
-
-    assertThat(gasCalculator.computeExcessDataGas(0L, target)).isEqualTo(0);
-
-    assertThat(gasCalculator.computeExcessDataGas(excess, target)).isEqualTo(excess);
-
-    assertThat(gasCalculator.computeExcessDataGas(target, excess)).isEqualTo(excess);
-
-    assertThat(gasCalculator.computeExcessDataGas(target, target)).isEqualTo(target);
   }
 }

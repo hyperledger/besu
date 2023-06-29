@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -47,13 +48,19 @@ public class DataHashOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    Bytes blobIndex = frame.popStackItem();
-    UInt256 blobIndexUInt256 = UInt256.fromBytes(blobIndex);
+    Bytes versionedHashIndexParam = frame.popStackItem();
     if (frame.getVersionedHashes().isPresent()) {
-      List<Bytes32> versionedHashes = frame.getVersionedHashes().get();
-      if (blobIndexUInt256.lessThan(UInt256.valueOf(versionedHashes.size()))) {
-        Bytes32 requested = versionedHashes.get(blobIndexUInt256.toBigInteger().intValue());
-        frame.pushStackItem(requested);
+      List<VersionedHash> versionedHashes = frame.getVersionedHashes().get();
+      Bytes trimmedIndex = versionedHashIndexParam.trimLeadingZeros();
+      if(trimmedIndex.size() > 4) {
+        //won't fit in an int
+        frame.pushStackItem(Bytes.EMPTY);
+        return new OperationResult(3, null);
+      }
+      int versionedHashIndex = trimmedIndex.toInt();
+      if (versionedHashIndex < versionedHashes.size() && versionedHashIndex >= 0) {
+        VersionedHash requested = versionedHashes.get(versionedHashIndex);
+        frame.pushStackItem(requested.toBytes());
       } else {
         frame.pushStackItem(Bytes.EMPTY);
       }
