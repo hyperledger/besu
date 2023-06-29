@@ -67,7 +67,7 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
    *
    * @return The target data gas per block.
    */
-  public static long getTargetDataGasPerBlock() {
+  public long getTargetDataGasPerBlock() {
     return TARGET_DATA_GAS_PER_BLOCK;
   }
 

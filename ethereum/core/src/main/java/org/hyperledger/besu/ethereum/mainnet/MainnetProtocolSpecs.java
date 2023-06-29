@@ -709,6 +709,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.BLOB),
                     SHANGHAI_INIT_CODE_SIZE_LIMIT))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
+        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::cancunBlockHeaderValidator)
         .name("Cancun");
   }
 
