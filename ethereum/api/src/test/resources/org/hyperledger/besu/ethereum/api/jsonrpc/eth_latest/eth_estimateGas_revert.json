@@ -15,9 +15,9 @@
     "id": 3,
     "error": {
       "code": -32000,
-      "message": "Execution reverted"
-    },
-    "data": "0x00"
+      "message": "Execution reverted",
+      "data": "0x00"
+    }
   },
   "statusCode": 200
 }

@@ -41,11 +41,10 @@ public class JsonRpcTestHelper {
       throws Exception {
     // Check all expected fieldnames are set
     final Set<String> fieldNames = json.fieldNames();
-    assertThat(fieldNames.size()).isEqualTo(4);
+    assertThat(fieldNames.size()).isEqualTo(3);
     assertThat(fieldNames.contains("id")).isTrue();
     assertThat(fieldNames.contains("jsonrpc")).isTrue();
     assertThat(fieldNames.contains("error")).isTrue();
-    assertThat(fieldNames.contains("data")).isTrue();
 
     // Check standard field values
     assertIdMatches(json, id);

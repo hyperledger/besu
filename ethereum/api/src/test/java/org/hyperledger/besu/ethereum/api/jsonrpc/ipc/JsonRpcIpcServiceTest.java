@@ -124,7 +124,7 @@ class JsonRpcIpcServiceTest {
             socketPath,
             new JsonRpcExecutor(new BaseJsonRpcProcessor(), Collections.emptyMap()));
     final String expectedResponse =
-        "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"},\"data\":null}\n";
+        "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32600,\"message\":\"Invalid Request\"}}\n";
 
     assertSocketCall(service, socketPath, expectedResponse, Buffer.buffer("{\"foo\":\"bar\"}"));
   }
@@ -135,7 +135,7 @@ class JsonRpcIpcServiceTest {
     final JsonRpcIpcService service =
         new JsonRpcIpcService(vertx, socketPath, mock(JsonRpcExecutor.class));
     final String expectedResponse =
-        "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error\"},\"data\":null}\n";
+        "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error\"}}\n";
 
     assertSocketCall(service, socketPath, expectedResponse, Buffer.buffer("bad request"));
   }
