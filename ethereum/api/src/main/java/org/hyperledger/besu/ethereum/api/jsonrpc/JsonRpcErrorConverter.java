@@ -75,6 +75,8 @@ public class JsonRpcErrorConverter {
         return JsonRpcError.LOWER_NONCE_INVALID_TRANSACTION_EXISTS;
       case TOTAL_DATA_GAS_TOO_HIGH:
         return JsonRpcError.TOTAL_DATA_GAS_TOO_HIGH;
+      case TX_POOL_DISABLED:
+        return JsonRpcError.TX_POOL_DISABLED;
       default:
         return JsonRpcError.INTERNAL_ERROR;
     }

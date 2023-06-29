@@ -44,7 +44,6 @@ import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
-import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -56,15 +55,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
 import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -76,8 +72,6 @@ import picocli.CommandLine.ParentCommand;
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class StateTestSubCommand implements Runnable {
-  private static final Logger LOG = LoggerFactory.getLogger(StateTestSubCommand.class);
-
   public static final String COMMAND_NAME = "state-test";
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
@@ -92,8 +86,6 @@ public class StateTestSubCommand implements Runnable {
   @Parameters
   private final List<Path> stateTestFiles = new ArrayList<>();
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
-
   @SuppressWarnings("unused")
   public StateTestSubCommand() {
     // PicoCLI requires this
@@ -106,9 +98,8 @@ public class StateTestSubCommand implements Runnable {
 
   @Override
   public void run() {
-    LogConfigurator.setLevel("", "OFF");
-    final ObjectMapper stateTestMapper = new ObjectMapper();
-    stateTestMapper.disable(Feature.AUTO_CLOSE_SOURCE);
+    final ObjectMapper stateTestMapper = JsonUtils.createObjectMapper();
+
     final JavaType javaType =
         stateTestMapper
             .getTypeFactory()
@@ -147,7 +138,8 @@ public class StateTestSubCommand implements Runnable {
     } catch (final JsonProcessingException jpe) {
       parentCommand.out.println("File content error: " + jpe);
     } catch (final IOException e) {
-      LOG.error("Unable to read state file", e);
+      System.err.println("Unable to read state file");
+      e.printStackTrace(System.err);
     }
   }
 
@@ -173,6 +165,7 @@ public class StateTestSubCommand implements Runnable {
                 parentCommand.showReturnData)
             : OperationTracer.NO_TRACING;
 
+    final ObjectMapper objectMapper = JsonUtils.createObjectMapper();
     for (final GeneralStateTestCaseEipSpec spec : specs) {
 
       final BlockHeader blockHeader = spec.getBlockHeader();

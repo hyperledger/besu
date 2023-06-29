@@ -154,7 +154,6 @@ public abstract class AbstractTransactionPoolTest {
         spy(
             new TransactionBroadcaster(
                 ethContext,
-                transactions,
                 peerTransactionTracker,
                 transactionsMessageSender,
                 newPooledTransactionHashesMessageSender));
@@ -175,15 +174,19 @@ public abstract class AbstractTransactionPoolTest {
     configConsumer.accept(configBuilder);
     final TransactionPoolConfiguration config = configBuilder.build();
 
-    return new TransactionPool(
-        transactions,
-        protocolSchedule,
-        protocolContext,
-        transactionBroadcaster,
-        ethContext,
-        miningParameters,
-        new TransactionPoolMetrics(metricsSystem),
-        config);
+    final TransactionPool txPool =
+        new TransactionPool(
+            () -> transactions,
+            protocolSchedule,
+            protocolContext,
+            transactionBroadcaster,
+            ethContext,
+            miningParameters,
+            new TransactionPoolMetrics(metricsSystem),
+            config);
+
+    txPool.setEnabled();
+    return txPool;
   }
 
   @ParameterizedTest
@@ -438,7 +441,6 @@ public abstract class AbstractTransactionPoolTest {
 
     verify(transactions).containsTransaction(transaction1);
     verifyNoInteractions(transactionValidator);
-    verifyNoMoreInteractions(transactions);
   }
 
   @Test
