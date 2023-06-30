@@ -109,9 +109,9 @@ public class BonsaiAccount implements MutableAccount, EvmAccount {
     this.codeHash = toCopy.codeHash;
     this.code = toCopy.code;
     updatedStorage.putAll(toCopy.updatedStorage);
+    this.newAccount = toCopy.newAccount;
 
     this.mutable = mutable;
-    this.newAccount = false;
   }
 
   public BonsaiAccount(
