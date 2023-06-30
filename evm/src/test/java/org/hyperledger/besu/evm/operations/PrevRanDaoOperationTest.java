@@ -29,12 +29,12 @@ import org.hyperledger.besu.evm.operation.PrevRanDaoOperation;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class PrevRanDaoOperationTest {
+class PrevRanDaoOperationTest {
 
   @Test
-  public void pushesPrevRandaoWhenDifficultyZero() {
+  void pushesPrevRandaoWhenDifficultyZero() {
     PrevRanDaoOperation op = new PrevRanDaoOperation(new LondonGasCalculator());
     MessageFrame messageFrame = mock(MessageFrame.class);
     BlockValues blockHeader = mock(BlockValues.class);
@@ -49,7 +49,7 @@ public class PrevRanDaoOperationTest {
   }
 
   @Test
-  public void pushesPrevRandDaoWhenDifficultyPresent() {
+  void pushesPrevRandDaoWhenDifficultyPresent() {
     PrevRanDaoOperation op = new PrevRanDaoOperation(new LondonGasCalculator());
     MessageFrame messageFrame = mock(MessageFrame.class);
     BlockValues blockHeader = mock(BlockValues.class);

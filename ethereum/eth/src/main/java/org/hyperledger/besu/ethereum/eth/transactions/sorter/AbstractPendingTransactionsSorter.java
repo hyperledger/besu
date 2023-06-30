@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
@@ -263,19 +264,16 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
                 highestPriorityPendingTransaction.getTransaction())) {
           final TransactionSelectionResult result =
               selector.evaluateTransaction(transactionToProcess);
-          switch (result) {
-            case DELETE_TRANSACTION_AND_CONTINUE:
-              transactionsToRemove.add(transactionToProcess);
-              transactionsToRemove.addAll(
-                  signalInvalidAndGetDependentTransactions(transactionToProcess));
-              break;
-            case CONTINUE:
-              break;
-            case COMPLETE_OPERATION:
-              transactionsToRemove.forEach(this::removeTransaction);
-              return;
-            default:
-              throw new RuntimeException("Illegal value for TransactionSelectionResult.");
+
+          if (result.discard()) {
+            transactionsToRemove.add(transactionToProcess);
+            transactionsToRemove.addAll(
+                signalInvalidAndGetDependentTransactions(transactionToProcess));
+          }
+
+          if (result.stop()) {
+            transactionsToRemove.forEach(this::removeTransaction);
+            return;
           }
         }
       }
@@ -543,7 +541,9 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
 
   @Override
   public void signalInvalidAndRemoveDependentTransactions(final Transaction transaction) {
-    signalInvalidAndGetDependentTransactions(transaction).forEach(this::removeTransaction);
+    synchronized (lock) {
+      signalInvalidAndGetDependentTransactions(transaction).forEach(this::removeTransaction);
+    }
   }
 
   @Override

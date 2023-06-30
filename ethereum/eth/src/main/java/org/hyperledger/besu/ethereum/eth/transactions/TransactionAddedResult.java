@@ -26,7 +26,6 @@ public final class TransactionAddedResult {
     DROPPED,
     TRY_NEXT_LAYER,
     ADDED,
-    REORG_SENDER,
     INTERNAL_ERROR
   }
 
@@ -43,13 +42,12 @@ public final class TransactionAddedResult {
   public static final TransactionAddedResult TRY_NEXT_LAYER =
       new TransactionAddedResult(Status.TRY_NEXT_LAYER);
 
-  public static final TransactionAddedResult REORG_SENDER =
-      new TransactionAddedResult(Status.REORG_SENDER);
-
   public static final TransactionAddedResult DROPPED = new TransactionAddedResult(Status.DROPPED);
 
   public static final TransactionAddedResult INTERNAL_ERROR =
       new TransactionAddedResult(Status.INTERNAL_ERROR);
+  public static final TransactionAddedResult DISABLED =
+      new TransactionAddedResult(TransactionInvalidReason.TX_POOL_DISABLED);
 
   private final Optional<TransactionInvalidReason> rejectReason;
 

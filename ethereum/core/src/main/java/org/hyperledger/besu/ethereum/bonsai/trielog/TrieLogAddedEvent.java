@@ -15,21 +15,13 @@
  */
 package org.hyperledger.besu.ethereum.bonsai.trielog;
 
-public class TrieLogAddedEvent {
+import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
 
-  private final TrieLogLayer layer;
+public record TrieLogAddedEvent(TrieLog layer) implements TrieLogEvent {
 
-  public TrieLogAddedEvent(final TrieLogLayer layer) {
-    this.layer = layer;
-  }
-
-  public TrieLogLayer getLayer() {
-    return layer;
-  }
-
-  @FunctionalInterface
-  interface TrieLogAddedObserver {
-
-    void onTrieLogAdded(TrieLogAddedEvent event);
+  @Override
+  public Type getType() {
+    return Type.ADDED;
   }
 }

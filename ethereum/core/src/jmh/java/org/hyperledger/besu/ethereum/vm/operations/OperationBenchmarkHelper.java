@@ -65,7 +65,7 @@ public class OperationBenchmarkHelper {
             RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
 
     final ExecutionContextTestFixture executionContext =
-        ExecutionContextTestFixture.builder().keyValueStorage(keyValueStorage).build();
+        ExecutionContextTestFixture.builder().blockchainKeyValueStorage(keyValueStorage).build();
     final MutableBlockchain blockchain = executionContext.getBlockchain();
 
     for (int i = 1; i < 256; i++) {

@@ -93,10 +93,7 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
    * @return the optional data
    */
   public Optional<byte[]> get(final byte[] key) {
-    if (isClosed.get()) {
-      LOG.debug("Attempted to access closed snapshot");
-      return Optional.empty();
-    }
+    throwIfClosed();
 
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
       return Optional.ofNullable(snapTx.get(columnFamilyHandle, readOptions, key));
@@ -107,10 +104,7 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
 
   @Override
   public void put(final byte[] key, final byte[] value) {
-    if (isClosed.get()) {
-      LOG.debug("Attempted to access closed snapshot");
-      return;
-    }
+    throwIfClosed();
 
     try (final OperationTimer.TimingContext ignored = metrics.getWriteLatency().startTimer()) {
       snapTx.put(columnFamilyHandle, key, value);
@@ -125,10 +119,8 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
 
   @Override
   public void remove(final byte[] key) {
-    if (isClosed.get()) {
-      LOG.debug("Attempted to access closed snapshot");
-      return;
-    }
+    throwIfClosed();
+
     try (final OperationTimer.TimingContext ignored = metrics.getRemoveLatency().startTimer()) {
       snapTx.delete(columnFamilyHandle, key);
     } catch (final RocksDBException e) {
@@ -146,6 +138,8 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
    * @return the stream
    */
   public Stream<Pair<byte[], byte[]>> stream() {
+    throwIfClosed();
+
     final RocksIterator rocksIterator = db.newIterator(columnFamilyHandle, readOptions);
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStream();
@@ -157,6 +151,8 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
    * @return the stream
    */
   public Stream<byte[]> streamKeys() {
+    throwIfClosed();
+
     final RocksIterator rocksIterator = db.newIterator(columnFamilyHandle, readOptions);
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStreamKeys();
@@ -169,6 +165,8 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
 
   @Override
   public void rollback() {
+    throwIfClosed();
+
     try {
       snapTx.rollback();
       metrics.getRollbackCount().inc();
@@ -189,9 +187,7 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
    * @return the rocks db snapshot transaction
    */
   public RocksDBSnapshotTransaction copy() {
-    if (isClosed.get()) {
-      throw new StorageException("Snapshot already closed");
-    }
+    throwIfClosed();
     try {
       var copyReadOptions = new ReadOptions().setSnapshot(snapshot.markAndUseSnapshot());
       var copySnapTx = db.beginTransaction(writeOptions);
@@ -212,5 +208,12 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
     readOptions.close();
     snapshot.unMarkSnapshot();
     isClosed.set(true);
+  }
+
+  private void throwIfClosed() {
+    if (isClosed.get()) {
+      LOG.error("Attempting to use a closed RocksDBSnapshotTransaction");
+      throw new StorageException("Storage has already been closed");
+    }
   }
 }

@@ -19,11 +19,13 @@ import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
@@ -44,15 +46,30 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
   }
 
   public static MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
-    return createInMemoryBlockchain(genesisBlock, new MainnetBlockHeaderFunctions());
+    return createInMemoryBlockchain(genesisBlock, createInMemoryVariablesStorage());
+  }
+
+  public static MutableBlockchain createInMemoryBlockchain(
+      final Block genesisBlock, final VariablesStorage variablesStorage) {
+    return createInMemoryBlockchain(
+        genesisBlock, new MainnetBlockHeaderFunctions(), variablesStorage);
   }
 
   public static MutableBlockchain createInMemoryBlockchain(
       final Block genesisBlock, final BlockHeaderFunctions blockHeaderFunctions) {
+    return createInMemoryBlockchain(
+        genesisBlock, blockHeaderFunctions, createInMemoryVariablesStorage());
+  }
+
+  public static MutableBlockchain createInMemoryBlockchain(
+      final Block genesisBlock,
+      final BlockHeaderFunctions blockHeaderFunctions,
+      final VariablesStorage variablesStorage) {
     final InMemoryKeyValueStorage keyValueStorage = new InMemoryKeyValueStorage();
     return DefaultBlockchain.createMutable(
         genesisBlock,
-        new KeyValueStoragePrefixedKeyBlockchainStorage(keyValueStorage, blockHeaderFunctions),
+        new KeyValueStoragePrefixedKeyBlockchainStorage(
+            keyValueStorage, variablesStorage, blockHeaderFunctions),
         new NoOpMetricsSystem(),
         0);
   }
@@ -73,7 +90,8 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         inMemoryKeyValueStorageProvider,
         blockchain,
         cachedMerkleTrieLoader,
-        new NoOpMetricsSystem());
+        new NoOpMetricsSystem(),
+        null);
   }
 
   public static MutableWorldState createInMemoryWorldState() {
@@ -85,5 +103,9 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
 
   public static PrivateStateStorage createInMemoryPrivateStateStorage() {
     return new PrivateStateKeyValueStorage(new InMemoryKeyValueStorage());
+  }
+
+  public static VariablesStorage createInMemoryVariablesStorage() {
+    return new VariablesKeyValueStorage(new InMemoryKeyValueStorage());
   }
 }

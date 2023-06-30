@@ -14,11 +14,8 @@ dependencies {
   // test dependencies.
   testImplementation project(':testutil')
 
-  testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
-
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 
   // integration test dependencies.
   integrationTestImplementation project(':testutil')
@@ -28,6 +25,4 @@ dependencies {
   integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   integrationTestImplementation 'org.mockito:mockito-core'
   integrationTestImplementation 'org.testcontainers:testcontainers'
-
-  integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 }

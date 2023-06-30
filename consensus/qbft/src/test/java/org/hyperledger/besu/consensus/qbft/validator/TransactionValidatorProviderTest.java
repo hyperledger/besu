@@ -39,13 +39,13 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class TransactionValidatorProviderTest {
   @Mock private ValidatorContractController validatorContractController;
 
@@ -59,7 +59,7 @@ public class TransactionValidatorProviderTest {
   private final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
   private static final Address CONTRACT_ADDRESS = Address.fromHexString("1");
 
-  @Before
+  @BeforeEach
   public void setup() {
     forksSchedule = new ForksSchedule<>(List.of(createContractForkSpec(0L, CONTRACT_ADDRESS)));
     genesisBlock = createEmptyBlock(0, Hash.ZERO);

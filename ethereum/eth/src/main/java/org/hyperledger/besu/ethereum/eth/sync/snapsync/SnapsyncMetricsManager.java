@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static io.netty.util.internal.ObjectUtil.checkNonEmpty;
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapsyncMetricsManager.Step.HEAL_TRIE;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -35,6 +36,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** Manages the metrics related to the SnapSync process. */
 public class SnapsyncMetricsManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapsyncMetricsManager.class);
@@ -43,12 +45,34 @@ public class SnapsyncMetricsManager {
   private final MetricsSystem metricsSystem;
   private final EthContext ethContext;
 
-  private final AtomicReference<BigDecimal> percentageDownloaded;
-  private final AtomicLong nbAccounts;
-  private final AtomicLong nbSlots;
+  /** Represents the progress status of the snapsync process. */
+  private final AtomicReference<BigDecimal> percentageProgress;
+
+  /**
+   * Represents the number of accounts downloaded during the initial step of the snapsync process.
+   */
+  private final AtomicLong nbAccountsDownloaded;
+
+  /** Represents the number of slots downloaded during the initial step of the snapsync process. */
+  private final AtomicLong nbSlotsDownloaded;
+
+  /** Represents the number of code entries downloaded. */
   private final AtomicLong nbCodes;
-  private final AtomicLong nbNodesGenerated;
-  private final AtomicLong nbNodesHealed;
+
+  /**
+   * Represents the number of trie nodes generated during the initial step of the snapsync process.
+   */
+  private final AtomicLong nbTrieNodesGenerated;
+
+  /** Represents the number of flat accounts healed during the healing process. */
+  private final AtomicLong nbFlatAccountsHealed;
+
+  /** Represents the number of flat slots healed during the healing process. */
+  private final AtomicLong nbFlatSlotsHealed;
+
+  /** Represents the number of trie nodes healed during the healing process. */
+  private final AtomicLong nbTrieNodesHealed;
+
   private long startSyncTime;
 
   private final Map<Bytes32, BigInteger> lastRangeIndex = new HashMap<>();
@@ -58,33 +82,44 @@ public class SnapsyncMetricsManager {
   public SnapsyncMetricsManager(final MetricsSystem metricsSystem, final EthContext ethContext) {
     this.metricsSystem = metricsSystem;
     this.ethContext = ethContext;
-    percentageDownloaded = new AtomicReference<>(new BigDecimal(0));
-    nbAccounts = new AtomicLong(0);
-    nbSlots = new AtomicLong(0);
+    percentageProgress = new AtomicReference<>(new BigDecimal(0));
+    nbAccountsDownloaded = new AtomicLong(0);
+    nbSlotsDownloaded = new AtomicLong(0);
     nbCodes = new AtomicLong(0);
-    nbNodesGenerated = new AtomicLong(0);
-    nbNodesHealed = new AtomicLong(0);
-
+    nbTrieNodesGenerated = new AtomicLong(0);
+    nbFlatAccountsHealed = new AtomicLong(0);
+    nbFlatSlotsHealed = new AtomicLong(0);
+    nbTrieNodesHealed = new AtomicLong(0);
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_generated_nodes_total",
         "Total number of data nodes generated as part of snap sync world state download",
-        nbNodesGenerated::get);
+        nbTrieNodesGenerated::get);
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_healed_nodes_total",
         "Total number of data nodes healed as part of snap sync world state heal process",
-        nbNodesHealed::get);
+        nbTrieNodesHealed::get);
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_accounts_total",
         "Total number of accounts downloaded as part of snap sync world state",
-        nbAccounts::get);
+        nbAccountsDownloaded::get);
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_slots_total",
         "Total number of slots downloaded as part of snap sync world state",
-        nbSlots::get);
+        nbSlotsDownloaded::get);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_flat_accounts_healed_total",
+        "Total number of accounts healed in the flat database as part of snap sync world state",
+        nbFlatAccountsHealed::get);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_flat_slots_healed_total",
+        "Total number of slots healed in the flat database as part of snap sync world state",
+        nbFlatSlotsHealed::get);
     metricsSystem.createLongGauge(
         BesuMetricCategory.SYNCHRONIZER,
         "snap_world_state_codes_total",
@@ -94,18 +129,19 @@ public class SnapsyncMetricsManager {
 
   public void initRange(final Map<Bytes32, Bytes32> ranges) {
     for (Map.Entry<Bytes32, Bytes32> entry : ranges.entrySet()) {
-      lastRangeIndex.put(entry.getValue(), entry.getKey().toUnsignedBigInteger());
+      this.lastRangeIndex.put(entry.getValue(), entry.getKey().toUnsignedBigInteger());
     }
-    startSyncTime = System.currentTimeMillis();
-    lastNotifyTimestamp = startSyncTime;
+    this.startSyncTime = System.currentTimeMillis();
+    this.lastNotifyTimestamp = startSyncTime;
   }
 
-  public void notifyStateDownloaded(final Bytes32 startKeyHash, final Bytes32 endKeyHash) {
+  public void notifyRangeProgress(
+      final Step step, final Bytes32 startKeyHash, final Bytes32 endKeyHash) {
     checkNonEmpty(lastRangeIndex, "snapsync range collection");
     if (lastRangeIndex.containsKey(endKeyHash)) {
       final BigInteger lastPos = lastRangeIndex.get(endKeyHash);
       final BigInteger newPos = startKeyHash.toUnsignedBigInteger();
-      percentageDownloaded.getAndAccumulate(
+      percentageProgress.getAndAccumulate(
           BigDecimal.valueOf(100)
               .multiply(new BigDecimal(newPos.subtract(lastPos)))
               .divide(
@@ -113,16 +149,16 @@ public class SnapsyncMetricsManager {
                   MathContext.DECIMAL32),
           BigDecimal::add);
       lastRangeIndex.put(endKeyHash, newPos);
-      print(false);
+      print(step);
     }
   }
 
   public void notifyAccountsDownloaded(final long nbAccounts) {
-    this.nbAccounts.getAndAdd(nbAccounts);
+    this.nbAccountsDownloaded.getAndAdd(nbAccounts);
   }
 
   public void notifySlotsDownloaded(final long nbSlots) {
-    this.nbSlots.getAndAdd(nbSlots);
+    this.nbSlotsDownloaded.getAndAdd(nbSlots);
   }
 
   public void notifyCodeDownloaded() {
@@ -130,34 +166,51 @@ public class SnapsyncMetricsManager {
   }
 
   public void notifyNodesGenerated(final long nbNodes) {
-    this.nbNodesGenerated.getAndAdd(nbNodes);
+    this.nbTrieNodesGenerated.getAndAdd(nbNodes);
   }
 
-  public void notifyNodesHealed(final long nbNodes) {
-    this.nbNodesHealed.getAndAdd(nbNodes);
-    print(true);
+  public void notifyTrieNodesHealed(final long nbNodes) {
+    this.nbTrieNodesHealed.getAndAdd(nbNodes);
+    print(HEAL_TRIE);
   }
 
-  private void print(final boolean isHeal) {
+  private void print(final Step step) {
     final long now = System.currentTimeMillis();
     if (now - lastNotifyTimestamp >= PRINT_DELAY) {
       lastNotifyTimestamp = now;
-      if (!isHeal) {
-        int peerCount = -1; // ethContext is not available in tests
-        if (ethContext != null && ethContext.getEthPeers().peerCount() >= 0) {
-          peerCount = ethContext.getEthPeers().peerCount();
+      int peerCount = -1; // ethContext is not available in tests
+      if (ethContext != null && ethContext.getEthPeers().peerCount() >= 0) {
+        peerCount = ethContext.getEthPeers().peerCount();
+      }
+      switch (step) {
+        case DOWNLOAD -> {
+          LOG.debug(
+              "Worldstate {} in progress accounts={}, slots={}, codes={}, nodes={}",
+              step.message,
+              nbAccountsDownloaded,
+              nbSlotsDownloaded,
+              nbCodes,
+              nbTrieNodesGenerated);
+          LOG.info(
+              "Worldstate {} progress: {}%, Peer count: {}",
+              step.message, percentageProgress.get().setScale(2, RoundingMode.HALF_UP), peerCount);
         }
-        LOG.debug(
-            "Worldstate download in progress accounts={}, slots={}, codes={}, nodes={}",
-            nbAccounts,
-            nbSlots,
-            nbCodes,
-            nbNodesGenerated);
-        LOG.info(
-            "Worldstate download progress: {}%, Peer count: {}",
-            percentageDownloaded.get().setScale(2, RoundingMode.HALF_UP), peerCount);
-      } else {
-        LOG.info("Healed {} world state nodes", nbNodesHealed.get());
+        case HEAL_FLAT -> {
+          LOG.debug(
+              "Worldstate {} in progress accounts={}, slots={}",
+              step.message,
+              nbFlatAccountsHealed,
+              nbFlatSlotsHealed);
+          LOG.info(
+              "Worldstate {} progress: {}%, Peer count: {}",
+              step.message, percentageProgress.get().setScale(2, RoundingMode.HALF_UP), peerCount);
+        }
+        case HEAL_TRIE -> {
+          LOG.info(
+              "Healed {} world state trie nodes, Peer count: {}",
+              nbTrieNodesHealed.get(),
+              peerCount);
+        }
       }
     }
   }
@@ -166,8 +219,8 @@ public class SnapsyncMetricsManager {
     final Duration duration = Duration.ofMillis(System.currentTimeMillis() - startSyncTime);
     LOG.info(
         "Finished worldstate snapsync with nodes {} (healed={}) duration {}{}:{},{}.",
-        nbNodesGenerated.addAndGet(nbNodesHealed.get()),
-        nbNodesHealed,
+        nbTrieNodesGenerated.addAndGet(nbTrieNodesHealed.get()),
+        nbTrieNodesHealed,
         duration.toHoursPart() > 0 ? (duration.toHoursPart() + ":") : "",
         duration.toMinutesPart(),
         duration.toSecondsPart(),
@@ -176,5 +229,17 @@ public class SnapsyncMetricsManager {
 
   public MetricsSystem getMetricsSystem() {
     return metricsSystem;
+  }
+
+  public enum Step {
+    DOWNLOAD("download"),
+    HEAL_TRIE("trie node healing"),
+    HEAL_FLAT("flat database healing");
+
+    final String message;
+
+    Step(final String message) {
+      this.message = message;
+    }
   }
 }

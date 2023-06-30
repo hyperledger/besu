@@ -45,15 +45,19 @@ import org.hyperledger.besu.util.LogConfigurator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class MergeReorgTest implements MergeGenesisConfigHelper {
 
   @Mock PendingTransactions mockPendingTransactions;
@@ -69,14 +73,14 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
   private final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
 
   private final ProtocolContext protocolContext =
-      new ProtocolContext(blockchain, worldStateArchive, mergeContext);
+      new ProtocolContext(blockchain, worldStateArchive, mergeContext, Optional.empty());
 
   private final Address coinbase = genesisAllocations(getPowGenesisConfigFile()).findFirst().get();
   private final BlockHeaderTestFixture headerGenerator = new BlockHeaderTestFixture();
   private final BaseFeeMarket feeMarket =
       new LondonFeeMarket(0, genesisState.getBlock().getHeader().getBaseFee());
 
-  @Before
+  @BeforeEach
   public void setUp() {
     var mutable = worldStateArchive.getMutable();
     genesisState.writeStateTo(mutable);
@@ -90,7 +94,8 @@ public class MergeReorgTest implements MergeGenesisConfigHelper {
             CompletableFuture::runAsync,
             mockPendingTransactions,
             new MiningParameters.Builder().coinbase(coinbase).build(),
-            mock(BackwardSyncContext.class));
+            mock(BackwardSyncContext.class),
+            Optional.empty());
     mergeContext.setIsPostMerge(genesisState.getBlock().getHeader().getDifficulty());
     blockchain.observeBlockAdded(
         blockAddedEvent ->

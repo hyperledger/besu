@@ -44,7 +44,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class QbftProtocolScheduleTest {
   private final BftExtraDataCodec bftExtraDataCodec = mock(BftExtraDataCodec.class);
@@ -57,7 +57,8 @@ public class QbftProtocolScheduleTest {
         null,
         null,
         setupContextWithBftExtraDataEncoder(
-            QbftContext.class, validators, new QbftExtraDataCodec()));
+            QbftContext.class, validators, new QbftExtraDataCodec()),
+        Optional.empty());
   }
 
   @Test

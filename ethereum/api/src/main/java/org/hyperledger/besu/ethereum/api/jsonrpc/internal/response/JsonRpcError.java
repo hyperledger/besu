@@ -30,8 +30,10 @@ public enum JsonRpcError {
   INVALID_PARAMS(-32602, "Invalid params"),
   INTERNAL_ERROR(-32603, "Internal error"),
   TIMEOUT_ERROR(-32603, "Timeout expired"),
-
   METHOD_NOT_ENABLED(-32604, "Method not enabled"),
+
+  // Resource unavailable error
+  TX_POOL_DISABLED(-32002, "Transaction pool not enabled"),
 
   // eth_getBlockByNumber specific error message
   UNKNOWN_BLOCK(-39001, "Unknown block"),
@@ -55,6 +57,7 @@ public enum JsonRpcError {
   // Transaction validation failures
   NONCE_TOO_LOW(-32001, "Nonce too low"),
   INVALID_TRANSACTION_SIGNATURE(-32002, "Invalid signature"),
+  INVALID_TRANSACTION_TYPE(-32602, "Invalid transaction type"),
   INTRINSIC_GAS_EXCEEDS_LIMIT(-32003, "Intrinsic gas exceeds gas limit"),
   TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE(-32004, "Upfront cost exceeds account balance"),
   EXCEEDS_BLOCK_GAS_LIMIT(-32005, "Transaction gas limit exceeds block gas limit"),
@@ -64,6 +67,7 @@ public enum JsonRpcError {
   TX_SENDER_NOT_AUTHORIZED(-32007, "Sender account not authorized to send transactions"),
   CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE(-32008, "Initial sync is still in progress"),
   GAS_PRICE_TOO_LOW(-32009, "Gas price below configured minimum gas price"),
+  GAS_PRICE_BELOW_CURRENT_BASE_FEE(-32009, "Gas price below current base fee"),
   WRONG_CHAIN_ID(-32000, "Wrong chainId"),
   REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED(-32000, "ChainId not supported"),
   REPLAY_PROTECTED_SIGNATURE_REQUIRED(-32000, "ChainId is required"),
@@ -138,7 +142,7 @@ public enum JsonRpcError {
 
   // Private transaction errors
   ENCLAVE_ERROR(-50100, "Error communicating with enclave"),
-  UNIMPLEMENTED_PRIVATE_TRANSACTION_TYPE(-50100, "Unimplemented private transaction type"),
+  UNSUPPORTED_PRIVATE_TRANSACTION_TYPE(-50100, "Unsupported private transaction type"),
   PRIVACY_NOT_ENABLED(-50100, "Privacy is not enabled"),
   CREATE_PRIVACY_GROUP_ERROR(-50100, "Error creating privacy group"),
   DECODE_ERROR(-50100, "Unable to decode the private signed raw transaction"),
@@ -159,8 +163,12 @@ public enum JsonRpcError {
   PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY(
       -50100, "Private from does not match enclave public key"),
   VALUE_NOT_ZERO(-50100, "We cannot transfer ether in a private transaction yet."),
+  PRIVATE_TRANSACTION_INVALID(-50100, "Private transaction invalid"),
+  PRIVATE_TRANSACTION_FAILED(-50100, "Private transaction failed"),
 
   CANT_CONNECT_TO_LOCAL_PEER(-32100, "Cannot add local node as peer."),
+  CANT_RESOLVE_PEER_ENODE_DNS(-32100, "Cannot resolve enode DNS hostname"),
+  DNS_NOT_ENABLED(-32100, "Enode DNS support is disabled"),
 
   // Invalid input errors
   ENODE_ID_INVALID(

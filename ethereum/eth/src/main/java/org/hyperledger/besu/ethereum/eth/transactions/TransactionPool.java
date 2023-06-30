@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.fluent.SimpleAccount;
 import org.hyperledger.besu.plugin.data.TransactionType;
+import org.hyperledger.besu.util.Subscribers;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -56,11 +57,20 @@ import java.util.Comparator;
 import java.util.IntSummaryStatistics;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,17 +85,23 @@ import org.slf4j.LoggerFactory;
 public class TransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPool.class);
   private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
-  private final PendingTransactions pendingTransactions;
+  private final Supplier<PendingTransactions> pendingTransactionsSupplier;
+  private volatile PendingTransactions pendingTransactions;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
+  private final EthContext ethContext;
   private final TransactionBroadcaster transactionBroadcaster;
   private final MiningParameters miningParameters;
   private final TransactionPoolMetrics metrics;
   private final TransactionPoolConfiguration configuration;
-  private final AtomicBoolean isPoolEnabled = new AtomicBoolean(true);
+  private final AtomicBoolean isPoolEnabled = new AtomicBoolean(false);
+  private final PendingTransactionsListenersProxy pendingTransactionsListenersProxy =
+      new PendingTransactionsListenersProxy();
+  private volatile OptionalLong subscribeConnectId = OptionalLong.empty();
+  private final SaveRestoreManager saveRestoreManager = new SaveRestoreManager();
 
   public TransactionPool(
-      final PendingTransactions pendingTransactions,
+      final Supplier<PendingTransactions> pendingTransactionsSupplier,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final TransactionBroadcaster transactionBroadcaster,
@@ -93,16 +109,15 @@ public class TransactionPool implements BlockAddedObserver {
       final MiningParameters miningParameters,
       final TransactionPoolMetrics metrics,
       final TransactionPoolConfiguration configuration) {
-    this.pendingTransactions = pendingTransactions;
+    this.pendingTransactionsSupplier = pendingTransactionsSupplier;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
+    this.ethContext = ethContext;
     this.transactionBroadcaster = transactionBroadcaster;
     this.miningParameters = miningParameters;
     this.metrics = metrics;
     this.configuration = configuration;
-    ethContext.getEthPeers().subscribeConnect(this::handleConnect);
     initLogForReplay();
-    CompletableFuture.runAsync(this::loadFromDisk);
   }
 
   private void initLogForReplay() {
@@ -121,84 +136,10 @@ public class TransactionPool implements BlockAddedObserver {
         .log();
   }
 
-  public void saveToDisk() {
-    if (configuration.getEnableSaveRestore()) {
-      final File saveFile = configuration.getSaveFile();
-      LOG.info("Saving transaction pool content to file {}", saveFile);
-      try (final BufferedWriter bw =
-          new BufferedWriter(new FileWriter(saveFile, StandardCharsets.US_ASCII))) {
-        final var allTxs = pendingTransactions.getPendingTransactions();
-        allTxs.parallelStream()
-            .map(
-                ptx -> {
-                  final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
-                  ptx.getTransaction().writeTo(rlp);
-                  return (ptx.isReceivedFromLocalSource() ? "l" : "r")
-                      + rlp.encoded().toBase64String();
-                })
-            .forEach(
-                line -> {
-                  synchronized (bw) {
-                    try {
-                      bw.write(line);
-                      bw.newLine();
-                    } catch (IOException e) {
-                      throw new RuntimeException(e);
-                    }
-                  }
-                });
-        LOG.info("Saved {} transactions to file {}", allTxs.size(), saveFile);
-      } catch (IOException e) {
-        LOG.error("Error while saving txpool content to disk", e);
-      }
-    }
-  }
-
-  public void loadFromDisk() {
-    if (configuration.getEnableSaveRestore()) {
-      final File saveFile = configuration.getSaveFile();
-      if (saveFile.exists()) {
-        LOG.info("Loading transaction pool content from file {}", saveFile);
-        try (final BufferedReader br =
-            new BufferedReader(new FileReader(saveFile, StandardCharsets.US_ASCII))) {
-          final IntSummaryStatistics stats =
-              br.lines()
-                  .parallel()
-                  .mapToInt(
-                      line -> {
-                        final boolean isLocal = line.charAt(0) == 'l';
-                        final Transaction tx =
-                            Transaction.readFrom(Bytes.fromBase64String(line.substring(1)));
-
-                        final ValidationResult<TransactionInvalidReason> result;
-                        if (isLocal && !configuration.getDisableLocalTransactions()) {
-                          result = addLocalTransaction(tx);
-                        } else {
-                          result = addRemoteTransaction(tx);
-                        }
-
-                        return result.isValid() ? 1 : 0;
-                      })
-                  .summaryStatistics();
-          LOG.info(
-              "Added {} transactions of {} loaded from file {}",
-              stats.getSum(),
-              stats.getCount(),
-              saveFile);
-        } catch (IOException e) {
-          LOG.error("Error while saving txpool content to disk", e);
-        }
-      }
-      saveFile.delete();
-    }
-  }
-
+  @VisibleForTesting
   void handleConnect(final EthPeer peer) {
-    transactionBroadcaster.relayTransactionPoolTo(peer);
-  }
-
-  public void reset() {
-    pendingTransactions.reset();
+    transactionBroadcaster.relayTransactionPoolTo(
+        peer, pendingTransactions.getPendingTransactions());
   }
 
   public ValidationResult<TransactionInvalidReason> addTransactionViaApi(
@@ -345,27 +286,28 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   public long subscribePendingTransactions(final PendingTransactionAddedListener listener) {
-    return pendingTransactions.subscribePendingTransactions(listener);
+    return pendingTransactionsListenersProxy.onAddedListeners.subscribe(listener);
   }
 
   public void unsubscribePendingTransactions(final long id) {
-    pendingTransactions.unsubscribePendingTransactions(id);
+    pendingTransactionsListenersProxy.onAddedListeners.unsubscribe(id);
   }
 
   public long subscribeDroppedTransactions(final PendingTransactionDroppedListener listener) {
-    return pendingTransactions.subscribeDroppedTransactions(listener);
+    return pendingTransactionsListenersProxy.onDroppedListeners.subscribe(listener);
   }
 
   public void unsubscribeDroppedTransactions(final long id) {
-    pendingTransactions.unsubscribeDroppedTransactions(id);
+    pendingTransactionsListenersProxy.onDroppedListeners.unsubscribe(id);
   }
 
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
-    LOG.trace("Block added event {}", event);
-    if (event.getEventType().equals(BlockAddedEvent.EventType.HEAD_ADVANCED)
-        || event.getEventType().equals(BlockAddedEvent.EventType.CHAIN_REORG)) {
-      if (isPoolEnabled.get()) {
+    if (isPoolEnabled.get()) {
+      LOG.trace("Block added event {}", event);
+      if (event.getEventType().equals(BlockAddedEvent.EventType.HEAD_ADVANCED)
+          || event.getEventType().equals(BlockAddedEvent.EventType.CHAIN_REORG)) {
+
         pendingTransactions.manageBlockAdded(
             event.getBlock().getHeader(),
             event.getAddedTransactions(),
@@ -582,15 +524,215 @@ public class TransactionPool implements BlockAddedObserver {
     }
   }
 
-  public void setEnabled() {
-    isPoolEnabled.set(true);
+  public CompletableFuture<Void> setEnabled() {
+    if (!isEnabled()) {
+      pendingTransactions = pendingTransactionsSupplier.get();
+      pendingTransactionsListenersProxy.subscribe();
+      isPoolEnabled.set(true);
+      subscribeConnectId =
+          OptionalLong.of(ethContext.getEthPeers().subscribeConnect(this::handleConnect));
+      return saveRestoreManager
+          .loadFromDisk()
+          .exceptionally(
+              t -> {
+                LOG.error("Error while restoring transaction pool from disk", t);
+                return null;
+              });
+    }
+    return CompletableFuture.completedFuture(null);
   }
 
-  public void setDisabled() {
-    isPoolEnabled.set(false);
+  public CompletableFuture<Void> setDisabled() {
+    if (isEnabled()) {
+      isPoolEnabled.set(false);
+      subscribeConnectId.ifPresent(ethContext.getEthPeers()::unsubscribeConnect);
+      pendingTransactionsListenersProxy.unsubscribe();
+      final PendingTransactions pendingTransactionsToSave = pendingTransactions;
+      pendingTransactions = new DisabledPendingTransactions();
+      return saveRestoreManager
+          .saveToDisk(pendingTransactionsToSave)
+          .exceptionally(
+              t -> {
+                LOG.error("Error while saving transaction pool to disk", t);
+                return null;
+              });
+    }
+    return CompletableFuture.completedFuture(null);
   }
 
   public boolean isEnabled() {
     return isPoolEnabled.get();
+  }
+
+  class PendingTransactionsListenersProxy {
+    private final Subscribers<PendingTransactionAddedListener> onAddedListeners =
+        Subscribers.create();
+    private final Subscribers<PendingTransactionDroppedListener> onDroppedListeners =
+        Subscribers.create();
+
+    private volatile long onAddedListenerId;
+    private volatile long onDroppedListenerId;
+
+    void subscribe() {
+      onAddedListenerId = pendingTransactions.subscribePendingTransactions(this::onAdded);
+      onDroppedListenerId = pendingTransactions.subscribeDroppedTransactions(this::onDropped);
+    }
+
+    void unsubscribe() {
+      pendingTransactions.unsubscribePendingTransactions(onAddedListenerId);
+      pendingTransactions.unsubscribeDroppedTransactions(onDroppedListenerId);
+    }
+
+    private void onDropped(final Transaction transaction) {
+      onDroppedListeners.forEach(listener -> listener.onTransactionDropped(transaction));
+    }
+
+    private void onAdded(final Transaction transaction) {
+      onAddedListeners.forEach(listener -> listener.onTransactionAdded(transaction));
+    }
+  }
+
+  class SaveRestoreManager {
+    private final Lock diskAccessLock = new ReentrantLock();
+    private final AtomicReference<CompletableFuture<Void>> writeInProgress =
+        new AtomicReference<>(CompletableFuture.completedFuture(null));
+    private final AtomicReference<CompletableFuture<Void>> readInProgress =
+        new AtomicReference<>(CompletableFuture.completedFuture(null));
+    private final AtomicBoolean isCancelled = new AtomicBoolean(false);
+
+    CompletableFuture<Void> saveToDisk(final PendingTransactions pendingTransactionsToSave) {
+      return serializeAndDedupOperation(
+          () -> executeSaveToDisk(pendingTransactionsToSave), writeInProgress);
+    }
+
+    CompletableFuture<Void> loadFromDisk() {
+      return serializeAndDedupOperation(this::executeLoadFromDisk, readInProgress);
+    }
+
+    private CompletableFuture<Void> serializeAndDedupOperation(
+        final Runnable operation,
+        final AtomicReference<CompletableFuture<Void>> operationInProgress) {
+      if (configuration.getEnableSaveRestore()) {
+        try {
+          if (diskAccessLock.tryLock(1, TimeUnit.MINUTES)) {
+            try {
+              if (!operationInProgress.get().isDone()) {
+                isCancelled.set(true);
+                try {
+                  operationInProgress.get().get();
+                } catch (ExecutionException ee) {
+                  // nothing to do
+                }
+              }
+
+              isCancelled.set(false);
+              operationInProgress.set(CompletableFuture.runAsync(operation));
+              return operationInProgress.get();
+            } catch (InterruptedException ie) {
+              isCancelled.set(false);
+            } finally {
+              diskAccessLock.unlock();
+            }
+          } else {
+            CompletableFuture.failedFuture(
+                new TimeoutException("Timeout waiting for disk access lock"));
+          }
+        } catch (InterruptedException ie) {
+          return CompletableFuture.failedFuture(ie);
+        }
+      }
+      return CompletableFuture.completedFuture(null);
+    }
+
+    private void executeSaveToDisk(final PendingTransactions pendingTransactionsToSave) {
+      final File saveFile = configuration.getSaveFile();
+      try (final BufferedWriter bw =
+          new BufferedWriter(new FileWriter(saveFile, StandardCharsets.US_ASCII))) {
+        final var allTxs = pendingTransactionsToSave.getPendingTransactions();
+        LOG.info("Saving {} transactions to file {}", allTxs.size(), saveFile);
+
+        final long savedTxs =
+            allTxs.parallelStream()
+                .takeWhile(unused -> !isCancelled.get())
+                .map(
+                    ptx -> {
+                      final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+                      ptx.getTransaction().writeTo(rlp);
+                      return (ptx.isReceivedFromLocalSource() ? "l" : "r")
+                          + rlp.encoded().toBase64String();
+                    })
+                .mapToInt(
+                    line -> {
+                      synchronized (bw) {
+                        try {
+                          bw.write(line);
+                          bw.newLine();
+                        } catch (IOException e) {
+                          throw new RuntimeException(e);
+                        }
+                      }
+                      return 1;
+                    })
+                .sum();
+        if (isCancelled.get()) {
+          LOG.info(
+              "Saved {} transactions to file {}, before operation was cancelled",
+              savedTxs,
+              saveFile);
+        } else {
+          LOG.info("Saved {} transactions to file {}", savedTxs, saveFile);
+        }
+      } catch (IOException e) {
+        LOG.error("Error while saving txpool content to disk", e);
+      }
+    }
+
+    private void executeLoadFromDisk() {
+      if (configuration.getEnableSaveRestore()) {
+        final File saveFile = configuration.getSaveFile();
+        if (saveFile.exists()) {
+          LOG.info("Loading transaction pool content from file {}", saveFile);
+          try (final BufferedReader br =
+              new BufferedReader(new FileReader(saveFile, StandardCharsets.US_ASCII))) {
+            final IntSummaryStatistics stats =
+                br.lines()
+                    .takeWhile(unused -> !isCancelled.get())
+                    .mapToInt(
+                        line -> {
+                          final boolean isLocal = line.charAt(0) == 'l';
+                          final Transaction tx =
+                              Transaction.readFrom(Bytes.fromBase64String(line.substring(1)));
+
+                          final ValidationResult<TransactionInvalidReason> result;
+                          if (isLocal && !configuration.getDisableLocalTransactions()) {
+                            result = addLocalTransaction(tx);
+                          } else {
+                            result = addRemoteTransaction(tx);
+                          }
+
+                          return result.isValid() ? 1 : 0;
+                        })
+                    .summaryStatistics();
+
+            if (isCancelled.get()) {
+              LOG.info(
+                  "Added {} transactions of {} loaded from file {}, before operation was cancelled",
+                  stats.getSum(),
+                  stats.getCount(),
+                  saveFile);
+            } else {
+              LOG.info(
+                  "Added {} transactions of {} loaded from file {}",
+                  stats.getSum(),
+                  stats.getCount(),
+                  saveFile);
+            }
+          } catch (IOException e) {
+            LOG.error("Error while saving txpool content to disk", e);
+          }
+        }
+        saveFile.delete();
+      }
+    }
   }
 }

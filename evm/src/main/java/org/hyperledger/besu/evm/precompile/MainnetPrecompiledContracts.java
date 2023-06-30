@@ -114,6 +114,18 @@ public interface MainnetPrecompiledContracts {
   }
 
   /**
+   * Cancun precompile contract registry.
+   *
+   * @param gasCalculator the gas calculator
+   * @return the precompile contract registry
+   */
+  static PrecompileContractRegistry cancun(final GasCalculator gasCalculator) {
+    PrecompileContractRegistry precompileContractRegistry = new PrecompileContractRegistry();
+    populateForCancun(precompileContractRegistry, gasCalculator);
+    return precompileContractRegistry;
+  }
+
+  /**
    * Populate registry for Cancun.
    *
    * @param registry the registry
@@ -122,6 +134,33 @@ public interface MainnetPrecompiledContracts {
   static void populateForCancun(
       final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
     populateForIstanbul(registry, gasCalculator);
+
+    // EIP-4844 - shard blob transactions
+    // TODO: allow override to be configured?
+    registry.put(Address.KZG_POINT_EVAL, new KZGPointEvalPrecompiledContract());
+  }
+
+  /**
+   * FutureEIPs precompile contract registry.
+   *
+   * @param gasCalculator the gas calculator
+   * @return the precompile contract registry
+   */
+  static PrecompileContractRegistry futureEIPs(final GasCalculator gasCalculator) {
+    PrecompileContractRegistry precompileContractRegistry = new PrecompileContractRegistry();
+    populateForFutureEIPs(precompileContractRegistry, gasCalculator);
+    return precompileContractRegistry;
+  }
+
+  /**
+   * Populate registry for Future EIPs.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   */
+  static void populateForFutureEIPs(
+      final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
+    populateForCancun(registry, gasCalculator);
 
     // EIP-2537 - BLS12-381 curve operations
     registry.put(Address.BLS12_G1ADD, new BLS12G1AddPrecompiledContract());
@@ -133,9 +172,5 @@ public interface MainnetPrecompiledContracts {
     registry.put(Address.BLS12_PAIRING, new BLS12PairingPrecompiledContract());
     registry.put(Address.BLS12_MAP_FP_TO_G1, new BLS12MapFpToG1PrecompiledContract());
     registry.put(Address.BLS12_MAP_FP2_TO_G2, new BLS12MapFp2ToG2PrecompiledContract());
-
-    // EIP-4844 - shard blob transactions
-    // TODO: allow override to be configured?
-    registry.put(Address.KZG_POINT_EVAL, new KZGPointEvalPrecompiledContract());
   }
 }

@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -31,9 +32,11 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
+import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
 import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -55,6 +58,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -82,6 +86,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   private final Wei minTransactionGasPrice;
   private final Double minBlockOccupancyRatio;
   protected final BlockHeader parentHeader;
+  private final Optional<Address> depositContractAddress;
 
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
 
@@ -95,7 +100,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final ProtocolSchedule protocolSchedule,
       final Wei minTransactionGasPrice,
       final Double minBlockOccupancyRatio,
-      final BlockHeader parentHeader) {
+      final BlockHeader parentHeader,
+      final Optional<Address> depositContractAddress) {
     this.coinbase = coinbase;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.targetGasLimitSupplier = targetGasLimitSupplier;
@@ -106,6 +112,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.minBlockOccupancyRatio = minBlockOccupancyRatio;
     this.parentHeader = parentHeader;
+    this.depositContractAddress = depositContractAddress;
     blockHeaderFunctions = ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
   }
 
@@ -172,7 +179,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final List<BlockHeader> ommers = maybeOmmers.orElse(selectOmmers());
 
       throwIfStopped();
-      final BlockTransactionSelector.TransactionSelectionResults transactionResults =
+      final TransactionSelectionResults transactionResults =
           selectTransactions(
               processableBlockHeader,
               disposableWorldState,
@@ -180,6 +187,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               miningBeneficiary,
               dataGasPrice,
               newProtocolSpec);
+
+      transactionResults.logSelectionStats();
 
       throwIfStopped();
 
@@ -195,8 +204,14 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      final Optional<List<Deposit>> maybeDeposits =
-          Optional.empty(); // TODO 6110: Extract deposits from transaction receipts
+      final DepositsValidator depositsValidator = newProtocolSpec.getDepositsValidator();
+      Optional<List<Deposit>> maybeDeposits = Optional.empty();
+      if (depositsValidator instanceof DepositsValidator.AllowedDeposits
+          && depositContractAddress.isPresent()) {
+        maybeDeposits = Optional.of(findDepositsFromReceipts(transactionResults));
+      }
+
+      throwIfStopped();
 
       if (rewardCoinbase
           && !rewardBeneficiary(
@@ -232,7 +247,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   withdrawalsCanBeProcessed
                       ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
                       : null)
-              .depositsRoot(null) // TODO 6110: Derive deposit roots from deposits
+              .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
               .excessDataGas(newExcessDataGas)
               .buildSealableBlockHeader();
 
@@ -256,9 +271,17 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     }
   }
 
+  @VisibleForTesting
+  List<Deposit> findDepositsFromReceipts(final TransactionSelectionResults transactionResults) {
+    return transactionResults.getReceipts().stream()
+        .flatMap(receipt -> receipt.getLogsList().stream())
+        .filter(log -> depositContractAddress.get().equals(log.getLogger()))
+        .map(DepositDecoder::decodeFromLog)
+        .toList();
+  }
+
   private DataGas computeExcessDataGas(
-      BlockTransactionSelector.TransactionSelectionResults transactionResults,
-      ProtocolSpec newProtocolSpec) {
+      TransactionSelectionResults transactionResults, ProtocolSpec newProtocolSpec) {
 
     if (newProtocolSpec.getFeeMarket().implementsDataFee()) {
       final var gasCalculator = newProtocolSpec.getGasCalculator();
@@ -276,7 +299,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     return null;
   }
 
-  private BlockTransactionSelector.TransactionSelectionResults selectTransactions(
+  private TransactionSelectionResults selectTransactions(
       final ProcessableBlockHeader processableBlockHeader,
       final MutableWorldState disposableWorldState,
       final Optional<List<Transaction>> transactions,
@@ -304,7 +327,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             dataGasPrice,
             protocolSpec.getFeeMarket(),
             protocolSpec.getGasCalculator(),
-            protocolSpec.getGasLimitCalculator());
+            protocolSpec.getGasLimitCalculator(),
+            protocolContext.getTransactionSelectorFactory());
 
     if (transactions.isPresent()) {
       return selector.evaluateTransactions(transactions.get());

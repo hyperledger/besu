@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
+import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -37,14 +38,11 @@ import javax.inject.Singleton;
 import com.google.common.base.Suppliers;
 import dagger.Module;
 import dagger.Provides;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @SuppressWarnings({"CloseableProvides"})
 @Module(includes = GenesisFileModule.class)
 public class DataStoreModule {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DataStoreModule.class);
   private final Supplier<RocksDBKeyValueStorageFactory> rocksDBFactory =
       Suppliers.memoize(
           () ->
@@ -52,6 +50,20 @@ public class DataStoreModule {
                   RocksDBCLIOptions.create()::toDomainObject,
                   List.of(KeyValueSegmentIdentifier.values()),
                   RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS));
+
+  @Provides
+  @Singleton
+  @Named("variables")
+  KeyValueStorage provideVariablesKeyValueStorage(
+      @Named("KeyValueStorageName") final String keyValueStorageName,
+      final BesuConfiguration commonConfiguration,
+      final MetricsSystem metricsSystem) {
+    return constructKeyValueStorage(
+        keyValueStorageName,
+        commonConfiguration,
+        metricsSystem,
+        KeyValueSegmentIdentifier.VARIABLES);
+  }
 
   @Provides
   @Singleton
@@ -116,7 +128,7 @@ public class DataStoreModule {
       case "rocksdb":
         return rocksDBFactory.get().create(segment, commonConfiguration, metricsSystem);
       default:
-        LOG.error("Unknown key, continuing as though 'memory' was specified");
+        System.err.println("Unknown key, continuing as though 'memory' was specified");
         // fall through
       case "memory":
         return new InMemoryKeyValueStorage();
@@ -127,7 +139,9 @@ public class DataStoreModule {
   @Singleton
   static BlockchainStorage provideBlockchainStorage(
       @Named("blockchain") final KeyValueStorage keyValueStorage,
+      @Named("variables") final KeyValueStorage variablesKeyValueStorage,
       final BlockHeaderFunctions blockHashFunction) {
-    return new KeyValueStoragePrefixedKeyBlockchainStorage(keyValueStorage, blockHashFunction);
+    return new KeyValueStoragePrefixedKeyBlockchainStorage(
+        keyValueStorage, new VariablesKeyValueStorage(variablesKeyValueStorage), blockHashFunction);
   }
 }

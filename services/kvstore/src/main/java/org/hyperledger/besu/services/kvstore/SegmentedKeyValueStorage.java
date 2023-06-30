@@ -79,6 +79,17 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
   Stream<Pair<byte[], byte[]>> stream(final S segmentHandle);
 
   /**
+   * Returns a stream of key-value pairs starting from the specified key. This method is used to
+   * retrieve a stream of data from the storage, starting from the given key. If no data is
+   * available from the specified key onwards, an empty stream is returned.
+   *
+   * @param segmentHandle The segment handle whose keys we want to stream.
+   * @param startKey The key from which the stream should start.
+   * @return A stream of key-value pairs starting from the specified key.
+   */
+  Stream<Pair<byte[], byte[]>> streamFromKey(final S segmentHandle, final byte[] startKey);
+
+  /**
    * Stream keys.
    *
    * @param segmentHandle the segment handle
@@ -122,6 +133,13 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
    * @param segmentHandle the segment handle
    */
   void clear(S segmentHandle);
+
+  /**
+   * Whether the underlying storage is closed.
+   *
+   * @return boolean indicating whether the underlying storage is closed.
+   */
+  boolean isClosed();
 
   /**
    * Represents a set of changes to be committed atomically. A single transaction is not

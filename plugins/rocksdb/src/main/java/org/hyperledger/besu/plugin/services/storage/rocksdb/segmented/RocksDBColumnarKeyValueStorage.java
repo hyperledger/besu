@@ -78,12 +78,18 @@ public abstract class RocksDBColumnarKeyValueStorage
   protected static final long ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC = 1_073_741_824L;
   /** RocksDb memtable size when using the high spec option */
   protected static final long ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC = 1_073_741_824L;
+  /** RocksDb number of log files to keep on disk */
+  private static final long NUMBER_OF_LOG_FILES_TO_KEEP = 7;
+  /** RocksDb Time to roll a log file (1 day = 3600 * 24 seconds) */
+  private static final long TIME_TO_ROLL_LOG_FILE = 86_400L;
 
   static {
     RocksDbUtil.loadNativeLibrary();
   }
 
-  private final AtomicBoolean closed = new AtomicBoolean(false);
+  /** atomic boolean to track if the storage is closed */
+  protected final AtomicBoolean closed = new AtomicBoolean(false);
+
   private final WriteOptions tryDeleteOptions =
       new WriteOptions().setNoSlowdown(true).setIgnoreMissingColumnFamilies(true);
   private final ReadOptions readOptions = new ReadOptions().setVerifyChecksums(false);
@@ -147,16 +153,7 @@ public abstract class RocksDBColumnarKeyValueStorage
                       .noneMatch(existed -> Arrays.equals(existed, ignorableSegment.getId())))
           .forEach(trimmedSegments::remove);
       columnDescriptors =
-          trimmedSegments.stream()
-              .map(
-                  segment ->
-                      new ColumnFamilyDescriptor(
-                          segment.getId(),
-                          new ColumnFamilyOptions()
-                              .setTtl(0)
-                              .setCompressionType(CompressionType.LZ4_COMPRESSION)
-                              .setTableFormatConfig(createBlockBasedTableConfig(configuration))))
-              .collect(Collectors.toList());
+          trimmedSegments.stream().map(this::createColumnDescriptor).collect(Collectors.toList());
       columnDescriptors.add(
           new ColumnFamilyDescriptor(
               DEFAULT_COLUMN.getBytes(StandardCharsets.UTF_8),
@@ -165,33 +162,46 @@ public abstract class RocksDBColumnarKeyValueStorage
                   .setCompressionType(CompressionType.LZ4_COMPRESSION)
                   .setTableFormatConfig(createBlockBasedTableConfig(configuration))));
 
-      if (configuration.isHighSpec()) {
-        options =
-            new DBOptions()
-                .setCreateIfMissing(true)
-                .setMaxOpenFiles(configuration.getMaxOpenFiles())
-                .setDbWriteBufferSize(ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC)
-                .setStatistics(stats)
-                .setCreateMissingColumnFamilies(true)
-                .setEnv(
-                    Env.getDefault()
-                        .setBackgroundThreads(configuration.getBackgroundThreadCount()));
-      } else {
-        options =
-            new DBOptions()
-                .setCreateIfMissing(true)
-                .setMaxOpenFiles(configuration.getMaxOpenFiles())
-                .setStatistics(stats)
-                .setCreateMissingColumnFamilies(true)
-                .setEnv(
-                    Env.getDefault()
-                        .setBackgroundThreads(configuration.getBackgroundThreadCount()));
-      }
+      setGlobalOptions(configuration, stats);
 
       txOptions = new TransactionDBOptions();
       columnHandles = new ArrayList<>(columnDescriptors.size());
     } catch (RocksDBException e) {
       throw new StorageException(e);
+    }
+  }
+
+  private ColumnFamilyDescriptor createColumnDescriptor(final SegmentIdentifier segment) {
+    final var options =
+        new ColumnFamilyOptions()
+            .setTtl(0)
+            .setCompressionType(CompressionType.LZ4_COMPRESSION)
+            .setTableFormatConfig(createBlockBasedTableConfig(configuration));
+
+    if (segment.containsStaticData()) {
+      options
+          .setEnableBlobFiles(true)
+          .setEnableBlobGarbageCollection(false)
+          .setMinBlobSize(100)
+          .setBlobCompressionType(CompressionType.LZ4_COMPRESSION);
+    }
+
+    return new ColumnFamilyDescriptor(segment.getId(), options);
+  }
+
+  private void setGlobalOptions(final RocksDBConfiguration configuration, final Statistics stats) {
+    options = new DBOptions();
+    options
+        .setCreateIfMissing(true)
+        .setMaxOpenFiles(configuration.getMaxOpenFiles())
+        .setStatistics(stats)
+        .setCreateMissingColumnFamilies(true)
+        .setLogFileTimeToRoll(TIME_TO_ROLL_LOG_FILE)
+        .setKeepLogFileNum(NUMBER_OF_LOG_FILES_TO_KEEP)
+        .setEnv(Env.getDefault().setBackgroundThreads(configuration.getBackgroundThreadCount()));
+
+    if (configuration.isHighSpec()) {
+      options.setDbWriteBufferSize(ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC);
     }
   }
 
@@ -217,24 +227,9 @@ public abstract class RocksDBColumnarKeyValueStorage
   }
 
   BlockBasedTableConfig createBlockBasedTableConfig(final RocksDBConfiguration config) {
-    if (config.isHighSpec()) return createBlockBasedTableConfigHighSpec();
-    else return createBlockBasedTableConfigDefault(config);
-  }
-
-  private BlockBasedTableConfig createBlockBasedTableConfigHighSpec() {
-    final LRUCache cache = new LRUCache(ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC);
-    return new BlockBasedTableConfig()
-        .setFormatVersion(ROCKSDB_FORMAT_VERSION)
-        .setBlockCache(cache)
-        .setFilterPolicy(new BloomFilter(10, false))
-        .setPartitionFilters(true)
-        .setCacheIndexAndFilterBlocks(false)
-        .setBlockSize(ROCKSDB_BLOCK_SIZE);
-  }
-
-  private BlockBasedTableConfig createBlockBasedTableConfigDefault(
-      final RocksDBConfiguration config) {
-    final LRUCache cache = new LRUCache(config.getCacheCapacity());
+    final LRUCache cache =
+        new LRUCache(
+            config.isHighSpec() ? ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC : config.getCacheCapacity());
     return new BlockBasedTableConfig()
         .setFormatVersion(ROCKSDB_FORMAT_VERSION)
         .setBlockCache(cache)
@@ -265,6 +260,14 @@ public abstract class RocksDBColumnarKeyValueStorage
   public Stream<Pair<byte[], byte[]>> stream(final RocksDbSegmentIdentifier segmentHandle) {
     final RocksIterator rocksIterator = getDB().newIterator(segmentHandle.get());
     rocksIterator.seekToFirst();
+    return RocksDbIterator.create(rocksIterator).toStream();
+  }
+
+  @Override
+  public Stream<Pair<byte[], byte[]>> streamFromKey(
+      final RocksDbSegmentIdentifier segmentHandle, final byte[] startKey) {
+    final RocksIterator rocksIterator = getDB().newIterator(segmentHandle.get());
+    rocksIterator.seek(startKey);
     return RocksDbIterator.create(rocksIterator).toStream();
   }
 
@@ -327,6 +330,11 @@ public abstract class RocksDBColumnarKeyValueStorage
           .forEach(ColumnFamilyHandle::close);
       getDB().close();
     }
+  }
+
+  @Override
+  public boolean isClosed() {
+    return closed.get();
   }
 
   void throwIfClosed() {

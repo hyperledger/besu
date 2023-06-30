@@ -16,8 +16,8 @@
 package org.hyperledger.besu.ethereum.bonsai.storage;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
-import org.hyperledger.besu.ethereum.bonsai.worldview.StorageSlotKey;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -29,12 +29,15 @@ import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKeyValueStorage
     implements BonsaiStorageSubscriber {
 
   protected final BonsaiWorldStateKeyValueStorage parentWorldStateStorage;
-
+  private static final Logger LOG =
+      LoggerFactory.getLogger(BonsaiSnapshotWorldStateKeyValueStorage.class);
   private final long subscribeParentId;
 
   public BonsaiSnapshotWorldStateKeyValueStorage(
@@ -46,6 +49,8 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final KeyValueStorage trieLogStorage,
       final ObservableMetricsSystem metricsSystem) {
     super(
+        parentWorldStateStorage.flatDbMode,
+        parentWorldStateStorage.flatDbReaderStrategy,
         accountStorage,
         codeStorage,
         storageStorage,
@@ -69,6 +74,14 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
         metricsSystem);
   }
 
+  private boolean isClosedGet() {
+    if (isClosed.get()) {
+      Throwable t = new Throwable("Attempting to access closed worldstate");
+      LOG.warn(t.getMessage(), t);
+    }
+    return isClosed.get();
+  }
+
   @Override
   public BonsaiUpdater updater() {
     return new Updater(
@@ -81,51 +94,51 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
 
   @Override
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    return isClosed.get() ? Optional.empty() : super.getAccount(accountHash);
+    return isClosedGet() ? Optional.empty() : super.getAccount(accountHash);
   }
 
   @Override
   public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
-    return isClosed.get() ? Optional.empty() : super.getCode(codeHash, accountHash);
+    return isClosedGet() ? Optional.empty() : super.getCode(codeHash, accountHash);
   }
 
   @Override
   public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
-    return isClosed.get() ? Optional.empty() : super.getAccountStateTrieNode(location, nodeHash);
+    return isClosedGet() ? Optional.empty() : super.getAccountStateTrieNode(location, nodeHash);
   }
 
   @Override
   public Optional<Bytes> getAccountStorageTrieNode(
       final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
-    return isClosed.get()
+    return isClosedGet()
         ? Optional.empty()
         : super.getAccountStorageTrieNode(accountHash, location, nodeHash);
   }
 
   @Override
   public Optional<byte[]> getTrieLog(final Hash blockHash) {
-    return isClosed.get() ? Optional.empty() : super.getTrieLog(blockHash);
+    return isClosedGet() ? Optional.empty() : super.getTrieLog(blockHash);
   }
 
   @Override
   public Optional<Bytes> getStateTrieNode(final Bytes location) {
-    return isClosed.get() ? Optional.empty() : super.getStateTrieNode(location);
+    return isClosedGet() ? Optional.empty() : super.getStateTrieNode(location);
   }
 
   @Override
   public Optional<Bytes> getWorldStateRootHash() {
-    return isClosed.get() ? Optional.empty() : super.getWorldStateRootHash();
+    return isClosedGet() ? Optional.empty() : super.getWorldStateRootHash();
   }
 
   @Override
   public Optional<Hash> getWorldStateBlockHash() {
-    return isClosed.get() ? Optional.empty() : super.getWorldStateBlockHash();
+    return isClosedGet() ? Optional.empty() : super.getWorldStateBlockHash();
   }
 
   @Override
   public Optional<Bytes> getStorageValueByStorageSlotKey(
       final Hash accountHash, final StorageSlotKey storageSlotKey) {
-    return isClosed.get()
+    return isClosedGet()
         ? Optional.empty()
         : super.getStorageValueByStorageSlotKey(accountHash, storageSlotKey);
   }
@@ -135,14 +148,14 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final Supplier<Optional<Hash>> storageRootSupplier,
       final Hash accountHash,
       final StorageSlotKey storageSlotKey) {
-    return isClosed.get()
+    return isClosedGet()
         ? Optional.empty()
         : super.getStorageValueByStorageSlotKey(storageRootSupplier, accountHash, storageSlotKey);
   }
 
   @Override
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
-    return !isClosed.get() && super.isWorldStateAvailable(rootHash, blockHash);
+    return !isClosedGet() && super.isWorldStateAvailable(rootHash, blockHash);
   }
 
   @Override
@@ -205,7 +218,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
 
   @Override
   protected synchronized void doClose() throws Exception {
-    if (!isClosed.get()) {
+    if (!isClosedGet()) {
       // alert any subscribers we are closing:
       subscribers.forEach(BonsaiStorageSubscriber::onCloseStorage);
 

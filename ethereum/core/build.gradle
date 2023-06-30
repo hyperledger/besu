@@ -29,6 +29,7 @@ jar {
 
 dependencies {
   api 'org.slf4j:slf4j-api'
+  api 'org.web3j:core'
 
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
 
@@ -50,6 +51,7 @@ dependencies {
   annotationProcessor 'com.google.dagger:dagger-compiler'
   implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'io.vertx:vertx-core'
+
   implementation 'net.java.dev.jna:jna'
   implementation 'org.apache.commons:commons-lang3'
   implementation 'org.apache.tuweni:tuweni-bytes'

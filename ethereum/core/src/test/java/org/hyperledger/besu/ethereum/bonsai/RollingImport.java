@@ -49,7 +49,10 @@ public class RollingImport {
         new CachedMerkleTrieLoader(new NoOpMetricsSystem());
     final BonsaiWorldStateProvider archive =
         new BonsaiWorldStateProvider(
-            provider, null, cachedMerkleTrieLoader, new NoOpMetricsSystem());
+            provider, null, cachedMerkleTrieLoader, new NoOpMetricsSystem(), null);
+    final BonsaiWorldState bonsaiState =
+        new BonsaiWorldState(
+            archive, new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()));
     final InMemoryKeyValueStorage accountStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
@@ -66,16 +69,6 @@ public class RollingImport {
     final InMemoryKeyValueStorage trieLogStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
-    final BonsaiWorldState bonsaiState =
-        new BonsaiWorldState(
-            archive,
-            new BonsaiWorldStateKeyValueStorage(
-                accountStorage,
-                codeStorage,
-                storageStorage,
-                trieBranchStorage,
-                trieLogStorage,
-                new NoOpMetricsSystem()));
 
     int count = 0;
     while (!reader.isDone()) {

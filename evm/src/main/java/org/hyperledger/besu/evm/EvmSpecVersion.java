@@ -21,33 +21,37 @@ import org.slf4j.LoggerFactory;
 /** The enum Evm spec version. */
 public enum EvmSpecVersion {
   /** Frontier evm spec version. */
-  FRONTIER(0, true),
+  FRONTIER(0, true, "Frontier", "Finalized"),
   /** Homestead evm spec version. */
-  HOMESTEAD(0, true),
+  HOMESTEAD(0, true, "Homestead", "Finalized"),
   /** Byzantium evm spec version. */
-  BYZANTIUM(0, true),
+  BYZANTIUM(0, true, "Byzantium", "Finalized"),
   /** Constantinople evm spec version. */
-  CONSTANTINOPLE(0, true),
+  CONSTANTINOPLE(0, true, "Constantinople", "Did not reach Mainnet"),
+  /** Petersburg / ConstantinopleFix evm spec version. */
+  PETERSBURG(0, true, "ConstantinopleFix", "Finalized (also called Petersburg)"),
   /** Istanbul evm spec version. */
-  ISTANBUL(0, true),
+  ISTANBUL(0, true, "Istanbul", "Finalized"),
+  /** Berlin evm spec version */
+  BERLIN(0, true, "Berlin", "Finalized"),
   /** London evm spec version. */
-  LONDON(0, true),
+  LONDON(0, true, "London", "Finalized"),
   /** Paris evm spec version. */
-  PARIS(0, true),
+  PARIS(0, true, "Merge", "Finalized (also called Paris)"),
   /** Shanghai evm spec version. */
-  SHANGHAI(0, true),
+  SHANGHAI(0, true, "Shanghai", "Finalized"),
   /** Cancun evm spec version. */
-  CANCUN(0, false),
+  CANCUN(0, false, "Cancun", "In Development"),
   /** Prague evm spec version. */
-  PRAGUE(0, false),
+  PRAGUE(0, false, "Prague", "Placeholder"),
   /** Osaka evm spec version. */
-  OSAKA(0, false),
+  OSAKA(0, false, "Osaka", "Placeholder"),
   /** Bogota evm spec version. */
-  BOGOTA(0, false),
+  BOGOTA(0, false, "Bogata", "Placeholder"),
   /** Development fork for unscheduled EIPs */
-  FUTURE_EIPS(1, false),
+  FUTURE_EIPS(1, false, "Future_EIPs", "Development, for accepted and unscheduled EIPs"),
   /** Development fork for EIPs not accepted to Mainnet */
-  EXPERIMENTAL_EIPS(1, false);
+  EXPERIMENTAL_EIPS(1, false, "Experimental_EIPs", "Development, for experimental EIPs");
 
   private static final Logger LOGGER = LoggerFactory.getLogger(EvmSpecVersion.class);
 
@@ -56,12 +60,23 @@ public enum EvmSpecVersion {
   /** The Max eof version. */
   final int maxEofVersion;
 
+  /** Public name matching execution-spec-tests name */
+  final String name;
+  /** A brief description of the state of the fork */
+  final String description;
+
   /** The Version warned. */
   boolean versionWarned = false;
 
-  EvmSpecVersion(final int maxEofVersion, final boolean specFinalized) {
+  EvmSpecVersion(
+      final int maxEofVersion,
+      final boolean specFinalized,
+      final String name,
+      final String description) {
     this.maxEofVersion = maxEofVersion;
     this.specFinalized = specFinalized;
+    this.name = name;
+    this.description = description;
   }
 
   /**
@@ -71,6 +86,24 @@ public enum EvmSpecVersion {
    */
   public int getMaxEofVersion() {
     return maxEofVersion;
+  }
+
+  /**
+   * Name of the fork, in execution-spec-tests form
+   *
+   * @return name of the fork
+   */
+  public String getName() {
+    return name;
+  }
+
+  /**
+   * Description of the fork
+   *
+   * @return description
+   */
+  public String getDescription() {
+    return description;
   }
 
   /** Maybe warn version. */

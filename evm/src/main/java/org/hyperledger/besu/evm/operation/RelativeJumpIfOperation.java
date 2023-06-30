@@ -25,7 +25,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class RelativeJumpIfOperation extends RelativeJumpOperation {
 
   /** The constant OPCODE. */
-  public static final int OPCODE = 0x5d;
+  public static final int OPCODE = 0xe1;
 
   /**
    * Instantiates a new Relative jump If operation.

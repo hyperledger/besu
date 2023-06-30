@@ -23,7 +23,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
@@ -40,6 +39,8 @@ import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.BesuContext;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -70,14 +71,16 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
       final StorageProvider provider,
       final Blockchain blockchain,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader,
-      final ObservableMetricsSystem metricsSystem) {
+      final ObservableMetricsSystem metricsSystem,
+      final BesuContext pluginContext) {
     this(
         (BonsaiWorldStateKeyValueStorage)
             provider.createWorldStateStorage(DataStorageFormat.BONSAI),
         blockchain,
         Optional.empty(),
         cachedMerkleTrieLoader,
-        metricsSystem);
+        metricsSystem,
+        pluginContext);
   }
 
   public BonsaiWorldStateProvider(
@@ -85,7 +88,8 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader,
-      final ObservableMetricsSystem metricsSystem) {
+      final ObservableMetricsSystem metricsSystem,
+      final BesuContext pluginContext) {
 
     // TODO: de-dup constructors
     this.trieLogManager =
@@ -94,7 +98,8 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
             blockchain,
             worldStateStorage,
             metricsSystem,
-            maxLayersToLoad.orElse(RETAINED_LAYERS));
+            maxLayersToLoad.orElse(RETAINED_LAYERS),
+            pluginContext);
     this.blockchain = blockchain;
     this.worldStateStorage = worldStateStorage;
     this.persistedState = new BonsaiWorldState(this, worldStateStorage);
@@ -189,8 +194,8 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
         final Optional<BlockHeader> maybePersistedHeader =
             blockchain.getBlockHeader(mutableState.blockHash()).map(BlockHeader.class::cast);
 
-        final List<TrieLogLayer> rollBacks = new ArrayList<>();
-        final List<TrieLogLayer> rollForwards = new ArrayList<>();
+        final List<TrieLog> rollBacks = new ArrayList<>();
+        final List<TrieLog> rollForwards = new ArrayList<>();
         if (maybePersistedHeader.isEmpty()) {
           trieLogManager.getTrieLogLayer(mutableState.blockHash()).ifPresent(rollBacks::add);
         } else {
@@ -232,7 +237,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
         final BonsaiWorldStateUpdateAccumulator bonsaiUpdater =
             (BonsaiWorldStateUpdateAccumulator) mutableState.updater();
         try {
-          for (final TrieLogLayer rollBack : rollBacks) {
+          for (final TrieLog rollBack : rollBacks) {
             LOG.debug("Attempting Rollback of {}", rollBack.getBlockHash());
             bonsaiUpdater.rollBack(rollBack);
           }
@@ -286,6 +291,12 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     return persistedState;
   }
 
+  /**
+   * Prepares the state healing process for a given address and location. It prepares the state
+   * healing, including retrieving data from storage, identifying invalid slots or nodes, removing
+   * account and slot from the state trie, and committing the changes. Finally, it downgrades the
+   * world state storage to partial flat database mode.
+   */
   public void prepareStateHealing(final Address address, final Bytes location) {
     final Set<Bytes> keysToDelete = new HashSet<>();
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = worldStateStorage.updater();
@@ -335,6 +346,8 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     }
     keysToDelete.forEach(bytes -> updater.removeAccountStateTrieNode(bytes, null));
     updater.commit();
+
+    worldStateStorage.downgradeToPartialFlatDbMode();
   }
 
   public TrieLogManager getTrieLogManager() {

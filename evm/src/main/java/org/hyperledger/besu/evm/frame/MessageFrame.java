@@ -817,6 +817,26 @@ public class MessageFrame {
     }
   }
 
+  /**
+   * Copies bytes within memory.
+   *
+   * <p>Copying behaves as if the values are copied to an intermediate buffer before writing.
+   *
+   * @param dst The destination address
+   * @param src The source address
+   * @param length the number of bytes to copy
+   * @param explicitMemoryUpdate true if triggered by a memory opcode, false otherwise
+   */
+  public void copyMemory(
+      final long dst, final long src, final long length, final boolean explicitMemoryUpdate) {
+    if (length > 0) {
+      memory.copy(dst, src, length);
+      if (explicitMemoryUpdate) {
+        setUpdatedMemory(dst, memory.getBytes(dst, length));
+      }
+    }
+  }
+
   private void setUpdatedMemory(
       final long offset, final long sourceOffset, final long length, final Bytes value) {
     final long endIndex = sourceOffset + length;
