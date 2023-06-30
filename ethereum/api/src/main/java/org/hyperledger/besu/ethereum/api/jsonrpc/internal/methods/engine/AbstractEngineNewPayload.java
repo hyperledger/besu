@@ -27,6 +27,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRp
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -101,16 +102,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     Optional<List<String>> maybeVersionedHashParam =
         requestContext.getOptionalList(1, String.class);
-    Optional<List<Bytes32>> maybeVersionedHashes = Optional.empty();
-    if (maybeVersionedHashParam.isPresent()) {
-      List<Bytes32> versionedHashes =
-          maybeVersionedHashParam.get().stream()
-              .map(Bytes32::fromHexStringStrict)
-              .collect(Collectors.toList());
-      if (versionedHashes.size() > 0) {
-        maybeVersionedHashes = Optional.of(versionedHashes);
-      }
-    }
 
     Object reqId = requestContext.getRequest().getId();
 
@@ -204,6 +195,20 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       LOG.debug(errorMessage);
       return respondWithInvalid(reqId, blockParam, null, getInvalidBlockHashStatus(), errorMessage);
     }
+
+    var blobTransactions =
+        transactions.stream().filter(transaction -> transaction.getType().supportsBlob()).toList();
+
+    // Validate Blob Transactions
+    var blobTransactionsInvalidResult =
+        validateBlobTransactions(blobTransactions, maybeVersionedHashParam);
+
+    if (blobTransactionsInvalidResult.isPresent()) {
+      LOG.debug(blobTransactionsInvalidResult.get());
+      return respondWithInvalid(
+          reqId, blockParam, null, INVALID, blobTransactionsInvalidResult.get());
+    }
+
     // do we already have this payload
     if (protocolContext.getBlockchain().getBlockByHash(newBlockHeader.getBlockHash()).isPresent()) {
       LOG.debug("block already present");
@@ -218,49 +223,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               .orElse(Hash.ZERO),
           INVALID,
           "Block already present in bad block manager.");
-    }
-
-    final List<Bytes32> transactionVersionedHashes = new ArrayList<>();
-    // get versioned hashes, in order, from all blob tx
-    transactions.stream()
-        .filter(tx -> tx.getBlobCount() > 0)
-        .forEachOrdered(
-            tx ->
-                transactionVersionedHashes.addAll(
-                    tx.getVersionedHashes().get().stream()
-                        .map(vh -> vh.toBytes())
-                        .collect(toList())));
-    // and compare with expected versioned hashes param
-
-    // check if one is empty
-    if (maybeVersionedHashes.isPresent() && transactionVersionedHashes.isEmpty()) {
-      return respondWithInvalid(
-          reqId,
-          blockParam,
-          null,
-          INVALID,
-          "Versioned hashes from blob transactions (empty) do not match expected values");
-    }
-    if (maybeVersionedHashes.isEmpty() && !transactionVersionedHashes.isEmpty()) {
-      return respondWithInvalid(
-          reqId,
-          blockParam,
-          null,
-          INVALID,
-          "Versioned hashes from blob transactions do not match expected values (empty)");
-    }
-    if (maybeVersionedHashes.isEmpty() && transactionVersionedHashes.isEmpty()) {
-      LOG.trace("Versioned hashes from blob tx (empty) matches expected values (empty)");
-    } else {
-      // otherwise, check list contents
-      if (!maybeVersionedHashes.get().equals(transactionVersionedHashes)) {
-        return respondWithInvalid(
-            reqId,
-            blockParam,
-            null,
-            INVALID,
-            "Versioned hashes from blob transactions do not match expected values (empty)");
-      }
     }
 
     final Optional<BlockHeader> maybeParentHeader =
@@ -335,6 +297,35 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           INVALID,
           executionResult.errorMessage.get());
     }
+  }
+
+  private Optional<String> validateBlobTransactions(
+      final List<Transaction> blobTransactions,
+      final Optional<List<String>> maybeVersionedHashParam) {
+
+    List<Bytes32> versionedHashesParam =
+        maybeVersionedHashParam
+            .map(strings -> strings.stream().map(Bytes32::fromHexStringStrict).toList())
+            .orElseGet(ArrayList::new);
+
+    final List<Bytes32> transactionVersionedHashes = new ArrayList<>();
+
+    for (Transaction transaction : blobTransactions) {
+      if (transaction.getType().supportsBlob()) {
+        var versionedHashes = transaction.getVersionedHashes();
+        if (versionedHashes.isEmpty()) {
+          return Optional.of("There must be at least one blob");
+        }
+        transactionVersionedHashes.addAll(
+            versionedHashes.get().stream().map(VersionedHash::toBytes).toList());
+      }
+    }
+
+    // check list contents
+    if (!versionedHashesParam.equals(transactionVersionedHashes)) {
+      return Optional.of("Versioned hashes from blob transactions do not match expected values");
+    }
+    return Optional.empty();
   }
 
   JsonRpcResponse respondWith(
