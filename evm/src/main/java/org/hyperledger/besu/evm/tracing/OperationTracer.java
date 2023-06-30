@@ -66,9 +66,20 @@ public interface OperationTracer {
   /**
    * Trace the end of a transaction.
    *
+   * @param gasLimit the gas limit set for the transaction
+   */
+  default void traceStartTransaction(final long gasLimit) {}
+
+  /**
+   * Trace the end of a transaction.
+   *
    * @param output the bytes output from the transaction
    * @param gasUsed the gas used by the entire transaction
    * @param timeNs the time in nanoseconds it took to execute the transaction
    */
   default void traceEndTransaction(final Bytes output, final long gasUsed, final long timeNs) {}
+
+  default boolean isExtendedTracing() {
+    return false;
+  }
 }
