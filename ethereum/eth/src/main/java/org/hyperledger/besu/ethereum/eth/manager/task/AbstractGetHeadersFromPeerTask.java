@@ -118,6 +118,9 @@ public abstract class AbstractGetHeadersFromPeerTask
       prevBlockHeader = header;
       headersList.add(header);
     }
+    // if we have received more than one header we have to update the chain state with the last
+    // header as well, as the header with the highest block number can be the first or the last
+    // header.
     if (headers.size() > 1) {
       updatePeerChainState(peer, header);
     }
