@@ -1,6 +1,6 @@
 # Changelog
 
-## 23.4.4
+## 23.4.5
 
 ### Breaking Changes
 
@@ -17,13 +17,13 @@
 
 ---
 
-## 23.4.3
+## 23.4.4
 
 ### Breaking Changes
 - Move blockchain related variables in a dedicated storage, to pave the way to future optimizations [#5471](https://github.com/hyperledger/besu/pull/5471). The migration is performed automatically at startup,
 and in case a rollback is needed, before installing a previous version, the migration can be reverted, using the subcommand `storage revert-variables` with the same configuration use to run Besu.
 - Remove deprecated Rinkeby named network. [#5540](https://github.com/hyperledger/besu/pull/5540)
-
+- Use BlobDB for blockchain storage to reduce initial sync time and write amplification (PR #5475). This PR reduces sync time by 14 hours on m6a.xlarge VM (1 day 8 hours 27 minutes instead of 1 day 22 hours 4 minutes).
 ### Additions and Improvements
 - Allow Ethstats connection url to specify ws:// or wss:// scheme. [#5494](https://github.com/hyperledger/besu/issues/5494)
 - Add support for Shanghai changes to the GraphQL service [#5496](https://github.com/hyperledger/besu/pull/5496)
@@ -40,12 +40,16 @@ and in case a rollback is needed, before installing a previous version, the migr
 - Fix the unavailability of account code and storage on GraphQL/Bonsai [#5548](https://github.com/hyperledger/besu/pull/5548)
 
 ### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.4.4/besu-23.4.4.tar.gz / sha256: bd476d235b6fe1f236a62bc709f41c87deb68b72c47bb5b58e56b9d9283af2c4
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.4.4/besu-23.4.4.zip / sha256: 4575000f4fd21d318e7b77340c9281d496bc800bee5b45a13684319e6f28bf27
 
-## 23.4.2
+## 23.4.3
 
 - Was not released (failed burn-in test)
 
----
+- ## 23.4.2
+
+- Was not released (failed burn-in test)
 
 ## 23.4.1
 
