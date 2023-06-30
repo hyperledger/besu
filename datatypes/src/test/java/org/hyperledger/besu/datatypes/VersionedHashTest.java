@@ -15,21 +15,20 @@
 
 package org.hyperledger.besu.datatypes;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 class VersionedHashTest {
 
-    @Test
-    public void throwsOnUnsupportedHashType() {
-        assertThrows(IllegalArgumentException.class, () -> new VersionedHash((byte) 0, Hash.ZERO));
-    }
+  @Test
+  public void throwsOnUnsupportedHashType() {
+    assertThrows(IllegalArgumentException.class, () -> new VersionedHash((byte) 0, Hash.ZERO));
+  }
 
-    @Test
-    public void throwsOnParsingUnsupportedHashType() {
-        assertThrows(IllegalArgumentException.class, () -> new VersionedHash(Bytes32.ZERO));
-    }
-
+  @Test
+  public void throwsOnParsingUnsupportedHashType() {
+    assertThrows(IllegalArgumentException.class, () -> new VersionedHash(Bytes32.ZERO));
+  }
 }
