@@ -61,7 +61,7 @@ import java.util.function.Supplier;
 import com.google.common.base.Suppliers;
 import ethereum.ckzg4844.CKZG4844JNI;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Ignore;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -526,14 +526,61 @@ public class MainnetTransactionValidatorTest {
   }
 
   @Test
-  @Ignore("This test is ignored because it requires a native library to be loaded")
+  public void shouldRejectContractCreateWithBlob() {
+    /*
+    https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md#blob-transaction
+    "The field to deviates slightly from the semantics with the exception that it
+    MUST NOT be nil and therefore must always represent a 20-byte address.
+    This means that blob transactions cannot have the form of a create transaction."
+     */
+    final MainnetTransactionValidator validator =
+        new MainnetTransactionValidator(
+            gasCalculator,
+            GasLimitCalculator.constant(),
+            FeeMarket.cancun(0L, Optional.empty()),
+            false,
+            Optional.of(BigInteger.ONE),
+            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559, TransactionType.BLOB),
+            0xc000);
+
+    var blobTx =
+        new TransactionTestFixture()
+            .to(Optional.empty())
+            .type(TransactionType.BLOB)
+            .chainId(Optional.of(BigInteger.ONE))
+            .maxFeePerGas(Optional.of(Wei.of(15)))
+            .maxFeePerDataGas(Optional.of(Wei.of(128)))
+            .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
+            .blobsWithCommitments(
+                Optional.of(
+                    new BlobsWithCommitments(
+                        List.of(new KZGCommitment(Bytes.EMPTY)),
+                        List.of(new Blob(Bytes.EMPTY)),
+                        List.of(new KZGProof(Bytes.EMPTY)))))
+            .versionedHashes(
+                Optional.of(List.of(new VersionedHash((byte) 1, Sha256Hash.wrap(Bytes32.ZERO)))))
+            .createTransaction(senderKeys);
+    var validationResult =
+        validator.validate(blobTx, Optional.empty(), transactionValidationParams);
+    if (!validationResult.isValid()) {
+      System.out.println(
+          validationResult.getInvalidReason() + " " + validationResult.getErrorMessage());
+    }
+
+    assertThat(validationResult.isValid()).isFalse();
+    assertThat(validationResult.getInvalidReason())
+        .isEqualTo(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT);
+  }
+
+  @Test
+  // @Ignore("This test is ignored because it requires a native library to be loaded")
   public void shouldAcceptTransactionWithAtLeastOneBlob() {
     when(gasCalculator.dataGasUsed(anyInt())).thenReturn(2L);
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator,
             GasLimitCalculator.constant(),
-            FeeMarket.london(0L),
+            FeeMarket.cancun(0L, Optional.empty()),
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559, TransactionType.BLOB),
@@ -568,6 +615,7 @@ public class MainnetTransactionValidatorTest {
 
     var blobTx =
         new TransactionTestFixture()
+            .to(Optional.of(Address.fromHexString("0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF")))
             .type(TransactionType.BLOB)
             .chainId(Optional.of(BigInteger.ONE))
             .maxFeePerGas(Optional.of(Wei.of(15)))

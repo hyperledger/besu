@@ -323,6 +323,12 @@ public class MainnetTransactionValidator implements TransactionValidator {
   public ValidationResult<TransactionInvalidReason> validateTransactionsBlobs(
       final Transaction transaction) {
 
+    if (transaction.getType().supportsBlob() && transaction.getTo().isEmpty()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+          "transaction blob transactions cannot have a to address");
+    }
+
     if (transaction.getBlobsWithCommitments().isEmpty()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_BLOBS,
@@ -330,18 +336,6 @@ public class MainnetTransactionValidator implements TransactionValidator {
     }
 
     BlobsWithCommitments blobsWithCommitments = transaction.getBlobsWithCommitments().get();
-
-    final long blobsLimit =
-        gasLimitCalculator.currentDataGasLimit()
-            / gasCalculator.dataGasUsed(blobsWithCommitments.getBlobs().size());
-    if (blobsWithCommitments.getBlobs().size() > blobsLimit) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.INVALID_BLOBS,
-          "Too many transaction blobs ("
-              + blobsWithCommitments.getBlobs().size()
-              + ") in transaction, max is "
-              + blobsLimit);
-    }
 
     if (blobsWithCommitments.getBlobs().size() != blobsWithCommitments.getKzgCommitments().size()) {
       return ValidationResult.invalid(
