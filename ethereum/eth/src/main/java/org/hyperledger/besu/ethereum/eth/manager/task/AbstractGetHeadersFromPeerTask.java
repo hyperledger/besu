@@ -118,7 +118,9 @@ public abstract class AbstractGetHeadersFromPeerTask
       prevBlockHeader = header;
       headersList.add(header);
     }
-    updatePeerChainState(peer, header);
+    if (headers.size() > 1) {
+      updatePeerChainState(peer, header);
+    }
 
     LOG.debug("Received {} of {} headers requested from peer {}", headersList.size(), count, peer);
     return Optional.of(headersList);
