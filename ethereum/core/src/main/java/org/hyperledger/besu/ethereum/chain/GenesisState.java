@@ -20,6 +20,7 @@ import org.hyperledger.besu.config.GenesisAllocation;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -167,6 +168,8 @@ public final class GenesisState {
         .blockHeaderFunctions(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule))
         .baseFee(genesis.getGenesisBaseFeePerGas().orElse(null))
         .withdrawalsRoot(isShanghaiAtGenesis(genesis) ? Hash.EMPTY_TRIE_HASH : null)
+        .dataGasUsed(isCancunAtGenesis(genesis) ? parseDataGasUsed(genesis) : 0L)
+        .excessDataGas(isCancunAtGenesis(genesis) ? parseExcessDataGas(genesis) : DataGas.ZERO)
         .depositsRoot(isExperimentalEipsTimeAtGenesis(genesis) ? Hash.EMPTY_TRIE_HASH : null)
         .buildBlockHeader();
   }
@@ -216,19 +219,36 @@ public final class GenesisState {
   private static long parseNonce(final GenesisConfigFile genesis) {
     return withNiceErrorMessage("nonce", genesis.getNonce(), GenesisState::parseUnsignedLong);
   }
+  
+  private static long parseDataGasUsed(final GenesisConfigFile genesis) {
+      return withNiceErrorMessage("dataGasUsed", genesis.getDataGasUsed(), GenesisState::parseUnsignedLong);
+  }
+
+  private static DataGas parseExcessDataGas(final GenesisConfigFile genesis) {
+      long excessDataGas = withNiceErrorMessage("excessDataGas", genesis.getExcessDataGas(), GenesisState::parseUnsignedLong);
+      return DataGas.of(excessDataGas);
+  }
 
   private static long parseUnsignedLong(final String value) {
-    String nonce = value.toLowerCase(Locale.US);
-    if (nonce.startsWith("0x")) {
-      nonce = nonce.substring(2);
+    String v = value.toLowerCase(Locale.US);
+    if (v.startsWith("0x")) {
+      v = v.substring(2);
     }
-    return Long.parseUnsignedLong(nonce, 16);
+    return Long.parseUnsignedLong(v, 16);
   }
 
   private static boolean isShanghaiAtGenesis(final GenesisConfigFile genesis) {
     final OptionalLong shanghaiTimestamp = genesis.getConfigOptions().getShanghaiTime();
     if (shanghaiTimestamp.isPresent()) {
       return shanghaiTimestamp.getAsLong() == genesis.getTimestamp();
+    }
+    return false;
+  }
+
+  private static boolean isCancunAtGenesis(final GenesisConfigFile genesis) {
+    final OptionalLong cancunTimestamp = genesis.getConfigOptions().getCancunTime();
+    if (cancunTimestamp.isPresent()) {
+      return cancunTimestamp.getAsLong() == genesis.getTimestamp();
     }
     return false;
   }
