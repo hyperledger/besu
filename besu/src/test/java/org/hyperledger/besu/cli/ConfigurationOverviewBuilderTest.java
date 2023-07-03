@@ -148,11 +148,11 @@ class ConfigurationOverviewBuilderTest {
   void setLayeredTxPoolEnabled() {
     final String layeredTxPoolDisabled = builder.build();
     assertThat(layeredTxPoolDisabled)
-        .doesNotContain("Experimental Layered Transaction Pool configuration enabled");
+        .doesNotContain("Experimental layered transaction pool configuration enabled");
 
     builder.setLayeredTxPoolEnabled();
     final String layeredTxPoolEnabled = builder.build();
     assertThat(layeredTxPoolEnabled)
-        .contains("Experimental Layered Transaction Pool configuration enabled");
+        .contains("Experimental layered transaction pool configuration enabled");
   }
 }

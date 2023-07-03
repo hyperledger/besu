@@ -248,11 +248,11 @@ public class ConfigurationOverviewBuilder {
     }
 
     if (isHighSpec) {
-      lines.add("Experimental High Spec configuration enabled");
+      lines.add("Experimental high spec configuration enabled");
     }
 
     if (isLayeredTxPool) {
-      lines.add("Experimental Layered Transaction Pool configuration enabled");
+      lines.add("Experimental layered transaction pool configuration enabled");
     }
 
     lines.add("");
