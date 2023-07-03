@@ -417,11 +417,12 @@ public class T8nSubCommand implements Runnable {
             builder.signature(
                 SignatureAlgorithmFactory.getInstance()
                     .createSignature(
-                        Bytes.fromHexString(txNode.get("r").textValue()).toUnsignedBigInteger(),
-                        Bytes.fromHexString(txNode.get("s").textValue()).toUnsignedBigInteger(),
-                        Bytes.fromHexString(txNode.get("v").textValue())
+                        Bytes.fromHexStringLenient(txNode.get("r").textValue())
+                            .toUnsignedBigInteger(),
+                        Bytes.fromHexStringLenient(txNode.get("s").textValue())
+                            .toUnsignedBigInteger(),
+                        Bytes.fromHexStringLenient(txNode.get("v").textValue())
                             .toUnsignedBigInteger()
-                            .subtract(Transaction.REPLAY_UNPROTECTED_V_BASE)
                             .byteValueExact()));
             transactions.add(builder.build());
           }
