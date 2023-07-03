@@ -76,14 +76,14 @@ import java.util.Optional;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Answers;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public abstract class AbstractBlockTransactionSelectorTest {
   protected static final double MIN_OCCUPANCY_80_PERCENT = 0.8;
   protected static final double MIN_OCCUPANCY_100_PERCENT = 1;
@@ -109,7 +109,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   protected EthContext ethContext;
 
-  @Before
+  @BeforeEach
   public void setup() {
     genesisConfigFile = getGenesisConfigFile();
     protocolSchedule = createProtocolSchedule();

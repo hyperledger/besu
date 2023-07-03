@@ -24,12 +24,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.UUID;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
 
-@RunWith(Parameterized.class)
 public class HashRateMiningCoordinatorTest {
   private final Blockchain blockchain = mock(Blockchain.class);
   private final SyncState syncState = mock(SyncState.class);
@@ -40,7 +37,7 @@ public class HashRateMiningCoordinatorTest {
   private final int startSealersSize;
   private final boolean wantAdded;
 
-  @Parameters
+  @ParameterizedTest
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {

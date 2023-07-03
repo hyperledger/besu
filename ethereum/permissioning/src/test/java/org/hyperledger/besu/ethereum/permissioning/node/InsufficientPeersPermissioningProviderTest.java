@@ -32,14 +32,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class InsufficientPeersPermissioningProviderTest {
   @Mock private P2PNetwork p2pNetwork;
   private final EnodeURL SELF_ENODE =
@@ -58,7 +58,7 @@ public class InsufficientPeersPermissioningProviderTest {
       EnodeURLImpl.fromString(
           "enode://00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005@192.168.0.5:30303");
 
-  @Before
+  @BeforeEach
   public void setup() {
     when(p2pNetwork.getLocalEnode()).thenReturn(Optional.of(SELF_ENODE));
   }

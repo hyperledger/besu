@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.trie.patricia;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static junit.framework.TestCase.assertFalse;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -33,13 +32,14 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public abstract class AbstractMerklePatriciaTrieTest {
   protected MerkleTrie<Bytes, String> trie;
 
-  @Before
+  @BeforeEach
   public void setup() {
     trie = createTrie();
   }
