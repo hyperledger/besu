@@ -137,11 +137,11 @@ class ConfigurationOverviewBuilderTest {
   @Test
   void setHighSpecEnabled() {
     final String highSpecNotEnabled = builder.build();
-    assertThat(highSpecNotEnabled).doesNotContain("Experimental High Spec configuration enabled");
+    assertThat(highSpecNotEnabled).doesNotContain("Experimental high spec configuration enabled");
 
     builder.setHighSpecEnabled();
     final String highSpecEnabled = builder.build();
-    assertThat(highSpecEnabled).contains("Experimental High Spec configuration enabled");
+    assertThat(highSpecEnabled).contains("Experimental high spec configuration enabled");
   }
 
   @Test
