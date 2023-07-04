@@ -93,6 +93,7 @@ import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.MergeConfigOptions;
+import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
@@ -2133,7 +2134,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--remote-connections-max-percentage"));
 
     // Check that block producer options work
-    if (!isMergeEnabled() && !genesisConfigOptions.isPoa()) {
+    if (!isMergeEnabled()
+        && !(Optional.ofNullable(genesisConfigOptions)
+            .orElseGet(() -> new StubGenesisConfigOptions())
+            .isPoa())) {
       CommandLineUtils.checkOptionDependencies(
           logger,
           commandLine,
@@ -2146,7 +2150,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               "--miner-extra-data"));
     }
 
-    if (!genesisConfigOptions.isPoa()) {
+    if (!Optional.ofNullable(genesisConfigOptions)
+        .orElseGet(() -> new StubGenesisConfigOptions())
+        .isPoa()) {
       // Check that mining options are able to work
       CommandLineUtils.checkOptionDependencies(
           logger,
