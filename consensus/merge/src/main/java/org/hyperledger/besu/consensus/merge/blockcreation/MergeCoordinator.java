@@ -104,6 +104,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
    * @param pendingTransactions the pending transactions
    * @param miningParams the mining params
    * @param backwardSyncContext the backward sync context
+   * @param depositContractAddress the address of the deposit contract
    */
   public MergeCoordinator(
       final ProtocolContext protocolContext,
@@ -111,7 +112,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final ProposalBuilderExecutor blockBuilderExecutor,
       final PendingTransactions pendingTransactions,
       final MiningParameters miningParams,
-      final BackwardSyncContext backwardSyncContext) {
+      final BackwardSyncContext backwardSyncContext,
+      final Optional<Address> depositContractAddress) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.blockBuilderExecutor = blockBuilderExecutor;
@@ -136,7 +138,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 protocolSchedule,
                 this.miningParameters.getMinTransactionGasPrice(),
                 address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
-                parentHeader);
+                parentHeader,
+                depositContractAddress);
 
     this.backwardSyncContext.subscribeBadChainListener(this);
   }
@@ -467,7 +470,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           .setMessage("Appending new head block hash {} to backward sync")
           .addArgument(headHash::toHexString)
           .log();
-      backwardSyncContext.updateHead(headHash);
+      backwardSyncContext.maybeUpdateTargetHeight(headHash);
       backwardSyncContext
           .syncBackwardsUntil(headHash)
           .thenRun(() -> updateFinalized(finalizedHash));

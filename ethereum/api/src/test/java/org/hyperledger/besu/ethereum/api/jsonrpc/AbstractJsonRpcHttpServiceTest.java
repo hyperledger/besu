@@ -191,6 +191,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             folder.getRoot().toPath(),
             mock(EthPeers.class),
             syncVertx,
+            Optional.empty(),
             Optional.empty());
   }
 

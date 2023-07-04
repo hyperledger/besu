@@ -83,6 +83,7 @@ import org.hyperledger.besu.cli.subcommands.ValidateConfigSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand;
 import org.hyperledger.besu.cli.subcommands.operator.OperatorSubCommand;
 import org.hyperledger.besu.cli.subcommands.rlp.RLPSubCommand;
+import org.hyperledger.besu.cli.subcommands.storage.StorageSubCommand;
 import org.hyperledger.besu.cli.util.BesuCommandCustomFactory;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
@@ -140,6 +141,7 @@ import org.hyperledger.besu.ethereum.permissioning.PermissioningConfigurationBui
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
@@ -1598,6 +1600,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     commandLine.addSubcommand(
         ValidateConfigSubCommand.COMMAND_NAME,
         new ValidateConfigSubCommand(commandLine, commandLine.getOut()));
+    commandLine.addSubcommand(
+        StorageSubCommand.COMMAND_NAME, new StorageSubCommand(commandLine.getOut()));
     final String generateCompletionSubcommandName = "generate-completion";
     commandLine.addSubcommand(
         generateCompletionSubcommandName, AutoComplete.GenerateCompletion.class);
@@ -2163,6 +2167,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         "--Xcheckpoint-post-merge-enabled can only be used with X_CHECKPOINT sync-mode",
         SyncMode.X_CHECKPOINT.equals(getDefaultSyncModeIfNotSet()),
         singletonList("--Xcheckpoint-post-merge-enabled"));
+
+    CommandLineUtils.failIfOptionDoesntMeetRequirement(
+        commandLine,
+        "--Xsnapsync-synchronizer-flat option can only be used when -Xsnapsync-synchronizer-flat-db-healing-enabled is true",
+        unstableSynchronizerOptions.isSnapsyncFlatDbHealingEnabled(),
+        asList(
+            "--Xsnapsync-synchronizer-flat-account-healed-count-per-request",
+            "--Xsnapsync-synchronizer-flat-slot-healed-count-per-request"));
 
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)
         && nodePrivateKeyFileOption.getNodePrivateKeyFile() != null) {
@@ -2979,6 +2991,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return this.keyValueStorageProvider;
   }
 
+  /**
+   * Get the storage provider
+   *
+   * @return the storage provider
+   */
+  public StorageProvider getStorageProvider() {
+    return keyValueStorageProvider(keyValueStorageName);
+  }
+
   private Optional<PkiBlockCreationConfiguration> maybePkiBlockCreationConfiguration() {
     return pkiBlockCreationOptions
         .asDomainConfig(commandLine)
@@ -3082,6 +3103,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .storageProvider(keyValueStorageProvider(keyValueStorageName))
             .rpcEndpointService(rpcEndpointServiceImpl)
             .rpcMaxLogsRange(rpcMaxLogsRange)
+            .enodeDnsConfiguration(getEnodeDnsConfiguration())
             .build();
 
     addShutdownHook(runner);
@@ -3651,6 +3673,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (rocksDBPlugin.isHighSpecEnabled()) {
       builder.setHighSpecEnabled();
+    }
+
+    if (buildTransactionPoolConfiguration().getLayeredTxPoolEnabled()) {
+      builder.setLayeredTxPoolEnabled();
     }
 
     return builder.build();

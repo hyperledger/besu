@@ -69,8 +69,6 @@ dependencies {
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
 
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
-
   integrationTestImplementation project(':crypto:algorithms')
   integrationTestImplementation project(path: ':crypto:services', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(path: ':consensus:common', configuration: 'testSupportArtifacts')

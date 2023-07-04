@@ -129,6 +129,7 @@ public class JsonRpcHttpServiceTlsTest {
                     folder.getRoot().toPath(),
                     mock(EthPeers.class),
                     vertx,
+                    Optional.empty(),
                     Optional.empty()));
     service = createJsonRpcHttpService(createJsonRpcConfig());
     service.start().join();

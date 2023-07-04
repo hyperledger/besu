@@ -24,6 +24,7 @@ import java.util.Iterator;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
 
 public class TrieIterator<V> implements PathNodeVisitor<V> {
 
@@ -40,10 +41,15 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
   @Override
   public Node<V> visit(final ExtensionNode<V> node, final Bytes searchPath) {
     Bytes remainingPath = searchPath;
+    final Bytes extensionPath;
+    final Bytes commonPrefixPath;
     if (state == State.SEARCHING) {
-      final Bytes extensionPath = node.getPath();
-      final int commonPathLength = extensionPath.commonPrefixLength(searchPath);
-      remainingPath = searchPath.slice(commonPathLength);
+      extensionPath = node.getPath();
+      commonPrefixPath = searchPath.slice(0, Math.min(searchPath.size(), extensionPath.size()));
+      remainingPath = searchPath.slice(commonPrefixPath.size());
+      if (node.getPath().compareTo(commonPrefixPath) > 0) {
+        remainingPath = MutableBytes.create(remainingPath.size());
+      }
     }
 
     paths.push(node.getPath());
@@ -70,7 +76,12 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
     for (int i = iterateFrom; i < node.maxChild() && state.continueIterating(); i++) {
       paths.push(Bytes.of(i));
       final Node<V> child = node.child((byte) i);
-      child.accept(this, remainingPath);
+      if (i == iterateFrom) {
+        child.accept(this, remainingPath);
+      } else {
+        child.accept(this, MutableBytes.create(remainingPath.size()));
+      }
+
       if (unload) {
         child.unload();
       }

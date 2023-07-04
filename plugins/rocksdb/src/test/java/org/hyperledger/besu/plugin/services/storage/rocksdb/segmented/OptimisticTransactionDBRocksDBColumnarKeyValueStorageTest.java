@@ -25,6 +25,8 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class OptimisticTransactionDBRocksDBColumnarKeyValueStorageTest
     extends RocksDBColumnarKeyValueStorageTest {
 
@@ -32,7 +34,9 @@ public class OptimisticTransactionDBRocksDBColumnarKeyValueStorageTest
   protected SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore()
       throws Exception {
     return new OptimisticRocksDBColumnarKeyValueStorage(
-        new RocksDBConfigurationBuilder().databaseDir(folder.newFolder().toPath()).build(),
+        new RocksDBConfigurationBuilder()
+            .databaseDir(folder.resolve(Bytes.random(9).toString()))
+            .build(),
         Arrays.asList(TestSegment.FOO, TestSegment.BAR),
         List.of(),
         new NoOpMetricsSystem(),

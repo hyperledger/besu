@@ -151,6 +151,25 @@ public class BytesValueRLPInputTest {
   }
 
   @Test
+  public void assertUnsignedIntScalar() {
+    // Scalar should be encoded as the minimal byte array representing the number. For 0, that means
+    // the empty byte array, which is a short element of zero-length, so 0x80.
+    assertUnsignedIntScalar(0L, h("0x80"));
+
+    assertUnsignedIntScalar(1L, h("0x01"));
+    assertUnsignedIntScalar(15L, h("0x0F"));
+    assertUnsignedIntScalar(1024L, h("0x820400"));
+    assertUnsignedIntScalar((1L << 32) - 1, h("0x84ffffffff"));
+  }
+
+  private void assertUnsignedIntScalar(final long expected, final Bytes toTest) {
+    final RLPInput in = RLP.input(toTest);
+    assertThat(in.isDone()).isFalse();
+    assertThat(in.readUnsignedIntScalar()).isEqualTo(expected);
+    assertThat(in.isDone()).isTrue();
+  }
+
+  @Test
   public void assertLongScalar() {
     // Scalar should be encoded as the minimal byte array representing the number. For 0, that means
     // the empty byte array, which is a short element of zero-length, so 0x80.

@@ -60,7 +60,8 @@ public class PoWBlockCreator extends AbstractBlockCreator {
         protocolSchedule,
         minTransactionGasPrice,
         minBlockOccupancyRatio,
-        parentHeader);
+        parentHeader,
+        Optional.empty());
 
     this.nonceSolver = nonceSolver;
   }

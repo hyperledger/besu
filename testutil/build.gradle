@@ -36,7 +36,7 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'com.squareup.okhttp3:okhttp'
   implementation 'io.vertx:vertx-core'
-  implementation 'junit:junit'
+  implementation 'org.junit.jupiter:junit-jupiter'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-io'
   implementation 'org.apache.tuweni:tuweni-toml'

@@ -23,7 +23,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 abstract class AbstractTaskQueueTest<T extends TaskCollection<Bytes>> {
 

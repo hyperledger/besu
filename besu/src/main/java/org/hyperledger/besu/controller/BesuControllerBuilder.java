@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.chain.ChainPrunerConfiguration;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -123,7 +124,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       () ->
           Optional.ofNullable(genesisConfig)
               .map(conf -> conf.getConfigOptions(genesisConfigOverrides))
-              .orElseGet(genesisConfig::getConfigOptions);
+              .orElseThrow();
 
   /** The Sync config. */
   protected SynchronizerConfiguration syncConfig;
@@ -561,11 +562,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfig, protocolSchedule);
+
+    final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
+
     final WorldStateStorage worldStateStorage =
         storageProvider.createWorldStateStorage(dataStorageConfiguration.getDataStorageFormat());
 
     final BlockchainStorage blockchainStorage =
-        storageProvider.createBlockchainStorage(protocolSchedule);
+        storageProvider.createBlockchainStorage(protocolSchedule, variablesStorage);
 
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(
@@ -773,7 +777,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         nodeKey,
         closeables,
         additionalPluginServices,
-        ethPeers);
+        ethPeers,
+        storageProvider);
   }
 
   /**

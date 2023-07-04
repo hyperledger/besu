@@ -12,14 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
+package org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.TRIE_NODE;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.patricia.TrieNodeDecoder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -34,7 +36,8 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public abstract class TrieNodeDataRequest extends SnapDataRequest implements TasksPriorityProvider {
+public abstract class TrieNodeHealingRequest extends SnapDataRequest
+    implements TasksPriorityProvider {
 
   private final Bytes32 nodeHash;
   private final Bytes location;
@@ -42,7 +45,7 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
 
   protected boolean requiresPersisting = true;
 
-  protected TrieNodeDataRequest(final Hash nodeHash, final Hash rootHash, final Bytes location) {
+  protected TrieNodeHealingRequest(final Hash nodeHash, final Hash rootHash, final Bytes location) {
     super(TRIE_NODE, rootHash);
     this.nodeHash = nodeHash;
     this.location = location;
@@ -54,7 +57,8 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
       final WorldStateStorage worldStateStorage,
       final WorldStateStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncState snapSyncState) {
+      final SnapSyncProcessState snapSyncState,
+      final SnapSyncConfiguration snapSyncConfiguration) {
     if (isExpired(snapSyncState) || pendingChildren.get() > 0) {
       // we do nothing. Our last child will eventually persist us.
       return 0;
@@ -62,12 +66,15 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
     int saved = 0;
     if (requiresPersisting) {
       checkNotNull(data, "Must set data before node can be persisted.");
-      saved = doPersist(worldStateStorage, updater, downloadState, snapSyncState);
+      saved =
+          doPersist(
+              worldStateStorage, updater, downloadState, snapSyncState, snapSyncConfiguration);
     }
     if (possibleParent.isPresent()) {
       return possibleParent
               .get()
-              .saveParent(worldStateStorage, updater, downloadState, snapSyncState)
+              .saveParent(
+                  worldStateStorage, updater, downloadState, snapSyncState, snapSyncConfiguration)
           + saved;
     }
     return saved;
@@ -77,7 +84,7 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
   public Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
       final WorldStateStorage worldStateStorage,
-      final SnapSyncState snapSyncState) {
+      final SnapSyncProcessState snapSyncState) {
     if (!isResponseReceived()) {
       // If this node hasn't been downloaded yet, we can't return any child data
       return Stream.empty();
@@ -116,7 +123,7 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
   }
 
   @Override
-  public boolean isExpired(final SnapSyncState snapSyncState) {
+  public boolean isExpired(final SnapSyncProcessState snapSyncState) {
     return snapSyncState.isExpired(this);
   }
 
@@ -158,7 +165,8 @@ public abstract class TrieNodeDataRequest extends SnapDataRequest implements Tas
     return !Objects.equals(node.getHash(), nodeHash) && node.isReferencedByHash();
   }
 
-  public abstract Optional<Bytes> getExistingData(final WorldStateStorage worldStateStorage);
+  public abstract Optional<Bytes> getExistingData(
+      final SnapWorldDownloadState downloadState, final WorldStateStorage worldStateStorage);
 
   public abstract List<Bytes> getTrieNodePath();
 
