@@ -94,11 +94,8 @@ public class EngineGetPayloadResultV3 {
       this.receiptsRoot = header.getReceiptsRoot().toString();
       this.extraData = header.getExtraData().toString();
       this.baseFeePerGas = header.getBaseFee().map(Quantity::create).orElse(null);
-      this.excessDataGas =
-          header.getExcessDataGas().map(Quantity::create).orElse(Quantity.HEX_ZERO);
       this.gasLimit = Quantity.create(header.getGasLimit());
       this.gasUsed = Quantity.create(header.getGasUsed());
-      this.dataGasUsed = Quantity.create(header.getDataGasUsed());
       this.timestamp = Quantity.create(header.getTimestamp());
       this.transactions = transactions;
       this.feeRecipient = header.getCoinbase().toString();
@@ -111,6 +108,9 @@ public class EngineGetPayloadResultV3 {
                           .map(WithdrawalParameter::fromWithdrawal)
                           .collect(Collectors.toList()))
               .orElse(null);
+      this.dataGasUsed = header.getDataGasUsed().map(Quantity::create).orElse(Quantity.HEX_ZERO);
+      this.excessDataGas =
+          header.getExcessDataGas().map(Quantity::create).orElse(Quantity.HEX_ZERO);
     }
 
     @JsonGetter(value = "blockNumber")

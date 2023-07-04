@@ -49,7 +49,7 @@ public class EnginePayloadParameter {
   private final List<WithdrawalParameter> withdrawals;
   private final List<DepositParameter> deposits;
   private final List<Bytes32> versionedHashes;
-  private final long dataGasUsed;
+  private final Long dataGasUsed;
   private final String excessDataGas;
 
   @JsonCreator
@@ -88,7 +88,7 @@ public class EnginePayloadParameter {
     this.prevRandao = Bytes32.fromHexString(prevRandao);
     this.transactions = transactions;
     this.withdrawals = withdrawals;
-    this.dataGasUsed = dataGasUsed == null ? 0 : dataGasUsed.getValue();
+    this.dataGasUsed = dataGasUsed == null ? null : dataGasUsed.getValue();
     this.deposits = deposits;
     this.excessDataGas = excessDataGas;
     this.versionedHashes = versionedHashes;
@@ -154,7 +154,7 @@ public class EnginePayloadParameter {
     return withdrawals;
   }
 
-  public long getDataGasUsed() {
+  public Long getDataGasUsed() {
     return dataGasUsed;
   }
 

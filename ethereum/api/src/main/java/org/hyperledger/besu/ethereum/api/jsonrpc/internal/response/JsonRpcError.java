@@ -87,6 +87,7 @@ public enum JsonRpcError {
   INVALID_TERMINAL_BLOCK(-32002, "Terminal block doesn't satisfy terminal block conditions"),
   INVALID_FORKCHOICE_STATE(-38002, "Invalid forkchoice state"),
   INVALID_PAYLOAD_ATTRIBUTES(-38003, "Invalid payload attributes"),
+  UNSUPPORTED_FORK(-32602, "Unsupported fork"),
   INVALID_RANGE_REQUEST_TOO_LARGE(-38004, "Too large request"),
   // Miner failures
   COINBASE_NOT_SET(-32010, "Coinbase not set. Unable to start mining without a coinbase"),

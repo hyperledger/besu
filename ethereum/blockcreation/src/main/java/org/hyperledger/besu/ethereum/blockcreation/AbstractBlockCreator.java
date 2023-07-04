@@ -229,7 +229,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       throwIfStopped();
 
       DataGas newExcessDataGas = null;
-      long newDataGasUsed = 0;
+      Long newDataGasUsed = null;
       if (newProtocolSpec.getFeeMarket().implementsDataFee()) {
         final var gasCalculator = newProtocolSpec.getGasCalculator();
         newExcessDataGas =
@@ -238,7 +238,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                     // casting parent excess data gas to long since for the moment it should be well
                     // below that limit
                     parentHeader.getExcessDataGas().map(DataGas::toLong).orElse(0L),
-                    parentHeader.getDataGasUsed()));
+                    parentHeader.getDataGasUsed().orElse(0L)));
 
         final int newBlobsCount =
             transactionResults.getTransactionsByType(TransactionType.BLOB).stream()
