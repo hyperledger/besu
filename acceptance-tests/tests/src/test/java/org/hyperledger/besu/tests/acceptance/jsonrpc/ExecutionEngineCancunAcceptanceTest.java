@@ -25,8 +25,8 @@ import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
 public class ExecutionEngineCancunAcceptanceTest extends AbstractJsonRpcTest {
-  private static final String GENESIS_FILE = "/jsonrpc/engine/cancun/genesis.json";
-  private static final String TEST_CASE_PATH = "/jsonrpc/engine/cancun/test-cases/";
+  private static final String GENESIS_FILE = "/jsonrpc/engine/shanghai/genesis.json";
+  private static final String TEST_CASE_PATH = "/jsonrpc/engine/shanghai/test-cases/";
 
   private static JsonRpcTestsContext testsContext;
 
