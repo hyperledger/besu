@@ -2115,7 +2115,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void issueOptionWarnings() {
 
-    System.out.println("Spitting out option warnings");
     // Check that P2P options are able to work
     CommandLineUtils.checkOptionDependencies(
         logger,
@@ -2132,6 +2131,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--p2p-interface",
             "--p2p-port",
             "--remote-connections-max-percentage"));
+
     // Check that block producer options work
     if (!isMergeEnabled() && !genesisConfigOptions.isPoa()) {
       CommandLineUtils.checkOptionDependencies(
