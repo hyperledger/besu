@@ -115,7 +115,13 @@ public class WorldStateProofProviderTest {
         new StateTrieAccountValue(1L, Wei.of(2L), Hash.wrap(storageTrie.getRootHash()), codeHash);
     // Save to storage
     worldStateTrie.put(addressHash, RLP.encode(accountValue::writeTo));
-    worldStateTrie.commit(updater::putAccountStateTrieNode);
+    worldStateTrie.commit(
+        (location, hash, value) -> {
+          updater.putAccountStateTrieNode(location, hash, value);
+          if (location.isEmpty()) {
+            updater.saveWorldState(Bytes.EMPTY, worldStateTrie.getRootHash(), value);
+          }
+        });
     // Persist updates
     updater.commit();
 
