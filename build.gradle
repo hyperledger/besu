@@ -870,7 +870,7 @@ task manifestDockerRelease {
       archs.forEach { arch -> targets += "'${variantImage}-${arch}' " }
 
       exec {
-        def cmd = "docker manifest create '${variantImage}' ${targets}"
+        def cmd = "docker manifest create '${variantImage}' ${targets} --amend"
         println "Executing '${cmd}'"
         executable "sh"
         args "-c", cmd
@@ -886,7 +886,7 @@ task manifestDockerRelease {
     exec {
       def targets = ""
       archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
-      def cmd = "docker manifest create '${baseTag}' ${targets}"
+      def cmd = "docker manifest create '${baseTag}' ${targets} --amend"
       println "Executing '${cmd}'"
       executable "sh"
       args "-c", cmd
