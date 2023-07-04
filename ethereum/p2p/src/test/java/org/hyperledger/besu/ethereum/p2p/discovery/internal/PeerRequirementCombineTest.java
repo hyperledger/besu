@@ -18,17 +18,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class PeerRequirementCombineTest {
   private static final PeerRequirement fulfilled = () -> true;
   private static final PeerRequirement notFulfilled = () -> false;
@@ -45,27 +43,27 @@ public class PeerRequirementCombineTest {
     this.expectedResult = expectedResult;
   }
 
-  @Parameters
-  public static Collection<Object[]> data() {
-    return Arrays.asList(
-        new Object[][] {
-          {Collections.emptyList(), true},
-          {Arrays.asList(fulfilled), true},
-          {Arrays.asList(notFulfilled), false},
-          {Arrays.asList(notFulfilled, notFulfilled), false},
-          {Arrays.asList(notFulfilled, fulfilled), false},
-          {Arrays.asList(fulfilled, notFulfilled), false},
-          {Arrays.asList(fulfilled, fulfilled), true}
-        });
+  public static Stream<Object[]> data() {
+    return Stream.of(
+            new Object[]{Collections.emptyList(), true},
+            new Object[]{Arrays.asList(fulfilled), true},
+            new Object[]{Arrays.asList(notFulfilled), false},
+            new Object[]{Arrays.asList(notFulfilled, notFulfilled), false},
+            new Object[]{Arrays.asList(notFulfilled, fulfilled), false},
+            new Object[]{Arrays.asList(fulfilled, notFulfilled), false},
+            new Object[]{Arrays.asList(fulfilled, fulfilled), true}
+    );
   }
 
-  @Test
+  @ParameterizedTest
+  @MethodSource("data")
   public void combine() {
     PeerRequirement combined = PeerRequirement.combine(requirements);
     assertThat(combined.hasSufficientPeers()).isEqualTo(expectedResult);
   }
 
-  @Test
+  @ParameterizedTest
+  @MethodSource("data")
   public void combineAndModify() {
     List<PeerRequirement> modifiableRequirements = new ArrayList<>(requirements);
     modifiableRequirements.add(configurable);
@@ -82,7 +80,8 @@ public class PeerRequirementCombineTest {
     assertThat(combined.hasSufficientPeers()).isEqualTo(expectedResult);
   }
 
-  @Test
+  @ParameterizedTest
+  @MethodSource("data")
   public void combine_withOn() {
     PeerRequirement combined = PeerRequirement.combine(Collections.emptyList());
     assertThat(combined.hasSufficientPeers()).isTrue();

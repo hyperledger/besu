@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
+import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.pki.keystore.KeyStoreWrapper.KEYSTORE_TYPE_PKCS12;
 
@@ -46,9 +47,10 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
-import org.junit.Assume;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -220,16 +222,12 @@ class TLSContextFactoryTest {
     return null == path ? null : Path.of(TLSContextFactoryTest.class.getResource(path).toURI());
   }
 
+  @DisabledOnOs(OS.MAC)
   private static KeyStoreWrapper getHardwareKeyStoreWrapper(
       final String config, final String crlLocation) {
     try {
       return new HardwareKeyStoreWrapper(keystorePassword, toPath(config), toPath(crlLocation));
     } catch (final Exception e) {
-      if (OS.MAC.isCurrentOs()) {
-        // nss3 is difficult to setup on mac correctly, don't let it break unit tests for dev
-        // machines.
-        Assume.assumeNoException("Failed to initialize hardware keystore", e);
-      }
       // Not a mac, probably a production build. Full failure.
       throw new PkiException("Failed to initialize hardware keystore", e);
     }

@@ -35,7 +35,7 @@ import java.util.Random;
 import io.vertx.core.buffer.Buffer;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PeerDiscoveryPacketSedesTest {
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();

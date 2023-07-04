@@ -33,7 +33,7 @@ import io.vertx.core.buffer.Buffer;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.assertj.core.api.Condition;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PeerDiscoveryPacketPcapSedesTest {
   private static final String pingHexData =
