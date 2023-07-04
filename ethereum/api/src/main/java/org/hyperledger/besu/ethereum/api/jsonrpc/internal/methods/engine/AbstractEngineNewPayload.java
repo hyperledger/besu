@@ -110,6 +110,11 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         .addArgument(() -> Json.encodePrettily(blockParam))
         .log();
 
+    var forkValidationResult = validateForkSupported(reqId, blockParam);
+    if (forkValidationResult.isPresent()) {
+      return forkValidationResult.get();
+    }
+
     final Optional<List<Withdrawal>> maybeWithdrawals =
         Optional.ofNullable(blockParam.getWithdrawals())
             .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()));
@@ -417,5 +422,10 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             timeInS,
             ethPeers.peerCount()));
     LOG.info(String.format(message.toString(), messageArgs.toArray()));
+  }
+
+  Optional<JsonRpcResponse> validateForkSupported(
+      final Object id, final EnginePayloadParameter payloadParameter) {
+    return Optional.empty();
   }
 }

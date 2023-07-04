@@ -115,8 +115,8 @@ public abstract class AbstractEngineNewPayloadTest {
   private static final Address depositContractAddress =
       Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
 
-  @Mock private ProtocolSpec protocolSpec;
-  @Mock private ProtocolSchedule protocolSchedule;
+  @Mock protected ProtocolSpec protocolSpec;
+  @Mock protected ProtocolSchedule protocolSchedule;
   @Mock private ProtocolContext protocolContext;
 
   @Mock private MergeContext mergeContext;
@@ -595,7 +595,7 @@ public abstract class AbstractEngineNewPayloadTest {
         header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
         txs,
         null,
-        null,
+        header.getDataGasUsed().map(UnsignedLongParameter::new).orElse(null),
         null,
         header.getExcessDataGas().map(DataGas::toHexString).orElse(null),
         new ArrayList<>());
@@ -622,7 +622,7 @@ public abstract class AbstractEngineNewPayloadTest {
         header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
         txs,
         withdrawals,
-        new UnsignedLongParameter(header.getDataGasUsed()),
+        header.getDataGasUsed().map(UnsignedLongParameter::new).orElse(null),
         deposits,
         header.getExcessDataGas().map(DataGas::toHexString).orElse(null),
         List.of(DEFAULT_VERSIONED_HASH.toBytes()));

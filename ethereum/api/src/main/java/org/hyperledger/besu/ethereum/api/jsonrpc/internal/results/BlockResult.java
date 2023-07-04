@@ -133,7 +133,7 @@ public class BlockResult implements JsonRpcResult {
             .orElse(null);
 
     this.dataGasUsed =
-        header.getExcessDataGas().isPresent() ? Quantity.create(header.getDataGasUsed()) : null;
+        header.getDataGasUsed().isPresent() ? Quantity.create(header.getDataGasUsed().get()) : null;
     this.excessDataGas = header.getExcessDataGas().map(Quantity::create).orElse(null);
   }
 
