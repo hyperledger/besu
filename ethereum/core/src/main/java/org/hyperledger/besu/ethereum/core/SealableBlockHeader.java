@@ -44,7 +44,6 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
   protected final Hash withdrawalsRoot;
 
   protected final Hash depositsRoot;
-  protected final long dataGasUsed;
 
   protected SealableBlockHeader(
       final Hash parentHash,
@@ -63,7 +62,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final Wei baseFee,
       final Bytes32 mixHashOrPrevRandao,
       final Hash withdrawalsRoot,
-      final long dataGasUsed,
+      final Long dataGasUsed,
       final DataGas excessDataGas,
       final Hash depositsRoot) {
     super(
@@ -75,6 +74,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
         timestamp,
         baseFee,
         mixHashOrPrevRandao,
+        dataGasUsed,
         excessDataGas);
     this.ommersHash = ommersHash;
     this.stateRoot = stateRoot;
@@ -85,7 +85,6 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
     this.logsBloom = logsBloom;
     this.gasUsed = gasUsed;
     this.extraData = extraData;
-    this.dataGasUsed = dataGasUsed;
   }
 
   /**
@@ -167,14 +166,5 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
    */
   public Optional<Hash> getDepositsRoot() {
     return Optional.ofNullable(depositsRoot);
-  }
-
-  /**
-   * Returns the data gas used
-   *
-   * @return the data gas used
-   */
-  public long getDataGasUsed() {
-    return dataGasUsed;
   }
 }

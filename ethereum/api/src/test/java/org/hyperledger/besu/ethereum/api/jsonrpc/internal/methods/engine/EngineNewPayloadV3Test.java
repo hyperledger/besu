@@ -15,18 +15,30 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.assertj.core.api.Assertions;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -53,8 +65,100 @@ public class EngineNewPayloadV3Test extends AbstractEngineNewPayloadTest {
             new JsonRpcRequestContext(
                 new JsonRpcRequest(
                     "2.0",
-                    RpcMethod.ENGINE_NEW_PAYLOAD_V2.getMethodName(),
+                    RpcMethod.ENGINE_NEW_PAYLOAD_V3.getMethodName(),
                     new Object[] {payload, List.of(shortHash.toHexString())})));
     assertThat(badParam.getType()).isEqualTo(JsonRpcResponseType.ERROR);
   }
+
+  private void mockAfterCancun() {
+    when(protocolSchedule.hardforkFor(any()))
+        .thenReturn(Optional.of(new ScheduledProtocolSpec.Hardfork("Cancun", 0L)));
+  }
+
+  @Test
+  public void beforeCancun_NilDataFields_NilVersionedHashes_valid() {
+    DataGas excessDataGas = null;
+    Long dataGasUsed = null;
+    List<String> versionedHashes = null;
+    var response = responsePayload(excessDataGas, dataGasUsed, versionedHashes);
+    Assertions.assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
+  }
+
+  @Test
+  public void beforeCancun_NilExcessDataGas_0x00DataGasUsed_NilVersionedHashes_invalid() {
+    DataGas excessDataGas = DataGas.ZERO;
+    Long dataGasUsed = null;
+    List<String> versionedHashes = null;
+    var response = responsePayload(excessDataGas, dataGasUsed, versionedHashes);
+    Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
+    final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
+    assertThat(errorResponse.getError()).isEqualTo(JsonRpcError.UNSUPPORTED_FORK);
+  }
+
+  @Test
+  public void beforeCancun_0x00DataFields_NilVersionedHashes_invalid() {
+    DataGas excessDataGas = DataGas.ZERO;
+    Long dataGasUsed = 0L;
+    List<String> versionedHashes = List.of();
+    var response = responsePayload(excessDataGas, dataGasUsed, versionedHashes);
+    Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
+    final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
+    assertThat(errorResponse.getError()).isEqualTo(JsonRpcError.UNSUPPORTED_FORK);
+  }
+
+  @Test
+  public void beforeCancun_NilExcessDataGas_0x00DataGasUsed_EmptyVersionedHashes_invalid() {
+    DataGas excessDataGas = DataGas.ZERO;
+    Long dataGasUsed = null;
+    List<String> versionedHashes = List.of();
+    var response = responsePayload(excessDataGas, dataGasUsed, versionedHashes);
+    Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
+    final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
+    assertThat(errorResponse.getError()).isEqualTo(JsonRpcError.UNSUPPORTED_FORK);
+  }
+
+  @Test
+  public void afterCancun_NilExcessDataGas_0x00DataGasUsed_EmptyVersionedHashes_invalid() {
+    mockAfterCancun();
+    DataGas excessDataGas = null;
+    Long dataGasUsed = 0L;
+    List<String> versionedHashes = List.of();
+    var response = responsePayload(excessDataGas, dataGasUsed, versionedHashes);
+    Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
+    final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
+    assertThat(errorResponse.getError()).isEqualTo(JsonRpcError.INVALID_PARAMS);
+  }
+
+  @Test
+  public void afterCancun_0x00ExcessDataGas_NilDataGasUsed_EmptyVersionedHashes_invalid() {
+    mockAfterCancun();
+    DataGas excessDataGas = DataGas.ZERO;
+    Long dataGasUsed = null;
+    List<String> versionedHashes = List.of();
+    var response = responsePayload(excessDataGas, dataGasUsed, versionedHashes);
+    Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
+    final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
+    assertThat(errorResponse.getError()).isEqualTo(JsonRpcError.INVALID_PARAMS);
+  }
+
+  JsonRpcResponse responsePayload(
+      final DataGas excessDataGas, final Long dataGasUsed, final List<String> versionedHashes) {
+    BlockHeader mockHeader =
+        new BlockHeaderTestFixture()
+            .excessDataGas(excessDataGas)
+            .dataGasUsed(dataGasUsed)
+            .buildHeader();
+
+    EnginePayloadParameter payload = mockPayload(mockHeader, List.of());
+    return method.response(
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0",
+                RpcMethod.ENGINE_NEW_PAYLOAD_V3.getMethodName(),
+                new Object[] {payload, versionedHashes})));
+  }
+
+  @Override
+  @Ignore
+  public void shouldRespondWithSyncingDuringBackwardsSync() {}
 }

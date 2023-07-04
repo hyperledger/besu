@@ -69,6 +69,7 @@ import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -114,8 +115,8 @@ public abstract class AbstractEngineNewPayloadTest {
   private static final Address depositContractAddress =
       Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
 
-  @Mock private ProtocolSpec protocolSpec;
-  @Mock private ProtocolSchedule protocolSchedule;
+  @Mock protected ProtocolSpec protocolSpec;
+  @Mock protected ProtocolSchedule protocolSchedule;
   @Mock private ProtocolContext protocolContext;
 
   @Mock private MergeContext mergeContext;
@@ -594,9 +595,9 @@ public abstract class AbstractEngineNewPayloadTest {
         header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
         txs,
         null,
+        header.getDataGasUsed().map(UnsignedLongParameter::new).orElse(null),
         null,
         header.getExcessDataGas().map(DataGas::toHexString).orElse(null),
-        null,
         null);
   }
 
@@ -621,10 +622,10 @@ public abstract class AbstractEngineNewPayloadTest {
         header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
         txs,
         withdrawals,
-        new UnsignedLongParameter(header.getDataGasUsed()),
+        header.getDataGasUsed().map(UnsignedLongParameter::new).orElse(null),
+        deposits,
         header.getExcessDataGas().map(DataGas::toHexString).orElse(null),
-        List.of(DEFAULT_VERSIONED_HASH.toBytes()),
-        deposits);
+        List.of(DEFAULT_VERSIONED_HASH.toBytes()));
   }
 
   @NotNull

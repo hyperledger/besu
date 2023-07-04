@@ -41,7 +41,7 @@ public class DataGasValidationRule implements DetachedBlockHeaderValidationRule 
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
     long headerExcessDataGas = header.getExcessDataGas().map(DataGas::toLong).orElse(0L);
     long parentExcessDataGas = parent.getExcessDataGas().map(DataGas::toLong).orElse(0L);
-    long parentDataGasUsed = parent.getDataGasUsed();
+    long parentDataGasUsed = parent.getDataGasUsed().orElse(0L);
 
     long calculatedExcessDataGas =
         gasCalculator.computeExcessDataGas(parentExcessDataGas, parentDataGasUsed);
