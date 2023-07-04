@@ -102,7 +102,7 @@ public class TransactionLogBloomCacherTest {
             Hash.EMPTY,
             0,
             null,
-            0,
+            null,
             null,
             null,
             new MainnetBlockHeaderFunctions());
@@ -276,7 +276,7 @@ public class TransactionLogBloomCacherTest {
             Hash.EMPTY,
             0,
             null,
-            0,
+            null,
             null,
             null,
             new MainnetBlockHeaderFunctions());
