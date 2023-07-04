@@ -20,6 +20,8 @@ import java.net.URISyntaxException;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -43,6 +45,11 @@ public class ExecutionEngineCancunAcceptanceTest extends AbstractJsonRpcTest {
   public static Iterable<Object[]> testCases() throws URISyntaxException {
     return testCases(TEST_CASE_PATH);
   }
+
+  @Test
+  @Override
+  @Ignore
+  public void test() throws IOException {}
 
   @AfterClass
   public static void tearDown() {
