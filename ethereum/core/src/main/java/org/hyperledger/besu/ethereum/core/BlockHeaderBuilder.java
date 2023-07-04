@@ -257,6 +257,7 @@ public class BlockHeaderBuilder {
     timestamp(processableBlockHeader.getTimestamp());
     baseFee(processableBlockHeader.getBaseFee().orElse(null));
     processableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
+    processableBlockHeader.getDataGasUsed().ifPresent(this::dataGasUsed);
     processableBlockHeader.getExcessDataGas().ifPresent(this::excessDataGas);
     return this;
   }
@@ -279,6 +280,7 @@ public class BlockHeaderBuilder {
     baseFee(sealableBlockHeader.getBaseFee().orElse(null));
     sealableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
     withdrawalsRoot(sealableBlockHeader.getWithdrawalsRoot().orElse(null));
+    sealableBlockHeader.getDataGasUsed().ifPresent(this::dataGasUsed);
     sealableBlockHeader.getExcessDataGas().ifPresent(this::excessDataGas);
     depositsRoot(sealableBlockHeader.getDepositsRoot().orElse(null));
     return this;

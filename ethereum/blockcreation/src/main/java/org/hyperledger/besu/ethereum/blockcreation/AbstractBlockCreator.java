@@ -229,7 +229,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       throwIfStopped();
 
       DataGas newExcessDataGas = null;
-      long newDataGasUsed = 0;
+      Long newDataGasUsed = null;
       if (newProtocolSpec.getFeeMarket().implementsDataFee()) {
         final var gasCalculator = newProtocolSpec.getGasCalculator();
         newExcessDataGas =
