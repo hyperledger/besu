@@ -66,6 +66,13 @@ public interface GenesisConfigOptions {
   boolean isClique();
 
   /**
+   * Is poa boolean.
+   *
+   * @return the boolean
+   */
+  boolean isPoa();
+
+  /**
    * Is consensus migration boolean.
    *
    * @return the boolean
