@@ -596,9 +596,9 @@ public abstract class AbstractEngineNewPayloadTest {
         txs,
         null,
         header.getDataGasUsed().map(UnsignedLongParameter::new).orElse(null),
-        null,
         header.getExcessDataGas().map(DataGas::toHexString).orElse(null),
-        null);
+        new ArrayList<>(),
+        null); // deposits
   }
 
   private EnginePayloadParameter mockPayload(
@@ -623,9 +623,9 @@ public abstract class AbstractEngineNewPayloadTest {
         txs,
         withdrawals,
         header.getDataGasUsed().map(UnsignedLongParameter::new).orElse(null),
-        deposits,
         header.getExcessDataGas().map(DataGas::toHexString).orElse(null),
-        List.of(DEFAULT_VERSIONED_HASH.toBytes()));
+        List.of(DEFAULT_VERSIONED_HASH.toBytes()),
+        deposits);
   }
 
   @NotNull

@@ -27,7 +27,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRp
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -67,7 +66,6 @@ import java.util.stream.Collectors;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -201,17 +199,11 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return respondWithInvalid(reqId, blockParam, null, getInvalidBlockHashStatus(), errorMessage);
     }
 
-    var blobTransactions =
-        transactions.stream().filter(transaction -> transaction.getType().supportsBlob()).toList();
-
-    // Validate Blob Transactions
-    var blobTransactionsInvalidResult =
-        validateBlobTransactions(blobTransactions, maybeVersionedHashParam);
-
-    if (blobTransactionsInvalidResult.isPresent()) {
-      LOG.debug(blobTransactionsInvalidResult.get());
-      return respondWithInvalid(
-          reqId, blockParam, null, INVALID, blobTransactionsInvalidResult.get());
+    // Validate transactions
+    var transactionValidationResult =
+        validateTransactions(blockParam, reqId, transactions, maybeVersionedHashParam);
+    if (transactionValidationResult.isPresent()) {
+      return transactionValidationResult.get();
     }
 
     // do we already have this payload
@@ -304,35 +296,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     }
   }
 
-  private Optional<String> validateBlobTransactions(
-      final List<Transaction> blobTransactions,
-      final Optional<List<String>> maybeVersionedHashParam) {
-
-    List<Bytes32> versionedHashesParam =
-        maybeVersionedHashParam
-            .map(strings -> strings.stream().map(Bytes32::fromHexStringStrict).toList())
-            .orElseGet(ArrayList::new);
-
-    final List<Bytes32> transactionVersionedHashes = new ArrayList<>();
-
-    for (Transaction transaction : blobTransactions) {
-      if (transaction.getType().supportsBlob()) {
-        var versionedHashes = transaction.getVersionedHashes();
-        if (versionedHashes.isEmpty()) {
-          return Optional.of("There must be at least one blob");
-        }
-        transactionVersionedHashes.addAll(
-            versionedHashes.get().stream().map(VersionedHash::toBytes).toList());
-      }
-    }
-
-    // check list contents
-    if (!versionedHashesParam.equals(transactionVersionedHashes)) {
-      return Optional.of("Versioned hashes from blob transactions do not match expected values");
-    }
-    return Optional.empty();
-  }
-
   JsonRpcResponse respondWith(
       final Object requestId,
       final EnginePayloadParameter param,
@@ -398,6 +361,19 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     return INVALID;
   }
 
+  protected Optional<JsonRpcResponse> validateForkSupported(
+      final Object id, final EnginePayloadParameter payloadParameter) {
+    return Optional.empty();
+  }
+
+  protected Optional<JsonRpcResponse> validateTransactions(
+      final EnginePayloadParameter blockParam,
+      final Object reqId,
+      final List<Transaction> transactions,
+      final Optional<List<String>> maybeVersionedHashParam) {
+    return Optional.empty();
+  }
+
   private void logImportedBlockInfo(final Block block, final double timeInS) {
     final StringBuilder message = new StringBuilder();
     message.append("Imported #%,d / %d tx");
@@ -422,10 +398,5 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             timeInS,
             ethPeers.peerCount()));
     LOG.info(String.format(message.toString(), messageArgs.toArray()));
-  }
-
-  Optional<JsonRpcResponse> validateForkSupported(
-      final Object id, final EnginePayloadParameter payloadParameter) {
-    return Optional.empty();
   }
 }
