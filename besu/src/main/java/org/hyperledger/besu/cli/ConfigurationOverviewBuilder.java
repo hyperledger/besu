@@ -47,6 +47,7 @@ public class ConfigurationOverviewBuilder {
   private Collection<String> engineApis;
   private String engineJwtFilePath;
   private boolean isHighSpec = false;
+  private boolean isLayeredTxPool = false;
   private Map<String, String> environment;
 
   /**
@@ -166,6 +167,16 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets experimental layered txpool enabled.
+   *
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setLayeredTxPoolEnabled() {
+    isLayeredTxPool = true;
+    return this;
+  }
+
+  /**
    * Sets the engine jwt file path.
    *
    * @param engineJwtFilePath the engine apis
@@ -237,7 +248,11 @@ public class ConfigurationOverviewBuilder {
     }
 
     if (isHighSpec) {
-      lines.add("High spec configuration enabled");
+      lines.add("Experimental high spec configuration enabled");
+    }
+
+    if (isLayeredTxPool) {
+      lines.add("Experimental layered transaction pool configuration enabled");
     }
 
     lines.add("");
