@@ -19,16 +19,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,21 +44,43 @@ import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.runners.Parameterized;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(Parameterized.class)
 public class WorldStateProofProviderTest {
 
   private static final Address address =
       Address.fromHexString("0x1234567890123456789012345678901234567890");
 
-  private final WorldStateStorage worldStateStorage =
-      new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
-
+  private WorldStateStorage worldStateStorage;
   private WorldStateProofProvider worldStateProofProvider;
+  private final DataStorageFormat dataStorageFormat;
+
+  @Parameterized.Parameters
+  public static Collection<Object[]> data() {
+    return Arrays.asList(
+        new Object[][] {
+          {
+            DataStorageFormat.BONSAI,
+          },
+          {DataStorageFormat.FOREST}
+        });
+  }
+
+  public WorldStateProofProviderTest(final DataStorageFormat dataStorageFormat) {
+    this.dataStorageFormat = dataStorageFormat;
+  }
 
   @Before
   public void setup() {
+    if (dataStorageFormat.equals(DataStorageFormat.BONSAI)) {
+      worldStateStorage =
+          new BonsaiWorldStateKeyValueStorage(
+              new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
+    } else {
+      worldStateStorage = new WorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+    }
+
     worldStateProofProvider = new WorldStateProofProvider(worldStateStorage);
   }
 
@@ -89,7 +116,6 @@ public class WorldStateProofProviderTest {
     // Save to storage
     worldStateTrie.put(addressHash, RLP.encode(accountValue::writeTo));
     worldStateTrie.commit(updater::putAccountStateTrieNode);
-
     // Persist updates
     updater.commit();
 
