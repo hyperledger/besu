@@ -220,11 +220,11 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             new BlockBody(transactions, Collections.emptyList(), maybeWithdrawals, maybeDeposits));
 
     if (maybeParentHeader.isEmpty()) {
-      LOG.atDebug()
-          .setMessage("Parent of block {} is not present, append it to backward sync")
-          .addArgument(block::toLogString)
-          .log();
-      mergeCoordinator.appendNewPayloadToSync(block);
+      //      LOG.atDebug()
+      //          .setMessage("Parent of block {} is not present, append it to backward sync")
+      //          .addArgument(block::toLogString)
+      //          .log();
+      //      mergeCoordinator.appendNewPayloadToSync(block);
 
       return respondWith(reqId, blockParam, null, SYNCING);
     }

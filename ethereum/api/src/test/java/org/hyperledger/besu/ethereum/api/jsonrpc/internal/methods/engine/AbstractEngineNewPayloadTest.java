@@ -71,7 +71,6 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes32;
@@ -361,8 +360,8 @@ public abstract class AbstractEngineNewPayloadTest {
   @Test
   public void shouldRespondWithSyncingDuringBackwardsSync() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    when(mergeCoordinator.appendNewPayloadToSync(any()))
-        .thenReturn(CompletableFuture.completedFuture(null));
+    //    when(mergeCoordinator.appendNewPayloadToSync(any()))
+    //        .thenReturn(CompletableFuture.completedFuture(null));
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
