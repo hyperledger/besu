@@ -65,6 +65,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -109,6 +110,7 @@ public abstract class MainnetProtocolSpecs {
     final int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return new ProtocolSpecBuilder()
+        .supportedTransactionTypes(EnumSet.of(TransactionType.FRONTIER))
         .gasCalculator(FrontierGasCalculator::new)
         .gasLimitCalculator(new FrontierTargetingGasLimitCalculator())
         .evmBuilder(MainnetEVMs::frontier)
@@ -123,9 +125,17 @@ public abstract class MainnetProtocolSpecs {
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
                     0))
         .transactionValidatorBuilder(
-            (chainId, gasCalculator, gasLimitCalculator, checkSignatureMalleability) ->
+            (chainId,
+                gasCalculator,
+                gasLimitCalculator,
+                checkSignatureMalleability,
+                supportedTransactionTypes) ->
                 new MainnetTransactionValidator(
-                    gasCalculator, gasLimitCalculator, checkSignatureMalleability, chainId))
+                    gasCalculator,
+                    gasLimitCalculator,
+                    checkSignatureMalleability,
+                    chainId,
+                    supportedTransactionTypes))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -404,15 +414,9 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration) {
     return muirGlacierDefinition(
             chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason, evmConfiguration)
+        .supportedTransactionTypes(
+            EnumSet.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST))
         .gasCalculator(BerlinGasCalculator::new)
-        .transactionValidatorBuilder(
-            (cid, gasCalculator, gasLimitCalculator, checkSignatureMalleability) ->
-                new MainnetTransactionValidator(
-                    gasCalculator,
-                    gasLimitCalculator,
-                    checkSignatureMalleability,
-                    cid,
-                    Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST)))
         .transactionReceiptFactory(
             enableRevertReason
                 ? MainnetProtocolSpecs::berlinTransactionReceiptFactoryWithReasonEnabled
@@ -442,21 +446,25 @@ public abstract class MainnetProtocolSpecs {
             configStackSizeLimit,
             enableRevertReason,
             evmConfiguration)
+        .supportedTransactionTypes(
+            EnumSet.of(
+                TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559))
         .gasCalculator(LondonGasCalculator::new)
         .gasLimitCalculator(
             new LondonTargetingGasLimitCalculator(londonForkBlockNumber, londonFeeMarket))
         .transactionValidatorBuilder(
-            (cid, gasCalculator, gasLimitCalculator, checkSignatureMalleability) ->
+            (cid,
+                gasCalculator,
+                gasLimitCalculator,
+                checkSignatureMalleability,
+                supportedTransactionTypes) ->
                 new MainnetTransactionValidator(
                     gasCalculator,
                     gasLimitCalculator,
                     londonFeeMarket,
                     checkSignatureMalleability,
                     cid,
-                    Set.of(
-                        TransactionType.FRONTIER,
-                        TransactionType.ACCESS_LIST,
-                        TransactionType.EIP1559),
+                    supportedTransactionTypes,
                     Integer.MAX_VALUE))
         .transactionProcessorBuilder(
             (gasCalculator,
@@ -607,17 +615,18 @@ public abstract class MainnetProtocolSpecs {
                     CoinbaseFeePriceCalculator.eip1559()))
         // Contract creation rules for EIP-3860 Limit and meter intitcode
         .transactionValidatorBuilder(
-            (cid, gasCalculator, gasLimitCalculator, checkSignatureMalleability) ->
+            (cid,
+                gasCalculator,
+                gasLimitCalculator,
+                checkSignatureMalleability,
+                supportedTransactionTypes) ->
                 new MainnetTransactionValidator(
                     gasCalculator,
                     gasLimitCalculator,
                     londonFeeMarket,
                     checkSignatureMalleability,
                     cid,
-                    Set.of(
-                        TransactionType.FRONTIER,
-                        TransactionType.ACCESS_LIST,
-                        TransactionType.EIP1559),
+                    supportedTransactionTypes,
                     SHANGHAI_INIT_CODE_SIZE_LIMIT))
         .withdrawalsProcessor(new WithdrawalsProcessor())
         .withdrawalsValidator(new WithdrawalsValidator.AllowedWithdrawals())
@@ -651,6 +660,12 @@ public abstract class MainnetProtocolSpecs {
             enableRevertReason,
             genesisConfigOptions,
             evmConfiguration)
+        .supportedTransactionTypes(
+            EnumSet.of(
+                TransactionType.FRONTIER,
+                TransactionType.ACCESS_LIST,
+                TransactionType.EIP1559,
+                TransactionType.BLOB))
         .feeMarket(cancunFeeMarket)
         // gas calculator for EIP-4844 data gas
         .gasCalculator(CancunGasCalculator::new)
@@ -690,18 +705,18 @@ public abstract class MainnetProtocolSpecs {
                     CoinbaseFeePriceCalculator.eip1559()))
         // change to check for max data gas per block for EIP-4844
         .transactionValidatorBuilder(
-            (cid, gasCalculator, gasLimitCalculator, checkSignatureMalleability) ->
+            (cid,
+                gasCalculator,
+                gasLimitCalculator,
+                checkSignatureMalleability,
+                supportedTransactionTypes) ->
                 new MainnetTransactionValidator(
                     gasCalculator,
                     gasLimitCalculator,
                     cancunFeeMarket,
                     checkSignatureMalleability,
                     cid,
-                    Set.of(
-                        TransactionType.FRONTIER,
-                        TransactionType.ACCESS_LIST,
-                        TransactionType.EIP1559,
-                        TransactionType.BLOB),
+                    supportedTransactionTypes,
                     SHANGHAI_INIT_CODE_SIZE_LIMIT))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .name("Cancun");

@@ -41,11 +41,11 @@ import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
-import java.util.Set;
 
 public class ClassicProtocolSpecs {
   private static final Wei MAX_BLOCK_REWARD = Wei.fromEth(5);
@@ -76,9 +76,17 @@ public class ClassicProtocolSpecs {
         .isReplayProtectionSupported(true)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .transactionValidatorBuilder(
-            (cid, gasCalculator, gasLimitCalculator, checkSignatureMalleability) ->
+            (cid,
+                gasCalculator,
+                gasLimitCalculator,
+                checkSignatureMalleability,
+                supportedTransactionTypes) ->
                 new MainnetTransactionValidator(
-                    gasCalculator, gasLimitCalculator, checkSignatureMalleability, cid))
+                    gasCalculator,
+                    gasLimitCalculator,
+                    checkSignatureMalleability,
+                    cid,
+                    supportedTransactionTypes))
         .name("ClassicTangerineWhistle");
   }
 
@@ -131,9 +139,17 @@ public class ClassicProtocolSpecs {
             chainId, contractSizeLimit, configStackSizeLimit, ecip1017EraRounds, evmConfiguration)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_REMOVED)
         .transactionValidatorBuilder(
-            (cid, gasCalculator, gasLimitCalculator, checkSignatureMalleability) ->
+            (cid,
+                gasCalculator,
+                gasLimitCalculator,
+                checkSignatureMalleability,
+                supportedTransactionTypes) ->
                 new MainnetTransactionValidator(
-                    gasCalculator, gasLimitCalculator, checkSignatureMalleability, cid))
+                    gasCalculator,
+                    gasLimitCalculator,
+                    checkSignatureMalleability,
+                    cid,
+                    supportedTransactionTypes))
         .name("DefuseDifficultyBomb");
   }
 
@@ -293,15 +309,21 @@ public class ClassicProtocolSpecs {
             enableRevertReason,
             ecip1017EraRounds,
             evmConfiguration)
+        .supportedTransactionTypes(
+            EnumSet.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST))
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorBuilder(
-            (cid, gasCalculator, gasLimitCalculator, checkSignatureMalleability) ->
+            (cid,
+                gasCalculator,
+                gasLimitCalculator,
+                checkSignatureMalleability,
+                supportedTransactionTypes) ->
                 new MainnetTransactionValidator(
                     gasCalculator,
                     gasLimitCalculator,
                     checkSignatureMalleability,
                     cid,
-                    Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST)))
+                    supportedTransactionTypes))
         .transactionReceiptFactory(
             enableRevertReason
                 ? MainnetProtocolSpecs::berlinTransactionReceiptFactoryWithReasonEnabled

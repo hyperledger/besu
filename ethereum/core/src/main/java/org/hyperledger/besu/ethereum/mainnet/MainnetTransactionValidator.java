@@ -53,19 +53,19 @@ public class MainnetTransactionValidator implements TransactionValidator {
   private final Set<TransactionType> acceptedTransactionTypes;
 
   private final int maxInitcodeSize;
-
-  public MainnetTransactionValidator(
-      final GasCalculator gasCalculator,
-      final GasLimitCalculator gasLimitCalculator,
-      final boolean checkSignatureMalleability,
-      final Optional<BigInteger> chainId) {
-    this(
-        gasCalculator,
-        gasLimitCalculator,
-        checkSignatureMalleability,
-        chainId,
-        Set.of(TransactionType.FRONTIER));
-  }
+  //
+  //  public MainnetTransactionValidator(
+  //      final GasCalculator gasCalculator,
+  //      final GasLimitCalculator gasLimitCalculator,
+  //      final boolean checkSignatureMalleability,
+  //      final Optional<BigInteger> chainId) {
+  //    this(
+  //        gasCalculator,
+  //        gasLimitCalculator,
+  //        checkSignatureMalleability,
+  //        chainId,
+  //        Set.of(TransactionType.FRONTIER));
+  //  }
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,

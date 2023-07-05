@@ -37,9 +37,11 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -57,6 +59,7 @@ public class ProtocolSpecBuilder {
   private BiFunction<GasCalculator, EvmConfiguration, EVM> evmBuilder;
   private TransactionValidatorBuilder transactionValidatorBuilder;
   private boolean checkSignatureMalleability;
+  private Set<TransactionType> supportedTransactionTypes;
   private Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> ommerHeaderValidatorBuilder;
   private Function<ProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder;
@@ -140,6 +143,12 @@ public class ProtocolSpecBuilder {
 
   public ProtocolSpecBuilder checkSignatureMalleability(final boolean checkSignatureMalleability) {
     this.checkSignatureMalleability = checkSignatureMalleability;
+    return this;
+  }
+
+  public ProtocolSpecBuilder supportedTransactionTypes(
+      final Set<TransactionType> supportedTransactionTypes) {
+    this.supportedTransactionTypes = supportedTransactionTypes;
     return this;
   }
 
@@ -315,6 +324,7 @@ public class ProtocolSpecBuilder {
     checkNotNull(privacyParameters, "Missing privacy parameters");
     checkNotNull(feeMarket, "Missing fee market");
     checkNotNull(badBlockManager, "Missing bad blocks manager");
+    checkNotNull(supportedTransactionTypes, "Missing supported transaction types");
 
     final GasCalculator gasCalculator = gasCalculatorBuilder.get();
     final EVM evm = evmBuilder.apply(gasCalculator, evmConfiguration);
@@ -322,7 +332,11 @@ public class ProtocolSpecBuilder {
         new PrecompiledContractConfiguration(gasCalculator, privacyParameters);
     final TransactionValidator transactionValidator =
         transactionValidatorBuilder.apply(
-            chainId, gasCalculator, gasLimitCalculator, checkSignatureMalleability);
+            chainId,
+            gasCalculator,
+            gasLimitCalculator,
+            checkSignatureMalleability,
+            supportedTransactionTypes);
     final AbstractMessageProcessor contractCreationProcessor =
         contractCreationProcessorBuilder.apply(gasCalculator, evm);
     final PrecompileContractRegistry precompileContractRegistry =
@@ -465,7 +479,8 @@ public class ProtocolSpecBuilder {
         Optional<BigInteger> chainId,
         GasCalculator gasCalculator,
         GasLimitCalculator gasLimitCalculator,
-        boolean checkSignatureMalleability);
+        boolean checkSignatureMalleability,
+        Set<TransactionType> supportedTransactionTypes);
   }
 
   public interface PrivateTransactionProcessorBuilder {
