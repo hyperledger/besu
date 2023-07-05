@@ -39,19 +39,15 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
   protected final BlockResultFactory blockResultFactory;
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineGetPayload.class);
 
-  // protected final Optional<ProtocolSchedule> schedule;
-
   public AbstractEngineGetPayload(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeMiningCoordinator,
       final BlockResultFactory blockResultFactory,
       final EngineCallListener engineCallListener) {
-    // final ProtocolSchedule schedule) {
     super(vertx, protocolContext, engineCallListener);
     this.mergeMiningCoordinator = mergeMiningCoordinator;
     this.blockResultFactory = blockResultFactory;
-    // this.schedule = Optional.ofNullable(schedule);
   }
 
   @Override
