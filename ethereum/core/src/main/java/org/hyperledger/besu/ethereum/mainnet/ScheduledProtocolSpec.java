@@ -27,7 +27,6 @@ public interface ScheduledProtocolSpec {
 
   boolean isOnMilestoneBoundary(ProcessableBlockHeader header);
 
-  // long milestone();
   Hardfork fork();
 
   ProtocolSpec spec();

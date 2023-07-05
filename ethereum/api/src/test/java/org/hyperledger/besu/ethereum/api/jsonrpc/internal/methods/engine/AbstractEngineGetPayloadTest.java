@@ -61,8 +61,8 @@ public abstract class AbstractEngineGetPayloadTest {
         final ProtocolContext protocolContext,
         final MergeMiningCoordinator mergeCoordinator,
         final BlockResultFactory ethPeers,
-        final EngineCallListener engineCallListener,
-        final ProtocolSchedule schedule);
+        final EngineCallListener engineCallListener);
+    // final ProtocolSchedule schedule);
   }
 
   private final MethodFactory methodFactory;
@@ -72,7 +72,7 @@ public abstract class AbstractEngineGetPayloadTest {
     this.methodFactory = methodFactory;
   }
 
-  private static final Vertx vertx = Vertx.vertx();
+  protected static final Vertx vertx = Vertx.vertx();
   protected static final BlockResultFactory factory = new BlockResultFactory();
   protected static final PayloadIdentifier mockPid =
       PayloadIdentifier.forPayloadParams(
@@ -81,7 +81,7 @@ public abstract class AbstractEngineGetPayloadTest {
       new BlockHeaderTestFixture().prevRandao(Bytes32.random()).buildHeader();
   private static final Block mockBlock =
       new Block(mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
-  private static final BlockWithReceipts mockBlockWithReceipts =
+  protected static final BlockWithReceipts mockBlockWithReceipts =
       new BlockWithReceipts(mockBlock, Collections.emptyList());
   private static final Block mockBlockWithWithdrawals =
       new Block(
@@ -105,16 +105,16 @@ public abstract class AbstractEngineGetPayloadTest {
   protected static final BlockWithReceipts mockBlockWithReceiptsAndDeposits =
       new BlockWithReceipts(mockBlockWithDeposits, Collections.emptyList());
 
-  @Mock private ProtocolContext protocolContext;
+  @Mock protected ProtocolContext protocolContext;
 
   @Mock protected MergeContext mergeContext;
-  @Mock private MergeMiningCoordinator mergeMiningCoordinator;
+  @Mock protected MergeMiningCoordinator mergeMiningCoordinator;
 
   @Mock protected EngineCallListener engineCallListener;
 
   @Mock protected ProtocolSchedule protocolSchedule;
 
-  private static final long SHANGHAI_AT = 1337L;
+  protected static final long SHANGHAI_AT = 1337L;
 
   @Before
   public void before() {
@@ -124,12 +124,8 @@ public abstract class AbstractEngineGetPayloadTest {
         .thenReturn(Optional.of(new ScheduledProtocolSpec.Hardfork("shanghai", SHANGHAI_AT)));
     this.method =
         methodFactory.create(
-            vertx,
-            protocolContext,
-            mergeMiningCoordinator,
-            factory,
-            engineCallListener,
-            protocolSchedule);
+            vertx, protocolContext, mergeMiningCoordinator, factory, engineCallListener);
+    // protocolSchedule);
   }
 
   @Test

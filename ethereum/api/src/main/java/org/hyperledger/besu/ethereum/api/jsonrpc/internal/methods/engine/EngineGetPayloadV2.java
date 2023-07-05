@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Optional;
 
@@ -37,15 +36,10 @@ public class EngineGetPayloadV2 extends AbstractEngineGetPayload {
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeMiningCoordinator,
       final BlockResultFactory blockResultFactory,
-      final EngineCallListener engineCallListener,
-      final ProtocolSchedule schedule) {
-    super(
-        vertx,
-        protocolContext,
-        mergeMiningCoordinator,
-        blockResultFactory,
-        engineCallListener,
-        schedule);
+      final EngineCallListener engineCallListener) {
+    // final ProtocolSchedule schedule) {
+    super(vertx, protocolContext, mergeMiningCoordinator, blockResultFactory, engineCallListener);
+    // schedule);
   }
 
   @Override

@@ -42,6 +42,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -55,6 +56,20 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
 
   public EngineGetPayloadV3Test() {
     super(EngineGetPayloadV3::new);
+  }
+
+  @Before
+  @Override
+  public void before() {
+    super.before();
+    this.method =
+        new EngineGetPayloadV3(
+            vertx,
+            protocolContext,
+            mergeMiningCoordinator,
+            factory,
+            engineCallListener,
+            protocolSchedule);
   }
 
   @Override
