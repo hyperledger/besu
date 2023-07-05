@@ -20,6 +20,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.node.configuration;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 
+import org.hyperledger.besu.config.KzgSetupFile;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.EnclaveFactory;
@@ -89,7 +90,8 @@ public class BesuNodeFactory {
         config.getKeyPair(),
         config.getPkiKeyStoreConfiguration(),
         config.isStrictTxReplayProtectionEnabled(),
-        config.getEnvironment());
+        config.getEnvironment(),
+        config.getKzgTrustedSetup());
   }
 
   public BesuNode createMinerNode(
@@ -546,6 +548,7 @@ public class BesuNodeFactory {
             .miningEnabled()
             .jsonRpcEnabled()
             .engineRpcEnabled(true)
+            .kzgTrustedSetup(KzgSetupFile.getPathFromResource("mainnet"))
             .jsonRpcDebug()
             .build());
   }

@@ -199,6 +199,11 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       }
     }
 
+    if (node.getKzgTrustedSetup() != null){
+      params.add("--kzg-trusted-setup");
+      params.add(node.getKzgTrustedSetup());
+    }
+
     if (node.wsRpcEnabled()) {
       params.add("--rpc-ws-enabled");
       params.add("--rpc-ws-host");

@@ -70,13 +70,16 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
   public static void init(final String networkName) {
     if (loaded.compareAndSet(false, true)) {
       init();
-      final String trustedSetupResourceName =
-          "/kzg-trusted-setups/" + networkName.toLowerCase() + ".txt";
+      final String trustedSetupResourceName = getResourceName(networkName);
       CKZG4844JNI.loadTrustedSetupFromResource(
           trustedSetupResourceName, KZGPointEvalPrecompiledContract.class);
     } else {
       throw new IllegalStateException("KZG trusted setup was already loaded");
     }
+  }
+
+  public static String getResourceName(final String networkName){
+    return "/kzg-trusted-setups/" + networkName.toLowerCase() + ".txt";
   }
 
   /** free up resources. */

@@ -90,6 +90,7 @@ public class BesuNodeConfigurationBuilder {
   private Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration = Optional.empty();
   private Boolean strictTxReplayProtectionEnabled = false;
   private Map<String, String> environment = new HashMap<>();
+  private String kzgTrustedSetup = null;
 
   public BesuNodeConfigurationBuilder() {
     // Check connections more frequently during acceptance tests to cut down on
@@ -494,6 +495,14 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder kzgTrustedSetup(final String kzgTrustedSetup) {
+    this.kzgTrustedSetup = kzgTrustedSetup;
+    return this;
+  }
+
+
+
+
   public BesuNodeConfiguration build() {
     return new BesuNodeConfiguration(
         name,
@@ -527,6 +536,7 @@ public class BesuNodeConfigurationBuilder {
         keyPair,
         pkiKeyStoreConfiguration,
         strictTxReplayProtectionEnabled,
-        environment);
+        environment,
+        kzgTrustedSetup);
   }
 }

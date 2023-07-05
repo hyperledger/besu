@@ -67,6 +67,7 @@ public class BesuNodeConfiguration {
   private final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration;
   private final boolean strictTxReplayProtectionEnabled;
   private final Map<String, String> environment;
+  private final String kzgTrustedSetup;
 
   BesuNodeConfiguration(
       final String name,
@@ -100,7 +101,8 @@ public class BesuNodeConfiguration {
       final Optional<KeyPair> keyPair,
       final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration,
       final boolean strictTxReplayProtectionEnabled,
-      final Map<String, String> environment) {
+      final Map<String, String> environment,
+      final String kzgTrustedSetup) {
     this.name = name;
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
@@ -133,6 +135,7 @@ public class BesuNodeConfiguration {
     this.pkiKeyStoreConfiguration = pkiKeyStoreConfiguration;
     this.strictTxReplayProtectionEnabled = strictTxReplayProtectionEnabled;
     this.environment = environment;
+    this.kzgTrustedSetup = kzgTrustedSetup;
   }
 
   public String getName() {
@@ -261,5 +264,9 @@ public class BesuNodeConfiguration {
 
   public Map<String, String> getEnvironment() {
     return environment;
+  }
+
+  public String getKzgTrustedSetup() {
+    return kzgTrustedSetup;
   }
 }

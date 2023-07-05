@@ -128,6 +128,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration = Optional.empty();
   private final boolean isStrictTxReplayProtectionEnabled;
   private final Map<String, String> environment;
+  private final String kzgTrustedSetup;
 
   public BesuNode(
       final String name,
@@ -161,7 +162,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final Optional<KeyPair> keyPair,
       final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration,
       final boolean isStrictTxReplayProtectionEnabled,
-      final Map<String, String> environment)
+      final Map<String, String> environment,
+      final String kzgTrustedSetup)
       throws IOException {
     this.homeDirectory = dataPath.orElseGet(BesuNode::createTmpDataDirectory);
     this.isStrictTxReplayProtectionEnabled = isStrictTxReplayProtectionEnabled;
@@ -219,6 +221,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     privacyParameters.ifPresent(this::setPrivacyParameters);
     this.pkiKeyStoreConfiguration = pkiKeyStoreConfiguration;
     this.environment = environment;
+    this.kzgTrustedSetup = kzgTrustedSetup;
     LOG.info("Created BesuNode {}", this);
   }
 
@@ -805,5 +808,9 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public Map<String, String> getEnvironment() {
     return environment;
+  }
+
+  public String getKzgTrustedSetup() {
+    return kzgTrustedSetup;
   }
 }

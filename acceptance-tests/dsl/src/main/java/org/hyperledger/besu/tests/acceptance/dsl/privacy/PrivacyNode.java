@@ -128,7 +128,8 @@ public class PrivacyNode implements AutoCloseable {
             Optional.empty(),
             Optional.empty(),
             besuConfig.isStrictTxReplayProtectionEnabled(),
-            besuConfig.getEnvironment());
+            besuConfig.getEnvironment(),
+            besuConfig.getKzgTrustedSetup());
   }
 
   public void testEnclaveConnection(final List<PrivacyNode> otherNodes) {
