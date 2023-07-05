@@ -70,9 +70,9 @@ public class EnginePayloadParameter {
       @JsonProperty("transactions") final List<String> transactions,
       @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals,
       @JsonProperty("dataGasUsed") final UnsignedLongParameter dataGasUsed,
-      @JsonProperty("deposits") final List<DepositParameter> deposits,
       @JsonProperty("excessDataGas") final String excessDataGas,
-      @JsonProperty("versionedHashes") final List<Bytes32> versionedHashes) {
+      @JsonProperty("versionedHashes") final List<Bytes32> versionedHashes,
+      @JsonProperty("deposits") final List<DepositParameter> deposits) {
     this.blockHash = blockHash;
     this.parentHash = parentHash;
     this.feeRecipient = feeRecipient;
@@ -89,9 +89,9 @@ public class EnginePayloadParameter {
     this.transactions = transactions;
     this.withdrawals = withdrawals;
     this.dataGasUsed = dataGasUsed == null ? 0 : dataGasUsed.getValue();
-    this.deposits = deposits;
     this.excessDataGas = excessDataGas;
     this.versionedHashes = versionedHashes;
+    this.deposits = deposits;
   }
 
   public Hash getBlockHash() {
@@ -162,11 +162,11 @@ public class EnginePayloadParameter {
     return excessDataGas;
   }
 
-  public List<DepositParameter> getDeposits() {
-    return deposits;
-  }
-
   public List<Bytes32> getVersionedHashes() {
     return versionedHashes;
+  }
+
+  public List<DepositParameter> getDeposits() {
+    return deposits;
   }
 }
