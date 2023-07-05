@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineE
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineExchangeTransitionConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV2;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetBlobsBundleV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByHashV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByRangeV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV1;
@@ -90,14 +89,12 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                   mergeCoordinator.get(),
                   blockResultFactory,
                   engineQosTimer),
-              // protocolSchedule),
               new EngineGetPayloadV2(
                   consensusEngineServer,
                   protocolContext,
                   mergeCoordinator.get(),
                   blockResultFactory,
                   engineQosTimer),
-              // protocolSchedule),
               new EngineNewPayloadV1(
                   consensusEngineServer,
                   protocolSchedule,
@@ -131,13 +128,6 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                   protocolContext,
                   mergeCoordinator.get(),
                   engineQosTimer),
-              new EngineGetBlobsBundleV1(
-                  consensusEngineServer,
-                  protocolContext,
-                  mergeCoordinator.get(),
-                  new BlockResultFactory(),
-                  engineQosTimer),
-              // protocolSchedule),
               new EngineExchangeTransitionConfiguration(
                   consensusEngineServer, protocolContext, engineQosTimer),
               new EngineGetPayloadBodiesByHashV1(

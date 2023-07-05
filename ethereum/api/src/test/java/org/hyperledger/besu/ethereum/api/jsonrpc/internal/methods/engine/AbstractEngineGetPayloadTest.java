@@ -62,7 +62,6 @@ public abstract class AbstractEngineGetPayloadTest {
         final MergeMiningCoordinator mergeCoordinator,
         final BlockResultFactory ethPeers,
         final EngineCallListener engineCallListener);
-    // final ProtocolSchedule schedule);
   }
 
   private final MethodFactory methodFactory;
@@ -125,7 +124,6 @@ public abstract class AbstractEngineGetPayloadTest {
     this.method =
         methodFactory.create(
             vertx, protocolContext, mergeMiningCoordinator, factory, engineCallListener);
-    // protocolSchedule);
   }
 
   @Test

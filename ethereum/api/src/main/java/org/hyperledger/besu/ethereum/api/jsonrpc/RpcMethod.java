@@ -64,7 +64,6 @@ public enum RpcMethod {
   ENGINE_GET_PAYLOAD_BODIES_BY_RANGE_V1("engine_getPayloadBodiesByRangeV1"),
   ENGINE_EXCHANGE_CAPABILITIES("engine_exchangeCapabilities"),
   ENGINE_PREPARE_PAYLOAD_DEBUG("engine_preparePayload_debug"),
-  ENGINE_GET_BLOBS_BUNDLE_V1("engine_getBlobsBundleV1"),
   PRIV_CALL("priv_call"),
   PRIV_GET_PRIVATE_TRANSACTION("priv_getPrivateTransaction"),
   PRIV_GET_TRANSACTION_COUNT("priv_getTransactionCount"),

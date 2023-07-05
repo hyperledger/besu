@@ -37,9 +37,7 @@ public class EngineGetPayloadV2 extends AbstractEngineGetPayload {
       final MergeMiningCoordinator mergeMiningCoordinator,
       final BlockResultFactory blockResultFactory,
       final EngineCallListener engineCallListener) {
-    // final ProtocolSchedule schedule) {
     super(vertx, protocolContext, mergeMiningCoordinator, blockResultFactory, engineCallListener);
-    // schedule);
   }
 
   @Override

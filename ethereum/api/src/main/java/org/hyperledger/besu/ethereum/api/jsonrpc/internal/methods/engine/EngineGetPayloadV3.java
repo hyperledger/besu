@@ -59,7 +59,6 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
       final EngineCallListener engineCallListener,
       final ProtocolSchedule schedule) {
     super(vertx, protocolContext, mergeMiningCoordinator, blockResultFactory, engineCallListener);
-    // schedule);
     this.shanghai = schedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Shanghai"));
     this.cancun = schedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
   }
