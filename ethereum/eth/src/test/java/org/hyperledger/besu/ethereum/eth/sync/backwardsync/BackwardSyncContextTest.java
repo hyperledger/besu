@@ -60,16 +60,16 @@ import java.util.concurrent.ExecutionException;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class BackwardSyncContextTest {
 
   public static final int REMOTE_HEIGHT = 50;
@@ -105,7 +105,7 @@ public class BackwardSyncContextTest {
   private Block uncle;
   private Block genesisBlock;
 
-  @Before
+  @BeforeEach
   public void setup() {
     when(protocolSpec.getBlockValidator()).thenReturn(blockValidator);
     doReturn(protocolSpec).when(protocolSchedule).getByBlockHeader(any());

@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 public class TransactionsMessageSenderTest {

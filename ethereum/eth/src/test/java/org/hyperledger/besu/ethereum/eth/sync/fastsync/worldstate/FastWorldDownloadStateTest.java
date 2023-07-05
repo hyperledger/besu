@@ -43,12 +43,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class FastWorldDownloadStateTest {
 
   private static final Bytes ROOT_NODE_DATA = Bytes.of(1, 2, 3, 4);
@@ -70,7 +69,6 @@ public class FastWorldDownloadStateTest {
 
   private CompletableFuture<Void> future;
 
-  @Parameterized.Parameters
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][] {{DataStorageFormat.BONSAI}, {DataStorageFormat.FOREST}});
   }
@@ -81,7 +79,9 @@ public class FastWorldDownloadStateTest {
     this.storageFormat = storageFormat;
   }
 
-  @Before
+  @BeforeEach
+  @ParameterizedTest
+  @MethodSource("data")
   public void setUp() {
     if (storageFormat == DataStorageFormat.BONSAI) {
       worldStateStorage =

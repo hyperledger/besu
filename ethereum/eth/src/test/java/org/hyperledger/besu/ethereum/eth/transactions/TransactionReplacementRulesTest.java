@@ -30,14 +30,11 @@ import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Optional;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class TransactionReplacementRulesTest {
 
-  @Parameterized.Parameters
   public static Collection<Object[]> data() {
     return asList(
         new Object[][] {
@@ -81,27 +78,13 @@ public class TransactionReplacementRulesTest {
         });
   }
 
-  private final PendingTransaction oldTx;
-  private final PendingTransaction newTx;
-  private final Optional<Wei> baseFee;
-  private final int priceBump;
-  private final boolean expected;
-
-  public TransactionReplacementRulesTest(
-      final PendingTransaction oldTx,
-      final PendingTransaction newTx,
-      final Optional<Wei> baseFee,
-      final int priceBump,
-      final boolean expected) {
-    this.oldTx = oldTx;
-    this.newTx = newTx;
-    this.baseFee = baseFee;
-    this.priceBump = priceBump;
-    this.expected = expected;
-  }
-
-  @Test
-  public void shouldReplace() {
+  @ParameterizedTest
+  @MethodSource("data")
+  public void shouldReplace( PendingTransaction oldTx,
+                             PendingTransaction newTx,
+                             Optional<Wei> baseFee,
+                             int priceBump,
+                             boolean expected) {
     BlockHeader mockHeader = mock(BlockHeader.class);
     when(mockHeader.getBaseFee()).thenReturn(baseFee);
 

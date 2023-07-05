@@ -45,14 +45,12 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class CheckPointSyncChainDownloaderTest {
 
   private final WorldStateStorage worldStateStorage = mock(WorldStateStorage.class);
@@ -68,19 +66,14 @@ public class CheckPointSyncChainDownloaderTest {
   protected Blockchain otherBlockchain;
   private Checkpoint checkpoint;
 
-  @Parameters
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][] {{DataStorageFormat.BONSAI}, {DataStorageFormat.FOREST}});
   }
 
-  private final DataStorageFormat storageFormat;
-
-  public CheckPointSyncChainDownloaderTest(final DataStorageFormat storageFormat) {
-    this.storageFormat = storageFormat;
-  }
-
-  @Before
-  public void setup() {
+  @BeforeEach
+  @ParameterizedTest
+  @MethodSource("data")
+  public void setup(DataStorageFormat storageFormat) {
     when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
     final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
     localBlockchain = localBlockchainSetup.getBlockchain();
@@ -111,7 +104,7 @@ public class CheckPointSyncChainDownloaderTest {
             Optional.of(checkpoint));
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     ethProtocolManager.stop();
   }

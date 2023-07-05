@@ -42,8 +42,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 public class NewPooledTransactionHashesMessageSenderTest {
@@ -61,7 +61,7 @@ public class NewPooledTransactionHashesMessageSenderTest {
   private PeerTransactionTracker transactionTracker;
   private NewPooledTransactionHashesMessageSender messageSender;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     transactionTracker = new PeerTransactionTracker();
     messageSender = new NewPooledTransactionHashesMessageSender(transactionTracker);
