@@ -123,9 +123,9 @@ public abstract class MainnetProtocolSpecs {
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
                     0))
         .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
+            (chainId, gasCalculator, gasLimitCalculator, checkSignatureMalleability) ->
                 new MainnetTransactionValidator(
-                    gasCalculator, gasLimitCalculator, false, Optional.empty()))
+                    gasCalculator, gasLimitCalculator, checkSignatureMalleability, chainId))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -187,6 +187,7 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration) {
     final int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
     return frontierDefinition(configContractSizeLimit, configStackSizeLimit, evmConfiguration)
+        .checkSignatureMalleability(true)
         .gasCalculator(HomesteadGasCalculator::new)
         .evmBuilder(MainnetEVMs::homestead)
         .contractCreationProcessorBuilder(
@@ -197,10 +198,6 @@ public abstract class MainnetProtocolSpecs {
                     true,
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
                     0))
-        .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(
-                    gasCalculator, gasLimitCalculator, true, Optional.empty()))
         .difficultyCalculator(MainnetDifficultyCalculators.HOMESTEAD)
         .name("Homestead");
   }
@@ -257,6 +254,7 @@ public abstract class MainnetProtocolSpecs {
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
 
     return tangerineWhistleDefinition(OptionalInt.empty(), configStackSizeLimit, evmConfiguration)
+        .chainId(chainId)
         .isReplayProtectionSupported(true)
         .gasCalculator(SpuriousDragonGasCalculator::new)
         .skipZeroBlockRewards(true)
@@ -275,9 +273,6 @@ public abstract class MainnetProtocolSpecs {
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
-        .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(gasCalculator, gasLimitCalculator, true, chainId))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -411,12 +406,12 @@ public abstract class MainnetProtocolSpecs {
             chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason, evmConfiguration)
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
+            (cid, gasCalculator, gasLimitCalculator, checkSignatureMalleability) ->
                 new MainnetTransactionValidator(
                     gasCalculator,
                     gasLimitCalculator,
-                    true,
-                    chainId,
+                    checkSignatureMalleability,
+                    cid,
                     Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST)))
         .transactionReceiptFactory(
             enableRevertReason
@@ -451,13 +446,13 @@ public abstract class MainnetProtocolSpecs {
         .gasLimitCalculator(
             new LondonTargetingGasLimitCalculator(londonForkBlockNumber, londonFeeMarket))
         .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
+            (cid, gasCalculator, gasLimitCalculator, checkSignatureMalleability) ->
                 new MainnetTransactionValidator(
                     gasCalculator,
                     gasLimitCalculator,
                     londonFeeMarket,
-                    true,
-                    chainId,
+                    checkSignatureMalleability,
+                    cid,
                     Set.of(
                         TransactionType.FRONTIER,
                         TransactionType.ACCESS_LIST,
@@ -612,13 +607,13 @@ public abstract class MainnetProtocolSpecs {
                     CoinbaseFeePriceCalculator.eip1559()))
         // Contract creation rules for EIP-3860 Limit and meter intitcode
         .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
+            (cid, gasCalculator, gasLimitCalculator, checkSignatureMalleability) ->
                 new MainnetTransactionValidator(
                     gasCalculator,
                     gasLimitCalculator,
                     londonFeeMarket,
-                    true,
-                    chainId,
+                    checkSignatureMalleability,
+                    cid,
                     Set.of(
                         TransactionType.FRONTIER,
                         TransactionType.ACCESS_LIST,
@@ -695,13 +690,13 @@ public abstract class MainnetProtocolSpecs {
                     CoinbaseFeePriceCalculator.eip1559()))
         // change to check for max data gas per block for EIP-4844
         .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
+            (cid, gasCalculator, gasLimitCalculator, checkSignatureMalleability) ->
                 new MainnetTransactionValidator(
                     gasCalculator,
                     gasLimitCalculator,
                     cancunFeeMarket,
-                    true,
-                    chainId,
+                    checkSignatureMalleability,
+                    cid,
                     Set.of(
                         TransactionType.FRONTIER,
                         TransactionType.ACCESS_LIST,

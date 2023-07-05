@@ -38,12 +38,14 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 
+import java.math.BigInteger;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class ProtocolSpecBuilder {
+  private Optional<BigInteger> chainId = Optional.empty();
   private Supplier<GasCalculator> gasCalculatorBuilder;
   private GasLimitCalculator gasLimitCalculator;
   private Wei blockReward;
@@ -53,8 +55,8 @@ public class ProtocolSpecBuilder {
   private DifficultyCalculator difficultyCalculator;
   private EvmConfiguration evmConfiguration;
   private BiFunction<GasCalculator, EvmConfiguration, EVM> evmBuilder;
-  private BiFunction<GasCalculator, GasLimitCalculator, TransactionValidator>
-      transactionValidatorBuilder;
+  private TransactionValidatorBuilder transactionValidatorBuilder;
+  private boolean checkSignatureMalleability;
   private Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> ommerHeaderValidatorBuilder;
   private Function<ProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder;
@@ -82,6 +84,11 @@ public class ProtocolSpecBuilder {
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
   private boolean isPoS = false;
   private boolean isReplayProtectionSupported = false;
+
+  public ProtocolSpecBuilder chainId(final Optional<BigInteger> chainId) {
+    this.chainId = chainId;
+    return this;
+  }
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -126,9 +133,13 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder transactionValidatorBuilder(
-      final BiFunction<GasCalculator, GasLimitCalculator, TransactionValidator>
-          transactionValidatorBuilder) {
+      final TransactionValidatorBuilder transactionValidatorBuilder) {
     this.transactionValidatorBuilder = transactionValidatorBuilder;
+    return this;
+  }
+
+  public ProtocolSpecBuilder checkSignatureMalleability(final boolean checkSignatureMalleability) {
+    this.checkSignatureMalleability = checkSignatureMalleability;
     return this;
   }
 
@@ -310,7 +321,8 @@ public class ProtocolSpecBuilder {
     final PrecompiledContractConfiguration precompiledContractConfiguration =
         new PrecompiledContractConfiguration(gasCalculator, privacyParameters);
     final TransactionValidator transactionValidator =
-        transactionValidatorBuilder.apply(gasCalculator, gasLimitCalculator);
+        transactionValidatorBuilder.apply(
+            chainId, gasCalculator, gasLimitCalculator, checkSignatureMalleability);
     final AbstractMessageProcessor contractCreationProcessor =
         contractCreationProcessorBuilder.apply(gasCalculator, evm);
     final PrecompileContractRegistry precompileContractRegistry =
@@ -446,6 +458,14 @@ public class ProtocolSpecBuilder {
         TransactionValidator transactionValidator,
         AbstractMessageProcessor contractCreationProcessor,
         AbstractMessageProcessor messageCallProcessor);
+  }
+
+  public interface TransactionValidatorBuilder {
+    TransactionValidator apply(
+        Optional<BigInteger> chainId,
+        GasCalculator gasCalculator,
+        GasLimitCalculator gasLimitCalculator,
+        boolean checkSignatureMalleability);
   }
 
   public interface PrivateTransactionProcessorBuilder {

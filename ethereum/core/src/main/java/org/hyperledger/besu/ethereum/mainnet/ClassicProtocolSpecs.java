@@ -72,11 +72,13 @@ public class ClassicProtocolSpecs {
       final EvmConfiguration evmConfiguration) {
     return MainnetProtocolSpecs.homesteadDefinition(
             contractSizeLimit, configStackSizeLimit, evmConfiguration)
+        .chainId(chainId)
         .isReplayProtectionSupported(true)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(gasCalculator, gasLimitCalculator, true, chainId))
+            (cid, gasCalculator, gasLimitCalculator, checkSignatureMalleability) ->
+                new MainnetTransactionValidator(
+                    gasCalculator, gasLimitCalculator, checkSignatureMalleability, cid))
         .name("ClassicTangerineWhistle");
   }
 
@@ -129,8 +131,9 @@ public class ClassicProtocolSpecs {
             chainId, contractSizeLimit, configStackSizeLimit, ecip1017EraRounds, evmConfiguration)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_REMOVED)
         .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(gasCalculator, gasLimitCalculator, true, chainId))
+            (cid, gasCalculator, gasLimitCalculator, checkSignatureMalleability) ->
+                new MainnetTransactionValidator(
+                    gasCalculator, gasLimitCalculator, checkSignatureMalleability, cid))
         .name("DefuseDifficultyBomb");
   }
 
@@ -292,12 +295,12 @@ public class ClassicProtocolSpecs {
             evmConfiguration)
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
+            (cid, gasCalculator, gasLimitCalculator, checkSignatureMalleability) ->
                 new MainnetTransactionValidator(
                     gasCalculator,
                     gasLimitCalculator,
-                    true,
-                    chainId,
+                    checkSignatureMalleability,
+                    cid,
                     Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST)))
         .transactionReceiptFactory(
             enableRevertReason
