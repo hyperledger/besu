@@ -129,7 +129,7 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
         LOG.debug("This message contains unrelated bodies. Peer: {}", peer);
         return Optional.empty();
       }
-      headers.forEach(h -> blocks.add(new Block(h, body)));
+      headers.forEach(h -> blocks.add(new Block(h, body, true, false)));
       // Clear processed headers
       headers.clear();
     }

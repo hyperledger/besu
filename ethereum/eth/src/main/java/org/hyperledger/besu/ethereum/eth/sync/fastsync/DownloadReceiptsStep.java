@@ -60,7 +60,10 @@ public class DownloadReceiptsStep
             block -> {
               final List<TransactionReceipt> receipts =
                   receiptsByHeader.getOrDefault(block.getHeader(), emptyList());
-              return new BlockWithReceipts(block, receipts);
+              // this is because we already did the receipts validation when getting them from the
+              // network
+              // in GetReceiptsFromPeerTask.processResponse method
+              block.setReceiptsRootVerified(true);              return new BlockWithReceipts(block, receipts);
             })
         .collect(toList());
   }

@@ -27,10 +27,25 @@ public class Block {
 
   private final BlockHeader header;
   private final BlockBody body;
+  private final boolean transactionsRootVerified;
+  private boolean receiptsRootVerified;
 
   public Block(final BlockHeader header, final BlockBody body) {
     this.header = header;
     this.body = body;
+    this.transactionsRootVerified = false;
+    this.receiptsRootVerified = false;
+  }
+
+  public Block(
+          final BlockHeader header,
+          final BlockBody body,
+          final boolean transactionsRootVerified,
+          final boolean receiptsRootVerified) {
+    this.header = header;
+    this.body = body;
+    this.transactionsRootVerified = transactionsRootVerified;
+    this.receiptsRootVerified = receiptsRootVerified;
   }
 
   public BlockHeader getHeader() {
@@ -51,6 +66,18 @@ public class Block {
 
   public int calculateSize() {
     return toRlp().size();
+  }
+
+  public boolean isTransactionsRootVerified() {
+    return transactionsRootVerified;
+  }
+
+  public boolean isReceiptsRootVerified() {
+    return receiptsRootVerified;
+  }
+
+  public void setReceiptsRootVerified(final boolean receiptsRootVerified) {
+    this.receiptsRootVerified = receiptsRootVerified;
   }
 
   public void writeTo(final RLPOutput out) {
