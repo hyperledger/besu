@@ -52,15 +52,15 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EthCallTest {
 
   private EthCall method;
@@ -74,7 +74,7 @@ public class EthCallTest {
 
   @Captor ArgumentCaptor<PreCloseStateHandler<Optional<JsonRpcResponse>>> mapperCaptor;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     method = new EthCall(blockchainQueries, transactionSimulator);
     blockHeader = mock(BlockHeader.class);

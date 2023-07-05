@@ -48,13 +48,13 @@ import java.util.Optional;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EngineGetPayloadBodiesByHashV1Test {
   private EngineGetPayloadBodiesByHashV1 method;
   private static final Vertx vertx = Vertx.vertx();
@@ -63,7 +63,7 @@ public class EngineGetPayloadBodiesByHashV1Test {
   @Mock private EngineCallListener engineCallListener;
   @Mock private MutableBlockchain blockchain;
 
-  @Before
+  @BeforeEach
   public void before() {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     this.method =

@@ -22,19 +22,19 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import io.vertx.junit5.VertxExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(VertxExtension.class)
 public class TomlAuthTest {
 
   private Vertx vertx;
   private JsonObject validAuthInfo;
   private TomlAuth tomlAuth;
 
-  @Before
+  @BeforeEach
   public void before(final TestContext context) throws URISyntaxException {
     vertx = Vertx.vertx();
     tomlAuth =

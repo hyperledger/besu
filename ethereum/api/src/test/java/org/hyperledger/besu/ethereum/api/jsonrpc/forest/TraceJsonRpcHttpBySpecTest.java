@@ -18,18 +18,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.AbstractJsonRpcHttpBySpecTest;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 
-import java.net.URL;
-
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
-
-@RunWith(Parameterized.class)
 public class TraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
-
-  public TraceJsonRpcHttpBySpecTest(final String specName, final URL specURL) {
-    super(specName, specURL);
-  }
 
   @Override
   public void setup() throws Exception {
@@ -43,7 +32,6 @@ public class TraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
         "trace/chain-data/genesis.json", "trace/chain-data/blocks.bin", storageFormat);
   }
 
-  @Parameters(name = "{index}: {0}")
   public static Object[][] specs() {
     return AbstractJsonRpcHttpBySpecTest.findSpecFiles(
         new String[] {

@@ -39,13 +39,13 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.impl.UserImpl;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PrivDistributeRawTransactionTest {
 
   private static final String VALID_PRIVATE_TRANSACTION_RLP_PRIVACY_GROUP =
@@ -66,7 +66,7 @@ public class PrivDistributeRawTransactionTest {
   private PrivDistributeRawTransaction method;
   @Mock private PrivacyController privacyController;
 
-  @Before
+  @BeforeEach
   public void before() {
     method = new PrivDistributeRawTransaction(privacyController, privacyIdProvider, false);
   }

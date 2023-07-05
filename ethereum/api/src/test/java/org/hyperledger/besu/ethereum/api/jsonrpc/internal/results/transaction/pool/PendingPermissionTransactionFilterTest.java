@@ -40,14 +40,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
+
 public class PendingPermissionTransactionFilterTest {
 
-  @Parameterized.Parameters
   public static Collection<Object[]> data() {
     return asList(
         new Object[][] {
@@ -110,7 +108,8 @@ public class PendingPermissionTransactionFilterTest {
             .collect(Collectors.toList());
   }
 
-  @Test
+  @ParameterizedTest
+  @MethodSource("data")
   public void localAndRemoteAddressShouldNotStartWithForwardSlash() {
 
     final Collection<Transaction> filteredList =

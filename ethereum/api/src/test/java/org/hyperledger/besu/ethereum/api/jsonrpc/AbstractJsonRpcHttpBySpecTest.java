@@ -44,11 +44,9 @@ import com.google.common.io.Resources;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpServiceTest {
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -59,14 +57,10 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
   private static final Pattern GAS_MATCH_FOR_TRACE =
       Pattern.compile("\"gasUsed\":\"[x0-9a-fA-F]+\",");
 
-  private final URL specURL;
 
-  protected AbstractJsonRpcHttpBySpecTest(final String specName, final URL specURL) {
-    this.specURL = specURL;
-  }
-
-  @Test
-  public void jsonRPCCallWithSpecFile() throws Exception {
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("specs")
+  public void jsonRPCCallWithSpecFile(URL specURL) throws Exception {
     jsonRPCCall(specURL);
   }
 

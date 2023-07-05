@@ -39,16 +39,12 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 
-@RunWith(Parameterized.class)
 public class TimeoutHandlerTest {
 
-  @Parameters
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
@@ -59,24 +55,13 @@ public class TimeoutHandlerTest {
   }
 
   private static final TimeoutOptions DEFAULT_OPTS = TimeoutOptions.defaultOptions();
-  private final Optional<TimeoutOptions> globalOptions;
-  private final RpcMethod method;
-  private final long timeoutSec;
-  private final boolean timerMustBeSet;
 
-  public TimeoutHandlerTest(
-      final Optional<TimeoutOptions> globalOptions,
-      final RpcMethod method,
-      final long timeoutSec,
-      final boolean timerMustBeSet) {
-    this.globalOptions = globalOptions;
-    this.method = method;
-    this.timeoutSec = timeoutSec;
-    this.timerMustBeSet = timerMustBeSet;
-  }
-
-  @Test
-  public void test() {
+  @ParameterizedTest
+  @MethodSource("data")
+  public void test( Optional<TimeoutOptions> globalOptions,
+                    RpcMethod method,
+                    long timeoutSec,
+                    boolean timerMustBeSet) {
     final Map<String, TimeoutOptions> options;
     if (timerMustBeSet) {
       options =

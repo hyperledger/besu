@@ -43,8 +43,8 @@ import java.util.Collections;
 import java.util.Optional;
 
 import org.bouncycastle.util.encoders.Base64;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PrivDebugGetStateRootTest {
 
@@ -64,7 +64,7 @@ public class PrivDebugGetStateRootTest {
   private final PrivacyController privacyController =
       mock(RestrictedDefaultPrivacyController.class);
 
-  @Before
+  @BeforeEach
   public void setUp() {
     method = new PrivDebugGetStateRoot(blockchainQueries, privacyIdProvider, privacyController);
   }

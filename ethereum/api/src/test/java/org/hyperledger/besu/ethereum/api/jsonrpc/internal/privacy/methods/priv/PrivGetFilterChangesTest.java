@@ -46,13 +46,13 @@ import java.util.List;
 import com.google.common.collect.Lists;
 import io.vertx.ext.auth.User;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PrivGetFilterChangesTest {
 
   private final String FILTER_ID = "0xdbdb02abb65a2ba57a1cc0336c17ef75";
@@ -65,7 +65,7 @@ public class PrivGetFilterChangesTest {
 
   private PrivGetFilterChanges method;
 
-  @Before
+  @BeforeEach
   public void before() {
     method = new PrivGetFilterChanges(filterManager, privacyController, privacyIdProvider);
   }

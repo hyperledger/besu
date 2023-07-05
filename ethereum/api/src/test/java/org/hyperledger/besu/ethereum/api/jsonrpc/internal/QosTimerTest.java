@@ -22,16 +22,16 @@ import java.util.concurrent.TimeoutException;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import io.vertx.junit5.VertxExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(VertxExtension.class)
 public class QosTimerTest {
   static Vertx vertx = Vertx.vertx();
 
-  @Ignore("fails on CI with short timeouts and don't want to slow test suite down with longer ones")
+  @Disabled("fails on CI with short timeouts and don't want to slow test suite down with longer ones")
   @Test
   public void shouldExecuteConsecutivelyAtTimeout(final TestContext ctx) {
     final long TEST_QOS_TIMEOUT = 100L;
