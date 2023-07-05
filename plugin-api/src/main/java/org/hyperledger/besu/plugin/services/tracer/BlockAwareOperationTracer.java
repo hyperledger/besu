@@ -18,7 +18,7 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 
-public interface ExtendedOperationTracer extends OperationTracer {
+public interface BlockAwareOperationTracer extends OperationTracer {
   /**
    * Trace the start of a block.
    *
