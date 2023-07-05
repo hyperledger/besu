@@ -60,6 +60,7 @@ public class ProtocolSpecBuilder {
   private TransactionValidatorBuilder transactionValidatorBuilder;
   private boolean checkSignatureMalleability;
   private Set<TransactionType> supportedTransactionTypes;
+  private int maxInitcodeSize = Integer.MAX_VALUE;
   private Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> ommerHeaderValidatorBuilder;
   private Function<ProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder;
@@ -149,6 +150,11 @@ public class ProtocolSpecBuilder {
   public ProtocolSpecBuilder supportedTransactionTypes(
       final Set<TransactionType> supportedTransactionTypes) {
     this.supportedTransactionTypes = supportedTransactionTypes;
+    return this;
+  }
+
+  public ProtocolSpecBuilder maxInitcodeSize(final int maxInitcodeSize) {
+    this.maxInitcodeSize = maxInitcodeSize;
     return this;
   }
 
@@ -337,7 +343,8 @@ public class ProtocolSpecBuilder {
             gasLimitCalculator,
             feeMarket,
             checkSignatureMalleability,
-            supportedTransactionTypes);
+            supportedTransactionTypes,
+            maxInitcodeSize);
     final AbstractMessageProcessor contractCreationProcessor =
         contractCreationProcessorBuilder.apply(gasCalculator, evm);
     final PrecompileContractRegistry precompileContractRegistry =
@@ -482,7 +489,8 @@ public class ProtocolSpecBuilder {
         GasLimitCalculator gasLimitCalculator,
         FeeMarket feeMarket,
         boolean checkSignatureMalleability,
-        Set<TransactionType> supportedTransactionTypes);
+        Set<TransactionType> supportedTransactionTypes,
+        int maxInitcodeSize);
   }
 
   public interface PrivateTransactionProcessorBuilder {

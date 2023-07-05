@@ -75,21 +75,6 @@ public class ClassicProtocolSpecs {
         .chainId(chainId)
         .isReplayProtectionSupported(true)
         .gasCalculator(TangerineWhistleGasCalculator::new)
-        .transactionValidatorBuilder(
-            (cid,
-                gasCalculator,
-                gasLimitCalculator,
-                feeMarket,
-                checkSignatureMalleability,
-                supportedTransactionTypes) ->
-                new MainnetTransactionValidator(
-                    gasCalculator,
-                    gasLimitCalculator,
-                    feeMarket,
-                    checkSignatureMalleability,
-                    cid,
-                    supportedTransactionTypes,
-                    Integer.MAX_VALUE))
         .name("ClassicTangerineWhistle");
   }
 
@@ -141,21 +126,6 @@ public class ClassicProtocolSpecs {
     return gothamDefinition(
             chainId, contractSizeLimit, configStackSizeLimit, ecip1017EraRounds, evmConfiguration)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_REMOVED)
-        .transactionValidatorBuilder(
-            (cid,
-                gasCalculator,
-                gasLimitCalculator,
-                feeMarket,
-                checkSignatureMalleability,
-                supportedTransactionTypes) ->
-                new MainnetTransactionValidator(
-                    gasCalculator,
-                    gasLimitCalculator,
-                    feeMarket,
-                    checkSignatureMalleability,
-                    cid,
-                    supportedTransactionTypes,
-                    Integer.MAX_VALUE))
         .name("DefuseDifficultyBomb");
   }
 
@@ -318,21 +288,6 @@ public class ClassicProtocolSpecs {
         .supportedTransactionTypes(
             EnumSet.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST))
         .gasCalculator(BerlinGasCalculator::new)
-        .transactionValidatorBuilder(
-            (cid,
-                gasCalculator,
-                gasLimitCalculator,
-                feeMarket,
-                checkSignatureMalleability,
-                supportedTransactionTypes) ->
-                new MainnetTransactionValidator(
-                    gasCalculator,
-                    gasLimitCalculator,
-                    feeMarket,
-                    checkSignatureMalleability,
-                    cid,
-                    supportedTransactionTypes,
-                    Integer.MAX_VALUE))
         .transactionReceiptFactory(
             enableRevertReason
                 ? MainnetProtocolSpecs::berlinTransactionReceiptFactoryWithReasonEnabled

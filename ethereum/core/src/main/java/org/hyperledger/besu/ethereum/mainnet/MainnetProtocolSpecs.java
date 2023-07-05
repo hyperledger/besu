@@ -130,7 +130,8 @@ public abstract class MainnetProtocolSpecs {
                 gasLimitCalculator,
                 feeMarket,
                 checkSignatureMalleability,
-                supportedTransactionTypes) ->
+                supportedTransactionTypes,
+                maxInitcodeSize) ->
                 new MainnetTransactionValidator(
                     gasCalculator,
                     gasLimitCalculator,
@@ -138,7 +139,7 @@ public abstract class MainnetProtocolSpecs {
                     checkSignatureMalleability,
                     chainId,
                     supportedTransactionTypes,
-                    Integer.MAX_VALUE))
+                    maxInitcodeSize))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -579,6 +580,7 @@ public abstract class MainnetProtocolSpecs {
             enableRevertReason,
             genesisConfigOptions,
             evmConfiguration)
+        .maxInitcodeSize(SHANGHAI_INIT_CODE_SIZE_LIMIT)
         // gas calculator has new code to support EIP-3860 limit and meter initcode
         .gasCalculator(ShanghaiGasCalculator::new)
         // EVM has a new operation for EIP-3855 PUSH0 instruction
@@ -602,22 +604,6 @@ public abstract class MainnetProtocolSpecs {
                     stackSizeLimit,
                     londonFeeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
-        // Contract creation rules for EIP-3860 Limit and meter intitcode
-        .transactionValidatorBuilder(
-            (cid,
-                gasCalculator,
-                gasLimitCalculator,
-                feeMarket,
-                checkSignatureMalleability,
-                supportedTransactionTypes) ->
-                new MainnetTransactionValidator(
-                    gasCalculator,
-                    gasLimitCalculator,
-                    feeMarket,
-                    checkSignatureMalleability,
-                    cid,
-                    supportedTransactionTypes,
-                    SHANGHAI_INIT_CODE_SIZE_LIMIT))
         .withdrawalsProcessor(new WithdrawalsProcessor())
         .withdrawalsValidator(new WithdrawalsValidator.AllowedWithdrawals())
         .name("Shanghai");
