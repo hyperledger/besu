@@ -38,7 +38,7 @@
       "parentBaseFee": "7",
       "parentGasUsed": "0",
       "parentGasLimit": "100000000000000000",
-      "parentTimstamp": "0",
+      "parentTimestamp": "0",
       "blockHashes": {
         "0": "0xfc63c00c7fe67bcc6ae52ea4eed5ff00b8673b1afb581d090c34b5fa6eca9467"
       },
