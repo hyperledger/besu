@@ -35,8 +35,8 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -194,7 +194,7 @@ public class MainnetTransactionValidatorTest {
     final TransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
-    validator.setTransactionFilter(transactionFilter(false));
+    validator.setPermissionTransactionFilter(transactionFilter(false));
 
     Account invalidEOA =
         when(account(basicTransaction.getUpfrontCost(0L), basicTransaction.getNonce())
@@ -211,7 +211,7 @@ public class MainnetTransactionValidatorTest {
     final TransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
-    validator.setTransactionFilter(transactionFilter(false));
+    validator.setPermissionTransactionFilter(transactionFilter(false));
 
     assertThat(
             validator.validateForSender(
@@ -224,7 +224,7 @@ public class MainnetTransactionValidatorTest {
     final TransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
-    validator.setTransactionFilter(transactionFilter(true));
+    validator.setPermissionTransactionFilter(transactionFilter(true));
 
     assertThat(
             validator.validateForSender(
@@ -237,7 +237,7 @@ public class MainnetTransactionValidatorTest {
     final TransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
-    validator.setTransactionFilter(transactionFilter(true));
+    validator.setPermissionTransactionFilter(transactionFilter(true));
 
     assertThat(
             validator.validateForSender(
@@ -271,7 +271,7 @@ public class MainnetTransactionValidatorTest {
                   TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
                 }),
             Integer.MAX_VALUE);
-    validator.setTransactionFilter(transactionFilter(true));
+    validator.setPermissionTransactionFilter(transactionFilter(true));
 
     final Transaction transaction =
         Transaction.builder()
@@ -300,8 +300,9 @@ public class MainnetTransactionValidatorTest {
         ArgumentCaptor.forClass(Boolean.class);
     final ArgumentCaptor<Boolean> stateChangeOnchainParamCaptor =
         ArgumentCaptor.forClass(Boolean.class);
-    final TransactionFilter transactionFilter = mock(TransactionFilter.class);
-    when(transactionFilter.permitted(
+    final PermissionTransactionFilter permissionTransactionFilter =
+        mock(PermissionTransactionFilter.class);
+    when(permissionTransactionFilter.permitted(
             any(Transaction.class),
             stateChangeLocalParamCaptor.capture(),
             stateChangeOnchainParamCaptor.capture()))
@@ -310,7 +311,7 @@ public class MainnetTransactionValidatorTest {
     final TransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
-    validator.setTransactionFilter(transactionFilter);
+    validator.setPermissionTransactionFilter(permissionTransactionFilter);
 
     final TransactionValidationParams validationParams =
         ImmutableTransactionValidationParams.builder().checkOnchainPermissions(true).build();
@@ -323,12 +324,13 @@ public class MainnetTransactionValidatorTest {
 
   @Test
   public void shouldNotCheckAccountPermissionIfBothValidationParamsCheckPermissionsAreFalse() {
-    final TransactionFilter transactionFilter = mock(TransactionFilter.class);
+    final PermissionTransactionFilter permissionTransactionFilter =
+        mock(PermissionTransactionFilter.class);
 
     final TransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
-    validator.setTransactionFilter(transactionFilter);
+    validator.setPermissionTransactionFilter(permissionTransactionFilter);
 
     final TransactionValidationParams validationParams =
         ImmutableTransactionValidationParams.builder()
@@ -341,7 +343,7 @@ public class MainnetTransactionValidatorTest {
     assertThat(validator.validateForSender(basicTransaction, accountWithNonce(0), validationParams))
         .isEqualTo(ValidationResult.valid());
 
-    verifyNoInteractions(transactionFilter);
+    verifyNoInteractions(permissionTransactionFilter);
   }
 
   @Test
@@ -546,10 +548,11 @@ public class MainnetTransactionValidatorTest {
     return account;
   }
 
-  private TransactionFilter transactionFilter(final boolean permitted) {
-    final TransactionFilter transactionFilter = mock(TransactionFilter.class);
-    when(transactionFilter.permitted(any(Transaction.class), anyBoolean(), anyBoolean()))
+  private PermissionTransactionFilter transactionFilter(final boolean permitted) {
+    final PermissionTransactionFilter permissionTransactionFilter =
+        mock(PermissionTransactionFilter.class);
+    when(permissionTransactionFilter.permitted(any(Transaction.class), anyBoolean(), anyBoolean()))
         .thenReturn(permitted);
-    return transactionFilter;
+    return permissionTransactionFilter;
   }
 }
