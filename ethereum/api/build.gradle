@@ -125,7 +125,7 @@ dependencies {
 
 artifacts { testSupportArtifacts testSupportJar }
 
-tasks.register("generateTestBlockchain") {
+tasks.register('generateTestBlockchain') {
   def srcFiles = 'src/test/resources/org/hyperledger/besu/ethereum/api/jsonrpc/trace/chain-data'
   def dataPath = "$buildDir/generated/data"
   def blocksBin = "$buildDir/resources/test/org/hyperledger/besu/ethereum/api/jsonrpc/trace/chain-data/blocks.bin"

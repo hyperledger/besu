@@ -75,7 +75,7 @@ mainClassName = 'org.hyperledger.besu.evmtool.EvmTool'
 startScripts {
   applicationName = 'evm'
   defaultJvmOpts = [
-    '-Dsecp256k1.randomize=false'
+    "-Dsecp256k1.randomize=false"
   ]
   doLast {
     unixScript.text = unixScript.text.replace('BESU_HOME', '\$APP_HOME')
@@ -85,12 +85,12 @@ startScripts {
 
 // rename the top level dir from besu-<version> to besu and this makes it really
 // simple for use in docker
-tasks.register('dockerDistUntar') {
+tasks.register("dockerDistUntar") {
   dependsOn distTar
   dependsOn distZip
   def dockerBuildDir = "${buildDir}/docker-besu-evmtool"
   def distTarFile = distTar.outputs.files.singleFile
-  def distTarFileName = distTar.outputs.files.singleFile.name.replace('.tar', '')
+  def distTarFileName = distTar.outputs.files.singleFile.name.replace(".tar", "")
 
   doFirst {
     new File(dockerBuildDir).mkdir()
@@ -102,11 +102,11 @@ tasks.register('dockerDistUntar') {
   }
 }
 
-tasks.register("distDocker", Exec) {
+tasks.register('distDocker', Exec) {
   dependsOn dockerDistUntar
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-  def dockerOrgName = project.hasProperty('dockerOrgName') ? project.getProperty('dockerOrgName') : 'hyperledger'
-  def dockerArtifactName = project.hasProperty('dockerArtifactName') ? project.getProperty('dockerArtifactName') : 'besu-evmtool'
+  def dockerOrgName = project.hasProperty('dockerOrgName') ? project.getProperty("dockerOrgName") : "hyperledger"
+  def dockerArtifactName = project.hasProperty("dockerArtifactName") ? project.getProperty("dockerArtifactName") : "besu-evmtool"
   def imageName = "${dockerOrgName}/${dockerArtifactName}"
 
   def image = "${imageName}:${dockerBuildVersion}"
@@ -120,15 +120,15 @@ tasks.register("distDocker", Exec) {
     }
   }
 
-  executable 'sh'
-  args '-c', "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
+  executable "sh"
+  args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
 }
 
-tasks.register("dockerUpload", Exec) {
+tasks.register('dockerUpload', Exec) {
   dependsOn distDocker
   String dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-  def dockerOrgName = project.hasProperty('dockerOrgName') ? project.getProperty('dockerOrgName') : 'hyperledger'
-  def dockerArtifactName = project.hasProperty('dockerArtifactName') ? project.getProperty('dockerArtifactName') : 'besu-evmtool'
+  def dockerOrgName = project.hasProperty('dockerOrgName') ? project.getProperty("dockerOrgName") : "hyperledger"
+  def dockerArtifactName = project.hasProperty("dockerArtifactName") ? project.getProperty("dockerArtifactName") : "besu-evmtool"
   def imageName = "${dockerOrgName}/${dockerArtifactName}"
   def image = "${imageName}:${dockerBuildVersion}"
   def cmd = "docker push '${image}'"
@@ -144,8 +144,8 @@ tasks.register("dockerUpload", Exec) {
   }
 
   additionalTags.each { tag -> cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'" }
-  executable 'sh'
-  args '-c', cmd
+  executable "sh"
+  args "-c", cmd
 }
 
 graalvmNative {
@@ -154,13 +154,13 @@ graalvmNative {
       sharedLibrary = false
       buildArgs.addAll(
         "-H:ReflectionConfigurationFiles=${projectDir}/src/main/graal/reflection-config.json",
-        '-H:AdditionalSecurityProviders=org.bouncycastle.jce.provider.BouncyCastleProvider',
+        "-H:AdditionalSecurityProviders=org.bouncycastle.jce.provider.BouncyCastleProvider",
         '-H:+TraceSecurityServices'
         )
 
 
       // Netty drags in older versions of bouncy castle, exclude it so there are no conflicts
-      excludeConfig.put('io.netty:netty-buffer', ['.*'])
+      excludeConfig.put("io.netty:netty-buffer", [".*"])
     }
   }
 }
@@ -174,7 +174,7 @@ configurations.nativeImageClasspath {
 
   // keep log4j from sneaking in.  GraalVM has an aleric reaction if it sees even one class
   exclude group: 'org.slf4j', module: 'log4j-over-slf4j:1.7.36'
-  exclude group: 'log4j', module: 'log4j'
-  exclude group: 'org.apache.logging.log4j'
-  exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
+  exclude group: "log4j", module: "log4j"
+  exclude group: "org.apache.logging.log4j"
+  exclude group: 'org.bouncycastle', module: 'bcprov-jdk18on'
 }

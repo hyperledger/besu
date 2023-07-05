@@ -43,7 +43,7 @@ dependencies {
 }
 
 configurations { testArtifacts }
-tasks.register("testJar", Jar) {
+tasks.register('testJar', Jar) {
   archiveBaseName = "${project.name}-test"
   from sourceSets.test.output
 }
