@@ -44,44 +44,11 @@ public class MainnetTransactionValidator implements TransactionValidator {
   private final GasCalculator gasCalculator;
   private final GasLimitCalculator gasLimitCalculator;
   private final FeeMarket feeMarket;
-
   private final boolean disallowSignatureMalleability;
-
   private final Optional<BigInteger> chainId;
-
   private Optional<PermissionTransactionFilter> permissionTransactionFilter = Optional.empty();
   private final Set<TransactionType> acceptedTransactionTypes;
-
   private final int maxInitcodeSize;
-  //
-  //  public MainnetTransactionValidator(
-  //      final GasCalculator gasCalculator,
-  //      final GasLimitCalculator gasLimitCalculator,
-  //      final boolean checkSignatureMalleability,
-  //      final Optional<BigInteger> chainId) {
-  //    this(
-  //        gasCalculator,
-  //        gasLimitCalculator,
-  //        checkSignatureMalleability,
-  //        chainId,
-  //        Set.of(TransactionType.FRONTIER));
-  //  }
-
-  //  public MainnetTransactionValidator(
-  //      final GasCalculator gasCalculator,
-  //      final GasLimitCalculator gasLimitCalculator,
-  //      final boolean checkSignatureMalleability,
-  //      final Optional<BigInteger> chainId,
-  //      final Set<TransactionType> acceptedTransactionTypes) {
-  //    this(
-  //        gasCalculator,
-  //        gasLimitCalculator,
-  //        FeeMarket.legacy(),
-  //        checkSignatureMalleability,
-  //        chainId,
-  //        acceptedTransactionTypes,
-  //        Integer.MAX_VALUE);
-  //  }
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,

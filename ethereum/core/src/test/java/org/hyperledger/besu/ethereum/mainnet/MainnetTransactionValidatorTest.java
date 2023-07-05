@@ -45,6 +45,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
+import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -74,11 +75,42 @@ public class MainnetTransactionValidatorTest {
           .chainId(Optional.of(BigInteger.ONE))
           .createTransaction(senderKeys);
 
+  private MainnetTransactionValidator createTransactionValidator() {
+    return createTransactionValidator(null);
+  }
+
+  private MainnetTransactionValidator createTransactionValidator(final int chainId) {
+    return createTransactionValidator(BigInteger.valueOf(chainId));
+  }
+
+  private MainnetTransactionValidator createTransactionValidator(final BigInteger chainId) {
+    return new MainnetTransactionValidator(
+        gasCalculator,
+        GasLimitCalculator.constant(),
+        FeeMarket.legacy(),
+        false,
+        Optional.ofNullable(chainId),
+        EnumSet.allOf(TransactionType.class),
+        Integer.MAX_VALUE);
+  }
+
+  private MainnetTransactionValidator createTransactionValidator(
+      final BigInteger chainId,
+      final FeeMarket feeMarket,
+      final EnumSet<TransactionType> transactionTypes) {
+    return new MainnetTransactionValidator(
+        gasCalculator,
+        GasLimitCalculator.constant(),
+        feeMarket,
+        false,
+        Optional.ofNullable(chainId),
+        transactionTypes,
+        Integer.MAX_VALUE);
+  }
+
   @Test
   public void shouldRejectTransactionIfIntrinsicGasExceedsGasLimit() {
-    final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
+    final TransactionValidator validator = createTransactionValidator();
     final Transaction transaction =
         new TransactionTestFixture()
             .gasLimit(10)
@@ -93,9 +125,7 @@ public class MainnetTransactionValidatorTest {
 
   @Test
   public void shouldRejectTransactionWhenTransactionHasChainIdAndValidatorDoesNot() {
-    final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
+    final TransactionValidator validator = createTransactionValidator();
     assertThat(validator.validate(basicTransaction, Optional.empty(), transactionValidationParams))
         .isEqualTo(
             ValidationResult.invalid(
@@ -104,30 +134,23 @@ public class MainnetTransactionValidatorTest {
 
   @Test
   public void shouldRejectTransactionWhenTransactionHasIncorrectChainId() {
-    final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator,
-            GasLimitCalculator.constant(),
-            false,
-            Optional.of(BigInteger.valueOf(2)));
+    final TransactionValidator validator = createTransactionValidator(2);
+
     assertThat(validator.validate(basicTransaction, Optional.empty(), transactionValidationParams))
         .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.WRONG_CHAIN_ID));
   }
 
   @Test
   public void shouldRejectTransactionWhenSenderAccountDoesNotExist() {
-    final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
+    final TransactionValidator validator = createTransactionValidator(1);
+
     assertThat(validator.validateForSender(basicTransaction, null, processingBlockParams))
         .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE));
   }
 
   @Test
   public void shouldRejectTransactionWhenTransactionNonceBelowAccountNonce() {
-    final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
+    final TransactionValidator validator = createTransactionValidator(1);
 
     final Account account = accountWithNonce(basicTransaction.getNonce() + 1);
     assertThat(validator.validateForSender(basicTransaction, account, processingBlockParams))
@@ -137,9 +160,7 @@ public class MainnetTransactionValidatorTest {
   @Test
   public void
       shouldRejectTransactionWhenTransactionNonceAboveAccountNonceAndFutureNonceIsNotAllowed() {
-    final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
+    final TransactionValidator validator = createTransactionValidator(1);
 
     final Account account = accountWithNonce(basicTransaction.getNonce() - 1);
     assertThat(validator.validateForSender(basicTransaction, account, processingBlockParams))
@@ -149,10 +170,7 @@ public class MainnetTransactionValidatorTest {
   @Test
   public void
       shouldAcceptTransactionWhenTransactionNonceAboveAccountNonceAndFutureNonceIsAllowed() {
-    final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
-
+    final TransactionValidator validator = createTransactionValidator(1);
     final Account account = accountWithNonce(basicTransaction.getNonce() - 1);
     assertThat(validator.validateForSender(basicTransaction, account, transactionPoolParams))
         .isEqualTo(ValidationResult.valid());
@@ -160,10 +178,7 @@ public class MainnetTransactionValidatorTest {
 
   @Test
   public void shouldRejectTransactionWhenNonceExceedsMaximumAllowedNonce() {
-    final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
-
+    final TransactionValidator validator = createTransactionValidator(1);
     final Transaction transaction =
         new TransactionTestFixture().nonce(11).createTransaction(senderKeys);
     final Account account = accountWithNonce(5);
@@ -174,10 +189,7 @@ public class MainnetTransactionValidatorTest {
 
   @Test
   public void transactionWithNullSenderCanBeValidIfGasPriceAndValueIsZero() {
-    final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
-
+    final TransactionValidator validator = createTransactionValidator(1);
     final TransactionTestFixture builder = new TransactionTestFixture();
     final KeyPair senderKeyPair = SIGNATURE_ALGORITHM.get().generateKeyPair();
     final Address arbitrarySender = Address.fromHexString("1");
@@ -191,9 +203,8 @@ public class MainnetTransactionValidatorTest {
 
   @Test
   public void shouldRejectTransactionIfAccountIsNotEOA() {
-    final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
+    final TransactionValidator validator = createTransactionValidator();
+
     validator.setPermissionTransactionFilter(transactionFilter(false));
 
     Account invalidEOA =
@@ -208,9 +219,7 @@ public class MainnetTransactionValidatorTest {
 
   @Test
   public void shouldRejectTransactionIfAccountIsNotPermitted() {
-    final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
+    final TransactionValidator validator = createTransactionValidator();
     validator.setPermissionTransactionFilter(transactionFilter(false));
 
     assertThat(
@@ -221,9 +230,7 @@ public class MainnetTransactionValidatorTest {
 
   @Test
   public void shouldAcceptValidTransactionIfAccountIsPermitted() {
-    final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
+    final TransactionValidator validator = createTransactionValidator();
     validator.setPermissionTransactionFilter(transactionFilter(true));
 
     assertThat(
@@ -234,9 +241,7 @@ public class MainnetTransactionValidatorTest {
 
   @Test
   public void shouldRejectTransactionWithMaxFeeTimesGasLimitGreaterThanBalance() {
-    final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
+    final TransactionValidator validator = createTransactionValidator();
     validator.setPermissionTransactionFilter(transactionFilter(true));
 
     assertThat(
@@ -260,17 +265,12 @@ public class MainnetTransactionValidatorTest {
   @Test
   public void shouldRejectTransactionWithMaxPriorityFeeGreaterThanMaxFee() {
     final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator,
-            GasLimitCalculator.constant(),
+        createTransactionValidator(
+            BigInteger.ONE,
             FeeMarket.london(0L),
-            false,
-            Optional.of(BigInteger.ONE),
-            Set.of(
-                new TransactionType[] {
-                  TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
-                }),
-            Integer.MAX_VALUE);
+            EnumSet.of(
+                TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559));
+
     validator.setPermissionTransactionFilter(transactionFilter(true));
 
     final Transaction transaction =
@@ -308,9 +308,7 @@ public class MainnetTransactionValidatorTest {
             stateChangeOnchainParamCaptor.capture()))
         .thenReturn(true);
 
-    final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
+    final TransactionValidator validator = createTransactionValidator();
     validator.setPermissionTransactionFilter(permissionTransactionFilter);
 
     final TransactionValidationParams validationParams =
@@ -327,9 +325,7 @@ public class MainnetTransactionValidatorTest {
     final PermissionTransactionFilter permissionTransactionFilter =
         mock(PermissionTransactionFilter.class);
 
-    final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
+    final TransactionValidator validator = createTransactionValidator();
     validator.setPermissionTransactionFilter(permissionTransactionFilter);
 
     final TransactionValidationParams validationParams =
@@ -349,24 +345,14 @@ public class MainnetTransactionValidatorTest {
   @Test
   public void shouldAcceptOnlyTransactionsInAcceptedTransactionTypes() {
     final TransactionValidator frontierValidator =
-        new MainnetTransactionValidator(
-            gasCalculator,
-            GasLimitCalculator.constant(),
-            FeeMarket.legacy(),
-            false,
-            Optional.of(BigInteger.ONE),
-            Set.of(TransactionType.FRONTIER),
-            Integer.MAX_VALUE);
+        createTransactionValidator(
+            BigInteger.ONE, FeeMarket.legacy(), EnumSet.of(TransactionType.FRONTIER));
 
     final TransactionValidator eip1559Validator =
-        new MainnetTransactionValidator(
-            gasCalculator,
-            GasLimitCalculator.constant(),
+        createTransactionValidator(
+            BigInteger.ONE,
             FeeMarket.london(0L),
-            false,
-            Optional.of(BigInteger.ONE),
-            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
-            Integer.MAX_VALUE);
+            EnumSet.of(TransactionType.FRONTIER, TransactionType.EIP1559));
 
     final Transaction transaction =
         new TransactionTestFixture()
@@ -392,14 +378,10 @@ public class MainnetTransactionValidatorTest {
   @Test
   public void shouldRejectTransactionIfEIP1559TransactionGasPriceLessBaseFee() {
     final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator,
-            GasLimitCalculator.constant(),
+        createTransactionValidator(
+            BigInteger.ONE,
             FeeMarket.london(0L),
-            false,
-            Optional.of(BigInteger.ONE),
-            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
-            Integer.MAX_VALUE);
+            EnumSet.of(TransactionType.FRONTIER, TransactionType.EIP1559));
     final Transaction transaction =
         new TransactionTestFixture()
             .type(TransactionType.EIP1559)
@@ -416,14 +398,11 @@ public class MainnetTransactionValidatorTest {
   public void shouldAcceptZeroGasPriceTransactionIfBaseFeeIsZero() {
     final Optional<Wei> zeroBaseFee = Optional.of(Wei.ZERO);
     final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator,
-            GasLimitCalculator.constant(),
+        createTransactionValidator(
+            BigInteger.ONE,
             FeeMarket.london(0L, zeroBaseFee),
-            false,
-            Optional.of(BigInteger.ONE),
-            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
-            Integer.MAX_VALUE);
+            EnumSet.of(TransactionType.FRONTIER, TransactionType.EIP1559));
+
     final Transaction transaction =
         new TransactionTestFixture()
             .type(TransactionType.EIP1559)
@@ -439,14 +418,10 @@ public class MainnetTransactionValidatorTest {
   @Test
   public void shouldAcceptValidEIP1559() {
     final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator,
-            GasLimitCalculator.constant(),
+        createTransactionValidator(
+            BigInteger.ONE,
             FeeMarket.london(0L),
-            false,
-            Optional.of(BigInteger.ONE),
-            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
-            Integer.MAX_VALUE);
+            EnumSet.of(TransactionType.FRONTIER, TransactionType.EIP1559));
     final Transaction transaction =
         new TransactionTestFixture()
             .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
@@ -464,14 +439,10 @@ public class MainnetTransactionValidatorTest {
   @Test
   public void shouldValidate1559TransactionWithPriceLowerThanBaseFeeForTransactionPool() {
     final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator,
-            GasLimitCalculator.constant(),
+        createTransactionValidator(
+            BigInteger.ONE,
             FeeMarket.london(0L),
-            false,
-            Optional.of(BigInteger.ONE),
-            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
-            Integer.MAX_VALUE);
+            EnumSet.of(TransactionType.FRONTIER, TransactionType.EIP1559));
     final Transaction transaction =
         new TransactionTestFixture()
             .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
