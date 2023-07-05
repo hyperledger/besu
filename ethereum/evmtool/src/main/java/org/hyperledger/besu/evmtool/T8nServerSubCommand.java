@@ -15,33 +15,29 @@
  */
 package org.hyperledger.besu.evmtool;
 
-import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.crypto.SignatureAlgorithm;
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.datatypes.Address;
+import static org.hyperledger.besu.evmtool.T8nExecutor.extractTransactions;
+
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.plugin.data.TransactionType;
+import org.hyperledger.besu.evmtool.T8nExecutor.RejectedTransaction;
 import org.hyperledger.besu.util.LogConfigurator;
 
-import java.math.BigInteger;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import picocli.CommandLine;
 
 @CommandLine.Command(
@@ -69,6 +65,7 @@ public class T8nServerSubCommand implements Runnable {
             req ->
                 req.bodyHandler(
                     body -> {
+                      ObjectMapper objectMapper = JsonUtils.createObjectMapper();
                       JsonObject t8nRequest = body.toJsonObject();
                       JsonObject state = t8nRequest.getJsonObject("state");
                       String fork = state.getString("fork");
@@ -81,18 +78,27 @@ public class T8nServerSubCommand implements Runnable {
                       ReferenceTestWorldState initialWorldState =
                           input.getJsonObject("alloc").mapTo(ReferenceTestWorldState.class);
                       initialWorldState.persist(null);
-                      List<Transaction> transactions = Collections.emptyList();
+                      List<Transaction> transactions = new ArrayList<>();
+                      List<RejectedTransaction> rejections = new ArrayList<>();
                       Object txs = input.getValue("txs");
                       if (txs != null) {
                         if (txs instanceof JsonArray txsArray) {
-                          transactions = extractTransactions(txsArray);
+                          extractTransactions(
+                              new PrintWriter(System.err, true, StandardCharsets.UTF_8),
+                              txsArray.stream().map(s -> (JsonNode) s).iterator(),
+                              transactions,
+                              rejections);
                         } else if (txs instanceof String tx) {
                           transactions =
-                              extractTransactions(new JsonArray().add(removeSurrounding("\"", tx)));
+                              extractTransactions(
+                                  new PrintWriter(System.err, true, StandardCharsets.UTF_8),
+                                  List.<JsonNode>of(new TextNode(removeSurrounding("\"", tx)))
+                                      .iterator(),
+                                  transactions,
+                                  rejections);
                         }
                       }
 
-                      ObjectMapper objectMapper = JsonUtils.createObjectMapper();
                       final T8nExecutor.T8nResult result =
                           T8nExecutor.runTest(
                               chainId,
@@ -102,6 +108,7 @@ public class T8nServerSubCommand implements Runnable {
                               referenceTestEnv,
                               initialWorldState,
                               transactions,
+                              rejections,
                               new T8nExecutor.TracerManager() {
                                 @Override
                                 public OperationTracer getManagedTracer(
@@ -136,72 +143,6 @@ public class T8nServerSubCommand implements Runnable {
             server -> System.out.println("Transition server listening on " + server.actualPort()))
         .onFailure(
             err -> System.err.println("Failed to start transition server: " + err.getMessage()));
-  }
-
-  private List<Transaction> extractTransactions(final JsonArray jsonArray) {
-    List<Transaction> transactions = new ArrayList<>();
-    for (int i = 0; i < jsonArray.size(); i++) {
-      Object rawTx = jsonArray.getValue(i);
-      if (rawTx instanceof String txNode) {
-        BytesValueRLPInput rlpInput = new BytesValueRLPInput(Bytes.fromHexString(txNode), false);
-        rlpInput.enterList();
-        while (!rlpInput.isEndOfCurrentList()) {
-          Transaction tx = Transaction.readFrom(rlpInput);
-          transactions.add(tx);
-        }
-      } else if (rawTx instanceof JsonObject txNode) {
-        if (txNode.containsKey("txBytes")) {
-          JsonObject txBytesNode = txNode.getJsonObject("txBytes");
-          Transaction tx =
-              Transaction.readFrom(Bytes.fromHexString(txBytesNode.getString("txbytes")));
-          transactions.add(tx);
-        } else {
-          Transaction.Builder builder = Transaction.builder();
-          int type = Bytes.fromHexStringLenient(txNode.getString("type")).toInt();
-          TransactionType transactionType = TransactionType.of(type == 0 ? 0xf8 : type);
-          builder.type(transactionType);
-          builder.nonce(Bytes.fromHexStringLenient(txNode.getString("nonce")).toLong());
-          builder.gasPrice(Wei.fromHexString(txNode.getString("gasPrice")));
-          builder.gasLimit(Bytes.fromHexStringLenient(txNode.getString("gas")).toLong());
-          builder.value(Wei.fromHexString(txNode.getString("value")));
-          builder.payload(Bytes.fromHexString(txNode.getString("input")));
-          if (txNode.containsKey("to")) {
-            builder.to(Address.fromHexString(txNode.getString("to")));
-          }
-
-          if (transactionType.requiresChainId()
-              || !txNode.containsKey("protected")
-              || txNode.getBoolean("protected")) {
-            // chainid if protected
-            builder.chainId(
-                new BigInteger(
-                    1, Bytes.fromHexStringLenient(txNode.getString("chainId")).toArrayUnsafe()));
-          }
-
-          if (txNode.containsKey("secretKey")) {
-            SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
-            KeyPair keys =
-                signatureAlgorithm.createKeyPair(
-                    signatureAlgorithm.createPrivateKey(
-                        Bytes32.fromHexString(txNode.getString("secretKey"))));
-
-            transactions.add(builder.signAndBuild(keys));
-          } else {
-            builder.signature(
-                SignatureAlgorithmFactory.getInstance()
-                    .createSignature(
-                        Bytes.fromHexString(txNode.getString("r")).toUnsignedBigInteger(),
-                        Bytes.fromHexString(txNode.getString("s")).toUnsignedBigInteger(),
-                        Bytes.fromHexString(txNode.getString("v"))
-                            .toUnsignedBigInteger()
-                            .subtract(Transaction.REPLAY_UNPROTECTED_V_BASE)
-                            .byteValueExact()));
-            transactions.add(builder.build());
-          }
-        }
-      }
-    }
-    return transactions;
   }
 
   private static String removeSurrounding(final String delimiter, final String message) {
