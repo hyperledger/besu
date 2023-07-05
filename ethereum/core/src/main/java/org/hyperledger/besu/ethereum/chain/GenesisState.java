@@ -19,8 +19,8 @@ import static java.util.Collections.emptyList;
 import org.hyperledger.besu.config.GenesisAllocation;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -168,8 +168,8 @@ public final class GenesisState {
         .blockHeaderFunctions(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule))
         .baseFee(genesis.getGenesisBaseFeePerGas().orElse(null))
         .withdrawalsRoot(isShanghaiAtGenesis(genesis) ? Hash.EMPTY_TRIE_HASH : null)
-        .dataGasUsed(isCancunAtGenesis(genesis) ? parseDataGasUsed(genesis) : 0L)
-        .excessDataGas(isCancunAtGenesis(genesis) ? parseExcessDataGas(genesis) : DataGas.ZERO)
+        .dataGasUsed(isCancunAtGenesis(genesis) ? parseDataGasUsed(genesis) : null)
+        .excessDataGas(isCancunAtGenesis(genesis) ? parseExcessDataGas(genesis) : null)
         .depositsRoot(isExperimentalEipsTimeAtGenesis(genesis) ? Hash.EMPTY_TRIE_HASH : null)
         .buildBlockHeader();
   }
@@ -219,14 +219,17 @@ public final class GenesisState {
   private static long parseNonce(final GenesisConfigFile genesis) {
     return withNiceErrorMessage("nonce", genesis.getNonce(), GenesisState::parseUnsignedLong);
   }
-  
+
   private static long parseDataGasUsed(final GenesisConfigFile genesis) {
-      return withNiceErrorMessage("dataGasUsed", genesis.getDataGasUsed(), GenesisState::parseUnsignedLong);
+    return withNiceErrorMessage(
+        "dataGasUsed", genesis.getDataGasUsed(), GenesisState::parseUnsignedLong);
   }
 
   private static DataGas parseExcessDataGas(final GenesisConfigFile genesis) {
-      long excessDataGas = withNiceErrorMessage("excessDataGas", genesis.getExcessDataGas(), GenesisState::parseUnsignedLong);
-      return DataGas.of(excessDataGas);
+    long excessDataGas =
+        withNiceErrorMessage(
+            "excessDataGas", genesis.getExcessDataGas(), GenesisState::parseUnsignedLong);
+    return DataGas.of(excessDataGas);
   }
 
   private static long parseUnsignedLong(final String value) {
