@@ -45,15 +45,21 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeMiningCoordinator,
       final BlockResultFactory blockResultFactory,
+      final EngineCallListener engineCallListener) {
+    super(vertx, protocolContext, mergeMiningCoordinator, blockResultFactory, engineCallListener);
+    this.shanghai = Optional.empty();
+    this.cancun = Optional.empty();
+  }
+
+  public EngineGetPayloadV3(
+      final Vertx vertx,
+      final ProtocolContext protocolContext,
+      final MergeMiningCoordinator mergeMiningCoordinator,
+      final BlockResultFactory blockResultFactory,
       final EngineCallListener engineCallListener,
       final ProtocolSchedule schedule) {
-    super(
-        vertx,
-        protocolContext,
-        mergeMiningCoordinator,
-        blockResultFactory,
-        engineCallListener,
-        schedule);
+    super(vertx, protocolContext, mergeMiningCoordinator, blockResultFactory, engineCallListener);
+    // schedule);
     this.shanghai = schedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Shanghai"));
     this.cancun = schedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
   }

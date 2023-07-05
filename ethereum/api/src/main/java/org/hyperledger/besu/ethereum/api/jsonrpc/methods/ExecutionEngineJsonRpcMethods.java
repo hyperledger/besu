@@ -89,15 +89,15 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                   protocolContext,
                   mergeCoordinator.get(),
                   blockResultFactory,
-                  engineQosTimer,
-                  protocolSchedule),
+                  engineQosTimer),
+              // protocolSchedule),
               new EngineGetPayloadV2(
                   consensusEngineServer,
                   protocolContext,
                   mergeCoordinator.get(),
                   blockResultFactory,
-                  engineQosTimer,
-                  protocolSchedule),
+                  engineQosTimer),
+              // protocolSchedule),
               new EngineNewPayloadV1(
                   consensusEngineServer,
                   protocolSchedule,
@@ -136,8 +136,8 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                   protocolContext,
                   mergeCoordinator.get(),
                   new BlockResultFactory(),
-                  engineQosTimer,
-                  protocolSchedule),
+                  engineQosTimer),
+              // protocolSchedule),
               new EngineExchangeTransitionConfiguration(
                   consensusEngineServer, protocolContext, engineQosTimer),
               new EngineGetPayloadBodiesByHashV1(
