@@ -128,14 +128,17 @@ public abstract class MainnetProtocolSpecs {
             (chainId,
                 gasCalculator,
                 gasLimitCalculator,
+                feeMarket,
                 checkSignatureMalleability,
                 supportedTransactionTypes) ->
                 new MainnetTransactionValidator(
                     gasCalculator,
                     gasLimitCalculator,
+                    feeMarket,
                     checkSignatureMalleability,
                     chainId,
-                    supportedTransactionTypes))
+                    supportedTransactionTypes,
+                    Integer.MAX_VALUE))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -452,20 +455,6 @@ public abstract class MainnetProtocolSpecs {
         .gasCalculator(LondonGasCalculator::new)
         .gasLimitCalculator(
             new LondonTargetingGasLimitCalculator(londonForkBlockNumber, londonFeeMarket))
-        .transactionValidatorBuilder(
-            (cid,
-                gasCalculator,
-                gasLimitCalculator,
-                checkSignatureMalleability,
-                supportedTransactionTypes) ->
-                new MainnetTransactionValidator(
-                    gasCalculator,
-                    gasLimitCalculator,
-                    londonFeeMarket,
-                    checkSignatureMalleability,
-                    cid,
-                    supportedTransactionTypes,
-                    Integer.MAX_VALUE))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -618,12 +607,13 @@ public abstract class MainnetProtocolSpecs {
             (cid,
                 gasCalculator,
                 gasLimitCalculator,
+                feeMarket,
                 checkSignatureMalleability,
                 supportedTransactionTypes) ->
                 new MainnetTransactionValidator(
                     gasCalculator,
                     gasLimitCalculator,
-                    londonFeeMarket,
+                    feeMarket,
                     checkSignatureMalleability,
                     cid,
                     supportedTransactionTypes,
@@ -703,21 +693,6 @@ public abstract class MainnetProtocolSpecs {
                     stackSizeLimit,
                     cancunFeeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
-        // change to check for max data gas per block for EIP-4844
-        .transactionValidatorBuilder(
-            (cid,
-                gasCalculator,
-                gasLimitCalculator,
-                checkSignatureMalleability,
-                supportedTransactionTypes) ->
-                new MainnetTransactionValidator(
-                    gasCalculator,
-                    gasLimitCalculator,
-                    cancunFeeMarket,
-                    checkSignatureMalleability,
-                    cid,
-                    supportedTransactionTypes,
-                    SHANGHAI_INIT_CODE_SIZE_LIMIT))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .name("Cancun");
   }

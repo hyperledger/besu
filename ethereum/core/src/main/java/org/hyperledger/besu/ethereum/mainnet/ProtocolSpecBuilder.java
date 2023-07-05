@@ -335,6 +335,7 @@ public class ProtocolSpecBuilder {
             chainId,
             gasCalculator,
             gasLimitCalculator,
+            feeMarket,
             checkSignatureMalleability,
             supportedTransactionTypes);
     final AbstractMessageProcessor contractCreationProcessor =
@@ -479,6 +480,7 @@ public class ProtocolSpecBuilder {
         Optional<BigInteger> chainId,
         GasCalculator gasCalculator,
         GasLimitCalculator gasLimitCalculator,
+        FeeMarket feeMarket,
         boolean checkSignatureMalleability,
         Set<TransactionType> supportedTransactionTypes);
   }

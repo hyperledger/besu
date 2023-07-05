@@ -79,14 +79,17 @@ public class ClassicProtocolSpecs {
             (cid,
                 gasCalculator,
                 gasLimitCalculator,
+                feeMarket,
                 checkSignatureMalleability,
                 supportedTransactionTypes) ->
                 new MainnetTransactionValidator(
                     gasCalculator,
                     gasLimitCalculator,
+                    feeMarket,
                     checkSignatureMalleability,
                     cid,
-                    supportedTransactionTypes))
+                    supportedTransactionTypes,
+                    Integer.MAX_VALUE))
         .name("ClassicTangerineWhistle");
   }
 
@@ -142,14 +145,17 @@ public class ClassicProtocolSpecs {
             (cid,
                 gasCalculator,
                 gasLimitCalculator,
+                feeMarket,
                 checkSignatureMalleability,
                 supportedTransactionTypes) ->
                 new MainnetTransactionValidator(
                     gasCalculator,
                     gasLimitCalculator,
+                    feeMarket,
                     checkSignatureMalleability,
                     cid,
-                    supportedTransactionTypes))
+                    supportedTransactionTypes,
+                    Integer.MAX_VALUE))
         .name("DefuseDifficultyBomb");
   }
 
@@ -316,14 +322,17 @@ public class ClassicProtocolSpecs {
             (cid,
                 gasCalculator,
                 gasLimitCalculator,
+                feeMarket,
                 checkSignatureMalleability,
                 supportedTransactionTypes) ->
                 new MainnetTransactionValidator(
                     gasCalculator,
                     gasLimitCalculator,
+                    feeMarket,
                     checkSignatureMalleability,
                     cid,
-                    supportedTransactionTypes))
+                    supportedTransactionTypes,
+                    Integer.MAX_VALUE))
         .transactionReceiptFactory(
             enableRevertReason
                 ? MainnetProtocolSpecs::berlinTransactionReceiptFactoryWithReasonEnabled
