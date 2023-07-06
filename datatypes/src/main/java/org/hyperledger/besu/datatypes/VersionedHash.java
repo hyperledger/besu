@@ -18,6 +18,7 @@ package org.hyperledger.besu.datatypes;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonValue;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
@@ -26,7 +27,9 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public class VersionedHash {
 
-  private final byte versionId;
+  /**
+   * The versionedHash value. The first byte is the version id, the remainder is the subsequent bytes of the hash.
+   */
   Bytes32 hashish;
 
   /**
@@ -39,9 +42,7 @@ public class VersionedHash {
     if (versionId != 1) {
       throw new IllegalArgumentException("Only supported hash version is 0x01, sha256 hash.");
     }
-
-    this.versionId = versionId;
-    this.hashish = hash;
+    this.hashish = Bytes32.wrap(Bytes.concatenate(Bytes.of(1), hash.slice(1,hash.size()-1)));
   }
 
   /**
@@ -54,7 +55,6 @@ public class VersionedHash {
     if (versionId != 1) {
       throw new IllegalArgumentException("Only supported hash version is 0x01, sha256 hash.");
     }
-    this.versionId = versionId;
     this.hashish = typedHash;
   }
 
@@ -64,9 +64,7 @@ public class VersionedHash {
    * @return The hash value.
    */
   public Bytes32 toBytes() {
-    byte[] bytes = hashish.toArray();
-    bytes[0] = versionId;
-    return Bytes32.wrap(bytes);
+    return this.hashish;
   }
 
   /**
@@ -75,7 +73,7 @@ public class VersionedHash {
    * @return the version id.
    */
   public byte getVersionId() {
-    return versionId;
+    return this.hashish.get(0);
   }
 
   @Override
