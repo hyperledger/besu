@@ -32,14 +32,13 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Function;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 public class RawBlockIteratorTest {
 
-  @TempDir
-  private static Path tmp;
+  @TempDir private static Path tmp;
   private BlockDataGenerator gen;
 
   @BeforeEach

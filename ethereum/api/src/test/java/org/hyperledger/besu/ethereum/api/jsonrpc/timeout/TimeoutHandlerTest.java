@@ -58,10 +58,11 @@ public class TimeoutHandlerTest {
 
   @ParameterizedTest
   @MethodSource("data")
-  public void test( Optional<TimeoutOptions> globalOptions,
-                    RpcMethod method,
-                    long timeoutSec,
-                    boolean timerMustBeSet) {
+  public void test(
+      final Optional<TimeoutOptions> globalOptions,
+      final RpcMethod method,
+      final long timeoutSec,
+      final boolean timerMustBeSet) {
     final Map<String, TimeoutOptions> options;
     if (timerMustBeSet) {
       options =

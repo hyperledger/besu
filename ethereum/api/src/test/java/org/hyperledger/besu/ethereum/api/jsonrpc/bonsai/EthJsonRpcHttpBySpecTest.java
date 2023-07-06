@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.bonsai;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.AbstractJsonRpcHttpBySpecTest;
 
-import java.net.URL;
-
 public class EthJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
 
   @Override

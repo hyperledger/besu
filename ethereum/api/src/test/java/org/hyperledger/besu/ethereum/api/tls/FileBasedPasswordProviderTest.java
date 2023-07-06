@@ -27,8 +27,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 public class FileBasedPasswordProviderTest {
 
-  @TempDir
-  private static Path folder;
+  @TempDir private static Path folder;
 
   @Test
   public void passwordCanBeReadFromFile() throws IOException {

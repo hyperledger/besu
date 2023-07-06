@@ -19,13 +19,11 @@ import static org.hyperledger.besu.ethereum.forkid.ForkIdTestUtil.GenesisHash;
 import static org.hyperledger.besu.ethereum.forkid.ForkIdTestUtil.mockBlockchain;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -35,67 +33,61 @@ import org.slf4j.LoggerFactory;
 public class ForkIdBackwardCompatibilityTest {
   private static final Logger LOG = LoggerFactory.getLogger(ForkIdBackwardCompatibilityTest.class);
 
-  public static Stream<Arguments> data(){
-      return Stream.of(
-              Arguments.of(
-                      "with 0 forks and legacyEth64=false",
-                      GenesisHash.PRIVATE,
-                      2L,
-                      Arrays.asList(0L, 0L, 4L, 5L, 6L),
-                      false,
-                      new ForkId(Bytes.fromHexString("0x190a55ad"), 4L)
-              ),
-              Arguments.of(
-                      "with 0 forks and legacyEth64=true",
-                      GenesisHash.PRIVATE,
-                      2L,
-                      Arrays.asList(0L, 0L, 4L, 5L, 6L),
-                      true,
-                      null
-              ),
-              Arguments.of(
-                      "with no 0 forks and legacyEth64=false",
-                      GenesisHash.PRIVATE,
-                      2L,
-                      Arrays.asList(4L, 5L, 6L),
-                      false,
-                      new ForkId(Bytes.fromHexString("0x190a55ad"), 4L)
-              ),
-              Arguments.of(
-                      "with no 0 forks and legacyEth64=true",
-                      GenesisHash.PRIVATE,
-                      2L,
-                      Arrays.asList(4L, 5L, 6L),
-                      true,
-                      null
-              ),
-              Arguments.of(
-                      "post head with 0 forks and legacyEth64=false",
-                      GenesisHash.PRIVATE,
-                      8L,
-                      Arrays.asList(0L, 0L, 4L, 5L, 6L),
-                      false,
-                      new ForkId(Bytes.fromHexString("0x033462fc"), 0L)
-              ),
-              Arguments.of(
-                      "post head with 0 forks and legacyEth64=true",
-                      GenesisHash.PRIVATE,
-                      8L,
-                      Arrays.asList(0L, 0L, 4L, 5L, 6L),
-                      true,
-                      null
-              )
-      );
+  public static Stream<Arguments> data() {
+    return Stream.of(
+        Arguments.of(
+            "with 0 forks and legacyEth64=false",
+            GenesisHash.PRIVATE,
+            2L,
+            Arrays.asList(0L, 0L, 4L, 5L, 6L),
+            false,
+            new ForkId(Bytes.fromHexString("0x190a55ad"), 4L)),
+        Arguments.of(
+            "with 0 forks and legacyEth64=true",
+            GenesisHash.PRIVATE,
+            2L,
+            Arrays.asList(0L, 0L, 4L, 5L, 6L),
+            true,
+            null),
+        Arguments.of(
+            "with no 0 forks and legacyEth64=false",
+            GenesisHash.PRIVATE,
+            2L,
+            Arrays.asList(4L, 5L, 6L),
+            false,
+            new ForkId(Bytes.fromHexString("0x190a55ad"), 4L)),
+        Arguments.of(
+            "with no 0 forks and legacyEth64=true",
+            GenesisHash.PRIVATE,
+            2L,
+            Arrays.asList(4L, 5L, 6L),
+            true,
+            null),
+        Arguments.of(
+            "post head with 0 forks and legacyEth64=false",
+            GenesisHash.PRIVATE,
+            8L,
+            Arrays.asList(0L, 0L, 4L, 5L, 6L),
+            false,
+            new ForkId(Bytes.fromHexString("0x033462fc"), 0L)),
+        Arguments.of(
+            "post head with 0 forks and legacyEth64=true",
+            GenesisHash.PRIVATE,
+            8L,
+            Arrays.asList(0L, 0L, 4L, 5L, 6L),
+            true,
+            null));
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("data")
-  public void assertBackwardCompatibilityWorks(final String name,
-                                               final String genesisHash,
-                                               final long head,
-                                               final List<Long> forks,
-                                               final boolean legacyEth64,
-                                               final ForkId wantForkId) {
+  public void assertBackwardCompatibilityWorks(
+      final String name,
+      final String genesisHash,
+      final long head,
+      final List<Long> forks,
+      final boolean legacyEth64,
+      final ForkId wantForkId) {
     LOG.info("Running test case {}", name);
     final ForkIdManager forkIdManager =
         new ForkIdManager(

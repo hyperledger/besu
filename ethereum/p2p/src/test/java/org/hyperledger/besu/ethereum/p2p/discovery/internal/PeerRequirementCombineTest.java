@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -34,37 +33,28 @@ public class PeerRequirementCombineTest {
   private static final AtomicBoolean configurableIsFulfilled = new AtomicBoolean(true);
   private static final PeerRequirement configurable = configurableIsFulfilled::get;
 
-  private final List<PeerRequirement> requirements;
-  private final boolean expectedResult;
-
-  public PeerRequirementCombineTest(
-      final List<PeerRequirement> requirements, final boolean expectedResult) {
-    this.requirements = requirements;
-    this.expectedResult = expectedResult;
-  }
-
   public static Stream<Object[]> data() {
     return Stream.of(
-            new Object[]{Collections.emptyList(), true},
-            new Object[]{Arrays.asList(fulfilled), true},
-            new Object[]{Arrays.asList(notFulfilled), false},
-            new Object[]{Arrays.asList(notFulfilled, notFulfilled), false},
-            new Object[]{Arrays.asList(notFulfilled, fulfilled), false},
-            new Object[]{Arrays.asList(fulfilled, notFulfilled), false},
-            new Object[]{Arrays.asList(fulfilled, fulfilled), true}
-    );
+        new Object[] {Collections.emptyList(), true},
+        new Object[] {Arrays.asList(fulfilled), true},
+        new Object[] {Arrays.asList(notFulfilled), false},
+        new Object[] {Arrays.asList(notFulfilled, notFulfilled), false},
+        new Object[] {Arrays.asList(notFulfilled, fulfilled), false},
+        new Object[] {Arrays.asList(fulfilled, notFulfilled), false},
+        new Object[] {Arrays.asList(fulfilled, fulfilled), true});
   }
 
   @ParameterizedTest
   @MethodSource("data")
-  public void combine() {
+  public void combine(final List<PeerRequirement> requirements, final boolean expectedResult) {
     PeerRequirement combined = PeerRequirement.combine(requirements);
     assertThat(combined.hasSufficientPeers()).isEqualTo(expectedResult);
   }
 
   @ParameterizedTest
   @MethodSource("data")
-  public void combineAndModify() {
+  public void combineAndModify(
+      final List<PeerRequirement> requirements, final boolean expectedResult) {
     List<PeerRequirement> modifiableRequirements = new ArrayList<>(requirements);
     modifiableRequirements.add(configurable);
 

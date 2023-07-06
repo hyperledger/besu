@@ -59,8 +59,7 @@ import org.mockito.Mockito;
 
 public class GraphQLHttpServiceTest {
 
-  @TempDir
-  private static Path folder;
+  @TempDir private static Path folder;
 
   private static final Vertx vertx = Vertx.vertx();
 
@@ -110,12 +109,7 @@ public class GraphQLHttpServiceTest {
   private static GraphQLHttpService createGraphQLHttpService(final GraphQLConfiguration config)
       throws Exception {
     return new GraphQLHttpService(
-        vertx,
-        folder,
-        config,
-        graphQL,
-        graphQlContextMap,
-        Mockito.mock(EthScheduler.class));
+        vertx, folder, config, graphQL, graphQlContextMap, Mockito.mock(EthScheduler.class));
   }
 
   private static GraphQLHttpService createGraphQLHttpService() throws Exception {

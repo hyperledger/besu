@@ -39,7 +39,6 @@ import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.eth.sync.tasks.PersistBlockTaskTest;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -47,8 +46,6 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -83,7 +80,7 @@ public class FastSyncActionsTest {
     @Override
     public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
       return Stream.of(
-              Arguments.of(DataStorageFormat.BONSAI), Arguments.of(DataStorageFormat.FOREST));
+          Arguments.of(DataStorageFormat.BONSAI), Arguments.of(DataStorageFormat.FOREST));
     }
   }
 
@@ -111,7 +108,8 @@ public class FastSyncActionsTest {
 
   @ParameterizedTest
   @ArgumentsSource(FastSyncActionsTest.FastSyncActionsTestArguments.class)
-  public void waitForPeersShouldSucceedIfEnoughPeersAreFound(final DataStorageFormat storageFormat) {
+  public void waitForPeersShouldSucceedIfEnoughPeersAreFound(
+      final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     for (int i = 0; i < syncConfig.getFastSyncMinimumPeerCount(); i++) {
       EthProtocolManagerTestUtil.createPeer(
@@ -135,7 +133,8 @@ public class FastSyncActionsTest {
 
   @ParameterizedTest
   @ArgumentsSource(FastSyncActionsTest.FastSyncActionsTestArguments.class)
-  public void selectPivotBlockShouldUseExistingPivotBlockIfAvailable(final DataStorageFormat storageFormat) {
+  public void selectPivotBlockShouldUseExistingPivotBlockIfAvailable(
+      final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     final BlockHeader pivotHeader = new BlockHeaderTestFixture().number(1024).buildHeader();
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 5000);
@@ -148,7 +147,8 @@ public class FastSyncActionsTest {
 
   @ParameterizedTest
   @ArgumentsSource(FastSyncActionsTest.FastSyncActionsTestArguments.class)
-  public void selectPivotBlockShouldSelectBlockPivotDistanceFromBestPeer(final DataStorageFormat storageFormat) {
+  public void selectPivotBlockShouldSelectBlockPivotDistanceFromBestPeer(
+      final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     final int minPeers = 1;
     syncConfigBuilder.fastSyncMinimumPeerCount(minPeers);
@@ -168,7 +168,8 @@ public class FastSyncActionsTest {
 
   @ParameterizedTest
   @ArgumentsSource(FastSyncActionsTest.FastSyncActionsTestArguments.class)
-  public void selectPivotBlockShouldConsiderTotalDifficultyWhenSelectingBestPeer(final DataStorageFormat storageFormat) {
+  public void selectPivotBlockShouldConsiderTotalDifficultyWhenSelectingBestPeer(
+      final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     final int minPeers = 1;
     syncConfigBuilder.fastSyncMinimumPeerCount(minPeers);
@@ -189,7 +190,8 @@ public class FastSyncActionsTest {
 
   @ParameterizedTest
   @ArgumentsSource(FastSyncActionsTest.FastSyncActionsTestArguments.class)
-  public void selectPivotBlockShouldWaitAndRetryUntilMinHeightEstimatesAreAvailable(final DataStorageFormat storageFormat) {
+  public void selectPivotBlockShouldWaitAndRetryUntilMinHeightEstimatesAreAvailable(
+      final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
     final int minPeers = 2;
@@ -220,7 +222,8 @@ public class FastSyncActionsTest {
 
   @ParameterizedTest
   @ArgumentsSource(FastSyncActionsTest.FastSyncActionsTestArguments.class)
-  public void selectPivotBlockShouldWaitAndRetryIfSufficientChainHeightEstimatesAreUnavailable(final DataStorageFormat storageFormat) {
+  public void selectPivotBlockShouldWaitAndRetryIfSufficientChainHeightEstimatesAreUnavailable(
+      final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     final int minPeers = 3;
     syncConfigBuilder.fastSyncMinimumPeerCount(minPeers);
@@ -269,7 +272,8 @@ public class FastSyncActionsTest {
 
   @ParameterizedTest
   @ArgumentsSource(FastSyncActionsTest.FastSyncActionsTestArguments.class)
-  public void selectPivotBlockShouldWaitAndRetryIfSufficientValidatedPeersUnavailable(final DataStorageFormat storageFormat) {
+  public void selectPivotBlockShouldWaitAndRetryIfSufficientValidatedPeersUnavailable(
+      final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     final int minPeers = 3;
     final PeerValidator validator = mock(PeerValidator.class);
@@ -320,7 +324,8 @@ public class FastSyncActionsTest {
 
   @ParameterizedTest
   @ArgumentsSource(FastSyncActionsTest.FastSyncActionsTestArguments.class)
-  public void selectPivotBlockUsesBestPeerWithHeightEstimate(final DataStorageFormat storageFormat) {
+  public void selectPivotBlockUsesBestPeerWithHeightEstimate(
+      final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     selectPivotBlockUsesBestPeerMatchingRequiredCriteria(true, false);
   }
@@ -334,7 +339,8 @@ public class FastSyncActionsTest {
 
   @ParameterizedTest
   @ArgumentsSource(FastSyncActionsTest.FastSyncActionsTestArguments.class)
-  public void selectPivotBlockUsesBestPeerThatIsValidatedAndHasHeightEstimate(final DataStorageFormat storageFormat) {
+  public void selectPivotBlockUsesBestPeerThatIsValidatedAndHasHeightEstimate(
+      final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     selectPivotBlockUsesBestPeerMatchingRequiredCriteria(true, true);
   }
@@ -391,7 +397,8 @@ public class FastSyncActionsTest {
 
   @ParameterizedTest
   @ArgumentsSource(FastSyncActionsTest.FastSyncActionsTestArguments.class)
-  public void selectPivotBlockShouldWaitAndRetryIfBestPeerChainIsShorterThanPivotDistance(final DataStorageFormat storageFormat) {
+  public void selectPivotBlockShouldWaitAndRetryIfBestPeerChainIsShorterThanPivotDistance(
+      final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     final int minPeers = 1;
     syncConfigBuilder.fastSyncMinimumPeerCount(minPeers);
@@ -420,7 +427,8 @@ public class FastSyncActionsTest {
 
   @ParameterizedTest
   @ArgumentsSource(FastSyncActionsTest.FastSyncActionsTestArguments.class)
-  public void selectPivotBlockShouldRetryIfBestPeerChainIsEqualToPivotDistance(final DataStorageFormat storageFormat) {
+  public void selectPivotBlockShouldRetryIfBestPeerChainIsEqualToPivotDistance(
+      final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     final long pivotDistance = syncConfig.getFastSyncPivotDistance();
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
@@ -444,7 +452,8 @@ public class FastSyncActionsTest {
 
   @ParameterizedTest
   @ArgumentsSource(FastSyncActionsTest.FastSyncActionsTestArguments.class)
-  public void downloadPivotBlockHeaderShouldUseExistingPivotBlockHeaderIfPresent(final DataStorageFormat storageFormat) {
+  public void downloadPivotBlockHeaderShouldUseExistingPivotBlockHeaderIfPresent(
+      final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     final BlockHeader pivotHeader = new BlockHeaderTestFixture().number(1024).buildHeader();
     final FastSyncState expected = new FastSyncState(pivotHeader);
@@ -453,7 +462,8 @@ public class FastSyncActionsTest {
 
   @ParameterizedTest
   @ArgumentsSource(FastSyncActionsTest.FastSyncActionsTestArguments.class)
-  public void downloadPivotBlockHeaderShouldRetrievePivotBlockHeader(final DataStorageFormat storageFormat) {
+  public void downloadPivotBlockHeaderShouldRetrievePivotBlockHeader(
+      final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     syncConfig = SynchronizerConfiguration.builder().fastSyncMinimumPeerCount(1).build();
     fastSyncActions =
@@ -474,7 +484,8 @@ public class FastSyncActionsTest {
 
   @ParameterizedTest
   @ArgumentsSource(FastSyncActionsTest.FastSyncActionsTestArguments.class)
-  public void downloadPivotBlockHeaderShouldRetrievePivotBlockHash(final DataStorageFormat storageFormat) {
+  public void downloadPivotBlockHeaderShouldRetrievePivotBlockHash(
+      final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     syncConfig = SynchronizerConfiguration.builder().fastSyncMinimumPeerCount(1).build();
     GenesisConfigOptions genesisConfig = mock(GenesisConfigOptions.class);

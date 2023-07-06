@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -31,15 +30,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class BaseFeeMarketBaseFeeTest {
 
   private final BaseFeeMarket baseFeeMarket = FeeMarket.london(0);
-
 
   public static Stream<Arguments> data() {
     try {
@@ -50,15 +47,15 @@ public class BaseFeeMarketBaseFeeTest {
       final String testSuiteJson = Resources.toString(testFileUrl, Charsets.UTF_8);
       final ObjectMapper objectMapper = new ObjectMapper();
       final BaseFeeMarketBaseFeeTestCase[] testCases =
-              objectMapper.readValue(testSuiteJson, BaseFeeMarketBaseFeeTestCase[].class);
+          objectMapper.readValue(testSuiteJson, BaseFeeMarketBaseFeeTestCase[].class);
       for (final BaseFeeMarketBaseFeeTestCase testCase : testCases) {
         data.add(
-                new Object[] {
-                        testCase.parentBaseFee,
-                        testCase.parentGasUsed,
-                        testCase.parentTargetGasUsed,
-                        testCase.expectedBaseFee
-                });
+            new Object[] {
+              testCase.parentBaseFee,
+              testCase.parentGasUsed,
+              testCase.parentTargetGasUsed,
+              testCase.expectedBaseFee
+            });
       }
       return data.stream().map(Arguments::of);
     } catch (final Exception e) {
@@ -70,11 +67,10 @@ public class BaseFeeMarketBaseFeeTest {
   @MethodSource("data")
   @Disabled("Need to have spec frozen to define correct values")
   public void assertThatBaseFeeIsCorrect(
-          final Wei parentBaseFee,
-          final long parentGasUsed,
-          final long parentTargetGasUsed,
-          final Wei expectedBaseFee
-  ) {
+      final Wei parentBaseFee,
+      final long parentGasUsed,
+      final long parentTargetGasUsed,
+      final Wei expectedBaseFee) {
     assertThat(baseFeeMarket.computeBaseFee(0L, parentBaseFee, parentGasUsed, parentTargetGasUsed))
         .isEqualTo(expectedBaseFee);
   }

@@ -50,16 +50,16 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import io.vertx.junit5.VertxExtension;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(VertxExtension.class)
 public class WebSocketMessageHandlerTest {
 
   private static final int VERTX_AWAIT_TIMEOUT_MILLIS = 10000;
@@ -70,7 +70,7 @@ public class WebSocketMessageHandlerTest {
   private ServerWebSocket websocketMock;
   private final Map<String, JsonRpcMethod> methods = new HashMap<>();
 
-  @Before
+  @BeforeEach
   public void before(final TestContext context) {
     vertx = Vertx.vertx();
 
@@ -88,7 +88,7 @@ public class WebSocketMessageHandlerTest {
             TimeoutOptions.defaultOptions().getTimeoutSeconds());
   }
 
-  @After
+  @AfterEach
   public void after(final TestContext context) {
     Mockito.reset(jsonRpcMethodMock);
     Mockito.reset(websocketMock);

@@ -37,19 +37,17 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class ProofOfWorkValidationRuleTest {
 
-  private  BlockHeader blockHeader;
-  private  BlockHeader parentHeader;
-  private  ProofOfWorkValidationRule validationRule;
+  private BlockHeader blockHeader;
+  private BlockHeader parentHeader;
+  private ProofOfWorkValidationRule validationRule;
 
-  public void setup(final long parentBlockNum, final long blockNum)
-      throws IOException {
+  public void setup(final long parentBlockNum, final long blockNum) throws IOException {
     blockHeader = ValidationTestUtils.readHeader(parentBlockNum);
     parentHeader = ValidationTestUtils.readHeader(blockNum);
     validationRule =
@@ -58,23 +56,25 @@ public class ProofOfWorkValidationRuleTest {
   }
 
   public static Stream<Arguments> data() {
-    return Stream.of(Arguments.of(300005, 300006),
-            Arguments.of(1200000, 1200001),
-            Arguments.of(4400000, 4400001),
-            Arguments.of(4400001, 4400002)
-            );
+    return Stream.of(
+        Arguments.of(300005, 300006),
+        Arguments.of(1200000, 1200001),
+        Arguments.of(4400000, 4400001),
+        Arguments.of(4400001, 4400002));
   }
 
   @ParameterizedTest(name = "block {1}")
   @MethodSource("data")
-  public void validatesValidBlocks(final long parentBlockNum, final long blockNum) throws IOException {
+  public void validatesValidBlocks(final long parentBlockNum, final long blockNum)
+      throws IOException {
     setup(parentBlockNum, blockNum);
     assertThat(validationRule.validate(blockHeader, parentHeader)).isTrue();
   }
 
   @ParameterizedTest(name = "block {1}")
   @MethodSource("data")
-  public void failsBlockWithZeroValuedDifficulty(final long parentBlockNum, final long blockNum) throws IOException {
+  public void failsBlockWithZeroValuedDifficulty(final long parentBlockNum, final long blockNum)
+      throws IOException {
     setup(parentBlockNum, blockNum);
     final BlockHeader header =
         BlockHeaderBuilder.fromHeader(blockHeader)
@@ -86,7 +86,8 @@ public class ProofOfWorkValidationRuleTest {
 
   @ParameterizedTest(name = "block {1}")
   @MethodSource("data")
-  public void passesBlockWithOneValuedDifficulty(final long parentBlockNum, final long blockNum) throws IOException {
+  public void passesBlockWithOneValuedDifficulty(final long parentBlockNum, final long blockNum)
+      throws IOException {
     setup(parentBlockNum, blockNum);
     final BlockHeaderBuilder headerBuilder =
         BlockHeaderBuilder.fromHeader(blockHeader)
@@ -110,7 +111,8 @@ public class ProofOfWorkValidationRuleTest {
 
   @ParameterizedTest(name = "block {1}")
   @MethodSource("data")
-  public void failsWithVeryLargeDifficulty(final long parentBlockNum, final long blockNum) throws IOException {
+  public void failsWithVeryLargeDifficulty(final long parentBlockNum, final long blockNum)
+      throws IOException {
     setup(parentBlockNum, blockNum);
     final Difficulty largeDifficulty = Difficulty.of(BigInteger.valueOf(2).pow(255));
     final BlockHeader header =
@@ -123,7 +125,8 @@ public class ProofOfWorkValidationRuleTest {
 
   @ParameterizedTest(name = "block {1}")
   @MethodSource("data")
-  public void failsWithMisMatchedMixHash(final long parentBlockNum, final long blockNum) throws IOException {
+  public void failsWithMisMatchedMixHash(final long parentBlockNum, final long blockNum)
+      throws IOException {
     setup(parentBlockNum, blockNum);
     final Hash updateMixHash = Hash.wrap(UInt256.fromBytes(blockHeader.getMixHash()).subtract(1L));
     final BlockHeader header =
@@ -136,7 +139,8 @@ public class ProofOfWorkValidationRuleTest {
 
   @ParameterizedTest(name = "block {1}")
   @MethodSource("data")
-  public void failsWithMisMatchedNonce(final long parentBlockNum, final long blockNum) throws IOException {
+  public void failsWithMisMatchedNonce(final long parentBlockNum, final long blockNum)
+      throws IOException {
     setup(parentBlockNum, blockNum);
     final long updatedNonce = blockHeader.getNonce() + 1;
     final BlockHeader header =
@@ -149,7 +153,8 @@ public class ProofOfWorkValidationRuleTest {
 
   @ParameterizedTest(name = "block {1}")
   @MethodSource("data")
-  public void failsWithNonEip1559BlockAfterFork(final long parentBlockNum, final long blockNum) throws IOException {
+  public void failsWithNonEip1559BlockAfterFork(final long parentBlockNum, final long blockNum)
+      throws IOException {
     setup(parentBlockNum, blockNum);
     final ProofOfWorkValidationRule proofOfWorkValidationRule =
         new ProofOfWorkValidationRule(
@@ -179,7 +184,8 @@ public class ProofOfWorkValidationRuleTest {
 
   @ParameterizedTest(name = "block {1}")
   @MethodSource("data")
-  public void failsWithEip1559BlockBeforeFork(final long parentBlockNum, final long blockNum) throws IOException {
+  public void failsWithEip1559BlockBeforeFork(final long parentBlockNum, final long blockNum)
+      throws IOException {
     setup(parentBlockNum, blockNum);
     final ProofOfWorkValidationRule proofOfWorkValidationRule =
         new ProofOfWorkValidationRule(

@@ -58,7 +58,7 @@ public class FullSyncDownloaderTest {
     @Override
     public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
       return Stream.of(
-              Arguments.of(DataStorageFormat.BONSAI), Arguments.of(DataStorageFormat.FOREST));
+          Arguments.of(DataStorageFormat.BONSAI), Arguments.of(DataStorageFormat.FOREST));
     }
   }
 

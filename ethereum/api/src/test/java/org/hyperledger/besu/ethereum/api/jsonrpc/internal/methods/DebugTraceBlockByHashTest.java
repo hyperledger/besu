@@ -44,8 +44,8 @@ import java.util.OptionalLong;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Answers;
 
 public class DebugTraceBlockByHashTest {

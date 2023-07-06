@@ -49,10 +49,11 @@ public class ContextKeyTest<T> {
 
   @ParameterizedTest
   @MethodSource("data")
-  public void test( ContextKey key,
-                    RoutingContext ctx,
-                    Supplier<T> defaultSupplier,
-                    T expected) {
+  public void test(
+      final ContextKey key,
+      final RoutingContext ctx,
+      final Supplier<T> defaultSupplier,
+      final T expected) {
     assertThat(key.extractFrom(ctx, defaultSupplier)).isEqualTo(expected);
   }
 

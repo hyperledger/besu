@@ -54,8 +54,7 @@ public class PrivateTransactionLocatorTest {
 
   private final String participantKey = "R24z0/bq4uTz0x1JxjdyRwfydh8Gi0L4oYYR0XpKdmc=";
 
-  @Mock
-  private Blockchain blockchain;
+  @Mock private Blockchain blockchain;
   @Mock private Enclave enclave;
   @Mock private PrivateStateStorage privateStateStorage;
 

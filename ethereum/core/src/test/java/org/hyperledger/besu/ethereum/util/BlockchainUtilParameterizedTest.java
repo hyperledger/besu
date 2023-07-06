@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.OptionalInt;
@@ -50,7 +49,6 @@ public class BlockchainUtilParameterizedTest {
 
   private BlockHeader commonHeader;
   private List<BlockHeader> headers;
-
 
   @BeforeAll
   public static void setupClass() {
@@ -103,7 +101,6 @@ public class BlockchainUtilParameterizedTest {
       headers.add(remoteBlockchain.getBlockHeader(i).get());
     }
   }
-
 
   public static Stream<Arguments> parameters() {
     final List<Object[]> params = new ArrayList<>();

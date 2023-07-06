@@ -46,8 +46,7 @@ import org.mockito.Mockito;
 
 public class GraphQLHttpServiceHostWhitelistTest {
 
-  @TempDir
-  private static Path folder;
+  @TempDir private static Path folder;
 
   protected static Vertx vertx;
 
@@ -93,12 +92,7 @@ public class GraphQLHttpServiceHostWhitelistTest {
     final GraphQL graphQL = GraphQLProvider.buildGraphQL(dataFetchers);
 
     return new GraphQLHttpService(
-        vertx,
-        folder,
-        graphQLConfig,
-        graphQL,
-        graphQLContextMap,
-        Mockito.mock(EthScheduler.class));
+        vertx, folder, graphQLConfig, graphQL, graphQLContextMap, Mockito.mock(EthScheduler.class));
   }
 
   private static GraphQLConfiguration createGraphQLConfig() {

@@ -45,13 +45,13 @@ import io.vertx.core.http.WebSocketFrame;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import io.vertx.junit5.VertxExtension;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(VertxExtension.class)
 public class WebSocketServiceTest {
 
   private static final int VERTX_AWAIT_TIMEOUT_MILLIS = 10000;
@@ -65,7 +65,7 @@ public class WebSocketServiceTest {
   private final int maxConnections = 3;
   private final int maxFrameSize = 1024 * 1024;
 
-  @Before
+  @BeforeEach
   public void before() {
     vertx = Vertx.vertx();
 
@@ -102,7 +102,7 @@ public class WebSocketServiceTest {
     httpClient = vertx.createHttpClient(httpClientOptions);
   }
 
-  @After
+  @AfterEach
   public void after() {
     reset(webSocketMessageHandlerSpy);
     websocketService.stop();

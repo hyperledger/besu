@@ -60,11 +60,10 @@ public class TransactionPoolReplacementHandlerTest {
   @ParameterizedTest
   @MethodSource("data")
   public void shouldReplace(
-           List<TransactionPoolReplacementRule> rules,
-           PendingTransaction oldPendingTransaction,
-           PendingTransaction newPendingTransaction,
-           boolean expectedResult
-  ) {
+      final List<TransactionPoolReplacementRule> rules,
+      final PendingTransaction oldPendingTransaction,
+      final PendingTransaction newPendingTransaction,
+      final boolean expectedResult) {
     assertThat(
             new TransactionPoolReplacementHandler(rules)
                 .shouldReplace(oldPendingTransaction, newPendingTransaction, header))

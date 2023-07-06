@@ -40,9 +40,9 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 

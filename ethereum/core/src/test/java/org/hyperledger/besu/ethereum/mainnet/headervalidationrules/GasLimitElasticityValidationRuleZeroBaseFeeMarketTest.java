@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.ZeroBaseFeeMarket;
 
 import java.util.Optional;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -34,27 +33,31 @@ public class GasLimitElasticityValidationRuleZeroBaseFeeMarketTest {
       Optional.of(new ZeroBaseFeeMarket(10));
 
   public GasLimitRangeAndDeltaValidationRule uut =
-          new GasLimitRangeAndDeltaValidationRule(5000, MAX_VALUE, zeroBaseFeeMarket);
+      new GasLimitRangeAndDeltaValidationRule(5000, MAX_VALUE, zeroBaseFeeMarket);
 
   @ParameterizedTest
   @CsvSource({
-          "20000000, 10000000, 10, true",
-          "20019530, 10000000, 10, true",
-          "20019531, 10000000, 10, false",
-          "19980470, 10000000, 10, true",
-          "19980469, 10000000, 10, false",
-          "20000000, 20000000, 11, true",
-          "20019530, 20000000, 11, true",
-          "20019531, 20000000, 11, false",
-          "19980470, 20000000, 11, true",
-          "19980469, 20000000, 11, false",
-          "40039061, 40000000, 11, true",
-          "40039062, 40000000, 11, false",
-          "39960939, 40000000, 11, true",
-          "39960938, 40000000, 11, false",
-          "4999, 40000000, 11, false"
+    "20000000, 10000000, 10, true",
+    "20019530, 10000000, 10, true",
+    "20019531, 10000000, 10, false",
+    "19980470, 10000000, 10, true",
+    "19980469, 10000000, 10, false",
+    "20000000, 20000000, 11, true",
+    "20019530, 20000000, 11, true",
+    "20019531, 20000000, 11, false",
+    "19980470, 20000000, 11, true",
+    "19980469, 20000000, 11, false",
+    "40039061, 40000000, 11, true",
+    "40039062, 40000000, 11, false",
+    "39960939, 40000000, 11, true",
+    "39960938, 40000000, 11, false",
+    "4999, 40000000, 11, false"
   })
-  public void test(long headerGasLimit, long parentGasLimit, long headerNumber, boolean expectedResult) {
+  public void test(
+      final long headerGasLimit,
+      final long parentGasLimit,
+      final long headerNumber,
+      final boolean expectedResult) {
 
     final BlockHeaderTestFixture blockHeaderBuilder = new BlockHeaderTestFixture();
 

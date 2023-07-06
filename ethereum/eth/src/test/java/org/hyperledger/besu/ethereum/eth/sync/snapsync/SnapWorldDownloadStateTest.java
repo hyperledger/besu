@@ -95,7 +95,9 @@ public class SnapWorldDownloadStateTest {
     @Override
     public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
       return Stream.of(
-              Arguments.of(DataStorageFormat.BONSAI, true), Arguments.of(DataStorageFormat.BONSAI, false), Arguments.of(DataStorageFormat.FOREST, false));
+          Arguments.of(DataStorageFormat.BONSAI, true),
+          Arguments.of(DataStorageFormat.BONSAI, false),
+          Arguments.of(DataStorageFormat.FOREST, false));
     }
   }
 
@@ -139,7 +141,8 @@ public class SnapWorldDownloadStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
-  public void shouldCompleteReturnedFutureWhenNoPendingTasksRemain(final DataStorageFormat storageFormat) {
+  public void shouldCompleteReturnedFutureWhenNoPendingTasksRemain(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
     setUp(storageFormat);
     when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
     when(snapSyncState.isHealFlatDatabaseInProgress()).thenReturn(true);
@@ -151,7 +154,8 @@ public class SnapWorldDownloadStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
-  public void shouldStartHealWhenNoSnapsyncPendingTasksRemain(final DataStorageFormat storageFormat) {
+  public void shouldStartHealWhenNoSnapsyncPendingTasksRemain(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
     setUp(storageFormat);
     when(snapSyncState.isHealTrieInProgress()).thenReturn(false);
     when(snapSyncState.getPivotBlockHeader()).thenReturn(Optional.of(mock(BlockHeader.class)));
@@ -164,7 +168,8 @@ public class SnapWorldDownloadStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
-  public void shouldStoreRootNodeBeforeReturnedFutureCompletes(final DataStorageFormat storageFormat) {
+  public void shouldStoreRootNodeBeforeReturnedFutureCompletes(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
     setUp(storageFormat);
     when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
     when(snapSyncState.isHealFlatDatabaseInProgress()).thenReturn(true);
@@ -182,7 +187,8 @@ public class SnapWorldDownloadStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
-  public void shouldNotCompleteWhenThereAreAccountPendingTasks(final DataStorageFormat storageFormat) {
+  public void shouldNotCompleteWhenThereAreAccountPendingTasks(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
     setUp(storageFormat);
     when(snapSyncState.isHealTrieInProgress()).thenReturn(false);
     downloadState.pendingAccountRequests.add(
@@ -201,7 +207,8 @@ public class SnapWorldDownloadStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
-  public void shouldNotCompleteWhenThereAreStoragePendingTasks(final DataStorageFormat storageFormat) {
+  public void shouldNotCompleteWhenThereAreStoragePendingTasks(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
     setUp(storageFormat);
     when(snapSyncState.isHealTrieInProgress()).thenReturn(false);
     downloadState.pendingStorageRequests.add(
@@ -227,7 +234,8 @@ public class SnapWorldDownloadStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
-  public void shouldNotCompleteWhenThereAreTriePendingTasks(final DataStorageFormat storageFormat) {
+  public void shouldNotCompleteWhenThereAreTriePendingTasks(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
     setUp(storageFormat);
     when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
     downloadState.pendingTrieNodeRequests.add(
@@ -243,7 +251,8 @@ public class SnapWorldDownloadStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
-  public void shouldNotCompleteWhenThereAreFlatDBHealingPendingTasks(final DataStorageFormat storageFormat) {
+  public void shouldNotCompleteWhenThereAreFlatDBHealingPendingTasks(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
     setUp(storageFormat);
     when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
     when(snapSyncState.isHealFlatDatabaseInProgress()).thenReturn(true);
@@ -260,7 +269,8 @@ public class SnapWorldDownloadStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
-  public void shouldCancelOutstandingTasksWhenFutureIsCancelled(final DataStorageFormat storageFormat) {
+  public void shouldCancelOutstandingTasksWhenFutureIsCancelled(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
     setUp(storageFormat);
     final EthTask<?> outstandingTask1 = mock(EthTask.class);
     final EthTask<?> outstandingTask2 = mock(EthTask.class);
@@ -291,7 +301,8 @@ public class SnapWorldDownloadStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
-  public void shouldRestartHealWhenNewPivotBlock(final DataStorageFormat storageFormat) {
+  public void shouldRestartHealWhenNewPivotBlock(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
     setUp(storageFormat);
     when(snapSyncState.getPivotBlockHeader()).thenReturn(Optional.of(mock(BlockHeader.class)));
     when(snapSyncState.isHealTrieInProgress()).thenReturn(false);
@@ -314,7 +325,8 @@ public class SnapWorldDownloadStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
-  public void shouldWaitingBlockchainWhenTooBehind(final DataStorageFormat storageFormat) {
+  public void shouldWaitingBlockchainWhenTooBehind(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
     setUp(storageFormat);
     when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
 
@@ -336,7 +348,8 @@ public class SnapWorldDownloadStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
-  public void shouldStopWaitingBlockchainWhenNewPivotBlockAvailable(final DataStorageFormat storageFormat) {
+  public void shouldStopWaitingBlockchainWhenNewPivotBlockAvailable(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
     setUp(storageFormat);
 
     when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
@@ -375,7 +388,8 @@ public class SnapWorldDownloadStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
-  public void shouldStopWaitingBlockchainWhenCloseToTheHead(final DataStorageFormat storageFormat) {
+  public void shouldStopWaitingBlockchainWhenCloseToTheHead(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
     setUp(storageFormat);
 
     when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
@@ -403,7 +417,9 @@ public class SnapWorldDownloadStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
-  public void shouldCompleteReturnedFutureWhenNoPendingTasksRemainAndFlatDBHealNotNeeded(final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
+  public void shouldCompleteReturnedFutureWhenNoPendingTasksRemainAndFlatDBHealNotNeeded(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
+    setUp(storageFormat);
     Assumptions.assumeTrue(
         storageFormat == DataStorageFormat.FOREST
             || (storageFormat == DataStorageFormat.BONSAI && !isFlatDbHealingEnabled));
@@ -416,7 +432,9 @@ public class SnapWorldDownloadStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(SnapWorldDownloadStateTestArguments.class)
-  public void shouldNotCompleteReturnedFutureWhenNoPendingTasksRemainAndFlatDBHealNeeded(final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
+  public void shouldNotCompleteReturnedFutureWhenNoPendingTasksRemainAndFlatDBHealNeeded(
+      final DataStorageFormat storageFormat, final boolean isFlatDbHealingEnabled) {
+    setUp(storageFormat);
     Assumptions.assumeTrue(storageFormat == DataStorageFormat.BONSAI);
     Assumptions.assumeTrue(isFlatDbHealingEnabled);
     ((BonsaiWorldStateKeyValueStorage) worldStateStorage).upgradeToFullFlatDbMode();

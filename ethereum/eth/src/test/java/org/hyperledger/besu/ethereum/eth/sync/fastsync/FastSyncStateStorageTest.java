@@ -27,8 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 public class FastSyncStateStorageTest {
-  @TempDir
-  private static Path tempDir;
+  @TempDir private Path tempDir;
 
   private FastSyncStateStorage storage;
   private final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().buildHeader();

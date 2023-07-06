@@ -207,8 +207,8 @@ public class BlockchainSetupUtil {
     }
   }
 
-  private static void tempDirCleanup(Path temp){
-    if (temp != null){
+  private static void tempDirCleanup(final Path temp) {
+    if (temp != null) {
       try {
         Files.deleteIfExists(temp);
       } catch (IOException e) {

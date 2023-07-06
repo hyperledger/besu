@@ -53,7 +53,6 @@ public class TransactionReplacementRulesTest {
           {frontierTx(100L), frontierTx(105L), Optional.of(Wei.of(3L)), 10, false},
           {frontierTx(100L), frontierTx(110L), Optional.of(Wei.of(3L)), 10, false},
           {frontierTx(100L), frontierTx(111L), Optional.of(Wei.of(3L)), 10, true},
-
           // TransactionReplacementByFeeMarketRule
           //  eip1559 replacing frontier
           {frontierTx(5L), eip1559Tx(3L, 6L), Optional.of(Wei.of(1L)), 0, false},
@@ -80,11 +79,12 @@ public class TransactionReplacementRulesTest {
 
   @ParameterizedTest
   @MethodSource("data")
-  public void shouldReplace( PendingTransaction oldTx,
-                             PendingTransaction newTx,
-                             Optional<Wei> baseFee,
-                             int priceBump,
-                             boolean expected) {
+  public void shouldReplace(
+      final PendingTransaction oldTx,
+      final PendingTransaction newTx,
+      final Optional<Wei> baseFee,
+      final int priceBump,
+      final boolean expected) {
     BlockHeader mockHeader = mock(BlockHeader.class);
     when(mockHeader.getBaseFee()).thenReturn(baseFee);
 

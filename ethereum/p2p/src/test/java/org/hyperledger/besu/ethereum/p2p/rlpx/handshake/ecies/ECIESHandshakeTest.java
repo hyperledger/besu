@@ -28,7 +28,6 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.junit.jupiter.api.Assertions;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
@@ -147,7 +146,7 @@ public class ECIESHandshakeTest {
     final ByteBuf responderRp =
         responder
             .handleMessage(initiatorRq)
-            .orElseThrow(() -> Assertions.fail("Expected responder message"));
+            .orElseThrow(() -> new AssertionError("Expected responder message"));
     assertThat(responder.getPartyEphPubKey()).isEqualTo(initiator.getEphKeyPair().getPublicKey());
     assertThat(responder.getInitiatorNonce()).isEqualTo(initiator.getInitiatorNonce());
     assertThat(responder.partyPubKey()).isEqualTo(initiator.getNodeKey().getPublicKey());

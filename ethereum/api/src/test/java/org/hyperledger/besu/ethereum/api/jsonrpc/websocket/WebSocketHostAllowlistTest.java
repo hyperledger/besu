@@ -42,21 +42,16 @@ import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import io.vertx.junit5.VertxExtension;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(VertxExtension.class)
 public class WebSocketHostAllowlistTest {
 
-  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
-
   protected static Vertx vertx;
-
   private final List<String> hostsAllowlist = Arrays.asList("ally", "friend");
 
   private final WebSocketConfiguration webSocketConfiguration =
@@ -67,7 +62,7 @@ public class WebSocketHostAllowlistTest {
   private static final int VERTX_AWAIT_TIMEOUT_MILLIS = 10000;
   private int websocketPort;
 
-  @Before
+  @BeforeEach
   public void initServerAndClient() {
     webSocketConfiguration.setPort(0);
     vertx = Vertx.vertx();
@@ -99,7 +94,7 @@ public class WebSocketHostAllowlistTest {
     httpClient = vertx.createHttpClient(httpClientOptions);
   }
 
-  @After
+  @AfterEach
   public void after() {
     reset(webSocketMessageHandlerSpy);
     websocketService.stop();

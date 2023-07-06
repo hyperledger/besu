@@ -28,16 +28,16 @@ import org.junit.jupiter.params.provider.MethodSource;
 public class GasUsageValidationRuleTest {
 
   public static Stream<Arguments> data() {
-    return Stream.of(Arguments.of(5, 6, true), // gasUsed is less than gasLimit is valid
-            Arguments.of(5, 5, true), // gasUsed is the same as gaslimit is valid
-            Arguments.of(5, 4, false) // gasUsed is less than gasLimit
-            );
+    return Stream.of(
+        Arguments.of(5, 6, true), // gasUsed is less than gasLimit is valid
+        Arguments.of(5, 5, true), // gasUsed is the same as gaslimit is valid
+        Arguments.of(5, 4, false) // gasUsed is less than gasLimit
+        );
   }
-
 
   @ParameterizedTest
   @MethodSource("data")
-  public void test(long gasUsed, long gasLimit, boolean expectedResult) {
+  public void test(final long gasUsed, final long gasLimit, final boolean expectedResult) {
     final GasUsageValidationRule uut = new GasUsageValidationRule();
     final BlockHeaderTestFixture blockBuilder = new BlockHeaderTestFixture();
 

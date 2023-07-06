@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
-import org.hyperledger.besu.ethereum.eth.sync.ChainHeadTrackerTest;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -35,7 +34,6 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -62,7 +60,7 @@ public class PersistBlockTaskTest {
     @Override
     public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
       return Stream.of(
-              Arguments.of(DataStorageFormat.BONSAI), Arguments.of(DataStorageFormat.FOREST));
+          Arguments.of(DataStorageFormat.BONSAI), Arguments.of(DataStorageFormat.FOREST));
     }
   }
 
@@ -168,7 +166,8 @@ public class PersistBlockTaskTest {
 
   @ParameterizedTest
   @ArgumentsSource(PersistBlockTaskTest.PersistBlockTaskTestArguments.class)
-  public void failsToImportInvalidBlockSequenceWhereSecondBlockFails(final DataStorageFormat storageFormat) {
+  public void failsToImportInvalidBlockSequenceWhereSecondBlockFails(
+      final DataStorageFormat storageFormat) {
     setup(storageFormat);
     final BlockDataGenerator gen = new BlockDataGenerator();
     blockchainUtil.importFirstBlocks(3);
@@ -200,7 +199,8 @@ public class PersistBlockTaskTest {
 
   @ParameterizedTest
   @ArgumentsSource(PersistBlockTaskTest.PersistBlockTaskTestArguments.class)
-  public void failsToImportInvalidBlockSequenceWhereFirstBlockFails(final DataStorageFormat storageFormat) {
+  public void failsToImportInvalidBlockSequenceWhereFirstBlockFails(
+      final DataStorageFormat storageFormat) {
     setup(storageFormat);
     final BlockDataGenerator gen = new BlockDataGenerator();
     blockchainUtil.importFirstBlocks(3);
@@ -331,7 +331,8 @@ public class PersistBlockTaskTest {
 
   @ParameterizedTest
   @ArgumentsSource(PersistBlockTaskTest.PersistBlockTaskTestArguments.class)
-  public void importsUnorderedBlocksWithMixOfValidAndInvalidBlocks(final DataStorageFormat storageFormat) throws Exception {
+  public void importsUnorderedBlocksWithMixOfValidAndInvalidBlocks(
+      final DataStorageFormat storageFormat) throws Exception {
     setup(storageFormat);
     final BlockDataGenerator gen = new BlockDataGenerator();
     blockchainUtil.importFirstBlocks(3);

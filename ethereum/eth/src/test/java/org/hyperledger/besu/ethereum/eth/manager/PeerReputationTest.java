@@ -31,10 +31,7 @@ public class PeerReputationTest {
 
   @Test
   public void shouldThrowOnInvalidInitialScore() {
-    Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> new PeerReputation(2, 1)
-    );
+    Assertions.assertThrows(IllegalArgumentException.class, () -> new PeerReputation(2, 1));
   }
 
   @Test

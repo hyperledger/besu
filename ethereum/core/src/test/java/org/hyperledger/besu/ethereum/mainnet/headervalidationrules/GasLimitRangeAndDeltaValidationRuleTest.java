@@ -27,31 +27,70 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-
 public class GasLimitRangeAndDeltaValidationRuleTest {
 
   public static Stream<Arguments> data() {
     return Stream.of(
-          Arguments.of(4096, 4096, new GasLimitRangeAndDeltaValidationRule(4095, 4097), true, Optional.empty()),
-          // In Range, no change = valid,
-            Arguments.of(4096, 4096, new GasLimitRangeAndDeltaValidationRule(4094, 4095), false, Optional.empty()),
-          // Out of Range, no change = invalid,
-            Arguments.of(4099, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), true, Optional.empty()),
-          // In Range, <1/1024 change = valid,
-            Arguments.of(4093, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), true, Optional.empty()),
-          // In Range, ,1/1024 change = valid,
-            Arguments.of(4092, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), false, Optional.empty()),
-          // In Range, == 1/1024 change = invalid,
-            Arguments.of(4100, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), false, Optional.empty()),
-          // In Range, == 1/1024 change = invalid,
-            Arguments.of(4099, 4096, new GasLimitRangeAndDeltaValidationRule(4000, 4200), false, Optional.of(Wei.of(10L)))
-          // In Range, <1/1024 change, has basefee = invalid,
+        Arguments.of(
+            4096,
+            4096,
+            new GasLimitRangeAndDeltaValidationRule(4095, 4097),
+            true,
+            Optional.empty()),
+        // In Range, no change = valid,
+        Arguments.of(
+            4096,
+            4096,
+            new GasLimitRangeAndDeltaValidationRule(4094, 4095),
+            false,
+            Optional.empty()),
+        // Out of Range, no change = invalid,
+        Arguments.of(
+            4099,
+            4096,
+            new GasLimitRangeAndDeltaValidationRule(4000, 4200),
+            true,
+            Optional.empty()),
+        // In Range, <1/1024 change = valid,
+        Arguments.of(
+            4093,
+            4096,
+            new GasLimitRangeAndDeltaValidationRule(4000, 4200),
+            true,
+            Optional.empty()),
+        // In Range, ,1/1024 change = valid,
+        Arguments.of(
+            4092,
+            4096,
+            new GasLimitRangeAndDeltaValidationRule(4000, 4200),
+            false,
+            Optional.empty()),
+        // In Range, == 1/1024 change = invalid,
+        Arguments.of(
+            4100,
+            4096,
+            new GasLimitRangeAndDeltaValidationRule(4000, 4200),
+            false,
+            Optional.empty()),
+        // In Range, == 1/1024 change = invalid,
+        Arguments.of(
+            4099,
+            4096,
+            new GasLimitRangeAndDeltaValidationRule(4000, 4200),
+            false,
+            Optional.of(Wei.of(10L)))
+        // In Range, <1/1024 change, has basefee = invalid,
         );
   }
 
   @ParameterizedTest
   @MethodSource("data")
-  public void test(long headerGasLimit, long parentGasLimit, GasLimitRangeAndDeltaValidationRule uut, boolean expectedResult, Optional<Wei> optionalBaseFee) {
+  public void test(
+      final long headerGasLimit,
+      final long parentGasLimit,
+      final GasLimitRangeAndDeltaValidationRule uut,
+      final boolean expectedResult,
+      final Optional<Wei> optionalBaseFee) {
     final BlockHeaderTestFixture blockHeaderBuilder = new BlockHeaderTestFixture();
 
     blockHeaderBuilder.gasLimit(headerGasLimit);

@@ -42,52 +42,51 @@ public class RefundSstoreGasTest {
     final GasCalculator petersburg = new PetersburgGasCalculator();
     final GasCalculator istanbul = new IstanbulGasCalculator();
     return Stream.of(
-            // Zero no-op
-            Arguments.of("constantinople", constantinople, ZERO, ZERO, ZERO, 200L, 0L),
-            Arguments.of("petersburg", petersburg, ZERO, ZERO, ZERO, 5_000L, 0L),
-            Arguments.of("istanbul", istanbul, ZERO, ZERO, ZERO, 800L, 0L),
-            // Zero fresh change
-            Arguments.of("constantinople", constantinople, ZERO, ZERO, ONE, 20_000L, 0L),
-            Arguments.of("petersburg", petersburg, ZERO, ZERO, ONE, 20_000L, 0L),
-            Arguments.of("istanbul", istanbul, ZERO, ZERO, ONE, 20_000L, 0L),
-            // Dirty, reset to zero
-            Arguments.of("constantinople", constantinople, ZERO, ONE, ZERO, 200L, 19_800L),
-            Arguments.of("petersburg", petersburg, ZERO, ONE, ZERO, 5_000L, 15_000L),
-            Arguments.of("istanbul", istanbul, ZERO, ONE, ZERO, 800L, 19_200L),
-            // Dirty, changed but not reset
-            Arguments.of("constantinople", constantinople, ZERO, ONE, TWO, 200L, 0L),
-            Arguments.of("petersburg", petersburg, ZERO, ONE, TWO, 5_000L, 0L),
-            Arguments.of("istanbul", istanbul, ZERO, ONE, TWO, 800L, 0L),
-            // Dirty no-op
-            Arguments.of("constantinople", constantinople, ZERO, ONE, ONE, 200L, 0L),
-            Arguments.of("petersburg", petersburg, ZERO, ONE, ONE, 5_000L, 0L),
-            Arguments.of("istanbul", istanbul, ZERO, ONE, ONE, 800L, 0L),
-            // Dirty, zero no-op
-            Arguments.of("constantinople", constantinople, ONE, ZERO, ZERO, 200L, 0L),
-            Arguments.of("petersburg", petersburg, ONE, ZERO, ZERO, 5_000L, 0L),
-            Arguments.of("istanbul", istanbul, ONE, ZERO, ZERO, 800L, 0L),
-            // Dirty, reset to non-zero
-            Arguments.of("constantinople", constantinople, ONE, ZERO, ONE, 200L, -15_000L + 4_800L),
-            Arguments.of("petersburg", petersburg, ONE, ZERO, ONE, 20_000L, 0L),
-            Arguments.of("istanbul", istanbul, ONE, ZERO, ONE, 800L, -15_000L + 4_200L),
-            // Fresh change to zero
-            Arguments.of("constantinople", constantinople, ONE, ONE, ZERO, 5_000L, 15_000L),
-            Arguments.of("petersburg", petersburg, ONE, ONE, ZERO, 5_000L, 15_000L),
-            Arguments.of("istanbul", istanbul, ONE, ONE, ZERO, 5_000L, 15_000L),
-            // Fresh change with all non-zero
-            Arguments.of("constantinople", constantinople, ONE, ONE, TWO, 5_000L, 0L),
-            Arguments.of("petersburg", petersburg, ONE, ONE, TWO, 5_000L, 0L),
-            Arguments.of("istanbul", istanbul, ONE, ONE, TWO, 5_000L, 0L),
-            // Dirty, clear originally set value
-            Arguments.of("constantinople", constantinople, ONE, TWO, ZERO, 200L, 15_000L),
-            Arguments.of("petersburg", petersburg, ONE, TWO, ZERO, 5_000L, 15_000L),
-            Arguments.of("istanbul", istanbul, ONE, TWO, ZERO, 800L, 15_000L),
-            // Non-zero no-op
-            Arguments.of("constantinople", constantinople, ONE, ONE, ONE, 200L, 0L),
-            Arguments.of("petersburg", petersburg, ONE, ONE, ONE, 5_000L, 0L),
-            Arguments.of("istanbul", istanbul, ONE, ONE, ONE, 800L, 0L));
+        // Zero no-op
+        Arguments.of("constantinople", constantinople, ZERO, ZERO, ZERO, 200L, 0L),
+        Arguments.of("petersburg", petersburg, ZERO, ZERO, ZERO, 5_000L, 0L),
+        Arguments.of("istanbul", istanbul, ZERO, ZERO, ZERO, 800L, 0L),
+        // Zero fresh change
+        Arguments.of("constantinople", constantinople, ZERO, ZERO, ONE, 20_000L, 0L),
+        Arguments.of("petersburg", petersburg, ZERO, ZERO, ONE, 20_000L, 0L),
+        Arguments.of("istanbul", istanbul, ZERO, ZERO, ONE, 20_000L, 0L),
+        // Dirty, reset to zero
+        Arguments.of("constantinople", constantinople, ZERO, ONE, ZERO, 200L, 19_800L),
+        Arguments.of("petersburg", petersburg, ZERO, ONE, ZERO, 5_000L, 15_000L),
+        Arguments.of("istanbul", istanbul, ZERO, ONE, ZERO, 800L, 19_200L),
+        // Dirty, changed but not reset
+        Arguments.of("constantinople", constantinople, ZERO, ONE, TWO, 200L, 0L),
+        Arguments.of("petersburg", petersburg, ZERO, ONE, TWO, 5_000L, 0L),
+        Arguments.of("istanbul", istanbul, ZERO, ONE, TWO, 800L, 0L),
+        // Dirty no-op
+        Arguments.of("constantinople", constantinople, ZERO, ONE, ONE, 200L, 0L),
+        Arguments.of("petersburg", petersburg, ZERO, ONE, ONE, 5_000L, 0L),
+        Arguments.of("istanbul", istanbul, ZERO, ONE, ONE, 800L, 0L),
+        // Dirty, zero no-op
+        Arguments.of("constantinople", constantinople, ONE, ZERO, ZERO, 200L, 0L),
+        Arguments.of("petersburg", petersburg, ONE, ZERO, ZERO, 5_000L, 0L),
+        Arguments.of("istanbul", istanbul, ONE, ZERO, ZERO, 800L, 0L),
+        // Dirty, reset to non-zero
+        Arguments.of("constantinople", constantinople, ONE, ZERO, ONE, 200L, -15_000L + 4_800L),
+        Arguments.of("petersburg", petersburg, ONE, ZERO, ONE, 20_000L, 0L),
+        Arguments.of("istanbul", istanbul, ONE, ZERO, ONE, 800L, -15_000L + 4_200L),
+        // Fresh change to zero
+        Arguments.of("constantinople", constantinople, ONE, ONE, ZERO, 5_000L, 15_000L),
+        Arguments.of("petersburg", petersburg, ONE, ONE, ZERO, 5_000L, 15_000L),
+        Arguments.of("istanbul", istanbul, ONE, ONE, ZERO, 5_000L, 15_000L),
+        // Fresh change with all non-zero
+        Arguments.of("constantinople", constantinople, ONE, ONE, TWO, 5_000L, 0L),
+        Arguments.of("petersburg", petersburg, ONE, ONE, TWO, 5_000L, 0L),
+        Arguments.of("istanbul", istanbul, ONE, ONE, TWO, 5_000L, 0L),
+        // Dirty, clear originally set value
+        Arguments.of("constantinople", constantinople, ONE, TWO, ZERO, 200L, 15_000L),
+        Arguments.of("petersburg", petersburg, ONE, TWO, ZERO, 5_000L, 15_000L),
+        Arguments.of("istanbul", istanbul, ONE, TWO, ZERO, 800L, 15_000L),
+        // Non-zero no-op
+        Arguments.of("constantinople", constantinople, ONE, ONE, ONE, 200L, 0L),
+        Arguments.of("petersburg", petersburg, ONE, ONE, ONE, 5_000L, 0L),
+        Arguments.of("istanbul", istanbul, ONE, ONE, ONE, 800L, 0L));
   }
-
 
   private final Supplier<UInt256> mockSupplierForOriginalValue = mockSupplier();
   private final Supplier<UInt256> mockSupplierCurrentValue = mockSupplier();
@@ -97,22 +96,21 @@ public class RefundSstoreGasTest {
     return mock(Supplier.class);
   }
 
-
-  public void setUp(UInt256 originalValue,
-                    UInt256 currentValue) {
+  public void setUp(final UInt256 originalValue, final UInt256 currentValue) {
     when(mockSupplierForOriginalValue.get()).thenReturn(originalValue);
     when(mockSupplierCurrentValue.get()).thenReturn(currentValue);
   }
 
   @ParameterizedTest(name = "calculator: {0}, original: {2}, current: {3}, new: {4}")
   @MethodSource("scenarios")
-  public void shouldChargeCorrectGas(String forkName,
-                                     GasCalculator gasCalculator,
-                                     UInt256 originalValue,
-                                     UInt256 currentValue,
-                                     UInt256 newValue,
-                                     long expectedGasCost,
-                                     long expectedGasRefund) {
+  public void shouldChargeCorrectGas(
+      final String forkName,
+      final GasCalculator gasCalculator,
+      final UInt256 originalValue,
+      final UInt256 currentValue,
+      final UInt256 newValue,
+      final long expectedGasCost,
+      final long expectedGasRefund) {
     setUp(originalValue, currentValue);
     Assertions.assertThat(
             gasCalculator.calculateStorageCost(
@@ -122,13 +120,14 @@ public class RefundSstoreGasTest {
 
   @ParameterizedTest(name = "calculator: {0}, original: {2}, current: {3}, new: {4}")
   @MethodSource("scenarios")
-  public void shouldRefundCorrectGas(String forkName,
-                                     GasCalculator gasCalculator,
-                                     UInt256 originalValue,
-                                     UInt256 currentValue,
-                                     UInt256 newValue,
-                                     long expectedGasCost,
-                                     long expectedGasRefund) {
+  public void shouldRefundCorrectGas(
+      final String forkName,
+      final GasCalculator gasCalculator,
+      final UInt256 originalValue,
+      final UInt256 currentValue,
+      final UInt256 newValue,
+      final long expectedGasCost,
+      final long expectedGasRefund) {
     setUp(originalValue, currentValue);
     Assertions.assertThat(
             gasCalculator.calculateStorageRefundAmount(

@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;

@@ -27,9 +27,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 public class BackendQueryTest<T> {
   public static Stream<Arguments> data() {
     return Stream.of(
-            Arguments.of(supplierOf(false), null, true, RuntimeException.class, "Timeout expired"),
-            Arguments.of(supplierOf(true), "expected return", false, null, null)
-        );
+        Arguments.of(supplierOf(false), null, true, RuntimeException.class, "Timeout expired"),
+        Arguments.of(supplierOf(true), "expected return", false, null, null));
   }
 
   private static Supplier<Boolean> supplierOf(final boolean val) {
@@ -38,11 +37,13 @@ public class BackendQueryTest<T> {
 
   @ParameterizedTest
   @MethodSource("data")
-  public void test( Supplier<Boolean> alive,
-                    Object wantReturn,
-                    boolean wantException,
-                    Class<T> wantExceptionClass,
-                    String wantExceptionMessage) throws Exception {
+  public void test(
+      final Supplier<Boolean> alive,
+      final Object wantReturn,
+      final boolean wantException,
+      final Class<T> wantExceptionClass,
+      final String wantExceptionMessage)
+      throws Exception {
     if (wantException) {
       assertThatThrownBy(() -> BackendQuery.runIfAlive(() -> wantReturn, alive))
           .isInstanceOf(wantExceptionClass)

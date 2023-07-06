@@ -42,14 +42,14 @@ import io.vertx.core.http.WebSocketFrame;
 import io.vertx.core.json.Json;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import io.vertx.junit5.VertxExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.stubbing.Answer;
 
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(VertxExtension.class)
 public class EthUnsubscribeIntegrationTest {
 
   private Vertx vertx;
@@ -59,7 +59,7 @@ public class EthUnsubscribeIntegrationTest {
   private final int ASYNC_TIMEOUT = 5000;
   private final String CONNECTION_ID = "test-connection-id-1";
 
-  @Before
+  @BeforeEach
   public void before() {
     vertx = Vertx.vertx();
     subscriptionManager = new SubscriptionManager(new NoOpMetricsSystem());

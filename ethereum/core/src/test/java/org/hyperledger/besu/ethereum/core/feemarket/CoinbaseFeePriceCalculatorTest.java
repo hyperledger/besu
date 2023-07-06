@@ -18,12 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Wei;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -37,22 +34,23 @@ public class CoinbaseFeePriceCalculatorTest {
 
   public static Stream<Arguments> data() {
     return Stream.of(
-            // legacy transaction must return gas price * gas
-            Arguments.of(FRONTIER_CALCULATOR, 100L, Wei.of(10L), Optional.empty(), Wei.of(1000L)),
-            // EIP-1559 must return gas * (gas price - base fee)
-            Arguments.of(EIP_1559_CALCULATOR, 100L, Wei.of(10L), Optional.of(Wei.of(4L)), Wei.of(600L))
-    // Negative transaction gas price case
-    // {EIP_1559_CALCULATOR, Gas.of(100), Wei.of(95L), Optional.of(100L), Wei.of(-500L)}
-    );
+        // legacy transaction must return gas price * gas
+        Arguments.of(FRONTIER_CALCULATOR, 100L, Wei.of(10L), Optional.empty(), Wei.of(1000L)),
+        // EIP-1559 must return gas * (gas price - base fee)
+        Arguments.of(EIP_1559_CALCULATOR, 100L, Wei.of(10L), Optional.of(Wei.of(4L)), Wei.of(600L))
+        // Negative transaction gas price case
+        // {EIP_1559_CALCULATOR, Gas.of(100), Wei.of(95L), Optional.of(100L), Wei.of(-500L)}
+        );
   }
 
   @ParameterizedTest
   @MethodSource("data")
-  public void assertThatCalculatorWorks(final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator,
-                                        final long coinbaseFee,
-                                        final Wei transactionGasPrice,
-                                        final Optional<Wei> baseFee,
-                                        final Wei expectedPrice) {
+  public void assertThatCalculatorWorks(
+      final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator,
+      final long coinbaseFee,
+      final Wei transactionGasPrice,
+      final Optional<Wei> baseFee,
+      final Wei expectedPrice) {
     assertThat(coinbaseFeePriceCalculator.price(coinbaseFee, transactionGasPrice, baseFee))
         .isEqualByComparingTo(expectedPrice);
   }

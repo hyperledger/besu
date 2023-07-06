@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription;
 
-import static junit.framework.TestCase.fail;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.JsonRpcResult;
@@ -29,13 +28,14 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import io.vertx.junit5.VertxExtension;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(VertxExtension.class)
 public class SubscriptionManagerSendMessageTest {
 
   private static final int VERTX_AWAIT_TIMEOUT_MILLIS = 10000;
@@ -43,7 +43,7 @@ public class SubscriptionManagerSendMessageTest {
   private Vertx vertx;
   private SubscriptionManager subscriptionManager;
 
-  @Before
+  @BeforeEach
   public void before(final TestContext context) {
     vertx = Vertx.vertx();
     subscriptionManager = new SubscriptionManager(new NoOpMetricsSystem());
@@ -51,7 +51,7 @@ public class SubscriptionManagerSendMessageTest {
   }
 
   @Test
-  @Ignore
+  @Disabled
   public void shouldSendMessageOnTheConnectionIdEventBusAddressForExistingSubscription(
       final TestContext context) {
     final String connectionId = UUID.randomUUID().toString();
@@ -93,7 +93,7 @@ public class SubscriptionManagerSendMessageTest {
         .consumer(connectionId)
         .handler(
             msg -> {
-              fail("Shouldn't receive message");
+              Assertions.fail("Shouldn't receive message");
               async.complete();
             })
         .completionHandler(v -> subscriptionManager.sendMessage(1L, mock(JsonRpcResult.class)));

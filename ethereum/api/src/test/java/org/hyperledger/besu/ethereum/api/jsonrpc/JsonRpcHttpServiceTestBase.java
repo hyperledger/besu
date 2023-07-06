@@ -65,8 +65,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 public class JsonRpcHttpServiceTestBase {
 
-  @TempDir
-  private static Path folder;
+  @TempDir private static Path folder;
   protected final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
 
   private static final Vertx vertx = Vertx.vertx();

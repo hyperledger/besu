@@ -133,8 +133,7 @@ public abstract class AbstractIsolationTests {
   KeyPair sender1 = asKeyPair.apply(accounts.get(0).getPrivateKey().get());
   TransactionPool transactionPool;
 
-  @TempDir
-  private static Path tempData;
+  @TempDir private static Path tempData;
 
   @BeforeEach
   public void createStorage() {

@@ -57,8 +57,7 @@ public class PrivacyQueriesTest {
   private final long FROM_BLOCK_NUMBER = 0;
   private final long TO_BLOCK_NUMBER = 2;
 
-  @Mock
-  private BlockchainQueries blockchainQueries;
+  @Mock private BlockchainQueries blockchainQueries;
 
   @Mock private PrivateWorldStateReader privateWorldStateReader;
 

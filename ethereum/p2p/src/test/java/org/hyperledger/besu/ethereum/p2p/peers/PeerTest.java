@@ -120,14 +120,17 @@ public class PeerTest {
 
   @Test
   public void createFromURIFailsForMissingId() {
-    assertThrows(IllegalArgumentException.class, () -> DefaultPeer.fromURI("enode://172.20.0.4:30303"));
+    assertThrows(
+        IllegalArgumentException.class, () -> DefaultPeer.fromURI("enode://172.20.0.4:30303"));
   }
 
   @Test
   public void createFromURIFailsForMissingHost() {
-    assertThrows(IllegalArgumentException.class, () -> DefaultPeer.fromURI(
-            "enode://c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b@:30303"));
-
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            DefaultPeer.fromURI(
+                "enode://c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b@:30303"));
   }
 
   @Test

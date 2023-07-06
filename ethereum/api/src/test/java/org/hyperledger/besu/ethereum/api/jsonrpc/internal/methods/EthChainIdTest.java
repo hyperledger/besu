@@ -25,8 +25,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import java.math.BigInteger;
 import java.util.Optional;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class EthChainIdTest {
 

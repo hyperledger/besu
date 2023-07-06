@@ -60,11 +60,12 @@ public class FullSyncChainDownloaderTotalTerminalDifficultyTest {
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private static final Difficulty TARGET_TERMINAL_DIFFICULTY = Difficulty.of(1_000_000L);
 
-  static class FullSyncChainDownloaderTotalTerminalDifficultyTestArguments implements ArgumentsProvider {
+  static class FullSyncChainDownloaderTotalTerminalDifficultyTestArguments
+      implements ArgumentsProvider {
     @Override
     public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
       return Stream.of(
-              Arguments.of(DataStorageFormat.BONSAI), Arguments.of(DataStorageFormat.FOREST));
+          Arguments.of(DataStorageFormat.BONSAI), Arguments.of(DataStorageFormat.FOREST));
     }
   }
 

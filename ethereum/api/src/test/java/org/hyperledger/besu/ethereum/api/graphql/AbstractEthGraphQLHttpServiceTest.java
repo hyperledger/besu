@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
@@ -51,8 +50,8 @@ import io.vertx.core.Vertx;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;

@@ -59,8 +59,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class TransactionTracerTest {
 
-  @TempDir
-  private static Path traceDir;
+  @TempDir private static Path traceDir;
 
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private Blockchain blockchain;

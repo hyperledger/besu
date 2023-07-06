@@ -164,31 +164,31 @@ public class NetworkingServiceLifecycleTest {
   @Test
   public void startDiscoveryPortInUse() {
     assumingThat(
-            System.getProperty("user.language").startsWith("en"),
-            () -> {
-              try (final P2PNetwork service1 = getP2PNetworkBuilder().config(config).build()) {
-                service1.start();
-                final NetworkingConfiguration config = configWithRandomPorts();
-                final int usedPort = service1.getLocalEnode().get().getDiscoveryPortOrZero();
-                assertThat(usedPort).isNotZero();
-                config.getDiscovery().setBindPort(usedPort);
-                try (final P2PNetwork service2 = getP2PNetworkBuilder().config(config).build()) {
-                  try {
-                    service2.start();
-                  } catch (final Exception e) {
-                    assertThat(e).hasCauseExactlyInstanceOf(PeerDiscoveryServiceException.class);
-                    assertThat(e)
-                            .hasMessageStartingWith(
-                                    "org.hyperledger.besu.ethereum.p2p.discovery."
-                                            + "PeerDiscoveryServiceException: Failed to bind Ethereum UDP discovery listener to 0.0.0.0:");
-                    assertThat(e).hasMessageContaining("Address already in use");
-                  } finally {
-                    service1.stop();
-                    service2.stop();
-                  }
-                }
+        System.getProperty("user.language").startsWith("en"),
+        () -> {
+          try (final P2PNetwork service1 = getP2PNetworkBuilder().config(config).build()) {
+            service1.start();
+            final NetworkingConfiguration config = configWithRandomPorts();
+            final int usedPort = service1.getLocalEnode().get().getDiscoveryPortOrZero();
+            assertThat(usedPort).isNotZero();
+            config.getDiscovery().setBindPort(usedPort);
+            try (final P2PNetwork service2 = getP2PNetworkBuilder().config(config).build()) {
+              try {
+                service2.start();
+              } catch (final Exception e) {
+                assertThat(e).hasCauseExactlyInstanceOf(PeerDiscoveryServiceException.class);
+                assertThat(e)
+                    .hasMessageStartingWith(
+                        "org.hyperledger.besu.ethereum.p2p.discovery."
+                            + "PeerDiscoveryServiceException: Failed to bind Ethereum UDP discovery listener to 0.0.0.0:");
+                assertThat(e).hasMessageContaining("Address already in use");
+              } finally {
+                service1.stop();
+                service2.stop();
               }
-            });
+            }
+          }
+        });
   }
 
   @Test

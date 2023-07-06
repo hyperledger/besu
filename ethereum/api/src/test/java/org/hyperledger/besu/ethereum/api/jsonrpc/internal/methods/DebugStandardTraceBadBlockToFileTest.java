@@ -50,8 +50,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 public class DebugStandardTraceBadBlockToFileTest {
 
-  @TempDir
-  private static Path folder;
+  @TempDir private static Path folder;
 
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private final Blockchain blockchain = mock(Blockchain.class);

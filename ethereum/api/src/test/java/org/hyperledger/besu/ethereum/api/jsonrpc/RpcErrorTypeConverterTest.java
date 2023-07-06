@@ -72,9 +72,10 @@ public class RpcErrorTypeConverterTest {
         });
   }
 
-    @ParameterizedTest
-    @MethodSource("expectedErrorMapping")
-  public void expectedTransactionValidationToJsonRpcErrorConversion(TransactionInvalidReason txInvalidReason, RpcErrorType expectedJsonRpcError) {
+  @ParameterizedTest
+  @MethodSource("expectedErrorMapping")
+  public void expectedTransactionValidationToJsonRpcErrorConversion(
+      final TransactionInvalidReason txInvalidReason, final RpcErrorType expectedJsonRpcError) {
     assertThat(JsonRpcErrorConverter.convertTransactionInvalidReason(txInvalidReason))
         .isEqualTo(expectedJsonRpcError);
   }

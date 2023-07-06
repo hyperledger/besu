@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
-import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.pki.keystore.KeyStoreWrapper.KEYSTORE_TYPE_PKCS12;
 
@@ -47,7 +46,6 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.condition.DisabledOnOs;
@@ -222,7 +220,6 @@ class TLSContextFactoryTest {
     return null == path ? null : Path.of(TLSContextFactoryTest.class.getResource(path).toURI());
   }
 
-  @DisabledOnOs(OS.MAC)
   private static KeyStoreWrapper getHardwareKeyStoreWrapper(
       final String config, final String crlLocation) {
     try {
@@ -251,6 +248,7 @@ class TLSContextFactoryTest {
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("softwareKeysData")
+  @DisabledOnOs(OS.MAC)
   void testConnectionSoftwareKeys(
       final String ignoredTestDescription,
       final boolean testSuccess,
@@ -269,6 +267,7 @@ class TLSContextFactoryTest {
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("hardwareKeysData")
+  @DisabledOnOs(OS.MAC)
   void testConnectionHardwareKeys(
       final String ignoredTestDescription,
       final boolean testSuccess,

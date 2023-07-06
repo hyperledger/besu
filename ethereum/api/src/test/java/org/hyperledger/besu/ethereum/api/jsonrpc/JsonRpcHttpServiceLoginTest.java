@@ -82,15 +82,14 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class JsonRpcHttpServiceLoginTest {
 
-  @TempDir
-  private static Path folder;
+  @TempDir private static Path folder;
 
   private static final Vertx vertx = Vertx.vertx();
 

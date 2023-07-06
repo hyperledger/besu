@@ -94,8 +94,8 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 @Disabled("PIE-1434 - Ignored while working to make test more reliable")

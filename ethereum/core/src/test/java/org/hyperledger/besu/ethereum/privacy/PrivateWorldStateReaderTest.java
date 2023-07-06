@@ -55,8 +55,7 @@ public class PrivateWorldStateReaderTest {
   private final Hash blockHash = Hash.ZERO;
   private final Hash stateRootHash = Hash.ZERO;
 
-  @Mock
-  private PrivateStateRootResolver privateStateRootResolver;
+  @Mock private PrivateStateRootResolver privateStateRootResolver;
   @Mock private WorldStateArchive privateWorldStateArchive;
   @Mock private WorldState privateWorldState;
   @Mock private PrivateStateStorage privateStateStorage;

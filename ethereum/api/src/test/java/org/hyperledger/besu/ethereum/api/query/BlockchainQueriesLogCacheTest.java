@@ -44,8 +44,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -123,10 +123,7 @@ public class BlockchainQueriesLogCacheTest {
     when(blockchain.getBlockBody(any())).thenReturn(Optional.of(fakeBody));
     blockchainQueries =
         new BlockchainQueries(
-            blockchain,
-            worldStateArchive,
-            Optional.of(cacheDir),
-            Optional.of(scheduler));
+            blockchain, worldStateArchive, Optional.of(cacheDir), Optional.of(scheduler));
   }
 
   /**

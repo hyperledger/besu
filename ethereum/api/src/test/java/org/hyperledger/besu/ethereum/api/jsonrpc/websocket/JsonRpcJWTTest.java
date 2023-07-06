@@ -57,18 +57,14 @@ import io.vertx.core.http.WebSocketConnectOptions;
 import io.vertx.core.json.Json;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import io.vertx.junit5.VertxExtension;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(VertxExtension.class)
 public class JsonRpcJWTTest {
-
-  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
   public static final String HOSTNAME = "127.0.0.1";
 
   protected static Vertx vertx;
@@ -82,7 +78,7 @@ public class JsonRpcJWTTest {
   private Path bufferDir;
   private Map<String, JsonRpcMethod> websocketMethods;
 
-  @Before
+  @BeforeEach
   public void initServerAndClient() {
     jsonRpcConfiguration.setPort(0);
     jsonRpcConfiguration.setHostsAllowlist(List.of("*"));
@@ -125,7 +121,7 @@ public class JsonRpcJWTTest {
     scheduler = new EthScheduler(1, 1, 1, new NoOpMetricsSystem());
   }
 
-  @After
+  @AfterEach
   public void after() {}
 
   @Test

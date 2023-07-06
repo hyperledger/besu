@@ -39,8 +39,6 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.ExceptionUtils;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -71,7 +69,7 @@ public class PivotBlockRetrieverTest {
     @Override
     public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
       return Stream.of(
-              Arguments.of(DataStorageFormat.BONSAI), Arguments.of(DataStorageFormat.FOREST));
+          Arguments.of(DataStorageFormat.BONSAI), Arguments.of(DataStorageFormat.FOREST));
     }
   }
 
@@ -308,7 +306,8 @@ public class PivotBlockRetrieverTest {
 
   @ParameterizedTest
   @ArgumentsSource(PivotBlockRetrieverTestArguments.class)
-  public void shouldRetryWhenPeersDisagreeOnPivot_successfulRetry(final DataStorageFormat storageFormat) {
+  public void shouldRetryWhenPeersDisagreeOnPivot_successfulRetry(
+      final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     final long pivotBlockDelta = 1;
     pivotBlockRetriever = createPivotBlockRetriever(2, pivotBlockDelta, 1);
@@ -344,7 +343,8 @@ public class PivotBlockRetrieverTest {
 
   @ParameterizedTest
   @ArgumentsSource(PivotBlockRetrieverTestArguments.class)
-  public void shouldRetryWhenPeersDisagreeOnPivot_exceedMaxRetries(final DataStorageFormat storageFormat) {
+  public void shouldRetryWhenPeersDisagreeOnPivot_exceedMaxRetries(
+      final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     final long pivotBlockDelta = 1;
     pivotBlockRetriever = createPivotBlockRetriever(2, pivotBlockDelta, 1);
@@ -383,7 +383,8 @@ public class PivotBlockRetrieverTest {
 
   @ParameterizedTest
   @ArgumentsSource(PivotBlockRetrieverTestArguments.class)
-  public void shouldRetryWhenPeersDisagreeOnPivot_pivotInvalidOnRetry(final DataStorageFormat storageFormat) {
+  public void shouldRetryWhenPeersDisagreeOnPivot_pivotInvalidOnRetry(
+      final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     final long pivotBlockDelta = PIVOT_BLOCK_NUMBER + 1;
     pivotBlockRetriever = createPivotBlockRetriever(2, pivotBlockDelta, 1);

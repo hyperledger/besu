@@ -53,8 +53,7 @@ public class DebugStandardTraceBlockToFileTest {
       spy(new BlockchainQueries(blockchain, archive));
   private final TransactionTracer transactionTracer = mock(TransactionTracer.class);
   private final DebugStandardTraceBlockToFile debugStandardTraceBlockToFile =
-      new DebugStandardTraceBlockToFile(
-          () -> transactionTracer, blockchainQueries, folder);
+      new DebugStandardTraceBlockToFile(() -> transactionTracer, blockchainQueries, folder);
 
   @Test
   public void nameShouldBeDebugTraceTransaction() {

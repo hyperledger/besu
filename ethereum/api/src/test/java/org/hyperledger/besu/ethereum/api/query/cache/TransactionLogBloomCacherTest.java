@@ -36,7 +36,6 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -45,8 +44,8 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -57,8 +56,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class TransactionLogBloomCacherTest {
 
-  @TempDir
-  private static Path cacheDir;
+  @TempDir private static Path cacheDir;
 
   private Hash testHash;
   private static LogsBloomFilter testLogsBloomFilter;
@@ -121,17 +119,16 @@ public class TransactionLogBloomCacherTest {
               invocation.getArgument(0, Supplier.class).get();
               return null;
             });
-    transactionLogBloomCacher =
-        new TransactionLogBloomCacher(blockchain, cacheDir, scheduler);
+    transactionLogBloomCacher = new TransactionLogBloomCacher(blockchain, cacheDir, scheduler);
   }
 
   @Test
-  public void shouldSplitLogsIntoSeveralFiles() throws IOException {
+  public void shouldSplitLogsIntoSeveralFiles() {
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(200003L);
-    assertThat(Files.list(cacheDir).count()).isEqualTo(0);
+    assertThat(cacheDir.getRoot().toFile().list().length).isEqualTo(0);
     transactionLogBloomCacher.cacheAll();
-    assertThat(Files.list(cacheDir).count()).isEqualTo(2);
+    assertThat(cacheDir.getRoot().toFile().list().length).isEqualTo(2);
   }
 
   @Test
@@ -177,8 +174,8 @@ public class TransactionLogBloomCacherTest {
 
   @Test
   public void shouldReloadCacheWhenFileIsInvalid() throws IOException {
-    final File logBloom =  cacheDir.resolve("logBloom-0.cache").toFile();
-    final File logBloom1 =  cacheDir.resolve("logBloom-1.cache").toFile();
+    final File logBloom = cacheDir.resolve("logBloom-0.cache").toFile();
+    final File logBloom1 = cacheDir.resolve("logBloom-1.cache").toFile();
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(100003L);
     assertThat(logBloom.length()).isEqualTo(0);

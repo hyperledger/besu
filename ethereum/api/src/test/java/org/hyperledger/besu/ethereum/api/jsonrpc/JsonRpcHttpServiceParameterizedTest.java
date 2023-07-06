@@ -43,14 +43,13 @@ public class JsonRpcHttpServiceParameterizedTest extends JsonRpcHttpServiceTestB
     service.stop().join();
   }
 
-
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][] {{"\"a string\""}, {"a string"}, {"{bla"}, {""}});
   }
 
   @ParameterizedTest
   @MethodSource("data")
-  public void invalidJsonShouldReturnParseError(String requestJson) throws Exception {
+  public void invalidJsonShouldReturnParseError(final String requestJson) throws Exception {
     final RequestBody body = RequestBody.create(requestJson, JSON);
 
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {

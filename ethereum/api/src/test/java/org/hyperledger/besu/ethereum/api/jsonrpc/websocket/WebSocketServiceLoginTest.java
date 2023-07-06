@@ -55,6 +55,7 @@ import org.hyperledger.besu.nat.NatService;
 
 import java.math.BigInteger;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -87,22 +88,21 @@ import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.junit5.VertxExtension;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(VertxExtension.class)
 public class WebSocketServiceLoginTest {
   private static final int VERTX_AWAIT_TIMEOUT_MILLIS = 10000;
 
-  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir private static Path folder;
 
   private Vertx vertx;
   protected static Map<String, JsonRpcMethod> rpcMethods;
@@ -127,7 +127,7 @@ public class WebSocketServiceLoginTest {
   private WebSocketService websocketService;
   private HttpClient httpClient;
 
-  @Before
+  @BeforeEach
   public void before() throws URISyntaxException {
     vertx = Vertx.vertx();
 
@@ -183,7 +183,7 @@ public class WebSocketServiceLoginTest {
                     mock(MetricsConfiguration.class),
                     natService,
                     new HashMap<>(),
-                    folder.getRoot().toPath(),
+                    folder,
                     mock(EthPeers.class),
                     vertx,
                     Optional.empty(),
@@ -219,7 +219,7 @@ public class WebSocketServiceLoginTest {
     httpClient = vertx.createHttpClient(httpClientOptions);
   }
 
-  @After
+  @AfterEach
   public void after() {
     reset(webSocketMessageHandlerSpy);
     websocketService.stop();

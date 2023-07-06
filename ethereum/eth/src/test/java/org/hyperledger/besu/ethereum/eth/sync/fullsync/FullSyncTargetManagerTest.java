@@ -62,7 +62,7 @@ public class FullSyncTargetManagerTest {
     @Override
     public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
       return Stream.of(
-              Arguments.of(DataStorageFormat.BONSAI), Arguments.of(DataStorageFormat.FOREST));
+          Arguments.of(DataStorageFormat.BONSAI), Arguments.of(DataStorageFormat.FOREST));
     }
   }
 
@@ -141,7 +141,8 @@ public class FullSyncTargetManagerTest {
 
   @ParameterizedTest
   @ArgumentsSource(FullSyncTargetManagerTest.FullSyncTargetManagerTestArguments.class)
-  public void shouldDisconnectPeerIfWorldStateIsUnavailableForCommonAncestor(final DataStorageFormat storageFormat) {
+  public void shouldDisconnectPeerIfWorldStateIsUnavailableForCommonAncestor(
+      final DataStorageFormat storageFormat) {
     setup(storageFormat);
     final BlockHeader chainHeadHeader = localBlockchain.getChainHeadHeader();
     when(localWorldState.isWorldStateAvailable(
@@ -160,7 +161,8 @@ public class FullSyncTargetManagerTest {
 
   @ParameterizedTest
   @ArgumentsSource(FullSyncTargetManagerTest.FullSyncTargetManagerTestArguments.class)
-  public void shouldAllowSyncTargetWhenIfWorldStateIsAvailableForCommonAncestor(final DataStorageFormat storageFormat) {
+  public void shouldAllowSyncTargetWhenIfWorldStateIsAvailableForCommonAncestor(
+      final DataStorageFormat storageFormat) {
     setup(storageFormat);
     final BlockHeader chainHeadHeader = localBlockchain.getChainHeadHeader();
     when(localWorldState.isWorldStateAvailable(
