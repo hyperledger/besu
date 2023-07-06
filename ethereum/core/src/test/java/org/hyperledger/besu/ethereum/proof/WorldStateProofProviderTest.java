@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.proof;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageFormat.BONSAI;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -33,20 +34,18 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class WorldStateProofProviderTest {
 
   private static final Address address =
@@ -54,26 +53,13 @@ public class WorldStateProofProviderTest {
 
   private WorldStateStorage worldStateStorage;
   private WorldStateProofProvider worldStateProofProvider;
-  private final DataStorageFormat dataStorageFormat;
 
-  @Parameterized.Parameters
-  public static Collection<Object[]> data() {
-    return Arrays.asList(
-        new Object[][] {
-          {
-            DataStorageFormat.BONSAI,
-          },
-          {DataStorageFormat.FOREST}
-        });
+  private static Stream<Arguments> getDataStorageFormat() {
+    return Stream.of(Arguments.of(BONSAI), Arguments.of(DataStorageFormat.FOREST));
   }
 
-  public WorldStateProofProviderTest(final DataStorageFormat dataStorageFormat) {
-    this.dataStorageFormat = dataStorageFormat;
-  }
-
-  @Before
-  public void setup() {
-    if (dataStorageFormat.equals(DataStorageFormat.BONSAI)) {
+  public void setup(final DataStorageFormat dataStorageFormat) {
+    if (dataStorageFormat.equals(BONSAI)) {
       worldStateStorage =
           new BonsaiWorldStateKeyValueStorage(
               new InMemoryKeyValueStorageProvider(), new NoOpMetricsSystem());
@@ -84,16 +70,20 @@ public class WorldStateProofProviderTest {
     worldStateProofProvider = new WorldStateProofProvider(worldStateStorage);
   }
 
-  @Test
-  public void getProofWhenWorldStateNotAvailable() {
+  @ParameterizedTest
+  @MethodSource("getDataStorageFormat")
+  public void getProofWhenWorldStateNotAvailable(final DataStorageFormat dataStorageFormat) {
+    setup(dataStorageFormat);
     Optional<WorldStateProof> accountProof =
         worldStateProofProvider.getAccountProof(Hash.EMPTY, address, new ArrayList<>());
 
     assertThat(accountProof).isEmpty();
   }
 
-  @Test
-  public void getProofWhenWorldStateAvailable() {
+  @ParameterizedTest
+  @MethodSource("getDataStorageFormat")
+  public void getProofWhenWorldStateAvailable(final DataStorageFormat dataStorageFormat) {
+    setup(dataStorageFormat);
     final Hash addressHash = Hash.hash(address);
     final MerkleTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie(addressHash);
     final MerkleTrie<Bytes32, Bytes> storageTrie = emptyStorageTrie();
@@ -151,8 +141,10 @@ public class WorldStateProofProviderTest {
     assertThat(accountProof.get().getStorageProof(storageKey).size()).isGreaterThanOrEqualTo(1);
   }
 
-  @Test
-  public void getProofWhenStateTrieAccountUnavailable() {
+  @ParameterizedTest
+  @MethodSource("getDataStorageFormat")
+  public void getProofWhenStateTrieAccountUnavailable(final DataStorageFormat dataStorageFormat) {
+    setup(dataStorageFormat);
     final MerkleTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie(null);
 
     final Optional<WorldStateProof> accountProof =
