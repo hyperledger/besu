@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 
@@ -47,6 +47,6 @@ public class ScheduleBasedBlockHeaderFunctions implements BlockHeaderFunctions {
   }
 
   private BlockHeaderFunctions getBlockHeaderFunctions(final SealableBlockHeader header) {
-    return protocolSchedule.getByBlockNumber(header.getNumber()).getBlockHeaderFunctions();
+    return protocolSchedule.getByBlockHeader(header).getBlockHeaderFunctions();
   }
 }

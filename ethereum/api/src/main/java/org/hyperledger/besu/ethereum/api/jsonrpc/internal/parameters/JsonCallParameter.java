@@ -14,51 +14,68 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
-import static java.lang.Boolean.FALSE;
-
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.deserializer.GasDeserializer;
-import org.hyperledger.besu.ethereum.core.deserializer.HexStringDeserializer;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.json.HexLongDeserializer;
+import org.hyperledger.besu.ethereum.core.json.HexStringDeserializer;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.evm.AccessListEntry;
 
+import java.util.List;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonCallParameter extends CallParameter {
 
-  private final boolean strict;
+  private static final Logger LOG = LoggerFactory.getLogger(JsonCallParameter.class);
+
+  private final Optional<Boolean> strict;
 
   @JsonCreator
   public JsonCallParameter(
       @JsonProperty("from") final Address from,
       @JsonProperty("to") final Address to,
-      @JsonDeserialize(using = GasDeserializer.class) @JsonProperty("gas") final Gas gasLimit,
+      @JsonDeserialize(using = HexLongDeserializer.class) @JsonProperty("gas") final Long gasLimit,
       @JsonProperty("gasPrice") final Wei gasPrice,
-      @JsonProperty("gasPremium") final Wei gasPremium,
-      @JsonProperty("feeCap") final Wei feeCap,
+      @JsonProperty("maxPriorityFeePerGas") final Wei maxPriorityFeePerGas,
+      @JsonProperty("maxFeePerGas") final Wei maxFeePerGas,
       @JsonProperty("value") final Wei value,
       @JsonDeserialize(using = HexStringDeserializer.class) @JsonProperty("data")
           final Bytes payload,
-      @JsonProperty("strict") final Boolean strict) {
+      @JsonProperty("strict") final Boolean strict,
+      @JsonProperty("accessList") final List<AccessListEntry> accessList) {
     super(
         from,
         to,
-        gasLimit != null ? gasLimit.toLong() : -1,
+        gasLimit != null ? gasLimit : -1L,
         gasPrice,
-        Optional.ofNullable(gasPremium),
-        Optional.ofNullable(feeCap),
+        Optional.ofNullable(maxPriorityFeePerGas),
+        Optional.ofNullable(maxFeePerGas),
         value,
-        payload);
-    this.strict = Optional.ofNullable(strict).orElse(FALSE);
+        payload,
+        Optional.ofNullable(accessList));
+    this.strict = Optional.ofNullable(strict);
   }
 
-  public boolean isStrict() {
+  public Optional<Boolean> isMaybeStrict() {
     return strict;
+  }
+
+  @JsonAnySetter
+  public void logUnknownProperties(final String key, final Object value) {
+    LOG.debug(
+        "unknown property - {} with value - {} and type - {} caught during serialization",
+        key,
+        value,
+        value.getClass());
   }
 }

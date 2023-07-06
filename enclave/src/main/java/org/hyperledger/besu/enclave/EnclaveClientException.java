@@ -14,18 +14,37 @@
  */
 package org.hyperledger.besu.enclave;
 
-public class EnclaveClientException extends IllegalArgumentException {
+/** The Enclave client custom exception. */
+public class EnclaveClientException extends RuntimeException {
+  /** Status Code */
   private int statusCode;
 
+  /**
+   * Instantiates a new Enclave client exception.
+   *
+   * @param statusCode the status code
+   * @param message the message
+   */
   public EnclaveClientException(final int statusCode, final String message) {
     super(message);
     this.statusCode = statusCode;
   }
 
+  /**
+   * Instantiates a new Enclave client exception.
+   *
+   * @param message the message
+   * @param cause the cause
+   */
   public EnclaveClientException(final String message, final Throwable cause) {
     super(message, cause);
   }
 
+  /**
+   * Gets status code.
+   *
+   * @return the status code
+   */
   public int getStatusCode() {
     return statusCode;
   }

@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.eth.sync.tasks;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
-import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.EthTaskException;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.EthTaskException.FailureReason;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -53,6 +54,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -79,12 +81,14 @@ public class DetermineCommonAncestorTaskTest {
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             localBlockchain,
             worldStateArchive,
             mock(TransactionPool.class),
             EthProtocolConfiguration.defaultConfig());
     ethContext = ethProtocolManager.ethContext();
-    protocolContext = new ProtocolContext(localBlockchain, worldStateArchive, null);
+    protocolContext =
+        new ProtocolContext(localBlockchain, worldStateArchive, null, Optional.empty());
   }
 
   @Test
@@ -117,8 +121,7 @@ public class DetermineCommonAncestorTaskTest {
     assertThat(failure.get()).isNotNull();
     final Throwable error = ExceptionUtils.rootCause(failure.get());
     assertThat(error).isInstanceOf(EthTaskException.class);
-    assertThat(((EthTaskException) error).reason())
-        .isEqualTo(EthTaskException.FailureReason.PEER_DISCONNECTED);
+    assertThat(((EthTaskException) error).reason()).isEqualTo(FailureReason.NO_AVAILABLE_PEERS);
   }
 
   @Test
@@ -164,7 +167,7 @@ public class DetermineCommonAncestorTaskTest {
     final long range = maximumPossibleCommonAncestorNumber - minimumPossibleCommonAncestorNumber;
     final int skipInterval =
         DetermineCommonAncestorTask.calculateSkipInterval(range, headerRequestSize);
-    final int count = DetermineCommonAncestorTask.calculateCount(range, skipInterval);
+    final int count = DetermineCommonAncestorTask.calculateCount((double) range, skipInterval);
 
     assertThat(count).isEqualTo(11);
     assertThat(skipInterval).isEqualTo(9);

@@ -28,18 +28,31 @@ class CurrentValueCollector extends Collector {
   private final String metricName;
   private final String help;
   private final DoubleSupplier valueSupplier;
+  private final List<String> labelNames;
+  private final List<String> labelValues;
 
   public CurrentValueCollector(
       final String metricName, final String help, final DoubleSupplier valueSupplier) {
+    this(metricName, help, emptyList(), emptyList(), valueSupplier);
+  }
+
+  public CurrentValueCollector(
+      final String metricName,
+      final String help,
+      final List<String> labelNames,
+      final List<String> labelValues,
+      final DoubleSupplier valueSupplier) {
     this.metricName = metricName;
     this.help = help;
     this.valueSupplier = valueSupplier;
+    this.labelNames = labelNames;
+    this.labelValues = labelValues;
   }
 
   @Override
   public List<MetricFamilySamples> collect() {
     final Sample sample =
-        new Sample(metricName, emptyList(), emptyList(), valueSupplier.getAsDouble());
+        new Sample(metricName, labelNames, labelValues, valueSupplier.getAsDouble());
     return singletonList(
         new MetricFamilySamples(metricName, Type.GAUGE, help, singletonList(sample)));
   }

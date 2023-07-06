@@ -26,7 +26,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.Optional;
 
@@ -49,7 +50,7 @@ public class NetEnodeTest {
 
   private final DefaultPeer defaultPeer =
       DefaultPeer.fromEnodeURL(
-          EnodeURL.builder()
+          EnodeURLImpl.builder()
               .nodeId(nodeId)
               .ipAddress("1.2.3.4")
               .discoveryPort(7890)
@@ -80,7 +81,8 @@ public class NetEnodeTest {
         new JsonRpcSuccessResponse(request.getRequest().getId(), enodeURL.get().toString());
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   @Test
@@ -92,7 +94,8 @@ public class NetEnodeTest {
         new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.P2P_DISABLED);
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   @Test
@@ -106,7 +109,8 @@ public class NetEnodeTest {
             request.getRequest().getId(), JsonRpcError.P2P_NETWORK_NOT_RUNNING);
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   private JsonRpcRequestContext netEnodeRequest() {

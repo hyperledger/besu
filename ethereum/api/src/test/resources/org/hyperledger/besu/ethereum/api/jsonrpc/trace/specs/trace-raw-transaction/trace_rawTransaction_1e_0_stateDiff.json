@@ -1,0 +1,59 @@
+{
+  "comment" : "Transaction to test refund_CallToSuicideTwice_d0g0v0_Istanbul",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_rawTransaction",
+    "params" : [ "0xf8808001839896809401600000000000000000000000000000000000000aa000000000000000000000000000000000000000000000000000000000000001f41ca0ac4588a676585985805d4607b85ff0f925f5975d1249f842f1a01e3b910553faa0551434f8fec86b2a8a00f988142c0bf3f0564e313c5e05ba277a64644560af82", [ "stateDiff" ] ],
+    "id" : 49
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x",
+      "stateDiff" : {
+        "0x0000000000000000000000000000000000000000" : {
+          "balance" : {
+            "*" : {
+              "from" : "0x393f0f18385c0b29e",
+              "to" : "0x393f0f18385c111f1"
+            }
+          },
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : { }
+        },
+        "0x0160000000000000000000000000000000000000" : {
+          "balance" : {
+            "*" : {
+              "from" : "0xde0b6b3a764000a",
+              "to" : "0xde0b6b3a7640014"
+            }
+          },
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : { }
+        },
+        "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73" : {
+          "balance" : {
+            "*" : {
+              "from" : "0xffffffffffffffffffffffffffffffffd27fb671b",
+              "to" : "0xffffffffffffffffffffffffffffffffd27fb07be"
+            }
+          },
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x1e",
+              "to" : "0x1f"
+            }
+          },
+          "storage" : { }
+        }
+      },
+      "trace" : [ ],
+      "vmTrace" : null
+    },
+    "id" : 49
+  },
+  "statusCode" : 200
+}

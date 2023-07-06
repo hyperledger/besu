@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export TEST_PATH=../tests
-export GOSS_PATH=$TEST_PATH/goss-linux-amd64
+export GOSS_PATH=$TEST_PATH/goss-linux-${architecture}
 export GOSS_OPTS="$GOSS_OPTS --format junit"
 export GOSS_FILES_STRATEGY=cp
 DOCKER_IMAGE=$1

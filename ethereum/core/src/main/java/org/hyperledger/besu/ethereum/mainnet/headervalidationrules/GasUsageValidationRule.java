@@ -15,13 +15,10 @@
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
-import java.util.Optional;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Validates the gas used in executing the block (defined by the supplied header) is less than or
@@ -29,25 +26,13 @@ import org.apache.logging.log4j.Logger;
  */
 public class GasUsageValidationRule implements DetachedBlockHeaderValidationRule {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(GasUsageValidationRule.class);
 
-  private final Optional<EIP1559> eip1559;
-
-  public GasUsageValidationRule() {
-    this.eip1559 = Optional.empty();
-  }
-
-  public GasUsageValidationRule(final Optional<EIP1559> eip1559) {
-    this.eip1559 = eip1559;
-  }
+  public GasUsageValidationRule() {}
 
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
-    long slackCoefficient = 1;
-    if (eip1559.isPresent() && eip1559.get().isEIP1559(header.getNumber())) {
-      slackCoefficient = eip1559.get().getFeeMarket().getSlackCoefficient();
-    }
-    if (header.getGasUsed() > (header.getGasLimit() * slackCoefficient)) {
+    if (header.getGasUsed() > header.getGasLimit()) {
       LOG.info(
           "Invalid block header: gas used {} exceeds gas limit {}",
           header.getGasUsed(),

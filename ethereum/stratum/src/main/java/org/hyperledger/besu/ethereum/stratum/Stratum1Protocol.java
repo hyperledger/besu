@@ -14,33 +14,33 @@
  */
 package org.hyperledger.besu.ethereum.stratum;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of the stratum+tcp protocol.
@@ -48,7 +48,7 @@ import org.apache.tuweni.bytes.Bytes;
  * <p>This protocol allows miners to submit EthHash solutions over a persistent TCP connection.
  */
 public class Stratum1Protocol implements StratumProtocol {
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(Stratum1Protocol.class);
   private static final JsonMapper mapper = new JsonMapper();
   private static final String STRATUM_1 = "EthereumStratum/1.0.0";
 
@@ -60,14 +60,14 @@ public class Stratum1Protocol implements StratumProtocol {
 
   private final MiningCoordinator miningCoordinator;
   private final String extranonce;
-  private EthHashSolverInputs currentInput;
-  private Function<EthHashSolution, Boolean> submitCallback;
+  private PoWSolverInputs currentInput;
+  private Function<PoWSolution, Boolean> submitCallback;
   private final Supplier<String> jobIdSupplier;
   private final Supplier<String> subscriptionIdCreator;
   private final List<StratumConnection> activeConnections = new ArrayList<>();
   private final EpochCalculator epochCalculator;
 
-  public Stratum1Protocol(final String extranonce, final MiningCoordinator miningCoordinator) {
+  public Stratum1Protocol(final String extranonce, final PoWMiningCoordinator miningCoordinator) {
     this(
         extranonce,
         miningCoordinator,
@@ -80,27 +80,23 @@ public class Stratum1Protocol implements StratumProtocol {
 
   Stratum1Protocol(
       final String extranonce,
-      final MiningCoordinator miningCoordinator,
+      final PoWMiningCoordinator miningCoordinator,
       final Supplier<String> jobIdSupplier,
       final Supplier<String> subscriptionIdCreator) {
-    if (!(miningCoordinator instanceof EthHashMiningCoordinator)) {
-      throw new IllegalArgumentException(
-          "Stratum1 requires an EthHashMiningCoordinator not "
-              + ((miningCoordinator == null) ? "null" : miningCoordinator.getClass().getName()));
-    }
     this.extranonce = extranonce;
     this.miningCoordinator = miningCoordinator;
     this.jobIdSupplier = jobIdSupplier;
     this.subscriptionIdCreator = subscriptionIdCreator;
-    this.epochCalculator = ((EthHashMiningCoordinator) miningCoordinator).getEpochCalculator();
+    this.epochCalculator = miningCoordinator.getEpochCalculator();
   }
 
   @Override
-  public boolean canHandle(final String initialMessage, final StratumConnection conn) {
+  public boolean maybeHandle(
+      final Buffer initialMessage, final StratumConnection conn, final Consumer<String> sender) {
     final JsonRpcRequest requestBody;
     try {
       requestBody = new JsonObject(initialMessage).mapTo(JsonRpcRequest.class);
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException | DecodeException e) {
       LOG.debug(e.getMessage(), e);
       return false;
     }
@@ -121,36 +117,36 @@ public class Stratum1Protocol implements StratumProtocol {
                     },
                     extranonce
                   }));
-      conn.send(notify + "\n");
+      sender.accept(notify);
     } catch (JsonProcessingException e) {
       LOG.debug(e.getMessage(), e);
-      conn.close(null);
+      conn.close();
     }
     return true;
   }
 
-  private void registerConnection(final StratumConnection conn) {
+  private void registerConnection(final StratumConnection conn, final Consumer<String> sender) {
     activeConnections.add(conn);
     if (currentInput != null) {
-      sendNewWork(conn);
+      sendNewWork(sender);
     }
   }
 
-  private void sendNewWork(final StratumConnection conn) {
+  private void sendNewWork(final Consumer<String> sender) {
     byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber(), epochCalculator);
     Object[] params =
         new Object[] {
           jobIdSupplier.get(),
           Bytes.wrap(currentInput.getPrePowHash()).toHexString(),
           Bytes.wrap(dagSeed).toHexString(),
-          currentInput.getTarget().toBytes().toHexString(),
+          currentInput.getTarget().toHexString(),
           true
         };
     JsonRpcRequest req = new JsonRpcRequest("2.0", "mining.notify", params);
     try {
-      conn.send(mapper.writeValueAsString(req) + "\n");
+      sender.accept(mapper.writeValueAsString(req));
     } catch (JsonProcessingException e) {
-      LOG.debug(e.getMessage(), e);
+      throw new IllegalStateException(e);
     }
   }
 
@@ -160,61 +156,66 @@ public class Stratum1Protocol implements StratumProtocol {
   }
 
   @Override
-  public void handle(final StratumConnection conn, final String message) {
-    try {
-      JsonRpcRequest req = new JsonObject(message).mapTo(JsonRpcRequest.class);
-      if ("mining.authorize".equals(req.getMethod())) {
-        handleMiningAuthorize(conn, req);
-      } else if ("mining.submit".equals(req.getMethod())) {
-        handleMiningSubmit(conn, req);
-      } else if (RpcMethod.ETH_SUBMIT_HASHRATE.getMethodName().equals(req.getMethod())) {
-        handleHashrateSubmit(mapper, miningCoordinator, conn, req);
-      }
-    } catch (IllegalArgumentException | IOException e) {
-      LOG.debug(e.getMessage(), e);
-      conn.close(null);
+  public void handle(
+      final StratumConnection conn, final Buffer message, final Consumer<String> sender) {
+    JsonRpcRequest req = new JsonObject(message).mapTo(JsonRpcRequest.class);
+    if ("mining.authorize".equals(req.getMethod())) {
+      handleMiningAuthorize(conn, req, sender);
+    } else if ("mining.submit".equals(req.getMethod())) {
+      handleMiningSubmit(req, sender);
+    } else if (RpcMethod.ETH_SUBMIT_HASHRATE.getMethodName().equals(req.getMethod())) {
+      handleHashrateSubmit(mapper, miningCoordinator, conn, req, sender);
     }
   }
 
-  private void handleMiningSubmit(final StratumConnection conn, final JsonRpcRequest message)
-      throws IOException {
+  private void handleMiningSubmit(final JsonRpcRequest message, final Consumer<String> sender) {
     LOG.debug("Miner submitted solution {}", message);
     boolean result = false;
-    final EthHashSolution solution =
-        new EthHashSolution(
+    final PoWSolution solution =
+        new PoWSolution(
             Bytes.fromHexString(message.getRequiredParameter(2, String.class)).getLong(0),
             Hash.fromHexString(message.getRequiredParameter(4, String.class)),
-            Bytes.fromHexString(message.getRequiredParameter(3, String.class)).toArrayUnsafe());
-    if (Arrays.equals(currentInput.getPrePowHash(), solution.getPowHash())) {
+            null,
+            Bytes.fromHexString(message.getRequiredParameter(3, String.class)));
+    if (currentInput.getPrePowHash().equals(solution.getPowHash())) {
       result = submitCallback.apply(solution);
     }
 
-    String response =
-        mapper.writeValueAsString(new JsonRpcSuccessResponse(message.getId(), result));
-    conn.send(response + "\n");
+    String response;
+    try {
+      response = mapper.writeValueAsString(new JsonRpcSuccessResponse(message.getId(), result));
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException(e);
+    }
+    sender.accept(response);
   }
 
-  private void handleMiningAuthorize(final StratumConnection conn, final JsonRpcRequest message)
-      throws IOException {
+  private void handleMiningAuthorize(
+      final StratumConnection conn, final JsonRpcRequest message, final Consumer<String> sender) {
     // discard message contents as we don't care for username/password.
     // send confirmation
-    String confirm = mapper.writeValueAsString(new JsonRpcSuccessResponse(message.getId(), true));
-    conn.send(confirm + "\n");
+    String confirm;
+    try {
+      confirm = mapper.writeValueAsString(new JsonRpcSuccessResponse(message.getId(), true));
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException(e);
+    }
+    sender.accept(confirm);
     // ready for work.
-    registerConnection(conn);
+    registerConnection(conn, sender);
   }
 
   @Override
-  public void setCurrentWorkTask(final EthHashSolverInputs input) {
+  public void setCurrentWorkTask(final PoWSolverInputs input) {
     this.currentInput = input;
     LOG.debug("Sending new work to miners: {}", input);
     for (StratumConnection conn : activeConnections) {
-      sendNewWork(conn);
+      sendNewWork(conn.notificationSender());
     }
   }
 
   @Override
-  public void setSubmitCallback(final Function<EthHashSolution, Boolean> submitSolutionCallback) {
+  public void setSubmitCallback(final Function<PoWSolution, Boolean> submitSolutionCallback) {
     this.submitCallback = submitSolutionCallback;
   }
 }

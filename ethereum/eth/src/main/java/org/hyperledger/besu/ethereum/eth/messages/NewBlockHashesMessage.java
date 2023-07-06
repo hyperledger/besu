@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -78,8 +78,8 @@ public final class NewBlockHashesMessage extends AbstractMessageData {
   }
 
   @Override
-  public String toString() {
-    return String.format("NewBlockHashesMessage: [%s]", Iterators.toString(getNewHashes()));
+  public String toStringDecoded() {
+    return Iterators.toString(getNewHashes());
   }
 
   public static final class NewBlockHash {
@@ -103,7 +103,7 @@ public final class NewBlockHashesMessage extends AbstractMessageData {
 
     @Override
     public String toString() {
-      return String.format("New Block Hash [%d: %s]", number, hash);
+      return number() + " (" + hash() + ")";
     }
 
     @Override

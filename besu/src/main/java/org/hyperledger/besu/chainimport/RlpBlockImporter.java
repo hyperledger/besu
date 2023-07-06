@@ -21,10 +21,12 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -41,15 +43,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Stopwatch;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Tool for importing rlp-encoded block data from files. */
 public class RlpBlockImporter implements Closeable {
-  private static final Logger LOG = LogManager.getFormatterLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RlpBlockImporter.class);
 
   private final Semaphore blockBacklog = new Semaphore(2);
 
@@ -78,6 +81,17 @@ public class RlpBlockImporter implements Closeable {
     return importBlockchain(blocks, besuController, skipPowValidation, 0L, Long.MAX_VALUE);
   }
 
+  /**
+   * Import blockchain.
+   *
+   * @param blocks the blocks
+   * @param besuController the besu controller
+   * @param skipPowValidation the skip pow validation
+   * @param startBlock the start block
+   * @param endBlock the end block
+   * @return the rlp block importer - import result
+   * @throws IOException the io exception
+   */
   public RlpBlockImporter.ImportResult importBlockchain(
       final Path blocks,
       final BesuController besuController,
@@ -89,15 +103,12 @@ public class RlpBlockImporter implements Closeable {
     final ProtocolContext context = besuController.getProtocolContext();
     final MutableBlockchain blockchain = context.getBlockchain();
     int count = 0;
-
-    try (final RawBlockIterator iterator =
-        new RawBlockIterator(
-            blocks,
-            rlp ->
-                BlockHeader.readFrom(
-                    rlp, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)))) {
+    final BlockHeaderFunctions blockHeaderFunctions =
+        ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
+    try (final RawBlockIterator iterator = new RawBlockIterator(blocks, blockHeaderFunctions)) {
       BlockHeader previousHeader = null;
       CompletableFuture<Void> previousBlockFuture = null;
+      final AtomicReference<Throwable> threadedException = new AtomicReference<>();
       while (iterator.hasNext()) {
         final Block block = iterator.next();
         final BlockHeader header = block.getHeader();
@@ -113,7 +124,7 @@ public class RlpBlockImporter implements Closeable {
         if (previousHeader == null) {
           previousHeader = lookupPreviousHeader(blockchain, header);
         }
-        final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(blockNumber);
+        final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
         final BlockHeader lastHeader = previousHeader;
 
         final CompletableFuture<Void> validationFuture =
@@ -132,7 +143,12 @@ public class RlpBlockImporter implements Closeable {
         }
 
         try {
-          blockBacklog.acquire();
+          do {
+            final Throwable t = (Exception) threadedException.get();
+            if (t != null) {
+              throw new RuntimeException("Error importing block " + header.getNumber(), t);
+            }
+          } while (!blockBacklog.tryAcquire(1, SECONDS));
         } catch (final InterruptedException e) {
           LOG.error("Interrupted adding to backlog.", e);
           break;
@@ -142,6 +158,11 @@ public class RlpBlockImporter implements Closeable {
                 calculationFutures,
                 () -> evaluateBlock(context, block, header, protocolSpec, skipPowValidation),
                 importExecutor);
+        previousBlockFuture.exceptionally(
+            exception -> {
+              threadedException.set(exception);
+              return null;
+            });
 
         ++count;
         previousHeader = header;
@@ -196,7 +217,7 @@ public class RlpBlockImporter implements Closeable {
       cumulativeTimer.start();
       segmentTimer.start();
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
-      final boolean blockImported =
+      final BlockImportResult blockImported =
           blockImporter.importBlock(
               context,
               block,
@@ -204,7 +225,7 @@ public class RlpBlockImporter implements Closeable {
                   ? HeaderValidationMode.LIGHT_SKIP_DETACHED
                   : HeaderValidationMode.SKIP_DETACHED,
               skipPowValidation ? HeaderValidationMode.LIGHT : HeaderValidationMode.FULL);
-      if (!blockImported) {
+      if (!blockImported.isImported()) {
         throw new IllegalStateException(
             "Invalid block at block number " + header.getNumber() + ".");
       }
@@ -225,7 +246,7 @@ public class RlpBlockImporter implements Closeable {
     final long elapseMicros = segmentTimer.elapsed(TimeUnit.MICROSECONDS);
     //noinspection PlaceholderCountMatchesArgumentCount
     LOG.info(
-        "Import at block %8d / %,14d gas %,11d micros / Mgps %7.3f segment %6.3f cumulative",
+        "Import at block {} / {} gas {} micros / Mgps {} segment {} cumulative",
         blockNum,
         segmentGas,
         elapseMicros,
@@ -251,6 +272,7 @@ public class RlpBlockImporter implements Closeable {
   public void close() {
     validationExecutor.shutdownNow();
     try {
+      //noinspection ResultOfMethodCallIgnored
       validationExecutor.awaitTermination(5, SECONDS);
     } catch (final Exception e) {
       LOG.error("Error shutting down validatorExecutor.", e);
@@ -258,18 +280,28 @@ public class RlpBlockImporter implements Closeable {
 
     importExecutor.shutdownNow();
     try {
+      //noinspection ResultOfMethodCallIgnored
       importExecutor.awaitTermination(5, SECONDS);
     } catch (final Exception e) {
       LOG.error("Error shutting down importExecutor", e);
     }
   }
 
+  /** The Import result. */
   public static final class ImportResult {
 
+    /** The difficulty. */
     public final Difficulty td;
 
+    /** The Count. */
     final int count;
 
+    /**
+     * Instantiates a new Import result.
+     *
+     * @param td the td
+     * @param count the count
+     */
     ImportResult(final Difficulty td, final int count) {
       this.td = td;
       this.count = count;

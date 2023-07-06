@@ -25,13 +25,13 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Utility class to help interacting with various {@link NatManager}. */
 public class NatService {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(NatService.class);
 
   private static final boolean DEFAULT_FALLBACK_STATUS = true;
 
@@ -39,12 +39,23 @@ public class NatService {
   private Optional<NatManager> currentNatManager;
   private final boolean fallbackEnabled;
 
+  /**
+   * Instantiates a new Nat service.
+   *
+   * @param natManager the nat manager
+   * @param fallbackEnabled the fallback enabled
+   */
   public NatService(final Optional<NatManager> natManager, final boolean fallbackEnabled) {
     this.currentNatMethod = retrieveNatMethod(natManager);
     this.currentNatManager = natManager;
     this.fallbackEnabled = fallbackEnabled;
   }
 
+  /**
+   * Instantiates a new Nat service.
+   *
+   * @param natManager the nat manager
+   */
   public NatService(final Optional<NatManager> natManager) {
     this(natManager, DEFAULT_FALLBACK_STATUS);
   }
@@ -95,10 +106,12 @@ public class NatService {
       try {
         getNatManager().orElseThrow().start();
       } catch (Exception e) {
-        LOG.debug(
+        LOG.warn(
             "Nat manager failed to configure itself automatically due to the following reason : {}. {}",
-            e.getMessage(),
-            (fallbackEnabled) ? "NONE mode will be used" : "");
+            e,
+            (fallbackEnabled)
+                ? "NONE mode will be used as a fallback (set --Xnat-method-fallback-enabled=false to disable)"
+                : "");
         if (fallbackEnabled) {
           disableNatManager();
         } else {
@@ -158,6 +171,7 @@ public class NatService {
    *
    * @param fallbackValue the advertised IP address fallback value
    * @return The local IP address wrapped in a {@link Optional}.
+   * @throws RuntimeException the runtime exception
    */
   public String queryLocalIPAddress(final String fallbackValue) throws RuntimeException {
     if (isNatEnvironment()) {

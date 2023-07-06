@@ -16,16 +16,24 @@ package org.hyperledger.besu.util;
 
 import static java.util.stream.Collectors.toList;
 
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/** The Permissioning configuration validator. */
 public class PermissioningConfigurationValidator {
 
+  /**
+   * Check if all nodes are in allowlist.
+   *
+   * @param nodeURIs the node URIs
+   * @param permissioningConfiguration the permissioning configuration
+   * @throws Exception In case of nodes are not in allow list
+   */
   public static void areAllNodesAreInAllowlist(
       final Collection<EnodeURL> nodeURIs,
       final LocalPermissioningConfiguration permissioningConfiguration)

@@ -14,24 +14,32 @@
  */
 package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
 
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteType;
+import static com.google.common.base.Preconditions.checkState;
+
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.consensus.common.validator.VoteType;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Address;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The Ibft propose validator vote. */
 public class IbftProposeValidatorVote implements JsonRpcMethod {
-  private static final Logger LOG = LogManager.getLogger();
-  private final VoteProposer voteProposer;
+  private static final Logger LOG = LoggerFactory.getLogger(IbftProposeValidatorVote.class);
+  private final ValidatorProvider validatorProvider;
 
-  public IbftProposeValidatorVote(final VoteProposer voteProposer) {
-    this.voteProposer = voteProposer;
+  /**
+   * Instantiates a new Ibft propose validator vote.
+   *
+   * @param validatorProvider the validator provider
+   */
+  public IbftProposeValidatorVote(final ValidatorProvider validatorProvider) {
+    this.validatorProvider = validatorProvider;
   }
 
   @Override
@@ -41,7 +49,8 @@ public class IbftProposeValidatorVote implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-
+    checkState(
+        validatorProvider.getVoteProviderAtHead().isPresent(), "Ibft requires a vote provider");
     final Address validatorAddress = requestContext.getRequiredParameter(0, Address.class);
     final Boolean add = requestContext.getRequiredParameter(1, Boolean.class);
     LOG.trace(
@@ -51,9 +60,9 @@ public class IbftProposeValidatorVote implements JsonRpcMethod {
         validatorAddress);
 
     if (add) {
-      voteProposer.auth(validatorAddress);
+      validatorProvider.getVoteProviderAtHead().get().authVote(validatorAddress);
     } else {
-      voteProposer.drop(validatorAddress);
+      validatorProvider.getVoteProviderAtHead().get().dropVote(validatorAddress);
     }
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);

@@ -15,15 +15,14 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.apache.logging.log4j.LogManager.getLogger;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
@@ -35,13 +34,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PrivateTransactionLocator {
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PrivateTransactionLocator.class);
 
   private final Blockchain blockchain;
   private final Enclave enclave;
@@ -155,8 +155,7 @@ public class PrivateTransactionLocator {
         privateTransaction = PrivateTransaction.readFrom(input);
       }
     } catch (final RLPException e) {
-      LOG.debug("Error de-serializing private transaction from enclave", e);
-      throw e;
+      throw new IllegalStateException("Error de-serializing private transaction from enclave", e);
     }
 
     return new TransactionFromEnclave(privateTransaction, receiveResponse.getPrivacyGroupId());
@@ -192,10 +191,10 @@ public class PrivateTransactionLocator {
 
           for (final PrivateTransactionWithMetadata privateTx :
               privateTransactionWithMetadataList) {
-            final Hash actualPrivacyMarkerTransactionHash =
-                privateTx.getPrivateTransactionMetadata().getPrivacyMarkerTransactionHash();
+            final Hash actualPrivateMarkerTransactionHash =
+                privateTx.getPrivateTransactionMetadata().getPrivateMarkerTransactionHash();
 
-            if (expectedPmtHash.equals(actualPrivacyMarkerTransactionHash)) {
+            if (expectedPmtHash.equals(actualPrivateMarkerTransactionHash)) {
               return Optional.of(
                   new TransactionFromEnclave(
                       privateTx.getPrivateTransaction(),

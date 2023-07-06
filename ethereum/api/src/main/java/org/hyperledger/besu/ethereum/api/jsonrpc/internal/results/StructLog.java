@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 
 import java.util.Arrays;
@@ -42,8 +41,8 @@ public class StructLog {
 
   public StructLog(final TraceFrame traceFrame) {
     depth = traceFrame.getDepth() + 1;
-    gas = traceFrame.getGasRemaining().toLong();
-    gasCost = traceFrame.getGasCost().map(Gas::toLong).orElse(0L);
+    gas = traceFrame.getGasRemaining();
+    gasCost = traceFrame.getGasCost().orElse(0L);
     memory =
         traceFrame
             .getMemory()
@@ -64,8 +63,7 @@ public class StructLog {
     final Map<String, String> formattedStorage = new TreeMap<>();
     storage.forEach(
         (key, value) ->
-            formattedStorage.put(
-                key.toBytes().toUnprefixedHexString(), value.toBytes().toUnprefixedHexString()));
+            formattedStorage.put(key.toUnprefixedHexString(), value.toUnprefixedHexString()));
     return formattedStorage;
   }
 

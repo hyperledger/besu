@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.chain;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -36,7 +36,8 @@ public class BlockAddedEvent {
   public enum EventType {
     HEAD_ADVANCED,
     FORK,
-    CHAIN_REORG
+    CHAIN_REORG,
+    STORED_ONLY
   }
 
   private BlockAddedEvent(
@@ -98,12 +99,23 @@ public class BlockAddedEvent {
         block.getHeader().getParentHash());
   }
 
+  public static BlockAddedEvent createForStoredOnly(final Block block) {
+    return new BlockAddedEvent(
+        EventType.STORED_ONLY,
+        block,
+        Collections.emptyList(),
+        Collections.emptyList(),
+        Collections.emptyList(),
+        Collections.emptyList(),
+        block.getHeader().getParentHash());
+  }
+
   public Block getBlock() {
     return block;
   }
 
   public boolean isNewCanonicalHead() {
-    return eventType != EventType.FORK;
+    return eventType == EventType.HEAD_ADVANCED || eventType == EventType.CHAIN_REORG;
   }
 
   public EventType getEventType() {
@@ -128,5 +140,25 @@ public class BlockAddedEvent {
 
   public Hash getCommonAncestorHash() {
     return commonAncestorHash;
+  }
+
+  @Override
+  public String toString() {
+    return "BlockAddedEvent{"
+        + "eventType="
+        + eventType
+        + ", block="
+        + block.toLogString()
+        + ", commonAncestorHash="
+        + commonAncestorHash
+        + ", addedTransactions count="
+        + addedTransactions.size()
+        + ", removedTransactions count="
+        + removedTransactions.size()
+        + ", transactionReceipts count ="
+        + transactionReceipts.size()
+        + ", logsWithMetadata count="
+        + logsWithMetadata.size()
+        + '}';
   }
 }

@@ -1,0 +1,30 @@
+{
+  "request": {
+    "id": 28,
+    "jsonrpc": "2.0",
+    "method": "eth_getProof",
+    "params": [
+      "0x8888f1f195afa192cfee860698584c030f4c9db1",
+      ["0x0000000000000000000000000000000000000000000000000000000000000347"],
+      "0xb73cee02246c6f32ac0f459934e89102c2ce904d966a4fc2ab6309c3e104b9cb"
+    ]
+  },
+  "response": {
+    "jsonrpc" : "2.0",
+    "id" : 28,
+    "result" : {
+      "accountProof" : [ "0xf891a09e0124af825ca88d0c30ae4a69f2c339196c23952b0226f03c7e7460699c0541a097699db78357681938d946074cafa3355e921261ba0bd5081bff15c4f17d0c7f8080808080808080a044b83742345b4b2b4debce6d454e97bfb713ae1416dee357f5fd93f858a73a75808080a0d2c1b7d4a3c019943eff4e75716ade2750b1955abcf5d2355de6e3693d6c30d38080", "0xf872a0332fbb2bcac38ed596cbb34ae265df4d60b832ce8077a3abc6f57b4611005cfdb84ff84d808906cb0f6ed0e034ae5da056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a0c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470" ],
+      "address" : "0x8888f1f195afa192cfee860698584c030f4c9db1",
+      "balance" : "0x6cb0f6ed0e034ae5d",
+      "codeHash" : "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+      "nonce" : "0x0",
+      "storageHash" : "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+      "storageProof" : [ {
+        "key" : "0x0347",
+        "value" : "0x0",
+        "proof" : [ ]
+      } ]
+    }
+  },
+  "statusCode": 200
+}

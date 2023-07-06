@@ -14,11 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
-import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
+import org.hyperledger.besu.ethereum.p2p.rlpx.framing.FramerProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;
+import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakerProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -36,14 +38,19 @@ final class HandshakeHandlerInbound extends AbstractHandshakeHandler {
       final LocalNode localNode,
       final CompletableFuture<PeerConnection> connectionFuture,
       final PeerConnectionEventDispatcher connectionEventDispatcher,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final HandshakerProvider handshakerProvider,
+      final FramerProvider framerProvider) {
     super(
         subProtocols,
         localNode,
         Optional.empty(),
         connectionFuture,
         connectionEventDispatcher,
-        metricsSystem);
+        metricsSystem,
+        handshakerProvider,
+        framerProvider,
+        true);
     handshaker.prepareResponder(nodeKey);
   }
 

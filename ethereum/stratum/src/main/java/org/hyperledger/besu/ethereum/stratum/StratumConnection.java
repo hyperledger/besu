@@ -14,92 +14,52 @@
  */
 package org.hyperledger.besu.ethereum.stratum;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Iterator;
 import java.util.function.Consumer;
 
-import com.google.common.base.Splitter;
 import io.vertx.core.buffer.Buffer;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Persistent TCP connection using a variant of the Stratum protocol, connecting the client to
  * miners.
  */
 final class StratumConnection {
-  private static final Logger LOG = getLogger();
-
-  private String incompleteMessage = "";
+  private static final Logger LOG = LoggerFactory.getLogger(StratumConnection.class);
 
   private final StratumProtocol[] protocols;
-  private final Runnable closeHandle;
-  private final Consumer<String> sender;
-
+  private final Consumer<String> notificationSender;
   private StratumProtocol protocol;
 
-  StratumConnection(
-      final StratumProtocol[] protocols,
-      final Runnable closeHandle,
-      final Consumer<String> sender) {
+  StratumConnection(final StratumProtocol[] protocols, final Consumer<String> notificationSender) {
     this.protocols = protocols;
-    this.closeHandle = closeHandle;
-    this.sender = sender;
+    this.notificationSender = notificationSender;
   }
 
-  void handleBuffer(final Buffer buffer) {
-    LOG.trace("Buffer received {}", buffer);
-    Splitter splitter = Splitter.on('\n');
-    boolean firstMessage = false;
-    String messagesString;
-    try {
-      messagesString = buffer.toString(StandardCharsets.UTF_8);
-    } catch (IllegalArgumentException e) {
-      LOG.debug("Invalid message with non UTF-8 characters: " + e.getMessage(), e);
-      closeHandle.run();
-      return;
-    }
-    Iterator<String> messages = splitter.split(messagesString).iterator();
-    while (messages.hasNext()) {
-      String message = messages.next();
-      if (!firstMessage) {
-        message = incompleteMessage + message;
-        firstMessage = true;
+  void handleBuffer(final Buffer message, final Consumer<String> sender) {
+    LOG.trace(">> {}", message);
+    if (protocol == null) {
+      for (StratumProtocol protocol : protocols) {
+        if (protocol.maybeHandle(message, this, sender)) {
+          LOG.trace("Using protocol: {}", protocol.getClass().getSimpleName());
+          this.protocol = protocol;
+        }
       }
-      if (!messages.hasNext()) {
-        incompleteMessage = message;
-      } else {
-        LOG.trace("Dispatching message {}", message);
-        handleMessage(message);
+      if (protocol == null) {
+        throw new IllegalArgumentException("Invalid first message");
       }
+    } else {
+      protocol.handle(this, message, sender);
     }
   }
 
-  void close(final Void aVoid) {
+  void close() {
     if (protocol != null) {
       protocol.onClose(this);
     }
   }
 
-  private void handleMessage(final String message) {
-    if (protocol == null) {
-      for (StratumProtocol protocol : protocols) {
-        if (protocol.canHandle(message, this)) {
-          this.protocol = protocol;
-        }
-      }
-      if (protocol == null) {
-        LOG.debug("Invalid first message: {}", message);
-        closeHandle.run();
-      }
-    } else {
-      protocol.handle(this, message);
-    }
-  }
-
-  public void send(final String message) {
-    LOG.debug("Sending message {}", message);
-    sender.accept(message);
+  public Consumer<String> notificationSender() {
+    return notificationSender;
   }
 }

@@ -14,43 +14,29 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
-import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
-import org.hyperledger.besu.ethereum.vm.EstimateGasOperationTracer;
+import org.hyperledger.besu.evm.tracing.EstimateGasOperationTracer;
 
 import java.util.Optional;
-import java.util.function.Function;
 
-public class EthEstimateGas implements JsonRpcMethod {
-
-  private static final double SUB_CALL_REMAINING_GAS_RATIO = 65D / 64D;
-
-  private final BlockchainQueries blockchainQueries;
-  private final TransactionSimulator transactionSimulator;
+public class EthEstimateGas extends AbstractEstimateGas {
 
   public EthEstimateGas(
       final BlockchainQueries blockchainQueries, final TransactionSimulator transactionSimulator) {
-    this.blockchainQueries = blockchainQueries;
-    this.transactionSimulator = transactionSimulator;
+    super(blockchainQueries, transactionSimulator);
   }
 
   @Override
@@ -68,107 +54,75 @@ public class EthEstimateGas implements JsonRpcMethod {
     }
     if (!blockchainQueries
         .getWorldStateArchive()
-        .isWorldStateAvailable(blockHeader.getStateRoot())) {
+        .isWorldStateAvailable(blockHeader.getStateRoot(), blockHeader.getHash())) {
       return errorResponse(requestContext, JsonRpcError.WORLD_STATE_UNAVAILABLE);
     }
 
     final CallParameter modifiedCallParams =
         overrideGasLimitAndPrice(callParams, blockHeader.getGasLimit());
 
+    final boolean isAllowExceedingBalance = !callParams.isMaybeStrict().orElse(Boolean.FALSE);
+
     final EstimateGasOperationTracer operationTracer = new EstimateGasOperationTracer();
 
-    return transactionSimulator
-        .process(
-            modifiedCallParams,
-            ImmutableTransactionValidationParams.builder()
-                .from(TransactionValidationParams.transactionSimulator())
-                .isAllowExceedingBalance(!callParams.isStrict())
-                .build(),
+    var gasUsed =
+        executeSimulation(
+            blockHeader, modifiedCallParams, operationTracer, isAllowExceedingBalance);
+
+    if (gasUsed.isEmpty()) {
+      return errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR);
+    }
+
+    // if the transaction is invalid or doesn't have enough gas with the max it never will!
+    if (gasUsed.get().isInvalid() || !gasUsed.get().isSuccessful()) {
+      return errorResponse(requestContext, gasUsed.get());
+    }
+
+    var low = gasUsed.get().getResult().getEstimateGasUsedByTransaction();
+    var lowResult =
+        executeSimulation(
+            blockHeader,
+            overrideGasLimitAndPrice(callParams, low),
             operationTracer,
-            blockHeader.getNumber())
-        .map(gasEstimateResponse(requestContext, operationTracer))
-        .orElse(errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR));
-  }
+            isAllowExceedingBalance);
 
-  private BlockHeader blockHeader() {
-    final long headBlockNumber = blockchainQueries.headBlockNumber();
-    return blockchainQueries.getBlockchain().getBlockHeader(headBlockNumber).orElse(null);
-  }
+    if (lowResult.isPresent() && lowResult.get().isSuccessful()) {
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Quantity.create(low));
+    }
 
-  private CallParameter overrideGasLimitAndPrice(
-      final JsonCallParameter callParams, final long gasLimit) {
-    return new CallParameter(
-        callParams.getFrom(),
-        callParams.getTo(),
-        gasLimit,
-        Optional.ofNullable(callParams.getGasPrice()).orElse(Wei.ZERO),
-        callParams.getGasPremium(),
-        callParams.getFeeCap(),
-        callParams.getValue(),
-        callParams.getPayload());
-  }
+    var high = processEstimateGas(gasUsed.get(), operationTracer);
+    var mid = high;
+    while (low + 1 < high) {
+      mid = (high + low) / 2;
 
-  private Function<TransactionSimulatorResult, JsonRpcResponse> gasEstimateResponse(
-      final JsonRpcRequestContext request, final EstimateGasOperationTracer operationTracer) {
-    return result ->
-        result.isSuccessful()
-            ? new JsonRpcSuccessResponse(
-                request.getRequest().getId(),
-                Quantity.create(processEstimateGas(result, operationTracer)))
-            : errorResponse(request, result);
-  }
-
-  /**
-   * Estimate gas by adding minimum gas remaining for some operation and the necessary gas for sub
-   * calls
-   *
-   * @param result transaction simulator result
-   * @param operationTracer estimate gas operation tracer
-   * @return estimate gas
-   */
-  private long processEstimateGas(
-      final TransactionSimulatorResult result, final EstimateGasOperationTracer operationTracer) {
-    // no more than 63/64s of the remaining gas can be passed to the sub calls
-    final double subCallMultiplier =
-        Math.pow(SUB_CALL_REMAINING_GAS_RATIO, operationTracer.getMaxDepth());
-    // and minimum gas remaining is necessary for some operation (additionalStipend)
-    final long gasStipend = operationTracer.getStipendNeeded().toLong();
-    final long gasUsedByTransaction = result.getResult().getEstimateGasUsedByTransaction();
-    return ((long) ((gasUsedByTransaction + gasStipend) * subCallMultiplier));
-  }
-
-  private JsonRpcErrorResponse errorResponse(
-      final JsonRpcRequestContext request, final TransactionSimulatorResult result) {
-    final JsonRpcError jsonRpcError;
-
-    final ValidationResult<TransactionInvalidReason> validationResult =
-        result.getValidationResult();
-    if (validationResult != null && !validationResult.isValid()) {
-      jsonRpcError =
-          JsonRpcErrorConverter.convertTransactionInvalidReason(
-              validationResult.getInvalidReason());
-    } else {
-      final TransactionProcessingResult resultTrx = result.getResult();
-      if (resultTrx != null && resultTrx.getRevertReason().isPresent()) {
-        jsonRpcError = JsonRpcError.REVERT_ERROR;
+      var binarySearchResult =
+          executeSimulation(
+              blockHeader,
+              overrideGasLimitAndPrice(callParams, mid),
+              operationTracer,
+              isAllowExceedingBalance);
+      if (binarySearchResult.isEmpty() || !binarySearchResult.get().isSuccessful()) {
+        low = mid;
       } else {
-        jsonRpcError = JsonRpcError.INTERNAL_ERROR;
+        high = mid;
       }
     }
-    return errorResponse(request, jsonRpcError);
+
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Quantity.create(high));
   }
 
-  private JsonRpcErrorResponse errorResponse(
-      final JsonRpcRequestContext request, final JsonRpcError jsonRpcError) {
-    return new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);
-  }
-
-  private JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
-    final JsonCallParameter callParams = request.getRequiredParameter(0, JsonCallParameter.class);
-    if (callParams.getGasPrice() != null
-        && (callParams.getFeeCap().isPresent() || callParams.getGasPremium().isPresent())) {
-      throw new InvalidJsonRpcParameters("gasPrice cannot be used with baseFee or feeCap");
-    }
-    return callParams;
+  private Optional<TransactionSimulatorResult> executeSimulation(
+      final BlockHeader blockHeader,
+      final CallParameter modifiedCallParams,
+      final EstimateGasOperationTracer operationTracer,
+      final boolean allowExceedingBalance) {
+    return transactionSimulator.process(
+        modifiedCallParams,
+        ImmutableTransactionValidationParams.builder()
+            .from(TransactionValidationParams.transactionSimulator())
+            .isAllowExceedingBalance(allowExceedingBalance)
+            .build(),
+        operationTracer,
+        blockHeader.getNumber());
   }
 }

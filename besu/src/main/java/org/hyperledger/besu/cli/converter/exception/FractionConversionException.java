@@ -16,8 +16,14 @@ package org.hyperledger.besu.cli.converter.exception;
 
 import static java.lang.String.format;
 
+/** The custom Fraction conversion exception. */
 public final class FractionConversionException extends Exception {
 
+  /**
+   * Instantiates a new Fraction conversion exception.
+   *
+   * @param value the value
+   */
   public FractionConversionException(final String value) {
     super(format("Invalid value: %s, should be a decimal between 0.0 and 1.0 inclusive.", value));
   }

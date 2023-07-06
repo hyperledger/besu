@@ -17,7 +17,7 @@ package org.hyperledger.besu.nat.core.domain;
 
 /**
  * This enum describes the types of services that could be impacted by the {@link
- * org.hyperledger.besu.nat.NatMethod} used by the Besu node.
+ * org.hyperledger.besu.nat.NatMethod}* used by the Besu node.
  *
  * <ul>
  *   <li><b>JSON_RPC:</b> Ethereum JSON-RPC HTTP service.
@@ -26,8 +26,11 @@ package org.hyperledger.besu.nat.core.domain;
  * </ul>
  */
 public enum NatServiceType {
+  /** Json rpc nat service type. */
   JSON_RPC("json-rpc"),
+  /** Rlpx nat service type. */
   RLPX("rlpx"),
+  /** Discovery nat service type. */
   DISCOVERY("discovery");
 
   private final String value;
@@ -53,6 +56,11 @@ public enum NatServiceType {
         String.format("Invalid NAT service type provided: %s", natServiceTypeName));
   }
 
+  /**
+   * Gets value.
+   *
+   * @return the value
+   */
   public String getValue() {
     return value;
   }

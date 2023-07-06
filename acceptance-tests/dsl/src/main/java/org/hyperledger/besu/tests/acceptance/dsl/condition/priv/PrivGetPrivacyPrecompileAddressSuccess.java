@@ -16,7 +16,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.condition.priv;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetPrivacyPrecompileAddressTransaction;

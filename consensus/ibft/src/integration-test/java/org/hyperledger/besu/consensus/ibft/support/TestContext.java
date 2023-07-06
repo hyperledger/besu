@@ -17,11 +17,12 @@ package org.hyperledger.besu.consensus.ibft.support;
 import org.hyperledger.besu.consensus.common.bft.BftExecutors;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.EventMultiplexer;
+import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
+import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
-import org.hyperledger.besu.consensus.ibft.statemachine.IbftFinalState;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
@@ -43,22 +44,25 @@ public class TestContext {
   private final MutableBlockchain blockchain;
   private final BftExecutors bftExecutors;
   private final BftEventHandler controller;
-  private final IbftFinalState finalState;
+  private final BftFinalState finalState;
   private final EventMultiplexer eventMultiplexer;
+  private final MessageFactory messageFactory;
 
   public TestContext(
       final Map<Address, ValidatorPeer> remotePeers,
       final MutableBlockchain blockchain,
       final BftExecutors bftExecutors,
       final BftEventHandler controller,
-      final IbftFinalState finalState,
-      final EventMultiplexer eventMultiplexer) {
+      final BftFinalState finalState,
+      final EventMultiplexer eventMultiplexer,
+      final MessageFactory messageFactory) {
     this.remotePeers = remotePeers;
     this.blockchain = blockchain;
     this.bftExecutors = bftExecutors;
     this.controller = controller;
     this.finalState = finalState;
     this.eventMultiplexer = eventMultiplexer;
+    this.messageFactory = messageFactory;
   }
 
   public void start() {
@@ -79,12 +83,16 @@ public class TestContext {
   }
 
   public MessageFactory getLocalNodeMessageFactory() {
-    return finalState.getMessageFactory();
+    return messageFactory;
   }
 
   public Block createBlockForProposal(
       final BlockHeader parent, final int round, final long timestamp) {
-    return finalState.getBlockCreatorFactory().create(parent, round).createBlock(timestamp);
+    return finalState
+        .getBlockCreatorFactory()
+        .create(parent, round)
+        .createBlock(timestamp)
+        .getBlock();
   }
 
   public Block createBlockForProposalFromChainHead(final int round, final long timestamp) {

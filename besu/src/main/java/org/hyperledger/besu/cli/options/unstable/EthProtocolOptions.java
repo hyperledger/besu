@@ -24,15 +24,28 @@ import java.util.List;
 
 import picocli.CommandLine;
 
+/** The Eth protocol CLI options. */
 public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> {
+  private static final String MAX_MESSAGE_SIZE_FLAG = "--Xeth-max-message-size";
   private static final String MAX_GET_HEADERS_FLAG = "--Xewp-max-get-headers";
   private static final String MAX_GET_BODIES_FLAG = "--Xewp-max-get-bodies";
   private static final String MAX_GET_RECEIPTS_FLAG = "--Xewp-max-get-receipts";
   private static final String MAX_GET_NODE_DATA_FLAG = "--Xewp-max-get-node-data";
   private static final String MAX_GET_POOLED_TRANSACTIONS = "--Xewp-max-get-pooled-transactions";
-  private static final String ETH_65_ENABLED = "--Xeth-65-enabled";
   private static final String LEGACY_ETH_64_FORK_ID_ENABLED =
       "--compatibility-eth64-forkid-enabled";
+
+  private static final String MAX_CAPABILITY = "--Xeth-capability-max";
+  private static final String MIN_CAPABILITY = "--Xeth-capability-min";
+
+  @CommandLine.Option(
+      hidden = true,
+      names = {MAX_MESSAGE_SIZE_FLAG},
+      paramLabel = "<INTEGER>",
+      description =
+          "Maximum message size (in bytes) for Ethereum Wire Protocol messages. (default: ${DEFAULT-VALUE})")
+  private PositiveNumber maxMessageSize =
+      PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
 
   @CommandLine.Option(
       hidden = true,
@@ -80,53 +93,77 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
       PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS);
 
   @CommandLine.Option(
-      hidden = true,
-      names = {ETH_65_ENABLED},
-      paramLabel = "<Boolean>",
-      description = "Enable the Eth/65 subprotocol. (default: ${DEFAULT-VALUE})")
-  private Boolean eth65Enabled = EthProtocolConfiguration.DEFAULT_ETH_65_ENABLED;
-
-  @CommandLine.Option(
       names = {LEGACY_ETH_64_FORK_ID_ENABLED},
       paramLabel = "<Boolean>",
       description = "Enable the legacy Eth/64 fork id. (default: ${DEFAULT-VALUE})")
   private Boolean legacyEth64ForkIdEnabled =
       EthProtocolConfiguration.DEFAULT_LEGACY_ETH_64_FORK_ID_ENABLED;
 
+  @CommandLine.Option(
+      hidden = true,
+      names = {MAX_CAPABILITY},
+      paramLabel = "<INTEGER>",
+      description = "Max protocol version to support")
+  private int maxEthCapability = EthProtocolConfiguration.DEFAULT_MAX_CAPABILITY;
+
+  @CommandLine.Option(
+      hidden = true,
+      names = {MIN_CAPABILITY},
+      paramLabel = "<INTEGER>",
+      description = "Min protocol version to support")
+  private int minEthCapability = EthProtocolConfiguration.DEFAULT_MIN_CAPABILITY;
+
   private EthProtocolOptions() {}
 
+  /**
+   * Create eth protocol options.
+   *
+   * @return the eth protocol options
+   */
   public static EthProtocolOptions create() {
     return new EthProtocolOptions();
   }
 
+  /**
+   * From config eth protocol options.
+   *
+   * @param config the config
+   * @return the eth protocol options
+   */
   public static EthProtocolOptions fromConfig(final EthProtocolConfiguration config) {
     final EthProtocolOptions options = create();
+    options.maxMessageSize = PositiveNumber.fromInt(config.getMaxMessageSize());
     options.maxGetBlockHeaders = PositiveNumber.fromInt(config.getMaxGetBlockHeaders());
     options.maxGetBlockBodies = PositiveNumber.fromInt(config.getMaxGetBlockBodies());
     options.maxGetReceipts = PositiveNumber.fromInt(config.getMaxGetReceipts());
     options.maxGetNodeData = PositiveNumber.fromInt(config.getMaxGetNodeData());
     options.maxGetPooledTransactions = PositiveNumber.fromInt(config.getMaxGetPooledTransactions());
-    options.eth65Enabled = config.isEth65Enabled();
     options.legacyEth64ForkIdEnabled = config.isLegacyEth64ForkIdEnabled();
+    options.maxEthCapability = config.getMaxEthCapability();
+    options.minEthCapability = config.getMinEthCapability();
     return options;
   }
 
   @Override
   public EthProtocolConfiguration toDomainObject() {
     return EthProtocolConfiguration.builder()
+        .maxMessageSize(maxMessageSize)
         .maxGetBlockHeaders(maxGetBlockHeaders)
         .maxGetBlockBodies(maxGetBlockBodies)
         .maxGetReceipts(maxGetReceipts)
         .maxGetNodeData(maxGetNodeData)
         .maxGetPooledTransactions(maxGetPooledTransactions)
-        .eth65Enabled(eth65Enabled)
         .legacyEth64ForkIdEnabled(legacyEth64ForkIdEnabled)
+        .maxEthCapability(maxEthCapability)
+        .minEthCapability(minEthCapability)
         .build();
   }
 
   @Override
   public List<String> getCLIOptions() {
     return Arrays.asList(
+        MAX_MESSAGE_SIZE_FLAG,
+        OptionParser.format(maxMessageSize.getValue()),
         MAX_GET_HEADERS_FLAG,
         OptionParser.format(maxGetBlockHeaders.getValue()),
         MAX_GET_BODIES_FLAG,
@@ -137,7 +174,6 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
         OptionParser.format(maxGetNodeData.getValue()),
         MAX_GET_POOLED_TRANSACTIONS,
         OptionParser.format(maxGetPooledTransactions.getValue()),
-        ETH_65_ENABLED + "=" + eth65Enabled,
         LEGACY_ETH_64_FORK_ID_ENABLED + "=" + legacyEth64ForkIdEnabled);
   }
 }

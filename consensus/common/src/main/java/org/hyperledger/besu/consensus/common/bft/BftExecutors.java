@@ -23,46 +23,78 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The Bft executors. */
 public class BftExecutors {
 
   private enum State {
+    /** Idle state. */
     IDLE,
+    /** Running state. */
     RUNNING,
+    /** Stopped state. */
     STOPPED
   }
 
-  private static final Logger LOG = LogManager.getLogger();
+  /** The enum Consensus type. */
+  public enum ConsensusType {
+    /** Ibft consensus type. */
+    IBFT,
+    /** Qbft consensus type. */
+    QBFT
+  }
+
+  private static final Logger LOG = LoggerFactory.getLogger(BftExecutors.class);
 
   private final Duration shutdownTimeout = Duration.ofSeconds(30);
   private final MetricsSystem metricsSystem;
+  private final ConsensusType consensusType;
 
   private volatile ScheduledExecutorService timerExecutor;
   private volatile ExecutorService bftProcessorExecutor;
   private volatile State state = State.IDLE;
 
-  private BftExecutors(final MetricsSystem metricsSystem) {
+  private BftExecutors(final MetricsSystem metricsSystem, final ConsensusType consensusType) {
     this.metricsSystem = metricsSystem;
+    this.consensusType = consensusType;
   }
 
-  public static BftExecutors create(final MetricsSystem metricsSystem) {
-    return new BftExecutors(metricsSystem);
+  /**
+   * Create bft executors.
+   *
+   * @param metricsSystem the metrics system
+   * @param consensusType the consensus type
+   * @return the bft executors
+   */
+  public static BftExecutors create(
+      final MetricsSystem metricsSystem, final ConsensusType consensusType) {
+    return new BftExecutors(metricsSystem, consensusType);
   }
 
+  /** Start. */
   public synchronized void start() {
     if (state != State.IDLE) {
       // Nothing to do
       return;
     }
     state = State.RUNNING;
-    bftProcessorExecutor = Executors.newSingleThreadExecutor();
-    timerExecutor = MonitoredExecutors.newScheduledThreadPool("BftTimerExecutor", 1, metricsSystem);
+    final ThreadFactory namedThreadFactory =
+        new ThreadFactoryBuilder()
+            .setNameFormat("BftProcessorExecutor-" + consensusType.name() + "-%d")
+            .build();
+    bftProcessorExecutor = Executors.newSingleThreadExecutor(namedThreadFactory);
+    timerExecutor =
+        MonitoredExecutors.newScheduledThreadPool(
+            "BftTimerExecutor-" + consensusType.name(), 1, metricsSystem);
   }
 
+  /** Stop. */
   public void stop() {
     synchronized (this) {
       if (state != State.RUNNING) {
@@ -70,11 +102,15 @@ public class BftExecutors {
       }
       state = State.STOPPED;
     }
-
     timerExecutor.shutdownNow();
     bftProcessorExecutor.shutdownNow();
   }
 
+  /**
+   * Await stop.
+   *
+   * @throws InterruptedException the interrupted exception
+   */
   public void awaitStop() throws InterruptedException {
     if (!timerExecutor.awaitTermination(shutdownTimeout.getSeconds(), TimeUnit.SECONDS)) {
       LOG.error("{} timer executor did not shutdown cleanly.", getClass().getSimpleName());
@@ -84,11 +120,24 @@ public class BftExecutors {
     }
   }
 
+  /**
+   * Execute bft processor.
+   *
+   * @param bftProcessor the bft processor
+   */
   public synchronized void executeBftProcessor(final BftProcessor bftProcessor) {
     assertRunning();
     bftProcessorExecutor.execute(bftProcessor);
   }
 
+  /**
+   * Schedule task.
+   *
+   * @param command the command
+   * @param delay the delay
+   * @param unit the unit
+   * @return the scheduled future
+   */
   public synchronized ScheduledFuture<?> scheduleTask(
       final Runnable command, final long delay, final TimeUnit unit) {
     assertRunning();

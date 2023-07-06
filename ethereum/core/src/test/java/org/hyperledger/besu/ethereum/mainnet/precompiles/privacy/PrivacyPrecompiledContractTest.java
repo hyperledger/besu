@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.VALID_BASE64_ENCLAVE_KEY;
 import static org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture.privateTransactionBesu;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE;
+import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
@@ -26,22 +28,20 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.EnclaveConfigurationException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Log;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -53,9 +53,13 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
+import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.precompile.PrecompiledContract;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,19 +68,16 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("MockNotUsedInProduction")
 public class PrivacyPrecompiledContractTest {
-
-  @Rule public final TemporaryFolder temp = new TemporaryFolder();
 
   private final String actual = "Test String";
   private final Bytes privateTransactionLookupId = Bytes.wrap(actual.getBytes(UTF_8));
   private MessageFrame messageFrame;
-  private Blockchain blockchain;
+  private final Blockchain blockchain = mock(Blockchain.class);
   private final String DEFAULT_OUTPUT = "0x01";
   final String PAYLOAD_TEST_PRIVACY_GROUP_ID = "8lDVI66RZHIrBsolz6Kn88Rd+WsJ4hUjb4hsh29xW/o=";
   private final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
@@ -85,12 +86,15 @@ public class PrivacyPrecompiledContractTest {
   final PrivateStateRootResolver privateStateRootResolver =
       new PrivateStateRootResolver(privateStateStorage);
 
+  final PrivateStateGenesisAllocator privateStateGenesisAllocator =
+      new PrivateStateGenesisAllocator(
+          false, (privacyGroupId, blockNumber) -> Collections::emptyList);
+
   private PrivateTransactionProcessor mockPrivateTxProcessor(
       final TransactionProcessingResult result) {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
     when(mockPrivateTransactionProcessor.processTransaction(
-            nullable(Blockchain.class),
             nullable(WorldUpdater.class),
             nullable(WorldUpdater.class),
             nullable(ProcessableBlockHeader.class),
@@ -105,12 +109,12 @@ public class PrivacyPrecompiledContractTest {
     return mockPrivateTransactionProcessor;
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
     when(mutableWorldState.updater()).thenReturn(mock(WorldUpdater.class));
     when(worldStateArchive.getMutable()).thenReturn(mutableWorldState);
-    when(worldStateArchive.getMutable(any())).thenReturn(Optional.of(mutableWorldState));
+    when(worldStateArchive.getMutable(any(), any())).thenReturn(Optional.of(mutableWorldState));
 
     when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap())
         .thenReturn(PrivacyGroupHeadBlockMap.empty());
@@ -118,7 +122,6 @@ public class PrivacyPrecompiledContractTest {
         .thenReturn(new PrivateBlockMetadata(Collections.emptyList()));
 
     messageFrame = mock(MessageFrame.class);
-    blockchain = mock(Blockchain.class);
     final BlockDataGenerator blockGenerator = new BlockDataGenerator();
     final Block genesis = blockGenerator.genesisBlock();
     final Block block =
@@ -127,10 +130,12 @@ public class PrivacyPrecompiledContractTest {
     when(blockchain.getGenesisBlock()).thenReturn(genesis);
     when(blockchain.getBlockByHash(block.getHash())).thenReturn(Optional.of(block));
     when(blockchain.getBlockByHash(genesis.getHash())).thenReturn(Optional.of(genesis));
-    when(messageFrame.getBlockchain()).thenReturn(blockchain);
-    when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
+    when(messageFrame.getBlockValues()).thenReturn(block.getHeader());
     final PrivateMetadataUpdater privateMetadataUpdater = mock(PrivateMetadataUpdater.class);
-    when(messageFrame.getPrivateMetadataUpdater()).thenReturn(privateMetadataUpdater);
+    when(messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)).thenReturn(false);
+    when(messageFrame.hasContextVariable(KEY_PRIVATE_METADATA_UPDATER)).thenReturn(true);
+    when(messageFrame.getContextVariable(KEY_PRIVATE_METADATA_UPDATER))
+        .thenReturn(privateMetadataUpdater);
     when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap())
         .thenReturn(PrivacyGroupHeadBlockMap.empty());
   }
@@ -161,7 +166,9 @@ public class PrivacyPrecompiledContractTest {
         new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, privateFrom);
     when(enclave.receive(any(String.class))).thenReturn(response);
 
-    final Bytes actual = contract.compute(privateTransactionLookupId, messageFrame);
+    final PrecompiledContract.PrecompileContractResult result =
+        contract.computePrecompile(privateTransactionLookupId, messageFrame);
+    final Bytes actual = result.getOutput();
 
     assertThat(actual).isEqualTo(Bytes.fromHexString(DEFAULT_OUTPUT));
   }
@@ -173,18 +180,22 @@ public class PrivacyPrecompiledContractTest {
 
     when(enclave.receive(any(String.class))).thenThrow(EnclaveClientException.class);
 
-    final Bytes expected = contract.compute(privateTransactionLookupId, messageFrame);
-    assertThat(expected).isEqualTo(Bytes.EMPTY);
+    final PrecompiledContract.PrecompileContractResult result =
+        contract.computePrecompile(privateTransactionLookupId, messageFrame);
+    final Bytes actual = result.getOutput();
+
+    assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
 
-  @Test(expected = RuntimeException.class)
+  @Test
   public void testEnclaveDown() {
     final Enclave enclave = mock(Enclave.class);
     final PrivacyPrecompiledContract contract = buildPrivacyPrecompiledContract(enclave);
 
     when(enclave.receive(any(String.class))).thenThrow(new RuntimeException());
 
-    contract.compute(privateTransactionLookupId, messageFrame);
+    assertThatThrownBy(() -> contract.computePrecompile(privateTransactionLookupId, messageFrame))
+        .isInstanceOf(RuntimeException.class);
   }
 
   @Test
@@ -199,7 +210,7 @@ public class PrivacyPrecompiledContractTest {
     when(enclave.receive(eq(privateTransactionLookupId.toBase64String())))
         .thenReturn(responseWithoutSenderKey);
 
-    assertThatThrownBy(() -> contract.compute(privateTransactionLookupId, messageFrame))
+    assertThatThrownBy(() -> contract.computePrecompile(privateTransactionLookupId, messageFrame))
         .isInstanceOf(EnclaveConfigurationException.class)
         .hasMessage("Incompatible Orion version. Orion version must be 1.6.0 or greater.");
   }
@@ -234,8 +245,11 @@ public class PrivacyPrecompiledContractTest {
     when(enclave.receive(eq(privateTransactionLookupId.toBase64String())))
         .thenReturn(responseWithWrongSenderKey);
 
-    final Bytes expected = contract.compute(privateTransactionLookupId, messageFrame);
-    assertThat(expected).isEqualTo(Bytes.EMPTY);
+    final PrecompiledContract.PrecompileContractResult result =
+        contract.computePrecompile(privateTransactionLookupId, messageFrame);
+    final Bytes actual = result.getOutput();
+
+    assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
 
   @Test
@@ -263,7 +277,9 @@ public class PrivacyPrecompiledContractTest {
         new ReceiveResponse(payload, PAYLOAD_TEST_PRIVACY_GROUP_ID, privateFrom);
     when(enclave.receive(any(String.class))).thenReturn(response);
 
-    final Bytes actual = contract.compute(privateTransactionLookupId, messageFrame);
+    final PrecompiledContract.PrecompileContractResult result =
+        contract.computePrecompile(privateTransactionLookupId, messageFrame);
+    final Bytes actual = result.getOutput();
 
     assertThat(actual).isEqualTo(Bytes.fromHexString(DEFAULT_OUTPUT));
   }
@@ -284,12 +300,14 @@ public class PrivacyPrecompiledContractTest {
             new SpuriousDragonGasCalculator(),
             enclave,
             worldStateArchive,
-            privateStateRootResolver);
+            privateStateRootResolver,
+            privateStateGenesisAllocator,
+            "RestrictedPrivacyTest");
 
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
             TransactionProcessingResult.invalid(
-                ValidationResult.invalid(TransactionInvalidReason.INCORRECT_NONCE))));
+                ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_HIGH))));
 
     final PrivateTransaction privateTransaction = privateTransactionBesu();
     final byte[] payload = convertPrivateTransactionToBytes(privateTransaction);
@@ -300,7 +318,9 @@ public class PrivacyPrecompiledContractTest {
 
     when(enclave.receive(any(String.class))).thenReturn(response);
 
-    final Bytes actual = contract.compute(privateTransactionLookupId, messageFrame);
+    final PrecompiledContract.PrecompileContractResult result =
+        contract.computePrecompile(privateTransactionLookupId, messageFrame);
+    final Bytes actual = result.getOutput();
 
     assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
@@ -308,14 +328,17 @@ public class PrivacyPrecompiledContractTest {
   @Test
   public void testSimulatedPublicTransactionIsSkipped() {
     final PrivacyPrecompiledContract emptyContract =
-        new PrivacyPrecompiledContract(null, null, null, null);
+        new PrivacyPrecompiledContract(null, null, null, null, null, null);
 
     // A simulated public transaction doesn't contain a PrivateMetadataUpdater
     final MessageFrame frame = mock(MessageFrame.class);
-    when(frame.getPrivateMetadataUpdater()).thenReturn(null);
+    when(frame.getContextVariable(KEY_PRIVATE_METADATA_UPDATER)).thenReturn(null);
 
-    final Bytes result = emptyContract.compute(null, frame);
-    assertThat(result).isEqualTo(Bytes.EMPTY);
+    final PrecompiledContract.PrecompileContractResult result =
+        emptyContract.computePrecompile(null, frame);
+    final Bytes actual = result.getOutput();
+
+    assertThat(actual).isEqualTo(Bytes.EMPTY);
   }
 
   private byte[] convertPrivateTransactionToBytes(final PrivateTransaction privateTransaction) {
@@ -327,6 +350,11 @@ public class PrivacyPrecompiledContractTest {
 
   private PrivacyPrecompiledContract buildPrivacyPrecompiledContract(final Enclave enclave) {
     return new PrivacyPrecompiledContract(
-        new SpuriousDragonGasCalculator(), enclave, worldStateArchive, privateStateRootResolver);
+        new SpuriousDragonGasCalculator(),
+        enclave,
+        worldStateArchive,
+        privateStateRootResolver,
+        privateStateGenesisAllocator,
+        "PrivacyTests");
   }
 }

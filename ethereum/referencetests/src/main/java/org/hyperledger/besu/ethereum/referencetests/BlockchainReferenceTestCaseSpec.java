@@ -15,27 +15,34 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
-import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Map;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -62,8 +69,7 @@ public class BlockchainReferenceTestCaseSpec {
 
   private static WorldStateArchive buildWorldStateArchive(
       final Map<String, ReferenceTestWorldState.AccountMock> accounts) {
-    final WorldStateArchive worldStateArchive =
-        InMemoryStorageProvider.createInMemoryWorldStateArchive();
+    final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
 
     final MutableWorldState worldState = worldStateArchive.getMutable();
     final WorldUpdater updater = worldState.updater();
@@ -81,7 +87,7 @@ public class BlockchainReferenceTestCaseSpec {
 
   private static MutableBlockchain buildBlockchain(final BlockHeader genesisBlockHeader) {
     final Block genesisBlock = new Block(genesisBlockHeader, BlockBody.empty());
-    return InMemoryStorageProvider.createInMemoryBlockchain(genesisBlock);
+    return InMemoryKeyValueStorageProvider.createInMemoryBlockchain(genesisBlock);
   }
 
   @JsonCreator
@@ -100,7 +106,8 @@ public class BlockchainReferenceTestCaseSpec {
     this.worldStateArchive = buildWorldStateArchive(accounts);
     this.blockchain = buildBlockchain(genesisBlockHeader);
     this.sealEngine = sealEngine;
-    this.protocolContext = new ProtocolContext(this.blockchain, this.worldStateArchive, null);
+    this.protocolContext =
+        new ProtocolContext(this.blockchain, this.worldStateArchive, null, Optional.empty());
   }
 
   public String getNetwork() {
@@ -152,17 +159,24 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("gasUsed") final String gasUsed,
         @JsonProperty("timestamp") final String timestamp,
         @JsonProperty("extraData") final String extraData,
-        @JsonProperty("baseFee") final String baseFee,
+        @JsonProperty("baseFeePerGas") final String baseFee,
         @JsonProperty("mixHash") final String mixHash,
         @JsonProperty("nonce") final String nonce,
+        @JsonProperty("withdrawalsRoot") final String withdrawalsRoot,
+        @JsonProperty("depositsRoot") final String depositsRoot,
+        @JsonProperty("excessDataGas") final String excessDataGas,
         @JsonProperty("hash") final String hash) {
       super(
           Hash.fromHexString(parentHash), // parentHash
-          Hash.fromHexString(uncleHash), // ommersHash
+          uncleHash == null ? Hash.EMPTY_LIST_HASH : Hash.fromHexString(uncleHash), // ommersHash
           Address.fromHexString(coinbase), // coinbase
           Hash.fromHexString(stateRoot), // stateRoot
-          Hash.fromHexString(transactionsTrie), // transactionsRoot
-          Hash.fromHexString(receiptTrie), // receiptTrie
+          transactionsTrie == null
+              ? Hash.EMPTY_TRIE_HASH
+              : Hash.fromHexString(transactionsTrie), // transactionsRoot
+          receiptTrie == null
+              ? Hash.EMPTY_TRIE_HASH
+              : Hash.fromHexString(receiptTrie), // receiptTrie
           LogsBloomFilter.fromHexString(bloom), // bloom
           Difficulty.fromHexString(difficulty), // difficulty
           Long.decode(number), // number
@@ -170,13 +184,16 @@ public class BlockchainReferenceTestCaseSpec {
           Long.decode(gasUsed), // gasUsed
           Long.decode(timestamp), // timestamp
           Bytes.fromHexString(extraData), // extraData
-          baseFee != null ? Long.decode(baseFee) : null, // baseFee
+          baseFee != null ? Wei.fromHexString(baseFee) : null, // baseFee
           Hash.fromHexString(mixHash), // mixHash
-          Bytes.fromHexString(nonce).getLong(0),
+          Bytes.fromHexStringLenient(nonce).toLong(),
+          withdrawalsRoot != null ? Hash.fromHexString(withdrawalsRoot) : null,
+          excessDataGas != null ? DataGas.fromHexString(excessDataGas) : null,
+          depositsRoot != null ? Hash.fromHexString(depositsRoot) : null,
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
-              return Hash.fromHexString(hash);
+              return hash == null ? null : Hash.fromHexString(hash);
             }
 
             @Override
@@ -200,7 +217,8 @@ public class BlockchainReferenceTestCaseSpec {
     "blocknumber",
     "chainname",
     "expectExceptionALL",
-    "chainnetwork"
+    "chainnetwork",
+    "transactionSequence"
   })
   public static class CandidateBlock {
 
@@ -213,22 +231,26 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("rlp") final String rlp,
         @JsonProperty("blockHeader") final Object blockHeader,
         @JsonProperty("transactions") final Object transactions,
-        @JsonProperty("uncleHeaders") final Object uncleHeaders) {
-      boolean valid = true;
+        @JsonProperty("uncleHeaders") final Object uncleHeaders,
+        @JsonProperty("withdrawals") final Object withdrawals) {
+      boolean blockVaid = true;
       // The BLOCK__WrongCharAtRLP_0 test has an invalid character in its rlp string.
       Bytes rlpAttempt = null;
       try {
         rlpAttempt = Bytes.fromHexString(rlp);
       } catch (final IllegalArgumentException e) {
-        valid = false;
+        blockVaid = false;
       }
       this.rlp = rlpAttempt;
 
-      if (blockHeader == null && transactions == null && uncleHeaders == null) {
-        valid = false;
+      if (blockHeader == null
+          && transactions == null
+          && uncleHeaders == null
+          && withdrawals == null) {
+        blockVaid = false;
       }
 
-      this.valid = valid;
+      this.valid = blockVaid;
     }
 
     public boolean isValid() {
@@ -247,7 +269,13 @@ public class BlockchainReferenceTestCaseSpec {
       final BlockBody body =
           new BlockBody(
               input.readList(Transaction::readFrom),
-              input.readList(rlp -> BlockHeader.readFrom(rlp, blockHeaderFunctions)));
+              input.readList(inputData -> BlockHeader.readFrom(inputData, blockHeaderFunctions)),
+              input.isEndOfCurrentList()
+                  ? Optional.empty()
+                  : Optional.of(input.readList(Withdrawal::readFrom)),
+              input.isEndOfCurrentList()
+                  ? Optional.empty()
+                  : Optional.of(input.readList(Deposit::readFrom)));
       return new Block(header, body);
     }
   }

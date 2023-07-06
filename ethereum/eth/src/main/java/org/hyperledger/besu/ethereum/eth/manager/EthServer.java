@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -35,26 +35,18 @@ import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.PooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.collect.Lists;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 class EthServer {
-  private static final Logger LOG = LogManager.getLogger();
-
   private final Blockchain blockchain;
   private final WorldStateArchive worldStateArchive;
   private final TransactionPool transactionPool;
@@ -72,116 +64,67 @@ class EthServer {
     this.transactionPool = transactionPool;
     this.ethMessages = ethMessages;
     this.ethereumWireProtocolConfiguration = ethereumWireProtocolConfiguration;
-    this.setupListeners();
+    this.registerResponseConstructors();
   }
 
-  private void setupListeners() {
-    ethMessages.subscribe(EthPV62.GET_BLOCK_HEADERS, this::handleGetBlockHeaders);
-    ethMessages.subscribe(EthPV62.GET_BLOCK_BODIES, this::handleGetBlockBodies);
-    ethMessages.subscribe(EthPV63.GET_RECEIPTS, this::handleGetReceipts);
-    ethMessages.subscribe(EthPV63.GET_NODE_DATA, this::handleGetNodeData);
-    if (ethereumWireProtocolConfiguration.isEth65Enabled()) {
-      ethMessages.subscribe(EthPV65.GET_POOLED_TRANSACTIONS, this::handleGetPooledTransactions);
-    }
-  }
+  private void registerResponseConstructors() {
+    final int maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
 
-  private void handleGetBlockHeaders(final EthMessage message) {
-    LOG.trace("Responding to GET_BLOCK_HEADERS request");
-    try {
-      final MessageData response =
-          constructGetHeadersResponse(
-              blockchain,
-              message.getData(),
-              ethereumWireProtocolConfiguration.getMaxGetBlockHeaders());
-      message.getPeer().send(response);
-    } catch (final RLPException e) {
-      LOG.debug(
-          "Received malformed GET_BLOCK_HEADERS message, disconnecting: {}", message.getPeer(), e);
-      message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
-    } catch (final PeerNotConnected peerNotConnected) {
-      // Peer disconnected before we could respond - nothing to do
-    }
-  }
-
-  private void handleGetBlockBodies(final EthMessage message) {
-    LOG.trace("Responding to GET_BLOCK_BODIES request");
-    try {
-      final MessageData response =
-          constructGetBodiesResponse(
-              blockchain,
-              message.getData(),
-              ethereumWireProtocolConfiguration.getMaxGetBlockBodies());
-      message.getPeer().send(response);
-    } catch (final RLPException e) {
-      LOG.debug(
-          "Received malformed GET_BLOCK_BODIES message, disconnecting: {}", message.getPeer(), e);
-      message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
-    } catch (final PeerNotConnected peerNotConnected) {
-      // Peer disconnected before we could respond - nothing to do
-    }
-  }
-
-  private void handleGetReceipts(final EthMessage message) {
-    LOG.trace("Responding to GET_RECEIPTS request");
-    try {
-      final MessageData response =
-          constructGetReceiptsResponse(
-              blockchain, message.getData(), ethereumWireProtocolConfiguration.getMaxGetReceipts());
-      message.getPeer().send(response);
-    } catch (final RLPException e) {
-      LOG.debug("Received malformed GET_RECEIPTS message, disconnecting: {}", message.getPeer(), e);
-      message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
-    } catch (final PeerNotConnected peerNotConnected) {
-      // Peer disconnected before we could respond - nothing to do
-    }
-  }
-
-  private void handleGetNodeData(final EthMessage message) {
-    LOG.trace("Responding to GET_NODE_DATA request");
-    try {
-      final MessageData response =
-          constructGetNodeDataResponse(
-              worldStateArchive,
-              message.getData(),
-              ethereumWireProtocolConfiguration.getMaxGetNodeData());
-      message.getPeer().send(response);
-    } catch (final RLPException e) {
-      LOG.debug(
-          "Received malformed GET_NODE_DATA message, disconnecting: {}", message.getPeer(), e);
-      message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
-    } catch (final PeerNotConnected peerNotConnected) {
-      // Peer disconnected before we could respond - nothing to do
-    }
-  }
-
-  private void handleGetPooledTransactions(final EthMessage message) {
-    LOG.trace("Responding to GET_POOLED_TRANSACTIONS request");
-    try {
-      final MessageData response =
-          constructGetPooledTransactionsResponse(
-              transactionPool,
-              message.getData(),
-              ethereumWireProtocolConfiguration.getMaxGetPooledTransactions());
-      message.getPeer().send(response);
-    } catch (final RLPException e) {
-      LOG.debug(
-          "Received malformed GET_POOLED_TRANSACTIONS message, disconnecting: {}",
-          message.getPeer(),
-          e);
-      message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
-    } catch (final PeerNotConnected peerNotConnected) {
-      // Peer disconnected before we could respond - nothing to do
-    }
+    ethMessages.registerResponseConstructor(
+        EthPV62.GET_BLOCK_HEADERS,
+        messageData ->
+            constructGetHeadersResponse(
+                blockchain,
+                messageData,
+                ethereumWireProtocolConfiguration.getMaxGetBlockHeaders(),
+                maxMessageSize));
+    ethMessages.registerResponseConstructor(
+        EthPV62.GET_BLOCK_BODIES,
+        messageData ->
+            constructGetBodiesResponse(
+                blockchain,
+                messageData,
+                ethereumWireProtocolConfiguration.getMaxGetBlockBodies(),
+                maxMessageSize));
+    ethMessages.registerResponseConstructor(
+        EthPV63.GET_RECEIPTS,
+        messageData ->
+            constructGetReceiptsResponse(
+                blockchain,
+                messageData,
+                ethereumWireProtocolConfiguration.getMaxGetReceipts(),
+                maxMessageSize));
+    ethMessages.registerResponseConstructor(
+        EthPV63.GET_NODE_DATA,
+        messageData ->
+            constructGetNodeDataResponse(
+                worldStateArchive,
+                messageData,
+                ethereumWireProtocolConfiguration.getMaxGetNodeData(),
+                maxMessageSize));
+    ethMessages.registerResponseConstructor(
+        EthPV65.GET_POOLED_TRANSACTIONS,
+        messageData ->
+            constructGetPooledTransactionsResponse(
+                transactionPool,
+                messageData,
+                ethereumWireProtocolConfiguration.getMaxGetPooledTransactions(),
+                maxMessageSize));
   }
 
   static MessageData constructGetHeadersResponse(
-      final Blockchain blockchain, final MessageData message, final int requestLimit) {
+      final Blockchain blockchain,
+      final MessageData message,
+      final int requestLimit,
+      final int maxMessageSize) {
+    // Extract parameters from request
     final GetBlockHeadersMessage getHeaders = GetBlockHeadersMessage.readFrom(message);
     final Optional<Hash> hash = getHeaders.hash();
     final int skip = getHeaders.skip();
     final int maxHeaders = Math.min(requestLimit, getHeaders.maxHeaders());
     final boolean reversed = getHeaders.reverse();
     final BlockHeader firstHeader;
+    // Query first header by hash or number depending on request arguments
     if (hash.isPresent()) {
       final Hash startHash = hash.get();
       firstHeader = blockchain.getBlockHeader(startHash).orElse(null);
@@ -189,34 +132,58 @@ class EthServer {
       final long firstNumber = getHeaders.blockNumber().getAsLong();
       firstHeader = blockchain.getBlockHeader(firstNumber).orElse(null);
     }
-    final Collection<BlockHeader> resp;
+
+    // The initial header was not found, nothing to return
     if (firstHeader == null) {
-      resp = Collections.emptyList();
-    } else {
-      resp = Lists.newArrayList(firstHeader);
-      final long numberDelta = reversed ? -(skip + 1) : (skip + 1);
-      for (int i = 1; i < maxHeaders; i++) {
-        final long blockNumber = firstHeader.getNumber() + i * numberDelta;
-        if (blockNumber < BlockHeader.GENESIS_BLOCK_NUMBER) {
-          break;
-        }
-        final Optional<BlockHeader> maybeHeader = blockchain.getBlockHeader(blockNumber);
-        if (maybeHeader.isPresent()) {
-          resp.add(maybeHeader.get());
-        } else {
-          break;
-        }
-      }
+      return BlockHeadersMessage.create(Collections.emptyList());
     }
-    return BlockHeadersMessage.create(resp);
+
+    // Encode the first header
+    int responseSizeEstimate = RLP.MAX_PREFIX_SIZE;
+    final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+    rlp.startList();
+    final Bytes firstEncodedHeader = RLP.encode(firstHeader::writeTo);
+    if (responseSizeEstimate + firstEncodedHeader.size() > maxMessageSize) {
+      return BlockHeadersMessage.create(Collections.emptyList());
+    }
+    responseSizeEstimate += firstEncodedHeader.size();
+    rlp.writeRaw(firstEncodedHeader);
+    // Collect and encode the remaining headers
+    final long numberDelta = reversed ? -(skip + 1) : (skip + 1);
+    for (int i = 1; i < maxHeaders; i++) {
+      final long blockNumber = firstHeader.getNumber() + i * numberDelta;
+      if (blockNumber < BlockHeader.GENESIS_BLOCK_NUMBER) {
+        break;
+      }
+      final Optional<BlockHeader> maybeHeader = blockchain.getBlockHeader(blockNumber);
+      if (maybeHeader.isEmpty()) {
+        break;
+      }
+      final BytesValueRLPOutput headerRlp = new BytesValueRLPOutput();
+      maybeHeader.get().writeTo(headerRlp);
+      final int encodedSize = headerRlp.encodedSize();
+      if (responseSizeEstimate + encodedSize > maxMessageSize) {
+        break;
+      }
+      responseSizeEstimate += encodedSize;
+      rlp.writeRaw(headerRlp.encoded());
+    }
+    rlp.endList();
+
+    return BlockHeadersMessage.createUnsafe(rlp.encoded());
   }
 
   static MessageData constructGetBodiesResponse(
-      final Blockchain blockchain, final MessageData message, final int requestLimit) {
+      final Blockchain blockchain,
+      final MessageData message,
+      final int requestLimit,
+      final int maxMessageSize) {
     final GetBlockBodiesMessage getBlockBodiesMessage = GetBlockBodiesMessage.readFrom(message);
     final Iterable<Hash> hashes = getBlockBodiesMessage.hashes();
 
-    final Collection<BlockBody> bodies = new ArrayList<>();
+    int responseSizeEstimate = RLP.MAX_PREFIX_SIZE;
+    final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+    rlp.startList();
     int count = 0;
     for (final Hash hash : hashes) {
       if (count >= requestLimit) {
@@ -224,20 +191,35 @@ class EthServer {
       }
       count++;
       final Optional<BlockBody> maybeBody = blockchain.getBlockBody(hash);
-      if (!maybeBody.isPresent()) {
+      if (maybeBody.isEmpty()) {
         continue;
       }
-      bodies.add(maybeBody.get());
+
+      final BlockBody body = maybeBody.get();
+      final BytesValueRLPOutput bodyOutput = new BytesValueRLPOutput();
+      body.writeWrappedBodyTo(bodyOutput);
+      final int encodedSize = bodyOutput.encodedSize();
+      if (responseSizeEstimate + encodedSize > maxMessageSize) {
+        break;
+      }
+      responseSizeEstimate += encodedSize;
+      rlp.writeRaw(bodyOutput.encoded());
     }
-    return BlockBodiesMessage.create(bodies);
+    rlp.endList();
+    return BlockBodiesMessage.createUnsafe(rlp.encoded());
   }
 
   static MessageData constructGetReceiptsResponse(
-      final Blockchain blockchain, final MessageData message, final int requestLimit) {
+      final Blockchain blockchain,
+      final MessageData message,
+      final int requestLimit,
+      final int maxMessageSize) {
     final GetReceiptsMessage getReceipts = GetReceiptsMessage.readFrom(message);
     final Iterable<Hash> hashes = getReceipts.hashes();
 
-    final List<List<TransactionReceipt>> receipts = new ArrayList<>();
+    int responseSizeEstimate = RLP.MAX_PREFIX_SIZE;
+    final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+    rlp.startList();
     int count = 0;
     for (final Hash hash : hashes) {
       if (count >= requestLimit) {
@@ -245,21 +227,38 @@ class EthServer {
       }
       count++;
       final Optional<List<TransactionReceipt>> maybeReceipts = blockchain.getTxReceipts(hash);
-      if (!maybeReceipts.isPresent()) {
+      if (maybeReceipts.isEmpty()) {
         continue;
       }
-      receipts.add(maybeReceipts.get());
+      final BytesValueRLPOutput encodedReceipts = new BytesValueRLPOutput();
+      encodedReceipts.startList();
+      maybeReceipts.get().forEach(r -> r.writeTo(encodedReceipts));
+      encodedReceipts.endList();
+      final int encodedSize = encodedReceipts.encodedSize();
+      if (responseSizeEstimate + encodedSize > maxMessageSize) {
+        break;
+      }
+
+      responseSizeEstimate += encodedSize;
+      rlp.writeRaw(encodedReceipts.encoded());
     }
-    return ReceiptsMessage.create(receipts);
+    rlp.endList();
+
+    return ReceiptsMessage.createUnsafe(rlp.encoded());
   }
 
   static MessageData constructGetPooledTransactionsResponse(
-      final TransactionPool transactionPool, final MessageData message, final int requestLimit) {
+      final TransactionPool transactionPool,
+      final MessageData message,
+      final int requestLimit,
+      final int maxMessageSize) {
     final GetPooledTransactionsMessage getPooledTransactions =
         GetPooledTransactionsMessage.readFrom(message);
     final Iterable<Hash> hashes = getPooledTransactions.pooledTransactions();
 
-    final List<Transaction> tx = new ArrayList<>();
+    int responseSizeEstimate = RLP.MAX_PREFIX_SIZE;
+    final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+    rlp.startList();
     int count = 0;
     for (final Hash hash : hashes) {
       if (count >= requestLimit) {
@@ -270,19 +269,32 @@ class EthServer {
       if (maybeTx.isEmpty()) {
         continue;
       }
-      tx.add(maybeTx.get());
+      final BytesValueRLPOutput txRlp = new BytesValueRLPOutput();
+      maybeTx.get().writeTo(txRlp);
+      final int encodedSize = txRlp.encodedSize();
+      if (responseSizeEstimate + encodedSize > maxMessageSize) {
+        break;
+      }
+
+      responseSizeEstimate += encodedSize;
+      rlp.writeRaw(txRlp.encoded());
     }
-    return PooledTransactionsMessage.create(tx);
+    rlp.endList();
+
+    return PooledTransactionsMessage.createUnsafe(rlp.encoded());
   }
 
   static MessageData constructGetNodeDataResponse(
       final WorldStateArchive worldStateArchive,
       final MessageData message,
-      final int requestLimit) {
+      final int requestLimit,
+      final int maxMessageSize) {
     final GetNodeDataMessage getNodeDataMessage = GetNodeDataMessage.readFrom(message);
     final Iterable<Hash> hashes = getNodeDataMessage.hashes();
 
-    final List<Bytes> nodeData = new ArrayList<>();
+    int responseSizeEstimate = RLP.MAX_PREFIX_SIZE;
+    final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+    rlp.startList();
     int count = 0;
     for (final Hash hash : hashes) {
       if (count >= requestLimit) {
@@ -290,8 +302,23 @@ class EthServer {
       }
       count++;
 
-      worldStateArchive.getNodeData(hash).ifPresent(nodeData::add);
+      final Optional<Bytes> maybeNodeData = worldStateArchive.getNodeData(hash);
+      if (maybeNodeData.isEmpty()) {
+        continue;
+      }
+
+      final BytesValueRLPOutput rlpNodeData = new BytesValueRLPOutput();
+      rlpNodeData.writeBytes(maybeNodeData.get());
+      final int encodedSize = rlpNodeData.encodedSize();
+      if (responseSizeEstimate + encodedSize > maxMessageSize) {
+        break;
+      }
+
+      responseSizeEstimate += encodedSize;
+      rlp.writeRaw(rlpNodeData.encoded());
     }
-    return NodeDataMessage.create(nodeData);
+    rlp.endList();
+
+    return NodeDataMessage.createUnsafe(rlp.encoded());
   }
 }

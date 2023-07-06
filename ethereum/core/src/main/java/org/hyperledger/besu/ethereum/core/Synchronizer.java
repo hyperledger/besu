@@ -14,10 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /** Provides an interface to block synchronization processes. */
 public interface Synchronizer {
@@ -25,7 +29,7 @@ public interface Synchronizer {
   // Default tolerance used to determine whether or not this node is "in sync"
   long DEFAULT_IN_SYNC_TOLERANCE = 5;
 
-  void start();
+  CompletableFuture<Void> start();
 
   void stop();
 
@@ -38,6 +42,10 @@ public interface Synchronizer {
    *     empty
    */
   Optional<SyncStatus> getSyncStatus();
+
+  boolean resyncWorldState();
+
+  boolean healWorldState(final Optional<Address> maybeAccountToRepair, final Bytes location);
 
   long subscribeSyncStatus(final BesuEvents.SyncStatusListener listener);
 

@@ -32,14 +32,18 @@ import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 import com.google.common.collect.ImmutableSet;
-import org.junit.Test;
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PrometheusMetricsSystemTest {
 
@@ -47,6 +51,11 @@ public class PrometheusMetricsSystemTest {
       Comparator.<Observation, String>comparing(observation -> observation.getCategory().getName())
           .thenComparing(Observation::getMetricName)
           .thenComparing((o1, o2) -> o1.getLabels().equals(o2.getLabels()) ? 0 : 1);
+
+  @BeforeEach
+  public void resetGlobalOpenTelemetry() {
+    GlobalOpenTelemetry.resetForTest();
+  }
 
   private final ObservableMetricsSystem metricsSystem =
       new PrometheusMetricsSystem(DEFAULT_METRIC_CATEGORIES, true);
@@ -57,11 +66,11 @@ public class PrometheusMetricsSystemTest {
 
     counter.inc();
     assertThat(metricsSystem.streamObservations())
-        .containsExactly(new Observation(PEERS, "connected", 1d, emptyList()));
+        .containsExactly(new Observation(PEERS, "connected", 1.0, emptyList()));
 
     counter.inc();
     assertThat(metricsSystem.streamObservations())
-        .containsExactly(new Observation(PEERS, "connected", 2d, emptyList()));
+        .containsExactly(new Observation(PEERS, "connected", 2.0, emptyList()));
   }
 
   @Test
@@ -74,11 +83,11 @@ public class PrometheusMetricsSystemTest {
 
     counter1.labels().inc();
     assertThat(metricsSystem.streamObservations())
-        .containsExactly(new Observation(PEERS, "connected", 1d, emptyList()));
+        .containsExactly(new Observation(PEERS, "connected", 1.0, emptyList()));
 
     counter2.labels().inc();
     assertThat(metricsSystem.streamObservations())
-        .containsExactly(new Observation(PEERS, "connected", 2d, emptyList()));
+        .containsExactly(new Observation(PEERS, "connected", 2.0, emptyList()));
   }
 
   @Test
@@ -92,8 +101,35 @@ public class PrometheusMetricsSystemTest {
 
     assertThat(metricsSystem.streamObservations())
         .containsExactlyInAnyOrder(
-            new Observation(PEERS, "connected", 2d, singletonList("value1")),
-            new Observation(PEERS, "connected", 1d, singletonList("value2")));
+            new Observation(PEERS, "connected", 2.0, singletonList("value1")),
+            new Observation(PEERS, "connected", 1.0, singletonList("value2")));
+  }
+
+  @Test
+  public void shouldCreateSeparateObservationsForEachLabelledGaugeValue() {
+    final LabelledGauge gauge =
+        metricsSystem.createLabelledGauge(PEERS, "test", "test help", "a", "b", "c");
+    final double value1 = 1.0;
+    final double value2 = 11.0;
+
+    gauge.labels(() -> value1, "a1", "b1", "c1");
+    gauge.labels(() -> value2, "a2", "b2", "c2");
+
+    assertThat(metricsSystem.streamObservations())
+        .containsExactlyInAnyOrder(
+            new Observation(PEERS, "test", 1.0, List.of("a1", "b1", "c1")),
+            new Observation(PEERS, "test", 11.0, List.of("a2", "b2", "c2")));
+  }
+
+  @Test
+  public void shouldNotUseSameLabelsTwiceOnSameGauge() {
+    final LabelledGauge gauge =
+        metricsSystem.createLabelledGauge(PEERS, "test", "test help", "a", "b", "c");
+    final double value1 = 1.0;
+
+    gauge.labels(() -> value1, "a1", "b1", "c1");
+    assertThatThrownBy(() -> gauge.labels(() -> value1, "a1", "b1", "c1"))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
@@ -102,11 +138,11 @@ public class PrometheusMetricsSystemTest {
 
     counter.inc(5);
     assertThat(metricsSystem.streamObservations())
-        .containsExactly(new Observation(PEERS, "connected", 5d, emptyList()));
+        .containsExactly(new Observation(PEERS, "connected", 5.0, emptyList()));
 
     counter.inc(6);
     assertThat(metricsSystem.streamObservations())
-        .containsExactly(new Observation(PEERS, "connected", 11d, emptyList()));
+        .containsExactly(new Observation(PEERS, "connected", 11.0, emptyList()));
   }
 
   @Test
@@ -174,20 +210,20 @@ public class PrometheusMetricsSystemTest {
 
   @Test
   public void shouldCreateObservationFromGauge() {
-    metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7d);
+    metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7.0);
 
     assertThat(metricsSystem.streamObservations())
-        .containsExactlyInAnyOrder(new Observation(JVM, "myValue", 7d, emptyList()));
+        .containsExactlyInAnyOrder(new Observation(JVM, "myValue", 7.0, emptyList()));
   }
 
   @Test
-  public void shouldNotAllowDuplicateGaugeCreation() {
-    // Gauges have a reference to the source of their data so creating it twice will still only
-    // pull data from the first instance, possibly leaking memory and likely returning the wrong
-    // results.
-    metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7d);
-    assertThatThrownBy(() -> metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7d))
-        .isInstanceOf(IllegalArgumentException.class);
+  public void shouldAllowDuplicateGaugeCreation() {
+    // When we are pushing the same gauge, the first one will be unregistered and the new one will
+    // be used
+    metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7.0);
+    metricsSystem.createGauge(JVM, "myValue", "Help", () -> 7.0);
+    assertThat(metricsSystem.streamObservations())
+        .containsExactlyInAnyOrder(new Observation(JVM, "myValue", 7.0, emptyList()));
   }
 
   @Test

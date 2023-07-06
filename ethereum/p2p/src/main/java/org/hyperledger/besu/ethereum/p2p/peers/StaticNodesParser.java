@@ -18,8 +18,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptySet;
 
+import org.hyperledger.besu.plugin.data.EnodeURL;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -28,12 +31,12 @@ import java.util.stream.Collectors;
 
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonArray;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class StaticNodesParser {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(StaticNodesParser.class);
 
   public static Set<EnodeURL> fromPath(
       final Path path, final EnodeDnsConfiguration enodeDnsConfiguration)
@@ -42,16 +45,21 @@ public class StaticNodesParser {
     try {
       return readEnodesFromPath(path, enodeDnsConfiguration);
     } catch (FileNotFoundException | NoSuchFileException ex) {
-      LOG.info("StaticNodes file {} does not exist, no static connections will be created.", path);
+      LOG.debug("StaticNodes file {} does not exist, no static connections will be created.", path);
       return emptySet();
+    } catch (AccessDeniedException ex) {
+      LOG.warn(
+          "Access denied to static nodes file ({}). Ensure static nodes file and node data directory have correct permissions.",
+          path);
+      throw ex;
     } catch (IOException ex) {
-      LOG.info("Unable to parse static nodes file ({})", path);
+      LOG.warn("Unable to parse static nodes file ({})", path);
       throw ex;
     } catch (DecodeException ex) {
-      LOG.info("Content of ({}} was invalid json, and could not be decoded.", path);
+      LOG.warn("Content of ({}} was invalid json, and could not be decoded.", path);
       throw ex;
     } catch (IllegalArgumentException ex) {
-      LOG.info("Parsing ({}) has failed due incorrectly formatted enode element.", path);
+      LOG.warn("Parsing ({}) has failed due incorrectly formatted enode element.", path);
       throw ex;
     }
   }
@@ -72,13 +80,12 @@ public class StaticNodesParser {
   private static EnodeURL decodeString(
       final String input, final EnodeDnsConfiguration enodeDnsConfiguration) {
     try {
-      final EnodeURL enode = EnodeURL.fromString(input, enodeDnsConfiguration);
+      final EnodeURL enode = EnodeURLImpl.fromString(input, enodeDnsConfiguration);
       checkArgument(
           enode.isListening(), "Static node must be configured with a valid listening port.");
       return enode;
     } catch (IllegalArgumentException ex) {
-      LOG.info("Illegal static enode supplied ({}). {}", input, ex.getMessage());
-      throw ex;
+      throw new IllegalArgumentException("Illegal static enode supplied (" + input + ")", ex);
     }
   }
 }

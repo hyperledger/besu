@@ -14,14 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.FIND_PRIVACY_GROUP_ERROR;
 
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -31,19 +30,20 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("MockNotUsedInProduction")
 public class PrivFindPrivacyGroup implements JsonRpcMethod {
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PrivFindPrivacyGroup.class);
   private final PrivacyController privacyController;
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final PrivacyIdProvider privacyIdProvider;
 
   public PrivFindPrivacyGroup(
-      final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+      final PrivacyController privacyController, final PrivacyIdProvider privacyIdProvider) {
     this.privacyController = privacyController;
-    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
+    this.privacyIdProvider = privacyIdProvider;
   }
 
   @Override
@@ -63,9 +63,9 @@ public class PrivFindPrivacyGroup implements JsonRpcMethod {
     try {
       response =
           Arrays.asList(
-              privacyController.findOffChainPrivacyGroupByMembers(
+              privacyController.findPrivacyGroupByMembers(
                   Arrays.asList(addresses),
-                  enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser())));
+                  privacyIdProvider.getPrivacyUserId(requestContext.getUser())));
     } catch (final MultiTenancyValidationException e) {
       LOG.error("Unauthorized privacy multi-tenancy rpc request. {}", e.getMessage());
       return new JsonRpcErrorResponse(

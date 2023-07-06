@@ -1,7 +1,8 @@
 version: "3"
 services:
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.11.0
+  otelcollector:
+    image: otel/opentelemetry-collector-contrib:0.17.0
+    container_name: otelcollector
     command: ["--config=/etc/otel-collector-config.yml"]
     volumes:
       - ./otel-collector-config.yml:/etc/otel-collector-config.yml
@@ -10,13 +11,20 @@ services:
       - "8888:8888"   # Prometheus metrics exposed by the collector
       - "8889:8889"   # Prometheus exporter metrics
       - "13133:13133" # health_check extension
-      - "55680:55680" # zpages extension
+      - "4317:4317"   # OTLP GRPC receiver
     depends_on:
       - zipkin
+      - metricsviewer
 
-  #Zipkin
+  # Zipkin
   zipkin:
     image: openzipkin/zipkin
     container_name: zipkin
     ports:
       - 9411:9411
+
+  metricsviewer:
+    image: docker.io/tmio/metrics-ui
+    container_name: metricsviewer
+    ports:
+      - 8080:8080

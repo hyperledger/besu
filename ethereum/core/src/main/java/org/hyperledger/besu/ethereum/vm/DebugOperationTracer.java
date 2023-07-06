@@ -14,19 +14,25 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.ModificationNotAllowedException;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import static org.apache.tuweni.bytes.Bytes32.leftPad;
+
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
-import org.hyperledger.besu.ethereum.vm.Operation.OperationResult;
+import org.hyperledger.besu.evm.ModificationNotAllowedException;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.operation.Operation;
+import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.TreeMap;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -35,31 +41,39 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class DebugOperationTracer implements OperationTracer {
 
-  private static final UInt256 UINT256_32 = UInt256.valueOf(32);
-
   private final TraceOptions options;
   private List<TraceFrame> traceFrames = new ArrayList<>();
   private TraceFrame lastFrame;
+
+  private Optional<Bytes32[]> preExecutionStack;
+  private long gasRemaining;
+  private Bytes inputData;
+  private int pc;
 
   public DebugOperationTracer(final TraceOptions options) {
     this.options = options;
   }
 
   @Override
-  public void traceExecution(final MessageFrame frame, final ExecuteOperation executeOperation) {
+  public void tracePreExecution(final MessageFrame frame) {
+    preExecutionStack = captureStack(frame);
+    gasRemaining = frame.getRemainingGas();
+    if (lastFrame != null && frame.getMessageStackDepth() > lastFrame.getDepth())
+      inputData = frame.getInputData().copy();
+    else inputData = frame.getInputData();
+    pc = frame.getPC();
+  }
+
+  @Override
+  public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
     final Operation currentOperation = frame.getCurrentOperation();
     final int depth = frame.getMessageStackDepth();
     final String opcode = currentOperation.getName();
-    final int pc = frame.getPC();
-    final Gas gasRemaining = frame.getRemainingGas();
-    final Bytes inputData = frame.getInputData();
-    final Optional<Bytes32[]> stack = captureStack(frame);
-    final WorldUpdater worldUpdater = frame.getWorldState();
-    final Optional<Bytes32[]> stackPostExecution;
-    final OperationResult operationResult = executeOperation.execute();
+    final WorldUpdater worldUpdater = frame.getWorldUpdater();
     final Bytes outputData = frame.getOutputData();
     final Optional<Bytes[]> memory = captureMemory(frame);
-    stackPostExecution = captureStack(frame);
+    final Optional<Bytes32[]> stackPostExecution = captureStack(frame);
+
     if (lastFrame != null) {
       lastFrame.setGasRemainingPostExecution(gasRemaining);
     }
@@ -71,15 +85,17 @@ public class DebugOperationTracer implements OperationTracer {
             pc,
             Optional.of(opcode),
             gasRemaining,
-            operationResult.getGasCost(),
+            operationResult.getGasCost() == 0
+                ? OptionalLong.empty()
+                : OptionalLong.of(operationResult.getGasCost()),
             frame.getGasRefund(),
             depth,
-            operationResult.getHaltReason(),
+            Optional.ofNullable(operationResult.getHaltReason()),
             frame.getRecipientAddress(),
             frame.getApparentValue(),
             inputData,
             outputData,
-            stack,
+            preExecutionStack,
             memory,
             storage,
             worldUpdater,
@@ -97,25 +113,25 @@ public class DebugOperationTracer implements OperationTracer {
 
   @Override
   public void tracePrecompileCall(
-      final MessageFrame frame, final Gas gasRequirement, final Bytes output) {
+      final MessageFrame frame, final long gasRequirement, final Bytes output) {
     if (traceFrames.isEmpty()) {
       final TraceFrame traceFrame =
           new TraceFrame(
               frame.getPC(),
               Optional.empty(),
               frame.getRemainingGas(),
-              Optional.empty(),
+              OptionalLong.empty(),
               frame.getGasRefund(),
               frame.getMessageStackDepth(),
               Optional.empty(),
               frame.getRecipientAddress(),
               frame.getValue(),
-              frame.getInputData(),
+              frame.getInputData().copy(),
               frame.getOutputData(),
               Optional.empty(),
               Optional.empty(),
               Optional.empty(),
-              frame.getWorldState(),
+              frame.getWorldUpdater(),
               Optional.empty(),
               Optional.ofNullable(frame.getRefunds()),
               Optional.ofNullable(frame.getCode()),
@@ -126,7 +142,7 @@ public class DebugOperationTracer implements OperationTracer {
               Optional.empty());
       traceFrames.add(traceFrame);
     }
-    traceFrames.get(traceFrames.size() - 1).setPrecompiledGasCost(Optional.of(gasRequirement));
+    traceFrames.get(traceFrames.size() - 1).setPrecompiledGasCost(OptionalLong.of(gasRequirement));
   }
 
   @Override
@@ -150,18 +166,18 @@ public class DebugOperationTracer implements OperationTracer {
                     frame.getPC(),
                     Optional.empty(),
                     frame.getRemainingGas(),
-                    Optional.empty(),
+                    OptionalLong.empty(),
                     frame.getGasRefund(),
                     frame.getMessageStackDepth(),
                     Optional.of(exceptionalHaltReason),
                     frame.getRecipientAddress(),
                     frame.getValue(),
-                    frame.getInputData(),
+                    frame.getInputData().copy(),
                     frame.getOutputData(),
                     Optional.empty(),
                     Optional.empty(),
                     Optional.empty(),
-                    frame.getWorldState(),
+                    frame.getWorldUpdater(),
                     Optional.empty(),
                     Optional.ofNullable(frame.getRefunds()),
                     Optional.ofNullable(frame.getCode()),
@@ -183,7 +199,7 @@ public class DebugOperationTracer implements OperationTracer {
       final Map<UInt256, UInt256> storageContents =
           new TreeMap<>(
               frame
-                  .getWorldState()
+                  .getWorldUpdater()
                   .getAccount(frame.getRecipientAddress())
                   .getMutable()
                   .getUpdatedStorage());
@@ -197,9 +213,9 @@ public class DebugOperationTracer implements OperationTracer {
     if (!options.isMemoryEnabled()) {
       return Optional.empty();
     }
-    final Bytes[] memoryContents = new Bytes32[frame.memoryWordSize().intValue()];
+    final Bytes[] memoryContents = new Bytes[frame.memoryWordSize()];
     for (int i = 0; i < memoryContents.length; i++) {
-      memoryContents[i] = frame.readMemory(UInt256.valueOf(i * 32L), UINT256_32);
+      memoryContents[i] = frame.readMemory(i * 32L, 32);
     }
     return Optional.of(memoryContents);
   }
@@ -212,7 +228,7 @@ public class DebugOperationTracer implements OperationTracer {
     final Bytes32[] stackContents = new Bytes32[frame.stackSize()];
     for (int i = 0; i < stackContents.length; i++) {
       // Record stack contents in reverse
-      stackContents[i] = frame.getStackItem(stackContents.length - i - 1);
+      stackContents[i] = leftPad(frame.getStackItem(stackContents.length - i - 1));
     }
     return Optional.of(stackContents);
   }

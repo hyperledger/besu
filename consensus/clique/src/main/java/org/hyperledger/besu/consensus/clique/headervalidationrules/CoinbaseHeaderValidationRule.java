@@ -19,15 +19,21 @@ import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The Coinbase header validation rule. */
 public class CoinbaseHeaderValidationRule implements DetachedBlockHeaderValidationRule {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(CoinbaseHeaderValidationRule.class);
 
   private final EpochManager epochManager;
 
+  /**
+   * Instantiates a new Coinbase header validation rule.
+   *
+   * @param epochManager the epoch manager
+   */
   public CoinbaseHeaderValidationRule(final EpochManager epochManager) {
     this.epochManager = epochManager;
   }

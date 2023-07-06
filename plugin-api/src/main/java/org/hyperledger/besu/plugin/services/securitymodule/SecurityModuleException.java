@@ -16,20 +16,45 @@ package org.hyperledger.besu.plugin.services.securitymodule;
 
 /** SecurityModuleException can be thrown by operations of SecurityModule */
 public class SecurityModuleException extends RuntimeException {
+  /** Instantiates a new Security module exception. */
   public SecurityModuleException() {}
 
+  /**
+   * Instantiates a new Security module exception.
+   *
+   * @param message the message
+   */
   public SecurityModuleException(final String message) {
     super(message);
   }
 
+  /**
+   * Instantiates a new Security module exception.
+   *
+   * @param message the message
+   * @param cause the cause
+   */
   public SecurityModuleException(final String message, final Throwable cause) {
     super(message, cause);
   }
 
+  /**
+   * Instantiates a new Security module exception.
+   *
+   * @param cause the cause
+   */
   public SecurityModuleException(final Throwable cause) {
     super(cause);
   }
 
+  /**
+   * Instantiates a new Security module exception.
+   *
+   * @param message the message
+   * @param cause the cause
+   * @param enableSuppression the enable suppression
+   * @param writableStackTrace the writable stack trace
+   */
   public SecurityModuleException(
       final String message,
       final Throwable cause,

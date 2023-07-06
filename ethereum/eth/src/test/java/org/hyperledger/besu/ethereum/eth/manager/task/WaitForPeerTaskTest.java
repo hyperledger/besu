@@ -32,7 +32,7 @@ import org.junit.Test;
 public class WaitForPeerTaskTest {
   private EthProtocolManager ethProtocolManager;
   private EthContext ethContext;
-  private final MetricsSystem metricsSystem = new NoOpMetricsSystem();;
+  private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @Before
   public void setupTest() {

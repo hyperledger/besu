@@ -1,13 +1,11 @@
 # Besu Ethereum Client
- [![CircleCI](https://circleci.com/gh/hyperledger/besu/tree/master.svg?style=svg)](https://circleci.com/gh/hyperledger/besu/tree/master)
- [![Total alerts](https://img.shields.io/lgtm/alerts/g/hyperledger/besu.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/hyperledger/besu/alerts/)
- [![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/hyperledger/besu.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/hyperledger/besu/context:java)
+ [![CircleCI](https://circleci.com/gh/hyperledger/besu/tree/main.svg?style=svg)](https://circleci.com/gh/hyperledger/besu/tree/main)
  [![Documentation Status](https://readthedocs.org/projects/hyperledger-besu/badge/?version=latest)](https://besu.hyperledger.org/en/latest/?badge=latest)
  [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3174/badge)](https://bestpractices.coreinfrastructure.org/projects/3174)
- [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/PegasysEng/besu/blob/master/LICENSE)
- [ ![Download](https://api.bintray.com/packages/hyperledger-org/besu-repo/besu/images/download.svg) ](https://bintray.com/hyperledger-org/besu-repo/besu/_latestVersion)
- [![RocketChat chat](https://open.rocket.chat/images/join-chat.svg)](https://chat.hyperledger.org/channel/besu)
+ [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/hyperledger/besu/blob/main/LICENSE)
+ [![Discord](https://img.shields.io/discord/905194001349627914?logo=Hyperledger&style=plastic)](https://discord.gg/hyperledger)
 
+[Download](https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/)
 
 Besu is an Apache 2.0 licensed, MainNet compatible, Ethereum client written in Java.
 
@@ -25,7 +23,7 @@ Besu is an Apache 2.0 licensed, MainNet compatible, Ethereum client written in J
 Besu issues are tracked [in the github issues tab][Besu Issues].
 See our [guidelines](https://wiki.hyperledger.org/display/BESU/Issues) for more details on searching and creating issues.
 
-If you have any questions, queries or comments, [RocketChat] is the place to find us.
+If you have any questions, queries or comments, [Besu channel on Hyperledger Discord] is the place to find us.
 
 
 ## Besu Users
@@ -69,5 +67,5 @@ and <a href="https://www.yourkit.com/youmonitor/">YourKit YouMonitor</a>.
 
 [Besu Issues]: https://github.com/hyperledger/besu/issues
 [Besu User Documentation]: https://besu.hyperledger.org
-[RocketChat]: https://chat.hyperledger.org/
+[Besu channel on Hyperledger Discord]: https://discord.gg/hyperledger
 [Contributing Guidelines]: CONTRIBUTING.md

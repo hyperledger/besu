@@ -1,0 +1,67 @@
+{
+  "comment" : "call the prior contract then call log contract 00a0..00.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_rawTransaction",
+    "params" : [ "0xf8908081ef83fffff28080b84260006000600060006000738f0483125fcb9aaaefa9209d8e9d7b9c8b9fb90f5af1600060006000600060007300a00000000000000000000000000000000000005af11ba0289116cd7bd226e6cc31cbd20382b9632ac9aca596f03be9927240957cca3b13a021ec53811de779577040a16c294d920fc5d3056c6cc3dd87763b2cf16fa2d3cf", [ "trace" ] ],
+    "id" : 79
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x",
+      "stateDiff" : null,
+      "trace" : [ {
+        "action" : {
+          "from" : "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+          "gas" : "0xff2e26",
+          "init" : "0x60006000600060006000738f0483125fcb9aaaefa9209d8e9d7b9c8b9fb90f5af1600060006000600060007300a00000000000000000000000000000000000005af1",
+          "value" : "0x0"
+        },
+        "result" : {
+          "address" : "0x3d49d1ef2ade060a33c6e6aa213513a7ee9a6241",
+          "code" : "0x",
+          "gasUsed" : "0x8ab"
+        },
+        "subtraces" : 2,
+        "traceAddress" : [ ],
+        "type" : "create"
+      }, {
+        "action" : {
+          "callType" : "call",
+          "from" : "0x3d49d1ef2ade060a33c6e6aa213513a7ee9a6241",
+          "gas" : "0xfb2ea9",
+          "input" : "0x",
+          "to" : "0x8f0483125fcb9aaaefa9209d8e9d7b9c8b9fb90f",
+          "value" : "0x0"
+        },
+        "result" : {
+          "gasUsed" : "0x0",
+          "output" : "0x"
+        },
+        "subtraces" : 0,
+        "traceAddress" : [ 0 ],
+        "type" : "call"
+      }, {
+        "action" : {
+          "callType" : "call",
+          "from" : "0x3d49d1ef2ade060a33c6e6aa213513a7ee9a6241",
+          "gas" : "0xfb2be4",
+          "input" : "0x",
+          "to" : "0x00a0000000000000000000000000000000000000",
+          "value" : "0x0"
+        },
+        "result" : {
+          "gasUsed" : "0x30b",
+          "output" : "0x"
+        },
+        "subtraces" : 0,
+        "traceAddress" : [ 1 ],
+        "type" : "call"
+      } ],
+      "vmTrace" : null
+    },
+    "id" : 79
+  },
+  "statusCode" : 200
+}

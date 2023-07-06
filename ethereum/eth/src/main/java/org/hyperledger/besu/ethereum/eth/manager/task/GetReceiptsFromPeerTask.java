@@ -18,8 +18,8 @@ import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.toList;
 import static org.hyperledger.besu.ethereum.mainnet.BodyValidation.receiptsRoot;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -36,12 +36,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GetReceiptsFromPeerTask
     extends AbstractPeerRequestTask<Map<BlockHeader, List<TransactionReceipt>>> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(GetReceiptsFromPeerTask.class);
 
   private final Collection<BlockHeader> blockHeaders;
   private final Map<Hash, List<BlockHeader>> headersByReceiptsRoot = new HashMap<>();

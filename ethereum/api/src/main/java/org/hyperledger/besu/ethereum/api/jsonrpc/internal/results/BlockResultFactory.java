@@ -14,18 +14,26 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadBodiesResultV1.PayloadBody;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.BlockValueCalculator;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import org.apache.tuweni.bytes.Bytes;
 
 public class BlockResultFactory {
 
@@ -52,7 +60,8 @@ public class BlockResultFactory {
         ommers,
         blockWithMetadata.getTotalDifficulty(),
         blockWithMetadata.getSize(),
-        includeCoinbase);
+        includeCoinbase,
+        blockWithMetadata.getWithdrawals());
   }
 
   public BlockResult transactionComplete(final Block block) {
@@ -64,6 +73,7 @@ public class BlockResultFactory {
           new TransactionWithMetadata(
               block.getBody().getTransactions().get(i),
               block.getHeader().getNumber(),
+              block.getHeader().getBaseFee(),
               block.getHash(),
               i));
     }
@@ -80,6 +90,42 @@ public class BlockResultFactory {
             .collect(Collectors.toList());
     return new BlockResult(
         block.getHeader(), txs, ommers, block.getHeader().getDifficulty(), block.calculateSize());
+  }
+
+  public EngineGetPayloadResultV1 payloadTransactionCompleteV1(final Block block) {
+    final List<String> txs =
+        block.getBody().getTransactions().stream()
+            .map(TransactionEncoder::encodeOpaqueBytes)
+            .map(Bytes::toHexString)
+            .collect(Collectors.toList());
+
+    return new EngineGetPayloadResultV1(block.getHeader(), txs);
+  }
+
+  public EngineGetPayloadResultV2 payloadTransactionCompleteV2(
+      final BlockWithReceipts blockWithReceipts) {
+    final List<String> txs =
+        blockWithReceipts.getBlock().getBody().getTransactions().stream()
+            .map(TransactionEncoder::encodeOpaqueBytes)
+            .map(Bytes::toHexString)
+            .collect(Collectors.toList());
+
+    final Wei blockValue = new BlockValueCalculator().calculateBlockValue(blockWithReceipts);
+    return new EngineGetPayloadResultV2(
+        blockWithReceipts.getHeader(),
+        txs,
+        blockWithReceipts.getBlock().getBody().getWithdrawals(),
+        blockWithReceipts.getBlock().getBody().getDeposits(),
+        Quantity.create(blockValue));
+  }
+
+  public EngineGetPayloadBodiesResultV1 payloadBodiesCompleteV1(
+      final List<Optional<BlockBody>> blockBodies) {
+    final List<PayloadBody> payloadBodies =
+        blockBodies.stream()
+            .map(maybeBody -> maybeBody.map(PayloadBody::new).orElse(null))
+            .collect(Collectors.toList());
+    return new EngineGetPayloadBodiesResultV1(payloadBodies);
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {
@@ -104,6 +150,7 @@ public class BlockResultFactory {
         ommers,
         blockWithMetadata.getTotalDifficulty(),
         blockWithMetadata.getSize(),
-        includeCoinbase);
+        includeCoinbase,
+        blockWithMetadata.getWithdrawals());
   }
 }

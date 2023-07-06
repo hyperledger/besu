@@ -15,42 +15,51 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 
 import java.util.OptionalLong;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class LatestNonceProviderTest {
 
-  private final Address senderAdress = Address.fromHexString("1");
+  private final Address senderAddress = Address.fromHexString("1");
 
-  private final PendingTransactions pendingTransactions = mock(PendingTransactions.class);
-  private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
-  private final LatestNonceProvider nonceProvider =
-      new LatestNonceProvider(blockchainQueries, pendingTransactions);
+  @Mock private BlockchainQueries blockchainQueries;
+  private LatestNonceProvider nonceProvider;
+
+  @Mock private PendingTransactions pendingTransactions;
+
+  @Before
+  public void setUp() {
+    nonceProvider = new LatestNonceProvider(blockchainQueries, pendingTransactions);
+  }
 
   @Test
   public void nextNonceUsesTxPool() {
     final long highestNonceInPendingTransactions = 123;
-    when(pendingTransactions.getNextNonceForSender(senderAdress))
+    when(pendingTransactions.getNextNonceForSender(senderAddress))
         .thenReturn(OptionalLong.of(highestNonceInPendingTransactions));
-    assertThat(nonceProvider.getNonce(senderAdress)).isEqualTo(highestNonceInPendingTransactions);
+    assertThat(nonceProvider.getNonce(senderAddress)).isEqualTo(highestNonceInPendingTransactions);
   }
 
   @Test
   public void nextNonceIsTakenFromBlockchainIfNoPendingTransactionResponse() {
     final long headBlockNumber = 8;
-    final long nonceInBLockchain = 56;
-    when(pendingTransactions.getNextNonceForSender(senderAdress)).thenReturn(OptionalLong.empty());
+    final long nonceInBlockchain = 56;
+    when(pendingTransactions.getNextNonceForSender(senderAddress)).thenReturn(OptionalLong.empty());
     when(blockchainQueries.headBlockNumber()).thenReturn(headBlockNumber);
-    when(blockchainQueries.getTransactionCount(senderAdress, headBlockNumber))
-        .thenReturn(nonceInBLockchain);
-    assertThat(nonceProvider.getNonce(senderAdress)).isEqualTo(nonceInBLockchain);
+    when(blockchainQueries.getTransactionCount(senderAddress, headBlockNumber))
+        .thenReturn(nonceInBlockchain);
+    assertThat(nonceProvider.getNonce(senderAddress)).isEqualTo(nonceInBlockchain);
   }
 }

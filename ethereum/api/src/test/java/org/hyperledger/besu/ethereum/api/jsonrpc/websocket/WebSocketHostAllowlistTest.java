@@ -20,6 +20,8 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.BaseJsonRpcProcessor;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
@@ -37,7 +39,7 @@ import java.util.Optional;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -59,7 +61,7 @@ public class WebSocketHostAllowlistTest {
 
   private final WebSocketConfiguration webSocketConfiguration =
       WebSocketConfiguration.createDefault();
-  private static WebSocketRequestHandler webSocketRequestHandlerSpy;
+  private static WebSocketMessageHandler webSocketMessageHandlerSpy;
   private WebSocketService websocketService;
   private HttpClient httpClient;
   private static final int VERTX_AWAIT_TIMEOUT_MILLIS = 10000;
@@ -74,16 +76,17 @@ public class WebSocketHostAllowlistTest {
         new WebSocketMethodsFactory(
                 new SubscriptionManager(new NoOpMetricsSystem()), new HashMap<>())
             .methods();
-    webSocketRequestHandlerSpy =
+    webSocketMessageHandlerSpy =
         spy(
-            new WebSocketRequestHandler(
+            new WebSocketMessageHandler(
                 vertx,
-                websocketMethods,
+                new JsonRpcExecutor(new BaseJsonRpcProcessor(), websocketMethods),
                 mock(EthScheduler.class),
                 TimeoutOptions.defaultOptions().getTimeoutSeconds()));
 
     websocketService =
-        new WebSocketService(vertx, webSocketConfiguration, webSocketRequestHandlerSpy);
+        new WebSocketService(
+            vertx, webSocketConfiguration, webSocketMessageHandlerSpy, new NoOpMetricsSystem());
     websocketService.start().join();
     final InetSocketAddress inetSocketAddress = websocketService.socketAddress();
 
@@ -98,7 +101,7 @@ public class WebSocketHostAllowlistTest {
 
   @After
   public void after() {
-    reset(webSocketRequestHandlerSpy);
+    reset(webSocketMessageHandlerSpy);
     websocketService.stop();
   }
 
@@ -179,7 +182,7 @@ public class WebSocketHostAllowlistTest {
   public void httpRequestWithMalformedHostIsRejected(final TestContext context) {
     webSocketConfiguration.setAuthenticationEnabled(false);
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
-    doHttpRequestAndVerify(context, "ally:friend", 403);
+    doHttpRequestAndVerify(context, "ally:friend", 400);
     doHttpRequestAndVerify(context, "ally:123456", 403);
     doHttpRequestAndVerify(context, "ally:friend:1234", 403);
   }
@@ -188,19 +191,22 @@ public class WebSocketHostAllowlistTest {
       final TestContext context, final String hostname, final int expectedResponse) {
     final Async async = context.async();
 
-    final HttpClientRequest request =
-        httpClient.post(
-            websocketPort,
-            webSocketConfiguration.getHost(),
-            "/",
-            response -> {
-              assertThat(response.statusCode()).isEqualTo(expectedResponse);
-              async.complete();
-            });
-
-    request.putHeader("Host", hostname);
-    request.end();
-
+    httpClient.request(
+        HttpMethod.POST,
+        websocketPort,
+        webSocketConfiguration.getHost(),
+        "/",
+        request -> {
+          request.result().putHeader("Host", hostname);
+          request.result().end();
+          request
+              .result()
+              .send(
+                  response -> {
+                    assertThat(response.result().statusCode()).isEqualTo(expectedResponse);
+                    async.complete();
+                  });
+        });
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
   }
 }

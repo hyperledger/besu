@@ -20,9 +20,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Accounts;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Blockchain;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.admin.AdminConditions;
+import org.hyperledger.besu.tests.acceptance.dsl.condition.bft.BftConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.clique.CliqueConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.eth.EthConditions;
-import org.hyperledger.besu.tests.acceptance.dsl.condition.ibft2.Ibft2Conditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.login.LoginConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.net.NetConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.perm.PermissioningConditions;
@@ -37,10 +37,10 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeFact
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.permissioning.PermissionedNodeBuilder;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.account.AccountTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.admin.AdminTransactions;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.CliqueTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.contract.ContractTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.ibft2.Ibft2Transactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.NetTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningTransactions;
@@ -57,18 +57,18 @@ import java.math.BigInteger;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.ThreadContext;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 public class AcceptanceTestBase {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(AcceptanceTestBase.class);
 
   protected final Accounts accounts;
   protected final AccountTransactions accountTransactions;
@@ -82,8 +82,8 @@ public class AcceptanceTestBase {
   protected final ContractTransactions contractTransactions;
   protected final EthConditions eth;
   protected final EthTransactions ethTransactions;
-  protected final Ibft2Transactions ibftTwoTransactions;
-  protected final Ibft2Conditions ibftTwo;
+  protected final BftTransactions bftTransactions;
+  protected final BftConditions bft;
   protected final LoginConditions login;
   protected final NetConditions net;
   protected final BesuNodeFactory besu;
@@ -105,7 +105,7 @@ public class AcceptanceTestBase {
     accounts = new Accounts(ethTransactions);
     adminTransactions = new AdminTransactions();
     cliqueTransactions = new CliqueTransactions();
-    ibftTwoTransactions = new Ibft2Transactions();
+    bftTransactions = new BftTransactions();
     accountTransactions = new AccountTransactions(accounts);
     permissioningTransactions = new PermissioningTransactions();
     privacyTransactions = new PrivacyTransactions();
@@ -115,7 +115,7 @@ public class AcceptanceTestBase {
     blockchain = new Blockchain(ethTransactions);
     clique = new CliqueConditions(ethTransactions, cliqueTransactions);
     eth = new EthConditions(ethTransactions);
-    ibftTwo = new Ibft2Conditions(ibftTwoTransactions);
+    bft = new BftConditions(bftTransactions);
     login = new LoginConditions();
     net = new NetConditions(new NetTransactions());
     cluster = new Cluster(net);
@@ -179,13 +179,13 @@ public class AcceptanceTestBase {
   }
 
   @Rule
-  public TestWatcher log_eraser =
+  public TestWatcher logEraser =
       new TestWatcher() {
 
         @Override
         protected void starting(final Description description) {
-          ThreadContext.put("test", description.getMethodName());
-          ThreadContext.put("class", description.getClassName());
+          MDC.put("test", description.getMethodName());
+          MDC.put("class", description.getClassName());
 
           final String errorMessage = "Uncaught exception in thread \"{}\"";
           Thread.currentThread()
@@ -201,6 +201,7 @@ public class AcceptanceTestBase {
           LOG.error(
               "==========================================================================================");
           LOG.error("Test failed. Reported Throwable at the point of failure:", e);
+          LOG.error(e.getMessage());
         }
 
         @Override

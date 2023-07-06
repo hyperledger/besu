@@ -31,11 +31,11 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractPeerRequestTask.class);
   private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
 
   private Duration timeout = DEFAULT_TIMEOUT;
@@ -101,10 +101,15 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
     }
     try {
       final Optional<R> result = processResponse(streamClosed, message, peer);
-      result.ifPresent(promise::complete);
+      result.ifPresent(
+          r -> {
+            promise.complete(r);
+            peer.recordUsefulResponse();
+          });
     } catch (final RLPException e) {
       // Peer sent us malformed data - disconnect
       LOG.debug("Disconnecting with BREACH_OF_PROTOCOL due to malformed message: {}", peer, e);
+      LOG.trace("Message data: {}", message.getData());
       peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
       promise.completeExceptionally(new PeerBreachedProtocolException());
     }

@@ -31,19 +31,27 @@ dependencies {
   api project(':plugin-api')
   api project(':util')
 
+  implementation project(':datatypes')
   implementation project(':ethereum:api')
   implementation project(':ethereum:core')
   implementation project(':ethereum:blockcreation')
+  implementation project(':metrics:core')
+  implementation project(':consensus:merge')
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
-  implementation 'org.apache.tuweni:bytes'
-  implementation 'org.apache.tuweni:units'
+  implementation 'com.fasterxml.jackson.core:jackson-databind'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-units'
 
+  testImplementation project(path: ':metrics:core', configuration: 'testSupportArtifacts')
   testImplementation project(':testutil')
 
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
-  testImplementation 'junit:junit'
+  testImplementation 'io.vertx:vertx-junit5'
+  testImplementation 'io.vertx:vertx-web-client'
   testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
 }

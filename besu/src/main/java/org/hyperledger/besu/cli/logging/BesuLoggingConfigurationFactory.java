@@ -19,6 +19,7 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.ConfigurationFactory;
 import org.apache.logging.log4j.core.config.ConfigurationSource;
 
+/** Custom Log4J Configuration Factory for Besu */
 public class BesuLoggingConfigurationFactory extends ConfigurationFactory {
 
   @Override

@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
-import org.hyperledger.besu.ethereum.permissioning.QuorumQip714Gate;
+import org.hyperledger.besu.ethereum.permissioning.GoQuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.TransactionSmartContractPermissioningController;
 
 import java.util.Optional;
@@ -41,7 +41,7 @@ public class AccountPermissioningControllerTest {
 
   @Mock private AccountLocalConfigPermissioningController localConfigController;
   @Mock private TransactionSmartContractPermissioningController smartContractController;
-  @Mock private QuorumQip714Gate quorumQip714Gate;
+  @Mock private GoQuorumQip714Gate goQuorumQip714Gate;
 
   @Before
   public void before() {
@@ -109,9 +109,9 @@ public class AccountPermissioningControllerTest {
         new AccountPermissioningController(
             Optional.of(localConfigController),
             Optional.of(smartContractController),
-            Optional.of(quorumQip714Gate));
+            Optional.of(goQuorumQip714Gate));
 
-    when(quorumQip714Gate.shouldCheckPermissions()).thenReturn(false);
+    when(goQuorumQip714Gate.shouldCheckPermissions()).thenReturn(false);
 
     boolean isPermitted = permissioningController.isPermitted(mock(Transaction.class), true, false);
     assertThat(isPermitted).isTrue();
@@ -126,9 +126,9 @@ public class AccountPermissioningControllerTest {
         new AccountPermissioningController(
             Optional.of(localConfigController),
             Optional.of(smartContractController),
-            Optional.of(quorumQip714Gate));
+            Optional.of(goQuorumQip714Gate));
 
-    when(quorumQip714Gate.shouldCheckPermissions()).thenReturn(true);
+    when(goQuorumQip714Gate.shouldCheckPermissions()).thenReturn(true);
 
     permissioningController.isPermitted(mock(Transaction.class), true, false);
 

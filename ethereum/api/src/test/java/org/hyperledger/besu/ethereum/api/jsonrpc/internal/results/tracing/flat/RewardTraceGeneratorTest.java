@@ -18,14 +18,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ClassicBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
@@ -72,7 +71,7 @@ public class RewardTraceGeneratorTest {
     final BlockHeader blockHeader =
         gen.header(0x0A, blockBody, new BlockDataGenerator.BlockOptions());
     block = new Block(blockHeader, blockBody);
-    when(protocolSchedule.getByBlockNumber(block.getHeader().getNumber())).thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(block.getHeader())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockReward()).thenReturn(blockReward);
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(miningBeneficiaryCalculator);
     when(miningBeneficiaryCalculator.calculateBeneficiary(block.getHeader()))
@@ -92,7 +91,7 @@ public class RewardTraceGeneratorTest {
             blockReward,
             BlockHeader::getCoinbase,
             true,
-            TransactionGasBudgetCalculator.frontier());
+            protocolSchedule);
     when(protocolSpec.getBlockProcessor()).thenReturn(blockProcessor);
 
     final Stream<Trace> traceStream =
@@ -151,7 +150,8 @@ public class RewardTraceGeneratorTest {
             blockReward,
             BlockHeader::getCoinbase,
             true,
-            eraRounds);
+            eraRounds,
+            protocolSchedule);
     when(protocolSpec.getBlockProcessor()).thenReturn(blockProcessor);
 
     final Stream<Trace> traceStream =

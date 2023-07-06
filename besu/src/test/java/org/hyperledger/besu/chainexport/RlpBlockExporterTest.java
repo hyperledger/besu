@@ -20,21 +20,25 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
-import org.hyperledger.besu.ethereum.core.MiningParametersTestBuilder;
+import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 import org.hyperledger.besu.testutil.TestClock;
@@ -49,8 +53,11 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link BlockExporter}. */
+@RunWith(MockitoJUnitRunner.class)
 public final class RlpBlockExporterTest {
 
   @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
@@ -79,12 +86,12 @@ public final class RlpBlockExporterTest {
   private static BesuController createController() throws IOException {
     final Path dataDir = folder.newFolder().toPath();
     return new BesuController.Builder()
-        .fromGenesisConfig(GenesisConfigFile.mainnet())
+        .fromGenesisConfig(GenesisConfigFile.mainnet(), SyncMode.FAST)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-        .storageProvider(new InMemoryStorageProvider())
+        .storageProvider(new InMemoryKeyValueStorageProvider())
         .networkId(BigInteger.ONE)
-        .miningParameters(new MiningParametersTestBuilder().enabled(false).build())
+        .miningParameters(new MiningParameters.Builder().miningEnabled(false).build())
         .nodeKey(NodeKeyUtils.generate())
         .metricsSystem(new NoOpMetricsSystem())
         .privacyParameters(PrivacyParameters.DEFAULT)
@@ -92,6 +99,8 @@ public final class RlpBlockExporterTest {
         .clock(TestClock.fixed())
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
         .gasLimitCalculator(GasLimitCalculator.constant())
+        .evmConfiguration(EvmConfiguration.DEFAULT)
+        .networkConfiguration(NetworkingConfiguration.create())
         .build();
   }
 
@@ -236,10 +245,9 @@ public final class RlpBlockExporterTest {
   }
 
   private RawBlockIterator getBlockIterator(final Path blocks) throws IOException {
-    return new RawBlockIterator(
-        blocks,
-        rlp ->
-            BlockHeader.readFrom(rlp, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
+    final BlockHeaderFunctions blockHeaderFunctions =
+        ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
+    return new RawBlockIterator(blocks, blockHeaderFunctions);
   }
 
   private Block getBlock(final Blockchain blockchain, final long blockNumber) {

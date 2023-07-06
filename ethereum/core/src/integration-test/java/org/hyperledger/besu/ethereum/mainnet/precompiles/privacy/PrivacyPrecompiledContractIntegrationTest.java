@@ -17,23 +17,24 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.enclave.types.SendResponse;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.mainnet.SpuriousDragonGasCalculator;
+import org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -43,13 +44,20 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.orion.testutil.OrionKeyConfiguration;
-import org.hyperledger.orion.testutil.OrionTestHarness;
-import org.hyperledger.orion.testutil.OrionTestHarnessFactory;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
+import org.hyperledger.besu.evm.precompile.PrecompiledContract;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
+import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
+import org.hyperledger.enclave.testutil.TesseraTestHarness;
+import org.hyperledger.enclave.testutil.TesseraTestHarnessFactory;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -57,15 +65,14 @@ import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class PrivacyPrecompiledContractIntegrationTest {
 
-  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir private static Path folder;
 
   private static final Bytes VALID_PRIVATE_TRANSACTION_RLP =
       Bytes.fromHexString(
@@ -83,9 +90,8 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
   private static Enclave enclave;
   private static MessageFrame messageFrame;
-  private static Blockchain blockchain;
 
-  private static OrionTestHarness testHarness;
+  private static TesseraTestHarness testHarness;
   private static WorldStateArchive worldStateArchive;
   private static PrivateStateStorage privateStateStorage;
   private static final Vertx vertx = Vertx.vertx();
@@ -97,7 +103,6 @@ public class PrivacyPrecompiledContractIntegrationTest {
         TransactionProcessingResult.successful(
             null, 0, 0, Bytes.fromHexString(DEFAULT_OUTPUT), null);
     when(mockPrivateTransactionProcessor.processTransaction(
-            nullable(Blockchain.class),
             nullable(WorldUpdater.class),
             nullable(WorldUpdater.class),
             nullable(ProcessableBlockHeader.class),
@@ -112,42 +117,47 @@ public class PrivacyPrecompiledContractIntegrationTest {
     return mockPrivateTransactionProcessor;
   }
 
-  @BeforeClass
+  @BeforeAll
   public static void setUpOnce() throws Exception {
-    folder.create();
 
     testHarness =
-        OrionTestHarnessFactory.create(
-            folder.newFolder().toPath(),
-            new OrionKeyConfiguration("orion_key_0.pub", "orion_key_1.key"));
+        TesseraTestHarnessFactory.create(
+            "enclave",
+            Files.createTempDirectory(folder, "enclave"),
+            new EnclaveKeyConfiguration(
+                new String[] {"enclave_key_0.pub"},
+                new String[] {"enclave_key_1.key"},
+                EnclaveEncryptorType.NOOP),
+            Optional.empty());
 
     testHarness.start();
 
     final EnclaveFactory factory = new EnclaveFactory(vertx);
     enclave = factory.createVertxEnclave(testHarness.clientUrl());
     messageFrame = mock(MessageFrame.class);
-    blockchain = mock(Blockchain.class);
     final BlockDataGenerator blockGenerator = new BlockDataGenerator();
     final Block genesis = blockGenerator.genesisBlock();
     final Block block =
         blockGenerator.block(
             new BlockDataGenerator.BlockOptions().setParentHash(genesis.getHeader().getHash()));
-    when(blockchain.getGenesisBlock()).thenReturn(genesis);
-    when(blockchain.getBlockByHash(block.getHash())).thenReturn(Optional.of(block));
-    when(blockchain.getBlockByHash(genesis.getHash())).thenReturn(Optional.of(genesis));
-    when(messageFrame.getBlockchain()).thenReturn(blockchain);
-    when(messageFrame.getBlockHeader()).thenReturn(block.getHeader());
+    when(messageFrame.getBlockValues()).thenReturn(block.getHeader());
     final PrivateMetadataUpdater privateMetadataUpdater = mock(PrivateMetadataUpdater.class);
     when(privateMetadataUpdater.getPrivateBlockMetadata(any())).thenReturn(null);
     when(privateMetadataUpdater.getPrivacyGroupHeadBlockMap())
         .thenReturn(PrivacyGroupHeadBlockMap.empty());
-    when(messageFrame.getPrivateMetadataUpdater()).thenReturn(privateMetadataUpdater);
+    when(messageFrame.getContextVariable(
+            eq(PrivateStateUtils.KEY_IS_PERSISTING_PRIVATE_STATE), anyBoolean()))
+        .thenReturn(false);
+    when(messageFrame.getContextVariable(eq(PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER)))
+        .thenReturn(privateMetadataUpdater);
+    when(messageFrame.hasContextVariable(eq(PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER)))
+        .thenReturn(true);
 
     worldStateArchive = mock(WorldStateArchive.class);
     final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
     when(mutableWorldState.updater()).thenReturn(mock(WorldUpdater.class));
     when(worldStateArchive.getMutable()).thenReturn(mutableWorldState);
-    when(worldStateArchive.getMutable(any())).thenReturn(Optional.of(mutableWorldState));
+    when(worldStateArchive.getMutable(any(), any())).thenReturn(Optional.of(mutableWorldState));
 
     privateStateStorage = mock(PrivateStateStorage.class);
     final PrivateStateStorage.Updater storageUpdater = mock(PrivateStateStorage.Updater.class);
@@ -162,9 +172,9 @@ public class PrivacyPrecompiledContractIntegrationTest {
     when(privateStateStorage.updater()).thenReturn(storageUpdater);
   }
 
-  @AfterClass
+  @AfterAll
   public static void tearDownOnce() {
-    testHarness.getOrion().stop();
+    testHarness.stop();
     vertx.close();
   }
 
@@ -191,12 +201,17 @@ public class PrivacyPrecompiledContractIntegrationTest {
             new SpuriousDragonGasCalculator(),
             enclave,
             worldStateArchive,
-            new PrivateStateRootResolver(privateStateStorage));
+            new PrivateStateRootResolver(privateStateStorage),
+            new PrivateStateGenesisAllocator(
+                false, (privacyGroupId, blockNumber) -> Collections::emptyList),
+            "IntegrationTest");
 
     privacyPrecompiledContract.setPrivateTransactionProcessor(mockPrivateTxProcessor());
 
-    final Bytes actual =
-        privacyPrecompiledContract.compute(Bytes.fromBase64String(sr.getKey()), messageFrame);
+    final PrecompiledContract.PrecompileContractResult result =
+        privacyPrecompiledContract.computePrecompile(
+            Bytes.fromBase64String(sr.getKey()), messageFrame);
+    final Bytes actual = result.getOutput();
 
     assertThat(actual).isEqualTo(Bytes.fromHexString(DEFAULT_OUTPUT));
   }
@@ -210,7 +225,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     final Throwable thrown = catchThrowable(() -> enclave.send(s, publicKeys.get(0), publicKeys));
 
-    assertThat(thrown).hasMessageContaining("EnclaveDecodePublicKey");
+    assertThat(thrown).hasMessageContaining("Index 9 out of bounds for length 9");
   }
 
   @Test
@@ -222,6 +237,6 @@ public class PrivacyPrecompiledContractIntegrationTest {
 
     final Throwable thrown = catchThrowable(() -> enclave.send(s, publicKeys.get(0), publicKeys));
 
-    assertThat(thrown).hasMessageContaining("NodeMissingPeerUrl");
+    assertThat(thrown).hasMessageContaining("Recipient not found for key:");
   }
 }

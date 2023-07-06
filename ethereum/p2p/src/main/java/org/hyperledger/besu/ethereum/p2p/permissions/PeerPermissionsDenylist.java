@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.permissions;
 
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.util.LimitedSet;
 import org.hyperledger.besu.util.LimitedSet.Mode;
@@ -29,14 +30,14 @@ import org.apache.tuweni.bytes.Bytes;
 public class PeerPermissionsDenylist extends PeerPermissions {
   private static final int DEFAULT_INITIAL_CAPACITY = 20;
 
-  private final Set<Bytes> blacklist;
+  private final Set<Bytes> denylist;
 
   private PeerPermissionsDenylist(final int initialCapacity, final OptionalInt maxSize) {
     if (maxSize.isPresent()) {
-      blacklist =
+      denylist =
           LimitedSet.create(initialCapacity, maxSize.getAsInt(), Mode.DROP_LEAST_RECENTLY_ACCESSED);
     } else {
-      blacklist = new ConcurrentHashSet<>(initialCapacity);
+      denylist = new ConcurrentHashSet<>(initialCapacity);
     }
   }
 
@@ -54,35 +55,36 @@ public class PeerPermissionsDenylist extends PeerPermissions {
 
   @Override
   public boolean isPermitted(final Peer localNode, final Peer remotePeer, final Action action) {
-    return !blacklist.contains(remotePeer.getId());
+    return !EnodeURLImpl.sameListeningEndpoint(localNode.getEnodeURL(), remotePeer.getEnodeURL())
+        && !denylist.contains(remotePeer.getId());
   }
 
   public void add(final Peer peer) {
-    if (blacklist.add(peer.getId())) {
+    if (denylist.add(peer.getId())) {
       dispatchUpdate(true, Optional.of(Collections.singletonList(peer)));
     }
   }
 
   public void remove(final Peer peer) {
-    if (blacklist.remove(peer.getId())) {
+    if (denylist.remove(peer.getId())) {
       dispatchUpdate(false, Optional.of(Collections.singletonList(peer)));
     }
   }
 
   public void add(final Bytes peerId) {
-    if (blacklist.add(peerId)) {
+    if (denylist.add(peerId)) {
       dispatchUpdate(true, Optional.empty());
     }
   }
 
   public void remove(final Bytes peerId) {
-    if (blacklist.remove(peerId)) {
+    if (denylist.remove(peerId)) {
       dispatchUpdate(false, Optional.empty());
     }
   }
 
   @Override
   public void close() {
-    blacklist.clear();
+    denylist.clear();
   }
 }

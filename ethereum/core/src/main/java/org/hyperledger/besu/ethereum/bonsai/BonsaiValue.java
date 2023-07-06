@@ -16,60 +16,88 @@
 
 package org.hyperledger.besu.ethereum.bonsai;
 
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
-import java.util.Objects;
-import java.util.function.BiConsumer;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-public class BonsaiValue<T> {
-  private T original;
+public class BonsaiValue<T> implements TrieLog.LogTuple<T> {
+  private T prior;
   private T updated;
+  private boolean cleared;
 
-  BonsaiValue(final T original, final T updated) {
-    this.original = original;
+  public BonsaiValue(final T prior, final T updated) {
+    this.prior = prior;
     this.updated = updated;
+    this.cleared = false;
   }
 
-  public T getOriginal() {
-    return original;
+  public BonsaiValue(final T prior, final T updated, final boolean cleared) {
+    this.prior = prior;
+    this.updated = updated;
+    this.cleared = cleared;
   }
 
+  @Override
+  public T getPrior() {
+    return prior;
+  }
+
+  @Override
   public T getUpdated() {
     return updated;
   }
 
-  public void setOriginal(final T original) {
-    this.original = original;
+  public BonsaiValue<T> setPrior(final T prior) {
+    this.prior = prior;
+    return this;
   }
 
-  public void setUpdated(final T updated) {
+  public BonsaiValue<T> setUpdated(final T updated) {
+    this.cleared = updated == null;
     this.updated = updated;
+    return this;
   }
 
-  void writeRlp(final RLPOutput output, final BiConsumer<RLPOutput, T> writer) {
-    output.startList();
-    writeInnerRlp(output, writer);
-    output.endList();
+  public void setCleared() {
+    this.cleared = true;
   }
 
-  void writeInnerRlp(final RLPOutput output, final BiConsumer<RLPOutput, T> writer) {
-    if (original == null) {
-      output.writeNull();
-    } else {
-      writer.accept(output, original);
+  @Override
+  public boolean isCleared() {
+    return cleared;
+  }
+
+  @Override
+  public String toString() {
+    return "BonsaiValue{"
+        + "prior="
+        + prior
+        + ", updated="
+        + updated
+        + ", cleared="
+        + cleared
+        + '}';
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) {
+      return true;
     }
-    if (updated == null) {
-      output.writeNull();
-    } else {
-      writer.accept(output, updated);
+    if (o == null || getClass() != o.getClass()) {
+      return false;
     }
+    BonsaiValue<?> that = (BonsaiValue<?>) o;
+    return new EqualsBuilder()
+        .append(cleared, that.cleared)
+        .append(prior, that.prior)
+        .append(updated, that.updated)
+        .isEquals();
   }
 
-  boolean isUnchanged() {
-    return Objects.equals(updated, original);
-  }
-
-  T effective() {
-    return updated == null ? original : updated;
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder(17, 37).append(prior).append(updated).append(cleared).toHashCode();
   }
 }

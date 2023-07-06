@@ -16,12 +16,13 @@ package org.hyperledger.besu.consensus.clique;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.consensus.common.VoteType.ADD;
-import static org.hyperledger.besu.consensus.common.VoteType.DROP;
+import static org.hyperledger.besu.consensus.common.validator.VoteType.ADD;
+import static org.hyperledger.besu.consensus.common.validator.VoteType.DROP;
 
-import org.hyperledger.besu.consensus.common.ValidatorVote;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -32,11 +33,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class CliqueBlockInterfaceTest {
 
-  private static final KeyPair proposerKeys = KeyPair.generate();
+  private static final KeyPair proposerKeys =
+      SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private static final Address proposerAddress =
       Util.publicKeyToAddress(proposerKeys.getPublicKey());
   private static final List<Address> validatorList = singletonList(proposerAddress);

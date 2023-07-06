@@ -30,8 +30,8 @@ import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Finds the common ancestor with the given peer. It is assumed that the peer will at least share
@@ -40,7 +40,7 @@ import org.apache.logging.log4j.Logger;
  * cases this node's genesis block will be returned.
  */
 public class DetermineCommonAncestorTask extends AbstractEthTask<BlockHeader> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(DetermineCommonAncestorTask.class);
   private final EthContext ethContext;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;

@@ -14,13 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import static org.apache.tuweni.bytes.Bytes.wrapBuffer;
+
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerDiscoveryController.AsyncExecutor;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
+import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.nat.NatService;
 
@@ -32,12 +35,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(MockPeerDiscoveryAgent.class);
 
   // The set of known agents operating on the network
   private final Map<Bytes, MockPeerDiscoveryAgent> agentNetwork;
@@ -49,14 +52,18 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
       final DiscoveryConfiguration config,
       final PeerPermissions peerPermissions,
       final Map<Bytes, MockPeerDiscoveryAgent> agentNetwork,
-      final NatService natService) {
+      final NatService natService,
+      final ForkIdManager forkIdManager,
+      final RlpxAgent rlpxAgent) {
     super(
         nodeKey,
         config,
         peerPermissions,
         natService,
         new NoOpMetricsSystem(),
-        new InMemoryStorageProvider());
+        new InMemoryKeyValueStorageProvider(),
+        forkIdManager,
+        rlpxAgent);
     this.agentNetwork = agentNetwork;
   }
 
@@ -74,7 +81,8 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
    * @return A list of packets received by this agent
    */
   public List<IncomingPacket> getIncomingPackets() {
-    List<IncomingPacket> packets = Arrays.asList(incomingPackets.toArray(new IncomingPacket[0]));
+    final List<IncomingPacket> packets =
+        Arrays.asList(incomingPackets.toArray(new IncomingPacket[0]));
     incomingPackets.clear();
     return packets;
   }
@@ -83,19 +91,20 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
   protected CompletableFuture<InetSocketAddress> listenForConnections() {
     isRunning = true;
     // Skip network setup for tests
-    InetSocketAddress address = new InetSocketAddress(config.getBindHost(), config.getBindPort());
+    final InetSocketAddress address =
+        new InetSocketAddress(config.getBindHost(), config.getBindPort());
     return CompletableFuture.completedFuture(address);
   }
 
   @Override
   protected CompletableFuture<Void> sendOutgoingPacket(
       final DiscoveryPeer toPeer, final Packet packet) {
-    CompletableFuture<Void> result = new CompletableFuture<>();
+    final CompletableFuture<Void> result = new CompletableFuture<>();
     if (!this.isRunning) {
       result.completeExceptionally(new Exception("Attempt to send message from an inactive agent"));
     }
 
-    MockPeerDiscoveryAgent toAgent = agentNetwork.get(toPeer.getId());
+    final MockPeerDiscoveryAgent toAgent = agentNetwork.get(toPeer.getId());
     if (toAgent == null) {
       result.completeExceptionally(
           new Exception(
@@ -129,7 +138,7 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
   }
 
   @Override
-  protected AsyncExecutor createWorkerExecutor() {
+  protected PeerDiscoveryController.AsyncExecutor createWorkerExecutor() {
     return new BlockingAsyncExecutor();
   }
 
@@ -137,6 +146,16 @@ public class MockPeerDiscoveryAgent extends PeerDiscoveryAgent {
   public CompletableFuture<?> stop() {
     isRunning = false;
     return CompletableFuture.completedFuture(null);
+  }
+
+  @Override
+  protected void handleOutgoingPacketError(
+      final Throwable err, final DiscoveryPeer peer, final Packet packet) {
+    LOG.warn(
+        "Sending to peer {} failed, packet: {}, stacktrace: {}",
+        peer,
+        wrapBuffer(packet.encode()),
+        err);
   }
 
   public NodeKey getNodeKey() {

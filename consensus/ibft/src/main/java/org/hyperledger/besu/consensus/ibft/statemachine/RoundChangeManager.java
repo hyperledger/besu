@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.ibft.statemachine;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.ibft.validation.RoundChangeMessageValidator;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Collection;
 import java.util.Map;
@@ -25,12 +25,12 @@ import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Responsible for handling all RoundChange messages received for a given block height
- * (theoretically, RoundChange messages for a older height should have been previously discarded,
+ * (theoretically, RoundChange messages for an older height should have been previously discarded,
  * and messages for a future round should have been buffered).
  *
  * <p>If enough RoundChange messages all targeting a given round are received (and this node is the
@@ -39,29 +39,51 @@ import org.apache.logging.log4j.Logger;
  */
 public class RoundChangeManager {
 
+  /** The Round change status. */
   public static class RoundChangeStatus {
 
     private final long quorum;
 
+    /** The Received messages. */
     // Store only 1 round change per round per validator
     @VisibleForTesting final Map<Address, RoundChange> receivedMessages = Maps.newLinkedHashMap();
 
     private boolean actioned = false;
 
+    /**
+     * Instantiates a new Round change status.
+     *
+     * @param quorum the quorum
+     */
     public RoundChangeStatus(final long quorum) {
       this.quorum = quorum;
     }
 
+    /**
+     * Add message.
+     *
+     * @param msg the msg
+     */
     public void addMessage(final RoundChange msg) {
       if (!actioned) {
         receivedMessages.putIfAbsent(msg.getAuthor(), msg);
       }
     }
 
+    /**
+     * Is Round change ready.
+     *
+     * @return the boolean
+     */
     public boolean roundChangeReady() {
       return receivedMessages.size() >= quorum && !actioned;
     }
 
+    /**
+     * Create round change certificate collection.
+     *
+     * @return the collection
+     */
     public Collection<RoundChange> createRoundChangeCertificate() {
       if (roundChangeReady()) {
         actioned = true;
@@ -72,14 +94,21 @@ public class RoundChangeManager {
     }
   }
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RoundChangeManager.class);
 
+  /** The Round change cache. */
   @VisibleForTesting
   final Map<ConsensusRoundIdentifier, RoundChangeStatus> roundChangeCache = Maps.newHashMap();
 
   private final long quorum;
   private final RoundChangeMessageValidator roundChangeMessageValidator;
 
+  /**
+   * Instantiates a new Round change manager.
+   *
+   * @param quorum the quorum
+   * @param roundChangeMessageValidator the round change message validator
+   */
   public RoundChangeManager(
       final long quorum, final RoundChangeMessageValidator roundChangeMessageValidator) {
     this.quorum = quorum;

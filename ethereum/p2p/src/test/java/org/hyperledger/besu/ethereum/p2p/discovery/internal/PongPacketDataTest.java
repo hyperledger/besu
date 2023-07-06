@@ -25,6 +25,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.Test;
 
 public class PongPacketDataTest {
@@ -34,14 +35,17 @@ public class PongPacketDataTest {
     final long currentTimeSec = Instant.now().getEpochSecond();
     final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
     final Bytes32 hash = Bytes32.fromHexStringLenient("0x1234");
+    final UInt64 enrSeq = UInt64.ONE;
 
-    final PongPacketData packet = PongPacketData.create(to, hash);
+    final PongPacketData packet = PongPacketData.create(to, hash, enrSeq);
     final Bytes serialized = RLP.encode(packet::writeTo);
     final PongPacketData deserialized = PongPacketData.readFrom(RLP.input(serialized));
 
     assertThat(deserialized.getTo()).isEqualTo(to);
     assertThat(deserialized.getPingHash()).isEqualTo(hash);
     assertThat(deserialized.getExpiration()).isGreaterThan(currentTimeSec);
+    assertThat(deserialized.getEnrSeq().isPresent()).isTrue();
+    assertThat(deserialized.getEnrSeq().get()).isEqualTo(enrSeq);
   }
 
   @Test
@@ -49,12 +53,14 @@ public class PongPacketDataTest {
     final long time = System.currentTimeMillis();
     final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
     final Bytes32 hash = Bytes32.fromHexStringLenient("0x1234");
+    final UInt64 enrSeq = UInt64.ONE;
 
     BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
     to.encodeStandalone(out);
     out.writeBytes(hash);
     out.writeLongScalar(time);
+    out.writeLongScalar(enrSeq.toLong());
     out.endList();
     final Bytes encoded = out.encoded();
 
@@ -62,6 +68,51 @@ public class PongPacketDataTest {
     assertThat(deserialized.getTo()).isEqualTo(to);
     assertThat(deserialized.getPingHash()).isEqualTo(hash);
     assertThat(deserialized.getExpiration()).isEqualTo(time);
+    assertThat(deserialized.getEnrSeq().isPresent()).isTrue();
+    assertThat(deserialized.getEnrSeq().get()).isEqualTo(enrSeq);
+  }
+
+  @Test
+  public void handlesLegacyENREncode() {
+    final long time = System.currentTimeMillis();
+    final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
+    final Bytes32 hash = Bytes32.fromHexStringLenient("0x1234");
+    final UInt64 enrSeq = UInt64.ONE;
+
+    BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.startList();
+    to.encodeStandalone(out);
+    out.writeBytes(hash);
+    out.writeLongScalar(time);
+    out.writeBytes(enrSeq.toBytes());
+    out.endList();
+    final Bytes encoded = out.encoded();
+
+    final PongPacketData deserialized = PongPacketData.readFrom(RLP.input(encoded));
+    assertThat(deserialized.getTo()).isEqualTo(to);
+    assertThat(deserialized.getPingHash()).isEqualTo(hash);
+    assertThat(deserialized.getExpiration()).isEqualTo(time);
+    assertThat(deserialized.getEnrSeq().isPresent()).isTrue();
+    assertThat(deserialized.getEnrSeq().get()).isEqualTo(enrSeq);
+  }
+
+  @Test
+  public void legacyHandlesScalar() {
+
+    final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
+    final UInt64 enrSeq = UInt64.MAX_VALUE;
+    final Bytes32 hash = Bytes32.fromHexStringLenient("0x1234");
+    final PongPacketData pong = PongPacketData.create(to, hash, enrSeq);
+
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    pong.writeTo(out);
+
+    final PongPacketData legacyPong = PongPacketData.legacyReadFrom(RLP.input(out.encoded()));
+
+    assertThat(legacyPong.getTo()).isEqualTo(to);
+    assertThat(legacyPong.getPingHash()).isEqualTo(hash);
+    assertThat(legacyPong.getEnrSeq().isPresent()).isTrue();
+    assertThat(legacyPong.getEnrSeq().get()).isEqualTo(enrSeq);
   }
 
   @Test
@@ -69,12 +120,14 @@ public class PongPacketDataTest {
     final long time = System.currentTimeMillis();
     final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
     final Bytes32 hash = Bytes32.fromHexStringLenient("0x1234");
+    final UInt64 enrSeq = UInt64.ONE;
 
     BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
     to.encodeStandalone(out);
     out.writeBytes(hash);
     out.writeLongScalar(time);
+    out.writeLongScalar(enrSeq.toLong());
     // Add random fields
     out.writeLong(1234L);
     out.endList();
@@ -84,5 +137,33 @@ public class PongPacketDataTest {
     assertThat(deserialized.getTo()).isEqualTo(to);
     assertThat(deserialized.getPingHash()).isEqualTo(hash);
     assertThat(deserialized.getExpiration()).isEqualTo(time);
+    assertThat(deserialized.getEnrSeq().isPresent()).isTrue();
+    assertThat(deserialized.getEnrSeq().get()).isEqualTo(enrSeq);
+  }
+
+  @Test
+  public void readFrom_fixedWidthSeq() {
+    final long time = System.currentTimeMillis();
+    final Endpoint to = new Endpoint("127.0.0.2", 30303, Optional.empty());
+    final Bytes32 hash = Bytes32.fromHexStringLenient("0x1234");
+    final UInt64 enrSeq = UInt64.ONE;
+
+    BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.startList();
+    to.encodeStandalone(out);
+    out.writeBytes(hash);
+    out.writeLongScalar(time);
+    out.writeLongScalar(enrSeq.toLong());
+    // Add random fields
+    out.writeLong(1234L);
+    out.endList();
+    final Bytes encoded = out.encoded();
+
+    final PongPacketData deserialized = PongPacketData.readFrom(RLP.input(encoded));
+    assertThat(deserialized.getTo()).isEqualTo(to);
+    assertThat(deserialized.getPingHash()).isEqualTo(hash);
+    assertThat(deserialized.getExpiration()).isEqualTo(time);
+    assertThat(deserialized.getEnrSeq().isPresent()).isTrue();
+    assertThat(deserialized.getEnrSeq().get()).isEqualTo(enrSeq);
   }
 }

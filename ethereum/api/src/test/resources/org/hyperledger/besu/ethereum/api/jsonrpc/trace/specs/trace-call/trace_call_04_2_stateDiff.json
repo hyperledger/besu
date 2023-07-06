@@ -1,0 +1,56 @@
+{
+  "comment" : "Set contract storage (key,value)'s: (1,3),(1,0)",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_call",
+    "params" : [ {
+      "from" : "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+      "to" : "0x0010000000000000000000000000000000000000",
+      "gas" : "0xfffff2",
+      "gasPrice" : "0xef",
+      "value" : "0x0",
+      "data" : "0x0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000",
+      "nonce" : "0x0"
+    }, [ "stateDiff" ], "latest" ],
+    "id" : 4
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x",
+      "stateDiff" : {
+        "0x0000000000000000000000000000000000000000" : {
+          "balance" : {
+            "*" : {
+              "from" : "0x393f0f18385c0b29e",
+              "to" : "0x393f0f183861533da"
+            }
+          },
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : { }
+        },
+        "0x627306090abab3a6e1400e9345bc60c78a8bef57" : {
+          "balance" : {
+            "*" : {
+              "from" : "0xefffffffffffe28d07a0be63b",
+              "to" : "0xefffffffffffe28d079b764ff"
+            }
+          },
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x17",
+              "to" : "0x18"
+            }
+          },
+          "storage" : { }
+        }
+      },
+      "trace" : [ ],
+      "vmTrace" : null
+    },
+    "id" : 4
+  },
+  "statusCode" : 200
+}

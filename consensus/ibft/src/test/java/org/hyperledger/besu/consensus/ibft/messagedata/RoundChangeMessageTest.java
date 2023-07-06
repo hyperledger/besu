@@ -23,12 +23,12 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RoundChangeMessageTest {
   @Mock private RoundChange roundChangePayload;
   @Mock private Bytes messageBytes;
@@ -57,7 +57,7 @@ public class RoundChangeMessageTest {
     when(messageData.getCode()).thenReturn(IbftV2.ROUND_CHANGE);
     RoundChangeMessageData roundChangeMessage = RoundChangeMessageData.fromMessageData(messageData);
 
-    assertThat(roundChangeMessage.getData()).isEqualTo(messageData.getData());
+    assertThat(roundChangeMessage.getData()).isEqualTo(messageBytes);
     assertThat(roundChangeMessage.getCode()).isEqualTo(IbftV2.ROUND_CHANGE);
   }
 

@@ -14,17 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 
 public class PrivGetPrivacyPrecompileAddress implements JsonRpcMethod {
 
-  private final Integer privacyAddress;
+  private final Address privacyAddress;
 
   public PrivGetPrivacyPrecompileAddress(final PrivacyParameters privacyParameters) {
     privacyAddress = privacyParameters.getPrivacyAddress();
@@ -38,6 +38,6 @@ public class PrivGetPrivacyPrecompileAddress implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     return new JsonRpcSuccessResponse(
-        requestContext.getRequest().getId(), Address.privacyPrecompiled(privacyAddress).toString());
+        requestContext.getRequest().getId(), privacyAddress.toString());
   }
 }

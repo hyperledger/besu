@@ -1,0 +1,63 @@
+{
+  "comment" : "Sequential memory modifications with MSTORE.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_call",
+    "params" : [ {
+      "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+      "to" : "0x0080000000000000000000000000000000000000",
+      "gas" : "0xfffff2",
+      "gasPrice" : "0xef",
+      "value" : "0x0",
+      "nonce" : "0x0"
+    }, [ "vmTrace" ], "latest" ],
+    "id" : 66
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x",
+      "stateDiff" : null,
+      "trace" : [ ],
+      "vmTrace" : {
+        "code" : "0x7f00000000000000000000000000000000000000000000000000000000000000017f000000000000000000000000000000000000000000000000000000000000000152",
+        "ops" : [ {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x1" ],
+            "store" : null,
+            "used" : 16756199
+          },
+          "pc" : 0,
+          "sub" : null
+        }, {
+          "cost" : 3,
+          "ex" : {
+            "mem" : null,
+            "push" : [ "0x1" ],
+            "store" : null,
+            "used" : 16756196
+          },
+          "pc" : 33,
+          "sub" : null
+        }, {
+          "cost" : 9,
+          "ex" : {
+            "mem" : {
+              "data" : "0x0000000000000000000000000000000000000000000000000000000000000001",
+              "off" : 1
+            },
+            "push" : [ ],
+            "store" : null,
+            "used" : 16756187
+          },
+          "pc" : 66,
+          "sub" : null
+        } ]
+      }
+    },
+    "id" : 66
+  },
+  "statusCode" : 200
+}

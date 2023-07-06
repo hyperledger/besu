@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.Subscrip
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.InvalidSubscriptionRequestException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.PrivateSubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionRequestMapper;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 public class PrivSubscribe extends AbstractPrivateSubscriptionMethod {
@@ -34,8 +35,8 @@ public class PrivSubscribe extends AbstractPrivateSubscriptionMethod {
       final SubscriptionManager subscriptionManager,
       final SubscriptionRequestMapper mapper,
       final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
-    super(subscriptionManager, mapper, privacyController, enclavePublicKeyProvider);
+      final PrivacyIdProvider privacyIdProvider) {
+    super(subscriptionManager, mapper, privacyController, privacyIdProvider);
   }
 
   @Override
@@ -46,13 +47,13 @@ public class PrivSubscribe extends AbstractPrivateSubscriptionMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     try {
-      final String enclavePublicKey =
-          enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser());
+      final String privacyUserId = privacyIdProvider.getPrivacyUserId(requestContext.getUser());
       final PrivateSubscribeRequest subscribeRequest =
-          getMapper().mapPrivateSubscribeRequest(requestContext, enclavePublicKey);
-
-      checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(
-          requestContext, subscribeRequest.getPrivacyGroupId());
+          getMapper().mapPrivateSubscribeRequest(requestContext, privacyUserId);
+      if (privacyController instanceof MultiTenancyPrivacyController) {
+        checkIfPrivacyGroupMatchesAuthenticatedPrivacyUserId(
+            requestContext, subscribeRequest.getPrivacyGroupId());
+      }
 
       final Long subscriptionId = subscriptionManager().subscribe(subscribeRequest);
 

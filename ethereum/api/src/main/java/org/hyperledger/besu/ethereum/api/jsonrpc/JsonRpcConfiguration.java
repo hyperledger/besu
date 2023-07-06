@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
+
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
 
 import java.io.File;
@@ -31,26 +34,52 @@ import com.google.common.base.MoreObjects;
 public class JsonRpcConfiguration {
   private static final String DEFAULT_JSON_RPC_HOST = "127.0.0.1";
   public static final int DEFAULT_JSON_RPC_PORT = 8545;
+  public static final int DEFAULT_ENGINE_JSON_RPC_PORT = 8551;
+  public static final int DEFAULT_MAX_ACTIVE_CONNECTIONS = 80;
+  public static final int DEFAULT_MAX_BATCH_SIZE = 1024;
+  public static final long DEFAULT_MAX_REQUEST_CONTENT_LENGTH = 5 * 1024 * 1024; // 5MB
 
   private boolean enabled;
   private int port;
   private String host;
   private List<String> corsAllowedDomains = Collections.emptyList();
-  private List<RpcApi> rpcApis;
+  private List<String> rpcApis;
+  private List<String> noAuthRpcApis = Collections.emptyList();
   private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
   private boolean authenticationEnabled = false;
   private String authenticationCredentialsFile;
+  private JwtAlgorithm authenticationAlgorithm = JwtAlgorithm.RS256;
   private File authenticationPublicKeyFile;
   private Optional<TlsConfiguration> tlsConfiguration = Optional.empty();
   private long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
+  private int maxActiveConnections;
+  private int maxBatchSize;
+  private long maxRequestContentLength;
 
   public static JsonRpcConfiguration createDefault() {
     final JsonRpcConfiguration config = new JsonRpcConfiguration();
     config.setEnabled(false);
     config.setPort(DEFAULT_JSON_RPC_PORT);
     config.setHost(DEFAULT_JSON_RPC_HOST);
-    config.rpcApis = RpcApis.DEFAULT_JSON_RPC_APIS;
+    config.setRpcApis(DEFAULT_RPC_APIS);
     config.httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
+    config.setMaxActiveConnections(DEFAULT_MAX_ACTIVE_CONNECTIONS);
+    config.setMaxBatchSize(DEFAULT_MAX_BATCH_SIZE);
+    config.setMaxRequestContentLength(DEFAULT_MAX_REQUEST_CONTENT_LENGTH);
+    return config;
+  }
+
+  public static JsonRpcConfiguration createEngineDefault() {
+    final JsonRpcConfiguration config = createDefault();
+    config.setEnabled(false);
+    config.setPort(DEFAULT_ENGINE_JSON_RPC_PORT);
+    List<String> engineMethodGroup = new ArrayList<>(2);
+    engineMethodGroup.add(RpcApis.ENGINE.name());
+    engineMethodGroup.add(RpcApis.ETH.name());
+    config.setRpcApis(engineMethodGroup);
+    config.setAuthenticationEnabled(true);
+    config.setAuthenticationAlgorithm(JwtAlgorithm.HS256);
+    config.setAuthenticationPublicKeyFile(null); // ephemeral key will be generated on startup.
     return config;
   }
 
@@ -90,15 +119,23 @@ public class JsonRpcConfiguration {
     }
   }
 
-  public Collection<RpcApi> getRpcApis() {
+  public Collection<String> getRpcApis() {
     return rpcApis;
   }
 
-  public void setRpcApis(final List<RpcApi> rpcApis) {
+  public void setRpcApis(final List<String> rpcApis) {
     this.rpcApis = rpcApis;
   }
 
-  public void addRpcApi(final RpcApi rpcApi) {
+  public Collection<String> getNoAuthRpcApis() {
+    return this.noAuthRpcApis;
+  }
+
+  public void setNoAuthRpcApis(final List<String> rpcApis) {
+    this.noAuthRpcApis = rpcApis;
+  }
+
+  public void addRpcApi(final String rpcApi) {
     this.rpcApis = new ArrayList<>(rpcApis);
     rpcApis.add(rpcApi);
   }
@@ -107,8 +144,8 @@ public class JsonRpcConfiguration {
     return Collections.unmodifiableCollection(this.hostsAllowlist);
   }
 
-  public void setHostsAllowlist(final List<String> hostsWhitelist) {
-    this.hostsAllowlist = hostsWhitelist;
+  public void setHostsAllowlist(final List<String> hostsAllowlist) {
+    this.hostsAllowlist = hostsAllowlist;
   }
 
   public boolean isAuthenticationEnabled() {
@@ -133,6 +170,14 @@ public class JsonRpcConfiguration {
 
   public void setAuthenticationPublicKeyFile(final File authenticationPublicKeyFile) {
     this.authenticationPublicKeyFile = authenticationPublicKeyFile;
+  }
+
+  public JwtAlgorithm getAuthenticationAlgorithm() {
+    return authenticationAlgorithm;
+  }
+
+  public void setAuthenticationAlgorithm(final JwtAlgorithm authenticationAlgorithm) {
+    this.authenticationAlgorithm = authenticationAlgorithm;
   }
 
   public Optional<TlsConfiguration> getTlsConfiguration() {
@@ -165,6 +210,8 @@ public class JsonRpcConfiguration {
         .add("authenticationPublicKeyFile", authenticationPublicKeyFile)
         .add("tlsConfiguration", tlsConfiguration)
         .add("httpTimeoutSec", httpTimeoutSec)
+        .add("maxActiveConnections", maxActiveConnections)
+        .add("maxBatchSize", maxBatchSize)
         .toString();
   }
 
@@ -185,7 +232,8 @@ public class JsonRpcConfiguration {
         && Objects.equals(rpcApis, that.rpcApis)
         && Objects.equals(hostsAllowlist, that.hostsAllowlist)
         && Objects.equals(authenticationCredentialsFile, that.authenticationCredentialsFile)
-        && Objects.equals(authenticationPublicKeyFile, that.authenticationPublicKeyFile);
+        && Objects.equals(authenticationPublicKeyFile, that.authenticationPublicKeyFile)
+        && maxBatchSize == that.maxBatchSize;
   }
 
   @Override
@@ -199,6 +247,31 @@ public class JsonRpcConfiguration {
         hostsAllowlist,
         authenticationEnabled,
         authenticationCredentialsFile,
-        authenticationPublicKeyFile);
+        authenticationPublicKeyFile,
+        maxBatchSize);
+  }
+
+  public int getMaxActiveConnections() {
+    return maxActiveConnections;
+  }
+
+  public void setMaxActiveConnections(final int maxActiveConnections) {
+    this.maxActiveConnections = maxActiveConnections;
+  }
+
+  public int getMaxBatchSize() {
+    return maxBatchSize;
+  }
+
+  public void setMaxBatchSize(final int maxBatchSize) {
+    this.maxBatchSize = maxBatchSize;
+  }
+
+  public long getMaxRequestContentLength() {
+    return maxRequestContentLength;
+  }
+
+  public void setMaxRequestContentLength(final long maxRequestContentLength) {
+    this.maxRequestContentLength = maxRequestContentLength;
   }
 }

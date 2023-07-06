@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.consensus.ibft.statemachine;
 
+import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.IbftHelpers;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidator;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.Collection;
@@ -29,12 +29,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The Round state defines how a round will operate. */
 // Data items used to define how a round will operate
 public class RoundState {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RoundState.class);
 
   private final ConsensusRoundIdentifier roundIdentifier;
   private final MessageValidator validator;
@@ -50,6 +51,13 @@ public class RoundState {
   private boolean prepared = false;
   private boolean committed = false;
 
+  /**
+   * Instantiates a new Round state.
+   *
+   * @param roundIdentifier the round identifier
+   * @param quorum the quorum
+   * @param validator the validator
+   */
   public RoundState(
       final ConsensusRoundIdentifier roundIdentifier,
       final int quorum,
@@ -59,10 +67,21 @@ public class RoundState {
     this.validator = validator;
   }
 
+  /**
+   * Gets round identifier.
+   *
+   * @return the round identifier
+   */
   public ConsensusRoundIdentifier getRoundIdentifier() {
     return roundIdentifier;
   }
 
+  /**
+   * Sets proposed block.
+   *
+   * @param msg the msg
+   * @return the proposed block
+   */
   public boolean setProposedBlock(final Proposal msg) {
 
     if (!proposalMessage.isPresent()) {
@@ -78,6 +97,11 @@ public class RoundState {
     return false;
   }
 
+  /**
+   * Add prepare message.
+   *
+   * @param msg the msg
+   */
   public void addPrepareMessage(final Prepare msg) {
     if (!proposalMessage.isPresent() || validator.validatePrepare(msg)) {
       prepareMessages.add(msg);
@@ -86,6 +110,11 @@ public class RoundState {
     updateState();
   }
 
+  /**
+   * Add commit message.
+   *
+   * @param msg the msg
+   */
   public void addCommitMessage(final Commit msg) {
     if (!proposalMessage.isPresent() || validator.validateCommit(msg)) {
       commitMessages.add(msg);
@@ -98,7 +127,7 @@ public class RoundState {
   private void updateState() {
     // NOTE: The quorum for Prepare messages is 1 less than the quorum size as the proposer
     // does not supply a prepare message
-    final long prepareQuorum = IbftHelpers.prepareMessageCountForQuorum(quorum);
+    final long prepareQuorum = BftHelpers.prepareMessageCountForQuorum(quorum);
     prepared = (prepareMessages.size() >= prepareQuorum) && proposalMessage.isPresent();
     committed = (commitMessages.size() >= quorum) && proposalMessage.isPresent();
     LOG.trace(
@@ -111,24 +140,49 @@ public class RoundState {
         quorum);
   }
 
+  /**
+   * Gets proposed block.
+   *
+   * @return the proposed block
+   */
   public Optional<Block> getProposedBlock() {
     return proposalMessage.map(Proposal::getBlock);
   }
 
+  /**
+   * Is prepared.
+   *
+   * @return the boolean
+   */
   public boolean isPrepared() {
     return prepared;
   }
 
+  /**
+   * Is committed.
+   *
+   * @return the boolean
+   */
   public boolean isCommitted() {
     return committed;
   }
 
-  public Collection<Signature> getCommitSeals() {
+  /**
+   * Gets commit seals.
+   *
+   * @return the commit seals
+   */
+  public Collection<SECPSignature> getCommitSeals() {
     return commitMessages.stream()
         .map(cp -> cp.getSignedPayload().getPayload().getCommitSeal())
         .collect(Collectors.toList());
   }
 
+  /**
+   * Construct prepared round artifacts.
+   *
+   * @return the optional Prepared Round Artifacts
+   */
   public Optional<PreparedRoundArtifacts> constructPreparedRoundArtifacts() {
     if (isPrepared()) {
       return Optional.of(new PreparedRoundArtifacts(proposalMessage.get(), prepareMessages));

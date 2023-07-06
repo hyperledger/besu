@@ -22,12 +22,12 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -37,8 +37,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TrailingPeerLimiterTest {
 
@@ -54,7 +54,7 @@ public class TrailingPeerLimiterTest {
               new TrailingPeerRequirements(
                   CHAIN_HEAD - TRAILING_PEER_BLOCKS_BEHIND_THRESHOLD, MAX_TRAILING_PEERS));
 
-  @Before
+  @BeforeEach
   public void setUp() {
     when(ethPeers.streamAvailablePeers()).then(invocation -> peers.stream());
   }
@@ -145,7 +145,7 @@ public class TrailingPeerLimiterTest {
     final List<EthPeer> disconnected = asList(disconnectedPeers);
     for (final EthPeer peer : peers) {
       if (disconnected.contains(peer)) {
-        verify(peer).disconnect(DisconnectReason.TOO_MANY_PEERS);
+        verify(peer).disconnect(DisconnectReason.USELESS_PEER);
       } else {
         verify(peer, never()).disconnect(any(DisconnectReason.class));
       }

@@ -24,45 +24,45 @@ import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.clique.TestHelpers;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CliqueExtraDataValidationRuleTest {
 
-  private final KeyPair proposerKeyPair = KeyPair.generate();
+  private final KeyPair proposerKeyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private Address localAddr;
   private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
   private final List<Address> validatorList = Lists.newArrayList();
   private ProtocolContext cliqueProtocolContext;
 
-  @Before
+  @BeforeEach
   public void setup() {
     localAddr = Util.publicKeyToAddress(proposerKeyPair.getPublicKey());
 
     validatorList.add(localAddr);
     validatorList.add(AddressHelpers.calculateAddressWithRespectTo(localAddr, 1));
 
-    final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
-    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
+    final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
 
-    final CliqueContext cliqueContext =
-        new CliqueContext(voteTallyCache, null, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext);
+    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
+    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext, Optional.empty());
   }
 
   @Test
@@ -82,7 +82,7 @@ public class CliqueExtraDataValidationRuleTest {
 
   @Test
   public void signerNotInExpectedValidatorsFailsValidation() {
-    final KeyPair otherSigner = KeyPair.generate();
+    final KeyPair otherSigner = SignatureAlgorithmFactory.getInstance().generateKeyPair();
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
     final BlockHeader parent = headerBuilder.number(1).buildHeader();

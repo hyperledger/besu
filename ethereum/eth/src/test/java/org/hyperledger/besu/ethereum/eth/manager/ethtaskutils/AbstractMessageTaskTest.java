@@ -17,10 +17,11 @@ package org.hyperledger.besu.ethereum.eth.manager.ethtaskutils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.spy;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.DeterministicEthScheduler;
@@ -38,16 +39,19 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
-import java.util.Optional;
+import java.time.ZoneId;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -57,6 +61,7 @@ import org.junit.Test;
  * @param <R> The type of data returned from the network
  */
 public abstract class AbstractMessageTaskTest<T, R> {
+  protected static final int MAX_PEERS = 5;
   protected static Blockchain blockchain;
   protected static ProtocolSchedule protocolSchedule;
   protected static ProtocolContext protocolContext;
@@ -70,12 +75,12 @@ public abstract class AbstractMessageTaskTest<T, R> {
 
   @BeforeClass
   public static void setup() {
-    final BlockchainSetupUtil blockchainSetupUtil = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil blockchainSetupUtil =
+        BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST);
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
     protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     protocolContext = blockchainSetupUtil.getProtocolContext();
-
     assertThat(blockchainSetupUtil.getMaxBlockNumber()).isGreaterThanOrEqualTo(20L);
   }
 
@@ -83,7 +88,21 @@ public abstract class AbstractMessageTaskTest<T, R> {
   public void setupTest() {
     peersDoTimeout = new AtomicBoolean(false);
     peerCountToTimeout = new AtomicInteger(0);
-    ethPeers = spy(new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem));
+    ethPeers =
+        spy(
+            new EthPeers(
+                EthProtocol.NAME,
+                () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
+                TestClock.fixed(),
+                metricsSystem,
+                EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+                Collections.emptyList(),
+                Bytes.random(64),
+                MAX_PEERS,
+                MAX_PEERS,
+                MAX_PEERS,
+                false));
+
     final EthMessages ethMessages = new EthMessages();
     final EthScheduler ethScheduler =
         new DeterministicEthScheduler(
@@ -95,13 +114,11 @@ public abstract class AbstractMessageTaskTest<T, R> {
             protocolSchedule,
             protocolContext,
             ethContext,
-            TestClock.fixed(),
+            TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
             syncState,
-            Wei.of(1),
-            TransactionPoolConfiguration.DEFAULT,
-            true,
-            Optional.empty());
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
+            TransactionPoolConfiguration.DEFAULT);
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             blockchain,

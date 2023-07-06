@@ -14,17 +14,13 @@
  */
 package org.hyperledger.besu.ethereum;
 
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
-import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
-import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
 
-import java.util.function.BiFunction;
+import java.util.Optional;
 
 /**
  * Holds the mutable state used to track the current context of the protocol. This is primarily the
@@ -34,40 +30,49 @@ import java.util.function.BiFunction;
 public class ProtocolContext {
   private final MutableBlockchain blockchain;
   private final WorldStateArchive worldStateArchive;
-  private final Object consensusState;
+  private final ConsensusContext consensusContext;
+  private final Optional<TransactionSelectorFactory> transactionSelectorFactory;
+
+  private Optional<Synchronizer> synchronizer;
 
   public ProtocolContext(
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final Object consensusState) {
+      final ConsensusContext consensusContext) {
+    this(blockchain, worldStateArchive, consensusContext, Optional.empty());
+  }
+
+  public ProtocolContext(
+      final MutableBlockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final ConsensusContext consensusContext,
+      final Optional<TransactionSelectorFactory> transactionSelectorFactory) {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
-    this.consensusState = consensusState;
+    this.consensusContext = consensusContext;
+    this.synchronizer = Optional.empty();
+    this.transactionSelectorFactory = transactionSelectorFactory;
   }
 
   public static ProtocolContext init(
-      final StorageProvider storageProvider,
+      final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final GenesisState genesisState,
       final ProtocolSchedule protocolSchedule,
-      final MetricsSystem metricsSystem,
-      final BiFunction<Blockchain, WorldStateArchive, Object> consensusContextFactory,
-      final long reorgLoggingThreshold) {
-    final BlockchainStorage blockchainStorage =
-        storageProvider.createBlockchainStorage(protocolSchedule);
-
-    final MutableBlockchain blockchain =
-        DefaultBlockchain.createMutable(
-            genesisState.getBlock(), blockchainStorage, metricsSystem, reorgLoggingThreshold);
-
-    if (blockchain.getChainHeadBlockNumber() < 1) {
-      genesisState.writeStateTo(worldStateArchive.getMutable());
-    }
-
+      final ConsensusContextFactory consensusContextFactory,
+      final Optional<TransactionSelectorFactory> transactionSelectorFactory) {
     return new ProtocolContext(
         blockchain,
         worldStateArchive,
-        consensusContextFactory.apply(blockchain, worldStateArchive));
+        consensusContextFactory.create(blockchain, worldStateArchive, protocolSchedule),
+        transactionSelectorFactory);
+  }
+
+  public Optional<Synchronizer> getSynchronizer() {
+    return synchronizer;
+  }
+
+  public void setSynchronizer(final Optional<Synchronizer> synchronizer) {
+    this.synchronizer = synchronizer;
   }
 
   public MutableBlockchain getBlockchain() {
@@ -78,7 +83,17 @@ public class ProtocolContext {
     return worldStateArchive;
   }
 
-  public <C> C getConsensusState(final Class<C> klass) {
-    return klass.cast(consensusState);
+  public <C extends ConsensusContext> C getConsensusContext(final Class<C> klass) {
+    return consensusContext.as(klass);
+  }
+
+  public <C extends ConsensusContext> Optional<C> safeConsensusContext(final Class<C> klass) {
+    return Optional.ofNullable(consensusContext)
+        .filter(c -> klass.isAssignableFrom(c.getClass()))
+        .map(klass::cast);
+  }
+
+  public Optional<TransactionSelectorFactory> getTransactionSelectorFactory() {
+    return transactionSelectorFactory;
   }
 }

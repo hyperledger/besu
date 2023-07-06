@@ -16,19 +16,20 @@ package org.hyperledger.besu.consensus.clique.headervalidationrules;
 
 import org.hyperledger.besu.consensus.clique.CliqueDifficultyCalculator;
 import org.hyperledger.besu.consensus.clique.CliqueHelpers;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.AttachedBlockHeaderValidationRule;
 
 import java.math.BigInteger;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The Clique difficulty validation rule. */
 public class CliqueDifficultyValidationRule implements AttachedBlockHeaderValidationRule {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(CliqueDifficultyValidationRule.class);
 
   @Override
   public boolean validate(

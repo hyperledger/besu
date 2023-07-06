@@ -20,8 +20,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import com.google.common.collect.ImmutableSet;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tracks subscribers that should be notified when some event occurred. This class is safe to use
@@ -37,15 +37,15 @@ import org.apache.logging.log4j.Logger;
  * subscribers.unsubscribe(this::onSomeEvent);</code>
  * </pre>
  *
- * <p>Since the two separate <code>this:onSomeEvent</code> are not equal, the subscriber wouldn't be
- * removed. This bug is avoided by assigning each subscriber a unique ID and using that to
+ * <p>Since the two separate <code>this::onSomeEvent</code> are not equal, the subscriber wouldn't
+ * be removed. This bug is avoided by assigning each subscriber a unique ID and using that to
  * unsubscribe.
  *
  * @param <T> the type of subscribers
  */
 public class Subscribers<T> {
   private static final Subscribers<?> NONE = new EmptySubscribers<>();
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(Subscribers.class);
 
   private final AtomicLong subscriberId = new AtomicLong();
   private final Map<Long, T> subscribers = new ConcurrentHashMap<>();
@@ -56,15 +56,34 @@ public class Subscribers<T> {
     this.suppressCallbackExceptions = suppressCallbackExceptions;
   }
 
+  /**
+   * None subscribers.
+   *
+   * @param <T> the type parameter
+   * @return the subscribers
+   */
   @SuppressWarnings("unchecked")
   public static <T> Subscribers<T> none() {
     return (Subscribers<T>) NONE;
   }
 
+  /**
+   * Create subscribers.
+   *
+   * @param <T> the type parameter
+   * @return the subscribers
+   */
   public static <T> Subscribers<T> create() {
     return new Subscribers<T>(false);
   }
 
+  /**
+   * Create subscribers.
+   *
+   * @param <T> the type parameter
+   * @param catchCallbackExceptions the catch callback exceptions
+   * @return the subscribers
+   */
   public static <T> Subscribers<T> create(final boolean catchCallbackExceptions) {
     return new Subscribers<T>(catchCallbackExceptions);
   }
@@ -86,7 +105,7 @@ public class Subscribers<T> {
    *
    * @param subscriberId the ID of the subscriber to remove
    * @return <code>true</code> if a subscriber with that ID was found and removed, otherwise <code>
-   *     false</code>
+   *          false</code>
    */
   public boolean unsubscribe(final long subscriberId) {
     return subscribers.remove(subscriberId) != null;
@@ -110,9 +129,9 @@ public class Subscribers<T> {
             subscriber -> {
               try {
                 action.accept(subscriber);
-              } catch (Exception e) {
+              } catch (final Exception e) {
                 if (suppressCallbackExceptions) {
-                  LOG.error("Error in callback: ", e);
+                  LOG.debug("Error in callback: {}", e);
                 } else {
                   throw e;
                 }

@@ -32,8 +32,11 @@ import java.util.concurrent.ExecutionException;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public final class DockerNatManagerTest {
 
   private final String advertisedHost = "99.45.69.12";
@@ -97,7 +100,7 @@ public final class DockerNatManagerTest {
             p2pPort,
             p2pPort);
 
-    assertThat(mapping).isEqualToComparingFieldByField(expectedMapping);
+    assertThat(mapping).usingRecursiveComparison().isEqualTo(expectedMapping);
   }
 
   @Test
@@ -116,7 +119,7 @@ public final class DockerNatManagerTest {
             rpcHttpPort,
             rpcHttpPort);
 
-    assertThat(mapping).isEqualToComparingFieldByField(expectedMapping);
+    assertThat(mapping).usingRecursiveComparison().isEqualTo(expectedMapping);
   }
 
   @Test
@@ -135,6 +138,6 @@ public final class DockerNatManagerTest {
             p2pPort,
             p2pPort);
 
-    assertThat(mapping).isEqualToComparingFieldByField(expectedMapping);
+    assertThat(mapping).usingRecursiveComparison().isEqualTo(expectedMapping);
   }
 }

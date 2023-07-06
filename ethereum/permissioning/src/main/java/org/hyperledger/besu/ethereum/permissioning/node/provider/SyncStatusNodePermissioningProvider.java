@@ -17,11 +17,11 @@ package org.hyperledger.besu.ethereum.permissioning.node.provider;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.ethereum.core.Synchronizer;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
-import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningProvider;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 
 import java.net.URI;
 import java.util.Collection;
@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-public class SyncStatusNodePermissioningProvider implements NodePermissioningProvider {
+public class SyncStatusNodePermissioningProvider implements NodeConnectionPermissioningProvider {
 
   private final Synchronizer synchronizer;
   private final Set<URI> fixedNodes;
@@ -91,7 +91,8 @@ public class SyncStatusNodePermissioningProvider implements NodePermissioningPro
    *     otherwise
    */
   @Override
-  public boolean isPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
+  public boolean isConnectionPermitted(
+      final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
     if (hasReachedSync.get()) {
       return true;
     } else {

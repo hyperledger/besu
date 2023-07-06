@@ -51,6 +51,6 @@ public class EthSendTransactionTest {
 
     final JsonRpcResponse actualResponse = method.response(request);
 
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 }

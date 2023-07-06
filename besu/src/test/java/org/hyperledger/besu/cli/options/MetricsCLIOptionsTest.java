@@ -17,6 +17,10 @@ package org.hyperledger.besu.cli.options;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
+
+@RunWith(MockitoJUnitRunner.class)
 public class MetricsCLIOptionsTest
     extends AbstractCLIOptionsTest<MetricsConfiguration.Builder, MetricsCLIOptions> {
 
@@ -28,7 +32,8 @@ public class MetricsCLIOptionsTest
   @Override
   MetricsConfiguration.Builder createCustomizedDomainObject() {
     return MetricsConfiguration.builder()
-        .timersEnabled(!MetricsConfiguration.DEFAULT_TIMERS_ENABLED);
+        .timersEnabled(!MetricsConfiguration.DEFAULT_METRICS_TIMERS_ENABLED)
+        .idleTimeout(MetricsConfiguration.DEFAULT_METRICS_IDLE_TIMEOUT_SECONDS);
   }
 
   @Override

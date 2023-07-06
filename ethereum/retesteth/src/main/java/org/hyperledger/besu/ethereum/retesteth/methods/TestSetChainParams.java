@@ -27,12 +27,12 @@ import java.util.Map;
 import java.util.Optional;
 
 import io.vertx.core.json.JsonObject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TestSetChainParams implements JsonRpcMethod {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(TestSetChainParams.class);
 
   public static final String METHOD_NAME = "test_setChainParams";
   private final RetestethContext context;
@@ -118,11 +118,20 @@ public class TestSetChainParams implements JsonRpcMethod {
     maybeMoveToNumber(params, "EIP158ForkBlock", config, "eip158Block");
     maybeMoveToNumber(params, "byzantiumForkBlock", config, "byzantiumBlock");
     maybeMoveToNumber(params, "constantinopleForkBlock", config, "constantinopleBlock");
-    maybeMoveToNumber(params, "constantinopleFixForkBlock", config, "constantinopleFixBlock");
+    maybeMoveToNumber(params, "constantinopleFixForkBlock", config, "petersburgBlock");
     maybeMoveToNumber(params, "istanbulForkBlock", config, "istanbulBlock");
     maybeMoveToNumber(params, "muirGlacierForkBlock", config, "muirGlacierBlock");
     maybeMoveToNumber(params, "berlinForkBlock", config, "berlinBlock");
+    maybeMoveToNumber(params, "londonForkBlock", config, "londonBlock");
+    maybeMoveToNumber(params, "arrowGlacierForkBlock", config, "arrowGlacierBlock");
+    maybeMoveToNumber(params, "grayGlacierForkBlock", config, "grayGlacierBlock");
+    maybeMoveToNumber(params, "mergeNetSplitForkBlock", config, "mergeNetSplitBlock");
+    maybeMoveToNumber(params, "shanghaiForkTime", config, "shanghaiTime");
+    maybeMoveToNumber(params, "cancunForkTime", config, "cancunTime");
+    maybeMoveToNumber(params, "futureEipsForkTime", config, "futureEipsTime");
+    maybeMoveToNumber(params, "experimentalEipsForkTime", config, "experimentalEipsTime");
     maybeMoveToNumber(params, "chainID", config, "chainId", 1);
+
     maybeMove(genesis, "author", chainParamsJson, "coinbase");
     maybeMove(genesis, "difficulty", chainParamsJson, "difficulty");
     maybeMove(genesis, "extraData", chainParamsJson, "extraData");
@@ -131,6 +140,7 @@ public class TestSetChainParams implements JsonRpcMethod {
     maybeMove(genesis, "nonce", chainParamsJson, "nonce");
     maybeMove(genesis, "timestamp", chainParamsJson, "timestamp");
     maybeMove(chainParamsJson, "accounts", chainParamsJson, "alloc");
+    maybeMove(genesis, "baseFeePerGas", chainParamsJson, "baseFeePerGas");
 
     // strip out precompiles with zero balance
     final JsonObject alloc = chainParamsJson.getJsonObject("alloc");

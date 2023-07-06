@@ -14,61 +14,80 @@
  */
 package org.hyperledger.besu.consensus.ibft.statemachine;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
-import org.hyperledger.besu.consensus.ibft.IbftBlockHashing;
-import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
-import org.hyperledger.besu.consensus.ibft.IbftBlockInterface;
-import org.hyperledger.besu.consensus.ibft.IbftExtraData;
-import org.hyperledger.besu.consensus.ibft.IbftHelpers;
-import org.hyperledger.besu.consensus.ibft.blockcreation.IbftBlockCreator;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.network.IbftMessageTransmitter;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The Ibft round. */
 public class IbftRound {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(IbftRound.class);
 
   private final Subscribers<MinedBlockObserver> observers;
   private final RoundState roundState;
-  private final IbftBlockCreator blockCreator;
+  private final BlockCreator blockCreator;
   private final ProtocolContext protocolContext;
   private final BlockImporter blockImporter;
   private final NodeKey nodeKey;
   private final MessageFactory messageFactory; // used only to create stored local msgs
   private final IbftMessageTransmitter transmitter;
+  private final BftExtraDataCodec bftExtraDataCodec;
 
+  /**
+   * Instantiates a new Ibft round.
+   *
+   * @param roundState the round state
+   * @param blockCreator the block creator
+   * @param protocolContext the protocol context
+   * @param blockImporter the block importer
+   * @param observers the observers
+   * @param nodeKey the node key
+   * @param messageFactory the message factory
+   * @param transmitter the transmitter
+   * @param roundTimer the round timer
+   * @param bftExtraDataCodec the bft extra data codec
+   */
   public IbftRound(
       final RoundState roundState,
-      final IbftBlockCreator blockCreator,
+      final BlockCreator blockCreator,
       final ProtocolContext protocolContext,
       final BlockImporter blockImporter,
       final Subscribers<MinedBlockObserver> observers,
       final NodeKey nodeKey,
       final MessageFactory messageFactory,
       final IbftMessageTransmitter transmitter,
-      final RoundTimer roundTimer) {
+      final RoundTimer roundTimer,
+      final BftExtraDataCodec bftExtraDataCodec) {
     this.roundState = roundState;
     this.blockCreator = blockCreator;
     this.protocolContext = protocolContext;
@@ -77,41 +96,60 @@ public class IbftRound {
     this.nodeKey = nodeKey;
     this.messageFactory = messageFactory;
     this.transmitter = transmitter;
-
+    this.bftExtraDataCodec = bftExtraDataCodec;
     roundTimer.startTimer(getRoundIdentifier());
   }
 
+  /**
+   * Gets round identifier.
+   *
+   * @return the round identifier
+   */
   public ConsensusRoundIdentifier getRoundIdentifier() {
     return roundState.getRoundIdentifier();
   }
 
+  /**
+   * Create and send proposal message.
+   *
+   * @param headerTimeStampSeconds the header time stamp seconds
+   */
   public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
-    final Block block = blockCreator.createBlock(headerTimeStampSeconds);
-    final IbftExtraData extraData = IbftExtraData.decode(block.getHeader());
+    final Block block = blockCreator.createBlock(headerTimeStampSeconds).getBlock();
+    final BftExtraData extraData = bftExtraDataCodec.decode(block.getHeader());
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
     LOG.trace(
         "Creating proposed block with extraData={} blockHeader={}", extraData, block.getHeader());
     updateStateWithProposalAndTransmit(block, Optional.empty());
   }
 
+  /**
+   * Start round with.
+   *
+   * @param roundChangeArtifacts the round change artifacts
+   * @param headerTimestamp the header timestamp
+   */
   public void startRoundWith(
       final RoundChangeArtifacts roundChangeArtifacts, final long headerTimestamp) {
     final Optional<Block> bestBlockFromRoundChange = roundChangeArtifacts.getBlock();
 
     final RoundChangeCertificate roundChangeCertificate =
         roundChangeArtifacts.getRoundChangeCertificate();
-    Block blockToPublish;
+    final Block blockToPublish;
     if (!bestBlockFromRoundChange.isPresent()) {
       LOG.debug("Sending proposal with new block. round={}", roundState.getRoundIdentifier());
-      blockToPublish = blockCreator.createBlock(headerTimestamp);
+      blockToPublish = blockCreator.createBlock(headerTimestamp).getBlock();
     } else {
       LOG.debug(
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
+
+      final BftBlockInterface bftBlockInterface =
+          protocolContext.getConsensusContext(BftContext.class).getBlockInterface();
       blockToPublish =
-          IbftBlockInterface.replaceRoundInBlock(
+          bftBlockInterface.replaceRoundInBlock(
               bestBlockFromRoundChange.get(),
               getRoundIdentifier().getRoundNumber(),
-              IbftBlockHeaderFunctions.forCommittedSeal());
+              BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
     }
 
     updateStateWithProposalAndTransmit(blockToPublish, Optional.of(roundChangeCertificate));
@@ -132,6 +170,11 @@ public class IbftRound {
     updateStateWithProposedBlock(proposal);
   }
 
+  /**
+   * Handle proposal message.
+   *
+   * @param msg the msg
+   */
   public void handleProposalMessage(final Proposal msg) {
     LOG.debug("Received a proposal message. round={}", roundState.getRoundIdentifier());
     final Block block = msg.getBlock();
@@ -150,16 +193,31 @@ public class IbftRound {
     }
   }
 
+  /**
+   * Handle prepare message.
+   *
+   * @param msg the msg
+   */
   public void handlePrepareMessage(final Prepare msg) {
     LOG.debug("Received a prepare message. round={}", roundState.getRoundIdentifier());
     peerIsPrepared(msg);
   }
 
+  /**
+   * Handle commit message.
+   *
+   * @param msg the msg
+   */
   public void handleCommitMessage(final Commit msg) {
     LOG.debug("Received a commit message. round={}", roundState.getRoundIdentifier());
     peerIsCommitted(msg);
   }
 
+  /**
+   * Construct prepared round artifacts.
+   *
+   * @return the optional prepared round artifacts
+   */
   public Optional<PreparedRoundArtifacts> constructPreparedRoundArtifacts() {
     return roundState.constructPreparedRoundArtifacts();
   }
@@ -172,12 +230,12 @@ public class IbftRound {
     if (blockAccepted) {
       final Block block = roundState.getProposedBlock().get();
 
-      final Signature commitSeal;
+      final SECPSignature commitSeal;
       try {
         commitSeal = createCommitSeal(block);
       } catch (final SecurityModuleException e) {
         LOG.warn("Failed to construct commit seal; {}", e.getMessage());
-        return blockAccepted;
+        return true;
       }
 
       // There are times handling a proposed block is enough to enter prepared.
@@ -196,7 +254,7 @@ public class IbftRound {
         roundState.addCommitMessage(localCommitMessage);
       } catch (final SecurityModuleException e) {
         LOG.warn("Failed to create signed Commit message; {}", e.getMessage());
-        return blockAccepted;
+        return true;
       }
 
       // It is possible sufficient commit seals are now available and the block should be imported
@@ -234,20 +292,29 @@ public class IbftRound {
 
   private void importBlockToChain() {
     final Block blockToImport =
-        IbftHelpers.createSealedBlock(
-            roundState.getProposedBlock().get(), roundState.getCommitSeals());
+        BftHelpers.createSealedBlock(
+            bftExtraDataCodec,
+            roundState.getProposedBlock().get(),
+            roundState.getRoundIdentifier().getRoundNumber(),
+            roundState.getCommitSeals());
 
     final long blockNumber = blockToImport.getHeader().getNumber();
-    final IbftExtraData extraData = IbftExtraData.decode(blockToImport.getHeader());
-    LOG.log(
-        getRoundIdentifier().getRoundNumber() > 0 ? Level.INFO : Level.DEBUG,
-        "Importing block to chain. round={}, hash={}",
-        getRoundIdentifier(),
-        blockToImport.getHash());
+    final BftExtraData extraData = bftExtraDataCodec.decode(blockToImport.getHeader());
+    if (getRoundIdentifier().getRoundNumber() > 0) {
+      LOG.info(
+          "Importing block to chain. round={}, hash={}",
+          getRoundIdentifier(),
+          blockToImport.getHash());
+    } else {
+      LOG.debug(
+          "Importing block to chain. round={}, hash={}",
+          getRoundIdentifier(),
+          blockToImport.getHash());
+    }
     LOG.trace("Importing block with extraData={}", extraData);
-    final boolean result =
+    final BlockImportResult result =
         blockImporter.importBlock(protocolContext, blockToImport, HeaderValidationMode.FULL);
-    if (!result) {
+    if (!result.isImported()) {
       LOG.error(
           "Failed to import block to chain. block={} extraData={} blockHeader={}",
           blockNumber,
@@ -258,11 +325,12 @@ public class IbftRound {
     }
   }
 
-  private Signature createCommitSeal(final Block block) {
+  private SECPSignature createCommitSeal(final Block block) {
     final BlockHeader proposedHeader = block.getHeader();
-    final IbftExtraData extraData = IbftExtraData.decode(proposedHeader);
+    final BftExtraData extraData = bftExtraDataCodec.decode(proposedHeader);
     final Hash commitHash =
-        IbftBlockHashing.calculateDataHashForCommittedSeal(proposedHeader, extraData);
+        new BftBlockHashing(bftExtraDataCodec)
+            .calculateDataHashForCommittedSeal(proposedHeader, extraData);
     return nodeKey.sign(commitHash);
   }
 

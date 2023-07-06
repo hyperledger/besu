@@ -20,22 +20,31 @@ import org.hyperledger.besu.consensus.ibft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.ibft.payload.PreparedCertificate;
 import org.hyperledger.besu.consensus.ibft.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangePayload;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Collection;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The Round change payload validator. */
 public class RoundChangePayloadValidator {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RoundChangePayloadValidator.class);
 
   private final MessageValidatorForHeightFactory messageValidatorFactory;
   private final Collection<Address> validators;
   private final long minimumPrepareMessages;
   private final long chainHeight;
 
+  /**
+   * Instantiates a new Round change payload validator.
+   *
+   * @param messageValidatorFactory the message validator factory
+   * @param validators the validators
+   * @param minimumPrepareMessages the minimum prepare messages
+   * @param chainHeight the chain height
+   */
   public RoundChangePayloadValidator(
       final MessageValidatorForHeightFactory messageValidatorFactory,
       final Collection<Address> validators,
@@ -47,6 +56,12 @@ public class RoundChangePayloadValidator {
     this.chainHeight = chainHeight;
   }
 
+  /**
+   * Validate round change.
+   *
+   * @param msg the msg
+   * @return the boolean
+   */
   public boolean validateRoundChange(final SignedData<RoundChangePayload> msg) {
 
     if (!validators.contains(msg.getAuthor())) {
@@ -96,6 +111,10 @@ public class RoundChangePayloadValidator {
       return false;
     }
 
+    if (hasDuplicateAuthors(certificate.getPreparePayloads())) {
+      return false;
+    }
+
     if (certificate.getPreparePayloads().size() < minimumPrepareMessages) {
       LOG.info(
           "Invalid RoundChange message, insufficient Prepare messages exist to justify "
@@ -111,6 +130,18 @@ public class RoundChangePayloadValidator {
     }
 
     return true;
+  }
+
+  private boolean hasDuplicateAuthors(
+      final Collection<SignedData<PreparePayload>> preparePayloads) {
+    final long distinctAuthorCount =
+        preparePayloads.stream().map(SignedData::getAuthor).distinct().count();
+
+    if (distinctAuthorCount != preparePayloads.size()) {
+      LOG.info("Invalid PreparePayloads list, multiple payloads from the same author.");
+      return true;
+    }
+    return false;
   }
 
   private boolean validatePreparedCertificateRound(
@@ -130,8 +161,15 @@ public class RoundChangePayloadValidator {
     return true;
   }
 
+  /** The interface Message validator for height factory. */
   @FunctionalInterface
   public interface MessageValidatorForHeightFactory {
+    /**
+     * Create at round identifier and return signed data validator.
+     *
+     * @param roundIdentifier the round identifier
+     * @return the signed data validator
+     */
     SignedDataValidator createAt(final ConsensusRoundIdentifier roundIdentifier);
   }
 }

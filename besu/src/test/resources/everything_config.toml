@@ -15,6 +15,7 @@ color-enabled=false
 node-private-key-file="./path/to/privateKey"
 pid-path="~/.pid"
 reorg-logging-threshold=0
+static-nodes-file="~/besudata/static-nodes.json"
 
 # Security Module plugin to use
 security-module="localfile"
@@ -42,7 +43,12 @@ remote-connections-max-percentage=60
 random-peer-priority-enabled=false
 host-whitelist=["all"]
 host-allowlist=["all"]
+engine-host-allowlist=["all"]
+engine-rpc-enabled=true
+engine-jwt-disabled=true
+engine-jwt-secret="/tmp/jwt.hex"
 required-blocks=["8675309=123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
+discovery-dns-url="enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org"
 
 # chain
 network="MAINNET"
@@ -50,13 +56,20 @@ genesis-file="~/genesis.json"
 sync-mode="fast"
 fast-sync-min-peers=5
 network-id=303
+kzg-trusted-setup="/etc/besu/kzg-trusted-setup.txt"
 
 # JSON-RPC
 rpc-http-enabled=false
 rpc-http-host="5.6.7.8"
 rpc-http-port=5678
+engine-rpc-port=5679
+rpc-http-max-active-connections=100
 rpc-http-api=["DEBUG","ETH"]
 rpc-http-apis=["DEBUG","ETH"]
+rpc-http-api-method-no-auth=["admin_peers"]
+rpc-http-api-methods-no-auth=["admin_peers"]
+rpc-ws-api-method-no-auth=["admin_peers"]
+rpc-ws-api-methods-no-auth=["admin_peers"]
 rpc-http-cors-origins=["none"]
 rpc-http-authentication-enabled=false
 rpc-http-authentication-credentials-file="none"
@@ -67,6 +80,13 @@ rpc-http-tls-keystore-password-file="none.passwd"
 rpc-http-tls-client-auth-enabled=false
 rpc-http-tls-known-clients-file="rpc_tls_clients.txt"
 rpc-http-tls-ca-clients-enabled=false
+rpc-http-authentication-jwt-algorithm="RS256"
+rpc-ws-authentication-jwt-algorithm="RS256"
+rpc-http-tls-protocols=["TLSv1.2,TlSv1.1"]
+rpc-http-tls-cipher-suites=["TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384","TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"]
+rpc-http-max-batch-size=1
+rpc-http-max-request-content-length = 5242880
+rpc-max-logs-range=100
 
 # PRIVACY TLS
 privacy-tls-enabled=false
@@ -86,6 +106,8 @@ rpc-ws-api=["DEBUG","ETH"]
 rpc-ws-apis=["DEBUG","ETH"]
 rpc-ws-host="9.10.11.12"
 rpc-ws-port=9101
+rpc-ws-max-active-connections=101
+rpc-ws-max-frame-size=65535
 rpc-ws-authentication-enabled=false
 rpc-ws-authentication-credentials-file="none"
 rpc-ws-authentication-jwt-public-key-file="none"
@@ -118,6 +140,8 @@ miner-stratum-host="0.0.0.0"
 miner-stratum-port=8008
 Xminer-remote-sealers-limit=1000
 Xminer-remote-sealers-hashrate-ttl=10
+Xpos-block-creation-max-time=5
+
 # Pruning
 pruning-enabled=true
 pruning-blocks-retained=1024
@@ -139,18 +163,22 @@ privacy-url="http://127.0.0.1:8888"
 privacy-public-key-file="./pubKey.pub"
 privacy-enabled=false
 privacy-multi-tenancy-enabled=true
-privacy-precompiled-address=9
 privacy-marker-transaction-signing-key-file="./signerKey"
 privacy-enable-database-migration=false
 privacy-onchain-groups-enabled=false
+privacy-flexible-groups-enabled=false
 
 # Transaction Pool
 tx-pool-retention-hours=999
 tx-pool-price-bump=13
 tx-pool-max-size=1234
-tx-pool-hashes-max-size=10000
+tx-pool-limit-by-account-percentage=0.017
 Xincoming-tx-messages-keep-alive-seconds=60
 rpc-tx-feecap=2000000000000000000
+strict-tx-replay-protection-enabled=true
+tx-pool-disable-locals=false
+tx-pool-enable-save-restore=true
+tx-pool-save-file="txpool.dump"
 
 # Revert Reason
 revert-reason-enabled=false
@@ -165,8 +193,13 @@ target-gas-limit=8000000
 auto-log-bloom-caching-enabled=true
 
 # ethstats
-Xethstats="nodename:secret@host:1234"
-Xethstats-contact="contact@mail.n"
+ethstats="nodename:secret@host:1234"
+ethstats-contact="contact@mail.n"
+ethstats-cacert-file="./root.cert"
+
+# Data storage
+data-storage-format="BONSAI"
+bonsai-historical-block-limit=512
 
 # feature flags
 Xsecp256k1-native-enabled=false
@@ -174,3 +207,17 @@ Xaltbn128-native-enabled=false
 
 # compatibility flags
 compatibility-eth64-forkid-enabled=false
+
+#p2p over ssl
+Xp2p-tls-enabled=false
+Xp2p-tls-keystore-type="none"
+Xp2p-tls-keystore-file="none.file"
+Xp2p-tls-truststore-password-file="none"
+Xp2p-tls-truststore-type="none"
+Xp2p-tls-truststore-file="none.file"
+Xp2p-tls-keystore-password-file="none"
+Xp2p-tls-crl-file="none.file"
+Xp2p-tls-clienthello-sni=false
+
+#contracts
+Xevm-jumpdest-cache-weight-kb=32000

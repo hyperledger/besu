@@ -16,6 +16,7 @@ package org.hyperledger.besu.util;
 
 import com.google.common.base.Throwables;
 
+/** The Exception utils. */
 public class ExceptionUtils {
 
   private ExceptionUtils() {}

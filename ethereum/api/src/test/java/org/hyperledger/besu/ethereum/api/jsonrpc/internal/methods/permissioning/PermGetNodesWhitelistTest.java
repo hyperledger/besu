@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -77,7 +78,7 @@ public class PermGetNodesWhitelistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     verify(nodeLocalConfigPermissioningController, times(1)).getNodesAllowlist();
     verifyNoMoreInteractions(nodeLocalConfigPermissioningController);
@@ -87,13 +88,13 @@ public class PermGetNodesWhitelistTest {
   public void shouldReturnSuccessResponseWhenListSetAndEmpty() {
     final JsonRpcRequestContext request = buildRequest();
     final JsonRpcResponse expected =
-        new JsonRpcSuccessResponse(request.getRequest().getId(), Lists.emptyList());
+        new JsonRpcSuccessResponse(request.getRequest().getId(), Collections.emptyList());
 
     when(nodeLocalConfigPermissioningController.getNodesAllowlist()).thenReturn(buildNodesList());
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     verify(nodeLocalConfigPermissioningController, times(1)).getNodesAllowlist();
     verifyNoMoreInteractions(nodeLocalConfigPermissioningController);
@@ -109,7 +110,8 @@ public class PermGetNodesWhitelistTest {
             request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_NOT_ENABLED);
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   private JsonRpcRequestContext buildRequest() {

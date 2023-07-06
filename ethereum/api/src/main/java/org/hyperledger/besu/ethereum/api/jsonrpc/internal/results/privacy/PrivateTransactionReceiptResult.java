@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionReceiptLogResult;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Log;
-import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
+import org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil;
+import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +57,6 @@ public class PrivateTransactionReceiptResult {
   private final String from;
   private final List<TransactionReceiptLogResult> logs;
   private final String to;
-  private final String transactionHash;
   private final String transactionIndex;
   private final String revertReason;
   private final String output;
@@ -77,7 +77,6 @@ public class PrivateTransactionReceiptResult {
       final long blockNumber,
       final int txIndex,
       final Hash commitmentHash,
-      final Hash transactionHash,
       final Bytes privateFrom,
       final List<Bytes> privateFor,
       final Bytes privacyGroupId,
@@ -88,13 +87,15 @@ public class PrivateTransactionReceiptResult {
     this.to = to;
     this.output = output.toString();
     this.commitmentHash = commitmentHash.toString();
-    this.transactionHash = transactionHash.toString();
     this.privateFrom = privateFrom != null ? privateFrom.toBase64String() : null;
     this.privateFor =
         privateFor != null
             ? privateFor.stream().map(Bytes::toBase64String).collect(Collectors.toList())
             : null;
-    this.privacyGroupId = privacyGroupId != null ? privacyGroupId.toBase64String() : null;
+    this.privacyGroupId =
+        privacyGroupId != null
+            ? privacyGroupId.toBase64String()
+            : PrivacyGroupUtil.calculateEeaPrivacyGroupId(privateFrom, privateFor).toBase64String();
     this.revertReason = revertReason != null ? revertReason.toString() : null;
     this.status = status;
     this.logs = logReceipts(logs, blockNumber, commitmentHash, blockHash, txIndex);
@@ -137,11 +138,6 @@ public class PrivateTransactionReceiptResult {
   @JsonGetter("commitmentHash")
   public String getCommitmentHash() {
     return commitmentHash;
-  }
-
-  @JsonGetter("transactionHash")
-  public String getTransactionHash() {
-    return transactionHash;
   }
 
   @JsonGetter("privateFrom")

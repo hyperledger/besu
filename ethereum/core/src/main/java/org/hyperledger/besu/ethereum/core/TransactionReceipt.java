@@ -14,15 +14,21 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.mainnet.TransactionReceiptType;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
@@ -114,7 +120,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
         revertReason);
   }
 
-  private TransactionReceipt(
+  public TransactionReceipt(
       final TransactionType transactionType,
       final int status,
       final long cumulativeGasUsed,
@@ -153,7 +159,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     this.status = status;
     this.logs = logs;
     this.bloomFilter = bloomFilter;
-    transactionReceiptType =
+    this.transactionReceiptType =
         stateRoot == null ? TransactionReceiptType.STATUS : TransactionReceiptType.ROOT;
     this.revertReason = revertReason;
   }
@@ -171,26 +177,35 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     writeTo(out, true);
   }
 
-  private void writeTo(final RLPOutput out, final boolean withRevertReason) {
-    if (!transactionType.equals(TransactionType.FRONTIER)) {
-      out.writeRaw(Bytes.of((byte) transactionType.getSerializedType()));
+  private void writeTo(final RLPOutput rlpOutput, final boolean withRevertReason) {
+    if (transactionType.equals(TransactionType.FRONTIER)) {
+      writeToForReceiptTrie(rlpOutput, withRevertReason);
+    } else {
+      rlpOutput.writeBytes(RLP.encode(out -> writeToForReceiptTrie(out, withRevertReason)));
     }
-    out.startList();
+  }
+
+  public void writeToForReceiptTrie(final RLPOutput rlpOutput, final boolean withRevertReason) {
+    if (!transactionType.equals(TransactionType.FRONTIER)) {
+      rlpOutput.writeIntScalar(transactionType.getSerializedType());
+    }
+
+    rlpOutput.startList();
 
     // Determine whether it's a state root-encoded transaction receipt
     // or is a status code-encoded transaction receipt.
     if (stateRoot != null) {
-      out.writeBytes(stateRoot);
+      rlpOutput.writeBytes(stateRoot);
     } else {
-      out.writeLongScalar(status);
+      rlpOutput.writeLongScalar(status);
     }
-    out.writeLongScalar(cumulativeGasUsed);
-    out.writeBytes(bloomFilter);
-    out.writeList(logs, Log::writeTo);
+    rlpOutput.writeLongScalar(cumulativeGasUsed);
+    rlpOutput.writeBytes(bloomFilter);
+    rlpOutput.writeList(logs, Log::writeTo);
     if (withRevertReason && revertReason.isPresent()) {
-      out.writeBytes(revertReason.get());
+      rlpOutput.writeBytes(revertReason.get());
     }
-    out.endList();
+    rlpOutput.endList();
   }
 
   /**
@@ -206,57 +221,51 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
   /**
    * Creates a transaction receipt for the given RLP
    *
-   * @param input the RLP-encoded transaction receipt
+   * @param rlpInput the RLP-encoded transaction receipt
    * @param revertReasonAllowed whether the rlp input is allowed to have a revert reason
    * @return the transaction receipt
    */
   public static TransactionReceipt readFrom(
-      final RLPInput input, final boolean revertReasonAllowed) {
+      final RLPInput rlpInput, final boolean revertReasonAllowed) {
+    RLPInput input = rlpInput;
     TransactionType transactionType = TransactionType.FRONTIER;
-    try {
-      input.enterList();
-    } catch (RLPException rlpe) {
-      if (rlpe.getMessage().contains("Expected current item to be a list")) {
-        // This is an EIP-2718 receipt
-        transactionType = TransactionType.of(input.readByte());
-        input.enterList();
-      } else {
-        throw rlpe;
-      }
+    if (!rlpInput.nextIsList()) {
+      final Bytes typedTransactionReceiptBytes = input.readBytes();
+      transactionType = TransactionType.of(typedTransactionReceiptBytes.get(0));
+      input = new BytesValueRLPInput(typedTransactionReceiptBytes.slice(1), false);
     }
 
-    try {
-      // Get the first element to check later to determine the
-      // correct transaction receipt encoding to use.
-      final RLPInput firstElement = input.readAsRlp();
-      final long cumulativeGas = input.readLongScalar();
-      // The logs below will populate the bloom filter upon construction.
-      // TODO consider validating that the logs and bloom filter match.
-      final LogsBloomFilter bloomFilter = LogsBloomFilter.readFrom(input);
-      final List<Log> logs = input.readList(Log::readFrom);
-      final Optional<Bytes> revertReason;
-      if (input.isEndOfCurrentList()) {
-        revertReason = Optional.empty();
-      } else {
-        if (!revertReasonAllowed) {
-          throw new RLPException("Unexpected value at end of TransactionReceipt");
-        }
-        revertReason = Optional.of(input.readBytes());
+    input.enterList();
+    // Get the first element to check later to determine the
+    // correct transaction receipt encoding to use.
+    final RLPInput firstElement = input.readAsRlp();
+    final long cumulativeGas = input.readLongScalar();
+    // The logs below will populate the bloom filter upon construction.
+    // TODO consider validating that the logs and bloom filter match.
+    final LogsBloomFilter bloomFilter = LogsBloomFilter.readFrom(input);
+    final List<Log> logs = input.readList(Log::readFrom);
+    final Optional<Bytes> revertReason;
+    if (input.isEndOfCurrentList()) {
+      revertReason = Optional.empty();
+    } else {
+      if (!revertReasonAllowed) {
+        throw new RLPException("Unexpected value at end of TransactionReceipt");
       }
+      revertReason = Optional.of(input.readBytes());
+    }
 
-      // Status code-encoded transaction receipts have a single
-      // byte for success (0x01) or failure (0x80).
-      if (firstElement.raw().size() == 1) {
-        final int status = firstElement.readIntScalar();
-        return new TransactionReceipt(
-            transactionType, status, cumulativeGas, logs, bloomFilter, revertReason);
-      } else {
-        final Hash stateRoot = Hash.wrap(firstElement.readBytes32());
-        return new TransactionReceipt(
-            transactionType, stateRoot, cumulativeGas, logs, bloomFilter, revertReason);
-      }
-    } finally {
+    // Status code-encoded transaction receipts have a single
+    // byte for success (0x01) or failure (0x80).
+    if (firstElement.raw().size() == 1) {
+      final int status = firstElement.readIntScalar();
       input.leaveList();
+      return new TransactionReceipt(
+          transactionType, status, cumulativeGas, logs, bloomFilter, revertReason);
+    } else {
+      final Hash stateRoot = Hash.wrap(firstElement.readBytes32());
+      input.leaveList();
+      return new TransactionReceipt(
+          transactionType, stateRoot, cumulativeGas, logs, bloomFilter, revertReason);
     }
   }
 
@@ -285,7 +294,16 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
    * @return the logs generated by the transaction
    */
   @Override
-  public List<Log> getLogs() {
+  public List<? extends org.hyperledger.besu.plugin.data.Log> getLogs() {
+    return logs.stream().map(LogsWrapper::new).collect(Collectors.toList());
+  }
+
+  /**
+   * Returns the logs generated by the transaction.
+   *
+   * @return the logs generated by the transaction
+   */
+  public List<Log> getLogsList() {
     return logs;
   }
 
@@ -327,8 +345,8 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
       return false;
     }
     final TransactionReceipt other = (TransactionReceipt) obj;
-    return logs.equals(other.getLogs())
-        && stateRoot.equals(other.stateRoot)
+    return logs.equals(other.getLogsList())
+        && Objects.equals(stateRoot, other.stateRoot)
         && cumulativeGasUsed == other.getCumulativeGasUsed()
         && status == other.status;
   }

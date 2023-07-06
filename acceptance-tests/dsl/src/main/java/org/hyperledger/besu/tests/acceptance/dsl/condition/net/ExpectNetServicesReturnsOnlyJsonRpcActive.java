@@ -29,6 +29,7 @@ import com.google.common.net.InetAddresses;
 public class ExpectNetServicesReturnsOnlyJsonRpcActive implements Condition {
 
   private final NetServicesTransaction transaction;
+  private static final String JSON_RPC_CONSTANT = "jsonrpc";
 
   public ExpectNetServicesReturnsOnlyJsonRpcActive(final NetServicesTransaction transaction) {
     this.transaction = transaction;
@@ -38,10 +39,10 @@ public class ExpectNetServicesReturnsOnlyJsonRpcActive implements Condition {
   public void verify(final Node node) {
     final Map<String, Map<String, String>> result = node.execute(transaction);
     assertThat(result.keySet())
-        .containsExactlyInAnyOrderElementsOf(Collections.singletonList("jsonrpc"));
+        .containsExactlyInAnyOrderElementsOf(Collections.singletonList(JSON_RPC_CONSTANT));
 
-    assertThat(InetAddresses.isUriInetAddress(result.get("jsonrpc").get("host"))).isTrue();
-    final int jsonrpcPort = Integer.valueOf(result.get("jsonrpc").get("port"));
+    assertThat(InetAddresses.isUriInetAddress(result.get(JSON_RPC_CONSTANT).get("host"))).isTrue();
+    final int jsonrpcPort = Integer.parseInt(result.get(JSON_RPC_CONSTANT).get("port"));
     assertThat(NetworkUtility.isValidPort(jsonrpcPort)).isTrue();
   }
 }

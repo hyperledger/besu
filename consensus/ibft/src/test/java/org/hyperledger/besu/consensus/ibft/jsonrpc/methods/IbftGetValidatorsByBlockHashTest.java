@@ -16,27 +16,27 @@ package org.hyperledger.besu.consensus.ibft.jsonrpc.methods;
 
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.ibft.IbftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class IbftGetValidatorsByBlockHashTest {
 
   private static final String ETH_METHOD = "ibft_getValidatorsByBlockHash";
@@ -45,14 +45,14 @@ public class IbftGetValidatorsByBlockHashTest {
 
   @Mock private Blockchain blockchain;
   @Mock private BlockHeader blockHeader;
-  @Mock private IbftBlockInterface ibftBlockInterface;
+  @Mock private BftBlockInterface bftBlockInterface;
   @Mock private JsonRpcRequestContext request;
 
   private IbftGetValidatorsByBlockHash method;
 
-  @Before
+  @BeforeEach
   public void setUp() {
-    method = new IbftGetValidatorsByBlockHash(blockchain, ibftBlockInterface);
+    method = new IbftGetValidatorsByBlockHash(blockchain, bftBlockInterface);
   }
 
   @Test
@@ -65,7 +65,7 @@ public class IbftGetValidatorsByBlockHashTest {
     when(blockchain.getBlockHeader(Hash.ZERO)).thenReturn(Optional.of(blockHeader));
     final List<Address> addresses = Collections.singletonList(Address.ID);
     final List<String> expectedOutput = Collections.singletonList(Address.ID.toString());
-    when(ibftBlockInterface.validatorsInBlock(blockHeader)).thenReturn(addresses);
+    when(bftBlockInterface.validatorsInBlock(blockHeader)).thenReturn(addresses);
     request = requestWithParams(ZERO_HASH);
     JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
     Assertions.assertThat(response.getResult()).isEqualTo(expectedOutput);

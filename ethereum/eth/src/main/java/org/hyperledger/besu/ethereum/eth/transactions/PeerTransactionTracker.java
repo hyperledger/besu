@@ -15,8 +15,9 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.util.Collections.emptySet;
+import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 
@@ -28,14 +29,24 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
-  private static final int MAX_TRACKED_SEEN_TRANSACTIONS = 10_000;
+  private static final int MAX_TRACKED_SEEN_TRANSACTIONS = 100_000;
   private final Map<EthPeer, Set<Hash>> seenTransactions = new ConcurrentHashMap<>();
   private final Map<EthPeer, Set<Transaction>> transactionsToSend = new ConcurrentHashMap<>();
 
+  public void reset() {
+    seenTransactions.clear();
+    transactionsToSend.clear();
+  }
+
   public synchronized void markTransactionsAsSeen(
       final EthPeer peer, final Collection<Transaction> transactions) {
+    markTransactionHashesAsSeen(peer, toHashList(transactions));
+  }
+
+  public synchronized void markTransactionHashesAsSeen(
+      final EthPeer peer, final Collection<Hash> txHashes) {
     final Set<Hash> seenTransactionsForPeer = getOrCreateSeenTransactionsForPeer(peer);
-    transactions.stream().map(Transaction::getHash).forEach(seenTransactionsForPeer::add);
+    seenTransactionsForPeer.addAll(txHashes);
   }
 
   public synchronized void addToPeerSendQueue(final EthPeer peer, final Transaction transaction) {
@@ -58,19 +69,26 @@ public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
     }
   }
 
+  public boolean hasSeenTransaction(final Hash txHash) {
+    return seenTransactions.values().stream().anyMatch(seen -> seen.contains(txHash));
+  }
+
   private Set<Hash> getOrCreateSeenTransactionsForPeer(final EthPeer peer) {
     return seenTransactions.computeIfAbsent(peer, key -> createTransactionsSet());
   }
 
-  private boolean hasPeerSeenTransaction(final EthPeer peer, final Transaction transaction) {
+  boolean hasPeerSeenTransaction(final EthPeer peer, final Transaction transaction) {
+    return hasPeerSeenTransaction(peer, transaction.getHash());
+  }
+
+  boolean hasPeerSeenTransaction(final EthPeer peer, final Hash txHash) {
     final Set<Hash> seenTransactionsForPeer = seenTransactions.get(peer);
-    return seenTransactionsForPeer != null
-        && seenTransactionsForPeer.contains(transaction.getHash());
+    return seenTransactionsForPeer != null && seenTransactionsForPeer.contains(txHash);
   }
 
   private <T> Set<T> createTransactionsSet() {
     return Collections.newSetFromMap(
-        new LinkedHashMap<T, Boolean>(1 << 4, 0.75f, true) {
+        new LinkedHashMap<>(1 << 4, 0.75f, true) {
           @Override
           protected boolean removeEldestEntry(final Map.Entry<T, Boolean> eldest) {
             return size() > MAX_TRACKED_SEEN_TRANSACTIONS;

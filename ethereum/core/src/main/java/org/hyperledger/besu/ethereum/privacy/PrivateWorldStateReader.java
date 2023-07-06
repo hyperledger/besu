@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateBlockMetadata;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
@@ -50,7 +50,7 @@ public class PrivateWorldStateReader {
             Bytes32.wrap(Bytes.fromBase64String(privacyGroupId)), blockHash);
 
     return privateWorldStateArchive
-        .get(latestStateRoot)
+        .get(latestStateRoot, blockHash)
         .flatMap(worldState -> Optional.ofNullable(worldState.get(contractAddress)))
         .flatMap(account -> Optional.ofNullable(account.getCode()));
   }

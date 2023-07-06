@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.referencetests;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
@@ -26,10 +27,10 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,10 @@ public class ReferenceTestBlockchain implements Blockchain {
       "Blocks must not be looked up by number in the EVM. The block being processed may not be on the canonical chain.";
   private static final String CHAIN_HEAD_ERROR =
       "Chain head is inherently non-deterministic. The block currently being processed should be treated as the chain head.";
+  private static final String FINALIZED_ERROR =
+      "Finalized block is inherently non-deterministic. The block currently being processed should be treated as the finalized block.";
+  private static final String SAFE_BLOCK_ERROR =
+      "Safe block is inherently non-deterministic. The block currently being processed should be treated as the safe block.";
   private final Map<Hash, BlockHeader> hashToHeader = new HashMap<>();
 
   public ReferenceTestBlockchain() {
@@ -90,6 +95,16 @@ public class ReferenceTestBlockchain implements Blockchain {
   @Override
   public ChainHead getChainHead() {
     throw new NonDeterministicOperationException(CHAIN_HEAD_ERROR);
+  }
+
+  @Override
+  public Optional<Hash> getFinalized() {
+    throw new NonDeterministicOperationException(FINALIZED_ERROR);
+  }
+
+  @Override
+  public Optional<Hash> getSafeBlock() {
+    throw new NonDeterministicOperationException(SAFE_BLOCK_ERROR);
   }
 
   @Override
@@ -165,5 +180,18 @@ public class ReferenceTestBlockchain implements Blockchain {
     NonDeterministicOperationException(final String message) {
       super(message);
     }
+  }
+
+  @Override
+  public Comparator<BlockHeader> getBlockChoiceRule() {
+    return (a, b) -> {
+      throw new NonDeterministicOperationException(
+          "ReferenceTestBlockchian for VMTest Chains do not support fork choice rules");
+    };
+  }
+
+  @Override
+  public void setBlockChoiceRule(final Comparator<BlockHeader> blockChoiceRule) {
+    throw new UnsupportedOperationException("Not Used for Reference Tests");
   }
 }

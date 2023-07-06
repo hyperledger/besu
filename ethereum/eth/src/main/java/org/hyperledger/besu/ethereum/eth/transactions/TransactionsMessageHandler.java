@@ -23,12 +23,14 @@ import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 class TransactionsMessageHandler implements EthMessages.MessageCallback {
 
   private final TransactionsMessageProcessor transactionsMessageProcessor;
   private final EthScheduler scheduler;
   private final Duration txMsgKeepAlive;
+  private final AtomicBoolean isEnabled = new AtomicBoolean(false);
 
   public TransactionsMessageHandler(
       final EthScheduler scheduler,
@@ -43,9 +45,23 @@ class TransactionsMessageHandler implements EthMessages.MessageCallback {
   public void exec(final EthMessage message) {
     final TransactionsMessage transactionsMessage = TransactionsMessage.readFrom(message.getData());
     final Instant startedAt = now();
-    scheduler.scheduleTxWorkerTask(
-        () ->
-            transactionsMessageProcessor.processTransactionsMessage(
-                message.getPeer(), transactionsMessage, startedAt, txMsgKeepAlive));
+    if (isEnabled.get()) {
+      scheduler.scheduleTxWorkerTask(
+          () ->
+              transactionsMessageProcessor.processTransactionsMessage(
+                  message.getPeer(), transactionsMessage, startedAt, txMsgKeepAlive));
+    }
+  }
+
+  public void setDisabled() {
+    isEnabled.set(false);
+  }
+
+  public void setEnabled() {
+    isEnabled.set(true);
+  }
+
+  public boolean isEnabled() {
+    return isEnabled.get();
   }
 }

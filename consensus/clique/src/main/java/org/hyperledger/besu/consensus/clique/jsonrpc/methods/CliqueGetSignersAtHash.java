@@ -14,7 +14,8 @@
  */
 package org.hyperledger.besu.consensus.clique.jsonrpc.methods;
 
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -25,20 +26,26 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/** The Clique get signers at hash. */
 public class CliqueGetSignersAtHash implements JsonRpcMethod {
   private final BlockchainQueries blockchainQueries;
-  private final VoteTallyCache voteTallyCache;
+  private final ValidatorProvider validatorProvider;
 
+  /**
+   * Instantiates a new Clique get signers at hash.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param validatorProvider the validator provider
+   */
   public CliqueGetSignersAtHash(
-      final BlockchainQueries blockchainQueries, final VoteTallyCache voteTallyCache) {
+      final BlockchainQueries blockchainQueries, final ValidatorProvider validatorProvider) {
     this.blockchainQueries = blockchainQueries;
-    this.voteTallyCache = voteTallyCache;
+    this.validatorProvider = validatorProvider;
   }
 
   @Override
@@ -50,7 +57,7 @@ public class CliqueGetSignersAtHash implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Optional<BlockHeader> blockHeader = determineBlockHeader(requestContext);
     return blockHeader
-        .map(bh -> voteTallyCache.getVoteTallyAfterBlock(bh).getValidators())
+        .map(validatorProvider::getValidatorsAfterBlock)
         .map(addresses -> addresses.stream().map(Objects::toString).collect(Collectors.toList()))
         .<JsonRpcResponse>map(
             addresses -> new JsonRpcSuccessResponse(requestContext.getRequest().getId(), addresses))

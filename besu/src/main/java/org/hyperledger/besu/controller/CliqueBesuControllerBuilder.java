@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.controller;
 
+import static org.hyperledger.besu.consensus.clique.CliqueHelpers.installCliqueBlockChoiceRule;
+
 import org.hyperledger.besu.config.CliqueConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
@@ -25,14 +27,12 @@ import org.hyperledger.besu.consensus.clique.blockcreation.CliqueMiningCoordinat
 import org.hyperledger.besu.consensus.clique.jsonrpc.CliqueJsonRpcMethods;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.consensus.common.VoteTallyUpdater;
+import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -42,12 +42,13 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The Clique consensus controller builder. */
 public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(CliqueBesuControllerBuilder.class);
 
   private Address localAddress;
   private EpochManager epochManager;
@@ -57,8 +58,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected void prepForBuild() {
     localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
-    final CliqueConfigOptions cliqueConfig =
-        genesisConfig.getConfigOptions(genesisConfigOverrides).getCliqueConfigOptions();
+    final CliqueConfigOptions cliqueConfig = configOptionsSupplier.get().getCliqueConfigOptions();
     final long blocksPerEpoch = cliqueConfig.getEpochLength();
     secondsBetweenBlocks = cliqueConfig.getBlockPeriodSeconds();
 
@@ -88,11 +88,10 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
             miningParameters,
             new CliqueBlockScheduler(
                 clock,
-                protocolContext.getConsensusState(CliqueContext.class).getVoteTallyCache(),
+                protocolContext.getConsensusContext(CliqueContext.class).getValidatorProvider(),
                 localAddress,
                 secondsBetweenBlocks),
-            epochManager,
-            gasLimitCalculator);
+            epochManager);
     final CliqueMiningCoordinator miningCoordinator =
         new CliqueMiningCoordinator(
             protocolContext.getBlockchain(),
@@ -109,10 +108,11 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return CliqueProtocolSchedule.create(
-        genesisConfig.getConfigOptions(genesisConfigOverrides),
+        configOptionsSupplier.get(),
         nodeKey,
         privacyParameters,
-        isRevertReasonEnabled);
+        isRevertReasonEnabled,
+        evmConfiguration);
   }
 
   @Override
@@ -125,21 +125,29 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
+  protected PluginServiceFactory createAdditionalPluginServices(
+      final Blockchain blockchain, final ProtocolContext protocolContext) {
     return new CliqueQueryPluginServiceFactory(blockchain, nodeKey);
   }
 
   @Override
   protected CliqueContext createConsensusContext(
-      final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
-    return new CliqueContext(
-        new VoteTallyCache(
-            blockchain,
-            new VoteTallyUpdater(epochManager, blockInterface),
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final ProtocolSchedule protocolSchedule) {
+    final CliqueContext cliqueContext =
+        new CliqueContext(
+            BlockValidatorProvider.nonForkingValidatorProvider(
+                blockchain, epochManager, blockInterface),
             epochManager,
-            blockInterface),
-        new VoteProposer(),
-        epochManager,
-        blockInterface);
+            blockInterface);
+    installCliqueBlockChoiceRule(blockchain, cliqueContext);
+    return cliqueContext;
+  }
+
+  @Override
+  public MiningParameters getMiningParameterOverrides(final MiningParameters fromCli) {
+    // Clique mines by default, reflect that with in the mining parameters:
+    return new MiningParameters.Builder(fromCli).miningEnabled(true).build();
   }
 }

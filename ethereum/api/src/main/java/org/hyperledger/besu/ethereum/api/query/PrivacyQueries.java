@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.query;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
 import org.hyperledger.besu.ethereum.privacy.PrivateWorldStateReader;
@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -70,7 +71,7 @@ public class PrivacyQueries {
 
     final List<Hash> pmtHashList =
         privateTransactionMetadataList.stream()
-            .map(PrivateTransactionMetadata::getPrivacyMarkerTransactionHash)
+            .map(PrivateTransactionMetadata::getPrivateMarkerTransactionHash)
             .collect(Collectors.toList());
 
     final List<PrivateTransactionReceipt> privateTransactionReceiptList =
@@ -83,16 +84,24 @@ public class PrivacyQueries {
     final long blockNumber = blockHeader.get().getNumber();
     final boolean removed = !blockchainQueries.blockIsOnCanonicalChain(blockHash);
 
+    final AtomicInteger logIndexOffset = new AtomicInteger();
     return IntStream.range(0, privateTransactionReceiptList.size())
         .mapToObj(
-            i ->
-                LogWithMetadata.generate(
-                    privateTransactionReceiptList.get(i),
-                    blockNumber,
-                    blockHash,
-                    privateTransactionMetadataList.get(i).getPrivacyMarkerTransactionHash(),
-                    findPMTIndex(pmtHashList.get(i)),
-                    removed))
+            i -> {
+              final List<LogWithMetadata> result =
+                  LogWithMetadata.generate(
+                      logIndexOffset.intValue(),
+                      privateTransactionReceiptList.get(i),
+                      blockNumber,
+                      blockHash,
+                      privateTransactionMetadataList.get(i).getPrivateMarkerTransactionHash(),
+                      findPMTIndex(pmtHashList.get(i)),
+                      removed);
+
+              logIndexOffset.addAndGet(privateTransactionReceiptList.get(i).getLogs().size());
+
+              return result;
+            })
         .flatMap(Collection::stream)
         .filter(query::matches)
         .collect(Collectors.toList());

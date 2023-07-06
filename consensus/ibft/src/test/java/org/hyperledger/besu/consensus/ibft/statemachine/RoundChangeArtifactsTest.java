@@ -19,11 +19,11 @@ import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.TestHelpers;
+import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.List;
@@ -31,8 +31,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class RoundChangeArtifactsTest {
 
@@ -41,7 +41,7 @@ public class RoundChangeArtifactsTest {
   private final long chainHeight = 5;
   private final ConsensusRoundIdentifier targetRound = new ConsensusRoundIdentifier(chainHeight, 5);
 
-  @Before
+  @BeforeEach
   public void setup() {
     for (int i = 0; i < 4; i++) {
       final NodeKey nodeKey = NodeKeyUtils.generate();
@@ -54,7 +54,7 @@ public class RoundChangeArtifactsTest {
 
     final ConsensusRoundIdentifier preparedRound =
         new ConsensusRoundIdentifier(chainHeight, fromRound);
-    final Block block = TestHelpers.createProposalBlock(emptyList(), preparedRound);
+    final Block block = ProposedBlockHelpers.createProposalBlock(emptyList(), preparedRound);
 
     return new PreparedRoundArtifacts(
         messageFactories.get(0).createProposal(preparedRound, block, Optional.empty()),

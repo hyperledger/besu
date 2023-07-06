@@ -17,34 +17,50 @@ package org.hyperledger.besu.consensus.ibft.payload;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.ibft.messagedata.IbftV2;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
 import java.util.StringJoiner;
 
-public class CommitPayload implements Payload {
+/** The Commit payload. */
+public class CommitPayload extends IbftPayload {
   private static final int TYPE = IbftV2.COMMIT;
   private final ConsensusRoundIdentifier roundIdentifier;
   private final Hash digest;
-  private final Signature commitSeal;
+  private final SECPSignature commitSeal;
 
+  /**
+   * Instantiates a new Commit payload.
+   *
+   * @param roundIdentifier the round identifier
+   * @param digest the digest
+   * @param commitSeal the commit seal
+   */
   public CommitPayload(
       final ConsensusRoundIdentifier roundIdentifier,
       final Hash digest,
-      final Signature commitSeal) {
+      final SECPSignature commitSeal) {
     this.roundIdentifier = roundIdentifier;
     this.digest = digest;
     this.commitSeal = commitSeal;
   }
 
+  /**
+   * Read from rlp input and return commit payload.
+   *
+   * @param rlpInput the rlp input
+   * @return the commit payload
+   */
   public static CommitPayload readFrom(final RLPInput rlpInput) {
     rlpInput.enterList();
     final ConsensusRoundIdentifier roundIdentifier = ConsensusRoundIdentifier.readFrom(rlpInput);
     final Hash digest = Payload.readDigest(rlpInput);
-    final Signature commitSeal = rlpInput.readBytes(Signature::decode);
+    final SECPSignature commitSeal =
+        rlpInput.readBytes(SignatureAlgorithmFactory.getInstance()::decodeSignature);
     rlpInput.leaveList();
 
     return new CommitPayload(roundIdentifier, digest, commitSeal);
@@ -64,11 +80,21 @@ public class CommitPayload implements Payload {
     return TYPE;
   }
 
+  /**
+   * Gets digest.
+   *
+   * @return the digest
+   */
   public Hash getDigest() {
     return digest;
   }
 
-  public Signature getCommitSeal() {
+  /**
+   * Gets commit seal.
+   *
+   * @return the commit seal
+   */
+  public SECPSignature getCommitSeal() {
     return commitSeal;
   }
 

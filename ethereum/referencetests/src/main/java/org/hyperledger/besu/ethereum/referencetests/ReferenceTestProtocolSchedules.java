@@ -17,10 +17,11 @@ package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -38,34 +39,44 @@ public class ReferenceTestProtocolSchedules {
       Arrays.asList("Frontier", "Homestead", "EIP150");
 
   public static ReferenceTestProtocolSchedules create() {
+    return create(new StubGenesisConfigOptions());
+  }
+
+  public static ReferenceTestProtocolSchedules create(final StubGenesisConfigOptions genesisStub) {
     final ImmutableMap.Builder<String, ProtocolSchedule> builder = ImmutableMap.builder();
-    builder.put("Frontier", createSchedule(new StubGenesisConfigOptions()));
-    builder.put(
-        "FrontierToHomesteadAt5", createSchedule(new StubGenesisConfigOptions().homesteadBlock(5)));
-    builder.put("Homestead", createSchedule(new StubGenesisConfigOptions().homesteadBlock(0)));
+    builder.put("Frontier", createSchedule(genesisStub.clone()));
+    builder.put("FrontierToHomesteadAt5", createSchedule(genesisStub.clone().homesteadBlock(5)));
+    builder.put("Homestead", createSchedule(genesisStub.clone().homesteadBlock(0)));
     builder.put(
         "HomesteadToEIP150At5",
-        createSchedule(new StubGenesisConfigOptions().homesteadBlock(0).eip150Block(5)));
+        createSchedule(genesisStub.clone().homesteadBlock(0).eip150Block(5)));
     builder.put(
-        "HomesteadToDaoAt5",
-        createSchedule(new StubGenesisConfigOptions().homesteadBlock(0).daoForkBlock(5)));
-    builder.put("EIP150", createSchedule(new StubGenesisConfigOptions().eip150Block(0)));
-    builder.put("EIP158", createSchedule(new StubGenesisConfigOptions().eip158Block(0)));
+        "HomesteadToDaoAt5", createSchedule(genesisStub.clone().homesteadBlock(0).daoForkBlock(5)));
+    builder.put("EIP150", createSchedule(genesisStub.clone().eip150Block(0)));
+    builder.put("EIP158", createSchedule(genesisStub.clone().eip158Block(0)));
     builder.put(
         "EIP158ToByzantiumAt5",
-        createSchedule(new StubGenesisConfigOptions().eip158Block(0).byzantiumBlock(5)));
-    builder.put("Byzantium", createSchedule(new StubGenesisConfigOptions().byzantiumBlock(0)));
-    builder.put(
-        "Constantinople", createSchedule(new StubGenesisConfigOptions().constantinopleBlock(0)));
-    builder.put(
-        "ConstantinopleFix",
-        createSchedule(new StubGenesisConfigOptions().constantinopleFixBlock(0)));
-    builder.put("Istanbul", createSchedule(new StubGenesisConfigOptions().istanbulBlock(0)));
-    builder.put("MuirGlacier", createSchedule(new StubGenesisConfigOptions().muirGlacierBlock(0)));
-    if (ExperimentalEIPs.berlinEnabled) {
-      builder.put("Berlin", createSchedule(new StubGenesisConfigOptions().berlinBlock(0)));
-      builder.put("YOLOv2", createSchedule(new StubGenesisConfigOptions().berlinBlock(0)));
+        createSchedule(genesisStub.clone().eip158Block(0).byzantiumBlock(5)));
+    builder.put("Byzantium", createSchedule(genesisStub.clone().byzantiumBlock(0)));
+    builder.put("Constantinople", createSchedule(genesisStub.clone().constantinopleBlock(0)));
+    builder.put("ConstantinopleFix", createSchedule(genesisStub.clone().petersburgBlock(0)));
+    builder.put("Petersburg", createSchedule(genesisStub.clone().petersburgBlock(0)));
+    builder.put("Istanbul", createSchedule(genesisStub.clone().istanbulBlock(0)));
+    builder.put("MuirGlacier", createSchedule(genesisStub.clone().muirGlacierBlock(0)));
+    builder.put("Berlin", createSchedule(genesisStub.clone().berlinBlock(0)));
+
+    // the following schedules activate EIP-1559, but may have non-default
+    if (genesisStub.getBaseFeePerGas().isEmpty()) {
+      genesisStub.baseFeePerGas(0x0a);
     }
+    builder.put("London", createSchedule(genesisStub.clone().londonBlock(0)));
+    builder.put("ArrowGlacier", createSchedule(genesisStub.clone().arrowGlacierBlock(0)));
+    builder.put("GrayGlacier", createSchedule(genesisStub.clone().grayGlacierBlock(0)));
+    builder.put("Merge", createSchedule(genesisStub.clone().mergeNetSplitBlock(0)));
+    builder.put("Shanghai", createSchedule(genesisStub.clone().shanghaiTime(0)));
+    builder.put("Cancun", createSchedule(genesisStub.clone().cancunTime(0)));
+    builder.put("Future_EIPs", createSchedule(genesisStub.clone().futureEipsTime(0)));
+    builder.put("Experimental_EIPs", createSchedule(genesisStub.clone().experimentalEipsTime(0)));
     return new ReferenceTestProtocolSchedules(builder.build());
   }
 
@@ -83,10 +94,10 @@ public class ReferenceTestProtocolSchedules {
     return new ProtocolScheduleBuilder(
             options,
             CHAIN_ID,
-            Function.identity(),
+            ProtocolSpecAdapters.create(0, Function.identity()),
             PrivacyParameters.DEFAULT,
             false,
-            options.isQuorum())
+            EvmConfiguration.DEFAULT)
         .createProtocolSchedule();
   }
 

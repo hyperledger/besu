@@ -14,15 +14,14 @@
  */
 package org.hyperledger.besu.consensus.ibft.queries;
 
-import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.PoaQueryServiceImpl;
-import org.hyperledger.besu.consensus.ibft.IbftBlockHashing;
-import org.hyperledger.besu.consensus.ibft.IbftExtraData;
-import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.services.query.IbftQueryService;
 
 import java.util.Collection;
@@ -30,17 +29,28 @@ import java.util.Collections;
 
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The Ibft query service. */
 public class IbftQueryServiceImpl extends PoaQueryServiceImpl implements IbftQueryService {
 
+  private final BftBlockInterface blockInterface;
+
+  /**
+   * Instantiates a new Ibft query service.
+   *
+   * @param blockInterface the block interface
+   * @param blockchain the blockchain
+   * @param nodeKey the node key
+   */
   public IbftQueryServiceImpl(
-      final BlockInterface blockInterface, final Blockchain blockchain, final NodeKey nodeKey) {
+      final BftBlockInterface blockInterface, final Blockchain blockchain, final NodeKey nodeKey) {
     super(blockInterface, blockchain, nodeKey);
+    this.blockInterface = blockInterface;
   }
 
   @Override
   public int getRoundNumberFrom(final org.hyperledger.besu.plugin.data.BlockHeader header) {
     final BlockHeader headerFromChain = getHeaderFromChain(header);
-    final IbftExtraData extraData = IbftExtraData.decode(headerFromChain);
+    final BftExtraData extraData = blockInterface.getExtraData(headerFromChain);
     return extraData.getRound();
   }
 
@@ -48,10 +58,7 @@ public class IbftQueryServiceImpl extends PoaQueryServiceImpl implements IbftQue
   public Collection<Address> getSignersFrom(
       final org.hyperledger.besu.plugin.data.BlockHeader header) {
     final BlockHeader headerFromChain = getHeaderFromChain(header);
-    final IbftExtraData extraData = IbftExtraData.decode(headerFromChain);
-
-    return Collections.unmodifiableList(
-        IbftBlockHashing.recoverCommitterAddresses(headerFromChain, extraData));
+    return Collections.unmodifiableList(blockInterface.getCommitters(headerFromChain));
   }
 
   private BlockHeader getHeaderFromChain(

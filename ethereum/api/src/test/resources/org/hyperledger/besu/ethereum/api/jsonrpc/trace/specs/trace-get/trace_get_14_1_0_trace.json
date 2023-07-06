@@ -1,0 +1,35 @@
+{
+  "comment" : "CREATE2",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_get",
+    "params" : [ "0xaf151fc10eb21e76efb0bc74da179a674083e420280fb2985f76b0326682864a", [ ] ],
+    "id" : 310
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "action" : {
+        "callType" : "call",
+        "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+        "gas" : "0xffadea",
+        "input" : "0x",
+        "to" : "0x0140000000000000000000000000000000000000",
+        "value" : "0x0"
+      },
+      "blockHash" : "0x82066eb29b4f58f6ee0f8190e45efb31b3708397f0c147bf7a9bd3d1cae94e9b",
+      "blockNumber" : 20,
+      "result" : {
+        "gasUsed" : "0x16b87",
+        "output" : "0x"
+      },
+      "subtraces" : 1,
+      "traceAddress" : [ ],
+      "transactionHash" : "0xaf151fc10eb21e76efb0bc74da179a674083e420280fb2985f76b0326682864a",
+      "transactionPosition" : 1,
+      "type" : "call"
+    },
+    "id" : 310
+  },
+  "statusCode" : 200
+}

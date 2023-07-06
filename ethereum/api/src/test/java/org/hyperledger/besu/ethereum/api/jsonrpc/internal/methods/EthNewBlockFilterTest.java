@@ -56,7 +56,7 @@ public class EthNewBlockFilterTest {
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), "0x0");
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
     verify(filterManager).installBlockFilter();
     verifyNoMoreInteractions(filterManager);
   }

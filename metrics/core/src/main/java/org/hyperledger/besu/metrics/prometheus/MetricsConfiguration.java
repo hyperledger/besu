@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -28,13 +28,20 @@ import java.util.Set;
 
 import com.google.common.base.MoreObjects;
 
+/** The Metrics configuration. */
 public class MetricsConfiguration {
   private static final String DEFAULT_METRICS_HOST = "127.0.0.1";
+  /** The constant DEFAULT_METRICS_PORT. */
   public static final int DEFAULT_METRICS_PORT = 9545;
+
   private static final MetricsProtocol DEFAULT_METRICS_PROTOCOL = MetricsProtocol.PROMETHEUS;
   private static final String DEFAULT_METRICS_PUSH_HOST = "127.0.0.1";
+  /** The constant DEFAULT_METRICS_PUSH_PORT. */
   public static final int DEFAULT_METRICS_PUSH_PORT = 9001;
-  public static final Boolean DEFAULT_TIMERS_ENABLED = true;
+  /** The constant DEFAULT_METRICS_TIMERS_ENABLED. */
+  public static final Boolean DEFAULT_METRICS_TIMERS_ENABLED = true;
+  /** The constant DEFAULT_METRICS_IDLE_TIMEOUT_SECONDS. */
+  public static final int DEFAULT_METRICS_IDLE_TIMEOUT_SECONDS = 60;
 
   private final boolean enabled;
   private final MetricsProtocol protocol;
@@ -49,7 +56,13 @@ public class MetricsConfiguration {
   private final String prometheusJob;
   private final List<String> hostsAllowlist;
   private final boolean timersEnabled;
+  private final int idleTimeout;
 
+  /**
+   * Builder.
+   *
+   * @return the builder
+   */
   public static Builder builder() {
     return new Builder();
   }
@@ -66,7 +79,8 @@ public class MetricsConfiguration {
       final int pushInterval,
       final String prometheusJob,
       final List<String> hostsAllowlist,
-      final boolean timersEnabled) {
+      final boolean timersEnabled,
+      final int idleTimeout) {
     this.enabled = enabled;
     this.port = port;
     this.protocol = protocol;
@@ -79,68 +93,153 @@ public class MetricsConfiguration {
     this.prometheusJob = prometheusJob;
     this.hostsAllowlist = hostsAllowlist;
     this.timersEnabled = timersEnabled;
+    this.idleTimeout = idleTimeout;
   }
 
+  /**
+   * Is enabled.
+   *
+   * @return the boolean
+   */
   public boolean isEnabled() {
     return enabled;
   }
 
+  /**
+   * Gets protocol.
+   *
+   * @return the protocol
+   */
   public MetricsProtocol getProtocol() {
     return protocol;
   }
 
+  /**
+   * Gets host.
+   *
+   * @return the host
+   */
   public String getHost() {
     return host;
   }
 
+  /**
+   * Gets port.
+   *
+   * @return the port
+   */
   public int getPort() {
     return port;
   }
 
+  /**
+   * Gets actual port.
+   *
+   * @return the actual port
+   */
   public int getActualPort() {
     return actualPort;
   }
 
+  /**
+   * Sets actual port.
+   *
+   * @param actualPort the actual port
+   */
   void setActualPort(final int actualPort) {
     this.actualPort = actualPort;
   }
 
+  /**
+   * Gets metric categories.
+   *
+   * @return the metric categories
+   */
   public Set<MetricCategory> getMetricCategories() {
     return metricCategories;
   }
 
+  /**
+   * Gets push port.
+   *
+   * @return the push port
+   */
   public int getPushPort() {
     return pushPort;
   }
 
+  /**
+   * Gets push host.
+   *
+   * @return the push host
+   */
   public String getPushHost() {
     return pushHost;
   }
 
+  /**
+   * Is push enabled boolean.
+   *
+   * @return the boolean
+   */
   public boolean isPushEnabled() {
     return pushEnabled;
   }
 
+  /**
+   * Gets push interval.
+   *
+   * @return the push interval
+   */
   public int getPushInterval() {
     return pushInterval;
   }
 
+  /**
+   * Gets prometheus job.
+   *
+   * @return the prometheus job
+   */
   public String getPrometheusJob() {
     return prometheusJob;
   }
 
+  /**
+   * Gets hosts whitelist.
+   *
+   * @return the hosts whitelist
+   */
   // use getHostsAllowlist instead
   @Deprecated
   Collection<String> getHostsWhitelist() {
     return Collections.unmodifiableCollection(this.hostsAllowlist);
   }
 
+  /**
+   * Gets hosts allowlist.
+   *
+   * @return the hosts allowlist
+   */
   Collection<String> getHostsAllowlist() {
     return Collections.unmodifiableCollection(this.hostsAllowlist);
   }
 
+  /**
+   * Is timers enabled.
+   *
+   * @return the boolean
+   */
   public boolean isTimersEnabled() {
     return timersEnabled;
+  }
+
+  /**
+   * Gets idle timeout.
+   *
+   * @return the idle timeout
+   */
+  public int getIdleTimeout() {
+    return idleTimeout;
   }
 
   @Override
@@ -157,6 +256,8 @@ public class MetricsConfiguration {
         .add("pushInterval", pushInterval)
         .add("prometheusJob", prometheusJob)
         .add("hostsAllowlist", hostsAllowlist)
+        .add("timersEnabled", timersEnabled)
+        .add("idleTimeout", idleTimeout)
         .toString();
   }
 
@@ -179,7 +280,9 @@ public class MetricsConfiguration {
         && Objects.equals(metricCategories, that.metricCategories)
         && Objects.equals(pushHost, that.pushHost)
         && Objects.equals(prometheusJob, that.prometheusJob)
-        && Objects.equals(hostsAllowlist, that.hostsAllowlist);
+        && Objects.equals(hostsAllowlist, that.hostsAllowlist)
+        && timersEnabled == that.timersEnabled
+        && idleTimeout == that.idleTimeout;
   }
 
   @Override
@@ -195,9 +298,12 @@ public class MetricsConfiguration {
         pushHost,
         pushInterval,
         prometheusJob,
-        hostsAllowlist);
+        hostsAllowlist,
+        timersEnabled,
+        idleTimeout);
   }
 
+  /** The type Builder. */
   public static class Builder {
     private boolean enabled = false;
     private MetricsProtocol protocol = DEFAULT_METRICS_PROTOCOL;
@@ -210,60 +316,127 @@ public class MetricsConfiguration {
     private int pushInterval = 15;
     private String prometheusJob = "besu-client";
     private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
-    private boolean timersEnabled = DEFAULT_TIMERS_ENABLED;
+    private boolean timersEnabled = DEFAULT_METRICS_TIMERS_ENABLED;
+    private int idleTimeout = DEFAULT_METRICS_IDLE_TIMEOUT_SECONDS;
 
     private Builder() {}
 
+    /**
+     * Enabled.
+     *
+     * @param enabled the enabled
+     * @return the builder
+     */
     public Builder enabled(final boolean enabled) {
       this.enabled = enabled;
       return this;
     }
 
+    /**
+     * Protocol.
+     *
+     * @param protocol the protocol
+     * @return the builder
+     */
     public Builder protocol(final MetricsProtocol protocol) {
       this.protocol = protocol;
       return this;
     }
 
+    /**
+     * Port.
+     *
+     * @param port the port
+     * @return the builder
+     */
     public Builder port(final int port) {
       this.port = port;
       return this;
     }
 
+    /**
+     * Host.
+     *
+     * @param host the host
+     * @return the builder
+     */
     public Builder host(final String host) {
       this.host = host;
       return this;
     }
 
+    /**
+     * Metric categories.
+     *
+     * @param metricCategories the metric categories
+     * @return the builder
+     */
     public Builder metricCategories(final Set<MetricCategory> metricCategories) {
       this.metricCategories = metricCategories;
       return this;
     }
 
+    /**
+     * Push enabled.
+     *
+     * @param pushEnabled the push enabled
+     * @return the builder
+     */
     public Builder pushEnabled(final boolean pushEnabled) {
       this.pushEnabled = pushEnabled;
       return this;
     }
 
+    /**
+     * Push port.
+     *
+     * @param pushPort the push port
+     * @return the builder
+     */
     public Builder pushPort(final int pushPort) {
       this.pushPort = pushPort;
       return this;
     }
 
+    /**
+     * Push host.
+     *
+     * @param pushHost the push host
+     * @return the builder
+     */
     public Builder pushHost(final String pushHost) {
       this.pushHost = pushHost;
       return this;
     }
 
+    /**
+     * Push interval.
+     *
+     * @param pushInterval the push interval
+     * @return the builder
+     */
     public Builder pushInterval(final int pushInterval) {
       this.pushInterval = pushInterval;
       return this;
     }
 
+    /**
+     * Prometheus job.
+     *
+     * @param prometheusJob the prometheus job
+     * @return the builder
+     */
     public Builder prometheusJob(final String prometheusJob) {
       this.prometheusJob = prometheusJob;
       return this;
     }
 
+    /**
+     * Hosts whitelist.
+     *
+     * @param hostsAllowlist the hosts allowlist
+     * @return the builder
+     */
     // use hostsAllowlist instead
     @Deprecated
     public Builder hostsWhitelist(final List<String> hostsAllowlist) {
@@ -271,16 +444,44 @@ public class MetricsConfiguration {
       return this;
     }
 
+    /**
+     * Hosts allowlist.
+     *
+     * @param hostsAllowlist the hosts allowlist
+     * @return the builder
+     */
     public Builder hostsAllowlist(final List<String> hostsAllowlist) {
       this.hostsAllowlist = hostsAllowlist;
       return this;
     }
 
+    /**
+     * Timers enabled.
+     *
+     * @param timersEnabled the timers enabled
+     * @return the builder
+     */
     public Builder timersEnabled(final boolean timersEnabled) {
       this.timersEnabled = timersEnabled;
       return this;
     }
 
+    /**
+     * Idle timeout.
+     *
+     * @param idleTimeout the idle timeout
+     * @return the builder
+     */
+    public Builder idleTimeout(final int idleTimeout) {
+      this.idleTimeout = idleTimeout;
+      return this;
+    }
+
+    /**
+     * Build metrics configuration.
+     *
+     * @return the metrics configuration
+     */
     public MetricsConfiguration build() {
       return new MetricsConfiguration(
           enabled,
@@ -294,7 +495,8 @@ public class MetricsConfiguration {
           pushInterval,
           prometheusJob,
           hostsAllowlist,
-          timersEnabled);
+          timersEnabled,
+          idleTimeout);
     }
   }
 }

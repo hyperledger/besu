@@ -19,14 +19,25 @@ import org.hyperledger.besu.controller.BesuController;
 import java.util.ArrayList;
 import java.util.List;
 
+/** The Pre synchronization task runner. */
 public class PreSynchronizationTaskRunner {
 
   private final List<PreSynchronizationTask> tasks = new ArrayList<>();
 
+  /**
+   * Add task.
+   *
+   * @param task the task
+   */
   public void addTask(final PreSynchronizationTask task) {
     tasks.add(task);
   }
 
+  /**
+   * Run tasks.
+   *
+   * @param besuController the besu controller
+   */
   public void runTasks(final BesuController besuController) {
     tasks.forEach(t -> t.run(besuController));
   }

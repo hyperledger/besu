@@ -19,7 +19,9 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -34,7 +36,6 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 
@@ -100,7 +101,7 @@ public class EthGetUncleByBlockHashAndIndexTest {
 
     assertThat(thrown)
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid json rpc parameter at index 0");
+        .hasMessageContaining("Invalid json rpc parameter at index 0");
   }
 
   @Test
@@ -112,7 +113,7 @@ public class EthGetUncleByBlockHashAndIndexTest {
 
     assertThat(thrown)
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid json rpc parameter at index 1");
+        .hasMessageContaining("Invalid json rpc parameter at index 1");
   }
 
   @Test
@@ -125,7 +126,7 @@ public class EthGetUncleByBlockHashAndIndexTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -140,7 +141,7 @@ public class EthGetUncleByBlockHashAndIndexTest {
 
     final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByFieldRecursively(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   private BlockResult blockResult(final BlockHeader header) {
@@ -161,12 +162,13 @@ public class EthGetUncleByBlockHashAndIndexTest {
 
   public BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata(
       final BlockHeader header) {
-    final KeyPair keyPair = KeyPair.generate();
+    final KeyPair keyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
     final List<TransactionWithMetadata> transactions = new ArrayList<>();
     for (int i = 0; i < 3; i++) {
       final Transaction transaction = transactionTestFixture.createTransaction(keyPair);
       transactions.add(
-          new TransactionWithMetadata(transaction, header.getNumber(), header.getHash(), 0));
+          new TransactionWithMetadata(
+              transaction, header.getNumber(), header.getBaseFee(), header.getHash(), 0));
     }
 
     final List<Hash> ommers = new ArrayList<>();

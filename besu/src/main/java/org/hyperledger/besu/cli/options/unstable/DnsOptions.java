@@ -23,6 +23,7 @@ import java.util.List;
 
 import picocli.CommandLine;
 
+/** The Dns CLI options. */
 public class DnsOptions implements CLIOptions<EnodeDnsConfiguration> {
 
   private final String DNS_ENABLED = "--Xdns-enabled";
@@ -42,10 +43,21 @@ public class DnsOptions implements CLIOptions<EnodeDnsConfiguration> {
       arity = "1")
   private Boolean dnsUpdateEnabled = Boolean.FALSE;
 
+  /**
+   * Create dns options.
+   *
+   * @return the dns options
+   */
   public static DnsOptions create() {
     return new DnsOptions();
   }
 
+  /**
+   * From config dns options.
+   *
+   * @param enodeDnsConfiguration the enode dns configuration
+   * @return the dns options
+   */
   public static DnsOptions fromConfig(final EnodeDnsConfiguration enodeDnsConfiguration) {
     final DnsOptions cliOptions = new DnsOptions();
     cliOptions.dnsEnabled = enodeDnsConfiguration.dnsEnabled();
@@ -53,10 +65,20 @@ public class DnsOptions implements CLIOptions<EnodeDnsConfiguration> {
     return cliOptions;
   }
 
+  /**
+   * Gets dns enabled.
+   *
+   * @return the dns enabled
+   */
   public Boolean getDnsEnabled() {
     return dnsEnabled;
   }
 
+  /**
+   * Gets dns update enabled.
+   *
+   * @return the dns update enabled
+   */
   public Boolean getDnsUpdateEnabled() {
     return dnsUpdateEnabled;
   }

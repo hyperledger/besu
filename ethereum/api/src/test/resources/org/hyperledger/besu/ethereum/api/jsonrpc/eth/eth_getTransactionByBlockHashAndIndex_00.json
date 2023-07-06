@@ -22,6 +22,7 @@
       "nonce": "0x0",
       "to": null,
       "transactionIndex": "0x0",
+      "type" : "0x0",
       "value": "0xa",
       "v": "0x1c",
       "r": "0xe439aa8812c1c0a751b0931ea20c5a30cd54fe15cae883c59fd8107e04557679",

@@ -16,29 +16,26 @@ package org.hyperledger.besu.ethereum.worldstate;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.datatypes.AccountValue;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
 
-/** Represents the raw values associated with an account in the world state trie. */
-public class StateTrieAccountValue {
+import org.apache.tuweni.bytes.Bytes32;
 
-  private final long nonce;
-  private final Wei balance;
-  private final Hash storageRoot;
-  private final Hash codeHash;
-  private final int version;
+/** Represents the raw values associated with an account in the world state trie. */
+public class StateTrieAccountValue implements AccountValue {
+
+  protected final long nonce;
+  protected final Wei balance;
+  protected final Hash storageRoot;
+  protected final Hash codeHash;
 
   public StateTrieAccountValue(
-      final long nonce,
-      final Wei balance,
-      final Hash storageRoot,
-      final Hash codeHash,
-      final int version) {
+      final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
     checkNotNull(balance, "balance cannot be null");
     checkNotNull(storageRoot, "storageRoot cannot be null");
     checkNotNull(codeHash, "codeHash cannot be null");
@@ -46,7 +43,6 @@ public class StateTrieAccountValue {
     this.balance = balance;
     this.storageRoot = storageRoot;
     this.codeHash = codeHash;
-    this.version = version;
   }
 
   /**
@@ -54,6 +50,7 @@ public class StateTrieAccountValue {
    *
    * @return the account nonce.
    */
+  @Override
   public long getNonce() {
     return nonce;
   }
@@ -63,6 +60,7 @@ public class StateTrieAccountValue {
    *
    * @return the balance, in Wei, of the account.
    */
+  @Override
   public Wei getBalance() {
     return balance;
   }
@@ -72,6 +70,7 @@ public class StateTrieAccountValue {
    *
    * @return the hash of the root node of the storage trie.
    */
+  @Override
   public Hash getStorageRoot() {
     return storageRoot;
   }
@@ -81,17 +80,9 @@ public class StateTrieAccountValue {
    *
    * @return the hash of the account code (which may be {@link Hash#EMPTY}).
    */
+  @Override
   public Hash getCodeHash() {
     return codeHash;
-  }
-
-  /**
-   * The version of the EVM bytecode associated with this account.
-   *
-   * @return the version of the account code.
-   */
-  public int getVersion() {
-    return version;
   }
 
   @Override
@@ -100,7 +91,6 @@ public class StateTrieAccountValue {
     if (o == null || getClass() != o.getClass()) return false;
     final StateTrieAccountValue that = (StateTrieAccountValue) o;
     return nonce == that.nonce
-        && version == that.version
         && balance.equals(that.balance)
         && storageRoot.equals(that.storageRoot)
         && codeHash.equals(that.codeHash);
@@ -108,9 +98,10 @@ public class StateTrieAccountValue {
 
   @Override
   public int hashCode() {
-    return Objects.hash(nonce, balance, storageRoot, codeHash, version);
+    return Objects.hash(nonce, balance, storageRoot, codeHash);
   }
 
+  @Override
   public void writeTo(final RLPOutput out) {
     out.startList();
 
@@ -118,11 +109,6 @@ public class StateTrieAccountValue {
     out.writeUInt256Scalar(balance);
     out.writeBytes(storageRoot);
     out.writeBytes(codeHash);
-
-    if (version != Account.DEFAULT_VERSION) {
-      // version of zero is never written out.
-      out.writeIntScalar(version);
-    }
 
     out.endList();
   }
@@ -132,17 +118,23 @@ public class StateTrieAccountValue {
 
     final long nonce = in.readLongScalar();
     final Wei balance = Wei.of(in.readUInt256Scalar());
-    final Hash storageRoot = Hash.wrap(in.readBytes32());
-    final Hash codeHash = Hash.wrap(in.readBytes32());
-    final int version;
-    if (!in.isEndOfCurrentList()) {
-      version = in.readIntScalar();
+    Bytes32 storageRoot;
+    Bytes32 codeHash;
+    if (in.nextIsNull()) {
+      storageRoot = Hash.EMPTY_TRIE_HASH;
+      in.skipNext();
     } else {
-      version = Account.DEFAULT_VERSION;
+      storageRoot = in.readBytes32();
+    }
+    if (in.nextIsNull()) {
+      codeHash = Hash.EMPTY;
+      in.skipNext();
+    } else {
+      codeHash = in.readBytes32();
     }
 
     in.leaveList();
 
-    return new StateTrieAccountValue(nonce, balance, storageRoot, codeHash, version);
+    return new StateTrieAccountValue(nonce, balance, Hash.wrap(storageRoot), Hash.wrap(codeHash));
   }
 }

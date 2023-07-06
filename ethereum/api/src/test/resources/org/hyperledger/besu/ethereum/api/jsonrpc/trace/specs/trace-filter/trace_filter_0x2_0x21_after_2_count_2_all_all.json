@@ -1,0 +1,58 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "trace_filter",
+    "params": [
+      {
+        "fromBlock": "0x2",
+        "toBlock": "0x21",
+        "after": 2,
+        "count": 2
+      }
+    ],
+    "id": 415
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "action": {
+          "creationMethod": "create",
+          "from": "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+          "gas": "0xff300e",
+          "init": "0x6004600c60003960046000f3600035ff",
+          "value": "0x0"
+        },
+        "blockHash": "0x47a62e941d567d1d7411b32ff38bdef817357d226a0204c285e8db27b3808554",
+        "blockNumber": 3,
+        "result": {
+          "address": "0xf12b5dd4ead5f743c6baa640b0216200e89b60da",
+          "code": "0x600035ff",
+          "gasUsed": "0x338"
+        },
+        "subtraces": 0,
+        "traceAddress": [],
+        "transactionHash": "0x8d5477f0aae852c3e9487b0f8e7b9ecf9ccdf23d7934d4b4b7eff40c271031e5",
+        "transactionPosition": 0,
+        "type": "create"
+      },
+      {
+        "action": {
+          "author": "0x0000000000000000000000000000000000000000",
+          "rewardType": "block",
+          "value": "0x1bc16d674ec80000"
+        },
+        "blockHash": "0x47a62e941d567d1d7411b32ff38bdef817357d226a0204c285e8db27b3808554",
+        "blockNumber": 3,
+        "result": null,
+        "subtraces": 0,
+        "traceAddress": [],
+        "transactionHash": null,
+        "transactionPosition": null,
+        "type": "reward"
+      }
+    ],
+    "id": 415
+  },
+  "statusCode": 200
+}

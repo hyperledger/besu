@@ -17,17 +17,24 @@ package org.hyperledger.besu.controller;
 import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.PoaQueryServiceImpl;
-import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.plugin.services.metrics.PoAMetricsService;
 import org.hyperledger.besu.plugin.services.query.PoaQueryService;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
+/** The Clique query plugin service factory. */
 public class CliqueQueryPluginServiceFactory implements PluginServiceFactory {
 
   private final Blockchain blockchain;
   private final NodeKey nodeKey;
 
+  /**
+   * Instantiates a new Clique query plugin service factory.
+   *
+   * @param blockchain the blockchain
+   * @param nodeKey the node key
+   */
   public CliqueQueryPluginServiceFactory(final Blockchain blockchain, final NodeKey nodeKey) {
     this.blockchain = blockchain;
     this.nodeKey = nodeKey;

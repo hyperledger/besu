@@ -26,11 +26,15 @@ import org.awaitility.Awaitility;
 public interface BesuNodeRunner {
 
   static BesuNodeRunner instance() {
-    if (Boolean.getBoolean("acctests.runBesuAsProcess")) {
+    if (isProcessBesuNodeRunner()) {
       return new ProcessBesuNodeRunner();
     } else {
       return new ThreadBesuNodeRunner();
     }
+  }
+
+  static boolean isProcessBesuNodeRunner() {
+    return Boolean.getBoolean("acctests.runBesuAsProcess");
   }
 
   void startNode(BesuNode node);

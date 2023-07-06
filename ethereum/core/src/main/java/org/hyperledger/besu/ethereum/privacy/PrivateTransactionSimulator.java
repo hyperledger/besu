@@ -14,26 +14,30 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.plugin.data.Restriction;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -45,9 +49,17 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public class PrivateTransactionSimulator {
 
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+
   // Dummy signature for transactions to not fail being processed.
-  private static final SECP256K1.Signature FAKE_SIGNATURE =
-      SECP256K1.Signature.create(SECP256K1.HALF_CURVE_ORDER, SECP256K1.HALF_CURVE_ORDER, (byte) 0);
+  private static final SECPSignature FAKE_SIGNATURE =
+      SIGNATURE_ALGORITHM
+          .get()
+          .createSignature(
+              SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
+              SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
+              (byte) 0);
 
   private static final Address DEFAULT_FROM = Address.ZERO;
 
@@ -94,7 +106,7 @@ public class PrivateTransactionSimulator {
     }
 
     final MutableWorldState publicWorldState =
-        worldStateArchive.getMutable(header.getStateRoot()).orElse(null);
+        worldStateArchive.getMutable(header.getStateRoot(), header.getHash()).orElse(null);
     if (publicWorldState == null) {
       return Optional.empty();
     }
@@ -105,19 +117,21 @@ public class PrivateTransactionSimulator {
         privateStateRootResolver.resolveLastStateRoot(privacyGroupId, header.getHash());
 
     final MutableWorldState disposablePrivateState =
-        privacyParameters.getPrivateWorldStateArchive().getMutable(lastRootHash).get();
+        privacyParameters
+            .getPrivateWorldStateArchive()
+            .getMutable(lastRootHash, header.getHash())
+            .get();
 
     final PrivateTransaction transaction =
         getPrivateTransaction(callParams, header, privacyGroupId, disposablePrivateState);
 
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(header.getNumber());
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
 
     final PrivateTransactionProcessor privateTransactionProcessor =
         protocolSpec.getPrivateTransactionProcessor();
 
     final TransactionProcessingResult result =
         privateTransactionProcessor.processTransaction(
-            blockchain,
             publicWorldState.updater(),
             disposablePrivateState.updater(),
             header,
@@ -125,8 +139,8 @@ public class PrivateTransactionSimulator {
             // exist
             transaction,
             protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
-            new DebugOperationTracer(TraceOptions.DEFAULT),
-            new BlockHashLookup(header, blockchain),
+            OperationTracer.NO_TRACING,
+            new CachingBlockHashLookup(header, blockchain),
             privacyGroupId);
 
     return Optional.of(result);

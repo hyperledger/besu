@@ -17,16 +17,15 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.transaction.p
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.transaction.pool.Predicate.ACTION;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.transaction.pool.Predicate.EQ;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * This class allows to filter a list of pending transactions
@@ -43,17 +42,20 @@ public class PendingTransactionFilter {
   public static final String VALUE_FIELD = "value";
   public static final String NONCE_FIELD = "nonce";
 
-  public Set<Transaction> reduce(
-      final Set<TransactionInfo> pendingTransactions, final List<Filter> filters, final int limit)
+  public Collection<Transaction> reduce(
+      final Collection<PendingTransaction> pendingTransactions,
+      final List<Filter> filters,
+      final int limit)
       throws InvalidJsonRpcParameters {
     return pendingTransactions.stream()
-        .filter(transactionInfo -> applyFilters(transactionInfo, filters))
+        .filter(pendingTx -> applyFilters(pendingTx, filters))
         .limit(limit)
-        .map(TransactionInfo::getTransaction)
-        .collect(Collectors.toSet());
+        .map(PendingTransaction::getTransaction)
+        .toList();
   }
 
-  private boolean applyFilters(final TransactionInfo transactionInfo, final List<Filter> filters)
+  private boolean applyFilters(
+      final PendingTransaction pendingTransaction, final List<Filter> filters)
       throws InvalidJsonRpcParameters {
     boolean isValid = true;
     for (Filter filter : filters) {
@@ -61,23 +63,26 @@ public class PendingTransactionFilter {
       final String value = filter.getFieldValue();
       switch (filter.getFieldName()) {
         case FROM_FIELD:
-          isValid = validateFrom(transactionInfo, predicate, value);
+          isValid = validateFrom(pendingTransaction, predicate, value);
           break;
         case TO_FIELD:
-          isValid = validateTo(transactionInfo, predicate, value);
+          isValid = validateTo(pendingTransaction, predicate, value);
           break;
         case GAS_PRICE_FIELD:
-          isValid = validateWei(transactionInfo.getTransaction().getGasPrice(), predicate, value);
+          isValid =
+              validateWei(
+                  pendingTransaction.getTransaction().getGasPrice().get(), predicate, value);
           break;
         case GAS_FIELD:
           isValid =
-              validateWei(Wei.of(transactionInfo.getTransaction().getGasLimit()), predicate, value);
+              validateWei(
+                  Wei.of(pendingTransaction.getTransaction().getGasLimit()), predicate, value);
           break;
         case VALUE_FIELD:
-          isValid = validateWei(transactionInfo.getTransaction().getValue(), predicate, value);
+          isValid = validateWei(pendingTransaction.getTransaction().getValue(), predicate, value);
           break;
         case NONCE_FIELD:
-          isValid = validateNonce(transactionInfo, predicate, value);
+          isValid = validateNonce(pendingTransaction, predicate, value);
           break;
       }
       if (!isValid) {
@@ -88,31 +93,31 @@ public class PendingTransactionFilter {
   }
 
   private boolean validateFrom(
-      final TransactionInfo transactionInfo, final Predicate predicate, final String value)
+      final PendingTransaction pendingTransaction, final Predicate predicate, final String value)
       throws InvalidJsonRpcParameters {
     return predicate
         .getOperator()
-        .apply(transactionInfo.getTransaction().getSender(), Address.fromHexString(value));
+        .apply(pendingTransaction.getTransaction().getSender(), Address.fromHexString(value));
   }
 
   private boolean validateTo(
-      final TransactionInfo transactionInfo, final Predicate predicate, final String value)
+      final PendingTransaction pendingTransaction, final Predicate predicate, final String value)
       throws InvalidJsonRpcParameters {
-    final Optional<Address> maybeTo = transactionInfo.getTransaction().getTo();
+    final Optional<Address> maybeTo = pendingTransaction.getTransaction().getTo();
     if (maybeTo.isPresent() && predicate.equals(EQ)) {
       return predicate.getOperator().apply(maybeTo.get(), Address.fromHexString(value));
     } else if (predicate.equals(ACTION)) {
-      return transactionInfo.getTransaction().isContractCreation();
+      return pendingTransaction.getTransaction().isContractCreation();
     }
     return false;
   }
 
   private boolean validateNonce(
-      final TransactionInfo transactionInfo, final Predicate predicate, final String value)
+      final PendingTransaction pendingTransaction, final Predicate predicate, final String value)
       throws InvalidJsonRpcParameters {
     return predicate
         .getOperator()
-        .apply(transactionInfo.getTransaction().getNonce(), Long.decode(value));
+        .apply(pendingTransaction.getTransaction().getNonce(), Long.decode(value));
   }
 
   private boolean validateWei(

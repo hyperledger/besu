@@ -29,30 +29,52 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
+/** The Mock executor service. */
 public class MockExecutorService implements ExecutorService {
 
   private boolean autoRun = true;
 
   private final List<ExecutorTask<?>> tasks = new ArrayList<>();
 
+  /**
+   * Gets futures.
+   *
+   * @return the futures
+   */
   // Test utility for inspecting executor's futures
   public List<Future<?>> getFutures() {
     return tasks.stream().map(ExecutorTask::getFuture).collect(Collectors.toList());
   }
 
+  /**
+   * Sets auto run.
+   *
+   * @param shouldAutoRunTasks the should auto run tasks
+   */
   public void setAutoRun(final boolean shouldAutoRunTasks) {
     this.autoRun = shouldAutoRunTasks;
   }
 
+  /** Run pending futures. */
   public void runPendingFutures() {
     final List<ExecutorTask<?>> currentTasks = new ArrayList<>(tasks);
     currentTasks.forEach(ExecutorTask::run);
   }
 
+  /**
+   * Gets pending futures count.
+   *
+   * @return the pending futures count
+   */
   public long getPendingFuturesCount() {
     return tasks.stream().filter(ExecutorTask::isPending).count();
   }
 
+  /**
+   * Run pending futures in separate threads.
+   *
+   * @param executorService the executor service
+   */
   public void runPendingFuturesInSeparateThreads(final ExecutorService executorService) {
     final List<ExecutorTask<?>> currentTasks = new ArrayList<>(tasks);
     currentTasks.forEach(task -> executorService.execute(task::run));
@@ -152,6 +174,7 @@ public class MockExecutorService implements ExecutorService {
       this.taskRunner = taskRunner;
     }
 
+    /** Run. */
     public void run() {
       if (!isPending) {
         return;
@@ -166,10 +189,20 @@ public class MockExecutorService implements ExecutorService {
       }
     }
 
+    /**
+     * Gets future.
+     *
+     * @return the future
+     */
     public CompletableFuture<T> getFuture() {
       return future;
     }
 
+    /**
+     * Is pending.
+     *
+     * @return the boolean
+     */
     public boolean isPending() {
       return isPending;
     }

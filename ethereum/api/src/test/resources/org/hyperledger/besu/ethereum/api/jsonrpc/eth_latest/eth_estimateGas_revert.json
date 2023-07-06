@@ -1,0 +1,23 @@
+{
+  "request": {
+    "id": 3,
+    "jsonrpc": "2.0",
+    "method": "eth_estimateGas",
+    "params": [
+      {
+        "from": "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f",
+        "data": "0x600160005560016000fd6011600155"
+      }
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "error": {
+      "code": -32000,
+      "message": "Execution reverted",
+      "data": "0x00"
+    }
+  },
+  "statusCode": 200
+}

@@ -1,0 +1,48 @@
+{
+  "comment" : "Sequential memory modifications with MSTORE8.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_rawTransaction",
+    "params" : [ "0xf8618081ef83fffff294007000000000000000000000000000000000000080801ca037d0695dc0e97dafd4e2f08d7b9c05ec8f6825409ff49ded4714632ee49c5d4ca05123df205d2b5344b4693feb1a341c1b1d0c38cc53b105c58e0b8dbec3c0288b", [ "stateDiff" ] ],
+    "id" : 12
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x",
+      "stateDiff" : {
+        "0x0000000000000000000000000000000000000000" : {
+          "balance" : {
+            "*" : {
+              "from" : "0x393f0f18385c0b29e",
+              "to" : "0x393f0f183860d6418"
+            }
+          },
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : { }
+        },
+        "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73" : {
+          "balance" : {
+            "*" : {
+              "from" : "0xffffffffffffffffffffffffffffffffd27fb671b",
+              "to" : "0xffffffffffffffffffffffffffffffffd27aeb5a1"
+            }
+          },
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x1e",
+              "to" : "0x1f"
+            }
+          },
+          "storage" : { }
+        }
+      },
+      "trace" : [ ],
+      "vmTrace" : null
+    },
+    "id" : 12
+  },
+  "statusCode" : 200
+}

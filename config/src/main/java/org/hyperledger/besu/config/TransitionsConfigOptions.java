@@ -19,47 +19,71 @@ import static java.util.Collections.emptyList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 
+/** The Transitions config options. */
 public class TransitionsConfigOptions {
 
-  public static final String IBFT2_FORKS = "ibft2";
-
+  /** The constant DEFAULT. */
   public static final TransitionsConfigOptions DEFAULT =
       new TransitionsConfigOptions(JsonUtil.createEmptyObjectNode());
 
   private final ObjectNode customForkConfigRoot;
 
+  /**
+   * Instantiates a new Transitions config options.
+   *
+   * @param customForkConfigRoot the custom fork config root
+   */
   @JsonCreator
   public TransitionsConfigOptions(final ObjectNode customForkConfigRoot) {
     this.customForkConfigRoot = customForkConfigRoot;
   }
 
-  public List<IbftFork> getIbftForks() {
-    final Optional<ArrayNode> ibftForksNode =
-        JsonUtil.getArrayNode(customForkConfigRoot, IBFT2_FORKS);
+  /**
+   * Gets ibft forks.
+   *
+   * @return the ibft forks
+   */
+  public List<BftFork> getIbftForks() {
+    return getBftForks("ibft2", BftFork::new);
+  }
 
-    if (ibftForksNode.isEmpty()) {
+  /**
+   * Gets qbft forks.
+   *
+   * @return the qbft forks
+   */
+  public List<QbftFork> getQbftForks() {
+    return getBftForks("qbft", QbftFork::new);
+  }
+
+  private <T> List<T> getBftForks(
+      final String fieldKey, final Function<ObjectNode, T> forkConstructor) {
+    final Optional<ArrayNode> bftForksNode = JsonUtil.getArrayNode(customForkConfigRoot, fieldKey);
+
+    if (bftForksNode.isEmpty()) {
       return emptyList();
     }
 
-    final List<IbftFork> ibftForks = Lists.newArrayList();
+    final List<T> bftForks = Lists.newArrayList();
 
-    ibftForksNode
+    bftForksNode
         .get()
         .elements()
         .forEachRemaining(
             node -> {
               if (!node.isObject()) {
-                throw new IllegalArgumentException("Ibft2 fork is illegally formatted.");
+                throw new IllegalArgumentException("Bft fork is illegally formatted.");
               }
-              ibftForks.add(new IbftFork((ObjectNode) node));
+              bftForks.add(forkConstructor.apply((ObjectNode) node));
             });
 
-    return Collections.unmodifiableList(ibftForks);
+    return Collections.unmodifiableList(bftForks);
   }
 }

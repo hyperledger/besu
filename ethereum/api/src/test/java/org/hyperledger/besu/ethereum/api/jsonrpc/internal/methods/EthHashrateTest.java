@@ -21,7 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 
 import java.util.Optional;
 
@@ -34,7 +34,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class EthHashrateTest {
 
-  @Mock private EthHashMiningCoordinator miningCoordinator;
+  @Mock private PoWMiningCoordinator miningCoordinator;
   private EthHashrate method;
   private final String JSON_RPC_VERSION = "2.0";
   private final String ETH_METHOD = "eth_hashrate";
@@ -57,7 +57,7 @@ public class EthHashrateTest {
     when(miningCoordinator.hashesPerSecond()).thenReturn(Optional.of(12L));
 
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -68,7 +68,7 @@ public class EthHashrateTest {
     when(miningCoordinator.hashesPerSecond()).thenReturn(Optional.empty());
 
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   private JsonRpcRequestContext requestWithParams() {

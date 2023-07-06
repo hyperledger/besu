@@ -15,27 +15,27 @@
 package org.hyperledger.besu.ethereum.api.graphql.scalar;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.graphql.internal.Scalars;
-import org.hyperledger.besu.ethereum.core.Address;
 
+import java.util.Locale;
+
+import graphql.GraphQLContext;
+import graphql.execution.CoercedVariables;
+import graphql.language.FloatValue;
 import graphql.language.StringValue;
 import graphql.schema.CoercingParseLiteralException;
 import graphql.schema.CoercingParseValueException;
 import graphql.schema.CoercingSerializeException;
 import graphql.schema.GraphQLScalarType;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
 public class AddressScalarTest {
 
   private GraphQLScalarType scalar;
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   private final String addrStr = "0x6295ee1b4f6dd65047762f924ecd367c17eabf8f";
   private final String invalidAddrStr = "0x295ee1b4f6dd65047762f924ecd367c17eabf8f";
@@ -44,48 +44,85 @@ public class AddressScalarTest {
   private final StringValue invalidAddrValue = StringValue.newStringValue(invalidAddrStr).build();
 
   @Test
-  public void pareValueTest() {
-    final String result = (String) scalar.getCoercing().parseValue(addr);
-    assertThat(result).isEqualTo(addrStr);
+  public void parseValueTest() {
+    final Address result =
+        (Address)
+            scalar
+                .getCoercing()
+                .parseValue(addrStr, GraphQLContext.newContext().build(), Locale.ENGLISH);
+    assertThat(result).isEqualTo(addr);
   }
 
   @Test
-  public void pareValueErrorTest() {
-
-    thrown.expect(CoercingParseValueException.class);
-    scalar.getCoercing().parseValue(addrStr);
+  public void parseValueErrorTest() {
+    assertThatThrownBy(
+            () ->
+                scalar
+                    .getCoercing()
+                    .parseValue(3.4f, GraphQLContext.newContext().build(), Locale.ENGLISH))
+        .isInstanceOf(CoercingParseValueException.class);
   }
 
   @Test
   public void serializeTest() {
-
-    final String result = (String) scalar.getCoercing().serialize(addr);
+    final String result =
+        (String)
+            scalar
+                .getCoercing()
+                .serialize(addr, GraphQLContext.newContext().build(), Locale.ENGLISH);
     assertThat(result).isEqualTo(addrStr);
   }
 
   @Test
   public void serializeErrorTest() {
-
-    thrown.expect(CoercingSerializeException.class);
-    scalar.getCoercing().serialize(addrStr);
+    assertThatThrownBy(
+            () ->
+                scalar
+                    .getCoercing()
+                    .serialize(3.4f, GraphQLContext.newContext().build(), Locale.ENGLISH))
+        .isInstanceOf(CoercingSerializeException.class);
   }
 
   @Test
-  public void pareLiteralTest() {
-    final Address result = (Address) scalar.getCoercing().parseLiteral(addrValue);
+  public void parseLiteralTest() {
+    final Address result =
+        (Address)
+            scalar
+                .getCoercing()
+                .parseLiteral(
+                    addrValue,
+                    CoercedVariables.emptyVariables(),
+                    GraphQLContext.newContext().build(),
+                    Locale.ENGLISH);
     assertThat(result).isEqualTo(addr);
   }
 
   @Test
-  public void pareLiteralErrorTest() {
-    thrown.expect(CoercingParseLiteralException.class);
-    scalar.getCoercing().parseLiteral(addrStr);
+  public void parseLiteralErrorTest() {
+    assertThatThrownBy(
+            () ->
+                scalar
+                    .getCoercing()
+                    .parseLiteral(
+                        FloatValue.of(3.4f),
+                        CoercedVariables.emptyVariables(),
+                        GraphQLContext.newContext().build(),
+                        Locale.ENGLISH))
+        .isInstanceOf(CoercingParseLiteralException.class);
   }
 
   @Test
-  public void pareLiteralErrorTest2() {
-    thrown.expect(CoercingParseLiteralException.class);
-    scalar.getCoercing().parseLiteral(invalidAddrValue);
+  public void parseLiteralErrorTest2() {
+    assertThatThrownBy(
+            () ->
+                scalar
+                    .getCoercing()
+                    .parseLiteral(
+                        invalidAddrValue,
+                        CoercedVariables.emptyVariables(),
+                        GraphQLContext.newContext().build(),
+                        Locale.ENGLISH))
+        .isInstanceOf(CoercingParseLiteralException.class);
   }
 
   @Before

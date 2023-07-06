@@ -14,17 +14,58 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
+import org.hyperledger.besu.datatypes.Address;
+
+import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+
 /**
  * This exception is thrown when there is an issue retrieving or decoding values from {@link
  * MerkleStorage}.
  */
 public class MerkleTrieException extends RuntimeException {
 
+  private Optional<Address> maybeAddress;
+  private Bytes32 hash;
+  private Bytes location;
+
   public MerkleTrieException(final String message) {
     super(message);
   }
 
+  public MerkleTrieException(final String message, final Bytes32 hash, final Bytes location) {
+    super(message);
+    this.hash = hash;
+    this.location = location;
+    this.maybeAddress = Optional.empty();
+  }
+
   public MerkleTrieException(final String message, final Exception cause) {
     super(message, cause);
+  }
+
+  public MerkleTrieException(
+      final String message,
+      final Optional<Address> maybeAddress,
+      final Bytes32 hash,
+      final Bytes location) {
+    super(message);
+    this.hash = hash;
+    this.location = location;
+    this.maybeAddress = maybeAddress;
+  }
+
+  public Optional<Address> getMaybeAddress() {
+    return maybeAddress;
+  }
+
+  public Bytes32 getHash() {
+    return hash;
+  }
+
+  public Bytes getLocation() {
+    return location;
   }
 }

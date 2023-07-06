@@ -17,14 +17,13 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import static okhttp3.Protocol.HTTP_1_1;
 import static okhttp3.Protocol.HTTP_2;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.NET;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
 import static org.hyperledger.besu.ethereum.api.tls.TlsConfiguration.Builder.aTlsConfiguration;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -34,7 +33,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.tls.FileBasedPasswordProvider;
 import org.hyperledger.besu.ethereum.api.tls.SelfSignedP12Certificate;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -54,10 +53,8 @@ import java.io.UncheckedIOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -85,7 +82,6 @@ public class JsonRpcHttpServiceTlsTest {
   private static final String JSON_HEADER = "application/json; charset=utf-8";
   private static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
   private static final BigInteger CHAIN_ID = BigInteger.valueOf(123);
-  private static final Collection<RpcApi> JSON_RPC_APIS = List.of(ETH, NET, WEB3);
   private static final NatService natService = new NatService(Optional.empty());
   private JsonRpcHttpService service;
   private String baseUrl;
@@ -115,14 +111,15 @@ public class JsonRpcHttpServiceTlsTest {
                     synchronizer,
                     MainnetProtocolSchedule.fromConfig(
                         new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID)),
+                    mock(ProtocolContext.class),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
-                    mock(EthHashMiningCoordinator.class),
+                    mock(PoWMiningCoordinator.class),
                     new NoOpMetricsSystem(),
                     supportedCapabilities,
                     Optional.of(mock(AccountLocalConfigPermissioningController.class)),
                     Optional.of(mock(NodeLocalConfigPermissioningController.class)),
-                    JSON_RPC_APIS,
+                    DEFAULT_RPC_APIS,
                     mock(PrivacyParameters.class),
                     mock(JsonRpcConfiguration.class),
                     mock(WebSocketConfiguration.class),
@@ -130,7 +127,10 @@ public class JsonRpcHttpServiceTlsTest {
                     natService,
                     Collections.emptyMap(),
                     folder.getRoot().toPath(),
-                    mock(EthPeers.class)));
+                    mock(EthPeers.class),
+                    vertx,
+                    Optional.empty(),
+                    Optional.empty()));
     service = createJsonRpcHttpService(createJsonRpcConfig());
     service.start().join();
     baseUrl = service.url();

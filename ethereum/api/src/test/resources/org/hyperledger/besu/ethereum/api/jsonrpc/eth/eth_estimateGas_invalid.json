@@ -1,0 +1,22 @@
+{
+  "request": {
+    "id": 3,
+    "jsonrpc": "2.0",
+    "method": "eth_estimateGas",
+    "params": [
+      {
+        "from": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+        "data": "0x600160005560016000fe6011600155"
+      }
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "error": {
+      "code": -32603,
+      "message": "Internal error"
+    }
+  },
+  "statusCode": 200
+}

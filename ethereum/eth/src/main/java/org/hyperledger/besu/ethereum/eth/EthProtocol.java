@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -20,50 +20,37 @@ import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Set;
 
 /**
- * Eth protocol messages as defined in
- * https://github.com/ethereum/wiki/wiki/Ethereum-Wire-Protocol#new-model-syncing-pv62}
+ * Eth protocol messages as defined in <a
+ * href="https://github.com/ethereum/devp2p/blob/master/caps/eth.md">Ethereum Wire Protocol
+ * (ETH)</a>}
  */
 public class EthProtocol implements SubProtocol {
   public static final String NAME = "eth";
-  public static final Capability ETH62 = Capability.create(NAME, EthVersion.V62);
-  public static final Capability ETH63 = Capability.create(NAME, EthVersion.V63);
-  public static final Capability ETH64 = Capability.create(NAME, EthVersion.V64);
-  public static final Capability ETH65 = Capability.create(NAME, EthVersion.V65);
-
   private static final EthProtocol INSTANCE = new EthProtocol();
+  public static final Capability ETH62 = Capability.create(NAME, EthProtocolVersion.V62);
+  public static final Capability ETH63 = Capability.create(NAME, EthProtocolVersion.V63);
+  public static final Capability ETH64 = Capability.create(NAME, EthProtocolVersion.V64);
+  public static final Capability ETH65 = Capability.create(NAME, EthProtocolVersion.V65);
+  public static final Capability ETH66 = Capability.create(NAME, EthProtocolVersion.V66);
+  public static final Capability ETH67 = Capability.create(NAME, EthProtocolVersion.V67);
+  public static final Capability ETH68 = Capability.create(NAME, EthProtocolVersion.V68);
 
-  private static final List<Integer> eth62Messages =
-      Arrays.asList(
-          EthPV62.STATUS,
-          EthPV62.NEW_BLOCK_HASHES,
-          EthPV62.TRANSACTIONS,
-          EthPV62.GET_BLOCK_HEADERS,
-          EthPV62.BLOCK_HEADERS,
-          EthPV62.GET_BLOCK_BODIES,
-          EthPV62.BLOCK_BODIES,
-          EthPV62.NEW_BLOCK);
-
-  private static final List<Integer> eth63Messages = new ArrayList<>(eth62Messages);
-
-  static {
-    eth63Messages.addAll(
-        Arrays.asList(
-            EthPV63.GET_NODE_DATA, EthPV63.NODE_DATA, EthPV63.GET_RECEIPTS, EthPV63.RECEIPTS));
-  }
-
-  private static final List<Integer> eth65Messages = new ArrayList<>(eth63Messages);
-
-  static {
-    eth65Messages.addAll(
-        Arrays.asList(
-            EthPV65.NEW_POOLED_TRANSACTION_HASHES,
+  public static boolean requestIdCompatible(final int code) {
+    return Set.of(
+            EthPV62.GET_BLOCK_HEADERS,
+            EthPV62.BLOCK_HEADERS,
+            EthPV62.GET_BLOCK_BODIES,
+            EthPV62.BLOCK_BODIES,
             EthPV65.GET_POOLED_TRANSACTIONS,
-            EthPV65.POOLED_TRANSACTIONS));
+            EthPV65.POOLED_TRANSACTIONS,
+            EthPV63.GET_NODE_DATA,
+            EthPV63.NODE_DATA,
+            EthPV63.GET_RECEIPTS,
+            EthPV63.RECEIPTS)
+        .contains(code);
   }
 
   @Override
@@ -74,11 +61,14 @@ public class EthProtocol implements SubProtocol {
   @Override
   public int messageSpace(final int protocolVersion) {
     switch (protocolVersion) {
-      case EthVersion.V62:
+      case EthProtocolVersion.V62:
         return 8;
-      case EthVersion.V63:
-      case EthVersion.V64:
-      case EthVersion.V65:
+      case EthProtocolVersion.V63:
+      case EthProtocolVersion.V64:
+      case EthProtocolVersion.V65:
+      case EthProtocolVersion.V66:
+      case EthProtocolVersion.V67:
+      case EthProtocolVersion.V68:
         // same number of messages in each range, eth65 defines messages in the middle of the
         // range defined by eth63 and eth64 defines no new ranges.
         return 17;
@@ -89,17 +79,7 @@ public class EthProtocol implements SubProtocol {
 
   @Override
   public boolean isValidMessageCode(final int protocolVersion, final int code) {
-    switch (protocolVersion) {
-      case EthVersion.V62:
-        return eth62Messages.contains(code);
-      case EthVersion.V63:
-      case EthVersion.V64:
-        return eth63Messages.contains(code);
-      case EthVersion.V65:
-        return eth65Messages.contains(code);
-      default:
-        return false;
-    }
+    return EthProtocolVersion.getSupportedMessages(protocolVersion).contains(code);
   }
 
   @Override
@@ -144,10 +124,7 @@ public class EthProtocol implements SubProtocol {
     return INSTANCE;
   }
 
-  public static class EthVersion {
-    public static final int V62 = 62;
-    public static final int V63 = 63;
-    public static final int V64 = 64;
-    public static final int V65 = 65;
+  public static boolean isEth66Compatible(final Capability capability) {
+    return NAME.equals(capability.getName()) && capability.getVersion() >= ETH66.getVersion();
   }
 }

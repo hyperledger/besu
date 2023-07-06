@@ -32,11 +32,17 @@ import org.jupnp.model.message.UpnpResponse;
 import org.jupnp.transport.impl.jetty.StreamClientConfigurationImpl;
 import org.jupnp.transport.spi.AbstractStreamClient;
 
+/** The OkHttp stream client. */
 public class OkHttpStreamClient extends AbstractStreamClient<StreamClientConfigurationImpl, Call> {
 
   private final StreamClientConfigurationImpl config;
   private final OkHttpClient client;
 
+  /**
+   * Instantiates a new OkHttp stream client.
+   *
+   * @param config the config
+   */
   OkHttpStreamClient(final StreamClientConfigurationImpl config) {
     this.config = config;
     client = new OkHttpClient();
@@ -50,9 +56,9 @@ public class OkHttpStreamClient extends AbstractStreamClient<StreamClientConfigu
     if (method == UpnpRequest.Method.POST || method == UpnpRequest.Method.NOTIFY) {
       final MediaType mediaType = MediaType.get(requestMessage.getContentTypeHeader().getString());
       if (requestMessage.getBodyType() == UpnpMessage.BodyType.STRING) {
-        body = RequestBody.create(mediaType, requestMessage.getBodyString());
+        body = RequestBody.create(requestMessage.getBodyString(), mediaType);
       } else {
-        body = RequestBody.create(mediaType, requestMessage.getBodyBytes());
+        body = RequestBody.create(requestMessage.getBodyBytes(), mediaType);
       }
     } else {
       body = null;

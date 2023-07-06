@@ -22,8 +22,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
+import javax.annotation.Nonnull;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,7 +42,7 @@ public class NodesSmartContractPermissioningStaticNodesAcceptanceTest
   @Test
   public void onlyTrustStaticNodesWhileOutOfSync() {
     // wait for some blocks so the permissioned node has some syncing to do
-    waitForBlockHeight(miner, 50);
+    waitForBlockHeight(miner, 25);
     stopMining(miner);
 
     // start permissioned node with miner node in the static nodes list
@@ -51,7 +51,7 @@ public class NodesSmartContractPermissioningStaticNodesAcceptanceTest
 
     // as soon as we start the node should connect to static nodes
     permissionedNode.verify(net.awaitPeerCount(1));
-    waitForBlockHeight(permissionedNode, 50);
+    waitForBlockHeight(permissionedNode, 25);
 
     // after syncing up with the network the node won't trust static nodes anymore
     permissionedNode.verify(net.awaitPeerCount(0));
@@ -72,7 +72,7 @@ public class NodesSmartContractPermissioningStaticNodesAcceptanceTest
         .build();
   }
 
-  @NotNull
+  @Nonnull
   private List<String> mapNodesToEnodeURLs(final List<Node> staticNodes) {
     return staticNodes.stream()
         .map(node -> (RunnableNode) node)

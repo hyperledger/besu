@@ -24,14 +24,14 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.authentication.AuthenticationProvider;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
 import org.apache.tuweni.toml.TomlTable;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
-public class TomlAuth implements AuthProvider {
+public class TomlAuth implements AuthenticationProvider {
 
   public static final String PRIVACY_PUBLIC_KEY = "privacyPublicKey";
   private final Vertx vertx;
@@ -93,7 +93,7 @@ public class TomlAuth implements AuthProvider {
         false,
         res -> {
           if (res.succeeded()) {
-            resultHandler.handle(Future.succeededFuture((TomlUser) res.result()));
+            resultHandler.handle(Future.succeededFuture((User) res.result()));
           } else {
             resultHandler.handle(Future.failedFuture(res.cause()));
           }

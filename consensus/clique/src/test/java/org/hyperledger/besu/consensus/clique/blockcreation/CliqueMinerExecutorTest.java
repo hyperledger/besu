@@ -27,33 +27,33 @@ import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueExtraData;
 import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
 import org.hyperledger.besu.consensus.common.EpochManager;
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
-import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
+import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CliqueMinerExecutorTest {
 
@@ -69,7 +69,7 @@ public class CliqueMinerExecutorTest {
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
-  @Before
+  @BeforeEach
   public void setup() {
     localAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
     validatorList.add(localAddress);
@@ -77,13 +77,11 @@ public class CliqueMinerExecutorTest {
     validatorList.add(AddressHelpers.calculateAddressWithRespectTo(localAddress, 2));
     validatorList.add(AddressHelpers.calculateAddressWithRespectTo(localAddress, 3));
 
-    final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
-    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
-    final VoteProposer voteProposer = new VoteProposer();
+    final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
 
-    final CliqueContext cliqueContext =
-        new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext);
+    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
+    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext, Optional.empty());
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }
 
@@ -94,20 +92,22 @@ public class CliqueMinerExecutorTest {
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
-            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerNodeKey, false),
-            new PendingTransactions(
-                TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-                1,
-                5,
-                TestClock.fixed(),
+            CliqueProtocolSchedule.create(
+                GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, EvmConfiguration.DEFAULT),
+            new GasPricePendingTransactionsSorter(
+                ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build(),
+                TestClock.system(ZoneId.systemDefault()),
                 metricsSystem,
-                () -> null,
-                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
+                CliqueMinerExecutorTest::mockBlockHeader),
             proposerNodeKey,
-            new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, vanityData, false),
+            new MiningParameters.Builder()
+                .coinbase(AddressHelpers.ofValue(1))
+                .minTransactionGasPrice(Wei.ZERO)
+                .extraData(vanityData)
+                .miningEnabled(false)
+                .build(),
             mock(CliqueBlockScheduler.class),
-            new EpochManager(EPOCH_LENGTH),
-            GasLimitCalculator.constant());
+            new EpochManager(EPOCH_LENGTH));
 
     // NOTE: Passing in the *parent* block, so must be 1 less than EPOCH
     final BlockHeader header = blockHeaderBuilder.number(EPOCH_LENGTH - 1).buildHeader();
@@ -134,20 +134,22 @@ public class CliqueMinerExecutorTest {
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
-            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerNodeKey, false),
-            new PendingTransactions(
-                TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-                1,
-                5,
-                TestClock.fixed(),
+            CliqueProtocolSchedule.create(
+                GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, EvmConfiguration.DEFAULT),
+            new GasPricePendingTransactionsSorter(
+                ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build(),
+                TestClock.system(ZoneId.systemDefault()),
                 metricsSystem,
-                () -> null,
-                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
+                CliqueMinerExecutorTest::mockBlockHeader),
             proposerNodeKey,
-            new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, vanityData, false),
+            new MiningParameters.Builder()
+                .coinbase(AddressHelpers.ofValue(1))
+                .minTransactionGasPrice(Wei.ZERO)
+                .extraData(vanityData)
+                .miningEnabled(false)
+                .build(),
             mock(CliqueBlockScheduler.class),
-            new EpochManager(EPOCH_LENGTH),
-            GasLimitCalculator.constant());
+            new EpochManager(EPOCH_LENGTH));
 
     // Parent block was epoch, so the next block should contain no validators.
     final BlockHeader header = blockHeaderBuilder.number(EPOCH_LENGTH).buildHeader();
@@ -174,20 +176,22 @@ public class CliqueMinerExecutorTest {
     final CliqueMinerExecutor executor =
         new CliqueMinerExecutor(
             cliqueProtocolContext,
-            CliqueProtocolSchedule.create(GENESIS_CONFIG_OPTIONS, proposerNodeKey, false),
-            new PendingTransactions(
-                TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS,
-                1,
-                5,
-                TestClock.fixed(),
+            CliqueProtocolSchedule.create(
+                GENESIS_CONFIG_OPTIONS, proposerNodeKey, false, EvmConfiguration.DEFAULT),
+            new GasPricePendingTransactionsSorter(
+                ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build(),
+                TestClock.system(ZoneId.systemDefault()),
                 metricsSystem,
-                () -> null,
-                TransactionPoolConfiguration.DEFAULT_PRICE_BUMP),
+                CliqueMinerExecutorTest::mockBlockHeader),
             proposerNodeKey,
-            new MiningParameters(AddressHelpers.ofValue(1), Wei.ZERO, initialVanityData, false),
+            new MiningParameters.Builder()
+                .coinbase(AddressHelpers.ofValue(1))
+                .minTransactionGasPrice(Wei.ZERO)
+                .extraData(initialVanityData)
+                .miningEnabled(false)
+                .build(),
             mock(CliqueBlockScheduler.class),
-            new EpochManager(EPOCH_LENGTH),
-            GasLimitCalculator.constant());
+            new EpochManager(EPOCH_LENGTH));
 
     executor.setExtraData(modifiedVanityData);
     final Bytes extraDataBytes = executor.calculateExtraData(blockHeaderBuilder.buildHeader());
@@ -200,6 +204,12 @@ public class CliqueMinerExecutorTest {
                 .blockHeaderFunctions(new CliqueBlockHeaderFunctions())
                 .buildHeader());
     assertThat(cliqueExtraData.getVanityData()).isEqualTo(modifiedVanityData);
+  }
+
+  private static BlockHeader mockBlockHeader() {
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.empty());
+    return blockHeader;
   }
 
   private Bytes generateRandomVanityData() {

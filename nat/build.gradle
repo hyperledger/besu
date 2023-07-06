@@ -28,14 +28,13 @@ jar {
 }
 
 dependencies {
+  api 'org.slf4j:slf4j-api'
+
   implementation 'com.google.guava:guava'
   implementation 'com.squareup.okhttp3:okhttp'
-  implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.jupnp:org.jupnp'
   implementation 'org.jupnp:org.jupnp.support'
   implementation 'io.kubernetes:client-java'
-
-  runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   // test dependencies.
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
@@ -44,5 +43,8 @@ dependencies {
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
+
+  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }

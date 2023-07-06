@@ -19,15 +19,16 @@ package org.hyperledger.besu.cli.subcommands.operator;
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
 import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 
+import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.query.StateBackupService;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -47,21 +48,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParentCommand;
 
+/** The Restore state subcommand. */
 @Command(
     name = "x-restore-state",
     description = "Restores the chain from a previously generated backup-state.",
-    mixinStandardHelpOptions = true)
+    mixinStandardHelpOptions = true,
+    versionProvider = VersionProvider.class)
 public class RestoreState implements Runnable {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RestoreState.class);
 
   @Option(
       names = "--backup-path",
@@ -128,7 +131,7 @@ public class RestoreState implements Runnable {
             new RollingFileReader(this::receiptFileName, compressed)) {
       final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
       // target block is "including" the target block, so LE test not LT.
-      for (int i = 0; i <= targetBlock; i++) {
+      for (long i = 0; i <= targetBlock; i++) {
         if (i % 100000 == 0) {
           LOG.info("Loading chain data {} / {}", i, targetBlock);
         }
@@ -142,7 +145,7 @@ public class RestoreState implements Runnable {
             BlockHeader.readFrom(
                 new BytesValueRLPInput(Bytes.wrap(headerEntry), false, true), functions);
         final BlockBody body =
-            BlockBody.readFrom(
+            BlockBody.readWrappedBodyFrom(
                 new BytesValueRLPInput(Bytes.wrap(bodyEntry), false, true), functions);
         final RLPInput receiptsRlp = new BytesValueRLPInput(Bytes.wrap(receiptEntry), false, true);
         final int receiptsCount = receiptsRlp.enterList();
@@ -171,7 +174,7 @@ public class RestoreState implements Runnable {
 
     try (final RollingFileReader reader =
         new RollingFileReader(this::accountFileName, compressed)) {
-      for (int i = 0; i < accountCount; i++) {
+      for (long i = 0; i < accountCount; i++) {
         if (i % 100000 == 0) {
           LOG.info("Loading account data {} / {}", i, accountCount);
         }
@@ -260,7 +263,7 @@ public class RestoreState implements Runnable {
 
   private void updateCode(final Bytes code) {
     maybeCommitUpdater();
-    updater.putCode(code);
+    updater.putCode(null, code);
   }
 
   private void updateAccountState(final Bytes32 key, final Bytes value) {
@@ -273,7 +276,7 @@ public class RestoreState implements Runnable {
   private void updateAccountStorage(final Bytes32 key, final Bytes value) {
     maybeCommitUpdater();
     // restore by path not supported
-    updater.putAccountStorageTrieNode(null, key, value);
+    updater.putAccountStorageTrieNode(null, null, key, value);
     trieNodeCount++;
   }
 

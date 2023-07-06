@@ -21,18 +21,20 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.util.LogConfigurator;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.Set;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Configurator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AdminChangeLogLevel implements JsonRpcMethod {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(AdminChangeLogLevel.class);
+  private static final Set<String> VALID_PARAMS =
+      Set.of("OFF", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "ALL");
 
   @Override
   public String getName() {
@@ -42,7 +44,11 @@ public class AdminChangeLogLevel implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     try {
-      final Level logLevel = requestContext.getRequiredParameter(0, Level.class);
+      final String logLevel = requestContext.getRequiredParameter(0, String.class);
+      if (!VALID_PARAMS.contains(logLevel)) {
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+      }
       final Optional<String[]> optionalLogFilters =
           requestContext.getOptionalParameter(1, String[].class);
       optionalLogFilters.ifPresentOrElse(
@@ -56,8 +62,8 @@ public class AdminChangeLogLevel implements JsonRpcMethod {
     }
   }
 
-  private void setLogLevel(final String logFilter, final Level logLevel) {
-    LOG.log(Level.OFF, "Setting {} logging level to {} ", logFilter, logLevel.name());
-    Configurator.setAllLevels(logFilter, logLevel);
+  private void setLogLevel(final String logFilter, final String logLevel) {
+    LOG.debug("Setting {} logging level to {} ", logFilter, logLevel);
+    LogConfigurator.setLevel(logFilter, logLevel);
   }
 }

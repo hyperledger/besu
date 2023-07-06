@@ -43,12 +43,12 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TransactionLogBloomCacher {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(TransactionLogBloomCacher.class);
   private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
 
   public static final int BLOCKS_PER_BLOOM_CACHE = 100_000;
@@ -97,7 +97,7 @@ public class TransactionLogBloomCacher {
     if (!cachingStatus.isCaching()) {
       try {
         cachingStatus.cachingCount.incrementAndGet();
-        LOG.info(
+        LOG.debug(
             "Generating transaction log bloom cache from block {} to block {} in {}",
             start,
             stop,
@@ -107,7 +107,7 @@ public class TransactionLogBloomCacher {
           return cachingStatus;
         }
         for (long blockNum = start; blockNum < stop; blockNum += BLOCKS_PER_BLOOM_CACHE) {
-          LOG.info("Caching segment at {}", blockNum);
+          LOG.trace("Caching segment at {}", blockNum);
           final File cacheFile = calculateCacheFileName(blockNum, cacheDir);
           blockchain
               .getBlockHeader(blockNum)
@@ -121,7 +121,7 @@ public class TransactionLogBloomCacher {
         LOG.error("Unhandled caching exception", e);
       } finally {
         cachingStatus.cachingCount.decrementAndGet();
-        LOG.info("Caching request complete");
+        LOG.trace("Caching request complete");
       }
     }
 
@@ -141,7 +141,7 @@ public class TransactionLogBloomCacher {
         cachingStatus.currentBlock = blockNum;
         blockNum++;
       }
-    } catch (IOException e) {
+    } catch (final IOException e) {
       if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
         LOG.error(e.getMessage());
         System.exit(0);
@@ -171,13 +171,13 @@ public class TransactionLogBloomCacher {
             for (long number = ancestorBlockNumber.get() + 1;
                 number < blockHeader.getNumber();
                 number++) {
-              Optional<BlockHeader> ancestorBlockHeader = blockchain.getBlockHeader(number);
+              final Optional<BlockHeader> ancestorBlockHeader = blockchain.getBlockHeader(number);
               if (ancestorBlockHeader.isPresent()) {
-                cacheSingleBlock(ancestorBlockHeader.get(), cacheFile);
+                cacheSingleBlock(ancestorBlockHeader.get(), cacheFile, true);
               }
             }
           }
-          cacheSingleBlock(blockHeader, cacheFile);
+          cacheSingleBlock(blockHeader, cacheFile, true);
         } catch (final InvalidCacheException e) {
           populateLatestSegment(blockNumber);
         }
@@ -195,16 +195,15 @@ public class TransactionLogBloomCacher {
     }
   }
 
-  private void cacheSingleBlock(final BlockHeader blockHeader, final File cacheFile)
+  private void cacheSingleBlock(
+      final BlockHeader blockHeader, final File cacheFile, final boolean isCheckSizeNeeded)
       throws IOException, InvalidCacheException {
     try (final RandomAccessFile writer = new RandomAccessFile(cacheFile, "rw")) {
 
-      long nbCachedBlocks = cacheFile.length() / BLOOM_BITS_LENGTH;
+      final long nbCachedBlocks = cacheFile.length() / BLOOM_BITS_LENGTH;
       final long blockIndex = (blockHeader.getNumber() % BLOCKS_PER_BLOOM_CACHE);
       final long offset = blockIndex * BLOOM_BITS_LENGTH;
-
-      // detect missing block
-      if (blockIndex > nbCachedBlocks) {
+      if (isCheckSizeNeeded && blockIndex > nbCachedBlocks) {
         throw new InvalidCacheException();
       }
       writer.seek(offset);
@@ -226,9 +225,11 @@ public class TransactionLogBloomCacher {
       long blockNumber =
           Math.min((segmentNumber + 1) * BLOCKS_PER_BLOOM_CACHE - 1, eventBlockNumber);
       fillCacheFile(segmentNumber * BLOCKS_PER_BLOOM_CACHE, blockNumber, currentFile);
-
       while (blockNumber <= eventBlockNumber && (blockNumber % BLOCKS_PER_BLOOM_CACHE != 0)) {
-        cacheSingleBlock(blockchain.getBlockHeader(blockNumber).orElseThrow(), currentFile);
+        Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockNumber);
+        if (blockHeader.isPresent()) {
+          cacheSingleBlock(blockHeader.get(), currentFile, false);
+        }
         blockNumber++;
       }
       Files.move(
@@ -283,25 +284,29 @@ public class TransactionLogBloomCacher {
       final long blockNumber, final boolean overrideCacheCheck) {
     if (!cachingStatus.isCaching()) {
       scheduler.scheduleFutureTask(
-          () -> {
-            long currentSegment = (blockNumber / BLOCKS_PER_BLOOM_CACHE) - 1;
-            while (currentSegment >= 0) {
-              try {
-                if (overrideCacheCheck || !cachedSegments.getOrDefault(currentSegment, false)) {
-                  final long startBlock = currentSegment * BLOCKS_PER_BLOOM_CACHE;
-                  final File cacheFile = calculateCacheFileName(startBlock, cacheDir);
-                  if (overrideCacheCheck
-                      || !cacheFile.isFile()
-                      || cacheFile.length() != EXPECTED_BLOOM_FILE_SIZE) {
-                    generateLogBloomCache(startBlock, startBlock + BLOCKS_PER_BLOOM_CACHE);
-                  }
-                  cachedSegments.put(currentSegment, true);
-                }
-              } finally {
-                currentSegment--;
-              }
-            }
-          },
+          () ->
+              scheduler.scheduleComputationTask(
+                  () -> {
+                    long currentSegment = (blockNumber / BLOCKS_PER_BLOOM_CACHE) - 1;
+                    while (currentSegment >= 0) {
+                      try {
+                        if (overrideCacheCheck
+                            || !cachedSegments.getOrDefault(currentSegment, false)) {
+                          final long startBlock = currentSegment * BLOCKS_PER_BLOOM_CACHE;
+                          final File cacheFile = calculateCacheFileName(startBlock, cacheDir);
+                          if (overrideCacheCheck
+                              || !cacheFile.isFile()
+                              || cacheFile.length() != EXPECTED_BLOOM_FILE_SIZE) {
+                            generateLogBloomCache(startBlock, startBlock + BLOCKS_PER_BLOOM_CACHE);
+                          }
+                          cachedSegments.put(currentSegment, true);
+                        }
+                      } finally {
+                        currentSegment--;
+                      }
+                    }
+                    return null;
+                  }),
           Duration.ofSeconds(1));
     }
   }

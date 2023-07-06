@@ -17,56 +17,131 @@ package org.hyperledger.besu.enclave.types;
 import java.io.Serializable;
 import java.util.List;
 
+/** The Privacy group. */
 public class PrivacyGroup implements Serializable {
 
+  /** Private Group Id */
   private String privacyGroupId;
+  /** Name */
   private String name;
+  /** Description */
   private String description;
+  /** Type */
   private Type type;
+  /** Members */
   private List<String> members;
 
+  /**
+   * Gets privacy group id.
+   *
+   * @return the privacy group id
+   */
   public String getPrivacyGroupId() {
     return privacyGroupId;
   }
 
+  /**
+   * Sets privacy group id.
+   *
+   * @param privacyGroupId the privacy group id
+   */
   public void setPrivacyGroupId(final String privacyGroupId) {
     this.privacyGroupId = privacyGroupId;
   }
 
+  /**
+   * Gets name.
+   *
+   * @return the name
+   */
   public String getName() {
     return name;
   }
 
+  /**
+   * Sets name.
+   *
+   * @param name the name
+   */
   public void setName(final String name) {
     this.name = name;
   }
 
+  /**
+   * Gets description.
+   *
+   * @return the description
+   */
   public String getDescription() {
     return description;
   }
 
+  /**
+   * Sets description.
+   *
+   * @param description the description
+   */
   public void setDescription(final String description) {
     this.description = description;
   }
 
+  /**
+   * Gets type.
+   *
+   * @return the type
+   */
   public Type getType() {
     return type;
   }
 
+  /**
+   * Sets type.
+   *
+   * @param type the type
+   */
   public void setType(final Type type) {
     this.type = type;
   }
 
+  /**
+   * Gets members.
+   *
+   * @return the members
+   */
   public List<String> getMembers() {
     return members;
   }
 
+  /**
+   * Sets members.
+   *
+   * @param members the members
+   */
   public void setMembers(final List<String> members) {
     this.members = members;
   }
 
+  /**
+   * Add members.
+   *
+   * @param participantsFromParameter the participants from parameter
+   */
+  public void addMembers(final List<String> participantsFromParameter) {
+    members.addAll(participantsFromParameter);
+  }
+
+  /** Instantiates a new Privacy group. */
   public PrivacyGroup() {}
 
+  /**
+   * Instantiates a new Privacy group.
+   *
+   * @param privacyGroupId the privacy group id
+   * @param type the type
+   * @param name the name
+   * @param description the description
+   * @param members the members
+   */
   public PrivacyGroup(
       final String privacyGroupId,
       final Type type,
@@ -80,9 +155,13 @@ public class PrivacyGroup implements Serializable {
     this.members = members;
   }
 
+  /** The enum Type. */
   public enum Type {
+    /** Legacy type. */
     LEGACY,
-    ONCHAIN,
+    /** Flexible type. */
+    FLEXIBLE,
+    /** Pantheon type. */
     PANTHEON
   }
 }

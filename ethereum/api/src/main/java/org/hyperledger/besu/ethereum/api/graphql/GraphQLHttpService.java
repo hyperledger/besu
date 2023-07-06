@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLRespon
 import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLResponseType;
 import org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLSuccessResponse;
 import org.hyperledger.besu.ethereum.api.handlers.IsAliveHandler;
-import org.hyperledger.besu.ethereum.api.handlers.TimeoutHandler;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.util.NetworkUtility;
@@ -40,6 +39,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.annotations.VisibleForTesting;
@@ -60,16 +61,18 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.jackson.JacksonCodec;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import io.vertx.ext.web.handler.TimeoutHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GraphQLHttpService {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(GraphQLHttpService.class);
 
   private static final InetSocketAddress EMPTY_SOCKET_ADDRESS = new InetSocketAddress("0.0.0.0", 0);
   private static final String APPLICATION_JSON = "application/json";
@@ -87,7 +90,8 @@ public class GraphQLHttpService {
 
   private final GraphQL graphQL;
 
-  private final GraphQLDataFetcherContext dataFetcherContext;
+  private final Map<GraphQLContextType, Object> graphQlContextMap;
+
   private final EthScheduler scheduler;
 
   /**
@@ -97,7 +101,7 @@ public class GraphQLHttpService {
    * @param dataDir The data directory where requests can be buffered
    * @param config Configuration for the rpc methods being loaded
    * @param graphQL GraphQL engine
-   * @param dataFetcherContext DataFetcherContext required by GraphQL to finish it's job
+   * @param graphQlContextMap GraphQlContext Map
    * @param scheduler {@link EthScheduler} used to trigger timeout on backend queries
    */
   public GraphQLHttpService(
@@ -105,7 +109,7 @@ public class GraphQLHttpService {
       final Path dataDir,
       final GraphQLConfiguration config,
       final GraphQL graphQL,
-      final GraphQLDataFetcherContextImpl dataFetcherContext,
+      final Map<GraphQLContextType, Object> graphQlContextMap,
       final EthScheduler scheduler) {
     this.dataDir = dataDir;
 
@@ -113,7 +117,7 @@ public class GraphQLHttpService {
     this.config = config;
     this.vertx = vertx;
     this.graphQL = graphQL;
-    this.dataFetcherContext = dataFetcherContext;
+    this.graphQlContextMap = graphQlContextMap;
     this.scheduler = scheduler;
   }
 
@@ -129,7 +133,11 @@ public class GraphQLHttpService {
     // Create the HTTP server and a router object.
     httpServer =
         vertx.createHttpServer(
-            new HttpServerOptions().setHost(config.getHost()).setPort(config.getPort()));
+            new HttpServerOptions()
+                .setHost(config.getHost())
+                .setPort(config.getPort())
+                .setHandle100ContinueAutomatically(true)
+                .setCompressionSupported(true));
 
     // Handle graphql http requests
     final Router router = Router.router(vertx);
@@ -148,7 +156,8 @@ public class GraphQLHttpService {
         .handler(
             BodyHandler.create()
                 .setUploadsDirectory(dataDir.resolve("uploads").toString())
-                .setDeleteUploadedFilesOnEnd(true));
+                .setDeleteUploadedFilesOnEnd(true)
+                .setPreallocateBodyBuffer(true));
     router.route("/").method(GET).method(POST).handler(this::handleEmptyRequestAndRedirect);
     router
         .route(GRAPH_QL_ROUTE)
@@ -156,8 +165,9 @@ public class GraphQLHttpService {
         .method(POST)
         .produces(APPLICATION_JSON)
         .handler(
-            TimeoutHandler.handler(
-                Optional.of(new TimeoutOptions(config.getHttpTimeoutSec())), false))
+            TimeoutHandler.create(
+                TimeUnit.SECONDS.toMillis(config.getHttpTimeoutSec()),
+                TimeoutOptions.DEFAULT_ERROR_CODE))
         .handler(this::handleGraphQLRequest);
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
@@ -208,7 +218,11 @@ public class GraphQLHttpService {
   }
 
   private Optional<String> getAndValidateHostHeader(final RoutingContext event) {
-    final Iterable<String> splitHostHeader = Splitter.on(':').split(event.request().host());
+    String hostname =
+        event.request().getHeader(HttpHeaders.HOST) != null
+            ? event.request().getHeader(HttpHeaders.HOST)
+            : event.request().host();
+    final Iterable<String> splitHostHeader = Splitter.on(':').split(hostname);
     final long hostPieces = stream(splitHostHeader).count();
     if (hostPieces > 1) {
       // If the host contains a colon, verify the host is correctly formed - host [ ":" port ]
@@ -281,19 +295,19 @@ public class GraphQLHttpService {
       final Map<String, Object> variables;
       final HttpServerRequest request = routingContext.request();
 
-      switch (request.method()) {
-        case GET:
+      switch (request.method().name()) {
+        case "GET":
           final String queryString = request.getParam("query");
           query = Objects.requireNonNullElse(queryString, "");
           operationName = request.getParam("operationName");
           final String variableString = request.getParam("variables");
           if (variableString != null) {
-            variables = Json.decodeValue(variableString, MAP_TYPE);
+            variables = JacksonCodec.decodeValue(variableString, MAP_TYPE);
           } else {
             variables = Collections.emptyMap();
           }
           break;
-        case POST:
+        case "POST":
           final String contentType = request.getHeader(HttpHeaders.CONTENT_TYPE);
           if (contentType != null && MediaType.parse(contentType).is(MEDIA_TYPE_JUST_JSON)) {
             final String requestBody = routingContext.getBodyAsString().trim();
@@ -383,14 +397,17 @@ public class GraphQLHttpService {
 
   private GraphQLResponse process(
       final String requestJson, final String operationName, final Map<String, Object> variables) {
+    Map<GraphQLContextType, Object> contextMap = new ConcurrentHashMap<>();
+    contextMap.putAll(graphQlContextMap);
+    contextMap.put(
+        GraphQLContextType.IS_ALIVE_HANDLER,
+        new IsAliveHandler(scheduler, config.getHttpTimeoutSec()));
     final ExecutionInput executionInput =
         ExecutionInput.newExecutionInput()
             .query(requestJson)
             .operationName(operationName)
             .variables(variables)
-            .context(
-                new GraphQLDataFetcherContextImpl(
-                    dataFetcherContext, new IsAliveHandler(scheduler, config.getHttpTimeoutSec())))
+            .graphQLContext(contextMap)
             .build();
     final ExecutionResult result = graphQL.execute(executionInput);
     final Map<String, Object> toSpecificationResult = result.toSpecification();

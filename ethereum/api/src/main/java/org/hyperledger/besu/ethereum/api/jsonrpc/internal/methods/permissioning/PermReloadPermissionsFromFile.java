@@ -28,14 +28,14 @@ import java.util.Optional;
 
 public class PermReloadPermissionsFromFile implements JsonRpcMethod {
 
-  private final Optional<AccountLocalConfigPermissioningController> accountWhitelistController;
-  private final Optional<NodeLocalConfigPermissioningController> nodesWhitelistController;
+  private final Optional<AccountLocalConfigPermissioningController> accountAllowlistController;
+  private final Optional<NodeLocalConfigPermissioningController> nodesAllowlistController;
 
   public PermReloadPermissionsFromFile(
-      final Optional<AccountLocalConfigPermissioningController> accountWhitelistController,
-      final Optional<NodeLocalConfigPermissioningController> nodesWhitelistController) {
-    this.accountWhitelistController = accountWhitelistController;
-    this.nodesWhitelistController = nodesWhitelistController;
+      final Optional<AccountLocalConfigPermissioningController> accountAllowlistController,
+      final Optional<NodeLocalConfigPermissioningController> nodesAllowlistController) {
+    this.accountAllowlistController = accountAllowlistController;
+    this.nodesAllowlistController = nodesAllowlistController;
   }
 
   @Override
@@ -45,14 +45,14 @@ public class PermReloadPermissionsFromFile implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    if (!accountWhitelistController.isPresent() && !nodesWhitelistController.isPresent()) {
+    if (!accountAllowlistController.isPresent() && !nodesAllowlistController.isPresent()) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.PERMISSIONING_NOT_ENABLED);
     }
 
     try {
-      accountWhitelistController.ifPresent(AccountLocalConfigPermissioningController::reload);
-      nodesWhitelistController.ifPresent(NodeLocalConfigPermissioningController::reload);
+      accountAllowlistController.ifPresent(AccountLocalConfigPermissioningController::reload);
+      nodesAllowlistController.ifPresent(NodeLocalConfigPermissioningController::reload);
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
     } catch (Exception e) {
       return new JsonRpcErrorResponse(

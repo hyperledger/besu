@@ -1,0 +1,48 @@
+{
+  "comment" : "Proxy call to another contract. Using STATICCALL.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_rawTransaction",
+    "params" : [ "0xf8f5800183030d4094012000000000000000000000000000000000000080b8940000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001200000000000000000000000000000000000000000000000000000000000000120785e45de3d6be050ba3c4d33ff0bb2d010ace3b1dfe9c49f4c7a8075102fa19a86c010ace3b1dfe9c49f4c7a8075102fa19a86d1ba00c83105e5af46d8b2f2aaa5c1b7437e8f182f6d146254e6ce1448e5544215701a037212e599b54c405191df381fcf6aca71fbfeafd052521cc61e24a9fd405728f", [ "stateDiff" ] ],
+    "id" : 41
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x0000000000000000000000000000000000000000000000000000000000000012",
+      "stateDiff" : {
+        "0x0000000000000000000000000000000000000000" : {
+          "balance" : {
+            "*" : {
+              "from" : "0x393f0f18385c0b29e",
+              "to" : "0x393f0f18385c10c8b"
+            }
+          },
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : { }
+        },
+        "0x627306090abab3a6e1400e9345bc60c78a8bef57" : {
+          "balance" : {
+            "*" : {
+              "from" : "0xefffffffffffe28d07a0be63b",
+              "to" : "0xefffffffffffe28d07a0b8c4e"
+            }
+          },
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x17",
+              "to" : "0x18"
+            }
+          },
+          "storage" : { }
+        }
+      },
+      "trace" : [ ],
+      "vmTrace" : null
+    },
+    "id" : 41
+  },
+  "statusCode" : 200
+}

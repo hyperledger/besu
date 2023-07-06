@@ -1,0 +1,90 @@
+{
+    "accessList" : {
+        "_info" : {
+            "comment" : "Access list in tr example",
+            "filling-rpc-server" : "evm version 1.10.0-unstable-e09dc4eb-20210211",
+            "filling-tool-version" : "retesteth-0.1.0-accesslist+commit.37e87c45.Linux.g++",
+            "lllcversion" : "Version: 0.5.14-develop.2020.6.22+commit.9189ad7a.Linux.g++",
+            "source" : "src/GeneralStateTestsFiller/stExample/accessListFiller.json",
+            "sourceHash" : "0b91ae030423fd2d178aea8c362196b24e059c2525c64f5aca273e3e277c22ed",
+            "labels" : {
+                "0" : ":label somelabel",
+                "1" : ":label somelabel2"
+            }
+        },
+        "env" : {
+            "currentCoinbase" : "0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba",
+            "currentDifficulty" : "0x020000",
+            "currentGasLimit" : "0xff112233445566",
+            "currentNumber" : "0x01",
+            "currentTimestamp" : "0x03e8",
+            "previousHash" : "0x5e20a0453cecd065ea59c37ac63e079ee08998b6045136a8ce6635c7912ec0b6"
+        },
+        "post" : {
+            "Berlin" : [
+                {
+                    "indexes" : {
+                        "data" : 0,
+                        "gas" : 0,
+                        "value" : 0
+                    },
+                    "hash" : "0x6ef2bfc9fbc7f1ad04aefc6ca5d64ec882f81c60a14f5171f181a169a6db1a6b",
+                    "logs" : "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+                },
+                {
+                    "indexes" : {
+                        "data" : 1,
+                        "gas" : 0,
+                        "value" : 0
+                    },
+                    "hash" : "0x0bdf3644f34b9678b88307ffe487c8215daa8689580eacf2e93ba809843f6898",
+                    "logs" : "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"
+                }
+            ]
+        },
+        "pre" : {
+            "0x095e7baea6a6c7c4c2dfeb977efac326af552d87" : {
+                "balance" : "0x0de0b6b3a7640000",
+                "code" : "0x600160010160005500",
+                "nonce" : "0x00",
+                "storage" : {
+                }
+            },
+            "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b" : {
+                "balance" : "0x0de0b6b3a7640000",
+                "code" : "0x",
+                "nonce" : "0x00",
+                "storage" : {
+                }
+            }
+        },
+        "transaction" : {
+            "data" : [
+                "0x1122",
+                "0x3344"
+            ],
+            "accessLists" : [
+                [
+                    {
+                        "address" : "0x0000000000000000000000000000000000001337",
+                        "storageKeys" : [
+                            "0x0000000000000000000000000000000000000000000000000000000000000001",
+                            "0x0000000000000000000000000000000000000000000000000000000000000002"
+                        ]
+                    }
+                ],
+                null
+            ],
+            "gasLimit" : [
+                "0x061a80"
+            ],
+            "gasPrice" : "0x01",
+            "nonce" : "0x00",
+            "secretKey" : "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8",
+            "to" : "0x095e7baea6a6c7c4c2dfeb977efac326af552d87",
+            "value" : [
+                "0x0186a0"
+            ]
+        }
+    }
+}

@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static java.util.Arrays.asList;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.util.List;
@@ -28,7 +27,10 @@ public class TransactionPoolReplacementHandler {
   private final List<TransactionPoolReplacementRule> rules;
 
   public TransactionPoolReplacementHandler(final Percentage priceBump) {
-    this(asList(new TransactionReplacementByPriceRule(priceBump)));
+    this(
+        asList(
+            new TransactionReplacementByGasPriceRule(priceBump),
+            new TransactionReplacementByFeeMarketRule(priceBump)));
   }
 
   @VisibleForTesting
@@ -37,15 +39,17 @@ public class TransactionPoolReplacementHandler {
   }
 
   public boolean shouldReplace(
-      final TransactionInfo existingTransactionInfo,
-      final TransactionInfo newTransactionInfo,
+      final PendingTransaction existingPendingTransaction,
+      final PendingTransaction newPendingTransaction,
       final BlockHeader chainHeadHeader) {
-    assert existingTransactionInfo != null;
-    return newTransactionInfo != null
+    assert existingPendingTransaction != null;
+    return newPendingTransaction != null
         && rules.stream()
             .anyMatch(
                 rule ->
                     rule.shouldReplace(
-                        existingTransactionInfo, newTransactionInfo, chainHeadHeader.getBaseFee()));
+                        existingPendingTransaction,
+                        newPendingTransaction,
+                        chainHeadHeader.getBaseFee()));
   }
 }

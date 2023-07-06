@@ -23,6 +23,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({"jsonrpc", "id", "result"})
 public class JsonRpcSuccessResponse implements JsonRpcResponse {
 
+  public static final String SUCCESS_RESULT = "Success";
+
   private final Object id;
   private final Object result;
 
@@ -33,7 +35,7 @@ public class JsonRpcSuccessResponse implements JsonRpcResponse {
 
   public JsonRpcSuccessResponse(final Object id) {
     this.id = id;
-    this.result = "Success";
+    this.result = SUCCESS_RESULT;
   }
 
   @JsonGetter("id")

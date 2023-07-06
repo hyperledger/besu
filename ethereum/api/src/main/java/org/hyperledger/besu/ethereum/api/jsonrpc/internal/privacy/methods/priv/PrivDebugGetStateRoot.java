@@ -14,15 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.FIND_PRIVACY_GROUP_ERROR;
 
+import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AbstractBlockParameterMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -32,22 +32,24 @@ import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.Optional;
+import java.util.regex.Pattern;
 
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PrivDebugGetStateRoot.class);
 
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final PrivacyIdProvider privacyIdProvider;
   private final PrivacyController privacyController;
 
   public PrivDebugGetStateRoot(
       final BlockchainQueries blockchainQueries,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider,
+      final PrivacyIdProvider privacyIdProvider,
       final PrivacyController privacyController) {
     super(blockchainQueries);
-    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
+    this.privacyIdProvider = privacyIdProvider;
     this.privacyController = privacyController;
   }
 
@@ -65,16 +67,28 @@ public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
   protected Object resultByBlockNumber(
       final JsonRpcRequestContext requestContext, final long blockNumber) {
     final String privacyGroupId = requestContext.getRequiredParameter(0, String.class);
-    final String enclavePublicKey =
-        enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser());
-    LOG.trace("Executing {}", this::getName);
+    final String privacyUserId = privacyIdProvider.getPrivacyUserId(requestContext.getUser());
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Executing {}", getName());
+    }
 
     final Optional<PrivacyGroup> privacyGroup;
     try {
-      privacyGroup = privacyController.findPrivacyGroupByGroupId(privacyGroupId, enclavePublicKey);
+      privacyGroup = privacyController.findPrivacyGroupByGroupId(privacyGroupId, privacyUserId);
     } catch (final MultiTenancyValidationException e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), FIND_PRIVACY_GROUP_ERROR);
+    } catch (final EnclaveClientException e) {
+      final Pattern pattern = Pattern.compile("^Privacy group.*not found$");
+      if (e.getMessage().equals(JsonRpcError.ENCLAVE_PRIVACY_GROUP_MISSING.getMessage())
+          || pattern.matcher(e.getMessage()).find()) {
+        LOG.error("Failed to retrieve privacy group");
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), FIND_PRIVACY_GROUP_ERROR);
+      } else {
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), JsonRpcError.ENCLAVE_ERROR);
+      }
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
@@ -87,7 +101,7 @@ public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
     }
 
     return privacyController
-        .getStateRootByBlockNumber(privacyGroupId, enclavePublicKey, blockNumber)
+        .getStateRootByBlockNumber(privacyGroupId, privacyUserId, blockNumber)
         .<JsonRpcResponse>map(
             stateRootHash ->
                 new JsonRpcSuccessResponse(

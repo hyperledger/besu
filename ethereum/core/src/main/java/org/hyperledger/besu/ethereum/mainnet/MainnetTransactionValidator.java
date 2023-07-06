@@ -14,15 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.crypto.SECP256K1;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Gas;
+import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
+
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
@@ -38,7 +42,8 @@ import java.util.Set;
 public class MainnetTransactionValidator {
 
   private final GasCalculator gasCalculator;
-  private final Optional<TransactionPriceCalculator> transactionPriceCalculator;
+  private final GasLimitCalculator gasLimitCalculator;
+  private final FeeMarket feeMarket;
 
   private final boolean disallowSignatureMalleability;
 
@@ -46,35 +51,53 @@ public class MainnetTransactionValidator {
 
   private Optional<TransactionFilter> transactionFilter = Optional.empty();
   private final Set<TransactionType> acceptedTransactionTypes;
-  private final boolean goQuorumCompatibilityMode;
+
+  private final int maxInitcodeSize;
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
+      final GasLimitCalculator gasLimitCalculator,
       final boolean checkSignatureMalleability,
-      final Optional<BigInteger> chainId,
-      final boolean goQuorumCompatibilityMode) {
+      final Optional<BigInteger> chainId) {
     this(
         gasCalculator,
-        Optional.empty(),
+        gasLimitCalculator,
         checkSignatureMalleability,
         chainId,
-        Set.of(TransactionType.FRONTIER),
-        goQuorumCompatibilityMode);
+        Set.of(TransactionType.FRONTIER));
   }
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
-      final Optional<TransactionPriceCalculator> transactionPriceCalculator,
+      final GasLimitCalculator gasLimitCalculator,
+      final boolean checkSignatureMalleability,
+      final Optional<BigInteger> chainId,
+      final Set<TransactionType> acceptedTransactionTypes) {
+    this(
+        gasCalculator,
+        gasLimitCalculator,
+        FeeMarket.legacy(),
+        checkSignatureMalleability,
+        chainId,
+        acceptedTransactionTypes,
+        Integer.MAX_VALUE);
+  }
+
+  public MainnetTransactionValidator(
+      final GasCalculator gasCalculator,
+      final GasLimitCalculator gasLimitCalculator,
+      final FeeMarket feeMarket,
       final boolean checkSignatureMalleability,
       final Optional<BigInteger> chainId,
       final Set<TransactionType> acceptedTransactionTypes,
-      final boolean goQuorumCompatibilityMode) {
+      final int maxInitcodeSize) {
     this.gasCalculator = gasCalculator;
-    this.transactionPriceCalculator = transactionPriceCalculator;
+    this.gasLimitCalculator = gasLimitCalculator;
+    this.feeMarket = feeMarket;
     this.disallowSignatureMalleability = checkSignatureMalleability;
     this.chainId = chainId;
     this.acceptedTransactionTypes = acceptedTransactionTypes;
-    this.goQuorumCompatibilityMode = goQuorumCompatibilityMode;
+    this.maxInitcodeSize = maxInitcodeSize;
   }
 
   /**
@@ -82,22 +105,19 @@ public class MainnetTransactionValidator {
    *
    * @param transaction the transaction to validate
    * @param baseFee optional baseFee
-   * @return An empty @{link Optional} if the transaction is considered valid; otherwise an @{code
+   * @param transactionValidationParams Validation parameters that will be used
+   * @return An empty {@link Optional} if the transaction is considered valid; otherwise an {@code
    *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
    *     is invalid.
    */
   public ValidationResult<TransactionInvalidReason> validate(
-      final Transaction transaction, final Optional<Long> baseFee) {
+      final Transaction transaction,
+      final Optional<Wei> baseFee,
+      final TransactionValidationParams transactionValidationParams) {
     final ValidationResult<TransactionInvalidReason> signatureResult =
         validateTransactionSignature(transaction);
     if (!signatureResult.isValid()) {
       return signatureResult;
-    }
-
-    if (goQuorumCompatibilityMode && !transaction.getGasPrice().isZero()) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO,
-          "gasPrice must be set to zero on a GoQuorum compatible network");
     }
 
     final TransactionType transactionType = transaction.getType();
@@ -106,20 +126,69 @@ public class MainnetTransactionValidator {
           TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
           String.format(
               "Transaction type %s is invalid, accepted transaction types are %s",
-              transactionType, acceptedTransactionTypes.toString()));
+              transactionType, acceptedTransactionTypes));
     }
 
-    if (transactionType.equals(TransactionType.EIP1559)) {
-      final Wei price = transactionPriceCalculator.orElseThrow().price(transaction, baseFee);
-      if (price.compareTo(Wei.of(baseFee.orElseThrow())) < 0) {
+    if (transaction.getNonce() == MAX_NONCE) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.NONCE_OVERFLOW, "Nonce must be less than 2^64-1");
+    }
+
+    if (transaction.isContractCreation() && transaction.getPayload().size() > maxInitcodeSize) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INITCODE_TOO_LARGE,
+          String.format(
+              "Initcode size of %d exceeds maximum size of %s",
+              transaction.getPayload().size(), maxInitcodeSize));
+    }
+
+    return validateCostAndFee(transaction, baseFee, transactionValidationParams);
+  }
+
+  private ValidationResult<TransactionInvalidReason> validateCostAndFee(
+      final Transaction transaction,
+      final Optional<Wei> maybeBaseFee,
+      final TransactionValidationParams transactionValidationParams) {
+
+    if (maybeBaseFee.isPresent()) {
+      final Wei price = feeMarket.getTransactionPriceCalculator().price(transaction, maybeBaseFee);
+      if (!transactionValidationParams.isAllowMaxFeeGasBelowBaseFee()
+          && price.compareTo(maybeBaseFee.orElseThrow()) < 0) {
         return ValidationResult.invalid(
-            TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-            String.format("gasPrice is less than the current BaseFee"));
+            TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE,
+            "gasPrice is less than the current BaseFee");
+      }
+
+      // assert transaction.max_fee_per_gas >= transaction.max_priority_fee_per_gas
+      if (transaction.getType().supports1559FeeMarket()
+          && transaction
+                  .getMaxPriorityFeePerGas()
+                  .get()
+                  .getAsBigInteger()
+                  .compareTo(transaction.getMaxFeePerGas().get().getAsBigInteger())
+              > 0) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS,
+            "max priority fee per gas cannot be greater than max fee per gas");
       }
     }
 
-    final Gas intrinsicGasCost = gasCalculator.transactionIntrinsicGasCost(transaction);
-    if (intrinsicGasCost.compareTo(Gas.of(transaction.getGasLimit())) > 0) {
+    if (transaction.getType().supportsBlob()) {
+      final long txTotalDataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
+      if (txTotalDataGas > gasLimitCalculator.currentDataGasLimit()) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.TOTAL_DATA_GAS_TOO_HIGH,
+            String.format(
+                "total data gas %d exceeds max data gas per block %d",
+                txTotalDataGas, gasLimitCalculator.currentDataGasLimit()));
+      }
+    }
+
+    final long intrinsicGasCost =
+        gasCalculator.transactionIntrinsicGasCost(
+                transaction.getPayload(), transaction.isContractCreation())
+            + (transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L));
+    if (Long.compareUnsigned(intrinsicGasCost, transaction.getGasLimit()) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
           String.format(
@@ -136,18 +205,22 @@ public class MainnetTransactionValidator {
       final TransactionValidationParams validationParams) {
     Wei senderBalance = Account.DEFAULT_BALANCE;
     long senderNonce = Account.DEFAULT_NONCE;
+    Hash codeHash = Hash.EMPTY;
 
     if (sender != null) {
       senderBalance = sender.getBalance();
       senderNonce = sender.getNonce();
+      if (sender.getCodeHash() != null) codeHash = sender.getCodeHash();
     }
 
-    if (transaction.getUpfrontCost().compareTo(senderBalance) > 0) {
+    final Wei upfrontCost =
+        transaction.getUpfrontCost(gasCalculator.dataGasCost(transaction.getBlobCount()));
+    if (upfrontCost.compareTo(senderBalance) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
           String.format(
               "transaction up-front cost %s exceeds transaction sender account balance %s",
-              transaction.getUpfrontCost(), senderBalance));
+              upfrontCost.toQuantityHexString(), senderBalance.toQuantityHexString()));
     }
 
     if (transaction.getNonce() < senderNonce) {
@@ -160,10 +233,18 @@ public class MainnetTransactionValidator {
 
     if (!validationParams.isAllowFutureNonce() && senderNonce != transaction.getNonce()) {
       return ValidationResult.invalid(
-          TransactionInvalidReason.INCORRECT_NONCE,
+          TransactionInvalidReason.NONCE_TOO_HIGH,
           String.format(
               "transaction nonce %s does not match sender account nonce %s.",
               transaction.getNonce(), senderNonce));
+    }
+
+    if (!validationParams.isAllowContractAddressAsSender() && !codeHash.equals(Hash.EMPTY)) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED,
+          String.format(
+              "Sender %s has deployed code and so is not authorized to send transactions",
+              transaction.getSender()));
     }
 
     if (!isSenderAllowed(transaction, validationParams)) {
@@ -173,6 +254,10 @@ public class MainnetTransactionValidator {
     }
 
     return ValidationResult.valid();
+  }
+
+  public boolean isReplayProtectionSupported() {
+    return chainId.isPresent();
   }
 
   public ValidationResult<TransactionInvalidReason> validateTransactionSignature(
@@ -186,20 +271,20 @@ public class MainnetTransactionValidator {
               transaction.getChainId().get(), chainId.get()));
     }
 
-    if (!chainId.isPresent() && transaction.getChainId().isPresent()) {
+    if (chainId.isEmpty() && transaction.getChainId().isPresent()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED,
           "replay protected signatures is not supported");
     }
 
-    final SECP256K1.Signature signature = transaction.getSignature();
-    if (disallowSignatureMalleability
-        && signature.getS().compareTo(SECP256K1.HALF_CURVE_ORDER) > 0) {
+    final SECPSignature signature = transaction.getSignature();
+    final BigInteger halfCurveOrder = SignatureAlgorithmFactory.getInstance().getHalfCurveOrder();
+    if (disallowSignatureMalleability && signature.getS().compareTo(halfCurveOrder) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_SIGNATURE,
           String.format(
               "Signature s value should be less than %s, but got %s",
-              SECP256K1.HALF_CURVE_ORDER, signature.getS()));
+              halfCurveOrder, signature.getS()));
     }
 
     // org.bouncycastle.math.ec.ECCurve.AbstractFp.decompressPoint throws an
@@ -211,7 +296,6 @@ public class MainnetTransactionValidator {
           TransactionInvalidReason.INVALID_SIGNATURE,
           "sender could not be extracted from transaction signature");
     }
-
     return ValidationResult.valid();
   }
 
@@ -236,7 +320,7 @@ public class MainnetTransactionValidator {
   }
 
   /**
-   * Asserts whether a transaction is valid for the sender accounts current state.
+   * Asserts whether a transaction is valid for the sender account's current state.
    *
    * <p>Note: {@code validate} should be called before getting the sender {@link Account} used in
    * this method to ensure that a sender can be extracted from the {@link Transaction}.
@@ -247,7 +331,7 @@ public class MainnetTransactionValidator {
    *     will be considered valid (used when received transactions in the transaction pool). If
    *     false, only a transaction with the nonce equals the account nonce will be considered valid
    *     (used when processing transactions).
-   * @return An empty @{link Optional} if the transaction is considered valid; otherwise an @{code
+   * @return An empty {@link Optional} if the transaction is considered valid; otherwise an {@code
    *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
    *     is invalid.
    */

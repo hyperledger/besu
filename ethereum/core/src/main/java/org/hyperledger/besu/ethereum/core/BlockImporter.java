@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
 import java.util.List;
@@ -34,10 +35,10 @@ public interface BlockImporter {
    * @param context The context to attempt to update
    * @param block The block
    * @param headerValidationMode Determines the validation to perform on this header.
-   * @return {@code true} if the block was added somewhere in the blockchain; otherwise {@code
-   *     false}
+   * @return {@code BlockImportResult}
+   * @see BlockImportResult
    */
-  default boolean importBlock(
+  default BlockImportResult importBlock(
       final ProtocolContext context,
       final Block block,
       final HeaderValidationMode headerValidationMode) {
@@ -51,10 +52,10 @@ public interface BlockImporter {
    * @param block The block
    * @param headerValidationMode Determines the validation to perform on this header.
    * @param ommerValidationMode Determines the validation to perform on ommer headers.
-   * @return {@code true} if the block was added somewhere in the blockchain; otherwise {@code
-   *     false}
+   * @return {@code BlockImportResult}
+   * @see BlockImportResult
    */
-  boolean importBlock(
+  BlockImportResult importBlock(
       ProtocolContext context,
       Block block,
       HeaderValidationMode headerValidationMode,
@@ -69,10 +70,10 @@ public interface BlockImporter {
    * @param receipts The receipts associated with this block.
    * @param headerValidationMode Determines the validation to perform on this header.
    * @param ommerValidationMode Determines the validation to perform on ommer headers.
-   * @return {@code true} if the block was added somewhere in the blockchain; otherwise {@code
-   *     false}
+   * @return {@code BlockImportResult}
+   * @see BlockImportResult
    */
-  boolean fastImportBlock(
+  BlockImportResult fastImportBlock(
       ProtocolContext context,
       Block block,
       List<TransactionReceipt> receipts,

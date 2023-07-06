@@ -15,10 +15,11 @@
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.data.Offset.offset;
 
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.FindNeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.NeighborsPacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
@@ -26,6 +27,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.PacketData;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PacketType;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.List;
 import java.util.Random;
@@ -90,7 +92,7 @@ public class PeerDiscoveryPacketSedesTest {
     assertThat(deserialized.getExpiration()).isCloseTo(PacketData.defaultExpiration(), offset(2L));
   }
 
-  @Test(expected = RLPException.class)
+  @Test
   public void deserializeDifferentPacketData() {
     final byte[] r = new byte[64];
     new Random().nextBytes(r);
@@ -100,10 +102,11 @@ public class PeerDiscoveryPacketSedesTest {
     final Bytes serialized = RLP.encode(packet::writeTo);
     assertThat(serialized).isNotNull();
 
-    NeighborsPacketData.readFrom(RLP.input(serialized));
+    final RLPInput input = RLP.input(serialized);
+    assertThatThrownBy(() -> NeighborsPacketData.readFrom(input)).isInstanceOf(RLPException.class);
   }
 
-  @Test(expected = PeerDiscoveryPacketDecodingException.class)
+  @Test
   public void integrityCheckFailsUnmatchedHash() {
     final byte[] r = new byte[64];
     new Random().nextBytes(r);
@@ -120,6 +123,8 @@ public class PeerDiscoveryPacketSedesTest {
     // Change one bit in the last byte, which belongs to the payload, hence the hash will not match
     // any longer.
     garbled.set(i, (byte) (garbled.get(i) + 0x01));
-    Packet.decode(Buffer.buffer(garbled.toArray()));
+    final Buffer input = Buffer.buffer(garbled.toArray());
+    assertThatThrownBy(() -> Packet.decode(input))
+        .isInstanceOf(PeerDiscoveryPacketDecodingException.class);
   }
 }

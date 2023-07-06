@@ -1,0 +1,12 @@
+{
+  "variables": "{ \"hash\": \"0xc8df1f061abb4d0c107b2b1a794ade8780b3120e681f723fe55a7be586d95ba6\"}",
+  "request": "query getBlock($hash :Bytes32!) { block(hash:$hash) { number } }",
+  "response": {
+    "data": {
+      "block": {
+        "number": "0x1e"
+      }
+    }
+  },
+  "statusCode": 200
+}

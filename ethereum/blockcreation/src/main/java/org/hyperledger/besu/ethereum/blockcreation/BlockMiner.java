@@ -15,23 +15,26 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import com.google.common.base.Stopwatch;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Responsible for creating a block, and importing it to the blockchain. This is specifically a
@@ -45,7 +48,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BlockMiner.class);
 
   protected final Function<BlockHeader, M> blockCreatorFactory;
   protected final M minerBlockCreator;
@@ -102,13 +105,25 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
    * @param ommers The list of ommers to include.
    * @return the newly created block.
    */
-  public Block createBlock(
+  public BlockCreationResult createBlock(
       final BlockHeader parentHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers) {
     final BlockCreator blockCreator = this.blockCreatorFactory.apply(parentHeader);
     final long timestamp = scheduler.getNextTimestamp(parentHeader).getTimestampForHeader();
     return blockCreator.createBlock(transactions, ommers, timestamp);
+  }
+
+  /**
+   * Create a block with the given timestamp.
+   *
+   * @param parentHeader The header of the parent of the block to be produced
+   * @param timestamp unix timestamp of the new block.
+   * @return the newly created block.
+   */
+  public BlockCreationResult createBlock(final BlockHeader parentHeader, final long timestamp) {
+    final BlockCreator blockCreator = this.blockCreatorFactory.apply(parentHeader);
+    return blockCreator.createBlock(Optional.empty(), Optional.empty(), timestamp);
   }
 
   protected boolean mineBlock() throws InterruptedException {
@@ -120,16 +135,16 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
 
     final Stopwatch stopwatch = Stopwatch.createStarted();
     LOG.trace("Mining a new block with timestamp {}", newBlockTimestamp);
-    final Block block = minerBlockCreator.createBlock(newBlockTimestamp);
+    final Block block = minerBlockCreator.createBlock(newBlockTimestamp).getBlock();
     LOG.trace(
         "Block created, importing to local chain, block includes {} transactions",
         block.getBody().getTransactions().size());
 
     final BlockImporter importer =
-        protocolSchedule.getByBlockNumber(block.getHeader().getNumber()).getBlockImporter();
-    final boolean blockImported =
+        protocolSchedule.getByBlockHeader(block.getHeader()).getBlockImporter();
+    final BlockImportResult blockImportResult =
         importer.importBlock(protocolContext, block, HeaderValidationMode.FULL);
-    if (blockImported) {
+    if (blockImportResult.isImported()) {
       notifyNewBlockListeners(block);
       final double taskTimeInSec = stopwatch.elapsed(TimeUnit.MILLISECONDS) / 1000.0;
       LOG.info(
@@ -146,7 +161,7 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
       LOG.error("Illegal block mined, could not be imported to local chain.");
     }
 
-    return blockImported;
+    return blockImportResult.isImported();
   }
 
   public void cancel() {

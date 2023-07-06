@@ -43,11 +43,12 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The Metrics http service. */
 public class MetricsHttpService implements MetricsService {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(MetricsHttpService.class);
 
   private static final InetSocketAddress EMPTY_SOCKET_ADDRESS = new InetSocketAddress("0.0.0.0", 0);
 
@@ -57,6 +58,13 @@ public class MetricsHttpService implements MetricsService {
 
   private HttpServer httpServer;
 
+  /**
+   * Instantiates a new Metrics http service.
+   *
+   * @param vertx the vertx
+   * @param configuration the configuration
+   * @param metricsSystem the metrics system
+   */
   public MetricsHttpService(
       final Vertx vertx,
       final MetricsConfiguration configuration,
@@ -81,7 +89,12 @@ public class MetricsHttpService implements MetricsService {
     // Create the HTTP server and a router object.
     httpServer =
         vertx.createHttpServer(
-            new HttpServerOptions().setHost(config.getHost()).setPort(config.getPort()));
+            new HttpServerOptions()
+                .setHost(config.getHost())
+                .setPort(config.getPort())
+                .setIdleTimeout(config.getIdleTimeout())
+                .setHandle100ContinueAutomatically(true)
+                .setCompressionSupported(true));
 
     final Router router = Router.router(vertx);
 
@@ -104,9 +117,7 @@ public class MetricsHttpService implements MetricsService {
                 final int actualPort = httpServer.actualPort();
                 config.setActualPort(actualPort);
                 LOG.info(
-                    "Metrics service started and listening on {}:{}",
-                    actualPort,
-                    httpServer.actualPort());
+                    "Metrics service started and listening on {}:{}", config.getHost(), actualPort);
                 return;
               }
               httpServer = null;
@@ -230,6 +241,11 @@ public class MetricsHttpService implements MetricsService {
         });
   }
 
+  /**
+   * Socket address inet socket address.
+   *
+   * @return the inet socket address
+   */
   InetSocketAddress socketAddress() {
     if (httpServer == null) {
       return EMPTY_SOCKET_ADDRESS;

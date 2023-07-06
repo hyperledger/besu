@@ -19,7 +19,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
@@ -42,18 +42,18 @@ public class EthSynchronizerUpdaterTest {
 
   @Test
   public void ethPeerIsMissingResultInNoUpdate() {
-    when(ethPeers.peer(any())).thenReturn(null);
+    when(ethPeers.peer(any(PeerConnection.class))).thenReturn(null);
 
     final EthSynchronizerUpdater updater = new EthSynchronizerUpdater(ethPeers);
 
     updater.updatePeerChainState(1, mock(PeerConnection.class));
 
-    verifyZeroInteractions(ethPeer);
+    verifyNoInteractions(ethPeer);
   }
 
   @Test
   public void chainStateUpdateIsAttemptedIfEthPeerExists() {
-    when(ethPeers.peer(any())).thenReturn(ethPeer);
+    when(ethPeers.peer(any(PeerConnection.class))).thenReturn(ethPeer);
     when(ethPeer.chainState()).thenReturn(chainState);
 
     final EthSynchronizerUpdater updater = new EthSynchronizerUpdater(ethPeers);

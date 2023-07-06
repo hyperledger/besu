@@ -1,0 +1,15 @@
+{
+  "comment" : "",
+  "request" : {
+    "method" : "trace_callMany",
+    "params" : [ [ ], "latest" ],
+    "id" : 1,
+    "jsonrpc" : "2.0"
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : [ ],
+    "id" : 1
+  },
+  "statusCode" : 200
+}

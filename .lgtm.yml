@@ -1,0 +1,5 @@
+extraction:
+  java:
+    index:
+      java_version: "17"
+      build_command: JAVA_OPTS="-Xmx1000M" ./gradlew -Dorg.gradle.java.home=/usr/lib/jvm/java-11-openjdk-amd64 --no-scan compileJava

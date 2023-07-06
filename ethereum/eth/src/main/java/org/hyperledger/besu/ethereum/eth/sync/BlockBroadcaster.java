@@ -21,11 +21,11 @@ import org.hyperledger.besu.ethereum.eth.messages.NewBlockMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.util.Subscribers;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BlockBroadcaster {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BlockBroadcaster.class);
 
   private final EthContext ethContext;
   private final Subscribers<BlockPropagatedSubscriber> blockPropagatedSubscribers =

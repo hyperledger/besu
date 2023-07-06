@@ -22,6 +22,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/** The Future utils. */
 public class FutureUtils {
 
   /**
@@ -31,9 +32,9 @@ public class FutureUtils {
    *
    * <p>This is the exceptional equivalent to {@link CompletionStage#thenCompose(Function)}
    *
+   * @param <T> the type of the CompletionStage's result
    * @param future the future to handle results or exceptions from
    * @param errorHandler the function returning a new CompletionStage
-   * @param <T> the type of the CompletionStage's result
    * @return the CompletionStage
    */
   public static <T> CompletableFuture<T> exceptionallyCompose(
@@ -60,9 +61,9 @@ public class FutureUtils {
    * successfully with the same value. When <code>from</code> completes exceptionally, <code>to
    * </code> will be completed exceptionally with the same exception.
    *
+   * @param <T> the type of the success value
    * @param from the CompletionStage to take results and exceptions from
    * @param to the CompletableFuture to propagate results and exceptions to
-   * @param <T> the type of the success value
    */
   public static <T> void propagateResult(
       final CompletionStage<T> from, final CompletableFuture<T> to) {
@@ -87,9 +88,9 @@ public class FutureUtils {
    * <p>If the Supplier throws an exception, the target CompletableFuture will be completed
    * exceptionally with the thrown exception.
    *
+   * @param <T> the type of the success value
    * @param from the Supplier to get the CompletableFuture to take results and exceptions from
    * @param to the CompletableFuture to propagate results and exceptions to
-   * @param <T> the type of the success value
    */
   public static <T> void propagateResult(
       final Supplier<CompletableFuture<T>> from, final CompletableFuture<T> to) {
@@ -104,8 +105,9 @@ public class FutureUtils {
    * Propagates cancellation, and only cancellation, from one future to another.
    *
    * <p>When <code>from</code> is completed with a {@link
-   * java.util.concurrent.CancellationException} {@link java.util.concurrent.Future#cancel(boolean)}
-   * will be called on <code>to</code>, allowing interruption if the future is currently running.
+   * java.util.concurrent.CancellationException}* {@link
+   * java.util.concurrent.Future#cancel(boolean)} will be called on <code>to</code>, allowing
+   * interruption if the future is currently running.
    *
    * @param from the CompletableFuture to take cancellation from
    * @param to the CompletableFuture to propagate cancellation to

@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.consensus.clique;
 
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
@@ -25,6 +25,7 @@ import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Clique block hashing. */
 public class CliqueBlockHashing {
   /**
    * Constructs a hash of the block header, suitable for use when creating the proposer seal. The
@@ -69,7 +70,7 @@ public class CliqueBlockHashing {
   private static Bytes encodeExtraDataWithoutProposerSeal(final CliqueExtraData cliqueExtraData) {
     final Bytes extraDataBytes = cliqueExtraData.encode();
     // Always trim off final 65 bytes (which maybe zeros)
-    return extraDataBytes.slice(0, extraDataBytes.size() - Signature.BYTES_REQUIRED);
+    return extraDataBytes.slice(0, extraDataBytes.size() - SECPSignature.BYTES_REQUIRED);
   }
 
   private static Bytes serializeHeader(
@@ -92,7 +93,7 @@ public class CliqueBlockHashing {
     out.writeBytes(extraDataSerializer.get());
     out.writeBytes(header.getMixHash());
     out.writeLong(header.getNonce());
-    header.getBaseFee().ifPresent(out::writeLongScalar);
+    header.getBaseFee().ifPresent(out::writeUInt256Scalar);
     out.endList();
     return out.encoded();
   }

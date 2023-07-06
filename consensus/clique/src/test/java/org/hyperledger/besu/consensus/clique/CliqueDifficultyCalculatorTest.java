@@ -19,12 +19,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.VoteProposer;
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -32,14 +31,15 @@ import org.hyperledger.besu.ethereum.core.Util;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.collect.Lists;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CliqueDifficultyCalculatorTest {
 
-  private final KeyPair proposerKeyPair = KeyPair.generate();
+  private final KeyPair proposerKeyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private Address localAddr;
 
   private final List<Address> validatorList = Lists.newArrayList();
@@ -47,20 +47,18 @@ public class CliqueDifficultyCalculatorTest {
   private BlockHeaderTestFixture blockHeaderBuilder;
   private final CliqueBlockInterface blockInterface = new CliqueBlockInterface();
 
-  @Before
+  @BeforeEach
   public void setup() {
     localAddr = Util.publicKeyToAddress(proposerKeyPair.getPublicKey());
 
     validatorList.add(localAddr);
     validatorList.add(AddressHelpers.calculateAddressWithRespectTo(localAddr, 1));
 
-    final VoteTallyCache voteTallyCache = mock(VoteTallyCache.class);
-    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
-    final VoteProposer voteProposer = new VoteProposer();
+    final ValidatorProvider validatorProvider = mock(ValidatorProvider.class);
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
 
-    final CliqueContext cliqueContext =
-        new CliqueContext(voteTallyCache, voteProposer, null, blockInterface);
-    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext);
+    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
+    cliqueProtocolContext = new ProtocolContext(null, null, cliqueContext, Optional.empty());
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }
 

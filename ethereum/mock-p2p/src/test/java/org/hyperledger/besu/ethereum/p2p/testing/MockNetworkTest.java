@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.testing;
 
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -44,7 +44,7 @@ public final class MockNetworkTest {
     final MockNetwork network = new MockNetwork(Arrays.asList(cap));
     final Peer one =
         DefaultPeer.fromEnodeURL(
-            EnodeURL.builder()
+            EnodeURLImpl.builder()
                 .nodeId(randomId())
                 .ipAddress("192.168.1.2")
                 .discoveryPort(1234)
@@ -52,7 +52,7 @@ public final class MockNetworkTest {
                 .build());
     final Peer two =
         DefaultPeer.fromEnodeURL(
-            EnodeURL.builder()
+            EnodeURLImpl.builder()
                 .nodeId(randomId())
                 .ipAddress("192.168.1.3")
                 .discoveryPort(1234)

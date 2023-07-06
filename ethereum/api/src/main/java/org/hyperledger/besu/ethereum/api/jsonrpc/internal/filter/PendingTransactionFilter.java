@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.graphql;
 
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import graphql.GraphQL;
@@ -71,17 +72,18 @@ public class GraphQLHttpServiceHostWhitelistTest {
     final BlockchainQueries blockchainQueries = Mockito.mock(BlockchainQueries.class);
     final Synchronizer synchronizer = Mockito.mock(Synchronizer.class);
 
-    final EthHashMiningCoordinator miningCoordinatorMock =
-        Mockito.mock(EthHashMiningCoordinator.class);
+    final PoWMiningCoordinator miningCoordinatorMock = Mockito.mock(PoWMiningCoordinator.class);
 
-    final GraphQLDataFetcherContextImpl dataFetcherContext =
-        Mockito.mock(GraphQLDataFetcherContextImpl.class);
-    Mockito.when(dataFetcherContext.getBlockchainQueries()).thenReturn(blockchainQueries);
-    Mockito.when(dataFetcherContext.getMiningCoordinator()).thenReturn(miningCoordinatorMock);
-
-    Mockito.when(dataFetcherContext.getTransactionPool())
-        .thenReturn(Mockito.mock(TransactionPool.class));
-    Mockito.when(dataFetcherContext.getSynchronizer()).thenReturn(synchronizer);
+    final Map<GraphQLContextType, Object> graphQLContextMap =
+        Map.of(
+            GraphQLContextType.BLOCKCHAIN_QUERIES,
+            blockchainQueries,
+            GraphQLContextType.TRANSACTION_POOL,
+            Mockito.mock(TransactionPool.class),
+            GraphQLContextType.MINING_COORDINATOR,
+            miningCoordinatorMock,
+            GraphQLContextType.SYNCHRONIZER,
+            synchronizer);
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.ETH62);
@@ -94,7 +96,7 @@ public class GraphQLHttpServiceHostWhitelistTest {
         folder.newFolder().toPath(),
         graphQLConfig,
         graphQL,
-        dataFetcherContext,
+        graphQLContextMap,
         Mockito.mock(EthScheduler.class));
   }
 
@@ -144,7 +146,7 @@ public class GraphQLHttpServiceHostWhitelistTest {
   }
 
   private int doRequest(final String hostname) throws IOException {
-    final RequestBody body = RequestBody.create(GRAPHQL, "{protocolVersion}");
+    final RequestBody body = RequestBody.create("{maxPriorityFeePerGas}", GRAPHQL);
 
     final Request build =
         new Request.Builder()

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,12 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
+import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
+import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
+import org.hyperledger.besu.ethereum.trie.patricia.LeafNode;
+
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
 
 public class TrieIterator<V> implements PathNodeVisitor<V> {
 
@@ -36,10 +41,15 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
   @Override
   public Node<V> visit(final ExtensionNode<V> node, final Bytes searchPath) {
     Bytes remainingPath = searchPath;
+    final Bytes extensionPath;
+    final Bytes commonPrefixPath;
     if (state == State.SEARCHING) {
-      final Bytes extensionPath = node.getPath();
-      final int commonPathLength = extensionPath.commonPrefixLength(searchPath);
-      remainingPath = searchPath.slice(commonPathLength);
+      extensionPath = node.getPath();
+      commonPrefixPath = searchPath.slice(0, Math.min(searchPath.size(), extensionPath.size()));
+      remainingPath = searchPath.slice(commonPrefixPath.size());
+      if (node.getPath().compareTo(commonPrefixPath) > 0) {
+        remainingPath = MutableBytes.create(remainingPath.size());
+      }
     }
 
     paths.push(node.getPath());
@@ -63,10 +73,15 @@ public class TrieIterator<V> implements PathNodeVisitor<V> {
       remainingPath = searchPath.slice(1);
     }
     paths.push(node.getPath());
-    for (byte i = iterateFrom; i < BranchNode.RADIX && state.continueIterating(); i++) {
+    for (int i = iterateFrom; i < node.maxChild() && state.continueIterating(); i++) {
       paths.push(Bytes.of(i));
-      final Node<V> child = node.child(i);
-      child.accept(this, remainingPath);
+      final Node<V> child = node.child((byte) i);
+      if (i == iterateFrom) {
+        child.accept(this, remainingPath);
+      } else {
+        child.accept(this, MutableBytes.create(remainingPath.size()));
+      }
+
       if (unload) {
         child.unload();
       }

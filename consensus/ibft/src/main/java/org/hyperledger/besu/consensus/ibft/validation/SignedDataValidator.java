@@ -20,19 +20,20 @@ import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.ibft.payload.CommitPayload;
 import org.hyperledger.besu.consensus.ibft.payload.PreparePayload;
 import org.hyperledger.besu.consensus.ibft.payload.ProposalPayload;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.Collection;
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The Signed data validator. */
 public class SignedDataValidator {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(SignedDataValidator.class);
 
   private final Collection<Address> validators;
   private final Address expectedProposer;
@@ -40,6 +41,13 @@ public class SignedDataValidator {
 
   private Optional<SignedData<ProposalPayload>> proposal = Optional.empty();
 
+  /**
+   * Instantiates a new Signed data validator.
+   *
+   * @param validators the validators
+   * @param expectedProposer the expected proposer
+   * @param roundIdentifier the round identifier
+   */
   public SignedDataValidator(
       final Collection<Address> validators,
       final Address expectedProposer,
@@ -49,6 +57,12 @@ public class SignedDataValidator {
     this.roundIdentifier = roundIdentifier;
   }
 
+  /**
+   * Validate proposal.
+   *
+   * @param msg the msg
+   * @return the boolean
+   */
   public boolean validateProposal(final SignedData<ProposalPayload> msg) {
 
     if (proposal.isPresent()) {
@@ -98,6 +112,12 @@ public class SignedDataValidator {
     return true;
   }
 
+  /**
+   * Validate prepare.
+   *
+   * @param msg the msg
+   * @return the boolean
+   */
   public boolean validatePrepare(final SignedData<PreparePayload> msg) {
     final String msgType = "Prepare";
 
@@ -113,6 +133,12 @@ public class SignedDataValidator {
     return validateDigestMatchesProposal(msg.getPayload().getDigest(), msgType);
   }
 
+  /**
+   * Validate commit.
+   *
+   * @param msg the msg
+   * @return the boolean
+   */
   public boolean validateCommit(final SignedData<CommitPayload> msg) {
     final String msgType = "Commit";
 

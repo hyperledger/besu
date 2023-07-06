@@ -14,14 +14,16 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl;
 
-import static org.hyperledger.besu.ethereum.core.Hash.fromHexString;
+import static org.hyperledger.besu.datatypes.Hash.fromHexString;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
+
+import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.web3j.protocol.core.methods.response.EthBlock.Block;
@@ -50,7 +52,10 @@ public class BlockUtils {
         Bytes.fromHexString(block.getExtraData()),
         null,
         mixHash,
-        block.getNonce().longValue(),
+        new BigInteger(block.getNonceRaw().substring(2), 16).longValue(),
+        null,
+        null,
+        null,
         blockHeaderFunctions);
   }
 }

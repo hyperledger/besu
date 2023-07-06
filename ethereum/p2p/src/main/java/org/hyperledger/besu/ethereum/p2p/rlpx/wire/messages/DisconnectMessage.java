@@ -61,11 +61,6 @@ public final class DisconnectMessage extends AbstractMessageData {
     return Data.readFrom(RLP.input(data)).getReason();
   }
 
-  @Override
-  public String toString() {
-    return "DisconnectMessage{" + "data=" + data + '}';
-  }
-
   public static class Data {
     private final DisconnectReason reason;
 
@@ -80,9 +75,14 @@ public final class DisconnectMessage extends AbstractMessageData {
     }
 
     public static Data readFrom(final RLPInput in) {
-      in.enterList();
-      Bytes reasonData = in.readBytes();
-      in.leaveList();
+      Bytes reasonData = Bytes.EMPTY;
+      if (in.nextIsList()) {
+        in.enterList();
+        reasonData = in.readBytes();
+        in.leaveList();
+      } else if (in.nextSize() == 1) {
+        reasonData = in.readBytes();
+      }
 
       // Disconnect reason should be at most 1 byte, otherwise, just return UNKNOWN
       final DisconnectReason reason =
@@ -101,8 +101,8 @@ public final class DisconnectMessage extends AbstractMessageData {
   /**
    * Reasons for disconnection, modelled as specified in the wire protocol DISCONNECT message.
    *
-   * @see <a href="https://github.com/ethereum/wiki/wiki/%C3%90%CE%9EVp2p-Wire-Protocol">ÐΞVp2p Wire
-   *     Protocol</a>
+   * @see <a href="https://github.com/ethereum/devp2p/blob/master/rlpx.md#disconnect-0x01">RLPx
+   *     Transport Protocol</a>
    */
   public enum DisconnectReason {
     UNKNOWN(null),

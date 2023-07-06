@@ -14,21 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.retesteth.methods;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashBlockCreator;
-import org.hyperledger.besu.ethereum.blockcreation.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWBlockCreator;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.retesteth.RetestethClock;
 import org.hyperledger.besu.ethereum.retesteth.RetestethContext;
+
+import java.util.Optional;
 
 public class TestMineBlocks implements JsonRpcMethod {
   private final RetestethContext context;
@@ -60,26 +62,29 @@ public class TestMineBlocks implements JsonRpcMethod {
     final ProtocolContext protocolContext = context.getProtocolContext();
     final MutableBlockchain blockchain = context.getBlockchain();
     final HeaderValidationMode headerValidationMode = context.getHeaderValidationMode();
-    final EthHashBlockCreator blockCreator =
-        new EthHashBlockCreator(
+    final PoWBlockCreator blockCreator =
+        new PoWBlockCreator(
             context.getCoinbase(),
+            () -> Optional.of(blockchain.getChainHeadHeader().getGasLimit()),
             header -> context.getExtraData(),
             context.getTransactionPool().getPendingTransactions(),
             protocolContext,
             protocolSchedule,
-            GasLimitCalculator.constant(),
             context.getEthHashSolver(),
             Wei.ZERO,
             0.0,
             blockchain.getChainHeadHeader());
-    final Block block = blockCreator.createBlock(retesethClock.instant().getEpochSecond());
+    final Block block =
+        blockCreator.createBlock(retesethClock.instant().getEpochSecond()).getBlock();
 
     // advance clock so next mine won't hit the same timestamp
     retesethClock.advanceSeconds(1);
 
     final BlockImporter blockImporter =
-        protocolSchedule.getByBlockNumber(blockchain.getChainHeadBlockNumber()).getBlockImporter();
-    return blockImporter.importBlock(
-        protocolContext, block, headerValidationMode, headerValidationMode);
+        protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()).getBlockImporter();
+    final BlockImportResult result =
+        blockImporter.importBlock(
+            protocolContext, block, headerValidationMode, headerValidationMode);
+    return result.isImported();
   }
 }

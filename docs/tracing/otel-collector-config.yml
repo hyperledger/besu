@@ -2,11 +2,17 @@ receivers:
   otlp:
     protocols:
       grpc:
-      http:
 
 exporters:
   zipkin:
     endpoint: "http://zipkin:9411/api/v2/spans"
+  otlp:
+    endpoint: "metricsviewer:4317"
+    insecure: true
+  logging:
+    loglevel: debug
+    sampling_initial: 5
+    sampling_thereafter: 200
 
 processors:
   batch:
@@ -22,4 +28,8 @@ service:
     traces:
       receivers: [otlp]
       exporters: [zipkin]
+      processors: [batch]
+    metrics:
+      receivers: [otlp]
+      exporters: [otlp, logging]
       processors: [batch]

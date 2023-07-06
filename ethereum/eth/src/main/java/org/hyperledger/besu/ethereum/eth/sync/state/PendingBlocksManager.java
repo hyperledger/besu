@@ -16,16 +16,19 @@ package org.hyperledger.besu.ethereum.eth.sync.state;
 
 import static java.util.Collections.newSetFromMap;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.cache.ImmutablePendingBlock;
 import org.hyperledger.besu.ethereum.eth.sync.state.cache.PendingBlockCache;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -105,6 +108,10 @@ public class PendingBlocksManager {
     return pendingBlocks.containsKey(blockHash);
   }
 
+  public int size() {
+    return pendingBlocks.size();
+  }
+
   public List<Block> childrenOf(final Hash parentBlock) {
     final Set<Hash> blocksByParent = pendingBlocksByParentHash.get(parentBlock);
     if (blocksByParent == null || blocksByParent.size() == 0) {
@@ -115,5 +122,41 @@ public class PendingBlocksManager {
         .filter(Objects::nonNull)
         .map(ImmutablePendingBlock::block)
         .collect(Collectors.toList());
+  }
+
+  public Optional<BlockHeader> lowestAnnouncedBlock() {
+    return pendingBlocks.values().stream()
+        .map(ImmutablePendingBlock::block)
+        .map(Block::getHeader)
+        .min(Comparator.comparing(BlockHeader::getNumber));
+  }
+
+  /**
+   * Get the lowest pending ancestor block saved for a block
+   *
+   * @param block target block
+   * @return An optional with the lowest ancestor pending block
+   */
+  public Optional<Block> pendingAncestorBlockOf(final Block block) {
+    Block ancestor = block;
+    int ancestorLevel = 0;
+    while (pendingBlocks.containsKey(ancestor.getHeader().getParentHash())
+        && ancestorLevel++ < pendingBlocks.size()) {
+      ancestor = pendingBlocks.get(ancestor.getHeader().getParentHash()).block();
+    }
+    return Optional.of(ancestor);
+  }
+
+  @Override
+  public String toString() {
+    return "PendingBlocksManager{"
+        + "pendingBlocks ["
+        + pendingBlocks.values().stream()
+            .map(ImmutablePendingBlock::block)
+            .map(b -> b.getHeader().getNumber() + " (" + b.getHash() + ")")
+            .collect(Collectors.joining(", "))
+        + "], pendingBlocksByParentHash="
+        + pendingBlocksByParentHash
+        + '}';
   }
 }

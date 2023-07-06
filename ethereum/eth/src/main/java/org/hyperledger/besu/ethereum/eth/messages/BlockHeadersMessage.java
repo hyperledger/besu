@@ -56,6 +56,17 @@ public final class BlockHeadersMessage extends AbstractMessageData {
     return new BlockHeadersMessage(tmp.encoded());
   }
 
+  /**
+   * Create a message with raw, already encoded data. No checks are performed to validate the
+   * rlp-encoded data.
+   *
+   * @param data An rlp-encoded list of headers
+   * @return A new BlockHeadersMessage
+   */
+  public static BlockHeadersMessage createUnsafe(final Bytes data) {
+    return new BlockHeadersMessage(data);
+  }
+
   private BlockHeadersMessage(final Bytes data) {
     super(data);
   }

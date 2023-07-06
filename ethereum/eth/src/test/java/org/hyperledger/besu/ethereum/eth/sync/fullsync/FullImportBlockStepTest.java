@@ -16,15 +16,17 @@ package org.hyperledger.besu.ethereum.eth.sync.fullsync;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.SKIP_DETACHED;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
@@ -47,20 +49,23 @@ public class FullImportBlockStepTest {
 
   @Before
   public void setUp() {
-    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
+    when(protocolSchedule.getByBlockHeader(any(BlockHeader.class))).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
 
-    importBlocksStep = new FullImportBlockStep(protocolSchedule, protocolContext, null);
+    importBlocksStep =
+        new FullImportBlockStep(
+            protocolSchedule, protocolContext, null, SyncTerminationCondition.never());
   }
 
   @Test
   public void shouldImportBlock() {
     final Block block = gen.block();
 
-    when(blockImporter.importBlock(protocolContext, block, SKIP_DETACHED)).thenReturn(true);
+    when(blockImporter.importBlock(protocolContext, block, SKIP_DETACHED))
+        .thenReturn(new BlockImportResult(true));
     importBlocksStep.accept(block);
 
-    verify(protocolSchedule).getByBlockNumber(block.getHeader().getNumber());
+    verify(protocolSchedule).getByBlockHeader(block.getHeader());
     verify(blockImporter).importBlock(protocolContext, block, SKIP_DETACHED);
   }
 
@@ -68,7 +73,8 @@ public class FullImportBlockStepTest {
   public void shouldThrowExceptionWhenValidationFails() {
     final Block block = gen.block();
 
-    when(blockImporter.importBlock(protocolContext, block, SKIP_DETACHED)).thenReturn(false);
+    when(blockImporter.importBlock(protocolContext, block, SKIP_DETACHED))
+        .thenReturn(new BlockImportResult(false));
     assertThatThrownBy(() -> importBlocksStep.accept(block))
         .isInstanceOf(InvalidBlockException.class);
   }

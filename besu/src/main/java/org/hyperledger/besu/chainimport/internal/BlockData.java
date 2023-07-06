@@ -15,11 +15,11 @@
 package org.hyperledger.besu.chainimport.internal;
 
 import org.hyperledger.besu.chainimport.internal.TransactionData.NonceProvider;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.WorldState;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +33,9 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/**
+ * Represents BlockData used in ChainData. Meant to be constructed by Json serializer/deserializer.
+ */
 @JsonIgnoreProperties("comment")
 public class BlockData {
 
@@ -42,6 +45,15 @@ public class BlockData {
   private final Optional<Address> coinbase;
   private final Optional<Bytes> extraData;
 
+  /**
+   * Constructor for BlockData
+   *
+   * @param number Block number in hex format.
+   * @param parentHash Parent hash in hex format.
+   * @param coinbase Coinbase Address in hex format.
+   * @param extraData Extra data in hex format.
+   * @param transactions list of TransactionData.
+   */
   @JsonCreator
   public BlockData(
       @JsonProperty("number") final Optional<String> number,
@@ -56,27 +68,59 @@ public class BlockData {
     this.transactionData = transactions;
   }
 
+  /**
+   * Gets number.
+   *
+   * @return the number
+   */
   public Optional<Long> getNumber() {
     return number;
   }
 
+  /**
+   * Gets parent hash.
+   *
+   * @return the parent hash
+   */
   public Optional<Hash> getParentHash() {
     return parentHash;
   }
 
+  /**
+   * Gets coinbase.
+   *
+   * @return the coinbase
+   */
   public Optional<Address> getCoinbase() {
     return coinbase;
   }
 
+  /**
+   * Gets extra data.
+   *
+   * @return the extra data
+   */
   public Optional<Bytes> getExtraData() {
     return extraData;
   }
 
+  /**
+   * Stream transactions.
+   *
+   * @param worldState the world state
+   * @return the stream of Transaction
+   */
   public Stream<Transaction> streamTransactions(final WorldState worldState) {
     final NonceProvider nonceProvider = getNonceProvider(worldState);
     return transactionData.stream().map((tx) -> tx.getSignedTransaction(nonceProvider));
   }
 
+  /**
+   * Gets nonce provider.
+   *
+   * @param worldState the world state
+   * @return the nonce provider
+   */
   public NonceProvider getNonceProvider(final WorldState worldState) {
     final HashMap<Address, Long> currentNonceValues = new HashMap<>();
     return (Address address) ->

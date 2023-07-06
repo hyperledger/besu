@@ -23,26 +23,39 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The RocksDb plugin. */
 public class RocksDBPlugin implements BesuPlugin {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RocksDBPlugin.class);
   private static final String NAME = "rocksdb";
 
   private final RocksDBCLIOptions options;
+  private final List<SegmentIdentifier> ignorableSegments = new ArrayList<>();
   private BesuContext context;
   private RocksDBKeyValueStorageFactory factory;
   private RocksDBKeyValuePrivacyStorageFactory privacyFactory;
 
+  /** Instantiates a newRocksDb plugin. */
   public RocksDBPlugin() {
     this.options = RocksDBCLIOptions.create();
+  }
+
+  /**
+   * Add ignorable segment identifier.
+   *
+   * @param ignorable the ignorable
+   */
+  public void addIgnorableSegmentIdentifier(final SegmentIdentifier ignorable) {
+    ignorableSegments.add(ignorable);
   }
 
   @Override
@@ -54,7 +67,7 @@ public class RocksDBPlugin implements BesuPlugin {
 
     if (cmdlineOptions.isEmpty()) {
       throw new IllegalStateException(
-          "Expecting a PicoCLIO options to register CLI options with, but none found.");
+          "Expecting a PicoCLI options to register CLI options with, but none found.");
     }
 
     cmdlineOptions.get().addPicoCLIOptions(NAME, options);
@@ -95,6 +108,15 @@ public class RocksDBPlugin implements BesuPlugin {
     }
   }
 
+  /**
+   * Is high spec enabled.
+   *
+   * @return the boolean
+   */
+  public boolean isHighSpecEnabled() {
+    return options.isHighSpec();
+  }
+
   private void createAndRegister(final StorageService service) {
     final List<SegmentIdentifier> segments = service.getAllSegmentIdentifiers();
 
@@ -102,7 +124,10 @@ public class RocksDBPlugin implements BesuPlugin {
         Suppliers.memoize(options::toDomainObject);
     factory =
         new RocksDBKeyValueStorageFactory(
-            configuration, segments, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
+            configuration,
+            segments,
+            ignorableSegments,
+            RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
     privacyFactory = new RocksDBKeyValuePrivacyStorageFactory(factory);
 
     service.registerKeyValueStorage(factory);

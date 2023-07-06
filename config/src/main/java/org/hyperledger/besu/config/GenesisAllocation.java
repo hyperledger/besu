@@ -16,38 +16,85 @@ package org.hyperledger.besu.config;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+/** The Genesis allocation configuration. */
 public class GenesisAllocation {
   private final String address;
   private final ObjectNode data;
 
+  /**
+   * Instantiates a new Genesis allocation.
+   *
+   * @param address the address
+   * @param data the data
+   */
   GenesisAllocation(final String address, final ObjectNode data) {
     this.address = address;
     this.data = data;
   }
 
+  /**
+   * Gets address.
+   *
+   * @return the address
+   */
   public String getAddress() {
     return address;
   }
 
+  /**
+   * Gets private key.
+   *
+   * @return the private key
+   */
+  public Optional<String> getPrivateKey() {
+    return Optional.ofNullable(JsonUtil.getString(data, "privatekey", null));
+  }
+
+  /**
+   * Gets balance.
+   *
+   * @return the balance
+   */
   public String getBalance() {
     return JsonUtil.getValueAsString(data, "balance", "0");
   }
 
+  /**
+   * Gets code.
+   *
+   * @return the code
+   */
   public String getCode() {
     return JsonUtil.getString(data, "code", null);
   }
 
+  /**
+   * Gets nonce.
+   *
+   * @return the nonce
+   */
   public String getNonce() {
     return JsonUtil.getValueAsString(data, "nonce", "0");
   }
 
+  /**
+   * Gets version.
+   *
+   * @return the version
+   */
   public String getVersion() {
     return JsonUtil.getValueAsString(data, "version", null);
   }
 
+  /**
+   * Gets storage map.
+   *
+   * @return fields under storage as a map
+   */
   public Map<String, String> getStorage() {
     final Map<String, String> map = new HashMap<>();
     JsonUtil.getObjectNode(data, "storage")

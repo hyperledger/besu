@@ -14,15 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.api.query;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+
+import java.util.Optional;
 
 public class TransactionReceiptWithMetadata {
   private final TransactionReceipt receipt;
   private final Hash transactionHash;
   private final int transactionIndex;
   private final long gasUsed;
+  private final Optional<Wei> baseFee;
   private final long blockNumber;
   private final Hash blockHash;
   private final Transaction transaction;
@@ -33,12 +37,14 @@ public class TransactionReceiptWithMetadata {
       final Hash transactionHash,
       final int transactionIndex,
       final long gasUsed,
+      final Optional<Wei> baseFee,
       final Hash blockHash,
       final long blockNumber) {
     this.receipt = receipt;
     this.transactionHash = transactionHash;
     this.transactionIndex = transactionIndex;
     this.gasUsed = gasUsed;
+    this.baseFee = baseFee;
     this.blockHash = blockHash;
     this.blockNumber = blockNumber;
     this.transaction = transaction;
@@ -50,10 +56,18 @@ public class TransactionReceiptWithMetadata {
       final Hash transactionHash,
       final int transactionIndex,
       final long gasUsed,
+      final Optional<Wei> baseFee,
       final Hash blockHash,
       final long blockNumber) {
     return new TransactionReceiptWithMetadata(
-        receipt, transaction, transactionHash, transactionIndex, gasUsed, blockHash, blockNumber);
+        receipt,
+        transaction,
+        transactionHash,
+        transactionIndex,
+        gasUsed,
+        baseFee,
+        blockHash,
+        blockNumber);
   }
 
   public TransactionReceipt getReceipt() {
@@ -84,5 +98,9 @@ public class TransactionReceiptWithMetadata {
   // the receipt itself)
   public long getGasUsed() {
     return gasUsed;
+  }
+
+  public Optional<Wei> getBaseFee() {
+    return baseFee;
   }
 }

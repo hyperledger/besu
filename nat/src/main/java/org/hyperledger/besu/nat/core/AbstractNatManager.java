@@ -33,24 +33,43 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The Abstract Nat manager. */
 public abstract class AbstractNatManager implements NatManager {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractNatManager.class);
 
+  /** The Nat method. */
   protected final NatMethod natMethod;
 
+  /** The Started. */
   protected final AtomicBoolean started = new AtomicBoolean();
 
+  /**
+   * Instantiates a new Abstract nat manager.
+   *
+   * @param natMethod the nat method
+   */
   protected AbstractNatManager(final NatMethod natMethod) {
     this.natMethod = natMethod;
   }
 
+  /**
+   * Do start.
+   *
+   * @throws NatInitializationException the nat initialization exception
+   */
   protected abstract void doStart() throws NatInitializationException;
 
+  /** Do stop. */
   protected abstract void doStop();
 
+  /**
+   * Retrieve external ip address completable future.
+   *
+   * @return the completable future
+   */
   protected abstract CompletableFuture<String> retrieveExternalIPAddress();
 
   @Override

@@ -22,10 +22,26 @@ import org.hyperledger.besu.metrics.opentelemetry.OpenTelemetrySystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.OpenTelemetry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** Creates a new metric system based on configuration. */
 public class MetricsSystemFactory {
 
+  private static final Logger LOG = LoggerFactory.getLogger(MetricsSystemFactory.class);
+  private static final AtomicBoolean globalOpenTelemetryDisabled = new AtomicBoolean(false);
+
   private MetricsSystemFactory() {}
+
+  private static void disableGlobalOpenTelemetry() {
+    if (!globalOpenTelemetryDisabled.compareAndExchange(false, true)) {
+      GlobalOpenTelemetry.set(OpenTelemetry.noop());
+    }
+  }
 
   /**
    * Creates and starts a new metric system to observe the behavior of the client
@@ -34,7 +50,9 @@ public class MetricsSystemFactory {
    * @return a new metric system
    */
   public static ObservableMetricsSystem create(final MetricsConfiguration metricsConfiguration) {
+    LOG.trace("Creating a metric system with {}", metricsConfiguration.getProtocol());
     if (!metricsConfiguration.isEnabled() && !metricsConfiguration.isPushEnabled()) {
+      disableGlobalOpenTelemetry();
       return new NoOpMetricsSystem();
     }
     if (PROMETHEUS.equals(metricsConfiguration.getProtocol())) {
@@ -42,13 +60,15 @@ public class MetricsSystemFactory {
           new PrometheusMetricsSystem(
               metricsConfiguration.getMetricCategories(), metricsConfiguration.isTimersEnabled());
       metricsSystem.init();
+      disableGlobalOpenTelemetry();
       return metricsSystem;
     } else if (OPENTELEMETRY.equals(metricsConfiguration.getProtocol())) {
       final OpenTelemetrySystem metricsSystem =
           new OpenTelemetrySystem(
               metricsConfiguration.getMetricCategories(),
               metricsConfiguration.isTimersEnabled(),
-              metricsConfiguration.getPrometheusJob());
+              metricsConfiguration.getPrometheusJob(),
+              true);
       metricsSystem.initDefaults();
       return metricsSystem;
     } else {

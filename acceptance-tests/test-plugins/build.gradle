@@ -1,0 +1,37 @@
+
+dependencies {
+  api 'org.slf4j:slf4j-api'
+
+  implementation project(':besu')
+  implementation project(':crypto:algorithms')
+  implementation project(':datatypes')
+  implementation project(':ethereum:core')
+  implementation project(':ethereum:rlp')
+  implementation project(':plugin-api')
+  implementation 'com.google.auto.service:auto-service'
+  implementation 'info.picocli:picocli'
+
+  testImplementation 'junit:junit'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
+
+  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+}
+
+task testPluginsJar(type: Jar) {
+  archiveFileName = 'testPlugins.jar'
+  manifest {
+    attributes(
+      'Specification-Title': archiveBaseName,
+      'Specification-Version': project.version,
+      'Implementation-Title': archiveBaseName,
+      'Implementation-Version': calculateVersion()
+      )
+  }
+  from sourceSets.main.output
+}
+
+artifacts { testPluginsJar }
+
+
+javadoc { enabled = false }

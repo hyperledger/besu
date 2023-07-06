@@ -36,11 +36,14 @@ import org.junit.Test;
 
 public class TestImportRawBlockTest {
   private TestImportRawBlock test_importRawBlock;
+  private TestRewindToBlock test_rewindToBlock;
+  private RetestethContext context;
 
   @Before
   public void setupClass() throws IOException {
-    final RetestethContext context = new RetestethContext();
+    context = new RetestethContext();
     test_importRawBlock = new TestImportRawBlock(context);
+    test_rewindToBlock = new TestRewindToBlock(context);
     final TestSetChainParams test_setChainParams = new TestSetChainParams(context);
     final String chainParamsJsonString =
         Resources.toString(
@@ -100,5 +103,29 @@ public class TestImportRawBlockTest {
 
     final var response = test_importRawBlock.response(request);
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+  }
+
+  @Test
+  public void testReimportExistingBlock() {
+    final String rawBlockRLPString =
+        "0xf90262f901faa0e38bef3dadb98e856ea82c7e9813b76a6ec8d9cf60694dd65d800a1669c1a1fda01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347948888f1f195afa192cfee860698584c030f4c9db1a06e6be3f633fe0399cb17a9d8238b988a39bd9ab3e0ac0820f4df705a1ee37536a06fb77a9ddaa64a8e161b643d05533a4093f2be900ad06279b1b56b3bcee3b979a04b33fa3c9c50b7b9a4500f5c0b1e71ab43362abc81c2cf31fd2b54acf7d750d8b90100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008302000001832fefba83016b66845db7320980a00000000000000000000000000000000000000000000000000000000000000000880000000000000000f862f860800a830249f094095e7baea6a6c7c4c2dfeb977efac326af552d870a801ba0d42a045ac77a6d4676dd5fbc5104ed7471b6cef2465cfefaa52919b340f942a9a06e4d319aea79e45cde79d337e6edf849ceac505cab65dd41a572cab132d4dccac0";
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                "2.0", TestImportRawBlock.METHOD_NAME, new Object[] {rawBlockRLPString}));
+
+    final JsonRpcRequestContext requestRewind =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", TestRewindToBlock.METHOD_NAME, new Object[] {0L}));
+
+    final var response = test_importRawBlock.response(request);
+    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    final var rewindResponse = test_rewindToBlock.response(requestRewind);
+    assertThat(rewindResponse.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    final var reimportResponse = test_importRawBlock.response(request);
+    assertThat(reimportResponse.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+
+    assertThat(context.getBlockchain().getChainHead().getHeight()).isEqualTo(1L);
   }
 }

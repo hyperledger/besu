@@ -1,0 +1,35 @@
+{
+  "comment" : "call the prior contract then callcode log contract 00a0..00.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_get",
+    "params" : [ "0x4c253746668dca6ac3f7b9bc18248b558a95b5fc881d140872c2dff984d344a7", [ ] ],
+    "id" : 291
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "action" : {
+        "creationMethod": "create",
+        "from" : "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+        "gas" : "0xff2e26",
+        "init" : "0x60006000600060006000732c2b9c9a4a25e24b174f26114e8926a9f2128fe45af2600060006000600060007300a00000000000000000000000000000000000005af2",
+        "value" : "0x0"
+      },
+      "blockHash" : "0x425ea2cf9bb89c09f131ab531958c4d189b5d047fd924d74f25d49cf47a5a8f1",
+      "blockNumber" : 19,
+      "result" : {
+        "address" : "0x30753e4a8aad7f8597332e813735def5dd395028",
+        "code" : "0x",
+        "gasUsed" : "0x1c39"
+      },
+      "subtraces" : 2,
+      "traceAddress" : [ ],
+      "transactionHash" : "0x4c253746668dca6ac3f7b9bc18248b558a95b5fc881d140872c2dff984d344a7",
+      "transactionPosition" : 3,
+      "type" : "create"
+    },
+    "id" : 291
+  },
+  "statusCode" : 200
+}

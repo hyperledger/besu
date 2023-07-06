@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.eth.sync.tasks;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
-import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -144,6 +145,7 @@ public class DetermineCommonAncestorTaskParameterizedTest {
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     final EthProtocolManager ethProtocolManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             localBlockchain,
             worldStateArchive,
             mock(TransactionPool.class),
@@ -159,7 +161,7 @@ public class DetermineCommonAncestorTaskParameterizedTest {
 
     final EthContext ethContext = ethProtocolManager.ethContext();
     final ProtocolContext protocolContext =
-        new ProtocolContext(localBlockchain, worldStateArchive, null);
+        new ProtocolContext(localBlockchain, worldStateArchive, null, Optional.empty());
 
     final EthTask<BlockHeader> task =
         DetermineCommonAncestorTask.create(

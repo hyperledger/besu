@@ -18,17 +18,27 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.vertx.core.Future;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.RequestOptions;
 
+/** The Vertx request transmitter. */
 public class VertxRequestTransmitter implements RequestTransmitter {
 
+  private static final String APPLICATION_JSON = "application/json";
   private final HttpClient client;
   private static final long REQUEST_TIMEOUT_MS = 5000L;
 
+  /**
+   * Instantiates a new Vertx request transmitter.
+   *
+   * @param httpClient the http client
+   */
   public VertxRequestTransmitter(final HttpClient httpClient) {
     this.client = httpClient;
   }
@@ -40,7 +50,12 @@ public class VertxRequestTransmitter implements RequestTransmitter {
       final String endpoint,
       final ResponseBodyHandler<T> responseHandler) {
     return sendRequest(
-        HttpMethod.POST, Optional.of(contentType), Optional.of(content), endpoint, responseHandler);
+        HttpMethod.POST,
+        Optional.of(contentType),
+        Optional.of(content),
+        endpoint,
+        responseHandler,
+        false);
   }
 
   @Override
@@ -48,36 +63,71 @@ public class VertxRequestTransmitter implements RequestTransmitter {
       final String contentType,
       final String content,
       final String endpoint,
-      final ResponseBodyHandler<T> responseHandler) {
+      final ResponseBodyHandler<T> responseHandler,
+      final boolean withAcceptJsonHeader) {
     return sendRequest(
         HttpMethod.GET,
         Optional.ofNullable(contentType),
         Optional.ofNullable(content),
         endpoint,
-        responseHandler);
+        responseHandler,
+        withAcceptJsonHeader);
   }
 
+  /**
+   * Send request operation.
+   *
+   * @param <T> the type parameter
+   * @param method the method
+   * @param contentType the content type
+   * @param content the content
+   * @param endpoint the endpoint
+   * @param responseHandler the response handler
+   * @param withAcceptJsonHeader the with accept json header
+   * @return the t
+   */
   protected <T> T sendRequest(
       final HttpMethod method,
       final Optional<String> contentType,
       final Optional<String> content,
       final String endpoint,
-      final ResponseBodyHandler<T> responseHandler) {
+      final ResponseBodyHandler<T> responseHandler,
+      final boolean withAcceptJsonHeader) {
     try {
       final CompletableFuture<T> result = new CompletableFuture<>();
-      final HttpClientRequest request =
-          client
-              .request(method, endpoint)
-              .handler(response -> handleResponse(response, responseHandler, result))
-              .setTimeout(REQUEST_TIMEOUT_MS)
-              .exceptionHandler(result::completeExceptionally)
-              .setChunked(false);
-      contentType.ifPresent(ct -> request.putHeader(HttpHeaders.CONTENT_TYPE, ct));
-      if (content.isPresent()) {
-        request.end(content.get());
-      } else {
-        request.end();
+      RequestOptions options = new RequestOptions();
+      options.setTimeout(REQUEST_TIMEOUT_MS);
+      options.setMethod(method);
+      options.setURI(endpoint);
+      if (withAcceptJsonHeader) {
+        // this is needed when using Tessera GET /transaction/{hash} to choose the right RPC
+        options.putHeader(HttpHeaderNames.ACCEPT, APPLICATION_JSON);
       }
+      contentType.ifPresent(ct -> options.putHeader(HttpHeaders.CONTENT_TYPE, ct));
+
+      final Future<HttpClientRequest> request = client.request(options);
+      request
+          .onComplete(
+              newRequest -> {
+                if (content.isPresent()) {
+                  request.result().end(content.get());
+                } else {
+                  request.result().end();
+                }
+                request
+                    .result()
+                    .send(
+                        h -> {
+                          if (h.succeeded()) {
+                            handleResponse(
+                                newRequest.result().response().result(), responseHandler, result);
+                          } else {
+                            result.completeExceptionally(h.cause());
+                          }
+                        });
+              })
+          .onFailure(result::completeExceptionally);
+
       return result.get();
     } catch (final ExecutionException | InterruptedException e) {
       if (e.getCause() instanceof EnclaveClientException) {

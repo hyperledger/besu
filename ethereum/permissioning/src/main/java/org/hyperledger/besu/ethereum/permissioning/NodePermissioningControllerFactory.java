@@ -14,28 +14,31 @@
  */
 package org.hyperledger.besu.ethereum.permissioning;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningController;
-import org.hyperledger.besu.ethereum.permissioning.node.NodePermissioningProvider;
 import org.hyperledger.besu.ethereum.permissioning.node.provider.SyncStatusNodePermissioningProvider;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NodePermissioningControllerFactory {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(NodePermissioningControllerFactory.class);
 
   public NodePermissioningController create(
       final PermissioningConfiguration permissioningConfiguration,
@@ -44,11 +47,13 @@ public class NodePermissioningControllerFactory {
       final Bytes localNodeId,
       final TransactionSimulator transactionSimulator,
       final MetricsSystem metricsSystem,
-      final Blockchain blockchain) {
+      final Blockchain blockchain,
+      final List<NodeConnectionPermissioningProvider> pluginProviders) {
+
+    ArrayList<NodeConnectionPermissioningProvider> providers = Lists.newArrayList(pluginProviders);
 
     final Optional<SyncStatusNodePermissioningProvider> syncStatusProviderOptional;
 
-    List<NodePermissioningProvider> providers = new ArrayList<>();
     if (permissioningConfiguration.getLocalConfig().isPresent()) {
       LocalPermissioningConfiguration localPermissioningConfiguration =
           permissioningConfiguration.getLocalConfig().get();
@@ -83,21 +88,21 @@ public class NodePermissioningControllerFactory {
       syncStatusProviderOptional = Optional.empty();
     }
 
-    final Optional<QuorumQip714Gate> quorumQip714Gate =
+    final Optional<GoQuorumQip714Gate> goQuorumQip714Gate =
         permissioningConfiguration
             .getQuorumPermissioningConfig()
             .flatMap(
                 config -> {
                   if (config.isEnabled()) {
                     return Optional.of(
-                        QuorumQip714Gate.getInstance(config.getQip714Block(), blockchain));
+                        GoQuorumQip714Gate.getInstance(config.getQip714Block(), blockchain));
                   } else {
                     return Optional.empty();
                   }
                 });
 
     final NodePermissioningController nodePermissioningController =
-        new NodePermissioningController(syncStatusProviderOptional, providers, quorumQip714Gate);
+        new NodePermissioningController(syncStatusProviderOptional, providers, goQuorumQip714Gate);
 
     permissioningConfiguration
         .getSmartContractConfig()
@@ -117,13 +122,13 @@ public class NodePermissioningControllerFactory {
       final PermissioningConfiguration permissioningConfiguration,
       final TransactionSimulator transactionSimulator,
       final MetricsSystem metricsSystem,
-      final List<NodePermissioningProvider> providers) {
+      final List<NodeConnectionPermissioningProvider> providers) {
     final SmartContractPermissioningConfiguration smartContractPermissioningConfig =
         permissioningConfiguration.getSmartContractConfig().get();
     final Address nodePermissioningSmartContractAddress =
         smartContractPermissioningConfig.getNodeSmartContractAddress();
 
-    final NodePermissioningProvider smartContractProvider;
+    final NodeConnectionPermissioningProvider smartContractProvider;
     switch (smartContractPermissioningConfig.getNodeSmartContractInterfaceVersion()) {
       case 1:
         {
@@ -151,13 +156,20 @@ public class NodePermissioningControllerFactory {
       final SmartContractPermissioningConfiguration smartContractPermissioningConfig) {
     LOG.debug("Validating onchain node permissioning smart contract configuration");
 
+    // eliminate the sync status and other checks, so we can just check the smart contract function
+    final NodePermissioningController tempControllerCheckingSmartContractOnly =
+        new NodePermissioningController(
+            Optional.empty(), nodePermissioningController.getProviders(), Optional.empty());
+
     try {
       // the enodeURLs don't matter. We just want to check if a call to the smart contract succeeds
-      nodePermissioningController.isPermitted(
-          EnodeURL.fromString(
+      tempControllerCheckingSmartContractOnly.isPermitted(
+          EnodeURLImpl.fromString(
               "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@10.3.58.6:30303"),
-          EnodeURL.fromString(
+          EnodeURLImpl.fromString(
               "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@10.3.58.6:30303"));
+      LOG.debug(
+          "Successful validation of onchain node permissioning smart contract configuration!");
     } catch (Exception e) {
       final String msg =
           String.format(

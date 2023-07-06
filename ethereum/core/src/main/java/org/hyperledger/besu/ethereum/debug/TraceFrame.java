@@ -14,16 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.debug;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.vm.Code;
-import org.hyperledger.besu.ethereum.vm.ExceptionalHaltReason;
-import org.hyperledger.besu.ethereum.vm.internal.MemoryEntry;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.internal.MemoryEntry;
+import org.hyperledger.besu.evm.internal.StorageEntry;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
@@ -34,9 +35,9 @@ public class TraceFrame {
 
   private final int pc;
   private final Optional<String> opcode;
-  private final Gas gasRemaining;
-  private final Optional<Gas> gasCost;
-  private final Gas gasRefund;
+  private final long gasRemaining;
+  private final OptionalLong gasCost;
+  private final long gasRefund;
   private final int depth;
   private Optional<ExceptionalHaltReason> exceptionalHaltReason;
   private final Address recipient;
@@ -46,6 +47,7 @@ public class TraceFrame {
   private final Optional<Bytes32[]> stack;
   private final Optional<Bytes[]> memory;
   private final Optional<Map<UInt256, UInt256>> storage;
+
   private final WorldUpdater worldUpdater;
   private final Optional<Bytes> revertReason;
   private final Optional<Map<Address, Wei>> maybeRefunds;
@@ -53,18 +55,18 @@ public class TraceFrame {
   private final int stackItemsProduced;
   private final Optional<Bytes32[]> stackPostExecution;
 
-  private Gas gasRemainingPostExecution;
+  private long gasRemainingPostExecution;
   private final boolean virtualOperation;
   private final Optional<MemoryEntry> maybeUpdatedMemory;
-  private final Optional<MemoryEntry> maybeUpdatedStorage;
-  private Optional<Gas> precompiledGasCost;
+  private final Optional<StorageEntry> maybeUpdatedStorage;
+  private OptionalLong precompiledGasCost;
 
   public TraceFrame(
       final int pc,
       final Optional<String> opcode,
-      final Gas gasRemaining,
-      final Optional<Gas> gasCost,
-      final Gas gasRefund,
+      final long gasRemaining,
+      final OptionalLong gasCost,
+      final long gasRefund,
       final int depth,
       final Optional<ExceptionalHaltReason> exceptionalHaltReason,
       final Address recipient,
@@ -82,7 +84,7 @@ public class TraceFrame {
       final Optional<Bytes32[]> stackPostExecution,
       final boolean virtualOperation,
       final Optional<MemoryEntry> maybeUpdatedMemory,
-      final Optional<MemoryEntry> maybeUpdatedStorage) {
+      final Optional<StorageEntry> maybeUpdatedStorage) {
     this.pc = pc;
     this.opcode = opcode;
     this.gasRemaining = gasRemaining;
@@ -106,7 +108,7 @@ public class TraceFrame {
     this.virtualOperation = virtualOperation;
     this.maybeUpdatedMemory = maybeUpdatedMemory;
     this.maybeUpdatedStorage = maybeUpdatedStorage;
-    precompiledGasCost = Optional.empty();
+    precompiledGasCost = OptionalLong.empty();
   }
 
   public int getPc() {
@@ -117,15 +119,15 @@ public class TraceFrame {
     return opcode.orElse("");
   }
 
-  public Gas getGasRemaining() {
+  public long getGasRemaining() {
     return gasRemaining;
   }
 
-  public Optional<Gas> getGasCost() {
+  public OptionalLong getGasCost() {
     return gasCost;
   }
 
-  public Gas getGasRefund() {
+  public long getGasRefund() {
     return gasRefund;
   }
 
@@ -150,7 +152,7 @@ public class TraceFrame {
   }
 
   public Bytes getInputData() {
-    return inputData;
+    return this.inputData;
   }
 
   public Bytes getOutputData() {
@@ -208,11 +210,11 @@ public class TraceFrame {
     return stackPostExecution;
   }
 
-  public Gas getGasRemainingPostExecution() {
+  public long getGasRemainingPostExecution() {
     return gasRemainingPostExecution;
   }
 
-  public void setGasRemainingPostExecution(final Gas gasRemainingPostExecution) {
+  public void setGasRemainingPostExecution(final long gasRemainingPostExecution) {
     this.gasRemainingPostExecution = gasRemainingPostExecution;
   }
 
@@ -224,15 +226,15 @@ public class TraceFrame {
     return maybeUpdatedMemory;
   }
 
-  public Optional<MemoryEntry> getMaybeUpdatedStorage() {
+  public Optional<StorageEntry> getMaybeUpdatedStorage() {
     return maybeUpdatedStorage;
   }
 
-  public Optional<Gas> getPrecompiledGasCost() {
+  public OptionalLong getPrecompiledGasCost() {
     return precompiledGasCost;
   }
 
-  public void setPrecompiledGasCost(final Optional<Gas> precompiledGasCost) {
+  public void setPrecompiledGasCost(final OptionalLong precompiledGasCost) {
     this.precompiledGasCost = precompiledGasCost;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -21,10 +21,11 @@ import static org.assertj.core.api.Assertions.fail;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.ImmutableEnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfigurationBuilder;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.net.URL;
 import java.nio.file.Files;
@@ -33,12 +34,15 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class LocalPermissioningConfigurationValidatorTest {
 
-  static final String PERMISSIONING_CONFIG_ROPSTEN_BOOTNODES =
-      "/permissioning_config_ropsten_bootnodes.toml";
+  static final String PERMISSIONING_CONFIG_SEPOLIA_BOOTNODES =
+      "/permissioning_config_sepolia_bootnodes.toml";
   static final String PERMISSIONING_CONFIG = "/permissioning_config.toml";
   static final String PERMISSIONING_CONFIG_VALID_HOSTNAME =
       "/permissioning_config_valid_hostname.toml";
@@ -46,12 +50,12 @@ public class LocalPermissioningConfigurationValidatorTest {
       "/permissioning_config_unknown_hostname.toml";
 
   @Test
-  public void ropstenWithNodesAllowlistOptionWhichDoesIncludeRopstenBootnodesMustNotError()
+  public void sepoliaWithNodesAllowlistOptionWhichDoesIncludeRopstenBootnodesMustNotError()
       throws Exception {
 
-    EthNetworkConfig ethNetworkConfig = EthNetworkConfig.getNetworkConfig(NetworkName.ROPSTEN);
+    EthNetworkConfig ethNetworkConfig = EthNetworkConfig.getNetworkConfig(NetworkName.SEPOLIA);
 
-    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_ROPSTEN_BOOTNODES);
+    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_SEPOLIA_BOOTNODES);
     final Path toml = Files.createTempFile("toml", "");
     Files.write(toml, Resources.toByteArray(configFile));
 
@@ -71,7 +75,7 @@ public class LocalPermissioningConfigurationValidatorTest {
   @Test
   public void nodesAllowlistOptionWhichDoesNotIncludeBootnodesMustError() throws Exception {
 
-    EthNetworkConfig ethNetworkConfig = EthNetworkConfig.getNetworkConfig(NetworkName.ROPSTEN);
+    EthNetworkConfig ethNetworkConfig = EthNetworkConfig.getNetworkConfig(NetworkName.SEPOLIA);
 
     final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG);
     final Path toml = Files.createTempFile("toml", "");
@@ -90,15 +94,24 @@ public class LocalPermissioningConfigurationValidatorTest {
       final List<EnodeURL> enodeURIs = ethNetworkConfig.getBootNodes();
       PermissioningConfigurationValidator.areAllNodesAreInAllowlist(
           enodeURIs, permissioningConfiguration);
-      fail("expected exception because ropsten bootnodes are not in node-allowlist");
+      fail("expected exception because sepolia bootnodes are not in node-allowlist");
     } catch (Exception e) {
       assertThat(e.getMessage()).startsWith("Specified node(s) not in nodes-allowlist");
       assertThat(e.getMessage())
           .contains(
-              "enode://6332792c4a00e3e4ee0926ed89e0d27ef985424d97b6a45bf0f23e51f0dcb5e66b875777506458aea7af6f9e4ffb69f43f3778ee73c81ed9d34c51c4b16b0b0f@52.232.243.152:30303");
+              "enode://4e5e92199ee224a01932a377160aa432f31d0b351f84ab413a8e0a42f4f36476f8fb1cbe914af0d9aef0d51665c214cf653c651c4bbd9d5550a934f241f1682b@138.197.51.181:30303");
       assertThat(e.getMessage())
           .contains(
-              "enode://94c15d1b9e2fe7ce56e458b9a3b672ef11894ddedd0c6f247e0f1d3487f52b66208fb4aeb8179fce6e3a749ea93ed147c37976d67af557508d199d9594c35f09@192.81.208.223:30303");
+              "enode://143e11fb766781d22d92a2e33f8f104cddae4411a122295ed1fdb6638de96a6ce65f5b7c964ba3763bba27961738fef7d3ecc739268f3e5e771fb4c87b6234ba@146.190.1.103:30303");
+      assertThat(e.getMessage())
+          .contains(
+              "enode://8b61dc2d06c3f96fddcbebb0efb29d60d3598650275dc469c22229d3e5620369b0d3dedafd929835fe7f489618f19f456fe7c0df572bf2d914a9f4e006f783a9@170.64.250.88:30303");
+      assertThat(e.getMessage())
+          .contains(
+              "enode://10d62eff032205fcef19497f35ca8477bea0eadfff6d769a147e895d8b2b8f8ae6341630c645c30f5df6e67547c03494ced3d9c5764e8622a26587b083b028e8@139.59.49.206:30303");
+      assertThat(e.getMessage())
+          .contains(
+              "enode://9e9492e2e8836114cc75f5b929784f4f46c324ad01daf87d956f98b3b6c5fcba95524d6e5cf9861dc96a2c8a171ea7105bb554a197455058de185fa870970c7c@138.68.123.152:30303");
     }
   }
 
@@ -119,7 +132,7 @@ public class LocalPermissioningConfigurationValidatorTest {
 
     // This node is defined in the PERMISSIONING_CONFIG file without the discovery port
     final EnodeURL enodeURL =
-        EnodeURL.fromString(
+        EnodeURLImpl.fromString(
             "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.9:4567?discport=30303");
 
     // In an URI comparison the URLs should not match
@@ -156,7 +169,7 @@ public class LocalPermissioningConfigurationValidatorTest {
 
     // This node is defined in the PERMISSIONING_CONFIG_DNS file without the discovery port
     final EnodeURL enodeURL =
-        EnodeURL.fromString(
+        EnodeURLImpl.fromString(
             "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@localhost:4567?discport=30303",
             enodeDnsConfiguration);
 
@@ -195,7 +208,8 @@ public class LocalPermissioningConfigurationValidatorTest {
                     toml.toAbsolutePath().toString()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining(
-            "Invalid enode URL syntax. Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'. Invalid ip address.");
+            "Invalid enode URL syntax 'enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@localhost:4567'. "
+                + "Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'. Invalid ip address.");
   }
 
   @Test
@@ -207,7 +221,7 @@ public class LocalPermissioningConfigurationValidatorTest {
     Files.write(toml, Resources.toByteArray(configFile));
 
     final ImmutableEnodeDnsConfiguration enodeDnsConfiguration =
-        ImmutableEnodeDnsConfiguration.builder().dnsEnabled(false).updateEnabled(false).build();
+        ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(false).build();
 
     assertThatThrownBy(
             () ->
@@ -219,6 +233,6 @@ public class LocalPermissioningConfigurationValidatorTest {
                     toml.toAbsolutePath().toString()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining(
-            "Invalid enode URL syntax. Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'. Invalid ip address.");
+            "Invalid IP address (or DNS query resolved an invalid IP). --Xdns-enabled is true but --Xdns-update-enabled flag is false.");
   }
 }

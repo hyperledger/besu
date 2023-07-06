@@ -1,0 +1,35 @@
+{
+  "comment" : "Set contract storage (key,value)'s: (1,1),(2,2)",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_get",
+    "params" : [ "0x4de634fe767d1f6d0512ca0c9c0a054d3a2596f7cdd7c1eea5f93046a740b3c7", [ ] ],
+    "id" : 203
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "action" : {
+        "callType" : "call",
+        "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+        "gas" : "0xffabba",
+        "input" : "0x0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002",
+        "to" : "0x0010000000000000000000000000000000000000",
+        "value" : "0x0"
+      },
+      "blockHash" : "0xa1221b6473a02f05fd7235f3b336c9a061c04e74afc0034e8d6207148149d2be",
+      "blockNumber" : 4,
+      "result" : {
+        "gasUsed" : "0x9c58",
+        "output" : "0x"
+      },
+      "subtraces" : 0,
+      "traceAddress" : [ ],
+      "transactionHash" : "0x4de634fe767d1f6d0512ca0c9c0a054d3a2596f7cdd7c1eea5f93046a740b3c7",
+      "transactionPosition" : 0,
+      "type" : "call"
+    },
+    "id" : 203
+  },
+  "statusCode" : 200
+}

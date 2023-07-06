@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,8 +16,12 @@
 package org.hyperledger.besu.evmtool;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.metrics.MetricsConfigurationModule;
+import org.hyperledger.besu.metrics.MetricsSystemModule;
 
 import java.util.function.Function;
 import javax.inject.Singleton;
@@ -32,13 +36,16 @@ import dagger.Component;
       DataStoreModule.class,
       BlockchainModule.class,
       EvmToolCommandOptionsModule.class,
+      MetricsConfigurationModule.class,
       MetricsSystemModule.class,
     })
 public interface EvmToolComponent {
 
-  Function<Integer, ProtocolSpec> getProtocolSpec();
+  Function<BlockHeader, ProtocolSpec> getProtocolSpec();
 
   WorldUpdater getWorldUpdater();
+
+  MutableWorldState getWorldState();
 
   Blockchain getBlockchain();
 }

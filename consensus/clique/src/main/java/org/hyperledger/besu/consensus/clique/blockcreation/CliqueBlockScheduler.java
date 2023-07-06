@@ -14,32 +14,41 @@
  */
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
-import org.hyperledger.besu.consensus.common.ValidatorProvider;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.time.Clock;
+import java.util.Collection;
 import java.util.Random;
 
 import com.google.common.annotations.VisibleForTesting;
 
+/** The Clique block scheduler. */
 public class CliqueBlockScheduler extends DefaultBlockScheduler {
 
   private final int OUT_OF_TURN_DELAY_MULTIPLIER_MILLIS = 500;
 
-  private final VoteTallyCache voteTallyCache;
+  private final ValidatorProvider validatorProvider;
   private final Address localNodeAddress;
   private final Random r = new Random();
 
+  /**
+   * Instantiates a new Clique block scheduler.
+   *
+   * @param clock the clock
+   * @param validatorProvider the validator provider
+   * @param localNodeAddress the local node address
+   * @param secondsBetweenBlocks the seconds between blocks
+   */
   public CliqueBlockScheduler(
       final Clock clock,
-      final VoteTallyCache voteTallyCache,
+      final ValidatorProvider validatorProvider,
       final Address localNodeAddress,
       final long secondsBetweenBlocks) {
     super(secondsBetweenBlocks, 0L, clock);
-    this.voteTallyCache = voteTallyCache;
+    this.validatorProvider = validatorProvider;
     this.localNodeAddress = localNodeAddress;
   }
 
@@ -56,17 +65,17 @@ public class CliqueBlockScheduler extends DefaultBlockScheduler {
   }
 
   private int calculateTurnBasedDelay(final BlockHeader parentHeader) {
-    final CliqueProposerSelector proposerSelector = new CliqueProposerSelector(voteTallyCache);
+    final CliqueProposerSelector proposerSelector = new CliqueProposerSelector(validatorProvider);
     final Address nextProposer = proposerSelector.selectProposerForNextBlock(parentHeader);
 
     if (nextProposer.equals(localNodeAddress)) {
       return 0;
     }
-    return calculatorOutOfTurnDelay(voteTallyCache.getVoteTallyAfterBlock(parentHeader));
+    return calculatorOutOfTurnDelay(validatorProvider.getValidatorsAfterBlock(parentHeader));
   }
 
-  private int calculatorOutOfTurnDelay(final ValidatorProvider validators) {
-    final int countSigners = validators.getValidators().size();
+  private int calculatorOutOfTurnDelay(final Collection<Address> validators) {
+    final int countSigners = validators.size();
     final double multiplier = (countSigners / 2d) + 1;
     final int maxDelay = (int) (multiplier * OUT_OF_TURN_DELAY_MULTIPLIER_MILLIS);
     return r.nextInt(maxDelay) + 1;

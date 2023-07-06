@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.worldstate;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 
 import java.util.concurrent.ExecutorService;
@@ -30,12 +30,12 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Pruner {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(Pruner.class);
 
   private final MarkSweepPruner pruningStrategy;
   private final Blockchain blockchain;
@@ -165,13 +165,13 @@ public class Pruner {
     try {
       executorService.execute(action);
     } catch (final MerkleTrieException mte) {
-      LOG.fatal(
+      LOG.error(
           "An unrecoverable error occurred while pruning. The database directory must be deleted and resynced.",
           mte);
       System.exit(1);
     } catch (final Exception e) {
       LOG.error(
-          "An unexpected error ocurred in the {} pruning phase: {}. Reattempting.",
+          "An unexpected error occurred in the {} pruning phase: {}. Reattempting.",
           getPruningPhase(),
           e.getMessage());
       pruningStrategy.clearMarks();

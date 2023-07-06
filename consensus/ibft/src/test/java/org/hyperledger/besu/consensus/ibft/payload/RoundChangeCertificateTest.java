@@ -18,13 +18,14 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.ibft.TestHelpers;
 import org.hyperledger.besu.consensus.ibft.messagedata.IbftV2;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -33,7 +34,7 @@ import java.math.BigInteger;
 import java.util.Optional;
 
 import org.assertj.core.util.Lists;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class RoundChangeCertificateTest {
   private static final ConsensusRoundIdentifier ROUND_IDENTIFIER =
@@ -57,9 +58,12 @@ public class RoundChangeCertificateTest {
   @Test
   public void rlpRoundTripWithPreparedCertificate() {
     final Block block =
-        TestHelpers.createProposalBlock(singletonList(AddressHelpers.ofValue(1)), ROUND_IDENTIFIER);
+        ProposedBlockHelpers.createProposalBlock(
+            singletonList(AddressHelpers.ofValue(1)), ROUND_IDENTIFIER);
     final ProposalPayload proposalPayload = new ProposalPayload(ROUND_IDENTIFIER, block.getHash());
-    final Signature signature = Signature.create(BigInteger.ONE, BigInteger.TEN, (byte) 0);
+    final SECPSignature signature =
+        SignatureAlgorithmFactory.getInstance()
+            .createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0);
     SignedData<ProposalPayload> signedProposal =
         PayloadDeserializers.from(proposalPayload, signature);
 

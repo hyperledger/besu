@@ -26,25 +26,48 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/** The Round change artifacts. */
 public class RoundChangeArtifacts {
 
   private final Optional<Block> block;
   private final List<SignedData<RoundChangePayload>> roundChangePayloads;
 
+  /**
+   * Instantiates a new Round change artifacts.
+   *
+   * @param block the block
+   * @param roundChangePayloads the round change payloads
+   */
   public RoundChangeArtifacts(
       final Optional<Block> block, final List<SignedData<RoundChangePayload>> roundChangePayloads) {
     this.block = block;
     this.roundChangePayloads = roundChangePayloads;
   }
 
+  /**
+   * Gets block.
+   *
+   * @return the block
+   */
   public Optional<Block> getBlock() {
     return block;
   }
 
+  /**
+   * Gets round change certificate.
+   *
+   * @return the round change certificate
+   */
   public RoundChangeCertificate getRoundChangeCertificate() {
     return new RoundChangeCertificate(roundChangePayloads);
   }
 
+  /**
+   * Create round change artifacts.
+   *
+   * @param roundChanges the round changes
+   * @return the round change artifacts
+   */
   public static RoundChangeArtifacts create(final Collection<RoundChange> roundChanges) {
 
     final Comparator<RoundChange> preparedRoundComparator =

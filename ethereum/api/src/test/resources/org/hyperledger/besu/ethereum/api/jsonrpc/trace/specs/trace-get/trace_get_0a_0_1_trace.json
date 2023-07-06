@@ -1,0 +1,35 @@
+{
+  "comment" : "Proxy call to another contract - 1 level deep. Using CALLCODE.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_get",
+    "params" : [ "0x4ec95b7de430b61fc9a57ed35274fd766b7f5fac5213ab946963eb528deae6b5", [ "0x0" ] ],
+    "id" : 233
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "action" : {
+        "callType" : "callcode",
+        "from" : "0x0050000000000000000000000000000000000000",
+        "gas" : "0xfbab36",
+        "input" : "0xf000000000000000000000000000000000000000000000000000000000000001",
+        "to" : "0x0030000000000000000000000000000000000000",
+        "value" : "0x0"
+      },
+      "blockHash" : "0xf020928933dc70cc8b6034b6881501cb6cbf57cacd8cfb01ed6b2329e68e7073",
+      "blockNumber" : 10,
+      "result" : {
+        "gasUsed" : "0x1b",
+        "output" : "0xf000000000000000000000000000000000000000000000000000000000000002"
+      },
+      "subtraces" : 0,
+      "traceAddress" : [ 0 ],
+      "transactionHash" : "0x4ec95b7de430b61fc9a57ed35274fd766b7f5fac5213ab946963eb528deae6b5",
+      "transactionPosition" : 0,
+      "type" : "call"
+    },
+    "id" : 233
+  },
+  "statusCode" : 200
+}

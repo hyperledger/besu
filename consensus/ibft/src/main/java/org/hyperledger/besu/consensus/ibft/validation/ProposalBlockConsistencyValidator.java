@@ -14,21 +14,34 @@
  */
 package org.hyperledger.besu.consensus.ibft.validation;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.ibft.IbftExtraData;
 import org.hyperledger.besu.consensus.ibft.payload.ProposalPayload;
 import org.hyperledger.besu.ethereum.core.Block;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The Proposal block consistency validator. */
 public class ProposalBlockConsistencyValidator {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(ProposalBlockConsistencyValidator.class);
 
+  /**
+   * Validate proposal matches block.
+   *
+   * @param signedPayload the signed payload
+   * @param proposedBlock the proposed block
+   * @param bftBlockInterface the bft block interface
+   * @return the boolean
+   */
   public boolean validateProposalMatchesBlock(
-      final SignedData<ProposalPayload> signedPayload, final Block proposedBlock) {
+      final SignedData<ProposalPayload> signedPayload,
+      final Block proposedBlock,
+      final BftBlockInterface bftBlockInterface) {
 
     if (!signedPayload.getPayload().getDigest().equals(proposedBlock.getHash())) {
       LOG.info("Invalid Proposal, embedded digest does not match block's hash.");
@@ -41,7 +54,8 @@ public class ProposalBlockConsistencyValidator {
       return false;
     }
 
-    if (!validateBlockMatchesProposalRound(signedPayload.getPayload(), proposedBlock)) {
+    if (!validateBlockMatchesProposalRound(
+        signedPayload.getPayload(), proposedBlock, bftBlockInterface)) {
       return false;
     }
 
@@ -49,9 +63,9 @@ public class ProposalBlockConsistencyValidator {
   }
 
   private boolean validateBlockMatchesProposalRound(
-      final ProposalPayload payload, final Block block) {
+      final ProposalPayload payload, final Block block, final BftBlockInterface bftBlockInterface) {
     final ConsensusRoundIdentifier msgRound = payload.getRoundIdentifier();
-    final IbftExtraData extraData = IbftExtraData.decode(block.getHeader());
+    final BftExtraData extraData = bftBlockInterface.getExtraData(block.getHeader());
     if (extraData.getRound() != msgRound.getRoundNumber()) {
       LOG.info("Invalid Proposal message, round number in block does not match that in message.");
       return false;

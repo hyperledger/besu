@@ -16,10 +16,12 @@ package org.hyperledger.besu.ethereum.core;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveFactory;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateWorldStateReader;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
@@ -28,12 +30,15 @@ import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.plugin.services.PrivacyPluginService;
+import org.hyperledger.besu.plugin.services.privacy.PrivacyGroupGenesisProvider;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -41,25 +46,45 @@ import com.google.common.io.Files;
 
 public class PrivacyParameters {
 
+  // Last address that can be generated for a pre-compiled contract
+  public static final Integer PRIVACY = Byte.MAX_VALUE - 1;
+  public static final Address DEFAULT_PRIVACY = Address.precompiled(PRIVACY);
+  public static final Address FLEXIBLE_PRIVACY = Address.precompiled(PRIVACY - 1);
+
+  // Flexible privacy management contracts (injected in private state)
+  public static final Address FLEXIBLE_PRIVACY_PROXY = Address.precompiled(PRIVACY - 2);
+  public static final Address DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT =
+      Address.precompiled(PRIVACY - 3);
+
+  public static final Address PLUGIN_PRIVACY = Address.precompiled(PRIVACY - 4);
+
   public static final URI DEFAULT_ENCLAVE_URL = URI.create("http://localhost:8888");
   public static final PrivacyParameters DEFAULT = new PrivacyParameters();
 
   private boolean enabled;
   private URI enclaveUri;
-  private String enclavePublicKey;
+  private String privacyUserId;
   private File enclavePublicKeyFile;
-  private Optional<SECP256K1.KeyPair> signingKeyPair = Optional.empty();
+  private Optional<KeyPair> signingKeyPair = Optional.empty();
   private Enclave enclave;
   private PrivacyStorageProvider privateStorageProvider;
   private WorldStateArchive privateWorldStateArchive;
   private PrivateStateStorage privateStateStorage;
   private boolean multiTenancyEnabled;
-  private boolean onchainPrivacyGroupsEnabled;
+  private boolean flexiblePrivacyGroupsEnabled;
+  private boolean privacyPluginEnabled;
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivateWorldStateReader privateWorldStateReader;
+  private PrivacyPluginService privacyPluginService;
 
-  public Integer getPrivacyAddress() {
-    return onchainPrivacyGroupsEnabled ? Address.PRIVACY - 1 : Address.PRIVACY;
+  public Address getPrivacyAddress() {
+    if (isPrivacyPluginEnabled()) {
+      return PLUGIN_PRIVACY;
+    } else if (isFlexiblePrivacyGroupsEnabled()) {
+      return FLEXIBLE_PRIVACY;
+    } else {
+      return DEFAULT_PRIVACY;
+    }
   }
 
   public Boolean isEnabled() {
@@ -78,13 +103,13 @@ public class PrivacyParameters {
     this.enclaveUri = enclaveUri;
   }
 
-  public String getEnclavePublicKey() {
-    return enclavePublicKey;
+  public String getPrivacyUserId() {
+    return privacyUserId;
   }
 
   @VisibleForTesting
-  public void setEnclavePublicKey(final String enclavePublicKey) {
-    this.enclavePublicKey = enclavePublicKey;
+  public void setPrivacyUserId(final String privacyUserId) {
+    this.privacyUserId = privacyUserId;
   }
 
   public File getEnclavePublicKeyFile() {
@@ -95,11 +120,11 @@ public class PrivacyParameters {
     this.enclavePublicKeyFile = enclavePublicKeyFile;
   }
 
-  public Optional<SECP256K1.KeyPair> getSigningKeyPair() {
+  public Optional<KeyPair> getSigningKeyPair() {
     return signingKeyPair;
   }
 
-  private void setSigningKeyPair(final SECP256K1.KeyPair signingKeyPair) {
+  private void setSigningKeyPair(final KeyPair signingKeyPair) {
     this.signingKeyPair = Optional.ofNullable(signingKeyPair);
   }
 
@@ -143,12 +168,20 @@ public class PrivacyParameters {
     return multiTenancyEnabled;
   }
 
-  private void setOnchainPrivacyGroupsEnabled(final boolean onchainPrivacyGroupsEnabled) {
-    this.onchainPrivacyGroupsEnabled = onchainPrivacyGroupsEnabled;
+  private void setFlexiblePrivacyGroupsEnabled(final boolean flexiblePrivacyGroupsEnabled) {
+    this.flexiblePrivacyGroupsEnabled = flexiblePrivacyGroupsEnabled;
   }
 
-  public boolean isOnchainPrivacyGroupsEnabled() {
-    return onchainPrivacyGroupsEnabled;
+  public boolean isFlexiblePrivacyGroupsEnabled() {
+    return flexiblePrivacyGroupsEnabled;
+  }
+
+  private void setPrivacyPluginEnabled(final boolean privacyPluginEnabled) {
+    this.privacyPluginEnabled = privacyPluginEnabled;
+  }
+
+  public boolean isPrivacyPluginEnabled() {
+    return privacyPluginEnabled;
   }
 
   public PrivateStateRootResolver getPrivateStateRootResolver() {
@@ -168,6 +201,32 @@ public class PrivacyParameters {
     this.privateWorldStateReader = privateWorldStateReader;
   }
 
+  private void setPrivacyService(final PrivacyPluginService privacyPluginService) {
+    this.privacyPluginService = privacyPluginService;
+  }
+
+  public PrivacyPluginService getPrivacyService() {
+    return privacyPluginService;
+  }
+
+  public PrivateStateGenesisAllocator getPrivateStateGenesisAllocator() {
+    // Note: the order of plugin registration may cause issues here.
+    // This is why it's instantiated on get. It's needed in the privacy pre-compile constructors
+    // but privacy parameters is built before the plugin has had a chance to register a provider
+    // and have cli options instantiated
+    return new PrivateStateGenesisAllocator(
+        flexiblePrivacyGroupsEnabled, createPrivateGenesisProvider());
+  }
+
+  private PrivacyGroupGenesisProvider createPrivateGenesisProvider() {
+    if (privacyPluginService != null
+        && privacyPluginService.getPrivacyGroupGenesisProvider() != null) {
+      return privacyPluginService.getPrivacyGroupGenesisProvider();
+    } else {
+      return (privacyGroupId, blockNumber) -> Collections::emptyList;
+    }
+  }
+
   @Override
   public String toString() {
     return "PrivacyParameters{"
@@ -175,10 +234,14 @@ public class PrivacyParameters {
         + enabled
         + ", multiTenancyEnabled = "
         + multiTenancyEnabled
-        + ", onchainPrivacyGroupsEnabled = "
-        + onchainPrivacyGroupsEnabled
+        + ", privacyPluginEnabled = "
+        + privacyPluginEnabled
+        + ", flexiblePrivacyGroupsEnabled = "
+        + flexiblePrivacyGroupsEnabled
         + ", enclaveUri='"
         + enclaveUri
+        + ", privatePayloadEncryptionService='"
+        + privacyPluginService.getClass().getSimpleName()
         + '\''
         + '}';
   }
@@ -188,7 +251,7 @@ public class PrivacyParameters {
     private boolean enabled;
     private URI enclaveUrl;
     private File enclavePublicKeyFile;
-    private String enclavePublicKey;
+    private String privacyUserId;
     private Path privateKeyPath;
     private PrivacyStorageProvider storageProvider;
     private EnclaveFactory enclaveFactory;
@@ -196,7 +259,9 @@ public class PrivacyParameters {
     private Path privacyKeyStoreFile;
     private Path privacyKeyStorePasswordFile;
     private Path privacyTlsKnownEnclaveFile;
-    private boolean onchainPrivacyGroupsEnabled;
+    private boolean flexiblePrivacyGroupsEnabled;
+    private boolean privacyPluginEnabled;
+    private PrivacyPluginService privacyPluginService;
 
     public Builder setEnclaveUrl(final URI enclaveUrl) {
       this.enclaveUrl = enclaveUrl;
@@ -243,8 +308,26 @@ public class PrivacyParameters {
       return this;
     }
 
-    public Builder setOnchainPrivacyGroupsEnabled(final boolean onchainPrivacyGroupsEnabled) {
-      this.onchainPrivacyGroupsEnabled = onchainPrivacyGroupsEnabled;
+    public Builder setFlexiblePrivacyGroupsEnabled(final boolean flexiblePrivacyGroupsEnabled) {
+      this.flexiblePrivacyGroupsEnabled = flexiblePrivacyGroupsEnabled;
+      return this;
+    }
+
+    public Builder setPrivacyPluginEnabled(final boolean privacyPluginEnabled) {
+      this.privacyPluginEnabled = privacyPluginEnabled;
+      return this;
+    }
+
+    public Builder setPrivacyUserIdUsingFile(final File publicKeyFile) throws IOException {
+      this.enclavePublicKeyFile = publicKeyFile;
+      this.privacyUserId = Files.asCharSource(publicKeyFile, UTF_8).read();
+      // throws exception if invalid base 64
+      Base64.getDecoder().decode(this.privacyUserId);
+      return this;
+    }
+
+    public Builder setPrivacyService(final PrivacyPluginService privacyPluginService) {
+      this.privacyPluginService = privacyPluginService;
       return this;
     }
 
@@ -268,10 +351,14 @@ public class PrivacyParameters {
                 privateStateRootResolver, privateWorldStateArchive, privateStateStorage));
 
         config.setPrivateWorldStateArchive(privateWorldStateArchive);
-        config.setEnclavePublicKey(enclavePublicKey);
-        config.setEnclavePublicKeyFile(enclavePublicKeyFile);
+
+        config.setPrivacyService(privacyPluginService);
+
         config.setPrivateStorageProvider(storageProvider);
         config.setPrivateStateStorage(privateStateStorage);
+
+        config.setPrivacyUserId(privacyUserId);
+        config.setEnclavePublicKeyFile(enclavePublicKeyFile);
         // pass TLS options to enclave factory if they are set
         if (privacyKeyStoreFile != null) {
           config.setEnclave(
@@ -283,32 +370,17 @@ public class PrivacyParameters {
         } else {
           config.setEnclave(enclaveFactory.createVertxEnclave(enclaveUrl));
         }
+        config.setEnclaveUri(enclaveUrl);
 
         if (privateKeyPath != null) {
           config.setSigningKeyPair(KeyPairUtil.load(privateKeyPath.toFile()));
         }
       }
       config.setEnabled(enabled);
-      config.setEnclaveUri(enclaveUrl);
       config.setMultiTenancyEnabled(multiTenancyEnabled);
-      config.setOnchainPrivacyGroupsEnabled(onchainPrivacyGroupsEnabled);
+      config.setFlexiblePrivacyGroupsEnabled(flexiblePrivacyGroupsEnabled);
+      config.setPrivacyPluginEnabled(privacyPluginEnabled);
       return config;
-    }
-
-    public Builder setEnclavePublicKeyUsingFile(final File publicKeyFile) throws IOException {
-      this.enclavePublicKeyFile = publicKeyFile;
-      this.enclavePublicKey = Files.asCharSource(publicKeyFile, UTF_8).read();
-      validatePublicKey(publicKeyFile);
-      return this;
-    }
-
-    private void validatePublicKey(final File publicKeyFile) {
-      if (publicKeyFile.length() != 44) {
-        throw new IllegalArgumentException(
-            "Contents of enclave public key file needs to be 44 characters long to decode to a valid 32 byte public key.");
-      }
-      // throws exception if invalid base 64
-      Base64.getDecoder().decode(this.enclavePublicKey);
     }
   }
 }

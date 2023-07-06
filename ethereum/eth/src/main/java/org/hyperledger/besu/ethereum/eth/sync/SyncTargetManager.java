@@ -29,12 +29,12 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class SyncTargetManager {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(SyncTargetManager.class);
 
   private final SynchronizerConfiguration config;
   private final ProtocolSchedule protocolSchedule;
@@ -55,14 +55,7 @@ public abstract class SyncTargetManager {
     this.metricsSystem = metricsSystem;
   }
 
-  public CompletableFuture<SyncTarget> findSyncTarget(
-      final Optional<SyncTarget> currentSyncTarget) {
-    return currentSyncTarget
-        .map(CompletableFuture::completedFuture) // Return an existing sync target if present
-        .orElseGet(this::selectNewSyncTarget);
-  }
-
-  private CompletableFuture<SyncTarget> selectNewSyncTarget() {
+  public CompletableFuture<SyncTarget> findSyncTarget() {
     return selectBestAvailableSyncTarget()
         .thenCompose(
             maybeBestPeer -> {
@@ -89,7 +82,7 @@ public abstract class SyncTargetManager {
                             return waitForPeerAndThenSetSyncTarget();
                           }
                           final SyncTarget syncTarget = new SyncTarget(bestPeer, target);
-                          LOG.info(
+                          LOG.debug(
                               "Found common ancestor with peer {} at block {}",
                               bestPeer,
                               target.getNumber());
@@ -113,7 +106,7 @@ public abstract class SyncTargetManager {
   protected abstract CompletableFuture<Optional<EthPeer>> selectBestAvailableSyncTarget();
 
   private CompletableFuture<SyncTarget> waitForPeerAndThenSetSyncTarget() {
-    return waitForNewPeer().handle((r, t) -> r).thenCompose((r) -> selectNewSyncTarget());
+    return waitForNewPeer().handle((r, t) -> r).thenCompose((r) -> findSyncTarget());
   }
 
   private CompletableFuture<?> waitForNewPeer() {

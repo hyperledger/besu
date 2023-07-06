@@ -16,43 +16,88 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
+import org.hyperledger.besu.ethereum.rlp.RLPException;
 
-import java.util.ArrayList;
+import java.math.BigInteger;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class RequestManager {
-  private final AtomicLong responseStreamId = new AtomicLong(0L);
-  private final Map<Long, ResponseStream> responseStreams = new ConcurrentHashMap<>();
+
+  private static final Logger LOG = LoggerFactory.getLogger(RequestManager.class);
+  private final AtomicLong requestIdCounter =
+      new AtomicLong(1); // some clients have issues encoding zero
+  private final Map<BigInteger, ResponseStream> responseStreams = new ConcurrentHashMap<>();
   private final EthPeer peer;
+  private final boolean supportsRequestId;
+  private final String protocolName;
 
   private final AtomicInteger outstandingRequests = new AtomicInteger(0);
 
-  public RequestManager(final EthPeer peer) {
+  public RequestManager(
+      final EthPeer peer, final boolean supportsRequestId, final String protocolName) {
     this.peer = peer;
+    this.supportsRequestId = supportsRequestId;
+    this.protocolName = protocolName;
   }
 
   public int outstandingRequests() {
     return outstandingRequests.get();
   }
 
-  public ResponseStream dispatchRequest(final RequestSender sender) throws PeerNotConnected {
+  public String getProtocolName() {
+    return protocolName;
+  }
+
+  public ResponseStream dispatchRequest(final RequestSender sender, final MessageData messageData)
+      throws PeerNotConnected {
     outstandingRequests.incrementAndGet();
-    final ResponseStream stream = createStream();
-    sender.send();
+    final BigInteger requestId = BigInteger.valueOf(requestIdCounter.getAndIncrement());
+    final ResponseStream stream = createStream(requestId);
+    sender.send(supportsRequestId ? messageData.wrapMessageData(requestId) : messageData);
     return stream;
   }
 
-  public void dispatchResponse(final EthMessage message) {
-    final Collection<ResponseStream> streams = new ArrayList<>(responseStreams.values());
+  public void dispatchResponse(final EthMessage ethMessage) {
+    final Collection<ResponseStream> streams = List.copyOf(responseStreams.values());
     final int count = outstandingRequests.decrementAndGet();
+    try {
+      if (supportsRequestId) {
+        // If there's a requestId, find the specific stream it belongs to
+        final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
+            ethMessage.getData().unwrapMessageData();
+        Optional.ofNullable(responseStreams.get(requestIdAndEthMessage.getKey()))
+            .ifPresentOrElse(
+                responseStream -> responseStream.processMessage(requestIdAndEthMessage.getValue()),
+                // Consider incorrect requestIds to be a useless response; too
+                // many of these and we will disconnect.
+                () -> peer.recordUselessResponse("Request ID incorrect"));
 
-    streams.forEach(s -> s.processMessage(message.getData()));
+      } else {
+        // otherwise iterate through all of them
+        streams.forEach(stream -> stream.processMessage(ethMessage.getData()));
+      }
+    } catch (final RLPException e) {
+      LOG.debug(
+          "Received malformed message {} (BREACH_OF_PROTOCOL), disconnecting: {}",
+          ethMessage.getData(),
+          peer,
+          e);
+
+      peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+    }
+
     if (count == 0) {
       // No possibility of any remaining outstanding messages
       closeOutstandingStreams(streams);
@@ -63,10 +108,9 @@ public class RequestManager {
     closeOutstandingStreams(responseStreams.values());
   }
 
-  private ResponseStream createStream() {
-    final long listenerId = nextStreamId();
-    final ResponseStream stream = new ResponseStream(peer, () -> deregisterStream(listenerId));
-    responseStreams.put(listenerId, stream);
+  private ResponseStream createStream(final BigInteger requestId) {
+    final ResponseStream stream = new ResponseStream(peer, () -> deregisterStream(requestId));
+    responseStreams.put(requestId, stream);
     return stream;
   }
 
@@ -75,17 +119,13 @@ public class RequestManager {
     outstandingStreams.forEach(ResponseStream::close);
   }
 
-  private void deregisterStream(final long id) {
+  private void deregisterStream(final BigInteger id) {
     responseStreams.remove(id);
-  }
-
-  private long nextStreamId() {
-    return responseStreamId.incrementAndGet();
   }
 
   @FunctionalInterface
   public interface RequestSender {
-    void send() throws PeerNotConnected;
+    void send(final MessageData messageData) throws PeerNotConnected;
   }
 
   @FunctionalInterface

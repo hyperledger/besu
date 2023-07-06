@@ -14,31 +14,32 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
-import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetcherContext;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.api.graphql.GraphQLContextType;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldState;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
-import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
+import org.hyperledger.besu.evm.log.LogTopic;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
 import com.google.common.primitives.Longs;
 import graphql.schema.DataFetchingEnvironment;
@@ -63,29 +64,29 @@ public class BlockAdapterBase extends AdapterBase {
     return block.map(NormalBlockAdapter::new);
   }
 
-  public Optional<Bytes32> getHash() {
-    return Optional.of(header.getHash());
+  public Bytes32 getHash() {
+    return header.getHash();
   }
 
-  public Optional<Bytes> getNonce() {
+  public Bytes getNonce() {
     final long nonce = header.getNonce();
     final byte[] bytes = Longs.toByteArray(nonce);
-    return Optional.of(Bytes.wrap(bytes));
+    return Bytes.wrap(bytes);
   }
 
-  public Optional<Bytes32> getTransactionsRoot() {
-    return Optional.of(header.getTransactionsRoot());
+  public Bytes32 getTransactionsRoot() {
+    return header.getTransactionsRoot();
   }
 
-  public Optional<Bytes32> getStateRoot() {
-    return Optional.of(header.getStateRoot());
+  public Bytes32 getStateRoot() {
+    return header.getStateRoot();
   }
 
-  public Optional<Bytes32> getReceiptsRoot() {
-    return Optional.of(header.getReceiptsRoot());
+  public Bytes32 getReceiptsRoot() {
+    return header.getReceiptsRoot();
   }
 
-  public Optional<AdapterBase> getMiner(final DataFetchingEnvironment environment) {
+  public AdapterBase getMiner(final DataFetchingEnvironment environment) {
 
     final BlockchainQueries query = getBlockchainQueries(environment);
     long blockNumber = header.getNumber();
@@ -94,59 +95,60 @@ public class BlockAdapterBase extends AdapterBase {
       blockNumber = bn;
     }
 
-    return Optional.ofNullable(query.getWorldState(blockNumber).get().get(header.getCoinbase()))
+    return query
+        .getAndMapWorldState(blockNumber, ws -> Optional.ofNullable(ws.get(header.getCoinbase())))
         .map(account -> (AdapterBase) new AccountAdapter(account))
-        .or(() -> Optional.of(new EmptyAccountAdapter(header.getCoinbase())));
+        .orElseGet(() -> new EmptyAccountAdapter(header.getCoinbase()));
   }
 
-  public Optional<Bytes> getExtraData() {
-    return Optional.of(header.getExtraData());
+  public Bytes getExtraData() {
+    return header.getExtraData();
   }
 
-  public Optional<Long> getGasLimit() {
-    return Optional.of(header.getGasLimit());
+  public Optional<Wei> getBaseFeePerGas() {
+    return header.getBaseFee();
   }
 
-  public Optional<Long> getGasUsed() {
-    return Optional.of(header.getGasUsed());
+  public Long getGasLimit() {
+    return header.getGasLimit();
   }
 
-  public Optional<UInt256> getTimestamp() {
-    return Optional.of(UInt256.valueOf(header.getTimestamp()));
+  public Long getGasUsed() {
+    return header.getGasUsed();
   }
 
-  public Optional<Bytes> getLogsBloom() {
-    return Optional.of(header.getLogsBloom());
+  public Long getTimestamp() {
+    return header.getTimestamp();
   }
 
-  public Optional<Bytes32> getMixHash() {
-    return Optional.of(header.getMixHash());
+  public Bytes getLogsBloom() {
+    return header.getLogsBloom();
   }
 
-  public Optional<Difficulty> getDifficulty() {
-    return Optional.of(header.getDifficulty());
+  public Bytes32 getMixHash() {
+    return header.getMixHash();
   }
 
-  public Optional<Bytes32> getOmmerHash() {
-    return Optional.of(header.getOmmersHash());
+  public Difficulty getDifficulty() {
+    return header.getDifficulty();
   }
 
-  public Optional<Long> getNumber() {
-    final long bn = header.getNumber();
-    return Optional.of(bn);
+  public Bytes32 getOmmerHash() {
+    return header.getOmmersHash();
   }
 
-  public Optional<AccountAdapter> getAccount(final DataFetchingEnvironment environment) {
+  public Long getNumber() {
+    return header.getNumber();
+  }
 
+  public AccountAdapter getAccount(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final long bn = header.getNumber();
-    final WorldState ws = query.getWorldState(bn).get();
-
-    if (ws != null) {
-      final Address addr = environment.getArgument("address");
-      return Optional.of(new AccountAdapter(ws.get(addr)));
-    }
-    return Optional.empty();
+    final Address address = environment.getArgument("address");
+    return query
+        .getAndMapWorldState(
+            bn, ws -> Optional.of(new AccountAdapter(ws.get(address), Optional.of(bn))))
+        .get();
   }
 
   public List<LogAdapter> getLogs(final DataFetchingEnvironment environment) {
@@ -154,16 +156,20 @@ public class BlockAdapterBase extends AdapterBase {
     final Map<String, Object> filter = environment.getArgument("filter");
 
     @SuppressWarnings("unchecked")
-    final List<Address> addrs = (List<Address>) filter.get("addresses");
+    final List<Address> addresses = (List<Address>) filter.get("addresses");
     @SuppressWarnings("unchecked")
     final List<List<Bytes32>> topics = (List<List<Bytes32>>) filter.get("topics");
 
     final List<List<LogTopic>> transformedTopics = new ArrayList<>();
     for (final List<Bytes32> topic : topics) {
-      transformedTopics.add(topic.stream().map(LogTopic::of).collect(Collectors.toList()));
+      if (topic.isEmpty()) {
+        transformedTopics.add(Collections.singletonList(null));
+      } else {
+        transformedTopics.add(topic.stream().map(LogTopic::of).toList());
+      }
     }
     final LogsQuery query =
-        new LogsQuery.Builder().addresses(addrs).topics(transformedTopics).build();
+        new LogsQuery.Builder().addresses(addresses).topics(transformedTopics).build();
 
     final BlockchainQueries blockchain = getBlockchainQueries(environment);
 
@@ -176,9 +182,9 @@ public class BlockAdapterBase extends AdapterBase {
     return results;
   }
 
-  public Optional<Long> getEstimateGas(final DataFetchingEnvironment environment) {
+  public Long getEstimateGas(final DataFetchingEnvironment environment) {
     final Optional<CallResult> result = executeCall(environment);
-    return result.map(CallResult::getGasUsed);
+    return result.map(CallResult::getGasUsed).orElse(0L);
   }
 
   public Optional<CallResult> getCall(final DataFetchingEnvironment environment) {
@@ -193,10 +199,14 @@ public class BlockAdapterBase extends AdapterBase {
     final UInt256 gasPrice = (UInt256) callData.get("gasPrice");
     final UInt256 value = (UInt256) callData.get("value");
     final Bytes data = (Bytes) callData.get("data");
+    final Optional<Wei> maxFeePerGas =
+        Optional.ofNullable((UInt256) callData.get("maxFeePerGas")).map(Wei::of);
+    final Optional<Wei> maxPriorityFeePerGas =
+        Optional.ofNullable((UInt256) callData.get("maxPriorityFeePerGas")).map(Wei::of);
 
     final BlockchainQueries query = getBlockchainQueries(environment);
     final ProtocolSchedule protocolSchedule =
-        ((GraphQLDataFetcherContext) environment.getContext()).getProtocolSchedule();
+        environment.getGraphQlContext().get(GraphQLContextType.PROTOCOL_SCHEDULE);
     final long bn = header.getNumber();
 
     final TransactionSimulator transactionSimulator =
@@ -216,24 +226,71 @@ public class BlockAdapterBase extends AdapterBase {
       valueParam = Wei.of(value);
     }
     final CallParameter param =
-        new CallParameter(from, to, gasParam, gasPriceParam, valueParam, data);
+        new CallParameter(
+            from,
+            to,
+            gasParam,
+            gasPriceParam,
+            maxPriorityFeePerGas,
+            maxFeePerGas,
+            valueParam,
+            data,
+            Optional.empty());
 
-    final Optional<TransactionSimulatorResult> opt =
-        transactionSimulator.process(
-            param,
-            TransactionValidationParams.transactionSimulator(),
-            OperationTracer.NO_TRACING,
-            bn);
-    if (opt.isPresent()) {
-      final TransactionSimulatorResult result = opt.get();
-      long status = 0;
-      if (result.isSuccessful()) {
-        status = 1;
-      }
-      final CallResult callResult =
-          new CallResult(status, result.getGasEstimate(), result.getOutput());
-      return Optional.of(callResult);
-    }
-    return Optional.empty();
+    ImmutableTransactionValidationParams.Builder transactionValidationParams =
+        ImmutableTransactionValidationParams.builder()
+            .from(TransactionValidationParams.transactionSimulator());
+    transactionValidationParams.isAllowExceedingBalance(true);
+
+    return transactionSimulator.process(
+        param,
+        transactionValidationParams.build(),
+        OperationTracer.NO_TRACING,
+        (mutableWorldState, transactionSimulatorResult) ->
+            transactionSimulatorResult.map(
+                result -> {
+                  long status = 0;
+                  if (result.isSuccessful()) {
+                    status = 1;
+                  }
+                  return new CallResult(status, result.getGasEstimate(), result.getOutput());
+                }),
+        header);
+  }
+
+  Bytes getRawHeader() {
+    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+    header.writeTo(rlpOutput);
+    return rlpOutput.encoded();
+  }
+
+  Bytes getRaw(final DataFetchingEnvironment environment) {
+    final BlockchainQueries query = getBlockchainQueries(environment);
+    return query
+        .getBlockchain()
+        .getBlockBody(header.getBlockHash())
+        .map(
+            blockBody -> {
+              final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+              blockBody.writeWrappedBodyTo(rlpOutput);
+              return rlpOutput.encoded();
+            })
+        .orElse(Bytes.EMPTY);
+  }
+
+  Optional<Bytes32> getWithdrawalsRoot() {
+    return header.getWithdrawalsRoot().map(Function.identity());
+  }
+
+  Optional<List<WithdrawalAdapter>> getWithdrawals(final DataFetchingEnvironment environment) {
+    final BlockchainQueries query = getBlockchainQueries(environment);
+    return query
+        .getBlockchain()
+        .getBlockBody(header.getBlockHash())
+        .flatMap(
+            blockBody ->
+                blockBody
+                    .getWithdrawals()
+                    .map(wl -> wl.stream().map(WithdrawalAdapter::new).toList()));
   }
 }

@@ -23,7 +23,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.Collection;
@@ -55,19 +54,19 @@ public class TransactionPoolReplacementHandlerTest {
   }
 
   private final List<TransactionPoolReplacementRule> rules;
-  private final TransactionInfo oldTransactionInfo;
-  private final TransactionInfo newTransactionInfo;
+  private final PendingTransaction oldPendingTransaction;
+  private final PendingTransaction newPendingTransaction;
   private final boolean expectedResult;
   private final BlockHeader header;
 
   public TransactionPoolReplacementHandlerTest(
       final List<TransactionPoolReplacementRule> rules,
-      final TransactionInfo oldTransactionInfo,
-      final TransactionInfo newTransactionInfo,
+      final PendingTransaction oldPendingTransaction,
+      final PendingTransaction newPendingTransaction,
       final boolean expectedResult) {
     this.rules = rules;
-    this.oldTransactionInfo = oldTransactionInfo;
-    this.newTransactionInfo = newTransactionInfo;
+    this.oldPendingTransaction = oldPendingTransaction;
+    this.newPendingTransaction = newPendingTransaction;
     this.expectedResult = expectedResult;
     header = mock(BlockHeader.class);
     when(header.getBaseFee()).thenReturn(Optional.empty());
@@ -77,7 +76,7 @@ public class TransactionPoolReplacementHandlerTest {
   public void shouldReplace() {
     assertThat(
             new TransactionPoolReplacementHandler(rules)
-                .shouldReplace(oldTransactionInfo, newTransactionInfo, header))
+                .shouldReplace(oldPendingTransaction, newPendingTransaction, header))
         .isEqualTo(expectedResult);
   }
 
@@ -92,11 +91,11 @@ public class TransactionPoolReplacementHandlerTest {
         .collect(Collectors.toList());
   }
 
-  private static TransactionInfo mockTransactionInfo() {
-    final TransactionInfo transactionInfo = mock(TransactionInfo.class);
+  private static PendingTransaction mockTransactionInfo() {
+    final PendingTransaction pendingTransaction = mock(PendingTransaction.class);
     final Transaction transaction = mock(Transaction.class);
     when(transaction.getType()).thenReturn(TransactionType.FRONTIER);
-    when(transactionInfo.getTransaction()).thenReturn(transaction);
-    return transactionInfo;
+    when(pendingTransaction.getTransaction()).thenReturn(transaction);
+    return pendingTransaction;
   }
 }

@@ -21,4 +21,8 @@ public class AdminTransactions {
   public AddPeerTransaction addPeer(final URI peer) {
     return new AddPeerTransaction(peer);
   }
+
+  public AdminPeersTransaction listPeers() {
+    return new AdminPeersTransaction();
+  }
 }

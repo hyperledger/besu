@@ -20,11 +20,11 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BackendQuery {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BackendQuery.class);
 
   public static <T> T runIfAlive(final Callable<T> task, final Supplier<Boolean> alive)
       throws Exception {

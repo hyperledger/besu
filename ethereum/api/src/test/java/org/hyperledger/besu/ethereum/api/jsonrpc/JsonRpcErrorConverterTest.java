@@ -37,8 +37,8 @@ public class JsonRpcErrorConverterTest {
         new Object[][] {
           {TransactionInvalidReason.NONCE_TOO_LOW, JsonRpcError.NONCE_TOO_LOW},
           {TransactionInvalidReason.PRIVATE_NONCE_TOO_LOW, JsonRpcError.NONCE_TOO_LOW},
-          {TransactionInvalidReason.INCORRECT_NONCE, JsonRpcError.INCORRECT_NONCE},
-          {TransactionInvalidReason.INCORRECT_PRIVATE_NONCE, JsonRpcError.INCORRECT_NONCE},
+          {TransactionInvalidReason.NONCE_TOO_HIGH, JsonRpcError.NONCE_TOO_HIGH},
+          {TransactionInvalidReason.PRIVATE_NONCE_TOO_HIGH, JsonRpcError.NONCE_TOO_HIGH},
           {TransactionInvalidReason.INVALID_SIGNATURE, JsonRpcError.INVALID_TRANSACTION_SIGNATURE},
           {
             TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
@@ -73,8 +73,7 @@ public class JsonRpcErrorConverterTest {
           {
             TransactionInvalidReason.TRANSACTION_REPLACEMENT_UNDERPRICED,
             JsonRpcError.ETH_SEND_TX_REPLACEMENT_UNDERPRICED
-          },
-          {TransactionInvalidReason.GAS_PRICE_MUST_BE_ZERO, JsonRpcError.GAS_PRICE_MUST_BE_ZERO}
+          }
         });
   }
 

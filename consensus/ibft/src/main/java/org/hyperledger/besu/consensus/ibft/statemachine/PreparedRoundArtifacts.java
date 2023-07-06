@@ -22,20 +22,37 @@ import org.hyperledger.besu.ethereum.core.Block;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+/** The Prepared round artifacts. */
 public class PreparedRoundArtifacts {
 
   private final Proposal proposal;
   private final Collection<Prepare> prepares;
 
+  /**
+   * Instantiates a new Prepared round artifacts.
+   *
+   * @param proposal the proposal
+   * @param prepares the prepares
+   */
   public PreparedRoundArtifacts(final Proposal proposal, final Collection<Prepare> prepares) {
     this.proposal = proposal;
     this.prepares = prepares;
   }
 
+  /**
+   * Gets block.
+   *
+   * @return the block
+   */
   public Block getBlock() {
     return proposal.getBlock();
   }
 
+  /**
+   * Gets prepared certificate.
+   *
+   * @return the prepared certificate
+   */
   public PreparedCertificate getPreparedCertificate() {
     return new PreparedCertificate(
         proposal.getSignedPayload(),

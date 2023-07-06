@@ -16,43 +16,62 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
+import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastDownloaderFactory;
+import org.hyperledger.besu.ethereum.eth.sync.checkpointsync.CheckpointDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncException;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.FullSyncDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDownloaderFactory;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.Pruner;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.util.ExceptionUtils;
+import org.hyperledger.besu.util.log.FramedLogMessage;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class DefaultSynchronizer implements Synchronizer {
+public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceListener {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultSynchronizer.class);
 
   private final Optional<Pruner> maybePruner;
   private final SyncState syncState;
   private final AtomicBoolean running = new AtomicBoolean(false);
-  private final BlockPropagationManager blockPropagationManager;
-  private final Optional<FastSyncDownloader> fastSyncDownloader;
-  private final FullSyncDownloader fullSyncDownloader;
+  private final Optional<BlockPropagationManager> blockPropagationManager;
+  private final Supplier<Optional<FastSyncDownloader<?>>> fastSyncFactory;
+  private Optional<FastSyncDownloader<?>> fastSyncDownloader;
+  private final Optional<FullSyncDownloader> fullSyncDownloader;
+  private final ProtocolContext protocolContext;
+  private final PivotBlockSelector pivotBlockSelector;
+  private final SyncTerminationCondition terminationCondition;
 
   public DefaultSynchronizer(
       final SynchronizerConfiguration syncConfig,
@@ -64,10 +83,16 @@ public class DefaultSynchronizer implements Synchronizer {
       final EthContext ethContext,
       final SyncState syncState,
       final Path dataDirectory,
+      final StorageProvider storageProvider,
       final Clock clock,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final SyncTerminationCondition terminationCondition,
+      final PivotBlockSelector pivotBlockSelector) {
     this.maybePruner = maybePruner;
     this.syncState = syncState;
+    this.pivotBlockSelector = pivotBlockSelector;
+    this.protocolContext = protocolContext;
+    this.terminationCondition = terminationCondition;
 
     ChainHeadTracker.trackChainHeadForPeers(
         ethContext,
@@ -77,30 +102,80 @@ public class DefaultSynchronizer implements Synchronizer {
         metricsSystem);
 
     this.blockPropagationManager =
-        new BlockPropagationManager(
-            syncConfig,
-            protocolSchedule,
-            protocolContext,
-            ethContext,
-            syncState,
-            new PendingBlocksManager(syncConfig),
-            metricsSystem,
-            blockBroadcaster);
+        terminationCondition.shouldStopDownload()
+            ? Optional.empty()
+            : Optional.of(
+                new BlockPropagationManager(
+                    syncConfig,
+                    protocolSchedule,
+                    protocolContext,
+                    ethContext,
+                    syncState,
+                    new PendingBlocksManager(syncConfig),
+                    metricsSystem,
+                    blockBroadcaster));
 
     this.fullSyncDownloader =
-        new FullSyncDownloader(
-            syncConfig, protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
-    this.fastSyncDownloader =
-        FastDownloaderFactory.create(
-            syncConfig,
-            dataDirectory,
-            protocolSchedule,
-            protocolContext,
-            metricsSystem,
-            ethContext,
-            worldStateStorage,
-            syncState,
-            clock);
+        terminationCondition.shouldStopDownload()
+            ? Optional.empty()
+            : Optional.of(
+                new FullSyncDownloader(
+                    syncConfig,
+                    protocolSchedule,
+                    protocolContext,
+                    ethContext,
+                    syncState,
+                    metricsSystem,
+                    terminationCondition));
+
+    if (SyncMode.FAST.equals(syncConfig.getSyncMode())) {
+      this.fastSyncFactory =
+          () ->
+              FastDownloaderFactory.create(
+                  pivotBlockSelector,
+                  syncConfig,
+                  dataDirectory,
+                  protocolSchedule,
+                  protocolContext,
+                  metricsSystem,
+                  ethContext,
+                  worldStateStorage,
+                  syncState,
+                  clock);
+    } else if (SyncMode.X_CHECKPOINT.equals(syncConfig.getSyncMode())) {
+      this.fastSyncFactory =
+          () ->
+              CheckpointDownloaderFactory.createCheckpointDownloader(
+                  new SnapSyncStatePersistenceManager(storageProvider),
+                  pivotBlockSelector,
+                  syncConfig,
+                  dataDirectory,
+                  protocolSchedule,
+                  protocolContext,
+                  metricsSystem,
+                  ethContext,
+                  worldStateStorage,
+                  syncState,
+                  clock);
+    } else {
+      this.fastSyncFactory =
+          () ->
+              SnapDownloaderFactory.createSnapDownloader(
+                  new SnapSyncStatePersistenceManager(storageProvider),
+                  pivotBlockSelector,
+                  syncConfig,
+                  dataDirectory,
+                  protocolSchedule,
+                  protocolContext,
+                  metricsSystem,
+                  ethContext,
+                  worldStateStorage,
+                  syncState,
+                  clock);
+    }
+
+    // create a non-resync fast sync downloader:
+    this.fastSyncDownloader = this.fastSyncFactory.get();
 
     metricsSystem.createLongGauge(
         BesuMetricCategory.ETHEREUM,
@@ -117,29 +192,31 @@ public class DefaultSynchronizer implements Synchronizer {
   private TrailingPeerRequirements calculateTrailingPeerRequirements() {
     return fastSyncDownloader
         .flatMap(FastSyncDownloader::calculateTrailingPeerRequirements)
-        .orElseGet(fullSyncDownloader::calculateTrailingPeerRequirements);
+        .orElse(
+            fullSyncDownloader
+                .map(FullSyncDownloader::calculateTrailingPeerRequirements)
+                .orElse(TrailingPeerRequirements.UNRESTRICTED));
   }
 
   @Override
-  public void start() {
+  public CompletableFuture<Void> start() {
     if (running.compareAndSet(false, true)) {
       LOG.info("Starting synchronizer.");
-      blockPropagationManager.start();
-      if (fastSyncDownloader.isPresent()) {
-        fastSyncDownloader
-            .get()
-            .start()
-            .whenComplete(this::handleFastSyncResult)
-            .exceptionally(
-                ex -> {
-                  LOG.warn("Exiting FastSync process");
-                  System.exit(0);
-                  return null;
-                });
+      blockPropagationManager.ifPresent(
+          manager -> {
+            if (!manager.isRunning()) {
+              manager.start();
+            }
+          });
 
+      CompletableFuture<Void> future;
+      if (fastSyncDownloader.isPresent()) {
+        future = fastSyncDownloader.get().start().thenCompose(this::handleSyncResult);
       } else {
-        startFullSync();
+        syncState.markInitialSyncPhaseAsDone();
+        future = startFullSync();
       }
+      return future.thenApply(this::finalizeSync);
     } else {
       throw new IllegalStateException("Attempt to start an already started synchronizer.");
     }
@@ -150,8 +227,14 @@ public class DefaultSynchronizer implements Synchronizer {
     if (running.compareAndSet(true, false)) {
       LOG.info("Stopping synchronizer");
       fastSyncDownloader.ifPresent(FastSyncDownloader::stop);
-      fullSyncDownloader.stop();
+      fullSyncDownloader.ifPresent(FullSyncDownloader::stop);
       maybePruner.ifPresent(Pruner::stop);
+      blockPropagationManager.ifPresent(
+          manager -> {
+            if (manager.isRunning()) {
+              manager.stop();
+            }
+          });
     }
   }
 
@@ -162,31 +245,41 @@ public class DefaultSynchronizer implements Synchronizer {
     }
   }
 
-  private void handleFastSyncResult(final FastSyncState result, final Throwable error) {
+  private CompletableFuture<Void> handleSyncResult(final FastSyncState result) {
     if (!running.get()) {
       // We've been shutdown which will have triggered the fast sync future to complete
-      return;
+      return CompletableFuture.completedFuture(null);
     }
     fastSyncDownloader.ifPresent(FastSyncDownloader::deleteFastSyncState);
-    final Throwable rootCause = ExceptionUtils.rootCause(error);
-    if (rootCause instanceof FastSyncException) {
-      LOG.error(
-          "Fast sync failed ({}), please try again.", ((FastSyncException) rootCause).getError());
-      throw new FastSyncException(rootCause);
-    } else if (error != null) {
-      LOG.error("Fast sync failed, please try again.", error);
-      throw new FastSyncException(error);
+    result
+        .getPivotBlockHeader()
+        .ifPresent(
+            blockHeader -> protocolContext.getWorldStateArchive().resetArchiveStateTo(blockHeader));
+    LOG.info(
+        "Sync completed successfully with pivot block {}",
+        result.getPivotBlockNumber().getAsLong());
+    pivotBlockSelector.close();
+    syncState.markInitialSyncPhaseAsDone();
+
+    if (terminationCondition.shouldContinueDownload()) {
+      return startFullSync();
     } else {
-      LOG.info(
-          "Fast sync completed successfully with pivot block {}",
-          result.getPivotBlockNumber().getAsLong());
+      syncState.setReachedTerminalDifficulty(true);
+      return CompletableFuture.completedFuture(null);
     }
-    startFullSync();
   }
 
-  private void startFullSync() {
+  private CompletableFuture<Void> startFullSync() {
     maybePruner.ifPresent(Pruner::start);
-    fullSyncDownloader.start();
+    return fullSyncDownloader
+        .map(FullSyncDownloader::start)
+        .orElse(CompletableFuture.completedFuture(null))
+        .thenRun(
+            () -> {
+              if (terminationCondition.shouldStopDownload()) {
+                syncState.setReachedTerminalDifficulty(true);
+              }
+            });
   }
 
   @Override
@@ -195,6 +288,62 @@ public class DefaultSynchronizer implements Synchronizer {
       return Optional.empty();
     }
     return syncState.syncStatus();
+  }
+
+  @Override
+  public boolean resyncWorldState() {
+    // if sync is running currently, stop it and delete the fast sync state
+    if (fastSyncDownloader.isPresent() && running.get()) {
+      stop();
+      fastSyncDownloader.get().deleteFastSyncState();
+    }
+    // recreate fast sync with resync and start
+    this.syncState.markInitialSyncRestart();
+    this.syncState.markResyncNeeded();
+    this.fastSyncDownloader = this.fastSyncFactory.get();
+    start();
+    return true;
+  }
+
+  @Override
+  public boolean healWorldState(
+      final Optional<Address> maybeAccountToRepair, final Bytes location) {
+    // recreate fast sync with resync and start
+    if (fastSyncDownloader.isPresent() && running.get()) {
+      stop();
+      fastSyncDownloader.get().deleteFastSyncState();
+    }
+
+    LOG.atDebug()
+        .setMessage("heal stacktrace: \n{}")
+        .addArgument(
+            () -> {
+              var sw = new StringWriter();
+              new Exception().printStackTrace(new PrintWriter(sw, true));
+              return sw.toString();
+            })
+        .log();
+
+    final List<String> lines = new ArrayList<>();
+    lines.add("Besu has identified a problem with its worldstate database.");
+    lines.add("Your node will fetch the correct data from peers to repair the problem.");
+    lines.add("Starting the sync pipeline...");
+    LOG.atInfo().setMessage(FramedLogMessage.generate(lines)).log();
+
+    this.syncState.markInitialSyncRestart();
+    this.syncState.markResyncNeeded();
+    maybeAccountToRepair.ifPresent(
+        address -> {
+          if (this.protocolContext.getWorldStateArchive() instanceof BonsaiWorldStateProvider) {
+            ((BonsaiWorldStateProvider) this.protocolContext.getWorldStateArchive())
+                .prepareStateHealing(
+                    org.hyperledger.besu.datatypes.Address.wrap(address), location);
+          }
+          this.syncState.markAccountToRepair(maybeAccountToRepair);
+        });
+    this.fastSyncDownloader = this.fastSyncFactory.get();
+    start();
+    return true;
   }
 
   @Override
@@ -221,5 +370,21 @@ public class DefaultSynchronizer implements Synchronizer {
   @Override
   public boolean unsubscribeInSync(final long listenerId) {
     return syncState.unsubscribeSyncStatus(listenerId);
+  }
+
+  private Void finalizeSync(final Void unused) {
+    LOG.info("Stopping block propagation.");
+    blockPropagationManager.ifPresent(BlockPropagationManager::stop);
+    LOG.info("Stopping the pruner.");
+    maybePruner.ifPresent(Pruner::stop);
+    running.set(false);
+    return null;
+  }
+
+  @Override
+  public void onNewUnverifiedForkchoice(final ForkchoiceEvent event) {
+    if (this.blockPropagationManager.isPresent()) {
+      this.blockPropagationManager.get().onNewUnverifiedForkchoice(event);
+    }
   }
 }

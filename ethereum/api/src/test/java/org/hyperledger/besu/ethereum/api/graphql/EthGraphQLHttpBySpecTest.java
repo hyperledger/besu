@@ -49,10 +49,12 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
     specs.add("eth_call_Block8");
     specs.add("eth_call_Block8_invalidHexBytesData");
     specs.add("eth_call_BlockLatest");
+    specs.add("eth_call_from_contract");
 
     specs.add("eth_estimateGas_transfer");
     specs.add("eth_estimateGas_noParams");
     specs.add("eth_estimateGas_contractDeploy");
+    specs.add("eth_estimateGas_from_contract");
 
     specs.add("eth_gasPrice");
 
@@ -76,7 +78,9 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
     specs.add("eth_getCode");
     specs.add("eth_getCode_noCode");
 
+    specs.add("eth_getLogs_emptyListParam");
     specs.add("eth_getLogs_matchTopic");
+    specs.add("eth_getLogs_matchAnyTopic");
     specs.add("eth_getLogs_range");
 
     specs.add("eth_getStorageAt");
@@ -109,6 +113,16 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
     specs.add("graphql_tooComplex");
     specs.add("graphql_tooComplexSchema");
 
+    specs.add("graphql_variable_address");
+    specs.add("graphql_variable_bytes");
+    specs.add("graphql_variable_bytes32");
+    specs.add("graphql_variable_long");
+
+    specs.add("block_withdrawals_pre_shanghai");
+    specs.add("block_withdrawals");
+    specs.add("eth_getTransaction_type2");
+    specs.add("eth_getBlock_shanghai");
+
     return specs;
   }
 
@@ -124,10 +138,15 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
             EthGraphQLHttpBySpecTest.class.getResource(testSpecFile), Charsets.UTF_8);
     final JsonObject spec = new JsonObject(json);
     final String rawRequestBody = spec.getString("request");
-    final RequestBody requestBody = RequestBody.create(rawRequestBody, GRAPHQL);
+    final String rawVariables = spec.getString("variables");
+    final RequestBody requestBody =
+        rawVariables == null
+            ? RequestBody.create(rawRequestBody, GRAPHQL)
+            : RequestBody.create(
+                "{ \"query\":\"" + rawRequestBody + "\", \"variables\": " + rawVariables + "}",
+                JSON);
     final Request request = new Request.Builder().post(requestBody).url(baseUrl).build();
 
-    importBlocks(1, BLOCKS.size());
     try (final Response resp = client.newCall(request).execute()) {
       final JsonObject expectedRespBody = spec.getJsonObject("response");
       final String resultStr = resp.body().string();
@@ -137,12 +156,6 @@ public class EthGraphQLHttpBySpecTest extends AbstractEthGraphQLHttpServiceTest 
 
       final int expectedStatusCode = spec.getInteger("statusCode");
       Assertions.assertThat(resp.code()).isEqualTo(expectedStatusCode);
-    }
-  }
-
-  private void importBlocks(final int from, final int to) {
-    for (int i = from; i < to; ++i) {
-      importBlock(i);
     }
   }
 }

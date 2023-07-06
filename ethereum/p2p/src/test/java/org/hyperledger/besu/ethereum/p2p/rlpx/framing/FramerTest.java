@@ -218,7 +218,7 @@ public class FramerTest {
   }
 
   @Test
-  public void shouldThrowFramingExceptionWhenMessageIsNotCompressedButShouldBe() {
+  public void downgradesToUncompressed() {
     final HandshakeSecrets secrets =
         new HandshakeSecrets(
             Bytes.fromHexString(
@@ -239,7 +239,36 @@ public class FramerTest {
 
     // Then read it with compression enabled.
     receivingFramer.enableCompression();
-    assertThatThrownBy(() -> receivingFramer.deframe(out)).isInstanceOf(FramingException.class);
+    assertThat(receivingFramer.deframe(out)).isNotNull();
+    assertThat(receivingFramer.isCompressionEnabled()).isFalse();
+  }
+
+  @Test
+  public void compressionWorks() {
+    final HandshakeSecrets secrets =
+        new HandshakeSecrets(
+            Bytes.fromHexString(
+                    "0x75b3ee95adff0c529a05efd7612aa1dbe5057eb9facdde0dfc837ad143da1d43")
+                .toArray(),
+            Bytes.fromHexString(
+                    "0x030dfd1566f4800c4842c177f7d476b64ae2b99a2aa0ab5600aa2f41a8710575")
+                .toArray(),
+            Bytes.fromHexString(
+                    "0xc9d3385b1588a5969cba312f8c29bedb4cb9d56ec0cf825436addc1ec644f1d6")
+                .toArray());
+    final Framer receivingFramer = new Framer(secrets);
+    final Framer sendingFramer = new Framer(secrets);
+
+    // Write a disconnect message with compression enabled.
+    sendingFramer.enableCompression();
+    final ByteBuf out = Unpooled.buffer();
+    sendingFramer.frame(DisconnectMessage.create(DisconnectReason.TIMEOUT), out);
+
+    // Then read it with compression enabled.
+    receivingFramer.enableCompression();
+    assertThat(receivingFramer.deframe(out)).isNotNull();
+    assertThat(receivingFramer.isCompressionEnabled()).isTrue();
+    assertThat(receivingFramer.isCompressionSuccessful()).isTrue();
   }
 
   private HandshakeSecrets secretsFrom(final JsonNode td, final boolean swap) {

@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.consensus.clique;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 
+/** The Clique block header functions. */
 public class CliqueBlockHeaderFunctions implements BlockHeaderFunctions {
 
   @Override
@@ -29,5 +30,10 @@ public class CliqueBlockHeaderFunctions implements BlockHeaderFunctions {
   @Override
   public CliqueExtraData parseExtraData(final BlockHeader header) {
     return CliqueExtraData.decodeRaw(header);
+  }
+
+  @Override
+  public int getCheckPointWindowSize(final BlockHeader blockHeader) {
+    return CliqueExtraData.decode(blockHeader).getValidators().size();
   }
 }

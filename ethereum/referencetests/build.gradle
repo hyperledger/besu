@@ -13,38 +13,161 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+def blockchainReferenceTests = tasks.register("blockchainReferenceTests")  {
+  final referenceTestsPath = 'src/reference-test/external-resources/BlockchainTests'
+  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
+  inputs.files fileTree(referenceTestsPath),
+    fileTree(generatedTestsPath)
+  outputs.files generatedTestsPath
+  generateTestFiles(
+    fileTree(referenceTestsPath),
+    file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
+    "BlockchainTests",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/blockchain",
+    "BlockchainReferenceTest",
+    ("BlockchainTests/InvalidBlocks/bcExpectSection") // exclude test for test filling tool
+    )
+}
+
+configurations {
+  // we need this because referenceTestImplementation defaults to 'canBeResolved=false'.
+  tarConfig.extendsFrom referenceTestImplementation
+  tarConfig {
+    canBeResolved = true
+    canBeConsumed = false
+  }
+}
+
+def executionSpecTests = tasks.register("executionSpecTests") {
+  final referenceTestsPath = "$buildDir/execution-spec-tests/"
+  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
+  def tarPath = configurations.tarConfig.files.find{ it.name.startsWith('execution-spec-tests')}
+
+  copy {
+    from tarTree(tarPath)
+    into "$referenceTestsPath"
+  }
+
+  inputs.files fileTree(referenceTestsPath), fileTree(generatedTestsPath)
+  outputs.files generatedTestsPath
+  generateTestFiles(
+    fileTree(referenceTestsPath + "/fixtures"),
+    file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
+    "fixtures",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
+    "ExecutionSpecTest",
+    ("fixtures/example/example") // exclude test for test filling tool
+    )
+}
+
+def generalstateReferenceTests = tasks.register("generalstateReferenceTests")  {
+  final referenceTestsPath = "src/reference-test/external-resources/GeneralStateTests"
+  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
+  inputs.files fileTree(referenceTestsPath),
+    fileTree(generatedTestsPath)
+  outputs.files generatedTestsPath
+  generateTestFiles(
+    fileTree(referenceTestsPath),
+    file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
+    "GeneralStateTests",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/generalstate",
+    "GeneralStateReferenceTest"
+    )
+}
+
+def generalstateRegressionReferenceTests = tasks.register("generalstateRegressionReferenceTests") {
+  final referenceTestsPath = "src/reference-test/resources/regressions/generalstate"
+  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
+  inputs.files fileTree(referenceTestsPath),
+    fileTree(generatedTestsPath)
+  outputs.files generatedTestsPath
+  generateTestFiles(
+    fileTree(referenceTestsPath),
+    file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
+    "regressions",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/generalstate",
+    "GeneralStateRegressionReferenceTest"
+    )
+}
+
 sourceSets {
-  test {
+  referenceTest {
+    java {
+      compileClasspath += main.output
+      runtimeClasspath += main.output
+      srcDirs "src/reference-test/java",
+        blockchainReferenceTests,
+        executionSpecTests,
+        generalstateReferenceTests,
+        generalstateRegressionReferenceTests
+    }
     resources {
-      include '*Tests/**/*.json'
+      srcDirs 'src/reference-test/resources',
+        'src/reference-test/external-resources',
+        'src/reference-test/templates',
+        'build/execution-spec-tests/'
     }
   }
 }
 
-configurations { testOutput }
-
 dependencies {
   implementation project(':config')
-  implementation project(':crypto')
+  implementation project(':crypto:algorithms')
+  implementation project(':datatypes')
   implementation project(':ethereum:core')
   implementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   implementation project(':ethereum:rlp')
+  implementation project(':evm')
   implementation project(':services:kvstore')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
 
-  testOutput sourceSets.test.output
+  referenceTestImplementation project(path: ':config')
+  referenceTestImplementation project(path: ':datatypes')
+  referenceTestImplementation project(path: ':ethereum:core')
+  referenceTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
+  referenceTestImplementation project(path: ':ethereum:rlp')
+  referenceTestImplementation project(path: ':ethereum:rlp', configuration: 'testSupportArtifacts')
+  referenceTestImplementation project(path: ':ethereum:trie')
+  referenceTestImplementation project(path: ':evm')
+  referenceTestImplementation project(path: ':plugin-api')
+  referenceTestImplementation project(path: ':testutil')
+  referenceTestImplementation project(path: ':util')
+  // the following will be resolved via custom ivy repository declared in root build.gradle
+  referenceTestImplementation 'ethereum:execution-spec-tests:0.2.3:fixtures@tar.gz'
+  referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
+  referenceTestImplementation 'com.google.guava:guava'
+  referenceTestImplementation 'org.apache.tuweni:tuweni-bytes'
+  referenceTestImplementation 'org.apache.tuweni:tuweni-units'
+  referenceTestImplementation 'org.assertj:assertj-core'
+  referenceTestImplementation 'org.junit.jupiter:junit-jupiter-api'
+  referenceTestImplementation 'org.junit.jupiter:junit-jupiter-params'
+
+  referenceTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 }
 
-task ('validateReferenceTestSubmodule') {
-  description = "Checks that the reference tests submodule is not accidentially changed"
+tasks.register('referenceTests', Test) {
+  useJUnitPlatform()
+  doFirst {
+    if (!file("src/reference-test/external-resources/README.md").exists()) {
+      throw new GradleException("ethereum/referencetest/src/reference-test/external-resources/README.md missing: please clone submodules (git submodule update --init --recursive)")
+    }
+  }
+  description = 'Runs ETH reference tests.'
+  testClassesDirs = sourceSets.referenceTest.output.classesDirs
+  classpath = sourceSets.referenceTest.runtimeClasspath
+}
+
+tasks.register('validateReferenceTestSubmodule') {
+  description = "Checks that the reference tests submodule is not accidentally changed"
   doLast {
-    def expectedHash = 'b8abaebf5949877ead03e8f74ac03c0ede41d5f7'
     def result = new ByteArrayOutputStream()
+    def expectedHash = '04f338a6e673a6b4d906ec9d6d2bc939309357a5'
+    def submodulePath = java.nio.file.Path.of("${rootProject.projectDir}", "ethereum/referencetests/src/reference-test/external-resources").toAbsolutePath()
     try {
       exec {
-        commandLine 'git', 'submodule'
+        commandLine 'git', 'submodule', 'status', submodulePath
         standardOutput = result
         errorOutput = result
       }
@@ -53,9 +176,10 @@ task ('validateReferenceTestSubmodule') {
       // The CI servers have git and that is the only critical place for this failure
       expectedHash = ''
     }
+
     if (!result.toString().contains(expectedHash)) {
       throw new GradleException("""For the Ethereum Reference Tests the git commit did not match what was expected.
-
+  
 If this is a deliberate change where you are updating the reference tests 
 then update "expectedHash" in `ethereum/referencetests/build.gradle` as the 
 commit hash for this task.
@@ -64,7 +188,7 @@ Full git output : ${result}
 
 If this is accidental you can correct the reference test versions with the 
 following commands:
-    pushd ethereum/referencetests/src/test/resources
+    pushd ${submodulePath}
     git checkout ${expectedHash}
     cd ..
     git add resources
@@ -73,3 +197,33 @@ following commands:
   }
 }
 processResources.dependsOn('validateReferenceTestSubmodule')
+
+def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, String destination, String namePrefix, String ... excludedPath) {
+  mkdir(destination)
+  def referenceTestTemplate = templateFile.text
+
+  // This is how many json files to include in each test file
+  def fileSets = jsonPath.getFiles().collate(5)
+
+  fileSets.eachWithIndex { fileSet, idx ->
+    def paths = []
+    fileSet.each { testJsonFile ->
+      def parentFile = testJsonFile.getParentFile()
+      def parentPathFile = parentFile.getPath().substring(parentFile.getPath().indexOf(pathstrip))
+      if (!testJsonFile.getName().toString().startsWith(".") && !excludedPath.contains(parentPathFile)) {
+        def pathFile = testJsonFile.getPath()
+        paths << pathFile.substring(pathFile.indexOf(pathstrip))
+      }
+    }
+
+    def testFile = file(destination + "/" + namePrefix + "_" + idx + ".java")
+
+
+    def allPaths = '"' + paths.join('", "') + '"'
+
+    def testFileContents = referenceTestTemplate
+      .replaceAll("%%TESTS_FILE%%", allPaths)
+      .replaceAll("%%TESTS_NAME%%", namePrefix + "_" + idx)
+    testFile.newWriter().withWriter { w -> w << testFileContents }
+  }
+}

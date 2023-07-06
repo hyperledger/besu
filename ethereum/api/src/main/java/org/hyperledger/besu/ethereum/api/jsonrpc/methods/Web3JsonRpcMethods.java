@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Web3ClientVersion;
@@ -31,8 +30,8 @@ public class Web3JsonRpcMethods extends ApiGroupJsonRpcMethods {
   }
 
   @Override
-  protected RpcApi getApiGroup() {
-    return RpcApis.WEB3;
+  protected String getApiGroup() {
+    return RpcApis.WEB3.name();
   }
 
   @Override

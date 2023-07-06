@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -41,14 +42,14 @@ import java.util.function.Function;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MarkSweepPruner {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(MarkSweepPruner.class);
   private static final byte[] IN_USE = Bytes.of(1).toArrayUnsafe();
 
   private static final int DEFAULT_OPS_PER_TRANSACTION = 10_000;
@@ -195,15 +196,14 @@ public class MarkSweepPruner {
     long prunedNodeCount = 0;
     WorldStateStorage.Updater updater = worldStateStorage.updater();
     for (long blockNumber = markedBlockNumber - 1; blockNumber >= 0; blockNumber--) {
-      final Hash candidateStateRootHash =
-          blockchain.getBlockHeader(blockNumber).get().getStateRoot();
-
-      if (!worldStateStorage.isWorldStateAvailable(candidateStateRootHash)) {
+      final BlockHeader blockHeader = blockchain.getBlockHeader(blockNumber).get();
+      final Hash candidateStateRootHash = blockHeader.getStateRoot();
+      if (!worldStateStorage.isWorldStateAvailable(candidateStateRootHash, null)) {
         break;
       }
 
       if (!isMarked(candidateStateRootHash)) {
-        updater.removeAccountStateTrieNode(candidateStateRootHash);
+        updater.removeAccountStateTrieNode(null, candidateStateRootHash);
         prunedNodeCount++;
         if (prunedNodeCount % operationsPerTransaction == 0) {
           updater.commit();
@@ -211,6 +211,7 @@ public class MarkSweepPruner {
         }
       }
     }
+
     updater.commit();
     // Sweep non-state-root nodes
     prunedNodeCount += worldStateStorage.prune(this::isMarked);
@@ -237,7 +238,7 @@ public class MarkSweepPruner {
     return pendingMarks.contains(Bytes32.wrap(key)) || markStorage.containsKey(key);
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> createStateTrie(final Bytes32 rootHash) {
+  private MerkleTrie<Bytes32, Bytes> createStateTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
         worldStateStorage::getAccountStateTrieNode,
         rootHash,
@@ -245,9 +246,9 @@ public class MarkSweepPruner {
         Function.identity());
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> createStorageTrie(final Bytes32 rootHash) {
+  private MerkleTrie<Bytes32, Bytes> createStorageTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStorageTrieNode,
+        (location, hash) -> worldStateStorage.getAccountStorageTrieNode(null, location, hash),
         rootHash,
         Function.identity(),
         Function.identity());

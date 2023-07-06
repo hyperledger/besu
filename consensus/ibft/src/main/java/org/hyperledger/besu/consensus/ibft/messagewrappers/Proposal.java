@@ -14,14 +14,15 @@
  */
 package org.hyperledger.besu.consensus.ibft.messagewrappers;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.ibft.IbftBlockHeaderFunctions;
+import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibft.payload.PayloadDeserializers;
 import org.hyperledger.besu.consensus.ibft.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -30,12 +31,21 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Proposal. */
 public class Proposal extends BftMessage<ProposalPayload> {
 
+  private static final IbftExtraDataCodec BFT_EXTRA_DATA_ENCODER = new IbftExtraDataCodec();
   private final Block proposedBlock;
 
   private final Optional<RoundChangeCertificate> roundChangeCertificate;
 
+  /**
+   * Instantiates a new Proposal.
+   *
+   * @param payload the payload
+   * @param proposedBlock the proposed block
+   * @param certificate the certificate
+   */
   public Proposal(
       final SignedData<ProposalPayload> payload,
       final Block proposedBlock,
@@ -45,14 +55,29 @@ public class Proposal extends BftMessage<ProposalPayload> {
     this.roundChangeCertificate = certificate;
   }
 
+  /**
+   * Gets block.
+   *
+   * @return the block
+   */
   public Block getBlock() {
     return proposedBlock;
   }
 
+  /**
+   * Gets digest.
+   *
+   * @return the digest
+   */
   public Hash getDigest() {
     return getPayload().getDigest();
   }
 
+  /**
+   * Gets round change certificate.
+   *
+   * @return the round change certificate
+   */
   public Optional<RoundChangeCertificate> getRoundChangeCertificate() {
     return roundChangeCertificate;
   }
@@ -72,12 +97,19 @@ public class Proposal extends BftMessage<ProposalPayload> {
     return rlpOut.encoded();
   }
 
+  /**
+   * Decode.
+   *
+   * @param data the data
+   * @return the proposal
+   */
   public static Proposal decode(final Bytes data) {
     final RLPInput rlpIn = RLP.input(data);
     rlpIn.enterList();
     final SignedData<ProposalPayload> payload =
         PayloadDeserializers.readSignedProposalPayloadFrom(rlpIn);
-    final Block proposedBlock = Block.readFrom(rlpIn, IbftBlockHeaderFunctions.forCommittedSeal());
+    final Block proposedBlock =
+        Block.readFrom(rlpIn, BftBlockHeaderFunctions.forCommittedSeal(BFT_EXTRA_DATA_ENCODER));
 
     final Optional<RoundChangeCertificate> roundChangeCertificate =
         readRoundChangeCertificate(rlpIn);

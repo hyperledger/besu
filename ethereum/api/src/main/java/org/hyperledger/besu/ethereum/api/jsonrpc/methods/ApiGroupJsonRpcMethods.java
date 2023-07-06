@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 
 import java.util.Arrays;
@@ -26,11 +25,11 @@ import java.util.stream.Collectors;
 public abstract class ApiGroupJsonRpcMethods implements JsonRpcMethods {
 
   @Override
-  public Map<String, JsonRpcMethod> create(final Collection<RpcApi> apis) {
+  public Map<String, JsonRpcMethod> create(final Collection<String> apis) {
     return apis.contains(getApiGroup()) ? create() : Collections.emptyMap();
   }
 
-  protected abstract RpcApi getApiGroup();
+  protected abstract String getApiGroup();
 
   protected abstract Map<String, JsonRpcMethod> create();
 

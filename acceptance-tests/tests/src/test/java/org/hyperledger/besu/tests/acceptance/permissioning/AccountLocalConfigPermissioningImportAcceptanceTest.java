@@ -74,7 +74,7 @@ public class AccountLocalConfigPermissioningImportAcceptanceTest extends Accepta
         besu.createIbft2NodeWithLocalAccountPermissioning(
             "nodeC", GENESIS_FILE, allowList, newPermissionsFile);
 
-    waitForBlockHeight(bootnode, 5);
+    waitForBlockHeight(bootnode, 2);
 
     nodeA.verify(beneficiary.balanceEquals(0));
     nodeA.execute(accountTransactions.createTransfer(sender, beneficiary, 1));
@@ -82,8 +82,8 @@ public class AccountLocalConfigPermissioningImportAcceptanceTest extends Accepta
 
     permissionedCluster.startNode(nodeC);
 
-    waitForBlockHeight(bootnode, 10);
-    waitForBlockHeight(nodeC, 10);
+    waitForBlockHeight(bootnode, 4);
+    waitForBlockHeight(nodeC, 4);
   }
 
   private void persistAllowList(final List<String> allowList, final Path path) throws IOException {

@@ -20,7 +20,7 @@ import java.util.Optional;
 
 public interface WorldStateDownloadStatus {
 
-  public Optional<Long> getPulledStates();
+  Optional<Long> getPulledStates();
 
-  public Optional<Long> getKnownStates();
+  Optional<Long> getKnownStates();
 }

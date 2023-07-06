@@ -24,19 +24,17 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivateTransactionDataFixture;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
-import org.hyperledger.besu.ethereum.core.WrappedEvmAccount;
+import org.hyperledger.besu.ethereum.privacy.PrivateStateGenesisAllocator;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
@@ -45,6 +43,9 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.Collections;
@@ -54,7 +55,10 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class PrivacyBlockProcessorTest {
 
   private PrivacyBlockProcessor privacyBlockProcessor;
@@ -79,7 +83,9 @@ public class PrivacyBlockProcessorTest {
             enclave,
             privateStateStorage,
             privateWorldStateArchive,
-            new PrivateStateRootResolver(privateStateStorage));
+            new PrivateStateRootResolver(privateStateStorage),
+            new PrivateStateGenesisAllocator(
+                true, (privacyGroupId, blockNumber) -> Collections::emptyList));
     publicWorldStateArchive = mock(WorldStateArchive.class);
     privacyBlockProcessor.setPublicWorldStateArchive(publicWorldStateArchive);
   }
@@ -110,6 +116,8 @@ public class PrivacyBlockProcessorTest {
             eq(firstBlock.getHeader()),
             eq(firstBlock.getBody().getTransactions()),
             eq(firstBlock.getBody().getOmmers()),
+            eq(Optional.empty()),
+            eq(Optional.empty()),
             any());
     verify(blockProcessor)
         .processBlock(
@@ -118,10 +126,11 @@ public class PrivacyBlockProcessorTest {
             eq(secondBlock.getHeader()),
             eq(secondBlock.getBody().getTransactions()),
             eq(secondBlock.getBody().getOmmers()),
+            eq(Optional.empty()),
+            eq(Optional.empty()),
             any());
   }
 
-  @SuppressWarnings({"rawtypes", "unchecked"})
   @Test
   public void mustPerformRehydration() {
     final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
@@ -132,27 +141,28 @@ public class PrivacyBlockProcessorTest {
     final Block firstBlock =
         blockDataGenerator.block(
             BlockDataGenerator.BlockOptions.create()
-                .addTransaction(PrivateTransactionDataFixture.privacyMarkerTransactionOnChain()));
+                .addTransaction(PrivateTransactionDataFixture.privateMarkerTransactionOnchain()));
     final Block secondBlock =
         blockDataGenerator.block(
             BlockDataGenerator.BlockOptions.create()
                 .addTransaction(
-                    PrivateTransactionDataFixture.privacyMarkerTransactionOnChainAdd()));
+                    PrivateTransactionDataFixture.privateMarkerTransactionOnchainAdd()));
 
     when(enclave.receive(any()))
         .thenReturn(
             PrivateTransactionDataFixture.generateAddToGroupReceiveResponse(
                 PrivateTransactionDataFixture.privateTransactionBesu(),
-                PrivateTransactionDataFixture.privacyMarkerTransactionOnChain()));
+                PrivateTransactionDataFixture.privateMarkerTransactionOnchain()));
     when(blockchain.getTransactionLocation(any()))
         .thenReturn(Optional.of(new TransactionLocation(firstBlock.getHash(), 0)));
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.of(firstBlock));
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(firstBlock.getHeader()));
     final ProtocolSpec protocolSpec = mockProtocolSpec();
-    when(protocolSchedule.getByBlockNumber(anyLong())).thenReturn(protocolSpec);
-    when(publicWorldStateArchive.getMutable(any())).thenReturn(Optional.of(mutableWorldState));
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
+    when(publicWorldStateArchive.getMutable(any(), any()))
+        .thenReturn(Optional.of(mutableWorldState));
     final MutableWorldState mockPrivateStateArchive = mockPrivateStateArchive();
-    when(privateWorldStateArchive.getMutable(any()))
+    when(privateWorldStateArchive.getMutable(any(), any()))
         .thenReturn(Optional.of(mockPrivateStateArchive));
 
     final PrivacyGroupHeadBlockMap expected =
@@ -173,6 +183,8 @@ public class PrivacyBlockProcessorTest {
             eq(secondBlock.getHeader()),
             eq(secondBlock.getBody().getTransactions()),
             eq(secondBlock.getBody().getOmmers()),
+            eq(Optional.empty()),
+            eq(Optional.empty()),
             any());
   }
 
@@ -188,13 +200,12 @@ public class PrivacyBlockProcessorTest {
     return mockPrivateState;
   }
 
-  @SuppressWarnings("rawtypes")
   private ProtocolSpec mockProtocolSpec() {
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
     final MainnetTransactionProcessor mockPublicTransactionProcessor =
         mock(MainnetTransactionProcessor.class);
     when(mockPublicTransactionProcessor.processTransaction(
-            any(), any(), any(), any(), any(), any(), anyBoolean(), any()))
+            any(), any(), any(), any(), any(), any(), anyBoolean(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.successful(
                 Collections.emptyList(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));
@@ -202,7 +213,7 @@ public class PrivacyBlockProcessorTest {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
     when(mockPrivateTransactionProcessor.processTransaction(
-            any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+            any(), any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.successful(
                 Collections.emptyList(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));

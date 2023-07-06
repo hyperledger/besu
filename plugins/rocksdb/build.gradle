@@ -33,24 +33,29 @@ publishing {
 
 dependencies {
   api project(':plugin-api')
+  api 'org.slf4j:slf4j-api'
 
   implementation project(':metrics:core')
   implementation project(':metrics:rocksdb')
   implementation project(':services:kvstore')
+  implementation project(':util')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
   implementation 'info.picocli:picocli'
+  implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'io.prometheus:simpleclient'
-  implementation 'org.apache.logging.log4j:log4j-api'
-  implementation 'org.apache.tuweni:bytes'
+  implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.rocksdb:rocksdbjni'
-
-  runtimeOnly 'org.apache.logging.log4j:log4j-core'
+  implementation project(path: ':ethereum:core')
 
   testImplementation project(':testutil')
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
+
+  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }

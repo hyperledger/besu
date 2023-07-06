@@ -15,10 +15,12 @@
  */
 package org.hyperledger.besu.evmtool;
 
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.function.Function;
+import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
@@ -28,7 +30,8 @@ import dagger.Provides;
 public class ProtocolModule {
 
   @Provides
-  Function<Integer, ProtocolSpec> getProtocolSpec(final ProtocolSchedule protocolSchedule) {
-    return protocolSchedule::getByBlockNumber;
+  @Singleton
+  Function<BlockHeader, ProtocolSpec> getProtocolSpec(final ProtocolSchedule protocolSchedule) {
+    return protocolSchedule::getByBlockHeader;
   }
 }

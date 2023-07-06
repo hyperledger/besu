@@ -18,8 +18,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -35,14 +35,14 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Given a set of headers, repeatedly requests the receipts for those blocks. */
 public class GetReceiptsForHeadersTask
     extends AbstractRetryingPeerTask<Map<BlockHeader, List<TransactionReceipt>>> {
-  private static final Logger LOG = LogManager.getLogger();
-  private static final int DEFAULT_RETRIES = 3;
+  private static final Logger LOG = LoggerFactory.getLogger(GetReceiptsForHeadersTask.class);
+  private static final int DEFAULT_RETRIES = 4;
 
   private final EthContext ethContext;
 

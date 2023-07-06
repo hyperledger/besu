@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.framing;
 import static io.netty.buffer.ByteBufUtil.hexDump;
 import static io.netty.buffer.Unpooled.wrappedBuffer;
 import static org.bouncycastle.pqc.math.linearalgebra.ByteUtils.xor;
+import static org.hyperledger.besu.ethereum.p2p.rlpx.RlpxFrameConstants.LENGTH_FRAME_SIZE;
+import static org.hyperledger.besu.ethereum.p2p.rlpx.RlpxFrameConstants.LENGTH_MAX_MESSAGE_FRAME;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakeSecrets;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;
@@ -38,6 +40,8 @@ import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.modes.SICBlockCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This component is responsible for reading and composing RLPx protocol frames, conformant to the
@@ -53,12 +57,12 @@ import org.bouncycastle.crypto.params.ParametersWithIV;
  * @see <a href="https://github.com/ethereum/devp2p/blob/master/rlpx.md#framing">RLPx framing</a>
  */
 public class Framer {
+  private static final Logger LOG = LoggerFactory.getLogger(Framer.class);
+
   private static final int LENGTH_HEADER_DATA = 16;
   private static final int LENGTH_MAC = 16;
   private static final int LENGTH_FULL_HEADER = LENGTH_HEADER_DATA + LENGTH_MAC;
-  private static final int LENGTH_FRAME_SIZE = 3;
   private static final int LENGTH_MESSAGE_ID = 1;
-  private static final int LENGTH_MAX_MESSAGE_FRAME = 0xFFFFFF;
 
   private static final byte[] IV = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   private static final byte[] PROTOCOL_HEADER =
@@ -79,6 +83,15 @@ public class Framer {
   private boolean headerProcessed;
   private int frameSize;
   private boolean compressionEnabled = false;
+  // have we ever successfully uncompressed a packet?
+  private boolean compressionSuccessful = false;
+
+  protected Framer() {
+    this.secrets = null;
+    this.encryptor = null;
+    this.decryptor = null;
+    this.macEncryptor = null;
+  }
 
   /**
    * Creates a new framer out of the handshake secrets derived during the cryptographic handshake.
@@ -107,6 +120,14 @@ public class Framer {
 
   public void disableCompression() {
     this.compressionEnabled = false;
+  }
+
+  boolean isCompressionEnabled() {
+    return compressionEnabled;
+  }
+
+  boolean isCompressionSuccessful() {
+    return compressionSuccessful;
   }
 
   /**
@@ -269,8 +290,24 @@ public class Framer {
       if (uncompressedLength >= LENGTH_MAX_MESSAGE_FRAME) {
         throw error("Message size %s in excess of maximum length.", uncompressedLength);
       }
-      final byte[] decompressedMessageData = compressor.decompress(compressedMessageData);
-      data = Bytes.wrap(decompressedMessageData);
+      Bytes _data;
+      try {
+        final byte[] decompressedMessageData = compressor.decompress(compressedMessageData);
+        _data = Bytes.wrap(decompressedMessageData);
+        compressionSuccessful = true;
+      } catch (final FramingException fe) {
+        if (compressionSuccessful) {
+          throw fe;
+        } else {
+          // OpenEthereum/Parity does not implement EIP-706
+          // If failing on the first packet downgrade to uncompressed
+          compressionEnabled = false;
+          LOG.debug("Snappy decompression failed: downgrading to uncompressed");
+          final int messageLength = frameSize - LENGTH_MESSAGE_ID;
+          _data = Bytes.wrap(frameData, 1, messageLength);
+        }
+      }
+      data = _data;
     } else {
       // Move data to a ByteBuf
       final int messageLength = frameSize - LENGTH_MESSAGE_ID;

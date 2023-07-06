@@ -14,12 +14,14 @@
  */
 package org.hyperledger.besu.cli.util;
 
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.datatypes.Wei;
 
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -36,12 +38,19 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.ParameterException;
 
+/** The Toml config file default value provider used by PicoCli. */
 public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
 
   private final CommandLine commandLine;
   private final File configFile;
   private TomlParseResult result;
 
+  /**
+   * Instantiates a new Toml config file default value provider.
+   *
+   * @param commandLine the command line
+   * @param configFile the config file
+   */
   public TomlConfigFileDefaultProvider(final CommandLine commandLine, final File configFile) {
     this.commandLine = commandLine;
     this.configFile = configFile;
@@ -69,11 +78,17 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
     } else if (optionSpec.isMultiValue() || isArray) {
       defaultValue = getListEntryAsString(optionSpec);
     } else if (optionSpec.type().equals(Integer.class) || optionSpec.type().equals(int.class)) {
-      defaultValue = getIntegerEntryAsString(optionSpec);
+      defaultValue = getNumericEntryAsString(optionSpec);
+    } else if (optionSpec.type().equals(Long.class) || optionSpec.type().equals(long.class)) {
+      defaultValue = getNumericEntryAsString(optionSpec);
     } else if (optionSpec.type().equals(Wei.class)) {
-      defaultValue = getIntegerEntryAsString(optionSpec);
+      defaultValue = getNumericEntryAsString(optionSpec);
     } else if (optionSpec.type().equals(BigInteger.class)) {
-      defaultValue = getIntegerEntryAsString(optionSpec);
+      defaultValue = getNumericEntryAsString(optionSpec);
+    } else if (optionSpec.type().equals(Double.class) || optionSpec.type().equals(double.class)) {
+      defaultValue = getNumericEntryAsString(optionSpec);
+    } else if (optionSpec.type().equals(Float.class) || optionSpec.type().equals(float.class)) {
+      defaultValue = getNumericEntryAsString(optionSpec);
     } else { // else will be treated as String
       defaultValue = getEntryAsString(optionSpec);
     }
@@ -89,11 +104,49 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
   private Optional<String> getKeyName(final OptionSpec spec) {
     // If any of the names of the option are used as key in the toml results
     // then returns the value of first one.
-    return Arrays.stream(spec.names())
-        // remove leading dashes on option name as we can have "--" or "-" options
-        .map(name -> name.replaceFirst("^-+", ""))
-        .filter(result::contains)
-        .findFirst();
+    Optional<String> keyName =
+        Arrays.stream(spec.names())
+            // remove leading dashes on option name as we can have "--" or "-" options
+            .map(name -> name.replaceFirst("^-+", ""))
+            .filter(result::contains)
+            .findFirst();
+
+    if (keyName.isEmpty()) {
+      // If the base key name doesn't exist in the file it may be under a TOML table heading
+      // e.g. TxPool.tx-pool-max-size
+      keyName = getDottedKeyName(spec);
+    }
+
+    return keyName;
+  }
+
+  /*
+   For all spec names, look to see if any of the TOML keyPathSet entries contain
+   the name. A key path set might look like ["TxPool", "tx-max-pool-size"] where
+   "TxPool" is the TOML table heading (which we ignore) and "tx-max-pool-size" is
+   the name of the option being requested. For a request for "tx-max-pool-size" this
+   function will return "TxPool.tx-max-pool-size" which can then be used directly
+   as a query on the TOML result structure.
+  */
+  private Optional<String> getDottedKeyName(final OptionSpec spec) {
+    List<String> foundNames = new ArrayList<>();
+
+    Arrays.stream(spec.names())
+        .forEach(
+            nextSpecName -> {
+              String specName =
+                  result.keyPathSet().stream()
+                      .filter(option -> option.contains(nextSpecName.replaceFirst("^-+", "")))
+                      .findFirst()
+                      .orElse(new ArrayList<>())
+                      .stream()
+                      .collect(Collectors.joining("."));
+              if (specName.length() > 0) {
+                foundNames.add(specName);
+              }
+            });
+
+    return foundNames.stream().findFirst();
   }
 
   private String getListEntryAsString(final OptionSpec spec) {
@@ -125,11 +178,12 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
     return getKeyName(spec).map(result::getBoolean).map(Object::toString).orElse(null);
   }
 
-  private String getIntegerEntryAsString(final OptionSpec spec) {
-    // return the string representation of the integer value corresponding to the option in toml
-    // file
+  private String getNumericEntryAsString(final OptionSpec spec) {
+    // return the string representation of the numeric value corresponding to the option in toml
+    // file - this works for integer, double, and float
     // or null if not present in the config
-    return getKeyName(spec).map(result::get).map(String::valueOf).orElse(null);
+
+    return getKeyName(spec).map(result::get).map(Object::toString).orElse(null);
   }
 
   private void checkConfigurationValidity() {
@@ -138,7 +192,8 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
           commandLine, String.format("Unable to read TOML configuration file %s", configFile));
   }
 
-  private void loadConfigurationFromFile() {
+  /** Load configuration from file. */
+  public void loadConfigurationFromFile() {
 
     if (result == null) {
       try {
@@ -170,8 +225,23 @@ public class TomlConfigFileDefaultProvider implements IDefaultValueProvider {
   private void checkUnknownOptions(final TomlParseResult result) {
     final CommandSpec commandSpec = commandLine.getCommandSpec();
 
+    // Besu ignores TOML table headings (e.g. [TxPool]) so we use keyPathSet() and take the
+    // last element in each one. For a TOML parameter that's not defined inside a table, the lists
+    // returned in keyPathSet() will contain a single entry - the config parameter itself. For a
+    // TOML
+    // entry that is in a table the list will contain N entries, the last one being the config
+    // parameter itself.
+    final Set<String> optionsWithoutTables = new HashSet<String>();
+    result.keyPathSet().stream()
+        .forEach(
+            strings -> {
+              optionsWithoutTables.add(strings.get(strings.size() - 1));
+            });
+
+    // Once we've stripped TOML table headings from the lists, we can check that the remaining
+    // options are valid
     final Set<String> unknownOptionsList =
-        result.keySet().stream()
+        optionsWithoutTables.stream()
             .filter(option -> !commandSpec.optionsMap().containsKey("--" + option))
             .collect(Collectors.toSet());
 

@@ -3,7 +3,7 @@
     <Properties>
         <Property name="root.log.level">${env:LOG_LEVEL:-INFO}</Property>
         <Property name="root.log.logger">${env:LOGGER:-Console}</Property>
-        <Property name="host">${env:HOST:-${docker:containerId:-localhost}}</Property>
+        <Property name="host">${env:HOST:-${docker:containerId:-${hostName:-localhost}}}</Property>
         <Property name="splunk.url">${env:SPLUNK_URL}</Property>
         <Property name="splunk.token">${env:SPLUNK_TOKEN}</Property>
         <Property name="splunk.index">${env:SPLUNK_INDEX}</Property>
@@ -39,6 +39,9 @@
     </Appenders>
     <Loggers>
         <Logger name="org.apache.logging.log4j.status.StatusLogger" level="OFF"/>
+        <Logger name="org.apache.tuweni.discovery.DNSTimerTask">
+            <RegexFilter regex="Refreshing DNS records with .*" onMatch="DENY" onMismatch="NEUTRAL" />
+        </Logger>
         <Root level="${sys:root.log.level}">
             <AppenderRef ref="Router" />
         </Root>

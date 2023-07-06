@@ -15,9 +15,8 @@
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -28,36 +27,44 @@ import org.hyperledger.besu.consensus.clique.CliqueBlockInterface;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
 import org.hyperledger.besu.consensus.clique.CliqueMiningTracker;
 import org.hyperledger.besu.consensus.clique.TestHelpers;
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.assertj.core.util.Lists;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@SuppressWarnings("DirectInvocationOnMock")
 public class CliqueMiningCoordinatorTest {
 
-  private final KeyPair proposerKeys = KeyPair.generate();
-  private final KeyPair validatorKeys = KeyPair.generate();
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+
+  private final KeyPair proposerKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
+  private final KeyPair validatorKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
   private final Address proposerAddress = Util.publicKeyToAddress(proposerKeys.getPublicKey());
   private final Address validatorAddress = Util.publicKeyToAddress(validatorKeys.getPublicKey());
 
@@ -73,23 +80,15 @@ public class CliqueMiningCoordinatorTest {
   @Mock private CliqueMinerExecutor minerExecutor;
   @Mock private CliqueBlockMiner blockMiner;
   @Mock private SyncState syncState;
-  @Mock private VoteTallyCache voteTallyCache;
+  @Mock private ValidatorProvider validatorProvider;
+  @Mock private BlockHeader blockHeader;
 
-  @Before
+  @BeforeEach
   public void setup() {
-
     headerTestFixture.number(1);
     Block genesisBlock = createEmptyBlock(0, Hash.ZERO, proposerKeys); // not normally signed but ok
     blockChain = createInMemoryBlockchain(genesisBlock);
 
-    final VoteTally voteTally = mock(VoteTally.class);
-    when(voteTally.getValidators()).thenReturn(validators);
-    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(voteTally);
-    final CliqueContext cliqueContext =
-        new CliqueContext(voteTallyCache, null, null, blockInterface);
-
-    when(protocolContext.getConsensusState(CliqueContext.class)).thenReturn(cliqueContext);
-    when(protocolContext.getBlockchain()).thenReturn(blockChain);
     when(minerExecutor.startAsyncMining(any(), any(), any())).thenReturn(Optional.of(blockMiner));
     when(syncState.isInSync()).thenReturn(true);
 
@@ -98,10 +97,12 @@ public class CliqueMiningCoordinatorTest {
 
   @Test
   public void outOfTurnBlockImportedDoesNotInterruptInTurnMiningOperation() {
+    setupCliqueContextAndBlockchain();
+
     // As the head of the blockChain is 0 (which effectively doesn't have a signer, all validators
     // are able to propose.
 
-    when(blockMiner.getParentHeader()).thenReturn(blockChain.getChainHeadHeader());
+    when(blockMiner.getParentHeader()).thenReturn(blockHeader);
 
     // Note also - validators is an hard-ordered LIST, thus in-turn will follow said list - block_1
     // should be created by proposer.
@@ -117,7 +118,7 @@ public class CliqueMiningCoordinatorTest {
 
     final Block importedBlock = createEmptyBlock(1, blockChain.getChainHeadHash(), validatorKeys);
 
-    blockChain.appendBlock(importedBlock, Lists.emptyList());
+    blockChain.appendBlock(importedBlock, Collections.emptyList());
 
     // The minerExecutor should not be invoked as the mining operation was conducted by an in-turn
     // validator, and the created block came from an out-turn validator.
@@ -145,7 +146,7 @@ public class CliqueMiningCoordinatorTest {
 
     final Block importedBlock = createEmptyBlock(2, blockChain.getChainHeadHash(), validatorKeys);
 
-    blockChain.appendBlock(importedBlock, Lists.emptyList());
+    blockChain.appendBlock(importedBlock, Collections.emptyList());
 
     // The minerExecutor should not be invoked as the mining operation was conducted by an in-turn
     // validator, and the created block came from an out-turn validator.
@@ -156,8 +157,10 @@ public class CliqueMiningCoordinatorTest {
 
   @Test
   public void outOfTurnBlockImportedInterruptsOutOfTurnMiningOperation() {
+    setupCliqueContextAndBlockchain();
+
     blockChain.appendBlock(
-        createEmptyBlock(1, blockChain.getChainHeadHash(), validatorKeys), Lists.emptyList());
+        createEmptyBlock(1, blockChain.getChainHeadHash(), validatorKeys), Collections.emptyList());
 
     when(blockMiner.getParentHeader()).thenReturn(blockChain.getChainHeadHeader());
 
@@ -176,7 +179,7 @@ public class CliqueMiningCoordinatorTest {
 
     final Block importedBlock = createEmptyBlock(2, blockChain.getChainHeadHash(), validatorKeys);
 
-    blockChain.appendBlock(importedBlock, Lists.emptyList());
+    blockChain.appendBlock(importedBlock, Collections.emptyList());
 
     // The minerExecutor should not be invoked as the mining operation was conducted by an in-turn
     // validator, and the created block came from an out-turn validator.
@@ -187,8 +190,10 @@ public class CliqueMiningCoordinatorTest {
 
   @Test
   public void outOfTurnBlockImportedInterruptsNonRunningMiner() {
+    setupCliqueContextAndBlockchain();
+
     blockChain.appendBlock(
-        createEmptyBlock(1, blockChain.getChainHeadHash(), proposerKeys), Lists.emptyList());
+        createEmptyBlock(1, blockChain.getChainHeadHash(), proposerKeys), Collections.emptyList());
 
     when(blockMiner.getParentHeader()).thenReturn(blockChain.getChainHeadHeader());
 
@@ -207,7 +212,7 @@ public class CliqueMiningCoordinatorTest {
 
     final Block importedBlock = createEmptyBlock(2, blockChain.getChainHeadHash(), validatorKeys);
 
-    blockChain.appendBlock(importedBlock, Lists.emptyList());
+    blockChain.appendBlock(importedBlock, Collections.emptyList());
 
     // The minerExecutor should not be invoked as the mining operation was conducted by an in-turn
     // validator, and the created block came from an out-turn validator.
@@ -232,7 +237,7 @@ public class CliqueMiningCoordinatorTest {
     when(minerExecutor.startAsyncMining(any(), any(), any())).thenReturn(Optional.of(blockMiner));
 
     final Block importedBlock = createEmptyBlock(1, blockChain.getChainHeadHash(), proposerKeys);
-    blockChain.appendBlock(importedBlock, Lists.emptyList());
+    blockChain.appendBlock(importedBlock, Collections.emptyList());
 
     // The minerExecutor should not be invoked as the mining operation was conducted by an in-turn
     // validator, and the created block came from an out-turn validator.
@@ -246,6 +251,15 @@ public class CliqueMiningCoordinatorTest {
     headerTestFixture.number(blockNumber).parentHash(parentHash);
     final BlockHeader header =
         TestHelpers.createCliqueSignedBlockHeader(headerTestFixture, signer, validators);
-    return new Block(header, new BlockBody(Lists.emptyList(), Lists.emptyList()));
+    return new Block(header, new BlockBody(Collections.emptyList(), Collections.emptyList()));
+  }
+
+  private void setupCliqueContextAndBlockchain() {
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
+
+    final CliqueContext cliqueContext = new CliqueContext(validatorProvider, null, blockInterface);
+    when(protocolContext.getConsensusContext(CliqueContext.class)).thenReturn(cliqueContext);
+
+    when(protocolContext.getBlockchain()).thenReturn(blockChain);
   }
 }

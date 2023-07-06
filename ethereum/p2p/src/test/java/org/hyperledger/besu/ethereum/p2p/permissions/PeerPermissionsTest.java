@@ -21,7 +21,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions.Action;
 
@@ -157,7 +157,7 @@ public class PeerPermissionsTest {
 
   private Peer createPeer() {
     return DefaultPeer.fromEnodeURL(
-        EnodeURL.builder()
+        EnodeURLImpl.builder()
             .listeningPort(30303)
             .discoveryPort(30303)
             .nodeId(Peer.randomId())

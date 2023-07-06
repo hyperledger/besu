@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.clique.jsonrpc.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.AdditionalMatchers.lt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -22,15 +23,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.SignerMetricResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
@@ -41,10 +41,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.LongStream;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CliqueGetSignerMetricsTest {
 
@@ -56,18 +54,16 @@ public class CliqueGetSignerMetricsTest {
   private final String JSON_RPC_VERSION = "2.0";
   private CliqueGetSignerMetrics method;
 
-  private VoteTallyCache voteTallyCache;
+  private ValidatorProvider validatorProvider;
   private BlockchainQueries blockchainQueries;
   private BlockInterface blockInterface;
 
-  @Rule public ExpectedException expectedException = ExpectedException.none();
-
-  @Before
+  @BeforeEach
   public void setup() {
-    voteTallyCache = mock(VoteTallyCache.class);
+    validatorProvider = mock(ValidatorProvider.class);
     blockchainQueries = mock(BlockchainQueries.class);
     blockInterface = mock(BlockInterface.class);
-    method = new CliqueGetSignerMetrics(voteTallyCache, blockInterface, blockchainQueries);
+    method = new CliqueGetSignerMetrics(validatorProvider, blockInterface, blockchainQueries);
   }
 
   @Test
@@ -77,22 +73,16 @@ public class CliqueGetSignerMetricsTest {
 
   @Test
   public void exceptionWhenInvalidStartBlockSupplied() {
-    final JsonRpcRequestContext request = requestWithParams("INVALID");
-
-    expectedException.expect(InvalidJsonRpcParameters.class);
-    expectedException.expectMessage("Invalid json rpc parameter at index 0");
-
-    method.response(request);
+    assertThatThrownBy(() -> method.response(requestWithParams("INVALID")))
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessageContaining("Invalid json rpc parameter at index 0");
   }
 
   @Test
   public void exceptionWhenInvalidEndBlockSupplied() {
-    final JsonRpcRequestContext request = requestWithParams("1", "INVALID");
-
-    expectedException.expect(InvalidJsonRpcParameters.class);
-    expectedException.expectMessage("Invalid json rpc parameter at index 1");
-
-    method.response(request);
+    assertThatThrownBy(() -> method.response(requestWithParams("1", "INVALID")))
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessageContaining("Invalid json rpc parameter at index 1");
   }
 
   @Test
@@ -261,8 +251,7 @@ public class CliqueGetSignerMetricsTest {
     when(blockchainQueries.getBlockHeaderByNumber(number)).thenReturn(Optional.of(header));
     when(blockInterface.getProposerOfBlock(header)).thenReturn(proposerAddressBlock);
 
-    when(voteTallyCache.getVoteTallyAfterBlock(header))
-        .thenReturn(new VoteTally(Arrays.asList(VALIDATORS)));
+    when(validatorProvider.getValidatorsAfterBlock(header)).thenReturn((Arrays.asList(VALIDATORS)));
 
     final SignerMetricResult signerMetricResult = new SignerMetricResult(proposerAddressBlock);
     signerMetricResult.incrementeNbBlock();

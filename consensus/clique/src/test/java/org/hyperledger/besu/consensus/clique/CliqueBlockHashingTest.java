@@ -16,19 +16,19 @@ package org.hyperledger.besu.consensus.clique;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.Arrays;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CliqueBlockHashingTest {
 
@@ -43,7 +43,7 @@ public class CliqueBlockHashingTest {
   private static final Hash KNOWN_BLOCK_HASH =
       Hash.fromHexString("0x8b27a29300811af926039b90288d3d384dcb55931049c17c4f762e45c116776e");
 
-  @Before
+  @BeforeEach
   public void setup() {
     expectedHeader = createKnownHeaderFromCapturedData();
   }

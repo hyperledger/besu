@@ -23,6 +23,7 @@ import java.util.function.Function;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.units.bigints.UInt64;
 
 /**
  * An input used to decode data in RLP encoding.
@@ -83,6 +84,13 @@ public interface RLPInput {
   int nextSize();
 
   /**
+   * Returns the offset of the next item, counting from the start of the RLP Input as a whole.
+   *
+   * @return offset from buffer start
+   */
+  int nextOffset();
+
+  /**
    * Whether the input is at the end of a currently entered list, that is if {@link #leaveList()}
    * should be the next method called.
    *
@@ -129,7 +137,8 @@ public interface RLPInput {
   void leaveListLenient();
 
   /**
-   * Reads a scalar from the input and return is as a long value.
+   * Reads a non-negative scalar from the input and return it as a long value which is interpreted
+   * as an unsigned long.
    *
    * @return The next scalar item of this input as a long value.
    * @throws RLPException if the next item to read is a list, the input is at the end of its current
@@ -156,6 +165,16 @@ public interface RLPInput {
    *     list (and {@link #leaveList()} hasn't been called) or if the next item has leading zeros.
    */
   BigInteger readBigIntegerScalar();
+
+  /**
+   * Reads a scalar from the input and return is as a {@link UInt64}.
+   *
+   * @return The next scalar item of this input as a {@link UInt64}.
+   * @throws RLPException if the next item to read is a list, the input is at the end of its current
+   *     list (and {@link #leaveList()} hasn't been called) or if the next item is either too big to
+   *     fit a {@link UInt64} or has leading zeros.
+   */
+  UInt64 readUInt64Scalar();
 
   /**
    * Reads a scalar from the input and return is as a {@link UInt256}.
@@ -213,6 +232,11 @@ public interface RLPInput {
    *     long.
    */
   default int readUnsignedByte() {
+    if (isZeroLengthString()) {
+      // Decode an empty string (0x80) as an unsigned byte with value 0
+      readBytes();
+      return 0;
+    }
     return readByte() & 0xFF;
   }
 
@@ -238,6 +262,15 @@ public interface RLPInput {
     return (readInt()) & 0xFFFFFFFFL;
   }
 
+  /**
+   * Reads a scalar from the input and return is as an unsigned int contained in a long
+   *
+   * @return The next scalar item of this input as an unsigned int value as long
+   * @throws RLPException if the next item to read is a list, the input is at the end of its current
+   *     list (and {@link #leaveList()} hasn't been called) or if the next item is either too big to
+   *     fit an unsigned int or has leading zeros.
+   */
+  long readUnsignedIntScalar();
   /**
    * Reads an inet address from this input.
    *
@@ -268,7 +301,7 @@ public interface RLPInput {
   Bytes32 readBytes32();
 
   /**
-   * Reads the next iterm of this input (assuming it is not a list) and transform it with the
+   * Reads the next item of this input (assuming it is not a list) and transforms it with the
    * provided mapping function.
    *
    * <p>Note that the only benefit of this method over calling the mapper function on the result of
@@ -303,8 +336,17 @@ public interface RLPInput {
    */
   Bytes raw();
 
+  boolean isZeroLengthString();
+
   /** Resets this RLP input to the start. */
   void reset();
+
+  /**
+   * Returns a raw {@link Bytes} representation of this RLP list.
+   *
+   * @return The raw RLP list.
+   */
+  Bytes currentListAsBytes();
 
   /**
    * Reads a full list from the input given a method that knows how to read its elements.
@@ -317,7 +359,7 @@ public interface RLPInput {
    */
   default <T> List<T> readList(final Function<RLPInput, T> valueReader) {
     final int size = enterList();
-    final List<T> res = new ArrayList<>(size);
+    final List<T> res = size == 0 ? List.of() : new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       try {
         res.add(valueReader.apply(this));

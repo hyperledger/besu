@@ -23,38 +23,56 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.Statistics;
-import org.rocksdb.TransactionDB;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The Rocks db metrics factory. */
 public class RocksDBMetricsFactory {
 
+  /** The constant PUBLIC_ROCKS_DB_METRICS. */
   public static final RocksDBMetricsFactory PUBLIC_ROCKS_DB_METRICS =
       new RocksDBMetricsFactory(
           BesuMetricCategory.KVSTORE_ROCKSDB, BesuMetricCategory.KVSTORE_ROCKSDB_STATS);
 
+  /** The constant PRIVATE_ROCKS_DB_METRICS. */
   public static final RocksDBMetricsFactory PRIVATE_ROCKS_DB_METRICS =
       new RocksDBMetricsFactory(
           BesuMetricCategory.KVSTORE_PRIVATE_ROCKSDB,
           BesuMetricCategory.KVSTORE_PRIVATE_ROCKSDB_STATS);
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RocksDBMetricsFactory.class);
 
   private final MetricCategory rocksDbMetricCategory;
   private final MetricCategory statsDbMetricCategory;
 
+  /**
+   * Instantiates a new RocksDb metrics factory.
+   *
+   * @param rocksDbMetricCategory the rocks db metric category
+   * @param statsDbMetricCategory the stats db metric category
+   */
   public RocksDBMetricsFactory(
       final MetricCategory rocksDbMetricCategory, final MetricCategory statsDbMetricCategory) {
     this.rocksDbMetricCategory = rocksDbMetricCategory;
     this.statsDbMetricCategory = statsDbMetricCategory;
   }
 
+  /**
+   * Create RocksDb metrics.
+   *
+   * @param metricsSystem the metrics system
+   * @param rocksDbConfiguration the rocks db configuration
+   * @param db the db
+   * @param stats the stats
+   * @return the rocks db metrics
+   */
   public RocksDBMetrics create(
       final MetricsSystem metricsSystem,
       final RocksDBConfiguration rocksDbConfiguration,
-      final TransactionDB db,
+      final RocksDB db,
       final Statistics stats) {
     final OperationTimer readLatency =
         metricsSystem

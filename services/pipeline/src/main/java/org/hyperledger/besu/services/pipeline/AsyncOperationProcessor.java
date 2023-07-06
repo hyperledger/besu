@@ -25,11 +25,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class AsyncOperationProcessor<I, O> implements Processor<I, O> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(AsyncOperationProcessor.class);
   private final Function<I, CompletableFuture<O>> processor;
   private final List<CompletableFuture<O>> inProgress;
   private CompletableFuture<?> nextOutputAvailableFuture = completedFuture(null);

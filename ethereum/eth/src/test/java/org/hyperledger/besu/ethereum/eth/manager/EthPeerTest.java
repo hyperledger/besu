@@ -18,10 +18,15 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.EthPeerTestUtil;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
@@ -31,6 +36,9 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.PingMessage;
+import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.util.Arrays;
@@ -43,11 +51,16 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class EthPeerTest {
   private static final BlockDataGenerator gen = new BlockDataGenerator();
   private final TestClock clock = new TestClock();
+  private static final Bytes NODE_ID = Bytes.random(64);
+  private static final Bytes NODE_ID_ZERO =
+      Bytes.fromHexString(
+          "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010");
 
   @Test
   public void getHeadersStream() throws PeerNotConnected {
@@ -324,6 +337,46 @@ public class EthPeerTest {
     assertThat(peer.isFullyValidated()).isTrue();
   }
 
+  @Test
+  public void message_permissioning_any_false_permission_preventsMessageFromSendingToPeer()
+      throws PeerNotConnected {
+    NodeMessagePermissioningProvider trueProvider = mock(NodeMessagePermissioningProvider.class);
+    NodeMessagePermissioningProvider falseProvider = mock(NodeMessagePermissioningProvider.class);
+    when(trueProvider.isMessagePermitted(any(), anyInt())).thenReturn(true);
+    when(falseProvider.isMessagePermitted(any(), anyInt())).thenReturn(false);
+
+    // use failOnSend callback
+    final EthPeer peer =
+        createPeer(Collections.emptyList(), List.of(falseProvider, trueProvider), getFailOnSend());
+    peer.send(PingMessage.get());
+  }
+
+  @Test
+  public void compareTo_withSameNodeId() {
+    final EthPeer peer1 = createPeerWithPeerInfo(NODE_ID);
+    final EthPeer peer2 = createPeerWithPeerInfo(NODE_ID);
+    assertThat(peer1.compareTo(peer2)).isEqualTo(0);
+    assertThat(peer2.compareTo(peer1)).isEqualTo(0);
+  }
+
+  @Test
+  public void compareTo_withDifferentNodeId() {
+    final EthPeer peer1 = createPeerWithPeerInfo(NODE_ID);
+    final EthPeer peer2 = createPeerWithPeerInfo(NODE_ID_ZERO);
+    assertThat(peer1.compareTo(peer2)).isEqualTo(1);
+    assertThat(peer2.compareTo(peer1)).isEqualTo(-1);
+  }
+
+  @Test
+  public void recordUsefulResponse() {
+    final EthPeer peer = createPeer();
+    peer.recordUselessResponse("bodies");
+    final EthPeer peer2 = createPeer();
+    peer2.recordUselessResponse("bodies");
+    peer.recordUsefulResponse();
+    assertThat(peer.getReputation().compareTo(peer2.getReputation())).isGreaterThan(0);
+  }
+
   private void messageStream(
       final ResponseStreamSupplier getStream,
       final MessageData targetMessage,
@@ -402,18 +455,80 @@ public class EthPeerTest {
   }
 
   private EthPeer createPeer() {
-    return createPeer(Collections.emptyList());
+    return createPeer(Collections.emptyList(), Collections.emptyList());
   }
 
   private EthPeer createPeer(final PeerValidator... peerValidators) {
-    return createPeer(Arrays.asList(peerValidators));
+    return createPeer(Arrays.asList(peerValidators), Collections.emptyList());
   }
 
   private EthPeer createPeer(final List<PeerValidator> peerValidators) {
-    final Set<Capability> caps = new HashSet<>(singletonList(EthProtocol.ETH63));
-    final PeerConnection peerConnection = new MockPeerConnection(caps);
+    return createPeer(peerValidators, Collections.emptyList());
+  }
+
+  private EthPeer createPeerWithPeerInfo(final Bytes nodeId) {
+    final PeerConnection peerConnection = mock(PeerConnection.class);
+    // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
+    // that extend the sub-protocol work correctly
+    PeerInfo peerInfo = new PeerInfo(1, "clientId", Collections.emptyList(), 30303, nodeId);
+    when(peerConnection.getPeerInfo()).thenReturn(peerInfo);
+    when(peerConnection.getPeer()).thenReturn(EthPeerTestUtil.createPeer(peerInfo.getNodeId()));
+
     final Consumer<EthPeer> onPeerReady = (peer) -> {};
-    return new EthPeer(peerConnection, EthProtocol.NAME, onPeerReady, peerValidators, clock);
+    return new EthPeer(
+        peerConnection,
+        "foo",
+        onPeerReady,
+        Collections.emptyList(),
+        EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+        clock,
+        Collections.emptyList(),
+        Bytes.random(64));
+  }
+
+  private MockPeerConnection.PeerSendHandler getFailOnSend() {
+    return (cap, message, conn) -> {
+      fail("should not call send");
+    };
+  }
+
+  private MockPeerConnection.PeerSendHandler getNoOpSend() {
+    return (cap, msg, conn) -> {};
+  }
+
+  private EthPeer createPeer(
+      final List<PeerValidator> peerValidators,
+      final List<NodeMessagePermissioningProvider> permissioningProviders) {
+    return createPeer(peerValidators, permissioningProviders, getNoOpSend());
+  }
+
+  private EthPeer createPeer(
+      final List<PeerValidator> peerValidators,
+      final List<NodeMessagePermissioningProvider> permissioningProviders,
+      final MockPeerConnection.PeerSendHandler onSend) {
+
+    final PeerConnection peerConnection = getPeerConnection(onSend);
+    final Consumer<EthPeer> onPeerReady = (peer) -> {};
+    // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
+    // that extend the sub-protocol work correctly
+    return new EthPeer(
+        peerConnection,
+        "foo",
+        onPeerReady,
+        peerValidators,
+        EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+        clock,
+        permissioningProviders,
+        Bytes.random(64));
+  }
+
+  private PeerConnection getPeerConnection(final MockPeerConnection.PeerSendHandler onSend) {
+    // Use a non-eth protocol name to ensure that EthPeer with sub-protocols such as Istanbul
+    // that extend the sub-protocol work correctly
+    final Set<Capability> caps =
+        new HashSet<>(Collections.singletonList(Capability.create("foo", 63)));
+
+    return new MockPeerConnection(caps, onSend);
   }
 
   @FunctionalInterface

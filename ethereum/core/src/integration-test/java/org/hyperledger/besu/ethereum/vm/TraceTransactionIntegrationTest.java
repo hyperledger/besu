@@ -17,16 +17,16 @@ package org.hyperledger.besu.ethereum.vm;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Account;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
-import org.hyperledger.besu.ethereum.core.Gas;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
@@ -35,17 +35,20 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TraceTransactionIntegrationTest {
 
@@ -62,20 +65,23 @@ public class TraceTransactionIntegrationTest {
   private MainnetTransactionProcessor transactionProcessor;
   private BlockHashLookup blockHashLookup;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     final ExecutionContextTestFixture contextTestFixture = ExecutionContextTestFixture.create();
     genesisBlock = contextTestFixture.getGenesis();
     blockchain = contextTestFixture.getBlockchain();
     worldStateArchive = contextTestFixture.getStateArchive();
     final ProtocolSchedule protocolSchedule = contextTestFixture.getProtocolSchedule();
-    transactionProcessor = protocolSchedule.getByBlockNumber(0).getTransactionProcessor();
-    blockHashLookup = new BlockHashLookup(genesisBlock.getHeader(), blockchain);
+    transactionProcessor =
+        protocolSchedule
+            .getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader())
+            .getTransactionProcessor();
+    blockHashLookup = new CachingBlockHashLookup(genesisBlock.getHeader(), blockchain);
   }
 
   @Test
   public void shouldTraceSStoreOperation() {
-    final KeyPair keyPair = KeyPair.generate();
+    final KeyPair keyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
     final Transaction createTransaction =
         Transaction.builder()
             .type(TransactionType.FRONTIER)
@@ -86,19 +92,23 @@ public class TraceTransactionIntegrationTest {
             .value(Wei.ZERO)
             .signAndBuild(keyPair);
 
+    final BlockHeader genesisBlockHeader = genesisBlock.getHeader();
     final MutableWorldState worldState =
-        worldStateArchive.getMutable(genesisBlock.getHeader().getStateRoot()).get();
+        worldStateArchive
+            .getMutable(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash())
+            .get();
     final WorldUpdater createTransactionUpdater = worldState.updater();
     TransactionProcessingResult result =
         transactionProcessor.processTransaction(
             blockchain,
             createTransactionUpdater,
-            genesisBlock.getHeader(),
+            genesisBlockHeader,
             createTransaction,
-            genesisBlock.getHeader().getCoinbase(),
+            genesisBlockHeader.getCoinbase(),
             blockHashLookup,
             false,
-            TransactionValidationParams.blockReplay());
+            TransactionValidationParams.blockReplay(),
+            Wei.ZERO);
     assertThat(result.isSuccessful()).isTrue();
     final Account createdContract =
         createTransactionUpdater.getTouchedAccounts().stream()
@@ -125,12 +135,13 @@ public class TraceTransactionIntegrationTest {
         transactionProcessor.processTransaction(
             blockchain,
             storeUpdater,
-            genesisBlock.getHeader(),
+            genesisBlockHeader,
             executeTransaction,
-            genesisBlock.getHeader().getCoinbase(),
+            genesisBlockHeader.getCoinbase(),
             tracer,
             blockHashLookup,
-            false);
+            false,
+            Wei.ZERO);
 
     assertThat(result.isSuccessful()).isTrue();
 
@@ -159,15 +170,20 @@ public class TraceTransactionIntegrationTest {
     final Transaction transaction =
         Transaction.readFrom(
             new BytesValueRLPInput(Bytes.fromHexString(CONTRACT_CREATION_TX), false));
+    final BlockHeader genesisBlockHeader = genesisBlock.getHeader();
     transactionProcessor.processTransaction(
         blockchain,
-        worldStateArchive.getMutable(genesisBlock.getHeader().getStateRoot()).get().updater(),
-        genesisBlock.getHeader(),
+        worldStateArchive
+            .getMutable(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash())
+            .get()
+            .updater(),
+        genesisBlockHeader,
         transaction,
-        genesisBlock.getHeader().getCoinbase(),
+        genesisBlockHeader.getCoinbase(),
         tracer,
-        new BlockHashLookup(genesisBlock.getHeader(), blockchain),
-        false);
+        new CachingBlockHashLookup(genesisBlockHeader, blockchain),
+        false,
+        Wei.ZERO);
 
     final int expectedDepth = 0; // Reference impl returned 1. Why the difference?
 
@@ -176,8 +192,8 @@ public class TraceTransactionIntegrationTest {
 
     TraceFrame frame = traceFrames.get(0);
     assertThat(frame.getDepth()).isEqualTo(expectedDepth);
-    assertThat(frame.getGasRemaining()).isEqualTo(Gas.of(4632748));
-    assertThat(frame.getGasCost()).contains(Gas.of(3));
+    assertThat(frame.getGasRemaining()).isEqualTo(4632748L);
+    assertThat(frame.getGasCost()).isEqualTo(OptionalLong.of(3));
     assertThat(frame.getOpcode()).isEqualTo("PUSH1");
     assertThat(frame.getPc()).isEqualTo(0);
     assertStackContainsExactly(frame);
@@ -186,8 +202,8 @@ public class TraceTransactionIntegrationTest {
 
     frame = traceFrames.get(1);
     assertThat(frame.getDepth()).isEqualTo(expectedDepth);
-    assertThat(frame.getGasRemaining()).isEqualTo(Gas.of(4632745));
-    assertThat(frame.getGasCost()).contains(Gas.of(3));
+    assertThat(frame.getGasRemaining()).isEqualTo(4632745L);
+    assertThat(frame.getGasCost()).isEqualTo(OptionalLong.of(3L));
     assertThat(frame.getOpcode()).isEqualTo("PUSH1");
     assertThat(frame.getPc()).isEqualTo(2);
     assertStackContainsExactly(
@@ -197,8 +213,8 @@ public class TraceTransactionIntegrationTest {
 
     frame = traceFrames.get(2);
     assertThat(frame.getDepth()).isEqualTo(expectedDepth);
-    assertThat(frame.getGasRemaining()).isEqualTo(Gas.of(4632742));
-    assertThat(frame.getGasCost()).contains(Gas.of(12));
+    assertThat(frame.getGasRemaining()).isEqualTo(4632742L);
+    assertThat(frame.getGasCost()).isEqualTo(OptionalLong.of(12L));
     assertThat(frame.getOpcode()).isEqualTo("MSTORE");
     assertThat(frame.getPc()).isEqualTo(4);
     assertStackContainsExactly(
@@ -219,8 +235,8 @@ public class TraceTransactionIntegrationTest {
 
     frame = traceFrames.get(3);
     assertThat(frame.getDepth()).isEqualTo(expectedDepth);
-    assertThat(frame.getGasRemaining()).isEqualTo(Gas.of(4632730));
-    assertThat(frame.getGasCost()).contains(Gas.of(2));
+    assertThat(frame.getGasRemaining()).isEqualTo(4632730L);
+    assertThat(frame.getGasCost()).isEqualTo(OptionalLong.of(2L));
     assertThat(frame.getOpcode()).isEqualTo("CALLVALUE");
     assertThat(frame.getPc()).isEqualTo(5);
     assertStackContainsExactly(frame);

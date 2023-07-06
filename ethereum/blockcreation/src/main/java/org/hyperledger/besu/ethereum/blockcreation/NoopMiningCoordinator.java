@@ -15,12 +15,12 @@
 
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 
 import java.util.List;
 import java.util.Optional;
@@ -77,6 +77,11 @@ public class NoopMiningCoordinator implements MiningCoordinator {
       final BlockHeader parentHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers) {
+    return Optional.empty();
+  }
+
+  @Override
+  public Optional<Block> createBlock(final BlockHeader parentHeader, final long timestamp) {
     return Optional.empty();
   }
 

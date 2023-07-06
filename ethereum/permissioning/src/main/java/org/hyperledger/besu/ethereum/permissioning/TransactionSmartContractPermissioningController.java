@@ -18,7 +18,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.crypto.Hash;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.permissioning.account.TransactionPermissioningProvider;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -30,9 +30,11 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.BaseUInt256Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Controller that can read from a smart contract that exposes the permissioning call
@@ -41,7 +43,8 @@ import org.apache.tuweni.bytes.Bytes;
 public class TransactionSmartContractPermissioningController
     implements TransactionPermissioningProvider {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(TransactionSmartContractPermissioningController.class);
 
   private final Address contractAddress;
   private final TransactionSimulator transactionSimulator;
@@ -106,7 +109,7 @@ public class TransactionSmartContractPermissioningController
    */
   @Override
   public boolean isPermitted(final Transaction transaction) {
-    final org.hyperledger.besu.ethereum.core.Hash transactionHash = transaction.getHash();
+    final org.hyperledger.besu.datatypes.Hash transactionHash = transaction.getHash();
     final Address sender = transaction.getSender();
 
     LOG.trace("Account permissioning - Smart Contract : Checking transaction {}", transactionHash);
@@ -193,8 +196,8 @@ public class TransactionSmartContractPermissioningController
     return Bytes.concatenate(
         encodeAddress(transaction.getSender()),
         encodeAddress(transaction.getTo()),
-        transaction.getValue().toBytes(),
-        transaction.getGasPrice().toBytes(),
+        transaction.getValue(),
+        transaction.getGasPrice().map(BaseUInt256Value::toBytes).orElse(Bytes32.ZERO),
         encodeLong(transaction.getGasLimit()),
         encodeBytes(transaction.getPayload()));
   }

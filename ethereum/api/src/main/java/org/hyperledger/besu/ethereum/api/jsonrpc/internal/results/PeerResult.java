@@ -29,7 +29,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.immutables.value.Value;
 
-@JsonPropertyOrder({"version", "name", "caps", "network", "port", "id", "protocols"})
+@JsonPropertyOrder({"version", "name", "caps", "network", "port", "id", "protocols", "enode"})
 @Value.Immutable
 @Value.Style(allParameters = true)
 public interface PeerResult {
@@ -49,6 +49,7 @@ public interface PeerResult {
         .port(Quantity.create(peerInfo.getPort()))
         .id(peerInfo.getNodeId().toString())
         .protocols(Map.of(peer.getProtocolName(), ProtocolsResult.fromEthPeer(peer)))
+        .enode(connection.getRemoteEnode().toString())
         .build();
   }
 
@@ -72,4 +73,7 @@ public interface PeerResult {
 
   @JsonGetter(value = "protocols")
   Map<String, ProtocolsResult> getProtocols();
+
+  @JsonGetter(value = "enode")
+  String getEnode();
 }

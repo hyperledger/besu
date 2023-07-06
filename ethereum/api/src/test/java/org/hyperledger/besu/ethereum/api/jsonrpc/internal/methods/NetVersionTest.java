@@ -49,7 +49,7 @@ public class NetVersionTest {
 
     final JsonRpcResponse response = method.response(request());
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -59,7 +59,7 @@ public class NetVersionTest {
 
     final JsonRpcResponse response = method.response(request());
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   private JsonRpcRequestContext request() {

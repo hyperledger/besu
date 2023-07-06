@@ -31,7 +31,7 @@ public enum GraphQLError {
   INTRINSIC_GAS_EXCEEDS_LIMIT(-32003, "Intrinsic gas exceeds gas limit"),
   TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE(-32004, "Upfront cost exceeds account balance"),
   EXCEEDS_BLOCK_GAS_LIMIT(-32005, "Transaction gas limit exceeds block gas limit"),
-  INCORRECT_NONCE(-32006, "Incorrect nonce"),
+  INCORRECT_NONCE(-32006, "Nonce too high"),
   TX_SENDER_NOT_AUTHORIZED(-32007, "Sender account not authorized to send transactions"),
   CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE(-32008, "Initial sync is still in progress"),
   GAS_PRICE_TOO_LOW(-32009, "Gas price below configured minimum gas price"),
@@ -76,8 +76,8 @@ public enum GraphQLError {
       case NONCE_TOO_LOW:
       case PRIVATE_NONCE_TOO_LOW:
         return NONCE_TOO_LOW;
-      case INCORRECT_NONCE:
-      case INCORRECT_PRIVATE_NONCE:
+      case NONCE_TOO_HIGH:
+      case PRIVATE_NONCE_TOO_HIGH:
         return INCORRECT_NONCE;
       case INTRINSIC_GAS_EXCEEDS_GAS_LIMIT:
         return INTRINSIC_GAS_EXCEEDS_LIMIT;

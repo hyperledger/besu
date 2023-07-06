@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.services.tasks.CachingTaskCollection;
 
 import java.util.concurrent.TimeUnit;
@@ -46,6 +47,10 @@ public class SynchronizerConfiguration {
   public static final int DEFAULT_COMPUTATION_PARALLELISM = 2;
   public static final int DEFAULT_WORLD_STATE_TASK_CACHE_SIZE =
       CachingTaskCollection.DEFAULT_CACHE_SIZE;
+  public static final long DEFAULT_PROPAGATION_MANAGER_GET_BLOCK_TIMEOUT_MILLIS =
+      TimeUnit.SECONDS.toMillis(60);
+
+  public static final boolean DEFAULT_CHECKPOINT_POST_MERGE_ENABLED = false;
 
   // Fast sync config
   private final int fastSyncPivotDistance;
@@ -56,11 +61,17 @@ public class SynchronizerConfiguration {
   private final int worldStateMaxRequestsWithoutProgress;
   private final int worldStateTaskCacheSize;
 
+  // Snapsync
+  private final SnapSyncConfiguration snapSyncConfiguration;
+
   // Block propagation config
   private final Range<Long> blockPropagationRange;
 
   // General config
   private final SyncMode syncMode;
+
+  // Near head Checkpoint sync
+  private final boolean checkpointPostMergeEnabled;
 
   // Downloader config
   private final long downloaderChangeTargetThresholdByHeight;
@@ -73,6 +84,7 @@ public class SynchronizerConfiguration {
   private final int computationParallelism;
   private final int maxTrailingPeers;
   private final long worldStateMinMillisBeforeStalling;
+  private final long propagationManagerGetBlockTimeoutMillis;
 
   private SynchronizerConfiguration(
       final int fastSyncPivotDistance,
@@ -83,6 +95,7 @@ public class SynchronizerConfiguration {
       final int worldStateMaxRequestsWithoutProgress,
       final long worldStateMinMillisBeforeStalling,
       final int worldStateTaskCacheSize,
+      final SnapSyncConfiguration snapSyncConfiguration,
       final Range<Long> blockPropagationRange,
       final SyncMode syncMode,
       final long downloaderChangeTargetThresholdByHeight,
@@ -93,7 +106,9 @@ public class SynchronizerConfiguration {
       final int downloaderParallelism,
       final int transactionsParallelism,
       final int computationParallelism,
-      final int maxTrailingPeers) {
+      final int maxTrailingPeers,
+      final long propagationManagerGetBlockTimeoutMillis,
+      final boolean checkpointPostMergeEnabled) {
     this.fastSyncPivotDistance = fastSyncPivotDistance;
     this.fastSyncFullValidationRate = fastSyncFullValidationRate;
     this.fastSyncMinimumPeerCount = fastSyncMinimumPeerCount;
@@ -102,6 +117,7 @@ public class SynchronizerConfiguration {
     this.worldStateMaxRequestsWithoutProgress = worldStateMaxRequestsWithoutProgress;
     this.worldStateMinMillisBeforeStalling = worldStateMinMillisBeforeStalling;
     this.worldStateTaskCacheSize = worldStateTaskCacheSize;
+    this.snapSyncConfiguration = snapSyncConfiguration;
     this.blockPropagationRange = blockPropagationRange;
     this.syncMode = syncMode;
     this.downloaderChangeTargetThresholdByHeight = downloaderChangeTargetThresholdByHeight;
@@ -113,6 +129,8 @@ public class SynchronizerConfiguration {
     this.transactionsParallelism = transactionsParallelism;
     this.computationParallelism = computationParallelism;
     this.maxTrailingPeers = maxTrailingPeers;
+    this.propagationManagerGetBlockTimeoutMillis = propagationManagerGetBlockTimeoutMillis;
+    this.checkpointPostMergeEnabled = checkpointPostMergeEnabled;
   }
 
   public static Builder builder() {
@@ -128,11 +146,24 @@ public class SynchronizerConfiguration {
     return syncMode;
   }
 
+  public boolean isCheckpointPostMergeEnabled() {
+    return checkpointPostMergeEnabled;
+  }
+
+  /**
+   * All the configuration related to snapsync
+   *
+   * @return snapsync configuration
+   */
+  public SnapSyncConfiguration getSnapSyncConfiguration() {
+    return snapSyncConfiguration;
+  }
+
   /**
    * The range of block numbers (relative to the current chain head and the best network block) that
    * are considered appropriate to import as new blocks are announced on the network.
    *
-   * @return the range of blocks considered valid to import from the network, relative to the the
+   * @return the range of blocks considered valid to import from the network, relative to the
    *     current chain head.
    */
   public Range<Long> getBlockPropagationRange() {
@@ -219,6 +250,10 @@ public class SynchronizerConfiguration {
     return maxTrailingPeers;
   }
 
+  public long getPropagationManagerGetBlockTimeoutMillis() {
+    return propagationManagerGetBlockTimeoutMillis;
+  }
+
   public static class Builder {
     private SyncMode syncMode = SyncMode.FULL;
     private int fastSyncMinimumPeerCount = DEFAULT_FAST_SYNC_MINIMUM_PEERS;
@@ -231,6 +266,7 @@ public class SynchronizerConfiguration {
     private int downloaderHeaderRequestSize = DEFAULT_DOWNLOADER_HEADER_REQUEST_SIZE;
     private int downloaderCheckpointTimeoutsPermitted =
         DEFAULT_DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED;
+    private SnapSyncConfiguration snapSyncConfiguration = SnapSyncConfiguration.getDefault();
     private int downloaderChainSegmentSize = DEFAULT_DOWNLOADER_CHAIN_SEGMENT_SIZE;
     private int downloaderParallelism = DEFAULT_DOWNLOADER_PARALLELISM;
     private int transactionsParallelism = DEFAULT_TRANSACTIONS_PARALLELISM;
@@ -244,6 +280,10 @@ public class SynchronizerConfiguration {
     private long worldStateMinMillisBeforeStalling = DEFAULT_WORLD_STATE_MIN_MILLIS_BEFORE_STALLING;
     private int worldStateTaskCacheSize = DEFAULT_WORLD_STATE_TASK_CACHE_SIZE;
 
+    private long propagationManagerGetBlockTimeoutMillis =
+        DEFAULT_PROPAGATION_MANAGER_GET_BLOCK_TIMEOUT_MILLIS;
+    private boolean checkpointPostMergeEnabled = DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
+
     public Builder fastSyncPivotDistance(final int distance) {
       fastSyncPivotDistance = distance;
       return this;
@@ -251,6 +291,11 @@ public class SynchronizerConfiguration {
 
     public Builder fastSyncFullValidationRate(final float rate) {
       this.fastSyncFullValidationRate = rate;
+      return this;
+    }
+
+    public Builder snapSyncConfiguration(final SnapSyncConfiguration snapSyncConfiguration) {
+      this.snapSyncConfiguration = snapSyncConfiguration;
       return this;
     }
 
@@ -350,6 +395,17 @@ public class SynchronizerConfiguration {
       return this;
     }
 
+    public Builder propagationManagerGetBlockTimeoutMillis(
+        final long propagationManagerGetBlockTimeoutMillis) {
+      this.propagationManagerGetBlockTimeoutMillis = propagationManagerGetBlockTimeoutMillis;
+      return this;
+    }
+
+    public Builder checkpointPostMergeEnabled(final boolean checkpointPostMergeEnabled) {
+      this.checkpointPostMergeEnabled = checkpointPostMergeEnabled;
+      return this;
+    }
+
     public SynchronizerConfiguration build() {
       return new SynchronizerConfiguration(
           fastSyncPivotDistance,
@@ -360,6 +416,7 @@ public class SynchronizerConfiguration {
           worldStateMaxRequestsWithoutProgress,
           worldStateMinMillisBeforeStalling,
           worldStateTaskCacheSize,
+          snapSyncConfiguration,
           blockPropagationRange,
           syncMode,
           downloaderChangeTargetThresholdByHeight,
@@ -370,7 +427,9 @@ public class SynchronizerConfiguration {
           downloaderParallelism,
           transactionsParallelism,
           computationParallelism,
-          maxTrailingPeers);
+          maxTrailingPeers,
+          propagationManagerGetBlockTimeoutMillis,
+          checkpointPostMergeEnabled);
     }
   }
 }

@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.plugin.data.Quantity;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Quantity;
 
 import java.math.BigInteger;
 
@@ -103,6 +103,6 @@ public abstract class ClassicDifficultyCalculators {
   }
 
   private static BigInteger difficulty(final Quantity value) {
-    return (BigInteger) value.getValue();
+    return value.getAsBigInteger();
   }
 }

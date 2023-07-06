@@ -101,7 +101,7 @@ class InSyncTracker {
     }
 
     public void ifKnown(final Consumer<Boolean> handler) {
-      inSync.ifPresent(handler::accept);
+      inSync.ifPresent(handler);
     }
   }
 }

@@ -37,16 +37,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EthScheduler {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(EthScheduler.class);
 
   private final Duration defaultTimeout = Duration.ofSeconds(5);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   private final CountDownLatch shutdown = new CountDownLatch(1);
-  private static final int TX_WORKER_CAPACITY = 1000000;
+  private static final int TX_WORKER_CAPACITY = 1_000;
 
   protected final ExecutorService syncWorkerExecutor;
   protected final ScheduledExecutorService scheduler;
@@ -72,18 +72,20 @@ public class EthScheduler {
       final MetricsSystem metricsSystem) {
     this(
         MonitoredExecutors.newFixedThreadPool(
-            EthScheduler.class.getSimpleName() + "-Workers", syncWorkerCount, metricsSystem),
+            EthScheduler.class.getSimpleName() + "-Workers", 1, syncWorkerCount, metricsSystem),
         MonitoredExecutors.newScheduledThreadPool(
             EthScheduler.class.getSimpleName() + "-Timer", 1, metricsSystem),
         MonitoredExecutors.newBoundedThreadPool(
             EthScheduler.class.getSimpleName() + "-Transactions",
+            1,
             txWorkerCount,
             txWorkerQueueSize,
             metricsSystem),
         MonitoredExecutors.newCachedThreadPool(
             EthScheduler.class.getSimpleName() + "-Services", metricsSystem),
-        MonitoredExecutors.newFixedThreadPool(
+        MonitoredExecutors.newBoundedThreadPool(
             EthScheduler.class.getSimpleName() + "-Computation",
+            1,
             computationWorkerCount,
             metricsSystem));
   }
@@ -177,7 +179,7 @@ public class EthScheduler {
   public ScheduledFuture<?> scheduleFutureTaskWithFixedDelay(
       final Runnable command, final Duration initialDelay, final Duration duration) {
     return scheduler.scheduleWithFixedDelay(
-        command::run, initialDelay.toMillis(), duration.toMillis(), TimeUnit.MILLISECONDS);
+        command, initialDelay.toMillis(), duration.toMillis(), TimeUnit.MILLISECONDS);
   }
 
   public <T> CompletableFuture<T> scheduleFutureTask(

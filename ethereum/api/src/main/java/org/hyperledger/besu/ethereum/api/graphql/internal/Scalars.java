@@ -14,12 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
 
+import java.util.Locale;
+
+import graphql.GraphQLContext;
+import graphql.execution.CoercedVariables;
 import graphql.language.IntValue;
 import graphql.language.StringValue;
+import graphql.language.Value;
 import graphql.schema.Coercing;
 import graphql.schema.CoercingParseLiteralException;
 import graphql.schema.CoercingParseValueException;
@@ -28,177 +32,299 @@ import graphql.schema.GraphQLScalarType;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.apache.tuweni.units.bigints.UInt256Value;
 
 public class Scalars {
 
-  private static final Coercing<Object, Object> ADDRESS_COERCING =
-      new Coercing<Object, Object>() {
-        @Override
-        public String serialize(final Object input) throws CoercingSerializeException {
-          if (input instanceof Address) {
-            return input.toString();
-          }
-          throw new CoercingSerializeException("Unable to serialize " + input + " as an Address");
-        }
+  private Scalars() {}
 
-        @Override
-        public String parseValue(final Object input) throws CoercingParseValueException {
-          if (input instanceof Address) {
-            return input.toString();
-          }
-          throw new CoercingParseValueException(
-              "Unable to parse variable value " + input + " as an Address");
-        }
-
-        @Override
-        public Address parseLiteral(final Object input) throws CoercingParseLiteralException {
-          if (!(input instanceof StringValue)) {
-            throw new CoercingParseLiteralException("Value is not any Address : '" + input + "'");
-          }
-          String inputValue = ((StringValue) input).getValue();
-          try {
-            return Address.fromHexStringStrict(inputValue);
-          } catch (final IllegalArgumentException e) {
-            throw new CoercingParseLiteralException("Value is not any Address : '" + input + "'");
-          }
-        }
-      };
-
-  private static final Coercing<Object, Object> BIG_INT_COERCING =
-      new Coercing<Object, Object>() {
-        @Override
-        public String serialize(final Object input) throws CoercingSerializeException {
-          if (input instanceof UInt256Value) {
-            return ((UInt256Value) input).toShortHexString();
-          }
-          throw new CoercingSerializeException("Unable to serialize " + input + " as an BigInt");
-        }
-
-        @Override
-        public String parseValue(final Object input) throws CoercingParseValueException {
-          if (input instanceof UInt256Value) {
-            return ((UInt256Value) input).toShortHexString();
-          }
-          throw new CoercingParseValueException(
-              "Unable to parse variable value " + input + " as an BigInt");
-        }
-
-        @Override
-        public UInt256 parseLiteral(final Object input) throws CoercingParseLiteralException {
-          try {
-            if (input instanceof StringValue) {
-              return UInt256.fromHexString(((StringValue) input).getValue());
-            } else if (input instanceof IntValue) {
-              return UInt256.valueOf(((IntValue) input).getValue());
-            }
-          } catch (final IllegalArgumentException e) {
-            // fall through
-          }
-          throw new CoercingParseLiteralException("Value is not any BigInt : '" + input + "'");
-        }
-      };
-
-  private static final Coercing<Object, Object> BYTES_COERCING =
-      new Coercing<Object, Object>() {
-        @Override
-        public String serialize(final Object input) throws CoercingSerializeException {
-          if (input instanceof Bytes) {
-            return input.toString();
-          }
-          throw new CoercingSerializeException("Unable to serialize " + input + " as an Bytes");
-        }
-
-        @Override
-        public String parseValue(final Object input) throws CoercingParseValueException {
-          if (input instanceof Bytes) {
-            return input.toString();
-          }
-          throw new CoercingParseValueException(
-              "Unable to parse variable value " + input + " as an Bytes");
-        }
-
-        @Override
-        public Bytes parseLiteral(final Object input) throws CoercingParseLiteralException {
-          if (!(input instanceof StringValue)) {
-            throw new CoercingParseLiteralException("Value is not any Bytes : '" + input + "'");
-          }
-          String inputValue = ((StringValue) input).getValue();
-          if (!Quantity.isValid(inputValue)) {
-            throw new CoercingParseLiteralException(
-                "Bytes value '" + inputValue + "' is not prefixed with 0x");
-          }
-          try {
-            return Bytes.fromHexStringLenient(inputValue);
-          } catch (final IllegalArgumentException e) {
-            throw new CoercingParseLiteralException("Value is not any Bytes : '" + input + "'");
-          }
-        }
-      };
-
-  private static final Coercing<Object, Object> BYTES32_COERCING =
-      new Coercing<Object, Object>() {
-        @Override
-        public String serialize(final Object input) throws CoercingSerializeException {
-          if (input instanceof Hash) {
-            return ((Hash) input).toString();
-          }
-          if (input instanceof Bytes32) {
-            return input.toString();
-          }
-          throw new CoercingSerializeException("Unable to serialize " + input + " as an Bytes32");
-        }
-
-        @Override
-        public String parseValue(final Object input) throws CoercingParseValueException {
-          if (input instanceof Bytes32) {
-            return input.toString();
-          }
-          throw new CoercingParseValueException(
-              "Unable to parse variable value " + input + " as an Bytes32");
-        }
-
-        @Override
-        public Bytes32 parseLiteral(final Object input) throws CoercingParseLiteralException {
-          if (!(input instanceof StringValue)) {
-            throw new CoercingParseLiteralException("Value is not any Bytes32 : '" + input + "'");
-          }
-          String inputValue = ((StringValue) input).getValue();
-          if (!Quantity.isValid(inputValue)) {
-            throw new CoercingParseLiteralException(
-                "Bytes32 value '" + inputValue + "' is not prefixed with 0x");
-          }
-          try {
-            return Bytes32.fromHexStringLenient(inputValue);
-          } catch (final IllegalArgumentException e) {
-            throw new CoercingParseLiteralException("Value is not any Bytes32 : '" + input + "'");
-          }
-        }
-      };
-
-  private static final Coercing<Object, Object> LONG_COERCING =
-      new Coercing<Object, Object>() {
-        @Override
-        public Number serialize(final Object input) throws CoercingSerializeException {
-          if (input instanceof Number) {
-            return (Number) input;
-          } else if (input instanceof String) {
-            final String value = ((String) input).toLowerCase();
-            if (value.startsWith("0x")) {
-              return Bytes.fromHexStringLenient(value).toLong();
+  private static final Coercing<Address, String> ADDRESS_COERCING =
+      new Coercing<Address, String>() {
+        Address convertImpl(final Object input) {
+          if (input instanceof Address address) {
+            return address;
+          } else if (input instanceof Bytes bytes) {
+            if (((Bytes) input).size() <= 20) {
+              return Address.wrap(bytes);
             } else {
-              return Long.parseLong(value);
+              return null;
+            }
+          } else if (input instanceof StringValue stringValue) {
+            return convertImpl(stringValue.getValue());
+          } else if (input instanceof String string) {
+            try {
+              return Address.fromHexStringStrict(string);
+            } catch (IllegalArgumentException iae) {
+              return null;
+            }
+          } else {
+            return null;
+          }
+        }
+
+        @Override
+        public String serialize(
+            final Object input, final GraphQLContext graphQLContext, final Locale locale)
+            throws CoercingSerializeException {
+          Address result = convertImpl(input);
+          if (result != null) {
+            return result.toHexString();
+          } else {
+            throw new CoercingSerializeException("Unable to serialize " + input + " as an Address");
+          }
+        }
+
+        @Override
+        public Address parseValue(
+            final Object input, final GraphQLContext graphQLContext, final Locale locale)
+            throws CoercingParseValueException {
+          Address result = convertImpl(input);
+          if (result != null) {
+            return result;
+          } else {
+            throw new CoercingParseValueException(
+                "Unable to parse variable value " + input + " as an Address");
+          }
+        }
+
+        @Override
+        public Address parseLiteral(
+            final Value<?> input,
+            final CoercedVariables variables,
+            final GraphQLContext graphQLContext,
+            final Locale locale)
+            throws CoercingParseLiteralException {
+          Address result = convertImpl(input);
+          if (result != null) {
+            return result;
+          } else {
+            throw new CoercingParseLiteralException("Value is not any Address : '" + input + "'");
+          }
+        }
+      };
+
+  private static final Coercing<String, String> BIG_INT_COERCING =
+      new Coercing<String, String>() {
+
+        String convertImpl(final Object input) {
+          if (input instanceof String string) {
+            try {
+              return Bytes.fromHexStringLenient(string).toShortHexString();
+            } catch (IllegalArgumentException iae) {
+              return null;
+            }
+          } else if (input instanceof Bytes bytes) {
+            return bytes.toShortHexString();
+          } else if (input instanceof StringValue stringValue) {
+            return convertImpl(stringValue.getValue());
+          } else if (input instanceof IntValue intValue) {
+            return UInt256.valueOf(intValue.getValue()).toShortHexString();
+          } else {
+            return null;
+          }
+        }
+
+        @Override
+        public String serialize(
+            final Object input, final GraphQLContext graphQLContext, final Locale locale)
+            throws CoercingSerializeException {
+          var result = convertImpl(input);
+          if (result != null) {
+            return result;
+          } else {
+            throw new CoercingSerializeException("Unable to serialize " + input + " as an BigInt");
+          }
+        }
+
+        @Override
+        public String parseValue(
+            final Object input, final GraphQLContext graphQLContext, final Locale locale)
+            throws CoercingParseValueException {
+          var result = convertImpl(input);
+          if (result != null) {
+            return result;
+          } else {
+            throw new CoercingParseValueException(
+                "Unable to parse variable value " + input + " as an BigInt");
+          }
+        }
+
+        @Override
+        public String parseLiteral(
+            final Value<?> input,
+            final CoercedVariables variables,
+            final GraphQLContext graphQLContext,
+            final Locale locale)
+            throws CoercingParseLiteralException {
+          var result = convertImpl(input);
+          if (result != null) {
+            return result;
+          } else {
+            throw new CoercingParseLiteralException("Value is not any BigInt : '" + input + "'");
+          }
+        }
+      };
+
+  private static final Coercing<Bytes, String> BYTES_COERCING =
+      new Coercing<Bytes, String>() {
+
+        Bytes convertImpl(final Object input) {
+          if (input instanceof Bytes bytes) {
+            return bytes;
+          } else if (input instanceof StringValue stringValue) {
+            return convertImpl(stringValue.getValue());
+          } else if (input instanceof String string) {
+            if (!Quantity.isValid(string)) {
+              throw new CoercingParseLiteralException(
+                  "Bytes value '" + input + "' is not prefixed with 0x");
+            }
+            try {
+              return Bytes.fromHexStringLenient((String) input);
+            } catch (IllegalArgumentException iae) {
+              return null;
+            }
+          } else {
+            return null;
+          }
+        }
+
+        @Override
+        public String serialize(
+            final Object input, final GraphQLContext graphQLContext, final Locale locale)
+            throws CoercingSerializeException {
+          var result = convertImpl(input);
+          if (result != null) {
+            return result.toHexString();
+          } else {
+            throw new CoercingSerializeException("Unable to serialize " + input + " as an Bytes");
+          }
+        }
+
+        @Override
+        public Bytes parseValue(
+            final Object input, final GraphQLContext graphQLContext, final Locale locale)
+            throws CoercingParseValueException {
+          var result = convertImpl(input);
+          if (result != null) {
+            return result;
+          } else {
+            throw new CoercingParseValueException(
+                "Unable to parse variable value " + input + " as an Bytes");
+          }
+        }
+
+        @Override
+        public Bytes parseLiteral(
+            final Value<?> input,
+            final CoercedVariables variables,
+            final GraphQLContext graphQLContext,
+            final Locale locale)
+            throws CoercingParseLiteralException {
+          var result = convertImpl(input);
+          if (result != null) {
+            return result;
+          } else {
+            throw new CoercingParseLiteralException("Value is not any Bytes : '" + input + "'");
+          }
+        }
+      };
+
+  private static final Coercing<Bytes32, String> BYTES32_COERCING =
+      new Coercing<Bytes32, String>() {
+
+        Bytes32 convertImpl(final Object input) {
+          if (input instanceof Bytes32 bytes32) {
+            return bytes32;
+          } else if (input instanceof Bytes bytes) {
+            if (bytes.size() <= 32) {
+              return Bytes32.leftPad((Bytes) input);
+            } else {
+              return null;
+            }
+          } else if (input instanceof StringValue stringValue) {
+            return convertImpl(stringValue.getValue());
+          } else if (input instanceof String string) {
+            if (!Quantity.isValid(string)) {
+              throw new CoercingParseLiteralException(
+                  "Bytes32 value '" + input + "' is not prefixed with 0x");
+            } else {
+              try {
+                return Bytes32.fromHexStringLenient((String) input);
+              } catch (IllegalArgumentException iae) {
+                return null;
+              }
+            }
+          } else {
+            return null;
+          }
+        }
+
+        @Override
+        public String serialize(
+            final Object input, final GraphQLContext graphQLContext, final Locale locale)
+            throws CoercingSerializeException {
+          var result = convertImpl(input);
+          if (result == null) {
+            throw new CoercingSerializeException("Unable to serialize " + input + " as an Bytes32");
+          } else {
+            return result.toHexString();
+          }
+        }
+
+        @Override
+        public Bytes32 parseValue(
+            final Object input, final GraphQLContext graphQLContext, final Locale locale)
+            throws CoercingParseValueException {
+          var result = convertImpl(input);
+          if (result == null) {
+            throw new CoercingParseValueException(
+                "Unable to parse variable value " + input + " as an Bytes32");
+          } else {
+            return result;
+          }
+        }
+
+        @Override
+        public Bytes32 parseLiteral(
+            final Value<?> input,
+            final CoercedVariables variables,
+            final GraphQLContext graphQLContext,
+            final Locale locale)
+            throws CoercingParseLiteralException {
+          var result = convertImpl(input);
+          if (result == null) {
+            throw new CoercingParseLiteralException("Value is not any Bytes32 : '" + input + "'");
+          } else {
+            return result;
+          }
+        }
+      };
+
+  private static final Coercing<Number, String> LONG_COERCING =
+      new Coercing<>() {
+        @Override
+        public String serialize(
+            final Object input, final GraphQLContext graphQLContext, final Locale locale)
+            throws CoercingSerializeException {
+          if (input instanceof Number number) {
+            return Bytes.ofUnsignedLong(number.longValue()).toQuantityHexString();
+          } else if (input instanceof String string) {
+            if (string.startsWith("0x")) {
+              return string;
+            } else {
+              return "0x" + string;
             }
           }
           throw new CoercingSerializeException("Unable to serialize " + input + " as an Long");
         }
 
         @Override
-        public Number parseValue(final Object input) throws CoercingParseValueException {
-          if (input instanceof Number) {
-            return (Number) input;
-          } else if (input instanceof String) {
-            final String value = ((String) input).toLowerCase();
+        public Number parseValue(
+            final Object input, final GraphQLContext graphQLContext, final Locale locale)
+            throws CoercingParseValueException {
+          if (input instanceof Number number) {
+            return number;
+          } else if (input instanceof String string) {
+            final String value = string.toLowerCase();
             if (value.startsWith("0x")) {
               return Bytes.fromHexStringLenient(value).toLong();
             } else {
@@ -210,12 +336,17 @@ public class Scalars {
         }
 
         @Override
-        public Object parseLiteral(final Object input) throws CoercingParseLiteralException {
+        public Number parseLiteral(
+            final Value<?> input,
+            final CoercedVariables variables,
+            final GraphQLContext graphQLContext,
+            final Locale locale)
+            throws CoercingParseLiteralException {
           try {
-            if (input instanceof IntValue) {
-              return ((IntValue) input).getValue().longValue();
-            } else if (input instanceof StringValue) {
-              final String value = ((StringValue) input).getValue().toLowerCase();
+            if (input instanceof IntValue intValue) {
+              return intValue.getValue().longValue();
+            } else if (input instanceof StringValue stringValue) {
+              final String value = stringValue.getValue().toLowerCase();
               if (value.startsWith("0x")) {
                 return Bytes.fromHexStringLenient(value).toLong();
               } else {

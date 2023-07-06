@@ -22,7 +22,7 @@ public class IncrementingNonceGeneratorTest {
 
   @Test
   public void firstValueProvidedIsSuppliedAtConstruction() {
-    final Long initialValue = 0L;
+    final long initialValue = 0L;
     final IncrementingNonceGenerator generator = new IncrementingNonceGenerator(initialValue);
 
     assertThat(generator.iterator().next()).isEqualTo(initialValue);
@@ -30,7 +30,7 @@ public class IncrementingNonceGeneratorTest {
 
   @Test
   public void rollOverFromMaxResetsToZero() {
-    final Long initialValue = 0xFFFFFFFFFFFFFFFFL;
+    final long initialValue = 0xFFFFFFFFFFFFFFFFL;
     final IncrementingNonceGenerator generator = new IncrementingNonceGenerator(initialValue);
 
     assertThat(generator.iterator().next()).isEqualTo(initialValue);

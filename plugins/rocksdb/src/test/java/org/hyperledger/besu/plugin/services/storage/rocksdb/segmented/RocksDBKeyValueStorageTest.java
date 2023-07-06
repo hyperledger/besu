@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -35,24 +35,24 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented.RocksDBKeyValueStorage;
 
+import java.nio.file.Path;
 import java.util.function.LongSupplier;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RocksDBKeyValueStorageTest extends AbstractKeyValueStorageTest {
 
   @Mock private ObservableMetricsSystem metricsSystemMock;
   @Mock private LabelledMetric<OperationTimer> labelledMetricOperationTimerMock;
   @Mock private LabelledMetric<Counter> labelledMetricCounterMock;
   @Mock private OperationTimer operationTimerMock;
-  @Rule public final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir static Path folder;
 
   @Override
   protected KeyValueStorage createStore() throws Exception {
@@ -131,6 +131,6 @@ public class RocksDBKeyValueStorageTest extends AbstractKeyValueStorageTest {
   }
 
   private RocksDBConfiguration config() throws Exception {
-    return new RocksDBConfigurationBuilder().databaseDir(folder.newFolder().toPath()).build();
+    return new RocksDBConfigurationBuilder().databaseDir(getTempSubFolder(folder)).build();
   }
 }

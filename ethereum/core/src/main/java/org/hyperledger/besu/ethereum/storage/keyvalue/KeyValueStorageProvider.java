@@ -14,14 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.storage.keyvalue;
 
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
+import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -30,31 +35,52 @@ import java.util.function.Function;
 
 public class KeyValueStorageProvider implements StorageProvider {
 
-  private final Function<SegmentIdentifier, KeyValueStorage> storageCreator;
+  public static final boolean SEGMENT_ISOLATION_SUPPORTED = true;
+  public static final boolean SNAPSHOT_ISOLATION_UNSUPPORTED = false;
+
+  protected final Function<SegmentIdentifier, KeyValueStorage> storageCreator;
   private final KeyValueStorage worldStatePreimageStorage;
   private final boolean isWorldStateIterable;
-  private final Map<SegmentIdentifier, KeyValueStorage> storageInstances = new HashMap<>();
+  private final boolean isWorldStateSnappable;
+  protected final Map<SegmentIdentifier, KeyValueStorage> storageInstances = new HashMap<>();
+  private final ObservableMetricsSystem metricsSystem;
 
   public KeyValueStorageProvider(
       final Function<SegmentIdentifier, KeyValueStorage> storageCreator,
       final KeyValueStorage worldStatePreimageStorage,
-      final boolean segmentIsolationSupported) {
+      final boolean segmentIsolationSupported,
+      final boolean storageSnapshotIsolationSupported,
+      final ObservableMetricsSystem metricsSystem) {
     this.storageCreator = storageCreator;
     this.worldStatePreimageStorage = worldStatePreimageStorage;
     this.isWorldStateIterable = segmentIsolationSupported;
+    this.isWorldStateSnappable = storageSnapshotIsolationSupported;
+    this.metricsSystem = metricsSystem;
   }
 
   @Override
-  public BlockchainStorage createBlockchainStorage(final ProtocolSchedule protocolSchedule) {
+  public VariablesStorage createVariablesStorage() {
+    return new VariablesKeyValueStorage(
+        getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.VARIABLES));
+  }
+
+  @Override
+  public BlockchainStorage createBlockchainStorage(
+      final ProtocolSchedule protocolSchedule, final VariablesStorage variablesStorage) {
     return new KeyValueStoragePrefixedKeyBlockchainStorage(
         getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.BLOCKCHAIN),
+        variablesStorage,
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
   }
 
   @Override
-  public WorldStateStorage createWorldStateStorage() {
-    return new WorldStateKeyValueStorage(
-        getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.WORLD_STATE));
+  public WorldStateStorage createWorldStateStorage(final DataStorageFormat dataStorageFormat) {
+    if (dataStorageFormat.equals(DataStorageFormat.BONSAI)) {
+      return new BonsaiWorldStateKeyValueStorage(this, metricsSystem);
+    } else {
+      return new WorldStateKeyValueStorage(
+          getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.WORLD_STATE));
+    }
   }
 
   @Override
@@ -68,8 +94,19 @@ public class KeyValueStorageProvider implements StorageProvider {
   }
 
   @Override
+  public SnappableKeyValueStorage getSnappableStorageBySegmentIdentifier(
+      final SegmentIdentifier segment) {
+    return (SnappableKeyValueStorage) getStorageBySegmentIdentifier(segment);
+  }
+
+  @Override
   public boolean isWorldStateIterable() {
     return isWorldStateIterable;
+  }
+
+  @Override
+  public boolean isWorldStateSnappable() {
+    return isWorldStateSnappable;
   }
 
   @Override

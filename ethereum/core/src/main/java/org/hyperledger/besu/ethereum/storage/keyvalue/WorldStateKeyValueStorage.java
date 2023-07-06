@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.storage.keyvalue;
 
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -44,7 +46,12 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
-  public Optional<Bytes> getCode(final Bytes32 codeHash) {
+  public DataStorageFormat getDataStorageFormat() {
+    return DataStorageFormat.FOREST;
+  }
+
+  @Override
+  public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
@@ -58,22 +65,28 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
-  public Optional<Bytes> getAccountStorageTrieNode(final Bytes location, final Bytes32 nodeHash) {
+  public Optional<Bytes> getAccountStorageTrieNode(
+      final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
     return getTrieNode(nodeHash);
   }
 
   private Optional<Bytes> getTrieNode(final Bytes32 nodeHash) {
-    if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
-      return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
+    if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
+      return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else {
       return keyValueStorage.get(nodeHash.toArrayUnsafe()).map(Bytes::wrap);
     }
   }
 
   @Override
+  public FlatDbMode getFlatDbMode() {
+    return FlatDbMode.NO_FLATTENED;
+  }
+
+  @Override
   public Optional<Bytes> getNodeData(final Bytes location, final Bytes32 hash) {
-    if (hash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
-      return Optional.of(MerklePatriciaTrie.EMPTY_TRIE_NODE);
+    if (hash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
+      return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else if (hash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
@@ -82,8 +95,23 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
-  public boolean isWorldStateAvailable(final Bytes32 rootHash) {
+  public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
     return getAccountStateTrieNode(Bytes.EMPTY, rootHash).isPresent();
+  }
+
+  @Override
+  public void clear() {
+    keyValueStorage.clear();
+  }
+
+  @Override
+  public void clearTrieLog() {
+    // nothing to do for forest
+  }
+
+  @Override
+  public void clearFlatDatabase() {
+    // nothing to do for forest
   }
 
   @Override
@@ -94,8 +122,8 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   @Override
   public long prune(final Predicate<byte[]> inUseCheck) {
     final AtomicInteger prunedKeys = new AtomicInteger(0);
-    try (final Stream<byte[]> keys = keyValueStorage.streamKeys()) {
-      keys.forEach(
+    try (final Stream<byte[]> entry = keyValueStorage.streamKeys()) {
+      entry.forEach(
           key -> {
             lock.lock();
             try {
@@ -138,13 +166,8 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
     }
 
     @Override
-    public Updater removeAccountStateTrieNode(final Bytes32 nodeHash) {
-      transaction.remove(nodeHash.toArrayUnsafe());
-      return this;
-    }
-
-    @Override
-    public Updater putCode(final Bytes32 codeHash, final Bytes code) {
+    public WorldStateStorage.Updater putCode(
+        final Hash accountHash, final Bytes32 codeHash, final Bytes code) {
       if (code.size() == 0) {
         // Don't save empty values
         return this;
@@ -156,9 +179,15 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
     }
 
     @Override
+    public WorldStateStorage.Updater saveWorldState(
+        final Bytes blockHash, final Bytes32 nodeHash, final Bytes node) {
+      return putAccountStateTrieNode(null, nodeHash, node);
+    }
+
+    @Override
     public Updater putAccountStateTrieNode(
         final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
+      if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
         // Don't save empty nodes
         return this;
       }
@@ -168,9 +197,16 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
     }
 
     @Override
+    public WorldStateStorage.Updater removeAccountStateTrieNode(
+        final Bytes location, final Bytes32 nodeHash) {
+      transaction.remove(nodeHash.toArrayUnsafe());
+      return this;
+    }
+
+    @Override
     public Updater putAccountStorageTrieNode(
-        final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      if (nodeHash.equals(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH)) {
+        final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
+      if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
         // Don't save empty nodes
         return this;
       }

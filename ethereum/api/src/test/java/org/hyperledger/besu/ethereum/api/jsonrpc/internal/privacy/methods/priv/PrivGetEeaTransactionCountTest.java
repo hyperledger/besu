@@ -15,69 +15,76 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
-import org.junit.Before;
-import org.junit.Test;
+import java.util.stream.Stream;
 
-public class PrivGetEeaTransactionCountTest {
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+class PrivGetEeaTransactionCountTest {
   private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
+  private static final String[] PRIVATE_FOR = {
+    "sgFkVOyFndZe/5SAZJO5UYbrl7pezHetveriBBWWnE8=",
+    "R1kW75NQC9XX3kwNpyPjCBFflM29+XvnKKS9VLrUkzo=",
+    "QzHuACXpfhoGAgrQriWJcDJ6MrUwcCvutKMoAn9KplQ="
+  };
 
-  private final PrivacyParameters privacyParameters = mock(PrivacyParameters.class);
   private final PrivacyController privacyController = mock(PrivacyController.class);
   private JsonRpcRequestContext request;
 
-  private final String privateFrom = "thePrivateFromKey";
-  private final String[] privateFor = new String[] {"first", "second", "third"};
-  private final Address address = Address.fromHexString("55");
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider = (user) -> ENCLAVE_PUBLIC_KEY;
+  private final Address address =
+      Address.fromHexString("0x1000000000000000000000000000000000000001");
+  private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
-  @Before
+  @BeforeEach
   public void setup() {
-    when(privacyParameters.isEnabled()).thenReturn(true);
-    final Object[] jsonBody = new Object[] {address.toString(), privateFrom, privateFor};
+    final Object[] jsonBody = new Object[] {address.toString(), ENCLAVE_PUBLIC_KEY, PRIVATE_FOR};
     request =
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "priv_getEeaTransactionCount", jsonBody));
   }
 
-  @Test
-  public void validRequestProducesExpectedNonce() {
-    final long reportedNonce = 8L;
+  @ParameterizedTest(name = "{index}: {1}")
+  @MethodSource({"provideNonces"})
+  void validRequestProducesExpectedNonce(final long nonce, final String ignoredName) {
     final PrivGetEeaTransactionCount method =
-        new PrivGetEeaTransactionCount(privacyController, enclavePublicKeyProvider);
+        new PrivGetEeaTransactionCount(privacyController, privacyIdProvider);
 
-    when(privacyController.determineEeaNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
-        .thenReturn(reportedNonce);
+    when(privacyController.determineNonce(any(), any(), eq(ENCLAVE_PUBLIC_KEY))).thenReturn(nonce);
 
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
 
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
-    final int returnedValue = Integer.decode((String) successResponse.getResult());
-    assertThat(returnedValue).isEqualTo(reportedNonce);
+    assertThat(successResponse.getResult()).isEqualTo("0x" + Long.toHexString(nonce));
   }
 
   @Test
-  public void nonceProviderThrowsRuntimeExceptionProducesErrorResponse() {
+  void nonceProviderThrowsRuntimeExceptionProducesErrorResponse() {
     final PrivGetEeaTransactionCount method =
-        new PrivGetEeaTransactionCount(privacyController, enclavePublicKeyProvider);
+        new PrivGetEeaTransactionCount(privacyController, privacyIdProvider);
 
-    when(privacyController.determineEeaNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
+    when(privacyController.determineNonce(any(), any(), eq(ENCLAVE_PUBLIC_KEY)))
         .thenThrow(EnclaveClientException.class);
 
     final JsonRpcResponse response = method.response(request);
@@ -89,11 +96,11 @@ public class PrivGetEeaTransactionCountTest {
   }
 
   @Test
-  public void nonceProviderThrowsAnExceptionProducesErrorResponse() {
+  void nonceProviderThrowsAnExceptionProducesErrorResponse() {
     final PrivGetEeaTransactionCount method =
-        new PrivGetEeaTransactionCount(privacyController, enclavePublicKeyProvider);
+        new PrivGetEeaTransactionCount(privacyController, privacyIdProvider);
 
-    when(privacyController.determineEeaNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
+    when(privacyController.determineNonce(any(), any(), eq(ENCLAVE_PUBLIC_KEY)))
         .thenThrow(EnclaveClientException.class);
 
     final JsonRpcResponse response = method.response(request);
@@ -105,11 +112,11 @@ public class PrivGetEeaTransactionCountTest {
   }
 
   @Test
-  public void failsWithUnauthorizedErrorIfMultiTenancyValidationFails() {
+  void failsWithUnauthorizedErrorIfMultiTenancyValidationFails() {
     final PrivGetEeaTransactionCount method =
-        new PrivGetEeaTransactionCount(privacyController, enclavePublicKeyProvider);
+        new PrivGetEeaTransactionCount(privacyController, privacyIdProvider);
 
-    when(privacyController.determineEeaNonce(privateFrom, privateFor, address, ENCLAVE_PUBLIC_KEY))
+    when(privacyController.determineNonce(any(), any(), eq(ENCLAVE_PUBLIC_KEY)))
         .thenThrow(new MultiTenancyValidationException("validation failed"));
 
     final JsonRpcResponse response = method.response(request);
@@ -118,5 +125,9 @@ public class PrivGetEeaTransactionCountTest {
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
     assertThat(errorResponse.getError())
         .isEqualTo(JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR);
+  }
+
+  private static Stream<Arguments> provideNonces() {
+    return Stream.of(Arguments.of(8, "low nonce"), Arguments.of(MAX_NONCE - 1, "high nonce"));
   }
 }

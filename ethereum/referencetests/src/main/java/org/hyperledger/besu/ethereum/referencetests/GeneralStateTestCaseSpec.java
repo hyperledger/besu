@@ -15,8 +15,8 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.ArrayList;
@@ -24,7 +24,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
+import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -71,7 +73,8 @@ public class GeneralStateTestCaseSpec {
                 blockHeader,
                 p.indexes.data,
                 p.indexes.gas,
-                p.indexes.value));
+                p.indexes.value,
+                p.expectException));
       }
       res.put(eip, specs);
     }
@@ -118,20 +121,25 @@ public class GeneralStateTestCaseSpec {
   }
 
   /** Represents the "post" part of a general state test json _for a specific hard-fork_. */
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class PostSection {
 
     private final Hash rootHash;
-    private final Hash logsHash;
+    @Nullable private final Hash logsHash;
     private final Indexes indexes;
+    private final String expectException;
 
     @JsonCreator
     public PostSection(
+        @JsonProperty("expectException") final String expectException,
         @JsonProperty("hash") final String hash,
+        @JsonProperty("indexes") final Indexes indexes,
         @JsonProperty("logs") final String logs,
-        @JsonProperty("indexes") final Indexes indexes) {
+        @JsonProperty("txbytes") final String txbytes) {
       this.rootHash = Hash.fromHexString(hash);
-      this.logsHash = Hash.fromHexString(logs);
+      this.logsHash = Optional.ofNullable(logs).map(Hash::fromHexString).orElse(null);
       this.indexes = indexes;
+      this.expectException = expectException;
     }
   }
 }

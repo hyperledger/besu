@@ -16,69 +16,98 @@ package org.hyperledger.besu.consensus.ibft.payload;
 
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
+/** The Payload deserializers. */
 public class PayloadDeserializers {
 
+  /**
+   * Read signed proposal payload from rlp input.
+   *
+   * @param rlpInput the rlp input
+   * @return the signed data
+   */
   public static SignedData<ProposalPayload> readSignedProposalPayloadFrom(final RLPInput rlpInput) {
 
     rlpInput.enterList();
     final ProposalPayload unsignedMessageData = ProposalPayload.readFrom(rlpInput);
-    final Signature signature = readSignature(rlpInput);
+    final SECPSignature signature = readSignature(rlpInput);
     rlpInput.leaveList();
 
     return from(unsignedMessageData, signature);
   }
 
+  /**
+   * Read signed prepare payload from rlp input.
+   *
+   * @param rlpInput the rlp input
+   * @return the signed data
+   */
   public static SignedData<PreparePayload> readSignedPreparePayloadFrom(final RLPInput rlpInput) {
 
     rlpInput.enterList();
     final PreparePayload unsignedMessageData = PreparePayload.readFrom(rlpInput);
-    final Signature signature = readSignature(rlpInput);
+    final SECPSignature signature = readSignature(rlpInput);
     rlpInput.leaveList();
 
     return from(unsignedMessageData, signature);
   }
 
+  /**
+   * Read signed commit payload from rlp input.
+   *
+   * @param rlpInput the rlp input
+   * @return the signed data
+   */
   public static SignedData<CommitPayload> readSignedCommitPayloadFrom(final RLPInput rlpInput) {
 
     rlpInput.enterList();
     final CommitPayload unsignedMessageData = CommitPayload.readFrom(rlpInput);
-    final Signature signature = readSignature(rlpInput);
+    final SECPSignature signature = readSignature(rlpInput);
     rlpInput.leaveList();
 
     return from(unsignedMessageData, signature);
   }
 
+  /**
+   * Read signed round change payload from rlp input.
+   *
+   * @param rlpInput the rlp input
+   * @return the signed data
+   */
   public static SignedData<RoundChangePayload> readSignedRoundChangePayloadFrom(
       final RLPInput rlpInput) {
 
     rlpInput.enterList();
     final RoundChangePayload unsignedMessageData = RoundChangePayload.readFrom(rlpInput);
-    final Signature signature = readSignature(rlpInput);
+    final SECPSignature signature = readSignature(rlpInput);
     rlpInput.leaveList();
 
     return from(unsignedMessageData, signature);
   }
 
+  /**
+   * Create signed payload data from unsigned message data.
+   *
+   * @param <M> the type parameter
+   * @param unsignedMessageData the unsigned message data
+   * @param signature the signature
+   * @return the signed data
+   */
   protected static <M extends Payload> SignedData<M> from(
-      final M unsignedMessageData, final Signature signature) {
-
-    final Address sender = recoverSender(unsignedMessageData, signature);
-
-    return new SignedData<>(unsignedMessageData, sender, signature);
+      final M unsignedMessageData, final SECPSignature signature) {
+    return SignedData.create(unsignedMessageData, signature);
   }
 
-  protected static Signature readSignature(final RLPInput signedMessage) {
-    return signedMessage.readBytes(Signature::decode);
-  }
-
-  protected static Address recoverSender(
-      final Payload unsignedMessageData, final Signature signature) {
-
-    return Util.signatureToAddress(signature, MessageFactory.hashForSignature(unsignedMessageData));
+  /**
+   * Read signature from signed message.
+   *
+   * @param signedMessage the signed message
+   * @return the secp signature
+   */
+  protected static SECPSignature readSignature(final RLPInput signedMessage) {
+    return signedMessage.readBytes(SignatureAlgorithmFactory.getInstance()::decodeSignature);
   }
 }

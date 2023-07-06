@@ -36,7 +36,6 @@ import com.sun.source.tree.Tree;
 
 @AutoService(BugChecker.class) // the service descriptor
 @BugPattern(
-    name = "DoNotReturnNullOptionals",
     summary = "Do not return null optionals.",
     severity = SUGGESTION,
     linkType = BugPattern.LinkType.NONE)

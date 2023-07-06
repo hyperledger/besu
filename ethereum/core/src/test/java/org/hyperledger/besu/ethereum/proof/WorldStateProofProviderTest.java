@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,13 +16,13 @@ package org.hyperledger.besu.ethereum.proof;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -67,8 +67,9 @@ public class WorldStateProofProviderTest {
 
   @Test
   public void getProofWhenWorldStateAvailable() {
-    final MerklePatriciaTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie();
-    final MerklePatriciaTrie<Bytes32, Bytes> storageTrie = emptyStorageTrie();
+    final Hash addressHash = Hash.hash(address);
+    final MerkleTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie(addressHash);
+    final MerkleTrie<Bytes32, Bytes> storageTrie = emptyStorageTrie();
 
     final WorldStateStorage.Updater updater = worldStateStorage.updater();
 
@@ -77,14 +78,14 @@ public class WorldStateProofProviderTest {
     writeStorageValue(storageTrie, UInt256.valueOf(2L), UInt256.valueOf(4L));
     writeStorageValue(storageTrie, UInt256.valueOf(3L), UInt256.valueOf(6L));
     // Save to Storage
-    storageTrie.commit(updater::putAccountStorageTrieNode);
+    storageTrie.commit(
+        (location, hash, value) ->
+            updater.putAccountStorageTrieNode(addressHash, location, hash, value));
 
     // Define account value
-    final Hash addressHash = Hash.hash(address);
     final Hash codeHash = Hash.hash(Bytes.fromHexString("0x1122"));
     final StateTrieAccountValue accountValue =
-        new StateTrieAccountValue(
-            1L, Wei.of(2L), Hash.wrap(storageTrie.getRootHash()), codeHash, 0);
+        new StateTrieAccountValue(1L, Wei.of(2L), Hash.wrap(storageTrie.getRootHash()), codeHash);
     // Save to storage
     worldStateTrie.put(addressHash, RLP.encode(accountValue::writeTo));
     worldStateTrie.commit(updater::putAccountStateTrieNode);
@@ -120,7 +121,7 @@ public class WorldStateProofProviderTest {
 
   @Test
   public void getProofWhenStateTrieAccountUnavailable() {
-    final MerklePatriciaTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie();
+    final MerkleTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie(null);
 
     final Optional<WorldStateProof> accountProof =
         worldStateProofProvider.getAccountProof(
@@ -130,27 +131,28 @@ public class WorldStateProofProviderTest {
   }
 
   private void writeStorageValue(
-      final MerklePatriciaTrie<Bytes32, Bytes> storageTrie,
-      final UInt256 key,
-      final UInt256 value) {
+      final MerkleTrie<Bytes32, Bytes> storageTrie, final UInt256 key, final UInt256 value) {
     storageTrie.put(storageKeyHash(key), encodeStorageValue(value));
   }
 
   private Bytes32 storageKeyHash(final UInt256 storageKey) {
-    return Hash.hash(storageKey.toBytes());
+    return Hash.hash(storageKey);
   }
 
   private Bytes encodeStorageValue(final UInt256 storageValue) {
     return RLP.encode(out -> out.writeBytes(storageValue.toMinimalBytes()));
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> emptyStorageTrie() {
+  private MerkleTrie<Bytes32, Bytes> emptyStorageTrie() {
     return new StoredMerklePatriciaTrie<>(
         worldStateStorage::getAccountStateTrieNode, b -> b, b -> b);
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> emptyWorldStateTrie() {
+  private MerkleTrie<Bytes32, Bytes> emptyWorldStateTrie(final Hash accountHash) {
     return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStorageTrieNode, b -> b, b -> b);
+        (location, hash) ->
+            worldStateStorage.getAccountStorageTrieNode(accountHash, location, hash),
+        b -> b,
+        b -> b);
   }
 }

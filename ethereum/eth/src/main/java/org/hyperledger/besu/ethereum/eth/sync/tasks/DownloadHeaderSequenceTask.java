@@ -17,11 +17,11 @@ package org.hyperledger.besu.ethereum.eth.sync.tasks;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Arrays.asList;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractGetHeadersFromPeerTask;
@@ -45,16 +45,16 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.common.primitives.Ints;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Retrieves a sequence of headers, sending out requests repeatedly until all headers are fulfilled.
  * Validates headers as they are received.
  */
 public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<BlockHeader>> {
-  private static final Logger LOG = LogManager.getLogger();
-  private static final int DEFAULT_RETRIES = 3;
+  private static final Logger LOG = LoggerFactory.getLogger(DownloadHeaderSequenceTask.class);
+  private static final int DEFAULT_RETRIES = 4;
 
   private final EthContext ethContext;
   private final ProtocolContext protocolContext;
@@ -199,7 +199,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
               child =
                   (headerIndex == segmentLength - 1) ? referenceHeader : headers[headerIndex + 1];
             }
-            final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(child.getNumber());
+            final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(child);
             final BadBlockManager badBlockManager = protocolSpec.getBadBlocksManager();
 
             if (!validateHeader(child, header)) {
@@ -212,7 +212,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
                   GetBlockFromPeerTask.create(
                           protocolSchedule,
                           ethContext,
-                          child.getHash(),
+                          Optional.of(child.getHash()),
                           child.getNumber(),
                           metricsSystem)
                       .assignPeer(headersResult.getPeer());
@@ -222,12 +222,13 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
                   .whenComplete(
                       (blockPeerTaskResult, error) -> {
                         if (error == null && blockPeerTaskResult.getResult() != null) {
-                          badBlockManager.addBadBlock(blockPeerTaskResult.getResult());
+                          badBlockManager.addBadBlock(
+                              blockPeerTaskResult.getResult(), Optional.ofNullable(error));
                         }
-                        headersResult.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
                         LOG.debug(
-                            "Received invalid headers from peer, disconnecting from: {}",
+                            "Received invalid headers from peer (BREACH_OF_PROTOCOL), disconnecting from: {}",
                             headersResult.getPeer());
+                        headersResult.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
                         future.completeExceptionally(
                             new InvalidBlockException(
                                 "Header failed validation.",
@@ -257,7 +258,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
       return false;
     }
 
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(child.getNumber());
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(child);
     final BlockHeaderValidator blockHeaderValidator = protocolSpec.getBlockHeaderValidator();
     return blockHeaderValidator.validateHeader(
         child, header, protocolContext, validationPolicy.getValidationModeForNextBlock());

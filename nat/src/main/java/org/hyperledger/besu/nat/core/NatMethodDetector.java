@@ -19,8 +19,14 @@ import org.hyperledger.besu.nat.NatMethod;
 
 import java.util.Optional;
 
+/** The interface Nat method detector. */
 @FunctionalInterface
 public interface NatMethodDetector {
 
+  /**
+   * Detect NatMethod.
+   *
+   * @return the optional NatMethod
+   */
   Optional<NatMethod> detect();
 }

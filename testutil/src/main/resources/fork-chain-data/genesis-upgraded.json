@@ -1,14 +1,9 @@
 {
   "config": {
     "chainId": 2018,
-    "homesteadBlock": 0,
-    "daoForkBlock": 0,
-    "eip150Block": 0,
-    "eip155Block": 0,
-    "eip158Block": 0,
     "byzantiumBlock": 0,
     "constantinopleBlock": 5,
-    "constantinopleFixBlock": 7,
+    "petersburgBlock": 7,
     "contractSizeLimit": 2147483647,
     "ethash": {
       "fixeddifficulty": 100

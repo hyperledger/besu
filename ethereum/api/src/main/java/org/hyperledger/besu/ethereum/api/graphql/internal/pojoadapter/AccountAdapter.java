@@ -14,9 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.AccountState;
 
 import java.util.Optional;
 
@@ -27,30 +30,70 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 @SuppressWarnings("unused") // reflected by GraphQL
 public class AccountAdapter extends AdapterBase {
-  private final Account account;
+
+  private final Optional<Account> account;
+  private final Address address;
+  private final Optional<Long> blockNumber;
 
   public AccountAdapter(final Account account) {
-    this.account = account;
+    this(account == null ? null : account.getAddress(), account, Optional.empty());
   }
 
-  public Optional<Address> getAddress() {
-    return Optional.of(account.getAddress());
+  public AccountAdapter(final Account account, final Optional<Long> blockNumber) {
+    this(account == null ? null : account.getAddress(), account, blockNumber);
   }
 
-  public Optional<Wei> getBalance() {
-    return Optional.of(account.getBalance());
+  public AccountAdapter(final Address address, final Account account) {
+    this(address, account, Optional.empty());
   }
 
-  public Optional<Long> getTransactionCount() {
-    return Optional.of(account.getNonce());
+  public AccountAdapter(
+      final Address address, final Account account, final Optional<Long> blockNumber) {
+    this.account = Optional.ofNullable(account);
+    this.address = address;
+    this.blockNumber = blockNumber;
   }
 
-  public Optional<Bytes> getCode() {
-    return Optional.of(account.getCode());
+  public Address getAddress() {
+    return address;
   }
 
-  public Optional<Bytes32> getStorage(final DataFetchingEnvironment environment) {
+  public Wei getBalance() {
+    return account.map(AccountState::getBalance).orElse(Wei.ZERO);
+  }
+
+  public Long getTransactionCount() {
+    return account.map(AccountState::getNonce).orElse(0L);
+  }
+
+  public Bytes getCode(final DataFetchingEnvironment environment) {
+
+    if (account.get() instanceof BonsaiAccount) {
+      final BlockchainQueries query = getBlockchainQueries(environment);
+      return query
+          .getAndMapWorldState(
+              blockNumber.orElse(query.headBlockNumber()),
+              ws -> Optional.of(ws.get(account.get().getAddress()).getCode()))
+          .get();
+    } else {
+      return account.map(AccountState::getCode).orElse(Bytes.EMPTY);
+    }
+  }
+
+  public Bytes32 getStorage(final DataFetchingEnvironment environment) {
+    final BlockchainQueries query = getBlockchainQueries(environment);
     final Bytes32 slot = environment.getArgument("slot");
-    return Optional.of(account.getStorageValue(UInt256.fromBytes(slot)).toBytes());
+
+    if (account.get() instanceof BonsaiAccount) {
+      return query
+          .getAndMapWorldState(
+              blockNumber.orElse(query.headBlockNumber()),
+              ws -> Optional.of((Bytes32) ws.get(address).getStorageValue(UInt256.fromBytes(slot))))
+          .get();
+    } else {
+      return account
+          .map(a -> (Bytes32) a.getStorageValue(UInt256.fromBytes(slot)))
+          .orElse(Bytes32.ZERO);
+    }
   }
 }

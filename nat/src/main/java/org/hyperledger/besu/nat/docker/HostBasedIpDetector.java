@@ -21,6 +21,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Optional;
 
+/** The Host based Ip detector. */
 public class HostBasedIpDetector implements IpDetector {
 
   private static final String HOSTNAME = "HOST_IP";

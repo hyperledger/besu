@@ -18,7 +18,6 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 
-import org.assertj.core.util.Lists;
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.Response;
@@ -61,7 +60,10 @@ public class PermissioningJsonRpcRequestFactory {
 
   Request<?, GetNodesWhitelistResponse> getNodesWhitelist() {
     return new Request<>(
-        "perm_getNodesAllowlist", Lists.emptyList(), web3jService, GetNodesWhitelistResponse.class);
+        "perm_getNodesAllowlist",
+        Collections.emptyList(),
+        web3jService,
+        GetNodesWhitelistResponse.class);
   }
 
   Request<?, GetAccountsWhitelistResponse> getAccountsWhitelist() {

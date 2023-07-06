@@ -16,18 +16,20 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
@@ -67,14 +69,17 @@ public class RespondingEthPeer {
   private final EthPeer ethPeer;
   private final BlockingQueue<OutgoingMessage> outgoingMessages;
   private final EthProtocolManager ethProtocolManager;
+  private final Optional<SnapProtocolManager> snapProtocolManager;
   private final MockPeerConnection peerConnection;
 
   private RespondingEthPeer(
       final EthProtocolManager ethProtocolManager,
+      final Optional<SnapProtocolManager> snapProtocolManager,
       final MockPeerConnection peerConnection,
       final EthPeer ethPeer,
       final BlockingQueue<OutgoingMessage> outgoingMessages) {
     this.ethProtocolManager = ethProtocolManager;
+    this.snapProtocolManager = snapProtocolManager;
     this.peerConnection = peerConnection;
     this.ethPeer = ethPeer;
     this.outgoingMessages = outgoingMessages;
@@ -112,6 +117,7 @@ public class RespondingEthPeer {
 
   private static RespondingEthPeer create(
       final EthProtocolManager ethProtocolManager,
+      final Optional<SnapProtocolManager> snapProtocolManager,
       final Hash chainHeadHash,
       final Difficulty totalDifficulty,
       final OptionalLong estimatedHeight,
@@ -123,13 +129,14 @@ public class RespondingEthPeer {
     final MockPeerConnection peerConnection =
         new MockPeerConnection(
             caps, (cap, msg, conn) -> outgoingMessages.add(new OutgoingMessage(cap, msg)));
-    ethPeers.registerConnection(peerConnection, peerValidators);
+    ethPeers.registerNewConnection(peerConnection, peerValidators);
     final EthPeer peer = ethPeers.peer(peerConnection);
-    peer.registerStatusReceived(chainHeadHash, totalDifficulty, 63);
+    peer.registerStatusReceived(chainHeadHash, totalDifficulty, 63, peerConnection);
     estimatedHeight.ifPresent(height -> peer.chainState().update(chainHeadHash, height));
-    peer.registerStatusSent();
+    peer.registerStatusSent(peerConnection);
 
-    return new RespondingEthPeer(ethProtocolManager, peerConnection, peer, outgoingMessages);
+    return new RespondingEthPeer(
+        ethProtocolManager, snapProtocolManager, peerConnection, peer, outgoingMessages);
   }
 
   public EthPeer getEthPeer() {
@@ -182,7 +189,9 @@ public class RespondingEthPeer {
     }
   }
 
-  /** @return True if any requests were processed */
+  /**
+   * @return True if any requests were processed
+   */
   public boolean respond(final Responder responder) {
     // Respond to queued messages
     final List<OutgoingMessage> currentMessages = new ArrayList<>();
@@ -196,9 +205,16 @@ public class RespondingEthPeer {
   private void respondToMessage(final Responder responder, final OutgoingMessage msg) {
     final Optional<MessageData> maybeResponse = responder.respond(msg.capability, msg.messageData);
     maybeResponse.ifPresent(
-        (response) ->
+        (response) -> {
+          if (ethProtocolManager.getSupportedCapabilities().contains(msg.capability)) {
             ethProtocolManager.processMessage(
-                msg.capability, new DefaultMessage(peerConnection, response)));
+                msg.capability, new DefaultMessage(peerConnection, response));
+          } else
+            snapProtocolManager.ifPresent(
+                protocolManager ->
+                    protocolManager.processMessage(
+                        msg.capability, new DefaultMessage(peerConnection, response)));
+        });
   }
 
   public Optional<MessageData> peekNextOutgoingRequest() {
@@ -246,23 +262,27 @@ public class RespondingEthPeer {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final TransactionPool transactionPool) {
+    final int maxMsgSize = EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE;
     return (cap, msg) -> {
       MessageData response = null;
       switch (msg.getCode()) {
         case EthPV62.GET_BLOCK_HEADERS:
-          response = EthServer.constructGetHeadersResponse(blockchain, msg, 200);
+          response = EthServer.constructGetHeadersResponse(blockchain, msg, 200, maxMsgSize);
           break;
         case EthPV62.GET_BLOCK_BODIES:
-          response = EthServer.constructGetBodiesResponse(blockchain, msg, 200);
+          response = EthServer.constructGetBodiesResponse(blockchain, msg, 200, maxMsgSize);
           break;
         case EthPV63.GET_RECEIPTS:
-          response = EthServer.constructGetReceiptsResponse(blockchain, msg, 200);
+          response = EthServer.constructGetReceiptsResponse(blockchain, msg, 200, maxMsgSize);
           break;
         case EthPV63.GET_NODE_DATA:
-          response = EthServer.constructGetNodeDataResponse(worldStateArchive, msg, 200);
+          response =
+              EthServer.constructGetNodeDataResponse(worldStateArchive, msg, 200, maxMsgSize);
           break;
         case EthPV65.GET_POOLED_TRANSACTIONS:
-          response = EthServer.constructGetPooledTransactionsResponse(transactionPool, msg, 200);
+          response =
+              EthServer.constructGetPooledTransactionsResponse(
+                  transactionPool, msg, 200, maxMsgSize);
       }
       return Optional.ofNullable(response);
     };
@@ -371,6 +391,7 @@ public class RespondingEthPeer {
 
   public static class Builder {
     private EthProtocolManager ethProtocolManager;
+    private Optional<SnapProtocolManager> snapProtocolManager = Optional.empty();
     private Hash chainHeadHash = gen.hash();
     private Difficulty totalDifficulty = Difficulty.of(1000L);
     private OptionalLong estimatedHeight = OptionalLong.of(1000L);
@@ -380,12 +401,23 @@ public class RespondingEthPeer {
       checkNotNull(ethProtocolManager, "Must configure EthProtocolManager");
 
       return RespondingEthPeer.create(
-          ethProtocolManager, chainHeadHash, totalDifficulty, estimatedHeight, peerValidators);
+          ethProtocolManager,
+          snapProtocolManager,
+          chainHeadHash,
+          totalDifficulty,
+          estimatedHeight,
+          peerValidators);
     }
 
     public Builder ethProtocolManager(final EthProtocolManager ethProtocolManager) {
       checkNotNull(ethProtocolManager);
       this.ethProtocolManager = ethProtocolManager;
+      return this;
+    }
+
+    public Builder snapProtocolManager(final SnapProtocolManager snapProtocolManager) {
+      checkNotNull(snapProtocolManager);
+      this.snapProtocolManager = Optional.of(snapProtocolManager);
       return this;
     }
 

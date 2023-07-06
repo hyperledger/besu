@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -20,13 +20,15 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.ethereum.trie.TrieIterator.LeafHandler;
 import org.hyperledger.besu.ethereum.trie.TrieIterator.State;
+import org.hyperledger.besu.ethereum.trie.patricia.DefaultNodeFactory;
+import org.hyperledger.besu.ethereum.trie.patricia.PutVisitor;
 
 import java.nio.charset.StandardCharsets;
 import java.util.NavigableSet;
@@ -45,6 +47,7 @@ public class TrieIteratorTest {
       Bytes32.fromHexString("0x5555555555555555555555555555555555555555555555555555555555555555");
   private static final Bytes32 KEY_HASH2 =
       Bytes32.fromHexString("0x5555555555555555555555555555555555555555555555555555555555555556");
+
   private static final Bytes PATH1 = bytesToPath(KEY_HASH1);
   private static final Bytes PATH2 = bytesToPath(KEY_HASH2);
 
@@ -71,7 +74,7 @@ public class TrieIteratorTest {
   public void shouldNotNotifyLeafHandlerOfNullNodes() {
     NullNode.<String>instance().accept(iterator, PATH1);
 
-    verifyZeroInteractions(leafHandler);
+    verifyNoInteractions(leafHandler);
   }
 
   @Test
@@ -125,7 +128,7 @@ public class TrieIteratorTest {
     final int stopNodeNumber = random.nextInt(Math.max(1, totalNodes - 1));
     for (int i = 0; i < totalNodes; i++) {
       final Bytes32 keyHash =
-          Hash.keccak256(UInt256.valueOf(Math.abs(random.nextLong())).toBytes());
+          Hash.keccak256(UInt256.valueOf(Math.abs(random.nextInt(Integer.MAX_VALUE))));
       root = root.accept(new PutVisitor<>(nodeFactory, "Value"), bytesToPath(keyHash));
       expectedKeyHashes.add(keyHash);
       if (i == startNodeNumber) {

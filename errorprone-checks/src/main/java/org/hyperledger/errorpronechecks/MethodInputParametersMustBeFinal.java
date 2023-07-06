@@ -25,6 +25,7 @@ import com.google.errorprone.bugpatterns.BugChecker;
 import com.google.errorprone.bugpatterns.BugChecker.ClassTreeMatcher;
 import com.google.errorprone.bugpatterns.BugChecker.MethodTreeMatcher;
 import com.google.errorprone.matchers.Description;
+import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.ModifiersTree;
@@ -32,7 +33,6 @@ import com.sun.source.tree.VariableTree;
 
 @AutoService(BugChecker.class)
 @BugPattern(
-    name = "MethodInputParametersMustBeFinal",
     summary = "Method input parameters must be final.",
     severity = WARNING,
     linkType = BugPattern.LinkType.NONE)
@@ -40,6 +40,7 @@ public class MethodInputParametersMustBeFinal extends BugChecker
     implements MethodTreeMatcher, ClassTreeMatcher {
 
   private boolean isAbstraction = false;
+  private boolean isGenerated = false;
 
   @Override
   public Description matchClass(final ClassTree tree, final VisitorState state) {
@@ -47,11 +48,16 @@ public class MethodInputParametersMustBeFinal extends BugChecker
         isInterface(tree.getModifiers())
             || isAnonymousClassInAbstraction(tree)
             || isEnumInAbstraction(tree);
+    isGenerated = ASTHelpers.hasDirectAnnotationWithSimpleName(tree, "Generated");
     return Description.NO_MATCH;
   }
 
   @Override
   public Description matchMethod(final MethodTree tree, final VisitorState state) {
+    if (isGenerated) {
+      return Description.NO_MATCH;
+    }
+
     final ModifiersTree mods = tree.getModifiers();
 
     if (isAbstraction) {
@@ -107,5 +113,19 @@ public class MethodInputParametersMustBeFinal extends BugChecker
   @SuppressWarnings("TreeToString")
   private boolean isEnum(final ClassTree tree) {
     return tree.toString().contains("enum");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    // isAbstract and isGenerated are transient calculations, not relevant to equality checks
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    return super.equals(o);
+  }
+
+  @Override
+  public int hashCode() {
+    // isAbstract and isGenerated are transient calculations, not relevant to equality checks
+    return super.hashCode();
   }
 }

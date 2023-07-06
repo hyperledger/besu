@@ -27,15 +27,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Takes a public storage factory and enables creating independently versioned privacy storage
  * objects which have the same features as the supported public storage factory
  */
 public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStorageFactory {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(RocksDBKeyValuePrivacyStorageFactory.class);
   private static final int DEFAULT_VERSION = 1;
   private static final Set<Integer> SUPPORTED_VERSIONS = Set.of(0, 1);
 
@@ -43,6 +44,11 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
   private final RocksDBKeyValueStorageFactory publicFactory;
   private Integer databaseVersion;
 
+  /**
+   * Instantiates a new RocksDb key value privacy storage factory.
+   *
+   * @param publicFactory the public factory
+   */
   public RocksDBKeyValuePrivacyStorageFactory(final RocksDBKeyValueStorageFactory publicFactory) {
     this.publicFactory = publicFactory;
   }
@@ -62,8 +68,7 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
       try {
         databaseVersion = readDatabaseVersion(commonConfiguration);
       } catch (final IOException e) {
-        LOG.error("Failed to retrieve the RocksDB database meta version: {}", e.getMessage());
-        throw new StorageException(e.getMessage(), e);
+        throw new StorageException("Failed to retrieve the RocksDB database meta version", e);
       }
     }
 

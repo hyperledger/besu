@@ -14,9 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.permissioning;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -76,13 +77,11 @@ public class PermissioningConfigurationBuilder {
 
       if (nodeAllowlistTomlArray != null) {
         List<EnodeURL> nodesAllowlistToml =
-            nodeAllowlistTomlArray
-                .toList()
-                .parallelStream()
+            nodeAllowlistTomlArray.toList().parallelStream()
                 .map(Object::toString)
                 .map(
                     url ->
-                        EnodeURL.fromString(
+                        EnodeURLImpl.fromString(
                             url, permissioningConfiguration.getEnodeDnsConfiguration()))
                 .collect(Collectors.toList());
         permissioningConfiguration.setNodeAllowlist(nodesAllowlistToml);
@@ -113,9 +112,7 @@ public class PermissioningConfigurationBuilder {
 
       if (accountAllowlistTomlArray != null) {
         List<String> accountsAllowlistToml =
-            accountAllowlistTomlArray
-                .toList()
-                .parallelStream()
+            accountAllowlistTomlArray.toList().parallelStream()
                 .map(Object::toString)
                 .collect(Collectors.toList());
 

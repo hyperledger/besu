@@ -18,6 +18,7 @@ import org.hyperledger.besu.plugin.Unstable;
 
 import java.util.Optional;
 
+/** The interface Sync status. */
 public interface SyncStatus {
 
   /**
@@ -50,7 +51,7 @@ public interface SyncStatus {
   @Unstable
   default Optional<Long> getPulledStates() {
     return Optional.empty();
-  };
+  }
 
   /**
    * KnownStates is the number of states the node knows of so far, or empty if this is not known or
@@ -61,5 +62,5 @@ public interface SyncStatus {
   @Unstable
   default Optional<Long> getKnownStates() {
     return Optional.empty();
-  };
+  }
 }

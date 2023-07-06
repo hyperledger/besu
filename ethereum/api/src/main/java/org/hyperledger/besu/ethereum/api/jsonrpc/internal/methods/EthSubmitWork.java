@@ -14,8 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -23,19 +22,19 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
 import java.util.Optional;
 
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EthSubmitWork implements JsonRpcMethod {
 
   private final MiningCoordinator miner;
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(EthSubmitWork.class);
 
   public EthSubmitWork(final MiningCoordinator miner) {
     this.miner = miner;
@@ -48,14 +47,14 @@ public class EthSubmitWork implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final Optional<EthHashSolverInputs> solver = miner.getWorkDefinition();
+    final Optional<PoWSolverInputs> solver = miner.getWorkDefinition();
     if (solver.isPresent()) {
-      final EthHashSolution solution =
-          new EthHashSolution(
+      final PoWSolution solution =
+          new PoWSolution(
               Bytes.fromHexString(requestContext.getRequiredParameter(0, String.class)).getLong(0),
               requestContext.getRequiredParameter(2, Hash.class),
-              Bytes.fromHexString(requestContext.getRequiredParameter(1, String.class))
-                  .toArrayUnsafe());
+              null,
+              Bytes.fromHexString(requestContext.getRequiredParameter(1, String.class)));
       final boolean result = miner.submitWork(solution);
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
     } else {

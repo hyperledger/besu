@@ -14,20 +14,30 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
+import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import picocli.CommandLine;
 
+/** The Networking Cli options. */
 public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
+  /** The constant PEER_LOWER_BOUND_FLAG */
+  public static final String PEER_LOWER_BOUND_FLAG = "--Xp2p-peer-lower-bound";
+
   private final String INITIATE_CONNECTIONS_FREQUENCY_FLAG =
       "--Xp2p-initiate-connections-frequency";
   private final String CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG =
       "--Xp2p-check-maintained-connections-frequency";
+  private final String DNS_DISCOVERY_SERVER_OVERRIDE_FLAG = "--Xp2p-dns-discovery-server";
+  private final String DISCOVERY_PROTOCOL_V5_ENABLED = "--Xv5-discovery-enabled";
+  /** The constant FILTER_ON_ENR_FORK_ID. */
+  public static final String FILTER_ON_ENR_FORK_ID = "--Xfilter-on-enr-fork-id";
 
   @CommandLine.Option(
       names = INITIATE_CONNECTIONS_FREQUENCY_FLAG,
@@ -47,37 +57,92 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
       description =
           "The frequency (in seconds) at which to check maintained connections (default: ${DEFAULT-VALUE})")
   private int checkMaintainedConnectionsFrequencySec =
-      NetworkingConfiguration.DEFAULT_CHECK_MAINTAINED_CONNECTSION_FREQUENCY_SEC;
+      NetworkingConfiguration.DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_SEC;
+
+  @CommandLine.Option(
+      names = DNS_DISCOVERY_SERVER_OVERRIDE_FLAG,
+      hidden = true,
+      description =
+          "DNS server host to use for doing DNS Discovery of peers, rather than the machine's configured DNS server")
+  private Optional<String> dnsDiscoveryServerOverride = Optional.empty();
+
+  @CommandLine.Option(
+      names = DISCOVERY_PROTOCOL_V5_ENABLED,
+      hidden = true,
+      defaultValue = "false",
+      description = "Whether to enable P2P Discovery Protocol v5 (default: ${DEFAULT-VALUE})")
+  private final Boolean isPeerDiscoveryV5Enabled = false;
+
+  @CommandLine.Option(
+      names = FILTER_ON_ENR_FORK_ID,
+      hidden = true,
+      defaultValue = "false",
+      description = "Whether to enable filtering of peers based on the ENR field ForkId)")
+  private final Boolean filterOnEnrForkId = false;
+
+  @CommandLine.Option(
+      hidden = true,
+      names = PEER_LOWER_BOUND_FLAG,
+      description =
+          "Lower bound on the target number of P2P connections (default: ${DEFAULT-VALUE})")
+  private Integer peerLowerBoundConfig = DefaultCommandValues.DEFAULT_P2P_PEER_LOWER_BOUND;
 
   private NetworkingOptions() {}
 
+  /**
+   * Create networking options.
+   *
+   * @return the networking options
+   */
   public static NetworkingOptions create() {
     return new NetworkingOptions();
   }
 
+  /**
+   * Create networking options from Networking Configuration.
+   *
+   * @param networkingConfig the networking config
+   * @return the networking options
+   */
   public static NetworkingOptions fromConfig(final NetworkingConfiguration networkingConfig) {
     final NetworkingOptions cliOptions = new NetworkingOptions();
     cliOptions.checkMaintainedConnectionsFrequencySec =
         networkingConfig.getCheckMaintainedConnectionsFrequencySec();
     cliOptions.initiateConnectionsFrequencySec =
         networkingConfig.getInitiateConnectionsFrequencySec();
+    cliOptions.dnsDiscoveryServerOverride = networkingConfig.getDnsDiscoveryServerOverride();
+    cliOptions.peerLowerBoundConfig = networkingConfig.getPeerLowerBound();
+
     return cliOptions;
   }
 
   @Override
   public NetworkingConfiguration toDomainObject() {
-    NetworkingConfiguration config = NetworkingConfiguration.create();
+    final NetworkingConfiguration config = NetworkingConfiguration.create();
     config.setCheckMaintainedConnectionsFrequency(checkMaintainedConnectionsFrequencySec);
     config.setInitiateConnectionsFrequency(initiateConnectionsFrequencySec);
+    config.setDnsDiscoveryServerOverride(dnsDiscoveryServerOverride);
+    config.getDiscovery().setDiscoveryV5Enabled(isPeerDiscoveryV5Enabled);
+    config.getDiscovery().setFilterOnEnrForkId(filterOnEnrForkId);
+    config.setPeerLowerBound(peerLowerBoundConfig);
     return config;
   }
 
   @Override
   public List<String> getCLIOptions() {
-    return Arrays.asList(
-        CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG,
-        OptionParser.format(checkMaintainedConnectionsFrequencySec),
-        INITIATE_CONNECTIONS_FREQUENCY_FLAG,
-        OptionParser.format(initiateConnectionsFrequencySec));
+    final List<String> retval =
+        Arrays.asList(
+            CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG,
+            OptionParser.format(checkMaintainedConnectionsFrequencySec),
+            INITIATE_CONNECTIONS_FREQUENCY_FLAG,
+            OptionParser.format(initiateConnectionsFrequencySec),
+            PEER_LOWER_BOUND_FLAG,
+            OptionParser.format((peerLowerBoundConfig)));
+
+    if (dnsDiscoveryServerOverride.isPresent()) {
+      retval.add(DNS_DISCOVERY_SERVER_OVERRIDE_FLAG);
+      retval.add(dnsDiscoveryServerOverride.get());
+    }
+    return retval;
   }
 }

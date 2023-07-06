@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
@@ -26,25 +26,17 @@ import org.mockito.Mockito;
 public class EIP1559Helper {
 
   public static BlockHeader blockHeader(
-      final long number, final long gasUsed, final Optional<Long> baseFee) {
+      final long number, final long gasUsed, final Optional<Wei> baseFee) {
     return blockHeader(number, gasUsed, baseFee, 0);
   }
 
   public static BlockHeader blockHeader(
-      final long number, final long gasUsed, final Optional<Long> baseFee, final long gasLimit) {
+      final long number, final long gasUsed, final Optional<Wei> baseFee, final long gasLimit) {
     final BlockHeader mock = Mockito.mock(BlockHeader.class);
     when(mock.getNumber()).thenReturn(number);
     when(mock.getGasUsed()).thenReturn(gasUsed);
     when(mock.getBaseFee()).thenReturn(baseFee);
     when(mock.getGasLimit()).thenReturn(gasLimit);
     return mock;
-  }
-
-  public static void enableEIP1559() {
-    ExperimentalEIPs.eip1559Enabled = true;
-  }
-
-  public static void disableEIP1559() {
-    ExperimentalEIPs.eip1559Enabled = false;
   }
 }

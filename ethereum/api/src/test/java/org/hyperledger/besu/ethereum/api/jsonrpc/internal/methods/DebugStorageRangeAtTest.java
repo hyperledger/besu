@@ -18,27 +18,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugStorageRangeAtResult;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.AccountStorageEntry;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,11 +51,13 @@ import java.util.List;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Answers;
 import org.mockito.invocation.InvocationOnMock;
 
 public class DebugStorageRangeAtTest {
@@ -60,16 +66,16 @@ public class DebugStorageRangeAtTest {
   private static final Bytes32 START_KEY_HASH = Bytes32.fromHexString("0x22");
   private final Blockchain blockchain = mock(Blockchain.class);
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
-  private final BlockReplay blockReplay = mock(BlockReplay.class);
+  private final BlockReplay blockReplay = mock(BlockReplay.class, Answers.RETURNS_DEEP_STUBS);
   private final DebugStorageRangeAt debugStorageRangeAt =
       new DebugStorageRangeAt(blockchainQueries, blockReplay);
-  private final MutableWorldState worldState = mock(MutableWorldState.class);
+  private final Tracer.TraceableState worldState = mock(Tracer.TraceableState.class);
   private final Account account = mock(Account.class);
   private final MainnetTransactionProcessor transactionProcessor =
       mock(MainnetTransactionProcessor.class);
   private final Transaction transaction = mock(Transaction.class);
 
-  private final BlockHeader blockHeader = mock(BlockHeader.class);
+  private final BlockHeader blockHeader = mock(BlockHeader.class, Answers.RETURNS_DEEP_STUBS);
   private final Hash blockHash =
       Hash.fromHexString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   private final Hash transactionHash =
@@ -89,7 +95,8 @@ public class DebugStorageRangeAtTest {
   @Test
   public void shouldRetrieveStorageRange_fullValues() {
     final TransactionWithMetadata transactionWithMetadata =
-        new TransactionWithMetadata(transaction, 12L, blockHash, TRANSACTION_INDEX);
+        new TransactionWithMetadata(
+            transaction, 12L, Optional.empty(), blockHash, TRANSACTION_INDEX);
     final BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata =
         new BlockWithMetadata<>(
             blockHeader,
@@ -111,10 +118,19 @@ public class DebugStorageRangeAtTest {
                 }));
 
     when(blockchainQueries.blockByHash(blockHash)).thenReturn(Optional.of(blockWithMetadata));
+    doAnswer(
+            invocation ->
+                invocation
+                    .<Function<MutableWorldState, Optional<? extends JsonRpcResponse>>>getArgument(
+                        1)
+                    .apply(worldState))
+        .when(blockchainQueries)
+        .getAndMapWorldState(any(), any());
     when(blockchainQueries.transactionByBlockHashAndIndex(blockHash, TRANSACTION_INDEX))
         .thenReturn(Optional.of(transactionWithMetadata));
     when(worldState.get(accountAddress)).thenReturn(account);
-    when(blockReplay.afterTransactionInBlock(eq(blockHash), eq(transactionHash), any()))
+    when(blockReplay.afterTransactionInBlock(
+            any(Tracer.TraceableState.class), any(Hash.class), eq(transactionHash), any()))
         .thenAnswer(this::callAction);
 
     final List<AccountStorageEntry> entries = new ArrayList<>();
@@ -151,8 +167,9 @@ public class DebugStorageRangeAtTest {
   }
 
   private Object callAction(final InvocationOnMock invocation) {
+    //noinspection rawtypes
     return Optional.of(
-        ((BlockReplay.TransactionAction) invocation.getArgument(2))
-            .performAction(transaction, blockHeader, blockchain, worldState, transactionProcessor));
+        ((BlockReplay.TransactionAction) invocation.getArgument(3))
+            .performAction(transaction, blockHeader, blockchain, transactionProcessor, Wei.ZERO));
   }
 }

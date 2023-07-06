@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.ibft.network;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.network.ValidatorMulticaster;
 import org.hyperledger.besu.consensus.ibft.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.PrepareMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.ProposalMessageData;
@@ -26,29 +27,43 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.consensus.ibft.statemachine.PreparedRoundArtifacts;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The Ibft message transmitter. */
 public class IbftMessageTransmitter {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(IbftMessageTransmitter.class);
 
   private final MessageFactory messageFactory;
   private final ValidatorMulticaster multicaster;
 
+  /**
+   * Instantiates a new Ibft message transmitter.
+   *
+   * @param messageFactory the message factory
+   * @param multicaster the multicaster
+   */
   public IbftMessageTransmitter(
       final MessageFactory messageFactory, final ValidatorMulticaster multicaster) {
     this.messageFactory = messageFactory;
     this.multicaster = multicaster;
   }
 
+  /**
+   * Multicast proposal.
+   *
+   * @param roundIdentifier the round identifier
+   * @param block the block
+   * @param roundChangeCertificate the round change certificate
+   */
   public void multicastProposal(
       final ConsensusRoundIdentifier roundIdentifier,
       final Block block,
@@ -65,6 +80,12 @@ public class IbftMessageTransmitter {
     }
   }
 
+  /**
+   * Multicast prepare.
+   *
+   * @param roundIdentifier the round identifier
+   * @param digest the digest
+   */
   public void multicastPrepare(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
     try {
       final Prepare data = messageFactory.createPrepare(roundIdentifier, digest);
@@ -77,10 +98,17 @@ public class IbftMessageTransmitter {
     }
   }
 
+  /**
+   * Multicast commit.
+   *
+   * @param roundIdentifier the round identifier
+   * @param digest the digest
+   * @param commitSeal the commit seal
+   */
   public void multicastCommit(
       final ConsensusRoundIdentifier roundIdentifier,
       final Hash digest,
-      final Signature commitSeal) {
+      final SECPSignature commitSeal) {
     try {
       final Commit data = messageFactory.createCommit(roundIdentifier, digest, commitSeal);
 
@@ -92,6 +120,12 @@ public class IbftMessageTransmitter {
     }
   }
 
+  /**
+   * Multicast round change.
+   *
+   * @param roundIdentifier the round identifier
+   * @param preparedRoundArtifacts the prepared round artifacts
+   */
   public void multicastRoundChange(
       final ConsensusRoundIdentifier roundIdentifier,
       final Optional<PreparedRoundArtifacts> preparedRoundArtifacts) {

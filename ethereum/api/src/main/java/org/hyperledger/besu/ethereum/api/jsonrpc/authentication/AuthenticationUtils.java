@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,96 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import com.google.common.annotations.VisibleForTesting;
-import io.vertx.core.Handler;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.User;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class AuthenticationUtils {
-  private static final Logger LOG = LogManager.getLogger();
-
-  @VisibleForTesting
-  public static boolean isPermitted(
-      final Optional<AuthenticationService> authenticationService,
-      final Optional<User> optionalUser,
-      final JsonRpcMethod jsonRpcMethod) {
-
-    AtomicBoolean foundMatchingPermission = new AtomicBoolean();
-
-    if (authenticationService.isEmpty()) {
-      // no auth provider configured thus anything is permitted
-      return true;
-    }
-
-    if (optionalUser.isPresent()) {
-      User user = optionalUser.get();
-      for (String perm : jsonRpcMethod.getPermissions()) {
-        user.isAuthorized(
-            perm,
-            (authed) -> {
-              if (authed.result()) {
-                LOG.trace(
-                    "user {} authorized : {} via permission {}",
-                    user,
-                    jsonRpcMethod.getName(),
-                    perm);
-                foundMatchingPermission.set(true);
-              }
-            });
-        // exit if a matching permission was found, no need to keep checking
-        if (foundMatchingPermission.get()) {
-          return foundMatchingPermission.get();
-        }
-      }
-    }
-
-    if (!foundMatchingPermission.get()) {
-      LOG.trace("user NOT authorized : {}", jsonRpcMethod.getName());
-    }
-    return foundMatchingPermission.get();
-  }
-
-  public static void getUser(
-      final Optional<AuthenticationService> authenticationService,
-      final String token,
-      final Handler<Optional<User>> handler) {
-    try {
-      if (authenticationService.isEmpty()) {
-        handler.handle(Optional.empty());
-      } else {
-        authenticationService
-            .get()
-            .getJwtAuthProvider()
-            .authenticate(
-                new JsonObject().put("jwt", token),
-                (r) -> {
-                  if (r.succeeded()) {
-                    final Optional<User> user = Optional.ofNullable(r.result());
-                    validateExpiryExists(user);
-                    handler.handle(user);
-                  } else {
-                    LOG.debug("Invalid JWT token", r.cause());
-                    handler.handle(Optional.empty());
-                  }
-                });
-      }
-    } catch (Exception e) {
-      handler.handle(Optional.empty());
-    }
-  }
-
-  private static void validateExpiryExists(final Optional<User> user) {
-    if (!user.map(User::principal).map(p -> p.containsKey("exp")).orElse(false)) {
-      throw new IllegalStateException("Invalid JWT doesn't have expiry");
-    }
-  }
 
   public static String getJwtTokenFromAuthorizationHeaderValue(final String value) {
     if (value != null) {
@@ -113,5 +26,16 @@ public class AuthenticationUtils {
       }
     }
     return null;
+  }
+
+  public static String truncToken(final String jwtToken) {
+    return Optional.ofNullable(jwtToken)
+        .map(
+            token ->
+                token
+                    .substring(0, 8)
+                    .concat("...")
+                    .concat(token.substring(token.length() - 8, token.length())))
+        .orElse("Invalid JWT");
   }
 }

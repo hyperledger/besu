@@ -1,0 +1,32 @@
+{
+  "comment" : "Various exceptional halt cases. Invalid OPCODE (0x1F).",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_get",
+    "params" : [ "0x6aed559a5dcf73efa132d8182585c40fdc6ef3b99a7629d80ffd4a62cb3db622", [ ] ],
+    "id" : 261
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "action" : {
+        "callType" : "call",
+        "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+        "gas" : "0xffadea",
+        "input" : "0x",
+        "to" : "0x00c0000000000000000000000000000000000000",
+        "value" : "0x0"
+      },
+      "blockHash" : "0x7d3d4c1129ebce54739fedf2642ea2cfaeafa48c2c489a11512d95f578f92abc",
+      "blockNumber" : 16,
+      "error" : "Bad instruction",
+      "subtraces" : 0,
+      "traceAddress" : [ ],
+      "transactionHash" : "0x6aed559a5dcf73efa132d8182585c40fdc6ef3b99a7629d80ffd4a62cb3db622",
+      "transactionPosition" : 0,
+      "type" : "call"
+    },
+    "id" : 261
+  },
+  "statusCode" : 200
+}

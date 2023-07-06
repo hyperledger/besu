@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TxPoolBesuPendingTransactions;
@@ -33,8 +32,8 @@ public class TxPoolJsonRpcMethods extends ApiGroupJsonRpcMethods {
   }
 
   @Override
-  protected RpcApi getApiGroup() {
-    return RpcApis.TX_POOL;
+  protected String getApiGroup() {
+    return RpcApis.TXPOOL.name();
   }
 
   @Override

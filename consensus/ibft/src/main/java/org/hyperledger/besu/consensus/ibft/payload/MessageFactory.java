@@ -22,24 +22,35 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.ibft.statemachine.PreparedRoundArtifacts;
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
-
+/** The Message factory. */
 public class MessageFactory {
 
   private final NodeKey nodeKey;
 
+  /**
+   * Instantiates a new Message factory.
+   *
+   * @param nodeKey the node key
+   */
   public MessageFactory(final NodeKey nodeKey) {
     this.nodeKey = nodeKey;
   }
 
+  /**
+   * Create proposal.
+   *
+   * @param roundIdentifier the round identifier
+   * @param block the block
+   * @param roundChangeCertificate the round change certificate
+   * @return the proposal
+   */
   public Proposal createProposal(
       final ConsensusRoundIdentifier roundIdentifier,
       final Block block,
@@ -50,6 +61,13 @@ public class MessageFactory {
     return new Proposal(createSignedMessage(payload), block, roundChangeCertificate);
   }
 
+  /**
+   * Create prepare.
+   *
+   * @param roundIdentifier the round identifier
+   * @param digest the digest
+   * @return the prepare
+   */
   public Prepare createPrepare(final ConsensusRoundIdentifier roundIdentifier, final Hash digest) {
 
     final PreparePayload payload = new PreparePayload(roundIdentifier, digest);
@@ -57,16 +75,31 @@ public class MessageFactory {
     return new Prepare(createSignedMessage(payload));
   }
 
+  /**
+   * Create commit.
+   *
+   * @param roundIdentifier the round identifier
+   * @param digest the digest
+   * @param commitSeal the commit seal
+   * @return the commit
+   */
   public Commit createCommit(
       final ConsensusRoundIdentifier roundIdentifier,
       final Hash digest,
-      final Signature commitSeal) {
+      final SECPSignature commitSeal) {
 
     final CommitPayload payload = new CommitPayload(roundIdentifier, digest, commitSeal);
 
     return new Commit(createSignedMessage(payload));
   }
 
+  /**
+   * Create round change.
+   *
+   * @param roundIdentifier the round identifier
+   * @param preparedRoundArtifacts the prepared round artifacts
+   * @return the round change
+   */
   public RoundChange createRoundChange(
       final ConsensusRoundIdentifier roundIdentifier,
       final Optional<PreparedRoundArtifacts> preparedRoundArtifacts) {
@@ -80,13 +113,7 @@ public class MessageFactory {
   }
 
   private <M extends Payload> SignedData<M> createSignedMessage(final M payload) {
-    final Signature signature = nodeKey.sign(hashForSignature(payload));
-    return new SignedData<>(payload, Util.publicKeyToAddress(nodeKey.getPublicKey()), signature);
-  }
-
-  public static Hash hashForSignature(final Payload unsignedMessageData) {
-    return Hash.hash(
-        Bytes.concatenate(
-            Bytes.of(unsignedMessageData.getMessageType()), unsignedMessageData.encoded()));
+    final SECPSignature signature = nodeKey.sign(payload.hashForSignature());
+    return SignedData.create(payload, signature);
   }
 }

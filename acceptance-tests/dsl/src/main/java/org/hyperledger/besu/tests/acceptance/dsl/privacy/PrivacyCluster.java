@@ -15,22 +15,26 @@
 package org.hyperledger.besu.tests.acceptance.dsl.privacy;
 
 import static java.util.Collections.emptyList;
+import static java.util.function.Predicate.not;
 
 import org.hyperledger.besu.tests.acceptance.dsl.condition.net.NetConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNodeRunner;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
+import org.hyperledger.enclave.testutil.EnclaveType;
+import org.hyperledger.enclave.testutil.TesseraTestHarness;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PrivacyCluster {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PrivacyCluster.class);
   private final NetConditions net;
   private final BesuNodeRunner besuNodeRunner;
 
@@ -61,11 +65,11 @@ public class PrivacyCluster {
       throw new IllegalArgumentException("Can't start a cluster with no nodes");
     }
     this.nodes = nodes;
-    this.runnableNodes = nodes.stream().map(n -> n.getBesu()).collect(Collectors.toList());
+    this.runnableNodes = nodes.stream().map(PrivacyNode::getBesu).collect(Collectors.toList());
 
     final Optional<PrivacyNode> bootNode = selectAndStartBootnode(nodes);
 
-    nodes.stream()
+    nodes.parallelStream()
         .filter(node -> bootNode.map(boot -> boot != node).orElse(true))
         .forEach(this::startNode);
   }
@@ -80,18 +84,23 @@ public class PrivacyCluster {
       node.awaitPeerDiscovery(net.awaitPeerCount(nodes.size() - 1));
     }
 
-    verifyAllOrionNetworkConnections();
+    verifyAllEnclaveNetworkConnections();
   }
 
   public List<PrivacyNode> getNodes() {
     return nodes;
   }
 
-  /** Verify that each Orion node has connected to every other Orion */
-  public void verifyAllOrionNetworkConnections() {
-    for (int i = 0; i < nodes.size() - 1; i++) {
-      nodes.get(i).testOrionConnection(nodes.subList(i + 1, nodes.size()));
-    }
+  /** Verify that each Enclave has connected to every other Enclave */
+  public void verifyAllEnclaveNetworkConnections() {
+    nodes.forEach(
+        privacyNode -> {
+          final List<PrivacyNode> otherNodes =
+              nodes.stream()
+                  .filter(not(privacyNode::equals))
+                  .collect(Collectors.toUnmodifiableList());
+          privacyNode.testEnclaveConnection(otherNodes);
+        });
   }
 
   public void stop() {
@@ -101,7 +110,7 @@ public class PrivacyCluster {
   }
 
   public void stopNode(final PrivacyNode node) {
-    node.getOrion().stop();
+    node.getEnclave().stop();
     besuNodeRunner.stopNode(node.getBesu());
   }
 
@@ -145,7 +154,24 @@ public class PrivacyCluster {
         .ifPresent(node.getConfiguration()::setGenesisConfig);
 
     if (!isBootNode) {
-      node.addOtherEnclaveNode(bootNode.getOrion().nodeUrl());
+      if (bootNode.getEnclave().getEnclaveType() == EnclaveType.TESSERA) {
+        final URI otherNode = bootNode.getEnclave().nodeUrl();
+        try {
+          // Substitute IP with hostname for test container network
+          final URI otherNodeHostname =
+              new URI(
+                  otherNode.getScheme()
+                      + "://"
+                      + bootNode.getName()
+                      + ":"
+                      + TesseraTestHarness.p2pPort);
+          node.addOtherEnclaveNode(otherNodeHostname);
+        } catch (Exception ex) {
+          throw new RuntimeException("Invalid node URI");
+        }
+      } else {
+        node.addOtherEnclaveNode(bootNode.getEnclave().nodeUrl());
+      }
     }
 
     LOG.info(

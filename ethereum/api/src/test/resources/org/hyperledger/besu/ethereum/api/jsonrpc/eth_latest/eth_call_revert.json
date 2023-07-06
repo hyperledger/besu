@@ -1,0 +1,24 @@
+{
+  "request": {
+    "id": 3,
+    "jsonrpc": "2.0",
+    "method": "eth_call",
+    "params": [
+      {
+        "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+        "to": "0x0110000000000000000000000000000000000000"
+      },
+      "0x11"
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "error": {
+      "code": -32000,
+      "message": "Execution reverted",
+      "data": "0x7d88c1856cc95352"
+    }
+  },
+  "statusCode": 200
+}
