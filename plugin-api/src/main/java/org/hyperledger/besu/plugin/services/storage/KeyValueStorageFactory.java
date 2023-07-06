@@ -49,10 +49,12 @@ public interface KeyValueStorageFactory extends Closeable {
    * @return the storage instance reserved for the given segment.
    * @exception StorageException problem encountered when creating storage for the segment.
    */
-  KeyValueStorage create(
+  KeyValueStorage createKeyValueStorage(
       SegmentIdentifier segment, BesuConfiguration configuration, MetricsSystem metricsSystem)
       throws StorageException;
 
+  GlobalKeyValueStorageTransaction<?> createGlobalKeyValueStorageTransaction()
+      throws StorageException;
   /**
    * Whether storage segment isolation is supported by the factory created instances.
    *

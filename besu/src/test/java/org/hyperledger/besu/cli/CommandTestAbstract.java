@@ -312,7 +312,7 @@ public abstract class CommandTestAbstract {
         .when(securityModuleService.getByName(eq("localfile")))
         .thenReturn(Optional.of(() -> securityModule));
     lenient()
-        .when(rocksDBSPrivacyStorageFactory.create(any(), any(), any()))
+        .when(rocksDBSPrivacyStorageFactory.createKeyValueStorage(any(), any(), any()))
         .thenReturn(new InMemoryKeyValueStorage());
 
     lenient()

@@ -41,8 +41,9 @@ import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.storage.GlobalKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.util.Map;
 import java.util.Optional;
@@ -430,35 +431,17 @@ public class BonsaiWorldState
     return Hash.wrap(worldStateRootHash);
   }
 
-  static final KeyValueStorageTransaction noOpTx =
-      new KeyValueStorageTransaction() {
-
-        @Override
-        public void put(final byte[] key, final byte[] value) {
-          // no-op
-        }
-
-        @Override
-        public void remove(final byte[] key) {
-          // no-op
-        }
-
-        @Override
-        public void commit() throws StorageException {
-          // no-op
-        }
-
-        @Override
-        public void rollback() {
-          // no-op
-        }
-      };
-
   @Override
   public Hash frontierRootHash() {
     return calculateRootHash(
         Optional.of(
-            new BonsaiWorldStateKeyValueStorage.Updater(noOpTx, noOpTx, noOpTx, noOpTx, noOpTx)),
+            new BonsaiWorldStateKeyValueStorage.Updater(
+                GlobalKeyValueStorageTransaction.NON_GLOBAL_TRANSACTION_FIELD,
+                new InMemoryKeyValueStorage(),
+                new InMemoryKeyValueStorage(),
+                new InMemoryKeyValueStorage(),
+                new InMemoryKeyValueStorage(),
+                new InMemoryKeyValueStorage())),
         accumulator.copy());
   }
 

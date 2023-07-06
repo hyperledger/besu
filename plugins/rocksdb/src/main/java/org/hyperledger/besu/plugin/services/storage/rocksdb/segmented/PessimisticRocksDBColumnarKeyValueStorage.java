@@ -30,7 +30,7 @@ import org.rocksdb.TransactionDB;
 import org.rocksdb.WriteOptions;
 
 /** TransactionDB RocksDB Columnar key value storage */
-public class TransactionDBRocksDBColumnarKeyValueStorage extends RocksDBColumnarKeyValueStorage {
+public class PessimisticRocksDBColumnarKeyValueStorage extends RocksDBColumnarKeyValueStorage {
 
   private final TransactionDB db;
 
@@ -44,7 +44,7 @@ public class TransactionDBRocksDBColumnarKeyValueStorage extends RocksDBColumnar
    * @param rocksDBMetricsFactory the rocksdb metrics factory
    * @throws StorageException the storage exception
    */
-  public TransactionDBRocksDBColumnarKeyValueStorage(
+  public PessimisticRocksDBColumnarKeyValueStorage(
       final RocksDBConfiguration configuration,
       final List<SegmentIdentifier> segments,
       final List<SegmentIdentifier> ignorableSegments,

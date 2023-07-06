@@ -65,7 +65,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
                 RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS));
 
     // Side effect is creation of the Metadata version file
-    storageFactory.create(segment, commonConfiguration, metricsSystem);
+    storageFactory.createKeyValueStorage(segment, commonConfiguration, metricsSystem);
 
     assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion()).isNotEmpty();
 
@@ -90,7 +90,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
                 RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS));
 
     // Side effect is creation of the Metadata version file
-    storageFactory.create(segment, commonConfiguration, metricsSystem);
+    storageFactory.createKeyValueStorage(segment, commonConfiguration, metricsSystem);
 
     assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion()).isNotEmpty();
 
@@ -112,7 +112,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
         new RocksDBKeyValueStorageFactory(
             () -> rocksDbConfiguration, segments, RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS);
 
-    storageFactory.create(segment, commonConfiguration, metricsSystem);
+    storageFactory.createKeyValueStorage(segment, commonConfiguration, metricsSystem);
 
     assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion()).isEmpty();
 
@@ -121,7 +121,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
     final RocksDBKeyValuePrivacyStorageFactory privacyStorageFactory =
         new RocksDBKeyValuePrivacyStorageFactory(storageFactory);
 
-    privacyStorageFactory.create(segment, commonConfiguration, metricsSystem);
+    privacyStorageFactory.createKeyValueStorage(segment, commonConfiguration, metricsSystem);
 
     assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion()).isNotEmpty();
 

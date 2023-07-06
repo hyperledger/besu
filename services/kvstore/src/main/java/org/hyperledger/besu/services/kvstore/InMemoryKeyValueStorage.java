@@ -17,6 +17,7 @@ package org.hyperledger.besu.services.kvstore;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.storage.GlobalKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
@@ -157,6 +158,13 @@ public class InMemoryKeyValueStorage
   @Override
   public KeyValueStorageTransaction startTransaction() {
     return new KeyValueStorageTransactionTransitionValidatorDecorator(new InMemoryTransaction());
+  }
+
+  @Override
+  public KeyValueStorageTransaction startTransaction(
+      final GlobalKeyValueStorageTransaction<?> globalTransaction) throws StorageException {
+    // no global transaction support
+    return startTransaction();
   }
 
   @Override

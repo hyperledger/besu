@@ -15,6 +15,7 @@
 package org.hyperledger.besu.services.kvstore;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.storage.GlobalKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
@@ -37,8 +38,8 @@ import org.slf4j.LoggerFactory;
 public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
 
   private static final Logger LOG = LoggerFactory.getLogger(SegmentedKeyValueStorageAdapter.class);
-  private final S segmentHandle;
-  private final SegmentedKeyValueStorage<S> storage;
+  protected final S segmentHandle;
+  protected final SegmentedKeyValueStorage<S, SegmentedKeyValueStorage.Transaction<S>> storage;
 
   /**
    * Instantiates a new Segmented key value storage adapter.
@@ -47,7 +48,8 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
    * @param storage the storage
    */
   public SegmentedKeyValueStorageAdapter(
-      final SegmentIdentifier segment, final SegmentedKeyValueStorage<S> storage) {
+      final SegmentIdentifier segment,
+      final SegmentedKeyValueStorage<S, SegmentedKeyValueStorage.Transaction<S>> storage) {
     segmentHandle = storage.getSegmentIdentifierByName(segment);
     this.storage = storage;
   }
@@ -110,9 +112,8 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
     storage.close();
   }
 
-  @Override
-  public KeyValueStorageTransaction startTransaction() throws StorageException {
-    final SegmentedKeyValueStorage.Transaction<S> transaction = storage.startTransaction();
+  private KeyValueStorageTransaction createTransaction(
+      final SegmentedKeyValueStorage.Transaction<S> transaction) throws StorageException {
     return new KeyValueStorageTransaction() {
 
       @Override
@@ -141,12 +142,29 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
     };
   }
 
+  @SuppressWarnings("unchecked")
+  @Override
+  public KeyValueStorageTransaction startTransaction(
+      final GlobalKeyValueStorageTransaction<?> globalTransaction) throws StorageException {
+    if (globalTransaction.getGlobalTransaction().isPresent()) {
+      return createTransaction(
+          (SegmentedKeyValueStorage.Transaction<S>) globalTransaction.getGlobalTransaction().get());
+    } else {
+      return startTransaction(); // if no global transaction, start a new one
+    }
+  }
+
+  @Override
+  public KeyValueStorageTransaction startTransaction() throws StorageException {
+    return createTransaction(storage.startTransaction());
+  }
+
   @Override
   public boolean isClosed() {
     return storage.isClosed();
   }
 
-  private void throwIfClosed() {
+  protected void throwIfClosed() {
     if (storage.isClosed()) {
       LOG.error("Attempting to use a closed Storage instance.");
       throw new StorageException("Storage has been closed");

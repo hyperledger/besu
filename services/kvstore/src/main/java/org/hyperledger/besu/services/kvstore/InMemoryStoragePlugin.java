@@ -20,6 +20,7 @@ import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.storage.GlobalKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
@@ -109,12 +110,19 @@ public class InMemoryStoragePlugin implements BesuPlugin {
     }
 
     @Override
-    public KeyValueStorage create(
+    public KeyValueStorage createKeyValueStorage(
         final SegmentIdentifier segment,
         final BesuConfiguration configuration,
         final MetricsSystem metricsSystem)
         throws StorageException {
       return storageMap.computeIfAbsent(segment, __ -> new InMemoryKeyValueStorage());
+    }
+
+    @Override
+    public GlobalKeyValueStorageTransaction<?> createGlobalKeyValueStorageTransaction()
+        throws StorageException {
+      // In memory storage does not support global transactions
+      return GlobalKeyValueStorageTransaction.NON_GLOBAL_TRANSACTION_FIELD;
     }
 
     @Override

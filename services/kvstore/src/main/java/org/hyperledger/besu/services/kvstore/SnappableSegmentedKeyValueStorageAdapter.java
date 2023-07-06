@@ -36,7 +36,8 @@ public class SnappableSegmentedKeyValueStorageAdapter<S> extends SegmentedKeyVal
    * @param storage the storage
    */
   public SnappableSegmentedKeyValueStorageAdapter(
-      final SegmentIdentifier segment, final SegmentedKeyValueStorage<S> storage) {
+      final SegmentIdentifier segment,
+      final SegmentedKeyValueStorage<S, SegmentedKeyValueStorage.Transaction<S>> storage) {
     this(
         segment,
         storage,
@@ -54,7 +55,7 @@ public class SnappableSegmentedKeyValueStorageAdapter<S> extends SegmentedKeyVal
    */
   public SnappableSegmentedKeyValueStorageAdapter(
       final SegmentIdentifier segment,
-      final SegmentedKeyValueStorage<S> storage,
+      final SegmentedKeyValueStorage<S, SegmentedKeyValueStorage.Transaction<S>> storage,
       final Supplier<SnappedKeyValueStorage> snapshotSupplier) {
     super(segment, storage);
     this.snapshotSupplier = snapshotSupplier;

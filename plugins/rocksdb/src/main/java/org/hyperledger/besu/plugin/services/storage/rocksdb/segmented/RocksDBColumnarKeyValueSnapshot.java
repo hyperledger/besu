@@ -18,6 +18,7 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.storage.GlobalKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
@@ -105,6 +106,12 @@ public class RocksDBColumnarKeyValueSnapshot implements SnappedKeyValueStorage {
         .filter(pair -> returnCondition.test(pair.getKey()))
         .map(Pair::getValue)
         .collect(toUnmodifiableSet());
+  }
+
+  @Override
+  public KeyValueStorageTransaction startTransaction(
+      final GlobalKeyValueStorageTransaction<?> globalTransaction) throws StorageException {
+    return snapTx;
   }
 
   @Override

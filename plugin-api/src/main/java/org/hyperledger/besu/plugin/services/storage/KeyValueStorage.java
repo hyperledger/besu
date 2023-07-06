@@ -118,6 +118,9 @@ public interface KeyValueStorage extends Closeable {
    */
   Set<byte[]> getAllValuesFromKeysThat(final Predicate<byte[]> returnCondition);
 
+  KeyValueStorageTransaction startTransaction(
+      final GlobalKeyValueStorageTransaction<?> globalTransaction) throws StorageException;
+
   /**
    * Begins a fresh transaction, for sequencing operations for later atomic execution.
    *

@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.GlobalKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
@@ -32,12 +33,14 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class KeyValueStorageProvider implements StorageProvider {
 
   public static final boolean SEGMENT_ISOLATION_SUPPORTED = true;
   public static final boolean SNAPSHOT_ISOLATION_UNSUPPORTED = false;
 
+  private final Supplier<GlobalKeyValueStorageTransaction<?>> globalTransactionCreator;
   protected final Function<SegmentIdentifier, KeyValueStorage> storageCreator;
   private final KeyValueStorage worldStatePreimageStorage;
   private final boolean isWorldStateIterable;
@@ -46,11 +49,13 @@ public class KeyValueStorageProvider implements StorageProvider {
   private final ObservableMetricsSystem metricsSystem;
 
   public KeyValueStorageProvider(
+      final Supplier<GlobalKeyValueStorageTransaction<?>> globalTransactionCreator,
       final Function<SegmentIdentifier, KeyValueStorage> storageCreator,
       final KeyValueStorage worldStatePreimageStorage,
       final boolean segmentIsolationSupported,
       final boolean storageSnapshotIsolationSupported,
       final ObservableMetricsSystem metricsSystem) {
+    this.globalTransactionCreator = globalTransactionCreator;
     this.storageCreator = storageCreator;
     this.worldStatePreimageStorage = worldStatePreimageStorage;
     this.isWorldStateIterable = segmentIsolationSupported;
@@ -97,6 +102,11 @@ public class KeyValueStorageProvider implements StorageProvider {
   public SnappableKeyValueStorage getSnappableStorageBySegmentIdentifier(
       final SegmentIdentifier segment) {
     return (SnappableKeyValueStorage) getStorageBySegmentIdentifier(segment);
+  }
+
+  @Override
+  public GlobalKeyValueStorageTransaction<?> createGlobalKeyValueStorageTransaction() {
+    return globalTransactionCreator.get();
   }
 
   @Override

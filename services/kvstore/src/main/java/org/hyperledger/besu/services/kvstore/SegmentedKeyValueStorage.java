@@ -30,7 +30,7 @@ import org.apache.commons.lang3.tuple.Pair;
  *
  * @param <S> the segment identifier type
  */
-public interface SegmentedKeyValueStorage<S> extends Closeable {
+public interface SegmentedKeyValueStorage<S, T> extends Closeable {
 
   /**
    * Gets segment identifier by name.

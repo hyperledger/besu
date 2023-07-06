@@ -60,9 +60,11 @@ public class StorageSubCommandTest extends CommandTestAbstract {
   public void revertVariables() {
     final var kvVariables = new InMemoryKeyValueStorage();
     final var kvBlockchain = new InMemoryKeyValueStorage();
-    when(rocksDBStorageFactory.create(eq(KeyValueSegmentIdentifier.VARIABLES), any(), any()))
+    when(rocksDBStorageFactory.createKeyValueStorage(
+            eq(KeyValueSegmentIdentifier.VARIABLES), any(), any()))
         .thenReturn(kvVariables);
-    when(rocksDBStorageFactory.create(eq(KeyValueSegmentIdentifier.BLOCKCHAIN), any(), any()))
+    when(rocksDBStorageFactory.createKeyValueStorage(
+            eq(KeyValueSegmentIdentifier.BLOCKCHAIN), any(), any()))
         .thenReturn(kvBlockchain);
 
     final var variableValues = getSampleVariableValues();
@@ -79,9 +81,11 @@ public class StorageSubCommandTest extends CommandTestAbstract {
   public void revertVariablesWhenSomeVariablesDoNotExist() {
     final var kvVariables = new InMemoryKeyValueStorage();
     final var kvBlockchain = new InMemoryKeyValueStorage();
-    when(rocksDBStorageFactory.create(eq(KeyValueSegmentIdentifier.VARIABLES), any(), any()))
+    when(rocksDBStorageFactory.createKeyValueStorage(
+            eq(KeyValueSegmentIdentifier.VARIABLES), any(), any()))
         .thenReturn(kvVariables);
-    when(rocksDBStorageFactory.create(eq(KeyValueSegmentIdentifier.BLOCKCHAIN), any(), any()))
+    when(rocksDBStorageFactory.createKeyValueStorage(
+            eq(KeyValueSegmentIdentifier.BLOCKCHAIN), any(), any()))
         .thenReturn(kvBlockchain);
 
     final var variableValues = getSampleVariableValues();
@@ -100,9 +104,11 @@ public class StorageSubCommandTest extends CommandTestAbstract {
   public void doesNothingWhenVariablesAlreadyReverted() {
     final var kvVariables = new InMemoryKeyValueStorage();
     final var kvBlockchain = new InMemoryKeyValueStorage();
-    when(rocksDBStorageFactory.create(eq(KeyValueSegmentIdentifier.VARIABLES), any(), any()))
+    when(rocksDBStorageFactory.createKeyValueStorage(
+            eq(KeyValueSegmentIdentifier.VARIABLES), any(), any()))
         .thenReturn(kvVariables);
-    when(rocksDBStorageFactory.create(eq(KeyValueSegmentIdentifier.BLOCKCHAIN), any(), any()))
+    when(rocksDBStorageFactory.createKeyValueStorage(
+            eq(KeyValueSegmentIdentifier.BLOCKCHAIN), any(), any()))
         .thenReturn(kvBlockchain);
 
     final var variableValues = getSampleVariableValues();

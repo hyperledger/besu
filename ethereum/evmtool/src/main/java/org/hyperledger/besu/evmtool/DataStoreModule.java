@@ -126,7 +126,9 @@ public class DataStoreModule {
 
     switch (keyValueStorageName) {
       case "rocksdb":
-        return rocksDBFactory.get().create(segment, commonConfiguration, metricsSystem);
+        return rocksDBFactory
+            .get()
+            .createKeyValueStorage(segment, commonConfiguration, metricsSystem);
       default:
         System.err.println("Unknown key, continuing as though 'memory' was specified");
         // fall through

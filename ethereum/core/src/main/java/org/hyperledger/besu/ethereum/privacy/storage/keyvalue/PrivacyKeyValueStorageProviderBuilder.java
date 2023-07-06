@@ -57,9 +57,10 @@ public class PrivacyKeyValueStorageProviderBuilder {
     checkNotNull(metricsSystem, "Cannot build a storage provider without a metrics system.");
 
     return new PrivacyKeyValueStorageProvider(
-        storageFactory.create(PRIVATE_TRANSACTIONS, commonConfiguration, metricsSystem),
+        storageFactory.createKeyValueStorage(
+            PRIVATE_TRANSACTIONS, commonConfiguration, metricsSystem),
         new LimitedInMemoryKeyValueStorage(DEFAULT_WORLD_STATE_PRE_IMAGE_CACHE_SIZE),
-        storageFactory.create(PRIVATE_STATE, commonConfiguration, metricsSystem),
+        storageFactory.createKeyValueStorage(PRIVATE_STATE, commonConfiguration, metricsSystem),
         storageFactory.getVersion());
   }
 }

@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.storage.GlobalKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
@@ -28,9 +29,9 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.OptimisticRocksDBColumnarKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.PessimisticRocksDBColumnarKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.TransactionDBRocksDBColumnarKeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented.RocksDBKeyValueStorage;
+import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
 import org.hyperledger.besu.services.kvstore.SnappableSegmentedKeyValueStorageAdapter;
 
@@ -38,6 +39,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -58,7 +60,6 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
   private Integer databaseVersion;
   private Boolean isSegmentIsolationSupported;
   private RocksDBColumnarKeyValueStorage segmentedStorage;
-  private KeyValueStorage unsegmentedStorage;
   private RocksDBConfiguration rocksDBConfiguration;
 
   private final Supplier<RocksDBFactoryConfiguration> configuration;
@@ -148,7 +149,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
   }
 
   @Override
-  public KeyValueStorage create(
+  public KeyValueStorage createKeyValueStorage(
       final SegmentIdentifier segment,
       final BesuConfiguration commonConfiguration,
       final MetricsSystem metricsSystem)
@@ -163,17 +164,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     // version. Introducing intermediate booleans that represent database properties and dispatching
     // creation logic based on them is error-prone.
     switch (databaseVersion) {
-      case 0 -> {
-        segmentedStorage = null;
-        if (unsegmentedStorage == null) {
-          unsegmentedStorage =
-              new RocksDBKeyValueStorage(
-                  rocksDBConfiguration, metricsSystem, rocksDBMetricsFactory);
-        }
-        return unsegmentedStorage;
-      }
       case 1, 2 -> {
-        unsegmentedStorage = null;
         if (segmentedStorage == null) {
           final List<SegmentIdentifier> segmentsForVersion =
               segments.stream()
@@ -182,7 +173,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
           if (isForestStorageFormat) {
             LOG.debug("FOREST mode detected, using TransactionDB.");
             segmentedStorage =
-                new TransactionDBRocksDBColumnarKeyValueStorage(
+                new PessimisticRocksDBColumnarKeyValueStorage(
                     rocksDBConfiguration,
                     segmentsForVersion,
                     ignorableSegments,
@@ -221,6 +212,31 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     }
   }
 
+  @Override
+  public GlobalKeyValueStorageTransaction<?> createGlobalKeyValueStorageTransaction()
+      throws StorageException {
+    final SegmentedKeyValueStorage.Transaction<RocksDbSegmentIdentifier> transaction =
+        segmentedStorage.startTransaction();
+    return new GlobalKeyValueStorageTransaction<
+        SegmentedKeyValueStorage.Transaction<RocksDbSegmentIdentifier>>() {
+      @Override
+      public Optional<SegmentedKeyValueStorage.Transaction<RocksDbSegmentIdentifier>>
+          getGlobalTransaction() {
+        return Optional.of(transaction);
+      }
+
+      @Override
+      protected void commitGlobalTransaction() {
+        transaction.commit();
+      }
+
+      @Override
+      protected void rollbackGlobalTransaction() {
+        transaction.rollback();
+      }
+    };
+  }
+
   /**
    * Storage path.
    *
@@ -249,7 +265,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
   }
 
   private boolean requiresInit() {
-    return segmentedStorage == null && unsegmentedStorage == null;
+    return segmentedStorage == null;
   }
 
   private int readDatabaseVersion(final BesuConfiguration commonConfiguration) throws IOException {
@@ -283,9 +299,6 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
 
   @Override
   public void close() throws IOException {
-    if (unsegmentedStorage != null) {
-      unsegmentedStorage.close();
-    }
     if (segmentedStorage != null) {
       segmentedStorage.close();
     }
