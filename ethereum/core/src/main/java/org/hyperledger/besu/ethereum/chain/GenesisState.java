@@ -259,7 +259,7 @@ public final class GenesisState {
   private static boolean isExperimentalEipsTimeAtGenesis(final GenesisConfigFile genesis) {
     final OptionalLong experimentalEipsTime = genesis.getConfigOptions().getExperimentalEipsTime();
     if (experimentalEipsTime.isPresent()) {
-      return  genesis.getTimestamp() >= experimentalEipsTime.getAsLong();
+      return genesis.getTimestamp() >= experimentalEipsTime.getAsLong();
     }
     return false;
   }

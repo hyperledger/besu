@@ -18,22 +18,19 @@ import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
-/**
-
- Calculates the excess data gas for a parent block header.
- */
+/** Calculates the excess data gas for a parent block header. */
 public class ExcessDataGasCalculator {
   /**
-public class ExcessDataGasCalculator {
-  /**
-   Calculates the excess data gas for a parent block header.
-   @param protocolSpec The protocol specification.
-   @param parentHeader The parent block header.
-   @return The excess data gas.
+   * public class ExcessDataGasCalculator { /** Calculates the excess data gas for a parent block
+   * header.
+   *
+   * @param protocolSpec The protocol specification.
+   * @param parentHeader The parent block header.
+   * @return The excess data gas.
    */
   public static DataGas calculateExcessDataGasForParent(
       final ProtocolSpec protocolSpec, final BlockHeader parentHeader) {
-// Blob Data Excess
+    // Blob Data Excess
     long headerExcess =
         protocolSpec
             .getGasCalculator()
