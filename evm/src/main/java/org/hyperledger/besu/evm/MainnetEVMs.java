@@ -843,15 +843,18 @@ public class MainnetEVMs {
       final BigInteger chainID) {
     registerShanghaiOperations(registry, gasCalculator, chainID);
 
-    // EIP-4844 DATAHASH
-    registry.put(new DataHashOperation(gasCalculator));
-
     // EIP-1153 TSTORE/TLOAD
     registry.put(new TStoreOperation(gasCalculator));
     registry.put(new TLoadOperation(gasCalculator));
 
+    // EIP-4844 DATAHASH
+    registry.put(new DataHashOperation(gasCalculator));
+
     // EIP-5656 MCOPY
     registry.put(new MCopyOperation(gasCalculator));
+
+    // EIP-6780 nerf self destruct
+    registry.put(new SelfDestructOperation(gasCalculator, true));
   }
 
   /**
@@ -1128,9 +1131,6 @@ public class MainnetEVMs {
     registry.put(new RelativeJumpVectorOperation(gasCalculator));
     registry.put(new CallFOperation(gasCalculator));
     registry.put(new RetFOperation(gasCalculator));
-
-    // EIP-6780 self destruct
-    registry.put(new SelfDestructOperation(gasCalculator, true));
   }
 
   /**

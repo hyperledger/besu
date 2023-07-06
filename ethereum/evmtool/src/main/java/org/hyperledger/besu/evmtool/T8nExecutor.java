@@ -15,6 +15,9 @@
  */
 package org.hyperledger.besu.evmtool;
 
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_BASE;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_MIN;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
 import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules.shouldClearEmptyAccounts;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
@@ -131,8 +134,7 @@ public class T8nExecutor {
             }
 
             if (transactionType.requiresChainId()
-                || !txNode.has("protected")
-                || txNode.get("protected").booleanValue()) {
+                || (txNode.has("protected") && txNode.get("protected").asBoolean(false))) {
               // chainid if protected
               builder.chainId(
                   new BigInteger(
@@ -192,10 +194,12 @@ public class T8nExecutor {
             } else {
               BigInteger v =
                   Bytes.fromHexStringLenient(txNode.get("v").textValue()).toUnsignedBigInteger();
-              if (v.compareTo(BigInteger.valueOf(35)) >= 0) {
-                v = v.subtract(BigInteger.valueOf(35)).mod(BigInteger.TWO);
-              } else if (v.compareTo(BigInteger.valueOf(27)) >= 0) {
-                v = v.subtract(BigInteger.valueOf(27)).mod(BigInteger.TWO);
+              if (transactionType == TransactionType.FRONTIER) {
+                if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
+                  v = v.subtract(REPLAY_PROTECTED_V_BASE).mod(BigInteger.TWO);
+                } else {
+                  v = v.subtract(REPLAY_UNPROTECTED_V_BASE);
+                }
               }
               builder.signature(
                   SignatureAlgorithmFactory.getInstance()
