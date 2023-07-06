@@ -27,13 +27,13 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class MainnetBlockImporterTest {
   @Mock private BlockValidator blockValidator;
   @Mock private ProtocolContext context;
@@ -42,7 +42,7 @@ public class MainnetBlockImporterTest {
   @Mock private Hash hash;
   private MainnetBlockImporter blockImporter;
 
-  @Before
+  @BeforeEach
   public void setup() {
     blockImporter = new MainnetBlockImporter(blockValidator);
     when(context.getBlockchain()).thenReturn(blockchain);

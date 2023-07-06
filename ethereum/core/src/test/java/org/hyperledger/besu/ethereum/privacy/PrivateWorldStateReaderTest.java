@@ -36,15 +36,15 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PrivateWorldStateReaderTest {
 
   private final String PRIVACY_GROUP_ID = "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
@@ -55,7 +55,8 @@ public class PrivateWorldStateReaderTest {
   private final Hash blockHash = Hash.ZERO;
   private final Hash stateRootHash = Hash.ZERO;
 
-  @Mock private PrivateStateRootResolver privateStateRootResolver;
+  @Mock
+  private PrivateStateRootResolver privateStateRootResolver;
   @Mock private WorldStateArchive privateWorldStateArchive;
   @Mock private WorldState privateWorldState;
   @Mock private PrivateStateStorage privateStateStorage;
@@ -63,14 +64,14 @@ public class PrivateWorldStateReaderTest {
 
   private PrivateWorldStateReader privateWorldStateReader;
 
-  @Before
+  @BeforeEach
   public void before() {
     privateWorldStateReader =
         new PrivateWorldStateReader(
             privateStateRootResolver, privateWorldStateArchive, privateStateStorage);
   }
 
-  @After
+  @AfterEach
   public void after() {
     Mockito.reset(privateStateStorage);
   }

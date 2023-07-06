@@ -34,7 +34,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import com.google.common.base.Suppliers;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class TransactionBuilderTest {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =

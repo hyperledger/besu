@@ -28,12 +28,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.stream.Stream;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class TransactionPriceCalculatorTest {
 
   private static final TransactionPriceCalculator FRONTIER_CALCULATOR =
@@ -41,34 +42,8 @@ public class TransactionPriceCalculatorTest {
   private static final TransactionPriceCalculator EIP_1559_CALCULATOR =
       TransactionPriceCalculator.eip1559();
 
-  private final TransactionPriceCalculator transactionPriceCalculator;
-  private final TransactionType transactionType;
-  private final Wei gasPrice;
-  private final Wei maxPriorityFeePerGas;
-  private final Wei maxFeePerGas;
-  private final Optional<Wei> baseFee;
-  private final Wei expectedPrice;
-
-  public TransactionPriceCalculatorTest(
-      final TransactionPriceCalculator transactionPriceCalculator,
-      final TransactionType transactionType,
-      final Wei gasPrice,
-      final Wei maxPriorityFeePerGas,
-      final Wei maxFeePerGas,
-      final Optional<Wei> baseFee,
-      final Wei expectedPrice) {
-    this.transactionPriceCalculator = transactionPriceCalculator;
-    this.transactionType = transactionType;
-    this.gasPrice = gasPrice;
-    this.maxPriorityFeePerGas = maxPriorityFeePerGas;
-    this.maxFeePerGas = maxFeePerGas;
-    this.baseFee = baseFee;
-    this.expectedPrice = expectedPrice;
-  }
-
-  @Parameterized.Parameters
-  public static Collection<Object[]> data() {
-    return Arrays.asList(
+  public static Stream<Arguments> data() {
+    return Arrays.stream(
         new Object[][] {
           // legacy transaction must return gas price
           {FRONTIER_CALCULATOR, FRONTIER, Wei.of(578L), null, null, Optional.empty(), Wei.of(578L)},
@@ -128,11 +103,20 @@ public class TransactionPriceCalculatorTest {
           },
           // EIP-1559 transaction zero price
           {EIP_1559_CALCULATOR, EIP1559, null, Wei.ZERO, Wei.ZERO, Optional.of(Wei.ZERO), Wei.ZERO}
-        });
+        }).map(Arguments::of);
   }
 
-  @Test
-  public void assertThatCalculatorWorks() {
+  @ParameterizedTest
+  @MethodSource("data")
+  public void assertThatCalculatorWorks(
+          final TransactionPriceCalculator transactionPriceCalculator,
+          final TransactionType transactionType,
+          final Wei gasPrice,
+          final Wei maxPriorityFeePerGas,
+          final Wei maxFeePerGas,
+          final Optional<Wei> baseFee,
+          final Wei expectedPrice
+  ) {
     assertThat(
             transactionPriceCalculator.price(
                 Transaction.builder()
