@@ -102,7 +102,7 @@
     "unsafeAllocated": true
   },
   {
-    "name": "org.hyperledger.besu.evmtool.T8nSubCommand$RejectedTransaction",
+    "name": "org.hyperledger.besu.evmtool.T8nExecutor$RejectedTransaction",
     "queryAllPublicConstructors": true,
     "queryAllPublicMethods": true,
     "allDeclaredConstructors": true,

@@ -3675,6 +3675,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setHighSpecEnabled();
     }
 
+    if (buildTransactionPoolConfiguration().getLayeredTxPoolEnabled()) {
+      builder.setLayeredTxPoolEnabled();
+    }
+
     return builder.build();
   }
 }
