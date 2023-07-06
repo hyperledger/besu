@@ -210,6 +210,11 @@ public class MainnetProtocolSpecFactory {
         evmConfiguration);
   }
 
+  public ProtocolSpecBuilder lacchainDefinition() {
+    return LacchainProtocolSpecs.postQuantumDefinition(
+        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled);
+  }
+
   ////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Classic Protocol Specs

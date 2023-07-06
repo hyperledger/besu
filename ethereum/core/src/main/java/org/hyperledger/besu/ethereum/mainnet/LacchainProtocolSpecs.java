@@ -14,9 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.mainnet.precompiles.FalconPrecompiledContract;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.precompile.FalconPrecompiledContract;
+import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -27,21 +28,19 @@ public class LacchainProtocolSpecs {
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason,
-      final boolean quorumCompatibilityMode) {
+      final boolean enableRevertReason) {
     return MainnetProtocolSpecs.istanbulDefinition(
             chainId,
             contractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
-            quorumCompatibilityMode)
+            EvmConfiguration.DEFAULT)
         .precompileContractRegistryBuilder(
             precompiledContractConfiguration -> {
               PrecompileContractRegistry lacchainContractsRegistry =
                   MainnetPrecompiledContractRegistries.istanbul(precompiledContractConfiguration);
               lacchainContractsRegistry.put(
                   Address.LACCHAIN_FALCON,
-                  Account.DEFAULT_VERSION,
                   new FalconPrecompiledContract(
                       precompiledContractConfiguration.getGasCalculator()));
               return lacchainContractsRegistry;

@@ -12,21 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet.precompiles;
+package org.hyperledger.besu.evm.precompile;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.crypto.Hash;
-import org.hyperledger.besu.ethereum.core.Gas;
-import org.hyperledger.besu.ethereum.mainnet.AbstractPrecompiledContract;
-import org.hyperledger.besu.ethereum.vm.GasCalculator;
-import org.hyperledger.besu.ethereum.vm.MessageFrame;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.openquantumsafe.Signature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * note: Liboqs - random number generation defaults to /dev/urandom a better form is to use the
@@ -35,7 +33,7 @@ import org.openquantumsafe.Signature;
  */
 public class FalconPrecompiledContract extends AbstractPrecompiledContract {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractBLS12PrecompiledContract.class);
 
   private static final Bytes METHOD_ABI =
       Hash.keccak256(Bytes.of("verify(bytes,bytes,bytes)".getBytes(UTF_8))).slice(0, 4);
@@ -47,8 +45,9 @@ public class FalconPrecompiledContract extends AbstractPrecompiledContract {
   }
 
   @Override
-  public Gas gasRequirement(final Bytes input) {
-    return gasCalculator().sha256PrecompiledContractGasCost(input);
+  public long gasRequirement(final Bytes input) {
+    long value = gasCalculator().sha256PrecompiledContractGasCost(input);
+    return value;
   }
 
   @Override

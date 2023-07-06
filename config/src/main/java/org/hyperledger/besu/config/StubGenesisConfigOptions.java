@@ -306,6 +306,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   public OptionalLong getLacchainPostQuantumBlockNumber() {
     return lacchainPostQuantumBlockNumber;
   }
+
+  @Override
   public OptionalLong getMagnetoBlockNumber() {
     return magnetoBlockNumber;
   }

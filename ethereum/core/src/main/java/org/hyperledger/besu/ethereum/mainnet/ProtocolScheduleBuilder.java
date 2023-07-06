@@ -309,6 +309,8 @@ public class ProtocolScheduleBuilder {
             config.getGrayGlacierBlockNumber(), specFactory.grayGlacierDefinition(config)),
         blockNumberMilestone(
             config.getMergeNetSplitBlockNumber(), specFactory.parisDefinition(config)),
+        blockNumberMilestone(
+            config.getLacchainPostQuantumBlockNumber(), specFactory.lacchainDefinition()),
         // Timestamp Forks
         timestampMilestone(config.getShanghaiTime(), specFactory.shanghaiDefinition(config)),
         timestampMilestone(config.getCancunTime(), specFactory.cancunDefinition(config)),

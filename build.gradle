@@ -117,12 +117,13 @@ allprojects {
 
   repositories {
     maven {
-      name = "GitHubPackages"
-      url = uri("https://maven.pkg.github.com/lacchain/liboqs-java/")
+      url 'https://maven.pkg.github.com/lacchain/liboqs-java'
+      content { includeGroupByRegex('org\\.openquantumsafe(\\..*)?') }
       credentials {
         username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
         password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
       }
+    }
     maven {
       url 'https://hyperledger.jfrog.io/hyperledger/besu-maven'
       content { includeGroupByRegex('org\\.hyperledger\\..*') }
@@ -739,8 +740,6 @@ task testDocker {
 }
 
 task dockerUpload {
-  dependsOn distDocker
-  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
   def imageName = "ghcr.io/lacchain/besu"
   def azureImageName = "hyperledger.azurecr.io/besu"
   def image = "${imageName}:${dockerBuildVersion}"
@@ -748,6 +747,10 @@ task dockerUpload {
 
   if (project.hasProperty('branch') && project.property('branch') == 'main') {
     additionalTags.add('develop')
+  }
+
+  if (!isInterimBuild(dockerBuildVersion)) {
+    additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
 
   doLast {

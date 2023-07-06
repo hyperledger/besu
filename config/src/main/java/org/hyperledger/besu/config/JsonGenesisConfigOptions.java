@@ -368,6 +368,9 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getLacchainPostQuantumBlockNumber() {
     return getOptionalLong("lacchainpqblock");
+  }
+
+  @Override
   public OptionalLong getMagnetoBlockNumber() {
     return getOptionalLong("magnetoblock");
   }
