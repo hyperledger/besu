@@ -38,10 +38,10 @@ public class Block {
   }
 
   public Block(
-          final BlockHeader header,
-          final BlockBody body,
-          final boolean transactionsRootVerified,
-          final boolean receiptsRootVerified) {
+      final BlockHeader header,
+      final BlockBody body,
+      final boolean transactionsRootVerified,
+      final boolean receiptsRootVerified) {
     this.header = header;
     this.body = body;
     this.transactionsRootVerified = transactionsRootVerified;

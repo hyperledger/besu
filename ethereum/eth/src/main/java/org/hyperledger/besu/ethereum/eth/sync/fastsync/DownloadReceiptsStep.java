@@ -63,7 +63,8 @@ public class DownloadReceiptsStep
               // this is because we already did the receipts validation when getting them from the
               // network
               // in GetReceiptsFromPeerTask.processResponse method
-              block.setReceiptsRootVerified(true);              return new BlockWithReceipts(block, receipts);
+              block.setReceiptsRootVerified(true);
+              return new BlockWithReceipts(block, receipts);
             })
         .collect(toList());
   }
