@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 
 import static java.util.function.Predicate.isEqual;
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessDataGasCalculator.calculateExcessDataGasForParent;
 
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
@@ -121,7 +122,7 @@ public class TransactionTracer {
                       .dataPricePerGas(
                           blockchain
                               .getBlockHeader(header.getParentHash())
-                              .flatMap(BlockHeader::getExcessDataGas)
+                              .map(parent -> calculateExcessDataGasForParent(protocolSpec, parent))
                               .orElse(DataGas.ZERO));
               for (int i = 0; i < body.getTransactions().size(); i++) {
                 ((StackedUpdater<?, ?>) stackedUpdater).markTransactionBoundary();

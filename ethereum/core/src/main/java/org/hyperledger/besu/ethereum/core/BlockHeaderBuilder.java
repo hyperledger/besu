@@ -73,8 +73,7 @@ public class BlockHeaderBuilder {
   // instead of an invalid identifier such as -1.
   private OptionalLong nonce = OptionalLong.empty();
 
-  private Long dataGasUsed;
-
+  private Long dataGasUsed = null;
   private DataGas excessDataGas = null;
 
   public static BlockHeaderBuilder create() {

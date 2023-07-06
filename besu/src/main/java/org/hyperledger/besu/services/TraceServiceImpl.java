@@ -15,6 +15,7 @@
 package org.hyperledger.besu.services;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessDataGasCalculator.calculateExcessDataGasForParent;
 
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
@@ -112,7 +113,9 @@ public class TraceServiceImpl implements TraceService {
                             .getFeeMarket()
                             .dataPricePerGas(
                                 maybeParentHeader
-                                    .flatMap(BlockHeader::getExcessDataGas)
+                                    .map(
+                                        parent ->
+                                            calculateExcessDataGasForParent(protocolSpec, parent))
                                     .orElse(DataGas.ZERO));
                     final TransactionProcessingResult result =
                         transactionProcessor.processTransaction(

@@ -320,6 +320,9 @@ public class BlockHeader extends SealableBlockHeader
     if (withdrawalsRoot != null) {
       sb.append("withdrawalsRoot=").append(withdrawalsRoot).append(", ");
     }
+    if (dataGasUsed != null) {
+      sb.append("dataGasUsed=").append(dataGasUsed).append(", ");
+    }
     if (excessDataGas != null) {
       sb.append("excessDataGas=").append(excessDataGas).append(", ");
     }

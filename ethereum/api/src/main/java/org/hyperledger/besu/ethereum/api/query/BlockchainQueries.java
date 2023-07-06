@@ -16,9 +16,9 @@ package org.hyperledger.besu.ethereum.api.query;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessDataGasCalculator.calculateExcessDataGasForParent;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
@@ -695,7 +695,8 @@ public class BlockchainQueries {
               parentHeader ->
                   protocolSpec
                       .getFeeMarket()
-                      .dataPricePerGas(parentHeader.getExcessDataGas().orElse(DataGas.ZERO)));
+                      .dataPricePerGas(
+                          calculateExcessDataGasForParent(protocolSpec, parentHeader)));
     }
     return Optional.empty();
   }
