@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessDataGasCalculator.calculateExcessDataGasForParent;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
@@ -169,10 +171,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           createPendingBlockHeader(timestamp, maybePrevRandao, newProtocolSpec);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.getMiningBeneficiary(processableBlockHeader.getNumber());
-      final Wei dataGasPrice =
+      Wei dataGasPrice =
           newProtocolSpec
               .getFeeMarket()
-              .dataPricePerGas(parentHeader.getExcessDataGas().orElse(DataGas.ZERO));
+              .dataPricePerGas(calculateExcessDataGasForParent(newProtocolSpec, parentHeader));
 
       throwIfStopped();
 
