@@ -14,12 +14,18 @@
  */
 package org.hyperledger.besu.plugin.services.query;
 
-import org.hyperledger.besu.plugin.data.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.Collection;
 
-/** Allows for the IBFT 2.0 specific aspects of the block chain to be queried. */
+/**
+ * Allows for the IBFT 2.0 specific aspects of the block chain to be queried.
+ *
+ * @deprecated This interface has been replaced by {@link
+ *     org.hyperledger.besu.plugin.services.query.BftQueryService}
+ */
+@Deprecated
 public interface IbftQueryService extends PoaQueryService {
 
   /**

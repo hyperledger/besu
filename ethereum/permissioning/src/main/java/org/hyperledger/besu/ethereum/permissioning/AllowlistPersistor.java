@@ -31,8 +31,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AllowlistPersistor {
+  private static final Logger LOG = LoggerFactory.getLogger(AllowlistPersistor.class);
 
   private final File configurationFile;
 
@@ -68,11 +71,16 @@ public class AllowlistPersistor {
             ? configItems.get(allowlistType)
             : Collections.emptyList();
 
-    boolean listsMatch = existingValues.containsAll(checkLists);
-    if (!listsMatch) {
+    if (!existingValues.containsAll(checkLists)) {
+      LOG.atDebug()
+          .setMessage("\n LISTS DO NOT MATCH configFile::")
+          .addArgument(existingValues)
+          .addArgument(configurationFilePath)
+          .log();
+      LOG.atDebug().setMessage("\nLISTS DO NOT MATCH in-memory ::").addArgument(checkLists).log();
       throw new AllowlistFileSyncException();
     }
-    return listsMatch;
+    return true;
   }
 
   public boolean verifyConfigFileMatchesState(
@@ -102,9 +110,7 @@ public class AllowlistPersistor {
             Collectors.toMap(
                 o -> o.getKey(),
                 o ->
-                    o.getValue()
-                        .toList()
-                        .parallelStream()
+                    o.getValue().toList().parallelStream()
                         .map(Object::toString)
                         .collect(Collectors.toList())));
   }
@@ -112,9 +118,7 @@ public class AllowlistPersistor {
   @VisibleForTesting
   void removeExistingConfigItem(final ALLOWLIST_TYPE allowlistType) throws IOException {
     List<String> otherConfigItems =
-        existingConfigItems(configurationFile.toPath())
-            .entrySet()
-            .parallelStream()
+        existingConfigItems(configurationFile.toPath()).entrySet().parallelStream()
             .filter(listType -> !listType.getKey().equals(allowlistType))
             .map(keyVal -> valueListToTomlArray(keyVal.getKey(), keyVal.getValue()))
             .collect(Collectors.toList());
@@ -153,8 +157,7 @@ public class AllowlistPersistor {
     return String.format(
         "%s=[%s]",
         allowlistType.getTomlKey(),
-        allowlistValues
-            .parallelStream()
+        allowlistValues.parallelStream()
             .map(uri -> String.format("\"%s\"", uri))
             .collect(Collectors.joining(",")));
   }

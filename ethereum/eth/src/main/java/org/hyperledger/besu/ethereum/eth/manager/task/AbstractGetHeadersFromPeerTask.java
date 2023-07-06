@@ -31,14 +31,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Retrieves a sequence of headers from a peer. */
 public abstract class AbstractGetHeadersFromPeerTask
     extends AbstractPeerRequestTask<List<BlockHeader>> {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractGetHeadersFromPeerTask.class);
 
   private final ProtocolSchedule protocolSchedule;
   protected final int count;
@@ -74,27 +74,33 @@ public abstract class AbstractGetHeadersFromPeerTask
     final List<BlockHeader> headers = headersMessage.getHeaders(protocolSchedule);
     if (headers.isEmpty()) {
       // Message contains no data - nothing to do
+      LOG.debug("headers.isEmpty. Peer: {}", peer);
       return Optional.empty();
     }
     if (headers.size() > count) {
       // Too many headers - this isn't our response
+      LOG.debug("headers.size()>count. Peer: {}", peer);
       return Optional.empty();
     }
 
     final BlockHeader firstHeader = headers.get(0);
     if (!matchesFirstHeader(firstHeader)) {
       // This isn't our message - nothing to do
+      LOG.debug("!matchesFirstHeader. Peer: {}", peer);
       return Optional.empty();
     }
 
-    final List<BlockHeader> headersList = new ArrayList<>();
+    final List<BlockHeader> headersList = new ArrayList<>(headers.size());
     headersList.add(firstHeader);
     BlockHeader prevBlockHeader = firstHeader;
+    updatePeerChainState(peer, firstHeader);
     final int expectedDelta = reverse ? -(skip + 1) : (skip + 1);
+    BlockHeader header = null;
     for (int i = 1; i < headers.size(); i++) {
-      final BlockHeader header = headers.get(i);
+      header = headers.get(i);
       if (header.getNumber() != prevBlockHeader.getNumber() + expectedDelta) {
         // Skip doesn't match, this isn't our data
+        LOG.debug("header not matching the expected number. Peer: {}", peer);
         return Optional.empty();
       }
       // if headers are supposed to be sequential check if a chain is formed
@@ -103,8 +109,8 @@ public abstract class AbstractGetHeadersFromPeerTask
         final BlockHeader child = reverse ? prevBlockHeader : header;
         if (!parent.getHash().equals(child.getParentHash())) {
           LOG.debug(
-              "Sequential headers must form a chain through hashes, disconnecting peer: {}",
-              peer.toString());
+              "Sequential headers must form a chain through hashes (BREACH_OF_PROTOCOL), disconnecting peer: {}",
+              peer);
           peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
           return Optional.empty();
         }
@@ -112,9 +118,27 @@ public abstract class AbstractGetHeadersFromPeerTask
       prevBlockHeader = header;
       headersList.add(header);
     }
+    // if we have received more than one header we have to update the chain state with the last
+    // header as well, as the header with the highest block number can be the first or the last
+    // header.
+    if (headers.size() > 1) {
+      updatePeerChainState(peer, header);
+    }
 
-    LOG.debug("Received {} of {} headers requested from peer.", headersList.size(), count);
+    LOG.debug("Received {} of {} headers requested from peer {}", headersList.size(), count, peer);
     return Optional.of(headersList);
+  }
+
+  private void updatePeerChainState(final EthPeer peer, final BlockHeader blockHeader) {
+    if (blockHeader.getNumber() > peer.chainState().getEstimatedHeight()) {
+      LOG.atTrace()
+          .setMessage("Updating chain state for peer {} to block header {}")
+          .addArgument(peer::getShortNodeId)
+          .addArgument(blockHeader::toLogString)
+          .log();
+      peer.chainState().update(blockHeader);
+    }
+    LOG.trace("Peer chain state {}", peer.chainState());
   }
 
   protected abstract boolean matchesFirstHeader(BlockHeader firstHeader);

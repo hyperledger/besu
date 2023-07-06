@@ -17,19 +17,19 @@ package org.hyperledger.besu.ethereum.permissioning.node;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.permissioning.node.provider.SyncStatusNodePermissioningProvider;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PeerPermissionsAdapter extends PeerPermissions {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PeerPermissionsAdapter.class);
 
   private final NodePermissioningController nodePermissioningController;
   private final List<EnodeURL> bootnodes;
@@ -87,7 +87,7 @@ public class PeerPermissionsAdapter extends PeerPermissions {
   }
 
   private boolean allowOutboundBonding(final Peer localNode, final Peer remotePeer) {
-    boolean outboundMessagingAllowed = outboundIsPermitted(localNode, remotePeer);
+    final boolean outboundMessagingAllowed = outboundIsPermitted(localNode, remotePeer);
     if (!nodePermissioningController.getSyncStatusNodePermissioningProvider().isPresent()) {
       return outboundMessagingAllowed;
     }
@@ -101,7 +101,7 @@ public class PeerPermissionsAdapter extends PeerPermissions {
   }
 
   private boolean allowOutboundNeighborsRequests(final Peer localNode, final Peer remotePeer) {
-    boolean outboundMessagingAllowed = outboundIsPermitted(localNode, remotePeer);
+    final boolean outboundMessagingAllowed = outboundIsPermitted(localNode, remotePeer);
     if (!nodePermissioningController.getSyncStatusNodePermissioningProvider().isPresent()) {
       return outboundMessagingAllowed;
     }

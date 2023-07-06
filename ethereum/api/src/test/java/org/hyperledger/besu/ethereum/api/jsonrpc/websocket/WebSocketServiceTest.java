@@ -21,9 +21,12 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.BaseJsonRpcProcessor;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
+import org.hyperledger.besu.ethereum.api.util.TestJsonRpcMethodsUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -36,11 +39,10 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.WebSocket;
-import io.vertx.core.http.WebSocketBase;
 import io.vertx.core.http.WebSocketFrame;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -56,9 +58,12 @@ public class WebSocketServiceTest {
 
   private Vertx vertx;
   private WebSocketConfiguration websocketConfiguration;
-  private WebSocketRequestHandler webSocketRequestHandlerSpy;
+  private WebSocketMessageHandler webSocketMessageHandlerSpy;
+  private Map<String, JsonRpcMethod> websocketMethods;
   private WebSocketService websocketService;
   private HttpClient httpClient;
+  private final int maxConnections = 3;
+  private final int maxFrameSize = 1024 * 1024;
 
   @Before
   public void before() {
@@ -67,21 +72,24 @@ public class WebSocketServiceTest {
     websocketConfiguration = WebSocketConfiguration.createDefault();
     websocketConfiguration.setPort(0);
     websocketConfiguration.setHostsAllowlist(Collections.singletonList("*"));
+    websocketConfiguration.setMaxActiveConnections(maxConnections);
+    websocketConfiguration.setMaxFrameSize(maxFrameSize);
 
-    final Map<String, JsonRpcMethod> websocketMethods =
+    websocketMethods =
         new WebSocketMethodsFactory(
                 new SubscriptionManager(new NoOpMetricsSystem()), new HashMap<>())
             .methods();
-    webSocketRequestHandlerSpy =
+    webSocketMessageHandlerSpy =
         spy(
-            new WebSocketRequestHandler(
+            new WebSocketMessageHandler(
                 vertx,
-                websocketMethods,
+                new JsonRpcExecutor(new BaseJsonRpcProcessor(), websocketMethods),
                 mock(EthScheduler.class),
                 TimeoutOptions.defaultOptions().getTimeoutSeconds()));
 
     websocketService =
-        new WebSocketService(vertx, websocketConfiguration, webSocketRequestHandlerSpy);
+        new WebSocketService(
+            vertx, websocketConfiguration, webSocketMessageHandlerSpy, new NoOpMetricsSystem());
     websocketService.start().join();
 
     websocketConfiguration.setPort(websocketService.socketAddress().getPort());
@@ -96,8 +104,47 @@ public class WebSocketServiceTest {
 
   @After
   public void after() {
-    reset(webSocketRequestHandlerSpy);
+    reset(webSocketMessageHandlerSpy);
     websocketService.stop();
+  }
+
+  @Test
+  public void limitActiveConnections(final TestContext context) {
+    // expecting maxConnections successful responses
+    final Async asyncResponse = context.async(maxConnections);
+    // and a number of rejections
+    final int countRejections = 2;
+    final Async asyncRejected = context.async(countRejections);
+
+    final String request = "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"syncing\"]}";
+    // the number in the response is the subscription ID, so in successive responses this increments
+    final String expectedResponse1 = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"0x1\"}";
+
+    // attempt to exceed max connections - but only maxConnections should succeed
+    for (int i = 0; i < maxConnections + countRejections; i++) {
+      httpClient.webSocket(
+          "/",
+          future -> {
+            if (future.succeeded()) {
+              WebSocket ws = future.result();
+              ws.handler(
+                  buffer -> {
+                    context.assertNotNull(buffer.toString());
+                    // assert a successful response
+                    context.assertTrue(
+                        buffer.toString().startsWith(expectedResponse1.substring(0, 36)));
+                    asyncResponse.countDown();
+                  });
+              ws.writeTextMessage(request);
+            } else {
+              // count down the rejected WS connections
+              asyncRejected.countDown();
+            }
+          });
+    }
+    // wait for successful responses AND rejected connections
+    asyncResponse.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+    asyncRejected.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
   }
 
   @Test
@@ -107,16 +154,45 @@ public class WebSocketServiceTest {
     final String request = "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"syncing\"]}";
     final String expectedResponse = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"0x1\"}";
 
-    httpClient.websocket(
+    httpClient.webSocket(
         "/",
-        webSocket -> {
-          webSocket.handler(
-              buffer -> {
-                context.assertEquals(expectedResponse, buffer.toString());
-                async.complete();
-              });
+        future -> {
+          if (future.succeeded()) {
+            WebSocket ws = future.result();
+            ws.handler(
+                buffer -> {
+                  context.assertEquals(expectedResponse, buffer.toString());
+                  async.complete();
+                });
 
-          webSocket.writeTextMessage(request);
+            ws.writeTextMessage(request);
+          } else {
+            context.fail("websocket connection failed");
+          }
+        });
+
+    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+  }
+
+  @Test
+  public void websocketServiceHandlesBinaryFrames(final TestContext context) {
+    final Async async = context.async();
+
+    httpClient.webSocket(
+        "/",
+        future -> {
+          if (future.succeeded()) {
+            WebSocket ws = future.result();
+            final JsonObject requestJson = new JsonObject().put("id", 1).put("method", "eth_x");
+            ws.handler(
+                // we don't really care what the response is
+                buffer -> {
+                  async.complete();
+                });
+            ws.writeFinalBinaryFrame(Buffer.buffer(requestJson.toString()));
+          } else {
+            context.fail("websocket connection failed");
+          }
         });
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
@@ -134,7 +210,13 @@ public class WebSocketServiceTest {
               context.assertNotNull(m.body());
               async.complete();
             })
-        .completionHandler(v -> httpClient.websocket("/", WebSocketBase::close));
+        .completionHandler(
+            v ->
+                httpClient.webSocket(
+                    "/",
+                    websocket -> {
+                      websocket.result().close();
+                    }));
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
   }
@@ -143,14 +225,19 @@ public class WebSocketServiceTest {
   public void websocketServiceCloseConnectionOnUnrecoverableError(final TestContext context) {
     final Async async = context.async();
 
-    final byte[] bigMessage = new byte[HttpServerOptions.DEFAULT_MAX_WEBSOCKET_MESSAGE_SIZE + 1];
+    final byte[] bigMessage = new byte[maxFrameSize + 1];
     Arrays.fill(bigMessage, (byte) 1);
 
-    httpClient.websocket(
+    httpClient.webSocket(
         "/",
-        webSocket -> {
-          webSocket.write(Buffer.buffer(bigMessage));
-          webSocket.closeHandler(v -> async.complete());
+        future -> {
+          if (future.succeeded()) {
+            WebSocket ws = future.result();
+            ws.write(Buffer.buffer(bigMessage));
+            ws.closeHandler(v -> async.complete());
+          } else {
+            context.fail("websocket connection failed");
+          }
         });
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
@@ -161,42 +248,54 @@ public class WebSocketServiceTest {
   public void websocketServiceMustReturnErrorOnHttpRequest(final TestContext context) {
     final Async async = context.async();
 
-    httpClient
-        .post(
-            websocketConfiguration.getPort(),
-            websocketConfiguration.getHost(),
-            "/",
-            response ->
-                response.bodyHandler(
-                    b -> {
-                      context
-                          .assertEquals(400, response.statusCode())
-                          .assertEquals(
-                              "Websocket endpoint can't handle HTTP requests", b.toString());
-                      async.complete();
-                    }))
-        .end();
-
+    httpClient.request(
+        HttpMethod.POST,
+        websocketConfiguration.getPort(),
+        websocketConfiguration.getHost(),
+        "/",
+        request -> {
+          request
+              .result()
+              .send(
+                  response ->
+                      response
+                          .result()
+                          .bodyHandler(
+                              b -> {
+                                context
+                                    .assertEquals(400, response.result().statusCode())
+                                    .assertEquals(
+                                        "Websocket endpoint can't handle HTTP requests",
+                                        b.toString());
+                                async.complete();
+                              }));
+        });
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
   }
 
   @Test
   public void handleLoginRequestWithAuthDisabled() {
-    final HttpClientRequest request =
-        httpClient.post(
-            websocketConfiguration.getPort(),
-            websocketConfiguration.getHost(),
-            "/login",
-            response -> {
-              assertThat(response.statusCode()).isEqualTo(400);
-              assertThat(response.statusMessage()).isEqualTo("Authentication not enabled");
-            });
-    request.putHeader("Content-Type", "application/json; charset=utf-8");
-    request.end("{\"username\":\"user\",\"password\":\"pass\"}");
+    httpClient.request(
+        HttpMethod.POST,
+        websocketConfiguration.getPort(),
+        websocketConfiguration.getHost(),
+        "/login",
+        request -> {
+          request.result().putHeader("Content-Type", "application/json; charset=utf-8");
+          request.result().end("{\"username\":\"user\",\"password\":\"pass\"}");
+          request
+              .result()
+              .send(
+                  response -> {
+                    assertThat(response.result().statusCode()).isEqualTo(400);
+                    assertThat(response.result().statusMessage())
+                        .isEqualTo("Authentication not enabled");
+                  });
+        });
   }
 
   @Test
-  public void webSocketDoesNotToHandlePingPayloadAsJsonRpcRequest(final TestContext context) {
+  public void webSocketDoesNotHandlePingPayloadAsJsonRpcRequest(final TestContext context) {
     final Async async = context.async();
 
     httpClient.webSocket(
@@ -214,7 +313,7 @@ public class WebSocketServiceTest {
 
           websocket.closeHandler(
               h -> {
-                verifyNoInteractions(webSocketRequestHandlerSpy);
+                verifyNoInteractions(webSocketMessageHandlerSpy);
                 async.complete();
               });
 
@@ -223,5 +322,67 @@ public class WebSocketServiceTest {
         });
 
     async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+  }
+
+  @Test
+  public void handleResponseWithOptionalEmptyValue(final TestContext context) {
+    final Async async = context.async();
+    final JsonRpcMethod method = TestJsonRpcMethodsUtil.optionalEmptyResponse();
+    websocketMethods.put(method.getName(), method);
+
+    final String request =
+        "{\"id\": 1, \"method\": \"" + method.getName() + "\", \"params\": [\"syncing\"]}";
+    final String expectedResponse = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":null}";
+
+    httpClient.webSocket(
+        "/",
+        future -> {
+          if (future.succeeded()) {
+            WebSocket ws = future.result();
+            ws.handler(
+                buffer -> {
+                  context.assertEquals(expectedResponse, buffer.toString());
+                  async.complete();
+                });
+
+            ws.writeTextMessage(request);
+          } else {
+            context.fail("websocket connection failed");
+          }
+        });
+
+    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+    async.handler((result) -> websocketMethods.remove(method.getName()));
+  }
+
+  @Test
+  public void handleResponseWithOptionalExistingValue(final TestContext context) {
+    final Async async = context.async();
+    final JsonRpcMethod method = TestJsonRpcMethodsUtil.optionalResponseWithValue("foo");
+    websocketMethods.put(method.getName(), method);
+
+    final String request =
+        "{\"id\": 1, \"method\": \"" + method.getName() + "\", \"params\": [\"syncing\"]}";
+    final String expectedResponse = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"foo\"}";
+
+    httpClient.webSocket(
+        "/",
+        future -> {
+          if (future.succeeded()) {
+            WebSocket ws = future.result();
+            ws.handler(
+                buffer -> {
+                  context.assertEquals(expectedResponse, buffer.toString());
+                  async.complete();
+                });
+
+            ws.writeTextMessage(request);
+          } else {
+            context.fail("websocket connection failed");
+          }
+        });
+
+    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+    async.handler((result) -> websocketMethods.remove(method.getName()));
   }
 }

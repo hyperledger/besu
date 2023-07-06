@@ -18,9 +18,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
-import org.hyperledger.besu.services.tasks.CachingTaskCollection;
+import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 import org.hyperledger.besu.services.tasks.Task;
+import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.time.Clock;
@@ -31,39 +31,61 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-class WorldDownloadState {
-  private static final Logger LOG = LogManager.getLogger();
+public abstract class WorldDownloadState<REQUEST extends TasksPriorityProvider> {
+  private static final Logger LOG = LoggerFactory.getLogger(WorldDownloadState.class);
 
-  private final boolean downloadWasResumed;
-  private final CachingTaskCollection<NodeDataRequest> pendingRequests;
-  private final int maxRequestsWithoutProgress;
+  private boolean downloadWasResumed;
+  protected final InMemoryTasksPriorityQueues<REQUEST> pendingRequests;
+
+  protected final int maxRequestsWithoutProgress;
   private final Clock clock;
   private final Set<EthTask<?>> outstandingRequests =
       Collections.newSetFromMap(new ConcurrentHashMap<>());
-  private final CompletableFuture<Void> internalFuture;
-  private final CompletableFuture<Void> downloadFuture;
+  protected CompletableFuture<Void> internalFuture;
+  private CompletableFuture<Void> downloadFuture;
   // Volatile so monitoring can access it without having to synchronize.
-  private volatile int requestsSinceLastProgress = 0;
+  protected volatile int requestsSinceLastProgress = 0;
   private final long minMillisBeforeStalling;
   private volatile long timestampOfLastProgress;
-  private Bytes rootNodeData;
-  private WorldStateDownloadProcess worldStateDownloadProcess;
+  protected Bytes rootNodeData;
+
+  protected final WorldStateStorage worldStateStorage;
+  protected WorldStateDownloadProcess worldStateDownloadProcess;
 
   public WorldDownloadState(
-      final CachingTaskCollection<NodeDataRequest> pendingRequests,
+      final WorldStateStorage worldStateStorage,
+      final InMemoryTasksPriorityQueues<REQUEST> pendingRequests,
       final int maxRequestsWithoutProgress,
       final long minMillisBeforeStalling,
       final Clock clock) {
+    this.worldStateStorage = worldStateStorage;
     this.minMillisBeforeStalling = minMillisBeforeStalling;
     this.timestampOfLastProgress = clock.millis();
     this.downloadWasResumed = !pendingRequests.isEmpty();
     this.pendingRequests = pendingRequests;
     this.maxRequestsWithoutProgress = maxRequestsWithoutProgress;
     this.clock = clock;
+    this.internalFuture = new CompletableFuture<>();
+    this.downloadFuture = new CompletableFuture<>();
+    this.internalFuture.whenComplete(this::cleanup);
+    this.downloadFuture.exceptionally(
+        error -> {
+          // Propagate cancellation back to our internal future.
+          if (error instanceof CancellationException) {
+            this.internalFuture.cancel(true);
+          }
+          return null;
+        });
+  }
+
+  public void reset() {
+    this.timestampOfLastProgress = clock.millis();
+    this.requestsSinceLastProgress = 0;
+    this.downloadWasResumed = true;
     this.internalFuture = new CompletableFuture<>();
     this.downloadFuture = new CompletableFuture<>();
     this.internalFuture.whenComplete(this::cleanup);
@@ -86,10 +108,8 @@ class WorldDownloadState {
         LOG.info("World state download failed. ", error);
       }
     }
-    for (final EthTask<?> outstandingRequest : outstandingRequests) {
-      outstandingRequest.cancel();
-    }
-    pendingRequests.clear();
+
+    cleanupQueues();
 
     if (error != null) {
       if (worldStateDownloadProcess != null) {
@@ -99,6 +119,13 @@ class WorldDownloadState {
     } else {
       downloadFuture.complete(result);
     }
+  }
+
+  protected synchronized void cleanupQueues() {
+    for (final EthTask<?> outstandingRequest : outstandingRequests) {
+      outstandingRequest.cancel();
+    }
+    pendingRequests.clear();
   }
 
   public boolean downloadWasResumed() {
@@ -121,23 +148,23 @@ class WorldDownloadState {
     return downloadFuture;
   }
 
-  public synchronized void enqueueRequest(final NodeDataRequest request) {
+  public synchronized void enqueueRequest(final REQUEST request) {
     if (!internalFuture.isDone()) {
       pendingRequests.add(request);
       notifyAll();
     }
   }
 
-  public synchronized void enqueueRequests(final Stream<NodeDataRequest> requests) {
+  public synchronized void enqueueRequests(final Stream<REQUEST> requests) {
     if (!internalFuture.isDone()) {
       requests.forEach(pendingRequests::add);
       notifyAll();
     }
   }
 
-  public synchronized Task<NodeDataRequest> dequeueRequestBlocking() {
+  public synchronized Task<REQUEST> dequeueRequestBlocking() {
     while (!internalFuture.isDone()) {
-      final Task<NodeDataRequest> task = pendingRequests.remove();
+      Task<REQUEST> task = pendingRequests.remove();
       if (task != null) {
         return task;
       }
@@ -155,7 +182,8 @@ class WorldDownloadState {
     this.rootNodeData = rootNodeData;
   }
 
-  public synchronized void requestComplete(final boolean madeProgress) {
+  public synchronized void requestComplete(
+      final boolean madeProgress, final long minMillisBeforeStalling) {
     if (madeProgress) {
       requestsSinceLastProgress = 0;
       timestampOfLastProgress = clock.millis();
@@ -168,47 +196,26 @@ class WorldDownloadState {
     }
   }
 
+  public synchronized void requestComplete(final boolean madeProgress) {
+    requestComplete(madeProgress, minMillisBeforeStalling);
+  }
+
   public int getRequestsSinceLastProgress() {
     return requestsSinceLastProgress;
   }
 
-  private synchronized void markAsStalled(final int maxNodeRequestRetries) {
+  protected synchronized void markAsStalled(final int maxNodeRequestRetries) {
     final String message =
         "Download stalled due to too many failures to retrieve node data (>"
             + maxNodeRequestRetries
             + " requests without making progress)";
+
     final WorldStateDownloaderException e = new StalledDownloadException(message);
     internalFuture.completeExceptionally(e);
   }
 
-  public synchronized boolean checkCompletion(
-      final WorldStateStorage worldStateStorage, final BlockHeader header) {
-    if (!internalFuture.isDone() && pendingRequests.allTasksCompleted()) {
-      if (rootNodeData == null) {
-        enqueueRequest(NodeDataRequest.createAccountDataRequest(header.getStateRoot()));
-        return false;
-      }
-      final Updater updater = worldStateStorage.updater();
-      updater.putAccountStateTrieNode(null, header.getStateRoot(), rootNodeData);
-      updater.commit();
-      internalFuture.complete(null);
-      // THere are no more inputs to process so make sure we wake up any threads waiting to dequeue
-      // so they can give up waiting.
-      notifyAll();
-      LOG.info("Finished downloading world state from peers");
-      return true;
-    } else {
-      return false;
-    }
-  }
-
   public synchronized boolean isDownloading() {
     return !internalFuture.isDone();
-  }
-
-  public synchronized void setWorldStateDownloadProcess(
-      final WorldStateDownloadProcess worldStateDownloadProcess) {
-    this.worldStateDownloadProcess = worldStateDownloadProcess;
   }
 
   public synchronized void notifyTaskAvailable() {
@@ -233,4 +240,11 @@ class WorldDownloadState {
         });
     return downloadFuture;
   }
+
+  public void setWorldStateDownloadProcess(
+      final WorldStateDownloadProcess worldStateDownloadProcess) {
+    this.worldStateDownloadProcess = worldStateDownloadProcess;
+  }
+
+  public abstract boolean checkCompletion(final BlockHeader header);
 }

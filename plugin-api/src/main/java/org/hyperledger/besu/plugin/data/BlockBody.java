@@ -16,7 +16,10 @@
 
 package org.hyperledger.besu.plugin.data;
 
+import org.hyperledger.besu.plugin.Unstable;
+
 import java.util.List;
+import java.util.Optional;
 
 /**
  * The parts of a Block not in the {@link BlockHeader}, information corresponding to the comprised
@@ -30,12 +33,27 @@ public interface BlockBody {
    *
    * @return The list of transactions of the block.
    */
-  public List<? extends Transaction> getTransactions();
+  List<? extends Transaction> getTransactions();
 
   /**
    * Returns the list of ommers of the block.
    *
    * @return The list of ommers of the block.
    */
-  public List<? extends BlockHeader> getOmmers();
+  List<? extends BlockHeader> getOmmers();
+
+  /**
+   * Returns the list of withdrawals of the block.
+   *
+   * @return The list of withdrawals of the block.
+   */
+  Optional<? extends List<? extends Withdrawal>> getWithdrawals();
+
+  /**
+   * Returns the list of deposits of the block.
+   *
+   * @return The list of deposits of the block.
+   */
+  @Unstable
+  Optional<? extends List<? extends Deposit>> getDeposits();
 }

@@ -16,8 +16,9 @@ package org.hyperledger.besu.ethereum.p2p.config;
 
 import static org.assertj.core.api.Java6Assertions.assertThatThrownBy;
 
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.Collections;
 
@@ -28,7 +29,7 @@ public class DiscoveryConfigurationTest {
   @Test
   public void setBootnodes_withDiscoveryDisabled() {
     final EnodeURL invalidBootnode =
-        EnodeURL.builder()
+        EnodeURLImpl.builder()
             .nodeId(Peer.randomId())
             .ipAddress("127.0.0.1")
             .listeningPort(30303)
@@ -46,7 +47,7 @@ public class DiscoveryConfigurationTest {
   @Test
   public void setBootnodes_withListeningDisabled() {
     final EnodeURL invalidBootnode =
-        EnodeURL.builder()
+        EnodeURLImpl.builder()
             .nodeId(Peer.randomId())
             .ipAddress("127.0.0.1")
             .discoveryAndListeningPorts(0)

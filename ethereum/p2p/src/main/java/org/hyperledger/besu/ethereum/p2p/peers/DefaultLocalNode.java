@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.peers;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.List;
 import java.util.Optional;

@@ -18,6 +18,7 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.Observation;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.LabelledGauge;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -31,6 +32,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableSet;
@@ -47,6 +49,7 @@ import io.prometheus.client.hotspot.MemoryPoolsExports;
 import io.prometheus.client.hotspot.StandardExports;
 import io.prometheus.client.hotspot.ThreadExports;
 
+/** The Prometheus metrics system. */
 public class PrometheusMetricsSystem implements ObservableMetricsSystem {
 
   private final Map<MetricCategory, Collection<Collector>> collectors = new ConcurrentHashMap<>();
@@ -59,12 +62,19 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   private final Set<MetricCategory> enabledCategories;
   private final boolean timersEnabled;
 
+  /**
+   * Instantiates a new Prometheus metrics system.
+   *
+   * @param enabledCategories the enabled categories
+   * @param timersEnabled the timers enabled
+   */
   public PrometheusMetricsSystem(
       final Set<MetricCategory> enabledCategories, final boolean timersEnabled) {
     this.enabledCategories = ImmutableSet.copyOf(enabledCategories);
     this.timersEnabled = timersEnabled;
   }
 
+  /** Init. */
   public void init() {
     addCollector(StandardMetricCategory.PROCESS, StandardExports::new);
     addCollector(StandardMetricCategory.JVM, MemoryPoolsExports::new);
@@ -141,6 +151,27 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
     }
   }
 
+  @Override
+  public LabelledGauge createLabelledGauge(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    final String metricName = convertToPrometheusName(category, name);
+    if (isCategoryEnabled(category)) {
+      final PrometheusGauge gauge = new PrometheusGauge(metricName, help, List.of(labelNames));
+      addCollectorUnchecked(category, gauge);
+      return gauge;
+    }
+    return NoOpMetricsSystem.getLabelledGauge(labelNames.length);
+  }
+
+  /**
+   * Add collector.
+   *
+   * @param category the category
+   * @param metricSupplier the metric supplier
+   */
   public void addCollector(
       final MetricCategory category, final Supplier<Collector> metricSupplier) {
     if (isCategoryEnabled(category)) {
@@ -149,10 +180,28 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   }
 
   private void addCollectorUnchecked(final MetricCategory category, final Collector metric) {
-    metric.register(registry);
-    collectors
-        .computeIfAbsent(category, key -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
-        .add(metric);
+    final Collection<Collector> metrics =
+        this.collectors.computeIfAbsent(
+            category, key -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
+
+    final List<String> newSamples =
+        metric.collect().stream()
+            .map(metricFamilySamples -> metricFamilySamples.name)
+            .collect(Collectors.toList());
+
+    metrics.stream()
+        .filter(
+            collector ->
+                collector.collect().stream()
+                    .anyMatch(metricFamilySamples -> newSamples.contains(metricFamilySamples.name)))
+        .findFirst()
+        .ifPresent(
+            collector -> {
+              metrics.remove(collector);
+              registry.unregister(collector);
+            });
+
+    metrics.add(metric.register(registry));
   }
 
   @Override
@@ -220,6 +269,13 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
         labelValues);
   }
 
+  /**
+   * Convert to prometheus name.
+   *
+   * @param category the category
+   * @param name the name
+   * @return the name as string
+   */
   public String convertToPrometheusName(final MetricCategory category, final String name) {
     return prometheusPrefix(category) + name;
   }
@@ -233,6 +289,11 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
     return category.getApplicationPrefix().orElse("") + category.getName() + "_";
   }
 
+  /**
+   * Gets registry.
+   *
+   * @return the registry
+   */
   CollectorRegistry getRegistry() {
     return registry;
   }

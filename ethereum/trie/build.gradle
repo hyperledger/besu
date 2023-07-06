@@ -28,31 +28,28 @@ jar {
 }
 
 dependencies {
-  implementation project(':crypto')
+  implementation project(':crypto:algorithms')
+  implementation project(':datatypes')
   implementation project(':ethereum:rlp')
-  implementation project(':services:kvstore')
+  implementation project(':plugin-api')
 
+  implementation 'org.immutables:value-annotations'
   implementation 'com.google.guava:guava'
-  implementation 'org.apache.tuweni:bytes'
+  implementation 'io.opentelemetry:opentelemetry-api'
+  implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.bouncycastle:bcprov-jdk15on'
 
+  annotationProcessor 'org.immutables:value'
+
+  testImplementation project(':services:kvstore')
   testImplementation project(':testutil')
-  testImplementation project(path: ':ethereum:referencetests', configuration: 'testOutput')
 
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation 'junit:junit'
-  testImplementation 'org.apache.tuweni:units'
+  testImplementation 'org.apache.tuweni:tuweni-units'
   testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
-}
 
-test { exclude 'org/hyperledger/besu/ethereum/trie/TrieRefTest.class' }
-
-task referenceTests(type: Test, dependsOn: ['compileTestJava']) {
-  doFirst {
-    if (!file("../referencetests/src/test/resources/README.md").exists()) {
-      throw new GradleException("ethereum/referencetests/src/test/resources/README.md missing: please clone submodules (git submodule update --init --recursive)")
-    }
-  }
-  include 'org/hyperledger/besu/ethereum/trie/TrieRefTest.class'
+  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }

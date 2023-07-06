@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.p2p.peers;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.Arrays;
 
@@ -26,6 +27,10 @@ public class PeerTestHelper {
     return DefaultPeer.fromEnodeURL(enode());
   }
 
+  public static Peer createPeer(final EnodeURL enodeURL) {
+    return DefaultPeer.fromEnodeURL(enodeURL);
+  }
+
   public static Peer createPeer(final Bytes nodeId) {
     return DefaultPeer.fromEnodeURL(enodeBuilder().nodeId(nodeId).build());
   }
@@ -34,18 +39,22 @@ public class PeerTestHelper {
     return enodeBuilder().build();
   }
 
-  public static EnodeURL.Builder enodeBuilder() {
-    return EnodeURL.builder().ipAddress("127.0.0.1").useDefaultPorts().nodeId(Peer.randomId());
+  public static EnodeURLImpl.Builder enodeBuilder() {
+    return EnodeURLImpl.builder().ipAddress("127.0.0.1").useDefaultPorts().nodeId(Peer.randomId());
   }
 
-  /** @return A LocalNode that is setup and ready. */
+  /**
+   * @return A LocalNode that is setup and ready.
+   */
   public static LocalNode createLocalNode() {
     final MutableLocalNode localNode = createMutableLocalNode();
     localNode.setEnode(enode());
     return localNode;
   }
 
-  /** @return A MutableLocalNode that is not ready (the enode has not been set). */
+  /**
+   * @return A MutableLocalNode that is not ready (the enode has not been set).
+   */
   public static MutableLocalNode createMutableLocalNode() {
     return MutableLocalNode.create("clientId", 5, Arrays.asList(Capability.create("eth", 63)));
   }

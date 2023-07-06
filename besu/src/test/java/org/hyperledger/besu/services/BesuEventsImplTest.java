@@ -16,11 +16,14 @@ package org.hyperledger.besu.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -29,10 +32,10 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -49,7 +52,9 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
+import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.AddedBlockContext;
@@ -61,6 +66,7 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -68,6 +74,8 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -78,9 +86,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class BesuEventsImplTest {
 
-  private static final KeyPair KEY_PAIR1 = KeyPair.generate();
-  private static final org.hyperledger.besu.ethereum.core.Transaction TX1 = createTransaction(1);
-  private static final org.hyperledger.besu.ethereum.core.Transaction TX2 = createTransaction(2);
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final KeyPair KEY_PAIR1 = SIGNATURE_ALGORITHM.get().generateKeyPair();
+  private static final org.hyperledger.besu.ethereum.core.Transaction TX1 = createTransaction(0);
+  private static final org.hyperledger.besu.ethereum.core.Transaction TX2 = createTransaction(1);
 
   @Mock private ProtocolSchedule mockProtocolSchedule;
   @Mock private ProtocolContext mockProtocolContext;
@@ -92,7 +102,7 @@ public class BesuEventsImplTest {
   @Mock private MainnetTransactionValidator mockTransactionValidator;
   @Mock private ProtocolSpec mockProtocolSpec;
   @Mock private WorldStateArchive mockWorldStateArchive;
-  @Mock private WorldState mockWorldState;
+  @Mock private MutableWorldState mockWorldState;
   private TransactionPool transactionPool;
   private BlockBroadcaster blockBroadcaster;
   private BesuEventsImpl serviceImpl;
@@ -105,27 +115,27 @@ public class BesuEventsImplTest {
         DefaultBlockchain.createMutable(
             gen.genesisBlock(),
             new KeyValueStoragePrefixedKeyBlockchainStorage(
-                new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions()),
+                new InMemoryKeyValueStorage(),
+                new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
+                new MainnetBlockHeaderFunctions()),
             new NoOpMetricsSystem(),
             0);
 
     when(mockEthContext.getEthMessages()).thenReturn(mockEthMessages);
     when(mockEthContext.getEthPeers()).thenReturn(mockEthPeers);
     when(mockEthContext.getScheduler()).thenReturn(mockEthScheduler);
-    when(mockEthPeers.streamAvailablePeers())
-        .thenReturn(Stream.empty())
-        .thenReturn(Stream.empty())
-        .thenReturn(Stream.empty())
-        .thenReturn(Stream.empty());
+    when(mockEthPeers.streamAvailablePeers()).thenAnswer(z -> Stream.empty());
     when(mockProtocolContext.getBlockchain()).thenReturn(blockchain);
     when(mockProtocolContext.getWorldStateArchive()).thenReturn(mockWorldStateArchive);
-    when(mockProtocolSchedule.getByBlockNumber(anyLong())).thenReturn(mockProtocolSpec);
+    when(mockProtocolSchedule.getByBlockHeader(any())).thenReturn(mockProtocolSpec);
     when(mockProtocolSpec.getTransactionValidator()).thenReturn(mockTransactionValidator);
-    when(mockTransactionValidator.validate(any(), any(Optional.class)))
+    when(mockProtocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0L));
+    when(mockTransactionValidator.validate(any(), any(Optional.class), any()))
         .thenReturn(ValidationResult.valid());
     when(mockTransactionValidator.validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
-    when(mockWorldStateArchive.get(any())).thenReturn(Optional.of(mockWorldState));
+    when(mockWorldStateArchive.getMutable(any(), anyBoolean()))
+        .thenReturn(Optional.of(mockWorldState));
 
     blockBroadcaster = new BlockBroadcaster(mockEthContext);
     syncState = new SyncState(blockchain, mockEthPeers);
@@ -137,13 +147,11 @@ public class BesuEventsImplTest {
             mockProtocolSchedule,
             mockProtocolContext,
             mockEthContext,
-            TestClock.fixed(),
+            TestClock.system(ZoneId.systemDefault()),
             new NoOpMetricsSystem(),
             syncState,
-            Wei.ZERO,
-            txPoolConfig,
-            true,
-            Optional.empty());
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
+            txPoolConfig);
 
     serviceImpl = new BesuEventsImpl(blockchain, blockBroadcaster, transactionPool, syncState);
   }
@@ -186,7 +194,8 @@ public class BesuEventsImplTest {
     syncState.setSyncTarget(
         mock(EthPeer.class),
         new org.hyperledger.besu.ethereum.core.BlockHeader(
-            null, null, null, null, null, null, null, null, 1, 1, 1, 1, null, null, null, 1, null));
+            null, null, null, null, null, null, null, null, 1, 1, 1, 1, null, null, null, 1, null,
+            null, null, null));
   }
 
   private void clearSyncTarget() {
@@ -299,11 +308,22 @@ public class BesuEventsImplTest {
     blockchain.appendBlock(block, gen.receipts(block));
     assertThat(result.get()).isNull();
 
-    final var reorgBlock =
+    final var forkBlock =
         gen.block(
             new BlockDataGenerator.BlockOptions()
                 .setParentHash(blockchain.getGenesisBlock().getHash())
-                .setBlockNumber(blockchain.getGenesisBlock().getHeader().getNumber() + 2));
+                .setDifficulty(block.getHeader().getDifficulty().subtract(1))
+                .setBlockNumber(blockchain.getGenesisBlock().getHeader().getNumber() + 1));
+    blockchain.appendBlock(forkBlock, gen.receipts(forkBlock));
+    assertThat(result.get()).isNull();
+
+    final var reorgBlock =
+        gen.block(
+            new BlockDataGenerator.BlockOptions()
+                .setParentHash(forkBlock.getHash())
+                .setDifficulty(Difficulty.of(10000000))
+                .setBlockNumber(forkBlock.getHeader().getNumber() + 1));
+
     List<TransactionReceipt> transactionReceipts = gen.receipts(reorgBlock);
     blockchain.appendBlock(reorgBlock, transactionReceipts);
     assertThat(result.get()).isNotNull();
@@ -367,7 +387,7 @@ public class BesuEventsImplTest {
     serviceImpl.addTransactionAddedListener(result::set);
 
     assertThat(result.get()).isNull();
-    transactionPool.addLocalTransaction(TX1);
+    transactionPool.addTransactionViaApi(TX1);
 
     assertThat(result.get()).isNotNull();
   }
@@ -378,13 +398,13 @@ public class BesuEventsImplTest {
     final long id = serviceImpl.addTransactionAddedListener(result::set);
 
     assertThat(result.get()).isNull();
-    transactionPool.addLocalTransaction(TX1);
+    transactionPool.addTransactionViaApi(TX1);
     assertThat(result.get()).isNotNull();
 
     serviceImpl.removeTransactionAddedListener(id);
     result.set(null);
 
-    transactionPool.addLocalTransaction(TX2);
+    transactionPool.addTransactionViaApi(TX2);
     assertThat(result.get()).isNull();
   }
 
@@ -400,9 +420,10 @@ public class BesuEventsImplTest {
     serviceImpl.addTransactionDroppedListener(result::set);
 
     assertThat(result.get()).isNull();
-    // The max pool size is configured to 1 so adding two transactions should trigger a drop
-    transactionPool.addLocalTransaction(TX1);
-    transactionPool.addLocalTransaction(TX2);
+    // sending a replacement with higher gas should drop the previous one
+    transactionPool.addTransactionViaApi(TX1);
+    transactionPool.addTransactionViaApi(
+        bumpTransactionGasPrice(TX1, TX1.getGasPrice().get().multiply(2)));
 
     assertThat(result.get()).isNotNull();
   }
@@ -413,14 +434,18 @@ public class BesuEventsImplTest {
     final long id = serviceImpl.addTransactionDroppedListener(result::set);
 
     assertThat(result.get()).isNull();
-    transactionPool.addLocalTransaction(TX1);
-    transactionPool.addLocalTransaction(TX2);
+    transactionPool.addTransactionViaApi(TX1);
+    // first replacement with higher gas should drop the previous one
+    transactionPool.addTransactionViaApi(
+        bumpTransactionGasPrice(TX1, TX1.getGasPrice().get().multiply(2)));
 
     assertThat(result.get()).isNotNull();
-    serviceImpl.removeTransactionAddedListener(id);
+    serviceImpl.removeTransactionDroppedListener(id);
     result.set(null);
 
-    transactionPool.addLocalTransaction(TX2);
+    // second replacement with higher gas should drop the previous one
+    transactionPool.addTransactionViaApi(
+        bumpTransactionGasPrice(TX1, TX1.getGasPrice().get().multiply(4)));
     assertThat(result.get()).isNull();
   }
 
@@ -471,6 +496,15 @@ public class BesuEventsImplTest {
     return new TransactionTestFixture()
         .nonce(transactionNumber)
         .gasLimit(0)
+        .createTransaction(KEY_PAIR1);
+  }
+
+  private static org.hyperledger.besu.ethereum.core.Transaction bumpTransactionGasPrice(
+      final Transaction originalTx, final Wei gasPriceBump) {
+    return new TransactionTestFixture()
+        .nonce(originalTx.getNonce())
+        .gasPrice(Wei.fromQuantity(originalTx.getGasPrice().get()).add(gasPriceBump))
+        .gasLimit(originalTx.getGasLimit())
         .createTransaction(KEY_PAIR1);
   }
 }

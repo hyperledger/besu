@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -25,23 +24,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.PendingTransactionsParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionPendingResult;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 
-import java.math.BigInteger;
-import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -56,12 +48,13 @@ public class TxPoolBesuPendingTransactionsTest {
   private TxPoolBesuPendingTransactions method;
   private final String JSON_RPC_VERSION = "2.0";
   private final String TXPOOL_PENDING_TRANSACTIONS_METHOD = "txpool_besuPendingTransactions";
+  private Set<PendingTransaction> listTrx;
 
   @Before
   public void setUp() {
-    final Set<PendingTransactions.TransactionInfo> listTrx = getPendingTransactions();
+    listTrx = getPendingTransactions();
     method = new TxPoolBesuPendingTransactions(pendingTransactions);
-    when(this.pendingTransactions.getTransactionInfo()).thenReturn(listTrx);
+    when(this.pendingTransactions.getPendingTransactions()).thenReturn(listTrx);
   }
 
   @Test
@@ -79,7 +72,32 @@ public class TxPoolBesuPendingTransactionsTest {
     final JsonRpcSuccessResponse actualResponse = (JsonRpcSuccessResponse) method.response(request);
     final Set<TransactionPendingResult> result =
         (Set<TransactionPendingResult>) actualResponse.getResult();
-    assertThat(result.size()).isEqualTo(4);
+    assertThat(result.size()).isEqualTo(getPendingTransactions().size());
+  }
+
+  @Test
+  public void pendingTransactionsGasPricesDoNotHaveLeadingZeroes() {
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                JSON_RPC_VERSION, TXPOOL_PENDING_TRANSACTIONS_METHOD, new Object[] {100}));
+
+    final JsonRpcSuccessResponse actualResponse = (JsonRpcSuccessResponse) method.response(request);
+    final Set<TransactionPendingResult> result =
+        (Set<TransactionPendingResult>) actualResponse.getResult();
+
+    assertThat(result)
+        .extracting(TransactionPendingResult::getGasPrice)
+        .filteredOn(Objects::nonNull)
+        .allSatisfy(p -> assertThat(p).doesNotContain("0x0"));
+    assertThat(result)
+        .extracting(TransactionPendingResult::getMaxFeePerGas)
+        .filteredOn(Objects::nonNull)
+        .allSatisfy(p -> assertThat(p).doesNotContain("0x0"));
+    assertThat(result)
+        .extracting(TransactionPendingResult::getMaxPriorityFeePerGas)
+        .filteredOn(Objects::nonNull)
+        .allSatisfy(p -> assertThat(p).doesNotContain("0x0"));
   }
 
   @Test
@@ -100,7 +118,8 @@ public class TxPoolBesuPendingTransactionsTest {
   public void shouldReturnPendingTransactionsWithFilter() {
 
     final Map<String, String> fromFilter = new HashMap<>();
-    fromFilter.put("eq", "0x0000000000000000000000000000000000000001");
+    fromFilter.put(
+        "eq", listTrx.stream().findAny().get().getTransaction().getSender().toHexString());
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -234,26 +253,11 @@ public class TxPoolBesuPendingTransactionsTest {
         .hasMessageContaining("The `to` filter only supports the `eq` or `action` operator");
   }
 
-  private Set<PendingTransactions.TransactionInfo> getPendingTransactions() {
-    final List<PendingTransactions.TransactionInfo> transactionInfoList = new ArrayList<>();
-    for (int i = 1; i < 5; i++) {
-      Transaction transaction = mock(Transaction.class);
-      when(transaction.getGasPrice()).thenReturn(Wei.of(i));
-      when(transaction.getValue()).thenReturn(Wei.of(i));
-      when(transaction.getGasLimit()).thenReturn((long) i);
-      when(transaction.getNonce()).thenReturn((long) i);
-      when(transaction.getPayload()).thenReturn(Bytes.EMPTY);
-      when(transaction.getV()).thenReturn(BigInteger.ONE);
-      when(transaction.getR()).thenReturn(BigInteger.ONE);
-      when(transaction.getS()).thenReturn(BigInteger.ONE);
-      when(transaction.getSender()).thenReturn(Address.fromHexString(String.valueOf(i)));
-      when(transaction.getTo())
-          .thenReturn(Optional.of(Address.fromHexString(String.valueOf(i + 1))));
-      when(transaction.getHash()).thenReturn(Hash.fromHexStringLenient(String.valueOf(i)));
-      transactionInfoList.add(
-          new PendingTransactions.TransactionInfo(
-              transaction, true, Instant.ofEpochSecond(Integer.MAX_VALUE)));
-    }
-    return new LinkedHashSet<>(transactionInfoList);
+  private Set<PendingTransaction> getPendingTransactions() {
+
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    return gen.transactionsWithAllTypes(4).stream()
+        .map(transaction -> new PendingTransaction.Local(transaction))
+        .collect(Collectors.toUnmodifiableSet());
   }
 }

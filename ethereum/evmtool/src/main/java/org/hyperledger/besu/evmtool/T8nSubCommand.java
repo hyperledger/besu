@@ -1,0 +1,435 @@
+/*
+ * Copyright Hyperledger Besu Contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ */
+
+package org.hyperledger.besu.evmtool;
+
+import static org.hyperledger.besu.evmtool.T8nSubCommand.COMMAND_ALIAS;
+import static org.hyperledger.besu.evmtool.T8nSubCommand.COMMAND_NAME;
+
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
+import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
+import org.hyperledger.besu.evm.AccessListEntry;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.plugin.data.TransactionType;
+
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.Stack;
+import java.util.stream.StreamSupport;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.IParameterConsumer;
+import picocli.CommandLine.Model.ArgSpec;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.ParameterException;
+import picocli.CommandLine.Parameters;
+import picocli.CommandLine.ParentCommand;
+
+@Command(
+    name = COMMAND_NAME,
+    aliases = COMMAND_ALIAS,
+    description = "Execute an Ethereum State Test.",
+    mixinStandardHelpOptions = true,
+    versionProvider = VersionProvider.class)
+public class T8nSubCommand implements Runnable {
+
+  record RejectedTransaction(int index, String error) {}
+
+  static final String COMMAND_NAME = "transition";
+  static final String COMMAND_ALIAS = "t8n";
+  private static final Path stdoutPath = Path.of("stdout");
+  private static final Path stdinPath = Path.of("stdin");
+
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
+  @Option(
+      names = {"--state.fork"},
+      paramLabel = "fork name",
+      description = "The fork to run the transition against")
+  private String fork = null;
+
+  @Option(
+      names = {"--input.env"},
+      paramLabel = "full path",
+      description = "The block environment for the transition")
+  private final Path env = stdinPath;
+
+  @Option(
+      names = {"--input.alloc"},
+      paramLabel = "full path",
+      description = "The account state for the transition")
+  private final Path alloc = stdinPath;
+
+  @Option(
+      names = {"--input.txs"},
+      paramLabel = "full path",
+      description = "The transactions to transition")
+  private final Path txs = stdinPath;
+
+  @Option(
+      names = {"--output.basedir"},
+      paramLabel = "full path",
+      description = "The output ")
+  private final Path outDir = Path.of(".");
+
+  @Option(
+      names = {"--output.alloc"},
+      paramLabel = "file name",
+      description = "The account state after the transition")
+  private final Path outAlloc = Path.of("alloc.json");
+
+  @Option(
+      names = {"--output.result"},
+      paramLabel = "file name",
+      description = "The summary of the transition")
+  private final Path outResult = Path.of("result.json");
+
+  @Option(
+      names = {"--output.body"},
+      paramLabel = "file name",
+      description = "RLP of transactions considered")
+  private final Path outBody = Path.of("txs.rlp");
+
+  @Option(
+      names = {"--state.chainid"},
+      paramLabel = "chain ID",
+      description = "The chain Id to use")
+  private final Long chainId = 1L;
+
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
+  @Option(
+      names = {"--state.reward"},
+      paramLabel = "block mining reward",
+      description = "The block reward to use in block tess")
+  private String rewardString = null;
+
+  @ParentCommand private final EvmToolCommand parentCommand;
+
+  @Parameters(parameterConsumer = OnlyEmptyParams.class)
+  @SuppressWarnings("UnusedVariable")
+  private final List<String> parameters = new ArrayList<>();
+
+  static class OnlyEmptyParams implements IParameterConsumer {
+    @Override
+    public void consumeParameters(
+        final Stack<String> args, final ArgSpec argSpec, final CommandSpec commandSpec) {
+      while (!args.isEmpty()) {
+        if (!args.pop().isEmpty()) {
+          throw new ParameterException(
+              argSpec.command().commandLine(),
+              "The transition command does not accept any non-empty parameters");
+        }
+      }
+    }
+  }
+
+  @SuppressWarnings("unused")
+  public T8nSubCommand() {
+    // PicoCLI requires this
+    parentCommand = null;
+  }
+
+  @SuppressWarnings("unused")
+  public T8nSubCommand(final EvmToolCommand parentCommand) {
+    // PicoCLI requires this too
+    this.parentCommand = parentCommand;
+  }
+
+  @Override
+  public void run() {
+    final ObjectMapper objectMapper = JsonUtils.createObjectMapper();
+    final ObjectReader t8nReader = objectMapper.reader();
+
+    MutableWorldState initialWorldState;
+    ReferenceTestEnv referenceTestEnv;
+    List<Transaction> transactions;
+    try {
+      ObjectNode config;
+      if (env.equals(stdinPath) || alloc.equals(stdinPath) || txs.equals(stdinPath)) {
+        try (InputStreamReader reader =
+            new InputStreamReader(parentCommand.in, StandardCharsets.UTF_8)) {
+          config = (ObjectNode) t8nReader.readTree(reader);
+        }
+      } else {
+        config = objectMapper.createObjectNode();
+      }
+
+      if (!env.equals(stdinPath)) {
+        try (FileReader reader = new FileReader(env.toFile(), StandardCharsets.UTF_8)) {
+          config.set("env", t8nReader.readTree(reader));
+        }
+      }
+      if (!alloc.equals(stdinPath)) {
+        try (FileReader reader = new FileReader(alloc.toFile(), StandardCharsets.UTF_8)) {
+          config.set("alloc", t8nReader.readTree(reader));
+        }
+      }
+      if (!txs.equals(stdinPath)) {
+        try (FileReader reader = new FileReader(txs.toFile(), StandardCharsets.UTF_8)) {
+          config.set("txs", t8nReader.readTree(reader));
+        }
+      }
+
+      referenceTestEnv = objectMapper.convertValue(config.get("env"), ReferenceTestEnv.class);
+      initialWorldState =
+          objectMapper.convertValue(config.get("alloc"), ReferenceTestWorldState.class);
+      initialWorldState.persist(null);
+      var node = config.get("txs");
+      Iterator<JsonNode> it;
+      if (node.isArray()) {
+        it = config.get("txs").elements();
+      } else if (node == null || node.isNull()) {
+        it = Collections.emptyIterator();
+      } else {
+        it = List.of(node).iterator();
+      }
+
+      transactions = extractTransactions(it);
+      if (!outDir.toString().isBlank()) {
+        outDir.toFile().mkdirs();
+      }
+    } catch (final JsonProcessingException jpe) {
+      parentCommand.out.println("File content error: " + jpe);
+      jpe.printStackTrace();
+      return;
+    } catch (final IOException e) {
+      System.err.println("Unable to read state file");
+      e.printStackTrace(System.err);
+      return;
+    }
+
+    T8nExecutor.TracerManager tracerManager;
+    if (parentCommand.showJsonResults) {
+      tracerManager =
+          new T8nExecutor.TracerManager() {
+            private final Map<OperationTracer, FileOutputStream> outputStreams = new HashMap<>();
+
+            @Override
+            public OperationTracer getManagedTracer(final int txIndex, final Hash txHash)
+                throws Exception {
+              var traceDest =
+                  new FileOutputStream(
+                      outDir
+                          .resolve(
+                              String.format("trace-%d-%s.jsonl", txIndex, txHash.toHexString()))
+                          .toFile());
+
+              var jsonTracer =
+                  new StandardJsonTracer(
+                      new PrintStream(traceDest),
+                      parentCommand.showMemory,
+                      !parentCommand.hideStack,
+                      parentCommand.showReturnData);
+              outputStreams.put(jsonTracer, traceDest);
+              return jsonTracer;
+            }
+
+            @Override
+            public void disposeTracer(final OperationTracer tracer) throws IOException {
+              if (outputStreams.containsKey(tracer)) {
+                outputStreams.remove(tracer).close();
+              }
+            }
+          };
+    } else {
+      tracerManager =
+          new T8nExecutor.TracerManager() {
+            @Override
+            public OperationTracer getManagedTracer(final int txIndex, final Hash txHash) {
+              return OperationTracer.NO_TRACING;
+            }
+
+            @Override
+            public void disposeTracer(final OperationTracer tracer) {
+              // single-test mode doesn't need to track tracers
+            }
+          };
+    }
+    final T8nExecutor.T8nResult result =
+        T8nExecutor.runTest(
+            chainId,
+            fork,
+            rewardString,
+            objectMapper,
+            referenceTestEnv,
+            initialWorldState,
+            transactions,
+            tracerManager);
+
+    try {
+      ObjectWriter writer = objectMapper.writerWithDefaultPrettyPrinter();
+      ObjectNode outputObject = objectMapper.createObjectNode();
+
+      if (outAlloc.equals(stdoutPath)) {
+        outputObject.set("alloc", result.allocObject());
+      } else {
+        try (PrintStream fileOut =
+            new PrintStream(new FileOutputStream(outDir.resolve(outAlloc).toFile()))) {
+          fileOut.println(writer.writeValueAsString(result.allocObject()));
+        }
+      }
+
+      if (outBody.equals((stdoutPath))) {
+        outputObject.set("body", result.bodyBytes());
+      } else {
+        try (PrintStream fileOut =
+            new PrintStream(new FileOutputStream(outDir.resolve(outBody).toFile()))) {
+          fileOut.print(result.bodyBytes().textValue());
+        }
+      }
+
+      if (outResult.equals(stdoutPath)) {
+        outputObject.set("result", result.resultObject());
+      } else {
+        try (PrintStream fileOut =
+            new PrintStream(new FileOutputStream(outDir.resolve(outResult).toFile()))) {
+          fileOut.println(writer.writeValueAsString(result.resultObject()));
+        }
+      }
+
+      if (outputObject.size() > 0) {
+        parentCommand.out.println(writer.writeValueAsString(outputObject));
+      }
+    } catch (IOException ioe) {
+      System.err.println("Could not write results");
+      ioe.printStackTrace(System.err);
+    }
+  }
+
+  private List<Transaction> extractTransactions(final Iterator<JsonNode> it) {
+    List<Transaction> transactions = new ArrayList<>();
+    while (it.hasNext()) {
+      JsonNode txNode = it.next();
+      if (txNode.isTextual()) {
+        BytesValueRLPInput rlpInput =
+            new BytesValueRLPInput(Bytes.fromHexString(txNode.asText()), false);
+        rlpInput.enterList();
+        while (!rlpInput.isEndOfCurrentList()) {
+          Transaction tx = Transaction.readFrom(rlpInput);
+          transactions.add(tx);
+        }
+      } else if (txNode.isObject()) {
+        if (txNode.has("txBytes")) {
+          Transaction tx =
+              Transaction.readFrom(Bytes.fromHexString(txNode.get("txbytes").asText()));
+          transactions.add(tx);
+        } else {
+          Transaction.Builder builder = Transaction.builder();
+          int type = Bytes.fromHexStringLenient(txNode.get("type").textValue()).toInt();
+          TransactionType transactionType = TransactionType.of(type == 0 ? 0xf8 : type);
+          builder.type(transactionType);
+          builder.nonce(Bytes.fromHexStringLenient(txNode.get("nonce").textValue()).toLong());
+          builder.gasPrice(Wei.fromHexString(txNode.get("gasPrice").textValue()));
+          builder.gasLimit(Bytes.fromHexStringLenient(txNode.get("gas").textValue()).toLong());
+          builder.value(Wei.fromHexString(txNode.get("value").textValue()));
+          builder.payload(Bytes.fromHexString(txNode.get("input").textValue()));
+          if (txNode.has("to")) {
+            builder.to(Address.fromHexString(txNode.get("to").textValue()));
+          }
+
+          if (transactionType.requiresChainId()
+              || !txNode.has("protected")
+              || txNode.get("protected").booleanValue()) {
+            // chainid if protected
+            builder.chainId(
+                new BigInteger(
+                    1,
+                    Bytes.fromHexStringLenient(txNode.get("chainId").textValue()).toArrayUnsafe()));
+          }
+
+          if (txNode.has("accessList")) {
+            JsonNode accessList = txNode.get("accessList");
+            if (!accessList.isArray()) {
+              parentCommand.out.printf(
+                  "TX json node unparseable: expected accessList to be an array - %s%n", txNode);
+              continue;
+            }
+            List<AccessListEntry> entries = new ArrayList<>(accessList.size());
+            for (JsonNode entryAsJson : accessList) {
+              Address address = Address.fromHexString(entryAsJson.get("address").textValue());
+              List<String> storageKeys =
+                  StreamSupport.stream(
+                          Spliterators.spliteratorUnknownSize(
+                              entryAsJson.get("storageKeys").elements(), Spliterator.ORDERED),
+                          false)
+                      .map(JsonNode::textValue)
+                      .toList();
+              var accessListEntry = AccessListEntry.createAccessListEntry(address, storageKeys);
+              entries.add(accessListEntry);
+            }
+            builder.accessList(entries);
+          }
+
+          if (txNode.has("secretKey")) {
+            SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+            KeyPair keys =
+                signatureAlgorithm.createKeyPair(
+                    signatureAlgorithm.createPrivateKey(
+                        Bytes32.fromHexString(txNode.get("secretKey").textValue())));
+
+            transactions.add(builder.signAndBuild(keys));
+          } else {
+            builder.signature(
+                SignatureAlgorithmFactory.getInstance()
+                    .createSignature(
+                        Bytes.fromHexString(txNode.get("r").textValue()).toUnsignedBigInteger(),
+                        Bytes.fromHexString(txNode.get("s").textValue()).toUnsignedBigInteger(),
+                        Bytes.fromHexString(txNode.get("v").textValue())
+                            .toUnsignedBigInteger()
+                            .subtract(Transaction.REPLAY_UNPROTECTED_V_BASE)
+                            .byteValueExact()));
+            transactions.add(builder.build());
+          }
+        }
+      } else {
+        parentCommand.out.printf("TX json node unparseable: %s%n", txNode);
+      }
+    }
+    return transactions;
+  }
+}

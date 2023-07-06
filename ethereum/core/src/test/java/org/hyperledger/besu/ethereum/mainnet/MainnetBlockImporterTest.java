@@ -21,11 +21,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -53,10 +53,12 @@ public class MainnetBlockImporterTest {
   public void doNotImportBlockIfBlockchainAlreadyHasBlock() {
     when(blockchain.contains(hash)).thenReturn(true);
 
-    assertThat(
-            blockImporter.importBlock(
-                context, block, HeaderValidationMode.FULL, HeaderValidationMode.FULL))
-        .isTrue();
+    final BlockImportResult result =
+        blockImporter.importBlock(
+            context, block, HeaderValidationMode.FULL, HeaderValidationMode.FULL);
+
+    assertThat(result.isImported()).isTrue();
+
     verify(blockValidator, never())
         .validateAndProcessBlock(
             context, block, HeaderValidationMode.FULL, HeaderValidationMode.FULL);

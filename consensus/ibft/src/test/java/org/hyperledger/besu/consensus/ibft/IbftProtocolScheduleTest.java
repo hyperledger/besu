@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,126 +12,115 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.consensus.ibft;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.IbftConfigOptions;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.config.JsonGenesisConfigOptions;
+import org.hyperledger.besu.config.JsonQbftConfigOptions;
+import org.hyperledger.besu.config.JsonUtil;
+import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
+import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class IbftProtocolScheduleTest {
+  private final BftExtraDataCodec bftExtraDataCodec = mock(BftExtraDataCodec.class);
+  private final BftExtraData bftExtraData = mock(BftExtraData.class);
+  private final NodeKey proposerNodeKey = NodeKeyUtils.generate();
+  private final Address proposerAddress = Util.publicKeyToAddress(proposerNodeKey.getPublicKey());
+  private final List<Address> validators = singletonList(proposerAddress);
 
-  private final GenesisConfigOptions genesisConfig = mock(GenesisConfigOptions.class);
-
-  @Test
-  public void ensureBlockRewardAndMiningBeneficiaryInProtocolSpecMatchConfig() {
-    final BigInteger arbitraryBlockReward = BigInteger.valueOf(5);
-    final String miningBeneficiary = Address.fromHexString("0x1").toString();
-    final IbftConfigOptions ibftConfig = mock(IbftConfigOptions.class);
-    when(ibftConfig.getMiningBeneficiary()).thenReturn(Optional.of(miningBeneficiary));
-    when(ibftConfig.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
-    when(ibftConfig.getEpochLength()).thenReturn(3000L);
-
-    when(genesisConfig.getIbft2ConfigOptions()).thenReturn(ibftConfig);
-
-    final ProtocolSchedule schedule = IbftProtocolSchedule.create(genesisConfig);
-    final ProtocolSpec spec = schedule.getByBlockNumber(1);
-
-    spec.getBlockReward();
-
-    assertThat(spec.getBlockReward()).isEqualTo(Wei.of(arbitraryBlockReward));
-    assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(null))
-        .isEqualTo(Address.fromHexString(miningBeneficiary));
+  @BeforeEach
+  public void setup() {
+    when(bftExtraDataCodec.decode(any())).thenReturn(bftExtraData);
+    when(bftExtraData.getValidators()).thenReturn(validators);
   }
 
   @Test
-  public void illegalMiningBeneficiaryStringThrowsException() {
-    final String miningBeneficiary = "notHexStringOfTwentyBytes";
-    final IbftConfigOptions ibftConfig = mock(IbftConfigOptions.class);
-    when(ibftConfig.getMiningBeneficiary()).thenReturn(Optional.of(miningBeneficiary));
-    when(genesisConfig.getIbft2ConfigOptions()).thenReturn(ibftConfig);
-    when(ibftConfig.getEpochLength()).thenReturn(3000L);
-    when(ibftConfig.getBlockRewardWei()).thenReturn(BigInteger.ZERO);
+  public void blockModeTransitionsCreatesBlockModeHeaderValidators() {
+    final MutableBftConfigOptions arbitraryTransition =
+        new MutableBftConfigOptions(JsonQbftConfigOptions.DEFAULT);
+    arbitraryTransition.setBlockRewardWei(BigInteger.ONE);
 
-    assertThatThrownBy(() -> IbftProtocolSchedule.create(genesisConfig))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Mining beneficiary in config is not a valid ethereum address");
+    final BlockHeader parentHeader =
+        IbftBlockHeaderUtils.createPresetHeaderBuilder(1, proposerNodeKey, validators, null)
+            .buildHeader();
+    final BlockHeader blockHeader =
+        IbftBlockHeaderUtils.createPresetHeaderBuilder(2, proposerNodeKey, validators, parentHeader)
+            .buildHeader();
+
+    final BftProtocolSchedule schedule =
+        createProtocolSchedule(
+            JsonGenesisConfigOptions.fromJsonObject(JsonUtil.createEmptyObjectNode()),
+            List.of(
+                new ForkSpec<>(0, JsonQbftConfigOptions.DEFAULT),
+                new ForkSpec<>(1, arbitraryTransition),
+                new ForkSpec<>(2, JsonQbftConfigOptions.DEFAULT)));
+    assertThat(new MilestoneStreamingProtocolSchedule(schedule).streamMilestoneBlocks().count())
+        .isEqualTo(3);
+    assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 0)).isTrue();
+    assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 1)).isTrue();
+    assertThat(validateHeader(schedule, validators, parentHeader, blockHeader, 2)).isTrue();
   }
 
-  @Test
-  public void missingMiningBeneficiaryInConfigWillPayCoinbaseInHeader() {
-    final BigInteger arbitraryBlockReward = BigInteger.valueOf(3);
-    final IbftConfigOptions ibftConfig = mock(IbftConfigOptions.class);
-    when(ibftConfig.getMiningBeneficiary()).thenReturn(Optional.empty());
-    when(ibftConfig.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
-    when(ibftConfig.getEpochLength()).thenReturn(3000L);
-    when(genesisConfig.getIbft2ConfigOptions()).thenReturn(ibftConfig);
-
-    final ProtocolSchedule schedule = IbftProtocolSchedule.create(genesisConfig);
-    final ProtocolSpec spec = schedule.getByBlockNumber(1);
-
-    final Address headerCoinbase = Address.fromHexString("0x123");
-    final BlockHeader header = mock(BlockHeader.class);
-    when(header.getCoinbase()).thenReturn(headerCoinbase);
-
-    assertThat(spec.getBlockReward()).isEqualTo(Wei.of(arbitraryBlockReward));
-    assertThat(spec.getMiningBeneficiaryCalculator().calculateBeneficiary(header))
-        .isEqualTo(headerCoinbase);
+  private BftProtocolSchedule createProtocolSchedule(
+      final GenesisConfigOptions genesisConfig, final List<ForkSpec<BftConfigOptions>> forks) {
+    return IbftProtocolScheduleBuilder.create(
+        genesisConfig,
+        new ForksSchedule<>(forks),
+        PrivacyParameters.DEFAULT,
+        false,
+        bftExtraDataCodec,
+        EvmConfiguration.DEFAULT);
   }
 
-  @Test
-  public void negativeBlockRewardThrowsException() {
-    final BigInteger arbitraryBlockReward = BigInteger.valueOf(-3);
-    final IbftConfigOptions ibftConfig = mock(IbftConfigOptions.class);
-    when(ibftConfig.getMiningBeneficiary()).thenReturn(Optional.empty());
-    when(ibftConfig.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
-    when(ibftConfig.getEpochLength()).thenReturn(3000L);
-    when(genesisConfig.getIbft2ConfigOptions()).thenReturn(ibftConfig);
-
-    assertThatThrownBy(() -> IbftProtocolSchedule.create(genesisConfig))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Ibft2 Block reward in config cannot be negative");
+  private boolean validateHeader(
+      final BftProtocolSchedule schedule,
+      final List<Address> validators,
+      final BlockHeader parentHeader,
+      final BlockHeader blockHeader,
+      final int block) {
+    return schedule
+        .getByBlockNumber(block)
+        .getBlockHeaderValidator()
+        .validateHeader(
+            blockHeader, parentHeader, protocolContext(validators), HeaderValidationMode.LIGHT);
   }
 
-  @Test
-  public void zeroEpochLengthThrowsException() {
-    final BigInteger arbitraryBlockReward = BigInteger.valueOf(3);
-    final IbftConfigOptions ibftConfig = mock(IbftConfigOptions.class);
-    when(ibftConfig.getMiningBeneficiary()).thenReturn(Optional.empty());
-    when(ibftConfig.getEpochLength()).thenReturn(0L);
-    when(ibftConfig.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
-    when(genesisConfig.getIbft2ConfigOptions()).thenReturn(ibftConfig);
-
-    assertThatThrownBy(() -> IbftProtocolSchedule.create(genesisConfig))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Epoch length in config must be greater than zero");
-  }
-
-  @Test
-  public void negativeEpochLengthThrowsException() {
-    final BigInteger arbitraryBlockReward = BigInteger.valueOf(3);
-    final IbftConfigOptions ibftConfig = mock(IbftConfigOptions.class);
-    when(ibftConfig.getMiningBeneficiary()).thenReturn(Optional.empty());
-    when(ibftConfig.getEpochLength()).thenReturn(-3000L);
-    when(ibftConfig.getBlockRewardWei()).thenReturn(arbitraryBlockReward);
-    when(genesisConfig.getIbft2ConfigOptions()).thenReturn(ibftConfig);
-
-    assertThatThrownBy(() -> IbftProtocolSchedule.create(genesisConfig))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Epoch length in config must be greater than zero");
+  private ProtocolContext protocolContext(final Collection<Address> validators) {
+    return new ProtocolContext(
+        null,
+        null,
+        setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec),
+        Optional.empty());
   }
 }

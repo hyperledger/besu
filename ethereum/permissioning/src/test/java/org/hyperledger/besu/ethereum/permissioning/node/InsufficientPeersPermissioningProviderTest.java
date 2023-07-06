@@ -21,10 +21,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.DisconnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -42,19 +43,19 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class InsufficientPeersPermissioningProviderTest {
   @Mock private P2PNetwork p2pNetwork;
   private final EnodeURL SELF_ENODE =
-      EnodeURL.fromString(
+      EnodeURLImpl.fromString(
           "enode://00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001@192.168.0.1:30303");
   private final EnodeURL ENODE_2 =
-      EnodeURL.fromString(
+      EnodeURLImpl.fromString(
           "enode://00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002@192.168.0.2:30303");
   private final EnodeURL ENODE_3 =
-      EnodeURL.fromString(
+      EnodeURLImpl.fromString(
           "enode://00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003@192.168.0.3:30303");
   private final EnodeURL ENODE_4 =
-      EnodeURL.fromString(
+      EnodeURLImpl.fromString(
           "enode://00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004@192.168.0.4:30303");
   private final EnodeURL ENODE_5 =
-      EnodeURL.fromString(
+      EnodeURLImpl.fromString(
           "enode://00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005@192.168.0.5:30303");
 
   @Before
@@ -182,21 +183,21 @@ public class InsufficientPeersPermissioningProviderTest {
         ArgumentCaptor.forClass(ConnectCallback.class);
 
     verify(p2pNetwork).subscribeConnect(callbackCaptor.capture());
-    final ConnectCallback connectCallback = callbackCaptor.getValue();
+    final ConnectCallback incomingConnectCallback = callbackCaptor.getValue();
 
     final Runnable updatePermsCallback = mock(Runnable.class);
 
     provider.subscribeToUpdates(updatePermsCallback);
 
-    connectCallback.onConnect(peerConnectionMatching(ENODE_2));
+    incomingConnectCallback.onConnect(peerConnectionMatching(ENODE_2));
     verify(updatePermsCallback, times(0)).run();
-    connectCallback.onConnect(peerConnectionMatching(ENODE_3));
+    incomingConnectCallback.onConnect(peerConnectionMatching(ENODE_3));
     verify(updatePermsCallback, times(0)).run();
-    connectCallback.onConnect(peerConnectionMatching(ENODE_4));
+    incomingConnectCallback.onConnect(peerConnectionMatching(ENODE_4));
     verify(updatePermsCallback, times(1)).run();
-    connectCallback.onConnect(peerConnectionMatching(ENODE_5));
+    incomingConnectCallback.onConnect(peerConnectionMatching(ENODE_5));
     verify(updatePermsCallback, times(1)).run();
-    connectCallback.onConnect(peerConnectionMatching(ENODE_3));
+    incomingConnectCallback.onConnect(peerConnectionMatching(ENODE_3));
     verify(updatePermsCallback, times(1)).run();
   }
 
@@ -214,7 +215,7 @@ public class InsufficientPeersPermissioningProviderTest {
     final ArgumentCaptor<ConnectCallback> connectCallbackCaptor =
         ArgumentCaptor.forClass(ConnectCallback.class);
     verify(p2pNetwork).subscribeConnect(connectCallbackCaptor.capture());
-    final ConnectCallback connectCallback = connectCallbackCaptor.getValue();
+    final ConnectCallback incomingConnectCallback = connectCallbackCaptor.getValue();
 
     final ArgumentCaptor<DisconnectCallback> disconnectCallbackCaptor =
         ArgumentCaptor.forClass(DisconnectCallback.class);
@@ -225,13 +226,13 @@ public class InsufficientPeersPermissioningProviderTest {
 
     provider.subscribeToUpdates(updatePermsCallback);
 
-    connectCallback.onConnect(peerConnectionMatching(ENODE_2));
+    incomingConnectCallback.onConnect(peerConnectionMatching(ENODE_2));
     verify(updatePermsCallback, times(0)).run();
-    connectCallback.onConnect(peerConnectionMatching(ENODE_3));
+    incomingConnectCallback.onConnect(peerConnectionMatching(ENODE_3));
     verify(updatePermsCallback, times(0)).run();
-    connectCallback.onConnect(peerConnectionMatching(ENODE_4));
+    incomingConnectCallback.onConnect(peerConnectionMatching(ENODE_4));
     verify(updatePermsCallback, times(1)).run();
-    connectCallback.onConnect(peerConnectionMatching(ENODE_5));
+    incomingConnectCallback.onConnect(peerConnectionMatching(ENODE_5));
     verify(updatePermsCallback, times(1)).run();
     disconnectCallback.onDisconnect(peerConnectionMatching(ENODE_2), null, true);
     verify(updatePermsCallback, times(1)).run();

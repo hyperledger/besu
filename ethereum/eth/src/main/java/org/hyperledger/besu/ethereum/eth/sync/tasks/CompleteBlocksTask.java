@@ -19,10 +19,10 @@ import static java.util.Collections.emptyList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toMap;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
@@ -32,24 +32,26 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Given a set of headers, "completes" them by repeatedly requesting additional data (bodies) needed
  * to create the blocks that correspond to the supplied headers.
  */
 public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(CompleteBlocksTask.class);
 
   private static final int MIN_SIZE_INCOMPLETE_LIST = 1;
-  private static final int DEFAULT_RETRIES = 3;
+  private static final int DEFAULT_RETRIES = 4;
 
   private final EthContext ethContext;
   private final ProtocolSchedule protocolSchedule;
@@ -74,12 +76,39 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
     this.blocks =
         headers.stream()
             .filter(this::hasEmptyBody)
-            .collect(toMap(BlockHeader::getNumber, header -> new Block(header, BlockBody.empty())));
+            .collect(
+                toMap(
+                    BlockHeader::getNumber,
+                    header ->
+                        new Block(
+                            header,
+                            createEmptyBodyBasedOnProtocolSchedule(protocolSchedule, header))));
+  }
+
+  @NotNull
+  private BlockBody createEmptyBodyBasedOnProtocolSchedule(
+      final ProtocolSchedule protocolSchedule, final BlockHeader header) {
+    return new BlockBody(
+        Collections.emptyList(),
+        Collections.emptyList(),
+        isWithdrawalsEnabled(protocolSchedule, header)
+            ? Optional.of(Collections.emptyList())
+            : Optional.empty(),
+        Optional.empty());
+  }
+
+  private boolean isWithdrawalsEnabled(
+      final ProtocolSchedule protocolSchedule, final BlockHeader header) {
+    return protocolSchedule.getByBlockHeader(header).getWithdrawalsProcessor().isPresent();
   }
 
   private boolean hasEmptyBody(final BlockHeader header) {
     return header.getOmmersHash().equals(Hash.EMPTY_LIST_HASH)
-        && header.getTransactionsRoot().equals(Hash.EMPTY_TRIE_HASH);
+        && header.getTransactionsRoot().equals(Hash.EMPTY_TRIE_HASH)
+        && header
+            .getWithdrawalsRoot()
+            .map(wsRoot -> wsRoot.equals(Hash.EMPTY_TRIE_HASH))
+            .orElse(true);
   }
 
   public static CompleteBlocksTask forHeaders(

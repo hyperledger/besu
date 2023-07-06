@@ -14,11 +14,15 @@
  */
 package org.hyperledger.besu.plugin.data;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Quantity;
 import org.hyperledger.besu.plugin.Unstable;
 
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * The minimum set of data for a BlockHeader, as defined in the <a href=
@@ -53,18 +57,18 @@ public interface BlockHeader {
 
   /**
    * The Keccak 256-bit hash of the root node of the state trie, after all transactions are executed
-   * and finalisations applied.
+   * and finalizations applied.
    *
    * @return The Keccak 256-bit hash of the root node of the state trie, after all transactions are
-   *     executed and finalisations applied.
+   *     executed and finalizations applied.
    */
   Hash getStateRoot();
 
   /**
-   * The Keccak 256-bit hash of theroot node of the trie structure populated with each transaction
+   * The Keccak 256-bit hash of the root node of the trie structure populated with each transaction
    * in the transactions list portion of the block.
    *
-   * @return The Keccak 256-bit hash of theroot node of the trie structure populated with each
+   * @return The Keccak 256-bit hash of the root node of the trie structure populated with each
    *     transaction in the transactions list portion of the block.
    */
   Hash getTransactionsRoot();
@@ -162,10 +166,46 @@ public interface BlockHeader {
   /**
    * The BASEFEE of this header.
    *
-   * @return TheBASEFEE of this header.
+   * @return The BASEFEE of this header.
    */
   @Unstable
-  default Optional<Long> getBaseFee() {
+  default Optional<? extends Quantity> getBaseFee() {
     return Optional.empty();
   }
+
+  /**
+   * Optional 32 bytes of prevRandao data.
+   *
+   * @return Optional prevRandao bytes from this header.
+   */
+  default Optional<Bytes32> getPrevRandao() {
+    return Optional.empty();
+  }
+
+  /**
+   * The Keccak 256-bit hash of the root node of the trie structure populated with each withdrawal
+   * in the withdrawals list portion of the block.
+   *
+   * @return The Keccak 256-bit hash of the root node of the trie structure populated with each
+   *     withdrawal in the withdrawal list portion of the block.
+   */
+  Optional<? extends Hash> getWithdrawalsRoot();
+
+  /**
+   * The Keccak 256-bit hash of the root node of the trie structure populated with each deposit in
+   * the deposits list portion of the block.
+   *
+   * @return The Keccak 256-bit hash of the root node of the trie structure populated with each
+   *     deposit in the deposit list portion of the block.
+   */
+  @Unstable
+  Optional<? extends Hash> getDepositsRoot();
+
+  /**
+   * The excess_data_gas of this header.
+   *
+   * @return The excess_data_gas of this header.
+   */
+  @Unstable
+  Optional<? extends Quantity> getExcessDataGas();
 }

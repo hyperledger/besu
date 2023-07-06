@@ -34,6 +34,7 @@ import java.util.List;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/** The Enclave. */
 public class Enclave {
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -42,20 +43,38 @@ public class Enclave {
 
   private final RequestTransmitter requestTransmitter;
 
+  /**
+   * Instantiates a new Enclave.
+   *
+   * @param requestTransmitter the request transmitter
+   */
   public Enclave(final RequestTransmitter requestTransmitter) {
     this.requestTransmitter = requestTransmitter;
   }
 
+  /**
+   * Up check.
+   *
+   * @return the boolean
+   */
   public boolean upCheck() {
     try {
       final String upcheckResponse =
-          requestTransmitter.get(null, null, "/upcheck", this::handleRawResponse);
+          requestTransmitter.get(null, null, "/upcheck", this::handleRawResponse, false);
       return upcheckResponse.equals("I'm up!");
     } catch (final Exception e) {
       return false;
     }
   }
 
+  /**
+   * Send payload.
+   *
+   * @param payload the payload
+   * @param privateFrom the private from
+   * @param privateFor the private for
+   * @return the send response
+   */
   public SendResponse send(
       final String payload, final String privateFrom, final List<String> privateFor) {
     final SendRequestLegacy request = new SendRequestLegacy(payload, privateFrom, privateFor);
@@ -66,6 +85,14 @@ public class Enclave {
         (statusCode, body) -> handleJsonResponse(statusCode, body, SendResponse.class));
   }
 
+  /**
+   * Send payload.
+   *
+   * @param payload the payload
+   * @param privateFrom the private from
+   * @param privacyGroupId the privacy group id
+   * @return the send response
+   */
   public SendResponse send(
       final String payload, final String privateFrom, final String privacyGroupId) {
     final SendRequestBesu request = new SendRequestBesu(payload, privateFrom, privacyGroupId);
@@ -76,6 +103,12 @@ public class Enclave {
         (statusCode, body) -> handleJsonResponse(statusCode, body, SendResponse.class));
   }
 
+  /**
+   * Receive response.
+   *
+   * @param payloadKey the payload key
+   * @return the receive response
+   */
   public ReceiveResponse receive(final String payloadKey) {
     final ReceiveRequest request = new ReceiveRequest(payloadKey);
     return post(
@@ -85,6 +118,13 @@ public class Enclave {
         (statusCode, body) -> handleJsonResponse(statusCode, body, ReceiveResponse.class));
   }
 
+  /**
+   * Receive response.
+   *
+   * @param payloadKey the payload key
+   * @param to the to
+   * @return the receive response
+   */
   public ReceiveResponse receive(final String payloadKey, final String to) {
     final ReceiveRequest request = new ReceiveRequest(payloadKey, to);
     return post(
@@ -94,6 +134,15 @@ public class Enclave {
         (statusCode, body) -> handleJsonResponse(statusCode, body, ReceiveResponse.class));
   }
 
+  /**
+   * Create privacy group.
+   *
+   * @param addresses the addresses
+   * @param from the from
+   * @param name the name
+   * @param description the description
+   * @return the privacy group
+   */
   public PrivacyGroup createPrivacyGroup(
       final List<String> addresses,
       final String from,
@@ -108,6 +157,13 @@ public class Enclave {
         (statusCode, body) -> handleJsonResponse(statusCode, body, PrivacyGroup.class));
   }
 
+  /**
+   * Delete privacy group.
+   *
+   * @param privacyGroupId the privacy group id
+   * @param from the from
+   * @return the result of POST operation
+   */
   public String deletePrivacyGroup(final String privacyGroupId, final String from) {
     final DeletePrivacyGroupRequest request = new DeletePrivacyGroupRequest(privacyGroupId, from);
     return post(
@@ -117,6 +173,12 @@ public class Enclave {
         (statusCode, body) -> handleJsonResponse(statusCode, body, String.class));
   }
 
+  /**
+   * Find privacy group.
+   *
+   * @param addresses the addresses
+   * @return Array of privacy group
+   */
   public PrivacyGroup[] findPrivacyGroup(final List<String> addresses) {
     final FindPrivacyGroupRequest request = new FindPrivacyGroupRequest(addresses);
     return post(
@@ -126,6 +188,12 @@ public class Enclave {
         (statusCode, body) -> handleJsonResponse(statusCode, body, PrivacyGroup[].class));
   }
 
+  /**
+   * Retrieve privacy group.
+   *
+   * @param privacyGroupId the privacy group id
+   * @return the privacy group
+   */
   public PrivacyGroup retrievePrivacyGroup(final String privacyGroupId) {
     final RetrievePrivacyGroupRequest request = new RetrievePrivacyGroupRequest(privacyGroupId);
     return post(
@@ -168,10 +236,51 @@ public class Enclave {
       final int statusCode, final byte[] body, final Class<T> responseType) {
     try {
       return objectMapper.readValue(body, responseType);
-    } catch (IOException e) {
+    } catch (final IOException e) {
       final String utf8EncodedBody = new String(body, StandardCharsets.UTF_8);
-      throw new EnclaveClientException(statusCode, utf8EncodedBody);
+      // Check if it's a Tessera error message
+      try {
+        return objectMapper.readValue(
+            processTesseraError(utf8EncodedBody, responseType), responseType);
+      } catch (final IOException ex) {
+        throw new EnclaveClientException(statusCode, utf8EncodedBody);
+      }
     }
+  }
+
+  private <T> byte[] processTesseraError(final String errorMsg, final Class<T> responseType) {
+    if (responseType == SendResponse.class) {
+      final String base64Key =
+          errorMsg.substring(errorMsg.substring(0, errorMsg.indexOf('=')).lastIndexOf(' '));
+      return jsonByteArrayFromString("key", base64Key);
+    } else if (responseType == ErrorResponse.class) {
+      // Remove dynamic values
+      return jsonByteArrayFromString("error", removeBase64(errorMsg));
+    } else {
+      throw new RuntimeException("Unhandled response type.");
+    }
+  }
+
+  private String removeBase64(final String input) {
+    if (input.contains("=")) {
+      final String startInclBase64 = input.substring(0, input.lastIndexOf('='));
+      final String startTrimmed = startInclBase64.substring(0, startInclBase64.lastIndexOf(" "));
+      final String end = input.substring(input.lastIndexOf("="));
+      if (end.length() > 1) {
+        // Base64 in middle
+        return startTrimmed + end.substring(1);
+      } else {
+        // Base64 at end
+        return startTrimmed;
+      }
+    } else {
+      return input;
+    }
+  }
+
+  private byte[] jsonByteArrayFromString(final String key, final String value) {
+    String format = String.format("{\"%s\":\"%s\"}", key, value);
+    return format.getBytes(StandardCharsets.UTF_8);
   }
 
   private boolean clientError(final int statusCode) {

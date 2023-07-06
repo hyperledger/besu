@@ -74,8 +74,11 @@ public class GraphQLProvider {
                 .dataFetcher("gasPrice", graphQLDataFetchers.getGasPriceDataFetcher())
                 .dataFetcher("syncing", graphQLDataFetchers.getSyncingDataFetcher())
                 .dataFetcher("pending", graphQLDataFetchers.getPendingStateDataFetcher())
+                .dataFetcher("protocolVersion", graphQLDataFetchers.getProtocolVersionDataFetcher())
+                .dataFetcher("chainID", graphQLDataFetchers.getChainIdDataFetcher())
                 .dataFetcher(
-                    "protocolVersion", graphQLDataFetchers.getProtocolVersionDataFetcher()))
+                    "maxPriorityFeePerGas",
+                    graphQLDataFetchers.getMaxPriorityFeePerGasDataFetcher()))
         .type(
             TypeRuntimeWiring.newTypeWiring("Mutation")
                 .dataFetcher(

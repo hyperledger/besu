@@ -14,17 +14,42 @@
  */
 package org.hyperledger.besu.cli.options;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
-import org.hyperledger.besu.util.number.PositiveNumber;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class EthProtocolOptionsTest
     extends AbstractCLIOptionsTest<EthProtocolConfiguration, EthProtocolOptions> {
+
+  @Test
+  public void parsesValidMaxMessageSizeOptions() {
+
+    final TestBesuCommand cmd = parseCommand("--Xeth-max-message-size", "4");
+
+    final EthProtocolOptions options = getOptionsFromBesuCommand(cmd);
+    final EthProtocolConfiguration config = options.toDomainObject();
+    assertThat(config.getMaxMessageSize()).isEqualTo(4);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void parsesInvalidMaxMessageSizeOptionsShouldFail() {
+    parseCommand("--Xeth-max-message-size", "-4");
+    verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "Invalid value for option '--Xeth-max-message-size': cannot convert '-4' to PositiveNumber");
+  }
 
   @Test
   public void parsesValidEwpMaxGetHeadersOptions() {
@@ -34,16 +59,16 @@ public class EthProtocolOptionsTest
     final EthProtocolOptions options = getOptionsFromBesuCommand(cmd);
     final EthProtocolConfiguration config = options.toDomainObject();
     assertThat(config.getMaxGetBlockHeaders()).isEqualTo(13);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void parsesInvalidEwpMaxGetHeadersOptionsShouldFail() {
     parseCommand("--Xewp-max-get-headers", "-13");
     verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Invalid value for option '--Xewp-max-get-headers': cannot convert '-13' to PositiveNumber");
   }
@@ -56,16 +81,16 @@ public class EthProtocolOptionsTest
     final EthProtocolConfiguration config = options.toDomainObject();
     assertThat(config.getMaxGetBlockBodies()).isEqualTo(14);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void parsesInvalidEwpMaxGetBodiesOptionsShouldFail() {
     parseCommand("--Xewp-max-get-bodies", "-14");
     verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Invalid value for option '--Xewp-max-get-bodies': cannot convert '-14' to PositiveNumber");
   }
@@ -78,8 +103,8 @@ public class EthProtocolOptionsTest
     final EthProtocolConfiguration config = options.toDomainObject();
     assertThat(config.getMaxGetReceipts()).isEqualTo(15);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -87,8 +112,8 @@ public class EthProtocolOptionsTest
     parseCommand("--Xewp-max-get-receipts", "-15");
 
     verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Invalid value for option '--Xewp-max-get-receipts': cannot convert '-15' to PositiveNumber");
   }
@@ -101,18 +126,42 @@ public class EthProtocolOptionsTest
     final EthProtocolConfiguration config = options.toDomainObject();
     assertThat(config.getMaxGetNodeData()).isEqualTo(16);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
   public void parsesInvalidEwpMaxGetNodeDataOptionsShouldFail() {
     parseCommand("--Xewp-max-get-node-data", "-16");
     verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString())
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "Invalid value for option '--Xewp-max-get-node-data': cannot convert '-16' to PositiveNumber");
+  }
+
+  @Test
+  public void parsesValidEthMaxProtocol() {
+    final TestBesuCommand cmd = parseCommand("--Xeth-capability-max", "66");
+
+    final EthProtocolOptions options = getOptionsFromBesuCommand(cmd);
+    final EthProtocolConfiguration config = options.toDomainObject();
+    assertThat(config.getMaxEthCapability()).isEqualTo(66);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void parsesValidEthMinProtocol() {
+    final TestBesuCommand cmd = parseCommand("--Xeth-capability-min", "66");
+
+    final EthProtocolOptions options = getOptionsFromBesuCommand(cmd);
+    final EthProtocolConfiguration config = options.toDomainObject();
+    assertThat(config.getMinEthCapability()).isEqualTo(66);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Override
@@ -123,18 +172,14 @@ public class EthProtocolOptionsTest
   @Override
   EthProtocolConfiguration createCustomizedDomainObject() {
     return EthProtocolConfiguration.builder()
-        .maxGetBlockHeaders(
-            PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_HEADERS + 2))
-        .maxGetBlockBodies(
-            PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_BODIES + 2))
-        .maxGetReceipts(
-            PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_RECEIPTS + 2))
-        .maxGetNodeData(
-            PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_GET_NODE_DATA + 2))
-        .maxGetPooledTransactions(
-            PositiveNumber.fromInt(
-                EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS + 2))
-        .eth65Enabled(!EthProtocolConfiguration.DEFAULT_ETH_65_ENABLED)
+        .maxMessageSize(EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE * 2)
+        .maxGetBlockHeaders(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_HEADERS + 2)
+        .maxGetBlockBodies(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_BODIES + 2)
+        .maxGetReceipts(EthProtocolConfiguration.DEFAULT_MAX_GET_RECEIPTS + 2)
+        .maxGetNodeData(EthProtocolConfiguration.DEFAULT_MAX_GET_NODE_DATA + 2)
+        .maxGetPooledTransactions(EthProtocolConfiguration.DEFAULT_MAX_GET_POOLED_TRANSACTIONS + 2)
+        .maxEthCapability(EthProtocolConfiguration.DEFAULT_MAX_CAPABILITY)
+        .minEthCapability(EthProtocolConfiguration.DEFAULT_MIN_CAPABILITY)
         .build();
   }
 

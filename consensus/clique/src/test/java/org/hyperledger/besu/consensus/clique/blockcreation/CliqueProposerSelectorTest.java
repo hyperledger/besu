@@ -19,17 +19,16 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CliqueProposerSelectorTest {
 
@@ -39,13 +38,12 @@ public class CliqueProposerSelectorTest {
           AddressHelpers.ofValue(2),
           AddressHelpers.ofValue(3),
           AddressHelpers.ofValue(4));
-  private final VoteTally voteTally = new VoteTally(validatorList);
-  private VoteTallyCache voteTallyCache;
+  private ValidatorProvider validatorProvider;
 
-  @Before
+  @BeforeEach
   public void setup() {
-    voteTallyCache = mock(VoteTallyCache.class);
-    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(voteTally);
+    validatorProvider = mock(ValidatorProvider.class);
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
   }
 
   @Test
@@ -54,7 +52,7 @@ public class CliqueProposerSelectorTest {
 
     for (int prevBlockNumber = 0; prevBlockNumber < 10; prevBlockNumber++) {
       headerBuilderFixture.number(prevBlockNumber);
-      final CliqueProposerSelector selector = new CliqueProposerSelector(voteTallyCache);
+      final CliqueProposerSelector selector = new CliqueProposerSelector(validatorProvider);
       final Address nextProposer =
           selector.selectProposerForNextBlock(headerBuilderFixture.buildHeader());
       assertThat(nextProposer)

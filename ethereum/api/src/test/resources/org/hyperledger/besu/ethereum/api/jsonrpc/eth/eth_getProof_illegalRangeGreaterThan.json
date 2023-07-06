@@ -1,0 +1,21 @@
+{
+  "request": {
+    "id": 28,
+    "jsonrpc": "2.0",
+    "method": "eth_getProof",
+    "params": [
+      "0x8888f1f195afa192cfee860698584c030f4c9db1",
+      ["0x0000000000000000000000000000000000000000000000000000000000000347"],
+      "0x21"
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 28,
+    "error": {
+      "code": -32000,
+      "message": "Block not found"
+    }
+  },
+  "statusCode": 200
+}

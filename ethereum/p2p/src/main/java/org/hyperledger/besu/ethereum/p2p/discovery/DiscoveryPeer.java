@@ -14,19 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
+import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.ethereum.beacon.discovery.schema.NodeRecord;
 
 /**
- * Represents an Ethereum node that we interacting with through the discovery and wire protocols.
+ * Represents an Ethereum node that we are interacting with through the discovery and wire
+ * protocols.
  */
 public class DiscoveryPeer extends DefaultPeer {
   private PeerDiscoveryStatus status = PeerDiscoveryStatus.KNOWN;
@@ -38,6 +41,9 @@ public class DiscoveryPeer extends DefaultPeer {
   private long lastContacted = 0;
   private long lastSeen = 0;
   private long lastAttemptedConnection = 0;
+
+  private NodeRecord nodeRecord;
+  private Optional<ForkId> forkId = Optional.empty();
 
   private DiscoveryPeer(final EnodeURL enode, final Endpoint endpoint) {
     super(enode);
@@ -124,6 +130,26 @@ public class DiscoveryPeer extends DefaultPeer {
 
   public Endpoint getEndpoint() {
     return endpoint;
+  }
+
+  @Override
+  public Optional<NodeRecord> getNodeRecord() {
+    return Optional.ofNullable(nodeRecord);
+  }
+
+  public void setNodeRecord(final NodeRecord nodeRecord) {
+    this.nodeRecord = nodeRecord;
+    this.forkId = ForkId.fromRawForkId(nodeRecord.get("eth"));
+  }
+
+  @Override
+  public Optional<ForkId> getForkId() {
+    return this.forkId;
+  }
+
+  @Override
+  public void setForkId(final ForkId forkId) {
+    this.forkId = Optional.ofNullable(forkId);
   }
 
   public boolean discoveryEndpointMatches(final DiscoveryPeer peer) {

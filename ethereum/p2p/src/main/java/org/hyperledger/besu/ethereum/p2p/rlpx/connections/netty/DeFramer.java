@@ -16,10 +16,11 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.BreachOfProtocolException;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.IncompatiblePeerException;
+import org.hyperledger.besu.ethereum.p2p.network.exceptions.PeerChannelClosedException;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.PeerDisconnectedException;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.UnexpectedPeerConnectionException;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -52,12 +53,12 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.DecoderException;
 import io.netty.handler.timeout.IdleStateHandler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 final class DeFramer extends ByteToMessageDecoder {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(DeFramer.class);
 
   private final CompletableFuture<PeerConnection> connectFuture;
 
@@ -68,6 +69,7 @@ final class DeFramer extends ByteToMessageDecoder {
   // The peer we are expecting to connect to, if such a peer is known
   private final Optional<Peer> expectedPeer;
   private final List<SubProtocol> subProtocols;
+  private final boolean inboundInitiated;
   private boolean hellosExchanged;
   private final LabelledMetric<Counter> outboundMessagesCounter;
 
@@ -78,13 +80,15 @@ final class DeFramer extends ByteToMessageDecoder {
       final Optional<Peer> expectedPeer,
       final PeerConnectionEventDispatcher connectionEventDispatcher,
       final CompletableFuture<PeerConnection> connectFuture,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final boolean inboundInitiated) {
     this.framer = framer;
     this.subProtocols = subProtocols;
     this.localNode = localNode;
     this.expectedPeer = expectedPeer;
     this.connectFuture = connectFuture;
     this.connectionEventDispatcher = connectionEventDispatcher;
+    this.inboundInitiated = inboundInitiated;
     this.outboundMessagesCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.NETWORK,
@@ -109,14 +113,14 @@ final class DeFramer extends ByteToMessageDecoder {
         try {
           peerInfo = HelloMessage.readFrom(message).getPeerInfo();
         } catch (final RLPException e) {
-          LOG.debug("Received invalid HELLO message", e);
+          LOG.debug("Received invalid HELLO message, set log level to TRACE for message body", e);
           connectFuture.completeExceptionally(e);
           ctx.close();
           return;
         }
-        LOG.debug("Received HELLO message: {}", peerInfo);
+        LOG.trace("Received HELLO message: {}", peerInfo);
         if (peerInfo.getVersion() >= 5) {
-          LOG.debug("Enable compression for p2pVersion: {}", peerInfo.getVersion());
+          LOG.trace("Enable compression for p2pVersion: {}", peerInfo.getVersion());
           framer.enableCompression();
         }
 
@@ -125,20 +129,27 @@ final class DeFramer extends ByteToMessageDecoder {
                 subProtocols,
                 localNode.getPeerInfo().getCapabilities(),
                 peerInfo.getCapabilities());
-        final Peer peer = expectedPeer.orElse(createPeer(peerInfo, ctx));
+        final Optional<Peer> peer = expectedPeer.or(() -> createPeer(peerInfo, ctx));
+        if (peer.isEmpty()) {
+          LOG.debug("Failed to create connection for peer {}", peerInfo);
+          connectFuture.completeExceptionally(new PeerChannelClosedException(peerInfo));
+          ctx.close();
+          return;
+        }
         final PeerConnection connection =
             new NettyPeerConnection(
                 ctx,
-                peer,
+                peer.get(),
                 peerInfo,
                 capabilityMultiplexer,
                 connectionEventDispatcher,
-                outboundMessagesCounter);
+                outboundMessagesCounter,
+                inboundInitiated);
 
         // Check peer is who we expected
         if (expectedPeer.isPresent()
             && !Objects.equals(expectedPeer.get().getId(), peerInfo.getNodeId())) {
-          String unexpectedMsg =
+          final String unexpectedMsg =
               String.format(
                   "Expected id %s, but got %s", expectedPeer.get().getId(), peerInfo.getNodeId());
           connectFuture.completeExceptionally(new UnexpectedPeerConnectionException(unexpectedMsg));
@@ -166,16 +177,19 @@ final class DeFramer extends ByteToMessageDecoder {
                 new MessageFramer(capabilityMultiplexer, framer));
         connectFuture.complete(connection);
       } else if (message.getCode() == WireMessageCodes.DISCONNECT) {
-        DisconnectMessage disconnectMessage = DisconnectMessage.readFrom(message);
+        final DisconnectMessage disconnectMessage = DisconnectMessage.readFrom(message);
         LOG.debug(
-            "Peer disconnected before sending HELLO.  Reason: " + disconnectMessage.getReason());
+            "Peer {} disconnected before sending HELLO.  Reason: {}",
+            expectedPeer.map(Peer::getEnodeURLString).orElse("unknown"),
+            disconnectMessage.getReason());
         ctx.close();
         connectFuture.completeExceptionally(
             new PeerDisconnectedException(disconnectMessage.getReason()));
       } else {
         // Unexpected message - disconnect
         LOG.debug(
-            "Message received before HELLO's exchanged, disconnecting.  Code: {}, Data: {}",
+            "Message received before HELLO's exchanged (BREACH_OF_PROTOCOL), disconnecting.  Peer: {}, Code: {}, Data: {}",
+            expectedPeer.map(Peer::getEnodeURLString).orElse("unknown"),
             message.getCode(),
             message.getData().toString());
         ctx.writeAndFlush(
@@ -190,17 +204,21 @@ final class DeFramer extends ByteToMessageDecoder {
     }
   }
 
-  private Peer createPeer(final PeerInfo peerInfo, final ChannelHandlerContext ctx) {
+  private Optional<Peer> createPeer(final PeerInfo peerInfo, final ChannelHandlerContext ctx) {
     final InetSocketAddress remoteAddress = ((InetSocketAddress) ctx.channel().remoteAddress());
-    int port = peerInfo.getPort();
-    return DefaultPeer.fromEnodeURL(
-        EnodeURL.builder()
-            .nodeId(peerInfo.getNodeId())
-            .ipAddress(remoteAddress.getAddress())
-            .listeningPort(port)
-            // Discovery information is unknown, so disable it
-            .disableDiscovery()
-            .build());
+    if (remoteAddress == null) {
+      return Optional.empty();
+    }
+    final int port = peerInfo.getPort();
+    return Optional.of(
+        DefaultPeer.fromEnodeURL(
+            EnodeURLImpl.builder()
+                .nodeId(peerInfo.getNodeId())
+                .ipAddress(remoteAddress.getAddress())
+                .listeningPort(port)
+                // Discovery information is unknown, so disable it
+                .disableDiscovery()
+                .build()));
   }
 
   @Override
@@ -213,7 +231,7 @@ final class DeFramer extends ByteToMessageDecoder {
     if (cause instanceof FramingException
         || cause instanceof RLPException
         || cause instanceof IllegalArgumentException) {
-      LOG.debug("Invalid incoming message", throwable);
+      LOG.debug("Invalid incoming message (BREACH_OF_PROTOCOL)", throwable);
       if (connectFuture.isDone() && !connectFuture.isCompletedExceptionally()) {
         connectFuture.get().disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
         return;
@@ -227,7 +245,7 @@ final class DeFramer extends ByteToMessageDecoder {
     if (connectFuture.isDone() && !connectFuture.isCompletedExceptionally()) {
       connectFuture
           .get()
-          .terminateConnection(DisconnectMessage.DisconnectReason.TCP_SUBSYSTEM_ERROR, true);
+          .terminateConnection(DisconnectMessage.DisconnectReason.TCP_SUBSYSTEM_ERROR, false);
     } else {
       connectFuture.completeExceptionally(throwable);
       ctx.close();

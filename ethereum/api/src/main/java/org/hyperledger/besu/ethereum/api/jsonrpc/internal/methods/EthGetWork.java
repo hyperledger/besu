@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -23,27 +21,30 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import com.google.common.io.BaseEncoding;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EthGetWork implements JsonRpcMethod {
 
   private final MiningCoordinator miner;
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(EthGetWork.class);
   private final EpochCalculator epochCalculator;
 
   public EthGetWork(final MiningCoordinator miner) {
     this.miner = miner;
-    if (miner instanceof EthHashMiningCoordinator) {
-      this.epochCalculator = ((EthHashMiningCoordinator) miner).getEpochCalculator();
+    if (miner instanceof PoWMiningCoordinator) {
+      this.epochCalculator = ((PoWMiningCoordinator) miner).getEpochCalculator();
     } else {
       this.epochCalculator = new EpochCalculator.DefaultEpochCalculator();
     }
@@ -56,22 +57,25 @@ public class EthGetWork implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final Optional<EthHashSolverInputs> solver = miner.getWorkDefinition();
+    final Optional<PoWSolverInputs> solver = miner.getWorkDefinition();
+    final Object requestId = requestContext.getRequest().getId();
     if (solver.isPresent()) {
-      final EthHashSolverInputs rawResult = solver.get();
-      final byte[] dagSeed =
-          DirectAcyclicGraphSeed.dagSeed(rawResult.getBlockNumber(), epochCalculator);
-      final String[] result = {
-        "0x" + BaseEncoding.base16().lowerCase().encode(rawResult.getPrePowHash()),
-        "0x" + BaseEncoding.base16().lowerCase().encode(dagSeed),
-        rawResult.getTarget().toHexString(),
-        Quantity.create(rawResult.getBlockNumber())
-      };
-      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
+      final PoWSolverInputs rawResult = solver.get();
+      final List<String> response = new ArrayList<>(rawResponse(rawResult));
+      response.add(Quantity.create(rawResult.getBlockNumber()));
+      return new JsonRpcSuccessResponse(requestId, response);
     } else {
       LOG.trace("Mining is not operational, eth_getWork request cannot be processed");
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.NO_MINING_WORK_FOUND);
+      return new JsonRpcErrorResponse(requestId, JsonRpcError.NO_MINING_WORK_FOUND);
     }
+  }
+
+  public List<String> rawResponse(final PoWSolverInputs rawResult) {
+    final byte[] dagSeed =
+        DirectAcyclicGraphSeed.dagSeed(rawResult.getBlockNumber(), epochCalculator);
+    return List.of(
+        rawResult.getPrePowHash().toHexString(),
+        "0x" + BaseEncoding.base16().lowerCase().encode(dagSeed),
+        rawResult.getTarget().toHexString());
   }
 }

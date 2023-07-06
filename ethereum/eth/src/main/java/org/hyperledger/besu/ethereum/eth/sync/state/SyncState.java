@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.state;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -23,10 +24,13 @@ import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
 import org.hyperledger.besu.ethereum.eth.manager.ChainHeadEstimate;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadStatus;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.data.SyncStatus;
+import org.hyperledger.besu.plugin.services.BesuEvents.InitialSyncCompletionListener;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
+import org.hyperledger.besu.plugin.services.BesuEvents.TTDReachedListener;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Map;
@@ -42,14 +46,36 @@ public class SyncState {
   private final AtomicLong inSyncSubscriberId = new AtomicLong();
   private final Map<Long, InSyncTracker> inSyncTrackers = new ConcurrentHashMap<>();
   private final Subscribers<SyncStatusListener> syncStatusListeners = Subscribers.create();
+  private final Subscribers<TTDReachedListener> ttdReachedListeners = Subscribers.create();
+
+  private final Subscribers<InitialSyncCompletionListener> completionListenerSubscribers =
+      Subscribers.create();
+
   private volatile long chainHeightListenerId;
   private volatile Optional<SyncTarget> syncTarget = Optional.empty();
   private Optional<WorldStateDownloadStatus> worldStateDownloadStatus = Optional.empty();
   private Optional<Long> newPeerListenerId;
+  private Optional<Boolean> reachedTerminalDifficulty = Optional.empty();
+  private final Optional<Checkpoint> checkpoint;
+  private volatile boolean isInitialSyncPhaseDone;
+
+  private volatile boolean isResyncNeeded;
+
+  private Optional<Address> maybeAccountToRepair = Optional.empty();
 
   public SyncState(final Blockchain blockchain, final EthPeers ethPeers) {
+    this(blockchain, ethPeers, false, Optional.empty());
+  }
+
+  public SyncState(
+      final Blockchain blockchain,
+      final EthPeers ethPeers,
+      final boolean hasInitialSyncPhase,
+      final Optional<Checkpoint> checkpoint) {
     this.blockchain = blockchain;
     this.ethPeers = ethPeers;
+    isInitialSyncPhaseDone = !hasInitialSyncPhase;
+
     blockchain.observeBlockAdded(
         event -> {
           if (event.isNewCanonicalHead()) {
@@ -67,6 +93,7 @@ public class SyncState {
                     checkInSync();
                   }
                 }));
+    this.checkpoint = checkpoint;
   }
 
   /**
@@ -108,8 +135,24 @@ public class SyncState {
     return syncStatusListeners.subscribe(listener);
   }
 
+  public long subscribeTTDReached(final TTDReachedListener listener) {
+    return ttdReachedListeners.subscribe(listener);
+  }
+
+  public long subscribeCompletionReached(final InitialSyncCompletionListener listener) {
+    return completionListenerSubscribers.subscribe(listener);
+  }
+
   public boolean unsubscribeSyncStatus(final long listenerId) {
     return syncStatusListeners.unsubscribe(listenerId);
+  }
+
+  public boolean unsubscribeTTDReached(final long listenerId) {
+    return ttdReachedListeners.unsubscribe(listenerId);
+  }
+
+  public boolean unsubscribeInitialConditionReached(final long listenerId) {
+    return completionListenerSubscribers.unsubscribe(listenerId);
   }
 
   public Optional<SyncStatus> syncStatus() {
@@ -138,14 +181,28 @@ public class SyncState {
         getLocalChainHead(), getSyncTargetChainHead(), getBestPeerChainHead(), syncTolerance);
   }
 
+  public void setReachedTerminalDifficulty(final boolean stoppedAtTerminalDifficulty) {
+    this.reachedTerminalDifficulty = Optional.of(stoppedAtTerminalDifficulty);
+    ttdReachedListeners.forEach(listener -> listener.onTTDReached(stoppedAtTerminalDifficulty));
+  }
+
+  public Optional<Boolean> hasReachedTerminalDifficulty() {
+    if (isInitialSyncPhaseDone) {
+      return reachedTerminalDifficulty;
+    }
+    return Optional.of(Boolean.FALSE);
+  }
+
   private boolean isInSync(
       final ChainHead localChain,
       final Optional<ChainHeadEstimate> syncTargetChain,
       final Optional<ChainHeadEstimate> bestPeerChain,
       final long syncTolerance) {
-    // Sync target may be temporarily empty while we switch sync targets during a sync, so
-    // check both the sync target and our best peer to determine if we're in sync or not
-    return isInSync(localChain, syncTargetChain, syncTolerance)
+    return isInitialSyncPhaseDone
+        && reachedTerminalDifficulty.orElse(true)
+        // Sync target may be temporarily empty while we switch sync targets during a sync, so
+        // check both the sync target and our best peer to determine if we're in sync or not
+        && isInSync(localChain, syncTargetChain, syncTolerance)
         && isInSync(localChain, bestPeerChain, syncTolerance);
   }
 
@@ -219,6 +276,10 @@ public class SyncState {
         target.addPeerChainEstimatedHeightListener(estimatedHeight -> checkInSync());
   }
 
+  public long getLocalChainHeight() {
+    return blockchain.getChainHeadBlockNumber();
+  }
+
   public long bestChainHeight() {
     final long localChainHeight = blockchain.getChainHeadBlockNumber();
     return bestChainHeight(localChainHeight);
@@ -249,5 +310,40 @@ public class SyncState {
         .values()
         .forEach(
             (syncTracker) -> syncTracker.checkState(localChain, syncTargetChain, bestPeerChain));
+  }
+
+  public Optional<Checkpoint> getCheckpoint() {
+    return checkpoint;
+  }
+
+  public boolean isInitialSyncPhaseDone() {
+    return isInitialSyncPhaseDone;
+  }
+
+  public void markInitialSyncPhaseAsDone() {
+    isInitialSyncPhaseDone = true;
+    isResyncNeeded = false;
+    completionListenerSubscribers.forEach(InitialSyncCompletionListener::onInitialSyncCompleted);
+  }
+
+  public boolean isResyncNeeded() {
+    return isResyncNeeded;
+  }
+
+  public void markResyncNeeded() {
+    isResyncNeeded = true;
+  }
+
+  public Optional<Address> getAccountToRepair() {
+    return maybeAccountToRepair;
+  }
+
+  public void markAccountToRepair(final Optional<Address> address) {
+    maybeAccountToRepair = address;
+  }
+
+  public void markInitialSyncRestart() {
+    isInitialSyncPhaseDone = false;
+    completionListenerSubscribers.forEach(InitialSyncCompletionListener::onInitialSyncRestart);
   }
 }

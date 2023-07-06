@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminAddPeer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AdminChangeLogLevel;
@@ -30,11 +29,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.PluginsReloadC
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.plugin.BesuPlugin;
 
 import java.math.BigInteger;
 import java.util.Map;
+import java.util.Optional;
 
 public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
@@ -46,6 +47,7 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final NatService natService;
   private final Map<String, BesuPlugin> namedPlugins;
   private final EthPeers ethPeers;
+  private final Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
 
   public AdminJsonRpcMethods(
       final String clientVersion,
@@ -55,7 +57,8 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final BlockchainQueries blockchainQueries,
       final Map<String, BesuPlugin> namedPlugins,
       final NatService natService,
-      final EthPeers ethPeers) {
+      final EthPeers ethPeers,
+      final Optional<EnodeDnsConfiguration> enodeDnsConfiguration) {
     this.clientVersion = clientVersion;
     this.networkId = networkId;
     this.genesisConfigOptions = genesisConfigOptions;
@@ -64,18 +67,19 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.namedPlugins = namedPlugins;
     this.natService = natService;
     this.ethPeers = ethPeers;
+    this.enodeDnsConfiguration = enodeDnsConfiguration;
   }
 
   @Override
-  protected RpcApi getApiGroup() {
-    return RpcApis.ADMIN;
+  protected String getApiGroup() {
+    return RpcApis.ADMIN.name();
   }
 
   @Override
   protected Map<String, JsonRpcMethod> create() {
     return mapOf(
-        new AdminAddPeer(p2pNetwork),
-        new AdminRemovePeer(p2pNetwork),
+        new AdminAddPeer(p2pNetwork, enodeDnsConfiguration),
+        new AdminRemovePeer(p2pNetwork, enodeDnsConfiguration),
         new AdminNodeInfo(
             clientVersion,
             networkId,

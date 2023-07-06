@@ -1,0 +1,48 @@
+{
+  "comment" : "Various exceptional halt cases. INVALID_JUMP_DESTINATION.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_rawTransaction",
+    "params" : [ "0xf8618081ef83fffff29400e000000000000000000000000000000000000080801ca028b46afe2345d255199e0df8a46e8e75cdb52d0360473f0f375f3b853d66a3c7a07c46f3eb520a65c3bce2ce47eb25223a62ac2d68b865e83d92d215334e93c9cd", [ "stateDiff" ] ],
+    "id" : 21
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x",
+      "stateDiff" : {
+        "0x0000000000000000000000000000000000000000" : {
+          "balance" : {
+            "*" : {
+              "from" : "0x393f0f18385c0b29e",
+              "to" : "0x393f0f18474c0a58c"
+            }
+          },
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : { }
+        },
+        "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73" : {
+          "balance" : {
+            "*" : {
+              "from" : "0xffffffffffffffffffffffffffffffffd27fb671b",
+              "to" : "0xffffffffffffffffffffffffffffffffc38fb742d"
+            }
+          },
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x1e",
+              "to" : "0x1f"
+            }
+          },
+          "storage" : { }
+        }
+      },
+      "trace" : [ ],
+      "vmTrace" : null
+    },
+    "id" : 21
+  },
+  "statusCode" : 200
+}

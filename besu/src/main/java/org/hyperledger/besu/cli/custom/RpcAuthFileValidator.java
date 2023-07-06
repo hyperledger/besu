@@ -27,8 +27,17 @@ import org.apache.tuweni.toml.TomlParseResult;
 import picocli.CommandLine;
 import picocli.CommandLine.ParameterException;
 
+/** The Rpc authentication file validator. */
 public class RpcAuthFileValidator {
 
+  /**
+   * Validate auth file.
+   *
+   * @param commandLine the command line to use for parameter exceptions
+   * @param filename the auth file
+   * @param type the RPC type
+   * @return the auth filename
+   */
   public static String validate(
       final CommandLine commandLine, final String filename, final String type) {
 
@@ -80,9 +89,7 @@ public class RpcAuthFileValidator {
     int configuredUsers = tomlParseResult.getTable("Users").keySet().size();
 
     int usersWithPasswords =
-        tomlParseResult
-            .keyPathSet()
-            .parallelStream()
+        tomlParseResult.keyPathSet().parallelStream()
             .filter(
                 keySet ->
                     keySet.contains("Users")
@@ -95,9 +102,7 @@ public class RpcAuthFileValidator {
   }
 
   private static boolean verifyAllEntriesHaveValues(final TomlParseResult tomlParseResult) {
-    return tomlParseResult
-        .dottedKeySet()
-        .parallelStream()
+    return tomlParseResult.dottedKeySet().parallelStream()
         .filter(keySet -> !keySet.contains("password"))
         .allMatch(dottedKey -> verifyEntry(dottedKey, tomlParseResult));
   }

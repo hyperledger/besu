@@ -18,11 +18,11 @@ import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ReadinessCheck implements HealthService.HealthCheck {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(ReadinessCheck.class);
   private static final int DEFAULT_MINIMUM_PEERS = 1;
   private static final int DEFAULT_MAX_BLOCKS_BEHIND = 2;
   private final P2PNetwork p2pNetwork;

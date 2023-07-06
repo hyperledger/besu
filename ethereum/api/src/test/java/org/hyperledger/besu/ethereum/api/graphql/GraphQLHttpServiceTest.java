@@ -16,13 +16,13 @@ package org.hyperledger.besu.ethereum.api.graphql;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -33,6 +33,7 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -69,8 +70,8 @@ public class GraphQLHttpServiceTest {
   protected static final MediaType GRAPHQL = MediaType.parse("application/graphql; charset=utf-8");
   private static BlockchainQueries blockchainQueries;
   private static GraphQL graphQL;
-  private static GraphQLDataFetcherContextImpl dataFetcherContext;
-  private static EthHashMiningCoordinator miningCoordinatorMock;
+  private static Map<GraphQLContextType, Object> graphQlContextMap;
+  private static PoWMiningCoordinator miningCoordinatorMock;
 
   private final GraphQLTestHelper testHelper = new GraphQLTestHelper();
 
@@ -80,15 +81,17 @@ public class GraphQLHttpServiceTest {
     final Synchronizer synchronizer = Mockito.mock(Synchronizer.class);
     graphQL = Mockito.mock(GraphQL.class);
 
-    miningCoordinatorMock = Mockito.mock(EthHashMiningCoordinator.class);
-
-    dataFetcherContext = Mockito.mock(GraphQLDataFetcherContextImpl.class);
-    Mockito.when(dataFetcherContext.getBlockchainQueries()).thenReturn(blockchainQueries);
-    Mockito.when(dataFetcherContext.getMiningCoordinator()).thenReturn(miningCoordinatorMock);
-
-    Mockito.when(dataFetcherContext.getTransactionPool())
-        .thenReturn(Mockito.mock(TransactionPool.class));
-    Mockito.when(dataFetcherContext.getSynchronizer()).thenReturn(synchronizer);
+    miningCoordinatorMock = Mockito.mock(PoWMiningCoordinator.class);
+    graphQlContextMap =
+        Map.of(
+            GraphQLContextType.BLOCKCHAIN_QUERIES,
+            blockchainQueries,
+            GraphQLContextType.TRANSACTION_POOL,
+            Mockito.mock(TransactionPool.class),
+            GraphQLContextType.MINING_COORDINATOR,
+            miningCoordinatorMock,
+            GraphQLContextType.SYNCHRONIZER,
+            synchronizer);
 
     final Set<Capability> supportedCapabilities = new HashSet<>();
     supportedCapabilities.add(EthProtocol.ETH62);
@@ -110,7 +113,7 @@ public class GraphQLHttpServiceTest {
         folder.newFolder().toPath(),
         config,
         graphQL,
-        dataFetcherContext,
+        graphQlContextMap,
         Mockito.mock(EthScheduler.class));
   }
 
@@ -120,7 +123,7 @@ public class GraphQLHttpServiceTest {
         folder.newFolder().toPath(),
         createGraphQLConfig(),
         graphQL,
-        dataFetcherContext,
+        graphQlContextMap,
         Mockito.mock(EthScheduler.class));
   }
 
@@ -217,6 +220,7 @@ public class GraphQLHttpServiceTest {
   @Test
   public void query_get() throws Exception {
     final Wei price = Wei.of(16);
+    Mockito.when(blockchainQueries.gasPrice()).thenReturn(Optional.of(price.toLong()));
     Mockito.when(miningCoordinatorMock.getMinTransactionGasPrice()).thenReturn(price);
 
     try (final Response resp = client.newCall(buildGetRequest("?query={gasPrice}")).execute()) {
@@ -276,8 +280,8 @@ public class GraphQLHttpServiceTest {
   @Test
   public void getSocketAddressWhenActive() {
     final InetSocketAddress socketAddress = service.socketAddress();
-    Assertions.assertThat("127.0.0.1").isEqualTo(socketAddress.getAddress().getHostAddress());
-    Assertions.assertThat(socketAddress.getPort() > 0).isTrue();
+    Assertions.assertThat(socketAddress.getAddress().getHostAddress()).isEqualTo("127.0.0.1");
+    Assertions.assertThat(socketAddress.getPort()).isPositive();
   }
 
   @Test
@@ -285,9 +289,9 @@ public class GraphQLHttpServiceTest {
     final GraphQLHttpService service = createGraphQLHttpService();
 
     final InetSocketAddress socketAddress = service.socketAddress();
-    Assertions.assertThat("0.0.0.0").isEqualTo(socketAddress.getAddress().getHostAddress());
-    Assertions.assertThat(0).isEqualTo(socketAddress.getPort());
-    Assertions.assertThat("").isEqualTo(service.url());
+    Assertions.assertThat(socketAddress.getAddress().getHostAddress()).isEqualTo("0.0.0.0");
+    Assertions.assertThat(socketAddress.getPort()).isZero();
+    Assertions.assertThat(service.url()).isEmpty();
   }
 
   @Test
@@ -299,8 +303,8 @@ public class GraphQLHttpServiceTest {
 
     try {
       final InetSocketAddress socketAddress = service.socketAddress();
-      Assertions.assertThat("0.0.0.0").isEqualTo(socketAddress.getAddress().getHostAddress());
-      Assertions.assertThat(socketAddress.getPort() > 0).isTrue();
+      Assertions.assertThat(socketAddress.getAddress().getHostAddress()).isEqualTo("0.0.0.0");
+      Assertions.assertThat(socketAddress.getPort()).isPositive();
       Assertions.assertThat(!service.url().contains("0.0.0.0")).isTrue();
     } finally {
       service.stop().join();
@@ -327,12 +331,11 @@ public class GraphQLHttpServiceTest {
     @SuppressWarnings("unchecked")
     final List<Hash> list = Mockito.mock(List.class);
 
-    Mockito.when(blockchainQueries.blockByHash(ArgumentMatchers.eq(blockHash)))
-        .thenReturn(Optional.of(block));
+    Mockito.when(blockchainQueries.blockByHash(blockHash)).thenReturn(Optional.of(block));
     Mockito.when(block.getOmmers()).thenReturn(list);
     Mockito.when(list.size()).thenReturn(uncleCount);
 
-    final String query = "{block(hash:\"" + blockHash.toString() + "\") {ommerCount}}";
+    final String query = "{block(hash:\"" + blockHash + "\") {ommerCount}}";
 
     final RequestBody body = RequestBody.create(query, GRAPHQL);
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
@@ -340,8 +343,9 @@ public class GraphQLHttpServiceTest {
       final String jsonStr = resp.body().string();
       final JsonObject json = new JsonObject(jsonStr);
       testHelper.assertValidGraphQLResult(json);
-      final int result = json.getJsonObject("data").getJsonObject("block").getInteger("ommerCount");
-      Assertions.assertThat(result).isEqualTo(uncleCount);
+      final String result =
+          json.getJsonObject("data").getJsonObject("block").getString("ommerCount");
+      Assertions.assertThat(Bytes.fromHexStringLenient(result).toInt()).isEqualTo(uncleCount);
     }
   }
 
@@ -366,8 +370,9 @@ public class GraphQLHttpServiceTest {
       final String jsonStr = resp.body().string();
       final JsonObject json = new JsonObject(jsonStr);
       testHelper.assertValidGraphQLResult(json);
-      final int result = json.getJsonObject("data").getJsonObject("block").getInteger("ommerCount");
-      Assertions.assertThat(result).isEqualTo(uncleCount);
+      final String result =
+          json.getJsonObject("data").getJsonObject("block").getString("ommerCount");
+      Assertions.assertThat(Bytes.fromHexStringLenient(result).toInt()).isEqualTo(uncleCount);
     }
   }
 
@@ -391,8 +396,9 @@ public class GraphQLHttpServiceTest {
       final String jsonStr = resp.body().string();
       final JsonObject json = new JsonObject(jsonStr);
       testHelper.assertValidGraphQLResult(json);
-      final int result = json.getJsonObject("data").getJsonObject("block").getInteger("ommerCount");
-      Assertions.assertThat(result).isEqualTo(uncleCount);
+      final String result =
+          json.getJsonObject("data").getJsonObject("block").getString("ommerCount");
+      Assertions.assertThat(Bytes.fromHexStringLenient(result).toInt()).isEqualTo(uncleCount);
     }
   }
 

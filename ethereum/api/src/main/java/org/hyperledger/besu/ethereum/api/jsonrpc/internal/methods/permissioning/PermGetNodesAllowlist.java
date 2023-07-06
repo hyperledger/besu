@@ -30,11 +30,11 @@ import java.util.Optional;
 public class PermGetNodesAllowlist implements JsonRpcMethod {
 
   private final Optional<NodeLocalConfigPermissioningController>
-      nodeWhitelistPermissioningController;
+      nodeAllowlistPermissioningController;
 
   public PermGetNodesAllowlist(
-      final Optional<NodeLocalConfigPermissioningController> nodeWhitelistPermissioningController) {
-    this.nodeWhitelistPermissioningController = nodeWhitelistPermissioningController;
+      final Optional<NodeLocalConfigPermissioningController> nodeAllowlistPermissioningController) {
+    this.nodeAllowlistPermissioningController = nodeAllowlistPermissioningController;
   }
 
   @Override
@@ -45,9 +45,9 @@ public class PermGetNodesAllowlist implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     try {
-      if (nodeWhitelistPermissioningController.isPresent()) {
+      if (nodeAllowlistPermissioningController.isPresent()) {
         final List<String> enodeList =
-            nodeWhitelistPermissioningController.get().getNodesAllowlist();
+            nodeAllowlistPermissioningController.get().getNodesAllowlist();
 
         return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), enodeList);
       } else {

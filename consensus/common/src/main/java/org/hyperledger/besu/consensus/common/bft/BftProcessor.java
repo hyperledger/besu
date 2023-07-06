@@ -20,13 +20,13 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Execution context for draining queued bft events and applying them to a maintained state */
 public class BftProcessor implements Runnable {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BftProcessor.class);
 
   private final BftEventQueue incomingQueue;
   private volatile boolean shutdown = false;
@@ -49,6 +49,11 @@ public class BftProcessor implements Runnable {
     shutdown = true;
   }
 
+  /**
+   * Await stop.
+   *
+   * @throws InterruptedException the interrupted exception
+   */
   public void awaitStop() throws InterruptedException {
     shutdownLatch.await();
   }

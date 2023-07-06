@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.controller;
 
+import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMinerExecutor;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMinerExecutor;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -30,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
+/** The Mainnet besu controller builder. */
 public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
 
   private EpochCalculator epochCalculator = new EpochCalculator.DefaultEpochCalculator();
@@ -42,8 +44,9 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
       final MiningParameters miningParameters,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
-    final EthHashMinerExecutor executor =
-        new EthHashMinerExecutor(
+
+    final PoWMinerExecutor executor =
+        new PoWMinerExecutor(
             protocolContext,
             protocolSchedule,
             transactionPool.getPendingTransactions(),
@@ -52,11 +55,12 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
                 MainnetBlockHeaderValidator.MINIMUM_SECONDS_SINCE_PARENT,
                 MainnetBlockHeaderValidator.TIMESTAMP_TOLERANCE_S,
                 clock),
-            gasLimitCalculator,
-            epochCalculator);
+            epochCalculator,
+            miningParameters.getPowJobTimeToLive(),
+            miningParameters.getMaxOmmerDepth());
 
-    final EthHashMiningCoordinator miningCoordinator =
-        new EthHashMiningCoordinator(
+    final PoWMiningCoordinator miningCoordinator =
+        new PoWMiningCoordinator(
             protocolContext.getBlockchain(),
             executor,
             syncState,
@@ -72,28 +76,29 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  protected Void createConsensusContext(
-      final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
+  protected ConsensusContext createConsensusContext(
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final ProtocolSchedule protocolSchedule) {
     return null;
   }
 
   @Override
-  protected PluginServiceFactory createAdditionalPluginServices(final Blockchain blockchain) {
+  protected PluginServiceFactory createAdditionalPluginServices(
+      final Blockchain blockchain, final ProtocolContext protocolContext) {
     return new NoopPluginServiceFactory();
   }
 
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return MainnetProtocolSchedule.fromConfig(
-        genesisConfig.getConfigOptions(genesisConfigOverrides),
-        privacyParameters,
-        isRevertReasonEnabled);
+        configOptionsSupplier.get(), privacyParameters, isRevertReasonEnabled, evmConfiguration);
   }
 
   @Override
   protected void prepForBuild() {
-    genesisConfig
-        .getConfigOptions()
+    configOptionsSupplier
+        .get()
         .getThanosBlockNumber()
         .ifPresent(
             activationBlock -> epochCalculator = new EpochCalculator.Ecip1099EpochCalculator());

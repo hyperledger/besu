@@ -17,26 +17,38 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class MainnetBlockProcessorTest {
+@ExtendWith(MockitoExtension.class)
+public class MainnetBlockProcessorTest extends AbstractBlockProcessorTest {
 
   private final MainnetTransactionProcessor transactionProcessor =
       mock(MainnetTransactionProcessor.class);
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
       mock(AbstractBlockProcessor.TransactionReceiptFactory.class);
+  private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
+  private final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
+
+  @BeforeEach
+  public void setup() {
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
+  }
 
   @Test
   public void noAccountCreatedWhenBlockRewardIsZeroAndSkipped() {
@@ -48,7 +60,7 @@ public class MainnetBlockProcessorTest {
             Wei.ZERO,
             BlockHeader::getCoinbase,
             true,
-            TransactionGasBudgetCalculator.frontier());
+            protocolSchedule);
 
     final MutableWorldState worldState = ReferenceTestWorldState.create(emptyMap());
     final Hash initialHash = worldState.rootHash();
@@ -74,7 +86,7 @@ public class MainnetBlockProcessorTest {
             Wei.ZERO,
             BlockHeader::getCoinbase,
             false,
-            TransactionGasBudgetCalculator.frontier());
+            protocolSchedule);
 
     final MutableWorldState worldState = ReferenceTestWorldState.create(emptyMap());
     final Hash initialHash = worldState.rootHash();

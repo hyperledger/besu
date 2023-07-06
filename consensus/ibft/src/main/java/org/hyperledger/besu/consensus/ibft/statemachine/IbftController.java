@@ -14,17 +14,13 @@
  */
 package org.hyperledger.besu.consensus.ibft.statemachine;
 
-import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.Gossiper;
 import org.hyperledger.besu.consensus.common.bft.MessageTracker;
 import org.hyperledger.besu.consensus.common.bft.SynchronizerUpdater;
-import org.hyperledger.besu.consensus.common.bft.events.BftReceivedMessageEvent;
-import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
-import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
-import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
-import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
-import org.hyperledger.besu.consensus.common.bft.payload.Authored;
-import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
+import org.hyperledger.besu.consensus.common.bft.statemachine.BaseBftController;
+import org.hyperledger.besu.consensus.common.bft.statemachine.BaseBlockHeightManager;
+import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
+import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.ibft.messagedata.CommitMessageData;
 import org.hyperledger.besu.consensus.ibft.messagedata.IbftV2;
 import org.hyperledger.besu.consensus.ibft.messagedata.PrepareMessageData;
@@ -35,62 +31,44 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
+/** The Ibft controller. */
+public class IbftController extends BaseBftController {
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-public class IbftController implements BftEventHandler {
-
-  private static final Logger LOG = LogManager.getLogger();
-  private final Blockchain blockchain;
-  private final IbftFinalState ibftFinalState;
+  private BaseIbftBlockHeightManager currentHeightManager;
   private final IbftBlockHeightManagerFactory ibftBlockHeightManagerFactory;
-  private final FutureMessageBuffer futureMessageBuffer;
-  private BlockHeightManager currentHeightManager;
-  private final Gossiper gossiper;
-  private final MessageTracker duplicateMessageTracker;
-  private final SynchronizerUpdater sychronizerUpdater;
 
-  private final AtomicBoolean started = new AtomicBoolean(false);
-
+  /**
+   * Instantiates a new Ibft controller.
+   *
+   * @param blockchain the blockchain
+   * @param bftFinalState the bft final state
+   * @param ibftBlockHeightManagerFactory the ibft block height manager factory
+   * @param gossiper the gossiper
+   * @param duplicateMessageTracker the duplicate message tracker
+   * @param futureMessageBuffer the future message buffer
+   * @param sychronizerUpdater the sychronizer updater
+   */
   public IbftController(
       final Blockchain blockchain,
-      final IbftFinalState ibftFinalState,
+      final BftFinalState bftFinalState,
       final IbftBlockHeightManagerFactory ibftBlockHeightManagerFactory,
       final Gossiper gossiper,
       final MessageTracker duplicateMessageTracker,
       final FutureMessageBuffer futureMessageBuffer,
       final SynchronizerUpdater sychronizerUpdater) {
-    this.blockchain = blockchain;
-    this.ibftFinalState = ibftFinalState;
+
+    super(
+        blockchain,
+        bftFinalState,
+        gossiper,
+        duplicateMessageTracker,
+        futureMessageBuffer,
+        sychronizerUpdater);
     this.ibftBlockHeightManagerFactory = ibftBlockHeightManagerFactory;
-    this.futureMessageBuffer = futureMessageBuffer;
-    this.gossiper = gossiper;
-    this.duplicateMessageTracker = duplicateMessageTracker;
-    this.sychronizerUpdater = sychronizerUpdater;
   }
 
   @Override
-  public void start() {
-    if (started.compareAndSet(false, true)) {
-      startNewHeightManager(blockchain.getChainHeadHeader());
-    }
-  }
-
-  @Override
-  public void handleMessageEvent(final BftReceivedMessageEvent msg) {
-    final MessageData data = msg.getMessage().getData();
-    if (!duplicateMessageTracker.hasSeenMessage(data)) {
-      duplicateMessageTracker.addSeenMessage(data);
-      handleMessage(msg.getMessage());
-    } else {
-      LOG.trace("Discarded duplicate message");
-    }
-  }
-
-  private void handleMessage(final Message message) {
+  protected void handleMessage(final Message message) {
     final MessageData messageData = message.getData();
 
     switch (messageData.getCode()) {
@@ -130,125 +108,13 @@ public class IbftController implements BftEventHandler {
     }
   }
 
-  private <P extends BftMessage<?>> void consumeMessage(
-      final Message message, final P ibftMessage, final Consumer<P> handleMessage) {
-    LOG.trace("Received IBFT {} message", ibftMessage.getClass().getSimpleName());
-
-    // Discard all messages which target the BLOCKCHAIN height (which SHOULD be 1 less than
-    // the currentHeightManager, but CAN be the same directly following import).
-    if (ibftMessage.getRoundIdentifier().getSequenceNumber()
-        <= blockchain.getChainHeadBlockNumber()) {
-      LOG.debug("Discarding a message which targets a height not above current chain height.");
-      return;
-    }
-
-    if (processMessage(ibftMessage, message)) {
-      gossiper.send(message);
-      handleMessage.accept(ibftMessage);
-    }
-  }
-
   @Override
-  public void handleNewBlockEvent(final NewChainHead newChainHead) {
-    final BlockHeader newBlockHeader = newChainHead.getNewChainHeadHeader();
-    final BlockHeader currentMiningParent = currentHeightManager.getParentBlockHeader();
-    LOG.debug(
-        "New chain head detected (block number={})," + " currently mining on top of {}.",
-        newBlockHeader.getNumber(),
-        currentMiningParent.getNumber());
-    if (newBlockHeader.getNumber() < currentMiningParent.getNumber()) {
-      LOG.trace(
-          "Discarding NewChainHead event, was for previous block height. chainHeight={} eventHeight={}",
-          currentMiningParent.getNumber(),
-          newBlockHeader.getNumber());
-      return;
-    }
-
-    if (newBlockHeader.getNumber() == currentMiningParent.getNumber()) {
-      if (newBlockHeader.getHash().equals(currentMiningParent.getHash())) {
-        LOG.trace(
-            "Discarding duplicate NewChainHead event. chainHeight={} newBlockHash={} parentBlockHash={}",
-            newBlockHeader.getNumber(),
-            newBlockHeader.getHash(),
-            currentMiningParent.getHash());
-      } else {
-        LOG.error(
-            "Subsequent NewChainHead event at same block height indicates chain fork. chainHeight={}",
-            currentMiningParent.getNumber());
-      }
-      return;
-    }
-    startNewHeightManager(newBlockHeader);
-  }
-
-  @Override
-  public void handleBlockTimerExpiry(final BlockTimerExpiry blockTimerExpiry) {
-    final ConsensusRoundIdentifier roundIndentifier = blockTimerExpiry.getRoundIndentifier();
-    if (isMsgForCurrentHeight(roundIndentifier)) {
-      currentHeightManager.handleBlockTimerExpiry(roundIndentifier);
-    } else {
-      LOG.trace(
-          "Block timer event discarded as it is not for current block height chainHeight={} eventHeight={}",
-          currentHeightManager.getChainHeight(),
-          roundIndentifier.getSequenceNumber());
-    }
-  }
-
-  @Override
-  public void handleRoundExpiry(final RoundExpiry roundExpiry) {
-    // Discard all messages which target the BLOCKCHAIN height (which SHOULD be 1 less than
-    // the currentHeightManager, but CAN be the same directly following import).
-    if (roundExpiry.getView().getSequenceNumber() <= blockchain.getChainHeadBlockNumber()) {
-      LOG.debug("Discarding a round-expiry which targets a height not above current chain height.");
-      return;
-    }
-
-    if (isMsgForCurrentHeight(roundExpiry.getView())) {
-      currentHeightManager.roundExpired(roundExpiry);
-    } else {
-      LOG.trace(
-          "Round expiry event discarded as it is not for current block height chainHeight={} eventHeight={}",
-          currentHeightManager.getChainHeight(),
-          roundExpiry.getView().getSequenceNumber());
-    }
-  }
-
-  private void startNewHeightManager(final BlockHeader parentHeader) {
+  protected void createNewHeightManager(final BlockHeader parentHeader) {
     currentHeightManager = ibftBlockHeightManagerFactory.create(parentHeader);
-    final long newChainHeight = currentHeightManager.getChainHeight();
-    futureMessageBuffer.retrieveMessagesForHeight(newChainHeight).forEach(this::handleMessage);
   }
 
-  private boolean processMessage(final BftMessage<?> msg, final Message rawMsg) {
-    final ConsensusRoundIdentifier msgRoundIdentifier = msg.getRoundIdentifier();
-    if (isMsgForCurrentHeight(msgRoundIdentifier)) {
-      return isMsgFromKnownValidator(msg) && ibftFinalState.isLocalNodeValidator();
-    } else if (isMsgForFutureChainHeight(msgRoundIdentifier)) {
-      LOG.trace("Received message for future block height round={}", msgRoundIdentifier);
-      futureMessageBuffer.addMessage(msgRoundIdentifier.getSequenceNumber(), rawMsg);
-      // Notify the synchronizer the transmitting peer must have the parent block to the received
-      // message's target height.
-      sychronizerUpdater.updatePeerChainState(
-          msgRoundIdentifier.getSequenceNumber() - 1L, rawMsg.getConnection());
-    } else {
-      LOG.trace(
-          "IBFT message discarded as it is from a previous block height messageType={} chainHeight={} eventHeight={}",
-          msg.getMessageType(),
-          currentHeightManager.getChainHeight(),
-          msgRoundIdentifier.getSequenceNumber());
-    }
-    return false;
-  }
-
-  private boolean isMsgFromKnownValidator(final Authored msg) {
-    return ibftFinalState.getValidators().contains(msg.getAuthor());
-  }
-
-  private boolean isMsgForCurrentHeight(final ConsensusRoundIdentifier roundIdentifier) {
-    return roundIdentifier.getSequenceNumber() == currentHeightManager.getChainHeight();
-  }
-
-  private boolean isMsgForFutureChainHeight(final ConsensusRoundIdentifier roundIdentifier) {
-    return roundIdentifier.getSequenceNumber() > currentHeightManager.getChainHeight();
+  @Override
+  protected BaseBlockHeightManager getCurrentHeightManager() {
+    return currentHeightManager;
   }
 }

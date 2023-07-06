@@ -17,9 +17,11 @@ package org.hyperledger.besu.consensus.clique;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -30,16 +32,21 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.bouncycastle.util.encoders.Hex;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class CliqueExtraDataTest {
 
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+
   @Test
   public void encodeAndDecodingDoNotAlterData() {
-    final Signature proposerSeal = Signature.create(BigInteger.ONE, BigInteger.ONE, (byte) 0);
+    final SECPSignature proposerSeal =
+        SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0);
     final List<Address> validators =
         Arrays.asList(
             AddressHelpers.ofValue(1), AddressHelpers.ofValue(2), AddressHelpers.ofValue(3));
@@ -60,29 +67,10 @@ public class CliqueExtraDataTest {
   }
 
   @Test
-  public void parseRinkebyGenesisBlockExtraData() {
-    // Rinkeby genesis block extra data text found @ rinkeby.io
-    final byte[] genesisBlockExtraData =
-        Hex.decode(
-            "52657370656374206d7920617574686f7269746168207e452e436172746d616e42eb768f2244c8811c63729a21a3569731535f067ffc57839b00206d1ad20c69a1981b489f772031b279182d99e65703f0076e4812653aab85fca0f00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
-
-    final Bytes bufferToInject = Bytes.wrap(genesisBlockExtraData);
-
-    final CliqueExtraData extraData =
-        CliqueExtraData.decodeRaw(
-            new BlockHeaderTestFixture()
-                .number(BlockHeader.GENESIS_BLOCK_NUMBER)
-                .blockHeaderFunctions(new CliqueBlockHeaderFunctions())
-                .extraData(bufferToInject)
-                .buildHeader());
-    assertThat(extraData.getProposerSeal()).isEmpty();
-    assertThat(extraData.getValidators().size()).isEqualTo(3);
-  }
-
-  @Test
   public void insufficientDataResultsInAnIllegalArgumentException() {
     final Bytes illegalData =
-        Bytes.wrap(new byte[Signature.BYTES_REQUIRED + CliqueExtraData.EXTRA_VANITY_LENGTH - 1]);
+        Bytes.wrap(
+            new byte[SECPSignature.BYTES_REQUIRED + CliqueExtraData.EXTRA_VANITY_LENGTH - 1]);
 
     assertThatThrownBy(() -> CliqueExtraData.decodeRaw(createHeaderWithExtraData(illegalData)))
         .isInstanceOf(IllegalArgumentException.class)
@@ -95,7 +83,7 @@ public class CliqueExtraDataTest {
     final Bytes illegalData =
         Bytes.wrap(
             new byte
-                [Signature.BYTES_REQUIRED
+                [SECPSignature.BYTES_REQUIRED
                     + CliqueExtraData.EXTRA_VANITY_LENGTH
                     + Address.SIZE
                     - 1]);
@@ -109,7 +97,7 @@ public class CliqueExtraDataTest {
   public void addressToExtraDataString() {
     final List<KeyPair> nodeKeys = Lists.newArrayList();
     for (int i = 0; i < 4; i++) {
-      nodeKeys.add(KeyPair.generate());
+      nodeKeys.add(SIGNATURE_ALGORITHM.get().generateKeyPair());
     }
 
     final List<Address> addresses =

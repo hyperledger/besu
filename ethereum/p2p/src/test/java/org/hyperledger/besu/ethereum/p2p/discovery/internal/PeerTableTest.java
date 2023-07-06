@@ -16,23 +16,29 @@ package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable.AddResult.AddOutcome;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable.EvictResult;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable.EvictResult.EvictOutcome;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 
 import java.util.List;
 import java.util.Optional;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 
 public class PeerTableTest {
+
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();
 
   @Test
@@ -52,7 +58,7 @@ public class PeerTableTest {
   public void addSelf() {
     final DiscoveryPeer localPeer =
         DiscoveryPeer.fromEnode(
-            EnodeURL.builder()
+            EnodeURLImpl.builder()
                 .nodeId(Peer.randomId())
                 .ipAddress("127.0.0.1")
                 .discoveryAndListeningPorts(12345)
@@ -82,7 +88,8 @@ public class PeerTableTest {
   @Test
   public void peerExists_withDifferentIp() {
     final PeerTable table = new PeerTable(Peer.randomId(), 16);
-    final Bytes peerId = KeyPair.generate().getPublicKey().getEncodedBytes();
+    final Bytes peerId =
+        SIGNATURE_ALGORITHM.get().generateKeyPair().getPublicKey().getEncodedBytes();
     final DiscoveryPeer peer =
         DiscoveryPeer.fromIdAndEndpoint(peerId, new Endpoint("1.1.1.1", 30303, Optional.empty()));
 
@@ -101,7 +108,8 @@ public class PeerTableTest {
   @Test
   public void peerExists_withDifferentUdpPort() {
     final PeerTable table = new PeerTable(Peer.randomId(), 16);
-    final Bytes peerId = KeyPair.generate().getPublicKey().getEncodedBytes();
+    final Bytes peerId =
+        SIGNATURE_ALGORITHM.get().generateKeyPair().getPublicKey().getEncodedBytes();
     final DiscoveryPeer peer =
         DiscoveryPeer.fromIdAndEndpoint(peerId, new Endpoint("1.1.1.1", 30303, Optional.empty()));
 
@@ -120,7 +128,8 @@ public class PeerTableTest {
   @Test
   public void peerExists_withDifferentIdAndUdpPort() {
     final PeerTable table = new PeerTable(Peer.randomId(), 16);
-    final Bytes peerId = KeyPair.generate().getPublicKey().getEncodedBytes();
+    final Bytes peerId =
+        SIGNATURE_ALGORITHM.get().generateKeyPair().getPublicKey().getEncodedBytes();
     final DiscoveryPeer peer =
         DiscoveryPeer.fromIdAndEndpoint(peerId, new Endpoint("1.1.1.1", 30303, Optional.empty()));
 

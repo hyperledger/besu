@@ -17,13 +17,15 @@ package org.hyperledger.besu.ethereum.stratum;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
-import java.io.IOException;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import io.vertx.core.buffer.Buffer;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
@@ -35,13 +37,15 @@ import org.apache.tuweni.bytes.Bytes;
 public interface StratumProtocol {
 
   /**
-   * Checks if the protocol can handle a TCP connection, based on the initial message.
+   * Checks if the protocol can handle a TCP connection, based on the initial message. If the
+   * protocol can handle the message, it will consume it and handle it.
    *
    * @param initialMessage the initial message sent over the TCP connection.
    * @param conn the connection itself
+   * @param sender the callback to use to send messages back to the client
    * @return true if the protocol can handle this connection
    */
-  boolean canHandle(String initialMessage, StratumConnection conn);
+  boolean maybeHandle(Buffer initialMessage, StratumConnection conn, Consumer<String> sender);
 
   /**
    * Callback when a stratum connection is closed.
@@ -55,32 +59,38 @@ public interface StratumProtocol {
    *
    * @param conn the Stratum connection
    * @param message the message to handle
+   * @param sender the callback to use to send messages back to the client
    */
-  void handle(StratumConnection conn, String message);
+  void handle(StratumConnection conn, Buffer message, Consumer<String> sender);
 
   /**
    * Sets the current proof-of-work job.
    *
    * @param input the new proof-of-work job to send to miners
    */
-  void setCurrentWorkTask(EthHashSolverInputs input);
+  void setCurrentWorkTask(PoWSolverInputs input);
 
-  void setSubmitCallback(Function<EthHashSolution, Boolean> submitSolutionCallback);
+  void setSubmitCallback(Function<PoWSolution, Boolean> submitSolutionCallback);
 
   default void handleHashrateSubmit(
       final JsonMapper mapper,
       final MiningCoordinator miningCoordinator,
       final StratumConnection conn,
-      final JsonRpcRequest message)
-      throws IOException {
+      final JsonRpcRequest message,
+      final Consumer<String> sender) {
     final String hashRate = message.getRequiredParameter(0, String.class);
     final String id = message.getRequiredParameter(1, String.class);
-    String response =
-        mapper.writeValueAsString(
-            new JsonRpcSuccessResponse(
-                message.getId(),
-                miningCoordinator.submitHashRate(
-                    id, Bytes.fromHexString(hashRate).toBigInteger().longValue())));
-    conn.send(response + "\n");
+    String response;
+    try {
+      response =
+          mapper.writeValueAsString(
+              new JsonRpcSuccessResponse(
+                  message.getId(),
+                  miningCoordinator.submitHashRate(
+                      id, Bytes.fromHexString(hashRate).toBigInteger().longValue())));
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException(e);
+    }
+    sender.accept(response);
   }
 }

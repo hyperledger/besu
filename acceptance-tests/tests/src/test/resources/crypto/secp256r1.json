@@ -1,0 +1,23 @@
+{
+  "config": {
+    "chainId": 1981,
+    "ecCurve": "secp256r1",
+    "constantinoplefixblock": 0,
+    "ethash": {
+      "fixeddifficulty": 1000
+    }
+  },
+  "nonce": "0x0",
+  "timestamp": "0x58ee40ba",
+  "gasLimit": "0x1fffffffffffff",
+  "difficulty": "0x1",
+  "mixHash": "0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365",
+  "alloc": {
+    "91240f5b6994c7ed80f9f94b1aa847880ad3b150": {
+      "privateKey": "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63",
+      "info": "This genesis file uses SECP256R1 as elliptic curve. The address is only valid for this curve and invalid with the default SECP256K1 curve.",
+      "comment": "private key and this comment are ignored. In a real chain, the private key should NOT be stored",
+      "balance": "0xad78ebc5ac6200000"
+    }
+  }
+}

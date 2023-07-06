@@ -24,7 +24,9 @@ import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 
 import java.nio.file.Path;
+import java.util.Optional;
 import javax.inject.Named;
+import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
@@ -49,6 +51,18 @@ public class EvmToolCommandOptionsModule {
     return revertReasonEnabled;
   }
 
+  @Option(
+      names = {"--fork"},
+      paramLabel = "<String>",
+      description = "Fork to evaluate, overriding network setting.")
+  String fork = null;
+
+  @Provides
+  @Named("Fork")
+  Optional<String> provideFork() {
+    return Optional.ofNullable(fork);
+  }
+
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--key-value-storage"},
@@ -71,6 +85,7 @@ public class EvmToolCommandOptionsModule {
   final Path dataPath = getDefaultBesuDataPath(this);
 
   @Provides
+  @Singleton
   BesuConfiguration provideBesuConfiguration() {
     return new BesuConfigurationImpl(dataPath, dataPath.resolve(BesuController.DATABASE_PATH));
   }
@@ -83,6 +98,7 @@ public class EvmToolCommandOptionsModule {
   private final BlockParameter blockParameter = BlockParameter.PENDING;
 
   @Provides
+  @Singleton
   BlockParameter provideBlockParameter() {
     return blockParameter;
   }

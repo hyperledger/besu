@@ -18,10 +18,16 @@ package org.hyperledger.besu.ethereum.bonsai;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
+import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogLayer;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.util.io.RollingFileReader;
 
@@ -38,8 +44,15 @@ public class RollingImport {
     final RollingFileReader reader =
         new RollingFileReader((i, c) -> Path.of(String.format(arg[0] + "-%04d.rdat", i)), false);
 
-    final InMemoryStorageProvider provider = new InMemoryStorageProvider();
-    final BonsaiWorldStateArchive archive = new BonsaiWorldStateArchive(provider);
+    final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
+    final CachedMerkleTrieLoader cachedMerkleTrieLoader =
+        new CachedMerkleTrieLoader(new NoOpMetricsSystem());
+    final BonsaiWorldStateProvider archive =
+        new BonsaiWorldStateProvider(
+            provider, null, cachedMerkleTrieLoader, new NoOpMetricsSystem(), null);
+    final BonsaiWorldState bonsaiState =
+        new BonsaiWorldState(
+            archive, new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()));
     final InMemoryKeyValueStorage accountStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
@@ -56,14 +69,6 @@ public class RollingImport {
     final InMemoryKeyValueStorage trieLogStorage =
         (InMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
-    final BonsaiPersistedWorldState bonsaiState =
-        new BonsaiPersistedWorldState(
-            archive,
-            accountStorage,
-            codeStorage,
-            storageStorage,
-            trieBranchStorage,
-            trieLogStorage);
 
     int count = 0;
     while (!reader.isDone()) {
@@ -73,11 +78,12 @@ public class RollingImport {
           continue;
         }
         final TrieLogLayer layer =
-            TrieLogLayer.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false));
-        final BonsaiWorldStateUpdater updater = (BonsaiWorldStateUpdater) bonsaiState.updater();
+            TrieLogFactoryImpl.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false));
+        final BonsaiWorldStateUpdateAccumulator updater =
+            (BonsaiWorldStateUpdateAccumulator) bonsaiState.updater();
         updater.rollForward(layer);
         updater.commit();
-        bonsaiState.persist(Hash.wrap(layer.getBlockHash()));
+        bonsaiState.persist(null);
         if (count % 10000 == 0) {
           System.out.println(". - " + count);
         } else if (count % 100 == 0) {
@@ -101,11 +107,12 @@ public class RollingImport {
         reader.seek(count);
         final byte[] bytes = reader.readBytes();
         final TrieLogLayer layer =
-            TrieLogLayer.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false));
-        final BonsaiWorldStateUpdater updater = (BonsaiWorldStateUpdater) bonsaiState.updater();
+            TrieLogFactoryImpl.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false));
+        final BonsaiWorldStateUpdateAccumulator updater =
+            (BonsaiWorldStateUpdateAccumulator) bonsaiState.updater();
         updater.rollBack(layer);
         updater.commit();
-        bonsaiState.persist(Hash.wrap(layer.getBlockHash()));
+        bonsaiState.persist(null);
         if (count % 10000 == 0) {
           System.out.println(". - " + count);
         } else if (count % 100 == 0) {

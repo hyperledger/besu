@@ -15,28 +15,33 @@
 package org.hyperledger.besu.tests.acceptance.dsl.node;
 
 import static java.util.Collections.unmodifiableList;
-import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.apache.tuweni.io.file.Files.copyResource;
 
+import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.config.MergeConfigOptions;
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.KeyPairUtil;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.NodeConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.Transaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.admin.AdminRequestFactory;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftRequestFactory;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.ConsensusType;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.CliqueRequestFactory;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.ibft2.Ibft2RequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.login.LoginRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.CustomRequestFactory;
@@ -62,10 +67,11 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.base.MoreObjects;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
-import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 import org.java_websocket.exceptions.WebsocketNotConnectedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.core.JsonRpc2_0Web3j;
 import org.web3j.protocol.http.HttpService;
@@ -77,25 +83,33 @@ import org.web3j.utils.Async;
 public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable {
 
   private static final String LOCALHOST = "127.0.0.1";
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BesuNode.class);
+  public static final String HTTP = "http://";
+  public static final String WS_RPC = "ws-rpc";
+  public static final String JSON_RPC = "json-rpc";
 
   private final Path homeDirectory;
-  private final KeyPair keyPair;
+  private KeyPair keyPair;
   private final Properties portsProperties = new Properties();
   private final Boolean p2pEnabled;
+  private final int p2pPort;
+  private final Optional<TLSConfiguration> tlsConfiguration;
   private final NetworkingConfiguration networkingConfiguration;
   private final boolean revertReasonEnabled;
 
   private final String name;
-  private final MiningParameters miningParameters;
+  private MiningParameters miningParameters;
   private final List<String> runCommand;
   private PrivacyParameters privacyParameters = PrivacyParameters.DEFAULT;
   private final JsonRpcConfiguration jsonRpcConfiguration;
+  private final Optional<JsonRpcConfiguration> engineRpcConfiguration;
   private final WebSocketConfiguration webSocketConfiguration;
+  private final JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private final MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
   private final GenesisConfigurationProvider genesisConfigProvider;
   private final boolean devMode;
+  private final NetworkName network;
   private final boolean discoveryEnabled;
   private final List<URI> bootnodes = new ArrayList<>();
   private final boolean bootnodeEligible;
@@ -111,19 +125,27 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final List<String> staticNodes;
   private boolean isDnsEnabled = false;
   private Optional<Integer> exitCode = Optional.empty();
+  private Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration = Optional.empty();
+  private final boolean isStrictTxReplayProtectionEnabled;
+  private final Map<String, String> environment;
 
   public BesuNode(
       final String name,
       final Optional<Path> dataPath,
       final MiningParameters miningParameters,
       final JsonRpcConfiguration jsonRpcConfiguration,
+      final Optional<JsonRpcConfiguration> engineRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
+      final JsonRpcIpcConfiguration jsonRpcIpcConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final Optional<String> keyfilePath,
       final boolean devMode,
+      final NetworkName network,
       final GenesisConfigurationProvider genesisConfigProvider,
       final boolean p2pEnabled,
+      final int p2pPort,
+      final Optional<TLSConfiguration> tlsConfiguration,
       final NetworkingConfiguration networkingConfiguration,
       final boolean discoveryEnabled,
       final boolean bootnodeEligible,
@@ -135,9 +157,14 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final List<String> staticNodes,
       final boolean isDnsEnabled,
       final Optional<PrivacyParameters> privacyParameters,
-      final List<String> runCommand)
+      final List<String> runCommand,
+      final Optional<KeyPair> keyPair,
+      final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration,
+      final boolean isStrictTxReplayProtectionEnabled,
+      final Map<String, String> environment)
       throws IOException {
     this.homeDirectory = dataPath.orElseGet(BesuNode::createTmpDataDirectory);
+    this.isStrictTxReplayProtectionEnabled = isStrictTxReplayProtectionEnabled;
     keyfilePath.ifPresent(
         path -> {
           try {
@@ -146,16 +173,26 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
             LOG.error("Could not find key file \"{}\" in resources", path);
           }
         });
-    this.keyPair = KeyPairUtil.loadKeyPair(homeDirectory);
+    keyPair.ifPresentOrElse(
+        existingKeyPair -> {
+          this.keyPair = existingKeyPair;
+          KeyPairUtil.storeKeyFile(existingKeyPair, homeDirectory);
+        },
+        () -> this.keyPair = KeyPairUtil.loadKeyPair(homeDirectory));
     this.name = name;
     this.miningParameters = miningParameters;
     this.jsonRpcConfiguration = jsonRpcConfiguration;
+    this.engineRpcConfiguration = engineRpcConfiguration;
     this.webSocketConfiguration = webSocketConfiguration;
+    this.jsonRpcIpcConfiguration = jsonRpcIpcConfiguration;
     this.metricsConfiguration = metricsConfiguration;
     this.permissioningConfiguration = permissioningConfiguration;
     this.genesisConfigProvider = genesisConfigProvider;
     this.devMode = devMode;
+    this.network = network;
     this.p2pEnabled = p2pEnabled;
+    this.p2pPort = p2pPort;
+    this.tlsConfiguration = tlsConfiguration;
     this.networkingConfiguration = networkingConfiguration;
     this.discoveryEnabled = discoveryEnabled;
     this.bootnodeEligible = bootnodeEligible;
@@ -174,11 +211,15 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
             LOG.error("Could not find plugin \"{}\" in resources", pluginName);
           }
         });
+    engineRpcConfiguration.ifPresent(
+        config -> MergeConfigOptions.setMergeEnabled(config.isEnabled()));
     this.extraCLIOptions = extraCLIOptions;
     this.staticNodes = staticNodes;
     this.isDnsEnabled = isDnsEnabled;
     privacyParameters.ifPresent(this::setPrivacyParameters);
-    LOG.info("Created BesuNode {}", this.toString());
+    this.pkiKeyStoreConfiguration = pkiKeyStoreConfiguration;
+    this.environment = environment;
+    LOG.info("Created BesuNode {}", this);
   }
 
   private static Path createTmpDataDirectory() {
@@ -194,8 +235,23 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     return jsonRpcConfiguration().isEnabled();
   }
 
+  @Override
+  public boolean isEngineRpcEnabled() {
+    return engineRpcConfiguration.isPresent() && engineRpcConfiguration.get().isEnabled();
+  }
+
+  public boolean isEngineAuthDisabled() {
+    return engineRpcConfiguration
+        .map(engineConf -> !engineConf.isAuthenticationEnabled())
+        .orElse(false);
+  }
+
   private boolean isWebSocketsRpcEnabled() {
     return webSocketConfiguration().isEnabled();
+  }
+
+  public boolean isJsonRpcIpcEnabled() {
+    return jsonRpcIpcConfiguration().isEnabled();
   }
 
   boolean isMetricsEnabled() {
@@ -220,10 +276,15 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public URI enodeUrl() {
     final String discport = isDiscoveryEnabled() ? "?discport=" + getDiscoveryPort() : "";
-    return URI.create("enode://" + getNodeId() + "@" + LOCALHOST + ":" + getP2pPort() + discport);
+    return URI.create(
+        "enode://" + getNodeId() + "@" + LOCALHOST + ":" + getRuntimeP2pPort() + discport);
   }
 
-  private String getP2pPort() {
+  public String getP2pPort() {
+    return String.valueOf(p2pPort);
+  }
+
+  private String getRuntimeP2pPort() {
     final String port = portsProperties.getProperty("p2p");
     if (port == null) {
       throw new IllegalStateException("Requested p2p port before ports properties was written");
@@ -240,13 +301,23 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     return port;
   }
 
-  private Optional<String> jsonRpcBaseUrl() {
+  public Optional<String> jsonRpcBaseUrl() {
     if (isJsonRpcEnabled()) {
       return Optional.of(
-          "http://"
-              + jsonRpcConfiguration.getHost()
-              + ":"
-              + portsProperties.getProperty("json-rpc"));
+          HTTP + jsonRpcConfiguration.getHost() + ":" + portsProperties.getProperty(JSON_RPC));
+    } else {
+      return Optional.empty();
+    }
+  }
+
+  public Optional<String> engineRpcUrl() {
+    if (isEngineRpcEnabled()) {
+      final Optional<Integer> maybeEngineRpcPort = getEngineJsonRpcPort();
+      if (maybeEngineRpcPort.isEmpty()) {
+        return Optional.empty();
+      }
+      return Optional.of(
+          HTTP + engineRpcConfiguration.get().getHost() + ":" + maybeEngineRpcPort.get());
     } else {
       return Optional.empty();
     }
@@ -255,7 +326,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private Optional<String> wsRpcBaseUrl() {
     if (isWebSocketsRpcEnabled()) {
       return Optional.of(
-          "ws://" + webSocketConfiguration.getHost() + ":" + portsProperties.getProperty("ws-rpc"));
+          "ws://" + webSocketConfiguration.getHost() + ":" + portsProperties.getProperty(WS_RPC));
     } else {
       return Optional.empty();
     }
@@ -264,10 +335,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private Optional<String> wsRpcBaseHttpUrl() {
     if (isWebSocketsRpcEnabled()) {
       return Optional.of(
-          "http://"
-              + webSocketConfiguration.getHost()
-              + ":"
-              + portsProperties.getProperty("ws-rpc"));
+          HTTP + webSocketConfiguration.getHost() + ":" + portsProperties.getProperty(WS_RPC));
     } else {
       return Optional.empty();
     }
@@ -276,7 +344,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   public Optional<String> metricsHttpUrl() {
     if (isMetricsEnabled()) {
       return Optional.of(
-          "http://"
+          HTTP
               + metricsConfiguration.getHost()
               + ":"
               + portsProperties.getProperty("metrics")
@@ -289,15 +357,25 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   @Override
   public Optional<Integer> getJsonRpcWebSocketPort() {
     if (isWebSocketsRpcEnabled()) {
-      return Optional.of(Integer.valueOf(portsProperties.getProperty("ws-rpc")));
+      return Optional.of(Integer.valueOf(portsProperties.getProperty(WS_RPC)));
     } else {
       return Optional.empty();
     }
   }
 
-  public Optional<Integer> getJsonRpcSocketPort() {
-    if (isWebSocketsRpcEnabled()) {
-      return Optional.of(Integer.valueOf(portsProperties.getProperty("json-rpc")));
+  @Override
+  public Optional<Integer> getJsonRpcPort() {
+    if (isJsonRpcEnabled()) {
+      return Optional.of(Integer.valueOf(portsProperties.getProperty(JSON_RPC)));
+    } else {
+      return Optional.empty();
+    }
+  }
+
+  @Override
+  public Optional<Integer> getEngineJsonRpcPort() {
+    if (isEngineRpcEnabled()) {
+      return Optional.of(Integer.valueOf(portsProperties.getProperty("engine-json-rpc")));
     } else {
       return Optional.empty();
     }
@@ -308,7 +386,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     return LOCALHOST;
   }
 
-  private NodeRequests nodeRequests() {
+  public NodeRequests nodeRequests() {
     Optional<WebSocketService> websocketService = Optional.empty();
     if (nodeRequests == null) {
       final Web3jService web3jService;
@@ -330,20 +408,25 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
         websocketService = Optional.of((WebSocketService) web3jService);
       } else {
-        web3jService =
-            jsonRpcBaseUrl()
-                .map(HttpService::new)
-                .orElse(new HttpService("http://" + LOCALHOST + ":" + 8545));
+        final String url = jsonRpcBaseUrl().orElse(HTTP + LOCALHOST + ":" + 8545);
+        web3jService = new HttpService(url);
         if (token != null) {
           ((HttpService) web3jService).addHeader("Authorization", "Bearer " + token);
         }
       }
 
+      final ConsensusType bftType =
+          getGenesisConfig()
+              .map(
+                  gc ->
+                      gc.toLowerCase().contains("ibft") ? ConsensusType.IBFT2 : ConsensusType.QBFT)
+              .orElse(ConsensusType.IBFT2);
+
       nodeRequests =
           new NodeRequests(
               new JsonRpc2_0Web3j(web3jService, 2000, Async.defaultExecutorService()),
               new CliqueRequestFactory(web3jService),
-              new Ibft2RequestFactory(web3jService),
+              new BftRequestFactory(web3jService, bftType),
               new PermissioningJsonRpcRequestFactory(web3jService),
               new AdminRequestFactory(web3jService),
               new PrivacyRequestFactory(web3jService),
@@ -368,8 +451,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
         baseUrl = jsonRpcBaseUrl();
         port = "8545";
       }
-      loginRequestFactory =
-          new LoginRequestFactory(baseUrl.orElse("http://" + LOCALHOST + ":" + port));
+      loginRequestFactory = new LoginRequestFactory(baseUrl.orElse(HTTP + LOCALHOST + ":" + port));
     }
     return loginRequestFactory;
   }
@@ -490,6 +572,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     return jsonRpcConfiguration;
   }
 
+  Optional<JsonRpcConfiguration> engineRpcConfiguration() {
+    return engineRpcConfiguration;
+  }
+
   Optional<String> jsonRpcListenHost() {
     if (isJsonRpcEnabled()) {
       return Optional.of(jsonRpcConfiguration().getHost());
@@ -506,12 +592,24 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     }
   }
 
+  Optional<Integer> jsonEngineListenPort() {
+    if (isEngineRpcEnabled()) {
+      return Optional.of(engineRpcConfiguration.get().getPort());
+    } else {
+      return Optional.empty();
+    }
+  }
+
   boolean wsRpcEnabled() {
     return isWebSocketsRpcEnabled();
   }
 
   WebSocketConfiguration webSocketConfiguration() {
     return webSocketConfiguration;
+  }
+
+  JsonRpcIpcConfiguration jsonRpcIpcConfiguration() {
+    return jsonRpcIpcConfiguration;
   }
 
   Optional<String> wsRpcListenHost() {
@@ -540,6 +638,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     return p2pEnabled;
   }
 
+  public Optional<TLSConfiguration> getTLSConfiguration() {
+    return tlsConfiguration;
+  }
+
   public NetworkingConfiguration getNetworkingConfiguration() {
     return networkingConfiguration;
   }
@@ -559,6 +661,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     return miningParameters;
   }
 
+  public void setMiningParameters(final MiningParameters miningParameters) {
+    this.miningParameters = miningParameters;
+  }
+
   public PrivacyParameters getPrivacyParameters() {
     return privacyParameters;
   }
@@ -569,6 +675,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public boolean isDevMode() {
     return devMode;
+  }
+
+  public NetworkName getNetwork() {
+    return network;
   }
 
   public boolean isSecp256k1Native() {
@@ -622,6 +732,14 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public List<String> getRunCommand() {
     return runCommand;
+  }
+
+  public Optional<PkiKeyStoreConfiguration> getPkiKeyStoreConfiguration() {
+    return pkiKeyStoreConfiguration;
+  }
+
+  public boolean isStrictTxReplayProtectionEnabled() {
+    return isStrictTxReplayProtectionEnabled;
   }
 
   @Override
@@ -682,5 +800,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public void setExitCode(final int exitValue) {
     this.exitCode = Optional.of(exitValue);
+  }
+
+  @Override
+  public Map<String, String> getEnvironment() {
+    return environment;
   }
 }

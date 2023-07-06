@@ -25,7 +25,7 @@ import java.util.function.Supplier;
  * operations that defer to specific provider (e.g. BouncyCastle).
  */
 @Unstable
-public interface SecurityModuleService {
+public interface SecurityModuleService extends BesuService {
 
   /**
    * Registers a provider of security modules.

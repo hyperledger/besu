@@ -1,0 +1,48 @@
+{
+  "comment" : "Self destruct and send contract balance to the same address provided in the to field.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_rawTransaction",
+    "params" : [ "0xf8758081ef83fffff2940150000000000000000000000000000000000000809400000000000000000000000001500000000000001ca0d4e0bc58b66988dbda935ddbbd86947e82ab33eff8a8f2601a8662f012641dd9a05f96e65ab05bfceadd224172895f85c1ffedc514eb8ad496675736f0e8a6f1f6", [ "stateDiff" ] ],
+    "id" : 46
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x",
+      "stateDiff" : {
+        "0x0000000000000000000000000000000000000000" : {
+          "balance" : {
+            "*" : {
+              "from" : "0x393f0f18385c0b29e",
+              "to" : "0x393f0f183860da92e"
+            }
+          },
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : { }
+        },
+        "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73" : {
+          "balance" : {
+            "*" : {
+              "from" : "0xffffffffffffffffffffffffffffffffd27fb671b",
+              "to" : "0xffffffffffffffffffffffffffffffffd27ae708b"
+            }
+          },
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x1e",
+              "to" : "0x1f"
+            }
+          },
+          "storage" : { }
+        }
+      },
+      "trace" : [ ],
+      "vmTrace" : null
+    },
+    "id" : 46
+  },
+  "statusCode" : 200
+}

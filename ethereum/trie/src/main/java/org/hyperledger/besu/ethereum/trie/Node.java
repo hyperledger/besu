@@ -30,13 +30,17 @@ public interface Node<V> {
 
   Bytes getPath();
 
+  default Optional<Bytes> getLocation() {
+    return Optional.empty();
+  }
+
   Optional<V> getValue();
 
   List<Node<V>> getChildren();
 
-  Bytes getRlp();
+  Bytes getEncodedBytes();
 
-  Bytes getRlpRef();
+  Bytes getEncodedBytesRef();
 
   /**
    * Whether a reference to this node should be represented as a hash of the rlp, or the node rlp
@@ -46,7 +50,7 @@ public interface Node<V> {
    * @return true if this node should be referenced by hash
    */
   default boolean isReferencedByHash() {
-    return getRlp().size() >= 32;
+    return getEncodedBytes().size() >= 32;
   }
 
   Bytes32 getHash();
@@ -67,4 +71,16 @@ public interface Node<V> {
 
   /** Unloads the node if it is, for example, a StoredNode. */
   default void unload() {}
+
+  /**
+   * Return if a node needs heal. If one of its children missing in the storage
+   *
+   * @return true if the node need heal
+   */
+  boolean isHealNeeded();
+
+  /**
+   * Marking a node as need heal means that one of its children is not yet present in the storage
+   */
+  void markHealNeeded();
 }

@@ -32,15 +32,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
-import com.google.common.base.MoreObjects;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 public abstract class AbstractPeerConnection implements PeerConnection {
-  private static final Logger LOG = LogManager.getLogger();
-
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractPeerConnection.class);
+  private static final Marker P2P_MESSAGE_MARKER = MarkerFactory.getMarker("P2PMSG");
   private final Peer peer;
   private final PeerInfo peerInfo;
   private final InetSocketAddress localAddress;
@@ -53,6 +53,10 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   private final AtomicBoolean disconnected = new AtomicBoolean(false);
   protected final PeerConnectionEventDispatcher connectionEventDispatcher;
   private final LabelledMetric<Counter> outboundMessagesCounter;
+  private final long initiatedAt;
+  private final boolean inboundInitiated;
+  private boolean statusSent;
+  private boolean statusReceived;
 
   protected AbstractPeerConnection(
       final Peer peer,
@@ -62,7 +66,8 @@ public abstract class AbstractPeerConnection implements PeerConnection {
       final String connectionId,
       final CapabilityMultiplexer multiplexer,
       final PeerConnectionEventDispatcher connectionEventDispatcher,
-      final LabelledMetric<Counter> outboundMessagesCounter) {
+      final LabelledMetric<Counter> outboundMessagesCounter,
+      final boolean inboundInitiated) {
     this.peer = peer;
     this.peerInfo = peerInfo;
     this.localAddress = localAddress;
@@ -76,6 +81,10 @@ public abstract class AbstractPeerConnection implements PeerConnection {
     }
     this.connectionEventDispatcher = connectionEventDispatcher;
     this.outboundMessagesCounter = outboundMessagesCounter;
+    this.inboundInitiated = inboundInitiated;
+    this.initiatedAt = System.currentTimeMillis();
+
+    LOG.debug("New PeerConnection ({}) established with peer {}", this, peer.getId());
   }
 
   @Override
@@ -113,7 +122,15 @@ public abstract class AbstractPeerConnection implements PeerConnection {
           .inc();
     }
 
-    LOG.trace("Writing {} to {} via protocol {}", message, peerInfo, capability);
+    LOG.atTrace()
+        .addMarker(P2P_MESSAGE_MARKER)
+        .setMessage("Writing {} to {} via protocol {}")
+        .addArgument(message)
+        .addArgument(peerInfo)
+        .addArgument(capability)
+        .addKeyValue("rawData", message.getData())
+        .addKeyValue("decodedData", message::toStringDecoded)
+        .log();
     doSendMessage(capability, message);
   }
 
@@ -142,12 +159,12 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   @Override
   public void terminateConnection(final DisconnectReason reason, final boolean peerInitiated) {
     if (disconnected.compareAndSet(false, true)) {
-      LOG.debug("Disconnected ({}) from {}", reason, peerInfo);
       connectionEventDispatcher.dispatchDisconnect(this, reason, peerInitiated);
     }
     // Always ensure the context gets closed immediately even if we previously sent a disconnect
     // message and are waiting to close.
     closeConnectionImmediately();
+    LOG.debug("Terminating connection {}, reason {}", this, reason);
   }
 
   protected abstract void closeConnectionImmediately();
@@ -157,9 +174,9 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   @Override
   public void disconnect(final DisconnectReason reason) {
     if (disconnected.compareAndSet(false, true)) {
-      LOG.debug("Disconnecting ({}) from {}", reason, peerInfo);
       connectionEventDispatcher.dispatchDisconnect(this, reason, false);
       doSend(null, DisconnectMessage.create(reason));
+      LOG.debug("Disconnecting connection {}, reason {}", System.identityHashCode(this), reason);
       closeConnection();
     }
   }
@@ -177,6 +194,16 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   @Override
   public InetSocketAddress getRemoteAddress() {
     return remoteAddress;
+  }
+
+  @Override
+  public long getInitiatedAt() {
+    return initiatedAt;
+  }
+
+  @Override
+  public boolean inboundInitiated() {
+    return inboundInitiated;
   }
 
   @Override
@@ -198,13 +225,30 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   }
 
   @Override
+  public void setStatusSent() {
+    this.statusSent = true;
+  }
+
+  @Override
+  public void setStatusReceived() {
+    this.statusReceived = true;
+  }
+
+  @Override
+  public boolean getStatusExchanged() {
+    return statusReceived && statusSent;
+  }
+
+  @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("nodeId", peerInfo.getNodeId())
-        .add("clientId", peerInfo.getClientId())
-        .add(
-            "caps",
-            agreedCapabilities.stream().map(Capability::toString).collect(Collectors.joining(", ")))
-        .toString();
+    return "[Connection with hashCode "
+        + hashCode()
+        + " with peer "
+        + this.peer.getId()
+        + " inboundInitiated "
+        + inboundInitiated
+        + " initAt "
+        + initiatedAt
+        + "]";
   }
 }

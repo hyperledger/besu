@@ -1,0 +1,34 @@
+{
+  "comment" : "Revert. Note revertReason has been manually added to the response because OpenEthereum does not include it.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_rawTransaction",
+    "params" : [ "0xf8618081ef83fffff294011000000000000000000000000000000000000080801ba011e7a12824856b23b46fcf302e3a51c94093143c0d18c2de32b38c3ef3b1251ca04eb5fa78e936ab47980dd424d34ef4e4f579daf1652db1a9b1fa442992451885", [ "trace" ] ],
+    "id" : 77
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x7d88c1856cc95352",
+      "stateDiff" : null,
+      "trace" : [ {
+        "action" : {
+          "callType" : "call",
+          "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+          "gas" : "0xffadea",
+          "input" : "0x",
+          "to" : "0x0110000000000000000000000000000000000000",
+          "value" : "0x0"
+        },
+        "error" : "Reverted",
+        "revertReason" : "0x7d88c1856cc95352",
+        "subtraces" : 0,
+        "traceAddress" : [ ],
+        "type" : "call"
+      } ],
+      "vmTrace" : null
+    },
+    "id" : 77
+  },
+  "statusCode" : 200
+}

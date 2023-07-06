@@ -20,12 +20,12 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import java.math.BigInteger;
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PrivateTransactionValidator {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PrivateTransactionValidator.class);
 
   private final Optional<BigInteger> chainId;
 
@@ -77,7 +77,7 @@ public class PrivateTransactionValidator {
               transactionNonce, accountNonce);
       LOG.debug(errorMessage);
       return ValidationResult.invalid(
-          TransactionInvalidReason.INCORRECT_PRIVATE_NONCE, errorMessage);
+          TransactionInvalidReason.PRIVATE_NONCE_TOO_HIGH, errorMessage);
     }
 
     return ValidationResult.valid();
@@ -88,11 +88,6 @@ public class PrivateTransactionValidator {
     if (!privateTransaction.getValue().isZero()) {
       return ValidationResult.invalid(TransactionInvalidReason.PRIVATE_VALUE_NOT_ZERO);
     }
-    if (!privateTransaction.getRestriction().equals(Restriction.RESTRICTED)) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE);
-    }
-
     return ValidationResult.valid();
   }
 

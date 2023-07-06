@@ -14,23 +14,32 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import static org.hyperledger.besu.ethereum.eth.encoding.TransactionAnnouncementDecoder.getDecoder;
+import static org.hyperledger.besu.ethereum.eth.encoding.TransactionAnnouncementEncoder.getEncoder;
+
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionAnnouncement;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 
-public final class NewPooledTransactionHashesMessage extends AbstractMessageData {
-
+public class NewPooledTransactionHashesMessage extends AbstractMessageData {
   private static final int MESSAGE_CODE = EthPV65.NEW_POOLED_TRANSACTION_HASHES;
-  private List<Hash> pendingTransactions;
+  private List<TransactionAnnouncement> pendingTransactions;
+  private final Capability capability;
 
-  NewPooledTransactionHashesMessage(final Bytes rlp) {
+  @VisibleForTesting
+  public NewPooledTransactionHashesMessage(final Bytes rlp, final Capability capability) {
     super(rlp);
+    this.capability = capability;
   }
 
   @Override
@@ -38,13 +47,15 @@ public final class NewPooledTransactionHashesMessage extends AbstractMessageData
     return MESSAGE_CODE;
   }
 
-  public static NewPooledTransactionHashesMessage create(final List<Hash> pendingTransactions) {
-    final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    out.writeList(pendingTransactions, (h, w) -> w.writeBytes(h));
-    return new NewPooledTransactionHashesMessage(out.encoded());
+  public static NewPooledTransactionHashesMessage create(
+      final List<Transaction> pendingTransactions, final Capability capability) {
+    return new NewPooledTransactionHashesMessage(
+        getEncoder(capability).encode(pendingTransactions), capability);
   }
 
-  public static NewPooledTransactionHashesMessage readFrom(final MessageData message) {
+  public static NewPooledTransactionHashesMessage readFrom(
+      final MessageData message, final Capability capability) {
+
     if (message instanceof NewPooledTransactionHashesMessage) {
       return (NewPooledTransactionHashesMessage) message;
     }
@@ -54,15 +65,19 @@ public final class NewPooledTransactionHashesMessage extends AbstractMessageData
           String.format(
               "Message has code %d and thus is not a NewPooledTransactionHashesMessage.", code));
     }
-
-    return new NewPooledTransactionHashesMessage(message.getData());
+    return new NewPooledTransactionHashesMessage(message.getData(), capability);
   }
 
-  public List<Hash> pendingTransactions() {
+  public List<TransactionAnnouncement> pendingTransactions() {
     if (pendingTransactions == null) {
-      final BytesValueRLPInput in = new BytesValueRLPInput(getData(), false);
-      pendingTransactions = in.readList(rlp -> Hash.wrap(rlp.readBytes32()));
+      pendingTransactions = getDecoder(capability).decode(RLP.input(data));
     }
     return pendingTransactions;
+  }
+
+  public List<Hash> pendingTransactionHashes() {
+    return pendingTransactions().stream()
+        .map(TransactionAnnouncement::getHash)
+        .collect(Collectors.toUnmodifiableList());
   }
 }

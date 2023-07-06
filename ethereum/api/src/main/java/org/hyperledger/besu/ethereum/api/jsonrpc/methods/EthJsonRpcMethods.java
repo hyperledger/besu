@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthAccounts;
@@ -22,7 +21,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthBlockNumber
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthCall;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthChainId;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthCoinbase;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthCreateAccessList;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthEstimateGas;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthFeeHistory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGasPrice;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetBalance;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetBlockByHash;
@@ -70,6 +71,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
@@ -83,6 +85,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final TransactionPool transactionPool;
   private final MiningCoordinator miningCoordinator;
   private final Set<Capability> supportedCapabilities;
+  private final Optional<Long> maxLogRange;
 
   public EthJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
@@ -91,7 +94,8 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final FilterManager filterManager,
       final TransactionPool transactionPool,
       final MiningCoordinator miningCoordinator,
-      final Set<Capability> supportedCapabilities) {
+      final Set<Capability> supportedCapabilities,
+      final Optional<Long> maxLogRange) {
     this.blockchainQueries = blockchainQueries;
     this.synchronizer = synchronizer;
     this.protocolSchedule = protocolSchedule;
@@ -99,11 +103,12 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.transactionPool = transactionPool;
     this.miningCoordinator = miningCoordinator;
     this.supportedCapabilities = supportedCapabilities;
+    this.maxLogRange = maxLogRange;
   }
 
   @Override
-  protected RpcApi getApiGroup() {
-    return RpcApis.ETH;
+  protected String getApiGroup() {
+    return RpcApis.ETH.name();
   }
 
   @Override
@@ -113,7 +118,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthBlockNumber(blockchainQueries),
         new EthGetBalance(blockchainQueries),
         new EthGetBlockByHash(blockchainQueries, blockResult),
-        new EthGetBlockByNumber(blockchainQueries, blockResult),
+        new EthGetBlockByNumber(blockchainQueries, blockResult, synchronizer),
         new EthGetBlockTransactionCountByNumber(blockchainQueries),
         new EthGetBlockTransactionCountByHash(blockchainQueries),
         new EthCall(
@@ -122,8 +127,9 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 blockchainQueries.getBlockchain(),
                 blockchainQueries.getWorldStateArchive(),
                 protocolSchedule)),
+        new EthFeeHistory(protocolSchedule, blockchainQueries.getBlockchain()),
         new EthGetCode(blockchainQueries),
-        new EthGetLogs(blockchainQueries),
+        new EthGetLogs(blockchainQueries, maxLogRange),
         new EthGetProof(blockchainQueries),
         new EthGetUncleCountByBlockHash(blockchainQueries),
         new EthGetUncleCountByBlockNumber(blockchainQueries),
@@ -145,6 +151,12 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthSendRawTransaction(transactionPool),
         new EthSendTransaction(),
         new EthEstimateGas(
+            blockchainQueries,
+            new TransactionSimulator(
+                blockchainQueries.getBlockchain(),
+                blockchainQueries.getWorldStateArchive(),
+                protocolSchedule)),
+        new EthCreateAccessList(
             blockchainQueries,
             new TransactionSimulator(
                 blockchainQueries.getBlockchain(),

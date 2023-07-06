@@ -171,7 +171,7 @@ class RLPDecodingHelpers {
     final Kind kind; // The type of rlp element
     final long elementStart; // The index at which this element starts
     final long payloadStart; // The index at which the payload of this element starts
-    final int payloadSize; // The size of the paylod
+    final int payloadSize; // The size of the payload
 
     RLPElementMetadata(
         final Kind kind, final long elementStart, final long payloadStart, final int payloadSize) {
@@ -181,7 +181,11 @@ class RLPDecodingHelpers {
       this.payloadSize = payloadSize;
     }
 
-    /** @return the size of the byte string holding the rlp-encoded value and metadata */
+    /**
+     * The size of the byte string holding the rlp-encoded value and metadata
+     *
+     * @return the size of the byte string holding the rlp-encoded value and metadata
+     */
     int getEncodedSize() {
       final long encodedSize = elementEnd() - elementStart + 1;
       try {

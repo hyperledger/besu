@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync.tasks;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.Hash.EMPTY_TRIE_HASH;
+import static org.hyperledger.besu.datatypes.Hash.EMPTY_TRIE_HASH;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;

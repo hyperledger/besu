@@ -30,4 +30,9 @@ abstract class EmptyMessage implements MessageData {
   public Bytes getData() {
     return Bytes.EMPTY;
   }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + "{ code=" + getCode() + ", size=0}";
+  }
 }

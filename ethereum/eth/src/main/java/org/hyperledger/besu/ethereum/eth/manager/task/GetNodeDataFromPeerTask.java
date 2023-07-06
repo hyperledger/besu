@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 
 import static java.util.Collections.emptyMap;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
@@ -33,13 +33,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GetNodeDataFromPeerTask extends AbstractPeerRequestTask<Map<Hash, Bytes>> {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(GetNodeDataFromPeerTask.class);
 
   private final Set<Hash> hashes;
   private final long pivotBlockNumber;

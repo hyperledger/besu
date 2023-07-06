@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogTopic;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
+import org.hyperledger.besu.evm.log.LogTopic;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,8 +35,8 @@ public class LogAdapter extends AdapterBase {
     this.logWithMetadata = logWithMetadata;
   }
 
-  public Optional<Integer> getIndex() {
-    return Optional.of(logWithMetadata.getLogIndex());
+  public Integer getIndex() {
+    return logWithMetadata.getLogIndex();
   }
 
   public List<LogTopic> getTopics() {
@@ -44,18 +44,18 @@ public class LogAdapter extends AdapterBase {
     return new ArrayList<>(topics);
   }
 
-  public Optional<Bytes> getData() {
-    return Optional.of(logWithMetadata.getData());
+  public Bytes getData() {
+    return logWithMetadata.getData();
   }
 
-  public Optional<TransactionAdapter> getTransaction(final DataFetchingEnvironment environment) {
+  public TransactionAdapter getTransaction(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final Hash hash = logWithMetadata.getTransactionHash();
     final Optional<TransactionWithMetadata> tran = query.transactionByHash(hash);
-    return tran.map(TransactionAdapter::new);
+    return tran.map(TransactionAdapter::new).orElseThrow();
   }
 
-  public Optional<AccountAdapter> getAccount(final DataFetchingEnvironment environment) {
+  public AccountAdapter getAccount(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     long blockNumber = logWithMetadata.getBlockNumber();
     final Long bn = environment.getArgument("block");
@@ -64,7 +64,8 @@ public class LogAdapter extends AdapterBase {
     }
 
     return query
-        .getWorldState(blockNumber)
-        .map(ws -> new AccountAdapter(ws.get(logWithMetadata.getLogger())));
+        .getAndMapWorldState(
+            blockNumber, ws -> Optional.of(new AccountAdapter(ws.get(logWithMetadata.getLogger()))))
+        .get();
   }
 }

@@ -23,7 +23,7 @@ import java.util.Optional;
 
 /** This service allows plugins to register as an available storage engine. */
 @Unstable
-public interface StorageService {
+public interface StorageService extends BesuService {
 
   /**
    * Registers a factory as available for creating key-value storage instances.

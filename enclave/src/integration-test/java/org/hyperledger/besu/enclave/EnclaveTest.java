@@ -21,53 +21,60 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
-import org.hyperledger.orion.testutil.OrionKeyConfiguration;
-import org.hyperledger.orion.testutil.OrionTestHarness;
-import org.hyperledger.orion.testutil.OrionTestHarnessFactory;
+import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
+import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
+import org.hyperledger.enclave.testutil.TesseraTestHarness;
+import org.hyperledger.enclave.testutil.TesseraTestHarnessFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
 import org.awaitility.Awaitility;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class EnclaveTest {
 
-  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir private static Path folder;
 
   private static final String PAYLOAD = "a wonderful transaction";
   private static final String MOCK_KEY = "iOCzoGo5kwtZU0J41Z9xnGXHN6ZNukIa9MspvHtu3Jk=";
-  private static Enclave enclave;
+  private Enclave enclave;
   private Vertx vertx;
   private EnclaveFactory factory;
 
-  private static OrionTestHarness testHarness;
+  private TesseraTestHarness testHarness;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     vertx = Vertx.vertx();
     factory = new EnclaveFactory(vertx);
-    folder.create();
 
     testHarness =
-        OrionTestHarnessFactory.create(
-            folder.newFolder().toPath(),
-            new OrionKeyConfiguration("orion_key_0.pub", "orion_key_0.key"));
+        TesseraTestHarnessFactory.create(
+            "enclave",
+            Files.createTempDirectory(folder, "enclave"),
+            new EnclaveKeyConfiguration(
+                new String[] {"enclave_key_0.pub"},
+                new String[] {"enclave_key_0.key"},
+                EnclaveEncryptorType.NOOP),
+            Optional.empty());
 
     testHarness.start();
 
     enclave = factory.createVertxEnclave(testHarness.clientUrl());
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     testHarness.close();
     vertx.close();
@@ -84,7 +91,7 @@ public class EnclaveTest {
 
     final Throwable t = catchThrowable(() -> enclave.receive(MOCK_KEY, publicKey));
 
-    assertThat(t.getMessage()).isEqualTo("EnclavePayloadNotFound");
+    assertThat(t.getMessage()).isEqualTo("Message with hash was not found");
   }
 
   @Test
@@ -193,7 +200,7 @@ public class EnclaveTest {
     final PrivacyGroup retrievePrivacyGroup =
         enclave.retrievePrivacyGroup(privacyGroupResponse.getPrivacyGroupId());
 
-    assertThat(retrievePrivacyGroup).isEqualToComparingFieldByField(privacyGroupResponse);
+    assertThat(retrievePrivacyGroup).usingRecursiveComparison().isEqualTo(privacyGroupResponse);
 
     final String response =
         enclave.deletePrivacyGroup(privacyGroupResponse.getPrivacyGroupId(), publicKeys.get(0));

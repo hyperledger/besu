@@ -14,15 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.rlp;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.units.bigints.UInt256Value;
+import org.apache.tuweni.units.bigints.UInt64Value;
 
 /**
  * An output used to encode data in RLP encoding.
@@ -73,12 +73,20 @@ public interface RLPOutput {
   void writeBytes(Bytes v);
 
   /**
+   * Writes a scalar 64 bits unsigned int (encoded without leading zeros)
+   *
+   * @param v unsigned 64 bit integer value
+   */
+  default void writeUInt64Scalar(final UInt64Value<?> v) {
+    writeBytes(v.toBytes().trimLeadingZeros());
+  }
+  /**
    * Writes a scalar (encoded with no leading zeroes).
    *
    * @param v The scalar to write.
    */
   default void writeUInt256Scalar(final UInt256Value<?> v) {
-    writeBytes(v.toBytes().trimLeadingZeros());
+    writeBytes(v.trimLeadingZeros());
   }
 
   /**
@@ -104,10 +112,8 @@ public interface RLPOutput {
    * Writes a scalar (encoded with no leading zeroes).
    *
    * @param v The scalar to write.
-   * @throws IllegalArgumentException if {@code v < 0}.
    */
   default void writeLongScalar(final long v) {
-    checkArgument(v >= 0, "Invalid negative value %s for scalar encoding", v);
     writeBytes(Bytes.minimalBytes(v));
   }
 
@@ -115,13 +121,15 @@ public interface RLPOutput {
    * Writes a scalar (encoded with no leading zeroes).
    *
    * @param v The scalar to write.
-   * @throws IllegalArgumentException if {@code v} is a negative integer ({@code v.signum() < 0}).
    */
   default void writeBigIntegerScalar(final BigInteger v) {
-    checkArgument(v.signum() >= 0, "Invalid negative integer %s for scalar encoding", v);
+    if (v.equals(BigInteger.ZERO)) {
+      writeBytes(Bytes.EMPTY);
+      return;
+    }
 
     final byte[] bytes = v.toByteArray();
-    // BigInteger will not include leading zeros by contract, but it always include at least one
+    // BigInteger will not include leading zeros by contract, but it always includes at least one
     // bit of sign (a zero here since it's positive). What that mean is that if the first 1 of the
     // resulting number is exactly on a byte boundary, then the sign bit constraint will make the
     // value include one extra byte, which will be zero. In other words, they can be one zero bytes
@@ -189,7 +197,7 @@ public interface RLPOutput {
    *     {@code b < 0} or {@code b > 0xFF}.
    */
   default void writeUnsignedByte(final int b) {
-    writeBytes(Bytes.of(b));
+    processZeroByte(Long.valueOf(b), a -> writeBytes(Bytes.of(b)));
   }
 
   /**
@@ -200,7 +208,7 @@ public interface RLPOutput {
    *     if either {@code s < 0} or {@code s > 0xFFFF}.
    */
   default void writeUnsignedShort(final int s) {
-    writeBytes(Bytes.ofUnsignedShort(s));
+    processZeroByte(Long.valueOf(s), a -> writeBytes(Bytes.ofUnsignedShort(s).trimLeadingZeros()));
   }
 
   /**
@@ -211,7 +219,7 @@ public interface RLPOutput {
    *     either {@code i < 0} or {@code i > 0xFFFFFFFFL}.
    */
   default void writeUnsignedInt(final long i) {
-    writeBytes(Bytes.ofUnsignedInt(i));
+    processZeroByte(i, a -> writeBytes(Bytes.ofUnsignedInt(i).trimLeadingZeros()));
   }
 
   /**
@@ -251,6 +259,21 @@ public interface RLPOutput {
   }
 
   /**
+   * Writes an empty list to the output.
+   *
+   * <p>This is a shortcut for doing:
+   *
+   * <pre>{@code
+   * startList();
+   * endList();
+   * }</pre>
+   */
+  default void writeEmptyList() {
+    startList();
+    endList();
+  }
+
+  /**
    * Writes an already RLP encoded item to the output.
    *
    * <p>This method is the functional equivalent of decoding the provided value entirely (to an
@@ -277,4 +300,19 @@ public interface RLPOutput {
    * @param bytes An already RLP encoded value to write as next item of this output.
    */
   void writeRaw(Bytes bytes);
+
+  /**
+   * Check if the incoming value is 0 and writes it as 0x80, per the spec.
+   *
+   * @param input The value to check
+   * @param writer The consumer to write the non-zero output
+   */
+  private void processZeroByte(final Long input, final Consumer<Long> writer) {
+    // If input == 0, encode 0 value as 0x80
+    if (input == 0) {
+      writeRaw(Bytes.of(0x80));
+    } else {
+      writer.accept(input);
+    }
+  }
 }

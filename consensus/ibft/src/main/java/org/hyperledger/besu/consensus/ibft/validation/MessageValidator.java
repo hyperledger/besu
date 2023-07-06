@@ -14,25 +14,27 @@
  */
 package org.hyperledger.besu.consensus.ibft.validation;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangeCertificate;
 import org.hyperledger.besu.ethereum.BlockValidator;
-import org.hyperledger.besu.ethereum.BlockValidator.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The Message validator. */
 public class MessageValidator {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(MessageValidator.class);
 
   private final SignedDataValidator signedDataValidator;
   private final ProposalBlockConsistencyValidator proposalConsistencyValidator;
@@ -40,6 +42,15 @@ public class MessageValidator {
   private final ProtocolContext protocolContext;
   private final RoundChangeCertificateValidator roundChangeCertificateValidator;
 
+  /**
+   * Instantiates a new Message validator.
+   *
+   * @param signedDataValidator the signed data validator
+   * @param proposalConsistencyValidator the proposal consistency validator
+   * @param blockValidator the block validator
+   * @param protocolContext the protocol context
+   * @param roundChangeCertificateValidator the round change certificate validator
+   */
   public MessageValidator(
       final SignedDataValidator signedDataValidator,
       final ProposalBlockConsistencyValidator proposalConsistencyValidator,
@@ -53,6 +64,12 @@ public class MessageValidator {
     this.roundChangeCertificateValidator = roundChangeCertificateValidator;
   }
 
+  /**
+   * Validate proposal.
+   *
+   * @param msg the msg
+   * @return the boolean
+   */
   public boolean validateProposal(final Proposal msg) {
 
     if (!signedDataValidator.validateProposal(msg.getSignedPayload())) {
@@ -69,17 +86,21 @@ public class MessageValidator {
       return false;
     }
 
+    final BftBlockInterface blockInterface =
+        protocolContext.getConsensusContext(BftContext.class).getBlockInterface();
     return proposalConsistencyValidator.validateProposalMatchesBlock(
-        msg.getSignedPayload(), msg.getBlock());
+        msg.getSignedPayload(), msg.getBlock(), blockInterface);
   }
 
   private boolean validateBlock(final Block block) {
-    final Optional<BlockProcessingOutputs> validationResult =
+    final var validationResult =
         blockValidator.validateAndProcessBlock(
             protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL);
 
-    if (!validationResult.isPresent()) {
-      LOG.info("Invalid Proposal message, block did not pass validation.");
+    if (validationResult.isFailed()) {
+      LOG.info(
+          "Invalid Proposal message, block did not pass validation. Reason {}",
+          validationResult.errorMessage);
       return false;
     }
 
@@ -135,10 +156,22 @@ public class MessageValidator {
     return true;
   }
 
+  /**
+   * Validate prepare.
+   *
+   * @param msg the msg
+   * @return the boolean
+   */
   public boolean validatePrepare(final Prepare msg) {
     return signedDataValidator.validatePrepare(msg.getSignedPayload());
   }
 
+  /**
+   * Validate commit.
+   *
+   * @param msg the msg
+   * @return the boolean
+   */
   public boolean validateCommit(final Commit msg) {
     return signedDataValidator.validateCommit(msg.getSignedPayload());
   }

@@ -25,43 +25,83 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * The type Segmented key value storage adapter.
+ *
+ * @param <S> the type parameter
+ */
 public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SegmentedKeyValueStorageAdapter.class);
   private final S segmentHandle;
   private final SegmentedKeyValueStorage<S> storage;
 
+  /**
+   * Instantiates a new Segmented key value storage adapter.
+   *
+   * @param segment the segment
+   * @param storage the storage
+   */
   public SegmentedKeyValueStorageAdapter(
       final SegmentIdentifier segment, final SegmentedKeyValueStorage<S> storage) {
-    this.segmentHandle = storage.getSegmentIdentifierByName(segment);
+    segmentHandle = storage.getSegmentIdentifierByName(segment);
     this.storage = storage;
   }
 
   @Override
   public void clear() {
+    throwIfClosed();
     storage.clear(segmentHandle);
   }
 
   @Override
   public boolean containsKey(final byte[] key) throws StorageException {
+    throwIfClosed();
     return storage.containsKey(segmentHandle, key);
   }
 
   @Override
   public Optional<byte[]> get(final byte[] key) throws StorageException {
+    throwIfClosed();
     return storage.get(segmentHandle, key);
   }
 
   @Override
   public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
+    throwIfClosed();
     return storage.getAllKeysThat(segmentHandle, returnCondition);
   }
 
   @Override
+  public Set<byte[]> getAllValuesFromKeysThat(final Predicate<byte[]> returnCondition) {
+    throwIfClosed();
+    return storage.getAllValuesFromKeysThat(segmentHandle, returnCondition);
+  }
+
+  @Override
+  public Stream<Pair<byte[], byte[]>> stream() {
+    throwIfClosed();
+    return storage.stream(segmentHandle);
+  }
+
+  @Override
+  public Stream<Pair<byte[], byte[]>> streamFromKey(final byte[] startKey) throws StorageException {
+    return storage.streamFromKey(segmentHandle, startKey);
+  }
+
+  @Override
   public Stream<byte[]> streamKeys() {
+    throwIfClosed();
     return storage.streamKeys(segmentHandle);
   }
 
   @Override
   public boolean tryDelete(final byte[] key) {
+    throwIfClosed();
     return storage.tryDelete(segmentHandle, key);
   }
 
@@ -77,23 +117,39 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
 
       @Override
       public void put(final byte[] key, final byte[] value) {
+        throwIfClosed();
         transaction.put(segmentHandle, key, value);
       }
 
       @Override
       public void remove(final byte[] key) {
+        throwIfClosed();
         transaction.remove(segmentHandle, key);
       }
 
       @Override
       public void commit() throws StorageException {
+        throwIfClosed();
         transaction.commit();
       }
 
       @Override
       public void rollback() {
+        throwIfClosed();
         transaction.rollback();
       }
     };
+  }
+
+  @Override
+  public boolean isClosed() {
+    return storage.isClosed();
+  }
+
+  private void throwIfClosed() {
+    if (storage.isClosed()) {
+      LOG.error("Attempting to use a closed Storage instance.");
+      throw new StorageException("Storage has been closed");
+    }
   }
 }

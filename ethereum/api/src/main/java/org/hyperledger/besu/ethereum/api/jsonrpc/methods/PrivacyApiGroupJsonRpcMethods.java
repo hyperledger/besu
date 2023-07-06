@@ -14,27 +14,28 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.LatestNonceProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.DisabledPrivacyRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyRpcMethodDecorator;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.ChainHeadPrivateNonceProvider;
-import org.hyperledger.besu.ethereum.privacy.DefaultPrivacyController;
+import org.hyperledger.besu.ethereum.privacy.FlexiblePrivacyController;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
+import org.hyperledger.besu.ethereum.privacy.PluginPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivateNonceProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionSimulator;
+import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.FixedKeySigningPrivateMarkerTransactionFactory;
-import org.hyperledger.besu.ethereum.privacy.markertransaction.PrivateMarkerTransactionFactory;
 import org.hyperledger.besu.ethereum.privacy.markertransaction.RandomSigningPrivateMarkerTransactionFactory;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
 
 import java.math.BigInteger;
 import java.util.Map;
@@ -86,15 +87,21 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
     return privacyParameters;
   }
 
+  public GasCalculator getGasCalculator() {
+    return protocolSchedule
+        .getByBlockHeader(blockchainQueries.headBlockHeader())
+        .getGasCalculator();
+  }
+
   @Override
   protected Map<String, JsonRpcMethod> create() {
     final PrivateMarkerTransactionFactory markerTransactionFactory =
-        createPrivateMarkerTransactionFactory(
-            privacyParameters, blockchainQueries, transactionPool.getPendingTransactions());
-    final EnclavePublicKeyProvider enclavePublicProvider =
-        EnclavePublicKeyProvider.build(privacyParameters);
-    final PrivacyController privacyController = createPrivacyController(markerTransactionFactory);
-    return create(privacyController, enclavePublicProvider).entrySet().stream()
+        createPrivateMarkerTransactionFactory();
+    final PrivacyIdProvider enclavePublicProvider = PrivacyIdProvider.build(privacyParameters);
+    final PrivacyController privacyController = createPrivacyController();
+    return create(privacyController, enclavePublicProvider, markerTransactionFactory)
+        .entrySet()
+        .stream()
         .collect(
             Collectors.toMap(
                 Map.Entry::getKey,
@@ -103,44 +110,56 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
 
   protected abstract Map<String, JsonRpcMethod> create(
       final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider);
+      final PrivacyIdProvider privacyIdProvider,
+      PrivateMarkerTransactionFactory markerTransactionFactory);
 
-  private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory(
-      final PrivacyParameters privacyParameters,
-      final BlockchainQueries blockchainQueries,
-      final PendingTransactions pendingTransactions) {
-
-    final Address privateContractAddress =
-        Address.privacyPrecompiled(privacyParameters.getPrivacyAddress());
-
-    if (privacyParameters.getSigningKeyPair().isPresent()) {
+  private PrivateMarkerTransactionFactory createPrivateMarkerTransactionFactory() {
+    if (privacyParameters.getPrivacyService() != null
+        && privacyParameters.getPrivacyService().getPrivateMarkerTransactionFactory() != null) {
+      return privacyParameters.getPrivacyService().getPrivateMarkerTransactionFactory();
+    } else if (privacyParameters.getSigningKeyPair().isPresent()) {
       return new FixedKeySigningPrivateMarkerTransactionFactory(
-          privateContractAddress,
-          new LatestNonceProvider(blockchainQueries, pendingTransactions),
           privacyParameters.getSigningKeyPair().get());
     }
-    return new RandomSigningPrivateMarkerTransactionFactory(privateContractAddress);
+    return new RandomSigningPrivateMarkerTransactionFactory();
   }
 
-  private PrivacyController createPrivacyController(
-      final PrivateMarkerTransactionFactory markerTransactionFactory) {
+  private PrivacyController createPrivacyController() {
     final Optional<BigInteger> chainId = protocolSchedule.getChainId();
-    final DefaultPrivacyController defaultPrivacyController =
-        new DefaultPrivacyController(
-            getBlockchainQueries().getBlockchain(),
-            privacyParameters,
-            chainId,
-            markerTransactionFactory,
-            createPrivateTransactionSimulator(),
-            privateNonceProvider,
-            privacyParameters.getPrivateWorldStateReader());
-    return privacyParameters.isMultiTenancyEnabled()
-        ? new MultiTenancyPrivacyController(
-            defaultPrivacyController,
-            chainId,
-            privacyParameters.getEnclave(),
-            privacyParameters.isOnchainPrivacyGroupsEnabled())
-        : defaultPrivacyController;
+
+    if (privacyParameters.isPrivacyPluginEnabled()) {
+      return new PluginPrivacyController(
+          getBlockchainQueries().getBlockchain(),
+          privacyParameters,
+          chainId,
+          createPrivateTransactionSimulator(),
+          privateNonceProvider,
+          privacyParameters.getPrivateWorldStateReader());
+    } else {
+      final PrivacyController privacyController;
+      if (privacyParameters.isFlexiblePrivacyGroupsEnabled()) {
+        privacyController =
+            new FlexiblePrivacyController(
+                getBlockchainQueries().getBlockchain(),
+                privacyParameters,
+                chainId,
+                createPrivateTransactionSimulator(),
+                privateNonceProvider,
+                privacyParameters.getPrivateWorldStateReader());
+      } else {
+        privacyController =
+            new RestrictedDefaultPrivacyController(
+                getBlockchainQueries().getBlockchain(),
+                privacyParameters,
+                chainId,
+                createPrivateTransactionSimulator(),
+                privateNonceProvider,
+                privacyParameters.getPrivateWorldStateReader());
+      }
+      return privacyParameters.isMultiTenancyEnabled()
+          ? new MultiTenancyPrivacyController(privacyController)
+          : privacyController;
+    }
   }
 
   PrivacyQueries getPrivacyQueries() {
@@ -149,10 +168,13 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
 
   private JsonRpcMethod createPrivacyMethod(
       final PrivacyParameters privacyParameters, final JsonRpcMethod rpcMethod) {
-    if (privacyParameters.isEnabled() && privacyParameters.isMultiTenancyEnabled()) {
+    final String methodName = rpcMethod.getName();
+    if (methodName.equals(RpcMethod.ETH_SEND_RAW_PRIVATE_TRANSACTION.getMethodName())) {
+      return rpcMethod;
+    } else if (privacyParameters.isEnabled() && privacyParameters.isMultiTenancyEnabled()) {
       return new MultiTenancyRpcMethodDecorator(rpcMethod);
     } else if (!privacyParameters.isEnabled()) {
-      return new DisabledPrivacyRpcMethod(rpcMethod.getName());
+      return new DisabledPrivacyRpcMethod(methodName);
     } else {
       return rpcMethod;
     }

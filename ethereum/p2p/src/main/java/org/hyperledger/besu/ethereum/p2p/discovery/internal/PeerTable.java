@@ -183,14 +183,14 @@ public class PeerTable {
   }
 
   /**
-   * Returns the <code>limit</code> peers (at most) closest to the provided target, based on the XOR
-   * distance between the keccak-256 hash of the ID and the keccak-256 hash of the target.
+   * Returns the <code>limit</code> peers (at most) bonded closest to the provided target, based on
+   * the XOR distance between the keccak-256 hash of the ID and the keccak-256 hash of the target.
    *
    * @param target The target node ID.
    * @param limit The amount of results to return.
    * @return The <code>limit</code> closest peers, at most.
    */
-  public List<DiscoveryPeer> nearestPeers(final Bytes target, final int limit) {
+  public List<DiscoveryPeer> nearestBondedPeers(final Bytes target, final int limit) {
     final Bytes keccak256 = Hash.keccak256(target);
     return streamAllPeers()
         .filter(p -> p.getStatus() == PeerDiscoveryStatus.BONDED)

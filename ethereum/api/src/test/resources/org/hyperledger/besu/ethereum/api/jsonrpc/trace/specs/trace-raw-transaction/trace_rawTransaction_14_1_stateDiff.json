@@ -1,0 +1,66 @@
+{
+  "comment" : "CREATE2",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_rawTransaction",
+    "params" : [ "0xf8618081ef83fffff294014000000000000000000000000000000000000080801ba02806a0625bd207bb1d798f9665a498208e579e81f5252d6b84d67fa54e7f3ee7a052655604404f68ee4c1a4b2775d346d529af467c747ae0f8de5bc4de3dadac65", [ "stateDiff" ] ],
+    "id" : 32
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x",
+      "stateDiff" : {
+        "0x0000000000000000000000000000000000000000" : {
+          "balance" : {
+            "*" : {
+              "from" : "0x393f0f18385c0b29e",
+              "to" : "0x393f0f18470e3365c"
+            }
+          },
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : { }
+        },
+        "0x0140000000000000000000000000000000000000" : {
+          "balance" : "=",
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x1",
+              "to" : "0x2"
+            }
+          },
+          "storage" : {
+            "0x0000000000000000000000000000000000000000000000000000000000000000" : {
+              "*" : {
+                "from" : "0x0000000000000000000000000deea5bd06fb86553643c1e94a2f5aac632b9ec9",
+                "to" : "0x0000000000000000000000000000000000000000000000000000000000000000"
+              }
+            }
+          }
+        },
+        "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73" : {
+          "balance" : {
+            "*" : {
+              "from" : "0xffffffffffffffffffffffffffffffffd27fb671b",
+              "to" : "0xffffffffffffffffffffffffffffffffc3cd8e35d"
+            }
+          },
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x1e",
+              "to" : "0x1f"
+            }
+          },
+          "storage" : { }
+        }
+      },
+      "trace" : [ ],
+      "vmTrace" : null
+    },
+    "id" : 32
+  },
+  "statusCode" : 200
+}

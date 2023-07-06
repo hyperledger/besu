@@ -19,8 +19,10 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 
+/** The Clique config options. */
 public class CliqueConfigOptions {
 
+  /** The constant DEFAULT. */
   public static final CliqueConfigOptions DEFAULT =
       new CliqueConfigOptions(JsonUtil.createEmptyObjectNode());
 
@@ -29,18 +31,39 @@ public class CliqueConfigOptions {
 
   private final ObjectNode cliqueConfigRoot;
 
+  /**
+   * Instantiates a new Clique config options.
+   *
+   * @param cliqueConfigRoot the clique config root
+   */
   CliqueConfigOptions(final ObjectNode cliqueConfigRoot) {
     this.cliqueConfigRoot = cliqueConfigRoot;
   }
 
+  /**
+   * Gets epoch length.
+   *
+   * @return the epoch length
+   */
   public long getEpochLength() {
     return JsonUtil.getLong(cliqueConfigRoot, "epochlength", DEFAULT_EPOCH_LENGTH);
   }
 
+  /**
+   * Gets block period seconds.
+   *
+   * @return the block period seconds
+   */
   public int getBlockPeriodSeconds() {
-    return JsonUtil.getInt(cliqueConfigRoot, "blockperiodseconds", DEFAULT_BLOCK_PERIOD_SECONDS);
+    return JsonUtil.getPositiveInt(
+        cliqueConfigRoot, "blockperiodseconds", DEFAULT_BLOCK_PERIOD_SECONDS);
   }
 
+  /**
+   * As map.
+   *
+   * @return the map
+   */
   Map<String, Object> asMap() {
     return ImmutableMap.of(
         "epochLength", getEpochLength(), "blockPeriodSeconds", getBlockPeriodSeconds());

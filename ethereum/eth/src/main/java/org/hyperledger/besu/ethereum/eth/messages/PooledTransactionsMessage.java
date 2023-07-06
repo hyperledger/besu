@@ -45,6 +45,17 @@ public final class PooledTransactionsMessage extends AbstractMessageData {
     return new PooledTransactionsMessage(out.encoded());
   }
 
+  /**
+   * Create a message with raw, already encoded data. No checks are performed to validate the
+   * rlp-encoded data.
+   *
+   * @param data An rlp-encoded list of transactions
+   * @return A new PooledTransactionsMessage
+   */
+  public static PooledTransactionsMessage createUnsafe(final Bytes data) {
+    return new PooledTransactionsMessage(data);
+  }
+
   public static PooledTransactionsMessage readFrom(final MessageData message) {
     if (message instanceof PooledTransactionsMessage) {
       return (PooledTransactionsMessage) message;

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
+
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.LimitedTransactionsMessages;
@@ -22,11 +24,11 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNot
 import java.util.Set;
 import java.util.stream.StreamSupport;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class TransactionsMessageSender {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(TransactionsMessageSender.class);
 
   private final PeerTransactionTracker transactionTracker;
 
@@ -40,12 +42,22 @@ class TransactionsMessageSender {
         .forEach(this::sendTransactionsToPeer);
   }
 
-  private void sendTransactionsToPeer(final EthPeer peer) {
+  void sendTransactionsToPeer(final EthPeer peer) {
     final Set<Transaction> allTxToSend = transactionTracker.claimTransactionsToSendToPeer(peer);
     while (!allTxToSend.isEmpty()) {
       final LimitedTransactionsMessages limitedTransactionsMessages =
           LimitedTransactionsMessages.createLimited(allTxToSend);
-      LOG.trace("Sending transactions to peer {} TRANSACTIONS count {}", peer, allTxToSend.size());
+      final Set<Transaction> includedTransactions =
+          limitedTransactionsMessages.getIncludedTransactions();
+      LOG.atTrace()
+          .setMessage(
+              "Sending transactions to peer {} all transactions count {}, "
+                  + "single message transactions {}, single message list {}")
+          .addArgument(peer)
+          .addArgument(allTxToSend::size)
+          .addArgument(includedTransactions::size)
+          .addArgument(() -> toHashList(includedTransactions))
+          .log();
       allTxToSend.removeAll(limitedTransactionsMessages.getIncludedTransactions());
       try {
         peer.send(limitedTransactionsMessages.getTransactionsMessage());

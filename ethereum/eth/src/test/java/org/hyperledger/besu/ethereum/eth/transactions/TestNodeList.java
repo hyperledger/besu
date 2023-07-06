@@ -17,11 +17,10 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
-import static org.apache.logging.log4j.util.Strings.join;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.transactions.TestNode.shortId;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -40,20 +39,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import io.vertx.core.Vertx;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TestNodeList implements Closeable {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(TestNodeList.class);
   protected final List<TestNode> nodes = new ArrayList<>();
   private final Duration MSG_WAIT = Duration.ofSeconds(2);
 
   public TestNode create(
       final Vertx vertx,
       final Integer port,
-      final SECP256K1.KeyPair kp,
+      final KeyPair kp,
       final DiscoveryConfiguration discoveryCfg)
       throws IOException {
     final TestNode node = new TestNode(vertx, port, kp, discoveryCfg);
@@ -177,7 +176,7 @@ public class TestNodeList implements Closeable {
     checkNotNull(expected);
     checkArgument(
         expected.length == nodes.size(),
-        "Expected values for sd nodes, but got %s.",
+        "Expected values for %s nodes, but got %s.",
         expected.length,
         nodes.size());
     int errCnt = 0;
@@ -246,7 +245,7 @@ public class TestNodeList implements Closeable {
         connStr.add("Connection: " + localString + " to " + peerString);
       }
     }
-    LOG.info("TestNodeList Connections:\n" + join(connStr, '\n'));
+    LOG.info("TestNodeList Connections: {}", connStr);
   }
 
   @Override

@@ -17,20 +17,29 @@ package org.hyperledger.besu.consensus.ibft.validation;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The Future round proposal message validator. */
 /* One of these will be created by the IbftBlockHeightManager and will exist for the life of the
 chainheight, and used to ensure supplied Proposals are suitable for starting a new round.
  */
 public class FutureRoundProposalMessageValidator {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(FutureRoundProposalMessageValidator.class);
 
   private final MessageValidatorFactory messageValidatorFactory;
   private final long chainHeight;
   private final BlockHeader parentHeader;
 
+  /**
+   * Instantiates a new Future round proposal message validator.
+   *
+   * @param messageValidatorFactory the message validator factory
+   * @param chainHeight the chain height
+   * @param parentHeader the parent header
+   */
   public FutureRoundProposalMessageValidator(
       final MessageValidatorFactory messageValidatorFactory,
       final long chainHeight,
@@ -40,6 +49,12 @@ public class FutureRoundProposalMessageValidator {
     this.parentHeader = parentHeader;
   }
 
+  /**
+   * Validate proposal message.
+   *
+   * @param msg the msg
+   * @return the boolean
+   */
   public boolean validateProposalMessage(final Proposal msg) {
 
     if (msg.getRoundIdentifier().getSequenceNumber() != chainHeight) {

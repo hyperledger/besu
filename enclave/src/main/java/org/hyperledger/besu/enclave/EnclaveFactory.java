@@ -29,16 +29,28 @@ import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.net.PfxOptions;
 import org.apache.tuweni.net.tls.VertxTrustOptions;
 
+/** The Enclave factory. */
 public class EnclaveFactory {
 
   private final Vertx vertx;
   private static final int CONNECT_TIMEOUT = 1000;
   private static final boolean TRUST_CA = false;
 
+  /**
+   * Instantiates a new Enclave factory.
+   *
+   * @param vertx the vertx
+   */
   public EnclaveFactory(final Vertx vertx) {
     this.vertx = vertx;
   }
 
+  /**
+   * Create enclave.
+   *
+   * @param enclaveUri the enclave uri
+   * @return the enclave
+   */
   public Enclave createVertxEnclave(final URI enclaveUri) {
     final HttpClientOptions clientOptions = createNonTlsClientOptions(enclaveUri);
 
@@ -48,16 +60,16 @@ public class EnclaveFactory {
     return new Enclave(vertxTransmitter);
   }
 
-  public GoQuorumEnclave createGoQuorumEnclave(final URI enclaveUri) {
-    final HttpClientOptions clientOptions = createNonTlsClientOptions(enclaveUri);
-
-    final RequestTransmitter vertxTransmitter =
-        new VertxRequestTransmitter(vertx.createHttpClient(clientOptions));
-
-    return new GoQuorumEnclave(vertxTransmitter);
-  }
-
-  public GoQuorumEnclave createGoQuorumEnclave(
+  /**
+   * Create enclave.
+   *
+   * @param enclaveUri the enclave uri
+   * @param privacyKeyStoreFile the privacy key store file
+   * @param privacyKeyStorePasswordFile the privacy key store password file
+   * @param privacyAllowlistFile the privacy allowlist file
+   * @return the enclave
+   */
+  public Enclave createVertxEnclave(
       final URI enclaveUri,
       final Path privacyKeyStoreFile,
       final Path privacyKeyStorePasswordFile,
@@ -70,7 +82,7 @@ public class EnclaveFactory {
     final RequestTransmitter vertxTransmitter =
         new VertxRequestTransmitter(vertx.createHttpClient(clientOptions));
 
-    return new GoQuorumEnclave(vertxTransmitter);
+    return new Enclave(vertxTransmitter);
   }
 
   private HttpClientOptions createNonTlsClientOptions(final URI enclaveUri) {
@@ -100,7 +112,7 @@ public class EnclaveFactory {
             convertFrom(privacyKeyStoreFile, privacyKeyStorePasswordFile));
       }
       clientOptions.setTrustOptions(
-          VertxTrustOptions.whitelistServers(privacyAllowlistFile, TRUST_CA));
+          VertxTrustOptions.allowlistServers(privacyAllowlistFile, TRUST_CA));
     } catch (final NoSuchFileException e) {
       throw new InvalidConfigurationException(
           "Requested file " + e.getMessage() + " does not exist at specified location.");
@@ -115,28 +127,19 @@ public class EnclaveFactory {
     return clientOptions;
   }
 
-  public Enclave createVertxEnclave(
-      final URI enclaveUri,
-      final Path privacyKeyStoreFile,
-      final Path privacyKeyStorePasswordFile,
-      final Path privacyAllowlistFile) {
-
-    final HttpClientOptions clientOptions =
-        createTlsClientOptions(
-            enclaveUri, privacyKeyStoreFile, privacyKeyStorePasswordFile, privacyAllowlistFile);
-
-    final RequestTransmitter vertxTransmitter =
-        new VertxRequestTransmitter(vertx.createHttpClient(clientOptions));
-
-    return new Enclave(vertxTransmitter);
-  }
-
   private static PfxOptions convertFrom(final Path keystoreFile, final Path keystorePasswordFile)
       throws IOException {
     final String password = readSecretFromFile(keystorePasswordFile);
     return new PfxOptions().setPassword(password).setPath(keystoreFile.toString());
   }
 
+  /**
+   * Read secret from file.
+   *
+   * @param path the path
+   * @return the string
+   * @throws IOException the io exception
+   */
   static String readSecretFromFile(final Path path) throws IOException {
     final String password =
         Files.asCharSource(path.toFile(), StandardCharsets.UTF_8).readFirstLine();

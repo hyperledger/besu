@@ -27,11 +27,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The Database metadata. */
 public class DatabaseMetadata {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(DatabaseMetadata.class);
 
   private static final String METADATA_FILENAME = "DATABASE_METADATA.json";
   private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -39,44 +40,94 @@ public class DatabaseMetadata {
 
   private Optional<Integer> privacyVersion;
 
+  /**
+   * Instantiates a new Database metadata.
+   *
+   * @param version the version
+   */
   @JsonCreator
   public DatabaseMetadata(@JsonProperty("version") final int version) {
     this(version, Optional.empty());
   }
 
+  /**
+   * Instantiates a new Database metadata.
+   *
+   * @param version the version
+   * @param privacyVersion the privacy version
+   */
   public DatabaseMetadata(final int version, final Optional<Integer> privacyVersion) {
     this.version = version;
     this.privacyVersion = privacyVersion;
   }
 
+  /**
+   * Instantiates a new Database metadata.
+   *
+   * @param version the version
+   * @param privacyVersion the privacy version
+   */
   public DatabaseMetadata(final int version, final int privacyVersion) {
     this(version, Optional.of(privacyVersion));
   }
 
+  /**
+   * Gets version.
+   *
+   * @return the version
+   */
   public int getVersion() {
     return version;
   }
 
+  /**
+   * Sets privacy version.
+   *
+   * @param privacyVersion the privacy version
+   */
   @JsonSetter("privacyVersion")
   public void setPrivacyVersion(final int privacyVersion) {
     this.privacyVersion = Optional.of(privacyVersion);
   }
 
+  /**
+   * Gets privacy version.
+   *
+   * @return the privacy version
+   */
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonGetter("privacyVersion")
   public Integer getPrivacyVersion() {
     return privacyVersion.orElse(null);
   }
 
+  /**
+   * Maybe privacy version.
+   *
+   * @return the optional
+   */
   public Optional<Integer> maybePrivacyVersion() {
     return privacyVersion;
   }
 
+  /**
+   * Look up database metadata.
+   *
+   * @param dataDir the data dir
+   * @return the database metadata
+   * @throws IOException the io exception
+   */
   public static DatabaseMetadata lookUpFrom(final Path dataDir) throws IOException {
     LOG.info("Lookup database metadata file in data directory: {}", dataDir.toString());
     return resolveDatabaseMetadata(getDefaultMetadataFile(dataDir));
   }
 
+  /**
+   * Write to directory.
+   *
+   * @param dataDir the data dir
+   * @throws IOException the io exception
+   */
   public void writeToDirectory(final Path dataDir) throws IOException {
     try {
       final DatabaseMetadata currentMetadata =

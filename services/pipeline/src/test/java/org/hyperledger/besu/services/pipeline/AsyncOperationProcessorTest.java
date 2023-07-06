@@ -20,13 +20,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class AsyncOperationProcessorTest {
 
@@ -90,7 +90,7 @@ public class AsyncOperationProcessorTest {
     processor.processNextInput(readPipe, writePipe);
     processor.processNextInput(readPipe, writePipe);
     verify(readPipe, times(2)).get();
-    verifyZeroInteractions(writePipe);
+    verifyNoInteractions(writePipe);
 
     task1.complete("a");
     task2.complete("b");
@@ -160,7 +160,7 @@ public class AsyncOperationProcessorTest {
 
     processor.processNextInput(readPipe, writePipe);
     verify(readPipe, times(3)).get();
-    verifyZeroInteractions(writePipe);
+    verifyNoInteractions(writePipe);
 
     task1.complete("a");
 

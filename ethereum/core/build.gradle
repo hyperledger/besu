@@ -28,54 +28,78 @@ jar {
 }
 
 dependencies {
+  api 'org.slf4j:slf4j-api'
+  api 'org.web3j:core'
+
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
 
   implementation project(':config')
-  implementation project(':crypto')
+  implementation project(':crypto:algorithms')
+  implementation project(':datatypes')
   implementation project(':enclave')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:trie')
+  implementation project(':evm')
   implementation project(':metrics:core')
   implementation project(':plugin-api')
   implementation project(':services:kvstore')
 
+
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
+  implementation 'com.google.dagger:dagger'
+  annotationProcessor 'com.google.dagger:dagger-compiler'
+  implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'io.vertx:vertx-core'
+
   implementation 'net.java.dev.jna:jna'
-  implementation 'org.apache.logging.log4j:log4j-api'
-  implementation 'org.apache.tuweni:bytes'
-  implementation 'org.apache.tuweni:units'
+  implementation 'org.apache.commons:commons-lang3'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-concurrent'
+  implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'org.apache.tuweni:tuweni-rlp'
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.immutables:value-annotations'
   implementation 'org.openquantumsafe:liboqs-java'
+
+  implementation 'io.prometheus:simpleclient_guava'
 
   implementation 'org.xerial.snappy:snappy-java'
 
   annotationProcessor 'org.immutables:value'
 
-  runtimeOnly 'org.apache.logging.log4j:log4j-core'
-
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':ethereum:api')
+  testImplementation project(path: ':ethereum:blockcreation')
   testImplementation project(path: ':ethereum:referencetests')
-  testImplementation project(path: ':ethereum:referencetests', configuration: 'testOutput')
+  testImplementation project(path: ':ethereum:eth')
   testImplementation project(':testutil')
+  testImplementation project(path: ':plugins:rocksdb')
+
 
   testImplementation 'junit:junit'
   testImplementation 'org.apache.logging.log4j:log4j-core'
-  testImplementation 'org.apache.tuweni:bytes'
-  testImplementation 'org.apache.tuweni:io'
-  testImplementation 'org.apache.tuweni:units'
+  testImplementation 'org.apache.tuweni:tuweni-bytes'
+  testImplementation 'org.apache.tuweni:tuweni-io'
+  testImplementation 'org.apache.tuweni:tuweni-units'
   testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
+  testImplementation 'org.junit.jupiter:junit-jupiter-params'
   testImplementation 'org.mockito:mockito-core'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
+  testImplementation 'org.awaitility:awaitility'
+
+  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   integrationTestImplementation project(':testutil')
 
-  integrationTestImplementation 'junit:junit'
-  integrationTestImplementation 'net.consensys:orion'
   integrationTestImplementation 'org.assertj:assertj-core'
+  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   integrationTestImplementation 'org.mockito:mockito-core'
+  integrationTestImplementation 'org.testcontainers:testcontainers'
+
+  integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 
   testSupportImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testSupportImplementation project(':ethereum:eth')
@@ -86,7 +110,7 @@ dependencies {
   testSupportImplementation 'org.mockito:mockito-core'
 
   jmhImplementation project(path: ':config', configuration: 'testSupportArtifacts')
-  jmhImplementation project(':crypto')
+  jmhImplementation project(':crypto:algorithms')
   jmhImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   jmhImplementation project(':ethereum:rlp')
   jmhImplementation project(':ethereum:trie')
@@ -103,129 +127,6 @@ configurations { testArtifacts }
 task testJar(type: Jar) {
   archiveBaseName = "${project.name}-test"
   from sourceSets.test.output
-}
-
-test {
-  exclude 'org/hyperledger/besu/ethereum/mainnet/DifficultyCalculatorTests.class'
-  exclude 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
-  exclude 'org/hyperledger/besu/ethereum/vm/**ReferenceTest.class'
-  exclude 'org/hyperledger/besu/ethereum/vm/blockchain/**.class'
-  exclude 'org/hyperledger/besu/ethereum/vm/generalstate/**.class'
-}
-
-def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, String destination, String namePrefix, String ... excludedPath) {
-  def referenceTestTemplate = templateFile.text
-
-  // This is how many json files to include in each test file
-  def fileSets = jsonPath.getFiles().collate(5)
-
-  fileSets.eachWithIndex { fileSet, idx ->
-    def paths = []
-    fileSet.each { testJsonFile ->
-      def parentFile = testJsonFile.getParentFile()
-      def parentPathFile = parentFile.getPath().substring(parentFile.getPath().indexOf(pathstrip))
-      if (!testJsonFile.getName().toString().startsWith(".") && !excludedPath.contains(parentPathFile)) {
-        def pathFile = testJsonFile.getPath()
-        paths << pathFile.substring(pathFile.indexOf(pathstrip))
-      }
-    }
-
-    def testFile = file(destination + "/" + namePrefix + "_" + idx + ".java")
-
-    def allPaths = '"' + paths.join('", "') + '"'
-
-    def testFileContents = referenceTestTemplate
-      .replaceAll("%%TESTS_FILE%%", allPaths)
-      .replaceAll("%%TESTS_NAME%%", namePrefix + "_" + idx)
-    testFile.newWriter().withWriter { w -> w << testFileContents }
-  }
-}
-
-task blockchainReferenceTestsSetup {
-  generateTestFiles(
-    fileTree('../referencetests/src/test/resources/BlockchainTests'),
-    file("./src/test/resources/org/hyperledger/besu/ethereum/vm/BlockchainReferenceTest.java.template"),
-    "BlockchainTests",
-    "./src/test/java/org/hyperledger/besu/ethereum/vm/blockchain",
-    "BlockchainReferenceTest",
-    ("BlockchainTests/InvalidBlocks/bcExpectSection") // exclude test for test filling tool
-    )
-}
-
-task legacyBlockchainReferenceTestsSetup {
-  generateTestFiles(
-    fileTree('../referencetests/src/test/resources/LegacyTests/Constantinople/BlockchainTests'),
-    file("./src/test/resources/org/hyperledger/besu/ethereum/vm/BlockchainReferenceTest.java.template"),
-    "LegacyTests",
-    "./src/test/java/org/hyperledger/besu/ethereum/vm/blockchain",
-    "LegacyBlockchainReferenceTest",
-    ("BlockchainTests/InvalidBlocks/bcExpectSection") // exclude test for test filling tool
-    )
-}
-
-task generalstateReferenceTestsSetup {
-  generateTestFiles(
-    fileTree("../referencetests/src/test/resources/GeneralStateTests"),
-    file("./src/test/resources/org/hyperledger/besu/ethereum/vm/GeneralStateReferenceTest.java.template"),
-    "GeneralStateTests",
-    "./src/test/java/org/hyperledger/besu/ethereum/vm/generalstate",
-    "GeneralStateReferenceTest"
-    )
-}
-
-task legacyGeneralstateReferenceTestsSetup {
-  generateTestFiles(
-    fileTree('../referencetests/src/test/resources/LegacyTests/Constantinople/GeneralStateTests'),
-    file("./src/test/resources/org/hyperledger/besu/ethereum/vm/GeneralStateReferenceTest.java.template"),
-    "LegacyTests",
-    "./src/test/java/org/hyperledger/besu/ethereum/vm/generalstate",
-    "LegacyGeneralStateReferenceTest"
-    )
-}
-
-task generalstateRegressionReferenceTestsSetup {
-  generateTestFiles(
-    fileTree("./src/test/resources/regressions/generalstate"),
-    file("./src/test/resources/org/hyperledger/besu/ethereum/vm/GeneralStateReferenceTest.java.template"),
-    "regressions",
-    "./src/test/java/org/hyperledger/besu/ethereum/vm/generalstate",
-    "GeneralStateRegressionReferenceTest"
-    )
-}
-
-task cleanupReferenceTests(type: Delete) {
-  delete fileTree("./src/test/java/org/hyperledger/besu/ethereum/vm/generalstate/") {
-    include("**/GeneralStateReferenceTest*.java")
-    include("**/GeneralStateRegressionReferenceTest*.java")
-  }
-  delete fileTree("./src/test/java/org/hyperledger/besu/ethereum/vm/blockchain/") { include("**/BlockchainReferenceTest*.java") }
-}
-
-clean.dependsOn(cleanupReferenceTests)
-
-task referenceTests(type: Test, dependsOn: [
-  "blockchainReferenceTestsSetup",
-  "generalstateReferenceTestsSetup",
-  "legacyBlockchainReferenceTestsSetup",
-  "legacyGeneralstateReferenceTestsSetup",
-  "generalstateRegressionReferenceTestsSetup",
-  "compileTestJava"
-]) {
-  compileTestJava.mustRunAfter blockchainReferenceTestsSetup
-  compileTestJava.mustRunAfter generalstateReferenceTestsSetup
-  compileTestJava.mustRunAfter generalstateRegressionReferenceTestsSetup
-  doFirst {
-    if (!file("../referencetests/src/test/resources/README.md").exists()) {
-      throw new GradleException("ethereum/referencetests/src/test/resources/README.md missing: please clone submodules (git submodule update --init --recursive)")
-    }
-  }
-  scanForTestClasses = false
-  enableAssertions = true
-  include 'org/hyperledger/besu/ethereum/core/TransactionTest.class'
-  include 'org/hyperledger/besu/ethereum/mainnet/DifficultyCalculatorTests.class'
-  include 'org/hyperledger/besu/ethereum/vm/**ReferenceTest.class'
-  include 'org/hyperledger/besu/ethereum/vm/blockchain/**.class'
-  include 'org/hyperledger/besu/ethereum/vm/generalstate/**.class'
 }
 
 artifacts {

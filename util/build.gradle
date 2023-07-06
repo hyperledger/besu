@@ -22,25 +22,26 @@ jar {
       'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
-      'Implementation-Version': calculateVersion()
+      'Implementation-Version': calculateVersion(),
+      'Automatic-Module-Name': 'org.hyperledger.besu.internal.util'
       )
   }
 }
 
 dependencies {
-  api 'org.apache.logging.log4j:log4j-api'
-
-  implementation project(':plugin-api')
+  api 'org.slf4j:slf4j-api'
 
   implementation 'com.google.guava:guava'
-  implementation 'io.vertx:vertx-core'
-  implementation 'org.apache.tuweni:bytes'
-  implementation 'org.apache.tuweni:units'
+  implementation 'net.java.dev.jna:jna'
+  implementation 'org.apache.commons:commons-lang3'
+  implementation 'org.apache.logging.log4j:log4j-core'
+  implementation 'org.apache.logging.log4j:log4j-slf4j2-impl'
   implementation 'org.xerial.snappy:snappy-java'
 
-  runtimeOnly 'org.apache.logging.log4j:log4j-core'
-
-  testImplementation 'junit:junit'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
   testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
+
+  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }

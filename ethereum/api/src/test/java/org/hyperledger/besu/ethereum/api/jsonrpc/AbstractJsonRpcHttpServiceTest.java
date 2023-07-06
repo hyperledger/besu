@@ -21,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterIdGenerator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
@@ -30,7 +31,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -43,6 +44,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
@@ -59,6 +61,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import org.junit.After;
@@ -73,32 +76,44 @@ public abstract class AbstractJsonRpcHttpServiceTest {
 
   protected static String CLIENT_VERSION = "TestClientVersion/0.1.0";
   protected static final BigInteger NETWORK_ID = BigInteger.valueOf(123);
-  protected static final Collection<RpcApi> JSON_RPC_APIS =
-      Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3, RpcApis.DEBUG, RpcApis.TRACE);
+  protected static final Collection<String> JSON_RPC_APIS =
+      Arrays.asList(
+          RpcApis.ETH.name(),
+          RpcApis.NET.name(),
+          RpcApis.WEB3.name(),
+          RpcApis.DEBUG.name(),
+          RpcApis.TRACE.name());
 
   protected final Vertx vertx = Vertx.vertx();
+  protected final Vertx syncVertx = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
   protected JsonRpcHttpService service;
   protected OkHttpClient client;
   protected String baseUrl;
   protected final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
   protected FilterManager filterManager;
 
-  private void setupBlockchain() {
-    blockchainSetupUtil = getBlockchainSetupUtil();
+  protected void setupBlockchain() {
+    blockchainSetupUtil = getBlockchainSetupUtil(DataStorageFormat.FOREST);
     blockchainSetupUtil.importAllBlocks();
   }
 
-  protected BlockchainSetupUtil getBlockchainSetupUtil() {
-    return BlockchainSetupUtil.forTesting();
+  protected void setupBonsaiBlockchain() {
+    blockchainSetupUtil = getBlockchainSetupUtil(DataStorageFormat.BONSAI);
+    blockchainSetupUtil.importAllBlocks();
+  }
+
+  protected BlockchainSetupUtil getBlockchainSetupUtil(final DataStorageFormat storageFormat) {
+    return BlockchainSetupUtil.forTesting(storageFormat);
   }
 
   protected BlockchainSetupUtil createBlockchainSetupUtil(
-      final String genesisPath, final String blocksPath) {
+      final String genesisPath, final String blocksPath, final DataStorageFormat storageFormat) {
     final URL genesisURL = AbstractJsonRpcHttpServiceTest.class.getResource(genesisPath);
     final URL blocksURL = AbstractJsonRpcHttpServiceTest.class.getResource(blocksPath);
     checkArgument(genesisURL != null, "Unable to locate genesis file: " + genesisPath);
     checkArgument(blocksURL != null, "Unable to locate blocks file: " + blocksPath);
-    return BlockchainSetupUtil.createForEthashChain(new ChainResources(genesisURL, blocksURL));
+    return BlockchainSetupUtil.createForEthashChain(
+        new ChainResources(genesisURL, blocksURL), storageFormat);
   }
 
   @Before
@@ -106,22 +121,24 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     setupBlockchain();
   }
 
-  protected BlockchainSetupUtil startServiceWithEmptyChain() throws Exception {
-    final BlockchainSetupUtil emptySetupUtil = getBlockchainSetupUtil();
+  protected BlockchainSetupUtil startServiceWithEmptyChain(final DataStorageFormat storageFormat)
+      throws Exception {
+    final BlockchainSetupUtil emptySetupUtil = getBlockchainSetupUtil(storageFormat);
     startService(emptySetupUtil);
     return emptySetupUtil;
   }
 
   protected Map<String, JsonRpcMethod> getRpcMethods(
       final JsonRpcConfiguration config, final BlockchainSetupUtil blockchainSetupUtil) {
+    final ProtocolContext protocolContext = mock(ProtocolContext.class);
     final Synchronizer synchronizerMock = mock(Synchronizer.class);
     final P2PNetwork peerDiscoveryMock = mock(P2PNetwork.class);
     final TransactionPool transactionPoolMock = mock(TransactionPool.class);
-    final EthHashMiningCoordinator miningCoordinatorMock = mock(EthHashMiningCoordinator.class);
-    when(transactionPoolMock.addLocalTransaction(any(Transaction.class)))
+    final PoWMiningCoordinator miningCoordinatorMock = mock(PoWMiningCoordinator.class);
+    when(transactionPoolMock.addTransactionViaApi(any(Transaction.class)))
         .thenReturn(ValidationResult.valid());
     // nonce too low tests uses a tx with nonce=16
-    when(transactionPoolMock.addLocalTransaction(argThat(tx -> tx.getNonce() == 16)))
+    when(transactionPoolMock.addTransactionViaApi(argThat(tx -> tx.getNonce() == 16)))
         .thenReturn(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW));
     final PendingTransactions pendingTransactionsMock = mock(PendingTransactions.class);
     when(transactionPoolMock.getPendingTransactions()).thenReturn(pendingTransactionsMock);
@@ -156,6 +173,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             blockchainQueries,
             synchronizerMock,
             blockchainSetupUtil.getProtocolSchedule(),
+            protocolContext,
             filterManager,
             transactionPoolMock,
             miningCoordinatorMock,
@@ -171,7 +189,10 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             natService,
             new HashMap<>(),
             folder.getRoot().toPath(),
-            mock(EthPeers.class));
+            mock(EthPeers.class),
+            syncVertx,
+            Optional.empty(),
+            Optional.empty());
   }
 
   protected void startService() throws Exception {
@@ -185,6 +206,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     final NatService natService = new NatService(Optional.empty());
 
     config.setPort(0);
+    config.setMaxBatchSize(10);
     service =
         new JsonRpcHttpService(
             vertx,
@@ -207,5 +229,6 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     client.connectionPool().evictAll();
     service.stop().join();
     vertx.close();
+    syncVertx.close();
   }
 }

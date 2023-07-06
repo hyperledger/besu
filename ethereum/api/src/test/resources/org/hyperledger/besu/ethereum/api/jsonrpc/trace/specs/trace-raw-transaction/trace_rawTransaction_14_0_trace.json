@@ -1,0 +1,51 @@
+{
+  "comment" : "CREATE",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_rawTransaction",
+    "params" : [ "0xf8618081ef83fffff294013000000000000000000000000000000000000080801ca0520dc757d985e2dc024c64213cb34bae49d9ea9651542403f12792d12849e7bda05e302b1d126293a98420c5c731278ab3f4133708930eceea320f7f77f6e52fa8", [ "trace" ] ],
+    "id" : 84
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0x",
+      "stateDiff" : null,
+      "trace" : [ {
+        "action" : {
+          "callType" : "call",
+          "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+          "gas" : "0xffadea",
+          "input" : "0x",
+          "to" : "0x0130000000000000000000000000000000000000",
+          "value" : "0x0"
+        },
+        "result" : {
+          "gasUsed" : "0x131ae",
+          "output" : "0x"
+        },
+        "subtraces" : 1,
+        "traceAddress" : [ ],
+        "type" : "call"
+      }, {
+        "action" : {
+          "from" : "0x0130000000000000000000000000000000000000",
+          "gas" : "0xfb3412",
+          "init" : "0x600160015560015460025561ffff6000526002601ef3",
+          "value" : "0x0"
+        },
+        "result" : {
+          "address" : "0x2e615edd62acdfeb8ce3270b30fb36f0dbb8779d",
+          "code" : "0xffff",
+          "gasUsed" : "0xa10e"
+        },
+        "subtraces" : 0,
+        "traceAddress" : [ 0 ],
+        "type" : "create"
+      } ],
+      "vmTrace" : null
+    },
+    "id" : 84
+  },
+  "statusCode" : 200
+}

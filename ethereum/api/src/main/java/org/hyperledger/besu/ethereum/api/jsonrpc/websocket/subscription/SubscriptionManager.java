@@ -39,8 +39,8 @@ import java.util.stream.Collectors;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.Json;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The SubscriptionManager is responsible for managing subscriptions and sending messages to the
@@ -48,7 +48,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class SubscriptionManager extends AbstractVerticle implements PrivateTransactionObserver {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(SubscriptionManager.class);
 
   public static final String EVENTBUS_REMOVE_SUBSCRIPTIONS_ADDRESS =
       "SubscriptionManager::removeSubscriptions";
@@ -186,7 +186,7 @@ public class SubscriptionManager extends AbstractVerticle implements PrivateTran
     subscriptionsOfType(SubscriptionType.LOGS, PrivateLogsSubscription.class).stream()
         .filter(
             subscription ->
-                subscription.getEnclavePublicKey().equals(event.getEnclavePublicKey())
+                subscription.getPrivacyUserId().equals(event.getPrivacyUserId())
                     && subscription.getPrivacyGroupId().equals(event.getPrivacyGroupId()))
         .forEach(
             subscription ->

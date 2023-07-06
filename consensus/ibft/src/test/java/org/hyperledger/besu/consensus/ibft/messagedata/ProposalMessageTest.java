@@ -23,12 +23,12 @@ import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ProposalMessageTest {
   @Mock private Proposal proposalMessageData;
   @Mock private Bytes messageBytes;
@@ -57,7 +57,7 @@ public class ProposalMessageTest {
     when(messageData.getData()).thenReturn(messageBytes);
     final ProposalMessageData proposalMessage = ProposalMessageData.fromMessageData(messageData);
 
-    assertThat(proposalMessage.getData()).isEqualTo(messageData.getData());
+    assertThat(proposalMessage.getData()).isEqualTo(messageBytes);
     assertThat(proposalMessage.getCode()).isEqualTo(IbftV2.PROPOSAL);
   }
 

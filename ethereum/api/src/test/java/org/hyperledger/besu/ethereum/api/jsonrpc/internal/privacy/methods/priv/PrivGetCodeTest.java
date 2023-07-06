@@ -22,14 +22,14 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.Optional;
@@ -46,7 +46,7 @@ public class PrivGetCodeTest {
 
   @Mock private PrivacyController privacyController;
   @Mock private BlockchainQueries mockBlockchainQueries;
-  @Mock private EnclavePublicKeyProvider enclavePublicKeyProvider;
+  @Mock private PrivacyIdProvider privacyIdProvider;
 
   private final Hash latestBlockHash = Hash.ZERO;
   private final String enclavePublicKey = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
@@ -60,9 +60,9 @@ public class PrivGetCodeTest {
 
   @Before
   public void before() {
-    when(enclavePublicKeyProvider.getEnclaveKey(any())).thenReturn(enclavePublicKey);
+    when(privacyIdProvider.getPrivacyUserId(any())).thenReturn(enclavePublicKey);
 
-    method = new PrivGetCode(mockBlockchainQueries, privacyController, enclavePublicKeyProvider);
+    method = new PrivGetCode(mockBlockchainQueries, privacyController, privacyIdProvider);
     privGetCodeRequest = buildPrivGetCodeRequest();
   }
 

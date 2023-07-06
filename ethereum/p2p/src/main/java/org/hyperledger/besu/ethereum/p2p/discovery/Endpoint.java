@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.util.NetworkUtility.checkPort;
 import static org.hyperledger.besu.util.Preconditions.checkGuard;
 
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.util.IllegalPortException;
 
 import java.net.InetAddress;
@@ -35,17 +35,15 @@ import org.apache.tuweni.bytes.Bytes;
  * used in various Discovery messages.
  */
 public class Endpoint {
-  private final String host;
+  private final Optional<String> host;
   private final int udpPort;
   private final Optional<Integer> tcpPort;
 
   public Endpoint(final String host, final int udpPort, final Optional<Integer> tcpPort) {
-    checkArgument(
-        host != null && InetAddresses.isInetAddress(host), "host requires a valid IP address");
     checkPort(udpPort, "UDP");
     tcpPort.ifPresent(port -> checkPort(port, "TCP"));
 
-    this.host = host;
+    this.host = Optional.ofNullable(host);
     this.udpPort = udpPort;
     this.tcpPort = tcpPort;
   }
@@ -63,16 +61,16 @@ public class Endpoint {
   }
 
   public EnodeURL toEnode(final Bytes nodeId) {
-    return EnodeURL.builder()
+    return EnodeURLImpl.builder()
         .nodeId(nodeId)
-        .ipAddress(host)
+        .ipAddress(host.orElse(""))
         .listeningPort(tcpPort.orElse(udpPort))
         .discoveryPort(udpPort)
         .build();
   }
 
   public String getHost() {
-    return host;
+    return host.orElse("");
   }
 
   public int getUdpPort() {
@@ -143,7 +141,16 @@ public class Endpoint {
    * @param out The RLP output stream.
    */
   public void encodeInline(final RLPOutput out) {
-    out.writeInetAddress(InetAddresses.forString(host));
+    if (host.isPresent()) {
+      InetAddress hostAddress = InetAddresses.forString(host.get());
+      if (hostAddress != null) {
+        out.writeInetAddress(hostAddress);
+      } else { // present, but not a parseable IP address
+        out.writeNull();
+      }
+    } else {
+      out.writeNull();
+    }
     out.writeIntScalar(udpPort);
     tcpPort.ifPresentOrElse(out::writeIntScalar, out::writeNull);
   }
@@ -163,7 +170,13 @@ public class Endpoint {
         "Invalid number of components in RLP representation of an endpoint: expected 2 or 3 elements but got %s",
         fieldCount);
 
-    final InetAddress addr = in.readInetAddress();
+    String hostAddress = null;
+    if (!in.nextIsNull()) {
+      InetAddress addr = in.readInetAddress();
+      hostAddress = addr.getHostAddress();
+    } else {
+      in.skipNext();
+    }
     final int udpPort = in.readIntScalar();
 
     // Some mainnet packets have been shown to either not have the TCP port field at all,
@@ -176,7 +189,7 @@ public class Endpoint {
         tcpPort = Optional.of(in.readIntScalar());
       }
     }
-    return new Endpoint(addr.getHostAddress(), udpPort, tcpPort);
+    return new Endpoint(hostAddress, udpPort, tcpPort);
   }
 
   /**

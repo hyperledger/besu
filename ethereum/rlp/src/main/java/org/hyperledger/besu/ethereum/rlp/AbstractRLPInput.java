@@ -24,8 +24,10 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.bytes.MutableBytes32;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.units.bigints.UInt64;
 
 abstract class AbstractRLPInput implements RLPInput {
 
@@ -128,13 +130,13 @@ abstract class AbstractRLPInput implements RLPInput {
     // Sets the kind of the item, the offset at which his payload starts and the size of this
     // payload.
     try {
-      RLPDecodingHelpers.RLPElementMetadata elementMetadata =
+      final RLPDecodingHelpers.RLPElementMetadata elementMetadata =
           RLPDecodingHelpers.rlpElementMetadata(this::inputByte, size, currentItem);
       currentKind = elementMetadata.kind;
       currentPayloadOffset = elementMetadata.payloadStart;
       currentPayloadSize = elementMetadata.payloadSize;
-    } catch (RLPException exception) {
-      String message =
+    } catch (final RLPException exception) {
+      final String message =
           String.format(
               exception.getMessage() + getErrorMessageSuffix(), getErrorMessageSuffixParams());
       throw new RLPException(message, exception);
@@ -287,16 +289,18 @@ abstract class AbstractRLPInput implements RLPInput {
   @Override
   public long readLongScalar() {
     checkScalar("long scalar", 8);
+    long res = readGenericLongScalar();
+    setTo(nextItem());
+    return res;
+  }
+
+  private long readGenericLongScalar() {
     long res = 0;
     int shift = 0;
     for (int i = 0; i < currentPayloadSize; i++) {
       res |= ((long) payloadByte(currentPayloadSize - i - 1) & 0xFF) << shift;
       shift += 8;
     }
-    if (res < 0) {
-      error("long scalar %s is not non-negative", res);
-    }
-    setTo(nextItem());
     return res;
   }
 
@@ -314,11 +318,30 @@ abstract class AbstractRLPInput implements RLPInput {
   }
 
   @Override
+  public long readUnsignedIntScalar() {
+    checkScalar("unsigned int scalar", 4);
+    return readLongScalar();
+  }
+
+  @Override
   public BigInteger readBigIntegerScalar() {
     checkScalar("arbitrary precision scalar");
     final BigInteger res = getUnsignedBigInteger(currentPayloadOffset, currentPayloadSize);
     setTo(nextItem());
     return res;
+  }
+
+  private Bytes readBytes8Scalar() {
+    checkScalar("8-bytes scalar", 8);
+    final MutableBytes res = MutableBytes.create(8);
+    payloadSlice().copyTo(res, res.size() - currentPayloadSize);
+    setTo(nextItem());
+    return res;
+  }
+
+  @Override
+  public UInt64 readUInt64Scalar() {
+    return UInt64.fromBytes(readBytes8Scalar());
   }
 
   private Bytes32 readBytes32Scalar() {
@@ -514,12 +537,40 @@ abstract class AbstractRLPInput implements RLPInput {
   }
 
   @Override
+  public int nextOffset() {
+    return Math.toIntExact(currentPayloadOffset);
+  }
+
+  @Override
   public boolean isEndOfCurrentList() {
     return depth > 0 && currentItem >= endOfListOffset[depth - 1];
   }
 
   @Override
+  public boolean isZeroLengthString() {
+    return currentKind == RLPDecodingHelpers.Kind.SHORT_ELEMENT && currentPayloadSize == 0;
+  }
+
+  @Override
   public void reset() {
     setTo(0);
+  }
+
+  @Override
+  public Bytes currentListAsBytes() {
+    if (currentItem >= size) {
+      throw error("Cannot read list, input is fully consumed");
+    }
+    if (!currentKind.isList()) {
+      throw error("Cannot read list, current item is not a list list");
+    }
+
+    final MutableBytes scratch = MutableBytes.create(currentPayloadSize + 10);
+    final int headerSize = RLPEncodingHelpers.writeListHeader(currentPayloadSize, scratch, 0);
+    payloadSlice().copyTo(scratch, headerSize);
+    final Bytes res = scratch.slice(0, currentPayloadSize + headerSize);
+
+    setTo(nextItem());
+    return res;
   }
 }

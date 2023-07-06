@@ -14,10 +14,21 @@
  */
 package org.hyperledger.besu.plugin;
 
+import org.hyperledger.besu.plugin.services.BesuService;
+
 import java.util.Optional;
 
 /** Allows plugins to access Besu services. */
 public interface BesuContext {
+
+  /**
+   * Add service.
+   *
+   * @param <T> the type parameter
+   * @param serviceType the service type
+   * @param service the service
+   */
+  <T extends BesuService> void addService(final Class<T> serviceType, final T service);
 
   /**
    * Get the requested service, if it is available. There are a number of reasons that a service may
@@ -40,5 +51,5 @@ public interface BesuContext {
    * @return an optional containing the instance of the requested service, or empty if the service
    *     is unavailable
    */
-  <T> Optional<T> getService(Class<T> serviceType);
+  <T extends BesuService> Optional<T> getService(Class<T> serviceType);
 }

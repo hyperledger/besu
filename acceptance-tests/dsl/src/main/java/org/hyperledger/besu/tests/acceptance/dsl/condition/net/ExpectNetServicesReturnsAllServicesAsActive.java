@@ -29,6 +29,7 @@ import com.google.common.net.InetAddresses;
 public class ExpectNetServicesReturnsAllServicesAsActive implements Condition {
 
   private final NetServicesTransaction transaction;
+  private static final String JSON_RPC_CONSTANT = "jsonrpc";
 
   public ExpectNetServicesReturnsAllServicesAsActive(final NetServicesTransaction transaction) {
     this.transaction = transaction;
@@ -38,18 +39,18 @@ public class ExpectNetServicesReturnsAllServicesAsActive implements Condition {
   public void verify(final Node node) {
     final Map<String, Map<String, String>> result = node.execute(transaction);
     assertThat(result.keySet())
-        .containsExactlyInAnyOrderElementsOf(Arrays.asList("p2p", "jsonrpc", "ws"));
+        .containsExactlyInAnyOrderElementsOf(Arrays.asList("p2p", JSON_RPC_CONSTANT, "ws"));
 
     assertThat(InetAddresses.isUriInetAddress(result.get("p2p").get("host"))).isTrue();
-    final int p2pPort = Integer.valueOf(result.get("p2p").get("port"));
+    final int p2pPort = Integer.parseInt(result.get("p2p").get("port"));
     assertThat(NetworkUtility.isValidPort(p2pPort)).isTrue();
 
     assertThat(InetAddresses.isUriInetAddress(result.get("ws").get("host"))).isTrue();
-    final int wsPort = Integer.valueOf(result.get("ws").get("port"));
+    final int wsPort = Integer.parseInt(result.get("ws").get("port"));
     assertThat(NetworkUtility.isValidPort(wsPort)).isTrue();
 
-    assertThat(InetAddresses.isUriInetAddress(result.get("jsonrpc").get("host"))).isTrue();
-    final int jsonRpcPort = Integer.valueOf(result.get("jsonrpc").get("port"));
+    assertThat(InetAddresses.isUriInetAddress(result.get(JSON_RPC_CONSTANT).get("host"))).isTrue();
+    final int jsonRpcPort = Integer.parseInt(result.get(JSON_RPC_CONSTANT).get("port"));
     assertThat(NetworkUtility.isValidPort(jsonRpcPort)).isTrue();
   }
 }

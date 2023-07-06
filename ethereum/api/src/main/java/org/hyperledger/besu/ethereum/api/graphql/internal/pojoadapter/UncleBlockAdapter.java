@@ -33,8 +33,8 @@ class UncleBlockAdapter extends BlockAdapterBase {
     return Optional.of(0);
   }
 
-  public Optional<UInt256> getTotalDifficulty() {
-    return Optional.of(UInt256.ZERO);
+  public UInt256 getTotalDifficulty() {
+    return UInt256.ZERO;
   }
 
   public Optional<Integer> getOmmerCount() {

@@ -14,40 +14,43 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Wei;
-
-import java.util.Optional;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 
 import graphql.schema.DataFetchingEnvironment;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-@SuppressWarnings("unused") // reflected by GraphQL
-public class EmptyAccountAdapter extends AdapterBase {
+public class EmptyAccountAdapter extends AccountAdapter {
   private final Address address;
 
   public EmptyAccountAdapter(final Address address) {
+    super(null);
     this.address = address;
   }
 
-  public Optional<Address> getAddress() {
-    return Optional.of(address);
+  @Override
+  public Address getAddress() {
+    return address;
   }
 
-  public Optional<Wei> getBalance() {
-    return Optional.of(Wei.ZERO);
+  @Override
+  public Wei getBalance() {
+    return Wei.ZERO;
   }
 
-  public Optional<Long> getTransactionCount() {
-    return Optional.of(0L);
+  @Override
+  public Long getTransactionCount() {
+    return 0L;
   }
 
-  public Optional<Bytes> getCode() {
-    return Optional.of(Bytes.EMPTY);
+  @Override
+  public Bytes getCode(final DataFetchingEnvironment environment) {
+    return Bytes.EMPTY;
   }
 
-  public Optional<Bytes32> getStorage(final DataFetchingEnvironment environment) {
-    return Optional.of(Bytes32.ZERO);
+  @Override
+  public Bytes32 getStorage(final DataFetchingEnvironment environment) {
+    return Bytes32.ZERO;
   }
 }

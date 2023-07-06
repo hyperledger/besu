@@ -19,4 +19,8 @@ public class IncompleteResultsException extends EthTaskException {
   public IncompleteResultsException() {
     super(FailureReason.INCOMPLETE_RESULTS);
   }
+
+  public IncompleteResultsException(final String message) {
+    super(message, FailureReason.INCOMPLETE_RESULTS);
+  }
 }

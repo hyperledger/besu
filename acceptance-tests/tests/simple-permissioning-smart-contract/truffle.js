@@ -1,3 +1,5 @@
+// Copyright ConsenSys AG.
+// SPDX-License-Identifier: Apache-2.0
 const PrivateKeyProvider = require('truffle-hdwallet-provider');
 
 // address 627306090abaB3A6e1400e9345bC60c78a8BEf57

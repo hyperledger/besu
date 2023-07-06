@@ -32,8 +32,15 @@ public class AdminConditions {
   }
 
   public Condition addPeer(final Node addingPeer) {
-
     return new ExpectPeerAdded(admin.addPeer(enodeUrl(addingPeer)));
+  }
+
+  public Condition hasPeer(final Node peer) {
+    return new ExpectHasPeer(nodeId(peer), admin.listPeers());
+  }
+
+  public Condition doesNotHavePeer(final Node peer) {
+    return new ExpectNotHavePeer(nodeId(peer), admin.listPeers());
   }
 
   private URI enodeUrl(final Node node) {
@@ -42,5 +49,13 @@ public class AdminConditions {
     }
 
     return ((RunnableNode) node).enodeUrl();
+  }
+
+  private String nodeId(final Node node) {
+    if (!(node instanceof RunnableNode)) {
+      fail("A RunnableNode instance is required");
+    }
+
+    return "0x" + ((RunnableNode) node).getNodeId();
   }
 }

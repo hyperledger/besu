@@ -14,15 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
 import java.util.Objects;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-// Represents a block parameter that can be a special value ("pending", "earliest", "latest") or
-// a number formatted as a hex string.
+// Represents a block parameter that can be a special value ("pending", "earliest", "latest",
+// "finalized", "safe") or a number formatted as a hex string.
 // See: https://github.com/ethereum/wiki/wiki/JSON-RPC#the-default-block-parameter
 public class BlockParameter {
 
@@ -31,6 +33,8 @@ public class BlockParameter {
   public static final BlockParameter EARLIEST = new BlockParameter("earliest");
   public static final BlockParameter LATEST = new BlockParameter("latest");
   public static final BlockParameter PENDING = new BlockParameter("pending");
+  public static final BlockParameter FINALIZED = new BlockParameter("finalized");
+  public static final BlockParameter SAFE = new BlockParameter("safe");
 
   @JsonCreator
   public BlockParameter(final String value) {
@@ -47,6 +51,14 @@ public class BlockParameter {
         break;
       case "pending":
         type = BlockParameterType.PENDING;
+        number = Optional.empty();
+        break;
+      case "finalized":
+        type = BlockParameterType.FINALIZED;
+        number = Optional.empty();
+        break;
+      case "safe":
+        type = BlockParameterType.SAFE;
         number = Optional.empty();
         break;
       default:
@@ -77,8 +89,32 @@ public class BlockParameter {
     return this.type == BlockParameterType.EARLIEST;
   }
 
+  public boolean isFinalized() {
+    return this.type == BlockParameterType.FINALIZED;
+  }
+
+  public boolean isSafe() {
+    return this.type == BlockParameterType.SAFE;
+  }
+
   public boolean isNumeric() {
     return this.type == BlockParameterType.NUMERIC;
+  }
+
+  public Optional<Long> getBlockNumber(final BlockchainQueries blockchain) {
+    if (this.isFinalized()) {
+      return blockchain.finalizedBlockHeader().map(ProcessableBlockHeader::getNumber);
+    } else if (this.isLatest()) {
+      return Optional.of(blockchain.headBlockNumber());
+    } else if (this.isPending()) {
+      // Pending not implemented, returns latest
+      return Optional.of(blockchain.headBlockNumber());
+    } else if (this.isSafe()) {
+      return blockchain.safeBlockHeader().map(ProcessableBlockHeader::getNumber);
+    } else {
+      // Alternate cases (numeric input or "earliest")
+      return this.getNumber();
+    }
   }
 
   @Override
@@ -103,6 +139,8 @@ public class BlockParameter {
     EARLIEST,
     LATEST,
     PENDING,
-    NUMERIC
+    NUMERIC,
+    FINALIZED,
+    SAFE
   }
 }

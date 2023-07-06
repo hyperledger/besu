@@ -14,13 +14,27 @@
  */
 package org.hyperledger.besu.nat;
 
+/** The enum Nat method. */
 public enum NatMethod {
+  /** Upnp nat method. */
   UPNP,
+  /** Upnpp 2 ponly nat method. */
+  UPNPP2PONLY,
+  /** Docker nat method. */
   DOCKER,
+  /** Kubernetes nat method. */
   KUBERNETES,
+  /** Auto nat method. */
   AUTO,
+  /** None nat method. */
   NONE;
 
+  /**
+   * Map NatMethod from string value.
+   *
+   * @param str the Nat Method in String format
+   * @return instance of mapped NatMethod
+   */
   public static NatMethod fromString(final String str) {
     for (final NatMethod mode : NatMethod.values()) {
       if (mode.name().equalsIgnoreCase(str)) {

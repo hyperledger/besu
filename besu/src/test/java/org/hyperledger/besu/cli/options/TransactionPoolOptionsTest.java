@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.options;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
@@ -23,10 +24,61 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import java.time.Duration;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class TransactionPoolOptionsTest
     extends AbstractCLIOptionsTest<
         ImmutableTransactionPoolConfiguration.Builder, TransactionPoolOptions> {
+
+  @Test
+  public void strictTxReplayProtection_enabled() {
+    final TestBesuCommand cmd = parseCommand("--strict-tx-replay-protection-enabled");
+
+    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
+    final TransactionPoolConfiguration config = options.toDomainObject().build();
+    assertThat(config.getStrictTransactionReplayProtectionEnabled()).isTrue();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void strictTxReplayProtection_enabledWithBooleanArg() {
+    final TestBesuCommand cmd = parseCommand("--strict-tx-replay-protection-enabled=true");
+
+    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
+    final TransactionPoolConfiguration config = options.toDomainObject().build();
+    assertThat(config.getStrictTransactionReplayProtectionEnabled()).isTrue();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void strictTxReplayProtection_disabled() {
+    final TestBesuCommand cmd = parseCommand("--strict-tx-replay-protection-enabled=false");
+
+    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
+    final TransactionPoolConfiguration config = options.toDomainObject().build();
+    assertThat(config.getStrictTransactionReplayProtectionEnabled()).isFalse();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void strictTxReplayProtection_default() {
+    final TestBesuCommand cmd = parseCommand();
+
+    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
+    final TransactionPoolConfiguration config = options.toDomainObject().build();
+    assertThat(config.getStrictTransactionReplayProtectionEnabled()).isFalse();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
 
   @Test
   public void txMessageKeepAliveSeconds() {
@@ -40,8 +92,8 @@ public class TransactionPoolOptionsTest
     final TransactionPoolConfiguration config = options.toDomainObject().build();
     assertThat(config.getTxMessageKeepAliveSeconds()).isEqualTo(txMessageKeepAliveSeconds);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -57,8 +109,8 @@ public class TransactionPoolOptionsTest
     assertThat(config.getEth65TrxAnnouncedBufferingPeriod())
         .hasMillis(eth65TrxAnnouncedBufferingPeriod);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Override
@@ -66,17 +118,28 @@ public class TransactionPoolOptionsTest
     final ImmutableTransactionPoolConfiguration defaultValue =
         ImmutableTransactionPoolConfiguration.builder().build();
     return ImmutableTransactionPoolConfiguration.builder()
+        .strictTransactionReplayProtectionEnabled(false)
         .txMessageKeepAliveSeconds(defaultValue.getTxMessageKeepAliveSeconds())
-        .eth65TrxAnnouncedBufferingPeriod(defaultValue.getEth65TrxAnnouncedBufferingPeriod());
+        .eth65TrxAnnouncedBufferingPeriod(defaultValue.getEth65TrxAnnouncedBufferingPeriod())
+        .layeredTxPoolEnabled(defaultValue.getLayeredTxPoolEnabled())
+        .pendingTransactionsLayerMaxCapacityBytes(
+            defaultValue.getPendingTransactionsLayerMaxCapacityBytes())
+        .maxPrioritizedTransactions(defaultValue.getMaxPrioritizedTransactions())
+        .maxFutureBySender(defaultValue.getMaxFutureBySender());
   }
 
   @Override
   ImmutableTransactionPoolConfiguration.Builder createCustomizedDomainObject() {
     return ImmutableTransactionPoolConfiguration.builder()
+        .strictTransactionReplayProtectionEnabled(true)
         .txMessageKeepAliveSeconds(TransactionPoolConfiguration.DEFAULT_TX_MSG_KEEP_ALIVE + 1)
         .eth65TrxAnnouncedBufferingPeriod(
             TransactionPoolConfiguration.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD.plus(
-                Duration.ofMillis(100)));
+                Duration.ofMillis(100)))
+        .layeredTxPoolEnabled(true)
+        .pendingTransactionsLayerMaxCapacityBytes(1_000_000L)
+        .maxPrioritizedTransactions(1000)
+        .maxFutureBySender(10);
   }
 
   @Override

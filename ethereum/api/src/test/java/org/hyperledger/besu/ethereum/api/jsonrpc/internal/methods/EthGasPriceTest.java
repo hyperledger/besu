@@ -20,23 +20,23 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,7 +52,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class EthGasPriceTest {
 
-  @Mock private EthHashMiningCoordinator miningCoordinator;
+  @Mock private PoWMiningCoordinator miningCoordinator;
   @Mock private Blockchain blockchain;
   private EthGasPrice method;
   private final String JSON_RPC_VERSION = "2.0";
@@ -89,7 +89,7 @@ public class EthGasPriceTest {
         .thenAnswer(invocation -> createEmptyBlock(invocation.getArgument(0, Long.class)));
 
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
 
     verify(miningCoordinator).getMinTransactionGasPrice();
     verifyNoMoreInteractions(miningCoordinator);
@@ -111,7 +111,7 @@ public class EthGasPriceTest {
         .thenAnswer(invocation -> createFakeBlock(invocation.getArgument(0, Long.class)));
 
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
 
     verifyNoMoreInteractions(miningCoordinator);
 
@@ -132,7 +132,7 @@ public class EthGasPriceTest {
         .thenAnswer(invocation -> createFakeBlock(invocation.getArgument(0, Long.class)));
 
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
 
     verifyNoMoreInteractions(miningCoordinator);
 
@@ -158,9 +158,12 @@ public class EthGasPriceTest {
                 0,
                 0,
                 Bytes.EMPTY,
-                0L,
+                Wei.ZERO,
                 Hash.EMPTY,
                 0,
+                null,
+                null,
+                null,
                 null),
             new BlockBody(
                 List.of(
@@ -173,6 +176,7 @@ public class EthGasPriceTest {
                         null,
                         Bytes.EMPTY,
                         Address.ZERO,
+                        Optional.empty(),
                         Optional.empty())),
                 List.of())));
   }
@@ -194,9 +198,12 @@ public class EthGasPriceTest {
                 0,
                 0,
                 Bytes.EMPTY,
-                0L,
+                Wei.ZERO,
                 Hash.EMPTY,
                 0,
+                null,
+                null,
+                null,
                 null),
             new BlockBody(List.of(), List.of())));
   }

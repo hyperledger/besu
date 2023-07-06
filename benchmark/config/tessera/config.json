@@ -1,0 +1,48 @@
+{
+  "mode": "orion",
+  "useWhiteList": false,
+  "jdbc": {
+    "username": "sa",
+    "password": "",
+    "url": "jdbc:h2:/data/tm/db;MODE=Oracle;TRACE_LEVEL_SYSTEM_OUT=0",
+    "autoCreateTables": true
+  },
+  "serverConfigs": [
+    {
+      "app": "ThirdParty",
+      "serverAddress": "http://tessera:9080",
+      "communicationType": "REST"
+    },
+    {
+      "app": "Q2T",
+      "serverAddress": "http://tessera:9101",
+      "sslConfig": {
+        "tls": "OFF"
+      },
+      "communicationType": "REST"
+    },
+    {
+      "app": "P2P",
+      "serverAddress": "http://tessera:9000",
+      "sslConfig": {
+        "tls": "OFF"
+      },
+      "communicationType": "REST"
+    }
+  ],
+  "peer": [
+    {
+      "url": "http://tessera:9000"
+    }
+  ],
+  "keys": {
+    "passwords": [],
+    "keyData": [
+      {
+          "config": {"data":{"bytes":"uTJGpd4ZEEtDPFSZM0+GT11xn5NFIr2KGP2Q4SdVPRM="},"type":"unlocked"},
+          "publicKey": "GGilEkXLaQ9yhhtbpBT03Me9iYa7U/mWXxrJhnbl1XY="
+      }
+    ]
+  },
+  "alwaysSendTo": []
+}

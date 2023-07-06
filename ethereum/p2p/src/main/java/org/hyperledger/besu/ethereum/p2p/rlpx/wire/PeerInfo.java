@@ -16,8 +16,9 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.wire;
 
 import static org.apache.tuweni.bytes.Bytes.wrap;
 
-import org.hyperledger.besu.crypto.SECP256K1.PublicKey;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.crypto.SECPPublicKey;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -26,8 +27,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.owasp.encoder.Encode;
 
 /**
  * Encapsulates information about a peer, including their protocol version, client ID, capabilities
@@ -35,12 +38,13 @@ import org.apache.tuweni.bytes.Bytes;
  *
  * <p>The peer info is shared between peers during the <code>HELLO</code> wire protocol handshake.
  */
-public class PeerInfo {
+public class PeerInfo implements Comparable<PeerInfo> {
   private final int version;
   private final String clientId;
   private final List<Capability> capabilities;
   private final int port;
   private final Bytes nodeId;
+  private Address address = null;
 
   public PeerInfo(
       final int version,
@@ -95,8 +99,12 @@ public class PeerInfo {
   }
 
   public Address getAddress() {
-    final PublicKey remotePublicKey = PublicKey.create(nodeId);
-    return Util.publicKeyToAddress(remotePublicKey);
+    if (address == null) {
+      final SECPPublicKey remotePublicKey =
+          SignatureAlgorithmFactory.getInstance().createPublicKey(nodeId);
+      address = Util.publicKeyToAddress(remotePublicKey);
+    }
+    return address;
   }
 
   public void writeTo(final RLPOutput out) {
@@ -110,10 +118,11 @@ public class PeerInfo {
   }
 
   @Override
+  /** Returned string is sanitized since it contains user input */
   public String toString() {
     final StringBuilder sb = new StringBuilder("PeerInfo{");
     sb.append("version=").append(version);
-    sb.append(", clientId='").append(clientId).append('\'');
+    sb.append(", clientId='").append(Encode.forJava(clientId)).append('\'');
     sb.append(", capabilities=").append(capabilities);
     sb.append(", port=").append(port);
     sb.append(", nodeId=").append(nodeId);
@@ -140,5 +149,10 @@ public class PeerInfo {
   @Override
   public int hashCode() {
     return Objects.hash(version, clientId, capabilities, port, nodeId);
+  }
+
+  @Override
+  public int compareTo(final @Nonnull PeerInfo peerInfo) {
+    return this.nodeId.compareTo(peerInfo.nodeId);
   }
 }

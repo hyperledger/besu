@@ -21,7 +21,17 @@ import java.math.BigInteger;
 /** Represents R and S component of a Signature obtained through sign function */
 @Unstable
 public interface Signature {
+  /**
+   * Gets R.
+   *
+   * @return the R
+   */
   BigInteger getR();
 
+  /**
+   * Gets S.
+   *
+   * @return the S
+   */
   BigInteger getS();
 }

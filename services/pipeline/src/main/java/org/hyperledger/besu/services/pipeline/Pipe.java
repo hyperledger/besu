@@ -22,8 +22,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Forms the connection between two pipeline stages. A pipe is essentially a blocking queue with the
@@ -31,13 +31,13 @@ import org.apache.logging.log4j.Logger;
  * the pipeline aborted.
  *
  * <p>In most cases a Pipe is used through one of two narrower interfaces it supports {@link
- * ReadPipe} and {@link WritePipe}. These are designed to expose only the operations relevant to
+ * ReadPipe}* and {@link WritePipe}. These are designed to expose only the operations relevant to
  * objects either reading from or publishing to the pipe respectively.
  *
  * @param <T> the type of item that flows through the pipe.
  */
 public class Pipe<T> implements ReadPipe<T>, WritePipe<T> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(Pipe.class);
   private final BlockingQueue<T> queue;
   private final Counter inputCounter;
   private final Counter outputCounter;
@@ -45,6 +45,14 @@ public class Pipe<T> implements ReadPipe<T>, WritePipe<T> {
   private final AtomicBoolean closed = new AtomicBoolean();
   private final AtomicBoolean aborted = new AtomicBoolean();
 
+  /**
+   * Instantiates a new Pipe.
+   *
+   * @param capacity the capacity
+   * @param inputCounter the input counter
+   * @param outputCounter the output counter
+   * @param abortedItemCounter the aborted item counter
+   */
   public Pipe(
       final int capacity,
       final Counter inputCounter,
@@ -117,9 +125,10 @@ public class Pipe<T> implements ReadPipe<T>, WritePipe<T> {
   }
 
   @Override
-  public void drainTo(final Collection<T> output, final int maxElements) {
+  public int drainTo(final Collection<T> output, final int maxElements) {
     final int count = queue.drainTo(output, maxElements);
     outputCounter.inc(count);
+    return count;
   }
 
   @Override

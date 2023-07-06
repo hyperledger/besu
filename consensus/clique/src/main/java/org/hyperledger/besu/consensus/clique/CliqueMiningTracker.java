@@ -14,35 +14,67 @@
  */
 package org.hyperledger.besu.consensus.clique;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+/** The Clique mining tracker. */
 public class CliqueMiningTracker {
 
   private final Address localAddress;
   private final ProtocolContext protocolContext;
 
+  /**
+   * Instantiates a new Clique mining tracker.
+   *
+   * @param localAddress the local address
+   * @param protocolContext the protocol context
+   */
   public CliqueMiningTracker(final Address localAddress, final ProtocolContext protocolContext) {
     this.localAddress = localAddress;
     this.protocolContext = protocolContext;
   }
 
+  /**
+   * Is next proposer.
+   *
+   * @param header the header
+   * @return the boolean
+   */
   public boolean isProposerAfter(final BlockHeader header) {
     final Address nextProposer =
         CliqueHelpers.getProposerForBlockAfter(
-            header, protocolContext.getConsensusState(CliqueContext.class).getVoteTallyCache());
+            header,
+            protocolContext.getConsensusContext(CliqueContext.class).getValidatorProvider());
     return localAddress.equals(nextProposer);
   }
 
+  /**
+   * Is signer.
+   *
+   * @param header the header
+   * @return the boolean
+   */
   public boolean isSigner(final BlockHeader header) {
     return CliqueHelpers.isSigner(localAddress, protocolContext, header);
   }
 
+  /**
+   * Can make block next round.
+   *
+   * @param header the header
+   * @return the boolean
+   */
   public boolean canMakeBlockNextRound(final BlockHeader header) {
     return CliqueHelpers.addressIsAllowedToProduceNextBlock(localAddress, protocolContext, header);
   }
 
+  /**
+   * Block created locally.
+   *
+   * @param header the header
+   * @return the boolean
+   */
   public boolean blockCreatedLocally(final BlockHeader header) {
     return CliqueHelpers.getProposerOfBlock(header).equals(localAddress);
   }

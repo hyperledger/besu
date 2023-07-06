@@ -15,27 +15,24 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.Hash;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EthGetBlockByHashTest {
-
-  @Rule public final ExpectedException thrown = ExpectedException.none();
 
   @Mock private BlockchainQueries blockchainQueries;
   private final BlockResultFactory blockResult = new BlockResultFactory();
@@ -56,61 +53,41 @@ public class EthGetBlockByHashTest {
 
   @Test
   public void exceptionWhenNoParamsSupplied() {
-    final JsonRpcRequestContext request = requestWithParams();
-
-    thrown.expect(InvalidJsonRpcParameters.class);
-    thrown.expectMessage("Missing required json rpc parameter at index 0");
-
-    method.response(request);
-
+    assertThatThrownBy(() -> method.response(requestWithParams()))
+        .isInstanceOf(InvalidJsonRpcParameters.class);
     verifyNoMoreInteractions(blockchainQueries);
   }
 
   @Test
   public void exceptionWhenNoHashSupplied() {
-    final JsonRpcRequestContext request = requestWithParams("false");
-
-    thrown.expect(InvalidJsonRpcParameters.class);
-    thrown.expectMessage("Invalid json rpc parameter at index 0");
-
-    method.response(request);
-
+    assertThatThrownBy(() -> method.response(requestWithParams("false")))
+        .isInstanceOf(InvalidJsonRpcParameters.class);
     verifyNoMoreInteractions(blockchainQueries);
   }
 
   @Test
   public void exceptionWhenNoBoolSupplied() {
-    final JsonRpcRequestContext request = requestWithParams(ZERO_HASH);
-
-    thrown.expect(InvalidJsonRpcParameters.class);
-    thrown.expectMessage("Missing required json rpc parameter at index 1");
-
-    method.response(request);
-
+    assertThatThrownBy(() -> method.response(requestWithParams(ZERO_HASH)))
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessage("Missing required json rpc parameter at index 1");
     verifyNoMoreInteractions(blockchainQueries);
   }
 
   @Test
   public void exceptionWhenHashParamInvalid() {
-    final JsonRpcRequestContext request = requestWithParams("hash", "true");
-
-    thrown.expect(InvalidJsonRpcParameters.class);
-    thrown.expectMessage("Invalid json rpc parameter at index 0");
-
-    method.response(request);
-
+    assertThatThrownBy(() -> method.response(requestWithParams("hash", "true")))
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessage(
+            "Invalid json rpc parameter at index 0. Supplied value was: 'hash' of type: 'java.lang.String' - expected type: 'org.hyperledger.besu.datatypes.Hash'");
     verifyNoMoreInteractions(blockchainQueries);
   }
 
   @Test
   public void exceptionWhenBoolParamInvalid() {
-    final JsonRpcRequestContext request = requestWithParams(ZERO_HASH, "maybe");
-
-    thrown.expect(InvalidJsonRpcParameters.class);
-    thrown.expectMessage("Invalid json rpc parameter at index 1");
-
-    method.response(request);
-
+    assertThatThrownBy(() -> method.response(requestWithParams(ZERO_HASH, "maybe")))
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessage(
+            "Invalid json rpc parameter at index 1. Supplied value was: 'maybe' of type: 'java.lang.String' - expected type: 'java.lang.Boolean'");
     verifyNoMoreInteractions(blockchainQueries);
   }
 

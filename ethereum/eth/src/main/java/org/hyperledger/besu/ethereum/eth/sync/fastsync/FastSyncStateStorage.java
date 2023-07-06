@@ -24,9 +24,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import com.google.common.io.Files;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Supports persisting fast sync state to disk to enable resuming after a restart.
@@ -37,7 +37,7 @@ import org.apache.tuweni.bytes.Bytes;
  * block header we want to continue with that pivot block so the world state downloaded matches up.
  */
 public class FastSyncStateStorage {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(FastSyncStateStorage.class);
   private static final String PIVOT_BLOCK_HEADER_FILENAME = "pivotBlockHeader.rlp";
   private final File pivotBlockHeaderFile;
 

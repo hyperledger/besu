@@ -15,8 +15,10 @@
 package org.hyperledger.besu.ethereum.rlp;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Test;
 
 public class BytesValueRLPOutputTest {
@@ -152,11 +154,29 @@ public class BytesValueRLPOutputTest {
     assertThat(out.encoded()).isEqualTo(h("0xbb01000000" + times("3c", 16777216)));
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void multipleElementAddedWithoutList() {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.writeByte((byte) 0);
-    out.writeByte((byte) 1);
+    assertThatThrownBy(() -> out.writeByte((byte) 1)).isInstanceOf(IllegalStateException.class);
+  }
+
+  @Test
+  public void unsignedIntScalar() {
+    // Scalar should be encoded as the minimal byte array representing the number. For 0, that means
+    // the empty byte array, which is a short element of zero-length, so 0x80.
+    assertUnsignedIntScalar(h("0x80"), 0);
+
+    assertUnsignedIntScalar(h("0x01"), 1);
+    assertUnsignedIntScalar(h("0x0F"), 15);
+    assertUnsignedIntScalar(h("0x820400"), 1024);
+    assertUnsignedIntScalar(h("0x84ffffffff"), (1L << 32) - 1);
+  }
+
+  private void assertUnsignedIntScalar(final Bytes expected, final long toTest) {
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.writeUnsignedInt(toTest);
+    assertThat(out.encoded()).isEqualTo(expected);
   }
 
   @Test
@@ -177,6 +197,23 @@ public class BytesValueRLPOutputTest {
   }
 
   @Test
+  public void uint256Scalar() {
+    // Scalar should be encoded as the minimal byte array representing the number. For 0, that means
+    // the empty byte array, which is a short element of zero-length, so 0x80.
+    assertUInt256Scalar(h("0x80"), UInt256.valueOf(0));
+
+    assertUInt256Scalar(h("0x01"), UInt256.valueOf(1));
+    assertUInt256Scalar(h("0x0F"), UInt256.valueOf(15));
+    assertUInt256Scalar(h("0x820400"), UInt256.valueOf(1024));
+  }
+
+  private void assertUInt256Scalar(final Bytes expected, final UInt256 toTest) {
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.writeUInt256Scalar(toTest);
+    assertThat(out.encoded()).isEqualTo(expected);
+  }
+
+  @Test
   public void emptyList() {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
@@ -185,17 +222,17 @@ public class BytesValueRLPOutputTest {
     assertThat(out.encoded()).isEqualTo(h("0xc0"));
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void unclosedList() {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.startList();
-    out.encoded();
+    assertThatThrownBy(out::encoded).isInstanceOf(IllegalStateException.class);
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void closeUnopenedList() {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
-    out.endList();
+    assertThatThrownBy(out::endList).isInstanceOf(IllegalStateException.class);
   }
 
   @Test

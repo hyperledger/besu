@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.vm.LogMock;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.List;
 
@@ -50,7 +51,9 @@ public class LogsBloomFilterTestCaseSpec {
     return logs;
   }
 
-  /** @return - 2048-bit representation of each log entry, except data, of each transaction. */
+  /**
+   * @return - 2048-bit representation of each log entry, except data, of each transaction.
+   */
   public LogsBloomFilter getLogsBloomFilter() {
     return logsBloomFilter;
   }

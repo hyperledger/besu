@@ -45,5 +45,5 @@ public abstract class ApiConfiguration {
   @Value.Derived
   public double getGasPriceFraction() {
     return getGasPricePercentile() / 100.0;
-  };
+  }
 }

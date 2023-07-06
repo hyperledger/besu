@@ -17,31 +17,30 @@ package org.hyperledger.besu.ethereum.api.query;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
-import org.hyperledger.besu.ethereum.api.handlers.RpcMethodTimeoutException;
 import org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
-import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -49,24 +48,26 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BlockchainQueries {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BlockchainQueries.class);
 
   private final WorldStateArchive worldStateArchive;
   private final Blockchain blockchain;
   private final Optional<Path> cachePath;
   private final Optional<TransactionLogBloomCacher> transactionLogBloomCacher;
+  private final Optional<EthScheduler> ethScheduler;
   private final ApiConfiguration apiConfig;
 
   public BlockchainQueries(final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
@@ -102,6 +103,7 @@ public class BlockchainQueries {
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.cachePath = cachePath;
+    this.ethScheduler = scheduler;
     this.transactionLogBloomCacher =
         (cachePath.isPresent() && scheduler.isPresent())
             ? Optional.of(
@@ -142,6 +144,33 @@ public class BlockchainQueries {
   }
 
   /**
+   * Return the header of the head of the chain.
+   *
+   * @return The header of the head of the chain.
+   */
+  public BlockHeader headBlockHeader() {
+    return blockchain.getChainHeadHeader();
+  }
+
+  /**
+   * Return the header of the last finalized block.
+   *
+   * @return The header of the last finalized block.
+   */
+  public Optional<BlockHeader> finalizedBlockHeader() {
+    return blockchain.getFinalized().flatMap(blockchain::getBlockHeader);
+  }
+
+  /**
+   * Return the header of the last safe block.
+   *
+   * @return The header of the last safe block.
+   */
+  public Optional<BlockHeader> safeBlockHeader() {
+    return blockchain.getSafeBlock().flatMap(blockchain::getBlockHeader);
+  }
+
+  /**
    * Determines the block header for the address associated with this storage index.
    *
    * @param address The address of the account that owns the storage being queried.
@@ -151,8 +180,24 @@ public class BlockchainQueries {
    */
   public Optional<UInt256> storageAt(
       final Address address, final UInt256 storageIndex, final long blockNumber) {
+    final Hash blockHash =
+        getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
+
+    return storageAt(address, storageIndex, blockHash);
+  }
+
+  /**
+   * Determines the block header for the address associated with this storage index.
+   *
+   * @param address The address of the account that owns the storage being queried.
+   * @param storageIndex The storage index whose value is being retrieved.
+   * @param blockHash The blockHash that is being queried.
+   * @return The value at the storage index being queried.
+   */
+  public Optional<UInt256> storageAt(
+      final Address address, final UInt256 storageIndex, final Hash blockHash) {
     return fromAccount(
-        address, blockNumber, account -> account.getStorageValue(storageIndex), UInt256.ZERO);
+        address, blockHash, account -> account.getStorageValue(storageIndex), UInt256.ZERO);
   }
 
   /**
@@ -163,7 +208,21 @@ public class BlockchainQueries {
    * @return The balance of the account in Wei.
    */
   public Optional<Wei> accountBalance(final Address address, final long blockNumber) {
-    return fromAccount(address, blockNumber, Account::getBalance, Wei.ZERO);
+    final Hash blockHash =
+        getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
+
+    return accountBalance(address, blockHash);
+  }
+
+  /**
+   * Returns the balance of the given account at a specific block hash.
+   *
+   * @param address The address of the account being queried.
+   * @param blockHash The block hash being queried.
+   * @return The balance of the account in Wei.
+   */
+  public Optional<Wei> accountBalance(final Address address, final Hash blockHash) {
+    return fromAccount(address, blockHash, Account::getBalance, Wei.ZERO);
   }
 
   /**
@@ -174,7 +233,21 @@ public class BlockchainQueries {
    * @return The code associated with this address.
    */
   public Optional<Bytes> getCode(final Address address, final long blockNumber) {
-    return fromAccount(address, blockNumber, Account::getCode, Bytes.EMPTY);
+    final Hash blockHash =
+        getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
+
+    return getCode(address, blockHash);
+  }
+
+  /**
+   * Retrieves the code associated with the given account at a particular block hash.
+   *
+   * @param address The account address being queried.
+   * @param blockHash The hash of the block to be checked.
+   * @return The code associated with this address.
+   */
+  public Optional<Bytes> getCode(final Address address, final Hash blockHash) {
+    return fromAccount(address, blockHash, Account::getCode, Bytes.EMPTY);
   }
 
   /**
@@ -218,8 +291,22 @@ public class BlockchainQueries {
    * @return The number of transactions sent from the given address.
    */
   public long getTransactionCount(final Address address, final long blockNumber) {
-    return getWorldState(blockNumber)
-        .map(worldState -> worldState.get(address))
+    final Hash blockHash =
+        getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
+
+    return getTransactionCount(address, blockHash);
+  }
+
+  /**
+   * Returns the number of transactions sent from the given address in the block at the given hash.
+   *
+   * @param address The address whose sent transactions we want to count.
+   * @param blockHash The hash of the block being queried.
+   * @return The number of transactions sent from the given address.
+   */
+  public long getTransactionCount(final Address address, final Hash blockHash) {
+    return getAndMapWorldState(
+            blockHash, worldState -> Optional.ofNullable(worldState.get(address)))
         .map(Account::getNonce)
         .orElse(0L);
   }
@@ -325,18 +412,26 @@ public class BlockchainQueries {
                             blockchain
                                 .getTotalDifficultyByHash(blockHeaderHash)
                                 .map(
-                                    (td) -> {
+                                    td -> {
                                       final List<Transaction> txs = body.getTransactions();
                                       final List<TransactionWithMetadata> formattedTxs =
                                           formatTransactions(
-                                              txs, header.getNumber(), blockHeaderHash);
+                                              txs,
+                                              header.getNumber(),
+                                              header.getBaseFee(),
+                                              blockHeaderHash);
                                       final List<Hash> ommers =
                                           body.getOmmers().stream()
                                               .map(BlockHeader::getHash)
                                               .collect(Collectors.toList());
                                       final int size = new Block(header, body).calculateSize();
                                       return new BlockWithMetadata<>(
-                                          header, formattedTxs, ommers, td, size);
+                                          header,
+                                          formattedTxs,
+                                          ommers,
+                                          td,
+                                          size,
+                                          body.getWithdrawals());
                                     })));
   }
 
@@ -380,7 +475,7 @@ public class BlockchainQueries {
                             blockchain
                                 .getTotalDifficultyByHash(blockHeaderHash)
                                 .map(
-                                    (td) -> {
+                                    td -> {
                                       final List<Hash> txs =
                                           body.getTransactions().stream()
                                               .map(Transaction::getHash)
@@ -390,7 +485,8 @@ public class BlockchainQueries {
                                               .map(BlockHeader::getHash)
                                               .collect(Collectors.toList());
                                       final int size = new Block(header, body).calculateSize();
-                                      return new BlockWithMetadata<>(header, txs, ommers, td, size);
+                                      return new BlockWithMetadata<>(
+                                          header, txs, ommers, td, size, body.getWithdrawals());
                                     })));
   }
 
@@ -447,7 +543,11 @@ public class BlockchainQueries {
     final Transaction transaction = blockchain.getTransactionByHash(transactionHash).orElseThrow();
     return Optional.of(
         new TransactionWithMetadata(
-            transaction, header.getNumber(), blockHash, loc.getTransactionIndex()));
+            transaction,
+            header.getNumber(),
+            header.getBaseFee(),
+            blockHash,
+            loc.getTransactionIndex()));
   }
 
   /**
@@ -498,7 +598,7 @@ public class BlockchainQueries {
       return null;
     }
     return new TransactionWithMetadata(
-        txs.get(txIndex), header.getNumber(), blockHeaderHash, txIndex);
+        txs.get(txIndex), header.getNumber(), header.getBaseFee(), blockHeaderHash, txIndex);
   }
 
   public Optional<TransactionLocation> transactionLocationByHash(final Hash transactionHash) {
@@ -521,11 +621,12 @@ public class BlockchainQueries {
     // getTransactionLocation should not return if the TX or block doesn't exist, so throwing
     // on a missing optional is appropriate.
     final TransactionLocation location = maybeLocation.get();
-    final BlockBody blockBody = blockchain.getBlockBody(location.getBlockHash()).orElseThrow();
-    final Transaction transaction = blockBody.getTransactions().get(location.getTransactionIndex());
+    final Block block = blockchain.getBlockByHash(location.getBlockHash()).orElseThrow();
+    final Transaction transaction =
+        block.getBody().getTransactions().get(location.getTransactionIndex());
 
     final Hash blockhash = location.getBlockHash();
-    final BlockHeader header = blockchain.getBlockHeader(blockhash).orElseThrow();
+    final BlockHeader header = block.getHeader();
     final List<TransactionReceipt> transactionReceipts =
         blockchain.getTxReceipts(blockhash).orElseThrow();
     final TransactionReceipt transactionReceipt =
@@ -545,6 +646,7 @@ public class BlockchainQueries {
             transactionHash,
             location.getTransactionIndex(),
             gasUsed,
+            header.getBaseFee(),
             blockhash,
             header.getNumber()));
   }
@@ -604,12 +706,8 @@ public class BlockchainQueries {
         currentStep = nextStep;
       }
       return result;
-    } catch (final RpcMethodTimeoutException e) {
-      LOG.error("Error retrieving matching logs", e);
-      throw e;
     } catch (final Exception e) {
-      LOG.error("Error retrieving matching logs", e);
-      throw new RuntimeException(e);
+      throw new IllegalStateException("Error retrieving matching logs", e);
     }
   }
 
@@ -673,43 +771,33 @@ public class BlockchainQueries {
   public List<LogWithMetadata> matchingLogs(
       final Hash blockHash, final LogsQuery query, final Supplier<Boolean> isQueryAlive) {
     try {
-      final Optional<BlockHeader> blockHeader =
-          BackendQuery.runIfAlive(
-              "matchingLogs - getBlockHeader",
-              () -> blockchain.getBlockHeader(blockHash),
-              isQueryAlive);
+      final Optional<BlockHeader> blockHeader = getBlockHeader(blockHash, isQueryAlive);
       if (blockHeader.isEmpty()) {
         return Collections.emptyList();
       }
       // receipts and transactions should exist if the header exists, so throwing is ok.
-      final List<TransactionReceipt> receipts =
-          BackendQuery.runIfAlive(
-              "matchingLogs - getTxReceipts",
-              () -> blockchain.getTxReceipts(blockHash).orElseThrow(),
-              isQueryAlive);
-      final List<Transaction> transactions =
-          BackendQuery.runIfAlive(
-              "matchingLogs - getBlockBody",
-              () -> blockchain.getBlockBody(blockHash).orElseThrow().getTransactions(),
-              isQueryAlive);
+      final List<TransactionReceipt> receipts = getReceipts(blockHash, isQueryAlive);
+      final List<Transaction> transactions = getTransactions(blockHash, isQueryAlive);
       final long number = blockHeader.get().getNumber();
-      final boolean removed =
-          BackendQuery.runIfAlive(
-              "matchingLogs - blockIsOnCanonicalChain",
-              () -> !blockchain.blockIsOnCanonicalChain(blockHash),
-              isQueryAlive);
+      final boolean removed = getRemoved(blockHash, isQueryAlive);
+
+      final AtomicInteger logIndexOffset = new AtomicInteger();
       return IntStream.range(0, receipts.size())
           .mapToObj(
               i -> {
                 try {
                   BackendQuery.stopIfExpired(isQueryAlive);
-                  return LogWithMetadata.generate(
-                      receipts.get(i),
-                      number,
-                      blockHash,
-                      transactions.get(i).getHash(),
-                      i,
-                      removed);
+                  final List<LogWithMetadata> result =
+                      LogWithMetadata.generate(
+                          logIndexOffset.intValue(),
+                          receipts.get(i),
+                          number,
+                          blockHash,
+                          transactions.get(i).getHash(),
+                          i,
+                          removed);
+                  logIndexOffset.addAndGet(receipts.get(i).getLogs().size());
+                  return result;
                 } catch (final Exception e) {
                   throw new RuntimeException(e);
                 }
@@ -722,15 +810,92 @@ public class BlockchainQueries {
     }
   }
 
+  public List<LogWithMetadata> matchingLogs(
+      final Hash blockHash,
+      final TransactionWithMetadata transactionWithMetaData,
+      final Supplier<Boolean> isQueryAlive) {
+    if (transactionWithMetaData.getTransactionIndex().isEmpty()) {
+      throw new RuntimeException(
+          "Cannot find logs because transaction "
+              + transactionWithMetaData.getTransaction().getHash()
+              + " does not have a transaction index");
+    }
+
+    try {
+      final Optional<BlockHeader> blockHeader = getBlockHeader(blockHash, isQueryAlive);
+      if (blockHeader.isEmpty()) {
+        return Collections.emptyList();
+      }
+      // receipts and transactions should exist if the header exists, so throwing is ok.
+      final List<TransactionReceipt> receipts = getReceipts(blockHash, isQueryAlive);
+      final List<Transaction> transactions = getTransactions(blockHash, isQueryAlive);
+      final long number = blockHeader.get().getNumber();
+      final boolean removed = getRemoved(blockHash, isQueryAlive);
+
+      final int transactionIndex = transactionWithMetaData.getTransactionIndex().get();
+      final int logIndexOffset =
+          logIndexOffset(
+              transactionWithMetaData.getTransaction().getHash(), receipts, transactions);
+
+      return LogWithMetadata.generate(
+          logIndexOffset,
+          receipts.get(transactionIndex),
+          number,
+          blockHash,
+          transactions.get(transactionIndex).getHash(),
+          transactionIndex,
+          removed);
+
+    } catch (final Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   /**
-   * Returns the world state for the corresponding block number
+   * Wraps an operation on MutableWorldState with try-with-resources the corresponding block hash.
+   * This method provides access to the worldstate via a mapper function in order to ensure all of
+   * the uses of the MutableWorldState are subsequently closed, via the try-with-resources block.
    *
-   * @param blockNumber the block number
+   * @param <U> return type of the operation on the MutableWorldState
+   * @param blockHash the block hash
+   * @param mapper Function which performs an operation on a MutableWorldState
    * @return the world state at the block number
    */
-  public Optional<MutableWorldState> getWorldState(final long blockNumber) {
-    final Optional<BlockHeader> header = blockchain.getBlockHeader(blockNumber);
-    return header.map(BlockHeader::getStateRoot).flatMap(worldStateArchive::getMutable);
+  public <U> Optional<U> getAndMapWorldState(
+      final Hash blockHash, final Function<MutableWorldState, ? extends Optional<U>> mapper) {
+
+    return blockchain
+        .getBlockHeader(blockHash)
+        .flatMap(
+            blockHeader -> {
+              try (var ws = worldStateArchive.getMutable(blockHeader, false).orElse(null)) {
+                if (ws != null) {
+                  return mapper.apply(ws);
+                }
+              } catch (Exception ex) {
+                LOG.error("failed worldstate query for " + blockHash.toShortHexString(), ex);
+              }
+              LOG.atDebug()
+                  .setMessage("Failed to find worldstate for {}")
+                  .addArgument(blockHeader.toLogString())
+                  .log();
+              return Optional.empty();
+            });
+  }
+
+  /**
+   * Wraps an operation on MutableWorldState with try-with-resources the corresponding block number
+   *
+   * @param <U> return type of the operation on the MutableWorldState
+   * @param blockNumber the block number
+   * @param mapper Function which performs an operation on a MutableWorldState returning type U
+   * @return the world state at the block number
+   */
+  public <U> Optional<U> getAndMapWorldState(
+      final long blockNumber, final Function<MutableWorldState, ? extends Optional<U>> mapper) {
+    final Hash blockHash =
+        getBlockHeaderByNumber(blockNumber).map(BlockHeader::getHash).orElse(Hash.EMPTY);
+    return getAndMapWorldState(blockHash, mapper);
   }
 
   public Optional<Long> gasPrice() {
@@ -746,7 +911,8 @@ public class BlockchainQueries {
                         .orElseThrow(
                             () -> new IllegalStateException("Could not retrieve block #" + l)))
             .flatMap(Collection::stream)
-            .mapToLong(t -> t.getGasPrice().toLong())
+            .filter(t -> t.getGasPrice().isPresent())
+            .mapToLong(t -> t.getGasPrice().get().toLong())
             .sorted()
             .toArray();
     return (gasCollection == null || gasCollection.length == 0)
@@ -762,36 +928,110 @@ public class BlockchainQueries {
                             (int) ((gasCollection.length) * apiConfig.getGasPriceFraction()))])));
   }
 
-  private <T> Optional<T> fromWorldState(
-      final long blockNumber, final Function<WorldState, T> getter) {
-    if (outsideBlockchainRange(blockNumber)) {
-      return Optional.empty();
-    }
-    return getWorldState(blockNumber).map(getter);
+  public Optional<Wei> gasPriorityFee() {
+    final long blockHeight = headBlockNumber();
+    final BigInteger[] gasCollection =
+        LongStream.range(Math.max(0, blockHeight - apiConfig.getGasPriceBlocks()), blockHeight)
+            .mapToObj(
+                l ->
+                    blockchain
+                        .getBlockByNumber(l)
+                        .map(Block::getBody)
+                        .map(BlockBody::getTransactions)
+                        .orElseThrow(
+                            () -> new IllegalStateException("Could not retrieve block #" + l)))
+            .flatMap(Collection::stream)
+            .filter(t -> t.getMaxPriorityFeePerGas().isPresent())
+            .map(t -> t.getMaxPriorityFeePerGas().get().toBigInteger())
+            .sorted(BigInteger::compareTo)
+            .toArray(BigInteger[]::new);
+    return (gasCollection.length == 0)
+        ? Optional.empty()
+        : Optional.of(
+            Wei.of(
+                gasCollection[
+                    Math.min(
+                        gasCollection.length - 1,
+                        (int) ((gasCollection.length) * apiConfig.getGasPriceFraction()))]));
   }
 
   private <T> Optional<T> fromAccount(
       final Address address,
-      final long blockNumber,
+      final Hash blockHash,
       final Function<Account, T> getter,
       final T noAccountValue) {
-    return fromWorldState(
-        blockNumber,
+    return getAndMapWorldState(
+        blockHash,
         worldState ->
-            Optional.ofNullable(worldState.get(address)).map(getter).orElse(noAccountValue));
+            Optional.ofNullable(worldState.get(address))
+                .map(getter)
+                .or(() -> Optional.ofNullable(noAccountValue)));
   }
 
   private List<TransactionWithMetadata> formatTransactions(
-      final List<Transaction> txs, final long blockNumber, final Hash blockHash) {
+      final List<Transaction> txs,
+      final long blockNumber,
+      final Optional<Wei> baseFee,
+      final Hash blockHash) {
     final int count = txs.size();
     final List<TransactionWithMetadata> result = new ArrayList<>(count);
     for (int i = 0; i < count; i++) {
-      result.add(new TransactionWithMetadata(txs.get(i), blockNumber, blockHash, i));
+      result.add(new TransactionWithMetadata(txs.get(i), blockNumber, baseFee, blockHash, i));
     }
     return result;
   }
 
   private boolean outsideBlockchainRange(final long blockNumber) {
     return blockNumber > headBlockNumber() || blockNumber < BlockHeader.GENESIS_BLOCK_NUMBER;
+  }
+
+  private Boolean getRemoved(final Hash blockHash, final Supplier<Boolean> isQueryAlive)
+      throws Exception {
+    return BackendQuery.runIfAlive(
+        "matchingLogs - blockIsOnCanonicalChain",
+        () -> !blockchain.blockIsOnCanonicalChain(blockHash),
+        isQueryAlive);
+  }
+
+  private List<Transaction> getTransactions(
+      final Hash blockHash, final Supplier<Boolean> isQueryAlive) throws Exception {
+    return BackendQuery.runIfAlive(
+        "matchingLogs - getBlockBody",
+        () -> blockchain.getBlockBody(blockHash).orElseThrow().getTransactions(),
+        isQueryAlive);
+  }
+
+  private List<TransactionReceipt> getReceipts(
+      final Hash blockHash, final Supplier<Boolean> isQueryAlive) throws Exception {
+    return BackendQuery.runIfAlive(
+        "matchingLogs - getTxReceipts",
+        () -> blockchain.getTxReceipts(blockHash).orElseThrow(),
+        isQueryAlive);
+  }
+
+  private Optional<BlockHeader> getBlockHeader(
+      final Hash blockHash, final Supplier<Boolean> isQueryAlive) throws Exception {
+    return BackendQuery.runIfAlive(
+        "matchingLogs - getBlockHeader", () -> blockchain.getBlockHeader(blockHash), isQueryAlive);
+  }
+
+  private int logIndexOffset(
+      final Hash transactionHash,
+      final List<TransactionReceipt> receipts,
+      final List<Transaction> transactions) {
+    int logIndexOffset = 0;
+    for (int i = 0; i < receipts.size(); i++) {
+      if (transactions.get(i).getHash().equals(transactionHash)) {
+        break;
+      }
+
+      logIndexOffset += receipts.get(i).getLogs().size();
+    }
+
+    return logIndexOffset;
+  }
+
+  public Optional<EthScheduler> getEthScheduler() {
+    return ethScheduler;
   }
 }

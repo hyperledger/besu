@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.consensus.common.bft.payload;
 
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -24,13 +26,32 @@ import java.util.StringJoiner;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/**
+ * The type Signed data.
+ *
+ * @param <M> the type parameter of Payload
+ */
 public class SignedData<M extends Payload> implements Authored {
 
   private final Address sender;
-  private final Signature signature;
+  private final SECPSignature signature;
   private final M unsignedPayload;
 
-  public SignedData(final M unsignedPayload, final Address sender, final Signature signature) {
+  /**
+   * Create signed data.
+   *
+   * @param <T> the type parameter
+   * @param payload the payload
+   * @param signature the signature
+   * @return the signed data
+   */
+  public static <T extends Payload> SignedData<T> create(
+      final T payload, final SECPSignature signature) {
+    final Hash msgHash = payload.hashForSignature();
+    return new SignedData<>(payload, Util.signatureToAddress(signature, msgHash), signature);
+  }
+
+  private SignedData(final M unsignedPayload, final Address sender, final SECPSignature signature) {
     this.unsignedPayload = unsignedPayload;
     this.sender = sender;
     this.signature = signature;
@@ -41,18 +62,32 @@ public class SignedData<M extends Payload> implements Authored {
     return sender;
   }
 
+  /**
+   * Gets payload.
+   *
+   * @return the payload
+   */
   public M getPayload() {
     return unsignedPayload;
   }
 
+  /**
+   * Write to.
+   *
+   * @param output the output
+   */
   public void writeTo(final RLPOutput output) {
-
     output.startList();
     unsignedPayload.writeTo(output);
     output.writeBytes(signature.encodedBytes());
     output.endList();
   }
 
+  /**
+   * Encode.
+   *
+   * @return the bytes
+   */
   public Bytes encode() {
     final BytesValueRLPOutput rlpEncode = new BytesValueRLPOutput();
     writeTo(rlpEncode);

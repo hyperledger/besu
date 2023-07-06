@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.pubsub;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
@@ -22,9 +22,9 @@ import org.hyperledger.besu.tests.acceptance.dsl.pubsub.Subscription;
 import org.hyperledger.besu.tests.acceptance.dsl.pubsub.WebSocket;
 
 import io.vertx.core.Vertx;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class NewPendingTransactionAcceptanceTest extends AcceptanceTestBase {
 
@@ -35,7 +35,7 @@ public class NewPendingTransactionAcceptanceTest extends AcceptanceTestBase {
   private BesuNode minerNode;
   private BesuNode archiveNode;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     vertx = Vertx.vertx();
     minerNode = besu.createMinerNode("miner-node1");
@@ -46,7 +46,7 @@ public class NewPendingTransactionAcceptanceTest extends AcceptanceTestBase {
     archiveWebSocket = new WebSocket(vertx, archiveNode.getConfiguration());
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     vertx.close();
   }

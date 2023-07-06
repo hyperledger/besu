@@ -22,7 +22,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import java.io.IOException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class RunHelpTest extends AcceptanceTestBase {
 
@@ -38,6 +38,5 @@ public class RunHelpTest extends AcceptanceTestBase {
     final String consoleContents = cluster.getConsoleContents();
     assertThat(consoleContents)
         .startsWith("Usage:\n\nbesu [OPTIONS] [COMMAND]\n\nDescription:\n\n");
-    assertThat(consoleContents).endsWith("\nBesu is licensed under the Apache License 2.0\n");
   }
 }

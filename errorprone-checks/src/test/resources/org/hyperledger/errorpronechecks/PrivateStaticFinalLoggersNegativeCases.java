@@ -15,10 +15,11 @@
 
 package org.hyperledger.errorpronechecks;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PrivateStaticFinalLoggersNegativeCases {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(PrivateStaticFinalLoggersNegativeCases.class);
 }

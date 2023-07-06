@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,10 +18,18 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
+
 import java.time.Instant;
 import java.util.OptionalLong;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** A utility class for building block headers. */
 public class BlockHeaderBuilder {
@@ -35,6 +43,9 @@ public class BlockHeaderBuilder {
   private Hash stateRoot;
 
   private Hash transactionsRoot;
+
+  private Hash withdrawalsRoot = null;
+  private Hash depositsRoot = null;
 
   private Hash receiptsRoot;
 
@@ -52,9 +63,9 @@ public class BlockHeaderBuilder {
 
   private Bytes extraData;
 
-  private Long baseFee = null;
+  private Wei baseFee = null;
 
-  private Hash mixHash;
+  private Bytes32 mixHashOrPrevRandao = null;
 
   private BlockHeaderFunctions blockHeaderFunctions;
 
@@ -62,8 +73,30 @@ public class BlockHeaderBuilder {
   // instead of an invalid identifier such as -1.
   private OptionalLong nonce = OptionalLong.empty();
 
+  private DataGas excessDataGas = null;
+
   public static BlockHeaderBuilder create() {
     return new BlockHeaderBuilder();
+  }
+
+  public static BlockHeaderBuilder createDefault() {
+    return new BlockHeaderBuilder()
+        .parentHash(Hash.EMPTY)
+        .coinbase(Address.ZERO)
+        .difficulty(Difficulty.ONE)
+        .number(0)
+        .gasLimit(30_000_000)
+        .timestamp(0)
+        .ommersHash(Hash.EMPTY_LIST_HASH)
+        .stateRoot(Hash.EMPTY_TRIE_HASH)
+        .transactionsRoot(Hash.EMPTY)
+        .receiptsRoot(Hash.EMPTY)
+        .logsBloom(LogsBloomFilter.empty())
+        .gasUsed(0)
+        .extraData(Bytes.EMPTY)
+        .mixHash(Hash.EMPTY)
+        .nonce(0)
+        .blockHeaderFunctions(new MainnetBlockHeaderFunctions());
   }
 
   public static BlockHeaderBuilder fromHeader(final BlockHeader header) {
@@ -83,11 +116,15 @@ public class BlockHeaderBuilder {
         .extraData(header.getExtraData())
         .baseFee(header.getBaseFee().orElse(null))
         .mixHash(header.getMixHash())
-        .nonce(header.getNonce());
+        .nonce(header.getNonce())
+        .prevRandao(header.getPrevRandao().orElse(null))
+        .withdrawalsRoot(header.getWithdrawalsRoot().orElse(null))
+        .excessDataGas(header.getExcessDataGas().orElse(null))
+        .depositsRoot(header.getDepositsRoot().orElse(null));
   }
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
-    BlockHeaderBuilder toBuilder =
+    final BlockHeaderBuilder toBuilder =
         create()
             .parentHash(fromBuilder.parentHash)
             .ommersHash(fromBuilder.ommersHash)
@@ -102,8 +139,11 @@ public class BlockHeaderBuilder {
             .gasUsed(fromBuilder.gasUsed)
             .timestamp(fromBuilder.timestamp)
             .extraData(fromBuilder.extraData)
-            .mixHash(fromBuilder.mixHash)
             .baseFee(fromBuilder.baseFee)
+            .prevRandao(fromBuilder.mixHashOrPrevRandao)
+            .withdrawalsRoot(fromBuilder.withdrawalsRoot)
+            .excessDataGas(fromBuilder.excessDataGas)
+            .depositsRoot(fromBuilder.depositsRoot)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
@@ -127,8 +167,11 @@ public class BlockHeaderBuilder {
         timestamp < 0 ? Instant.now().getEpochSecond() : timestamp,
         extraData,
         baseFee,
-        mixHash,
+        mixHashOrPrevRandao,
         nonce.getAsLong(),
+        withdrawalsRoot,
+        excessDataGas,
+        depositsRoot,
         blockHeaderFunctions);
   }
 
@@ -136,7 +179,15 @@ public class BlockHeaderBuilder {
     validateProcessableBlockHeader();
 
     return new ProcessableBlockHeader(
-        parentHash, coinbase, difficulty, number, gasLimit, timestamp, baseFee);
+        parentHash,
+        coinbase,
+        difficulty,
+        number,
+        gasLimit,
+        timestamp,
+        baseFee,
+        mixHashOrPrevRandao,
+        excessDataGas);
   }
 
   public SealableBlockHeader buildSealableBlockHeader() {
@@ -156,12 +207,16 @@ public class BlockHeaderBuilder {
         gasUsed,
         timestamp,
         extraData,
-        baseFee);
+        baseFee,
+        mixHashOrPrevRandao,
+        withdrawalsRoot,
+        excessDataGas,
+        depositsRoot);
   }
 
   private void validateBlockHeader() {
     validateSealableBlockHeader();
-    checkState(this.mixHash != null, "Missing mixHash");
+    checkState(this.mixHashOrPrevRandao != null, "Missing mixHash or prevRandao");
     checkState(this.nonce.isPresent(), "Missing nonce");
     checkState(this.blockHeaderFunctions != null, "Missing blockHeaderFunctions");
   }
@@ -195,6 +250,8 @@ public class BlockHeaderBuilder {
     gasLimit(processableBlockHeader.getGasLimit());
     timestamp(processableBlockHeader.getTimestamp());
     baseFee(processableBlockHeader.getBaseFee().orElse(null));
+    processableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
+    processableBlockHeader.getExcessDataGas().ifPresent(this::excessDataGas);
     return this;
   }
 
@@ -214,6 +271,10 @@ public class BlockHeaderBuilder {
     timestamp(sealableBlockHeader.getTimestamp());
     extraData(sealableBlockHeader.getExtraData());
     baseFee(sealableBlockHeader.getBaseFee().orElse(null));
+    sealableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
+    withdrawalsRoot(sealableBlockHeader.getWithdrawalsRoot().orElse(null));
+    sealableBlockHeader.getExcessDataGas().ifPresent(this::excessDataGas);
+    depositsRoot(sealableBlockHeader.getDepositsRoot().orElse(null));
     return this;
   }
 
@@ -298,7 +359,7 @@ public class BlockHeaderBuilder {
 
   public BlockHeaderBuilder mixHash(final Hash mixHash) {
     checkNotNull(mixHash);
-    this.mixHash = mixHash;
+    this.mixHashOrPrevRandao = mixHash;
     return this;
   }
 
@@ -312,8 +373,30 @@ public class BlockHeaderBuilder {
     return this;
   }
 
-  public BlockHeaderBuilder baseFee(final Long baseFee) {
+  public BlockHeaderBuilder baseFee(final Wei baseFee) {
     this.baseFee = baseFee;
+    return this;
+  }
+
+  public BlockHeaderBuilder prevRandao(final Bytes32 prevRandao) {
+    if (prevRandao != null) {
+      this.mixHashOrPrevRandao = prevRandao;
+    }
+    return this;
+  }
+
+  public BlockHeaderBuilder withdrawalsRoot(final Hash hash) {
+    this.withdrawalsRoot = hash;
+    return this;
+  }
+
+  public BlockHeaderBuilder depositsRoot(final Hash hash) {
+    this.depositsRoot = hash;
+    return this;
+  }
+
+  public BlockHeaderBuilder excessDataGas(final DataGas excessDataGas) {
+    this.excessDataGas = excessDataGas;
     return this;
   }
 }

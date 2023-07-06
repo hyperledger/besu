@@ -14,17 +14,24 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -35,10 +42,20 @@ import java.util.List;
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
+import org.junit.Before;
 import org.junit.Test;
 
 /** Tests for {@link BlockBodiesMessage}. */
 public final class BlockBodiesMessageTest {
+
+  private ProtocolSchedule protocolSchedule;
+
+  @Before
+  public void setup() {
+    protocolSchedule =
+        FixedDifficultyProtocolSchedule.create(
+            GenesisConfigFile.development().getConfigOptions(), false, EvmConfiguration.DEFAULT);
+  }
 
   @Test
   public void blockBodiesRoundTrip() throws IOException {
@@ -64,14 +81,37 @@ public final class BlockBodiesMessageTest {
     final MessageData initialMessage = BlockBodiesMessage.create(bodies);
     final MessageData raw = new RawMessage(EthPV62.BLOCK_BODIES, initialMessage.getData());
     final BlockBodiesMessage message = BlockBodiesMessage.readFrom(raw);
-    final Iterator<BlockBody> readBodies =
-        message
-            .bodies(
-                FixedDifficultyProtocolSchedule.create(
-                    GenesisConfigFile.development().getConfigOptions(), false))
-            .iterator();
+    final Iterator<BlockBody> readBodies = message.bodies(protocolSchedule).iterator();
     for (int i = 0; i < 50; ++i) {
       Assertions.assertThat(readBodies.next()).isEqualTo(bodies.get(i));
     }
+  }
+
+  @Test
+  public void shouldEncodeEmptyBlocksInBlockBodiesMessage() {
+    final Bytes bytes = Bytes.fromHexString("0xc2c0c0");
+    final MessageData raw = new RawMessage(EthPV62.BLOCK_BODIES, bytes);
+    final BlockBodiesMessage message = BlockBodiesMessage.readFrom(raw);
+    final List<BlockBody> bodies = message.bodies(protocolSchedule);
+    bodies.forEach(blockBody -> Assertions.assertThat(blockBody.isEmpty()).isTrue());
+  }
+
+  @Test
+  public void shouldNotThrowRLPExceptionIfAllowedEmptyBody() {
+    final Bytes bytes = Bytes.fromHexString("0xc0");
+    final BlockBody empty = BlockBody.readWrappedBodyFrom(RLP.input(bytes), null, true);
+    Assertions.assertThat(empty.isEmpty()).isTrue();
+  }
+
+  @Test
+  public void shouldThrowRLPExceptionIfNotAllowedEmptyBody() {
+    final Bytes bytes = Bytes.fromHexString("0xc0");
+    final BlockHeaderFunctions blockHeaderFunctions =
+        ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
+    assertThrows(
+        RLPException.class,
+        () -> {
+          BlockBody.readWrappedBodyFrom(RLP.input(bytes), blockHeaderFunctions, false);
+        });
   }
 }

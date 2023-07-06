@@ -14,36 +14,32 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 
-import java.util.OptionalLong;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 
-public class EthGetTransactionCount extends AbstractBlockParameterMethod {
-
+public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMethod {
   private final Supplier<PendingTransactions> pendingTransactions;
-  private final boolean resultAsDecimal;
 
   public EthGetTransactionCount(
       final BlockchainQueries blockchain, final PendingTransactions pendingTransactions) {
-    this(Suppliers.ofInstance(blockchain), Suppliers.ofInstance(pendingTransactions), false);
+    this(Suppliers.ofInstance(blockchain), Suppliers.ofInstance(pendingTransactions));
   }
 
   public EthGetTransactionCount(
       final Supplier<BlockchainQueries> blockchain,
-      final Supplier<PendingTransactions> pendingTransactions,
-      final boolean resultAsDecimal) {
+      final Supplier<PendingTransactions> pendingTransactions) {
     super(blockchain);
     this.pendingTransactions = pendingTransactions;
-    this.resultAsDecimal = resultAsDecimal;
   }
 
   @Override
@@ -52,29 +48,32 @@ public class EthGetTransactionCount extends AbstractBlockParameterMethod {
   }
 
   @Override
-  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
-    return request.getRequiredParameter(1, BlockParameter.class);
+  protected BlockParameterOrBlockHash blockParameterOrBlockHash(
+      final JsonRpcRequestContext request) {
+    return request.getRequiredParameter(1, BlockParameterOrBlockHash.class);
   }
 
   @Override
   protected Object pendingResult(final JsonRpcRequestContext request) {
     final Address address = request.getRequiredParameter(0, Address.class);
-    final OptionalLong pendingNonce = pendingTransactions.get().getNextNonceForSender(address);
-    if (pendingNonce.isPresent()) {
-      return Quantity.create(pendingNonce.getAsLong());
-    } else {
-      return latestResult(request);
+    final long pendingNonce = pendingTransactions.get().getNextNonceForSender(address).orElse(0);
+    final long latestNonce =
+        getBlockchainQueries()
+            .getTransactionCount(
+                address, getBlockchainQueries().getBlockchain().getChainHead().getHash());
+
+    if (Long.compareUnsigned(pendingNonce, latestNonce) > 0) {
+      return Quantity.create(pendingNonce);
     }
+
+    return Quantity.create(latestNonce);
   }
 
   @Override
-  protected String resultByBlockNumber(
-      final JsonRpcRequestContext request, final long blockNumber) {
+  protected String resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
     final Address address = request.getRequiredParameter(0, Address.class);
-    if (blockNumber > getBlockchainQueries().headBlockNumber()) {
-      return null;
-    }
-    final long transactionCount = getBlockchainQueries().getTransactionCount(address, blockNumber);
-    return resultAsDecimal ? Long.toString(transactionCount) : Quantity.create(transactionCount);
+    final long transactionCount = getBlockchainQueries().getTransactionCount(address, blockHash);
+
+    return Quantity.create(transactionCount);
   }
 }

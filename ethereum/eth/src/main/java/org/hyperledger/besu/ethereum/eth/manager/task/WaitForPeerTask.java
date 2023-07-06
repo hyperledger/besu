@@ -18,12 +18,12 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Wait for a single new peer to connect. */
 public class WaitForPeerTask extends AbstractEthTask<Void> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(WaitForPeerTask.class);
 
   private final EthContext ethContext;
   private volatile Long peerListenerId;

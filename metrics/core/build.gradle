@@ -36,13 +36,23 @@ publishing {
 
 dependencies {
   implementation project(':plugin-api')
+  api 'org.slf4j:slf4j-api'
 
   implementation 'com.google.guava:guava'
+  implementation 'com.google.dagger:dagger'
+  implementation 'info.picocli:picocli'
   implementation 'io.grpc:grpc-netty'
+  implementation 'io.grpc:grpc-core'
+  implementation 'io.netty:netty-tcnative-boringssl-static'
+  implementation 'io.netty:netty-transport-native-epoll'
+  implementation 'io.netty:netty-all'
   implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'io.opentelemetry:opentelemetry-sdk'
-  implementation 'io.opentelemetry:opentelemetry-extension-runtime-metrics'
-  implementation 'io.opentelemetry:opentelemetry-exporters-otlp'
+  implementation 'io.opentelemetry:opentelemetry-semconv'
+  implementation 'io.opentelemetry:opentelemetry-sdk-trace'
+  implementation 'io.opentelemetry:opentelemetry-sdk-metrics'
+  implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+  implementation 'io.opentelemetry:opentelemetry-sdk-extension-autoconfigure'
 
   implementation 'io.prometheus:simpleclient'
   implementation 'io.prometheus:simpleclient_common'
@@ -50,19 +60,19 @@ dependencies {
   implementation 'io.prometheus:simpleclient_pushgateway'
   implementation 'io.vertx:vertx-core'
   implementation 'io.vertx:vertx-web'
-  implementation 'org.apache.logging.log4j:log4j-api'
-
-  runtimeOnly 'org.apache.logging.log4j:log4j-core'
 
   // test dependencies.
   testImplementation project(':util')
 
   testImplementation 'com.squareup.okhttp3:okhttp'
-  testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
 
   testSupportImplementation 'org.mockito:mockito-core'
+
+  annotationProcessor 'com.google.dagger:dagger-compiler'
 }
 
 

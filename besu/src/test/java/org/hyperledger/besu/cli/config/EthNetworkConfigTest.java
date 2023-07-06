@@ -16,17 +16,18 @@ package org.hyperledger.besu.cli.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.GOERLI_BOOTSTRAP_NODES;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.GOERLI_DISCOVERY_URL;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.MAINNET_DISCOVERY_URL;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.RINKEBY_BOOTSTRAP_NODES;
-import static org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration.RINKEBY_DISCOVERY_URL;
+import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_BOOTSTRAP_NODES;
+import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_DISCOVERY_URL;
+import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
+import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_DISCOVERY_URL;
 
 import java.math.BigInteger;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class EthNetworkConfigTest {
 
   @Test
@@ -35,14 +36,6 @@ public class EthNetworkConfigTest {
     assertThat(config.getDnsDiscoveryUrl()).isEqualTo(MAINNET_DISCOVERY_URL);
     assertThat(config.getBootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.ONE);
-  }
-
-  @Test
-  public void testDefaultRinkebyConfig() {
-    EthNetworkConfig config = EthNetworkConfig.getNetworkConfig(NetworkName.RINKEBY);
-    assertThat(config.getDnsDiscoveryUrl()).isEqualTo(RINKEBY_DISCOVERY_URL);
-    assertThat(config.getBootNodes()).isEqualTo(RINKEBY_BOOTSTRAP_NODES);
-    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(4));
   }
 
   @Test
@@ -59,6 +52,22 @@ public class EthNetworkConfigTest {
     assertThat(config.getDnsDiscoveryUrl()).isNull();
     assertThat(config.getBootNodes()).isEmpty();
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(2018));
+  }
+
+  @Test
+  public void testDefaultFutureConfig() {
+    EthNetworkConfig config = EthNetworkConfig.getNetworkConfig(NetworkName.FUTURE_EIPS);
+    assertThat(config.getDnsDiscoveryUrl()).isNull();
+    assertThat(config.getBootNodes()).isEmpty();
+    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(2022));
+  }
+
+  @Test
+  public void testDefaultExperimentalConfig() {
+    EthNetworkConfig config = EthNetworkConfig.getNetworkConfig(NetworkName.EXPERIMENTAL_EIPS);
+    assertThat(config.getDnsDiscoveryUrl()).isNull();
+    assertThat(config.getBootNodes()).isEmpty();
+    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(2023));
   }
 
   @Test

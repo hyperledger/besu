@@ -27,12 +27,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 final class ApiHandler extends SimpleChannelInboundHandler<MessageData> {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(ApiHandler.class);
+  private static final Marker P2P_MESSAGE_MARKER = MarkerFactory.getMarker("P2PMSG");
 
   private final CapabilityMultiplexer multiplexer;
   private final AtomicBoolean waitingForPong;
@@ -63,7 +66,7 @@ final class ApiHandler extends SimpleChannelInboundHandler<MessageData> {
     if (demultiplexed.getCapability() == null) {
       switch (message.getCode()) {
         case WireMessageCodes.PING:
-          LOG.debug("Received Wire PING");
+          LOG.trace("Received Wire PING");
           try {
             connection.send(null, PongMessage.get());
           } catch (final PeerConnection.PeerNotConnected peerNotConnected) {
@@ -71,7 +74,7 @@ final class ApiHandler extends SimpleChannelInboundHandler<MessageData> {
           }
           break;
         case WireMessageCodes.PONG:
-          LOG.debug("Received Wire PONG");
+          LOG.trace("Received Wire PONG");
           waitingForPong.set(false);
           break;
         case WireMessageCodes.DISCONNECT:
@@ -79,12 +82,12 @@ final class ApiHandler extends SimpleChannelInboundHandler<MessageData> {
           DisconnectMessage.DisconnectReason reason = DisconnectMessage.DisconnectReason.UNKNOWN;
           try {
             reason = disconnect.getReason();
-            LOG.debug(
+            LOG.trace(
                 "Received Wire DISCONNECT ({}) from peer: {}",
                 reason.name(),
                 connection.getPeerInfo());
           } catch (final RLPException e) {
-            LOG.debug(
+            LOG.trace(
                 "Received Wire DISCONNECT with invalid RLP. Peer: {}", connection.getPeerInfo());
           } catch (final Exception e) {
             LOG.error(
@@ -96,6 +99,16 @@ final class ApiHandler extends SimpleChannelInboundHandler<MessageData> {
       }
       return;
     }
+    LOG.atTrace()
+        .addMarker(P2P_MESSAGE_MARKER)
+        .setMessage("Received {} from {} via protocol {}")
+        .addArgument(message)
+        .addArgument(connection.getPeerInfo())
+        .addArgument(demultiplexed.getCapability())
+        .addKeyValue("rawData", message.getData())
+        .addKeyValue("decodedData", message::toStringDecoded)
+        .log();
+
     connectionEventDispatcher.dispatchMessage(demultiplexed.getCapability(), connection, message);
   }
 

@@ -14,25 +14,43 @@
  */
 package org.hyperledger.besu.consensus.ibft.validation;
 
+import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The Round change message validator. */
 public class RoundChangeMessageValidator {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RoundChangeMessageValidator.class);
 
   private final RoundChangePayloadValidator roundChangePayloadValidator;
   private final ProposalBlockConsistencyValidator proposalBlockConsistencyValidator;
+  private final BftBlockInterface bftBlockInterface;
 
+  /**
+   * Instantiates a new Round change message validator.
+   *
+   * @param roundChangePayloadValidator the round change payload validator
+   * @param proposalBlockConsistencyValidator the proposal block consistency validator
+   * @param bftBlockInterface the bft block interface
+   */
   public RoundChangeMessageValidator(
       final RoundChangePayloadValidator roundChangePayloadValidator,
-      final ProposalBlockConsistencyValidator proposalBlockConsistencyValidator) {
+      final ProposalBlockConsistencyValidator proposalBlockConsistencyValidator,
+      final BftBlockInterface bftBlockInterface) {
     this.proposalBlockConsistencyValidator = proposalBlockConsistencyValidator;
     this.roundChangePayloadValidator = roundChangePayloadValidator;
+    this.bftBlockInterface = bftBlockInterface;
   }
 
+  /**
+   * Validate round change.
+   *
+   * @param msg the msg
+   * @return the boolean
+   */
   public boolean validateRoundChange(final RoundChange msg) {
 
     if (!roundChangePayloadValidator.validateRoundChange(msg.getSignedPayload())) {
@@ -48,7 +66,9 @@ public class RoundChangeMessageValidator {
 
     if (msg.getPreparedCertificate().isPresent()) {
       if (!proposalBlockConsistencyValidator.validateProposalMatchesBlock(
-          msg.getPreparedCertificate().get().getProposalPayload(), msg.getProposedBlock().get())) {
+          msg.getPreparedCertificate().get().getProposalPayload(),
+          msg.getProposedBlock().get(),
+          bftBlockInterface)) {
         LOG.info("Invalid RoundChange message, proposal did not align with supplied block.");
         return false;
       }

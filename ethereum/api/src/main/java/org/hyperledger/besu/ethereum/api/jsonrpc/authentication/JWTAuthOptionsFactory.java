@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -23,37 +23,63 @@ import java.nio.file.Files;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 
+import io.vertx.core.buffer.Buffer;
+import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.PubSecKeyOptions;
+import io.vertx.ext.auth.impl.Codec;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
+import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
 
 public class JWTAuthOptionsFactory {
 
-  private static final String ALGORITHM = "RS256";
-  private static final String PERMISSIONS = "permissions";
+  private static final JwtAlgorithm DEFAULT = JwtAlgorithm.RS256;
 
   public JWTAuthOptions createForExternalPublicKey(final File externalPublicKeyFile) {
+    return createForExternalPublicKeyWithAlgorithm(externalPublicKeyFile, DEFAULT);
+  }
+
+  public JWTAuthOptions createForExternalPublicKeyWithAlgorithm(
+      final File externalPublicKeyFile, final JwtAlgorithm algorithm) {
     final byte[] externalJwtPublicKey = readPublicKey(externalPublicKeyFile);
-    final String base64EncodedPublicKey = Base64.getEncoder().encodeToString(externalJwtPublicKey);
     return new JWTAuthOptions()
-        .setPermissionsClaimKey(PERMISSIONS)
         .addPubSecKey(
-            new PubSecKeyOptions().setAlgorithm(ALGORITHM).setPublicKey(base64EncodedPublicKey));
+            new PubSecKeyOptions()
+                .setAlgorithm(algorithm.toString())
+                .setBuffer(keyPairToPublicPemString(externalJwtPublicKey)));
+  }
+
+  public JWTAuthOptions createWithGeneratedKeyPair(final JwtAlgorithm jwtAlgorithm) {
+    if (jwtAlgorithm.toString().startsWith("H")) {
+      throw new IllegalArgumentException(
+          "Cannot use keypairs with HMAC tokens, please call createWithGeneratedKey");
+    }
+    final KeyPair keypair = generateRsaKeyPair();
+    return new JWTAuthOptions()
+        .addPubSecKey(
+            new PubSecKeyOptions()
+                .setAlgorithm(jwtAlgorithm.toString())
+                .setBuffer(keyPairToPublicPemString(keypair.getPublic().getEncoded())))
+        .addPubSecKey(
+            new PubSecKeyOptions()
+                .setAlgorithm(jwtAlgorithm.toString())
+                .setBuffer(keyPairToPrivatePemString(keypair)));
+  }
+
+  public JWTAuthOptions engineApiJWTOptions(final JwtAlgorithm jwtAlgorithm) {
+    byte[] ephemeralKey = Bytes32.random().toArray();
+    return new JWTAuthOptions()
+        .setJWTOptions(new JWTOptions().setIgnoreExpiration(true).setLeeway(5))
+        .addPubSecKey(
+            new PubSecKeyOptions()
+                .setAlgorithm(jwtAlgorithm.toString())
+                .setBuffer(Buffer.buffer(ephemeralKey)));
   }
 
   public JWTAuthOptions createWithGeneratedKeyPair() {
-    final KeyPair keypair = generateJwtKeyPair();
-    return new JWTAuthOptions()
-        .setPermissionsClaimKey(PERMISSIONS)
-        .addPubSecKey(
-            new PubSecKeyOptions()
-                .setAlgorithm(ALGORITHM)
-                .setPublicKey(Base64.getEncoder().encodeToString(keypair.getPublic().getEncoded()))
-                .setSecretKey(
-                    Base64.getEncoder().encodeToString(keypair.getPrivate().getEncoded())));
+    return createWithGeneratedKeyPair(JwtAlgorithm.RS256);
   }
 
   private byte[] readPublicKey(final File publicKeyFile) {
@@ -69,7 +95,7 @@ public class JWTAuthOptionsFactory {
     }
   }
 
-  private KeyPair generateJwtKeyPair() {
+  private KeyPair generateRsaKeyPair() {
     final KeyPairGenerator keyGenerator;
     try {
       keyGenerator = KeyPairGenerator.getInstance("RSA");
@@ -79,5 +105,23 @@ public class JWTAuthOptionsFactory {
     }
 
     return keyGenerator.generateKeyPair();
+  }
+
+  private String keyPairToPublicPemString(final byte[] publicKey) {
+    StringBuilder pemBuffer = new StringBuilder();
+    pemBuffer.append("-----BEGIN PUBLIC KEY-----\r\n");
+    pemBuffer.append(Codec.base64MimeEncode(publicKey));
+    pemBuffer.append("\r\n");
+    pemBuffer.append("-----END PUBLIC KEY-----\r\n");
+    return pemBuffer.toString();
+  }
+
+  private String keyPairToPrivatePemString(final KeyPair kp) {
+    StringBuilder pemBuffer = new StringBuilder();
+    pemBuffer.append("-----BEGIN PRIVATE KEY-----\r\n");
+    pemBuffer.append(Codec.base64MimeEncode(kp.getPrivate().getEncoded()));
+    pemBuffer.append("\r\n");
+    pemBuffer.append("-----END PRIVATE KEY-----\r\n");
+    return pemBuffer.toString();
   }
 }

@@ -17,9 +17,10 @@ package org.hyperledger.besu.consensus.ibft.tests;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
+import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.NewChainHead;
-import org.hyperledger.besu.consensus.ibft.IbftHelpers;
+import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.consensus.ibft.messagedata.ProposalMessageData;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
@@ -31,7 +32,7 @@ import org.hyperledger.besu.consensus.ibft.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.ibft.support.TestContext;
 import org.hyperledger.besu.consensus.ibft.support.TestContextBuilder;
 import org.hyperledger.besu.consensus.ibft.support.ValidatorPeer;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.core.Block;
 
 import java.time.Clock;
@@ -39,8 +40,8 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class GossipTest {
 
@@ -64,7 +65,7 @@ public class GossipTest {
   private ValidatorPeer sender;
   private MessageFactory msgFactory;
 
-  @Before
+  @BeforeEach
   public void setup() {
     block = context.createBlockForProposalFromChainHead(roundId.getRoundNumber(), 30);
     sender = peers.getProposer();
@@ -158,7 +159,8 @@ public class GossipTest {
   @Test
   public void futureMessageGetGossipedLater() {
     final Block signedCurrentHeightBlock =
-        IbftHelpers.createSealedBlock(block, peers.sign(block.getHash()));
+        BftHelpers.createSealedBlock(
+            new IbftExtraDataCodec(), block, 0, peers.sign(block.getHash()));
 
     ConsensusRoundIdentifier futureRoundId = new ConsensusRoundIdentifier(2, 0);
     Prepare futurePrepare = sender.injectPrepare(futureRoundId, block.getHash());

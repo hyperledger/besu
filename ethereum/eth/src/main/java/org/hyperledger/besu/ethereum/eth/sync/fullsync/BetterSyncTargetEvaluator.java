@@ -40,7 +40,7 @@ public class BetterSyncTargetEvaluator {
     return maybeBestPeer
         .map(
             bestPeer -> {
-              if (EthPeers.BEST_CHAIN.compare(bestPeer, currentSyncTarget) <= 0) {
+              if (ethPeers.getBestChainComparator().compare(bestPeer, currentSyncTarget) <= 0) {
                 // Our current target is better or equal to the best peer
                 return false;
               }

@@ -19,11 +19,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockScheduler.BlockCreationTimeResult;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -33,27 +33,27 @@ import java.time.Clock;
 import java.util.List;
 
 import com.google.common.collect.Lists;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CliqueBlockSchedulerTest {
 
-  private final KeyPair proposerKeyPair = KeyPair.generate();
+  private final KeyPair proposerKeyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
   private Address localAddr;
 
   private final List<Address> validatorList = Lists.newArrayList();
-  private VoteTallyCache voteTallyCache;
+  private ValidatorProvider validatorProvider;
   private BlockHeaderTestFixture blockHeaderBuilder;
 
-  @Before
+  @BeforeEach
   public void setup() {
     localAddr = Util.publicKeyToAddress(proposerKeyPair.getPublicKey());
 
     validatorList.add(localAddr);
     validatorList.add(AddressHelpers.calculateAddressWithRespectTo(localAddr, 1));
 
-    voteTallyCache = mock(VoteTallyCache.class);
-    when(voteTallyCache.getVoteTallyAfterBlock(any())).thenReturn(new VoteTally(validatorList));
+    validatorProvider = mock(ValidatorProvider.class);
+    when(validatorProvider.getValidatorsAfterBlock(any())).thenReturn(validatorList);
 
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }
@@ -65,7 +65,7 @@ public class CliqueBlockSchedulerTest {
     final long secondsBetweenBlocks = 5L;
     when(clock.millis()).thenReturn(currentSecondsSinceEpoch * 1000);
     final CliqueBlockScheduler scheduler =
-        new CliqueBlockScheduler(clock, voteTallyCache, localAddr, secondsBetweenBlocks);
+        new CliqueBlockScheduler(clock, validatorProvider, localAddr, secondsBetweenBlocks);
 
     // There are 2 validators, therefore block 2 will put localAddr as the in-turn voter, therefore
     // parent block should be number 1.
@@ -86,7 +86,7 @@ public class CliqueBlockSchedulerTest {
     final long secondsBetweenBlocks = 5L;
     when(clock.millis()).thenReturn(currentSecondsSinceEpoch * 1000);
     final CliqueBlockScheduler scheduler =
-        new CliqueBlockScheduler(clock, voteTallyCache, localAddr, secondsBetweenBlocks);
+        new CliqueBlockScheduler(clock, validatorProvider, localAddr, secondsBetweenBlocks);
 
     // There are 2 validators, therefore block 3 will put localAddr as the out-turn voter, therefore
     // parent block should be number 2.
@@ -107,7 +107,7 @@ public class CliqueBlockSchedulerTest {
     final long secondsBetweenBlocks = 5L;
     when(clock.millis()).thenReturn(currentSecondsSinceEpoch * 1000);
     final CliqueBlockScheduler scheduler =
-        new CliqueBlockScheduler(clock, voteTallyCache, localAddr, secondsBetweenBlocks);
+        new CliqueBlockScheduler(clock, validatorProvider, localAddr, secondsBetweenBlocks);
 
     // There are 2 validators, therefore block 2 will put localAddr as the in-turn voter, therefore
     // parent block should be number 1.

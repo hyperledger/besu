@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -67,8 +67,7 @@ public class RocksDBKeyValueStorageFactoryTest {
     // Side effect is creation of the Metadata version file
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertThat(DatabaseMetadata.lookUpFrom(commonConfiguration.getDataPath()).getVersion())
-        .isEqualTo(DEFAULT_VERSION);
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isEqualTo(DEFAULT_VERSION);
   }
 
   @Test
@@ -199,5 +198,28 @@ public class RocksDBKeyValueStorageFactoryTest {
                         RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS)
                     .create(segment, commonConfiguration, metricsSystem))
         .isInstanceOf(IllegalStateException.class);
+  }
+
+  @Test
+  public void shouldCreateDBCorrectlyIfSymlink() throws Exception {
+    final Path tempRealDataDir =
+        Files.createDirectories(temporaryFolder.newFolder().toPath().resolve("real-data-dir"));
+    final Path tempSymLinkDataDir =
+        Files.createSymbolicLink(
+            temporaryFolder.newFolder().toPath().resolve("symlink-data-dir"), tempRealDataDir);
+    final Path tempDatabaseDir = temporaryFolder.newFolder().toPath().resolve("db");
+    when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
+    when(commonConfiguration.getDataPath()).thenReturn(tempSymLinkDataDir);
+    when(commonConfiguration.getDatabaseVersion()).thenReturn(DEFAULT_VERSION);
+
+    final RocksDBKeyValueStorageFactory storageFactory =
+        new RocksDBKeyValueStorageFactory(
+            () -> rocksDbConfiguration, segments, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
+
+    // Ensure that having created everything via a symlink data dir the DB meta-data has been
+    // created correctly
+    storageFactory.create(segment, commonConfiguration, metricsSystem);
+    assertThat(DatabaseMetadata.lookUpFrom(tempRealDataDir).getVersion())
+        .isEqualTo(DEFAULT_VERSION);
   }
 }

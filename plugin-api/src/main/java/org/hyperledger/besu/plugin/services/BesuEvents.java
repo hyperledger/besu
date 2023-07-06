@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.plugin.services;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.plugin.data.AddedBlockContext;
-import org.hyperledger.besu.plugin.data.Address;
 import org.hyperledger.besu.plugin.data.LogWithMetadata;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.data.SyncStatus;
@@ -44,7 +44,7 @@ import org.apache.tuweni.bytes.Bytes32;
  *   <li><b>SynchronizerStatus </b> - Fired when the status of the synchronizer changes.
  * </ul>
  */
-public interface BesuEvents {
+public interface BesuEvents extends BesuService {
 
   /**
    * Add a listener watching new blocks propagated.
@@ -235,5 +235,28 @@ public interface BesuEvents {
      * @param logWithMetadata the log with associated metadata. see https://eth.wiki/json-rpc/API
      */
     void onLogEmitted(LogWithMetadata logWithMetadata);
+  }
+
+  /** The interface TTD reached listener. */
+  interface TTDReachedListener {
+
+    /**
+     * Emitted when Total Terminal Difficulty is reached on a chain and dependent merge
+     * functionality should trigger.
+     *
+     * @param reached is true when we reached TTD, can be potentially false in case we reorg under
+     *     TTD
+     */
+    void onTTDReached(boolean reached);
+  }
+
+  /** The interface Initial sync completion listener. */
+  interface InitialSyncCompletionListener {
+
+    /** Emitted when initial sync finishes */
+    void onInitialSyncCompleted();
+
+    /** Emitted when initial sync restarts */
+    void onInitialSyncRestart();
   }
 }

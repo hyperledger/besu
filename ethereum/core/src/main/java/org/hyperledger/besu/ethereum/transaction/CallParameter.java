@@ -14,9 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.evm.AccessListEntry;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -31,15 +34,17 @@ public class CallParameter {
 
   private final long gasLimit;
 
-  private final Optional<Wei> gasPremium;
+  private final Optional<Wei> maxPriorityFeePerGas;
 
-  private final Optional<Wei> feeCap;
+  private final Optional<Wei> maxFeePerGas;
 
   private final Wei gasPrice;
 
   private final Wei value;
 
   private final Bytes payload;
+
+  private final Optional<List<AccessListEntry>> accessList;
 
   public CallParameter(
       final Address from,
@@ -51,8 +56,9 @@ public class CallParameter {
     this.from = from;
     this.to = to;
     this.gasLimit = gasLimit;
-    this.gasPremium = Optional.empty();
-    this.feeCap = Optional.empty();
+    this.accessList = Optional.empty();
+    this.maxPriorityFeePerGas = Optional.empty();
+    this.maxFeePerGas = Optional.empty();
     this.gasPrice = gasPrice;
     this.value = value;
     this.payload = payload;
@@ -63,18 +69,20 @@ public class CallParameter {
       final Address to,
       final long gasLimit,
       final Wei gasPrice,
-      final Optional<Wei> gasPremium,
-      final Optional<Wei> feeCap,
+      final Optional<Wei> maxPriorityFeePerGas,
+      final Optional<Wei> maxFeePerGas,
       final Wei value,
-      final Bytes payload) {
+      final Bytes payload,
+      final Optional<List<AccessListEntry>> accessList) {
     this.from = from;
     this.to = to;
     this.gasLimit = gasLimit;
-    this.gasPremium = gasPremium;
-    this.feeCap = feeCap;
+    this.maxPriorityFeePerGas = maxPriorityFeePerGas;
+    this.maxFeePerGas = maxFeePerGas;
     this.gasPrice = gasPrice;
     this.value = value;
     this.payload = payload;
+    this.accessList = accessList;
   }
 
   public Address getFrom() {
@@ -93,12 +101,12 @@ public class CallParameter {
     return gasPrice;
   }
 
-  public Optional<Wei> getGasPremium() {
-    return gasPremium;
+  public Optional<Wei> getMaxPriorityFeePerGas() {
+    return maxPriorityFeePerGas;
   }
 
-  public Optional<Wei> getFeeCap() {
-    return feeCap;
+  public Optional<Wei> getMaxFeePerGas() {
+    return maxFeePerGas;
   }
 
   public Wei getValue() {
@@ -107,6 +115,10 @@ public class CallParameter {
 
   public Bytes getPayload() {
     return payload;
+  }
+
+  public Optional<List<AccessListEntry>> getAccessList() {
+    return accessList;
   }
 
   @Override
@@ -122,14 +134,28 @@ public class CallParameter {
         && Objects.equals(from, that.from)
         && Objects.equals(to, that.to)
         && Objects.equals(gasPrice, that.gasPrice)
-        && Objects.equals(gasPremium, that.gasPremium)
-        && Objects.equals(feeCap, that.feeCap)
+        && Objects.equals(maxPriorityFeePerGas, that.maxPriorityFeePerGas)
+        && Objects.equals(maxFeePerGas, that.maxFeePerGas)
         && Objects.equals(value, that.value)
         && Objects.equals(payload, that.payload);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(from, to, gasLimit, gasPrice, gasPremium, feeCap, value, payload);
+    return Objects.hash(
+        from, to, gasLimit, gasPrice, maxPriorityFeePerGas, maxFeePerGas, value, payload);
+  }
+
+  public static CallParameter fromTransaction(final Transaction tx) {
+    return new CallParameter(
+        tx.getSender(),
+        tx.getTo().orElseGet(() -> null),
+        tx.getGasLimit(),
+        Wei.fromQuantity(tx.getGasPrice().orElseGet(() -> Wei.ZERO)),
+        Optional.of(Wei.fromQuantity(tx.getMaxPriorityFeePerGas().orElseGet(() -> Wei.ZERO))),
+        tx.getMaxFeePerGas(),
+        Wei.fromQuantity(tx.getValue()),
+        tx.getPayload(),
+        tx.getAccessList());
   }
 }

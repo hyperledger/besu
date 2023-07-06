@@ -22,8 +22,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PendingTransactionsStatisticsResult;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
 
 import com.google.common.collect.Sets;
 import org.junit.Before;
@@ -57,11 +57,11 @@ public class TxPoolBesuStatisticsTest {
             new JsonRpcRequest(
                 JSON_RPC_VERSION, TXPOOL_PENDING_TRANSACTIONS_METHOD, new Object[] {}));
 
-    final TransactionInfo local = createTransactionInfo(true);
-    final TransactionInfo secondLocal = createTransactionInfo(true);
-    final TransactionInfo remote = createTransactionInfo(false);
+    final PendingTransaction local = createTransactionInfo(true);
+    final PendingTransaction secondLocal = createTransactionInfo(true);
+    final PendingTransaction remote = createTransactionInfo(false);
     when(pendingTransactions.maxSize()).thenReturn(123L);
-    when(pendingTransactions.getTransactionInfo())
+    when(pendingTransactions.getPendingTransactions())
         .thenReturn(Sets.newHashSet(local, secondLocal, remote));
 
     final JsonRpcSuccessResponse actualResponse = (JsonRpcSuccessResponse) method.response(request);
@@ -72,9 +72,9 @@ public class TxPoolBesuStatisticsTest {
     assertThat(result.getMaxSize()).isEqualTo(123);
   }
 
-  private TransactionInfo createTransactionInfo(final boolean local) {
-    final TransactionInfo transactionInfo = mock(TransactionInfo.class);
-    when(transactionInfo.isReceivedFromLocalSource()).thenReturn(local);
-    return transactionInfo;
+  private PendingTransaction createTransactionInfo(final boolean local) {
+    final PendingTransaction pendingTransaction = mock(PendingTransaction.class);
+    when(pendingTransaction.isReceivedFromLocalSource()).thenReturn(local);
+    return pendingTransaction;
   }
 }

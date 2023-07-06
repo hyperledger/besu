@@ -15,15 +15,21 @@
 package org.hyperledger.besu.cli.util;
 
 import org.hyperledger.besu.BesuInfo;
-import org.hyperledger.besu.services.PluginVersionsProvider;
+import org.hyperledger.besu.plugin.services.PluginVersionsProvider;
 
 import java.util.stream.Stream;
 
 import picocli.CommandLine;
 
+/** The Version provider used by PicoCli to report Besu version on Cli. */
 public class VersionProvider implements CommandLine.IVersionProvider {
   private final PluginVersionsProvider pluginVersionsProvider;
 
+  /**
+   * Instantiates a new Version provider.
+   *
+   * @param pluginVersionsProvider the plugin versions provider
+   */
   public VersionProvider(final PluginVersionsProvider pluginVersionsProvider) {
     this.pluginVersionsProvider = pluginVersionsProvider;
   }

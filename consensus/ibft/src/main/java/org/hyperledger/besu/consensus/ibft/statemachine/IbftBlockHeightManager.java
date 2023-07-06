@@ -23,6 +23,7 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.events.RoundExpiry;
 import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.Payload;
+import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
@@ -44,8 +45,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.google.common.collect.Maps;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Responsible for starting/clearing Consensus rounds at a given block height. One of these is
@@ -53,9 +54,9 @@ import org.apache.logging.log4j.Logger;
  * and sends a Proposal message. If the round times out prior to importing a block, this class is
  * responsible for creating a RoundChange message and transmitting it.
  */
-public class IbftBlockHeightManager implements BlockHeightManager {
+public class IbftBlockHeightManager implements BaseIbftBlockHeightManager {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(IbftBlockHeightManager.class);
 
   private final IbftRoundFactory roundFactory;
   private final RoundChangeManager roundChangeManager;
@@ -67,24 +68,37 @@ public class IbftBlockHeightManager implements BlockHeightManager {
   private final FutureRoundProposalMessageValidator futureRoundProposalMessageValidator;
   private final Clock clock;
   private final Function<ConsensusRoundIdentifier, RoundState> roundStateCreator;
-  private final IbftFinalState finalState;
+  private final BftFinalState finalState;
 
   private Optional<PreparedRoundArtifacts> latestPreparedRoundArtifacts = Optional.empty();
 
   private IbftRound currentRound;
 
+  /**
+   * Instantiates a new Ibft block height manager.
+   *
+   * @param parentHeader the parent header
+   * @param finalState the final state
+   * @param roundChangeManager the round change manager
+   * @param ibftRoundFactory the ibft round factory
+   * @param clock the clock
+   * @param messageValidatorFactory the message validator factory
+   * @param messageFactory the message factory
+   */
   public IbftBlockHeightManager(
       final BlockHeader parentHeader,
-      final IbftFinalState finalState,
+      final BftFinalState finalState,
       final RoundChangeManager roundChangeManager,
       final IbftRoundFactory ibftRoundFactory,
       final Clock clock,
-      final MessageValidatorFactory messageValidatorFactory) {
+      final MessageValidatorFactory messageValidatorFactory,
+      final MessageFactory messageFactory) {
     this.parentHeader = parentHeader;
     this.roundFactory = ibftRoundFactory;
     this.blockTimer = finalState.getBlockTimer();
-    this.transmitter = finalState.getTransmitter();
-    this.messageFactory = finalState.getMessageFactory();
+    this.transmitter =
+        new IbftMessageTransmitter(messageFactory, finalState.getValidatorMulticaster());
+    this.messageFactory = messageFactory;
     this.clock = clock;
     this.roundChangeManager = roundChangeManager;
     this.finalState = finalState;
@@ -109,7 +123,8 @@ public class IbftBlockHeightManager implements BlockHeightManager {
   @Override
   public void handleBlockTimerExpiry(final ConsensusRoundIdentifier roundIdentifier) {
     if (roundIdentifier.equals(currentRound.getRoundIdentifier())) {
-      currentRound.createAndSendProposalMessage(clock.millis() / 1000);
+      final long headerTimeStampSeconds = Math.round(clock.millis() / 1000D);
+      currentRound.createAndSendProposalMessage(headerTimeStampSeconds);
     } else {
       LOG.trace(
           "Block timer expired for a round ({}) other than current ({})",
@@ -271,9 +286,13 @@ public class IbftBlockHeightManager implements BlockHeightManager {
     return PRIOR_ROUND;
   }
 
+  /** The enum Message age. */
   public enum MessageAge {
+    /** Prior round message age. */
     PRIOR_ROUND,
+    /** Current round message age. */
     CURRENT_ROUND,
+    /** Future round message age. */
     FUTURE_ROUND
   }
 }

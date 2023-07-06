@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,7 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
+
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** A block header capable of being sealed. */
 public class SealableBlockHeader extends ProcessableBlockHeader {
@@ -32,6 +41,10 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
 
   protected final Bytes extraData;
 
+  protected final Hash withdrawalsRoot;
+
+  protected final Hash depositsRoot;
+
   protected SealableBlockHeader(
       final Hash parentHash,
       final Hash ommersHash,
@@ -46,11 +59,26 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final long gasUsed,
       final long timestamp,
       final Bytes extraData,
-      final Long baseFee) {
-    super(parentHash, coinbase, difficulty, number, gasLimit, timestamp, baseFee);
+      final Wei baseFee,
+      final Bytes32 mixHashOrPrevRandao,
+      final Hash withdrawalsRoot,
+      final DataGas excessDataGas,
+      final Hash depositsRoot) {
+    super(
+        parentHash,
+        coinbase,
+        difficulty,
+        number,
+        gasLimit,
+        timestamp,
+        baseFee,
+        mixHashOrPrevRandao,
+        excessDataGas);
     this.ommersHash = ommersHash;
     this.stateRoot = stateRoot;
     this.transactionsRoot = transactionsRoot;
+    this.withdrawalsRoot = withdrawalsRoot;
+    this.depositsRoot = depositsRoot;
     this.receiptsRoot = receiptsRoot;
     this.logsBloom = logsBloom;
     this.gasUsed = gasUsed;
@@ -118,5 +146,23 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
    */
   public Bytes getExtraData() {
     return extraData;
+  }
+
+  /**
+   * Returns the block withdrawals root hash.
+   *
+   * @return the block withdrawals root hash
+   */
+  public Optional<Hash> getWithdrawalsRoot() {
+    return Optional.ofNullable(withdrawalsRoot);
+  }
+
+  /**
+   * Returns the block deposits root hash.
+   *
+   * @return the block deposits root hash
+   */
+  public Optional<Hash> getDepositsRoot() {
+    return Optional.ofNullable(depositsRoot);
   }
 }

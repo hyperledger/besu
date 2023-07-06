@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.permissioning;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 
 public class SmartContractPermissioningConfiguration {
   private boolean smartContractNodeAllowlistEnabled;

@@ -52,7 +52,8 @@ public class NetListeningTest {
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, true);
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   @Test
@@ -63,7 +64,8 @@ public class NetListeningTest {
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, false);
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   @Test

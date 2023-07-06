@@ -15,37 +15,43 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.PipelineChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class FastSyncChainDownloader {
 
-  private FastSyncChainDownloader() {}
+  protected FastSyncChainDownloader() {}
 
   public static ChainDownloader create(
       final SynchronizerConfiguration config,
+      final WorldStateStorage worldStateStorage,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
       final MetricsSystem metricsSystem,
-      final BlockHeader pivotBlockHeader) {
+      final FastSyncState fastSyncState) {
 
     final FastSyncTargetManager syncTargetManager =
         new FastSyncTargetManager(
-            config, protocolSchedule, protocolContext, ethContext, metricsSystem, pivotBlockHeader);
-
+            config,
+            worldStateStorage,
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            metricsSystem,
+            fastSyncState);
     return new PipelineChainDownloader(
         syncState,
         syncTargetManager,
         new FastSyncDownloadPipelineFactory(
-            config, protocolSchedule, protocolContext, ethContext, pivotBlockHeader, metricsSystem),
+            config, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem),
         ethContext.getScheduler(),
         metricsSystem);
   }

@@ -1,0 +1,184 @@
+{
+  "config-file-name": "config.toml",
+  "steps": [
+    {
+      "prompt-type": "LIST",
+      "question": "Which Ethereum network would you like to use ?",
+      "config-key": "network",
+      "available-options": "org.hyperledger.besu.cli.config.NetworkName"
+    },
+    {
+      "prompt-type": "LIST",
+      "question": "Which synchronization mode?",
+      "config-key": "sync-mode",
+      "available-options": "org.hyperledger.besu.ethereum.eth.sync.SyncMode"
+    },
+    {
+      "prompt-type": "CONFIRM",
+      "question": "Do you want to enable pruning?",
+      "config-key": "pruning-enabled",
+      "default-option": "no"
+    },
+    {
+      "prompt-type": "INPUT",
+      "question": "What is the data directory ?",
+      "config-key": "data-path"
+    },
+    {
+      "prompt-type": "CONFIRM",
+      "question": "Do you want to enable the JSON-RPC HTTP service ?",
+      "config-key": "rpc-http-enabled",
+      "default-option": "yes",
+      "sub-questions": [
+        {
+          "prompt-type": "CONFIRM",
+          "question": "Do you want to configure the JSON-RPC options now ?",
+          "default-option": "yes",
+          "sub-questions": [
+            {
+              "prompt-type": "INPUT",
+              "question": "What is the JSON RPC HTTP host address ?",
+              "config-key": "rpc-http-host"
+            },
+            {
+              "prompt-type": "INPUT",
+              "question": "What is the JSON RPC HTTP port ?",
+              "config-key": "rpc-http-port",
+              "regex": "[0-9]+"
+            },
+            {
+              "prompt-type": "CHECKBOX",
+              "question": "Select the list of APIs to enable on JSON-RPC HTTP service",
+              "config-key": "rpc-http-apis",
+              "available-options": "org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis$ALL_JSON_RPC_APIS",
+              "default-option": "ETH, NET, WEB3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "prompt-type": "CONFIRM",
+      "question": "Do you want to enable the JSON-RPC Websocket service ?",
+      "config-key": "rpc-ws-enabled",
+      "default-option": "no",
+      "sub-questions": [
+        {
+          "prompt-type": "CONFIRM",
+          "question": "Do you want to configure the JSON-RPC options now ?",
+          "default-option": "yes",
+          "sub-questions": [
+            {
+              "prompt-type": "INPUT",
+              "question": "What is the JSON RPC Websocket host address ?",
+              "config-key": "rpc-ws-host"
+            },
+            {
+              "prompt-type": "INPUT",
+              "question": "What is the JSON RPC Websocket port ?",
+              "config-key": "rpc-ws-port",
+              "regex": "[0-9]+"
+            },
+            {
+              "prompt-type": "CHECKBOX",
+              "question": "Select the list of APIs to enable on JSON-RPC Websocket service",
+              "config-key": "rpc-ws-apis",
+              "available-options": "org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis$ALL_JSON_RPC_APIS",
+              "default-option": "ETH, NET, WEB3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "prompt-type": "CONFIRM",
+      "question": "Do you want to enable GraphQL functionality ?",
+      "config-key": "graphql-http-enabled",
+      "default-option": "no",
+      "sub-questions": [
+        {
+          "prompt-type": "CONFIRM",
+          "question": "Do you want to configure the GraphQL options now ?",
+          "default-option": "yes",
+          "sub-questions": [
+            {
+              "prompt-type": "INPUT",
+              "question": "What is the GraphQL host address ?",
+              "config-key": "graphql-http-host"
+            },
+            {
+              "prompt-type": "INPUT",
+              "question": "What is the GraphQL port ?",
+              "config-key": "graphql-http-port",
+              "regex": "[0-9]+"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "prompt-type": "CONFIRM",
+      "question": "Do you want to use Ethstats ?",
+      "default-option": "no",
+      "sub-questions": [
+        {
+          "prompt-type": "INPUT",
+          "question": "What is the URL of Ethstats (nodename:secret@host:port) ?",
+          "config-key": "ethstats",
+          "regex": "([-\\w]+):([\\w]+)?@([-.\\w]+):([\\d]+)"
+        },
+        {
+          "prompt-type": "INPUT",
+          "question": "What is the contact address ?",
+          "config-key": "ethstats-contact"
+        }
+      ]
+    },
+    {
+      "prompt-type": "CONFIRM",
+      "question": "Do you want to enable NAT ?",
+      "default-option": "no",
+      "sub-questions": [
+        {
+          "prompt-type": "LIST",
+          "question": "Which NAT method would you like to use ?",
+          "config-key": "nat-method",
+          "available-options": "org.hyperledger.besu.nat.NatMethod"
+        }
+      ]
+    },
+    {
+      "prompt-type": "CONFIRM",
+      "question": "Do you want to enable mining ?",
+      "default-option": "no",
+      "config-key": "miner-enabled",
+      "sub-questions": [
+        {
+          "prompt-type": "INPUT",
+          "question": "What is the account to which mining rewards are paid ?",
+          "config-key": "miner-coinbase",
+          "regex": "^0x[0-9a-fA-F]{40}$"
+        },
+        {
+          "prompt-type": "CONFIRM",
+          "question": "Do you want to use Stratum ?",
+          "default-option": "no",
+          "config-key": "miner-stratum-enabled",
+          "sub-questions": [
+            {
+              "prompt-type": "INPUT",
+              "question": "What is the Stratum host address ?",
+              "config-key": "miner-stratum-host"
+            },
+            {
+              "prompt-type": "INPUT",
+              "question": "What is the Stratum port service ?",
+              "config-key": "miner-stratum-port",
+              "regex": "[0-9]+"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

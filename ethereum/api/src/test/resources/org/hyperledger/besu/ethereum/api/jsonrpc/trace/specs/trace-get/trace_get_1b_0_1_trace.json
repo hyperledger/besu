@@ -1,0 +1,29 @@
+{
+  "comment" : "Self destruct and send contract balance to the same address provided in the to field.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_get",
+    "params" : [ "0x728abdc65550943b21eba1eef7bb9c7b594d6f629dda1be4ae01b0f3ffcc6b16", [ "0x0" ] ],
+    "id" : 367
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "action" : {
+        "address" : "0x0150000000000000000000000000000000000000",
+        "balance" : "0x300",
+        "refundAddress" : "0x0150000000000000000000000000000000000000"
+      },
+      "blockHash" : "0xad804d4984008429f56b42be14d3d1ac9f1eaf33aa43aafb7a0fcaf2c4594f01",
+      "blockNumber" : 27,
+      "result" : null,
+      "subtraces" : 0,
+      "traceAddress" : [ 0 ],
+      "transactionHash" : "0x728abdc65550943b21eba1eef7bb9c7b594d6f629dda1be4ae01b0f3ffcc6b16",
+      "transactionPosition" : 0,
+      "type" : "suicide"
+    },
+    "id" : 367
+  },
+  "statusCode" : 200
+}

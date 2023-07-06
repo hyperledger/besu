@@ -25,14 +25,24 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogsResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EthGetLogs implements JsonRpcMethod {
 
-  private final BlockchainQueries blockchain;
+  private static final Logger LOG = LoggerFactory.getLogger(EthGetLogs.class);
 
-  public EthGetLogs(final BlockchainQueries blockchain) {
+  private final BlockchainQueries blockchain;
+  private final Optional<Long> maxLogRange;
+
+  public EthGetLogs(final BlockchainQueries blockchain, final Optional<Long> maxLogRange) {
     this.blockchain = blockchain;
+    this.maxLogRange = maxLogRange;
   }
 
   @Override
@@ -43,12 +53,14 @@ public class EthGetLogs implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final FilterParameter filter = requestContext.getRequiredParameter(0, FilterParameter.class);
+    LOG.atTrace().setMessage("eth_getLogs FilterParameter: {}").addArgument(filter).log();
 
     if (!filter.isValid()) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
     }
 
+    final AtomicReference<Exception> ex = new AtomicReference<>();
     final List<LogWithMetadata> matchingLogs =
         filter
             .getBlockHash()
@@ -58,15 +70,52 @@ public class EthGetLogs implements JsonRpcMethod {
                         blockHash, filter.getLogsQuery(), requestContext::isAlive))
             .orElseGet(
                 () -> {
-                  final long fromBlockNumber = filter.getFromBlock().getNumber().orElse(0L);
-                  final long toBlockNumber =
-                      filter.getToBlock().getNumber().orElse(blockchain.headBlockNumber());
+                  final long fromBlockNumber;
+                  final long toBlockNumber;
+                  try {
+                    fromBlockNumber =
+                        filter
+                            .getFromBlock()
+                            .getBlockNumber(blockchain)
+                            .orElseThrow(
+                                () ->
+                                    new Exception("fromBlock not found: " + filter.getFromBlock()));
+                    toBlockNumber =
+                        filter
+                            .getToBlock()
+                            .getBlockNumber(blockchain)
+                            .orElseThrow(
+                                () -> new Exception("toBlock not found: " + filter.getToBlock()));
+                    if (maxLogRange.isPresent()
+                        && (toBlockNumber - fromBlockNumber) > maxLogRange.get()) {
+                      throw new IllegalArgumentException(
+                          "Requested range exceeds maximum range limit");
+                    }
+                  } catch (final Exception e) {
+                    ex.set(e);
+                    return Collections.emptyList();
+                  }
+
                   return blockchain.matchingLogs(
                       fromBlockNumber,
                       toBlockNumber,
                       filter.getLogsQuery(),
                       requestContext::isAlive);
                 });
+
+    if (ex.get() != null) {
+      LOG.atDebug()
+          .setMessage("eth_getLogs request {} failed:")
+          .addArgument(requestContext.getRequest())
+          .setCause(ex.get())
+          .log();
+      if (ex.get() instanceof IllegalArgumentException) {
+        return new JsonRpcErrorResponse(
+            requestContext.getRequest().getId(), JsonRpcError.EXCEEDS_RPC_MAX_BLOCK_RANGE);
+      }
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+    }
 
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(), new LogsResult(matchingLogs));

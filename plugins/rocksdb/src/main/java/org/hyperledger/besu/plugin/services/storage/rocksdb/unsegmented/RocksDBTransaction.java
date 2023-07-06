@@ -19,20 +19,28 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.Transaction;
 import org.rocksdb.WriteOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The RocksDb transaction. */
 public class RocksDBTransaction implements KeyValueStorageTransaction {
-  private static final Logger logger = LogManager.getLogger();
+  private static final Logger logger = LoggerFactory.getLogger(RocksDBTransaction.class);
   private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
 
   private final RocksDBMetrics metrics;
   private final Transaction innerTx;
   private final WriteOptions options;
 
+  /**
+   * Instantiates a new RocksDb transaction.
+   *
+   * @param innerTx the inner tx
+   * @param options the options
+   * @param metrics the metrics
+   */
   RocksDBTransaction(
       final Transaction innerTx, final WriteOptions options, final RocksDBMetrics metrics) {
     this.innerTx = innerTx;

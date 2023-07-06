@@ -21,15 +21,15 @@ import java.io.FileNotFoundException;
 import java.util.stream.Collectors;
 
 import com.google.common.io.Resources;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseError;
 import org.apache.tuweni.toml.TomlParseResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TomlConfigFileParser {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(TomlConfigFileParser.class);
 
   private static TomlParseResult checkConfigurationValidity(
       final TomlParseResult result, final String toml) throws Exception {

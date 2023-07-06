@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -25,7 +25,7 @@ public class NullNode<V> implements Node<V> {
   @SuppressWarnings("rawtypes")
   private static final NullNode instance = new NullNode();
 
-  private NullNode() {}
+  protected NullNode() {}
 
   @SuppressWarnings("unchecked")
   public static <V> NullNode<V> instance() {
@@ -63,18 +63,18 @@ public class NullNode<V> implements Node<V> {
   }
 
   @Override
-  public Bytes getRlp() {
-    return MerklePatriciaTrie.EMPTY_TRIE_NODE;
+  public Bytes getEncodedBytes() {
+    return MerkleTrie.EMPTY_TRIE_NODE;
   }
 
   @Override
-  public Bytes getRlpRef() {
-    return MerklePatriciaTrie.EMPTY_TRIE_NODE;
+  public Bytes getEncodedBytesRef() {
+    return MerkleTrie.EMPTY_TRIE_NODE;
   }
 
   @Override
   public Bytes32 getHash() {
-    return MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH;
+    return MerkleTrie.EMPTY_TRIE_NODE_HASH;
   }
 
   @Override
@@ -94,6 +94,16 @@ public class NullNode<V> implements Node<V> {
 
   @Override
   public void markDirty() {
+    // do nothing
+  }
+
+  @Override
+  public boolean isHealNeeded() {
+    return false;
+  }
+
+  @Override
+  public void markHealNeeded() {
     // do nothing
   }
 }

@@ -30,11 +30,11 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 abstract class AbstractPeerBlockValidator implements PeerValidator {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractPeerBlockValidator.class);
   static long DEFAULT_CHAIN_HEIGHT_ESTIMATION_BUFFER = 10L;
 
   private final ProtocolSchedule protocolSchedule;
@@ -78,7 +78,7 @@ abstract class AbstractPeerBlockValidator implements PeerValidator {
               if (err != null) {
                 // Mark peer as invalid on error
                 LOG.debug(
-                    "Peer {} is invalid because required block block ({}) is unavailable: {}",
+                    "Peer {} is invalid because required block ({}) is unavailable: {}",
                     ethPeer,
                     blockNumber,
                     err.toString());

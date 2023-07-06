@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,15 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.chain;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -35,6 +36,20 @@ public interface Blockchain {
    * @return The head of the blockchain.
    */
   ChainHead getChainHead();
+
+  /**
+   * Return the last finalized block hash if present.
+   *
+   * @return The hash of the last finalized block
+   */
+  Optional<Hash> getFinalized();
+
+  /**
+   * Return the last safe block hash if present.
+   *
+   * @return The hash of the last safe block
+   */
+  Optional<Hash> getSafeBlock();
 
   /**
    * Return the block number of the head of the canonical chain.
@@ -77,6 +92,11 @@ public interface Blockchain {
             .orElseThrow(() -> new IllegalStateException("Missing genesis block."));
     return getBlockByHash(genesisHash)
         .orElseThrow(() -> new IllegalStateException("Missing genesis block."));
+  }
+
+  default BlockHeader getGenesisBlockHeader() {
+    return getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER)
+        .orElseThrow(() -> new IllegalStateException("Missing genesis block header."));
   }
 
   default Optional<Block> getBlockByHash(final Hash blockHash) {
@@ -206,7 +226,7 @@ public interface Blockchain {
   }
 
   /**
-   * Removes an previously added observer of any type.
+   * Removes a previously added observer of any type.
    *
    * @param observerId the ID of the observer to remove
    * @return {@code true} if the observer was removed; otherwise {@code false}
@@ -230,4 +250,22 @@ public interface Blockchain {
    * @return {@code true} if the observer was removed; otherwise {@code false}
    */
   boolean removeChainReorgObserver(long observerId);
+
+  /**
+   * Gets the current block choice rule. When presented with two block headers indicate which chain
+   * is preferred. greater than zero: the first chain is preferred, less than zero: the second chain
+   * is preferred, or zero: no preference.
+   *
+   * @return The preferred block header
+   */
+  Comparator<BlockHeader> getBlockChoiceRule();
+
+  /**
+   * Sets the current fork choice rule. When presented with two block headers indicate which chain
+   * is more preferred. greater than zero: the first chain is more preferred, less than zero: the
+   * second chain is more preferred, or zero: no preference.
+   *
+   * @param blockChoiceRule The new fork choice rule.
+   */
+  void setBlockChoiceRule(Comparator<BlockHeader> blockChoiceRule);
 }

@@ -14,14 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import org.hyperledger.besu.ethereum.chain.EthHashObserver;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
 import java.util.List;
 import java.util.Optional;
@@ -71,12 +71,12 @@ public interface MiningCoordinator {
     return Optional.empty();
   }
 
-  default Optional<EthHashSolverInputs> getWorkDefinition() {
+  default Optional<PoWSolverInputs> getWorkDefinition() {
     throw new UnsupportedOperationException(
         "Current consensus mechanism prevents querying work definition.");
   }
 
-  default boolean submitWork(final EthHashSolution solution) {
+  default boolean submitWork(final PoWSolution solution) {
     throw new UnsupportedOperationException(
         "Current consensus mechanism prevents submission of work solutions.");
   }
@@ -105,7 +105,20 @@ public interface MiningCoordinator {
       final List<Transaction> transactions,
       final List<BlockHeader> ommers);
 
-  default void addEthHashObserver(final EthHashObserver observer) {}
+  /**
+   * Creates a block if possible, otherwise return an empty result
+   *
+   * @param parentHeader The parent block's header
+   * @param timestamp unix timestamp of the new block.
+   * @return If supported, returns the block that was created, otherwise an empty response.
+   */
+  Optional<Block> createBlock(final BlockHeader parentHeader, final long timestamp);
+
+  default void addEthHashObserver(final PoWObserver observer) {}
 
   void changeTargetGasLimit(final Long targetGasLimit);
+
+  default boolean isCompatibleWithEngineApi() {
+    return false;
+  }
 }

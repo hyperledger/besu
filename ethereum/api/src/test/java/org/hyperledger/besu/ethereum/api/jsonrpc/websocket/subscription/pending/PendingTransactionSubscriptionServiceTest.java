@@ -18,17 +18,17 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.SimpleTestTransactionBuilder;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.Subscription;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.Arrays;
@@ -67,8 +67,8 @@ public class PendingTransactionSubscriptionServiceTest {
 
     service.onTransactionAdded(pending);
 
-    verifyZeroInteractions(block);
-    verifyZeroInteractions(blockchain);
+    verifyNoInteractions(block);
+    verifyNoInteractions(blockchain);
     verifySubscriptionMangerInteractions(messages(TX_ONE, subscriptionIds));
   }
 
@@ -80,8 +80,8 @@ public class PendingTransactionSubscriptionServiceTest {
 
     service.onTransactionAdded(pending);
 
-    verifyZeroInteractions(block);
-    verifyZeroInteractions(blockchain);
+    verifyNoInteractions(block);
+    verifyNoInteractions(blockchain);
     verifySubscriptionMangerDetailInteractions(messages(pending, subscriptionIds));
   }
 

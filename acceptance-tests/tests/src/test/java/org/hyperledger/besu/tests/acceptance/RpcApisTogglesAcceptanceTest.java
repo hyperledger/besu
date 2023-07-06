@@ -22,8 +22,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import org.java_websocket.exceptions.WebsocketNotConnectedException;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class RpcApisTogglesAcceptanceTest extends AcceptanceTestBase {
 
@@ -31,11 +31,11 @@ public class RpcApisTogglesAcceptanceTest extends AcceptanceTestBase {
   private BesuNode rpcDisabledNode;
   private BesuNode ethApiDisabledNode;
 
-  @Before
+  @BeforeEach
   public void before() throws Exception {
     rpcEnabledNode = besu.createArchiveNode("rpc-enabled");
     rpcDisabledNode = besu.createArchiveNodeWithRpcDisabled("rpc-disabled");
-    ethApiDisabledNode = besu.createArchiveNodeWithRpcApis("eth-api-disabled", RpcApis.NET);
+    ethApiDisabledNode = besu.createArchiveNodeWithRpcApis("eth-api-disabled", RpcApis.NET.name());
     cluster.start(rpcEnabledNode, rpcDisabledNode, ethApiDisabledNode);
   }
 

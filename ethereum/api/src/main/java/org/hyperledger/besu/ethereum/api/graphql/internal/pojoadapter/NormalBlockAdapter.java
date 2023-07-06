@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,8 +42,8 @@ public class NormalBlockAdapter extends BlockAdapterBase {
     return Optional.of(blockWithMetaData.getTransactions().size());
   }
 
-  public Optional<Difficulty> getTotalDifficulty() {
-    return Optional.of(blockWithMetaData.getTotalDifficulty());
+  public Difficulty getTotalDifficulty() {
+    return blockWithMetaData.getTotalDifficulty();
   }
 
   public Optional<Integer> getOmmerCount() {
@@ -65,7 +65,7 @@ public class NormalBlockAdapter extends BlockAdapterBase {
 
   public Optional<UncleBlockAdapter> getOmmerAt(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
-    final int index = environment.getArgument("index");
+    final int index = ((Number) environment.getArgument("index")).intValue();
     final List<Hash> ommers = blockWithMetaData.getOmmers();
     if (ommers.size() > index) {
       final Hash hash = blockWithMetaData.getHeader().getHash();
@@ -85,7 +85,7 @@ public class NormalBlockAdapter extends BlockAdapterBase {
   }
 
   public Optional<TransactionAdapter> getTransactionAt(final DataFetchingEnvironment environment) {
-    final int index = environment.getArgument("index");
+    final int index = ((Number) environment.getArgument("index")).intValue();
     final List<TransactionWithMetadata> trans = blockWithMetaData.getTransactions();
 
     if (trans.size() > index) {

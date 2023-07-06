@@ -14,14 +14,100 @@
  */
 package org.hyperledger.besu.cli.config;
 
+import java.math.BigInteger;
+import java.util.Optional;
+
+import org.apache.commons.lang3.StringUtils;
+
+/** The enum Network name. */
 public enum NetworkName {
-  MAINNET,
-  RINKEBY,
-  ROPSTEN,
-  GOERLI,
-  DEV,
-  CLASSIC,
-  KOTTI,
-  MORDOR,
-  YOLO_V2
+  /** Mainnet network name. */
+  MAINNET("/mainnet.json", BigInteger.valueOf(1)),
+  /** Sepolia network name. */
+  SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111)),
+  /** Goerli network name. */
+  GOERLI("/goerli.json", BigInteger.valueOf(5)),
+  /** Dev network name. */
+  DEV("/dev.json", BigInteger.valueOf(2018), false),
+  /** Future EIPs network name. */
+  FUTURE_EIPS("/future.json", BigInteger.valueOf(2022), false),
+  /** Experimental EIPs network name. */
+  EXPERIMENTAL_EIPS("/experimental.json", BigInteger.valueOf(2023), false),
+  /** Classic network name. */
+  CLASSIC("/classic.json", BigInteger.valueOf(1)),
+  /** Kotti network name. */
+  KOTTI("/kotti.json", BigInteger.valueOf(6)),
+  /** Mordor network name. */
+  MORDOR("/mordor.json", BigInteger.valueOf(7));
+
+  private final String genesisFile;
+  private final BigInteger networkId;
+  private final boolean canFastSync;
+  private final String deprecationDate;
+
+  NetworkName(final String genesisFile, final BigInteger networkId) {
+    this(genesisFile, networkId, true);
+  }
+
+  NetworkName(final String genesisFile, final BigInteger networkId, final boolean canFastSync) {
+    this.genesisFile = genesisFile;
+    this.networkId = networkId;
+    this.canFastSync = canFastSync;
+    // no deprecations planned
+    this.deprecationDate = null;
+  }
+
+  /**
+   * Gets genesis file.
+   *
+   * @return the genesis file
+   */
+  public String getGenesisFile() {
+    return genesisFile;
+  }
+
+  /**
+   * Gets network id.
+   *
+   * @return the network id
+   */
+  public BigInteger getNetworkId() {
+    return networkId;
+  }
+
+  /**
+   * Can fast sync boolean.
+   *
+   * @return the boolean
+   */
+  public boolean canFastSync() {
+    return canFastSync;
+  }
+
+  /**
+   * Normalize string.
+   *
+   * @return the string
+   */
+  public String normalize() {
+    return StringUtils.capitalize(name().toLowerCase());
+  }
+
+  /**
+   * Is deprecated boolean.
+   *
+   * @return the boolean
+   */
+  public boolean isDeprecated() {
+    return deprecationDate != null;
+  }
+
+  /**
+   * Gets deprecation date.
+   *
+   * @return the deprecation date
+   */
+  public Optional<String> getDeprecationDate() {
+    return Optional.ofNullable(deprecationDate);
+  }
 }

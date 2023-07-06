@@ -15,50 +15,80 @@
 package org.hyperledger.besu.consensus.clique;
 
 import org.hyperledger.besu.consensus.clique.blockcreation.CliqueProposerSelector;
-import org.hyperledger.besu.consensus.common.ValidatorProvider;
-import org.hyperledger.besu.consensus.common.VoteTally;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
+import java.util.Collection;
+import java.util.Comparator;
+
+/** The Clique helpers. */
 public class CliqueHelpers {
 
+  /**
+   * Gets proposer of block.
+   *
+   * @param header the header
+   * @return the proposer of block address
+   */
   public static Address getProposerOfBlock(final BlockHeader header) {
     final CliqueExtraData extraData = CliqueExtraData.decode(header);
     return extraData.getProposerAddress();
   }
 
-  public static Address getProposerForBlockAfter(
-      final BlockHeader parent, final VoteTallyCache voteTallyCache) {
-    final CliqueProposerSelector proposerSelector = new CliqueProposerSelector(voteTallyCache);
+  /**
+   * Gets proposer for block after.
+   *
+   * @param parent the parent
+   * @param validatorProvider the validator provider
+   * @return the proposer for block after
+   */
+  static Address getProposerForBlockAfter(
+      final BlockHeader parent, final ValidatorProvider validatorProvider) {
+    final CliqueProposerSelector proposerSelector = new CliqueProposerSelector(validatorProvider);
     return proposerSelector.selectProposerForNextBlock(parent);
   }
 
-  public static boolean isSigner(
+  /**
+   * Is signer.
+   *
+   * @param candidate the candidate
+   * @param protocolContext the protocol context
+   * @param parent the parent
+   * @return the boolean
+   */
+  static boolean isSigner(
       final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
-    final VoteTally validatorProvider =
+    final Collection<Address> validators =
         protocolContext
-            .getConsensusState(CliqueContext.class)
-            .getVoteTallyCache()
-            .getVoteTallyAfterBlock(parent);
-    return validatorProvider.getValidators().contains(candidate);
+            .getConsensusContext(CliqueContext.class)
+            .getValidatorProvider()
+            .getValidatorsAfterBlock(parent);
+    return validators.contains(candidate);
   }
 
+  /**
+   * Address is allowed to produce next block.
+   *
+   * @param candidate the candidate
+   * @param protocolContext the protocol context
+   * @param parent the parent
+   * @return the boolean
+   */
   public static boolean addressIsAllowedToProduceNextBlock(
       final Address candidate, final ProtocolContext protocolContext, final BlockHeader parent) {
-    final VoteTally validatorProvider =
-        protocolContext
-            .getConsensusState(CliqueContext.class)
-            .getVoteTallyCache()
-            .getVoteTallyAfterBlock(parent);
+    final ValidatorProvider validatorProvider =
+        protocolContext.getConsensusContext(CliqueContext.class).getValidatorProvider();
 
     if (!isSigner(candidate, protocolContext, parent)) {
       return false;
     }
 
-    final int minimumUnsignedPastBlocks = minimumBlocksSincePreviousSigning(validatorProvider);
+    final int minimumUnsignedPastBlocks =
+        minimumBlocksSincePreviousSigning(parent, validatorProvider);
 
     final Blockchain blockchain = protocolContext.getBlockchain();
     int unsignedBlockCount = 0;
@@ -85,10 +115,60 @@ public class CliqueHelpers {
     return true;
   }
 
-  private static int minimumBlocksSincePreviousSigning(final ValidatorProvider validatorProvider) {
-    final int validatorCount = validatorProvider.getValidators().size();
+  private static int minimumBlocksSincePreviousSigning(
+      final BlockHeader parent, final ValidatorProvider validatorProvider) {
+    final int validatorCount = validatorProvider.getValidatorsAfterBlock(parent).size();
     // The number of contiguous blocks in which a signer may only sign 1 (as taken from clique spec)
     final int signerLimit = (validatorCount / 2) + 1;
     return signerLimit - 1;
+  }
+
+  /**
+   * Install clique block choice rule.
+   *
+   * @param blockchain the blockchain
+   * @param cliqueContext the clique context
+   */
+  public static void installCliqueBlockChoiceRule(
+      final Blockchain blockchain, final CliqueContext cliqueContext) {
+    blockchain.setBlockChoiceRule(
+        // EIP-3436 - https://eips.ethereum.org/EIPS/eip-3436
+        blockchain
+            // 1. Choose the block with the most total difficulty.
+            .getBlockChoiceRule()
+            // 2. Then choose the block with the lowest block number.
+            .thenComparing(Comparator.comparing(ProcessableBlockHeader::getNumber).reversed())
+            // 3. Then choose the block whose validator had the least recent in-turn block
+            // assignment.
+            .thenComparing((BlockHeader header) -> -distanceFromInTurn(header, cliqueContext))
+            // 4. Then choose the block with the lowest hash.
+            .thenComparing(Comparator.comparing(BlockHeader::getHash).reversed()));
+  }
+
+  /**
+   * Distance calculation from step 3 of the forck choice rule in EIP-3436
+   *
+   * <p>` (header_number - validator_index) % validator_count `
+   *
+   * @param header The block header to calculate distance
+   * @param context The clique context, holding validators last validaion
+   * @return the number of blocks from when the validator in that block was most recently "in turn"
+   */
+  static int distanceFromInTurn(final BlockHeader header, final CliqueContext context) {
+    final Address proposer = CliqueHelpers.getProposerOfBlock(header);
+    final Collection<Address> validators =
+        context.getValidatorProvider().getValidatorsAfterBlock(header);
+
+    // validators is an ordered collection, but as it is a tree set the only way to get an "index"
+    // is to walk the tree.
+    int index = 0;
+    for (final Address validator : validators) {
+      if (validator.equals(proposer)) {
+        break;
+      }
+      index++;
+    }
+
+    return (int) (header.getNumber() - index) % validators.size();
   }
 }

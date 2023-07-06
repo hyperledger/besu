@@ -14,41 +14,42 @@
  */
 package org.hyperledger.besu.ethereum.permissioning.node;
 
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.permissioning.GoQuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
-import org.hyperledger.besu.ethereum.permissioning.QuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.node.provider.SyncStatusNodePermissioningProvider;
+import org.hyperledger.besu.plugin.data.EnodeURL;
+import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissioningProvider;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NodePermissioningController {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(NodePermissioningController.class);
 
   private final Optional<SyncStatusNodePermissioningProvider> syncStatusNodePermissioningProvider;
   private Optional<ContextualNodePermissioningProvider> insufficientPeersPermissioningProvider =
       Optional.empty();
-  private final List<NodePermissioningProvider> providers;
-  private final Optional<QuorumQip714Gate> quorumQip714Gate;
+  private final List<NodeConnectionPermissioningProvider> providers;
+  private final Optional<GoQuorumQip714Gate> goQuorumQip714Gate;
   private final Subscribers<Runnable> permissioningUpdateSubscribers = Subscribers.create();
 
   public NodePermissioningController(
       final Optional<SyncStatusNodePermissioningProvider> syncStatusNodePermissioningProvider,
-      final List<NodePermissioningProvider> providers,
-      final Optional<QuorumQip714Gate> quorumQip714Gate) {
+      final List<NodeConnectionPermissioningProvider> providers,
+      final Optional<GoQuorumQip714Gate> goQuorumQip714Gate) {
     this.providers = providers;
     this.syncStatusNodePermissioningProvider = syncStatusNodePermissioningProvider;
-    this.quorumQip714Gate = quorumQip714Gate;
+    this.goQuorumQip714Gate = goQuorumQip714Gate;
   }
 
   public boolean isPermitted(final EnodeURL sourceEnode, final EnodeURL destinationEnode) {
     final boolean checkPermissions =
-        quorumQip714Gate.map(QuorumQip714Gate::shouldCheckPermissions).orElse(true);
+        goQuorumQip714Gate.map(GoQuorumQip714Gate::shouldCheckPermissions).orElse(true);
     if (!checkPermissions) {
       LOG.trace("Skipping node permissioning check due to qip714block config");
 
@@ -58,7 +59,7 @@ public class NodePermissioningController {
     LOG.trace("Node permissioning: Checking {} -> {}", sourceEnode, destinationEnode);
 
     if (syncStatusNodePermissioningProvider
-        .map(p -> !p.hasReachedSync() && p.isPermitted(sourceEnode, destinationEnode))
+        .map(p -> !p.hasReachedSync() && p.isConnectionPermitted(sourceEnode, destinationEnode))
         .orElse(false)) {
 
       LOG.trace(
@@ -84,15 +85,17 @@ public class NodePermissioningController {
     }
 
     if (syncStatusNodePermissioningProvider.isPresent()
-        && !syncStatusNodePermissioningProvider.get().isPermitted(sourceEnode, destinationEnode)) {
+        && !syncStatusNodePermissioningProvider
+            .get()
+            .isConnectionPermitted(sourceEnode, destinationEnode)) {
 
       LOG.trace(
           "Node permissioning - Sync Status: Rejected {} -> {}", sourceEnode, destinationEnode);
 
       return false;
     } else {
-      for (final NodePermissioningProvider provider : providers) {
-        if (!provider.isPermitted(sourceEnode, destinationEnode)) {
+      for (final NodeConnectionPermissioningProvider provider : providers) {
+        if (!provider.isConnectionPermitted(sourceEnode, destinationEnode)) {
           LOG.trace(
               "Node permissioning - {}: Rejected {} -> {}",
               provider.getClass().getSimpleName(),
@@ -121,7 +124,7 @@ public class NodePermissioningController {
     return syncStatusNodePermissioningProvider;
   }
 
-  public List<NodePermissioningProvider> getProviders() {
+  public List<NodeConnectionPermissioningProvider> getProviders() {
     return providers;
   }
 

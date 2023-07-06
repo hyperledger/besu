@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,6 +16,8 @@ package org.hyperledger.besu.cli.subcommands.blocks;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.COMMAND_NAME;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_MAX_OMMERS_DEPTH;
+import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_POW_JOB_TTL;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_LIMIT;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_REMOTE_SEALERS_TTL;
 
@@ -26,20 +28,21 @@ import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.ExportSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.ImportSubCommand;
+import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.IncrementingNonceGenerator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.metrics.MetricsService;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -53,9 +56,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import io.vertx.core.Vertx;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ExecutionException;
@@ -71,11 +74,13 @@ import picocli.CommandLine.Spec;
     name = COMMAND_NAME,
     description = "This command provides blocks related actions.",
     mixinStandardHelpOptions = true,
+    versionProvider = VersionProvider.class,
     subcommands = {ImportSubCommand.class, ExportSubCommand.class})
 public class BlocksSubCommand implements Runnable {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(BlocksSubCommand.class);
 
+  /** The constant COMMAND_NAME. */
   public static final String COMMAND_NAME = "blocks";
 
   @SuppressWarnings("unused")
@@ -90,13 +95,21 @@ public class BlocksSubCommand implements Runnable {
   private final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory;
   private final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory;
 
-  private final PrintStream out;
+  private final PrintWriter out;
 
+  /**
+   * Instantiates a new Blocks sub command.
+   *
+   * @param rlpBlockImporter the RLP block importer
+   * @param jsonBlockImporterFactory the Json block importer factory
+   * @param rlpBlockExporterFactory the RLP block exporter factory
+   * @param out Instance of PrintWriter where command usage will be written.
+   */
   public BlocksSubCommand(
       final Supplier<RlpBlockImporter> rlpBlockImporter,
       final Function<BesuController, JsonBlockImporter> jsonBlockImporterFactory,
       final Function<Blockchain, RlpBlockExporter> rlpBlockExporterFactory,
-      final PrintStream out) {
+      final PrintWriter out) {
     this.rlpBlockImporter = rlpBlockImporter;
     this.rlpBlockExporterFactory = rlpBlockExporterFactory;
     this.jsonBlockImporterFactory = jsonBlockImporterFactory;
@@ -116,7 +129,8 @@ public class BlocksSubCommand implements Runnable {
   @Command(
       name = "import",
       description = "This command imports blocks from a file into the database.",
-      mixinStandardHelpOptions = true)
+      mixinStandardHelpOptions = true,
+      versionProvider = VersionProvider.class)
   static class ImportSubCommand implements Runnable {
     @SuppressWarnings("unused")
     @ParentCommand
@@ -188,6 +202,10 @@ public class BlocksSubCommand implements Runnable {
       if (blockImportFiles.isEmpty()) {
         throw new ParameterException(spec.commandLine(), "No files specified to import.");
       }
+      if (skipPow && format.equals(BlockImportFormat.JSON)) {
+        throw new ParameterException(
+            spec.commandLine(), "Can't skip proof of work validation for JSON blocks");
+      }
       LOG.info("Import {} block data from {} files", format, blockImportFiles.size());
       final Optional<MetricsService> metricsService = initMetrics(parentCommand);
 
@@ -244,7 +262,7 @@ public class BlocksSubCommand implements Runnable {
             .miningParameters(getMiningParameters())
             .build();
       } catch (final Exception e) {
-        throw new ExecutionException(new CommandLine(parentCommand), e.getMessage(), e);
+        throw new ExecutionException(parentCommand.spec.commandLine(), e.getMessage(), e);
       }
     }
 
@@ -253,19 +271,22 @@ public class BlocksSubCommand implements Runnable {
       // Extradata and coinbase can be configured on a per-block level via the json file
       final Address coinbase = Address.ZERO;
       final Bytes extraData = Bytes.EMPTY;
-      return new MiningParameters(
-          coinbase,
-          minTransactionGasPrice,
-          extraData,
-          false,
-          false,
-          "0.0.0.0",
-          8008,
-          "080c",
-          Optional.of(new IncrementingNonceGenerator(0)),
-          0.0,
-          DEFAULT_REMOTE_SEALERS_LIMIT,
-          DEFAULT_REMOTE_SEALERS_TTL);
+      return new MiningParameters.Builder()
+          .coinbase(coinbase)
+          .minTransactionGasPrice(minTransactionGasPrice)
+          .extraData(extraData)
+          .miningEnabled(false)
+          .stratumMiningEnabled(false)
+          .stratumNetworkInterface("0.0.0.0")
+          .stratumPort(8008)
+          .stratumExtranonce("080c")
+          .maybeNonceGenerator(new IncrementingNonceGenerator(0))
+          .minBlockOccupancyRatio(0.0)
+          .remoteSealersLimit(DEFAULT_REMOTE_SEALERS_LIMIT)
+          .remoteSealersTimeToLive(DEFAULT_REMOTE_SEALERS_TTL)
+          .powJobTimeToLive(DEFAULT_POW_JOB_TTL)
+          .maxOmmerDepth(DEFAULT_MAX_OMMERS_DEPTH)
+          .build();
     }
 
     private void importJsonBlocks(final BesuController controller, final Path path)
@@ -293,7 +314,8 @@ public class BlocksSubCommand implements Runnable {
   @Command(
       name = "export",
       description = "This command exports a specific block, or list of blocks from storage.",
-      mixinStandardHelpOptions = true)
+      mixinStandardHelpOptions = true,
+      versionProvider = VersionProvider.class)
   static class ExportSubCommand implements Runnable {
     @SuppressWarnings("unused")
     @ParentCommand

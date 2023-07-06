@@ -29,11 +29,11 @@ import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.payload.PreparedCertificate;
 import org.hyperledger.besu.consensus.ibft.statemachine.PreparedRoundArtifacts;
 import org.hyperledger.besu.consensus.ibft.validation.RoundChangePayloadValidator.MessageValidatorForHeightFactory;
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.Collections;
@@ -41,9 +41,10 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("DirectInvocationOnMock")
 public class RoundChangeSignedDataValidatorTest {
 
   private final NodeKey proposerKey = NodeKeyUtils.generate();
@@ -68,7 +69,7 @@ public class RoundChangeSignedDataValidatorTest {
   private final RoundChangePayloadValidator validator =
       new RoundChangePayloadValidator(validatorFactory, validators, 1, chainHeight);
 
-  @Before
+  @BeforeEach
   public void setup() {
     validators.add(Util.publicKeyToAddress(proposerKey.getPublicKey()));
     validators.add(Util.publicKeyToAddress(validatorKey.getPublicKey()));
@@ -206,5 +207,25 @@ public class RoundChangeSignedDataValidatorTest {
         .createAt(prepareCertificate.getProposalPayload().getPayload().getRoundIdentifier());
     verify(basicValidator, times(1)).validateProposal(prepareCertificate.getProposalPayload());
     verify(basicValidator, times(1)).validatePrepare(prepareMsg.getSignedPayload());
+  }
+
+  @Test
+  public void roundChangeWithDuplicatedPreparesFails() {
+    final RoundChangePayloadValidator validatorRequiringTwoPrepares =
+        new RoundChangePayloadValidator(validatorFactory, validators, 2, chainHeight);
+
+    final Prepare prepareMsg = validatorMessageFactory.createPrepare(currentRound, block.getHash());
+    final PreparedRoundArtifacts preparedRoundArtifacts =
+        new PreparedRoundArtifacts(
+            proposerMessageFactory.createProposal(currentRound, block, Optional.empty()),
+            Lists.newArrayList(prepareMsg, prepareMsg));
+    final PreparedCertificate prepareCertificate = preparedRoundArtifacts.getPreparedCertificate();
+    final RoundChange msg =
+        proposerMessageFactory.createRoundChange(targetRound, Optional.of(preparedRoundArtifacts));
+
+    when(basicValidator.validateProposal(prepareCertificate.getProposalPayload())).thenReturn(true);
+    when(basicValidator.validatePrepare(prepareMsg.getSignedPayload())).thenReturn(true);
+
+    assertThat(validatorRequiringTwoPrepares.validateRoundChange(msg.getSignedPayload())).isFalse();
   }
 }

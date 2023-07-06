@@ -21,10 +21,15 @@ import org.immutables.value.Value;
 @Value.Immutable
 public interface DataStorageConfiguration {
 
+  long DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD = 512;
+
   DataStorageConfiguration DEFAULT_CONFIG =
       ImmutableDataStorageConfiguration.builder()
           .dataStorageFormat(DataStorageFormat.FOREST)
+          .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
           .build();
 
   DataStorageFormat getDataStorageFormat();
+
+  Long getBonsaiMaxLayersToLoad();
 }

@@ -14,55 +14,52 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter.TraceType.TRACE;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter.TraceType.VM_TRACE;
+import static org.hyperledger.besu.services.pipeline.PipelineBuilder.createPipelineFrom;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceBlock.ChainUpdater;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter.TraceType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceFormatter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.TraceWriter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateDiffGenerator;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTraceGenerator;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm.VmTraceGenerator;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TraceReplayResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.api.util.ArrayNodeWrapper;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.services.pipeline.Pipeline;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Suppliers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
-  private final Supplier<BlockTracer> blockTracerSupplier;
-  private final Supplier<StateDiffGenerator> stateDiffGenerator =
-      Suppliers.memoize(StateDiffGenerator::new);
+  private static final Logger LOG = LoggerFactory.getLogger(TraceReplayBlockTransactions.class);
   private final ProtocolSchedule protocolSchedule;
+  private static final ObjectMapper MAPPER = new ObjectMapper();
 
   public TraceReplayBlockTransactions(
-      final Supplier<BlockTracer> blockTracerSupplier,
-      final ProtocolSchedule protocolSchedule,
-      final BlockchainQueries queries) {
+      final ProtocolSchedule protocolSchedule, final BlockchainQueries queries) {
     super(queries);
-    this.blockTracerSupplier = blockTracerSupplier;
     this.protocolSchedule = protocolSchedule;
   }
 
@@ -77,10 +74,16 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
   }
 
   @Override
-  protected Object resultByBlockNumber(
+  protected ArrayNode resultByBlockNumber(
       final JsonRpcRequestContext request, final long blockNumber) {
     final TraceTypeParameter traceTypeParameter =
         request.getRequiredParameter(1, TraceTypeParameter.class);
+
+    LOG.trace(
+        "Received RPC rpcName={} block={} traceType={}",
+        getName(),
+        blockNumber,
+        traceTypeParameter);
 
     if (blockNumber == BlockHeader.GENESIS_BLOCK_NUMBER) {
       // Nothing to trace for the genesis block
@@ -94,116 +97,86 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
         .orElse(null);
   }
 
-  private Object traceBlock(final Block block, final TraceTypeParameter traceTypeParameter) {
+  private ArrayNode traceBlock(final Block block, final TraceTypeParameter traceTypeParameter) {
 
-    if (block == null || block.getBody().getTransactions().isEmpty()) {
+    if (block == null) {
       return emptyResult();
     }
 
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
-    final TraceOptions traceOptions =
-        new TraceOptions(false, false, traceTypes.contains(VM_TRACE) || traceTypes.contains(TRACE));
 
-    return blockTracerSupplier
-        .get()
-        .trace(block, new DebugOperationTracer(traceOptions))
-        .map(BlockTrace::getTransactionTraces)
-        .map((traces) -> generateTracesFromTransactionTrace(traces, block, traceTypes))
-        .orElse(null);
+    final BlockHeader header = block.getHeader();
+    return Tracer.processTracing(
+            getBlockchainQueries(),
+            Optional.of(header),
+            traceableState -> {
+              ArrayNodeWrapper resultArrayNode = new ArrayNodeWrapper(MAPPER.createArrayNode());
+
+              final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
+              final MainnetTransactionProcessor transactionProcessor =
+                  protocolSpec.getTransactionProcessor();
+              final ChainUpdater chainUpdater = new ChainUpdater(traceableState);
+
+              final TransactionSource transactionSource = new TransactionSource(block);
+              final LabelledMetric<Counter> outputCounter =
+                  new PrometheusMetricsSystem(BesuMetricCategory.DEFAULT_METRIC_CATEGORIES, false)
+                      .createLabelledCounter(
+                          BesuMetricCategory.BLOCKCHAIN,
+                          "transactions_tracereplayblock_pipeline_processed_total",
+                          "Number of transactions processed for each block",
+                          "step",
+                          "action");
+              final DebugOperationTracer debugOperationTracer =
+                  new DebugOperationTracer(new TraceOptions(false, false, true));
+              final ExecuteTransactionStep executeTransactionStep =
+                  new ExecuteTransactionStep(
+                      chainUpdater,
+                      transactionProcessor,
+                      getBlockchainQueries().getBlockchain(),
+                      debugOperationTracer,
+                      protocolSpec,
+                      block);
+
+              final Function<TransactionTrace, CompletableFuture<TraceReplayResult>>
+                  traceReplayTransactionStep =
+                      new TraceReplayTransactionStep(protocolSchedule, block, traceTypes);
+
+              final BuildArrayNodeCompleterStep buildArrayNodeStep =
+                  new BuildArrayNodeCompleterStep(resultArrayNode);
+
+              final Pipeline<TransactionTrace> traceBlockPipeline =
+                  createPipelineFrom(
+                          "getTransactions",
+                          transactionSource,
+                          4,
+                          outputCounter,
+                          false,
+                          "trace_replay_block_transactions")
+                      .thenProcess("executeTransaction", executeTransactionStep)
+                      .thenProcessAsyncOrdered(
+                          "traceReplayTransaction", traceReplayTransactionStep, 4)
+                      .andFinishWith("buildArrayNode", buildArrayNodeStep::accept);
+              try {
+                if (getBlockchainQueries().getEthScheduler().isPresent()) {
+                  getBlockchainQueries()
+                      .getEthScheduler()
+                      .get()
+                      .startPipeline(traceBlockPipeline)
+                      .get();
+                } else {
+                  EthScheduler ethScheduler = new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());
+                  ethScheduler.startPipeline(traceBlockPipeline).get();
+                }
+              } catch (final InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+              }
+              resultArrayNode = buildArrayNodeStep.getResultArrayNode();
+              return Optional.of(resultArrayNode.getArrayNode());
+            })
+        .orElse(emptyResult());
   }
 
-  private JsonNode generateTracesFromTransactionTrace(
-      final List<TransactionTrace> transactionTraces,
-      final Block block,
-      final Set<TraceTypeParameter.TraceType> traceTypes) {
-    final ObjectMapper mapper = new ObjectMapper();
-    final ArrayNode resultArrayNode = mapper.createArrayNode();
-    final AtomicInteger traceCounter = new AtomicInteger(0);
-    transactionTraces.forEach(
-        transactionTrace ->
-            handleTransactionTrace(
-                transactionTrace, block, traceTypes, mapper, resultArrayNode, traceCounter));
-    return resultArrayNode;
-  }
-
-  private void handleTransactionTrace(
-      final TransactionTrace transactionTrace,
-      final Block block,
-      final Set<TraceTypeParameter.TraceType> traceTypes,
-      final ObjectMapper mapper,
-      final ArrayNode resultArrayNode,
-      final AtomicInteger traceCounter) {
-    final ObjectNode resultNode = mapper.createObjectNode();
-
-    TransactionProcessingResult result = transactionTrace.getResult();
-    resultNode.put("output", result.getRevertReason().orElse(result.getOutput()).toString());
-
-    if (traceTypes.contains(TraceType.STATE_DIFF)) {
-      generateTracesFromTransactionTrace(
-          trace -> resultNode.putPOJO("stateDiff", trace),
-          protocolSchedule,
-          transactionTrace,
-          block,
-          (__, txTrace, currentBlock, ignored) ->
-              stateDiffGenerator.get().generateStateDiff(txTrace),
-          traceCounter);
-    }
-    setNullNodesIfNotPresent(resultNode, "stateDiff");
-    if (traceTypes.contains(TraceTypeParameter.TraceType.TRACE)) {
-      generateTracesFromTransactionTrace(
-          resultNode.putArray("trace")::addPOJO,
-          protocolSchedule,
-          transactionTrace,
-          block,
-          FlatTraceGenerator::generateFromTransactionTrace,
-          traceCounter);
-    }
-    setEmptyArrayIfNotPresent(resultNode, "trace");
-    resultNode.put("transactionHash", transactionTrace.getTransaction().getHash().toHexString());
-    if (traceTypes.contains(VM_TRACE)) {
-      generateTracesFromTransactionTrace(
-          trace -> resultNode.putPOJO("vmTrace", trace),
-          protocolSchedule,
-          transactionTrace,
-          block,
-          (protocolSchedule, txTrace, currentBlock, ignored) ->
-              new VmTraceGenerator(transactionTrace).generateTraceStream(),
-          traceCounter);
-    }
-    setNullNodesIfNotPresent(resultNode, "vmTrace");
-    resultArrayNode.add(resultNode);
-  }
-
-  private void generateTracesFromTransactionTrace(
-      final TraceWriter writer,
-      final ProtocolSchedule protocolSchedule,
-      final TransactionTrace transactionTrace,
-      final Block block,
-      final TraceFormatter formatter,
-      final AtomicInteger traceCounter) {
-    formatter
-        .format(protocolSchedule, transactionTrace, block, traceCounter)
-        .forEachOrdered(writer::write);
-  }
-
-  private void setNullNodesIfNotPresent(final ObjectNode parentNode, final String... keys) {
-    Arrays.asList(keys)
-        .forEach(
-            key ->
-                Optional.ofNullable(parentNode.get(key))
-                    .ifPresentOrElse(ignored -> {}, () -> parentNode.put(key, (String) null)));
-  }
-
-  private void setEmptyArrayIfNotPresent(final ObjectNode parentNode, final String... keys) {
-    Arrays.asList(keys)
-        .forEach(
-            key ->
-                Optional.ofNullable(parentNode.get(key))
-                    .ifPresentOrElse(ignored -> {}, () -> parentNode.putArray(key)));
-  }
-
-  private Object emptyResult() {
-    final ObjectMapper mapper = new ObjectMapper();
-    return mapper.createArrayNode();
+  private ArrayNode emptyResult() {
+    return MAPPER.createArrayNode();
   }
 }

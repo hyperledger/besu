@@ -14,16 +14,31 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
+import java.util.Optional;
+
 public class EthContext {
 
   private final EthPeers ethPeers;
   private final EthMessages ethMessages;
+  private final Optional<EthMessages> snapMessages;
   private final EthScheduler scheduler;
+
+  public EthContext(
+      final EthPeers ethPeers,
+      final EthMessages ethMessages,
+      final EthMessages snapMessages,
+      final EthScheduler scheduler) {
+    this.ethPeers = ethPeers;
+    this.ethMessages = ethMessages;
+    this.snapMessages = Optional.of(snapMessages);
+    this.scheduler = scheduler;
+  }
 
   public EthContext(
       final EthPeers ethPeers, final EthMessages ethMessages, final EthScheduler scheduler) {
     this.ethPeers = ethPeers;
     this.ethMessages = ethMessages;
+    this.snapMessages = Optional.empty();
     this.scheduler = scheduler;
   }
 
@@ -33,6 +48,10 @@ public class EthContext {
 
   public EthMessages getEthMessages() {
     return ethMessages;
+  }
+
+  public Optional<EthMessages> getSnapMessages() {
+    return snapMessages;
   }
 
   public EthScheduler getScheduler() {

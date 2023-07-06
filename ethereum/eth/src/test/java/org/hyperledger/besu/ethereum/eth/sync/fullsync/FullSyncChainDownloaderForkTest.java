@@ -64,6 +64,7 @@ public class FullSyncChainDownloaderForkTest {
     protocolContext = localBlockchainSetup.getProtocolContext();
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
+            protocolSchedule,
             localBlockchain,
             new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()),
             localBlockchainSetup.getWorldArchive(),
@@ -80,7 +81,13 @@ public class FullSyncChainDownloaderForkTest {
 
   private ChainDownloader downloader(final SynchronizerConfiguration syncConfig) {
     return FullSyncChainDownloader.create(
-        syncConfig, protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
+        syncConfig,
+        protocolSchedule,
+        protocolContext,
+        ethContext,
+        syncState,
+        metricsSystem,
+        SyncTerminationCondition.never());
   }
 
   private ChainDownloader downloader() {

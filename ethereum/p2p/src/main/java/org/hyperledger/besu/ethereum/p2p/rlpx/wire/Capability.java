@@ -22,6 +22,8 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
+import org.owasp.encoder.Encode;
+
 /**
  * Represents a client capability.
  *
@@ -52,7 +54,7 @@ public class Capability {
   public void writeTo(final RLPOutput out) {
     out.startList();
     out.writeBytes(wrap(getName().getBytes(StandardCharsets.US_ASCII)));
-    out.writeUnsignedByte(getVersion());
+    out.writeUnsignedInt(getVersion());
     out.endList();
   }
 
@@ -82,7 +84,8 @@ public class Capability {
   }
 
   @Override
+  /** Returned string is sanitized since it contains user input */
   public String toString() {
-    return name + "/" + version;
+    return Encode.forJava(name) + "/" + version;
   }
 }

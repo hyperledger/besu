@@ -1,0 +1,48 @@
+{
+  "comment" : "Proxy call to another contract - several levels deep. Using CALL.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_rawTransaction",
+    "params" : [ "0xf8e28081ef83fffff294004000000000000000000000000000000000000080b880000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000030000000000000000000000000000000000000f0000000000000000000000000000000000000000000000000000000000000011ba094e32d38bf8eb598113e948ab6540783d311efa0ce2f96cc5fd6bf49d645b979a03b8c2561f34996a4c8f82f83b0dedeb5cd6eb1a7b7ff8ea52a288c4af80993f4", [ "stateDiff" ] ],
+    "id" : 9
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "output" : "0xf000000000000000000000000000000000000000000000000000000000000002",
+      "stateDiff" : {
+        "0x0000000000000000000000000000000000000000" : {
+          "balance" : {
+            "*" : {
+              "from" : "0x393f0f18385c0b29e",
+              "to" : "0x393f0f1838617bf80"
+            }
+          },
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : { }
+        },
+        "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73" : {
+          "balance" : {
+            "*" : {
+              "from" : "0xffffffffffffffffffffffffffffffffd27fb671b",
+              "to" : "0xffffffffffffffffffffffffffffffffd27a45a39"
+            }
+          },
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x1e",
+              "to" : "0x1f"
+            }
+          },
+          "storage" : { }
+        }
+      },
+      "trace" : [ ],
+      "vmTrace" : null
+    },
+    "id" : 9
+  },
+  "statusCode" : 200
+}

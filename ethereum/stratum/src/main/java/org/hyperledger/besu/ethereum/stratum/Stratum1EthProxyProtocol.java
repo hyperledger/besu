@@ -14,30 +14,29 @@
  */
 package org.hyperledger.besu.ethereum.stratum;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
-
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetWork;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSubmitHashRate;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthSubmitWork;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
-import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
-import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
-import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.google.common.io.BaseEncoding;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
-import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of the stratum1+tcp protocol.
@@ -45,109 +44,88 @@ import org.apache.tuweni.bytes.Bytes;
  * <p>This protocol allows miners to submit EthHash solutions over a persistent TCP connection.
  */
 public class Stratum1EthProxyProtocol implements StratumProtocol {
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(Stratum1EthProxyProtocol.class);
   private static final JsonMapper mapper = new JsonMapper();
+  private final EthGetWork ethGetWork;
+  private final EthSubmitWork ethSubmitWork;
+  private final EthSubmitHashRate ethSubmitHashRate;
+  private final Collection<StratumConnection> activeConnections = new ArrayList<>();
 
-  private final MiningCoordinator miningCoordinator;
-  private EthHashSolverInputs currentInput;
-  private Function<EthHashSolution, Boolean> submitCallback;
-  private final EpochCalculator epochCalculator;
-
-  public Stratum1EthProxyProtocol(final MiningCoordinator miningCoordinator) {
-    if (!(miningCoordinator instanceof EthHashMiningCoordinator)) {
-      throw new IllegalArgumentException(
-          "Stratum1 Proxies require an EthHashMiningCoordinator not "
-              + ((miningCoordinator == null) ? "null" : miningCoordinator.getClass().getName()));
-    }
-    this.miningCoordinator = miningCoordinator;
-    this.epochCalculator = ((EthHashMiningCoordinator) miningCoordinator).getEpochCalculator();
+  public Stratum1EthProxyProtocol(final PoWMiningCoordinator miningCoordinator) {
+    ethGetWork = new EthGetWork(miningCoordinator);
+    ethSubmitWork = new EthSubmitWork(miningCoordinator);
+    ethSubmitHashRate = new EthSubmitHashRate(miningCoordinator);
   }
 
   @Override
-  public boolean canHandle(final String initialMessage, final StratumConnection conn) {
-    JsonRpcRequestContext req;
+  public boolean maybeHandle(
+      final Buffer initialMessage, final StratumConnection conn, final Consumer<String> sender) {
+    JsonRpcRequest req;
     try {
-      req = new JsonObject(initialMessage).mapTo(JsonRpcRequestContext.class);
-    } catch (IllegalArgumentException e) {
+      req = new JsonObject(initialMessage).mapTo(JsonRpcRequest.class);
+    } catch (DecodeException | IllegalArgumentException e) {
       LOG.debug(e.getMessage(), e);
       return false;
     }
-    if (!"eth_submitLogin".equals(req.getRequest().getMethod())) {
-      LOG.debug("Invalid first message method: {}", req.getRequest().getMethod());
+    if (!"eth_submitLogin".equals(req.getMethod())) {
+      LOG.debug("Invalid first message method: {}", req.getMethod());
       return false;
     }
 
     try {
-      String response =
-          mapper.writeValueAsString(new JsonRpcSuccessResponse(req.getRequest().getId(), true));
-      conn.send(response + "\n");
+      String response = mapper.writeValueAsString(new JsonRpcSuccessResponse(req.getId(), true));
+      sender.accept(response);
+      activeConnections.add(conn);
     } catch (JsonProcessingException e) {
       LOG.debug(e.getMessage(), e);
-      conn.close(null);
+      conn.close();
     }
 
     return true;
   }
 
-  private void sendNewWork(final StratumConnection conn, final Object id) {
-    byte[] dagSeed = DirectAcyclicGraphSeed.dagSeed(currentInput.getBlockNumber(), epochCalculator);
-    final String[] result = {
-      "0x" + BaseEncoding.base16().lowerCase().encode(currentInput.getPrePowHash()),
-      "0x" + BaseEncoding.base16().lowerCase().encode(dagSeed),
-      currentInput.getTarget().toHexString()
-    };
-    JsonRpcSuccessResponse req = new JsonRpcSuccessResponse(id, result);
-    try {
-      conn.send(mapper.writeValueAsString(req) + "\n");
-    } catch (JsonProcessingException e) {
-      LOG.debug(e.getMessage(), e);
-    }
+  @Override
+  public void onClose(final StratumConnection conn) {
+    activeConnections.remove(conn);
   }
 
   @Override
-  public void onClose(final StratumConnection conn) {}
-
-  @Override
-  public void handle(final StratumConnection conn, final String message) {
-    try {
-      final JsonRpcRequest req = new JsonObject(message).mapTo(JsonRpcRequest.class);
-      if (RpcMethod.ETH_GET_WORK.getMethodName().equals(req.getMethod())) {
-        sendNewWork(conn, req.getId());
-      } else if (RpcMethod.ETH_SUBMIT_WORK.getMethodName().equals(req.getMethod())) {
-        handleMiningSubmit(conn, req);
-      } else if (RpcMethod.ETH_SUBMIT_HASHRATE.getMethodName().equals(req.getMethod())) {
-        handleHashrateSubmit(mapper, miningCoordinator, conn, req);
+  public void handle(
+      final StratumConnection conn, final Buffer message, final Consumer<String> sender) {
+    final JsonRpcRequest req = new JsonObject(message).mapTo(JsonRpcRequest.class);
+    final JsonRpcRequestContext reqContext = new JsonRpcRequestContext(req);
+    final JsonRpcResponse rpcResponse;
+    switch (req.getMethod()) {
+      case "eth_getWork" -> rpcResponse = ethGetWork.response(reqContext);
+      case "eth_submitWork" -> rpcResponse = ethSubmitWork.response(reqContext);
+      case "eth_submitHashrate" -> rpcResponse = ethSubmitHashRate.response(reqContext);
+      default -> {
+        LOG.debug("Invalid method: {}", req.getMethod());
+        throw new UnsupportedOperationException("Invalid method: " + req.getMethod());
       }
-    } catch (IllegalArgumentException | IOException e) {
-      LOG.debug(e.getMessage(), e);
-      conn.close(null);
+    }
+    try {
+      sender.accept(mapper.writeValueAsString(rpcResponse));
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException(e);
     }
   }
 
-  private void handleMiningSubmit(final StratumConnection conn, final JsonRpcRequest req)
-      throws IOException {
-    LOG.debug("Miner submitted solution {}", req);
-    boolean result = false;
-    final EthHashSolution solution =
-        new EthHashSolution(
-            Bytes.fromHexString(req.getRequiredParameter(0, String.class)).getLong(0),
-            req.getRequiredParameter(2, Hash.class),
-            Bytes.fromHexString(req.getRequiredParameter(1, String.class)).toArrayUnsafe());
-    if (Arrays.equals(currentInput.getPrePowHash(), solution.getPowHash())) {
-      result = submitCallback.apply(solution);
-    }
-
-    String response = mapper.writeValueAsString(new JsonRpcSuccessResponse(req.getId(), result));
-    conn.send(response + "\n");
+  @Override
+  public void setCurrentWorkTask(final PoWSolverInputs input) {
+    activeConnections.forEach(
+        conn -> {
+          try {
+            conn.notificationSender()
+                .accept(
+                    mapper.writeValueAsString(
+                        new JsonRpcSuccessResponse(0, ethGetWork.rawResponse(input))));
+          } catch (JsonProcessingException e) {
+            LOG.error("Failed to announce new work", e);
+          }
+        });
   }
 
   @Override
-  public void setCurrentWorkTask(final EthHashSolverInputs input) {
-    this.currentInput = input;
-  }
-
-  @Override
-  public void setSubmitCallback(final Function<EthHashSolution, Boolean> submitSolutionCallback) {
-    this.submitCallback = submitSolutionCallback;
-  }
+  public void setSubmitCallback(final Function<PoWSolution, Boolean> submitSolutionCallback) {}
 }

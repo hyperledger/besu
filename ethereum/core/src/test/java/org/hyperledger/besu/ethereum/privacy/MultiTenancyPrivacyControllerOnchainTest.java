@@ -15,22 +15,20 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.enclave.Enclave;
-import org.hyperledger.besu.enclave.types.PrivacyGroup;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Log;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.evm.log.Log;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -46,28 +44,14 @@ public class MultiTenancyPrivacyControllerOnchainTest {
   private static final String ENCLAVE_PUBLIC_KEY2 = "OnviftjiizpjRt+HTuFBsKo2bVqD+nNlNYL5EE7y3Id=";
   private static final String PRIVACY_GROUP_ID = "nNlNYL5EE7y3IdM=";
   private static final ArrayList<Log> LOGS = new ArrayList<>();
-  private static final PrivacyGroup ONCHAIN_PRIVACY_GROUP =
-      new PrivacyGroup("", PrivacyGroup.Type.ONCHAIN, "", "", List.of(ENCLAVE_PUBLIC_KEY1));
 
   private final PrivacyController privacyController = mock(PrivacyController.class);
-  private final Enclave enclave = mock(Enclave.class);
-  private final OnchainPrivacyGroupContract onchainPrivacyGroupContract =
-      mock(OnchainPrivacyGroupContract.class);
 
   private MultiTenancyPrivacyController multiTenancyPrivacyController;
 
   @Before
   public void setup() {
-    when(onchainPrivacyGroupContract.getPrivacyGroupByIdAndBlockNumber(
-            PRIVACY_GROUP_ID, Optional.of(1L)))
-        .thenReturn(Optional.of(ONCHAIN_PRIVACY_GROUP));
-
-    multiTenancyPrivacyController =
-        new MultiTenancyPrivacyController(
-            privacyController,
-            Optional.of(BigInteger.valueOf(2018)),
-            enclave,
-            Optional.of(onchainPrivacyGroupContract));
+    multiTenancyPrivacyController = new MultiTenancyPrivacyController(privacyController);
   }
 
   @Test
@@ -88,12 +72,20 @@ public class MultiTenancyPrivacyControllerOnchainTest {
     assertThat(result.get().getValidationResult().isValid()).isTrue();
   }
 
-  @Test(expected = MultiTenancyValidationException.class)
+  @Test
   public void simulatePrivateTransactionFailsForAbsentEnclaveKey() {
-    multiTenancyPrivacyController.simulatePrivateTransaction(
-        PRIVACY_GROUP_ID,
-        ENCLAVE_PUBLIC_KEY2,
-        new CallParameter(Address.ZERO, Address.ZERO, 0, Wei.ZERO, Wei.ZERO, Bytes.EMPTY),
-        1);
+    doThrow(
+            new MultiTenancyValidationException(
+                "Privacy group must contain the enclave public key"))
+        .when(privacyController)
+        .verifyPrivacyGroupContainsPrivacyUserId(
+            PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY2, Optional.of(1L));
+    final CallParameter callParams =
+        new CallParameter(Address.ZERO, Address.ZERO, 0, Wei.ZERO, Wei.ZERO, Bytes.EMPTY);
+    assertThatThrownBy(
+            () ->
+                multiTenancyPrivacyController.simulatePrivateTransaction(
+                    PRIVACY_GROUP_ID, ENCLAVE_PUBLIC_KEY2, callParams, 1))
+        .isInstanceOf(MultiTenancyValidationException.class);
   }
 }

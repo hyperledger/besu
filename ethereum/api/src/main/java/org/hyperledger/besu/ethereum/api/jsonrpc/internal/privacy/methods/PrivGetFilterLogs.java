@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogsResult;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
+import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.List;
@@ -31,16 +32,16 @@ import java.util.List;
 public class PrivGetFilterLogs implements JsonRpcMethod {
 
   private final PrivacyController privacyController;
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final PrivacyIdProvider privacyIdProvider;
   private final FilterManager filterManager;
 
   public PrivGetFilterLogs(
       final FilterManager filterManager,
       final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+      final PrivacyIdProvider privacyIdProvider) {
     this.filterManager = filterManager;
     this.privacyController = privacyController;
-    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
+    this.privacyIdProvider = privacyIdProvider;
   }
 
   @Override
@@ -53,7 +54,9 @@ public class PrivGetFilterLogs implements JsonRpcMethod {
     final String privacyGroupId = request.getRequiredParameter(0, String.class);
     final String filterId = request.getRequiredParameter(1, String.class);
 
-    checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(request, privacyGroupId);
+    if (privacyController instanceof MultiTenancyPrivacyController) {
+      checkIfPrivacyGroupMatchesAuthenticatedPrivacyUserId(request, privacyGroupId);
+    }
 
     final List<LogWithMetadata> logs = filterManager.logs(filterId);
     if (logs != null) {
@@ -64,9 +67,9 @@ public class PrivGetFilterLogs implements JsonRpcMethod {
         request.getRequest().getId(), JsonRpcError.LOGS_FILTER_NOT_FOUND);
   }
 
-  private void checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(
+  private void checkIfPrivacyGroupMatchesAuthenticatedPrivacyUserId(
       final JsonRpcRequestContext request, final String privacyGroupId) {
-    final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
-    privacyController.verifyPrivacyGroupContainsEnclavePublicKey(privacyGroupId, enclavePublicKey);
+    final String privacyUserId = privacyIdProvider.getPrivacyUserId(request.getUser());
+    privacyController.verifyPrivacyGroupContainsPrivacyUserId(privacyGroupId, privacyUserId);
   }
 }

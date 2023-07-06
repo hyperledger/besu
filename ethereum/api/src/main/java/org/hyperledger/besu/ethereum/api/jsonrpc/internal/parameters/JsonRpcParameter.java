@@ -20,10 +20,13 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
 public class JsonRpcParameter {
 
-  private static final ObjectMapper mapper = new ObjectMapper();
+  private static final ObjectMapper mapper =
+      new ObjectMapper()
+          .registerModule(new Jdk8Module()); // Handle JDK8 Optionals (de)serialization
 
   /**
    * Retrieves a required parameter at the given index interpreted as the given class. Throws
@@ -71,7 +74,11 @@ public class JsonRpcParameter {
         final String json = mapper.writeValueAsString(rawParam);
         param = mapper.readValue(json, paramClass);
       } catch (final JsonProcessingException e) {
-        throw new InvalidJsonRpcParameters("Invalid json rpc parameter at index " + index, e);
+        throw new InvalidJsonRpcParameters(
+            String.format(
+                "Invalid json rpc parameter at index %d. Supplied value was: '%s' of type: '%s' - expected type: '%s'",
+                index, rawParam, rawParam.getClass().getName(), paramClass.getName()),
+            e);
       }
     }
 

@@ -14,11 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Log;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +37,7 @@ import org.apache.tuweni.bytes.Bytes;
   "cumulativeGasUsed",
   "from",
   "gasUsed",
+  "effectiveGasPrice",
   "logs",
   "logsBloom",
   "root",
@@ -42,7 +45,8 @@ import org.apache.tuweni.bytes.Bytes;
   "to",
   "transactionHash",
   "transactionIndex",
-  "revertReason"
+  "revertReason",
+  "type"
 })
 public abstract class TransactionReceiptResult {
 
@@ -52,6 +56,7 @@ public abstract class TransactionReceiptResult {
   private final String cumulativeGasUsed;
   private final String from;
   private final String gasUsed;
+  private final String effectiveGasPrice;
   private final List<TransactionReceiptLogResult> logs;
   private final String logsBloom;
   private final String to;
@@ -60,30 +65,36 @@ public abstract class TransactionReceiptResult {
   private final String revertReason;
 
   protected final TransactionReceipt receipt;
+  protected final String type;
 
   protected TransactionReceiptResult(final TransactionReceiptWithMetadata receiptWithMetadata) {
-
-    receipt = receiptWithMetadata.getReceipt();
-
+    final Transaction txn = receiptWithMetadata.getTransaction();
+    this.receipt = receiptWithMetadata.getReceipt();
     this.blockHash = receiptWithMetadata.getBlockHash().toString();
     this.blockNumber = Quantity.create(receiptWithMetadata.getBlockNumber());
-    this.contractAddress =
-        receiptWithMetadata.getTransaction().contractAddress().map(Address::toString).orElse(null);
+    this.contractAddress = txn.contractAddress().map(Address::toString).orElse(null);
     this.cumulativeGasUsed = Quantity.create(receipt.getCumulativeGasUsed());
-    this.from = receiptWithMetadata.getTransaction().getSender().toString();
+    this.from = txn.getSender().toString();
     this.gasUsed = Quantity.create(receiptWithMetadata.getGasUsed());
+    this.effectiveGasPrice =
+        Quantity.create(txn.getEffectiveGasPrice(receiptWithMetadata.getBaseFee()));
+
     this.logs =
         logReceipts(
-            receipt.getLogs(),
+            receipt.getLogsList(),
             receiptWithMetadata.getBlockNumber(),
-            receiptWithMetadata.getTransaction().getHash(),
+            txn.getHash(),
             receiptWithMetadata.getBlockHash(),
             receiptWithMetadata.getTransactionIndex());
     this.logsBloom = receipt.getBloomFilter().toString();
-    this.to = receiptWithMetadata.getTransaction().getTo().map(Bytes::toHexString).orElse(null);
-    this.transactionHash = receiptWithMetadata.getTransaction().getHash().toString();
+    this.to = txn.getTo().map(Bytes::toHexString).orElse(null);
+    this.transactionHash = txn.getHash().toString();
     this.transactionIndex = Quantity.create(receiptWithMetadata.getTransactionIndex());
     this.revertReason = receipt.getRevertReason().map(Bytes::toString).orElse(null);
+    this.type =
+        txn.getType().equals(TransactionType.FRONTIER)
+            ? Quantity.create(0)
+            : Quantity.create(txn.getType().getSerializedType());
   }
 
   @JsonGetter(value = "blockHash")
@@ -116,6 +127,11 @@ public abstract class TransactionReceiptResult {
     return gasUsed;
   }
 
+  @JsonGetter(value = "effectiveGasPrice")
+  public String getEffectiveGasPrice() {
+    return effectiveGasPrice;
+  }
+
   @JsonGetter(value = "logs")
   public List<TransactionReceiptLogResult> getLogs() {
     return logs;
@@ -139,6 +155,11 @@ public abstract class TransactionReceiptResult {
   @JsonGetter(value = "transactionIndex")
   public String getTransactionIndex() {
     return transactionIndex;
+  }
+
+  @JsonGetter(value = "type")
+  public String getType() {
+    return type;
   }
 
   @JsonInclude(JsonInclude.Include.NON_NULL)

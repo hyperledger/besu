@@ -16,23 +16,24 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.util.Preconditions.checkNotNull;
-import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
-import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -41,6 +42,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -52,16 +54,21 @@ import org.hyperledger.besu.ethereum.p2p.network.NetworkRunner;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
+import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -69,13 +76,13 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.Vertx;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TestNode implements Closeable {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(TestNode.class);
   private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   protected final NodeKey nodeKey;
@@ -87,7 +94,7 @@ public class TestNode implements Closeable {
   public TestNode(
       final Vertx vertx,
       final Integer port,
-      final SECP256K1.KeyPair kp,
+      final KeyPair kp,
       final DiscoveryConfiguration discoveryCfg) {
     checkNotNull(vertx);
     checkNotNull(discoveryCfg);
@@ -106,7 +113,7 @@ public class TestNode implements Closeable {
     final GenesisConfigFile genesisConfigFile = GenesisConfigFile.development();
     final ProtocolSchedule protocolSchedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.development().getConfigOptions(), false);
+            GenesisConfigFile.development().getConfigOptions(), false, EvmConfiguration.DEFAULT);
 
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, protocolSchedule);
     final BlockHeaderFunctions blockHeaderFunctions =
@@ -116,14 +123,34 @@ public class TestNode implements Closeable {
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     genesisState.writeStateTo(worldStateArchive.getMutable());
     final ProtocolContext protocolContext =
-        new ProtocolContext(blockchain, worldStateArchive, null);
+        new ProtocolContext(blockchain, worldStateArchive, null, Optional.empty());
 
     final SyncState syncState = mock(SyncState.class);
+    final SynchronizerConfiguration syncConfig = mock(SynchronizerConfiguration.class);
     when(syncState.isInSync(anyLong())).thenReturn(true);
+    when(syncState.isInitialSyncPhaseDone()).thenReturn(true);
 
     final EthMessages ethMessages = new EthMessages();
-
-    final EthPeers ethPeers = new EthPeers(EthProtocol.NAME, TestClock.fixed(), metricsSystem);
+    final NodeMessagePermissioningProvider nmpp =
+        new NodeMessagePermissioningProvider() {
+          @Override
+          public boolean isMessagePermitted(final EnodeURL destinationEnode, final int code) {
+            return true;
+          }
+        };
+    final EthPeers ethPeers =
+        new EthPeers(
+            EthProtocol.NAME,
+            () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
+            TestClock.fixed(),
+            metricsSystem,
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+            Collections.singletonList(nmpp),
+            Bytes.random(64),
+            25,
+            25,
+            25,
+            false);
 
     final EthScheduler scheduler = new EthScheduler(1, 1, 1, metricsSystem);
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, scheduler);
@@ -133,13 +160,11 @@ public class TestNode implements Closeable {
             protocolSchedule,
             protocolContext,
             ethContext,
-            TestClock.fixed(),
+            TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
             syncState,
-            Wei.ZERO,
-            TransactionPoolConfiguration.DEFAULT,
-            true,
-            Optional.empty());
+            new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
+            TransactionPoolConfiguration.DEFAULT);
 
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(
@@ -152,7 +177,8 @@ public class TestNode implements Closeable {
             ethMessages,
             ethContext,
             Collections.emptyList(),
-            false,
+            Optional.empty(),
+            syncConfig,
             scheduler);
 
     final NetworkRunner networkRunner =
@@ -167,11 +193,19 @@ public class TestNode implements Closeable {
                         .config(networkingConfiguration)
                         .metricsSystem(new NoOpMetricsSystem())
                         .supportedCapabilities(capabilities)
-                        .storageProvider(new InMemoryStorageProvider())
+                        .storageProvider(new InMemoryKeyValueStorageProvider())
+                        .blockchain(blockchain)
+                        .blockNumberForks(Collections.emptyList())
+                        .timestampForks(Collections.emptyList())
+                        .allConnectionsSupplier(ethPeers::getAllConnections)
+                        .allActiveConnectionsSupplier(ethPeers::getAllActiveConnections)
                         .build())
             .metricsSystem(new NoOpMetricsSystem())
             .build();
     network = networkRunner.getNetwork();
+    final RlpxAgent rlpxAgent = network.getRlpxAgent();
+    rlpxAgent.subscribeConnectRequest((p, d) -> true);
+    ethPeers.setRlpxAgent(rlpxAgent);
     network.subscribeDisconnect(
         (connection, reason, initiatedByPeer) -> disconnections.put(connection, reason));
 
@@ -231,7 +265,7 @@ public class TestNode implements Closeable {
   }
 
   public void receiveLocalTransaction(final Transaction transaction) {
-    transactionPool.addLocalTransaction(transaction);
+    transactionPool.addTransactionViaApi(transaction);
   }
 
   public int getPendingTransactionCount() {

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.options;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.cli.CommandTestAbstract;
@@ -41,7 +42,10 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
 
     final List<String> fieldsToIgnore = getFieldsToIgnore();
     final String[] ignored = fieldsToIgnore.toArray(new String[0]);
-    assertThat(domainObjectFromOptions).isEqualToIgnoringGivenFields(domainObject, ignored);
+    assertThat(domainObjectFromOptions)
+        .usingRecursiveComparison()
+        .ignoringFields(ignored)
+        .isEqualTo(domainObject);
   }
 
   @Test
@@ -61,10 +65,10 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
     final TestBesuCommand cmd = parseCommand(cliOptions);
     final T optionsFromCommand = getOptionsFromBesuCommand(cmd);
 
-    assertThat(optionsFromCommand).isEqualToComparingFieldByField(options);
+    assertThat(optionsFromCommand).usingRecursiveComparison().isEqualTo(options);
 
-    assertThat(commandOutput.toString()).isEmpty();
-    assertThat(commandErrorOutput.toString()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -77,7 +81,10 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
 
     // Check default values supplied by CLI match expected default values
     final String[] fieldsToIgnore = getFieldsWithComputedDefaults().toArray(new String[0]);
-    assertThat(optionsFromCommand).isEqualToIgnoringGivenFields(defaultOptions, fieldsToIgnore);
+    assertThat(optionsFromCommand)
+        .usingRecursiveComparison()
+        .ignoringFields(fieldsToIgnore)
+        .isEqualTo(defaultOptions);
   }
 
   abstract D createDefaultDomainObject();

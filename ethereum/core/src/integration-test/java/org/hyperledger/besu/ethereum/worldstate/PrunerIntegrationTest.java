@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,23 +15,23 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryBlockchain;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.Pruner.PruningPhase;
+import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.testutil.MockExecutorService;
@@ -41,19 +41,20 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PrunerIntegrationTest {
 
   private final BlockDataGenerator gen = new BlockDataGenerator();
   private final NoOpMetricsSystem metricsSystem = new NoOpMetricsSystem();
-  private final Map<Bytes, byte[]> hashValueStore = new HashMap<>();
+  private final Map<Bytes, Optional<byte[]>> hashValueStore = new HashMap<>();
   private final InMemoryKeyValueStorage stateStorage = new TestInMemoryStorage(hashValueStore);
   private final WorldStateStorage worldStateStorage = new WorldStateKeyValueStorage(stateStorage);
   private final WorldStateArchive worldStateArchive =
@@ -137,9 +138,11 @@ public class PrunerIntegrationTest {
 
       // Assert that blocks from mark point onward are still accessible
       for (int i = fullyMarkedBlockNum; i <= blockchain.getChainHeadBlockNumber(); i++) {
-        final Hash stateRoot = blockchain.getBlockHeader(i).get().getStateRoot();
-        assertThat(worldStateArchive.get(stateRoot)).isPresent();
-        final WorldState markedState = worldStateArchive.get(stateRoot).get();
+        final BlockHeader blockHeader = blockchain.getBlockHeader(i).get();
+        final Hash stateRoot = blockHeader.getStateRoot();
+        assertThat(worldStateArchive.get(stateRoot, blockHeader.getHash())).isPresent();
+        final WorldState markedState =
+            worldStateArchive.get(stateRoot, blockHeader.getHash()).get();
         // Traverse accounts and make sure all are accessible
         final int expectedAccounts = accountsPerBlock * i;
         final long accounts =
@@ -155,13 +158,14 @@ public class PrunerIntegrationTest {
       for (int i = 0; i < fullyMarkedBlockNum; i++) {
         final BlockHeader curHeader = blockchain.getBlockHeader(i).get();
         if (!curHeader.getStateRoot().equals(Hash.EMPTY_TRIE_HASH)) {
-          assertThat(worldStateArchive.get(curHeader.getStateRoot())).isEmpty();
+          assertThat(worldStateArchive.get(curHeader.getStateRoot(), curHeader.getHash()))
+              .isEmpty();
         }
       }
 
       // Check that storage contains only the values we expect
       assertThat(hashValueStore.size()).isEqualTo(expectedNodes.size());
-      assertThat(hashValueStore.values())
+      assertThat(hashValueStore.values().stream().map(Optional::get))
           .containsExactlyInAnyOrderElementsOf(
               expectedNodes.stream().map(Bytes::toArrayUnsafe).collect(Collectors.toSet()));
     }
@@ -172,8 +176,10 @@ public class PrunerIntegrationTest {
   private void generateBlockchainData(final int numBlocks, final int numAccounts) {
     Block parentBlock = blockchain.getChainHeadBlock();
     for (int i = 0; i < numBlocks; i++) {
+      final BlockHeader parentHeader = parentBlock.getHeader();
+      final Hash parentHash = parentBlock.getHash();
       final MutableWorldState worldState =
-          worldStateArchive.getMutable(parentBlock.getHeader().getStateRoot()).get();
+          worldStateArchive.getMutable(parentHeader.getStateRoot(), parentHash).get();
       gen.createRandomContractAccountsWithNonEmptyStorage(worldState, numAccounts);
       final Hash stateRoot = worldState.rootHash();
 
@@ -181,8 +187,8 @@ public class PrunerIntegrationTest {
           gen.block(
               BlockOptions.create()
                   .setStateRoot(stateRoot)
-                  .setBlockNumber(parentBlock.getHeader().getNumber() + 1L)
-                  .setParentHash(parentBlock.getHash()));
+                  .setBlockNumber(parentHeader.getNumber() + 1L)
+                  .setParentHash(parentHash));
       final List<TransactionReceipt> receipts = gen.receipts(block);
       blockchain.appendBlock(block, receipts);
       parentBlock = block;
@@ -191,7 +197,7 @@ public class PrunerIntegrationTest {
 
   private Set<Bytes> collectWorldStateNodes(final Hash stateRootHash, final Set<Bytes> collector) {
     final List<Hash> storageRoots = new ArrayList<>();
-    final MerklePatriciaTrie<Bytes32, Bytes> stateTrie = createStateTrie(stateRootHash);
+    final MerkleTrie<Bytes32, Bytes> stateTrie = createStateTrie(stateRootHash);
 
     // Collect storage roots and code
     stateTrie
@@ -210,25 +216,24 @@ public class PrunerIntegrationTest {
     collectTrieNodes(stateTrie, collector);
     // Collect storage nodes
     for (Hash storageRoot : storageRoots) {
-      final MerklePatriciaTrie<Bytes32, Bytes> storageTrie = createStorageTrie(storageRoot);
+      final MerkleTrie<Bytes32, Bytes> storageTrie = createStorageTrie(storageRoot);
       collectTrieNodes(storageTrie, collector);
     }
 
     return collector;
   }
 
-  private void collectTrieNodes(
-      final MerklePatriciaTrie<Bytes32, Bytes> trie, final Set<Bytes> collector) {
+  private void collectTrieNodes(final MerkleTrie<Bytes32, Bytes> trie, final Set<Bytes> collector) {
     final Bytes32 rootHash = trie.getRootHash();
     trie.visitAll(
         (node) -> {
           if (node.isReferencedByHash() || node.getHash().equals(rootHash)) {
-            collector.add(node.getRlp());
+            collector.add(node.getEncodedBytes());
           }
         });
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> createStateTrie(final Bytes32 rootHash) {
+  private MerkleTrie<Bytes32, Bytes> createStateTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
         worldStateStorage::getAccountStateTrieNode,
         rootHash,
@@ -236,9 +241,9 @@ public class PrunerIntegrationTest {
         Function.identity());
   }
 
-  private MerklePatriciaTrie<Bytes32, Bytes> createStorageTrie(final Bytes32 rootHash) {
+  private MerkleTrie<Bytes32, Bytes> createStorageTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStorageTrieNode,
+        (location, hash) -> worldStateStorage.getAccountStorageTrieNode(null, location, hash),
         rootHash,
         Function.identity(),
         Function.identity());
@@ -247,7 +252,7 @@ public class PrunerIntegrationTest {
   // Proxy class so that we have access to the constructor that takes our own map
   private static class TestInMemoryStorage extends InMemoryKeyValueStorage {
 
-    public TestInMemoryStorage(final Map<Bytes, byte[]> hashValueStore) {
+    public TestInMemoryStorage(final Map<Bytes, Optional<byte[]>> hashValueStore) {
       super(hashValueStore);
     }
   }

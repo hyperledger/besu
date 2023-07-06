@@ -125,7 +125,7 @@ public abstract class PeerPermissions implements AutoCloseable {
 
     @Override
     public boolean isPermitted(final Peer localNode, final Peer remotePeer, final Action action) {
-      for (PeerPermissions permission : permissions) {
+      for (final PeerPermissions permission : permissions) {
         if (!permission.isPermitted(localNode, remotePeer, action)) {
           return false;
         }

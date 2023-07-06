@@ -15,8 +15,8 @@
 package org.hyperledger.besu.tests.acceptance.dsl.transaction;
 
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.admin.AdminRequestFactory;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.CliqueRequestFactory;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.ibft2.Ibft2RequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.login.LoginRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.CustomRequestFactory;
@@ -33,7 +33,7 @@ public class NodeRequests {
 
   private final Web3j netEth;
   private final CliqueRequestFactory clique;
-  private final Ibft2RequestFactory ibft;
+  private final BftRequestFactory bft;
   private final PermissioningJsonRpcRequestFactory perm;
   private final AdminRequestFactory admin;
   private final PrivacyRequestFactory privacy;
@@ -46,7 +46,7 @@ public class NodeRequests {
   public NodeRequests(
       final Web3j netEth,
       final CliqueRequestFactory clique,
-      final Ibft2RequestFactory ibft,
+      final BftRequestFactory bft,
       final PermissioningJsonRpcRequestFactory perm,
       final AdminRequestFactory admin,
       final PrivacyRequestFactory privacy,
@@ -57,7 +57,7 @@ public class NodeRequests {
       final LoginRequestFactory login) {
     this.netEth = netEth;
     this.clique = clique;
-    this.ibft = ibft;
+    this.bft = bft;
     this.perm = perm;
     this.admin = admin;
     this.privacy = privacy;
@@ -80,8 +80,8 @@ public class NodeRequests {
     return clique;
   }
 
-  public Ibft2RequestFactory ibft() {
-    return ibft;
+  public BftRequestFactory bft() {
+    return bft;
   }
 
   public PermissioningJsonRpcRequestFactory perm() {

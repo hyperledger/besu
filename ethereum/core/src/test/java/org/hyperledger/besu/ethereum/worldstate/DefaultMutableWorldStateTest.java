@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,21 +15,20 @@
 package org.hyperledger.besu.ethereum.worldstate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.InMemoryStorageProvider.createInMemoryWorldState;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldState;
 
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldState;
-import org.hyperledger.besu.ethereum.core.WorldState.StreamableAccount;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.evm.account.AccountStorageEntry;
+import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.worldstate.WorldState;
+import org.hyperledger.besu.evm.worldstate.WorldState.StreamableAccount;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -67,10 +66,10 @@ public class DefaultMutableWorldStateTest {
   @Test
   public void rootHash_Empty() {
     final MutableWorldState worldState = createEmpty();
-    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
     worldState.persist(null);
-    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
   }
 
   @Test
@@ -98,10 +97,10 @@ public class DefaultMutableWorldStateTest {
     final WorldUpdater updater = worldState.updater();
     updater.deleteAccount(ADDRESS);
     updater.commit();
-    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
     worldState.persist(null);
-    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
   }
 
   @Test
@@ -111,10 +110,10 @@ public class DefaultMutableWorldStateTest {
     updater.createAccount(ADDRESS).getMutable().setBalance(Wei.of(100000));
     updater.deleteAccount(ADDRESS);
     updater.commit();
-    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
     worldState.persist(null);
-    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
   }
 
   @Test
@@ -125,7 +124,7 @@ public class DefaultMutableWorldStateTest {
     updater.createAccount(ADDRESS).getMutable().setBalance(Wei.of(100000));
     updater.commit();
     assertThat(worldState.get(ADDRESS)).isNotNull();
-    assertThat(worldState.rootHash()).isNotEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isNotEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
     // Delete account
     updater = worldState.updater();
@@ -135,7 +134,7 @@ public class DefaultMutableWorldStateTest {
     updater.commit();
     assertThat(updater.get(ADDRESS)).isNull();
 
-    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
   }
 
   @Test
@@ -147,7 +146,7 @@ public class DefaultMutableWorldStateTest {
     updater.commit();
     worldState.persist(null);
     assertThat(worldState.get(ADDRESS)).isNotNull();
-    assertThat(worldState.rootHash()).isNotEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isNotEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
     // Delete account
     updater = worldState.updater();
@@ -161,7 +160,7 @@ public class DefaultMutableWorldStateTest {
     worldState.persist(null);
     assertThat(updater.get(ADDRESS)).isNull();
 
-    assertThat(worldState.rootHash()).isEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
   }
 
   @Test
@@ -234,7 +233,7 @@ public class DefaultMutableWorldStateTest {
         .hasValue(accountAIsFirst ? accountB.getAddress() : accountA.getAddress());
 
     // Get second account
-    final Bytes32 startHashForSecondAccount = UInt256.fromBytes(startHash).add(1L).toBytes();
+    final Bytes32 startHashForSecondAccount = UInt256.fromBytes(startHash).add(1L);
     final List<StreamableAccount> secondAccount =
         worldState.streamAccounts(startHashForSecondAccount, 100).collect(Collectors.toList());
     assertThat(secondAccount.size()).isEqualTo(1L);
@@ -264,12 +263,12 @@ public class DefaultMutableWorldStateTest {
     assertThat(worldState.get(ADDRESS).getBalance()).isEqualTo(newBalance);
 
     // Check that storage is empty before persisting
-    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash())).isFalse();
+    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash(), null)).isFalse();
 
     // Persist and re-run assertions
     worldState.persist(null);
 
-    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash())).isTrue();
+    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash(), null)).isTrue();
     assertThat(worldState.rootHash()).isEqualTo(expectedRootHash);
     assertThat(worldState.get(ADDRESS)).isNotNull();
     assertThat(worldState.get(ADDRESS).getBalance()).isEqualTo(newBalance);
@@ -476,7 +475,7 @@ public class DefaultMutableWorldStateTest {
     updater.commit();
     worldState.persist(null);
     assertThat(worldState.get(ADDRESS)).isNotNull();
-    assertThat(worldState.rootHash()).isNotEqualTo(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash()).isNotEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
     // Clear storage
     account = updater.getAccount(ADDRESS).getMutable();
@@ -579,11 +578,9 @@ public class DefaultMutableWorldStateTest {
     final MutableAccount account = updater.createAccount(ADDRESS).getMutable();
     account.setBalance(Wei.of(100000));
     account.setCode(Bytes.of(1, 2, 3));
-    account.setVersion(Account.DEFAULT_VERSION);
     account.setCode(Bytes.of(3, 2, 1));
     updater.commit();
     assertThat(worldState.get(ADDRESS).getCode()).isEqualTo(Bytes.of(3, 2, 1));
-    assertThat(worldState.get(ADDRESS).getVersion()).isEqualTo(Account.DEFAULT_VERSION);
     assertThat(worldState.rootHash())
         .isEqualTo(
             Hash.fromHexString(

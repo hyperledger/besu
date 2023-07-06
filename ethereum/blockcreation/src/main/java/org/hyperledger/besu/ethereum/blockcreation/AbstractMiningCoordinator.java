@@ -14,22 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.chain.EthHashObserver;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -44,9 +45,11 @@ public abstract class AbstractMiningCoordinator<
   }
 
   private final Subscribers<MinedBlockObserver> minedBlockObservers = Subscribers.create();
-  private final Subscribers<EthHashObserver> ethHashObservers = Subscribers.create();
+  private final Subscribers<PoWObserver> ethHashObservers = Subscribers.create();
   private final AbstractMinerExecutor<M> executor;
   private final SyncState syncState;
+  private final AtomicReference<Optional<Long>> remineOnNewHeadListenerId =
+      new AtomicReference<>(Optional.empty());
   protected final Blockchain blockchain;
 
   private State state = State.IDLE;
@@ -60,7 +63,6 @@ public abstract class AbstractMiningCoordinator<
     this.executor = executor;
     this.blockchain = blockchain;
     this.syncState = syncState;
-    this.blockchain.observeBlockAdded(this);
     syncState.subscribeInSync(this::inSyncChanged);
   }
 
@@ -70,7 +72,13 @@ public abstract class AbstractMiningCoordinator<
       final List<Transaction> transactions,
       final List<BlockHeader> ommers) {
     final M miner = executor.createMiner(minedBlockObservers, ethHashObservers, parentHeader);
-    return Optional.of(miner.createBlock(parentHeader, transactions, ommers));
+    return Optional.of(miner.createBlock(parentHeader, transactions, ommers).getBlock());
+  }
+
+  @Override
+  public Optional<Block> createBlock(final BlockHeader parentHeader, final long timestamp) {
+    final M miner = executor.createMiner(minedBlockObservers, ethHashObservers, parentHeader);
+    return Optional.of(miner.createBlock(parentHeader, timestamp).getBlock());
   }
 
   @Override
@@ -87,11 +95,10 @@ public abstract class AbstractMiningCoordinator<
   @Override
   public void stop() {
     synchronized (this) {
-      if (state != State.RUNNING) {
-        return;
+      if (state == State.RUNNING) {
+        haltCurrentMiningOperation();
       }
       state = State.STOPPED;
-      haltCurrentMiningOperation();
       executor.shutDown();
     }
   }
@@ -108,6 +115,7 @@ public abstract class AbstractMiningCoordinator<
         return true;
       }
       isEnabled = true;
+      remineOnNewHeadListenerId.set(Optional.of(blockchain.observeBlockAdded(this)));
       startMiningIfPossible();
     }
     return true;
@@ -120,6 +128,7 @@ public abstract class AbstractMiningCoordinator<
         return false;
       }
       isEnabled = false;
+      remineOnNewHeadListenerId.get().ifPresent(blockchain::removeObserver);
       haltCurrentMiningOperation();
     }
     return false;
@@ -189,7 +198,7 @@ public abstract class AbstractMiningCoordinator<
   }
 
   @Override
-  public void addEthHashObserver(final EthHashObserver obs) {
+  public void addEthHashObserver(final PoWObserver obs) {
     ethHashObservers.subscribe(obs);
   }
 

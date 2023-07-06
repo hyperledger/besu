@@ -18,14 +18,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PendingTransactionResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PendingTransactionsResult;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionInfoResult;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions.TransactionInfo;
 
 import java.time.Instant;
 
@@ -58,26 +58,26 @@ public class TxPoolBesuTransactionsTest {
 
   @Test
   public void shouldReturnPendingTransactions() {
-    Instant addedAt = Instant.ofEpochMilli(10_000_000);
+    long addedAt = 10_000_000;
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest(
                 JSON_RPC_VERSION, TXPOOL_PENDING_TRANSACTIONS_METHOD, new Object[] {}));
 
-    TransactionInfo transactionInfo = mock(TransactionInfo.class);
-    when(transactionInfo.getHash()).thenReturn(Hash.fromHexString(TRANSACTION_HASH));
-    when(transactionInfo.isReceivedFromLocalSource()).thenReturn(true);
-    when(transactionInfo.getAddedToPoolAt()).thenReturn(addedAt);
-    when(pendingTransactions.getTransactionInfo()).thenReturn(Sets.newHashSet(transactionInfo));
+    PendingTransaction pendingTransaction = mock(PendingTransaction.class);
+    when(pendingTransaction.getHash()).thenReturn(Hash.fromHexString(TRANSACTION_HASH));
+    when(pendingTransaction.isReceivedFromLocalSource()).thenReturn(true);
+    when(pendingTransaction.getAddedAt()).thenReturn(addedAt);
+    when(pendingTransactions.getPendingTransactions())
+        .thenReturn(Sets.newHashSet(pendingTransaction));
 
     final JsonRpcSuccessResponse actualResponse = (JsonRpcSuccessResponse) method.response(request);
     final PendingTransactionsResult result = (PendingTransactionsResult) actualResponse.getResult();
 
-    final TransactionInfoResult actualTransactionInfo =
-        result.getResults().stream().findFirst().get();
+    final PendingTransactionResult actualResult = result.getResults().stream().findFirst().get();
 
-    assertThat(actualTransactionInfo.getHash()).isEqualTo(TRANSACTION_HASH);
-    assertThat(actualTransactionInfo.isReceivedFromLocalSource()).isTrue();
-    assertThat(actualTransactionInfo.getAddedToPoolAt()).isEqualTo(addedAt.toString());
+    assertThat(actualResult.getHash()).isEqualTo(TRANSACTION_HASH);
+    assertThat(actualResult.isReceivedFromLocalSource()).isTrue();
+    assertThat(actualResult.getAddedToPoolAt()).isEqualTo(Instant.ofEpochMilli(addedAt).toString());
   }
 }

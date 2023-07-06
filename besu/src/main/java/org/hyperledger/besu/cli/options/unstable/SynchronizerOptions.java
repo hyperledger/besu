@@ -17,6 +17,8 @@ package org.hyperledger.besu.cli.options.unstable;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.ImmutableSnapSyncConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 
 import java.util.Arrays;
 import java.util.List;
@@ -25,6 +27,7 @@ import com.google.common.collect.Range;
 import org.apache.tuweni.units.bigints.UInt256;
 import picocli.CommandLine;
 
+/** The Synchronizer Cli options. */
 public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration.Builder> {
   private static final String BLOCK_PROPAGATION_RANGE_FLAG =
       "--Xsynchronizer-block-propagation-range";
@@ -59,6 +62,33 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String WORLD_STATE_TASK_CACHE_SIZE_FLAG =
       "--Xsynchronizer-world-state-task-cache-size";
 
+  private static final String SNAP_PIVOT_BLOCK_WINDOW_VALIDITY_FLAG =
+      "--Xsnapsync-synchronizer-pivot-block-window-validity";
+  private static final String SNAP_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING_FLAG =
+      "--Xsnapsync-synchronizer-pivot-block-distance-before-caching";
+  private static final String SNAP_STORAGE_COUNT_PER_REQUEST_FLAG =
+      "--Xsnapsync-synchronizer-storage-count-per-request";
+  private static final String SNAP_BYTECODE_COUNT_PER_REQUEST_FLAG =
+      "--Xsnapsync-synchronizer-bytecode-count-per-request";
+  private static final String SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG =
+      "--Xsnapsync-synchronizer-trienode-count-per-request";
+
+  private static final String SNAP_FLAT_ACCOUNT_HEALED_COUNT_PER_REQUEST_FLAG =
+      "--Xsnapsync-synchronizer-flat-account-healed-count-per-request";
+
+  private static final String SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG =
+      "--Xsnapsync-synchronizer-flat-slot-healed-count-per-request";
+
+  private static final String SNAP_FLAT_DB_HEALING_ENABLED_FLAG =
+      "--Xsnapsync-synchronizer-flat-db-healing-enabled";
+
+  private static final String CHECKPOINT_POST_MERGE_FLAG = "--Xcheckpoint-post-merge-enabled";
+
+  /**
+   * Parse block propagation range.
+   *
+   * @param arg the range such as -10..30
+   */
   @CommandLine.Option(
       names = BLOCK_PROPAGATION_RANGE_FLAG,
       hidden = true,
@@ -212,12 +242,115 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private int worldStateTaskCacheSize =
       SynchronizerConfiguration.DEFAULT_WORLD_STATE_TASK_CACHE_SIZE;
 
+  @CommandLine.Option(
+      names = SNAP_PIVOT_BLOCK_WINDOW_VALIDITY_FLAG,
+      hidden = true,
+      defaultValue = "126",
+      paramLabel = "<INTEGER>",
+      description =
+          "The size of the pivot block window before having to change it (default: ${DEFAULT-VALUE})")
+  private int snapsyncPivotBlockWindowValidity =
+      SnapSyncConfiguration.DEFAULT_PIVOT_BLOCK_WINDOW_VALIDITY;
+
+  @CommandLine.Option(
+      names = SNAP_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING_FLAG,
+      hidden = true,
+      defaultValue = "60",
+      paramLabel = "<INTEGER>",
+      description =
+          "The distance from the head before loading a pivot block into the cache to have a ready pivot block when the window is finished (default: ${DEFAULT-VALUE})")
+  private int snapsyncPivotBlockDistanceBeforeCaching =
+      SnapSyncConfiguration.DEFAULT_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING;
+
+  @CommandLine.Option(
+      names = SNAP_STORAGE_COUNT_PER_REQUEST_FLAG,
+      hidden = true,
+      defaultValue = "384",
+      paramLabel = "<INTEGER>",
+      description = "Snap sync storage queried per request (default: ${DEFAULT-VALUE})")
+  private int snapsyncStorageCountPerRequest =
+      SnapSyncConfiguration.DEFAULT_STORAGE_COUNT_PER_REQUEST;
+
+  @CommandLine.Option(
+      names = SNAP_BYTECODE_COUNT_PER_REQUEST_FLAG,
+      hidden = true,
+      defaultValue = "84",
+      paramLabel = "<INTEGER>",
+      description = "Snap sync bytecode queried per request (default: ${DEFAULT-VALUE})")
+  private int snapsyncBytecodeCountPerRequest =
+      SnapSyncConfiguration.DEFAULT_BYTECODE_COUNT_PER_REQUEST;
+
+  @CommandLine.Option(
+      names = SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG,
+      hidden = true,
+      defaultValue = "384",
+      paramLabel = "<INTEGER>",
+      description = "Snap sync trie node queried per request (default: ${DEFAULT-VALUE})")
+  private int snapsyncTrieNodeCountPerRequest =
+      SnapSyncConfiguration.DEFAULT_TRIENODE_COUNT_PER_REQUEST;
+
+  @CommandLine.Option(
+      names = SNAP_FLAT_ACCOUNT_HEALED_COUNT_PER_REQUEST_FLAG,
+      hidden = true,
+      defaultValue = "128",
+      paramLabel = "<INTEGER>",
+      description =
+          "Snap sync flat accounts verified and healed per request (default: ${DEFAULT-VALUE})")
+  private int snapsyncFlatAccountHealedCountPerRequest =
+      SnapSyncConfiguration.DEFAULT_LOCAL_FLAT_ACCOUNT_COUNT_TO_HEAL_PER_REQUEST;
+
+  @CommandLine.Option(
+      names = SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG,
+      hidden = true,
+      defaultValue = "1024",
+      paramLabel = "<INTEGER>",
+      description =
+          "Snap sync flat slots verified and healed per request (default: ${DEFAULT-VALUE})")
+  private int snapsyncFlatStorageHealedCountPerRequest =
+      SnapSyncConfiguration.DEFAULT_LOCAL_FLAT_STORAGE_COUNT_TO_HEAL_PER_REQUEST;
+
+  @CommandLine.Option(
+      names = SNAP_FLAT_DB_HEALING_ENABLED_FLAG,
+      hidden = true,
+      defaultValue = "false",
+      paramLabel = "<Boolean>",
+      description = "Snap sync flat db healing enabled (default: ${DEFAULT-VALUE})")
+  private Boolean snapsyncFlatDbHealingEnabled =
+      SnapSyncConfiguration.DEFAULT_IS_FLAT_DB_HEALING_ENABLED;
+
+  @CommandLine.Option(
+      names = {CHECKPOINT_POST_MERGE_FLAG},
+      hidden = true,
+      description = "Enable the sync to start from a post-merge block.")
+  private Boolean checkpointPostMergeSyncEnabled =
+      SynchronizerConfiguration.DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
+
   private SynchronizerOptions() {}
 
+  /**
+   * Create synchronizer options.
+   *
+   * @return the synchronizer options
+   */
   public static SynchronizerOptions create() {
     return new SynchronizerOptions();
   }
 
+  /**
+   * Flag to know whether the flat db healing feature is enabled or disabled.
+   *
+   * @return true is the flat db healing is enabled
+   */
+  public boolean isSnapsyncFlatDbHealingEnabled() {
+    return snapsyncFlatDbHealingEnabled;
+  }
+
+  /**
+   * Create synchronizer options from Synchronizer Configuration.
+   *
+   * @param config the Synchronizer Configuration
+   * @return the synchronizer options
+   */
   public static SynchronizerOptions fromConfig(final SynchronizerConfiguration config) {
     final SynchronizerOptions options = new SynchronizerOptions();
     options.blockPropagationRange = config.getBlockPropagationRange();
@@ -238,6 +371,23 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     options.worldStateMaxRequestsWithoutProgress = config.getWorldStateMaxRequestsWithoutProgress();
     options.worldStateMinMillisBeforeStalling = config.getWorldStateMinMillisBeforeStalling();
     options.worldStateTaskCacheSize = config.getWorldStateTaskCacheSize();
+    options.snapsyncPivotBlockWindowValidity =
+        config.getSnapSyncConfiguration().getPivotBlockWindowValidity();
+    options.snapsyncPivotBlockDistanceBeforeCaching =
+        config.getSnapSyncConfiguration().getPivotBlockDistanceBeforeCaching();
+    options.snapsyncStorageCountPerRequest =
+        config.getSnapSyncConfiguration().getStorageCountPerRequest();
+    options.snapsyncBytecodeCountPerRequest =
+        config.getSnapSyncConfiguration().getBytecodeCountPerRequest();
+    options.snapsyncTrieNodeCountPerRequest =
+        config.getSnapSyncConfiguration().getTrienodeCountPerRequest();
+    options.snapsyncFlatAccountHealedCountPerRequest =
+        config.getSnapSyncConfiguration().getLocalFlatAccountCountToHealPerRequest();
+    options.snapsyncFlatStorageHealedCountPerRequest =
+        config.getSnapSyncConfiguration().getLocalFlatStorageCountToHealPerRequest();
+    options.snapsyncFlatDbHealingEnabled =
+        config.getSnapSyncConfiguration().isFlatDbHealingEnabled();
+    options.checkpointPostMergeSyncEnabled = config.isCheckpointPostMergeEnabled();
     return options;
   }
 
@@ -260,43 +410,76 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     builder.worldStateMaxRequestsWithoutProgress(worldStateMaxRequestsWithoutProgress);
     builder.worldStateMinMillisBeforeStalling(worldStateMinMillisBeforeStalling);
     builder.worldStateTaskCacheSize(worldStateTaskCacheSize);
+    builder.snapSyncConfiguration(
+        ImmutableSnapSyncConfiguration.builder()
+            .pivotBlockWindowValidity(snapsyncPivotBlockWindowValidity)
+            .pivotBlockDistanceBeforeCaching(snapsyncPivotBlockDistanceBeforeCaching)
+            .storageCountPerRequest(snapsyncStorageCountPerRequest)
+            .bytecodeCountPerRequest(snapsyncBytecodeCountPerRequest)
+            .trienodeCountPerRequest(snapsyncTrieNodeCountPerRequest)
+            .localFlatAccountCountToHealPerRequest(snapsyncFlatAccountHealedCountPerRequest)
+            .localFlatStorageCountToHealPerRequest(snapsyncFlatStorageHealedCountPerRequest)
+            .isFlatDbHealingEnabled(snapsyncFlatDbHealingEnabled)
+            .build());
+    builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
+
     return builder;
   }
 
   @Override
   public List<String> getCLIOptions() {
-    return Arrays.asList(
-        BLOCK_PROPAGATION_RANGE_FLAG,
-        OptionParser.format(blockPropagationRange),
-        DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_HEIGHT_FLAG,
-        OptionParser.format(downloaderChangeTargetThresholdByHeight),
-        DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_TD_FLAG,
-        OptionParser.format(downloaderChangeTargetThresholdByTd),
-        DOWNLOADER_HEADER_REQUEST_SIZE_FLAG,
-        OptionParser.format(downloaderHeaderRequestSize),
-        DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED_FLAG,
-        OptionParser.format(downloaderCheckpointTimeoutsPermitted),
-        DOWNLOADER_CHAIN_SEGMENT_SIZE_FLAG,
-        OptionParser.format(downloaderChainSegmentSize),
-        DOWNLOADER_PARALLELISM_FLAG,
-        OptionParser.format(downloaderParallelism),
-        TRANSACTIONS_PARALLELISM_FLAG,
-        OptionParser.format(transactionsParallelism),
-        COMPUTATION_PARALLELISM_FLAG,
-        OptionParser.format(computationParallelism),
-        PIVOT_DISTANCE_FROM_HEAD_FLAG,
-        OptionParser.format(fastSyncPivotDistance),
-        FULL_VALIDATION_RATE_FLAG,
-        OptionParser.format(fastSyncFullValidationRate),
-        WORLD_STATE_HASH_COUNT_PER_REQUEST_FLAG,
-        OptionParser.format(worldStateHashCountPerRequest),
-        WORLD_STATE_REQUEST_PARALLELISM_FLAG,
-        OptionParser.format(worldStateRequestParallelism),
-        WORLD_STATE_MAX_REQUESTS_WITHOUT_PROGRESS_FLAG,
-        OptionParser.format(worldStateMaxRequestsWithoutProgress),
-        WORLD_STATE_MIN_MILLIS_BEFORE_STALLING_FLAG,
-        OptionParser.format(worldStateMinMillisBeforeStalling),
-        WORLD_STATE_TASK_CACHE_SIZE_FLAG,
-        OptionParser.format(worldStateTaskCacheSize));
+    List<String> value =
+        Arrays.asList(
+            BLOCK_PROPAGATION_RANGE_FLAG,
+            OptionParser.format(blockPropagationRange),
+            DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_HEIGHT_FLAG,
+            OptionParser.format(downloaderChangeTargetThresholdByHeight),
+            DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_TD_FLAG,
+            OptionParser.format(downloaderChangeTargetThresholdByTd),
+            DOWNLOADER_HEADER_REQUEST_SIZE_FLAG,
+            OptionParser.format(downloaderHeaderRequestSize),
+            DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED_FLAG,
+            OptionParser.format(downloaderCheckpointTimeoutsPermitted),
+            DOWNLOADER_CHAIN_SEGMENT_SIZE_FLAG,
+            OptionParser.format(downloaderChainSegmentSize),
+            DOWNLOADER_PARALLELISM_FLAG,
+            OptionParser.format(downloaderParallelism),
+            TRANSACTIONS_PARALLELISM_FLAG,
+            OptionParser.format(transactionsParallelism),
+            COMPUTATION_PARALLELISM_FLAG,
+            OptionParser.format(computationParallelism),
+            PIVOT_DISTANCE_FROM_HEAD_FLAG,
+            OptionParser.format(fastSyncPivotDistance),
+            FULL_VALIDATION_RATE_FLAG,
+            OptionParser.format(fastSyncFullValidationRate),
+            WORLD_STATE_HASH_COUNT_PER_REQUEST_FLAG,
+            OptionParser.format(worldStateHashCountPerRequest),
+            WORLD_STATE_REQUEST_PARALLELISM_FLAG,
+            OptionParser.format(worldStateRequestParallelism),
+            WORLD_STATE_MAX_REQUESTS_WITHOUT_PROGRESS_FLAG,
+            OptionParser.format(worldStateMaxRequestsWithoutProgress),
+            WORLD_STATE_MIN_MILLIS_BEFORE_STALLING_FLAG,
+            OptionParser.format(worldStateMinMillisBeforeStalling),
+            WORLD_STATE_TASK_CACHE_SIZE_FLAG,
+            OptionParser.format(worldStateTaskCacheSize),
+            SNAP_PIVOT_BLOCK_WINDOW_VALIDITY_FLAG,
+            OptionParser.format(snapsyncPivotBlockWindowValidity),
+            SNAP_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING_FLAG,
+            OptionParser.format(snapsyncPivotBlockDistanceBeforeCaching),
+            SNAP_STORAGE_COUNT_PER_REQUEST_FLAG,
+            OptionParser.format(snapsyncStorageCountPerRequest),
+            SNAP_BYTECODE_COUNT_PER_REQUEST_FLAG,
+            OptionParser.format(snapsyncBytecodeCountPerRequest),
+            SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG,
+            OptionParser.format(snapsyncTrieNodeCountPerRequest));
+    if (isSnapsyncFlatDbHealingEnabled()) {
+      value.addAll(
+          Arrays.asList(
+              SNAP_FLAT_ACCOUNT_HEALED_COUNT_PER_REQUEST_FLAG,
+              OptionParser.format(snapsyncFlatAccountHealedCountPerRequest),
+              SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG,
+              OptionParser.format(snapsyncFlatStorageHealedCountPerRequest)));
+    }
+    return value;
   }
 }

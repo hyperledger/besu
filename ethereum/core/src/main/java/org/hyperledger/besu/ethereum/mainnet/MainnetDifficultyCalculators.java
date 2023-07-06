@@ -14,13 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Quantity;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.plugin.data.Quantity;
 
 import java.math.BigInteger;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Ints;
 
 /** Provides the various difficultly calculates used on mainnet hard forks. */
@@ -39,10 +38,13 @@ public abstract class MainnetDifficultyCalculators {
   private static final long BYZANTIUM_FAKE_BLOCK_OFFSET = 2_999_999L;
   private static final long CONSTANTINOPLE_FAKE_BLOCK_OFFSET = 4_999_999L;
   private static final long MUIR_GLACIER_FAKE_BLOCK_OFFSET = 8_999_999L;
+  private static final long LONDON_FAKE_BLOCK_OFFSET = 9_699_999L;
+  private static final long ARROW_GLACIER_FAKE_BLOCK_OFFSET = 10_699_999L;
+  private static final long GRAY_GLACIER_FAKE_BLOCK_OFFSET = 11_399_999L;
 
   private MainnetDifficultyCalculators() {}
 
-  public static DifficultyCalculator FRONTIER =
+  static final DifficultyCalculator FRONTIER =
       (time, parent, protocolContext) -> {
         final BigInteger parentDifficulty = difficulty(parent.getDifficulty());
         final BigInteger adjust = parentDifficulty.divide(DIFFICULTY_BOUND_DIVISOR);
@@ -57,7 +59,7 @@ public abstract class MainnetDifficultyCalculators {
         return periodCount > 1 ? adjustForPeriod(periodCount, difficulty) : difficulty;
       };
 
-  public static DifficultyCalculator HOMESTEAD =
+  static final DifficultyCalculator HOMESTEAD =
       (time, parent, protocolContext) -> {
         final BigInteger parentDifficulty = difficulty(parent.getDifficulty());
         final BigInteger difficulty =
@@ -69,18 +71,36 @@ public abstract class MainnetDifficultyCalculators {
         return periodCount > 1 ? adjustForPeriod(periodCount, difficulty) : difficulty;
       };
 
-  @VisibleForTesting
-  public static DifficultyCalculator BYZANTIUM =
+  static final DifficultyCalculator BYZANTIUM =
       (time, parent, protocolContext) ->
           calculateThawedDifficulty(time, parent, BYZANTIUM_FAKE_BLOCK_OFFSET);
 
-  static DifficultyCalculator CONSTANTINOPLE =
+  static final DifficultyCalculator CONSTANTINOPLE =
       (time, parent, protocolContext) ->
           calculateThawedDifficulty(time, parent, CONSTANTINOPLE_FAKE_BLOCK_OFFSET);
 
-  static DifficultyCalculator MUIR_GLACIER =
+  static final DifficultyCalculator MUIR_GLACIER =
       (time, parent, protocolContext) ->
           calculateThawedDifficulty(time, parent, MUIR_GLACIER_FAKE_BLOCK_OFFSET);
+
+  // As per https://eips.ethereum.org/EIPS/eip-3554
+  static final DifficultyCalculator LONDON =
+      (time, parent, protocolContext) ->
+          calculateThawedDifficulty(time, parent, LONDON_FAKE_BLOCK_OFFSET);
+
+  // As per https://eips.ethereum.org/EIPS/eip-4345
+  static final DifficultyCalculator ARROW_GLACIER =
+      (time, parent, protocolContext) ->
+          calculateThawedDifficulty(time, parent, ARROW_GLACIER_FAKE_BLOCK_OFFSET);
+
+  // As per https://eips.ethereum.org/EIPS/eip-5133
+  static final DifficultyCalculator GRAY_GLACIER =
+      (time, parent, protocolContext) ->
+          calculateThawedDifficulty(time, parent, GRAY_GLACIER_FAKE_BLOCK_OFFSET);
+
+  // Proof-of-Stake difficulty must not be altered
+  static final DifficultyCalculator PROOF_OF_STAKE_DIFFICULTY =
+      (time, parent, protocolContext) -> BigInteger.ZERO;
 
   private static BigInteger calculateThawedDifficulty(
       final long time, final BlockHeader parent, final long fakeBlockOffset) {
@@ -126,6 +146,6 @@ public abstract class MainnetDifficultyCalculators {
   }
 
   private static BigInteger difficulty(final Quantity value) {
-    return (BigInteger) value.getValue();
+    return value.getAsBigInteger();
   }
 }

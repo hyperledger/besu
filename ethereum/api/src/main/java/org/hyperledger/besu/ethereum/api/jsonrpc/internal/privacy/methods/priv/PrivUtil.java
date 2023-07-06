@@ -16,7 +16,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.Optional;
@@ -25,15 +25,15 @@ public class PrivUtil {
 
   public static void checkMembershipForAuthenticatedUser(
       final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider,
+      final PrivacyIdProvider privacyIdProvider,
       final JsonRpcRequestContext request,
       final String privacyGroupId,
       final long blockNumber) {
-    final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
+    final String privacyUserId = privacyIdProvider.getPrivacyUserId(request.getUser());
     // check group membership at previous block (they could have been removed as of blockNumber but
     // membership will be correct as at previous block)
     final long blockNumberToCheck = blockNumber == 0 ? 0 : blockNumber - 1;
-    privacyController.verifyPrivacyGroupContainsEnclavePublicKey(
-        privacyGroupId, enclavePublicKey, Optional.of(blockNumberToCheck));
+    privacyController.verifyPrivacyGroupContainsPrivacyUserId(
+        privacyGroupId, privacyUserId, Optional.of(blockNumberToCheck));
   }
 }

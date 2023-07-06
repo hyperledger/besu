@@ -18,32 +18,25 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.both;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcRequest;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.LogTopic;
+import org.hyperledger.besu.evm.log.LogTopic;
 
 import java.util.List;
 import java.util.stream.Stream;
 
 import io.vertx.core.json.Json;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class SubscriptionRequestMapperTest {
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   private SubscriptionRequestMapper mapper;
   // These tests aren't passing through WebSocketRequestHandler, so connectionId is null.
@@ -86,12 +79,11 @@ public class SubscriptionRequestMapperTest {
     final JsonRpcRequest jsonRpcRequest =
         parseWebSocketRpcRequest("{\"id\": 1, \"method\": \"eth_unsubscribe\", \"params\": []}");
 
-    thrown.expect(InvalidSubscriptionRequestException.class);
-    thrown.expectCause(
-        both(hasMessage(equalTo("Missing required json rpc parameter at index 0")))
-            .and(instanceOf(InvalidJsonRpcParameters.class)));
-
-    mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
+    assertThatThrownBy(() -> mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest)))
+        .isInstanceOf(InvalidSubscriptionRequestException.class)
+        .getCause()
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessage("Missing required json rpc parameter at index 0");
   }
 
   @Test
@@ -142,12 +134,11 @@ public class SubscriptionRequestMapperTest {
         parseWebSocketRpcRequest(
             "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"newHeads\", {\"foo\": \"bar\"}]}");
 
-    thrown.expect(InvalidSubscriptionRequestException.class);
-    thrown.expectCause(
-        both(hasMessage(equalTo("Invalid json rpc parameter at index 1")))
-            .and(instanceOf(InvalidJsonRpcParameters.class)));
-
-    mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
+    assertThatThrownBy(() -> mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest)))
+        .isInstanceOf(InvalidSubscriptionRequestException.class)
+        .getCause()
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessageContaining("Invalid json rpc parameter at index 1");
   }
 
   @Test
@@ -176,8 +167,12 @@ public class SubscriptionRequestMapperTest {
             new FilterParameter(
                 BlockParameter.LATEST,
                 BlockParameter.LATEST,
+                null,
+                null,
                 singletonList(Address.fromHexString("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd")),
                 emptyList(),
+                null,
+                null,
                 null),
             null,
             null);
@@ -185,8 +180,7 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest subscribeRequest =
         mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
-    assertThat(subscribeRequest)
-        .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
+    assertThat(subscribeRequest).usingRecursiveComparison().isEqualTo(expectedSubscribeRequest);
   }
 
   @Test
@@ -201,6 +195,8 @@ public class SubscriptionRequestMapperTest {
             new FilterParameter(
                 BlockParameter.LATEST,
                 BlockParameter.LATEST,
+                null,
+                null,
                 Stream.of(
                         "0x8320fe7702b96808f7bbc0d4a888ed1468216cfd",
                         "0xf17f52151EbEF6C7334FAD080c5704D77216b732")
@@ -210,6 +206,8 @@ public class SubscriptionRequestMapperTest {
                     singletonList(
                         LogTopic.fromHexString(
                             "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab902"))),
+                null,
+                null,
                 null),
             null,
             null);
@@ -217,8 +215,7 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest subscribeRequest =
         mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
-    assertThat(subscribeRequest)
-        .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
+    assertThat(subscribeRequest).usingRecursiveComparison().isEqualTo(expectedSubscribeRequest);
   }
 
   @Test
@@ -233,6 +230,8 @@ public class SubscriptionRequestMapperTest {
             new FilterParameter(
                 BlockParameter.LATEST,
                 BlockParameter.LATEST,
+                null,
+                null,
                 singletonList(Address.fromHexString("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd")),
                 List.of(
                     singletonList(
@@ -241,6 +240,8 @@ public class SubscriptionRequestMapperTest {
                     singletonList(
                         LogTopic.fromHexString(
                             "0xd78a0cb8bb633d06981248b816e7bd33c2a35a6089241d099fa519e361cab901"))),
+                null,
+                null,
                 null),
             null,
             null);
@@ -248,8 +249,7 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest subscribeRequest =
         mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
-    assertThat(subscribeRequest)
-        .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
+    assertThat(subscribeRequest).usingRecursiveComparison().isEqualTo(expectedSubscribeRequest);
   }
 
   @Test
@@ -264,8 +264,12 @@ public class SubscriptionRequestMapperTest {
             new FilterParameter(
                 BlockParameter.LATEST,
                 BlockParameter.LATEST,
+                null,
+                null,
                 singletonList(Address.fromHexString("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd")),
                 emptyList(),
+                null,
+                null,
                 null),
             null,
             null);
@@ -273,8 +277,7 @@ public class SubscriptionRequestMapperTest {
     final SubscribeRequest subscribeRequest =
         mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
 
-    assertThat(subscribeRequest)
-        .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
+    assertThat(subscribeRequest).usingRecursiveComparison().isEqualTo(expectedSubscribeRequest);
   }
 
   @Test
@@ -283,12 +286,11 @@ public class SubscriptionRequestMapperTest {
         parseWebSocketRpcRequest(
             "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"logs\", {\"address\": \"0x0\", \"topics\": [\"0x1\"]}]}");
 
-    thrown.expect(InvalidSubscriptionRequestException.class);
-    thrown.expectCause(
-        both(hasMessage(equalTo("Invalid json rpc parameter at index 1")))
-            .and(instanceOf(InvalidJsonRpcParameters.class)));
-
-    mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
+    assertThatThrownBy(() -> mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest)))
+        .isInstanceOf(InvalidSubscriptionRequestException.class)
+        .getCause()
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessageContaining("Invalid json rpc parameter at index 1");
   }
 
   @Test
@@ -297,12 +299,11 @@ public class SubscriptionRequestMapperTest {
         parseWebSocketRpcRequest(
             "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"logs\", {\"foo\": \"bar\"}]}");
 
-    thrown.expect(InvalidSubscriptionRequestException.class);
-    thrown.expectCause(
-        both(hasMessage(equalTo("Invalid json rpc parameter at index 1")))
-            .and(instanceOf(InvalidJsonRpcParameters.class)));
-
-    mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
+    assertThatThrownBy(() -> mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest)))
+        .isInstanceOf(InvalidSubscriptionRequestException.class)
+        .getCause()
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessageContaining("Invalid json rpc parameter at index 1");
   }
 
   @Test
@@ -367,12 +368,11 @@ public class SubscriptionRequestMapperTest {
         parseWebSocketRpcRequest(
             "{\"id\": 1, \"method\": \"eth_subscribe\", \"params\": [\"foo\"]}");
 
-    thrown.expect(InvalidSubscriptionRequestException.class);
-    thrown.expectCause(
-        both(hasMessage(equalTo("Invalid json rpc parameter at index 0")))
-            .and(instanceOf(InvalidJsonRpcParameters.class)));
-
-    mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest));
+    assertThatThrownBy(() -> mapper.mapSubscribeRequest(new JsonRpcRequestContext(jsonRpcRequest)))
+        .isInstanceOf(InvalidSubscriptionRequestException.class)
+        .getCause()
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessageContaining("Invalid json rpc parameter at index 0");
   }
 
   @Test
@@ -387,8 +387,12 @@ public class SubscriptionRequestMapperTest {
             new FilterParameter(
                 BlockParameter.LATEST,
                 BlockParameter.LATEST,
+                null,
+                null,
                 singletonList(Address.fromHexString("0x8320fe7702b96808f7bbc0d4a888ed1468216cfd")),
                 emptyList(),
+                null,
+                null,
                 null),
             null,
             null,
@@ -399,8 +403,7 @@ public class SubscriptionRequestMapperTest {
         mapper.mapPrivateSubscribeRequest(
             new JsonRpcRequestContext(jsonRpcRequest), ENCLAVE_PUBLIC_KEY);
 
-    assertThat(subscribeRequest)
-        .isEqualToComparingFieldByFieldRecursively(expectedSubscribeRequest);
+    assertThat(subscribeRequest).usingRecursiveComparison().isEqualTo(expectedSubscribeRequest);
   }
 
   @Test
@@ -409,11 +412,12 @@ public class SubscriptionRequestMapperTest {
         parseWebSocketRpcRequest(
             "{\"id\": 1, \"method\": \"priv_subscribe\", \"params\": [\"B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=\", \"syncing\", {\"includeTransactions\": true}]}");
 
-    thrown.expect(InvalidSubscriptionRequestException.class);
-    thrown.expectMessage("Invalid subscribe request. Invalid private subscription type.");
-
-    mapper.mapPrivateSubscribeRequest(
-        new JsonRpcRequestContext(jsonRpcRequest), ENCLAVE_PUBLIC_KEY);
+    assertThatThrownBy(
+            () ->
+                mapper.mapPrivateSubscribeRequest(
+                    new JsonRpcRequestContext(jsonRpcRequest), ENCLAVE_PUBLIC_KEY))
+        .isInstanceOf(InvalidSubscriptionRequestException.class)
+        .hasMessage("Invalid subscribe request. Invalid private subscription type.");
   }
 
   @Test

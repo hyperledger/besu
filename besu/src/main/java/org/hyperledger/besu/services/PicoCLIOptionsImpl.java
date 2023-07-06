@@ -16,18 +16,24 @@ package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
+/** The Pico cli options service implementation to specify plugins. */
 public class PicoCLIOptionsImpl implements PicoCLIOptions {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PicoCLIOptionsImpl.class);
 
   private final CommandLine commandLine;
 
+  /**
+   * Instantiates a new Pico cli options.
+   *
+   * @param commandLine the command line
+   */
   public PicoCLIOptionsImpl(final CommandLine commandLine) {
     this.commandLine = commandLine;
   }

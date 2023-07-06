@@ -15,14 +15,20 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
 import static com.google.common.collect.Streams.stream;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils.truncToken;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.DefaultAuthenticationService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.Logging403ErrorHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.net.InetSocketAddress;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
@@ -30,6 +36,8 @@ import com.google.common.collect.Iterables;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpConnection;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
@@ -39,19 +47,22 @@ import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class WebSocketService {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(WebSocketService.class);
 
   private static final InetSocketAddress EMPTY_SOCKET_ADDRESS = new InetSocketAddress("0.0.0.0", 0);
   private static final String APPLICATION_JSON = "application/json";
 
+  private final int maxActiveConnections;
+  private final AtomicInteger activeConnectionsCount = new AtomicInteger();
+
   private final Vertx vertx;
   private final WebSocketConfiguration configuration;
-  private final WebSocketRequestHandler websocketRequestHandler;
+  private final WebSocketMessageHandler websocketMessageHandler;
 
   private HttpServer httpServer;
 
@@ -60,23 +71,33 @@ public class WebSocketService {
   public WebSocketService(
       final Vertx vertx,
       final WebSocketConfiguration configuration,
-      final WebSocketRequestHandler websocketRequestHandler) {
+      final WebSocketMessageHandler websocketMessageHandler,
+      final MetricsSystem metricsSystem) {
     this(
         vertx,
         configuration,
-        websocketRequestHandler,
-        AuthenticationService.create(vertx, configuration));
+        websocketMessageHandler,
+        DefaultAuthenticationService.create(vertx, configuration),
+        metricsSystem);
   }
 
-  private WebSocketService(
+  public WebSocketService(
       final Vertx vertx,
       final WebSocketConfiguration configuration,
-      final WebSocketRequestHandler websocketRequestHandler,
-      final Optional<AuthenticationService> authenticationService) {
+      final WebSocketMessageHandler websocketMessageHandler,
+      final Optional<AuthenticationService> authenticationService,
+      final MetricsSystem metricsSystem) {
     this.vertx = vertx;
     this.configuration = configuration;
-    this.websocketRequestHandler = websocketRequestHandler;
+    this.websocketMessageHandler = websocketMessageHandler;
     this.authenticationService = authenticationService;
+    this.maxActiveConnections = configuration.getMaxActiveConnections();
+
+    metricsSystem.createIntegerGauge(
+        BesuMetricCategory.RPC,
+        "active_ws_connection_count",
+        "Total no of active rpc ws connections",
+        activeConnectionsCount::intValue);
   }
 
   public CompletableFuture<?> start() {
@@ -84,15 +105,19 @@ public class WebSocketService {
         "Starting Websocket service on {}:{}", configuration.getHost(), configuration.getPort());
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
-
     httpServer =
         vertx
             .createHttpServer(
                 new HttpServerOptions()
                     .setHost(configuration.getHost())
                     .setPort(configuration.getPort())
-                    .setWebsocketSubProtocols("undefined"))
-            .websocketHandler(websocketHandler())
+                    .setHandle100ContinueAutomatically(true)
+                    .setCompressionSupported(true)
+                    .addWebSocketSubProtocol("undefined")
+                    .setMaxWebSocketFrameSize(configuration.getMaxFrameSize())
+                    .setMaxWebSocketMessageSize(configuration.getMaxFrameSize() * 4))
+            .webSocketHandler(websocketHandler())
+            .connectionHandler(connectionHandler())
             .requestHandler(httpHandler())
             .listen(startHandler(resultFuture));
 
@@ -105,7 +130,10 @@ public class WebSocketService {
       final String connectionId = websocket.textHandlerID();
       final String token = getAuthToken(websocket);
       if (token != null) {
-        LOG.trace("Websocket authentication token {}", token);
+        LOG.atTrace()
+            .setMessage("Websocket authentication token {}")
+            .addArgument(() -> truncToken(token))
+            .log();
       }
 
       if (!hasAllowedHostnameHeader(Optional.ofNullable(websocket.headers().get("Host")))) {
@@ -114,20 +142,24 @@ public class WebSocketService {
 
       LOG.debug("Websocket Connected ({})", socketAddressAsString(socketAddress));
 
-      websocket.textMessageHandler(
-          payload -> {
+      final Handler<Buffer> socketHandler =
+          buffer -> {
             LOG.debug(
-                "Received Websocket request {} ({})",
-                payload,
+                "Received Websocket request (binary frame) {} ({})",
+                buffer.toString(),
                 socketAddressAsString(socketAddress));
 
-            AuthenticationUtils.getUser(
-                authenticationService,
-                token,
-                user ->
-                    websocketRequestHandler.handle(
-                        authenticationService, connectionId, payload, user));
-          });
+            if (authenticationService.isPresent()) {
+              authenticationService
+                  .get()
+                  .authenticate(
+                      token, user -> websocketMessageHandler.handle(websocket, buffer, user));
+            } else {
+              websocketMessageHandler.handle(websocket, buffer, Optional.empty());
+            }
+          };
+      websocket.textMessageHandler(text -> socketHandler.handle(Buffer.buffer(text)));
+      websocket.binaryMessageHandler(socketHandler);
 
       websocket.closeHandler(
           v -> {
@@ -148,6 +180,34 @@ public class WebSocketService {
     };
   }
 
+  private Handler<HttpConnection> connectionHandler() {
+
+    return connection -> {
+      if (activeConnectionsCount.get() >= maxActiveConnections) {
+        // disallow new connections to prevent DoS
+        LOG.warn(
+            "Rejecting new connection from {}. {}/{} max active connections limit reached.",
+            connection.remoteAddress(),
+            activeConnectionsCount.getAndIncrement(),
+            maxActiveConnections);
+        connection.close();
+      } else {
+        LOG.debug(
+            "Opened connection from {}. Total of active connections: {}/{}",
+            connection.remoteAddress(),
+            activeConnectionsCount.incrementAndGet(),
+            maxActiveConnections);
+      }
+      connection.closeHandler(
+          c ->
+              LOG.debug(
+                  "Connection closed from {}. Total of active connections: {}/{}",
+                  connection.remoteAddress(),
+                  activeConnectionsCount.decrementAndGet(),
+                  maxActiveConnections));
+    };
+  }
+
   private Handler<HttpServerRequest> httpHandler() {
     final Router router = Router.router(vertx);
 
@@ -164,9 +224,9 @@ public class WebSocketService {
       router
           .post("/login")
           .produces(APPLICATION_JSON)
-          .handler(AuthenticationService::handleDisabledLogin);
+          .handler(DefaultAuthenticationService::handleDisabledLogin);
     }
-
+    router.errorHandler(403, new Logging403ErrorHandler());
     router.route().handler(WebSocketService::handleHttpNotSupported);
     return router;
   }

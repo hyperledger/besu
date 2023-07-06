@@ -25,15 +25,15 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.http.RequestOptions;
 import io.vertx.core.http.WebSocket;
+import io.vertx.core.http.WebSocketConnectOptions;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 public class WebSocketConnection {
 
-  private final RequestOptions options;
+  private final WebSocketConnectOptions options;
   private final ConcurrentLinkedDeque<SubscriptionEvent> subscriptionEvents;
 
   private volatile String error;
@@ -47,7 +47,7 @@ public class WebSocketConnection {
           "Can't start websocket connection for node with RPC disabled");
     }
     subscriptionEvents = new ConcurrentLinkedDeque<>();
-    options = new RequestOptions();
+    options = new WebSocketConnectOptions();
     options.setPort(node.getJsonRpcWebSocketPort().get());
     options.setHost(node.getHostName());
 
@@ -85,30 +85,33 @@ public class WebSocketConnection {
   private void connect(final Vertx vertx) {
     vertx
         .createHttpClient(new HttpClientOptions())
-        .websocket(
+        .webSocket(
             options,
             websocket -> {
-              webSocketConnection(websocket);
+              webSocketConnection(websocket.result());
 
-              websocket.handler(
-                  data -> {
-                    try {
-                      final WebSocketEvent eventType = Json.decodeValue(data, WebSocketEvent.class);
+              websocket
+                  .result()
+                  .handler(
+                      data -> {
+                        try {
+                          final WebSocketEvent eventType =
+                              Json.decodeValue(data, WebSocketEvent.class);
 
-                      if (eventType.isSubscription()) {
-                        success(Json.decodeValue(data, SubscriptionEvent.class));
-                      } else {
-                        success(Json.decodeValue(data, JsonRpcSuccessEvent.class));
-                      }
+                          if (eventType.isSubscription()) {
+                            success(Json.decodeValue(data, SubscriptionEvent.class));
+                          } else {
+                            success(Json.decodeValue(data, JsonRpcSuccessEvent.class));
+                          }
 
-                    } catch (final DecodeException e) {
-                      error(
-                          "Data: "
-                              + data.toString()
-                              + "\nException: "
-                              + ExceptionUtils.getStackTrace(e));
-                    }
-                  });
+                        } catch (final DecodeException e) {
+                          error(
+                              "Data: "
+                                  + data.toString()
+                                  + "\nException: "
+                                  + ExceptionUtils.getStackTrace(e));
+                        }
+                      });
             });
 
     WaitUtils.waitFor(() -> assertThat(connection).isNotNull());

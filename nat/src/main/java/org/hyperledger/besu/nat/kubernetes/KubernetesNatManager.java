@@ -32,29 +32,35 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
-import io.kubernetes.client.ApiClient;
-import io.kubernetes.client.Configuration;
-import io.kubernetes.client.apis.CoreV1Api;
-import io.kubernetes.client.models.V1Service;
+import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.Configuration;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1Service;
 import io.kubernetes.client.util.ClientBuilder;
 import io.kubernetes.client.util.KubeConfig;
 import io.kubernetes.client.util.authenticators.GCPAuthenticator;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class describes the behaviour of the Kubernetes NAT manager. Kubernetes Nat manager add
  * support for Kubernetes’s NAT implementation when Besu is being run from a Kubernetes cluster
  */
 public class KubernetesNatManager extends AbstractNatManager {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(KubernetesNatManager.class);
 
+  /** The constant DEFAULT_BESU_SERVICE_NAME_FILTER. */
   public static final String DEFAULT_BESU_SERVICE_NAME_FILTER = "besu";
 
   private String internalAdvertisedHost;
   private final String besuServiceNameFilter;
   private final List<NatPortMapping> forwardedPorts = new ArrayList<>();
 
+  /**
+   * Instantiates a new Kubernetes nat manager.
+   *
+   * @param besuServiceNameFilter the besu service name filter
+   */
   public KubernetesNatManager(final String besuServiceNameFilter) {
     super(NatMethod.KUBERNETES);
     this.besuServiceNameFilter = besuServiceNameFilter;
@@ -77,8 +83,11 @@ public class KubernetesNatManager extends AbstractNatManager {
       final CoreV1Api api = new CoreV1Api();
       // invokes the CoreV1Api client
       final V1Service service =
-          api.listServiceForAllNamespaces(null, null, null, null, null, null, null, null, null)
-              .getItems().stream()
+          api
+              .listServiceForAllNamespaces(
+                  null, null, null, null, null, null, null, null, null, null)
+              .getItems()
+              .stream()
               .filter(
                   v1Service -> v1Service.getMetadata().getName().contains(besuServiceNameFilter))
               .findFirst()
@@ -89,6 +98,12 @@ public class KubernetesNatManager extends AbstractNatManager {
     }
   }
 
+  /**
+   * Update using besu service. Visible for testing.
+   *
+   * @param service the service
+   * @throws RuntimeException the runtime exception
+   */
   @VisibleForTesting
   void updateUsingBesuService(final V1Service service) throws RuntimeException {
     try {

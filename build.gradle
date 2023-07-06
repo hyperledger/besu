@@ -20,17 +20,31 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 import java.text.SimpleDateFormat
 
 plugins {
-  id 'com.diffplug.gradle.spotless' version '4.3.0'
-  id 'com.jfrog.bintray' version '1.8.5'
-  id 'com.github.ben-manes.versions' version '0.28.0'
-  id 'com.github.hierynomus.license' version '0.15.0'
-  id 'io.spring.dependency-management' version '1.0.9.RELEASE'
-  id 'me.champeau.gradle.jmh' version '0.5.0' apply false
-  id 'net.ltgt.errorprone' version '1.2.1'
+  id 'com.diffplug.spotless' version '6.12.0'
+  id 'com.github.ben-manes.versions' version '0.42.0'
+  id 'com.github.hierynomus.license' version '0.16.1-fix'
+  id 'com.jfrog.artifactory' version '4.28.3'
+  id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+  id 'me.champeau.jmh' version '0.7.0' apply false
+  id 'net.ltgt.errorprone' version '2.0.2'
+  id 'maven-publish'
+  id 'org.sonarqube' version '3.4.0.2513'
 }
 
-if (!JavaVersion.current().java11Compatible) {
-  throw new GradleException("Java 11 or later is required to build Besu.\n" +
+sonarqube {
+  properties {
+    property "sonar.projectKey", "hyperledger_besu"
+    property "sonar.organization", "hyperledger"
+    property "sonar.host.url", "https://sonarcloud.io"
+    property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
+    property "sonar.coverage.exclusions", "acceptance-tests/**/*"
+  }
+}
+
+project.tasks["sonarqube"].dependsOn "jacocoRootReport"
+
+if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
+  throw new GradleException("Java 17 or later is required to build Besu.\n" +
   "  Detected version ${JavaVersion.current()}")
 }
 
@@ -71,24 +85,6 @@ def _strListCmdArg(name) {
   return _strListCmdArg(name, null)
 }
 
-apply plugin: 'com.jfrog.bintray'
-
-def bintrayUser = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
-def bintrayKey = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_KEY')
-def bintrayPackage = bintray.pkg {
-  repo = 'besu-repo'
-  name = 'besu'
-  userOrg = 'hyperledger-org'
-  licenses = ['Apache-2.0']
-  websiteUrl = 'https://github.com/hyperledger/besu'
-  vcsUrl = 'https://github.com/hyperledger/besu.git'
-
-  version {
-    name = project.version
-    released = new Date()
-  }
-}
-
 allprojects {
   apply plugin: 'java-library'
   apply plugin: 'io.spring.dependency-management'
@@ -100,7 +96,7 @@ allprojects {
   version = rootProject.version
 
   jacoco {
-    toolVersion = '0.8.5'
+    toolVersion = '0.8.8'
     if (project.tasks.findByName('referenceTests')) {
       applyTo referenceTests
     }
@@ -113,19 +109,13 @@ allprojects {
 
   task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
-    from javadoc.destinationDir
+    from javadoc.outputDirectory
   }
 
-  sourceCompatibility = 11
-  targetCompatibility = 11
+  sourceCompatibility = 17
+  targetCompatibility = 17
 
   repositories {
-    mavenCentral()
-    mavenLocal()
-    maven { url "https://hyperledger-org.bintray.com/besu-repo" }
-    maven { url "https://consensys.bintray.com/pegasys-repo" }
-    maven { url "https://splunk.jfrog.io/splunk/ext-releases-local" }
-    maven { url "https://dl.bintray.com/open-telemetry/maven" }
     maven {
       name = "GitHubPackages"
       url = uri("https://maven.pkg.github.com/lacchain/liboqs-java/")
@@ -133,49 +123,59 @@ allprojects {
         username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
         password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
       }
+    maven {
+      url 'https://hyperledger.jfrog.io/hyperledger/besu-maven'
+      content { includeGroupByRegex('org\\.hyperledger\\..*') }
+    }
+    maven {
+      url 'https://artifacts.consensys.net/public/maven/maven/'
+      content { includeGroupByRegex('tech\\.pegasys(\\..*)?') }
+    }
+    maven {
+      url 'https://splunk.jfrog.io/splunk/ext-releases-local'
+      content { includeGroupByRegex('com\\.splunk\\..*') }
+    }
+    mavenCentral()
+
+    // ethereum execution spec tests fixtures. Exclusively for ethereum submodule to run ref tests
+    def ethExecSpecTestsRepo = ivy {
+      url 'https://github.com'
+      patternLayout {
+        artifact '/[organisation]/[module]/releases/download/v[revision]/[classifier].[ext]'
+      }
+      metadataSources {
+        artifact()
+      }
+    }
+    exclusiveContent {
+      forRepositories(ethExecSpecTestsRepo)
+      filter { includeModule('ethereum', 'execution-spec-tests')}
     }
   }
 
-  dependencies { errorprone "com.google.errorprone:error_prone_core" }
+  dependencies { errorprone 'com.google.errorprone:error_prone_core' }
 
-  apply plugin: 'com.diffplug.gradle.spotless'
+  apply plugin: 'com.diffplug.spotless'
   spotless {
     java {
       // This path needs to be relative to each project
-      target fileTree('.') {
-        include '**/src/*/java/**/*.java'
-        exclude '**/generalstate/GeneralStateReferenceTest*.java'
-        exclude '**/generalstate/GeneralStateRegressionReferenceTest*.java'
-        exclude '**/generalstate/LegacyGeneralStateReferenceTest*.java'
-        exclude '**/blockchain/BlockchainReferenceTest*.java'
-        exclude '**/blockchain/LegacyBlockchainReferenceTest*.java'
-        exclude '**/.gradle/**'
-      }
+      target 'src/**/*.java'
+      targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
       removeUnusedImports()
-      googleJavaFormat('1.7')
+      googleJavaFormat('1.15.0')
       importOrder 'org.hyperledger', 'java', ''
       trimTrailingWhitespace()
       endWithNewline()
     }
     groovyGradle {
       target '*.gradle'
-      greclipse().configFile(rootProject.file('gradle/formatter.properties'))
+      greclipse('4.21.0').configFile(rootProject.file('gradle/formatter.properties'))
       endWithNewline()
     }
-
     // Below this line are currently only license header tasks
     format 'groovy', { target '**/src/*/grovy/**/*.groovy' }
-
-    // Currently disabled due to referencetest issues
-    //  format 'bash', {
-    //    target fileTree('.') {
-    //      include '**/*.sh'
-    //     exclude '**/ansible/**'
-    //    }
-    //  }
-    //  format 'sol', {
-    //    target fileTree('.') { include '**/*.sol' }
-    //  }
+    format 'bash', { target '**/*.sh' }
+    format 'sol', { target '**/*.sol' }
   }
 
   tasks.withType(JavaCompile) {
@@ -191,7 +191,7 @@ allprojects {
     ]
 
     options.errorprone {
-      excludedPaths = '.*/(generated/*.*|.*ReferenceTest_.*)'
+      excludedPaths = '.*/(generated/*.*|.*ReferenceTest_.*|build/.*/annotation-output/.*)'
 
       // Our equals need to be symmetric, this checker doesn't respect that.
       check('EqualsGetClass', CheckSeverity.OFF)
@@ -257,7 +257,24 @@ allprojects {
       '--add-opens',
       'java.base/java.util.concurrent=ALL-UNNAMED',
       '--add-opens',
-      'java.base/java.util.concurrent.atomic=ALL-UNNAMED'
+      'java.base/java.util.concurrent.atomic=ALL-UNNAMED',
+      // errorprone tests need access to the javac compiler
+      '--add-exports',
+      'jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED',
+      '--add-exports',
+      'jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED',
+      '--add-exports',
+      'jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED',
+      '--add-exports',
+      'jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED',
+      '--add-exports',
+      'jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED',
+      '--add-exports',
+      'jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED',
+      '--add-exports',
+      'jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED',
+      '--add-exports',
+      'jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED'
     ]
     Set toImport = [
       'test.ethereum.include',
@@ -271,10 +288,23 @@ allprojects {
         systemProperty name, System.getProperty(name)
       }
     }
+    useJUnitPlatform {}
   }
 
   javadoc {
-    options.addStringOption('Xdoclint:all', '-quiet')
+    options.addBooleanOption('Xdoclint:all', true)
+    // disable doc lint checking for generated code and acceptance tests dsl.
+    options.addBooleanOption('Xdoclint/package:-org.hyperledger.besu.privacy.contracts.generated,' +
+      '-org.hyperledger.besu.tests.acceptance.*,' +
+      '-org.hyperledger.besu.tests.web3j.generated,' +
+      // TODO: these are temporary disabled (ethereum and sub modules), it should be removed in a future PR.
+      '-org.hyperledger.besu.ethereum,' +
+      '-org.hyperledger.besu.ethereum.*,' +
+      '-org.hyperledger.besu.ethstats.*,' +
+      '-org.hyperledger.besu.evmtool',
+      true)
+    options.addStringOption('Xmaxerrs','65535')
+    options.addStringOption('Xmaxwarns','65535')
     options.addStringOption('Xwerror', '-html5')
     options.encoding = 'UTF-8'
   }
@@ -287,7 +317,7 @@ task checkMavenCoordinateCollisions {
   doLast {
     def coordinates = [:]
     getAllprojects().forEach {
-      if (it.properties.containsKey('publishing')) {
+      if (it.properties.containsKey('publishing') && it.jar?.enabled) {
         def coordinate = it.publishing?.publications[0].coordinates
         if (coordinates.containsKey(coordinate)) {
           throw new GradleException("Duplicate maven coordinates detected, ${coordinate} is used by " +
@@ -319,9 +349,7 @@ subprojects {
       }
     }
 
-    dependencies {
-      testImplementation sourceSets.testSupport.output
-    }
+    dependencies { testImplementation sourceSets.testSupport.output }
 
     task testSupportJar(type: Jar) {
       archiveBaseName = "${project.name}-support-test"
@@ -343,9 +371,7 @@ subprojects {
     }
 
     if (file('src/test-support').directory) {
-      dependencies {
-        integrationTestImplementation sourceSets.testSupport.output
-      }
+      dependencies { integrationTestImplementation sourceSets.testSupport.output }
     }
 
     task integrationTest(type: Test, dependsOn: ["compileTestJava"]) {
@@ -361,6 +387,7 @@ subprojects {
       testClassesDirs = sourceSets.integrationTest.output.classesDirs
       classpath = sourceSets.integrationTest.runtimeClasspath
       outputs.upToDateWhen { false }
+      useJUnitPlatform {}
     }
   }
 
@@ -371,7 +398,7 @@ subprojects {
   }
 
   if (sourceSetIsPopulated("main") || sourceSetIsPopulated("testSupport")) {
-    apply plugin: 'com.jfrog.bintray'
+    apply plugin: 'com.jfrog.artifactory'
     apply plugin: 'maven-publish'
 
     publishing {
@@ -411,16 +438,25 @@ subprojects {
       }
     }
 
-    bintray {
-      user = bintrayUser
-      key = bintrayKey
+    def artifactoryUser = project.hasProperty('artifactoryUser') ? project.property('artifactoryUser') : System.getenv('ARTIFACTORY_USER')
+    def artifactoryKey = project.hasProperty('artifactoryApiKey') ? project.property('artifactoryApiKey') : System.getenv('ARTIFACTORY_KEY')
+    def artifactoryRepo = System.getenv('ARTIFACTORY_REPO') ?: 'besu-maven'
+    def artifactoryOrg = System.getenv('ARTIFACTORY_ORG') ?: 'hyperledger'
 
-      publications = ['mavenJava']
-      override = version.endsWith('SNAPSHOT')
-
-      publish = true
-
-      pkg = bintrayPackage
+    artifactory {
+      contextUrl = "https://hyperledger.jfrog.io/${artifactoryOrg}"
+      publish {
+        repository {
+          repoKey = "${artifactoryRepo}"
+          username = artifactoryUser
+          password = artifactoryKey
+        }
+        defaults {
+          publications('mavenJava')
+          publishArtifacts = true
+          publishPom = true
+        }
+      }
     }
   }
 
@@ -442,7 +478,7 @@ subprojects {
   }
 
   if (file('src/jmh').directory) {
-    apply plugin: 'me.champeau.gradle.jmh'
+    apply plugin: 'me.champeau.jmh'
 
     jmh {
       // Allows to control JMH execution directly from the command line. I typical execution may look
@@ -455,13 +491,13 @@ subprojects {
       fork = _intCmdArg('f')
       iterations = _intCmdArg('i')
       benchmarkMode = _strListCmdArg('bm')
-      include = _strListCmdArg('include', [''])
+      includes = _strListCmdArg('include', [''])
       humanOutputFile = project.file("${project.buildDir}/reports/jmh/results.txt")
       resultFormat = 'JSON'
-      duplicateClassesStrategy = 'warn'
+      duplicateClassesStrategy = DuplicatesStrategy.WARN
     }
 
-    dependencies { jmh 'org.apache.logging.log4j:log4j-api' }
+    dependencies { jmh 'org.slf4j:slf4j-api' }
   }
 }
 
@@ -476,6 +512,8 @@ applicationDefaultJvmArgs = [
   // We shutdown log4j ourselves, as otherwise this shutdown hook runs before our own and whatever
   // happens during shutdown is not logged.
   '-Dlog4j.shutdownHookEnabled=false',
+  // Disable JNI lookups in log4j messages to improve security
+  '-Dlog4j2.formatMsgNoLookups=true',
   // Redirect java.util.logging loggers to use log4j2.
   '-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager',
   // Suppress Java JPMS warnings.  Document the reason for each suppression.
@@ -496,8 +534,6 @@ applicationDefaultJvmArgs = [
 run {
   args project.hasProperty("besu.run.args") ? project.property("besu.run.args").toString().split("\\s+") : []
   doFirst {
-    applicationDefaultJvmArgs.add(0, "-Dotel.resource.attributes=service.name=besu-dev")
-    applicationDefaultJvmArgs.add(0, "-javaagent:"+ configurations.javaAgent.singleFile.toPath() + "")
     applicationDefaultJvmArgs = applicationDefaultJvmArgs.collect {
       it.replace('BESU_HOME', "$buildDir/besu")
     }
@@ -511,19 +547,6 @@ def tweakStartScript(createScriptTask) {
 
   createScriptTask.unixScript.text = createScriptTask.unixScript.text.replace('BESU_HOME', '\$APP_HOME')
   createScriptTask.windowsScript.text = createScriptTask.windowsScript.text.replace('BESU_HOME', '%~dp0..')
-  // OpenTelemetry Wiring for unix scripts
-  def agentFileName = configurations.javaAgent.singleFile.toPath().getFileName()
-  def unixRegex = $/exec "$$JAVACMD" /$
-  def forwardSlash = "/"
-  def unixReplacement = $/if [ -n "$$TRACING" ];then
- TRACING_AGENT="-javaagent:$$APP_HOME/agent${forwardSlash}${agentFileName}"
-fi
-exec "$$JAVACMD" $$TRACING_AGENT /$
-  createScriptTask.unixScript.text = createScriptTask.unixScript.text.replace(unixRegex, unixReplacement)
-  // OpenTelemetry Wiring for windows scripts
-  def windowsRegex = $/"%JAVA_EXE%" %DEFAULT_JVM_OPTS%/$
-  def windowsReplacement = $/if Defined TRACING (TRACING_AGENT="-javaagent:" "%APP_HOME%\agent\/$ + agentFileName + '")\r\n"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %TRACING_AGENT%'
-  createScriptTask.windowsScript.text = createScriptTask.windowsScript.text.replace(windowsRegex, windowsReplacement)
 
   // Prevent the error originating from the 8191 chars limit on Windows
   createScriptTask.windowsScript.text =
@@ -534,28 +557,46 @@ exec "$$JAVACMD" $$TRACING_AGENT /$
 }
 
 startScripts {
-  doLast {
-    tweakStartScript(startScripts)
-  }
+  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
+  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
+  doLast { tweakStartScript(startScripts) }
 }
 
 task evmToolStartScripts(type: CreateStartScripts) {
-  mainClassName = 'org.hyperledger.besu.evmtool.EvmTool'
+  mainClass = 'org.hyperledger.besu.evmtool.EvmTool'
   classpath = startScripts.classpath
   outputDir = startScripts.outputDir
   applicationName = 'evm'
   defaultJvmOpts = [
     "-Dsecp256k1.randomize=false"
   ]
+  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
+  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
+  doLast { tweakStartScript(evmToolStartScripts) }
+}
+
+task autocomplete(type: JavaExec) {
+  dependsOn compileJava
+  def tempAutocompleteFile = File.createTempFile("besu", ".autocomplete")
+  standardOutput tempAutocompleteFile.newOutputStream()
+  outputs.file "$buildDir/besu.autocomplete.sh"
+
+  mainClass = application.mainClass
+  args "generate-completion"
+  classpath sourceSets.main.runtimeClasspath
   doLast {
-    tweakStartScript(evmToolStartScripts)
+    copy {
+      from tempAutocompleteFile
+      into "$buildDir"
+      rename tempAutocompleteFile.getName(), 'besu.autocomplete.sh'
+    }
   }
 }
 
 installDist { dependsOn checkLicenses }
 
 distTar {
-  dependsOn checkLicenses
+  dependsOn checkLicenses, autocomplete
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
   }
@@ -564,14 +605,59 @@ distTar {
 }
 
 distZip {
-  dependsOn checkLicenses
+  dependsOn checkLicenses, autocomplete
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
 }
 
-def dockerVariants = [
-  "openjdk-11"
+publishing {
+  publications {
+    distArtifactory(MavenPublication) {
+      groupId = '.'
+      version = project.version
+      artifactId = 'besu'
+      artifact("$buildDir/distributions/besu-${project.version}.zip")
+      artifact("$buildDir/distributions/besu-${project.version}.tar.gz") { extension = 'tar.gz' }
+    }
+  }
+}
+
+def artifactoryUser = project.hasProperty('artifactoryUser') ? project.property('artifactoryUser') : System.getenv('ARTIFACTORY_USER')
+def artifactoryKey = project.hasProperty('artifactoryApiKey') ? project.property('artifactoryApiKey') : System.getenv('ARTIFACTORY_KEY')
+def artifactoryOrg = System.getenv('ARTIFACTORY_ORG') ?: 'hyperledger'
+
+artifactory {
+  contextUrl = "https://hyperledger.jfrog.io/${artifactoryOrg}"
+  publish {
+    repository {
+      repoKey = "besu-binaries"
+      username = artifactoryUser
+      password = artifactoryKey
+    }
+    defaults {
+      publications('distArtifactory')
+      publishArtifacts = true
+      publishPom = false
+    }
+  }
+}
+
+artifactoryPublish {
+  dependsOn distTar
+  dependsOn distZip
+}
+
+def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
+def dockerOrgName = project.hasProperty('dockerOrgName') ? project.getProperty("dockerOrgName") : "hyperledger"
+def dockerArtifactName = project.hasProperty("dockerArtifactName") ? project.getProperty("dockerArtifactName") : "besu"
+def dockerImageName = "${dockerOrgName}/${dockerArtifactName}"
+def dockerVariants = project.hasProperty("dockerVariants") ? project.getProperty("dockerVariants").split(",") : [
+  "openjdk-17",
+  "openjdk-17-debug",
+  "openj9-jdk-17",
+  "graalvm",
+  "openjdk-latest"
 ]
 
 // rename the top level dir from besu-<version> to besu and this makes it really
@@ -589,6 +675,7 @@ tasks.register("dockerDistUntar") {
       from tarTree(distTarFile)
       into(dockerBuildDir)
     }
+    project.delete(files("${dockerBuildDir}/besu"))
     file("${dockerBuildDir}/${distTarFileName}").renameTo("${dockerBuildDir}/besu")
   }
 }
@@ -596,27 +683,37 @@ tasks.register("dockerDistUntar") {
 task distDocker {
   dependsOn dockerDistUntar
   inputs.dir("build/docker-besu/")
-  def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
   def dockerBuildDir = "build/docker-besu/"
   def imageName = "ghcr.io/lacchain/besu"
 
   doLast {
-    for (def variant in dockerVariants) {
+    for (def jvmVariant in dockerVariants) {
       copy {
-        from file("${projectDir}/docker/${variant}/Dockerfile")
+        from file("${projectDir}/docker/${jvmVariant}/Dockerfile")
         into(dockerBuildDir)
       }
       exec {
-        def image = "${imageName}:${dockerBuildVersion}-${variant}"
+        def image = "${dockerImageName}:${dockerBuildVersion}-${jvmVariant}"
+        def dockerPlatform = ""
+        if (project.hasProperty('docker-platform')){
+          dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
+          println "Building for platform ${project.getProperty('docker-platform')}"
+        }
         executable "sh"
         workingDir dockerBuildDir
-        args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
+        args "-c", "docker build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
       }
     }
+
     // tag the "default" (which is the variant in the zero position)
     exec {
       executable "sh"
-      args "-c", "docker tag '${imageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${imageName}:${dockerBuildVersion}'"
+      args "-c", "docker tag '${dockerImageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${dockerImageName}:${dockerBuildVersion}'"
+    }
+    // create a static tag for the benchmark target
+    exec {
+      executable "sh"
+      args "-c", "docker tag '${dockerImageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${dockerImageName}:benchmark'"
     }
   }
 }
@@ -649,7 +746,7 @@ task dockerUpload {
   def image = "${imageName}:${dockerBuildVersion}"
   def additionalTags = []
 
-  if (project.hasProperty('branch') && project.property('branch') == 'master') {
+  if (project.hasProperty('branch') && project.property('branch') == 'main') {
     additionalTags.add('develop')
   }
 
@@ -657,22 +754,152 @@ task dockerUpload {
     for (def variant in dockerVariants) {
       def variantImage = "${image}-${variant}"
       exec {
-        def cmd = "docker push '${variantImage}'"
-        additionalTags.each { tag ->
-          cmd += " && docker tag '${variantImage}' '${imageName}:${tag.trim()}-${variant}' && docker push '${imageName}:${tag.trim()}-${variant}'"
-        }
+        def archVariantImage = "${variantImage}-${architecture}"
+        def cmd = "docker tag '${variantImage}' '${archVariantImage}' && docker push '${archVariantImage}'"
+        additionalTags.each { tag -> cmd += " && docker tag '${variantImage}' '${dockerImageName}:${tag.trim()}-${variant}-${architecture}' && docker push '${dockerImageName}:${tag.trim()}-${variant}-${architecture}'" }
+        println "Executing '${cmd}'"
         executable "sh"
         args "-c", cmd
       }
     }
 
     exec {
-      def cmd = "docker push '${image}'"
-      additionalTags.each { tag ->
-        cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'"
-        // temporarily commented out because AWS credentials are broken
-        // cmd += " && docker tag '${image}' '${azureImageName}:${tag.trim()}' && docker push '${azureImageName}:${tag.trim()}'"
+      def archImage = "${image}-${architecture}"
+      def cmd = "docker tag ${image} ${archImage} && docker push '${archImage}'"
+      additionalTags.each { tag -> cmd += " && docker tag '${image}' '${dockerImageName}:${tag.trim()}-${architecture}' && docker push '${dockerImageName}:${tag.trim()}-${architecture}'" }
+      println "Executing '${cmd}'"
+      executable "sh"
+      args "-c", cmd
+    }
+  }
+}
+
+task dockerUploadRelease {
+  def archs = ["arm64", "amd64"]
+  def image = "${dockerImageName}:${dockerBuildVersion}"
+
+  doLast {
+    for (def architecture in archs) {
+      for (def variant in dockerVariants) {
+        def variantImage = "${image}-${variant}"
+        exec {
+          def cmd = "docker pull '${variantImage}-${architecture}' && docker tag '${variantImage}-${architecture}' '${dockerImageName}:latest-${variant}-${architecture}'"
+          println "Executing '${cmd}'"
+          executable "sh"
+          args "-c", cmd
+        }
+        exec {
+          def cmd = "docker push '${dockerImageName}:latest-${variant}-${architecture}'"
+          println "Executing '${cmd}'"
+          executable "sh"
+          args "-c", cmd
+        }
       }
+
+      exec {
+        def archImage = "${image}-${architecture}"
+        def cmd = "docker pull '${archImage}' && docker tag ${archImage} '${dockerImageName}:latest-${architecture}'"
+        println "Executing '${cmd}'"
+        executable "sh"
+        args "-c", cmd
+      }
+      exec {
+        def cmd = "docker push '${dockerImageName}:latest-${architecture}'"
+        println "Executing '${cmd}'"
+        executable "sh"
+        args "-c", cmd
+      }
+    }
+  }
+}
+
+task manifestDocker {
+  def image = "${dockerImageName}:${dockerBuildVersion}"
+  def archs = ["arm64", "amd64"]
+  def tags = ["${image}"]
+
+  if (project.hasProperty('branch') && project.property('branch') == 'main') {
+    tags.add("${dockerImageName}:develop")
+  }
+
+  if (!isInterimBuild(dockerBuildVersion)) {
+    tags.add("${dockerImageName}:" + dockerBuildVersion.split(/\./)[0..1].join('.'))
+  }
+
+  doLast {
+    for (baseTag in tags) {
+      for (def variant in dockerVariants) {
+        def variantImage = "${baseTag}-${variant}"
+        def targets = ""
+        archs.forEach { arch -> targets += "'${variantImage}-${arch}' " }
+
+        exec {
+          def cmd = "docker manifest create '${variantImage}' ${targets}"
+          println "Executing '${cmd}'"
+          executable "sh"
+          args "-c", cmd
+        }
+        exec {
+          def cmd = "docker manifest push '${variantImage}'"
+          println "Executing '${cmd}'"
+          executable "sh"
+          args "-c", cmd
+        }
+      }
+
+      exec {
+        def targets = ""
+        archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
+        def cmd = "docker manifest create '${baseTag}' ${targets}"
+        println "Executing '${cmd}'"
+        executable "sh"
+        args "-c", cmd
+      }
+      exec {
+        def cmd = "docker manifest push '${baseTag}'"
+        println "Executing '${cmd}'"
+        executable "sh"
+        args "-c", cmd
+      }
+    }
+  }
+}
+
+task manifestDockerRelease {
+  def archs = ["arm64", "amd64"]
+  def baseTag = "${dockerImageName}:latest";
+
+  doLast {
+    for (def variant in dockerVariants) {
+      def variantImage = "${baseTag}-${variant}"
+      def targets = ""
+      archs.forEach { arch -> targets += "'${variantImage}-${arch}' " }
+
+      exec {
+        def cmd = "docker manifest create '${variantImage}' ${targets} --amend"
+        println "Executing '${cmd}'"
+        executable "sh"
+        args "-c", cmd
+      }
+      exec {
+        def cmd = "docker manifest push '${variantImage}'"
+        println "Executing '${cmd}'"
+        executable "sh"
+        args "-c", cmd
+      }
+    }
+
+    exec {
+      def targets = ""
+      archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
+      def cmd = "docker manifest create '${baseTag}' ${targets} --amend"
+      println "Executing '${cmd}'"
+      executable "sh"
+      args "-c", cmd
+    }
+    exec {
+      def cmd = "docker manifest push '${baseTag}'"
+      println "Executing '${cmd}'"
       executable "sh"
       args "-c", cmd
     }
@@ -695,7 +922,7 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
     "(.*/.idea/.*)",
     "(.*/out/.*)",
     "(.*/build/.*)",
-    "(.*/src/[^/]+/generated/.*)",
+    "(.*/src/[^/]+/generated/.*)"
   ].join("|")
 
 }
@@ -703,11 +930,12 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   additionalSourceDirs.from files(subprojects.sourceSets.main.allSource.srcDirs)
   sourceDirectories.from files(subprojects.sourceSets.main.allSource.srcDirs)
-  classDirectories.from files(subprojects.sourceSets.main.output)
+  classDirectories.from files(subprojects.sourceSets.main.output).asFileTree.matching { exclude 'org/hyperledger/besu/tests/acceptance/**' }
   executionData.from fileTree(dir: '.', includes: ['**/jacoco/*.exec'])
   reports {
-    xml.enabled true
-    csv.enabled true
+    xml.required = true
+    xml.enabled = true
+    csv.required = true
     html.destination file("build/reports/jacocoHtml")
   }
   onlyIf = { true }
@@ -744,15 +972,16 @@ def calculateVersion() {
   return version
 }
 
-def getCheckedOutGitCommitHash() {
+
+def getCheckedOutGitCommitHash(length = 8) {
   try {
     def gitFolder = "$projectDir/.git/"
     if (!file(gitFolder).isDirectory()) {
       // We are in a submodule.  The file's contents are `gitdir: <gitFolder>\n`.
       // Read the file, cut off the front, and trim the whitespace.
-      gitFolder = file(gitFolder).text.substring(8).trim() + "/"
+      gitFolder = file(gitFolder).text.substring(length).trim() + "/"
     }
-    def takeFromHash = 8
+    def takeFromHash = length
     /*
      * '.git/HEAD' contains either
      *      in case of detached head: the currently checked out commit hash
@@ -770,6 +999,12 @@ def getCheckedOutGitCommitHash() {
     logger.info('Error retrieving git commit', e)
     return "xxxxxxxx"
   }
+}
+
+// Takes the version and if it contains SNAPSHOT, alpha, beta or RC in version then return true indicating an interim build
+def isInterimBuild(dockerBuildVersion) {
+  return (dockerBuildVersion ==~ /.*-SNAPSHOT/) || (dockerBuildVersion ==~ /.*-alpha/)
+  || (dockerBuildVersion ==~ /.*-beta/) || (dockerBuildVersion ==~ /.*-RC.*/)
 }
 
 tasks.register("verifyDistributions") {
@@ -790,14 +1025,8 @@ tasks.register("verifyDistributions") {
   }
 }
 
-configurations {
-  javaAgent
-}
-
 dependencies {
   implementation project(':besu')
-  implementation project(':ethereum:evmtool')
-  javaAgent group: 'io.opentelemetry.instrumentation.auto', name: 'opentelemetry-javaagent', classifier: 'all'
   errorprone 'com.google.errorprone:error_prone_core'
 }
 
@@ -808,31 +1037,14 @@ distributions {
       from("build/reports/license/license-dependency.html") { into "." }
       from("./docs/GettingStartedBinaries.md") { into "." }
       from("./docs/DocsArchive0.8.0.html") { into "." }
-      from(configurations.javaAgent.singleFile.toPath()) { into "agent"}
+      from("build/besu.autocomplete.sh") { into "." }
     }
   }
 }
 
-bintray {
-  user = bintrayUser
-  key = bintrayKey
-
-  filesSpec {
-    from distTar.destinationDirectory
-    from distZip.destinationDirectory
-    from file("plugin-api/build/libs/plugin-api-$version-javadoc.jar")
-    into '.'
-  }
-
-  publish = true
-  override = version.endsWith('SNAPSHOT')
-
-  pkg = bintrayPackage
-}
-
 check.dependsOn checkSpdxHeader
 build.dependsOn verifyDistributions
-bintrayUpload.dependsOn verifyDistributions
-bintrayUpload.mustRunAfter(distTar)
-bintrayUpload.mustRunAfter(distZip)
-bintrayUpload.mustRunAfter(javadocJar)
+artifactoryPublish.dependsOn verifyDistributions
+artifactoryPublish.mustRunAfter(distTar)
+artifactoryPublish.mustRunAfter(distZip)
+artifactoryPublish.mustRunAfter(javadocJar)

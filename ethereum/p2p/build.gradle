@@ -28,39 +28,49 @@ jar {
 }
 
 dependencies {
-  implementation project(':crypto')
+  api 'org.slf4j:slf4j-api'
+
+  implementation project(':crypto:services')
+  implementation project(':datatypes')
   implementation project(':ethereum:core')
   implementation project(':ethereum:rlp')
+  implementation project(':pki')
   implementation project(':metrics:core')
   implementation project(':nat')
+  implementation project(':util')
 
   implementation 'com.google.guava:guava'
   implementation 'dnsjava:dnsjava'
+  implementation 'io.netty:netty-transport-native-unix-common'
   implementation 'io.prometheus:simpleclient'
   implementation 'io.vertx:vertx-core'
-  implementation 'org.apache.logging.log4j:log4j-api'
-  implementation 'org.apache.tuweni:bytes'
-  implementation 'org.apache.tuweni:crypto'
-  implementation 'org.apache.tuweni:devp2p'
-  implementation 'org.apache.tuweni:dns-discovery'
-  implementation 'org.apache.tuweni:io'
-  implementation 'org.apache.tuweni:rlp'
-  implementation 'org.apache.tuweni:units'
+
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-crypto'
+  implementation('org.apache.tuweni:tuweni-devp2p') {
+    exclude group:'ch.qos.logback', module:'logback-classic'
+  }
+  implementation('org.apache.tuweni:tuweni-dns-discovery'){
+    exclude group:'ch.qos.logback', module:'logback-classic'
+  }
+  implementation 'org.apache.tuweni:tuweni-io'
+  implementation 'org.apache.tuweni:tuweni-rlp'
+  implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.jetbrains.kotlin:kotlin-stdlib'
+  implementation 'org.owasp.encoder:encoder'
   implementation 'org.xerial.snappy:snappy-java'
 
   annotationProcessor "org.immutables:value"
   implementation "org.immutables:value-annotations"
   implementation 'tech.pegasys.discovery:discovery'
 
-  runtimeOnly 'org.apache.logging.log4j:log4j-core'
-
   // test dependencies.
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
-  testImplementation project(path: ':crypto', configuration: 'testSupportArtifacts')
+  testImplementation project(path: ':crypto:services', configuration: 'testSupportArtifacts')
   testImplementation project(':testutil')
 
+  testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation('io.pkts:pkts-core') {
     exclude group: 'io.pkts', module: 'pkts-sdp'
     exclude group: 'io.pkts', module: 'pkts-sip'
@@ -70,5 +80,8 @@ dependencies {
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
+
+  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }

@@ -17,16 +17,18 @@ package org.hyperledger.besu.chainimport;
 import org.hyperledger.besu.chainimport.internal.BlockData;
 import org.hyperledger.besu.chainimport.internal.ChainData;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.WorldState;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,17 +41,22 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Tool for importing blocks with transactions from human-readable json. */
 public class JsonBlockImporter {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(JsonBlockImporter.class);
 
   private final ObjectMapper mapper;
   private final BesuController controller;
 
+  /**
+   * Instantiates a new Json block importer.
+   *
+   * @param controller the controller
+   */
   public JsonBlockImporter(final BesuController controller) {
     this.controller = controller;
     mapper = new ObjectMapper();
@@ -59,6 +66,12 @@ public class JsonBlockImporter {
     mapper.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
   }
 
+  /**
+   * Import chain.
+   *
+   * @param chainJson the chain json
+   * @throws IOException the io exception
+   */
   public void importChain(final String chainJson) throws IOException {
     warnIfDatabaseIsNotEmpty();
 
@@ -84,7 +97,7 @@ public class JsonBlockImporter {
         controller
             .getProtocolContext()
             .getWorldStateArchive()
-            .get(parentHeader.getStateRoot())
+            .get(parentHeader.getStateRoot(), parentHeader.getHash())
             .get();
     final List<Transaction> transactions =
         blockData.streamTransactions(worldState).collect(Collectors.toList());
@@ -119,9 +132,9 @@ public class JsonBlockImporter {
       final BlockData blockData,
       final GenesisConfigOptions genesisConfig) {
     // Some fields can only be configured for ethash
-    if (genesisConfig.isEthHash()) {
-      // For simplicity only set these for ethash.  Other consensus algorithms use these fields for
-      // special purposes or ignore them
+    if (genesisConfig.getPowAlgorithm() != PowAlgorithm.UNSUPPORTED) {
+      // For simplicity only set these for PoW consensus algorithms.
+      // Other consensus algorithms use these fields for special purposes or ignore them.
       miner.setCoinbase(blockData.getCoinbase().orElse(Address.ZERO));
       miner.setExtraData(blockData.getExtraData().orElse(Bytes.EMPTY));
     } else if (blockData.getCoinbase().isPresent() || blockData.getExtraData().isPresent()) {
@@ -140,14 +153,11 @@ public class JsonBlockImporter {
 
   private void importBlock(final Block block) {
     final BlockImporter importer =
-        controller
-            .getProtocolSchedule()
-            .getByBlockNumber(block.getHeader().getNumber())
-            .getBlockImporter();
+        controller.getProtocolSchedule().getByBlockHeader(block.getHeader()).getBlockImporter();
 
-    final boolean imported =
+    final BlockImportResult importResult =
         importer.importBlock(controller.getProtocolContext(), block, HeaderValidationMode.NONE);
-    if (imported) {
+    if (importResult.isImported()) {
       LOG.info(
           "Successfully created and imported block at height {} ({})",
           block.getHeader().getNumber(),
@@ -219,7 +229,7 @@ public class JsonBlockImporter {
 
     if (importedBlocks.size() > 0 && blockData.getNumber().isPresent()) {
       final long targetParentBlockNumber = blockData.getNumber().get() - 1L;
-      Optional<BlockHeader> maybeHeader =
+      final Optional<BlockHeader> maybeHeader =
           importedBlocks.stream()
               .map(Block::getHeader)
               .filter(h -> h.getNumber() == targetParentBlockNumber)
@@ -229,7 +239,7 @@ public class JsonBlockImporter {
       }
     }
 
-    long blockNumber;
+    final long blockNumber;
     if (blockData.getNumber().isPresent()) {
       blockNumber = blockData.getNumber().get() - 1L;
     } else if (importedBlocks.size() > 0) {
@@ -240,7 +250,7 @@ public class JsonBlockImporter {
     }
 
     if (blockNumber < BlockHeader.GENESIS_BLOCK_NUMBER) {
-      throw new IllegalArgumentException("Invalid block number: " + blockNumber + 1);
+      throw new IllegalArgumentException("Invalid block number: " + (blockNumber + 1));
     }
 
     return controller

@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT_SKIP_DETACHED;
 import static org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason.TOO_MANY_PEERS;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -35,18 +35,26 @@ import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.LockSupport;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
+@RunWith(Parameterized.class)
 public class FastSyncChainDownloaderTest {
 
-  private final FastSyncValidationPolicy validationPolicy = mock(FastSyncValidationPolicy.class);
+  private final WorldStateStorage worldStateStorage = mock(WorldStateStorage.class);
 
   protected ProtocolSchedule protocolSchedule;
   protected EthProtocolManager ethProtocolManager;
@@ -58,19 +66,32 @@ public class FastSyncChainDownloaderTest {
   private BlockchainSetupUtil otherBlockchainSetup;
   protected Blockchain otherBlockchain;
 
+  @Parameters
+  public static Collection<Object[]> data() {
+    return Arrays.asList(new Object[][] {{DataStorageFormat.BONSAI}, {DataStorageFormat.FOREST}});
+  }
+
+  private final DataStorageFormat storageFormat;
+
+  public FastSyncChainDownloaderTest(final DataStorageFormat storageFormat) {
+    this.storageFormat = storageFormat;
+  }
+
   @Before
   public void setup() {
-    when(validationPolicy.getValidationModeForNextBlock()).thenReturn(LIGHT_SKIP_DETACHED);
-    final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting();
+    when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
+    final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
     localBlockchain = localBlockchainSetup.getBlockchain();
-    otherBlockchainSetup = BlockchainSetupUtil.forTesting();
+    otherBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
     otherBlockchain = otherBlockchainSetup.getBlockchain();
 
     protocolSchedule = localBlockchainSetup.getProtocolSchedule();
     protocolContext = localBlockchainSetup.getProtocolContext();
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
-            localBlockchain, new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
+            protocolSchedule,
+            localBlockchain,
+            new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
 
     ethContext = ethProtocolManager.ethContext();
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
@@ -85,12 +106,13 @@ public class FastSyncChainDownloaderTest {
       final SynchronizerConfiguration syncConfig, final long pivotBlockNumber) {
     return FastSyncChainDownloader.create(
         syncConfig,
+        worldStateStorage,
         protocolSchedule,
         protocolContext,
         ethContext,
         syncState,
         new NoOpMetricsSystem(),
-        otherBlockchain.getBlockHeader(pivotBlockNumber).get());
+        new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get()));
   }
 
   @Test
@@ -143,7 +165,7 @@ public class FastSyncChainDownloaderTest {
 
   @Test
   public void recoversFromSyncTargetDisconnect() {
-    final BlockchainSetupUtil shorterChainUtil = BlockchainSetupUtil.forTesting();
+    final BlockchainSetupUtil shorterChainUtil = BlockchainSetupUtil.forTesting(storageFormat);
     final MutableBlockchain shorterChain = shorterChainUtil.getBlockchain();
 
     otherBlockchainSetup.importFirstBlocks(30);
@@ -155,7 +177,7 @@ public class FastSyncChainDownloaderTest {
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, shorterChain);
     final RespondingEthPeer.Responder shorterResponder =
         RespondingEthPeer.blockchainResponder(shorterChain);
-    // Doesn't respond to requests for checkpoints unless it's starting from geneis
+    // Doesn't respond to requests for checkpoints unless it's starting from genesis
     // So the import can only make it as far as block 15 (3 checkpoints 5 blocks apart)
     final RespondingEthPeer.Responder shorterLimitedRangeResponder =
         RespondingEthPeer.targetedResponder(

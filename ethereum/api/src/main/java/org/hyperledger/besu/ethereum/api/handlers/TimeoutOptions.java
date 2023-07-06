@@ -18,8 +18,10 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 public class TimeoutOptions {
+
+  public static final int DEFAULT_ERROR_CODE = 504;
+
   private static final long DEFAULT_TIMEOUT_SECONDS = Duration.ofMinutes(5).toSeconds();
-  private static final int DEFAULT_ERROR_CODE = 504;
   private final long timeoutSec;
 
   private final int errorCode;

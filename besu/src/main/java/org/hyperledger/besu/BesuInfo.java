@@ -18,6 +18,10 @@ import org.hyperledger.besu.util.platform.PlatformDetector;
 
 import java.util.Optional;
 
+/**
+ * Represent Besu information such as version, OS etc. Used with --version option and during Besu
+ * start.
+ */
 public final class BesuInfo {
   private static final String CLIENT = "besu";
   private static final String VERSION = BesuInfo.class.getPackage().getImplementationVersion();
@@ -26,10 +30,31 @@ public final class BesuInfo {
 
   private BesuInfo() {}
 
+  /**
+   * Generate version-only Besu version
+   *
+   * @return Besu version in format such as "v23.1.0" or "v23.1.1-dev-ac23d311"
+   */
+  public static String shortVersion() {
+    return VERSION;
+  }
+
+  /**
+   * Generate full Besu version
+   *
+   * @return Besu version in format such as "besu/v23.1.1-dev-ac23d311/osx-x86_64/graalvm-java-17"
+   *     or "besu/v23.1.0/osx-aarch_64/corretto-java-19"
+   */
   public static String version() {
     return String.format("%s/v%s/%s/%s", CLIENT, VERSION, OS, VM);
   }
 
+  /**
+   * Generate node name including identity.
+   *
+   * @param maybeIdentity optional node identity to include in the version string.
+   * @return Version with optional identity if provided.
+   */
   public static String nodeName(final Optional<String> maybeIdentity) {
     return maybeIdentity
         .map(identity -> String.format("%s/%s/v%s/%s/%s", CLIENT, identity, VERSION, OS, VM))

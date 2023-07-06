@@ -52,18 +52,18 @@ public class PendingPeerRequest {
     if (result.isDone()) {
       return true;
     }
-    final Optional<EthPeer> leastBusySuitablePeer = getLeastBusySuitablePeer();
-    if (!leastBusySuitablePeer.isPresent()) {
+    final Optional<EthPeer> maybePeer = getPeerToUse();
+    if (maybePeer.isEmpty()) {
       // No peers have the required height.
       result.completeExceptionally(new NoAvailablePeersException());
       return true;
     } else {
-      // At least one peer has the required height, but we not be able to use it if it's busy
-      final Optional<EthPeer> selectedPeer =
-          leastBusySuitablePeer.filter(EthPeer::hasAvailableRequestCapacity);
+      // At least one peer has the required height, but we are not able to use it if it's busy
+      final Optional<EthPeer> maybePeerWithCapacity =
+          maybePeer.filter(EthPeer::hasAvailableRequestCapacity);
 
-      selectedPeer.ifPresent(this::sendRequest);
-      return selectedPeer.isPresent();
+      maybePeerWithCapacity.ifPresent(this::sendRequest);
+      return maybePeerWithCapacity.isPresent();
     }
   }
 
@@ -79,8 +79,9 @@ public class PendingPeerRequest {
     }
   }
 
-  private Optional<EthPeer> getLeastBusySuitablePeer() {
-    return peer.isPresent()
+  private Optional<EthPeer> getPeerToUse() {
+    // return the assigned peer if still valid, otherwise switch to another peer
+    return peer.filter(p -> !p.isDisconnected()).isPresent()
         ? peer
         : ethPeers
             .streamAvailablePeers()

@@ -14,8 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.chain;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -27,16 +30,29 @@ public class BadBlockManager {
 
   private final Cache<Hash, Block> badBlocks =
       CacheBuilder.newBuilder().maximumSize(100).concurrencyLevel(1).build();
+  private final Cache<Hash, BlockHeader> badHeaders =
+      CacheBuilder.newBuilder().maximumSize(100).concurrencyLevel(1).build();
+  private final Cache<Hash, Hash> latestValidHashes =
+      CacheBuilder.newBuilder().maximumSize(100).concurrencyLevel(1).build();
 
   /**
    * Add a new invalid block.
    *
    * @param badBlock the invalid block
+   * @param cause optional exception causing the block to be considered invalid
    */
-  public void addBadBlock(final Block badBlock) {
+  public void addBadBlock(final Block badBlock, final Optional<Throwable> cause) {
     if (badBlock != null) {
-      this.badBlocks.put(badBlock.getHash(), badBlock);
+      if (cause.isEmpty() || !isInternalError(cause.get())) {
+        this.badBlocks.put(badBlock.getHash(), badBlock);
+      }
     }
+  }
+
+  public void reset() {
+    this.badBlocks.invalidateAll();
+    this.badHeaders.invalidateAll();
+    this.latestValidHashes.invalidateAll();
   }
 
   /**
@@ -56,5 +72,29 @@ public class BadBlockManager {
    */
   public Optional<Block> getBadBlock(final Hash hash) {
     return Optional.ofNullable(badBlocks.getIfPresent(hash));
+  }
+
+  public void addBadHeader(final BlockHeader header) {
+    badHeaders.put(header.getHash(), header);
+  }
+
+  public Optional<BlockHeader> getBadHash(final Hash blockHash) {
+    return Optional.ofNullable(badHeaders.getIfPresent(blockHash));
+  }
+
+  public void addLatestValidHash(final Hash blockHash, final Hash latestValidHash) {
+    this.latestValidHashes.put(blockHash, latestValidHash);
+  }
+
+  public Optional<Hash> getLatestValidHash(final Hash blockHash) {
+    return Optional.ofNullable(latestValidHashes.getIfPresent(blockHash));
+  }
+
+  private boolean isInternalError(final Throwable causedBy) {
+    // As new "internal only" types of exception are discovered, add them here.
+    if (causedBy instanceof StorageException || causedBy instanceof MerkleTrieException) {
+      return true;
+    }
+    return false;
   }
 }

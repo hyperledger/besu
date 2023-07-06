@@ -16,9 +16,11 @@ package org.hyperledger.besu.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class NetworkUtilityTest {
 
@@ -30,5 +32,12 @@ public class NetworkUtilityTest {
         .doesNotContain("0:0:0:0:0:0:0:0");
     final InetSocketAddress ipv6 = new InetSocketAddress("1:2:3:4:5:6:7:8", 80);
     assertThat(NetworkUtility.urlForSocketAddress("http", ipv6)).contains("[1:2:3:4:5:6:7:8]");
+  }
+
+  @Test
+  public void assertPortIsNotAvailable() throws IOException {
+    final ServerSocket serverSocket = new ServerSocket(8541);
+    assertThat(!NetworkUtility.isPortAvailable(8541)).isEqualTo(true);
+    serverSocket.close();
   }
 }

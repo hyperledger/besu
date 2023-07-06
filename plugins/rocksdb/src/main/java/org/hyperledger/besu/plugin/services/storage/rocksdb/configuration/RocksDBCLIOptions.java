@@ -17,20 +17,30 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 import com.google.common.base.MoreObjects;
 import picocli.CommandLine;
 
+/** The RocksDb cli options. */
 public class RocksDBCLIOptions {
 
+  /** The constant DEFAULT_MAX_OPEN_FILES. */
   public static final int DEFAULT_MAX_OPEN_FILES = 1024;
-  public static final long DEFAULT_CACHE_CAPACITY = 8388608;
-  public static final int DEFAULT_MAX_BACKGROUND_COMPACTIONS = 4;
+  /** The constant DEFAULT_CACHE_CAPACITY. */
+  public static final long DEFAULT_CACHE_CAPACITY = 134217728;
+
+  /** The constant DEFAULT_BACKGROUND_THREAD_COUNT. */
   public static final int DEFAULT_BACKGROUND_THREAD_COUNT = 4;
+  /** The constant DEFAULT_IS_HIGH_SPEC. */
+  public static final boolean DEFAULT_IS_HIGH_SPEC = false;
 
-  private static final String MAX_OPEN_FILES_FLAG = "--Xplugin-rocksdb-max-open-files";
-  private static final String CACHE_CAPACITY_FLAG = "--Xplugin-rocksdb-cache-capacity";
-  private static final String MAX_BACKGROUND_COMPACTIONS_FLAG =
-      "--Xplugin-rocksdb-max-background-compactions";
-  private static final String BACKGROUND_THREAD_COUNT_FLAG =
+  /** The constant MAX_OPEN_FILES_FLAG. */
+  public static final String MAX_OPEN_FILES_FLAG = "--Xplugin-rocksdb-max-open-files";
+  /** The constant CACHE_CAPACITY_FLAG. */
+  public static final String CACHE_CAPACITY_FLAG = "--Xplugin-rocksdb-cache-capacity";
+  /** The constant BACKGROUND_THREAD_COUNT_FLAG. */
+  public static final String BACKGROUND_THREAD_COUNT_FLAG =
       "--Xplugin-rocksdb-background-thread-count";
+  /** The constant IS_HIGH_SPEC. */
+  public static final String IS_HIGH_SPEC = "--Xplugin-rocksdb-high-spec-enabled";
 
+  /** The Max open files. */
   @CommandLine.Option(
       names = {MAX_OPEN_FILES_FLAG},
       hidden = true,
@@ -39,22 +49,16 @@ public class RocksDBCLIOptions {
       description = "Max number of files RocksDB will open (default: ${DEFAULT-VALUE})")
   int maxOpenFiles;
 
+  /** The Cache capacity. */
   @CommandLine.Option(
       names = {CACHE_CAPACITY_FLAG},
       hidden = true,
-      defaultValue = "8388608",
+      defaultValue = "134217728",
       paramLabel = "<LONG>",
       description = "Cache capacity of RocksDB (default: ${DEFAULT-VALUE})")
   long cacheCapacity;
 
-  @CommandLine.Option(
-      names = {MAX_BACKGROUND_COMPACTIONS_FLAG},
-      hidden = true,
-      defaultValue = "4",
-      paramLabel = "<INTEGER>",
-      description = "Maximum number of RocksDB background compactions (default: ${DEFAULT-VALUE})")
-  int maxBackgroundCompactions;
-
+  /** The Background thread count. */
   @CommandLine.Option(
       names = {BACKGROUND_THREAD_COUNT_FLAG},
       hidden = true,
@@ -63,24 +67,58 @@ public class RocksDBCLIOptions {
       description = "Number of RocksDB background threads (default: ${DEFAULT-VALUE})")
   int backgroundThreadCount;
 
+  /** The Is high spec. */
+  @CommandLine.Option(
+      names = {IS_HIGH_SPEC},
+      hidden = true,
+      paramLabel = "<BOOLEAN>",
+      description =
+          "Use this flag to boost Besu performance if you have a 16 GiB RAM hardware or more (default: ${DEFAULT-VALUE})")
+  boolean isHighSpec;
+
   private RocksDBCLIOptions() {}
 
+  /**
+   * Create RocksDb cli options.
+   *
+   * @return the RocksDb cli options
+   */
   public static RocksDBCLIOptions create() {
     return new RocksDBCLIOptions();
   }
 
+  /**
+   * RocksDb cli options from config.
+   *
+   * @param config the config
+   * @return the RocksDb cli options
+   */
   public static RocksDBCLIOptions fromConfig(final RocksDBConfiguration config) {
     final RocksDBCLIOptions options = create();
     options.maxOpenFiles = config.getMaxOpenFiles();
     options.cacheCapacity = config.getCacheCapacity();
-    options.maxBackgroundCompactions = config.getMaxBackgroundCompactions();
     options.backgroundThreadCount = config.getBackgroundThreadCount();
+    options.isHighSpec = config.isHighSpec();
     return options;
   }
 
+  /**
+   * To domain object rocks db factory configuration.
+   *
+   * @return the rocks db factory configuration
+   */
   public RocksDBFactoryConfiguration toDomainObject() {
     return new RocksDBFactoryConfiguration(
-        maxOpenFiles, maxBackgroundCompactions, backgroundThreadCount, cacheCapacity);
+        maxOpenFiles, backgroundThreadCount, cacheCapacity, isHighSpec);
+  }
+
+  /**
+   * Is high spec.
+   *
+   * @return the boolean
+   */
+  public boolean isHighSpec() {
+    return isHighSpec;
   }
 
   @Override
@@ -88,8 +126,8 @@ public class RocksDBCLIOptions {
     return MoreObjects.toStringHelper(this)
         .add("maxOpenFiles", maxOpenFiles)
         .add("cacheCapacity", cacheCapacity)
-        .add("maxBackgroundCompactions", maxBackgroundCompactions)
         .add("backgroundThreadCount", backgroundThreadCount)
+        .add("isHighSpec", isHighSpec)
         .toString();
   }
 }

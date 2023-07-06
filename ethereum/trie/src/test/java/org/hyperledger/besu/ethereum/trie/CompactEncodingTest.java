@@ -37,8 +37,7 @@ public class CompactEncodingTest {
   public void shouldRoundTripFromBytesToPathAndBack() {
     final Random random = new Random(282943948928429484L);
     for (int i = 0; i < 1000; i++) {
-      final Bytes32 bytes =
-          Hash.keccak256(UInt256.valueOf(random.nextInt(Integer.MAX_VALUE)).toBytes());
+      final Bytes32 bytes = Hash.keccak256(UInt256.valueOf(random.nextInt(Integer.MAX_VALUE)));
       final Bytes path = CompactEncoding.bytesToPath(bytes);
       assertThat(CompactEncoding.pathToBytes(path)).isEqualTo(bytes);
     }

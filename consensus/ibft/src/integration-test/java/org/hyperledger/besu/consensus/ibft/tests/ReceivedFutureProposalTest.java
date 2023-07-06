@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Ensure the Ibft component responds appropriately when a future round Proposal message is

@@ -13,40 +13,4 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-apply plugin: 'java-library'
-
-jar {
-  archiveBaseName = 'besu-crypto'
-  manifest {
-    attributes(
-      'Specification-Title': archiveBaseName,
-      'Specification-Version': project.version,
-      'Implementation-Title': archiveBaseName,
-      'Implementation-Version': calculateVersion()
-      )
-  }
-}
-
-dependencies {
-  api project(':plugin-api')
-  api project(':util')
-
-  api 'org.bouncycastle:bcprov-jdk15on'
-
-  implementation 'com.google.guava:guava'
-  implementation 'net.java.dev.jna:jna'
-  implementation 'org.apache.logging.log4j:log4j-api'
-  implementation 'org.apache.tuweni:bytes'
-  implementation 'org.apache.tuweni:units'
-  implementation 'org.hyperledger.besu:secp256k1'
-
-  runtimeOnly 'org.apache.logging.log4j:log4j-core'
-
-  testImplementation 'junit:junit'
-  testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.mockito:mockito-core'
-}
-
-artifacts {
-  testSupportArtifacts testSupportJar
-}
+jar { enabled = false }

@@ -1,0 +1,297 @@
+{
+  "comment" : "'Deploy contract that will self-destruct when called.', 'call the prior contract then call log contract 00a0..00.', 'Deploy contract that will self-destruct when called.', 'call the prior contract then callcode log contract 00a0..00.', 'Deploy contract that will self-destruct when called.', 'call the prior contract then delegatecall log contract 00a0..00.'",
+  "request" : {
+    "method" : "trace_callMany",
+    "params" : [ [ [ {
+      "from" : "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+      "value" : "0x0",
+      "gas" : "0xfffff2",
+      "gasPrice" : "0xef",
+      "data" : "0x6004600C60003960046000F3600035FF"
+    }, [ "stateDiff" ] ], [ {
+      "from" : "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+      "value" : "0x0",
+      "gas" : "0xfffff2",
+      "gasPrice" : "0xef",
+      "data" : "0x60006000600060006000738f0483125fcb9aaaefa9209d8e9d7b9c8b9fb90f5AF1600060006000600060007300A00000000000000000000000000000000000005AF1"
+    }, [ "stateDiff" ] ], [ {
+      "from" : "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+      "value" : "0x0",
+      "gas" : "0xfffff2",
+      "gasPrice" : "0xef",
+      "data" : "0x6004600C60003960046000F3600035FF"
+    }, [ "stateDiff" ] ], [ {
+      "from" : "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+      "value" : "0x0",
+      "gas" : "0xfffff2",
+      "gasPrice" : "0xef",
+      "data" : "0x60006000600060006000732c2b9c9a4a25e24b174f26114e8926a9f2128fe45AF2600060006000600060007300A00000000000000000000000000000000000005AF2"
+    }, [ "stateDiff" ] ], [ {
+      "from" : "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+      "value" : "0x0",
+      "gas" : "0xfffff2",
+      "gasPrice" : "0xef",
+      "data" : "0x6004600C60003960046000F3600035FF"
+    }, [ "stateDiff" ] ], [ {
+      "from" : "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+      "value" : "0x0",
+      "gas" : "0xfffff2",
+      "gasPrice" : "0xef",
+      "data" : "0x600060006000600073fb88de099e13c3ed21f80a7a1e49f8caecf10df65AF460006000600060007300A00000000000000000000000000000000000005AF4"
+    }, [ "stateDiff" ] ] ], "latest" ],
+    "id" : 1,
+    "jsonrpc" : "2.0"
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : [ {
+      "output" : "0x600035ff",
+      "stateDiff" : {
+        "0x0000000000000000000000000000000000000000" : {
+          "balance" : {
+            "*" : {
+              "from" : "0x393f0f18385c0b29e",
+              "to" : "0x393f0f1838685c9c2"
+            }
+          },
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : { }
+        },
+        "0x3d49d1ef2ade060a33c6e6aa213513a7ee9a6241" : {
+          "balance" : {
+            "+" : "0x0"
+          },
+          "code" : {
+            "+" : "0x600035ff"
+          },
+          "nonce" : {
+            "+" : "0x1"
+          },
+          "storage" : { }
+        },
+        "0x627306090abab3a6e1400e9345bc60c78a8bef57" : {
+          "balance" : {
+            "*" : {
+              "from" : "0xefffffffffffe28d07a0be63b",
+              "to" : "0xefffffffffffe28d07946cf17"
+            }
+          },
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x17",
+              "to" : "0x18"
+            }
+          },
+          "storage" : { }
+        }
+      },
+      "trace" : [ ],
+      "vmTrace" : null
+    }, {
+      "output" : "0x",
+      "stateDiff" : {
+        "0x0000000000000000000000000000000000000000" : {
+          "balance" : {
+            "*" : {
+              "from" : "0x393f0f1838685c9c2",
+              "to" : "0x393f0f1838751bedb"
+            }
+          },
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : { }
+        },
+        "0x2a504b5e7ec284aca5b6f49716611237239f0b97" : {
+          "balance" : {
+            "+" : "0x0"
+          },
+          "code" : {
+            "+" : "0x"
+          },
+          "nonce" : {
+            "+" : "0x1"
+          },
+          "storage" : { }
+        },
+        "0x627306090abab3a6e1400e9345bc60c78a8bef57" : {
+          "balance" : {
+            "*" : {
+              "from" : "0xefffffffffffe28d07946cf17",
+              "to" : "0xefffffffffffe28d0787ad9fe"
+            }
+          },
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x18",
+              "to" : "0x19"
+            }
+          },
+          "storage" : { }
+        }
+      },
+      "trace" : [ ],
+      "vmTrace" : null
+    }, {
+      "output" : "0x600035ff",
+      "stateDiff" : {
+        "0x0000000000000000000000000000000000000000" : {
+          "balance" : {
+            "*" : {
+              "from" : "0x393f0f1838751bedb",
+              "to" : "0x393f0f1838816d5ff"
+            }
+          },
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : { }
+        },
+        "0x627306090abab3a6e1400e9345bc60c78a8bef57" : {
+          "balance" : {
+            "*" : {
+              "from" : "0xefffffffffffe28d0787ad9fe",
+              "to" : "0xefffffffffffe28d077b5c2da"
+            }
+          },
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x19",
+              "to" : "0x1a"
+            }
+          },
+          "storage" : { }
+        },
+        "0xbd2c938b9f6bfc1a66368d08cb44dc3eb2ae27be" : {
+          "balance" : {
+            "+" : "0x0"
+          },
+          "code" : {
+            "+" : "0x600035ff"
+          },
+          "nonce" : {
+            "+" : "0x1"
+          },
+          "storage" : { }
+        }
+      },
+      "trace" : [ ],
+      "vmTrace" : null
+    }, {
+      "output" : "0x",
+      "stateDiff" : {
+        "0x0000000000000000000000000000000000000000" : {
+          "balance" : {
+            "*" : {
+              "from" : "0x393f0f1838816d5ff",
+              "to" : "0x393f0f183889d866a"
+            }
+          },
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : { }
+        },
+        "0x627306090abab3a6e1400e9345bc60c78a8bef57" : {
+          "balance" : {
+            "*" : {
+              "from" : "0xefffffffffffe28d077b5c2da",
+              "to" : "0xefffffffffffe28d0772f126f"
+            }
+          },
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x1a",
+              "to" : "0x1b"
+            }
+          },
+          "storage" : { }
+        }
+      },
+      "trace" : [ ],
+      "vmTrace" : null
+    }, {
+      "output" : "0x600035ff",
+      "stateDiff" : {
+        "0x0000000000000000000000000000000000000000" : {
+          "balance" : {
+            "*" : {
+              "from" : "0x393f0f183889d866a",
+              "to" : "0x393f0f18389629d8e"
+            }
+          },
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : { }
+        },
+        "0x627306090abab3a6e1400e9345bc60c78a8bef57" : {
+          "balance" : {
+            "*" : {
+              "from" : "0xefffffffffffe28d0772f126f",
+              "to" : "0xefffffffffffe28d07669fb4b"
+            }
+          },
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x1b",
+              "to" : "0x1c"
+            }
+          },
+          "storage" : { }
+        },
+        "0x8acee021a27779d8e98b9650722676b850b25e11" : {
+          "balance" : {
+            "+" : "0x0"
+          },
+          "code" : {
+            "+" : "0x600035ff"
+          },
+          "nonce" : {
+            "+" : "0x1"
+          },
+          "storage" : { }
+        }
+      },
+      "trace" : [ ],
+      "vmTrace" : null
+    }, {
+      "output" : "0x",
+      "stateDiff" : {
+        "0x0000000000000000000000000000000000000000" : {
+          "balance" : {
+            "*" : {
+              "from" : "0x393f0f18389629d8e",
+              "to" : "0x393f0f18389e92307"
+            }
+          },
+          "code" : "=",
+          "nonce" : "=",
+          "storage" : { }
+        },
+        "0x627306090abab3a6e1400e9345bc60c78a8bef57" : {
+          "balance" : {
+            "*" : {
+              "from" : "0xefffffffffffe28d07669fb4b",
+              "to" : "0xefffffffffffe28d075e375d2"
+            }
+          },
+          "code" : "=",
+          "nonce" : {
+            "*" : {
+              "from" : "0x1c",
+              "to" : "0x1d"
+            }
+          },
+          "storage" : { }
+        }
+      },
+      "trace" : [ ],
+      "vmTrace" : null
+    } ],
+    "id" : 1
+  },
+  "statusCode" : 200
+}

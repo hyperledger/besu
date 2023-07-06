@@ -1,34 +1,53 @@
 ---
 version: 2.1
 orbs:
-  win: circleci/windows@2.2.0
+  win: circleci/windows@5.0
 
 executors:
-  besu_executor_med: # 2cpu, 4G ram
+  besu_executor_small:
     docker:
-      - image: circleci/openjdk:11.0.8-jdk-buster
-        auth:
-          username: $DOCKER_USER_RO
-          password: $DOCKER_PASSWORD_RO
-    resource_class: medium
+      - image: cimg/openjdk:17.0
+    resource_class: small
     working_directory: ~/project
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
 
+  besu_executor_med: # 2cpu, 4G ram
+    docker:
+      - image: cimg/openjdk:17.0
+    resource_class: medium
+    working_directory: ~/project
+    environment:
+      architecture: "amd64"
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
+
+  besu_arm64_executor_med: # 2cpu, 8G ram
+    machine: #https://circleci.com/developer/machine/image/ubuntu-2204
+      image: ubuntu-2204:2022.10.2
+    resource_class: arm.medium
+    working_directory: ~/project
+    environment:
+      architecture: "arm64"
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2
+
   besu_executor_xl: # 8cpu, 16G ram
     docker:
-      - image: circleci/openjdk:11.0.8-jdk-buster
-        auth:
-          username: $DOCKER_USER_RO
-          password: $DOCKER_PASSWORD_RO
+      - image: cimg/openjdk:17.0
     resource_class: xlarge
     working_directory: ~/project
     environment:
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4
 
-notify:
-  webhooks:
-    - url: $HUBOT_URL
+  xl_machine_executor:
+    machine: #https://circleci.com/developer/machine/image/ubuntu-2204
+      image: ubuntu-2204:2022.10.2
+    resource_class: xlarge
+
+  trivy_executor:
+    docker:
+      - image: docker:stable-git
+    resource_class: small
+    working_directory: ~/project
 
 commands:
   prepare:
@@ -36,10 +55,16 @@ commands:
     steps:
       - checkout
       - run:
-          name: Install Packages - LibSodium
+          name: Install Packages - LibSodium, nssdb
           command: |
             sudo apt-get update
-            sudo apt-get install -y libsodium23 libsodium-dev apt-transport-https
+            sudo apt-get install -y libsodium23 libsodium-dev libjemalloc-dev apt-transport-https haveged libnss3-tools
+            sudo service haveged restart
+            java --version
+      - restore_gradle_cache
+  restore_gradle_cache:
+    description: "Restore Gradle cache"
+    steps:
       - restore_cache:
           name: Restore cached gradle dependencies
           keys:
@@ -50,6 +75,10 @@ commands:
   capture_test_results:
     description: "Capture test results"
     steps:
+      - run:
+          name: Jacoco
+          command: |
+            ./gradlew --no-daemon jacocoTestReport
       - run:
           name: Gather test results
           when: always
@@ -64,6 +93,8 @@ commands:
             done
       - store_test_results:
           path: build/test-results
+      - store_artifacts:
+          path: besu/build/reports/jacoco
 
   capture_test_logs:
     description: "Capture test logs"
@@ -80,13 +111,9 @@ jobs:
     steps:
       - prepare
       - run:
-          name: DCO check
-          command: |
-            ./scripts/dco_check.sh
-      - run:
           name: Assemble
           command: |
-            ./gradlew --no-daemon clean spotlessCheck compileJava compileTestJava assemble
+            ./gradlew --no-daemon clean compileJava compileTestJava assemble
       - save_cache:
           name: Caching gradle dependencies
           key: deps-{{ checksum "gradle/versions.gradle" }}-{{ .Branch }}-{{ .Revision }}
@@ -99,9 +126,10 @@ jobs:
             - ./
       - store_artifacts:
           name: Distribution artifacts
-          path:  build/distributions
+          path: build/distributions
           destination: distributions
           when: always
+
   testWindows:
     executor: win/default
     steps:
@@ -122,6 +150,31 @@ jobs:
             build\distributions\besu\bin\besu.bat --help
             build\distributions\besu\bin\besu.bat --version
 
+  dockerScan:
+    executor: trivy_executor
+    steps:
+      - checkout
+      - restore_gradle_cache
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Install trivy
+          command: |
+            apk add --update-cache --upgrade curl bash
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+      - run:
+          name: Scan with trivy
+          shell: /bin/sh
+          command: |
+            for FILE in $(ls docker)
+            do
+              if [[ $FILE == "test.sh" || $FILE == "tests" ]]; then
+                continue
+              fi
+              docker pull -q "hyperledger/besu:develop-$FILE"
+              trivy -q image --exit-code 1 --no-progress --severity HIGH,CRITICAL "hyperledger/besu:develop-$FILE"
+            done
+
   unitTests:
     executor: besu_executor_xl
     steps:
@@ -136,7 +189,7 @@ jobs:
       - capture_test_results
 
   integrationTests:
-    executor: besu_executor_xl
+    executor: xl_machine_executor
     steps:
       - prepare
       - attach_workspace:
@@ -145,10 +198,6 @@ jobs:
           name: IntegrationTests
           command: |
             ./gradlew --no-daemon integrationTest
-      - run:
-          name: Javadoc
-          command: |
-            ./gradlew --no-daemon javadoc
       - run:
           name: CompileJmh
           command: |
@@ -163,22 +212,22 @@ jobs:
           at: ~/project
       - run:
           name: ReferenceTests
-          no_output_timeout: 20m
+          no_output_timeout: 30m
           command: |
             git submodule update --init --recursive
             ./gradlew --no-daemon referenceTest
       - capture_test_results
 
   acceptanceTests:
-    parallelism: 8
-    executor: besu_executor_xl
+    parallelism: 4
+    executor: xl_machine_executor
     steps:
       - prepare
       - attach_workspace:
           at: ~/project
       - run:
-          name: AcceptanceTests
-          no_output_timeout: 40m
+          name: AcceptanceTests (Mainnet)
+          no_output_timeout: 20m
           command: |
             CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
               | sed 's@.*/src/test/java/@@' \
@@ -187,7 +236,73 @@ jobs:
               | circleci tests split --split-by=timings --timings-type=classname)
             # Format the arguments to "./gradlew test"
             GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
-            ./gradlew --no-daemon acceptanceTest $GRADLE_ARGS
+            ./gradlew --no-daemon acceptanceTestMainnet $GRADLE_ARGS
+      - capture_test_results
+      - capture_test_logs
+
+  acceptanceTestsCliqueBft:
+    parallelism: 6
+    executor: xl_machine_executor
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: AcceptanceTests (Non-Mainnet)
+          no_output_timeout: 20m
+          command: |
+            CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
+              | sed 's@.*/src/test/java/@@' \
+              | sed 's@/@.@g' \
+              | sed 's/.\{5\}$//' \
+              | circleci tests split --split-by=timings --timings-type=classname)
+            # Format the arguments to "./gradlew test"
+            GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
+            ./gradlew --no-daemon acceptanceTestCliqueBft $GRADLE_ARGS
+      - capture_test_results
+      - capture_test_logs
+
+  acceptanceTestsPrivacy:
+    parallelism: 6
+    executor: xl_machine_executor
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: AcceptanceTests (Non-Mainnet)
+          no_output_timeout: 20m
+          command: |
+            CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
+              | sed 's@.*/src/test/java/@@' \
+              | sed 's@/@.@g' \
+              | sed 's/.\{5\}$//' \
+              | circleci tests split --split-by=timings --timings-type=classname)
+            # Format the arguments to "./gradlew test"
+            GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
+            ./gradlew --no-daemon acceptanceTestPrivacy $GRADLE_ARGS
+      - capture_test_results
+      - capture_test_logs
+
+  acceptanceTestsPermissioning:
+    parallelism: 6
+    executor: xl_machine_executor
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: AcceptanceTests (Non-Mainnet)
+          no_output_timeout: 20m
+          command: |
+            CLASSNAMES=$(circleci tests glob "acceptance-tests/tests/src/test/java/**/*.java" \
+              | sed 's@.*/src/test/java/@@' \
+              | sed 's@/@.@g' \
+              | sed 's/.\{5\}$//' \
+              | circleci tests split --split-by=timings --timings-type=classname)
+            # Format the arguments to "./gradlew test"
+            GRADLE_ARGS=$(echo $CLASSNAMES | awk '{for (i=1; i<=NF; i++) print "--tests",$i}')
+            ./gradlew --no-daemon acceptanceTestPermissioning $GRADLE_ARGS
       - capture_test_results
       - capture_test_logs
 
@@ -199,9 +314,13 @@ jobs:
           at: ~/project
       - setup_remote_docker
       - run:
-          name: hadoLint_openjdk_11
+          name: hadoLint_openjdk_17
           command: |
-            docker run --rm -i hadolint/hadolint < docker/openjdk-11/Dockerfile
+            docker run --rm -i hadolint/hadolint < docker/openjdk-17/Dockerfile
+      - run:
+          name: hadoLint_openjdk_17_debug
+          command: |
+            docker run --rm -i hadolint/hadolint < docker/openjdk-17-debug/Dockerfile
       - run:
           name: hadoLint_openjdk_latest
           command: |
@@ -221,6 +340,40 @@ jobs:
             curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.9/goss-linux-amd64 -o ./docker/tests/goss-linux-amd64
             ./gradlew --no-daemon testDocker
 
+  buildArm64Docker:
+    executor: besu_arm64_executor_med
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: hadoLint_openjdk_17
+          command: |
+            docker run --rm -i hadolint/hadolint < docker/openjdk-17/Dockerfile
+      - run:
+          name: hadoLint_openjdk_latest
+          command: |
+            docker run --rm -i hadolint/hadolint < docker/openjdk-latest/Dockerfile
+      - run:
+          name: hadoLint_graalvm
+          command: |
+            docker run --rm -i hadolint/hadolint < docker/graalvm/Dockerfile
+      - run:
+          name: Java_17
+          command: |
+            sudo apt install -q --assume-yes openjdk-17-jre-headless openjdk-17-jdk-headless
+            sudo update-java-alternatives -a
+      - run:
+          name: build image
+          command: |
+            ./gradlew --no-daemon distDocker
+      - run:
+          name: test image
+          command: |
+            mkdir -p docker/reports
+            curl -L https://github.com/aelsabbahy/goss/releases/download/v0.3.9/goss-linux-arm -o ./docker/tests/goss-linux-arm64
+            ./gradlew --no-daemon testDocker
+
   publish:
     executor: besu_executor_med
     steps:
@@ -230,7 +383,7 @@ jobs:
       - run:
           name: Publish
           command: |
-            ./gradlew --no-daemon bintrayUpload
+            ./gradlew --no-daemon artifactoryPublish
 
   publishDocker:
     executor: besu_executor_med
@@ -243,9 +396,34 @@ jobs:
           name: Publish Docker
           command: |
             docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
-            # temporarily commented out because AWS credentials are broken
-            # docker login "${ACR_REPO}" --username "${ACR_USER_RW}" --password "${ACR_PASSWORD_RW}"
             ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
+
+  publishArm64Docker:
+    executor: besu_arm64_executor_med
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Java_17
+          command: |
+            sudo apt install -q --assume-yes openjdk-17-jre-headless openjdk-17-jdk-headless
+            sudo update-java-alternatives -a
+      - run:
+          name: Publish Docker
+          command: |
+            docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
+            ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
+  manifestDocker:
+    executor: besu_executor_med
+    steps:
+      - prepare
+      - setup_remote_docker
+      - run:
+          name: Create and publish docker manifest
+          command: |
+            docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
+            ./gradlew --no-daemon "-Pbranch=${CIRCLE_BRANCH}" --parallel manifestDocker
 
 workflows:
   version: 2
@@ -253,62 +431,97 @@ workflows:
     jobs:
       - assemble
       - unitTests:
-          requires:
+           requires:
             - assemble
-          context:
-            - besu-dockerhub-ro
       - testWindows:
           requires:
             - assemble
       - referenceTests:
           requires:
             - assemble
-          context:
-            - besu-dockerhub-ro            
       - integrationTests:
           requires:
             - assemble
-          context:
-            - besu-dockerhub-ro            
       - acceptanceTests:
           requires:
             - assemble
-          context:
-            - besu-dockerhub-ro            
+      - acceptanceTestsCliqueBft:
+          requires:
+            - assemble
+      - acceptanceTestsPrivacy:
+          requires:
+            - assemble
+      - acceptanceTestsPermissioning:
+          requires:
+            - assemble
       - buildDocker:
           requires:
-            - unitTests
-          context:
-            - besu-dockerhub-ro            
+            - assemble
+      - buildArm64Docker:
+          requires:
+            - assemble
       - publish:
           filters:
             branches:
               only:
-                - master
+                - main
                 - /^release-.*/
           requires:
+            - assemble
             - integrationTests
             - unitTests
             - acceptanceTests
             - referenceTests
             - buildDocker
-            - buildDocker
-          context:
-            - besu-dockerhub-ro
       - publishDocker:
           filters:
             branches:
               only:
-                - master
+                - main
                 - /^release-.*/
           requires:
+            - assemble
             - integrationTests
             - unitTests
             - acceptanceTests
             - referenceTests
             - buildDocker
           context:
-            - besu-dockerhub-ro
             - besu-dockerhub-rw
-            - besu-acr-rw
+      - publishArm64Docker:
+          filters:
+            branches:
+              only:
+                - main
+                - /^release-.*/
+          requires:
+            - integrationTests
+            - unitTests
+            - acceptanceTests
+            - referenceTests
+            - buildArm64Docker
+          context:
+            - besu-dockerhub-rw
+      - manifestDocker:
+          filters:
+            branches:
+              only:
+                - main
+                - /^release-.*/
+          requires:
+            - publishDocker
+            - publishArm64Docker
+          context:
+            - besu-dockerhub-rw
 
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 19 * * *"
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - assemble
+      - dockerScan

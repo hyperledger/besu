@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,15 +31,29 @@ import java.util.concurrent.CountDownLatch;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-@Ignore
+/** The Abstract key value storage test. */
+@Disabled
 public abstract class AbstractKeyValueStorageTest {
 
+  /**
+   * Create store key value storage.
+   *
+   * @return the key value storage
+   * @throws Exception the exception
+   */
   protected abstract KeyValueStorage createStore() throws Exception;
 
+  /**
+   * Two stores are independent.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void twoStoresAreIndependent() throws Exception {
     final KeyValueStorage store1 = createStore();
@@ -55,6 +70,11 @@ public abstract class AbstractKeyValueStorageTest {
     assertThat(result).isEmpty();
   }
 
+  /**
+   * Put.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void put() throws Exception {
     final KeyValueStorage store = createStore();
@@ -73,6 +93,11 @@ public abstract class AbstractKeyValueStorageTest {
     assertThat(store.get(key)).contains(secondValue);
   }
 
+  /**
+   * Stream keys.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void streamKeys() throws Exception {
     final KeyValueStorage store = createStore();
@@ -83,10 +108,15 @@ public abstract class AbstractKeyValueStorageTest {
             .collect(toUnmodifiableList());
     keys.forEach(key -> tx.put(key, bytesFromHexString("0ABC")));
     tx.commit();
-    assertThat(store.streamKeys().collect(toUnmodifiableSet()))
+    assertThat(store.stream().map(Pair::getKey).collect(toUnmodifiableSet()))
         .containsExactlyInAnyOrder(keys.toArray(new byte[][] {}));
   }
 
+  /**
+   * Gets all keys that.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void getAllKeysThat() throws Exception {
     final KeyValueStorage store = createStore();
@@ -103,6 +133,11 @@ public abstract class AbstractKeyValueStorageTest {
             bytesFromHexString("10"), bytesFromHexString("11"), bytesFromHexString("12"));
   }
 
+  /**
+   * Contains key.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void containsKey() throws Exception {
     final KeyValueStorage store = createStore();
@@ -118,6 +153,11 @@ public abstract class AbstractKeyValueStorageTest {
     assertThat(store.containsKey(key)).isTrue();
   }
 
+  /**
+   * Remove existing.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void removeExisting() throws Exception {
     final KeyValueStorage store = createStore();
@@ -134,6 +174,11 @@ public abstract class AbstractKeyValueStorageTest {
     assertThat(store.get(key)).isEmpty();
   }
 
+  /**
+   * Remove existing same transaction.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void removeExistingSameTransaction() throws Exception {
     final KeyValueStorage store = createStore();
@@ -147,6 +192,11 @@ public abstract class AbstractKeyValueStorageTest {
     assertThat(store.get(key)).isEmpty();
   }
 
+  /**
+   * Remove non existent.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void removeNonExistent() throws Exception {
     final KeyValueStorage store = createStore();
@@ -158,6 +208,11 @@ public abstract class AbstractKeyValueStorageTest {
     assertThat(store.get(key)).isEmpty();
   }
 
+  /**
+   * Concurrent update.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void concurrentUpdate() throws Exception {
     final int keyCount = 1000;
@@ -196,6 +251,11 @@ public abstract class AbstractKeyValueStorageTest {
     store.close();
   }
 
+  /**
+   * Transaction commit.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void transactionCommit() throws Exception {
     final KeyValueStorage store = createStore();
@@ -228,6 +288,11 @@ public abstract class AbstractKeyValueStorageTest {
     assertThat(store.get(bytesOf(4))).contains(bytesOf(8));
   }
 
+  /**
+   * Transaction rollback.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void transactionRollback() throws Exception {
     final KeyValueStorage store = createStore();
@@ -260,6 +325,11 @@ public abstract class AbstractKeyValueStorageTest {
     assertThat(store.get(bytesOf(4))).isEmpty();
   }
 
+  /**
+   * Transaction commit empty.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void transactionCommitEmpty() throws Exception {
     final KeyValueStorage store = createStore();
@@ -267,6 +337,11 @@ public abstract class AbstractKeyValueStorageTest {
     tx.commit();
   }
 
+  /**
+   * Transaction rollback empty.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void transactionRollbackEmpty() throws Exception {
     final KeyValueStorage store = createStore();
@@ -274,70 +349,147 @@ public abstract class AbstractKeyValueStorageTest {
     tx.rollback();
   }
 
-  @Test(expected = IllegalStateException.class)
+  /**
+   * Transaction put after commit.
+   *
+   * @throws Exception the exception
+   */
+  @Test
   public void transactionPutAfterCommit() throws Exception {
-    final KeyValueStorage store = createStore();
-    final KeyValueStorageTransaction tx = store.startTransaction();
-    tx.commit();
-    tx.put(bytesOf(1), bytesOf(1));
+    Assertions.assertThatThrownBy(
+            () -> {
+              final KeyValueStorage store = createStore();
+              final KeyValueStorageTransaction tx = store.startTransaction();
+              tx.commit();
+              tx.put(bytesOf(1), bytesOf(1));
+            })
+        .isInstanceOf(IllegalStateException.class);
   }
 
-  @Test(expected = IllegalStateException.class)
+  /**
+   * Transaction remove after commit.
+   *
+   * @throws Exception the exception
+   */
+  @Test
   public void transactionRemoveAfterCommit() throws Exception {
-    final KeyValueStorage store = createStore();
-    final KeyValueStorageTransaction tx = store.startTransaction();
-    tx.commit();
-    tx.remove(bytesOf(1));
+    Assertions.assertThatThrownBy(
+            () -> {
+              final KeyValueStorage store = createStore();
+              final KeyValueStorageTransaction tx = store.startTransaction();
+              tx.commit();
+              tx.remove(bytesOf(1));
+            })
+        .isInstanceOf(IllegalStateException.class);
   }
 
-  @Test(expected = IllegalStateException.class)
+  /**
+   * Transaction put after rollback.
+   *
+   * @throws Exception the exception
+   */
+  @Test
   public void transactionPutAfterRollback() throws Exception {
-    final KeyValueStorage store = createStore();
-    final KeyValueStorageTransaction tx = store.startTransaction();
-    tx.rollback();
-    tx.put(bytesOf(1), bytesOf(1));
+    Assertions.assertThatThrownBy(
+            () -> {
+              final KeyValueStorage store = createStore();
+              final KeyValueStorageTransaction tx = store.startTransaction();
+              tx.rollback();
+              tx.put(bytesOf(1), bytesOf(1));
+            })
+        .isInstanceOf(IllegalStateException.class);
   }
 
-  @Test(expected = IllegalStateException.class)
+  /**
+   * Transaction remove after rollback.
+   *
+   * @throws Exception the exception
+   */
+  @Test
   public void transactionRemoveAfterRollback() throws Exception {
-    final KeyValueStorage store = createStore();
-    final KeyValueStorageTransaction tx = store.startTransaction();
-    tx.rollback();
-    tx.remove(bytesOf(1));
+    Assertions.assertThatThrownBy(
+            () -> {
+              final KeyValueStorage store = createStore();
+              final KeyValueStorageTransaction tx = store.startTransaction();
+              tx.rollback();
+              tx.remove(bytesOf(1));
+            })
+        .isInstanceOf(IllegalStateException.class);
   }
 
-  @Test(expected = IllegalStateException.class)
+  /**
+   * Transaction commit after rollback.
+   *
+   * @throws Exception the exception
+   */
+  @Test
   public void transactionCommitAfterRollback() throws Exception {
-    final KeyValueStorage store = createStore();
-    final KeyValueStorageTransaction tx = store.startTransaction();
-    tx.rollback();
-    tx.commit();
+    Assertions.assertThatThrownBy(
+            () -> {
+              final KeyValueStorage store = createStore();
+              final KeyValueStorageTransaction tx = store.startTransaction();
+              tx.rollback();
+              tx.commit();
+            })
+        .isInstanceOf(IllegalStateException.class);
   }
 
-  @Test(expected = IllegalStateException.class)
+  /**
+   * Transaction commit twice.
+   *
+   * @throws Exception the exception
+   */
+  @Test
   public void transactionCommitTwice() throws Exception {
-    final KeyValueStorage store = createStore();
-    final KeyValueStorageTransaction tx = store.startTransaction();
-    tx.commit();
-    tx.commit();
+    Assertions.assertThatThrownBy(
+            () -> {
+              final KeyValueStorage store = createStore();
+              final KeyValueStorageTransaction tx = store.startTransaction();
+              tx.commit();
+              tx.commit();
+            })
+        .isInstanceOf(IllegalStateException.class);
   }
 
-  @Test(expected = IllegalStateException.class)
+  /**
+   * Transaction rollback after commit.
+   *
+   * @throws Exception the exception
+   */
+  @Test
   public void transactionRollbackAfterCommit() throws Exception {
-    final KeyValueStorage store = createStore();
-    final KeyValueStorageTransaction tx = store.startTransaction();
-    tx.commit();
-    tx.rollback();
+    Assertions.assertThatThrownBy(
+            () -> {
+              final KeyValueStorage store = createStore();
+              final KeyValueStorageTransaction tx = store.startTransaction();
+              tx.commit();
+              tx.rollback();
+            })
+        .isInstanceOf(IllegalStateException.class);
   }
 
-  @Test(expected = IllegalStateException.class)
+  /**
+   * Transaction rollback twice.
+   *
+   * @throws Exception the exception
+   */
+  @Test
   public void transactionRollbackTwice() throws Exception {
-    final KeyValueStorage store = createStore();
-    final KeyValueStorageTransaction tx = store.startTransaction();
-    tx.rollback();
-    tx.rollback();
+    Assertions.assertThatThrownBy(
+            () -> {
+              final KeyValueStorage store = createStore();
+              final KeyValueStorageTransaction tx = store.startTransaction();
+              tx.rollback();
+              tx.rollback();
+            })
+        .isInstanceOf(IllegalStateException.class);
   }
 
+  /**
+   * Two transactions.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void twoTransactions() throws Exception {
     final KeyValueStorage store = createStore();
@@ -355,6 +507,11 @@ public abstract class AbstractKeyValueStorageTest {
     assertThat(store.get(bytesOf(2))).contains(bytesOf(2));
   }
 
+  /**
+   * Transaction isolation.
+   *
+   * @throws Exception the exception
+   */
   @Test
   public void transactionIsolation() throws Exception {
     final int keyCount = 1000;
@@ -402,6 +559,12 @@ public abstract class AbstractKeyValueStorageTest {
     store.close();
   }
 
+  /**
+   * Bytes from hex string byte [ ].
+   *
+   * @param hex the hex
+   * @return the byte [ ]
+   */
   /*
    * Used to mimic the wrapping with Bytes performed in Besu
    */
@@ -409,7 +572,24 @@ public abstract class AbstractKeyValueStorageTest {
     return Bytes.fromHexString(hex).toArrayUnsafe();
   }
 
+  /**
+   * Bytes of byte [ ].
+   *
+   * @param bytes the bytes
+   * @return the byte [ ]
+   */
   protected byte[] bytesOf(final int... bytes) {
     return Bytes.of(bytes).toArrayUnsafe();
+  }
+
+  /**
+   * Create a sub folder from the given path, that will not conflict with other folders.
+   *
+   * @param folder the folder in which to create the sub folder
+   * @return the path representing the sub folder
+   * @throws Exception if the folder cannot be created
+   */
+  protected Path getTempSubFolder(final Path folder) throws Exception {
+    return java.nio.file.Files.createTempDirectory(folder, null);
   }
 }

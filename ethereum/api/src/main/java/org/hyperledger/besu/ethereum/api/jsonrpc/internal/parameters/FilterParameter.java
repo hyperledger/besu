@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import static java.util.Collections.emptyList;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogTopic;
+import org.hyperledger.besu.evm.log.LogTopic;
 
 import java.util.List;
 import java.util.Objects;
@@ -30,34 +30,47 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.google.common.base.MoreObjects;
 
 public class FilterParameter {
 
   private final BlockParameter fromBlock;
   private final BlockParameter toBlock;
+  private final List<Address> fromAddress;
+  private final List<Address> toAddress;
   private final List<Address> addresses;
   private final List<List<LogTopic>> topics;
   private final Optional<Hash> maybeBlockHash;
   private final LogsQuery logsQuery;
+  private final Optional<Integer> after, count;
   private final boolean isValid;
 
   @JsonCreator
   public FilterParameter(
       @JsonProperty("fromBlock") final BlockParameter fromBlock,
       @JsonProperty("toBlock") final BlockParameter toBlock,
+      @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+          @JsonProperty("fromAddress")
+          final List<Address> fromAddress,
+      @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY) @JsonProperty("toAddress")
+          final List<Address> toAddress,
       @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY) @JsonProperty("address")
           final List<Address> address,
       @JsonDeserialize(using = TopicsDeserializer.class) @JsonProperty("topics")
           final List<List<LogTopic>> topics,
-      @JsonProperty("blockHash") @JsonAlias({"blockhash"}) final Hash blockHash) {
+      @JsonProperty("blockHash") @JsonAlias({"blockhash"}) final Hash blockHash,
+      @JsonProperty("after") final Integer after,
+      @JsonProperty("count") final Integer count) {
     this.isValid = blockHash == null || (fromBlock == null && toBlock == null);
     this.fromBlock = fromBlock != null ? fromBlock : BlockParameter.LATEST;
     this.toBlock = toBlock != null ? toBlock : BlockParameter.LATEST;
+    this.fromAddress = fromAddress != null ? fromAddress : emptyList();
+    this.toAddress = toAddress != null ? toAddress : emptyList();
     this.addresses = address != null ? address : emptyList();
     this.topics = topics != null ? topics : emptyList();
     this.logsQuery = new LogsQuery(addresses, topics);
     this.maybeBlockHash = Optional.ofNullable(blockHash);
+    this.after = Optional.ofNullable(after);
+    this.count = Optional.ofNullable(count);
   }
 
   public BlockParameter getFromBlock() {
@@ -66,6 +79,14 @@ public class FilterParameter {
 
   public BlockParameter getToBlock() {
     return toBlock;
+  }
+
+  public List<Address> getFromAddress() {
+    return fromAddress;
+  }
+
+  public List<Address> getToAddress() {
+    return toAddress;
   }
 
   public List<Address> getAddresses() {
@@ -84,33 +105,74 @@ public class FilterParameter {
     return logsQuery;
   }
 
+  public Optional<Integer> getAfter() {
+    return after;
+  }
+
+  public Optional<Integer> getCount() {
+    return count;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     FilterParameter that = (FilterParameter) o;
-    return fromBlock.equals(that.fromBlock)
-        && toBlock.equals(that.toBlock)
-        && addresses.equals(that.addresses)
-        && topics.equals(that.topics)
-        && maybeBlockHash.equals(that.maybeBlockHash)
-        && logsQuery.equals(that.logsQuery);
+    return isValid == that.isValid
+        && Objects.equals(fromBlock, that.fromBlock)
+        && Objects.equals(toBlock, that.toBlock)
+        && Objects.equals(fromAddress, that.fromAddress)
+        && Objects.equals(toAddress, that.toAddress)
+        && Objects.equals(addresses, that.addresses)
+        && Objects.equals(topics, that.topics)
+        && Objects.equals(maybeBlockHash, that.maybeBlockHash)
+        && Objects.equals(logsQuery, that.logsQuery)
+        && Objects.equals(after, that.after)
+        && Objects.equals(count, that.count);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(fromBlock, toBlock, addresses, topics, maybeBlockHash, logsQuery);
+    return Objects.hash(
+        fromBlock,
+        toBlock,
+        fromAddress,
+        toAddress,
+        addresses,
+        topics,
+        maybeBlockHash,
+        logsQuery,
+        after,
+        count,
+        isValid);
   }
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("fromBlock", fromBlock)
-        .add("toBlock", toBlock)
-        .add("addresses", addresses)
-        .add("topics", topics)
-        .add("blockHash", maybeBlockHash)
-        .toString();
+    return "FilterParameter{"
+        + "fromBlock="
+        + fromBlock
+        + ", toBlock="
+        + toBlock
+        + ", fromAddress="
+        + fromAddress
+        + ", toAddress="
+        + toAddress
+        + ", addresses="
+        + addresses
+        + ", topics="
+        + topics
+        + ", maybeBlockHash="
+        + maybeBlockHash
+        + ", logsQuery="
+        + logsQuery
+        + ", after="
+        + after
+        + ", count="
+        + count
+        + ", isValid="
+        + isValid
+        + '}';
   }
 
   public boolean isValid() {

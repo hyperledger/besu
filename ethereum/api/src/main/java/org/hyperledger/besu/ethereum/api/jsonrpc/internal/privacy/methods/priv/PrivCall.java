@@ -21,24 +21,27 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AbstractBlockParameterMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 public class PrivCall extends AbstractBlockParameterMethod {
 
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final PrivacyIdProvider privacyIdProvider;
   private final PrivacyController privacyController;
 
   public PrivCall(
       final BlockchainQueries blockchainQueries,
       final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+      final PrivacyIdProvider privacyIdProvider) {
     super(blockchainQueries);
-    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
+    this.privacyIdProvider = privacyIdProvider;
     this.privacyController = privacyController;
   }
 
@@ -58,13 +61,10 @@ public class PrivCall extends AbstractBlockParameterMethod {
     final JsonCallParameter callParams = validateAndGetCallParams(request);
     final String privacyGroupId = request.getRequiredParameter(0, String.class);
 
-    final String enclavePublicKey = enclavePublicKeyProvider.getEnclaveKey(request.getUser());
-
-    PrivUtil.checkMembershipForAuthenticatedUser(
-        privacyController, enclavePublicKeyProvider, request, privacyGroupId, blockNumber);
+    final String privacyUserId = privacyIdProvider.getPrivacyUserId(request.getUser());
 
     return privacyController
-        .simulatePrivateTransaction(privacyGroupId, enclavePublicKey, callParams, blockNumber)
+        .simulatePrivateTransaction(privacyGroupId, privacyUserId, callParams, blockNumber)
         .map(
             result ->
                 result
@@ -75,8 +75,7 @@ public class PrivCall extends AbstractBlockParameterMethod {
                                 request.getRequest().getId(), result.getOutput().toString())),
                         reason ->
                             new JsonRpcErrorResponse(
-                                request.getRequest().getId(),
-                                JsonRpcErrorConverter.convertTransactionInvalidReason(reason))))
+                                request.getRequest().getId(), errorResponse(result, reason))))
         .orElse(validRequestBlockNotFound(request));
   }
 
@@ -87,6 +86,19 @@ public class PrivCall extends AbstractBlockParameterMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     return (JsonRpcResponse) findResultByParamType(requestContext);
+  }
+
+  private JsonRpcError errorResponse(
+      final TransactionProcessingResult result, final TransactionInvalidReason reason) {
+    final JsonRpcError jsonRpcError;
+    if (result.getRevertReason().isPresent() && result.getRevertReason().get().size() >= 4) {
+      jsonRpcError = JsonRpcError.REVERT_ERROR;
+      jsonRpcError.setData(result.getRevertReason().get().toHexString());
+    } else {
+      jsonRpcError = JsonRpcErrorConverter.convertTransactionInvalidReason(reason);
+    }
+
+    return jsonRpcError;
   }
 
   private JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {

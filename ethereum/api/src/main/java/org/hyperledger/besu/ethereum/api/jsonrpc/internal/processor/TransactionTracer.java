@@ -16,20 +16,24 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 
 import static java.util.function.Predicate.isEqual;
 
+import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
-import org.hyperledger.besu.ethereum.vm.OperationTracer;
-import org.hyperledger.besu.ethereum.vm.StandardJsonTracer;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.worldstate.StackedUpdater;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -42,12 +46,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /** Used to produce debug traces of transactions */
 public class TransactionTracer {
 
   public static final String TRACE_PATH = "traces";
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private final BlockReplay blockReplay;
 
@@ -56,24 +64,32 @@ public class TransactionTracer {
   }
 
   public Optional<TransactionTrace> traceTransaction(
-      final Hash blockHash, final Hash transactionHash, final DebugOperationTracer tracer) {
-    return blockReplay.beforeTransactionInBlock(
-        blockHash,
-        transactionHash,
-        (transaction, header, blockchain, worldState, transactionProcessor) -> {
-          final TransactionProcessingResult result =
-              processTransaction(
-                  header,
-                  blockchain,
-                  worldState.updater(),
-                  transaction,
-                  transactionProcessor,
-                  tracer);
-          return new TransactionTrace(transaction, result, tracer.getTraceFrames());
-        });
+      final Tracer.TraceableState mutableWorldState,
+      final Hash blockHash,
+      final Hash transactionHash,
+      final DebugOperationTracer tracer) {
+    Optional<TransactionTrace> transactionTrace =
+        blockReplay.beforeTransactionInBlock(
+            mutableWorldState,
+            blockHash,
+            transactionHash,
+            (transaction, header, blockchain, transactionProcessor, dataGasPrice) -> {
+              final TransactionProcessingResult result =
+                  processTransaction(
+                      header,
+                      blockchain,
+                      mutableWorldState.updater(),
+                      transaction,
+                      transactionProcessor,
+                      tracer,
+                      dataGasPrice);
+              return new TransactionTrace(transaction, result, tracer.getTraceFrames());
+            });
+    return transactionTrace;
   }
 
   public List<String> traceTransactionToFile(
+      final MutableWorldState mutableWorldState,
       final Hash blockHash,
       final Optional<TransactionTraceParams> transactionTraceParams,
       final Path traceDir) {
@@ -96,10 +112,19 @@ public class TransactionTracer {
     return blockReplay
         .performActionWithBlock(
             blockHash,
-            (body, header, blockchain, worldState, transactionProcessor) -> {
-              final WorldUpdater worldUpdater = worldState.updater();
+            (body, header, blockchain, transactionProcessor, protocolSpec) -> {
+              WorldUpdater stackedUpdater = mutableWorldState.updater().updater();
               final List<String> traces = new ArrayList<>();
+              final Wei dataGasPrice =
+                  protocolSpec
+                      .getFeeMarket()
+                      .dataPrice(
+                          blockchain
+                              .getBlockHeader(header.getParentHash())
+                              .flatMap(BlockHeader::getExcessDataGas)
+                              .orElse(DataGas.ZERO));
               for (int i = 0; i < body.getTransactions().size(); i++) {
+                ((StackedUpdater<?, ?>) stackedUpdater).markTransactionBoundary();
                 final Transaction transaction = body.getTransactions().get(i);
                 if (selectedHash.isEmpty()
                     || selectedHash.filter(isEqual(transaction.getHash())).isPresent()) {
@@ -110,12 +135,13 @@ public class TransactionTracer {
                         processTransaction(
                             header,
                             blockchain,
-                            worldUpdater,
+                            stackedUpdater,
                             transaction,
                             transactionProcessor,
-                            new StandardJsonTracer(out, showMemory));
+                            new StandardJsonTracer(out, showMemory, true, true),
+                            dataGasPrice);
                     out.println(
-                        StandardJsonTracer.summaryTrace(
+                        summaryTrace(
                             transaction, timer.stop().elapsed(TimeUnit.NANOSECONDS), result));
                     traces.add(traceFile.getPath());
                   } catch (FileNotFoundException e) {
@@ -126,10 +152,11 @@ public class TransactionTracer {
                   processTransaction(
                       header,
                       blockchain,
-                      worldUpdater,
+                      stackedUpdater,
                       transaction,
                       transactionProcessor,
-                      OperationTracer.NO_TRACING);
+                      OperationTracer.NO_TRACING,
+                      dataGasPrice);
                 }
               }
               return Optional.of(traces);
@@ -159,7 +186,8 @@ public class TransactionTracer {
       final WorldUpdater worldUpdater,
       final Transaction transaction,
       final MainnetTransactionProcessor transactionProcessor,
-      final OperationTracer tracer) {
+      final OperationTracer tracer,
+      final Wei dataGasPrice) {
     return transactionProcessor.processTransaction(
         blockchain,
         worldUpdater,
@@ -167,8 +195,21 @@ public class TransactionTracer {
         transaction,
         header.getCoinbase(),
         tracer,
-        new BlockHashLookup(header, blockchain),
+        new CachingBlockHashLookup(header, blockchain),
         false,
-        ImmutableTransactionValidationParams.builder().isAllowFutureNonce(true).build());
+        ImmutableTransactionValidationParams.builder().isAllowFutureNonce(true).build(),
+        dataGasPrice);
+  }
+
+  public static String summaryTrace(
+      final Transaction transaction, final long timer, final TransactionProcessingResult result) {
+    final ObjectNode summaryLine = OBJECT_MAPPER.createObjectNode();
+    summaryLine.put("output", result.getOutput().toUnprefixedHexString());
+    summaryLine.put(
+        "gasUsed",
+        StandardJsonTracer.shortNumber(
+            UInt256.valueOf(transaction.getGasLimit() - result.getGasRemaining())));
+    summaryLine.put("time", timer);
+    return summaryLine.toString();
   }
 }

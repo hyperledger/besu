@@ -17,11 +17,12 @@ package org.hyperledger.besu.config;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class CliqueConfigOptionsTest {
 
@@ -30,7 +31,7 @@ public class CliqueConfigOptionsTest {
 
   @Test
   public void shouldGetEpochLengthFromConfig() {
-    final CliqueConfigOptions config = fromConfigOptions(singletonMap("EpochLength", 10_000));
+    final CliqueConfigOptions config = fromConfigOptions(singletonMap("epochlength", 10_000));
     assertThat(config.getEpochLength()).isEqualTo(10_000);
   }
 
@@ -48,7 +49,7 @@ public class CliqueConfigOptionsTest {
 
   @Test
   public void shouldGetBlockPeriodFromConfig() {
-    final CliqueConfigOptions config = fromConfigOptions(singletonMap("BlockPeriodSeconds", 5));
+    final CliqueConfigOptions config = fromConfigOptions(singletonMap("blockperiodseconds", 5));
     assertThat(config.getBlockPeriodSeconds()).isEqualTo(5);
   }
 
@@ -62,6 +63,13 @@ public class CliqueConfigOptionsTest {
   public void shouldGetDefaultBlockPeriodFromDefaultConfig() {
     assertThat(CliqueConfigOptions.DEFAULT.getBlockPeriodSeconds())
         .isEqualTo(EXPECTED_DEFAULT_BLOCK_PERIOD);
+  }
+
+  @Test
+  public void shouldThrowOnNonPositiveBlockPeriod() {
+    final CliqueConfigOptions config = fromConfigOptions(singletonMap("blockperiodseconds", -1));
+    assertThatThrownBy(() -> config.getBlockPeriodSeconds())
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   private CliqueConfigOptions fromConfigOptions(final Map<String, Object> cliqueConfigOptions) {

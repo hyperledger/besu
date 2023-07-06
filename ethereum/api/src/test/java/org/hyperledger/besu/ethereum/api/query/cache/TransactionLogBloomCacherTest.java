@@ -23,15 +23,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Log;
-import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,6 +40,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Before;
@@ -65,7 +66,7 @@ public class TransactionLogBloomCacherTest {
   private TransactionLogBloomCacher transactionLogBloomCacher;
 
   @BeforeClass
-  public static void setupClass() throws IOException {
+  public static void setupClass() {
     final Address testAddress = Address.fromHexString("0x123456");
     final Bytes testMessage = Bytes.fromHexString("0x9876");
     final Log testLog = new Log(testAddress, testMessage, List.of());
@@ -100,13 +101,22 @@ public class TransactionLogBloomCacherTest {
             null,
             Hash.EMPTY,
             0,
+            null,
+            null,
+            null,
             new MainnetBlockHeaderFunctions());
     testHash = fakeHeader.getHash();
     when(blockchain.getBlockHeader(anyLong())).thenReturn(Optional.of(fakeHeader));
-    when(scheduler.scheduleFutureTask(any(Runnable.class), any(Duration.class)))
+    when(scheduler.scheduleFutureTask(any(Supplier.class), any(Duration.class)))
         .thenAnswer(
             invocation -> {
-              invocation.getArgument(0, Runnable.class).run();
+              invocation.getArgument(0, Supplier.class).get();
+              return null;
+            });
+    when(scheduler.scheduleComputationTask(any(Supplier.class)))
+        .thenAnswer(
+            invocation -> {
+              invocation.getArgument(0, Supplier.class).get();
               return null;
             });
     transactionLogBloomCacher =
@@ -128,12 +138,12 @@ public class TransactionLogBloomCacherTest {
 
     createLogBloomCache(logBloom);
 
-    createBlock(3L);
+    final BlockHeader header = createBlock(3L);
 
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 3);
 
     transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-        blockchain.getBlockHeader(3).get(), Optional.empty(), Optional.of(logBloom));
+        header, Optional.empty(), Optional.of(logBloom));
 
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 4);
     assertThat(cacheDir.getRoot().list().length).isEqualTo(1);
@@ -152,7 +162,7 @@ public class TransactionLogBloomCacherTest {
     }
 
     transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-        blockchain.getBlockHeader(4).get(), Optional.empty(), Optional.of(logBloom));
+        blockHeaders.get(4), Optional.empty(), Optional.of(logBloom));
 
     for (int i = 0; i < 5; i++) {
       assertThat(blockHeaders.get(i).getLogsBloom().toArray())
@@ -193,7 +203,7 @@ public class TransactionLogBloomCacherTest {
     }
 
     transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-        blockchain.getBlockHeader(4).get(), Optional.empty(), Optional.of(logBloom));
+        firstBranch.get(4), Optional.empty(), Optional.of(logBloom));
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 5);
     for (int i = 0; i < 5; i++) {
       assertThat(firstBranch.get(i).getLogsBloom().toArray())
@@ -208,7 +218,7 @@ public class TransactionLogBloomCacherTest {
     }
 
     transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-        blockchain.getBlockHeader(4).get(), blockchain.getBlockHeader(1), Optional.of(logBloom));
+        forkBranch.get(4), Optional.of(firstBranch.get(1)), Optional.of(logBloom));
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 5);
     for (int i = 0; i < 5; i++) {
       assertThat(forkBranch.get(i).getLogsBloom().toArray())
@@ -216,7 +226,7 @@ public class TransactionLogBloomCacherTest {
     }
 
     transactionLogBloomCacher.cacheLogsBloomForBlockHeader(
-        blockchain.getBlockHeader(1).get(), Optional.empty(), Optional.of(logBloom));
+        forkBranch.get(1), Optional.empty(), Optional.of(logBloom));
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 2);
 
     assertThat(cacheDir.getRoot().list().length).isEqualTo(1);
@@ -231,7 +241,7 @@ public class TransactionLogBloomCacherTest {
   private byte[] readLogBloomCache(final File logBloom, final long number) throws IOException {
     try (final RandomAccessFile randomAccessFile = new RandomAccessFile(logBloom, "r")) {
       randomAccessFile.seek(BLOOM_BITS_LENGTH * number);
-      byte[] retrievedLog = new byte[BLOOM_BITS_LENGTH];
+      final byte[] retrievedLog = new byte[BLOOM_BITS_LENGTH];
       randomAccessFile.read(retrievedLog);
       return retrievedLog;
     }
@@ -264,6 +274,9 @@ public class TransactionLogBloomCacherTest {
             null,
             Hash.EMPTY,
             0,
+            null,
+            null,
+            null,
             new MainnetBlockHeaderFunctions());
     testHash = fakeHeader.getHash();
     when(blockchain.getBlockHeader(number)).thenReturn(Optional.of(fakeHeader));

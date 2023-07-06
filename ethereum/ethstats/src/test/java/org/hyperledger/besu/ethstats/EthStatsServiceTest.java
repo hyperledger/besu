@@ -30,11 +30,12 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethstats.request.EthStatsRequest;
-import org.hyperledger.besu.ethstats.util.ImmutableNetstatsUrl;
-import org.hyperledger.besu.ethstats.util.NetstatsUrl;
+import org.hyperledger.besu.ethstats.util.EthStatsConnectOptions;
+import org.hyperledger.besu.ethstats.util.ImmutableEthStatsConnectOptions;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.math.BigInteger;
 import java.time.Duration;
@@ -73,8 +74,8 @@ public class EthStatsServiceTest {
   @Mock private HttpClient httpClient;
   @Mock private WebSocket webSocket;
 
-  final NetstatsUrl netstatsUrl =
-      ImmutableNetstatsUrl.builder()
+  final EthStatsConnectOptions ethStatsConnectOptions =
+      ImmutableEthStatsConnectOptions.builder()
           .nodeName("besu-node")
           .secret("secret")
           .host("127.0.0.1")
@@ -83,7 +84,7 @@ public class EthStatsServiceTest {
           .build();
 
   final EnodeURL node =
-      EnodeURL.builder()
+      EnodeURLImpl.builder()
           .nodeId(
               "50203c6bfca6874370e71aecc8958529fd723feb05013dc1abca8fc1fff845c5259faba05852e9dfe5ce172a7d6e7c2a3a5eaa8b541c8af15ea5518bbff5f2fa")
           .useDefaultPorts()
@@ -107,7 +108,7 @@ public class EthStatsServiceTest {
   public void shouldRetryWhenLocalEnodeNotAvailable() throws Exception {
     ethStatsService =
         new EthStatsService(
-            netstatsUrl,
+            ethStatsConnectOptions,
             blockchainQueries,
             ethProtocolManager,
             transactionPool,
@@ -126,7 +127,7 @@ public class EthStatsServiceTest {
   public void shouldSendHelloMessage() {
     ethStatsService =
         new EthStatsService(
-            netstatsUrl,
+            ethStatsConnectOptions,
             blockchainQueries,
             ethProtocolManager,
             transactionPool,
@@ -159,7 +160,7 @@ public class EthStatsServiceTest {
 
     ethStatsService =
         new EthStatsService(
-            netstatsUrl,
+            ethStatsConnectOptions,
             blockchainQueries,
             ethProtocolManager,
             transactionPool,
@@ -191,7 +192,7 @@ public class EthStatsServiceTest {
   public void shouldSendFullReportIfHelloMessageSucceeded() {
     ethStatsService =
         new EthStatsService(
-            netstatsUrl,
+            ethStatsConnectOptions,
             blockchainQueries,
             ethProtocolManager,
             transactionPool,

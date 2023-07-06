@@ -14,9 +14,10 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.transaction.perm;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.permissioning.NodeSmartContractV2PermissioningController;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.NodeRequests;
@@ -56,7 +57,7 @@ public class NodeSmartContractPermissioningConnectionIsAllowedV2Transaction
   }
 
   private org.web3j.protocol.core.methods.request.Transaction payload() {
-    final EnodeURL enodeURL = EnodeURL.fromURI(((RunnableNode) node).enodeUrl());
+    final EnodeURL enodeURL = EnodeURLImpl.fromURI(((RunnableNode) node).enodeUrl());
     final Bytes payload = createPayload(enodeURL);
 
     return org.web3j.protocol.core.methods.request.Transaction.createFunctionCallTransaction(

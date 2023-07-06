@@ -31,17 +31,16 @@ import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.time.Duration;
-import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PipelineChainDownloader implements ChainDownloader {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PipelineChainDownloader.class);
   static final Duration PAUSE_AFTER_ERROR_DURATION = Duration.ofSeconds(2);
   private final SyncState syncState;
   private final SyncTargetManager syncTargetManager;
@@ -98,7 +97,7 @@ public class PipelineChainDownloader implements ChainDownloader {
 
   private CompletableFuture<Void> selectSyncTargetAndDownload() {
     return syncTargetManager
-        .findSyncTarget(Optional.empty())
+        .findSyncTarget()
         .thenCompose(this::startDownloadForSyncTarget)
         .thenRun(pipelineCompleteCounter::inc);
   }
@@ -106,10 +105,11 @@ public class PipelineChainDownloader implements ChainDownloader {
   private CompletionStage<Void> repeatUnlessDownloadComplete(
       @SuppressWarnings("unused") final Void result) {
     syncState.clearSyncTarget();
-    if (syncTargetManager.shouldContinueDownloading()) {
+    if (syncTargetManager.shouldContinueDownloading()
+        && !syncState.hasReachedTerminalDifficulty().orElse(Boolean.FALSE)) {
       return performDownload();
     } else {
-      LOG.info("Chain download complete");
+      LOG.info("PipelineChain download complete");
       return completedFuture(null);
     }
   }
@@ -118,14 +118,12 @@ public class PipelineChainDownloader implements ChainDownloader {
     pipelineErrorCounter.inc();
     if (ExceptionUtils.rootCause(error) instanceof InvalidBlockException) {
       LOG.warn(
-          "Invalid block detected.  Disconnecting from sync target. {}",
+          "Invalid block detected (BREACH_OF_PROTOCOL). Disconnecting from sync target. {}",
           ExceptionUtils.rootCause(error).getMessage());
       syncState.disconnectSyncTarget(DisconnectReason.BREACH_OF_PROTOCOL);
     }
 
-    if (!cancelled.get()
-        && syncTargetManager.shouldContinueDownloading()
-        && !(ExceptionUtils.rootCause(error) instanceof CancellationException)) {
+    if (!cancelled.get() && syncTargetManager.shouldContinueDownloading()) {
       logDownloadFailure("Chain download failed. Restarting after short delay.", error);
       // Allowing the normal looping logic to retry after a brief delay.
       return scheduler.scheduleFutureTask(() -> completedFuture(null), PAUSE_AFTER_ERROR_DURATION);
@@ -138,9 +136,10 @@ public class PipelineChainDownloader implements ChainDownloader {
 
   private void logDownloadFailure(final String message, final Throwable error) {
     final Throwable rootCause = ExceptionUtils.rootCause(error);
-    if (rootCause instanceof CancellationException || rootCause instanceof InterruptedException) {
-      LOG.trace(message, error);
-    } else if (rootCause instanceof EthTaskException) {
+    if (rootCause instanceof CancellationException
+        || rootCause instanceof InterruptedException
+        || rootCause instanceof EthTaskException
+        || rootCause instanceof IllegalArgumentException) {
       LOG.debug(message, error);
     } else if (rootCause instanceof InvalidBlockException) {
       LOG.warn(message, error);
@@ -150,12 +149,23 @@ public class PipelineChainDownloader implements ChainDownloader {
   }
 
   private synchronized CompletionStage<Void> startDownloadForSyncTarget(final SyncTarget target) {
-    if (cancelled.get()) {
+    if (cancelled.get() || syncState.hasReachedTerminalDifficulty().orElse(Boolean.FALSE)) {
       return CompletableFuture.failedFuture(
           new CancellationException("Chain download was cancelled"));
     }
+    if (!syncTargetManager.shouldContinueDownloading()) {
+      return CompletableFuture.completedFuture(null);
+    }
+
     syncState.setSyncTarget(target.peer(), target.commonAncestor());
+    LOG.atDebug()
+        .setMessage("Starting download pipeline for sync target {}, common ancestor {} ({})")
+        .addArgument(target)
+        .addArgument(() -> target.commonAncestor().getNumber())
+        .addArgument(() -> target.commonAncestor().getBlockHash())
+        .log();
     currentDownloadPipeline = downloadPipelineFactory.createDownloadPipelineForSyncTarget(target);
-    return scheduler.startPipeline(currentDownloadPipeline);
+    return downloadPipelineFactory.startPipeline(
+        scheduler, syncState, target, currentDownloadPipeline);
   }
 }

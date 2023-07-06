@@ -16,7 +16,11 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionReceipt;
+import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.log.LogTopic;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +59,7 @@ public class LogWithMetadata extends Log
   }
 
   public static List<LogWithMetadata> generate(
+      final int logIndexOffset,
       final TransactionReceipt receipt,
       final long number,
       final Hash blockHash,
@@ -62,26 +67,37 @@ public class LogWithMetadata extends Log
       final int transactionIndex,
       final boolean removed) {
     return generate(
-        receipt.getLogs(), number, blockHash, transactionHash, transactionIndex, removed);
+        logIndexOffset,
+        receipt.getLogsList(),
+        number,
+        blockHash,
+        transactionHash,
+        transactionIndex,
+        removed);
   }
 
   public static List<LogWithMetadata> generate(
       final Block block, final List<TransactionReceipt> receipts, final boolean removed) {
     final List<LogWithMetadata> logsWithMetadata = new ArrayList<>();
+    int logIndexOffset = 0;
     for (int txi = 0; txi < receipts.size(); ++txi) {
-      logsWithMetadata.addAll(
+      final List<LogWithMetadata> logs =
           generate(
+              logIndexOffset,
               receipts.get(txi),
               block.getHeader().getNumber(),
               block.getHash(),
               block.getBody().getTransactions().get(txi).getHash(),
               txi,
-              removed));
+              removed);
+      logIndexOffset += logs.size();
+      logsWithMetadata.addAll(logs);
     }
     return logsWithMetadata;
   }
 
   public static List<LogWithMetadata> generate(
+      final int logIndexOffset,
       final PrivateTransactionReceipt receipt,
       final long number,
       final Hash blockHash,
@@ -89,10 +105,17 @@ public class LogWithMetadata extends Log
       final int transactionIndex,
       final boolean removed) {
     return generate(
-        receipt.getLogs(), number, blockHash, transactionHash, transactionIndex, removed);
+        logIndexOffset,
+        receipt.getLogs(),
+        number,
+        blockHash,
+        transactionHash,
+        transactionIndex,
+        removed);
   }
 
   private static List<LogWithMetadata> generate(
+      final int logIndexOffset,
       final List<Log> receiptLogs,
       final long number,
       final Hash blockHash,
@@ -104,7 +127,7 @@ public class LogWithMetadata extends Log
     for (int logIndex = 0; logIndex < receiptLogs.size(); ++logIndex) {
       logs.add(
           new LogWithMetadata(
-              logIndex,
+              logIndexOffset + logIndex,
               number,
               blockHash,
               transactionHash,
@@ -170,10 +193,10 @@ public class LogWithMetadata extends Log
     return new LogWithMetadata(
         pluginObject.getLogIndex(),
         pluginObject.getBlockNumber(),
-        Hash.fromPlugin(pluginObject.getBlockHash()),
-        Hash.fromPlugin(pluginObject.getTransactionHash()),
+        pluginObject.getBlockHash(),
+        pluginObject.getTransactionHash(),
         pluginObject.getTransactionIndex(),
-        Address.fromPlugin(pluginObject.getLogger()),
+        pluginObject.getLogger(),
         pluginObject.getData(),
         pluginObject.getTopics().stream().map(LogTopic::create).collect(Collectors.toList()),
         pluginObject.isRemoved());

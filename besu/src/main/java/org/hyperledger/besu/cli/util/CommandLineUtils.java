@@ -20,12 +20,23 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.Logger;
+import com.google.common.base.Strings;
+import org.slf4j.Logger;
 import picocli.CommandLine;
 
+/** The Command line utils. */
 public class CommandLineUtils {
+  /** The constant DEPENDENCY_WARNING_MSG. */
   public static final String DEPENDENCY_WARNING_MSG =
       "{} has been ignored because {} was not defined on the command line.";
+  /** The constant MULTI_DEPENDENCY_WARNING_MSG. */
+  public static final String MULTI_DEPENDENCY_WARNING_MSG =
+      "{} ignored because none of {} was defined.";
+  /** The constant DEPRECATION_WARNING_MSG. */
+  public static final String DEPRECATION_WARNING_MSG = "{} has been deprecated, use {} instead.";
+  /** The constant DEPRECATED_AND_USELESS_WARNING_MSG. */
+  public static final String DEPRECATED_AND_USELESS_WARNING_MSG =
+      "{} has been deprecated and is now useless, remove it.";
 
   /**
    * Check if options are passed that require an option to be true to have any effect and log a
@@ -51,20 +62,86 @@ public class CommandLineUtils {
       final boolean isMainOptionCondition,
       final List<String> dependentOptionsNames) {
     if (isMainOptionCondition) {
-      final String affectedOptions =
-          commandLine.getCommandSpec().options().stream()
-              .filter(
-                  option ->
-                      Arrays.stream(option.names()).anyMatch(dependentOptionsNames::contains)
-                          && !option.stringValues().isEmpty())
-              .map(option -> option.names()[0])
-              .collect(
-                  Collectors.collectingAndThen(
-                      Collectors.toList(), StringUtils.joiningWithLastDelimiter(", ", " and ")));
+      final String affectedOptions = getAffectedOptions(commandLine, dependentOptionsNames);
 
       if (!affectedOptions.isEmpty()) {
         logger.warn(DEPENDENCY_WARNING_MSG, affectedOptions, mainOptionName);
       }
+    }
+  }
+
+  /**
+   * Check if options are passed that require an option to be true to have any effect and log a
+   * warning with the list of affected options. Multiple main options may be passed to check
+   * dependencies against.
+   *
+   * <p>Note that in future version of PicoCLI some options dependency mechanism may be implemented
+   * that could replace this. See https://github.com/remkop/picocli/issues/295
+   *
+   * @param logger the logger instance used to log the warning
+   * @param commandLine the command line containing the options we want to check display.
+   * @param stringToLog the string that is going to be logged.
+   * @param isMainOptionCondition the conditions to test dependent options against. If all
+   *     conditions are true, dependent options will be checked.
+   * @param dependentOptionsNames a list of option names that can't be used if condition is met.
+   *     Example: if --min-gas-price is in the list and condition is that --miner-enabled should not
+   *     be false, we log a warning.
+   */
+  public static void checkMultiOptionDependencies(
+      final Logger logger,
+      final CommandLine commandLine,
+      final String stringToLog,
+      final List<Boolean> isMainOptionCondition,
+      final List<String> dependentOptionsNames) {
+    if (isMainOptionCondition.stream().allMatch(isTrue -> isTrue)) {
+      final String affectedOptions = getAffectedOptions(commandLine, dependentOptionsNames);
+
+      if (!affectedOptions.isEmpty()) {
+        logger.warn(stringToLog);
+      }
+    }
+  }
+
+  /**
+   * Fail if option doesnt meet requirement.
+   *
+   * @param commandLine the command line
+   * @param errorMessage the error message
+   * @param requirement the requirement
+   * @param dependentOptionsNames the dependent options names
+   */
+  public static void failIfOptionDoesntMeetRequirement(
+      final CommandLine commandLine,
+      final String errorMessage,
+      final boolean requirement,
+      final List<String> dependentOptionsNames) {
+    if (!requirement) {
+      final String affectedOptions = getAffectedOptions(commandLine, dependentOptionsNames);
+
+      if (!affectedOptions.isEmpty()) {
+        throw new CommandLine.ParameterException(commandLine, errorMessage);
+      }
+    }
+  }
+
+  private static String getAffectedOptions(
+      final CommandLine commandLine, final List<String> dependentOptionsNames) {
+    return commandLine.getCommandSpec().options().stream()
+        .filter(option -> Arrays.stream(option.names()).anyMatch(dependentOptionsNames::contains))
+        .filter(CommandLineUtils::isOptionSet)
+        .map(option -> option.names()[0])
+        .collect(
+            Collectors.collectingAndThen(
+                Collectors.toList(), StringUtils.joiningWithLastDelimiter(", ", " and ")));
+  }
+
+  private static boolean isOptionSet(final CommandLine.Model.OptionSpec option) {
+    final CommandLine commandLine = option.command().commandLine();
+    try {
+      return !option.stringValues().isEmpty()
+          || !Strings.isNullOrEmpty(commandLine.getDefaultValueProvider().defaultValue(option));
+    } catch (final Exception e) {
+      return false;
     }
   }
 }

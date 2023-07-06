@@ -19,8 +19,8 @@ import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 
 import java.util.concurrent.TimeUnit;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Responsible for ensuring the timestamp of a block is not more than "acceptableClockDriftSeconds'
@@ -28,7 +28,8 @@ import org.apache.logging.log4j.Logger;
  */
 public class TimestampBoundedByFutureParameter implements DetachedBlockHeaderValidationRule {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(TimestampBoundedByFutureParameter.class);
   private final long acceptableClockDriftSeconds;
 
   public TimestampBoundedByFutureParameter(final long acceptableClockDriftSeconds) {

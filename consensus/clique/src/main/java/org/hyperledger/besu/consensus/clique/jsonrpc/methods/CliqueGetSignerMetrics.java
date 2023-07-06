@@ -15,20 +15,28 @@
 package org.hyperledger.besu.consensus.clique.jsonrpc.methods;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
 import org.hyperledger.besu.consensus.common.jsonrpc.AbstractGetSignerMetricsMethod;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
+/** The Clique get signer metrics. */
 public class CliqueGetSignerMetrics extends AbstractGetSignerMetricsMethod
     implements JsonRpcMethod {
 
+  /**
+   * Instantiates a new Clique get signer metrics.
+   *
+   * @param validatorProvider the validator provider
+   * @param blockInterface the block interface
+   * @param blockchainQueries the blockchain queries
+   */
   public CliqueGetSignerMetrics(
-      final VoteTallyCache voteTallyCache,
+      final ValidatorProvider validatorProvider,
       final BlockInterface blockInterface,
       final BlockchainQueries blockchainQueries) {
-    super(voteTallyCache, blockInterface, blockchainQueries);
+    super(validatorProvider, blockInterface, blockchainQueries);
   }
 
   @Override

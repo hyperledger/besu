@@ -31,24 +31,27 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class FullSyncTargetManager extends SyncTargetManager {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(FullSyncTargetManager.class);
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
+  private final SyncTerminationCondition terminationCondition;
 
   FullSyncTargetManager(
       final SynchronizerConfiguration config,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final SyncTerminationCondition terminationCondition) {
     super(config, protocolSchedule, protocolContext, ethContext, metricsSystem);
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
+    this.terminationCondition = terminationCondition;
   }
 
   @Override
@@ -56,13 +59,14 @@ class FullSyncTargetManager extends SyncTargetManager {
     final BlockHeader commonAncestor = syncTarget.commonAncestor();
     if (protocolContext
         .getWorldStateArchive()
-        .isWorldStateAvailable(commonAncestor.getStateRoot())) {
+        .isWorldStateAvailable(commonAncestor.getStateRoot(), commonAncestor.getHash())) {
       return Optional.of(syncTarget);
     } else {
       LOG.warn(
-          "Disconnecting {} because world state is not available at common ancestor at block {}",
+          "Disconnecting {} because world state is not available at common ancestor at block {} ({})",
           syncTarget.peer(),
-          commonAncestor.getNumber());
+          commonAncestor.getNumber(),
+          commonAncestor.getHash());
       syncTarget.peer().disconnect(DisconnectReason.USELESS_PEER);
       return Optional.empty();
     }
@@ -72,18 +76,26 @@ class FullSyncTargetManager extends SyncTargetManager {
   protected CompletableFuture<Optional<EthPeer>> selectBestAvailableSyncTarget() {
     final Optional<EthPeer> maybeBestPeer = ethContext.getEthPeers().bestPeerWithHeightEstimate();
     if (!maybeBestPeer.isPresent()) {
-      LOG.info("No sync target, waiting for peers: {}", ethContext.getEthPeers().peerCount());
+      LOG.info(
+          "Unable to find sync target. Currently checking {} peers for usefulness",
+          ethContext.getEthPeers().peerCount());
       return completedFuture(Optional.empty());
     } else {
       final EthPeer bestPeer = maybeBestPeer.get();
       if (isSyncTargetReached(bestPeer)) {
         // We're caught up to our best peer, try again when a new peer connects
         LOG.debug(
-            "Caught up to best peer: {}, Peers: {}",
-            bestPeer.chainState().getEstimatedHeight(),
+            "Caught up to best peer: {}, chain state: {}. Current peers: {}",
+            bestPeer,
+            bestPeer.chainState(),
             ethContext.getEthPeers().peerCount());
         return completedFuture(Optional.empty());
       }
+      LOG.debug(
+          "Best peer: {}, chain state: {}. Current peers: {}",
+          bestPeer,
+          bestPeer.chainState(),
+          ethContext.getEthPeers().peerCount());
       return completedFuture(maybeBestPeer);
     }
   }
@@ -96,6 +108,6 @@ class FullSyncTargetManager extends SyncTargetManager {
 
   @Override
   public boolean shouldContinueDownloading() {
-    return true;
+    return terminationCondition.shouldContinueDownload();
   }
 }

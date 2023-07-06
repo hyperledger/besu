@@ -16,31 +16,87 @@ package org.hyperledger.besu.cli.options.unstable;
 
 import picocli.CommandLine;
 
+/** The Native library CLI options. */
 public class NativeLibraryOptions {
 
   @CommandLine.Option(
       hidden = true,
-      names = {"--Xsecp256k1-native-enabled"},
-      description = "Path to PID file (optional)",
+      names = {"--Xsecp-native-enabled", "--Xsecp256k1-native-enabled"},
+      description =
+          "Per default a native library is used for the signature algorithm. "
+              + "If the Java implementation should be used instead, this option must be set to false",
       arity = "1")
-  private final Boolean nativeSecp256k1 = Boolean.TRUE;
+  private final Boolean nativeSecp = Boolean.TRUE;
 
   @CommandLine.Option(
       hidden = true,
       names = {"--Xaltbn128-native-enabled"},
-      description = "Path to PID file (optional)",
+      description =
+          "Per default a native library is used for altbn128. "
+              + "If the Java implementation should be used instead, this option must be set to false",
       arity = "1")
   private final Boolean nativeAltbn128 = Boolean.TRUE;
 
+  @CommandLine.Option(
+      hidden = true,
+      names = {"--Xblake2bf-native-enabled"},
+      description =
+          "Per default a native library is used for blake2bf if present. "
+              + "If the Java implementation should be used instead, this option must be set to false",
+      arity = "1")
+  private final Boolean nativeBlake2bf = Boolean.TRUE;
+
+  @CommandLine.Option(
+      hidden = true,
+      names = {"--Xmodexp-native-enabled"},
+      description =
+          "Per default a native library is used for modexp. "
+              + "If the Java implementation should be used instead, this option must be set to false",
+      arity = "1")
+  private final Boolean nativeModExp = Boolean.TRUE;
+
+  /**
+   * Create native library options.
+   *
+   * @return the native library options
+   */
   public static NativeLibraryOptions create() {
     return new NativeLibraryOptions();
   }
 
-  public Boolean getNativeSecp256k1() {
-    return nativeSecp256k1;
+  /**
+   * Whether native secp is enabled.
+   *
+   * @return true if enabled, false otherwise.
+   */
+  public Boolean getNativeSecp() {
+    return nativeSecp;
   }
 
+  /**
+   * Whether native Altbn128 is enabled.
+   *
+   * @return true if enabled, false otherwise.
+   */
   public Boolean getNativeAltbn128() {
     return nativeAltbn128;
+  }
+
+  /**
+   * Whether native blake2bf is enabled.
+   *
+   * @return true if enabled, false otherwise.
+   */
+  public Boolean getNativeBlake2bf() {
+    return nativeBlake2bf;
+  }
+
+  /**
+   * Whether native mod exp is enabled.
+   *
+   * @return true if enabled, false otherwise.
+   */
+  public Boolean getNativeModExp() {
+    return nativeModExp;
   }
 }

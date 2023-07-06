@@ -18,26 +18,48 @@ import org.hyperledger.besu.consensus.common.bft.messagewrappers.BftMessage;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
 import org.hyperledger.besu.consensus.ibft.payload.CommitPayload;
 import org.hyperledger.besu.consensus.ibft.payload.PayloadDeserializers;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The Commit. */
 public class Commit extends BftMessage<CommitPayload> {
 
+  /**
+   * Instantiates a new Commit.
+   *
+   * @param payload the payload
+   */
   public Commit(final SignedData<CommitPayload> payload) {
     super(payload);
   }
 
-  public Signature getCommitSeal() {
+  /**
+   * Gets commit seal.
+   *
+   * @return the commit seal
+   */
+  public SECPSignature getCommitSeal() {
     return getPayload().getCommitSeal();
   }
 
+  /**
+   * Gets digest.
+   *
+   * @return the digest
+   */
   public Hash getDigest() {
     return getPayload().getDigest();
   }
 
+  /**
+   * Decode data to Commit.
+   *
+   * @param data the data
+   * @return the commit
+   */
   public static Commit decode(final Bytes data) {
     return new Commit(PayloadDeserializers.readSignedCommitPayloadFrom(RLP.input(data)));
   }

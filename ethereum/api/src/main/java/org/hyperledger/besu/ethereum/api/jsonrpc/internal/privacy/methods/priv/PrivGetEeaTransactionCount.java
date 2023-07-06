@@ -14,36 +14,43 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
-import static org.apache.logging.log4j.LogManager.getLogger;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.GET_PRIVATE_TRANSACTION_NONCE_ERROR;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.EnclavePublicKeyProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
+import org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil;
 
-import org.apache.logging.log4j.Logger;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PrivGetEeaTransactionCount implements JsonRpcMethod {
 
-  private static final Logger LOG = getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PrivGetEeaTransactionCount.class);
 
   private final PrivacyController privacyController;
-  private final EnclavePublicKeyProvider enclavePublicKeyProvider;
+  private final PrivacyIdProvider privacyIdProvider;
 
   public PrivGetEeaTransactionCount(
-      final PrivacyController privacyController,
-      final EnclavePublicKeyProvider enclavePublicKeyProvider) {
+      final PrivacyController privacyController, final PrivacyIdProvider privacyIdProvider) {
     this.privacyController = privacyController;
-    this.enclavePublicKeyProvider = enclavePublicKeyProvider;
+    this.privacyIdProvider = privacyIdProvider;
   }
 
   @Override
@@ -62,13 +69,20 @@ public class PrivGetEeaTransactionCount implements JsonRpcMethod {
     final String privateFrom = requestContext.getRequiredParameter(1, String.class);
     final String[] privateFor = requestContext.getRequiredParameter(2, String[].class);
 
+    final String privacyUserId = privacyIdProvider.getPrivacyUserId(requestContext.getUser());
+
+    if (!privateFrom.equals(privacyUserId)) {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), PRIVATE_FROM_DOES_NOT_MATCH_ENCLAVE_PUBLIC_KEY);
+    }
+
     try {
       final long nonce =
-          privacyController.determineEeaNonce(
+          determineEeaNonce(
               privateFrom,
               privateFor,
               address,
-              enclavePublicKeyProvider.getEnclaveKey(requestContext.getUser()));
+              privacyIdProvider.getPrivacyUserId(requestContext.getUser()));
       return new JsonRpcSuccessResponse(
           requestContext.getRequest().getId(), Quantity.create(nonce));
     } catch (final MultiTenancyValidationException e) {
@@ -80,5 +94,20 @@ public class PrivGetEeaTransactionCount implements JsonRpcMethod {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), GET_PRIVATE_TRANSACTION_NONCE_ERROR);
     }
+  }
+
+  private long determineEeaNonce(
+      final String privateFrom,
+      final String[] privateFor,
+      final Address address,
+      final String privacyUserId) {
+
+    final Bytes from = Bytes.fromBase64String(privateFrom);
+    final List<Bytes> toAddresses =
+        Arrays.stream(privateFor).map(Bytes::fromBase64String).collect(Collectors.toList());
+
+    final Bytes32 privacyGroupId = PrivacyGroupUtil.calculateEeaPrivacyGroupId(from, toAddresses);
+    return privacyController.determineNonce(
+        address, privacyGroupId.toBase64String(), privacyUserId);
   }
 }

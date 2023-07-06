@@ -43,8 +43,19 @@ public final class BlockBodiesMessage extends AbstractMessageData {
 
   public static BlockBodiesMessage create(final Iterable<BlockBody> bodies) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
-    tmp.writeList(bodies, BlockBody::writeTo);
+    tmp.writeList(bodies, BlockBody::writeWrappedBodyTo);
     return new BlockBodiesMessage(tmp.encoded());
+  }
+
+  /**
+   * Create a message with raw, already encoded body data. No checks are performed to validate the
+   * rlp-encoded data.
+   *
+   * @param data An rlp-encoded list of block bodies
+   * @return A new BlockBodiesMessage
+   */
+  public static BlockBodiesMessage createUnsafe(final Bytes data) {
+    return new BlockBodiesMessage(data);
   }
 
   private BlockBodiesMessage(final Bytes data) {
@@ -60,6 +71,6 @@ public final class BlockBodiesMessage extends AbstractMessageData {
     final BlockHeaderFunctions blockHeaderFunctions =
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
     return new BytesValueRLPInput(data, false)
-        .readList(rlp -> BlockBody.readFrom(rlp, blockHeaderFunctions));
+        .readList(rlp -> BlockBody.readWrappedBodyFrom(rlp, blockHeaderFunctions, true));
   }
 }

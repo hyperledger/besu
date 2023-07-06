@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -25,14 +26,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolution;
-import org.hyperledger.besu.ethereum.mainnet.EthHashSolverInputs;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
+import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
 import java.util.Optional;
 
-import com.google.common.io.BaseEncoding;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.Before;
@@ -49,7 +48,7 @@ public class EthSubmitWorkTest {
   private final String hexValue =
       "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 
-  @Mock private EthHashMiningCoordinator miningCoordinator;
+  @Mock private PoWMiningCoordinator miningCoordinator;
 
   @Before
   public void setUp() {
@@ -67,15 +66,14 @@ public class EthSubmitWorkTest {
     final JsonRpcResponse actualResponse = method.response(request);
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.NO_MINING_WORK_FOUND);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
   public void shouldFailIfMissingArguments() {
     final JsonRpcRequestContext request = requestWithParams();
-    final EthHashSolverInputs values =
-        new EthHashSolverInputs(
-            UInt256.fromHexString(hexValue), BaseEncoding.base16().lowerCase().decode(hexValue), 0);
+    final PoWSolverInputs values =
+        new PoWSolverInputs(UInt256.fromHexString(hexValue), Bytes.fromHexString(hexValue), 0);
     when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.of(values));
     assertThatThrownBy(
             () -> method.response(request), "Missing required json rpc parameter at index 0")
@@ -84,21 +82,23 @@ public class EthSubmitWorkTest {
 
   @Test
   public void shouldReturnTrueIfGivenCorrectResult() {
-    final EthHashSolverInputs firstInputs =
-        new EthHashSolverInputs(
+    final PoWSolverInputs firstInputs =
+        new PoWSolverInputs(
             UInt256.fromHexString(
                 "0x0083126e978d4fdf3b645a1cac083126e978d4fdf3b645a1cac083126e978d4f"),
-            new byte[] {
-              15, -114, -104, 87, -95, -36, -17, 120, 52, 1, 124, 61, -6, -66, 78, -27, -57, 118,
-              -18, -64, -103, -91, -74, -121, 42, 91, -14, -98, 101, 86, -43, -51
-            },
+            Bytes.wrap(
+                new byte[] {
+                  15, -114, -104, 87, -95, -36, -17, 120, 52, 1, 124, 61, -6, -66, 78, -27, -57,
+                  118, -18, -64, -103, -91, -74, -121, 42, 91, -14, -98, 101, 86, -43, -51
+                }),
             468);
 
-    final EthHashSolution expectedFirstOutput =
-        new EthHashSolution(
+    final PoWSolution expectedFirstOutput =
+        new PoWSolution(
             -6506032554016940193L,
             Hash.fromHexString(
                 "0xc5e3c33c86d64d0641dd3c86e8ce4628fe0aac0ef7b4c087c5fcaa45d5046d90"),
+            null,
             firstInputs.getPrePowHash());
     final JsonRpcRequestContext request =
         requestWithParams(
@@ -112,7 +112,7 @@ public class EthSubmitWorkTest {
     when(miningCoordinator.submitWork(expectedFirstOutput)).thenReturn(true);
 
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
@@ -123,7 +123,7 @@ public class EthSubmitWorkTest {
     when(miningCoordinator.getWorkDefinition()).thenReturn(Optional.empty());
 
     final JsonRpcResponse actualResponse = method.response(request);
-    assertThat(actualResponse).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {

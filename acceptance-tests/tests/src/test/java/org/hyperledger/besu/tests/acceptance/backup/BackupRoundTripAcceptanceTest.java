@@ -20,8 +20,8 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.JsonUtil;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Wei;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.tests.acceptance.AbstractPreexistingNodeTest;
 import org.hyperledger.besu.tests.acceptance.database.DatabaseMigrationAcceptanceTest;
 import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
@@ -36,10 +36,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
+import javax.annotation.Nonnull;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -139,10 +139,7 @@ public class BackupRoundTripAcceptanceTest extends AbstractPreexistingNodeTest {
         besu.createNode(
             "restore " + testName,
             configureNodeCommands(
-                restorePath,
-                "operator",
-                "x-restore-state",
-                "--backup-path=" + backupPath.toString()));
+                restorePath, "operator", "x-restore-state", "--backup-path=" + backupPath));
     cluster.startNode(restoreNode);
     WaitUtils.waitFor(60, () -> restoreNode.verify(exitedSuccessfully));
 
@@ -185,9 +182,9 @@ public class BackupRoundTripAcceptanceTest extends AbstractPreexistingNodeTest {
     assertThat(rebackupManifest).isEqualTo(backupManifest);
   }
 
-  @NotNull
-  private Function<BesuNodeConfigurationBuilder, BesuNodeConfigurationBuilder>
-      configureNodeCommands(final Path dataPath, final String... commands) {
+  @Nonnull
+  private UnaryOperator<BesuNodeConfigurationBuilder> configureNodeCommands(
+      final Path dataPath, final String... commands) {
     return nodeBuilder -> super.configureNode(nodeBuilder).dataPath(dataPath).run(commands);
   }
 }

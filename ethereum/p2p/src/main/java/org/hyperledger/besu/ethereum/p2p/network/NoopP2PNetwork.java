@@ -16,13 +16,14 @@ package org.hyperledger.besu.ethereum.p2p.network;
 
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.P2PDisabledException;
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.DisconnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.MessageCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -53,10 +54,13 @@ public class NoopP2PNetwork implements P2PNetwork {
   public void subscribeConnect(final ConnectCallback callback) {}
 
   @Override
+  public void subscribeConnectRequest(final ShouldConnectCallback callback) {}
+
+  @Override
   public void subscribeDisconnect(final DisconnectCallback callback) {}
 
   @Override
-  public boolean addMaintainConnectionPeer(final Peer peer) {
+  public boolean addMaintainedConnectionPeer(final Peer peer) {
     throw new P2PDisabledException("P2P networking disabled.  Unable to connect to add peer.");
   }
 
@@ -90,6 +94,9 @@ public class NoopP2PNetwork implements P2PNetwork {
   public Optional<EnodeURL> getLocalEnode() {
     return Optional.empty();
   }
+
+  @Override
+  public void updateNodeRecord() {}
 
   @Override
   public void close() throws IOException {}

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,13 +15,14 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.WorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
-import org.hyperledger.besu.ethereum.trie.MerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,7 +35,7 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
   private final WorldStatePreimageStorage preimageStorage;
   private final WorldStateProofProvider worldStateProof;
 
-  private static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerklePatriciaTrie.EMPTY_TRIE_NODE_HASH);
+  private static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
   public DefaultWorldStateArchive(
       final WorldStateStorage worldStateStorage, final WorldStatePreimageStorage preimageStorage) {
@@ -44,18 +45,24 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public Optional<WorldState> get(final Hash rootHash) {
-    return getMutable(rootHash).map(state -> state);
+  public Optional<WorldState> get(final Hash rootHash, final Hash blockHash) {
+    return getMutable(rootHash, blockHash).map(state -> state);
   }
 
   @Override
-  public boolean isWorldStateAvailable(final Hash rootHash) {
-    return worldStateStorage.isWorldStateAvailable(rootHash);
+  public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
+    return worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
   }
 
   @Override
-  public Optional<MutableWorldState> getMutable(final Hash rootHash) {
-    if (!worldStateStorage.isWorldStateAvailable(rootHash)) {
+  public Optional<MutableWorldState> getMutable(
+      final BlockHeader blockHeader, final boolean isPersistingState) {
+    return getMutable(blockHeader.getStateRoot(), blockHeader.getHash());
+  }
+
+  @Override
+  public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {
+    if (!worldStateStorage.isWorldStateAvailable(rootHash, blockHash)) {
       return Optional.empty();
     }
     return Optional.of(new DefaultMutableWorldState(rootHash, worldStateStorage, preimageStorage));
@@ -63,7 +70,12 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
 
   @Override
   public MutableWorldState getMutable() {
-    return getMutable(EMPTY_ROOT_HASH).get();
+    return getMutable(EMPTY_ROOT_HASH, null).get();
+  }
+
+  @Override
+  public void resetArchiveStateTo(final BlockHeader blockHeader) {
+    // ignore for forest
   }
 
   @Override
@@ -82,5 +94,10 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
       final Address accountAddress,
       final List<UInt256> accountStorageKeys) {
     return worldStateProof.getAccountProof(worldStateRoot, accountAddress, accountStorageKeys);
+  }
+
+  @Override
+  public void close() {
+    // no op
   }
 }

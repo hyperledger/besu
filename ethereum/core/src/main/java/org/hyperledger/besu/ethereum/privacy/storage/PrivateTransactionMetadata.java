@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.privacy.storage;
 
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -22,11 +22,11 @@ import java.util.Objects;
 
 /** Mined private transaction metadata. */
 public class PrivateTransactionMetadata {
-  private final Hash privacyMarkerTransactionHash;
+  private final Hash privateMarkerTransactionHash;
   private final Hash stateRoot;
 
-  public PrivateTransactionMetadata(final Hash privacyMarkerTransactionHash, final Hash stateRoot) {
-    this.privacyMarkerTransactionHash = privacyMarkerTransactionHash;
+  public PrivateTransactionMetadata(final Hash privateMarkerTransactionHash, final Hash stateRoot) {
+    this.privateMarkerTransactionHash = privateMarkerTransactionHash;
     this.stateRoot = stateRoot;
   }
 
@@ -34,14 +34,14 @@ public class PrivateTransactionMetadata {
     return stateRoot;
   }
 
-  public Hash getPrivacyMarkerTransactionHash() {
-    return privacyMarkerTransactionHash;
+  public Hash getPrivateMarkerTransactionHash() {
+    return privateMarkerTransactionHash;
   }
 
   public void writeTo(final RLPOutput out) {
     out.startList();
 
-    out.writeBytes(privacyMarkerTransactionHash);
+    out.writeBytes(privateMarkerTransactionHash);
     out.writeBytes(stateRoot);
 
     out.endList();
@@ -63,12 +63,12 @@ public class PrivateTransactionMetadata {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     final PrivateTransactionMetadata that = (PrivateTransactionMetadata) o;
-    return privacyMarkerTransactionHash.equals(that.privacyMarkerTransactionHash)
+    return privateMarkerTransactionHash.equals(that.privateMarkerTransactionHash)
         && stateRoot.equals(that.stateRoot);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(privacyMarkerTransactionHash, stateRoot);
+    return Objects.hash(privateMarkerTransactionHash, stateRoot);
   }
 }

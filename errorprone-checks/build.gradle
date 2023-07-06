@@ -21,10 +21,12 @@ configurations.maybeCreate("epJavac")
 apply plugin: 'java'
 apply plugin: 'net.ltgt.errorprone'
 
-sourceCompatibility = 11
-targetCompatibility = 11
+sourceCompatibility = 17
+targetCompatibility = 17
 
 dependencies {
+  api 'org.slf4j:slf4j-api'
+
   annotationProcessor 'com.google.auto.service:auto-service'
 
   implementation 'com.google.auto.service:auto-service'
@@ -33,11 +35,36 @@ dependencies {
   implementation 'info.picocli:picocli'
 
   testImplementation 'com.google.errorprone:error_prone_test_helpers'
-  testImplementation 'junit:junit'
-  testImplementation 'org.apache.logging.log4j:log4j-api'
   testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.junit.jupiter:junit-jupiter'
+
+  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 
   epJavac 'com.google.errorprone:error_prone_check_api'
 }
 
 test { testLogging { showStandardStreams = true } }
+
+
+tasks.withType(JavaCompile) {
+  options.compilerArgs += [
+    '--add-exports',
+    'jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED',
+    '--add-exports',
+    'jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED',
+    '--add-exports',
+    'jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED',
+    '--add-exports',
+    'jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED',
+    '--add-exports',
+    'jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED',
+    '--add-exports',
+    'jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED',
+    '--add-exports',
+    'jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED',
+    '--add-exports',
+    'jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED'
+  ]
+}
+
+javadoc { enabled = false }

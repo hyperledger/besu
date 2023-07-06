@@ -27,16 +27,28 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanKind;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * The Pipeline.
+ *
+ * @param <I> the type parameter
+ */
 public class Pipeline<I> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(Pipeline.class);
   private final Pipe<I> inputPipe;
   private final Collection<Stage> stages;
   private final Collection<Pipe<?>> pipes;
   private final CompleterStage<?> completerStage;
   private final AtomicBoolean started = new AtomicBoolean(false);
+  private final Tracer tracer =
+      GlobalOpenTelemetry.getTracer("org.hyperledger.besu.services.pipeline", "1.0.0");
 
   /**
    * Flags that the pipeline is being completed so that when we abort we can close the streams
@@ -47,14 +59,30 @@ public class Pipeline<I> {
   private final AtomicBoolean completing = new AtomicBoolean(false);
 
   private final CompletableFuture<Void> overallFuture = new CompletableFuture<>();
+  private final String name;
+  private final boolean tracingEnabled;
   private volatile List<Future<?>> futures;
 
+  /**
+   * Instantiates a new Pipeline.
+   *
+   * @param inputPipe the input pipe
+   * @param name the name
+   * @param tracingEnabled the tracing enabled
+   * @param stages the stages
+   * @param pipes the pipes
+   * @param completerStage the completer stage
+   */
   Pipeline(
       final Pipe<I> inputPipe,
+      final String name,
+      final boolean tracingEnabled,
       final Collection<Stage> stages,
       final Collection<Pipe<?>> pipes,
       final CompleterStage<?> completerStage) {
     this.inputPipe = inputPipe;
+    this.tracingEnabled = tracingEnabled;
+    this.name = name;
     this.stages = stages;
     this.pipes = pipes;
     this.completerStage = completerStage;
@@ -123,12 +151,24 @@ public class Pipeline<I> {
   private Future<?> runWithErrorHandling(final ExecutorService executorService, final Stage task) {
     return executorService.submit(
         () -> {
+          Span taskSpan = null;
+          if (tracingEnabled) {
+            taskSpan =
+                tracer
+                    .spanBuilder(task.getName())
+                    .setAttribute("pipeline", name)
+                    .setSpanKind(SpanKind.INTERNAL)
+                    .startSpan();
+          }
           final Thread thread = Thread.currentThread();
           final String originalName = thread.getName();
           try {
             thread.setName(originalName + " (" + task.getName() + ")");
             task.run();
           } catch (final Throwable t) {
+            if (tracingEnabled) {
+              taskSpan.setStatus(StatusCode.ERROR);
+            }
             LOG.debug("Unhandled exception in pipeline. Aborting.", t);
             try {
               abort(t);
@@ -139,6 +179,9 @@ public class Pipeline<I> {
               LOG.error("Failed to abort pipeline after error", t2);
             }
           } finally {
+            if (tracingEnabled) {
+              taskSpan.end();
+            }
             thread.setName(originalName);
           }
         });

@@ -19,29 +19,34 @@ import static org.hyperledger.besu.cli.subcommands.RetestethSubCommand.COMMAND_N
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
+import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
+import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.retesteth.RetestethConfiguration;
 import org.hyperledger.besu.ethereum.retesteth.RetestethService;
+import org.hyperledger.besu.util.LogConfigurator;
 
 import java.net.InetAddress;
 import java.nio.file.Path;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Configurator;
-import picocli.CommandLine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
+/** Subcommand to run a Retesteth compatible server for reference tests. */
 @Command(
     name = COMMAND_NAME,
     description = "Run a Retesteth compatible server for reference tests.",
-    mixinStandardHelpOptions = true)
+    mixinStandardHelpOptions = true,
+    versionProvider = VersionProvider.class)
+@SuppressWarnings("unused")
 public class RetestethSubCommand implements Runnable {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(RetestethSubCommand.class);
 
+  /** The constant COMMAND_NAME. */
   public static final String COMMAND_NAME = "retesteth";
 
   /**
@@ -51,18 +56,13 @@ public class RetestethSubCommand implements Runnable {
    */
   public static final int RETESTETH_PORT = 47710;
 
-  @CommandLine.Option(
+  @Option(
       names = {"--data-path"},
       paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP,
       description = "The path to Besu data directory (default: ${DEFAULT-VALUE})")
   private final Path dataPath = DefaultCommandValues.getDefaultBesuDataPath(this);
 
-  @Option(
-      names = {"--logging", "-l"},
-      paramLabel = "<LOG VERBOSITY LEVEL>",
-      description =
-          "Logging verbosity levels: OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL (default: ${DEFAULT-VALUE})")
-  private final Level logLevel = LogManager.getRootLogger().getLevel();
+  @Mixin private LoggingLevelOption loggingLevelOption;
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
@@ -105,9 +105,10 @@ public class RetestethSubCommand implements Runnable {
 
   private void prepareLogging() {
     // set log level per CLI flags
+    final String logLevel = loggingLevelOption.getLogLevel();
     if (logLevel != null) {
-      System.out.println("Setting logging level to " + logLevel.name());
-      Configurator.setAllLevels("", logLevel);
+      System.out.println("Setting logging level to " + logLevel);
+      LogConfigurator.setLevel("", logLevel);
     }
   }
 
@@ -130,7 +131,7 @@ public class RetestethSubCommand implements Runnable {
                 () -> {
                   try {
                     retestethService.close();
-                    LogManager.shutdown();
+                    LogConfigurator.shutdown();
                   } catch (final Exception e) {
                     LOG.error("Failed to stop Besu Retesteth");
                   }

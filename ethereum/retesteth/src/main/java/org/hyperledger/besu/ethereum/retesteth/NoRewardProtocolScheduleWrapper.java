@@ -14,21 +14,24 @@
  */
 package org.hyperledger.besu.ethereum.retesteth;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionFilter;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.fees.TransactionGasBudgetCalculator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
 
@@ -39,8 +42,8 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
   }
 
   @Override
-  public ProtocolSpec getByBlockNumber(final long number) {
-    final ProtocolSpec original = delegate.getByBlockNumber(number);
+  public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
+    final ProtocolSpec original = delegate.getByBlockHeader(blockHeader);
     final BlockProcessor noRewardBlockProcessor =
         new MainnetBlockProcessor(
             original.getTransactionProcessor(),
@@ -48,7 +51,7 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
             Wei.ZERO,
             original.getMiningBeneficiaryCalculator(),
             original.isSkipZeroBlockRewards(),
-            TransactionGasBudgetCalculator.frontier());
+            delegate);
     final BlockValidator noRewardBlockValidator =
         new MainnetBlockValidator(
             original.getBlockHeaderValidator(),
@@ -76,15 +79,44 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
         original.getPrecompileContractRegistry(),
         original.isSkipZeroBlockRewards(),
         original.getGasCalculator(),
-        original.getTransactionPriceCalculator(),
-        original.getEip1559(),
-        original.getGasBudgetCalculator(),
-        original.getBadBlocksManager());
+        original.getGasLimitCalculator(),
+        original.getFeeMarket(),
+        original.getBadBlocksManager(),
+        Optional.empty(),
+        original.getWithdrawalsValidator(),
+        original.getWithdrawalsProcessor(),
+        original.getDepositsValidator(),
+        original.isPoS());
+  }
+
+  @Override
+  public boolean anyMatch(final Predicate<ScheduledProtocolSpec> predicate) {
+    return delegate.anyMatch(predicate);
+  }
+
+  @Override
+  public boolean isOnMilestoneBoundary(final BlockHeader blockHeader) {
+    return delegate.isOnMilestoneBoundary(blockHeader);
   }
 
   @Override
   public Optional<BigInteger> getChainId() {
     return delegate.getChainId();
+  }
+
+  @Override
+  public void putBlockNumberMilestone(final long blockNumber, final ProtocolSpec protocolSpec) {
+    delegate.putBlockNumberMilestone(blockNumber, protocolSpec);
+  }
+
+  @Override
+  public void putTimestampMilestone(final long timestamp, final ProtocolSpec protocolSpec) {
+    delegate.putTimestampMilestone(timestamp, protocolSpec);
+  }
+
+  @Override
+  public String listMilestones() {
+    return delegate.listMilestones();
   }
 
   @Override

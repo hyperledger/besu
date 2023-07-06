@@ -19,7 +19,6 @@ import org.hyperledger.besu.cli.BesuCommand;
 import java.io.IOException;
 import java.util.stream.Stream;
 
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.ConsoleAppender;
 import org.apache.logging.log4j.core.config.AbstractConfiguration;
@@ -27,9 +26,18 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.ConfigurationSource;
 import org.apache.logging.log4j.core.config.xml.XmlConfiguration;
 import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The Xml extension configuration for Logging framework. */
 public class XmlExtensionConfiguration extends XmlConfiguration {
 
+  /**
+   * Instantiates a new Xml extension configuration.
+   *
+   * @param loggerContext the logger context
+   * @param configSource the Configuration Source
+   */
   public XmlExtensionConfiguration(
       final LoggerContext loggerContext, final ConfigurationSource configSource) {
     super(loggerContext, configSource);
@@ -57,11 +65,13 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
         createConsoleAppender();
         return refreshed;
       } catch (final IOException e) {
-        LogManager.getLogger().error("Failed to reload the Log4j2 Xml configuration file", e);
+        LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)
+            .error("Failed to reload the Log4j2 Xml configuration file", e);
       }
     }
 
-    LogManager.getLogger().warn("Cannot programmatically reconfigure loggers");
+    LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)
+        .warn("Cannot programmatically reconfigure loggers");
     return refreshedParent;
   }
 
@@ -83,7 +93,7 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
     final PatternLayout patternLayout =
         PatternLayout.newBuilder()
             .withConfiguration(this)
-            .withDisableAnsi(!BesuCommand.getColorEnabled().orElse(true))
+            .withDisableAnsi(!BesuCommand.getColorEnabled().orElse(!noColorSet()))
             .withNoConsoleNoAnsi(!BesuCommand.getColorEnabled().orElse(false))
             .withPattern(
                 String.join(
@@ -98,6 +108,10 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
         ConsoleAppender.newBuilder().setName("Console").setLayout(patternLayout).build();
     consoleAppender.start();
     this.getRootLogger().addAppender(consoleAppender, null, null);
+  }
+
+  private static boolean noColorSet() {
+    return System.getenv("NO_COLOR") != null;
   }
 
   private boolean customLog4jConfigFilePresent() {

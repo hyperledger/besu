@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,13 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
+import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
+import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
+import org.hyperledger.besu.ethereum.trie.patricia.LeafNode;
+
 import java.util.function.Consumer;
 
 public class AllNodesVisitor<V> implements NodeVisitor<V> {
 
   private final Consumer<Node<V>> handler;
 
-  AllNodesVisitor(final Consumer<Node<V>> handler) {
+  public AllNodesVisitor(final Consumer<Node<V>> handler) {
     this.handler = handler;
   }
 

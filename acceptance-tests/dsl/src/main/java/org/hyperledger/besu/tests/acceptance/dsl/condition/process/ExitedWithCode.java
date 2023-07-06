@@ -22,12 +22,12 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ExitedWithCode implements Condition {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(ExitedWithCode.class);
 
   private final int code;
 

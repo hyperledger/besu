@@ -16,11 +16,13 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
@@ -40,13 +42,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Requests bodies from a peer by header, matches up headers to bodies, and returns blocks. */
 public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(GetBodiesFromPeerTask.class);
 
   private final ProtocolSchedule protocolSchedule;
   private final List<BlockHeader> headers;
@@ -65,7 +67,7 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
     headers.forEach(
         (header) -> {
           final BodyIdentifier bodyId = new BodyIdentifier(header);
-          bodyToHeaders.putIfAbsent(bodyId, new ArrayList<>());
+          bodyToHeaders.putIfAbsent(bodyId, new ArrayList<>(headers.size()));
           bodyToHeaders.get(bodyId).add(header);
         });
   }
@@ -82,6 +84,11 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
   protected PendingPeerRequest sendRequest() {
     final List<Hash> blockHashes =
         headers.stream().map(BlockHeader::getHash).collect(Collectors.toList());
+    LOG.atTrace()
+        .setMessage("Requesting {} bodies with hashes {}.")
+        .addArgument(blockHashes.size())
+        .addArgument(blockHashes)
+        .log();
     final long minimumRequiredBlockNumber = headers.get(headers.size() - 1).getNumber();
 
     return sendRequestToPeer(
@@ -106,63 +113,91 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
     final List<BlockBody> bodies = bodiesMessage.bodies(protocolSchedule);
     if (bodies.size() == 0) {
       // Message contains no data - nothing to do
+      LOG.debug("Message contains no data. Peer: {}", peer);
       return Optional.empty();
     } else if (bodies.size() > headers.size()) {
       // Message doesn't match our request - nothing to do
+      LOG.debug("Message doesn't match our request. Peer: {}", peer);
       return Optional.empty();
     }
 
-    final List<Block> blocks = new ArrayList<>();
+    final List<Block> blocks = new ArrayList<>(headers.size());
     for (final BlockBody body : bodies) {
       final List<BlockHeader> headers = bodyToHeaders.get(new BodyIdentifier(body));
       if (headers == null) {
         // This message contains unrelated bodies - exit
+        LOG.debug("This message contains unrelated bodies. Peer: {}", peer);
         return Optional.empty();
       }
       headers.forEach(h -> blocks.add(new Block(h, body)));
       // Clear processed headers
       headers.clear();
     }
+    LOG.atTrace()
+        .setMessage("Associated {} bodies with {} headers to get {} blocks with these hashes: {}")
+        .addArgument(bodies.size())
+        .addArgument(headers.size())
+        .addArgument(blocks.size())
+        .addArgument(() -> blocks.stream().map(Block::toLogString).toList())
+        .log();
     return Optional.of(blocks);
   }
 
-  private static class BodyIdentifier {
+  static class BodyIdentifier {
     private final Bytes32 transactionsRoot;
     private final Bytes32 ommersHash;
+    private final Bytes32 withdrawalsRoot;
+    private final Bytes32 depositsRoot;
 
-    public BodyIdentifier(final Bytes32 transactionsRoot, final Bytes32 ommersHash) {
+    public BodyIdentifier(
+        final Bytes32 transactionsRoot,
+        final Bytes32 ommersHash,
+        final Bytes32 withdrawalsRoot,
+        final Bytes32 depositsRoot) {
       this.transactionsRoot = transactionsRoot;
       this.ommersHash = ommersHash;
+      this.withdrawalsRoot = withdrawalsRoot;
+      this.depositsRoot = depositsRoot;
     }
 
     public BodyIdentifier(final BlockBody body) {
-      this(body.getTransactions(), body.getOmmers());
+      this(body.getTransactions(), body.getOmmers(), body.getWithdrawals(), body.getDeposits());
     }
 
-    public BodyIdentifier(final List<Transaction> transactions, final List<BlockHeader> ommers) {
-      this(BodyValidation.transactionsRoot(transactions), BodyValidation.ommersHash(ommers));
+    public BodyIdentifier(
+        final List<Transaction> transactions,
+        final List<BlockHeader> ommers,
+        final Optional<List<Withdrawal>> withdrawals,
+        final Optional<List<Deposit>> deposits) {
+      this(
+          BodyValidation.transactionsRoot(transactions),
+          BodyValidation.ommersHash(ommers),
+          withdrawals.map(BodyValidation::withdrawalsRoot).orElse(null),
+          deposits.map(BodyValidation::depositsRoot).orElse(null));
     }
 
     public BodyIdentifier(final BlockHeader header) {
-      this(header.getTransactionsRoot(), header.getOmmersHash());
+      this(
+          header.getTransactionsRoot(),
+          header.getOmmersHash(),
+          header.getWithdrawalsRoot().orElse(null),
+          header.getDepositsRoot().orElse(null));
     }
 
     @Override
     public boolean equals(final Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      final BodyIdentifier that = (BodyIdentifier) o;
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      BodyIdentifier that = (BodyIdentifier) o;
       return Objects.equals(transactionsRoot, that.transactionsRoot)
-          && Objects.equals(ommersHash, that.ommersHash);
+          && Objects.equals(ommersHash, that.ommersHash)
+          && Objects.equals(withdrawalsRoot, that.withdrawalsRoot)
+          && Objects.equals(depositsRoot, that.depositsRoot);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(transactionsRoot, ommersHash);
+      return Objects.hash(transactionsRoot, ommersHash, withdrawalsRoot, depositsRoot);
     }
   }
 }

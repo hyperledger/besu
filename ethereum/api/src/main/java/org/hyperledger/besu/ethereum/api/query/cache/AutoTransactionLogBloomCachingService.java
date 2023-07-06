@@ -28,11 +28,12 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.stream.Stream;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AutoTransactionLogBloomCachingService {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(AutoTransactionLogBloomCachingService.class);
   private final Blockchain blockchain;
   private final TransactionLogBloomCacher transactionLogBloomCacher;
   private OptionalLong blockAddedSubscriptionId = OptionalLong.empty();
@@ -53,9 +54,9 @@ public class AutoTransactionLogBloomCachingService {
       final LogBloomCacheMetadata logBloomCacheMetadata =
           LogBloomCacheMetadata.lookUpFrom(cacheDir);
       if (logBloomCacheMetadata.getVersion() < DEFAULT_VERSION) {
-        try (Stream<Path> walk = Files.walk(cacheDir)) {
+        try (final Stream<Path> walk = Files.walk(cacheDir)) {
           walk.filter(Files::isRegularFile).map(Path::toFile).forEach(File::delete);
-        } catch (Exception e) {
+        } catch (final Exception e) {
           LOG.error("Failed to update cache {}", e.getMessage());
         }
         new LogBloomCacheMetadata(DEFAULT_VERSION).writeToDirectory(cacheDir);
@@ -76,8 +77,18 @@ public class AutoTransactionLogBloomCachingService {
 
       transactionLogBloomCacher
           .getScheduler()
-          .scheduleFutureTask(transactionLogBloomCacher::cacheAll, Duration.ofMinutes(1));
-    } catch (IOException e) {
+          .scheduleFutureTask(
+              () ->
+                  // run long tasks in the computation executor
+                  transactionLogBloomCacher
+                      .getScheduler()
+                      .scheduleComputationTask(
+                          () -> {
+                            transactionLogBloomCacher.cacheAll();
+                            return null;
+                          }),
+              Duration.ofMinutes(1));
+    } catch (final IOException e) {
       LOG.error("Unhandled caching exception.", e);
     }
   }

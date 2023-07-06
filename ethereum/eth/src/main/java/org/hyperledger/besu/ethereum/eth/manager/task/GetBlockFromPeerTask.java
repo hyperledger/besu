@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.task;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.IncompleteResultsException;
@@ -24,24 +24,25 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Downloads a block from a peer. Will complete exceptionally if block cannot be downloaded. */
 public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(GetBlockFromPeerTask.class);
 
   private final ProtocolSchedule protocolSchedule;
-  private final Hash hash;
+  private final Optional<Hash> hash;
   private final long blockNumber;
   private final MetricsSystem metricsSystem;
 
   protected GetBlockFromPeerTask(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final Hash hash,
+      final Optional<Hash> hash,
       final long blockNumber,
       final MetricsSystem metricsSystem) {
     super(ethContext, metricsSystem);
@@ -54,7 +55,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   public static GetBlockFromPeerTask create(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final Hash hash,
+      final Optional<Hash> hash,
       final long blockNumber,
       final MetricsSystem metricsSystem) {
     return new GetBlockFromPeerTask(protocolSchedule, ethContext, hash, blockNumber, metricsSystem);
@@ -62,25 +63,33 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
 
   @Override
   protected void executeTask() {
+    final String blockIdentifier = blockNumber + " (" + hash + ")";
     LOG.debug(
         "Downloading block {} from peer {}.",
-        hash,
+        blockIdentifier,
         assignedPeer.map(EthPeer::toString).orElse("<any>"));
     downloadHeader()
         .thenCompose(this::completeBlock)
         .whenComplete(
             (r, t) -> {
               if (t != null) {
-                LOG.info(
-                    "Failed to download block {} from peer {}.",
-                    hash,
-                    assignedPeer.map(EthPeer::toString).orElse("<any>"));
+                LOG.debug(
+                    "Failed to download block {} from peer {} with message '{}' and cause '{}'",
+                    blockIdentifier,
+                    assignedPeer.map(EthPeer::toString).orElse("<any>"),
+                    t.getMessage(),
+                    t.getCause());
                 result.completeExceptionally(t);
               } else if (r.getResult().isEmpty()) {
-                LOG.info("Failed to download block {} from peer {}.", hash, r.getPeer());
+                r.getPeer().recordUselessResponse("Download block returned an empty result");
+                LOG.debug(
+                    "Failed to download block {} from peer {} with empty result.",
+                    blockIdentifier,
+                    r.getPeer());
                 result.completeExceptionally(new IncompleteResultsException());
               } else {
-                LOG.debug("Successfully downloaded block {} from peer {}.", hash, r.getPeer());
+                LOG.debug(
+                    "Successfully downloaded block {} from peer {}.", blockIdentifier, r.getPeer());
                 result.complete(new PeerTaskResult<>(r.getPeer(), r.getResult().get(0)));
               }
             });
@@ -89,9 +98,16 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   private CompletableFuture<PeerTaskResult<List<BlockHeader>>> downloadHeader() {
     return executeSubTask(
         () -> {
-          final AbstractGetHeadersFromPeerTask task =
-              GetHeadersFromPeerByHashTask.forSingleHash(
-                  protocolSchedule, ethContext, hash, blockNumber, metricsSystem);
+          final AbstractGetHeadersFromPeerTask task;
+          task =
+              hash.map(
+                      value ->
+                          GetHeadersFromPeerByHashTask.forSingleHash(
+                              protocolSchedule, ethContext, value, blockNumber, metricsSystem))
+                  .orElseGet(
+                      () ->
+                          GetHeadersFromPeerByNumberTask.forSingleNumber(
+                              protocolSchedule, ethContext, blockNumber, metricsSystem));
           assignedPeer.ifPresent(task::assignPeer);
           return task.run();
         });
@@ -100,6 +116,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   private CompletableFuture<PeerTaskResult<List<Block>>> completeBlock(
       final PeerTaskResult<List<BlockHeader>> headerResult) {
     if (headerResult.getResult().isEmpty()) {
+      LOG.debug("header result is empty.");
       return CompletableFuture.failedFuture(new IncompleteResultsException());
     }
 

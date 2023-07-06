@@ -14,15 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.permissioning.account;
 
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
+import org.hyperledger.besu.ethereum.permissioning.GoQuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
-import org.hyperledger.besu.ethereum.permissioning.QuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.TransactionSmartContractPermissioningController;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -31,13 +33,14 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AccountPermissioningControllerFactory {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG =
+      LoggerFactory.getLogger(AccountPermissioningControllerFactory.class);
 
   public static Optional<AccountPermissioningController> create(
       final PermissioningConfiguration permissioningConfiguration,
@@ -61,14 +64,14 @@ public class AccountPermissioningControllerFactory {
     if (accountLocalConfigPermissioningController.isPresent()
         || transactionSmartContractPermissioningController.isPresent()) {
 
-      final Optional<QuorumQip714Gate> quorumQip714Gate =
+      final Optional<GoQuorumQip714Gate> goQuorumQip714Gate =
           permissioningConfiguration
               .getQuorumPermissioningConfig()
               .flatMap(
                   config -> {
                     if (config.isEnabled()) {
                       return Optional.of(
-                          QuorumQip714Gate.getInstance(config.getQip714Block(), blockchain));
+                          GoQuorumQip714Gate.getInstance(config.getQip714Block(), blockchain));
                     } else {
                       return Optional.empty();
                     }
@@ -78,7 +81,7 @@ public class AccountPermissioningControllerFactory {
           new AccountPermissioningController(
               accountLocalConfigPermissioningController,
               transactionSmartContractPermissioningController,
-              quorumQip714Gate);
+              goQuorumQip714Gate);
 
       return Optional.of(controller);
     } else {
@@ -139,9 +142,13 @@ public class AccountPermissioningControllerFactory {
     try {
       LOG.debug("Validating onchain account permissioning smart contract configuration");
 
-      final SECP256K1.Signature FAKE_SIGNATURE =
-          SECP256K1.Signature.create(
-              SECP256K1.HALF_CURVE_ORDER, SECP256K1.HALF_CURVE_ORDER, (byte) 0);
+      final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+
+      final SECPSignature FAKE_SIGNATURE =
+          signatureAlgorithm.createSignature(
+              signatureAlgorithm.getHalfCurveOrder(),
+              signatureAlgorithm.getHalfCurveOrder(),
+              (byte) 0);
 
       final Transaction transaction =
           Transaction.builder()
@@ -158,10 +165,8 @@ public class AccountPermissioningControllerFactory {
       // We don't care about the validation result. All we need it to ensure the check doesn't fail
       transactionSmartContractPermissioningController.isPermitted(transaction);
     } catch (Exception e) {
-      final String msg =
-          "Error validating onchain account permissioning smart contract configuration";
-      LOG.error(msg + ":", e);
-      throw new IllegalStateException(msg, e);
+      throw new IllegalStateException(
+          "Error validating onchain account permissioning smart contract configuration", e);
     }
   }
 }

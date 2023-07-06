@@ -29,8 +29,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A task that will retry a fixed number of times before completing the associated CompletableFuture
@@ -41,7 +41,7 @@ import org.apache.logging.log4j.Logger;
  */
 public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractRetryingPeerTask.class);
   private final EthContext ethContext;
   private final int maxRetries;
   private final Predicate<T> isEmptyResponse;
@@ -71,13 +71,17 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
     assignedPeer = Optional.of(peer);
   }
 
+  public Optional<EthPeer> getAssignedPeer() {
+    return assignedPeer;
+  }
+
   @Override
   protected void executeTask() {
     if (result.isDone()) {
       // Return if task is done
       return;
     }
-    if (retryCount > maxRetries) {
+    if (retryCount >= maxRetries) {
       result.completeExceptionally(new MaxRetriesReachedException());
       return;
     }
@@ -89,7 +93,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
               if (error != null) {
                 handleTaskError(error);
               } else {
-                // If we get a partial success reset the retry counter.
+                // If we get a partial success, reset the retry counter.
                 if (!isEmptyResponse.test(peerResult)) {
                   retryCount = 0;
                 }
@@ -100,7 +104,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
 
   protected abstract CompletableFuture<T> executePeerTask(Optional<EthPeer> assignedPeer);
 
-  private void handleTaskError(final Throwable error) {
+  protected void handleTaskError(final Throwable error) {
     final Throwable cause = ExceptionUtils.rootCause(error);
     if (!isRetryableError(cause)) {
       // Complete exceptionally
@@ -109,8 +113,10 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
     }
 
     if (cause instanceof NoAvailablePeersException) {
-      LOG.info("No peers available, waiting for peers: {}", ethContext.getEthPeers().peerCount());
-      // Wait for new peer to connect
+      LOG.debug(
+          "No useful peer found, wait max 5 seconds for new peer to connect: current peers {}",
+          ethContext.getEthPeers().peerCount());
+
       final WaitForPeerTask waitTask = WaitForPeerTask.create(ethContext, metricsSystem);
       executeSubTask(
           () ->
@@ -133,13 +139,22 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
                 .scheduleFutureTask(this::executeTaskTimed, Duration.ofSeconds(1)));
   }
 
-  private boolean isRetryableError(final Throwable error) {
-    final boolean isPeerError =
-        error instanceof PeerBreachedProtocolException
-            || error instanceof PeerDisconnectedException
-            || error instanceof NoAvailablePeersException;
+  protected boolean isRetryableError(final Throwable error) {
+    return error instanceof TimeoutException || (!assignedPeer.isPresent() && isPeerFailure(error));
+  }
 
-    return error instanceof TimeoutException || (!assignedPeer.isPresent() && isPeerError);
+  protected boolean isPeerFailure(final Throwable error) {
+    return error instanceof PeerBreachedProtocolException
+        || error instanceof PeerDisconnectedException
+        || error instanceof NoAvailablePeersException;
+  }
+
+  protected EthContext getEthContext() {
+    return ethContext;
+  }
+
+  protected MetricsSystem getMetricsSystem() {
+    return metricsSystem;
   }
 
   public int getRetryCount() {

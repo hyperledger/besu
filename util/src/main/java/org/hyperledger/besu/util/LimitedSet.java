@@ -21,8 +21,11 @@ import java.util.Set;
 
 /** Helper that creates a thread-safe set with a maximum capacity. */
 public final class LimitedSet {
+  /** The enum Mode. */
   public enum Mode {
+    /** Drop least recently accessed mode. */
     DROP_LEAST_RECENTLY_ACCESSED,
+    /** Drop oldest element mode. */
     DROP_OLDEST_ELEMENT
   }
 
@@ -31,10 +34,10 @@ public final class LimitedSet {
   /**
    * Creates a limited set of a initial size, maximum size, and eviction mode.
    *
+   * @param <T> The type of object held in the set.
    * @param initialCapacity The initial size to allocate for the set.
    * @param maxSize The maximum number of elements to keep in the set.
    * @param mode A mode that determines which element is evicted when the set exceeds its max size.
-   * @param <T> The type of object held in the set.
    * @return A thread-safe set that will evict elements when the max size is exceeded.
    */
   public static final <T> Set<T> create(

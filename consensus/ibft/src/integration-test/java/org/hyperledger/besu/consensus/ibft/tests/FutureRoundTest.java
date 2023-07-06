@@ -16,8 +16,8 @@ package org.hyperledger.besu.consensus.ibft.tests;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
-import org.hyperledger.besu.consensus.ibft.IbftHelpers;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
@@ -31,7 +31,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class FutureRoundTest {
 
@@ -61,7 +61,7 @@ public class FutureRoundTest {
   public void messagesForFutureRoundAreNotActionedUntilRoundIsActive() {
     final Block futureBlock =
         context.createBlockForProposalFromChainHead(futureRoundId.getRoundNumber(), 60);
-    final int quorum = IbftHelpers.calculateRequiredValidatorQuorum(NETWORK_SIZE);
+    final int quorum = BftHelpers.calculateRequiredValidatorQuorum(NETWORK_SIZE);
     final ConsensusRoundIdentifier subsequentRoundId = new ConsensusRoundIdentifier(1, 6);
     final RoundSpecificPeers subsequentRoles = context.roundSpecificPeers(subsequentRoundId);
 

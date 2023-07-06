@@ -15,14 +15,14 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 
-import org.hyperledger.besu.ethereum.core.AccountStorageEntry;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.evm.account.AccountStorageEntry;
+import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Map;
 import java.util.Random;
@@ -30,15 +30,14 @@ import java.util.TreeMap;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class EntriesFromIntegrationTest {
 
   @Test
   @SuppressWarnings("MathAbsoluteRandom")
   public void shouldCollectStateEntries() {
-    final MutableWorldState worldState =
-        InMemoryStorageProvider.createInMemoryWorldStateArchive().getMutable();
+    final MutableWorldState worldState = createInMemoryWorldStateArchive().getMutable();
     final WorldUpdater updater = worldState.updater();
     MutableAccount account = updater.getOrCreate(Address.fromHexString("0x56")).getMutable();
     final Map<Bytes32, AccountStorageEntry> expectedValues = new TreeMap<>();
@@ -76,6 +75,6 @@ public class EntriesFromIntegrationTest {
       final UInt256 key,
       final UInt256 value) {
     account.setStorageValue(key, value);
-    expectedValues.put(Hash.hash(key.toBytes()), AccountStorageEntry.forKeyAndValue(key, value));
+    expectedValues.put(Hash.hash(key), AccountStorageEntry.forKeyAndValue(key, value));
   }
 }

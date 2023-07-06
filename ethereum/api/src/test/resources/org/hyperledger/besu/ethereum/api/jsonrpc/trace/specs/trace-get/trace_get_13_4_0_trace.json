@@ -1,0 +1,35 @@
+{
+  "comment" : "Deploy contract that will self-destruct when called.",
+  "request" : {
+    "jsonrpc" : "2.0",
+    "method" : "trace_get",
+    "params" : [ "0x821ca63d171c5a3c60d32a738803092a52562056db3727a175f659cf49aae283", [ ] ],
+    "id" : 297
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : {
+      "action" : {
+        "creationMethod": "create",
+        "from" : "0x627306090abab3a6e1400e9345bc60c78a8bef57",
+        "gas" : "0xff300e",
+        "init" : "0x6004600c60003960046000f3600035ff",
+        "value" : "0x0"
+      },
+      "blockHash" : "0x425ea2cf9bb89c09f131ab531958c4d189b5d047fd924d74f25d49cf47a5a8f1",
+      "blockNumber" : 19,
+      "result" : {
+        "address" : "0xfb88de099e13c3ed21f80a7a1e49f8caecf10df6",
+        "code" : "0x600035ff",
+        "gasUsed" : "0x338"
+      },
+      "subtraces" : 0,
+      "traceAddress" : [ ],
+      "transactionHash" : "0x821ca63d171c5a3c60d32a738803092a52562056db3727a175f659cf49aae283",
+      "transactionPosition" : 4,
+      "type" : "create"
+    },
+    "id" : 297
+  },
+  "statusCode" : 200
+}

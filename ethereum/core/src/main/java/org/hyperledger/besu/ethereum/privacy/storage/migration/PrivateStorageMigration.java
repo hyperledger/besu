@@ -16,11 +16,11 @@ package org.hyperledger.besu.ethereum.privacy.storage.migration;
 
 import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValueStorage.SCHEMA_VERSION_1_4_0;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -36,13 +36,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PrivateStorageMigration {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(PrivateStorageMigration.class);
 
   private final Blockchain blockchain;
   private final Address privacyPrecompileAddress;
@@ -80,7 +80,7 @@ public class PrivateStorageMigration {
 
     LOG.info("Migrating private storage database...");
 
-    for (int blockNumber = 0; blockNumber <= chainHeadBlockNumber; blockNumber++) {
+    for (long blockNumber = 0; blockNumber <= chainHeadBlockNumber; blockNumber++) {
       final Block block =
           blockchain
               .getBlockByNumber(blockNumber)
@@ -93,15 +93,16 @@ public class PrivateStorageMigration {
 
       final int lastPmtIndex = findLastPMTIndexInBlock(block);
       if (lastPmtIndex >= 0) {
-        final ProtocolSpec protocolSpec = protocolSchedule.getByBlockNumber(blockNumber);
+        final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
         final PrivateMigrationBlockProcessor privateMigrationBlockProcessor =
             privateMigrationBlockProcessorBuilder.apply(protocolSpec);
 
         final MutableWorldState publicWorldState =
             blockchain
                 .getBlockHeader(blockHeader.getParentHash())
-                .map(BlockHeader::getStateRoot)
-                .flatMap(publicWorldStateArchive::getMutable)
+                .flatMap(
+                    header ->
+                        publicWorldStateArchive.getMutable(header.getStateRoot(), header.getHash()))
                 .orElseThrow(PrivateStorageMigrationException::new);
 
         final List<Transaction> transactionsToProcess =
@@ -130,14 +131,14 @@ public class PrivateStorageMigration {
     final List<Transaction> txs = block.getBody().getTransactions();
     int lastPmtIndex = -1;
     for (int i = 0; i < txs.size(); i++) {
-      if (isPrivacyMarkerTransaction(txs.get(i))) {
+      if (isPrivateMarkerTransaction(txs.get(i))) {
         lastPmtIndex = i;
       }
     }
     return lastPmtIndex;
   }
 
-  private boolean isPrivacyMarkerTransaction(final Transaction tx) {
+  private boolean isPrivateMarkerTransaction(final Transaction tx) {
     return tx.getTo().isPresent() && tx.getTo().get().equals(privacyPrecompileAddress);
   }
 

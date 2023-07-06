@@ -32,11 +32,11 @@ import java.util.Optional;
 public class PermRemoveNodesFromAllowlist implements JsonRpcMethod {
 
   private final Optional<NodeLocalConfigPermissioningController>
-      nodeWhitelistPermissioningController;
+      nodeAllowlistPermissioningController;
 
   public PermRemoveNodesFromAllowlist(
-      final Optional<NodeLocalConfigPermissioningController> nodeWhitelistPermissioningController) {
-    this.nodeWhitelistPermissioningController = nodeWhitelistPermissioningController;
+      final Optional<NodeLocalConfigPermissioningController> nodeAllowlistPermissioningController) {
+    this.nodeAllowlistPermissioningController = nodeAllowlistPermissioningController;
   }
 
   @Override
@@ -49,11 +49,11 @@ public class PermRemoveNodesFromAllowlist implements JsonRpcMethod {
     final StringListParameter enodeListParam =
         requestContext.getRequiredParameter(0, StringListParameter.class);
     try {
-      if (nodeWhitelistPermissioningController.isPresent()) {
+      if (nodeAllowlistPermissioningController.isPresent()) {
         try {
           final List<String> enodeURLs = enodeListParam.getStringList();
           final NodesAllowlistResult nodesAllowlistResult =
-              nodeWhitelistPermissioningController.get().removeNodes(enodeURLs);
+              nodeAllowlistPermissioningController.get().removeNodes(enodeURLs);
 
           switch (nodesAllowlistResult.result()) {
             case SUCCESS:

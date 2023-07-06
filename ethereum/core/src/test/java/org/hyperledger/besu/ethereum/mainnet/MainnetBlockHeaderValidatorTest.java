@@ -20,8 +20,11 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link MainnetBlockHeaderValidator}. */
+@RunWith(MockitoJUnitRunner.class)
 public final class MainnetBlockHeaderValidatorTest {
 
   @SuppressWarnings("unchecked")
@@ -30,7 +33,7 @@ public final class MainnetBlockHeaderValidatorTest {
   @Test
   public void validHeaderFrontier() throws Exception {
     final BlockHeaderValidator headerValidator =
-        MainnetBlockHeaderValidator.create()
+        MainnetBlockHeaderValidator.create(PoWHasher.ETHASH_LIGHT)
             .difficultyCalculator(MainnetDifficultyCalculators.FRONTIER)
             .build();
     assertThat(
@@ -45,7 +48,7 @@ public final class MainnetBlockHeaderValidatorTest {
   @Test
   public void validHeaderHomestead() throws Exception {
     final BlockHeaderValidator headerValidator =
-        MainnetBlockHeaderValidator.create()
+        MainnetBlockHeaderValidator.create(PoWHasher.ETHASH_LIGHT)
             .difficultyCalculator(MainnetDifficultyCalculators.HOMESTEAD)
             .build();
     assertThat(
@@ -60,7 +63,7 @@ public final class MainnetBlockHeaderValidatorTest {
   @Test
   public void invalidParentHash() throws Exception {
     final BlockHeaderValidator headerValidator =
-        MainnetBlockHeaderValidator.create()
+        MainnetBlockHeaderValidator.create(PoWHasher.ETHASH_LIGHT)
             .difficultyCalculator(MainnetDifficultyCalculators.FRONTIER)
             .build();
     assertThat(
@@ -75,7 +78,7 @@ public final class MainnetBlockHeaderValidatorTest {
   @Test
   public void validHeaderByzantium() throws Exception {
     final BlockHeaderValidator headerValidator =
-        MainnetBlockHeaderValidator.create()
+        MainnetBlockHeaderValidator.create(PoWHasher.ETHASH_LIGHT)
             .difficultyCalculator(MainnetDifficultyCalculators.BYZANTIUM)
             .build();
     assertThat(

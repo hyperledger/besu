@@ -25,14 +25,13 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.transac
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.transaction.pool.PendingTransactionFilter.Filter;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -114,7 +113,7 @@ public class PendingTransactionFilterTest {
   @Test
   public void localAndRemoteAddressShouldNotStartWithForwardSlash() {
 
-    final Set<Transaction> filteredList =
+    final Collection<Transaction> filteredList =
         pendingTransactionFilter.reduce(getPendingTransactions(), filters, limit);
 
     assertThat(filteredList.size()).isEqualTo(expectedListOfTransactionHash.size());
@@ -123,12 +122,12 @@ public class PendingTransactionFilterTest {
     }
   }
 
-  private Set<PendingTransactions.TransactionInfo> getPendingTransactions() {
-    final List<PendingTransactions.TransactionInfo> transactionInfoList = new ArrayList<>();
+  private Set<PendingTransaction> getPendingTransactions() {
+    final List<PendingTransaction> pendingTransactionList = new ArrayList<>();
     final int numberTrx = 5;
     for (int i = 1; i < numberTrx; i++) {
       Transaction transaction = mock(Transaction.class);
-      when(transaction.getGasPrice()).thenReturn(Wei.of(i));
+      when(transaction.getGasPrice()).thenReturn(Optional.of(Wei.of(i)));
       when(transaction.getValue()).thenReturn(Wei.of(i));
       when(transaction.getGasLimit()).thenReturn((long) i);
       when(transaction.getNonce()).thenReturn((long) i);
@@ -139,10 +138,8 @@ public class PendingTransactionFilterTest {
       if (i == numberTrx - 1) {
         when(transaction.isContractCreation()).thenReturn(true);
       }
-      transactionInfoList.add(
-          new PendingTransactions.TransactionInfo(
-              transaction, true, Instant.ofEpochSecond(Integer.MAX_VALUE)));
+      pendingTransactionList.add(new PendingTransaction.Local(transaction));
     }
-    return new LinkedHashSet<>(transactionInfoList);
+    return new LinkedHashSet<>(pendingTransactionList);
   }
 }

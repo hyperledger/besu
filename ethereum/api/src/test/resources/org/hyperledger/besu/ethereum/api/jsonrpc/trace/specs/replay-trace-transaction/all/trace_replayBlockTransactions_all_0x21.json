@@ -1,0 +1,88 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "trace_replayBlockTransactions",
+    "params": [
+      "0x21",
+      [
+        "trace",
+        "vmTrace",
+        "stateDiff"
+      ]
+    ],
+    "id": 415
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "result": [
+      {
+        "output": "0x",
+        "stateDiff": {
+          "0x0000000000000000000000000000000000000000": {
+            "balance": {
+              "*": {
+                "from": "0x3782f841c36b0fb3e",
+                "to": "0x3782f841c36f8b29e"
+              }
+            },
+            "code": "=",
+            "nonce": "=",
+            "storage": {}
+          },
+          "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": {
+            "balance": {
+              "*": {
+                "from": "0xffffffffffffffffffffffffffffffffd28431e7b",
+                "to": "0xffffffffffffffffffffffffffffffffd27fb671b"
+              }
+            },
+            "code": "=",
+            "nonce": {
+              "*": {
+                "from": "0x1d",
+                "to": "0x1e"
+              }
+            },
+            "storage": {}
+          }
+        },
+        "trace": [
+          {
+            "action": {
+              "creationMethod": "create",
+              "from": "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+              "gas": "0x46e824",
+              "init": "0x602af300",
+              "value": "0x0"
+            },
+            "error": "Stack underflow",
+            "subtraces": 0,
+            "traceAddress": [],
+            "type": "create"
+          }
+        ],
+        "transactionHash": "0xf0378e1bf579b23aff89255d93ade14fe9136a7cedd9c4985e9bec2d18ce65e9",
+        "vmTrace": {
+          "code": "0x602af300",
+          "ops": [
+            {
+              "cost": 3,
+              "ex": {
+                "mem": null,
+                "push": [
+                  "0x2a"
+                ],
+                "store": null,
+                "used": 4646945
+              },
+              "pc": 0,
+              "sub": null
+            }
+          ]
+        }
+      }
+    ],
+    "id": 415
+  },
+  "statusCode": 200
+}

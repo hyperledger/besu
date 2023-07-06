@@ -20,12 +20,12 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DiscoveryProtocolLogger {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(DiscoveryProtocolLogger.class);
   private final LabelledMetric<Counter> outgoingMessageCounter;
   private final LabelledMetric<Counter> incomingMessageCounter;
 
@@ -47,7 +47,7 @@ public class DiscoveryProtocolLogger {
   void logSendingPacket(final Peer peer, final Packet packet) {
     outgoingMessageCounter.labels(packet.getType().name()).inc();
     LOG.trace(
-        "<<< Sending  {} packet to peer {} ({}): {}",
+        "<<< Sending {} packet to peer {} ({}): {}",
         shortenPacketType(packet),
         peer.getId().slice(0, 16),
         peer.getEnodeURL(),
@@ -74,6 +74,10 @@ public class DiscoveryProtocolLogger {
         return "FINDN";
       case NEIGHBORS:
         return "NEIGH";
+      case ENR_REQUEST:
+        return "ENRREQ";
+      case ENR_RESPONSE:
+        return "ENRRESP";
     }
     return null;
   }

@@ -20,6 +20,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import org.junit.Test;
 
@@ -29,7 +30,8 @@ public class FixedProtocolScheduleTest {
   public void reportedDifficultyForAllBlocksIsAFixedValue() {
 
     final ProtocolSchedule schedule =
-        FixedDifficultyProtocolSchedule.create(GenesisConfigFile.development().getConfigOptions());
+        FixedDifficultyProtocolSchedule.create(
+            GenesisConfigFile.development().getConfigOptions(), EvmConfiguration.DEFAULT);
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 
@@ -37,23 +39,27 @@ public class FixedProtocolScheduleTest {
 
     assertThat(
             schedule
-                .getByBlockNumber(0)
+                .getByBlockHeader(blockHeader(0))
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader, null))
         .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
 
     assertThat(
             schedule
-                .getByBlockNumber(500)
+                .getByBlockHeader(blockHeader(500))
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader, null))
         .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
 
     assertThat(
             schedule
-                .getByBlockNumber(500_000)
+                .getByBlockHeader(blockHeader(500_000))
                 .getDifficultyCalculator()
                 .nextDifficulty(1, parentHeader, null))
         .isEqualTo(FixedDifficultyCalculators.DEFAULT_DIFFICULTY);
+  }
+
+  private BlockHeader blockHeader(final long number) {
+    return new BlockHeaderTestFixture().number(number).buildHeader();
   }
 }

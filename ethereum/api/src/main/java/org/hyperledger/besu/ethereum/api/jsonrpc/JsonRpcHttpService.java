@@ -16,32 +16,24 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Streams.stream;
-import static java.util.stream.Collectors.toList;
-import static org.apache.tuweni.net.tls.VertxTrustOptions.whitelistClients;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_REQUEST;
+import static org.apache.tuweni.net.tls.VertxTrustOptions.allowlistClients;
 
 import org.hyperledger.besu.ethereum.api.handlers.HandlerFactory;
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
-import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
-import org.hyperledger.besu.ethereum.api.jsonrpc.context.ContextKey;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.DefaultAuthenticationService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.AuthenticatedJsonRpcProcessor;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.BaseJsonRpcProcessor;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.TimedJsonRpcProcessor;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.TracedJsonRpcProcessor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestId;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.Logging403ErrorHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcNoResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
 import org.hyperledger.besu.ethereum.api.tls.TlsClientAuthConfiguration;
 import org.hyperledger.besu.ethereum.api.tls.TlsConfiguration;
-import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.opentelemetry.OpenTelemetrySystem;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
@@ -54,49 +46,80 @@ import org.hyperledger.besu.util.ExceptionUtils;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.net.InetSocketAddress;
-import java.net.SocketException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.vertx.core.CompositeFuture;
-import io.vertx.core.Future;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.baggage.propagation.W3CBaggagePropagator;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanKind;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.api.trace.TracerProvider;
+import io.opentelemetry.context.Context;
+import io.opentelemetry.context.propagation.TextMapGetter;
+import io.opentelemetry.context.propagation.TextMapPropagator;
+import io.opentelemetry.extension.trace.propagation.B3Propagator;
+import io.opentelemetry.extension.trace.propagation.JaegerPropagator;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.http.ClientAuth;
+import io.vertx.core.http.HttpConnection;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.DecodeException;
-import io.vertx.core.json.Json;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.PfxOptions;
-import io.vertx.ext.auth.User;
+import io.vertx.core.net.SocketAddress;
+import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JsonRpcHttpService {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(JsonRpcHttpService.class);
 
+  private static final String SPAN_CONTEXT = "span_context";
   private static final InetSocketAddress EMPTY_SOCKET_ADDRESS = new InetSocketAddress("0.0.0.0", 0);
   private static final String APPLICATION_JSON = "application/json";
-  private static final JsonRpcResponse NO_RESPONSE = new JsonRpcNoResponse();
-  private static final String EMPTY_RESPONSE = "";
+
+  private static final TextMapPropagator traceFormats =
+      TextMapPropagator.composite(
+          JaegerPropagator.getInstance(),
+          B3Propagator.injectingSingleHeader(),
+          W3CBaggagePropagator.getInstance());
+
+  private static final TextMapGetter<HttpServerRequest> requestAttributesGetter =
+      new TextMapGetter<>() {
+        @Override
+        public Iterable<String> keys(final HttpServerRequest carrier) {
+          return carrier.headers().names();
+        }
+
+        @Nullable
+        @Override
+        public String get(final @Nullable HttpServerRequest carrier, final String key) {
+          if (carrier == null) {
+            return null;
+          }
+          return carrier.headers().get(key);
+        }
+      };
 
   private final Vertx vertx;
   private final JsonRpcConfiguration config;
@@ -104,6 +127,10 @@ public class JsonRpcHttpService {
   private final NatService natService;
   private final Path dataDir;
   private final LabelledMetric<OperationTimer> requestTimer;
+  private TracerProvider tracerProvider;
+  private Tracer tracer;
+  private final int maxActiveConnections;
+  private final AtomicInteger activeConnectionsCount = new AtomicInteger();
 
   @VisibleForTesting public final Optional<AuthenticationService> authenticationService;
 
@@ -139,12 +166,12 @@ public class JsonRpcHttpService {
         metricsSystem,
         natService,
         methods,
-        AuthenticationService.create(vertx, config),
+        DefaultAuthenticationService.create(vertx, config),
         livenessService,
         readinessService);
   }
 
-  private JsonRpcHttpService(
+  public JsonRpcHttpService(
       final Vertx vertx,
       final Path dataDir,
       final JsonRpcConfiguration config,
@@ -161,6 +188,13 @@ public class JsonRpcHttpService {
             "request_time",
             "Time taken to process a JSON-RPC request",
             "methodName");
+
+    metricsSystem.createIntegerGauge(
+        BesuMetricCategory.RPC,
+        "active_http_connection_count",
+        "Total no of active rpc http connections",
+        activeConnectionsCount::intValue);
+
     validateConfig(config);
     this.config = config;
     this.vertx = vertx;
@@ -169,6 +203,10 @@ public class JsonRpcHttpService {
     this.authenticationService = authenticationService;
     this.livenessService = livenessService;
     this.readinessService = readinessService;
+    this.maxActiveConnections = config.getMaxActiveConnections();
+    if (metricsSystem instanceof OpenTelemetrySystem) {
+      this.tracerProvider = ((OpenTelemetrySystem) metricsSystem).getTracerProvider();
+    }
   }
 
   private void validateConfig(final JsonRpcConfiguration config) {
@@ -176,15 +214,26 @@ public class JsonRpcHttpService {
         config.getPort() == 0 || NetworkUtility.isValidPort(config.getPort()),
         "Invalid port configuration.");
     checkArgument(config.getHost() != null, "Required host is not configured.");
+    checkArgument(
+        config.getMaxActiveConnections() > 0, "Invalid max active connections configuration.");
   }
 
   public CompletableFuture<?> start() {
     LOG.info("Starting JSON-RPC service on {}:{}", config.getHost(), config.getPort());
-
+    LOG.debug("max number of active connections {}", maxActiveConnections);
+    if (this.tracerProvider != null) {
+      this.tracer = tracerProvider.get("org.hyperledger.besu.jsonrpc", "1.0.0");
+    } else {
+      this.tracer = OpenTelemetry.noop().getTracer("org.hyperledger.besu.jsonrpc", "1.0.0");
+    }
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
     try {
+
       // Create the HTTP server and a router object.
       httpServer = vertx.createHttpServer(getHttpServerOptions());
+
+      httpServer.connectionHandler(connectionHandler());
+
       httpServer
           .requestHandler(buildRouter())
           .listen(
@@ -226,13 +275,41 @@ public class JsonRpcHttpService {
     return resultFuture;
   }
 
+  private Handler<HttpConnection> connectionHandler() {
+
+    return connection -> {
+      if (activeConnectionsCount.get() >= maxActiveConnections) {
+        // disallow new connections to prevent DoS
+        LOG.warn(
+            "Rejecting new connection from {}. Max {} active connections limit reached.",
+            connection.remoteAddress(),
+            activeConnectionsCount.getAndIncrement());
+        connection.close();
+      } else {
+        LOG.debug(
+            "Opened connection from {}. Total of active connections: {}/{}",
+            connection.remoteAddress(),
+            activeConnectionsCount.incrementAndGet(),
+            maxActiveConnections);
+      }
+      connection.closeHandler(
+          c ->
+              LOG.debug(
+                  "Connection closed from {}. Total of active connections: {}/{}",
+                  connection.remoteAddress(),
+                  activeConnectionsCount.decrementAndGet(),
+                  maxActiveConnections));
+    };
+  }
+
   private Router buildRouter() {
     // Handle json rpc requests
     final Router router = Router.router(vertx);
+    router.route().handler(this::createSpan);
 
     // Verify Host header to avoid rebind attack.
     router.route().handler(checkAllowlistHostHeader());
-
+    router.errorHandler(403, new Logging403ErrorHandler());
     router
         .route()
         .handler(
@@ -243,6 +320,7 @@ public class JsonRpcHttpService {
         .route()
         .handler(
             BodyHandler.create()
+                .setBodyLimit(config.getMaxRequestContentLength())
                 .setUploadsDirectory(dataDir.resolve("uploads").toString())
                 .setDeleteUploadedFilesOnEnd(true));
     router.route("/").method(HttpMethod.GET).handler(this::handleEmptyRequest);
@@ -254,14 +332,39 @@ public class JsonRpcHttpService {
         .route(HealthService.READINESS_PATH)
         .method(HttpMethod.GET)
         .handler(readinessService::handleRequest);
-    router
-        .route("/")
-        .method(HttpMethod.POST)
-        .produces(APPLICATION_JSON)
+    Route mainRoute = router.route("/").method(HttpMethod.POST).produces(APPLICATION_JSON);
+    if (authenticationService.isPresent()) {
+      mainRoute.handler(
+          HandlerFactory.authentication(authenticationService.get(), config.getNoAuthRpcApis()));
+    }
+    mainRoute
+        .handler(HandlerFactory.jsonRpcParser())
         .handler(
-            HandlerFactory.timeout(
-                new TimeoutOptions(config.getHttpTimeoutSec()), rpcMethods, true))
-        .handler(this::handleJsonRPCRequest);
+            HandlerFactory.timeout(new TimeoutOptions(config.getHttpTimeoutSec()), rpcMethods));
+    if (authenticationService.isPresent()) {
+      mainRoute.blockingHandler(
+          HandlerFactory.jsonRpcExecutor(
+              new JsonRpcExecutor(
+                  new AuthenticatedJsonRpcProcessor(
+                      new TimedJsonRpcProcessor(
+                          new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()), requestTimer),
+                      authenticationService.get(),
+                      config.getNoAuthRpcApis()),
+                  rpcMethods),
+              tracer,
+              config),
+          false);
+    } else {
+      mainRoute.blockingHandler(
+          HandlerFactory.jsonRpcExecutor(
+              new JsonRpcExecutor(
+                  new TimedJsonRpcProcessor(
+                      new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()), requestTimer),
+                  rpcMethods),
+              tracer,
+              config),
+          false);
+    }
 
     if (authenticationService.isPresent()) {
       router
@@ -274,9 +377,33 @@ public class JsonRpcHttpService {
           .route("/login")
           .method(HttpMethod.POST)
           .produces(APPLICATION_JSON)
-          .handler(AuthenticationService::handleDisabledLogin);
+          .handler(DefaultAuthenticationService::handleDisabledLogin);
     }
     return router;
+  }
+
+  private void createSpan(final RoutingContext routingContext) {
+    final SocketAddress address = routingContext.request().connection().remoteAddress();
+
+    Context parent =
+        traceFormats.extract(Context.current(), routingContext.request(), requestAttributesGetter);
+    final Span serverSpan =
+        tracer
+            .spanBuilder(address.host() + ":" + address.port())
+            .setParent(parent)
+            .setSpanKind(SpanKind.SERVER)
+            .startSpan();
+    routingContext.put(SPAN_CONTEXT, Context.current().with(serverSpan));
+
+    routingContext.addEndHandler(
+        event -> {
+          if (event.failed()) {
+            serverSpan.recordException(event.cause());
+            serverSpan.setStatus(StatusCode.ERROR);
+          }
+          serverSpan.end();
+        });
+    routingContext.next();
   }
 
   private HttpServerOptions getHttpServerOptions() {
@@ -284,7 +411,8 @@ public class JsonRpcHttpService {
         new HttpServerOptions()
             .setHost(config.getHost())
             .setPort(config.getPort())
-            .setHandle100ContinueAutomatically(true);
+            .setHandle100ContinueAutomatically(true)
+            .setCompressionSupported(true);
 
     applyTlsConfig(httpServerOptions);
     return httpServerOptions;
@@ -304,6 +432,19 @@ public class JsonRpcHttpService {
                   .setPath(tlsConfiguration.getKeyStorePath().toString())
                   .setPassword(tlsConfiguration.getKeyStorePassword()))
           .setUseAlpn(true);
+
+      tlsConfiguration
+          .getSecureTransportProtocols()
+          .ifPresent(httpServerOptions::setEnabledSecureTransportProtocols);
+
+      tlsConfiguration
+          .getCipherSuites()
+          .ifPresent(
+              cipherSuites -> {
+                for (String cs : cipherSuites) {
+                  httpServerOptions.addEnabledCipherSuite(cs);
+                }
+              });
 
       tlsConfiguration
           .getClientAuthConfiguration()
@@ -327,7 +468,7 @@ public class JsonRpcHttpService {
         .ifPresent(
             knownClientsFile ->
                 httpServerOptions.setTrustOptions(
-                    whitelistClients(
+                    allowlistClients(
                         knownClientsFile, clientAuthConfiguration.isCaClientsEnabled())));
   }
 
@@ -336,13 +477,15 @@ public class JsonRpcHttpService {
   }
 
   private Throwable getFailureException(final Throwable listenFailure) {
-    if (listenFailure instanceof SocketException) {
-      return new JsonRpcServiceException(
-          String.format(
-              "Failed to bind Ethereum JSON-RPC listener to %s:%s: %s",
-              config.getHost(), config.getPort(), listenFailure.getMessage()));
-    }
-    return listenFailure;
+
+    JsonRpcServiceException servFail =
+        new JsonRpcServiceException(
+            String.format(
+                "Failed to bind Ethereum JSON-RPC listener to %s:%s: %s",
+                config.getHost(), config.getPort(), listenFailure.getMessage()));
+    servFail.initCause(listenFailure);
+
+    return servFail;
   }
 
   private Handler<RoutingContext> checkAllowlistHostHeader() {
@@ -363,13 +506,12 @@ public class JsonRpcHttpService {
     };
   }
 
-  private String getAuthToken(final RoutingContext routingContext) {
-    return AuthenticationUtils.getJwtTokenFromAuthorizationHeaderValue(
-        routingContext.request().getHeader("Authorization"));
-  }
-
   private Optional<String> getAndValidateHostHeader(final RoutingContext event) {
-    final Iterable<String> splitHostHeader = Splitter.on(':').split(event.request().host());
+    String hostname =
+        event.request().getHeader(HttpHeaders.HOST) != null
+            ? event.request().getHeader(HttpHeaders.HOST)
+            : event.request().host();
+    final Iterable<String> splitHostHeader = Splitter.on(':').split(hostname);
     final long hostPieces = stream(splitHostHeader).count();
     if (hostPieces > 1) {
       // If the host contains a colon, verify the host is correctly formed - host [ ":" port ]
@@ -428,249 +570,9 @@ public class JsonRpcHttpService {
     return config.getTlsConfiguration().isPresent() ? "https" : "http";
   }
 
-  private void handleJsonRPCRequest(final RoutingContext routingContext) {
-    // first check token if authentication is required
-    final String token = getAuthToken(routingContext);
-    if (authenticationService.isPresent() && token == null) {
-      // no auth token when auth required
-      handleJsonRpcUnauthorizedError(routingContext, null, JsonRpcError.UNAUTHORIZED);
-    } else {
-      // Parse json
-      try {
-        final String json = routingContext.getBodyAsString().trim();
-        if (!json.isEmpty() && json.charAt(0) == '{') {
-          final JsonObject requestBodyJsonObject =
-              ContextKey.REQUEST_BODY_AS_JSON_OBJECT.extractFrom(
-                  routingContext, () -> new JsonObject(json));
-          AuthenticationUtils.getUser(
-              authenticationService,
-              token,
-              user -> handleJsonSingleRequest(routingContext, requestBodyJsonObject, user));
-        } else {
-          final JsonArray array = new JsonArray(json);
-          if (array.size() < 1) {
-            handleJsonRpcError(routingContext, null, INVALID_REQUEST);
-            return;
-          }
-          AuthenticationUtils.getUser(
-              authenticationService,
-              token,
-              user -> handleJsonBatchRequest(routingContext, array, user));
-        }
-      } catch (final DecodeException ex) {
-        handleJsonRpcError(routingContext, null, JsonRpcError.PARSE_ERROR);
-      }
-    }
-  }
-
   // Facilitate remote health-checks in AWS, inter alia.
   private void handleEmptyRequest(final RoutingContext routingContext) {
     routingContext.response().setStatusCode(201).end();
-  }
-
-  private void handleJsonSingleRequest(
-      final RoutingContext routingContext, final JsonObject request, final Optional<User> user) {
-    final HttpServerResponse response = routingContext.response();
-    vertx.executeBlocking(
-        future -> {
-          final JsonRpcResponse jsonRpcResponse = process(routingContext, request, user);
-          future.complete(jsonRpcResponse);
-        },
-        false,
-        (res) -> {
-          if (!response.closed() && !response.headWritten()) {
-            if (res.failed()) {
-              response.setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end();
-              return;
-            }
-
-            final JsonRpcResponse jsonRpcResponse = (JsonRpcResponse) res.result();
-
-            response
-                .setStatusCode(status(jsonRpcResponse).code())
-                .putHeader("Content-Type", APPLICATION_JSON)
-                .end(serialize(jsonRpcResponse));
-          }
-        });
-  }
-
-  private HttpResponseStatus status(final JsonRpcResponse response) {
-    switch (response.getType()) {
-      case UNAUTHORIZED:
-        return HttpResponseStatus.UNAUTHORIZED;
-      case ERROR:
-        return statusCodeFromError(((JsonRpcErrorResponse) response).getError());
-      case SUCCESS:
-      case NONE:
-      default:
-        return HttpResponseStatus.OK;
-    }
-  }
-
-  private HttpResponseStatus statusCodeFromError(final JsonRpcError error) {
-    switch (error) {
-      case INVALID_REQUEST:
-      case INVALID_PARAMS:
-      case PARSE_ERROR:
-        return HttpResponseStatus.BAD_REQUEST;
-      default:
-        return HttpResponseStatus.OK;
-    }
-  }
-
-  private String serialize(final JsonRpcResponse response) {
-
-    if (response.getType() == JsonRpcResponseType.NONE) {
-      return EMPTY_RESPONSE;
-    }
-
-    return Json.encodePrettily(response);
-  }
-
-  @SuppressWarnings("rawtypes")
-  private void handleJsonBatchRequest(
-      final RoutingContext routingContext, final JsonArray jsonArray, final Optional<User> user) {
-    // Interpret json as rpc request
-    final List<Future> responses =
-        jsonArray.stream()
-            .map(
-                obj -> {
-                  if (!(obj instanceof JsonObject)) {
-                    return Future.succeededFuture(errorResponse(null, INVALID_REQUEST));
-                  }
-
-                  final JsonObject req = (JsonObject) obj;
-                  final Future<JsonRpcResponse> fut = Future.future();
-                  vertx.executeBlocking(
-                      future -> future.complete(process(routingContext, req, user)),
-                      false,
-                      ar -> {
-                        if (ar.failed()) {
-                          fut.fail(ar.cause());
-                        } else {
-                          fut.complete((JsonRpcResponse) ar.result());
-                        }
-                      });
-                  return fut;
-                })
-            .collect(toList());
-
-    CompositeFuture.all(responses)
-        .setHandler(
-            (res) -> {
-              final HttpServerResponse response = routingContext.response();
-              if (response.closed() || response.headWritten()) {
-                return;
-              }
-              if (res.failed()) {
-                response.setStatusCode(HttpResponseStatus.BAD_REQUEST.code()).end();
-                return;
-              }
-              final JsonRpcResponse[] completed =
-                  res.result().list().stream()
-                      .map(JsonRpcResponse.class::cast)
-                      .filter(this::isNonEmptyResponses)
-                      .toArray(JsonRpcResponse[]::new);
-
-              response.end(Json.encode(completed));
-            });
-  }
-
-  private boolean isNonEmptyResponses(final JsonRpcResponse result) {
-    return result.getType() != JsonRpcResponseType.NONE;
-  }
-
-  private JsonRpcResponse process(
-      final RoutingContext ctx, final JsonObject requestJson, final Optional<User> user) {
-    final JsonRpcRequest requestBody;
-    Object id = null;
-    try {
-      id = new JsonRpcRequestId(requestJson.getValue("id")).getValue();
-      requestBody = requestJson.mapTo(JsonRpcRequest.class);
-    } catch (final IllegalArgumentException exception) {
-      return errorResponse(id, INVALID_REQUEST);
-    }
-    // Handle notifications
-    if (requestBody.isNotification()) {
-      // Notifications aren't handled so create empty result for now.
-      return NO_RESPONSE;
-    }
-
-    final Optional<JsonRpcError> unavailableMethod = validateMethodAvailability(requestBody);
-    if (unavailableMethod.isPresent()) {
-      return errorResponse(id, unavailableMethod.get());
-    }
-
-    final JsonRpcMethod method = rpcMethods.get(requestBody.getMethod());
-
-    if (AuthenticationUtils.isPermitted(authenticationService, user, method)) {
-      // Generate response
-      try (final OperationTimer.TimingContext ignored =
-          requestTimer.labels(requestBody.getMethod()).startTimer()) {
-        if (user.isPresent()) {
-          return method.response(
-              new JsonRpcRequestContext(requestBody, user.get(), () -> !ctx.response().closed()));
-        }
-        return method.response(
-            new JsonRpcRequestContext(requestBody, () -> !ctx.response().closed()));
-      } catch (final InvalidJsonRpcParameters e) {
-        LOG.debug("Invalid Params", e);
-        return errorResponse(id, JsonRpcError.INVALID_PARAMS);
-      } catch (final MultiTenancyValidationException e) {
-        return unauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
-      } catch (final RuntimeException e) {
-        LOG.error("Error processing JSON-RPC requestBody", e);
-        return errorResponse(id, JsonRpcError.INTERNAL_ERROR);
-      }
-    } else {
-      return unauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
-    }
-  }
-
-  private Optional<JsonRpcError> validateMethodAvailability(final JsonRpcRequest request) {
-    final String name = request.getMethod();
-    LOG.debug("JSON-RPC request -> {}", name);
-
-    final JsonRpcMethod method = rpcMethods.get(name);
-
-    if (method == null) {
-      if (!RpcMethod.rpcMethodExists(name)) {
-        return Optional.of(JsonRpcError.METHOD_NOT_FOUND);
-      }
-      if (!rpcMethods.containsKey(name)) {
-        return Optional.of(JsonRpcError.METHOD_NOT_ENABLED);
-      }
-    }
-
-    return Optional.empty();
-  }
-
-  private void handleJsonRpcError(
-      final RoutingContext routingContext, final Object id, final JsonRpcError error) {
-    final HttpServerResponse response = routingContext.response();
-    if (!response.closed()) {
-      response
-          .setStatusCode(statusCodeFromError(error).code())
-          .end(Json.encode(new JsonRpcErrorResponse(id, error)));
-    }
-  }
-
-  private void handleJsonRpcUnauthorizedError(
-      final RoutingContext routingContext, final Object id, final JsonRpcError error) {
-    final HttpServerResponse response = routingContext.response();
-    if (!response.closed()) {
-      response
-          .setStatusCode(HttpResponseStatus.UNAUTHORIZED.code())
-          .end(Json.encode(new JsonRpcErrorResponse(id, error)));
-    }
-  }
-
-  private JsonRpcResponse errorResponse(final Object id, final JsonRpcError error) {
-    return new JsonRpcErrorResponse(id, error);
-  }
-
-  private JsonRpcResponse unauthorizedResponse(final Object id, final JsonRpcError error) {
-    return new JsonRpcUnauthorizedResponse(id, error);
   }
 
   private String buildCorsRegexFromConfig() {
@@ -678,7 +580,7 @@ public class JsonRpcHttpService {
       return "";
     }
     if (config.getCorsAllowedDomains().contains("*")) {
-      return "*";
+      return ".*";
     } else {
       final StringJoiner stringJoiner = new StringJoiner("|");
       config.getCorsAllowedDomains().stream().filter(s -> !s.isEmpty()).forEach(stringJoiner::add);

@@ -14,9 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
+
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApi;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
+import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 
 import java.io.File;
 import java.util.Arrays;
@@ -30,26 +31,41 @@ import com.google.common.base.MoreObjects;
 public class WebSocketConfiguration {
   public static final String DEFAULT_WEBSOCKET_HOST = "127.0.0.1";
   public static final int DEFAULT_WEBSOCKET_PORT = 8546;
-  public static final List<RpcApi> DEFAULT_WEBSOCKET_APIS =
-      Arrays.asList(RpcApis.ETH, RpcApis.NET, RpcApis.WEB3);
+  public static final int DEFAULT_WEBSOCKET_ENGINE_PORT = 8551;
+  public static final int DEFAULT_WEBSOCKET_MAX_FRAME_SIZE = 1024 * 1024;
+  public static final int DEFAULT_MAX_ACTIVE_CONNECTIONS = 80;
 
   private boolean enabled;
   private int port;
   private String host;
-  private List<RpcApi> rpcApis;
+  private List<String> rpcApis;
+  private List<String> rpcApisNoAuth = Collections.emptyList();
   private boolean authenticationEnabled = false;
   private String authenticationCredentialsFile;
   private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
   private File authenticationPublicKeyFile;
+  private JwtAlgorithm authenticationAlgorithm = JwtAlgorithm.RS256;
   private long timeoutSec;
+  private int maxActiveConnections;
+  private int maxFrameSize;
 
   public static WebSocketConfiguration createDefault() {
     final WebSocketConfiguration config = new WebSocketConfiguration();
     config.setEnabled(false);
     config.setHost(DEFAULT_WEBSOCKET_HOST);
     config.setPort(DEFAULT_WEBSOCKET_PORT);
-    config.setRpcApis(DEFAULT_WEBSOCKET_APIS);
+    config.setRpcApis(DEFAULT_RPC_APIS);
     config.setTimeoutSec(TimeoutOptions.defaultOptions().getTimeoutSeconds());
+    config.setMaxActiveConnections(DEFAULT_MAX_ACTIVE_CONNECTIONS);
+    config.setMaxFrameSize(DEFAULT_WEBSOCKET_MAX_FRAME_SIZE);
+    return config;
+  }
+
+  public static WebSocketConfiguration createEngineDefault() {
+    final WebSocketConfiguration config = createDefault();
+    config.setPort(DEFAULT_WEBSOCKET_ENGINE_PORT);
+    config.setRpcApis(Arrays.asList("ENGINE", "ETH"));
+    config.setHostsAllowlist(Arrays.asList("localhost", "127.0.0.1"));
     return config;
   }
 
@@ -79,12 +95,20 @@ public class WebSocketConfiguration {
     return port;
   }
 
-  public Collection<RpcApi> getRpcApis() {
+  public Collection<String> getRpcApis() {
     return rpcApis;
   }
 
-  public void setRpcApis(final List<RpcApi> rpcApis) {
+  public void setRpcApis(final List<String> rpcApis) {
     this.rpcApis = rpcApis;
+  }
+
+  public Collection<String> getRpcApisNoAuth() {
+    return rpcApisNoAuth;
+  }
+
+  public void setRpcApisNoAuth(final List<String> rpcApis) {
+    this.rpcApisNoAuth = rpcApis;
   }
 
   public boolean isAuthenticationEnabled() {
@@ -117,6 +141,14 @@ public class WebSocketConfiguration {
 
   public void setAuthenticationPublicKeyFile(final File authenticationPublicKeyFile) {
     this.authenticationPublicKeyFile = authenticationPublicKeyFile;
+  }
+
+  public JwtAlgorithm getAuthenticationAlgorithm() {
+    return authenticationAlgorithm;
+  }
+
+  public void setAuthenticationAlgorithm(final JwtAlgorithm algorithm) {
+    authenticationAlgorithm = algorithm;
   }
 
   public long getTimeoutSec() {
@@ -174,5 +206,21 @@ public class WebSocketConfiguration {
         .add("authenticationPublicKeyFile", authenticationPublicKeyFile)
         .add("timeoutSec", timeoutSec)
         .toString();
+  }
+
+  public int getMaxActiveConnections() {
+    return maxActiveConnections;
+  }
+
+  public void setMaxActiveConnections(final int maxActiveConnections) {
+    this.maxActiveConnections = maxActiveConnections;
+  }
+
+  public void setMaxFrameSize(final int maxFrameSize) {
+    this.maxFrameSize = maxFrameSize;
+  }
+
+  public Integer getMaxFrameSize() {
+    return maxFrameSize;
   }
 }

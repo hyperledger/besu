@@ -15,46 +15,63 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.proof.GetProofResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.ChainHead;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.Wei;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Collections;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
-public class EthGetProofTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class EthGetProofTest {
+  @Mock private Blockchain blockchain;
 
-  @Rule public final ExpectedException thrown = ExpectedException.none();
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  private WorldStateArchive archive;
 
-  @Mock private BlockchainQueries blockchainQueries;
+  @Mock private ChainHead chainHead;
+  @Mock private BlockHeader blockHeader;
+  private BlockchainQueries blockchainQueries;
 
   private EthGetProof method;
   private final String JSON_RPC_VERSION = "2.0";
@@ -66,51 +83,55 @@ public class EthGetProofTest {
       UInt256.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");
   private final long blockNumber = 1;
 
-  @Before
+  @BeforeEach
   public void setUp() {
-    method = new EthGetProof(blockchainQueries);
+    blockchainQueries = spy(new BlockchainQueries(blockchain, archive));
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchainQueries.headBlockNumber()).thenReturn(14L);
+    when(blockchain.getChainHead()).thenReturn(chainHead);
+    when(chainHead.getBlockHeader()).thenReturn(blockHeader);
+    when(blockHeader.getBlockHash()).thenReturn(Hash.ZERO);
+    when(blockchain.getBlockHeader(Hash.ZERO)).thenReturn(Optional.of(mock(BlockHeader.class)));
+    method = spy(new EthGetProof(blockchainQueries));
   }
 
   @Test
-  public void returnsCorrectMethodName() {
+  void returnsCorrectMethodName() {
     assertThat(method.getName()).isEqualTo(ETH_METHOD);
   }
 
   @Test
-  public void errorWhenNoAddressAccountSupplied() {
+  void errorWhenNoAddressAccountSupplied() {
     final JsonRpcRequestContext request = requestWithParams(null, null, "latest");
 
-    thrown.expect(InvalidJsonRpcParameters.class);
-    thrown.expectMessage("Missing required json rpc parameter at index 0");
-
-    method.response(request);
+    Assertions.assertThatThrownBy(() -> method.response(request))
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessageContaining("Missing required json rpc parameter at index 0");
   }
 
   @Test
-  public void errorWhenNoStorageKeysSupplied() {
+  void errorWhenNoStorageKeysSupplied() {
     final JsonRpcRequestContext request = requestWithParams(address.toString(), null, "latest");
 
-    thrown.expect(InvalidJsonRpcParameters.class);
-    thrown.expectMessage("Missing required json rpc parameter at index 1");
-
-    method.response(request);
+    Assertions.assertThatThrownBy(() -> method.response(request))
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessageContaining("Missing required json rpc parameter at index 1");
   }
 
   @Test
-  public void errorWhenNoBlockNumberSupplied() {
+  void errorWhenNoBlockNumberSupplied() {
     final JsonRpcRequestContext request = requestWithParams(address.toString(), new String[] {});
 
-    thrown.expect(InvalidJsonRpcParameters.class);
-    thrown.expectMessage("Missing required json rpc parameter at index 2");
-
-    method.response(request);
+    Assertions.assertThatThrownBy(() -> method.response(request))
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessageContaining("Missing required json rpc parameter at index 2");
   }
 
   @Test
-  public void errorWhenAccountNotFound() {
-
+  void errorWhenAccountNotFound() {
     generateWorldState();
-
+    when(archive.getAccountProof(any(Hash.class), any(Address.class), any()))
+        .thenReturn(Optional.empty());
     final JsonRpcErrorResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.NO_ACCOUNT_FOUND);
 
@@ -122,16 +143,15 @@ public class EthGetProofTest {
 
     final JsonRpcErrorResponse response = (JsonRpcErrorResponse) method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
-  public void errorWhenWorldStateUnavailable() {
-
-    when(blockchainQueries.getWorldState(blockNumber)).thenReturn(Optional.empty());
+  void errorWhenWorldStateUnavailable() {
 
     final JsonRpcErrorResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.WORLD_STATE_UNAVAILABLE);
+    when(archive.getMutable(any(BlockHeader.class), anyBoolean())).thenReturn(Optional.empty());
 
     final JsonRpcRequestContext request =
         requestWithParams(
@@ -141,11 +161,11 @@ public class EthGetProofTest {
 
     final JsonRpcErrorResponse response = (JsonRpcErrorResponse) method.response(request);
 
-    assertThat(response).isEqualToComparingFieldByField(expectedResponse);
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   @Test
-  public void getProof() {
+  void getProof() {
 
     final GetProofResult expectedResponse = generateWorldState();
 
@@ -155,28 +175,31 @@ public class EthGetProofTest {
 
     final JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) method.response(request);
 
-    assertThat(response.getResult()).isEqualToComparingFieldByFieldRecursively(expectedResponse);
+    final GetProofResult result = (GetProofResult) response.getResult();
+
+    assertThat(result).usingRecursiveComparison().isEqualTo(expectedResponse);
+    assertThat(result.getNonce()).isEqualTo("0xfffffffffffffffe");
+    assertThat(result.getStorageProof().size()).isGreaterThan(0);
+    assertThat(result.getStorageProof().get(0).getKey())
+        .isEqualTo(storageKey.trimLeadingZeros().toHexString());
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {
     return new JsonRpcRequestContext(new JsonRpcRequest(JSON_RPC_VERSION, ETH_METHOD, params));
   }
 
-  @SuppressWarnings("unchecked")
   private GetProofResult generateWorldState() {
 
     final Wei balance = Wei.of(1);
     final Hash codeHash =
         Hash.fromHexString("0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
-    final long nonce = 1;
+    final long nonce = MAX_NONCE - 1;
     final Hash rootHash =
         Hash.fromHexString("0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b431");
     final Hash storageRoot =
         Hash.fromHexString("0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
 
-    final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
-
-    when(blockchainQueries.getWorldStateArchive()).thenReturn(worldStateArchive);
+    when(blockchainQueries.getWorldStateArchive()).thenReturn(archive);
 
     final StateTrieAccountValue stateTrieAccountValue = mock(StateTrieAccountValue.class);
     when(stateTrieAccountValue.getBalance()).thenReturn(balance);
@@ -199,12 +222,19 @@ public class EthGetProofTest {
                     "0x2222222222222222222222222222222222222222222222222222222222222222")));
     when(worldStateProof.getStorageValue(storageKey)).thenReturn(UInt256.ZERO);
 
-    when(worldStateArchive.getAccountProof(eq(rootHash), eq(address), anyList()))
+    when(archive.getAccountProof(eq(rootHash), eq(address), anyList()))
         .thenReturn(Optional.of(worldStateProof));
 
     final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
     when(mutableWorldState.rootHash()).thenReturn(rootHash);
-    when(blockchainQueries.getWorldState(blockNumber)).thenReturn(Optional.of(mutableWorldState));
+    doAnswer(
+            invocation ->
+                invocation
+                    .<Function<MutableWorldState, Optional<? extends JsonRpcResponse>>>getArgument(
+                        1)
+                    .apply(mutableWorldState))
+        .when(blockchainQueries)
+        .getAndMapWorldState(any(), any());
 
     return GetProofResult.buildGetProofResult(address, worldStateProof);
   }

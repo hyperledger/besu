@@ -1,0 +1,69 @@
+{
+  "comment" : "'Transaction to test refund_CallToSuicideTwice_d0g0v0_Istanbul'",
+  "request" : {
+    "method" : "trace_callMany",
+    "params" : [ [ [ {
+      "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+      "value" : "0xa",
+      "to" : "0x0160000000000000000000000000000000000000",
+      "gas" : "0x989680",
+      "gasPrice" : "0x1",
+      "data" : "0x00000000000000000000000000000000000000000000000000000000000001f4"
+    }, [ "trace" ] ] ], "latest" ],
+    "id" : 1,
+    "jsonrpc" : "2.0"
+  },
+  "response" : {
+    "jsonrpc" : "2.0",
+    "result" : [ {
+      "output" : "0x",
+      "stateDiff" : null,
+      "trace" : [ {
+        "action" : {
+          "callType" : "call",
+          "from" : "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73",
+          "gas" : "0x9843e0",
+          "input" : "0x00000000000000000000000000000000000000000000000000000000000001f4",
+          "to" : "0x0160000000000000000000000000000000000000",
+          "value" : "0xa"
+        },
+        "result" : {
+          "gasUsed" : "0xcb3",
+          "output" : "0x"
+        },
+        "subtraces" : 2,
+        "traceAddress" : [ ],
+        "type" : "call"
+      }, {
+        "action" : {
+          "callType" : "call",
+          "from" : "0x0160000000000000000000000000000000000000",
+          "gas" : "0x1f4",
+          "input" : "0x",
+          "to" : "0x0170000000000000000000000000000000000000",
+          "value" : "0x0"
+        },
+        "error" : "Out of gas",
+        "subtraces" : 0,
+        "traceAddress" : [ 0 ],
+        "type" : "call"
+      }, {
+        "action" : {
+          "callType" : "call",
+          "from" : "0x0160000000000000000000000000000000000000",
+          "gas" : "0x1f4",
+          "input" : "0x",
+          "to" : "0x0170000000000000000000000000000000000000",
+          "value" : "0x0"
+        },
+        "error" : "Out of gas",
+        "subtraces" : 0,
+        "traceAddress" : [ 1 ],
+        "type" : "call"
+      } ],
+      "vmTrace" : null
+    } ],
+    "id" : 1
+  },
+  "statusCode" : 200
+}

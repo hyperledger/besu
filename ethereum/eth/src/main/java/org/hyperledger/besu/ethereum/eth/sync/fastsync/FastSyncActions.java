@@ -15,55 +15,60 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FastSyncActions {
 
-  private static final Logger LOG = LogManager.getLogger();
-  private final SynchronizerConfiguration syncConfig;
-  private final ProtocolSchedule protocolSchedule;
-  private final ProtocolContext protocolContext;
-  private final EthContext ethContext;
-  private final SyncState syncState;
-  private final MetricsSystem metricsSystem;
-  private final Counter pivotBlockSelectionCounter;
-  private final AtomicLong pivotBlockGauge = new AtomicLong(0);
+  private static final Logger LOG = LoggerFactory.getLogger(FastSyncActions.class);
+  protected final SynchronizerConfiguration syncConfig;
+  protected final WorldStateStorage worldStateStorage;
+  protected final ProtocolSchedule protocolSchedule;
+  protected final ProtocolContext protocolContext;
+  protected final EthContext ethContext;
+  protected final SyncState syncState;
+  protected final PivotBlockSelector pivotBlockSelector;
+  protected final MetricsSystem metricsSystem;
+  protected final Counter pivotBlockSelectionCounter;
+  protected final AtomicLong pivotBlockGauge = new AtomicLong(0);
 
   public FastSyncActions(
       final SynchronizerConfiguration syncConfig,
+      final WorldStateStorage worldStateStorage,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
+      final PivotBlockSelector pivotBlockSelector,
       final MetricsSystem metricsSystem) {
     this.syncConfig = syncConfig;
+    this.worldStateStorage = worldStateStorage;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.syncState = syncState;
+    this.pivotBlockSelector = pivotBlockSelector;
     this.metricsSystem = metricsSystem;
 
     pivotBlockSelectionCounter =
@@ -78,126 +83,121 @@ public class FastSyncActions {
         pivotBlockGauge::get);
   }
 
-  public CompletableFuture<FastSyncState> waitForSuitablePeers(final FastSyncState fastSyncState) {
-    if (fastSyncState.hasPivotBlockHeader()) {
-      return waitForAnyPeer().thenApply(ignore -> fastSyncState);
-    }
-
-    LOG.debug("Waiting for at least {} peers.", syncConfig.getFastSyncMinimumPeerCount());
-    return waitForPeers(syncConfig.getFastSyncMinimumPeerCount())
-        .thenApply(successfulWaitResult -> fastSyncState);
+  public SyncState getSyncState() {
+    return syncState;
   }
 
-  public <T> CompletableFuture<T> scheduleFutureTask(
-      final Supplier<CompletableFuture<T>> future, final Duration duration) {
-    return ethContext.getScheduler().scheduleFutureTask(future, duration);
-  }
-
-  private CompletableFuture<Void> waitForAnyPeer() {
-    final CompletableFuture<Void> waitForPeerResult =
-        ethContext.getScheduler().timeout(WaitForPeersTask.create(ethContext, 1, metricsSystem));
-    return exceptionallyCompose(
-        waitForPeerResult,
-        throwable -> {
-          if (ExceptionUtils.rootCause(throwable) instanceof TimeoutException) {
-            return waitForAnyPeer();
-          }
-          return CompletableFuture.failedFuture(throwable);
-        });
-  }
-
-  private CompletableFuture<Void> waitForPeers(final int count) {
-    final WaitForPeersTask waitForPeersTask =
-        WaitForPeersTask.create(ethContext, count, metricsSystem);
-    return waitForPeersTask.run();
+  public long getBestChainHeight() {
+    return pivotBlockSelector.getBestChainHeight();
   }
 
   public CompletableFuture<FastSyncState> selectPivotBlock(final FastSyncState fastSyncState) {
     return fastSyncState.hasPivotBlockHeader()
         ? completedFuture(fastSyncState)
-        : selectPivotBlockFromPeers();
+        : selectNewPivotBlock();
   }
 
-  private CompletableFuture<FastSyncState> selectPivotBlockFromPeers() {
-    return ethContext
-        .getEthPeers()
-        .bestPeerMatchingCriteria(this::canPeerDeterminePivotBlock)
-        // Only select a pivot block number when we have a minimum number of height estimates
-        .filter(
-            peer -> {
-              final long peerCount = countPeersThatCanDeterminePivotBlock();
-              final int minPeerCount = syncConfig.getFastSyncMinimumPeerCount();
-              if (peerCount < minPeerCount) {
-                LOG.info(
-                    "Waiting for valid peers with chain height information.  {} / {} required peers currently available.",
-                    peerCount,
-                    minPeerCount);
-                return false;
-              }
-              return true;
-            })
-        .map(
-            peer -> {
-              final long pivotBlockNumber =
-                  peer.chainState().getEstimatedHeight() - syncConfig.getFastSyncPivotDistance();
-              if (pivotBlockNumber <= BlockHeader.GENESIS_BLOCK_NUMBER) {
-                // Peer's chain isn't long enough, return an empty value so we can try again.
-                LOG.info("Waiting for peers with sufficient chain height");
-                return null;
-              }
-              LOG.info("Selecting block number {} as fast sync pivot block.", pivotBlockNumber);
-              pivotBlockSelectionCounter.inc();
-              pivotBlockGauge.set(pivotBlockNumber);
-              return completedFuture(new FastSyncState(pivotBlockNumber));
-            })
+  private CompletableFuture<FastSyncState> selectNewPivotBlock() {
+
+    return pivotBlockSelector
+        .selectNewPivotBlock()
+        .map(CompletableFuture::completedFuture)
         .orElseGet(this::retrySelectPivotBlockAfterDelay);
   }
 
-  private long countPeersThatCanDeterminePivotBlock() {
-    return ethContext
-        .getEthPeers()
-        .streamAvailablePeers()
-        .filter(this::canPeerDeterminePivotBlock)
-        .count();
-  }
-
-  private boolean canPeerDeterminePivotBlock(final EthPeer peer) {
-    return peer.chainState().hasEstimatedHeight() && peer.isFullyValidated();
+  <T> CompletableFuture<T> scheduleFutureTask(
+      final Supplier<CompletableFuture<T>> future, final Duration duration) {
+    return ethContext.getScheduler().scheduleFutureTask(future, duration);
   }
 
   private CompletableFuture<FastSyncState> retrySelectPivotBlockAfterDelay() {
     return ethContext
         .getScheduler()
-        .scheduleFutureTask(
-            () ->
-                waitForPeers(syncConfig.getFastSyncMinimumPeerCount())
-                    .thenCompose(ignore -> selectPivotBlockFromPeers()),
-            Duration.ofSeconds(5));
+        .scheduleFutureTask(pivotBlockSelector::prepareRetry, Duration.ofSeconds(5))
+        .thenCompose(ignore -> selectNewPivotBlock());
   }
 
   public CompletableFuture<FastSyncState> downloadPivotBlockHeader(
       final FastSyncState currentState) {
-    if (currentState.getPivotBlockHeader().isPresent()) {
+    return internalDownloadPivotBlockHeader(currentState).thenApply(this::updateStats);
+  }
+
+  private CompletableFuture<FastSyncState> internalDownloadPivotBlockHeader(
+      final FastSyncState currentState) {
+    if (currentState.hasPivotBlockHeader()) {
+      LOG.debug("Initial sync state {} already contains the block header", currentState);
       return completedFuture(currentState);
     }
-    return new PivotBlockRetriever(
-            protocolSchedule,
-            ethContext,
-            metricsSystem,
-            currentState.getPivotBlockNumber().getAsLong(),
-            syncConfig.getFastSyncMinimumPeerCount(),
-            syncConfig.getFastSyncPivotDistance())
-        .downloadPivotBlockHeader();
+
+    return waitForPeers(1)
+        .thenCompose(
+            unused ->
+                currentState
+                    .getPivotBlockHash()
+                    .map(this::downloadPivotBlockHeader)
+                    .orElseGet(
+                        () ->
+                            new PivotBlockRetriever(
+                                    protocolSchedule,
+                                    ethContext,
+                                    metricsSystem,
+                                    currentState.getPivotBlockNumber().getAsLong(),
+                                    syncConfig.getFastSyncMinimumPeerCount(),
+                                    syncConfig.getFastSyncPivotDistance())
+                                .downloadPivotBlockHeader()));
+  }
+
+  private FastSyncState updateStats(final FastSyncState fastSyncState) {
+    pivotBlockSelectionCounter.inc();
+    fastSyncState
+        .getPivotBlockHeader()
+        .ifPresent(blockHeader -> pivotBlockGauge.set(blockHeader.getNumber()));
+    return fastSyncState;
   }
 
   public ChainDownloader createChainDownloader(final FastSyncState currentState) {
     return FastSyncChainDownloader.create(
         syncConfig,
+        worldStateStorage,
         protocolSchedule,
         protocolContext,
         ethContext,
         syncState,
         metricsSystem,
-        currentState.getPivotBlockHeader().get());
+        currentState);
+  }
+
+  private CompletableFuture<FastSyncState> downloadPivotBlockHeader(final Hash hash) {
+    LOG.debug("Downloading pivot block header by hash {}", hash);
+    return RetryingGetHeaderFromPeerByHashTask.byHash(
+            protocolSchedule,
+            ethContext,
+            hash,
+            pivotBlockSelector.getMinRequiredBlockNumber(),
+            metricsSystem)
+        .getHeader()
+        .whenComplete(
+            (blockHeader, throwable) -> {
+              if (throwable != null) {
+                LOG.debug("Error downloading block header by hash {}", hash);
+              } else {
+                LOG.atDebug()
+                    .setMessage("Successfully downloaded pivot block header by hash {}")
+                    .addArgument(blockHeader::toLogString)
+                    .log();
+              }
+            })
+        .thenApply(FastSyncState::new);
+  }
+
+  public boolean isBlockchainBehind(final long blockNumber) {
+    return protocolContext.getBlockchain().getChainHeadHeader().getNumber() < blockNumber;
+  }
+
+  private CompletableFuture<Void> waitForPeers(final int count) {
+
+    final WaitForPeersTask waitForPeersTask =
+        WaitForPeersTask.create(ethContext, count, metricsSystem);
+    return waitForPeersTask.run();
   }
 }

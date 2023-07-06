@@ -15,11 +15,17 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.handlers.TimeoutOptions;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.BaseJsonRpcProcessor;
+import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketRequestHandler;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketMessageHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
@@ -27,8 +33,12 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.HashMap;
+import java.util.Optional;
 
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.ServerWebSocket;
+import io.vertx.core.http.WebSocketFrame;
 import io.vertx.core.json.Json;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -36,12 +46,14 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
+import org.mockito.stubbing.Answer;
 
 @RunWith(VertxUnitRunner.class)
 public class EthUnsubscribeIntegrationTest {
 
   private Vertx vertx;
-  private WebSocketRequestHandler webSocketRequestHandler;
+  private WebSocketMessageHandler webSocketMessageHandler;
   private SubscriptionManager subscriptionManager;
   private WebSocketMethodsFactory webSocketMethodsFactory;
   private final int ASYNC_TIMEOUT = 5000;
@@ -52,10 +64,10 @@ public class EthUnsubscribeIntegrationTest {
     vertx = Vertx.vertx();
     subscriptionManager = new SubscriptionManager(new NoOpMetricsSystem());
     webSocketMethodsFactory = new WebSocketMethodsFactory(subscriptionManager, new HashMap<>());
-    webSocketRequestHandler =
-        new WebSocketRequestHandler(
+    webSocketMessageHandler =
+        new WebSocketMessageHandler(
             vertx,
-            webSocketMethodsFactory.methods(),
+            new JsonRpcExecutor(new BaseJsonRpcProcessor(), webSocketMethodsFactory.methods()),
             mock(EthScheduler.class),
             TimeoutOptions.defaultOptions().getTimeoutSeconds());
   }
@@ -73,19 +85,20 @@ public class EthUnsubscribeIntegrationTest {
     final JsonRpcRequest unsubscribeRequestBody =
         createEthUnsubscribeRequestBody(subscriptionId, CONNECTION_ID);
 
-    vertx
-        .eventBus()
-        .consumer(CONNECTION_ID)
-        .handler(
-            msg -> {
-              assertThat(subscriptionManager.getSubscriptionById(subscriptionId)).isNull();
-              async.complete();
-            })
-        .completionHandler(
-            v ->
-                webSocketRequestHandler.handle(CONNECTION_ID, Json.encode(unsubscribeRequestBody)));
+    final JsonRpcSuccessResponse expectedResponse =
+        new JsonRpcSuccessResponse(unsubscribeRequestBody.getId(), Boolean.TRUE);
+
+    final ServerWebSocket websocketMock = mock(ServerWebSocket.class);
+    when(websocketMock.textHandlerID()).thenReturn(CONNECTION_ID);
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
+
+    webSocketMessageHandler.handle(
+        websocketMock, Json.encodeToBuffer(unsubscribeRequestBody), Optional.empty());
 
     async.awaitSuccess(ASYNC_TIMEOUT);
+    assertThat(subscriptionManager.getSubscriptionById(subscriptionId)).isNull();
+    verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedResponse))));
+    verify(websocketMock).writeFrame(argThat(this::isFinalFrame));
   }
 
   @Test
@@ -104,20 +117,21 @@ public class EthUnsubscribeIntegrationTest {
     final JsonRpcRequest unsubscribeRequestBody =
         createEthUnsubscribeRequestBody(subscriptionId2, CONNECTION_ID);
 
-    vertx
-        .eventBus()
-        .consumer(CONNECTION_ID)
-        .handler(
-            msg -> {
-              assertThat(subscriptionManager.getSubscriptionById(subscriptionId1)).isNotNull();
-              assertThat(subscriptionManager.getSubscriptionById(subscriptionId2)).isNull();
-              async.complete();
-            })
-        .completionHandler(
-            v ->
-                webSocketRequestHandler.handle(CONNECTION_ID, Json.encode(unsubscribeRequestBody)));
+    final JsonRpcSuccessResponse expectedResponse =
+        new JsonRpcSuccessResponse(unsubscribeRequestBody.getId(), Boolean.TRUE);
+
+    final ServerWebSocket websocketMock = mock(ServerWebSocket.class);
+    when(websocketMock.textHandlerID()).thenReturn(CONNECTION_ID);
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
+
+    webSocketMessageHandler.handle(
+        websocketMock, Json.encodeToBuffer(unsubscribeRequestBody), Optional.empty());
 
     async.awaitSuccess(ASYNC_TIMEOUT);
+    assertThat(subscriptionManager.getSubscriptionById(subscriptionId1)).isNotNull();
+    assertThat(subscriptionManager.getSubscriptionById(subscriptionId2)).isNull();
+    verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedResponse))));
+    verify(websocketMock).writeFrame(argThat(this::isFinalFrame));
   }
 
   private JsonRpcRequest createEthUnsubscribeRequestBody(
@@ -129,5 +143,20 @@ public class EthUnsubscribeIntegrationTest {
             + connectionId
             + "\"}",
         WebSocketRpcRequest.class);
+  }
+
+  private ArgumentMatcher<WebSocketFrame> isFrameWithText(final String text) {
+    return f -> f.isText() && f.textData().equals(text);
+  }
+
+  private boolean isFinalFrame(final WebSocketFrame frame) {
+    return frame.isFinal();
+  }
+
+  private Answer<Future<Void>> completeOnLastFrame(final Async async) {
+    return invocation -> {
+      async.complete();
+      return Future.succeededFuture();
+    };
   }
 }

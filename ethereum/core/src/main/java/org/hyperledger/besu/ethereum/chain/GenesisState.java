@@ -14,34 +14,38 @@
  */
 package org.hyperledger.besu.ethereum.chain;
 
+import static java.util.Collections.emptyList;
+
 import org.hyperledger.besu.config.GenesisAllocation;
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.LogsBloomFilter;
-import org.hyperledger.besu.ethereum.core.MutableAccount;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.Wei;
-import org.hyperledger.besu.ethereum.core.WorldUpdater;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
+import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -51,9 +55,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public final class GenesisState {
-
-  private static final BlockBody BODY =
-      new BlockBody(Collections.emptyList(), Collections.emptyList());
 
   private final Block block;
   private final List<GenesisAccount> genesisAccounts;
@@ -88,8 +89,17 @@ public final class GenesisState {
     final Block block =
         new Block(
             buildHeader(config, calculateGenesisStateHash(genesisAccounts), protocolSchedule),
-            BODY);
+            buildBody(config));
     return new GenesisState(block, genesisAccounts);
+  }
+
+  private static BlockBody buildBody(final GenesisConfigFile config) {
+    final Optional<List<Withdrawal>> withdrawals =
+        isShanghaiAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
+    final Optional<List<Deposit>> deposits =
+        isExperimentalEipsTimeAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
+
+    return new BlockBody(emptyList(), emptyList(), withdrawals, deposits);
   }
 
   public Block getBlock() {
@@ -102,13 +112,13 @@ public final class GenesisState {
    * @param target WorldView to write genesis state to
    */
   public void writeStateTo(final MutableWorldState target) {
-    writeAccountsTo(target, genesisAccounts, (Hash) block.getHeader().getBlockHash());
+    writeAccountsTo(target, genesisAccounts, block.getHeader());
   }
 
   private static void writeAccountsTo(
       final MutableWorldState target,
       final List<GenesisAccount> genesisAccounts,
-      final Hash rootHash) {
+      final BlockHeader rootHeader) {
     final WorldUpdater updater = target.updater();
     genesisAccounts.forEach(
         genesisAccount -> {
@@ -116,11 +126,10 @@ public final class GenesisState {
           account.setNonce(genesisAccount.nonce);
           account.setBalance(genesisAccount.balance);
           account.setCode(genesisAccount.code);
-          account.setVersion(genesisAccount.version);
           genesisAccount.storage.forEach(account::setStorageValue);
         });
     updater.commit();
-    target.persist(rootHash);
+    target.persist(rootHeader);
   }
 
   private static Hash calculateGenesisStateHash(final List<GenesisAccount> genesisAccounts) {
@@ -130,7 +139,7 @@ public final class GenesisState {
         new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage());
     final MutableWorldState worldState =
         new DefaultMutableWorldState(stateStorage, preimageStorage);
-    writeAccountsTo(worldState, genesisAccounts, Hash.ZERO);
+    writeAccountsTo(worldState, genesisAccounts, null);
     return worldState.rootHash();
   }
 
@@ -156,6 +165,9 @@ public final class GenesisState {
         .mixHash(parseMixHash(genesis))
         .nonce(parseNonce(genesis))
         .blockHeaderFunctions(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule))
+        .baseFee(genesis.getGenesisBaseFeePerGas().orElse(null))
+        .withdrawalsRoot(isShanghaiAtGenesis(genesis) ? Hash.EMPTY_TRIE_HASH : null)
+        .depositsRoot(isExperimentalEipsTimeAtGenesis(genesis) ? Hash.EMPTY_TRIE_HASH : null)
         .buildBlockHeader();
   }
 
@@ -213,6 +225,22 @@ public final class GenesisState {
     return Long.parseUnsignedLong(nonce, 16);
   }
 
+  private static boolean isShanghaiAtGenesis(final GenesisConfigFile genesis) {
+    final OptionalLong shanghaiTimestamp = genesis.getConfigOptions().getShanghaiTime();
+    if (shanghaiTimestamp.isPresent()) {
+      return shanghaiTimestamp.getAsLong() == genesis.getTimestamp();
+    }
+    return false;
+  }
+
+  private static boolean isExperimentalEipsTimeAtGenesis(final GenesisConfigFile genesis) {
+    final OptionalLong experimentalEipsTime = genesis.getConfigOptions().getExperimentalEipsTime();
+    if (experimentalEipsTime.isPresent()) {
+      return experimentalEipsTime.getAsLong() == genesis.getTimestamp();
+    }
+    return false;
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -228,7 +256,6 @@ public final class GenesisState {
     final Wei balance;
     final Map<UInt256, UInt256> storage;
     final Bytes code;
-    final int version;
 
     static GenesisAccount fromAllocation(final GenesisAllocation allocation) {
       return new GenesisAccount(
@@ -236,8 +263,7 @@ public final class GenesisState {
           allocation.getAddress(),
           allocation.getBalance(),
           allocation.getStorage(),
-          allocation.getCode(),
-          allocation.getVersion());
+          allocation.getCode());
     }
 
     private GenesisAccount(
@@ -245,13 +271,11 @@ public final class GenesisState {
         final String hexAddress,
         final String balance,
         final Map<String, String> storage,
-        final String hexCode,
-        final String version) {
+        final String hexCode) {
       this.nonce = withNiceErrorMessage("nonce", hexNonce, GenesisState::parseUnsignedLong);
       this.address = withNiceErrorMessage("address", hexAddress, Address::fromHexString);
       this.balance = withNiceErrorMessage("balance", balance, this::parseBalance);
       this.code = hexCode != null ? Bytes.fromHexString(hexCode) : null;
-      this.version = version != null ? Integer.decode(version) : Account.DEFAULT_VERSION;
       this.storage = parseStorage(storage);
     }
 
@@ -268,16 +292,13 @@ public final class GenesisState {
 
     private Map<UInt256, UInt256> parseStorage(final Map<String, String> storage) {
       final Map<UInt256, UInt256> parsedStorage = new HashMap<>();
-      storage
-          .entrySet()
-          .forEach(
-              (entry) -> {
-                final UInt256 key =
-                    withNiceErrorMessage("storage key", entry.getKey(), UInt256::fromHexString);
-                final UInt256 value =
-                    withNiceErrorMessage("storage value", entry.getValue(), UInt256::fromHexString);
-                parsedStorage.put(key, value);
-              });
+      storage.forEach(
+          (key1, value1) -> {
+            final UInt256 key = withNiceErrorMessage("storage key", key1, UInt256::fromHexString);
+            final UInt256 value =
+                withNiceErrorMessage("storage value", value1, UInt256::fromHexString);
+            parsedStorage.put(key, value);
+          });
 
       return parsedStorage;
     }
@@ -290,7 +311,6 @@ public final class GenesisState {
           .add("balance", balance)
           .add("storage", storage)
           .add("code", code)
-          .add("version", version)
           .toString();
     }
   }

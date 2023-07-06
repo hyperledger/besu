@@ -21,6 +21,7 @@ import static com.google.errorprone.util.ASTHelpers.getType;
 import static com.google.errorprone.util.ASTHelpers.isSubtype;
 
 import java.util.List;
+import java.util.Optional;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 
@@ -29,18 +30,23 @@ import com.google.errorprone.BugPattern;
 import com.google.errorprone.VisitorState;
 import com.google.errorprone.bugpatterns.BugChecker;
 import com.google.errorprone.bugpatterns.BugChecker.VariableTreeMatcher;
+import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.matchers.Description;
+import com.google.errorprone.suppliers.Supplier;
+import com.google.errorprone.suppliers.Suppliers;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.Type;
 
 @AutoService(BugChecker.class)
 @BugPattern(
-    name = "PrivateStaticFinalLoggers",
     summary = "Logger classes should be private, static, and final.",
     severity = WARNING,
     linkType = BugPattern.LinkType.NONE)
 public class PrivateStaticFinalLoggers extends BugChecker implements VariableTreeMatcher {
+
+  static final Supplier<Type> ORG_SLF4J_LOGGER = Suppliers.typeFromString("org.slf4j.Logger");
 
   @Override
   public Description matchVariable(final VariableTree tree, final VisitorState state) {
@@ -52,12 +58,13 @@ public class PrivateStaticFinalLoggers extends BugChecker implements VariableTre
         .containsAll(List.of(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL))) {
       return NO_MATCH;
     }
-    if (!isSubtype(
-        getType(tree), state.getTypeFromString("org.apache.logging.log4j.Logger"), state)) {
+    if (!isSubtype(getType(tree), ORG_SLF4J_LOGGER.get(state), state)) {
       return NO_MATCH;
     }
+    Optional<SuggestedFix> fixes =
+        addModifiers(tree, state, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL);
     return buildDescription(tree)
-        .addFix(addModifiers(tree, state, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL))
+        .addFix(fixes.isPresent() ? fixes.get() : SuggestedFix.emptyFix())
         .build();
   }
 }

@@ -18,9 +18,12 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -28,8 +31,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.EthHashMiningCoordinator;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
+import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -49,14 +54,17 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
 
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
@@ -67,18 +75,18 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class JsonRpcHttpServiceRpcApisTest {
-  @Rule public final TemporaryFolder folder = new TemporaryFolder();
+
+  @TempDir private static Path folder;
 
   private final Vertx vertx = Vertx.vertx();
   private final OkHttpClient client = new OkHttpClient();
@@ -91,18 +99,18 @@ public class JsonRpcHttpServiceRpcApisTest {
   private static final List<String> netServices =
       new ArrayList<>(Arrays.asList("jsonrpc", "ws", "p2p", "metrics"));
 
-  @Mock protected static BlockchainQueries blockchainQueries;
+  @Mock protected BlockchainQueries blockchainQueries;
 
   private final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
   private final NatService natService = new NatService(Optional.empty());
 
-  @Before
+  @BeforeEach
   public void before() {
     configuration = JsonRpcConfiguration.createDefault();
     configuration.setPort(0);
   }
 
-  @After
+  @AfterEach
   public void after() {
     service.stop().join();
   }
@@ -113,8 +121,8 @@ public class JsonRpcHttpServiceRpcApisTest {
     final String id = "123";
     final RequestBody body =
         RequestBody.create(
-            JSON,
-            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}");
+            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}",
+            JSON);
 
     try (final Response resp = client.newCall(buildRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
@@ -123,12 +131,12 @@ public class JsonRpcHttpServiceRpcApisTest {
 
   @Test
   public void requestWithNetMethodShouldSucceedWhenNetApiIsEnabled() throws Exception {
-    service = createJsonRpcHttpServiceWithRpcApis(RpcApis.NET);
+    service = createJsonRpcHttpServiceWithRpcApis(RpcApis.NET.name());
     final String id = "123";
     final RequestBody body =
         RequestBody.create(
-            JSON,
-            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}");
+            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}",
+            JSON);
 
     try (final Response resp = client.newCall(buildRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
@@ -138,12 +146,12 @@ public class JsonRpcHttpServiceRpcApisTest {
   @Test
   public void requestWithNetMethodShouldSuccessWithCode200WhenNetApiIsNotEnabled()
       throws Exception {
-    service = createJsonRpcHttpServiceWithRpcApis(RpcApis.WEB3);
+    service = createJsonRpcHttpServiceWithRpcApis(RpcApis.WEB3.name());
     final String id = "123";
     final RequestBody body =
         RequestBody.create(
-            JSON,
-            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}");
+            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}",
+            JSON);
 
     try (final Response resp = client.newCall(buildRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
@@ -157,19 +165,19 @@ public class JsonRpcHttpServiceRpcApisTest {
 
   @Test
   public void requestWithNetMethodShouldSucceedWhenNetApiAndOtherIsEnabled() throws Exception {
-    service = createJsonRpcHttpServiceWithRpcApis(RpcApis.NET, RpcApis.WEB3);
+    service = createJsonRpcHttpServiceWithRpcApis(RpcApis.NET.name(), RpcApis.WEB3.name());
     final String id = "123";
     final RequestBody body =
         RequestBody.create(
-            JSON,
-            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}");
+            "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_version\"}",
+            JSON);
 
     try (final Response resp = client.newCall(buildRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
     }
   }
 
-  private JsonRpcConfiguration createJsonRpcConfigurationWithRpcApis(final RpcApi... rpcApis) {
+  private JsonRpcConfiguration createJsonRpcConfigurationWithRpcApis(final String... rpcApis) {
     final JsonRpcConfiguration config = JsonRpcConfiguration.createDefault();
     config.setCorsAllowedDomains(singletonList("*"));
     config.setPort(0);
@@ -179,7 +187,7 @@ public class JsonRpcHttpServiceRpcApisTest {
     return config;
   }
 
-  private JsonRpcHttpService createJsonRpcHttpServiceWithRpcApis(final RpcApi... rpcApis)
+  private JsonRpcHttpService createJsonRpcHttpServiceWithRpcApis(final String... rpcApis)
       throws Exception {
     return createJsonRpcHttpServiceWithRpcApis(createJsonRpcConfigurationWithRpcApis(rpcApis));
   }
@@ -201,9 +209,10 @@ public class JsonRpcHttpServiceRpcApisTest {
                     blockchainQueries,
                     mock(Synchronizer.class),
                     ProtocolScheduleFixture.MAINNET,
+                    mock(ProtocolContext.class),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
-                    mock(EthHashMiningCoordinator.class),
+                    mock(PoWMiningCoordinator.class),
                     new NoOpMetricsSystem(),
                     supportedCapabilities,
                     Optional.of(mock(AccountLocalConfigPermissioningController.class)),
@@ -215,12 +224,15 @@ public class JsonRpcHttpServiceRpcApisTest {
                     mock(MetricsConfiguration.class),
                     natService,
                     new HashMap<>(),
-                    folder.getRoot().toPath(),
-                    mock(EthPeers.class)));
+                    folder,
+                    mock(EthPeers.class),
+                    vertx,
+                    Optional.empty(),
+                    Optional.empty()));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
-            folder.newFolder().toPath(),
+            folder,
             config,
             new NoOpMetricsSystem(),
             natService,
@@ -255,6 +267,10 @@ public class JsonRpcHttpServiceRpcApisTest {
             .setRlpx(RlpxConfiguration.create().setBindPort(0))
             .setDiscovery(DiscoveryConfiguration.create().setBindPort(0));
 
+    final MutableBlockchain blockchain = mock(MutableBlockchain.class);
+    final Block genesisBlock = mock(Block.class);
+    when(blockchain.getGenesisBlock()).thenReturn(genesisBlock);
+    when(genesisBlock.getHash()).thenReturn(Hash.ZERO);
     final P2PNetwork p2pNetwork =
         DefaultP2PNetwork.builder()
             .supportedCapabilities(Capability.create("eth", 63))
@@ -262,7 +278,12 @@ public class JsonRpcHttpServiceRpcApisTest {
             .vertx(vertx)
             .config(config)
             .metricsSystem(new NoOpMetricsSystem())
-            .storageProvider(new InMemoryStorageProvider())
+            .storageProvider(new InMemoryKeyValueStorageProvider())
+            .blockchain(blockchain)
+            .blockNumberForks(Collections.emptyList())
+            .timestampForks(Collections.emptyList())
+            .allConnectionsSupplier(Stream::empty)
+            .allActiveConnectionsSupplier(Stream::empty)
             .build();
 
     p2pNetwork.start();
@@ -297,9 +318,10 @@ public class JsonRpcHttpServiceRpcApisTest {
                     blockchainQueries,
                     mock(Synchronizer.class),
                     ProtocolScheduleFixture.MAINNET,
+                    mock(ProtocolContext.class),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),
-                    mock(EthHashMiningCoordinator.class),
+                    mock(PoWMiningCoordinator.class),
                     new NoOpMetricsSystem(),
                     supportedCapabilities,
                     Optional.of(mock(AccountLocalConfigPermissioningController.class)),
@@ -311,12 +333,15 @@ public class JsonRpcHttpServiceRpcApisTest {
                     metricsConfiguration,
                     natService,
                     new HashMap<>(),
-                    folder.getRoot().toPath(),
-                    mock(EthPeers.class)));
+                    folder,
+                    mock(EthPeers.class),
+                    vertx,
+                    Optional.empty(),
+                    Optional.empty()));
     final JsonRpcHttpService jsonRpcHttpService =
         new JsonRpcHttpService(
             vertx,
-            folder.newFolder().toPath(),
+            folder,
             jsonRpcConfiguration,
             new NoOpMetricsSystem(),
             natService,
@@ -393,7 +418,7 @@ public class JsonRpcHttpServiceRpcApisTest {
   public RequestBody createNetServicesRequestBody() {
     final String id = "123";
     return RequestBody.create(
-        JSON, "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_services\"}");
+        "{\"jsonrpc\":\"2.0\",\"id\":" + Json.encode(id) + ",\"method\":\"net_services\"}", JSON);
   }
 
   public JsonRpcHttpService getJsonRpcHttpService(final boolean[] enabledNetServices)
@@ -403,7 +428,7 @@ public class JsonRpcHttpServiceRpcApisTest {
     WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
     P2PNetwork p2pNetwork = mock(P2PNetwork.class);
     MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
-    NatService natService = mock(NatService.class);
+    final NatService natService = mock(NatService.class);
 
     if (enabledNetServices[netServices.indexOf("jsonrpc")]) {
       jsonRpcConfiguration = createJsonRpcConfiguration();

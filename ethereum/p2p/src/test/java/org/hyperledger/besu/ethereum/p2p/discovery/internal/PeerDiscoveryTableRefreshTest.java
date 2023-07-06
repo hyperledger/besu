@@ -23,12 +23,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
-import org.hyperledger.besu.crypto.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
+import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.util.Subscribers;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -38,6 +39,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -68,13 +70,15 @@ public class PeerDiscoveryTableRefreshTest {
                 .timerUtil(timer)
                 .workerExecutor(new BlockingAsyncExecutor())
                 .tableRefreshIntervalMs(0)
-                .peerBondedObservers(Subscribers.create())
                 .metricsSystem(new NoOpMetricsSystem())
+                .rlpxAgent(mock(RlpxAgent.class))
+                .forkIdManager(mock(ForkIdManager.class))
                 .build());
     controller.start();
 
     final PingPacketData mockPing =
-        PingPacketData.create(localPeer.getEndpoint(), remotePeer.getEndpoint());
+        PingPacketData.create(
+            Optional.ofNullable(localPeer.getEndpoint()), remotePeer.getEndpoint(), UInt64.ONE);
     final Packet mockPingPacket = Packet.create(PacketType.PING, mockPing, localKeyPair);
 
     doAnswer(
@@ -88,13 +92,14 @@ public class PeerDiscoveryTableRefreshTest {
 
     // Send a PING, so as to add a Peer in the controller.
     final PingPacketData ping =
-        PingPacketData.create(remotePeer.getEndpoint(), localPeer.getEndpoint());
+        PingPacketData.create(
+            Optional.ofNullable(remotePeer.getEndpoint()), localPeer.getEndpoint(), UInt64.ONE);
     final Packet pingPacket = Packet.create(PacketType.PING, ping, remoteKeyPair);
     controller.onMessage(pingPacket, remotePeer);
 
     // Answer localPeer PING to complete bonding
     final PongPacketData pong =
-        PongPacketData.create(localPeer.getEndpoint(), mockPingPacket.getHash());
+        PongPacketData.create(localPeer.getEndpoint(), mockPingPacket.getHash(), UInt64.ONE);
     final Packet pongPacket = Packet.create(PacketType.PONG, pong, remoteKeyPair);
     controller.onMessage(pongPacket, remotePeer);
 

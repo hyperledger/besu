@@ -14,8 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
-import org.hyperledger.besu.crypto.SECP256K1.KeyPair;
-import org.hyperledger.besu.crypto.SECP256K1.PrivateKey;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
@@ -26,24 +29,23 @@ import java.util.concurrent.TimeUnit;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes32;
 import org.awaitility.Awaitility;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ComparisonFailure;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class TransactionPoolPropagationTest {
+class TransactionPoolPropagationTest {
 
   final DiscoveryConfiguration noDiscovery = DiscoveryConfiguration.create().setActive(false);
 
   private Vertx vertx;
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUp() {
     vertx = Vertx.vertx();
   }
 
-  @After
-  public void tearDown() {
+  @AfterEach
+  void tearDown() {
     vertx.close();
   }
 
@@ -66,8 +68,8 @@ public class TransactionPoolPropagationTest {
    * 2nd order test to verify the framework correctly fails if a disconnect occurs It could have a
    * more detailed exception check - more than just the class.
    */
-  @Test(expected = ComparisonFailure.class)
-  public void disconnectShouldThrow() throws Exception {
+  @Test
+  void disconnectShouldThrow() throws Exception {
 
     try (final TestNodeList txNodes = new TestNodeList()) {
       // Create & Start Nodes
@@ -79,7 +81,7 @@ public class TransactionPoolPropagationTest {
 
       node1.network.getPeers().iterator().next().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
 
-      wrapup(txNodes);
+      assertThatThrownBy(() -> wrapup(txNodes)).isInstanceOf(AssertionError.class);
     }
   }
 
@@ -88,16 +90,17 @@ public class TransactionPoolPropagationTest {
    * node. Verify that all nodes get the correct number of pending transactions.
    */
   @Test
-  public void shouldPropagateLocalAndRemoteTransactions() throws Exception {
+  void shouldPropagateLocalAndRemoteTransactions() throws Exception {
     try (final TestNodeList nodes = new TestNodeList()) {
       // Create & Start Nodes
       final TestNode node1 = nodes.create(vertx, null, null, noDiscovery);
       final TestNode node2 = nodes.create(vertx, null, null, noDiscovery);
       final TestNode node3 = nodes.create(vertx, null, null, noDiscovery);
       final TestNode node4 = nodes.create(vertx, null, null, noDiscovery);
+      final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
       final KeyPair keyPair =
-          KeyPair.create(
-              PrivateKey.create(
+          signatureAlgorithm.createKeyPair(
+              signatureAlgorithm.createPrivateKey(
                   Bytes32.fromHexString(
                       "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63")));
       final TransactionTestFixture transactionBuilder = new TransactionTestFixture();

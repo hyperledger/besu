@@ -15,339 +15,190 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.fees.TransactionPriceCalculator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.TreeMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ProtocolScheduleBuilder {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(ProtocolScheduleBuilder.class);
   private final GenesisConfigOptions config;
-  private final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter;
   private final Optional<BigInteger> defaultChainId;
+  private final ProtocolSpecAdapters protocolSpecAdapters;
   private final PrivacyParameters privacyParameters;
   private final boolean isRevertReasonEnabled;
+  private final EvmConfiguration evmConfiguration;
   private final BadBlockManager badBlockManager = new BadBlockManager();
-  private final boolean quorumCompatibilityMode;
+
+  private DefaultProtocolSchedule protocolSchedule;
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final BigInteger defaultChainId,
-      final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter,
+      final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final boolean quorumCompatibilityMode) {
+      final EvmConfiguration evmConfiguration) {
     this(
         config,
         Optional.of(defaultChainId),
-        protocolSpecAdapter,
+        protocolSpecAdapters,
         privacyParameters,
         isRevertReasonEnabled,
-        quorumCompatibilityMode);
+        evmConfiguration);
   }
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
-      final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter,
+      final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final boolean quorumCompatibilityMode) {
+      final EvmConfiguration evmConfiguration) {
     this(
         config,
         Optional.empty(),
-        protocolSpecAdapter,
+        protocolSpecAdapters,
         privacyParameters,
         isRevertReasonEnabled,
-        quorumCompatibilityMode);
+        evmConfiguration);
   }
 
   private ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final Optional<BigInteger> defaultChainId,
-      final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> protocolSpecAdapter,
+      final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final boolean quorumCompatibilityMode) {
+      final EvmConfiguration evmConfiguration) {
     this.config = config;
-    this.defaultChainId = defaultChainId;
-    this.protocolSpecAdapter = protocolSpecAdapter;
+    this.protocolSpecAdapters = protocolSpecAdapters;
     this.privacyParameters = privacyParameters;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
-    this.quorumCompatibilityMode = quorumCompatibilityMode;
+    this.evmConfiguration = evmConfiguration;
+    this.defaultChainId = defaultChainId;
   }
 
   public ProtocolSchedule createProtocolSchedule() {
-    final Optional<BigInteger> chainId =
-        config.getChainId().map(Optional::of).orElse(defaultChainId);
-    final MutableProtocolSchedule protocolSchedule = new MutableProtocolSchedule(chainId);
+    final Optional<BigInteger> chainId = config.getChainId().or(() -> defaultChainId);
+    protocolSchedule = new DefaultProtocolSchedule(chainId);
+    initSchedule(protocolSchedule, chainId);
+    return protocolSchedule;
+  }
+
+  private void initSchedule(
+      final ProtocolSchedule protocolSchedule, final Optional<BigInteger> chainId) {
+
+    final MainnetProtocolSpecFactory specFactory =
+        new MainnetProtocolSpecFactory(
+            chainId,
+            config.getContractSizeLimit(),
+            config.getEvmStackSize(),
+            isRevertReasonEnabled,
+            config.getEcip1017EraRounds(),
+            evmConfiguration);
 
     validateForkOrdering();
 
-    addProtocolSpec(
-        protocolSchedule,
-        OptionalLong.of(0),
-        MainnetProtocolSpecs.frontierDefinition(
-            config.getContractSizeLimit(), config.getEvmStackSize(), quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getHomesteadBlockNumber(),
-        MainnetProtocolSpecs.homesteadDefinition(
-            config.getContractSizeLimit(), config.getEvmStackSize(), quorumCompatibilityMode));
+    final TreeMap<Long, BuilderMapEntry> builders = buildMilestoneMap(specFactory);
 
+    // At this stage, all milestones are flagged with correct modifier, but ProtocolSpecs must be
+    // inserted _AT_ the modifier block entry.
+    if (!builders.isEmpty()) {
+      protocolSpecAdapters.stream()
+          .forEach(
+              entry -> {
+                final long modifierBlock = entry.getKey();
+                final BuilderMapEntry parent =
+                    Optional.ofNullable(builders.floorEntry(modifierBlock))
+                        .orElse(builders.firstEntry())
+                        .getValue();
+                builders.put(
+                    modifierBlock,
+                    new BuilderMapEntry(
+                        parent.milestoneType,
+                        modifierBlock,
+                        parent.getBuilder(),
+                        entry.getValue()));
+              });
+    }
+
+    // Create the ProtocolSchedule, such that the Dao/fork milestones can be inserted
+    builders
+        .values()
+        .forEach(
+            e ->
+                addProtocolSpec(
+                    protocolSchedule,
+                    e.milestoneType,
+                    e.getBlockIdentifier(),
+                    e.getBuilder(),
+                    e.modifier));
+
+    // NOTE: It is assumed that Daofork blocks will not be used for private networks
+    // as too many risks exist around inserting a protocol-spec between daoBlock and daoBlock+10.
     config
         .getDaoForkBlock()
         .ifPresent(
             daoBlockNumber -> {
+              final BuilderMapEntry previousSpecBuilder =
+                  builders.floorEntry(daoBlockNumber).getValue();
               final ProtocolSpec originalProtocolSpec =
-                  protocolSchedule.getByBlockNumber(daoBlockNumber);
+                  getProtocolSpec(
+                      protocolSchedule,
+                      previousSpecBuilder.getBuilder(),
+                      previousSpecBuilder.getModifier());
               addProtocolSpec(
                   protocolSchedule,
-                  OptionalLong.of(daoBlockNumber),
-                  MainnetProtocolSpecs.daoRecoveryInitDefinition(
-                      config.getContractSizeLimit(),
-                      config.getEvmStackSize(),
-                      quorumCompatibilityMode));
+                  BuilderMapEntry.MilestoneType.BLOCK_NUMBER,
+                  daoBlockNumber,
+                  specFactory.daoRecoveryInitDefinition(),
+                  protocolSpecAdapters.getModifierForBlock(daoBlockNumber));
               addProtocolSpec(
                   protocolSchedule,
-                  OptionalLong.of(daoBlockNumber + 1),
-                  MainnetProtocolSpecs.daoRecoveryTransitionDefinition(
-                      config.getContractSizeLimit(),
-                      config.getEvmStackSize(),
-                      quorumCompatibilityMode));
-
+                  BuilderMapEntry.MilestoneType.BLOCK_NUMBER,
+                  daoBlockNumber + 1L,
+                  specFactory.daoRecoveryTransitionDefinition(),
+                  protocolSpecAdapters.getModifierForBlock(daoBlockNumber + 1L));
               // Return to the previous protocol spec after the dao fork has completed.
-              protocolSchedule.putMilestone(daoBlockNumber + 10, originalProtocolSpec);
+              protocolSchedule.putBlockNumberMilestone(daoBlockNumber + 10, originalProtocolSpec);
             });
-
-    addProtocolSpec(
-        protocolSchedule,
-        config.getTangerineWhistleBlockNumber(),
-        MainnetProtocolSpecs.tangerineWhistleDefinition(
-            config.getContractSizeLimit(), config.getEvmStackSize(), quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getSpuriousDragonBlockNumber(),
-        MainnetProtocolSpecs.spuriousDragonDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getByzantiumBlockNumber(),
-        MainnetProtocolSpecs.byzantiumDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getConstantinopleBlockNumber(),
-        MainnetProtocolSpecs.constantinopleDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getConstantinopleFixBlockNumber(),
-        MainnetProtocolSpecs.constantinopleFixDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getIstanbulBlockNumber(),
-        MainnetProtocolSpecs.istanbulDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getMuirGlacierBlockNumber(),
-        MainnetProtocolSpecs.muirGlacierDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            quorumCompatibilityMode));
-
-    if (ExperimentalEIPs.berlinEnabled) {
-      addProtocolSpec(
-          protocolSchedule,
-          config.getBerlinBlockNumber(),
-          MainnetProtocolSpecs.berlinDefinition(
-              chainId,
-              config.getContractSizeLimit(),
-              config.getEvmStackSize(),
-              isRevertReasonEnabled,
-              quorumCompatibilityMode));
-    }
-
-    if (ExperimentalEIPs.eip1559Enabled) {
-      final Optional<TransactionPriceCalculator> transactionPriceCalculator =
-          Optional.of(TransactionPriceCalculator.eip1559());
-      addProtocolSpec(
-          protocolSchedule,
-          config.getEIP1559BlockNumber(),
-          MainnetProtocolSpecs.eip1559Definition(
-              chainId,
-              transactionPriceCalculator,
-              config.getContractSizeLimit(),
-              config.getEvmStackSize(),
-              isRevertReasonEnabled,
-              config,
-              quorumCompatibilityMode));
-    }
 
     // specs for classic network
     config
         .getClassicForkBlock()
         .ifPresent(
             classicBlockNumber -> {
-              final ProtocolSpec originalProtocolSpce =
-                  protocolSchedule.getByBlockNumber(classicBlockNumber);
+              final BuilderMapEntry previousSpecBuilder =
+                  builders.floorEntry(classicBlockNumber).getValue();
+              final ProtocolSpec originalProtocolSpec =
+                  getProtocolSpec(
+                      protocolSchedule,
+                      previousSpecBuilder.getBuilder(),
+                      previousSpecBuilder.getModifier());
               addProtocolSpec(
                   protocolSchedule,
-                  OptionalLong.of(classicBlockNumber),
+                  BuilderMapEntry.MilestoneType.BLOCK_NUMBER,
+                  classicBlockNumber,
                   ClassicProtocolSpecs.classicRecoveryInitDefinition(
-                      config.getContractSizeLimit(),
-                      config.getEvmStackSize(),
-                      quorumCompatibilityMode));
-              protocolSchedule.putMilestone(classicBlockNumber + 1, originalProtocolSpce);
+                      config.getContractSizeLimit(), config.getEvmStackSize(), evmConfiguration),
+                  Function.identity());
+              protocolSchedule.putBlockNumberMilestone(
+                  classicBlockNumber + 1, originalProtocolSpec);
             });
 
-    addProtocolSpec(
-        protocolSchedule,
-        config.getEcip1015BlockNumber(),
-        ClassicProtocolSpecs.tangerineWhistleDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getDieHardBlockNumber(),
-        ClassicProtocolSpecs.dieHardDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getGothamBlockNumber(),
-        ClassicProtocolSpecs.gothamDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            config.getEcip1017EraRounds(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getDefuseDifficultyBombBlockNumber(),
-        ClassicProtocolSpecs.defuseDifficultyBombDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            config.getEcip1017EraRounds(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getAtlantisBlockNumber(),
-        ClassicProtocolSpecs.atlantisDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            config.getEcip1017EraRounds(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getAghartaBlockNumber(),
-        ClassicProtocolSpecs.aghartaDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            config.getEcip1017EraRounds(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getPhoenixBlockNumber(),
-        ClassicProtocolSpecs.phoenixDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            config.getEcip1017EraRounds(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getThanosBlockNumber(),
-        ClassicProtocolSpecs.thanosDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            config.getEcip1017EraRounds(),
-            quorumCompatibilityMode));
-    addProtocolSpec(
-        protocolSchedule,
-        config.getLacchainPostQuantumBlockNumber(),
-        LacchainProtocolSpecs.postQuantumDefinition(
-            chainId,
-            config.getContractSizeLimit(),
-            config.getEvmStackSize(),
-            isRevertReasonEnabled,
-            quorumCompatibilityMode));
-
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
-    return protocolSchedule;
-  }
-
-  private void addProtocolSpec(
-      final MutableProtocolSchedule protocolSchedule,
-      final OptionalLong blockNumber,
-      final ProtocolSpecBuilder definition) {
-    blockNumber.ifPresent(
-        number ->
-            protocolSchedule.putMilestone(
-                number,
-                protocolSpecAdapter
-                    .apply(definition)
-                    .badBlocksManager(badBlockManager)
-                    .privacyParameters(privacyParameters)
-                    .privateTransactionValidatorBuilder(
-                        () -> new PrivateTransactionValidator(protocolSchedule.getChainId()))
-                    .build(protocolSchedule)));
-  }
-
-  private long validateForkOrder(
-      final String forkName, final OptionalLong thisForkBlock, final long lastForkBlock) {
-    final long referenceForkBlock = thisForkBlock.orElse(lastForkBlock);
-    if (lastForkBlock > referenceForkBlock) {
-      throw new RuntimeException(
-          String.format(
-              "Genesis Config Error: '%s' is scheduled for block %d but it must be on or after block %d.",
-              forkName, thisForkBlock.getAsLong(), lastForkBlock));
-    }
-    return referenceForkBlock;
   }
 
   private void validateForkOrdering() {
@@ -371,14 +222,22 @@ public class ProtocolScheduleBuilder {
     lastForkBlock =
         validateForkOrder("Constantinople", config.getConstantinopleBlockNumber(), lastForkBlock);
     lastForkBlock =
-        validateForkOrder(
-            "ConstantinopleFix", config.getConstantinopleFixBlockNumber(), lastForkBlock);
+        validateForkOrder("Petersburg", config.getPetersburgBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Istanbul", config.getIstanbulBlockNumber(), lastForkBlock);
     lastForkBlock =
         validateForkOrder("MuirGlacier", config.getMuirGlacierBlockNumber(), lastForkBlock);
-    if (ExperimentalEIPs.berlinEnabled) {
-      lastForkBlock = validateForkOrder("Berlin", config.getBerlinBlockNumber(), lastForkBlock);
-    }
+    lastForkBlock = validateForkOrder("Berlin", config.getBerlinBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("London", config.getLondonBlockNumber(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder("ArrowGlacier", config.getArrowGlacierBlockNumber(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder("GrayGlacier", config.getGrayGlacierBlockNumber(), lastForkBlock);
+    // Begin timestamp forks
+    lastForkBlock = validateForkOrder("Shanghai", config.getShanghaiTime(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Cancun", config.getCancunTime(), lastForkBlock);
+    lastForkBlock = validateForkOrder("FutureEips", config.getFutureEipsTime(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder("ExperimentalEips", config.getExperimentalEipsTime(), lastForkBlock);
     assert (lastForkBlock >= 0);
   }
 
@@ -396,6 +255,171 @@ public class ProtocolScheduleBuilder {
     lastForkBlock = validateForkOrder("Atlantis", config.getAtlantisBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Agharta", config.getAghartaBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Phoenix", config.getPhoenixBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Thanos", config.getThanosBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Magneto", config.getMagnetoBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Mystique", config.getMystiqueBlockNumber(), lastForkBlock);
     assert (lastForkBlock >= 0);
+  }
+
+  private long validateForkOrder(
+      final String forkName, final OptionalLong thisForkBlock, final long lastForkBlock) {
+    final long referenceForkBlock = thisForkBlock.orElse(lastForkBlock);
+    if (lastForkBlock > referenceForkBlock) {
+      throw new RuntimeException(
+          String.format(
+              "Genesis Config Error: '%s' is scheduled for milestone %d but it must be on or after milestone %d.",
+              forkName, thisForkBlock.getAsLong(), lastForkBlock));
+    }
+    return referenceForkBlock;
+  }
+
+  private TreeMap<Long, BuilderMapEntry> buildMilestoneMap(
+      final MainnetProtocolSpecFactory specFactory) {
+    return createMilestones(specFactory)
+        .flatMap(Optional::stream)
+        .collect(
+            Collectors.toMap(
+                BuilderMapEntry::getBlockIdentifier,
+                b -> b,
+                (existing, replacement) -> replacement,
+                TreeMap::new));
+  }
+
+  private Stream<Optional<BuilderMapEntry>> createMilestones(
+      final MainnetProtocolSpecFactory specFactory) {
+    return Stream.of(
+        blockNumberMilestone(OptionalLong.of(0), specFactory.frontierDefinition()),
+        blockNumberMilestone(config.getHomesteadBlockNumber(), specFactory.homesteadDefinition()),
+        blockNumberMilestone(
+            config.getTangerineWhistleBlockNumber(), specFactory.tangerineWhistleDefinition()),
+        blockNumberMilestone(
+            config.getSpuriousDragonBlockNumber(), specFactory.spuriousDragonDefinition()),
+        blockNumberMilestone(config.getByzantiumBlockNumber(), specFactory.byzantiumDefinition()),
+        blockNumberMilestone(
+            config.getConstantinopleBlockNumber(), specFactory.constantinopleDefinition()),
+        blockNumberMilestone(config.getPetersburgBlockNumber(), specFactory.petersburgDefinition()),
+        blockNumberMilestone(config.getIstanbulBlockNumber(), specFactory.istanbulDefinition()),
+        blockNumberMilestone(
+            config.getMuirGlacierBlockNumber(), specFactory.muirGlacierDefinition()),
+        blockNumberMilestone(config.getBerlinBlockNumber(), specFactory.berlinDefinition()),
+        blockNumberMilestone(config.getLondonBlockNumber(), specFactory.londonDefinition(config)),
+        blockNumberMilestone(
+            config.getArrowGlacierBlockNumber(), specFactory.arrowGlacierDefinition(config)),
+        blockNumberMilestone(
+            config.getGrayGlacierBlockNumber(), specFactory.grayGlacierDefinition(config)),
+        blockNumberMilestone(
+            config.getMergeNetSplitBlockNumber(), specFactory.parisDefinition(config)),
+        // Timestamp Forks
+        timestampMilestone(config.getShanghaiTime(), specFactory.shanghaiDefinition(config)),
+        timestampMilestone(config.getCancunTime(), specFactory.cancunDefinition(config)),
+        timestampMilestone(config.getFutureEipsTime(), specFactory.futureEipsDefinition(config)),
+        timestampMilestone(
+            config.getExperimentalEipsTime(), specFactory.experimentalEipsDefinition(config)),
+
+        // Classic Milestones
+        blockNumberMilestone(
+            config.getEcip1015BlockNumber(), specFactory.tangerineWhistleDefinition()),
+        blockNumberMilestone(config.getDieHardBlockNumber(), specFactory.dieHardDefinition()),
+        blockNumberMilestone(config.getGothamBlockNumber(), specFactory.gothamDefinition()),
+        blockNumberMilestone(
+            config.getDefuseDifficultyBombBlockNumber(),
+            specFactory.defuseDifficultyBombDefinition()),
+        blockNumberMilestone(config.getAtlantisBlockNumber(), specFactory.atlantisDefinition()),
+        blockNumberMilestone(config.getAghartaBlockNumber(), specFactory.aghartaDefinition()),
+        blockNumberMilestone(config.getPhoenixBlockNumber(), specFactory.phoenixDefinition()),
+        blockNumberMilestone(config.getThanosBlockNumber(), specFactory.thanosDefinition()),
+        blockNumberMilestone(config.getMagnetoBlockNumber(), specFactory.magnetoDefinition()),
+        blockNumberMilestone(config.getMystiqueBlockNumber(), specFactory.mystiqueDefinition()));
+  }
+
+  private Optional<BuilderMapEntry> timestampMilestone(
+      final OptionalLong blockIdentifier, final ProtocolSpecBuilder builder) {
+    return createMilestone(blockIdentifier, builder, BuilderMapEntry.MilestoneType.TIMESTAMP);
+  }
+
+  private Optional<BuilderMapEntry> blockNumberMilestone(
+      final OptionalLong blockIdentifier, final ProtocolSpecBuilder builder) {
+    return createMilestone(blockIdentifier, builder, BuilderMapEntry.MilestoneType.BLOCK_NUMBER);
+  }
+
+  private Optional<BuilderMapEntry> createMilestone(
+      final OptionalLong blockIdentifier,
+      final ProtocolSpecBuilder builder,
+      final BuilderMapEntry.MilestoneType milestoneType) {
+    if (blockIdentifier.isEmpty()) {
+      return Optional.empty();
+    }
+    final long blockVal = blockIdentifier.getAsLong();
+    return Optional.of(
+        new BuilderMapEntry(
+            milestoneType, blockVal, builder, protocolSpecAdapters.getModifierForBlock(blockVal)));
+  }
+
+  private ProtocolSpec getProtocolSpec(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolSpecBuilder definition,
+      final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
+    definition
+        .badBlocksManager(badBlockManager)
+        .privacyParameters(privacyParameters)
+        .privateTransactionValidatorBuilder(
+            () -> new PrivateTransactionValidator(protocolSchedule.getChainId()));
+
+    return modifier.apply(definition).build(protocolSchedule);
+  }
+
+  private void addProtocolSpec(
+      final ProtocolSchedule protocolSchedule,
+      final BuilderMapEntry.MilestoneType milestoneType,
+      final long blockNumberOrTimestamp,
+      final ProtocolSpecBuilder definition,
+      final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
+
+    switch (milestoneType) {
+      case BLOCK_NUMBER -> protocolSchedule.putBlockNumberMilestone(
+          blockNumberOrTimestamp, getProtocolSpec(protocolSchedule, definition, modifier));
+      case TIMESTAMP -> protocolSchedule.putTimestampMilestone(
+          blockNumberOrTimestamp, getProtocolSpec(protocolSchedule, definition, modifier));
+      default -> throw new IllegalStateException(
+          "Unexpected milestoneType: "
+              + milestoneType
+              + " for milestone: "
+              + blockNumberOrTimestamp);
+    }
+  }
+
+  private static class BuilderMapEntry {
+    private final MilestoneType milestoneType;
+    private final long blockIdentifier;
+    private final ProtocolSpecBuilder builder;
+    private final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier;
+
+    public BuilderMapEntry(
+        final MilestoneType milestoneType,
+        final long blockIdentifier,
+        final ProtocolSpecBuilder builder,
+        final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
+      this.milestoneType = milestoneType;
+      this.blockIdentifier = blockIdentifier;
+      this.builder = builder;
+      this.modifier = modifier;
+    }
+
+    public long getBlockIdentifier() {
+      return blockIdentifier;
+    }
+
+    public ProtocolSpecBuilder getBuilder() {
+      return builder;
+    }
+
+    public Function<ProtocolSpecBuilder, ProtocolSpecBuilder> getModifier() {
+      return modifier;
+    }
+
+    private enum MilestoneType {
+      BLOCK_NUMBER,
+      TIMESTAMP
+    }
   }
 }

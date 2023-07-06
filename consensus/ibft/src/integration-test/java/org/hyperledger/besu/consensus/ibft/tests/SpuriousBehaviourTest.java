@@ -18,20 +18,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.ibft.support.IntegrationTestHelpers.createSignedCommitPayload;
 
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
+import org.hyperledger.besu.consensus.common.bft.inttest.NodeParams;
 import org.hyperledger.besu.consensus.ibft.messagedata.IbftV2;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Commit;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Prepare;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
-import org.hyperledger.besu.consensus.ibft.support.NodeParams;
 import org.hyperledger.besu.consensus.ibft.support.RoundSpecificPeers;
 import org.hyperledger.besu.consensus.ibft.support.TestContext;
 import org.hyperledger.besu.consensus.ibft.support.TestContextBuilder;
 import org.hyperledger.besu.consensus.ibft.support.ValidatorPeer;
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.NodeKeyUtils;
-import org.hyperledger.besu.crypto.SECP256K1.Signature;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
@@ -41,8 +41,8 @@ import java.time.Instant;
 import java.time.ZoneId;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SpuriousBehaviourTest {
 
@@ -67,7 +67,7 @@ public class SpuriousBehaviourTest {
   private Prepare expectedPrepare;
   private Commit expectedCommit;
 
-  @Before
+  @BeforeEach
   public void setup() {
 
     expectedPrepare =
@@ -145,7 +145,7 @@ public class SpuriousBehaviourTest {
 
     // nonProposer-2 will generate an invalid seal
     final ValidatorPeer badSealPeer = peers.getNonProposing(2);
-    final Signature illegalSeal = badSealPeer.getnodeKey().sign(Hash.ZERO);
+    final SECPSignature illegalSeal = badSealPeer.getnodeKey().sign(Hash.ZERO);
 
     badSealPeer.injectCommit(roundId, proposedBlock.getHash(), illegalSeal);
     assertThat(context.getCurrentChainHeight()).isEqualTo(0);

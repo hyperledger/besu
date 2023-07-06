@@ -16,13 +16,12 @@
 
 package org.hyperledger.besu.ethereum.mainnet.precompiles;
 
-import org.hyperledger.besu.ethereum.core.Account;
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.mainnet.IstanbulGasCalculator;
-import org.hyperledger.besu.ethereum.mainnet.PrecompileContractRegistry;
-import org.hyperledger.besu.ethereum.mainnet.PrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.PrecompiledContractConfiguration;
+import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
+import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
+import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
 import java.util.function.Function;
 
@@ -37,6 +36,6 @@ public class AbstractPrecompiledContractTest {
             .apply(
                 new PrecompiledContractConfiguration(
                     new IstanbulGasCalculator(), PrivacyParameters.DEFAULT))
-            .get(precompiledAddress, Account.DEFAULT_VERSION);
+            .get(precompiledAddress);
   }
 }

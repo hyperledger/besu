@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.condition.perm;
 
+import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.NodeSmartContractPermissioningV2Transactions;
@@ -31,7 +32,15 @@ public class NodeSmartContractPermissioningV2Conditions {
     return new WaitForTrueResponse(transactions.isConnectionAllowed(address, node));
   }
 
+  public Condition connectionIsAllowed(final String address, final EnodeURL enodeURL) {
+    return new WaitForTrueResponse(transactions.isConnectionAllowed(address, enodeURL));
+  }
+
   public Condition connectionIsForbidden(final String address, final Node node) {
     return new WaitForFalseResponse(transactions.isConnectionAllowed(address, node));
+  }
+
+  public Condition connectionIsForbidden(final String address, final EnodeURL enodeURL) {
+    return new WaitForFalseResponse(transactions.isConnectionAllowed(address, enodeURL));
   }
 }

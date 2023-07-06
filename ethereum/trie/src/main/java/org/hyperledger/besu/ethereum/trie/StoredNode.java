@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -22,19 +22,21 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-class StoredNode<V> implements Node<V> {
-  private final StoredNodeFactory<V> nodeFactory;
+public class StoredNode<V> implements Node<V> {
+  private final NodeFactory<V> nodeFactory;
   private final Bytes location;
   private final Bytes32 hash;
   private Node<V> loaded;
 
-  StoredNode(final StoredNodeFactory<V> nodeFactory, final Bytes location, final Bytes32 hash) {
+  public StoredNode(final NodeFactory<V> nodeFactory, final Bytes location, final Bytes32 hash) {
     this.nodeFactory = nodeFactory;
     this.location = location;
     this.hash = hash;
   }
 
-  /** @return True if the node needs to be persisted. */
+  /**
+   * @return True if the node needs to be persisted.
+   */
   @Override
   public boolean isDirty() {
     return false;
@@ -45,6 +47,17 @@ class StoredNode<V> implements Node<V> {
   public void markDirty() {
     throw new IllegalStateException(
         "A stored node cannot ever be dirty since it's loaded from storage");
+  }
+
+  @Override
+  public boolean isHealNeeded() {
+    return false;
+  }
+
+  @Override
+  public void markHealNeeded() {
+    throw new IllegalStateException(
+        "A stored node cannot be healed since it's loaded from storage");
   }
 
   @Override
@@ -71,6 +84,11 @@ class StoredNode<V> implements Node<V> {
   }
 
   @Override
+  public Optional<Bytes> getLocation() {
+    return Optional.ofNullable(location);
+  }
+
+  @Override
   public Optional<V> getValue() {
     return load().getValue();
   }
@@ -81,12 +99,12 @@ class StoredNode<V> implements Node<V> {
   }
 
   @Override
-  public Bytes getRlp() {
-    return load().getRlp();
+  public Bytes getEncodedBytes() {
+    return load().getEncodedBytes();
   }
 
   @Override
-  public Bytes getRlpRef() {
+  public Bytes getEncodedBytesRef() {
     // If this node was stored, then it must have a rlp larger than a hash
     return RLP.encodeOne(hash);
   }
@@ -113,7 +131,14 @@ class StoredNode<V> implements Node<V> {
           nodeFactory
               .retrieve(location, hash)
               .orElseThrow(
-                  () -> new MerkleTrieException("Unable to load trie node value for hash " + hash));
+                  () ->
+                      new MerkleTrieException(
+                          "Unable to load trie node value for hash "
+                              + hash
+                              + " location "
+                              + location,
+                          hash,
+                          location));
     }
 
     return loaded;
@@ -127,7 +152,7 @@ class StoredNode<V> implements Node<V> {
   @Override
   public String print() {
     if (loaded == null) {
-      return "StoredNode:" + "\n\tRef: " + getRlpRef();
+      return "StoredNode:" + "\n\tRef: " + getEncodedBytesRef();
     } else {
       return load().print();
     }

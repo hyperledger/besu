@@ -15,53 +15,51 @@
 package org.hyperledger.besu.tests.acceptance.dsl.node.configuration.privacy;
 
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfiguration;
-import org.hyperledger.orion.testutil.OrionKeyConfiguration;
+import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
 
 public class PrivacyNodeConfiguration {
 
-  private final int privacyAddress;
-  private final boolean isOnchainPrivacyGroupEnabled;
-  private final BesuNodeConfiguration besuConfig;
-  private final OrionKeyConfiguration orionConfig;
+  private final boolean isFlexiblePrivacyGroupEnabled;
   private final boolean isMultitenancyEnabled;
+  private final boolean isPrivacyPluginEnabled;
+  private final BesuNodeConfiguration besuConfig;
+  private final EnclaveKeyConfiguration keyConfig;
 
   PrivacyNodeConfiguration(
-      final int privacyAddress,
-      final BesuNodeConfiguration besuConfig,
-      final OrionKeyConfiguration orionConfig) {
-    this(privacyAddress, false, false, besuConfig, orionConfig);
+      final BesuNodeConfiguration besuConfig, final EnclaveKeyConfiguration keyConfig) {
+    this(false, false, false, besuConfig, keyConfig);
   }
 
-  PrivacyNodeConfiguration(
-      final int privacyAddress,
-      final boolean isOnchainPrivacyGroupEnabled,
+  public PrivacyNodeConfiguration(
+      final boolean isFlexiblePrivacyGroupEnabled,
       final boolean isMultitenancyEnabled,
+      final boolean isPrivacyPluginEnabled,
       final BesuNodeConfiguration besuConfig,
-      final OrionKeyConfiguration orionConfig) {
-    this.privacyAddress = privacyAddress;
-    this.isOnchainPrivacyGroupEnabled = isOnchainPrivacyGroupEnabled;
+      final EnclaveKeyConfiguration keyConfig) {
+    this.isFlexiblePrivacyGroupEnabled = isFlexiblePrivacyGroupEnabled;
     this.besuConfig = besuConfig;
-    this.orionConfig = orionConfig;
+    this.keyConfig = keyConfig;
     this.isMultitenancyEnabled = isMultitenancyEnabled;
+    this.isPrivacyPluginEnabled = isPrivacyPluginEnabled;
   }
 
-  public int getPrivacyAddress() {
-    return privacyAddress;
-  }
-
-  public boolean isOnchainPrivacyGroupEnabled() {
-    return isOnchainPrivacyGroupEnabled;
+  public boolean isFlexiblePrivacyGroupEnabled() {
+    return isFlexiblePrivacyGroupEnabled;
   }
 
   public boolean isMultitenancyEnabled() {
     return isMultitenancyEnabled;
   }
 
+  public boolean isPrivacyPluginEnabled() {
+    return isPrivacyPluginEnabled;
+  }
+
   public BesuNodeConfiguration getBesuConfig() {
     return besuConfig;
   }
 
-  public OrionKeyConfiguration getOrionKeyConfig() {
-    return orionConfig;
+  public EnclaveKeyConfiguration getKeyConfig() {
+    return keyConfig;
   }
 }

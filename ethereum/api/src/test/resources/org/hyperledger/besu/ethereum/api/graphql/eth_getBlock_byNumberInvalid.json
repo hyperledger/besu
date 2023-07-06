@@ -18,7 +18,9 @@
         }
       }
     ],
-    "data": null
+    "data": {
+      "block": null
+    }
   },
   "statusCode": 400
 }

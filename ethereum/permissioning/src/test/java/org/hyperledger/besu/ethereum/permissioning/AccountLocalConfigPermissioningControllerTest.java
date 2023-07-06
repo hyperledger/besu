@@ -25,7 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.core.Address;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -299,7 +299,8 @@ public class AccountLocalConfigPermissioningControllerTest {
 
     assertThat(thrown)
         .isInstanceOf(RuntimeException.class)
-        .hasMessageContaining("Unable to read permissioning TOML config file");
+        .hasRootCauseMessage(
+            "Unable to read permissioning TOML config file : foo Configuration file does not exist: foo");
 
     assertThat(controller.getAccountAllowlist())
         .containsExactly("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");

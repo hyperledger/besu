@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
+/** The Kubernetes detector. */
 public class KubernetesDetector implements NatMethodDetector {
 
   // When a Pod runs on a Node, the kubelet adds a set of environment variables for each active

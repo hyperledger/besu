@@ -14,13 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
-import org.hyperledger.besu.crypto.NodeKey;
-import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
+import org.hyperledger.besu.ethereum.p2p.rlpx.framing.FramerProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;
+import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakerProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -30,12 +32,12 @@ import java.util.concurrent.CompletableFuture;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 final class HandshakeHandlerOutbound extends AbstractHandshakeHandler {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(HandshakeHandlerOutbound.class);
 
   private final ByteBuf first;
 
@@ -46,15 +48,21 @@ final class HandshakeHandlerOutbound extends AbstractHandshakeHandler {
       final LocalNode localNode,
       final CompletableFuture<PeerConnection> connectionFuture,
       final PeerConnectionEventDispatcher connectionEventDispatcher,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final HandshakerProvider handshakerProvider,
+      final FramerProvider framerProvider) {
     super(
         subProtocols,
         localNode,
         Optional.of(peer),
         connectionFuture,
         connectionEventDispatcher,
-        metricsSystem);
-    handshaker.prepareInitiator(nodeKey, SECP256K1.PublicKey.create(peer.getId()));
+        metricsSystem,
+        handshakerProvider,
+        framerProvider,
+        false);
+    handshaker.prepareInitiator(
+        nodeKey, SignatureAlgorithmFactory.getInstance().createPublicKey(peer.getId()));
     this.first = handshaker.firstMessage();
   }
 

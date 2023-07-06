@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections;
 
-import org.hyperledger.besu.ethereum.p2p.peers.EnodeURL;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
+import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -122,4 +122,20 @@ public interface PeerConnection {
   default EnodeURL getRemoteEnode() {
     return getPeer().getEnodeURL();
   }
+
+  /**
+   * Get the difference, measured in milliseconds, between the time this connection was initiated
+   * and midnight, January 1, 1970 UTC
+   *
+   * @return the time when this connection was initiated.
+   */
+  long getInitiatedAt();
+
+  boolean inboundInitiated();
+
+  void setStatusSent();
+
+  void setStatusReceived();
+
+  boolean getStatusExchanged();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.config.JsonUtil;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -28,12 +29,11 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.Node;
-import org.hyperledger.besu.ethereum.trie.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.TrieIterator.State;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.plugin.data.Hash;
 import org.hyperledger.besu.util.io.RollingFileWriter;
 
 import java.io.IOException;
@@ -52,14 +52,14 @@ import java.util.function.Function;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class StateBackupService {
 
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(StateBackupService.class);
   private static final Bytes ACCOUNT_END_MARKER;
 
   static {
@@ -180,24 +180,19 @@ public class StateBackupService {
   }
 
   private BackupStatus backup(final long block, final boolean compress) throws IOException {
-    try {
-      checkArgument(
-          block >= 0 && block <= blockchain.getChainHeadBlockNumber(),
-          "Backup Block must be within blockchain");
-      backupStatus.targetBlock = block;
-      backupStatus.compressed = compress;
-      backupStatus.currentAccount = Bytes32.ZERO;
+    checkArgument(
+        block >= 0 && block <= blockchain.getChainHeadBlockNumber(),
+        "Backup Block must be within blockchain");
+    backupStatus.targetBlock = block;
+    backupStatus.compressed = compress;
+    backupStatus.currentAccount = Bytes32.ZERO;
 
-      backupChainData();
-      backupLeaves();
+    backupChainData();
+    backupLeaves();
 
-      writeManifest();
+    writeManifest();
 
-      return backupStatus;
-    } catch (final Throwable t) {
-      LOG.error("Unexpected error", t);
-      throw t;
-    }
+    return backupStatus;
   }
 
   private void writeManifest() throws IOException {
@@ -251,7 +246,7 @@ public class StateBackupService {
     final StateTrieAccountValue account =
         StateTrieAccountValue.readFrom(new BytesValueRLPInput(nodeValue, false));
 
-    final Bytes code = worldStateStorage.getCode(account.getCodeHash()).orElse(Bytes.EMPTY);
+    final Bytes code = worldStateStorage.getCode(account.getCodeHash(), null).orElse(Bytes.EMPTY);
     backupStatus.codeSize.addAndGet(code.size());
 
     final BytesValueRLPOutput accountOutput = new BytesValueRLPOutput();
@@ -297,7 +292,7 @@ public class StateBackupService {
             new RollingFileWriter(this::bodyFileName, backupStatus.compressed);
         final RollingFileWriter receiptsWriter =
             new RollingFileWriter(this::receiptFileName, backupStatus.compressed)) {
-      for (int blockNumber = 0; blockNumber <= backupStatus.targetBlock; blockNumber++) {
+      for (long blockNumber = 0; blockNumber <= backupStatus.targetBlock; blockNumber++) {
         final Optional<Block> block = blockchain.getBlockByNumber(blockNumber);
         checkState(
             block.isPresent(), "Block data for %s was not found in the archive", blockNumber);
@@ -312,7 +307,7 @@ public class StateBackupService {
         headerWriter.writeBytes(headerOutput.encoded().toArrayUnsafe());
 
         final BytesValueRLPOutput bodyOutput = new BytesValueRLPOutput();
-        block.get().getBody().writeTo(bodyOutput);
+        block.get().getBody().writeWrappedBodyTo(bodyOutput);
         bodyWriter.writeBytes(bodyOutput.encoded().toArrayUnsafe());
 
         final BytesValueRLPOutput receiptsOutput = new BytesValueRLPOutput();

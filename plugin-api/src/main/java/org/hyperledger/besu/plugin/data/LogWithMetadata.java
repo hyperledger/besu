@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.plugin.data;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -43,15 +46,45 @@ public interface LogWithMetadata {
    */
   Bytes getData();
 
+  /**
+   * Gets log index.
+   *
+   * @return the log index
+   */
   int getLogIndex();
 
+  /**
+   * Gets block number.
+   *
+   * @return the block number
+   */
   long getBlockNumber();
 
+  /**
+   * Gets block hash.
+   *
+   * @return the block hash
+   */
   Hash getBlockHash();
 
+  /**
+   * Gets transaction hash.
+   *
+   * @return the transaction hash
+   */
   Hash getTransactionHash();
 
+  /**
+   * Gets transaction index.
+   *
+   * @return the transaction index
+   */
   int getTransactionIndex();
 
+  /**
+   * Is removed.
+   *
+   * @return the boolean
+   */
   boolean isRemoved();
 }

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.network;
 
+import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -32,13 +33,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NetworkRunner implements AutoCloseable {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(NetworkRunner.class);
 
-  private final CountDownLatch shutdown = new CountDownLatch(1);;
+  private final CountDownLatch shutdown = new CountDownLatch(1);
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
@@ -78,6 +79,12 @@ public class NetworkRunner implements AutoCloseable {
       LOG.info("Starting Network.");
       setupHandlers();
       network.start();
+
+      LOG.info(
+          "Supported capabilities: {}",
+          protocolManagers.stream()
+              .map(q -> String.format("%s", q.getSupportedCapabilities()))
+              .collect(Collectors.joining(", ")));
     } else {
       LOG.error("Attempted to start already running network.");
     }
@@ -148,6 +155,9 @@ public class NetworkRunner implements AutoCloseable {
             protocolManager.handleNewConnection(connection);
           });
 
+      network.subscribeConnectRequest(
+          (peer, incoming) -> protocolManager.shouldConnect(peer, incoming));
+
       network.subscribeDisconnect(
           (connection, disconnectReason, initiatedByPeer) -> {
             if (Collections.disjoint(
@@ -162,6 +172,10 @@ public class NetworkRunner implements AutoCloseable {
   @Override
   public void close() {
     stop();
+  }
+
+  public RlpxAgent getRlpxAgent() {
+    return network.getRlpxAgent();
   }
 
   public static class Builder {

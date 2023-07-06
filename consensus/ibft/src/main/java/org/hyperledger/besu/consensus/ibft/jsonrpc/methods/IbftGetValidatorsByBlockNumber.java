@@ -26,15 +26,22 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/** The Ibft get validators by block number. */
 public class IbftGetValidatorsByBlockNumber extends AbstractBlockParameterMethod
     implements JsonRpcMethod {
-  private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LoggerFactory.getLogger(IbftGetValidatorsByBlockNumber.class);
 
   private final BlockInterface blockInterface;
 
+  /**
+   * Instantiates a new Ibft get validators by block number.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param blockInterface the block interface
+   */
   public IbftGetValidatorsByBlockNumber(
       final BlockchainQueries blockchainQueries, final BlockInterface blockInterface) {
     super(blockchainQueries);

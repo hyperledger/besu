@@ -21,6 +21,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogResult;
@@ -28,19 +30,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.InMemoryStorageProvider;
-import org.hyperledger.besu.ethereum.core.Log;
-import org.hyperledger.besu.ethereum.core.LogTopic;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.log.LogTopic;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,7 +66,7 @@ public class LogsSubscriptionServiceTest {
 
   private final BlockDataGenerator gen = new BlockDataGenerator(1);
   private final MutableBlockchain blockchain =
-      InMemoryStorageProvider.createInMemoryBlockchain(gen.genesisBlock());
+      InMemoryKeyValueStorageProvider.createInMemoryBlockchain(gen.genesisBlock());
 
   private LogsSubscriptionService logsSubscriptionService;
   private final AtomicLong nextSubscriptionId = new AtomicLong();
@@ -90,8 +90,9 @@ public class LogsSubscriptionServiceTest {
     final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts();
 
     final int txIndex = 1;
-    final int logIndex = 1;
-    final Log targetLog = receipts.get(txIndex).getLogs().get(logIndex);
+    final int logIndexInTransaction = 1;
+    final int logIndexInBlock = 3; // third log in the block
+    final Log targetLog = receipts.get(txIndex).getLogsList().get(logIndexInTransaction);
 
     final LogsSubscription subscription = createSubscription(targetLog.getLogger());
     registerSubscriptions(subscription);
@@ -104,7 +105,8 @@ public class LogsSubscriptionServiceTest {
 
     assertThat(logResults).hasSize(1);
     final LogResult result = logResults.get(0);
-    assertLogResultMatches(result, block, receipts, txIndex, logIndex, false);
+    assertLogResultMatches(
+        result, block, receipts, txIndex, logIndexInTransaction, logIndexInBlock, false);
   }
 
   @Test
@@ -115,8 +117,8 @@ public class LogsSubscriptionServiceTest {
     final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts();
 
     final int txIndex = 1;
-    final int logIndex = 1;
-    final Log targetLog = receipts.get(txIndex).getLogs().get(logIndex);
+    final int logListIndex = 1;
+    final Log targetLog = receipts.get(txIndex).getLogsList().get(logListIndex);
 
     final LogsSubscription subscription = createSubscription(targetLog.getLogger());
     registerSubscriptions(subscription);
@@ -138,9 +140,11 @@ public class LogsSubscriptionServiceTest {
 
     assertThat(logResults).hasSize(2);
     final LogResult firstLog = logResults.get(0);
-    assertLogResultMatches(firstLog, block, receipts, txIndex, logIndex, false);
+    // third log in the block
+    assertLogResultMatches(firstLog, block, receipts, txIndex, logListIndex, 3, false);
     final LogResult secondLog = logResults.get(1);
-    assertLogResultMatches(secondLog, block, receipts, txIndex, logIndex, true);
+    // third log in the block, but was removed
+    assertLogResultMatches(secondLog, block, receipts, txIndex, logListIndex, 3, true);
   }
 
   @Test
@@ -151,8 +155,8 @@ public class LogsSubscriptionServiceTest {
     final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts();
 
     final int txIndex = 1;
-    final int logIndex = 1;
-    final Log targetLog = receipts.get(txIndex).getLogs().get(logIndex);
+    final int logListIndex = 1;
+    final Log targetLog = receipts.get(txIndex).getLogsList().get(logListIndex);
 
     final LogsSubscription subscription = createSubscription(targetLog.getLogger());
     registerSubscriptions(subscription);
@@ -181,12 +185,12 @@ public class LogsSubscriptionServiceTest {
 
     assertThat(logResults).hasSize(3);
     final LogResult originalLog = logResults.get(0);
-    assertLogResultMatches(originalLog, block, receipts, txIndex, logIndex, false);
+    assertLogResultMatches(originalLog, block, receipts, txIndex, logListIndex, 3, false);
     final LogResult removedLog = logResults.get(1);
-    assertLogResultMatches(removedLog, block, receipts, txIndex, logIndex, true);
+    assertLogResultMatches(removedLog, block, receipts, txIndex, logListIndex, 3, true);
     final LogResult updatedLog = logResults.get(2);
     assertLogResultMatches(
-        updatedLog, newBlockWithLog.getBlock(), newBlockWithLog.getReceipts(), 0, 0, false);
+        updatedLog, newBlockWithLog.getBlock(), newBlockWithLog.getReceipts(), 0, 0, 0, false);
   }
 
   @Test
@@ -218,6 +222,9 @@ public class LogsSubscriptionServiceTest {
 
     // Verify all logs are emitted
     assertThat(logResults).hasSize(targetBlocks.size() * txCount);
+
+    final List<Integer> expectedLogIndex = Arrays.asList(0, 2);
+
     for (int i = 0; i < targetBlocks.size(); i++) {
       final BlockWithReceipts targetBlock = targetBlocks.get(i);
       for (int j = 0; j < txCount; j++) {
@@ -228,6 +235,7 @@ public class LogsSubscriptionServiceTest {
             targetBlock.getReceipts(),
             j,
             0,
+            expectedLogIndex.get(j),
             false);
       }
     }
@@ -241,7 +249,7 @@ public class LogsSubscriptionServiceTest {
 
     final int txIndex = 1;
     final int logIndex = 1;
-    final Log targetLog = receipts.get(txIndex).getLogs().get(logIndex);
+    final Log targetLog = receipts.get(txIndex).getLogsList().get(logIndex);
 
     final List<LogsSubscription> subscriptions =
         Stream.generate(() -> createSubscription(targetLog.getLogger()))
@@ -259,7 +267,7 @@ public class LogsSubscriptionServiceTest {
 
       assertThat(logResults).hasSize(1);
       final LogResult result = logResults.get(0);
-      assertLogResultMatches(result, block, receipts, txIndex, logIndex, false);
+      assertLogResultMatches(result, block, receipts, txIndex, logIndex, 3, false);
     }
   }
 
@@ -332,10 +340,11 @@ public class LogsSubscriptionServiceTest {
       final Block block,
       final List<TransactionReceipt> receipts,
       final int txIndex,
+      final int logListIndex,
       final int logIndex,
       final boolean isRemoved) {
     final Transaction expectedTransaction = block.getBody().getTransactions().get(txIndex);
-    final Log expectedLog = receipts.get(txIndex).getLogs().get(logIndex);
+    final Log expectedLog = receipts.get(txIndex).getLogsList().get(logListIndex);
 
     assertThat(result.getLogIndex()).isEqualTo(Quantity.create(logIndex));
     assertThat(result.getTransactionIndex()).isEqualTo(Quantity.create(txIndex));
@@ -380,7 +389,7 @@ public class LogsSubscriptionServiceTest {
       final TransactionReceipt receipt = gen.receipt(logsSupplier.get());
 
       receipts.add(receipt);
-      receipt.getLogs().forEach(logs::add);
+      receipt.getLogsList().forEach(logs::add);
       blockOptions.addTransaction(tx);
     }
 
@@ -399,8 +408,12 @@ public class LogsSubscriptionServiceTest {
         new FilterParameter(
             BlockParameter.LATEST,
             BlockParameter.LATEST,
+            null,
+            null,
             Arrays.asList(address),
             Collections.emptyList(),
+            null,
+            null,
             null),
         privacyGroupId,
         enclavePublicKey);
@@ -417,7 +430,15 @@ public class LogsSubscriptionServiceTest {
         nextSubscriptionId.incrementAndGet(),
         "conn",
         new FilterParameter(
-            BlockParameter.LATEST, BlockParameter.LATEST, addresses, logTopics, null));
+            BlockParameter.LATEST,
+            BlockParameter.LATEST,
+            null,
+            null,
+            addresses,
+            logTopics,
+            null,
+            null,
+            null));
   }
 
   private void registerSubscriptions(final LogsSubscription... subscriptions) {

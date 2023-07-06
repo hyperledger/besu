@@ -15,7 +15,8 @@
 package org.hyperledger.besu.consensus.common.jsonrpc;
 
 import org.hyperledger.besu.consensus.common.BlockInterface;
-import org.hyperledger.besu.consensus.common.VoteTallyCache;
+import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -24,7 +25,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.SignerMetricResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.ArrayList;
@@ -33,23 +33,37 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.LongStream;
 
+/** The Abstract get signer metrics method. */
 public abstract class AbstractGetSignerMetricsMethod {
 
   private static final long DEFAULT_RANGE_BLOCK = 100;
 
-  private final VoteTallyCache voteTallyCache;
+  private final ValidatorProvider validatorProvider;
   private final BlockInterface blockInterface;
   private final BlockchainQueries blockchainQueries;
 
+  /**
+   * Instantiates a new Abstract get signer metrics method.
+   *
+   * @param validatorProvider the validator provider
+   * @param blockInterface the block interface
+   * @param blockchainQueries the blockchain queries
+   */
   protected AbstractGetSignerMetricsMethod(
-      final VoteTallyCache voteTallyCache,
+      final ValidatorProvider validatorProvider,
       final BlockInterface blockInterface,
       final BlockchainQueries blockchainQueries) {
-    this.voteTallyCache = voteTallyCache;
+    this.validatorProvider = validatorProvider;
     this.blockInterface = blockInterface;
     this.blockchainQueries = blockchainQueries;
   }
 
+  /**
+   * Response.
+   *
+   * @param requestContext the request context
+   * @return the json rpc response
+   */
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
 
     final Optional<BlockParameter> startBlockParameter =
@@ -88,9 +102,8 @@ public abstract class AbstractGetSignerMetricsMethod {
                     // Get All validators present in the last block of the range even
                     // if they didn't propose a block
                     if (currentIndex == lastBlockIndex) {
-                      voteTallyCache
-                          .getVoteTallyAfterBlock(header)
-                          .getValidators()
+                      validatorProvider
+                          .getValidatorsAfterBlock(header)
                           .forEach(
                               address ->
                                   proposersMap.computeIfAbsent(address, SignerMetricResult::new));

@@ -14,20 +14,24 @@
  */
 package org.hyperledger.besu.consensus.clique;
 
-import org.hyperledger.besu.config.experimental.ExperimentalEIPs;
+import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MAX_GAS_LIMIT;
+import static org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification.DEFAULT_MIN_GAS_LIMIT;
+
+import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CliqueDifficultyValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CliqueExtraDataValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.CoinbaseHeaderValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.SignerRateLimitValidationRule;
 import org.hyperledger.besu.consensus.clique.headervalidationrules.VoteValidationRule;
 import org.hyperledger.besu.consensus.common.EpochManager;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.fees.EIP1559;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AttachedComposedFromDetachedRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.BaseFeeMarketBlockHeaderGasPriceValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
-import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.EIP1559BlockHeaderGasPriceValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
@@ -35,6 +39,9 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMore
 
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
+
+/** The Block header validation ruleset factory. */
 public class BlockHeaderValidationRulesetFactory {
 
   /**
@@ -45,37 +52,67 @@ public class BlockHeaderValidationRulesetFactory {
    *
    * @param secondsBetweenBlocks the minimum number of seconds which must elapse between blocks.
    * @param epochManager an object which determines if a given block is an epoch block.
-   * @param eip1559 an {@link Optional} wrapping {@link EIP1559} manager class if appropriate.
+   * @param baseFeeMarket an {@link Optional} wrapping {@link BaseFeeMarket} class if appropriate.
    * @return the header validator.
    */
   public static BlockHeaderValidator.Builder cliqueBlockHeaderValidator(
       final long secondsBetweenBlocks,
       final EpochManager epochManager,
-      final Optional<EIP1559> eip1559) {
+      final Optional<BaseFeeMarket> baseFeeMarket) {
+    return cliqueBlockHeaderValidator(
+        secondsBetweenBlocks, epochManager, baseFeeMarket, MergeConfigOptions.isMergeEnabled());
+  }
+
+  /**
+   * Clique block header validator. Visible for testing.
+   *
+   * @param secondsBetweenBlocks the seconds between blocks
+   * @param epochManager the epoch manager
+   * @param baseFeeMarket the base fee market
+   * @param isMergeEnabled the is merge enabled
+   * @return the block header validator . builder
+   */
+  @VisibleForTesting
+  public static BlockHeaderValidator.Builder cliqueBlockHeaderValidator(
+      final long secondsBetweenBlocks,
+      final EpochManager epochManager,
+      final Optional<BaseFeeMarket> baseFeeMarket,
+      final boolean isMergeEnabled) {
 
     final BlockHeaderValidator.Builder builder =
         new BlockHeaderValidator.Builder()
             .addRule(new AncestryValidationRule())
-            .addRule(new GasLimitRangeAndDeltaValidationRule(5000, 0x7fffffffffffffffL))
             .addRule(new TimestampBoundedByFutureParameter(10))
-            .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
             .addRule(
-                new ConstantFieldValidationRule<>("MixHash", BlockHeader::getMixHash, Hash.ZERO))
+                new GasLimitRangeAndDeltaValidationRule(
+                    DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT, baseFeeMarket))
             .addRule(
                 new ConstantFieldValidationRule<>(
                     "OmmersHash", BlockHeader::getOmmersHash, Hash.EMPTY_LIST_HASH))
             .addRule(new CliqueExtraDataValidationRule(epochManager))
-            .addRule(new VoteValidationRule())
             .addRule(new CliqueDifficultyValidationRule())
             .addRule(new SignerRateLimitValidationRule())
-            .addRule(new CoinbaseHeaderValidationRule(epochManager));
-    if (ExperimentalEIPs.eip1559Enabled && eip1559.isPresent()) {
-      builder
-          .addRule((new EIP1559BlockHeaderGasPriceValidationRule(eip1559.get())))
-          .addRule(new GasUsageValidationRule(eip1559));
-    } else {
-      builder.addRule(new GasUsageValidationRule());
+            .addRule(new CoinbaseHeaderValidationRule(epochManager))
+            .addRule(new GasUsageValidationRule());
+
+    if (baseFeeMarket.isPresent()) {
+      builder.addRule(new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket.get()));
     }
+
+    var mixHashRule =
+        new ConstantFieldValidationRule<>("MixHash", BlockHeader::getMixHash, Hash.ZERO);
+    var voteValidationRule = new VoteValidationRule();
+    var cliqueTimestampRule = new TimestampMoreRecentThanParent(secondsBetweenBlocks);
+
+    if (isMergeEnabled) {
+      builder
+          .addRule(new AttachedComposedFromDetachedRule(mixHashRule))
+          .addRule(new AttachedComposedFromDetachedRule(voteValidationRule))
+          .addRule(new AttachedComposedFromDetachedRule(cliqueTimestampRule));
+    } else {
+      builder.addRule(mixHashRule).addRule(voteValidationRule).addRule(cliqueTimestampRule);
+    }
+
     return builder;
   }
 }

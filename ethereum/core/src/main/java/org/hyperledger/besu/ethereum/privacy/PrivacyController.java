@@ -14,11 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.privacy;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
-import org.hyperledger.besu.enclave.types.ReceiveResponse;
-import org.hyperledger.besu.ethereum.core.Address;
-import org.hyperledger.besu.ethereum.core.Hash;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -28,83 +26,51 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public interface PrivacyController {
 
   Optional<ExecutedPrivateTransaction> findPrivateTransactionByPmtHash(
       final Hash pmtHash, final String enclaveKey);
 
-  String sendTransaction(
+  String createPrivateMarkerTransactionPayload(
       PrivateTransaction privateTransaction,
-      String enclavePublicKey,
+      String privacyUserId,
       Optional<PrivacyGroup> privacyGroup);
 
-  ReceiveResponse retrieveTransaction(String enclaveKey, String enclavePublicKey);
-
   PrivacyGroup createPrivacyGroup(
-      List<String> addresses, String name, String description, String enclavePublicKey);
+      List<String> addresses, String name, String description, String privacyUserId);
 
-  String deletePrivacyGroup(String privacyGroupId, String enclavePublicKey);
+  String deletePrivacyGroup(String privacyGroupId, String privacyUserId);
 
-  PrivacyGroup[] findOffChainPrivacyGroupByMembers(List<String> addresses, String enclavePublicKey);
+  PrivacyGroup[] findPrivacyGroupByMembers(List<String> addresses, String privacyUserId);
 
-  Transaction createPrivacyMarkerTransaction(
-      String privateTransactionLookupId, PrivateTransaction privateTransaction);
-
-  Transaction createPrivacyMarkerTransaction(
-      String privateTransactionLookupId,
-      PrivateTransaction privateTransaction,
-      Address privacyPrecompileAddress);
+  Optional<PrivacyGroup> findPrivacyGroupByGroupId(String privacyGroupId, String privacyUserId);
 
   ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
-      PrivateTransaction privateTransaction, String enclavePublicKey);
+      PrivateTransaction privateTransaction, String privacyUserId);
 
-  long determineEeaNonce(
-      String privateFrom, String[] privateFor, Address address, String enclavePublicKey);
-
-  long determineBesuNonce(Address sender, String privacyGroupId, String enclavePublicKey);
+  long determineNonce(Address sender, String privacyGroupId, String privacyUserId);
 
   Optional<TransactionProcessingResult> simulatePrivateTransaction(
       final String privacyGroupId,
-      final String enclavePublicKey,
+      final String privacyUserId,
       final CallParameter callParams,
       final long blockNumber);
-
-  Optional<String> buildAndSendAddPayload(
-      PrivateTransaction privateTransaction, Bytes32 privacyGroupId, String enclaveKey);
-
-  Optional<PrivacyGroup> findOffChainPrivacyGroupByGroupId(
-      String toBase64String, String enclaveKey);
-
-  Optional<PrivacyGroup> findPrivacyGroupByGroupId(
-      final String privacyGroupId, final String enclaveKey);
-
-  List<PrivacyGroup> findOnChainPrivacyGroupByMembers(List<String> asList, String enclaveKey);
 
   Optional<Bytes> getContractCode(
       final String privacyGroupId,
       final Address contractAddress,
       final Hash blockHash,
-      final String enclavePublicKey);
+      final String privacyUserId);
 
-  Optional<PrivacyGroup> findOnChainPrivacyGroupAndAddNewMembers(
-      Bytes privacyGroupId, String enclavePublicKey, final PrivateTransaction privateTransaction);
-
-  List<PrivateTransactionWithMetadata> retrieveAddBlob(String addDataKey);
-
-  boolean isGroupAdditionTransaction(PrivateTransaction privateTransaction);
-
-  void verifyPrivacyGroupContainsEnclavePublicKey(
-      final String privacyGroupId, final String enclavePublicKey)
+  void verifyPrivacyGroupContainsPrivacyUserId(
+      final String privacyGroupId, final String privacyUserId)
       throws MultiTenancyValidationException;
 
-  void verifyPrivacyGroupContainsEnclavePublicKey(
-      final String privacyGroupId, final String enclavePublicKey, final Optional<Long> blockNumber)
+  void verifyPrivacyGroupContainsPrivacyUserId(
+      final String privacyGroupId, final String privacyUserId, final Optional<Long> blockNumber)
       throws MultiTenancyValidationException;
-
-  PrivateTransactionSimulator getTransactionSimulator();
 
   Optional<Hash> getStateRootByBlockNumber(
-      final String privacyGroupId, final String enclavePublicKey, final long blockNumber);
+      final String privacyGroupId, final String privacyUserId, final long blockNumber);
 }

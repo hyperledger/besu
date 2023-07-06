@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.permissioning.AllowlistOperationResult;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -83,7 +84,7 @@ public class PermAddNodesToAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -99,22 +100,22 @@ public class PermAddNodesToAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
   public void shouldThrowInvalidJsonRpcParametersExceptionWhenEmptyEnode() {
-    final JsonRpcRequestContext request = buildRequest(Lists.emptyList());
+    final JsonRpcRequestContext request = buildRequest(Collections.emptyList());
     final JsonRpcResponse expected =
         new JsonRpcErrorResponse(
             request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_EMPTY_ENTRY);
 
-    when(nodeLocalConfigPermissioningController.addNodes(eq(Lists.emptyList())))
+    when(nodeLocalConfigPermissioningController.addNodes(Collections.emptyList()))
         .thenReturn(new NodesAllowlistResult(AllowlistOperationResult.ERROR_EMPTY_ENTRY));
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -129,7 +130,7 @@ public class PermAddNodesToAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -144,7 +145,7 @@ public class PermAddNodesToAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
   }
 
   @Test
@@ -157,7 +158,7 @@ public class PermAddNodesToAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     verify(nodeLocalConfigPermissioningController, times(1)).addNodes(any());
     verifyNoMoreInteractions(nodeLocalConfigPermissioningController);
@@ -173,7 +174,7 @@ public class PermAddNodesToAllowlistTest {
 
     final JsonRpcResponse actual = method.response(request);
 
-    assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+    assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
 
     verify(nodeLocalConfigPermissioningController, times(1)).addNodes(any());
     verifyNoMoreInteractions(nodeLocalConfigPermissioningController);
@@ -190,7 +191,8 @@ public class PermAddNodesToAllowlistTest {
             request.getRequest().getId(), JsonRpcError.NODE_ALLOWLIST_NOT_ENABLED);
 
     Assertions.assertThat(method.response(request))
-        .isEqualToComparingFieldByField(expectedResponse);
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   private JsonRpcRequestContext buildRequest(final List<String> enodeList) {
