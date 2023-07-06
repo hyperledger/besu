@@ -356,7 +356,8 @@ public class TransactionPool implements BlockAddedObserver {
   private TransactionValidator getTransactionValidator() {
     return protocolSchedule
         .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
-        .getTransactionValidator();
+        .getTransactionValidatorFactory()
+        .get();
   }
 
   public PendingTransactions getPendingTransactions() {

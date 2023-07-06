@@ -24,7 +24,6 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
@@ -32,10 +31,8 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
-import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -53,7 +50,6 @@ import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -190,54 +186,10 @@ public class MainnetTransactionValidatorTest {
   }
 
   @Test
-  public void shouldRejectTransactionIfAccountIsNotEOA() {
-    final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
-    validator.setPermissionTransactionFilter(transactionFilter(false));
-
-    Account invalidEOA =
-        when(account(basicTransaction.getUpfrontCost(0L), basicTransaction.getNonce())
-                .getCodeHash())
-            .thenReturn(Hash.fromHexStringLenient("0xdeadbeef"))
-            .getMock();
-
-    assertThat(validator.validateForSender(basicTransaction, invalidEOA, transactionPoolParams))
-        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED));
-  }
-
-  @Test
-  public void shouldRejectTransactionIfAccountIsNotPermitted() {
-    final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
-    validator.setPermissionTransactionFilter(transactionFilter(false));
-
-    assertThat(
-            validator.validateForSender(
-                basicTransaction, accountWithNonce(0), transactionPoolParams))
-        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED));
-  }
-
-  @Test
-  public void shouldAcceptValidTransactionIfAccountIsPermitted() {
-    final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
-    validator.setPermissionTransactionFilter(transactionFilter(true));
-
-    assertThat(
-            validator.validateForSender(
-                basicTransaction, accountWithNonce(0), transactionPoolParams))
-        .isEqualTo(ValidationResult.valid());
-  }
-
-  @Test
   public void shouldRejectTransactionWithMaxFeeTimesGasLimitGreaterThanBalance() {
     final TransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
-    validator.setPermissionTransactionFilter(transactionFilter(true));
 
     assertThat(
             validator.validateForSender(
@@ -271,7 +223,6 @@ public class MainnetTransactionValidatorTest {
                   TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
                 }),
             Integer.MAX_VALUE);
-    validator.setPermissionTransactionFilter(transactionFilter(true));
 
     final Transaction transaction =
         Transaction.builder()
@@ -292,58 +243,6 @@ public class MainnetTransactionValidatorTest {
         .isEqualTo(ValidationResult.invalid(MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS));
     assertThat(validationResult.getErrorMessage())
         .isEqualTo("max priority fee per gas cannot be greater than max fee per gas");
-  }
-
-  @Test
-  public void shouldPropagateCorrectStateChangeParamToTransactionFilter() {
-    final ArgumentCaptor<Boolean> stateChangeLocalParamCaptor =
-        ArgumentCaptor.forClass(Boolean.class);
-    final ArgumentCaptor<Boolean> stateChangeOnchainParamCaptor =
-        ArgumentCaptor.forClass(Boolean.class);
-    final PermissionTransactionFilter permissionTransactionFilter =
-        mock(PermissionTransactionFilter.class);
-    when(permissionTransactionFilter.permitted(
-            any(Transaction.class),
-            stateChangeLocalParamCaptor.capture(),
-            stateChangeOnchainParamCaptor.capture()))
-        .thenReturn(true);
-
-    final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
-    validator.setPermissionTransactionFilter(permissionTransactionFilter);
-
-    final TransactionValidationParams validationParams =
-        ImmutableTransactionValidationParams.builder().checkOnchainPermissions(true).build();
-
-    validator.validateForSender(basicTransaction, accountWithNonce(0), validationParams);
-
-    assertThat(stateChangeLocalParamCaptor.getValue()).isTrue();
-    assertThat(stateChangeOnchainParamCaptor.getValue()).isTrue();
-  }
-
-  @Test
-  public void shouldNotCheckAccountPermissionIfBothValidationParamsCheckPermissionsAreFalse() {
-    final PermissionTransactionFilter permissionTransactionFilter =
-        mock(PermissionTransactionFilter.class);
-
-    final TransactionValidator validator =
-        new MainnetTransactionValidator(
-            gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
-    validator.setPermissionTransactionFilter(permissionTransactionFilter);
-
-    final TransactionValidationParams validationParams =
-        ImmutableTransactionValidationParams.builder()
-            .checkOnchainPermissions(false)
-            .checkLocalPermissions(false)
-            .build();
-
-    validator.validateForSender(basicTransaction, accountWithNonce(0), validationParams);
-
-    assertThat(validator.validateForSender(basicTransaction, accountWithNonce(0), validationParams))
-        .isEqualTo(ValidationResult.valid());
-
-    verifyNoInteractions(permissionTransactionFilter);
   }
 
   @Test
@@ -546,13 +445,5 @@ public class MainnetTransactionValidatorTest {
     when(account.getBalance()).thenReturn(balance);
     when(account.getNonce()).thenReturn(nonce);
     return account;
-  }
-
-  private PermissionTransactionFilter transactionFilter(final boolean permitted) {
-    final PermissionTransactionFilter permissionTransactionFilter =
-        mock(PermissionTransactionFilter.class);
-    when(permissionTransactionFilter.permitted(any(Transaction.class), anyBoolean(), anyBoolean()))
-        .thenReturn(permitted);
-    return permissionTransactionFilter;
   }
 }

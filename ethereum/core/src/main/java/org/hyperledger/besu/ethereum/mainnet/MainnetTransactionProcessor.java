@@ -64,7 +64,7 @@ public class MainnetTransactionProcessor {
 
   protected final GasCalculator gasCalculator;
 
-  protected final TransactionValidator transactionValidator;
+  protected final TransactionValidatorFactory transactionValidatorFactory;
 
   private final AbstractMessageProcessor contractCreationProcessor;
 
@@ -81,7 +81,7 @@ public class MainnetTransactionProcessor {
 
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
-      final TransactionValidator transactionValidator,
+      final TransactionValidatorFactory transactionValidatorFactory,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
@@ -90,7 +90,7 @@ public class MainnetTransactionProcessor {
       final FeeMarket feeMarket,
       final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
     this.gasCalculator = gasCalculator;
-    this.transactionValidator = transactionValidator;
+    this.transactionValidatorFactory = transactionValidatorFactory;
     this.contractCreationProcessor = contractCreationProcessor;
     this.messageCallProcessor = messageCallProcessor;
     this.clearEmptyAccounts = clearEmptyAccounts;
@@ -271,6 +271,7 @@ public class MainnetTransactionProcessor {
       final PrivateMetadataUpdater privateMetadataUpdater,
       final Wei dataGasPrice) {
     try {
+      final var transactionValidator = transactionValidatorFactory.get();
       LOG.trace("Starting execution of {}", transaction);
       ValidationResult<TransactionInvalidReason> validationResult =
           transactionValidator.validate(
@@ -496,10 +497,6 @@ public class MainnetTransactionProcessor {
           ValidationResult.invalid(
               TransactionInvalidReason.INTERNAL_ERROR, "Internal Error in Besu - " + re));
     }
-  }
-
-  public TransactionValidator getTransactionValidator() {
-    return transactionValidator;
   }
 
   protected void process(final MessageFrame frame, final OperationTracer operationTracer) {
