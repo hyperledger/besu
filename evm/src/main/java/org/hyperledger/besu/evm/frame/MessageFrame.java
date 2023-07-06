@@ -1418,7 +1418,7 @@ public class MessageFrame {
     private Set<Address> accessListWarmAddresses = emptySet();
     private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
 
-    private Optional<List<VersionedHash>> versionedHashes;
+    private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
 
     /**
      * Sets Type.
@@ -1714,6 +1714,7 @@ public class MessageFrame {
       checkState(completer != null, "Missing message frame completer");
       checkState(miningBeneficiary != null, "Missing mining beneficiary");
       checkState(blockHashLookup != null, "Missing block hash lookup");
+      checkState(versionedHashes != null, "Missing optional versioned hashes");
     }
 
     /**
