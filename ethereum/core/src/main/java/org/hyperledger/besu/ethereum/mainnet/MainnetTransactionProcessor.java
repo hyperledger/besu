@@ -382,6 +382,8 @@ public class MainnetTransactionProcessor {
       if (transaction.getVersionedHashes().isPresent()) {
         commonMessageFrameBuilder.versionedHashes(
             Optional.of(transaction.getVersionedHashes().get().stream().toList()));
+      } else {
+        commonMessageFrameBuilder.versionedHashes(Optional.empty());
       }
 
       final MessageFrame initialFrame;
