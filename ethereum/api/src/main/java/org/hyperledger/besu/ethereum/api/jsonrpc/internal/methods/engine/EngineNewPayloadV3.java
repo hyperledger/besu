@@ -14,20 +14,17 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.UNSUPPORTED_FORK;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.AbstractEngineNewPayload.NewPayloadValidationReason.INVALID_NEW_PAYLOAD;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,26 +55,26 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
   }
 
   @Override
-  protected Optional<JsonRpcResponse> validateForkSupported(
+  protected ValidationResult<NewPayloadValidationReason> validateForkSupported(
       final Object reqId, final EnginePayloadParameter payloadParameter) {
     var cancun = timestampSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
 
     if (cancun.isPresent() && payloadParameter.getTimestamp() >= cancun.get().milestone()) {
       if (payloadParameter.getDataGasUsed() == null
           || payloadParameter.getExcessDataGas() == null) {
-        return Optional.of(new JsonRpcErrorResponse(reqId, INVALID_PARAMS));
+        return ValidationResult.invalid(NewPayloadValidationReason.INVALID_NEW_PAYLOAD);
       }
     } else {
       if (payloadParameter.getDataGasUsed() != null
           || payloadParameter.getExcessDataGas() != null) {
-        return Optional.of(new JsonRpcErrorResponse(reqId, UNSUPPORTED_FORK));
+        return ValidationResult.invalid(NewPayloadValidationReason.UNSUPPORTED_FORK);
       }
     }
-    return Optional.empty();
+    return ValidationResult.valid();
   }
 
   @Override
-  protected Optional<JsonRpcResponse> validateTransactions(
+  protected ValidationResult<NewPayloadValidationReason> validateTransactions(
       final EnginePayloadParameter blockParam,
       final Object reqId,
       final List<Transaction> transactions,
@@ -86,12 +83,10 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
     var blobTransactions =
         transactions.stream().filter(transaction -> transaction.getType().supportsBlob()).toList();
 
-    return validateBlobTransactions(blockParam, reqId, blobTransactions, maybeVersionedHashParam);
+    return validateBlobTransactions(blobTransactions, maybeVersionedHashParam);
   }
 
-  private Optional<JsonRpcResponse> validateBlobTransactions(
-      final EnginePayloadParameter blockParam,
-      final Object reqId,
+  private ValidationResult<NewPayloadValidationReason> validateBlobTransactions(
       final List<Transaction> blobTransactions,
       final Optional<List<String>> maybeVersionedHashParam) {
 
@@ -101,30 +96,22 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
             .orElseGet(ArrayList::new);
 
     final List<Bytes32> transactionVersionedHashes = new ArrayList<>();
-
     for (Transaction transaction : blobTransactions) {
       if (transaction.getType().supportsBlob()) {
         var versionedHashes = transaction.getVersionedHashes();
         if (versionedHashes.isEmpty()) {
-          return Optional.of(
-              respondWithInvalid(
-                  reqId, blockParam, null, INVALID, "There must be at least one blob"));
+          return ValidationResult.invalid(INVALID_NEW_PAYLOAD, "There must be at least one blob");
         }
         transactionVersionedHashes.addAll(
             versionedHashes.get().stream().map(VersionedHash::toBytes).toList());
       }
     }
-
     // check list contents
     if (!versionedHashesParam.equals(transactionVersionedHashes)) {
-      return Optional.of(
-          respondWithInvalid(
-              reqId,
-              blockParam,
-              null,
-              INVALID,
-              "Versioned hashes from blob transactions do not match expected values"));
+      return ValidationResult.invalid(
+          INVALID_NEW_PAYLOAD,
+          "Versioned hashes from blob transactions do not match expected values");
     }
-    return Optional.empty();
+    return ValidationResult.valid();
   }
 }

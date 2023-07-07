@@ -23,6 +23,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.DepositsValidatorProvider.getDepositsValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidatorProvider.getWithdrawalsValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.UNSUPPORTED_FORK;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.DataGas;
@@ -53,6 +54,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessDataGasCalculator;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -60,6 +63,7 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -108,9 +112,10 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         .addArgument(() -> Json.encodePrettily(blockParam))
         .log();
 
-    var forkValidationResult = validateForkSupported(reqId, blockParam);
-    if (forkValidationResult.isPresent()) {
-      return forkValidationResult.get();
+    ValidationResult<NewPayloadValidationReason> forkValidationResult =
+        validateForkSupported(reqId, blockParam);
+    if (!forkValidationResult.isValid()) {
+      return new JsonRpcErrorResponse(reqId, UNSUPPORTED_FORK);
     }
 
     final Optional<List<Withdrawal>> maybeWithdrawals =
@@ -200,10 +205,15 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     }
 
     // Validate transactions
-    var transactionValidationResult =
+    ValidationResult<NewPayloadValidationReason> transactionValidationResult =
         validateTransactions(blockParam, reqId, transactions, maybeVersionedHashParam);
-    if (transactionValidationResult.isPresent()) {
-      return transactionValidationResult.get();
+    if (transactionValidationResult.isValid()) {
+      return respondWithInvalid(
+          reqId,
+          blockParam,
+          null,
+          getInvalidBlockHashStatus(),
+          transactionValidationResult.getErrorMessage());
     }
 
     // do we already have this payload
@@ -224,14 +234,28 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     final Optional<BlockHeader> maybeParentHeader =
         protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
-    if (maybeParentHeader.isPresent()
-        && (blockParam.getTimestamp() <= maybeParentHeader.get().getTimestamp())) {
-      return respondWithInvalid(
-          reqId,
-          blockParam,
-          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
-          INVALID,
-          "block timestamp not greater than parent");
+    if (maybeParentHeader.isPresent()) {
+      BlockHeader parent = maybeParentHeader.get();
+      if ((blockParam.getTimestamp() <= parent.getTimestamp())) {
+        return respondWithInvalid(
+            reqId,
+            blockParam,
+            mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+            INVALID,
+            "block timestamp not greater than parent");
+      }
+
+      DataGas calculatedDataGas =
+          ExcessDataGasCalculator.calculateExcessDataGasForParent(
+              protocolSchedule.getByBlockHeader(parent), parent);
+      if (!Objects.equals(newBlockHeader.getExcessDataGas(), Optional.of(calculatedDataGas))) {
+        return respondWithInvalid(
+            reqId,
+            blockParam,
+            mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+            INVALID,
+            " Payload excessDataGas does not match calculated excessDataGas");
+      }
     }
 
     final var block =
@@ -361,17 +385,17 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     return INVALID;
   }
 
-  protected Optional<JsonRpcResponse> validateForkSupported(
+  protected ValidationResult<NewPayloadValidationReason> validateForkSupported(
       final Object id, final EnginePayloadParameter payloadParameter) {
-    return Optional.empty();
+    return ValidationResult.valid();
   }
 
-  protected Optional<JsonRpcResponse> validateTransactions(
+  protected ValidationResult<NewPayloadValidationReason> validateTransactions(
       final EnginePayloadParameter blockParam,
       final Object reqId,
       final List<Transaction> transactions,
       final Optional<List<String>> maybeVersionedHashParam) {
-    return Optional.empty();
+    return ValidationResult.valid();
   }
 
   private void logImportedBlockInfo(final Block block, final double timeInS) {
@@ -398,5 +422,10 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             timeInS,
             ethPeers.peerCount()));
     LOG.info(String.format(message.toString(), messageArgs.toArray()));
+  }
+
+  protected enum NewPayloadValidationReason {
+    INVALID_NEW_PAYLOAD,
+    UNSUPPORTED_FORK
   }
 }
