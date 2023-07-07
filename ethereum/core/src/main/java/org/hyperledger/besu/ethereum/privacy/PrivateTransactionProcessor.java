@@ -20,7 +20,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -49,7 +49,7 @@ public class PrivateTransactionProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(PrivateTransactionProcessor.class);
 
   @SuppressWarnings("unused")
-  private final MainnetTransactionValidator transactionValidator;
+  private final TransactionValidator transactionValidator;
 
   private final PrivateTransactionValidator privateTransactionValidator;
 
@@ -63,7 +63,7 @@ public class PrivateTransactionProcessor {
   private final boolean clearEmptyAccounts;
 
   public PrivateTransactionProcessor(
-      final MainnetTransactionValidator transactionValidator,
+      final TransactionValidator transactionValidator,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
