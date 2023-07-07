@@ -17,12 +17,12 @@
 
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.core.TransactionFilter;
+import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 public interface PrivacySupportingProtocolSchedule {
 
-  void setTransactionFilter(final TransactionFilter transactionFilter);
+  void setTransactionFilter(final PermissionTransactionFilter permissionTransactionFilter);
 
   void setPublicWorldStateArchiveForPrivacyBlockProcessor(
       final WorldStateArchive publicWorldStateArchive);
