@@ -20,7 +20,7 @@ import static org.hyperledger.besu.datatypes.Hash.EMPTY_TRIE_HASH;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.BlockReceipts;
 import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.RetryingMessageTaskTest;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 
@@ -33,22 +33,22 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 public class GetReceiptsForHeadersTaskTest
-    extends RetryingMessageTaskTest<Map<BlockHeader, List<TransactionReceipt>>> {
+    extends RetryingMessageTaskTest<Map<BlockHeader, BlockReceipts>> {
 
   @Override
-  protected Map<BlockHeader, List<TransactionReceipt>> generateDataToBeRequested() {
+  protected Map<BlockHeader, BlockReceipts> generateDataToBeRequested() {
     // Setup data to be requested and expected response
-    final Map<BlockHeader, List<TransactionReceipt>> blocks = new HashMap<>();
+    final Map<BlockHeader, BlockReceipts> blocks = new HashMap<>();
     for (long i = 0; i < 3; i++) {
       final BlockHeader header = blockchain.getBlockHeader(10 + i).get();
-      blocks.put(header, blockchain.getTxReceipts(header.getHash()).get());
+      blocks.put(header, new BlockReceipts(blockchain.getTxReceipts(header.getHash()).get(), true));
     }
     return blocks;
   }
 
   @Override
-  protected EthTask<Map<BlockHeader, List<TransactionReceipt>>> createTask(
-      final Map<BlockHeader, List<TransactionReceipt>> requestedData) {
+  protected EthTask<Map<BlockHeader, BlockReceipts>> createTask(
+      final Map<BlockHeader, BlockReceipts> requestedData) {
     final List<BlockHeader> headersToComplete = new ArrayList<>(requestedData.keySet());
     return GetReceiptsForHeadersTask.forHeaders(
         ethContext, headersToComplete, maxRetries, metricsSystem);
@@ -63,8 +63,14 @@ public class GetReceiptsForHeadersTaskTest
     final BlockHeader header3 =
         new BlockHeaderTestFixture().number(3).receiptsRoot(EMPTY_TRIE_HASH).buildHeader();
 
-    final Map<BlockHeader, List<TransactionReceipt>> expected =
-        ImmutableMap.of(header1, emptyList(), header2, emptyList(), header3, emptyList());
+    final Map<BlockHeader, BlockReceipts> expected =
+        ImmutableMap.of(
+            header1,
+            new BlockReceipts(emptyList(), false),
+            header2,
+            new BlockReceipts(emptyList(), false),
+            header3,
+            new BlockReceipts(emptyList(), false));
 
     assertThat(createTask(expected).run()).isCompletedWithValue(expected);
   }

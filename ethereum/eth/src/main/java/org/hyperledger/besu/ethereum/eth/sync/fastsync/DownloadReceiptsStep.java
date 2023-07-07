@@ -19,8 +19,8 @@ import static java.util.stream.Collectors.toList;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockReceipts;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.GetReceiptsForHeadersTask;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -44,7 +44,7 @@ public class DownloadReceiptsStep
   @Override
   public CompletableFuture<List<BlockWithReceipts>> apply(final List<Block> blocks) {
     final List<BlockHeader> headers = blocks.stream().map(Block::getHeader).collect(toList());
-    final CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>> getReceipts =
+    final CompletableFuture<Map<BlockHeader, BlockReceipts>> getReceipts =
         GetReceiptsForHeadersTask.forHeaders(ethContext, headers, metricsSystem).run();
     final CompletableFuture<List<BlockWithReceipts>> combineWithBlocks =
         getReceipts.thenApply(
@@ -54,17 +54,18 @@ public class DownloadReceiptsStep
   }
 
   private List<BlockWithReceipts> combineBlocksAndReceipts(
-      final List<Block> blocks, final Map<BlockHeader, List<TransactionReceipt>> receiptsByHeader) {
+      final List<Block> blocks, final Map<BlockHeader, BlockReceipts> receiptsByHeader) {
     return blocks.stream()
         .map(
             block -> {
-              final List<TransactionReceipt> receipts =
-                  receiptsByHeader.getOrDefault(block.getHeader(), emptyList());
+              final BlockReceipts blockReceipts =
+                  receiptsByHeader.getOrDefault(
+                      block.getHeader(), new BlockReceipts(emptyList(), false));
               // this is because we already did the receipts validation when getting them from the
               // network
               // in GetReceiptsFromPeerTask.processResponse method
-              block.setReceiptsRootVerified(true);
-              return new BlockWithReceipts(block, receipts);
+              block.setReceiptsRootVerified(blockReceipts.isReceiptsRootProcessed());
+              return new BlockWithReceipts(block, blockReceipts.getReceipts());
             })
         .collect(toList());
   }

@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.mainnet.BodyValidation.receiptsRoot;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockReceipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -40,7 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class GetReceiptsFromPeerTask
-    extends AbstractPeerRequestTask<Map<BlockHeader, List<TransactionReceipt>>> {
+    extends AbstractPeerRequestTask<Map<BlockHeader, BlockReceipts>> {
   private static final Logger LOG = LoggerFactory.getLogger(GetReceiptsFromPeerTask.class);
 
   private final Collection<BlockHeader> blockHeaders;
@@ -90,7 +91,7 @@ public class GetReceiptsFromPeerTask
   }
 
   @Override
-  protected Optional<Map<BlockHeader, List<TransactionReceipt>>> processResponse(
+  protected Optional<Map<BlockHeader, BlockReceipts>> processResponse(
       final boolean streamClosed, final MessageData message, final EthPeer peer) {
     if (streamClosed) {
       // All outstanding requests have been responded to and we still haven't found the response
@@ -107,7 +108,7 @@ public class GetReceiptsFromPeerTask
       return Optional.empty();
     }
 
-    final Map<BlockHeader, List<TransactionReceipt>> receiptsByHeader = new HashMap<>();
+    final Map<BlockHeader, BlockReceipts> receiptsByHeader = new HashMap<>();
     for (final List<TransactionReceipt> receiptsInBlock : receiptsByBlock) {
       final List<BlockHeader> blockHeaders =
           headersByReceiptsRoot.get(receiptsRoot(receiptsInBlock));
@@ -115,7 +116,14 @@ public class GetReceiptsFromPeerTask
         // Contains receipts that we didn't request, so mustn't be the response we're looking for.
         return Optional.empty();
       }
-      blockHeaders.forEach(header -> receiptsByHeader.put(header, receiptsInBlock));
+      blockHeaders.forEach(
+          header -> {
+            // Since we successfully correlated the block headers with the receipts root, this
+            // serves
+            // as a corroborative receipts validation for the block body.
+            BlockReceipts blockReceipts = new BlockReceipts(receiptsInBlock, true);
+            receiptsByHeader.put(header, blockReceipts);
+          });
     }
     return Optional.of(receiptsByHeader);
   }
