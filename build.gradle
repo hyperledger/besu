@@ -117,14 +117,6 @@ allprojects {
 
   repositories {
     maven {
-      url 'https://maven.pkg.github.com/lacchain/liboqs-java'
-      content { includeGroupByRegex('org\\.openquantumsafe(\\..*)?') }
-      credentials {
-        username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
-        password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
-      }
-    }
-    maven {
       url 'https://hyperledger.jfrog.io/hyperledger/besu-maven'
       content { includeGroupByRegex('org\\.hyperledger\\..*') }
     }
@@ -685,7 +677,6 @@ task distDocker {
   dependsOn dockerDistUntar
   inputs.dir("build/docker-besu/")
   def dockerBuildDir = "build/docker-besu/"
-  def imageName = "ghcr.io/lacchain/besu"
 
   doLast {
     for (def jvmVariant in dockerVariants) {
@@ -730,8 +721,8 @@ task testDocker {
   doLast {
     for (def variant in dockerVariants) {
       exec {
-        def image = project.hasProperty('release.releaseVersion') ? "ghcr.io/lacchain/besu:" + project.property('release.releaseVersion') : "ghcr.io/lacchain/besu:${project.version}"
-        workingDir "docker/${variant}"
+        def image = project.hasProperty('release.releaseVersion') ? "${dockerImageName}:" + project.property('release.releaseVersion') : "${dockerImageName}:${project.version}"
+        workingDir "${projectDir}/docker/${variant}"
         executable "sh"
         args "-c", "bash ../test.sh ${image}-${variant}"
       }
@@ -740,9 +731,9 @@ task testDocker {
 }
 
 task dockerUpload {
-  def imageName = "ghcr.io/lacchain/besu"
-  def azureImageName = "hyperledger.azurecr.io/besu"
-  def image = "${imageName}:${dockerBuildVersion}"
+  dependsOn distDocker
+  def architecture = System.getenv('architecture')
+  def image = "${dockerImageName}:${dockerBuildVersion}"
   def additionalTags = []
 
   if (project.hasProperty('branch') && project.property('branch') == 'main') {

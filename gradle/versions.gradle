@@ -219,7 +219,6 @@ dependencyManagement {
     }
 
     dependency 'org.springframework.security:spring-security-crypto:6.0.2'
-    dependency  'org.openquantumsafe:liboqs-java:1.1-SNAPSHOT'
 
     dependency 'org.testcontainers:testcontainers:1.17.6'
 

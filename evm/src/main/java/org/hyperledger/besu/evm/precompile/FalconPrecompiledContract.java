@@ -20,25 +20,25 @@ import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+import javax.annotation.Nonnull;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.openquantumsafe.Signature;
+import org.bouncycastle.pqc.crypto.falcon.FalconParameters;
+import org.bouncycastle.pqc.crypto.falcon.FalconPublicKeyParameters;
+import org.bouncycastle.pqc.crypto.falcon.FalconSigner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * note: Liboqs - random number generation defaults to /dev/urandom a better form is to use the
- * OQS_RAND_agl_openssl "OpenSSL" random number algorithm, then set the environment default engine
- * to IBRand for quantum entropy
- */
 public class FalconPrecompiledContract extends AbstractPrecompiledContract {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractBLS12PrecompiledContract.class);
 
   private static final Bytes METHOD_ABI =
       Hash.keccak256(Bytes.of("verify(bytes,bytes,bytes)".getBytes(UTF_8))).slice(0, 4);
-  // taken from liboqs C sig.h header, OQS_SIG_alg_falcon_512
   private static final String SIGNATURE_ALGORITHM = "Falcon-512";
+
+  private final FalconSigner falconSigner = new FalconSigner();
 
   public FalconPrecompiledContract(final GasCalculator gasCalculator) {
     super("Falcon", gasCalculator);
@@ -46,12 +46,13 @@ public class FalconPrecompiledContract extends AbstractPrecompiledContract {
 
   @Override
   public long gasRequirement(final Bytes input) {
-    long value = gasCalculator().sha256PrecompiledContractGasCost(input);
-    return value;
+    return gasCalculator().sha256PrecompiledContractGasCost(input);
   }
 
+  @Nonnull
   @Override
-  public Bytes compute(final Bytes methodInput, final MessageFrame messageFrame) {
+  public PrecompileContractResult computePrecompile(
+      final Bytes methodInput, @Nonnull final MessageFrame messageFrame) {
     Bytes methodAbi = methodInput.slice(0, METHOD_ABI.size());
     if (!methodAbi.xor(METHOD_ABI).isZero()) {
       throw new IllegalArgumentException("Unexpected method ABI: " + methodAbi.toHexString());
@@ -66,7 +67,10 @@ public class FalconPrecompiledContract extends AbstractPrecompiledContract {
     int dataLength = input.slice(dataOffset, 32).trimLeadingZeros().toInt();
 
     Bytes signatureSlice = input.slice(signatureOffset + 32, signatureLength);
-    Bytes pubKeySlice = input.slice(pubKeyOffset + 32, pubKeyLength);
+    Bytes pubKeySlice =
+        input.slice(
+            pubKeyOffset + 32 + 1,
+            pubKeyLength - 1); // BouncyCastle omits the first byte since it is always zero
     Bytes dataSlice = input.slice(dataOffset + 32, dataLength);
 
     if (LOG.isTraceEnabled()) {
@@ -77,16 +81,18 @@ public class FalconPrecompiledContract extends AbstractPrecompiledContract {
           pubKeySlice.toHexString(),
           dataSlice.toHexString());
     }
-    Signature verifier = new Signature(SIGNATURE_ALGORITHM);
+    FalconPublicKeyParameters falconPublicKeyParameters =
+        new FalconPublicKeyParameters(FalconParameters.falcon_512, pubKeySlice.toArray());
+    falconSigner.init(false, falconPublicKeyParameters);
     final boolean verifies =
-        verifier.verify(dataSlice.toArray(), signatureSlice.toArray(), pubKeySlice.toArray());
+        falconSigner.verifySignature(dataSlice.toArray(), signatureSlice.toArray());
 
     if (verifies) {
       LOG.debug("Signature is VALID");
-      return Bytes32.leftPad(Bytes.of(0));
+      return PrecompileContractResult.success(Bytes32.leftPad(Bytes.of(0)));
     } else {
       LOG.debug("Signature is INVALID");
-      return Bytes32.leftPad(Bytes.of(1));
+      return PrecompileContractResult.success(Bytes32.leftPad(Bytes.of(1)));
     }
   }
 }
