@@ -53,7 +53,7 @@ public class MainnetTransactionProcessorTest {
   private static final int MAX_STACK_SIZE = 1024;
 
   private final GasCalculator gasCalculator = new LondonGasCalculator();
-  @Mock private MainnetTransactionValidator transactionValidator;
+  @Mock private TransactionValidator transactionValidator;
   @Mock private AbstractMessageProcessor contractCreationProcessor;
   @Mock private AbstractMessageProcessor messageCallProcessor;
 
