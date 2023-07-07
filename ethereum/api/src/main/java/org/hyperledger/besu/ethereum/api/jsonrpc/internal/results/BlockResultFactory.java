@@ -147,6 +147,27 @@ public class BlockResultFactory {
         blobsBundleV1);
   }
 
+  public EngineGetPayloadResultV6110 payloadTransactionCompleteV6110(
+      final BlockWithReceipts blockWithReceipts) {
+    final List<String> txs =
+        blockWithReceipts.getBlock().getBody().getTransactions().stream()
+            .map(TransactionEncoder::encodeOpaqueBytes)
+            .map(Bytes::toHexString)
+            .collect(Collectors.toList());
+
+    final Wei blockValue = new BlockValueCalculator().calculateBlockValue(blockWithReceipts);
+
+    final BlobsBundleV1 blobsBundleV1 =
+        new BlobsBundleV1(blockWithReceipts.getBlock().getBody().getTransactions());
+    return new EngineGetPayloadResultV6110(
+        blockWithReceipts.getHeader(),
+        txs,
+        blockWithReceipts.getBlock().getBody().getWithdrawals(),
+        blockWithReceipts.getBlock().getBody().getDeposits(),
+        Quantity.create(blockValue),
+        blobsBundleV1);
+  }
+
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {
     return transactionHash(blockWithMetadata, false);
   }
