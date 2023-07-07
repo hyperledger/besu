@@ -17,14 +17,18 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.AbstractEngineNewPayload.NewPayloadValidationReason.INVALID_NEW_PAYLOAD;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessDataGasCalculator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,21 +78,15 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
   }
 
   @Override
-  protected ValidationResult<NewPayloadValidationReason> validateTransactions(
-      final EnginePayloadParameter blockParam,
-      final Object reqId,
+  protected ValidationResult<NewPayloadValidationReason> validateBlobs(
       final List<Transaction> transactions,
-      final Optional<List<String>> maybeVersionedHashParam) {
+      final BlockHeader header,
+      final Optional<BlockHeader> maybeParentHeader,
+      final Optional<List<String>> maybeVersionedHashParam,
+      final ProtocolSpec protocolSpec) {
 
     var blobTransactions =
         transactions.stream().filter(transaction -> transaction.getType().supportsBlob()).toList();
-
-    return validateBlobTransactions(blobTransactions, maybeVersionedHashParam);
-  }
-
-  private ValidationResult<NewPayloadValidationReason> validateBlobTransactions(
-      final List<Transaction> blobTransactions,
-      final Optional<List<String>> maybeVersionedHashParam) {
 
     List<Bytes32> versionedHashesParam =
         maybeVersionedHashParam
@@ -97,21 +95,55 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
 
     final List<Bytes32> transactionVersionedHashes = new ArrayList<>();
     for (Transaction transaction : blobTransactions) {
-      if (transaction.getType().supportsBlob()) {
-        var versionedHashes = transaction.getVersionedHashes();
-        if (versionedHashes.isEmpty()) {
-          return ValidationResult.invalid(INVALID_NEW_PAYLOAD, "There must be at least one blob");
-        }
-        transactionVersionedHashes.addAll(
-            versionedHashes.get().stream().map(VersionedHash::toBytes).toList());
+      var versionedHashes = transaction.getVersionedHashes();
+      // blob transactions must have at least one blob
+      if (versionedHashes.isEmpty()) {
+        return ValidationResult.invalid(INVALID_NEW_PAYLOAD, "There must be at least one blob");
       }
+      transactionVersionedHashes.addAll(
+          versionedHashes.get().stream().map(VersionedHash::toBytes).toList());
     }
-    // check list contents
+
+    // Validate versionedHashesParam
     if (!versionedHashesParam.equals(transactionVersionedHashes)) {
       return ValidationResult.invalid(
           INVALID_NEW_PAYLOAD,
           "Versioned hashes from blob transactions do not match expected values");
     }
+
+    // Validate excessDataGas
+    if (maybeParentHeader.isPresent()) {
+      if (!validateExcessDataGas(header, maybeParentHeader.get(), protocolSpec)) {
+        return ValidationResult.invalid(
+            NewPayloadValidationReason.INVALID_NEW_PAYLOAD,
+            "Payload excessDataGas does not match calculated excessDataGas");
+      }
+    }
+
+    // Validate dataGasUsed
+    if (header.getDataGasUsed().isPresent()) {
+      if (!validateDataGasUsed(header, versionedHashesParam, protocolSpec)) {
+        return ValidationResult.invalid(
+            NewPayloadValidationReason.INVALID_NEW_PAYLOAD,
+            "Payload DataGasUsed does not match calculated DataGasUsed");
+      }
+    }
     return ValidationResult.valid();
+  }
+
+  private boolean validateExcessDataGas(
+      final BlockHeader header, final BlockHeader parentHeader, final ProtocolSpec protocolSpec) {
+    DataGas calculatedDataGas =
+        ExcessDataGasCalculator.calculateExcessDataGasForParent(protocolSpec, parentHeader);
+    return header.getExcessDataGas().orElse(DataGas.ZERO).equals(calculatedDataGas);
+  }
+
+  private boolean validateDataGasUsed(
+      final BlockHeader header,
+      final List<Bytes32> maybeVersionedHashParam,
+      final ProtocolSpec protocolSpec) {
+    var calculatedDataGas =
+        protocolSpec.getGasCalculator().dataGasUsed(maybeVersionedHashParam.size());
+    return header.getDataGasUsed().orElse(0L).equals(calculatedDataGas);
   }
 }

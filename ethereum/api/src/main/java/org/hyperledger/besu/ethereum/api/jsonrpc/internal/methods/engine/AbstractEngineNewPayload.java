@@ -54,8 +54,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessDataGasCalculator;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -63,7 +63,6 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -106,6 +105,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         requestContext.getOptionalList(1, String.class);
 
     Object reqId = requestContext.getRequest().getId();
+
+    final Optional<BlockHeader> maybeParentHeader =
+        protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
 
     LOG.atTrace()
         .setMessage("blockparam: {}")
@@ -204,9 +206,13 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return respondWithInvalid(reqId, blockParam, null, getInvalidBlockHashStatus(), errorMessage);
     }
 
-    // Validate transactions
     ValidationResult<NewPayloadValidationReason> transactionValidationResult =
-        validateTransactions(blockParam, reqId, transactions, maybeVersionedHashParam);
+        validateBlobs(
+            transactions,
+            newBlockHeader,
+            maybeParentHeader,
+            maybeVersionedHashParam,
+            protocolSchedule.getByBlockHeader(newBlockHeader));
     if (!transactionValidationResult.isValid()) {
       return respondWithInvalid(
           reqId,
@@ -232,8 +238,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           "Block already present in bad block manager.");
     }
 
-    final Optional<BlockHeader> maybeParentHeader =
-        protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
     if (maybeParentHeader.isPresent()) {
       BlockHeader parent = maybeParentHeader.get();
       if ((blockParam.getTimestamp() <= parent.getTimestamp())) {
@@ -243,18 +247,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
             INVALID,
             "block timestamp not greater than parent");
-      }
-
-      DataGas calculatedDataGas =
-          ExcessDataGasCalculator.calculateExcessDataGasForParent(
-              protocolSchedule.getByBlockHeader(parent), parent);
-      if (!Objects.equals(newBlockHeader.getExcessDataGas(), Optional.of(calculatedDataGas))) {
-        return respondWithInvalid(
-            reqId,
-            blockParam,
-            mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
-            INVALID,
-            " Payload excessDataGas does not match calculated excessDataGas");
       }
     }
 
@@ -269,7 +261,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           .addArgument(block::toLogString)
           .log();
       mergeCoordinator.appendNewPayloadToSync(block);
-
       return respondWith(reqId, blockParam, null, SYNCING);
     }
 
@@ -390,11 +381,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     return ValidationResult.valid();
   }
 
-  protected ValidationResult<NewPayloadValidationReason> validateTransactions(
-      final EnginePayloadParameter blockParam,
-      final Object reqId,
+  protected ValidationResult<NewPayloadValidationReason> validateBlobs(
       final List<Transaction> transactions,
-      final Optional<List<String>> maybeVersionedHashParam) {
+      final BlockHeader header,
+      final Optional<BlockHeader> maybeParentHeader,
+      final Optional<List<String>> maybeVersionedHashParam,
+      final ProtocolSpec protocolSpec) {
     return ValidationResult.valid();
   }
 
