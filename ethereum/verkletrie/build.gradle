@@ -37,7 +37,7 @@ dependencies {
   implementation 'io.opentelemetry:opentelemetry-api'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
-  implementation 'org.bouncycastle:bcprov-jdk15on'
+  implementation 'org.bouncycastle:bcprov-jdk18on'
   implementation 'org.hyperledger.besu:ipa-multipoint'
 
   annotationProcessor "org.immutables:value"
