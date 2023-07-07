@@ -47,7 +47,8 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     final byte[] key = bytesFromHexString("0001");
     final byte[] val1 = bytesFromHexString("0FFF");
     final byte[] val2 = bytesFromHexString("1337");
-    final SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store = createSegmentedStore();
+    final SegmentedKeyValueStorage<RocksDbSegmentIdentifier, Transaction<RocksDbSegmentIdentifier>>
+        store = createSegmentedStore();
     RocksDbSegmentIdentifier segment = store.getSegmentIdentifierByName(TestSegment.FOO);
     KeyValueStorage duplicateSegmentRef =
         new SnappableSegmentedKeyValueStorageAdapter<>(TestSegment.FOO, store);
@@ -79,7 +80,8 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
 
   @Test
   public void twoSegmentsAreIndependent() throws Exception {
-    final SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store = createSegmentedStore();
+    final SegmentedKeyValueStorage<RocksDbSegmentIdentifier, Transaction<RocksDbSegmentIdentifier>>
+        store = createSegmentedStore();
 
     final Transaction<RocksDbSegmentIdentifier> tx = store.startTransaction();
     tx.put(
@@ -101,7 +103,9 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     // we're looping this in order to catch intermittent failures when rocksdb objects are not close
     // properly
     for (int i = 0; i < 50; i++) {
-      final SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store = createSegmentedStore();
+      final SegmentedKeyValueStorage<
+              RocksDbSegmentIdentifier, Transaction<RocksDbSegmentIdentifier>>
+          store = createSegmentedStore();
       final RocksDbSegmentIdentifier fooSegment = store.getSegmentIdentifierByName(TestSegment.FOO);
       final RocksDbSegmentIdentifier barSegment = store.getSegmentIdentifierByName(TestSegment.BAR);
 
@@ -145,7 +149,8 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
 
   @Test
   public void canGetThroughSegmentIteration() throws Exception {
-    final SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store = createSegmentedStore();
+    final SegmentedKeyValueStorage<RocksDbSegmentIdentifier, Transaction<RocksDbSegmentIdentifier>>
+        store = createSegmentedStore();
     final RocksDbSegmentIdentifier fooSegment = store.getSegmentIdentifierByName(TestSegment.FOO);
     final RocksDbSegmentIdentifier barSegment = store.getSegmentIdentifierByName(TestSegment.BAR);
 
@@ -180,11 +185,12 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
   public void dbShouldIgnoreExperimentalSegmentsIfNotExisted(@TempDir final Path testPath)
       throws Exception {
     // Create new db should ignore experimental column family
-    SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store =
-        createSegmentedStore(
-            testPath,
-            Arrays.asList(TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
-            List.of(TestSegment.EXPERIMENTAL));
+    SegmentedKeyValueStorage<RocksDbSegmentIdentifier, Transaction<RocksDbSegmentIdentifier>>
+        store =
+            createSegmentedStore(
+                testPath,
+                Arrays.asList(TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
+                List.of(TestSegment.EXPERIMENTAL));
     store.close();
 
     // new db will be backward compatible with db without knowledge of experimental column family
@@ -197,11 +203,12 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
   public void dbShouldNotIgnoreExperimentalSegmentsIfExisted(@TempDir final Path testPath)
       throws Exception {
     // Create new db with experimental column family
-    SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store =
-        createSegmentedStore(
-            testPath,
-            Arrays.asList(TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
-            List.of());
+    SegmentedKeyValueStorage<RocksDbSegmentIdentifier, Transaction<RocksDbSegmentIdentifier>>
+        store =
+            createSegmentedStore(
+                testPath,
+                Arrays.asList(TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
+                List.of());
     store.close();
 
     // new db will not be backward compatible with db without knowledge of experimental column
@@ -227,11 +234,12 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
   public void dbWillBeBackwardIncompatibleAfterExperimentalSegmentsAreAdded(
       @TempDir final Path testPath) throws Exception {
     // Create new db should ignore experimental column family
-    SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store =
-        createSegmentedStore(
-            testPath,
-            Arrays.asList(TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
-            List.of(TestSegment.EXPERIMENTAL));
+    SegmentedKeyValueStorage<RocksDbSegmentIdentifier, Transaction<RocksDbSegmentIdentifier>>
+        store =
+            createSegmentedStore(
+                testPath,
+                Arrays.asList(TestSegment.FOO, TestSegment.BAR, TestSegment.EXPERIMENTAL),
+                List.of(TestSegment.EXPERIMENTAL));
     store.close();
 
     // new db will be backward compatible with db without knowledge of experimental column family
@@ -294,13 +302,16 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     }
   }
 
-  protected abstract SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore()
-      throws Exception;
+  protected abstract SegmentedKeyValueStorage<
+          RocksDbSegmentIdentifier, Transaction<RocksDbSegmentIdentifier>>
+      createSegmentedStore() throws Exception;
 
-  protected abstract SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore(
-      final Path path,
-      final List<SegmentIdentifier> segments,
-      final List<SegmentIdentifier> ignorableSegments);
+  protected abstract SegmentedKeyValueStorage<
+          RocksDbSegmentIdentifier, Transaction<RocksDbSegmentIdentifier>>
+      createSegmentedStore(
+          final Path path,
+          final List<SegmentIdentifier> segments,
+          final List<SegmentIdentifier> ignorableSegments);
 
   @Override
   protected KeyValueStorage createStore() throws Exception {

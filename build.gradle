@@ -474,6 +474,7 @@ subprojects {
     apply plugin: 'me.champeau.jmh'
 
     jmh {
+      zip64 = true
       // Allows to control JMH execution directly from the command line. I typical execution may look
       // like:
       //    gradle jmh -Pf=2 -Pwi=3 -Pi=5 -Pinclude=MyBench
