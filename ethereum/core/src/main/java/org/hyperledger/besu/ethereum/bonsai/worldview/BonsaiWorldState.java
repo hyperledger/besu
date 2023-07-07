@@ -27,6 +27,7 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
@@ -67,7 +68,8 @@ public class BonsaiWorldState
 
   private BonsaiWorldStateKeyValueStorage worldStateStorage;
 
-  private final BonsaiWorldStateProvider archive;
+  private final CachedMerkleTrieLoader cachedMerkleTrieLoader;
+  private final TrieLogManager trieLogManager;
   private final BonsaiWorldStateUpdateAccumulator accumulator;
 
   private Hash worldStateRootHash;
@@ -78,38 +80,29 @@ public class BonsaiWorldState
   public BonsaiWorldState(
       final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateStorage) {
-    this.archive = archive;
-    this.worldStateStorage = worldStateStorage;
-    worldStateRootHash =
-        Hash.wrap(
-            Bytes32.wrap(worldStateStorage.getWorldStateRootHash().orElse(Hash.EMPTY_TRIE_HASH)));
-    worldStateBlockHash =
-        Hash.wrap(Bytes32.wrap(worldStateStorage.getWorldStateBlockHash().orElse(Hash.ZERO)));
-    accumulator =
-        new BonsaiWorldStateUpdateAccumulator(
-            this,
-            (addr, value) ->
-                archive
-                    .getCachedMerkleTrieLoader()
-                    .preLoadAccount(getWorldStateStorage(), worldStateRootHash, addr),
-            (addr, value) ->
-                archive
-                    .getCachedMerkleTrieLoader()
-                    .preLoadStorageSlot(getWorldStateStorage(), addr, value));
+    this(worldStateStorage, archive.getCachedMerkleTrieLoader(), archive.getTrieLogManager());
   }
 
-  public BonsaiWorldState(
-      final BonsaiWorldStateProvider archive,
+  protected BonsaiWorldState(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
-      final BonsaiWorldStateUpdateAccumulator updater) {
-    this.archive = archive;
+      final CachedMerkleTrieLoader cachedMerkleTrieLoader,
+      final TrieLogManager trieLogManager) {
     this.worldStateStorage = worldStateStorage;
     this.worldStateRootHash =
         Hash.wrap(
             Bytes32.wrap(worldStateStorage.getWorldStateRootHash().orElse(Hash.EMPTY_TRIE_HASH)));
     this.worldStateBlockHash =
         Hash.wrap(Bytes32.wrap(worldStateStorage.getWorldStateBlockHash().orElse(Hash.ZERO)));
-    this.accumulator = updater;
+    accumulator =
+        new BonsaiWorldStateUpdateAccumulator(
+            this,
+            (addr, value) ->
+                cachedMerkleTrieLoader.preLoadAccount(
+                    getWorldStateStorage(), worldStateRootHash, addr),
+            (addr, value) ->
+                cachedMerkleTrieLoader.preLoadStorageSlot(getWorldStateStorage(), addr, value));
+    this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
+    this.trieLogManager = trieLogManager;
   }
 
   /**
@@ -128,10 +121,6 @@ public class BonsaiWorldState
    */
   public Hash getWorldStateRootHash() {
     return worldStateRootHash;
-  }
-
-  public BonsaiWorldStateProvider getArchive() {
-    return archive;
   }
 
   @Override
@@ -189,9 +178,7 @@ public class BonsaiWorldState
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         createTrie(
             (location, hash) ->
-                archive
-                    .getCachedMerkleTrieLoader()
-                    .getAccountStateTrieNode(worldStateStorage, location, hash),
+                cachedMerkleTrieLoader.getAccountStateTrieNode(worldStateStorage, location, hash),
             worldStateRootHash);
 
     // for manicured tries and composting, collect branches here (not implemented)
@@ -277,10 +264,8 @@ public class BonsaiWorldState
       final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
           createTrie(
               (location, key) ->
-                  archive
-                      .getCachedMerkleTrieLoader()
-                      .getAccountStorageTrieNode(
-                          worldStateStorage, updatedAddressHash, location, key),
+                  cachedMerkleTrieLoader.getAccountStorageTrieNode(
+                      worldStateStorage, updatedAddressHash, location, key),
               storageRoot);
 
       // for manicured tries and composting, collect branches here (not implemented)
@@ -405,7 +390,6 @@ public class BonsaiWorldState
         }
         saveTrieLog =
             () -> {
-              final TrieLogManager trieLogManager = archive.getTrieLogManager();
               trieLogManager.saveTrieLog(localCopy, newWorldStateRootHash, blockHeader, this);
               // not save a frozen state in the cache
               if (!isFrozen) {
