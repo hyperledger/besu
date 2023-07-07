@@ -133,7 +133,7 @@ dependencyManagement {
       entry 'log4j-slf4j2-impl'
     }
 
-    dependencySet(group: 'io.tmio', version: '2.4.1') {
+    dependencySet(group: 'io.tmio', version: '2.4.2') {
       entry 'tuweni-bytes'
       entry 'tuweni-config'
       entry 'tuweni-concurrent'
