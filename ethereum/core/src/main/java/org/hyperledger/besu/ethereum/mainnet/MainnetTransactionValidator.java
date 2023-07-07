@@ -21,8 +21,8 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.account.Account;
@@ -39,7 +39,7 @@ import java.util.Set;
  * <p>The {@link MainnetTransactionValidator} performs the intrinsic gas cost check on the given
  * {@link Transaction}.
  */
-public class MainnetTransactionValidator {
+public class MainnetTransactionValidator implements TransactionValidator {
 
   private final GasCalculator gasCalculator;
   private final GasLimitCalculator gasLimitCalculator;
@@ -49,7 +49,7 @@ public class MainnetTransactionValidator {
 
   private final Optional<BigInteger> chainId;
 
-  private Optional<TransactionFilter> transactionFilter = Optional.empty();
+  private Optional<PermissionTransactionFilter> permissionTransactionFilter = Optional.empty();
   private final Set<TransactionType> acceptedTransactionTypes;
 
   private final int maxInitcodeSize;
@@ -100,16 +100,7 @@ public class MainnetTransactionValidator {
     this.maxInitcodeSize = maxInitcodeSize;
   }
 
-  /**
-   * Asserts whether a transaction is valid.
-   *
-   * @param transaction the transaction to validate
-   * @param baseFee optional baseFee
-   * @param transactionValidationParams Validation parameters that will be used
-   * @return An empty {@link Optional} if the transaction is considered valid; otherwise an {@code
-   *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
-   *     is invalid.
-   */
+  @Override
   public ValidationResult<TransactionInvalidReason> validate(
       final Transaction transaction,
       final Optional<Wei> baseFee,
@@ -199,6 +190,7 @@ public class MainnetTransactionValidator {
     return ValidationResult.valid();
   }
 
+  @Override
   public ValidationResult<TransactionInvalidReason> validateForSender(
       final Transaction transaction,
       final Account sender,
@@ -256,11 +248,7 @@ public class MainnetTransactionValidator {
     return ValidationResult.valid();
   }
 
-  public boolean isReplayProtectionSupported() {
-    return chainId.isPresent();
-  }
-
-  public ValidationResult<TransactionInvalidReason> validateTransactionSignature(
+  private ValidationResult<TransactionInvalidReason> validateTransactionSignature(
       final Transaction transaction) {
     if (chainId.isPresent()
         && (transaction.getChainId().isPresent() && !transaction.getChainId().equals(chainId))) {
@@ -302,7 +290,7 @@ public class MainnetTransactionValidator {
   private boolean isSenderAllowed(
       final Transaction transaction, final TransactionValidationParams validationParams) {
     if (validationParams.checkLocalPermissions() || validationParams.checkOnchainPermissions()) {
-      return transactionFilter
+      return permissionTransactionFilter
           .map(
               c ->
                   c.permitted(
@@ -315,30 +303,9 @@ public class MainnetTransactionValidator {
     }
   }
 
-  public void setTransactionFilter(final TransactionFilter transactionFilter) {
-    this.transactionFilter = Optional.of(transactionFilter);
-  }
-
-  /**
-   * Asserts whether a transaction is valid for the sender account's current state.
-   *
-   * <p>Note: {@code validate} should be called before getting the sender {@link Account} used in
-   * this method to ensure that a sender can be extracted from the {@link Transaction}.
-   *
-   * @param transaction the transaction to validateMessageFrame.State.COMPLETED_FAILED
-   * @param sender the sender account state to validate against
-   * @param allowFutureNonce if true, transactions with nonce equal or higher than the account nonce
-   *     will be considered valid (used when received transactions in the transaction pool). If
-   *     false, only a transaction with the nonce equals the account nonce will be considered valid
-   *     (used when processing transactions).
-   * @return An empty {@link Optional} if the transaction is considered valid; otherwise an {@code
-   *     Optional} containing a {@link TransactionInvalidReason} that identifies why the transaction
-   *     is invalid.
-   */
-  public ValidationResult<TransactionInvalidReason> validateForSender(
-      final Transaction transaction, final Account sender, final boolean allowFutureNonce) {
-    final TransactionValidationParams validationParams =
-        ImmutableTransactionValidationParams.builder().isAllowFutureNonce(allowFutureNonce).build();
-    return validateForSender(transaction, sender, validationParams);
+  @Override
+  public void setPermissionTransactionFilter(
+      final PermissionTransactionFilter permissionTransactionFilter) {
+    this.permissionTransactionFilter = Optional.of(permissionTransactionFilter);
   }
 }

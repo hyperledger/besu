@@ -30,9 +30,9 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -353,7 +353,7 @@ public class TransactionPool implements BlockAddedObserver {
         .log();
   }
 
-  private MainnetTransactionValidator getTransactionValidator() {
+  private TransactionValidator getTransactionValidator() {
     return protocolSchedule
         .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
         .getTransactionValidator();

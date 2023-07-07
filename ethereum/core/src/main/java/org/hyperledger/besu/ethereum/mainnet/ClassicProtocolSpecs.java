@@ -72,6 +72,7 @@ public class ClassicProtocolSpecs {
       final EvmConfiguration evmConfiguration) {
     return MainnetProtocolSpecs.homesteadDefinition(
             contractSizeLimit, configStackSizeLimit, evmConfiguration)
+        .isReplayProtectionSupported(true)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
