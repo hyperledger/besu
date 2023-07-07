@@ -72,29 +72,6 @@ public class EngineGetPayloadV2Test extends AbstractEngineGetPayloadTest {
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
-  @Test
-  public void shouldReturnBlockForKnownPayloadIdPostV6110() {
-    // should return deposits for a post-V6110 block
-    when(mergeContext.retrieveBlockById(mockPid))
-        .thenReturn(Optional.of(mockBlockWithReceiptsAndDeposits));
-
-    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V2.getMethodName(), mockPid);
-    assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
-    Optional.of(resp)
-        .map(JsonRpcSuccessResponse.class::cast)
-        .ifPresent(
-            r -> {
-              assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResultV2.class);
-              final EngineGetPayloadResultV2 res = (EngineGetPayloadResultV2) r.getResult();
-              assertThat(res.getExecutionPayload().getDeposits()).isNotNull();
-              assertThat(res.getExecutionPayload().getHash())
-                  .isEqualTo(mockHeader.getHash().toString());
-              assertThat(res.getBlockValue()).isEqualTo(Quantity.create(0));
-              assertThat(res.getExecutionPayload().getPrevRandao())
-                  .isEqualTo(mockHeader.getPrevRandao().map(Bytes32::toString).orElse(""));
-            });
-    verify(engineCallListener, times(1)).executionEngineCalled();
-  }
 
   @Test
   public void shouldReturnExecutionPayloadWithoutWithdrawals_PreShanghaiBlock() {
@@ -107,25 +84,6 @@ public class EngineGetPayloadV2Test extends AbstractEngineGetPayloadTest {
               assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResultV2.class);
               final EngineGetPayloadResultV2 res = (EngineGetPayloadResultV2) r.getResult();
               assertThat(res.getExecutionPayload().getWithdrawals()).isNull();
-              assertThat(res.getExecutionPayload().getDeposits()).isNull();
-            });
-    verify(engineCallListener, times(1)).executionEngineCalled();
-  }
-
-  @Test
-  public void shouldReturnExecutionPayloadWithoutDeposits_PreV6110Block() {
-    when(mergeContext.retrieveBlockById(mockPid))
-        .thenReturn(Optional.of(mockBlockWithReceiptsAndWithdrawals));
-
-    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V2.getMethodName(), mockPid);
-    assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
-    Optional.of(resp)
-        .map(JsonRpcSuccessResponse.class::cast)
-        .ifPresent(
-            r -> {
-              assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResultV2.class);
-              final EngineGetPayloadResultV2 res = (EngineGetPayloadResultV2) r.getResult();
-              assertThat(res.getExecutionPayload().getDeposits()).isNull();
             });
     verify(engineCallListener, times(1)).executionEngineCalled();
   }

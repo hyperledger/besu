@@ -115,7 +115,6 @@ public class BlockResultFactory {
         blockWithReceipts.getHeader(),
         txs,
         blockWithReceipts.getBlock().getBody().getWithdrawals(),
-        blockWithReceipts.getBlock().getBody().getDeposits(),
         Quantity.create(blockValue));
   }
 
