@@ -114,7 +114,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         .addArgument(() -> Json.encodePrettily(blockParam))
         .log();
 
-    ValidationResult<NewPayloadValidationReason> forkValidationResult =
+    ValidationResult<NewPayloadValidationResult> forkValidationResult =
         validateForkSupported(reqId, blockParam);
     if (!forkValidationResult.isValid()) {
       return new JsonRpcErrorResponse(reqId, UNSUPPORTED_FORK);
@@ -206,7 +206,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return respondWithInvalid(reqId, blockParam, null, getInvalidBlockHashStatus(), errorMessage);
     }
 
-    ValidationResult<NewPayloadValidationReason> transactionValidationResult =
+    ValidationResult<NewPayloadValidationResult> transactionValidationResult =
         validateBlobs(
             transactions,
             newBlockHeader,
@@ -238,16 +238,14 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           "Block already present in bad block manager.");
     }
 
-    if (maybeParentHeader.isPresent()) {
-      BlockHeader parent = maybeParentHeader.get();
-      if ((blockParam.getTimestamp() <= parent.getTimestamp())) {
-        return respondWithInvalid(
-            reqId,
-            blockParam,
-            mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
-            INVALID,
-            "block timestamp not greater than parent");
-      }
+    if (maybeParentHeader.isPresent()
+        && (blockParam.getTimestamp() <= maybeParentHeader.get().getTimestamp())) {
+      return respondWithInvalid(
+          reqId,
+          blockParam,
+          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+          INVALID,
+          "block timestamp not greater than parent");
     }
 
     final var block =
@@ -376,12 +374,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     return INVALID;
   }
 
-  protected ValidationResult<NewPayloadValidationReason> validateForkSupported(
+  protected ValidationResult<NewPayloadValidationResult> validateForkSupported(
       final Object id, final EnginePayloadParameter payloadParameter) {
     return ValidationResult.valid();
   }
 
-  protected ValidationResult<NewPayloadValidationReason> validateBlobs(
+  protected ValidationResult<NewPayloadValidationResult> validateBlobs(
       final List<Transaction> transactions,
       final BlockHeader header,
       final Optional<BlockHeader> maybeParentHeader,
@@ -416,8 +414,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     LOG.info(String.format(message.toString(), messageArgs.toArray()));
   }
 
-  protected enum NewPayloadValidationReason {
-    INVALID_NEW_PAYLOAD,
-    UNSUPPORTED_FORK
+  protected enum NewPayloadValidationResult {
+    INVALID_NEW_PAYLOAD_PARAMS
   }
 }

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.AbstractEngineNewPayload.NewPayloadValidationReason.INVALID_NEW_PAYLOAD;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.AbstractEngineNewPayload.NewPayloadValidationResult.INVALID_NEW_PAYLOAD_PARAMS;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.DataGas;
@@ -59,26 +59,26 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
   }
 
   @Override
-  protected ValidationResult<NewPayloadValidationReason> validateForkSupported(
+  protected ValidationResult<NewPayloadValidationResult> validateForkSupported(
       final Object reqId, final EnginePayloadParameter payloadParameter) {
     var cancun = timestampSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
 
     if (cancun.isPresent() && payloadParameter.getTimestamp() >= cancun.get().milestone()) {
       if (payloadParameter.getDataGasUsed() == null
           || payloadParameter.getExcessDataGas() == null) {
-        return ValidationResult.invalid(NewPayloadValidationReason.INVALID_NEW_PAYLOAD);
+        return ValidationResult.invalid(NewPayloadValidationResult.INVALID_NEW_PAYLOAD_PARAMS);
       }
     } else {
       if (payloadParameter.getDataGasUsed() != null
           || payloadParameter.getExcessDataGas() != null) {
-        return ValidationResult.invalid(NewPayloadValidationReason.UNSUPPORTED_FORK);
+        return ValidationResult.invalid(NewPayloadValidationResult.INVALID_NEW_PAYLOAD_PARAMS);
       }
     }
     return ValidationResult.valid();
   }
 
   @Override
-  protected ValidationResult<NewPayloadValidationReason> validateBlobs(
+  protected ValidationResult<NewPayloadValidationResult> validateBlobs(
       final List<Transaction> transactions,
       final BlockHeader header,
       final Optional<BlockHeader> maybeParentHeader,
@@ -98,7 +98,8 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
       var versionedHashes = transaction.getVersionedHashes();
       // blob transactions must have at least one blob
       if (versionedHashes.isEmpty()) {
-        return ValidationResult.invalid(INVALID_NEW_PAYLOAD, "There must be at least one blob");
+        return ValidationResult.invalid(
+            INVALID_NEW_PAYLOAD_PARAMS, "There must be at least one blob");
       }
       transactionVersionedHashes.addAll(
           versionedHashes.get().stream().map(VersionedHash::toBytes).toList());
@@ -107,7 +108,7 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
     // Validate versionedHashesParam
     if (!versionedHashesParam.equals(transactionVersionedHashes)) {
       return ValidationResult.invalid(
-          INVALID_NEW_PAYLOAD,
+          INVALID_NEW_PAYLOAD_PARAMS,
           "Versioned hashes from blob transactions do not match expected values");
     }
 
@@ -115,7 +116,7 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
     if (maybeParentHeader.isPresent()) {
       if (!validateExcessDataGas(header, maybeParentHeader.get(), protocolSpec)) {
         return ValidationResult.invalid(
-            NewPayloadValidationReason.INVALID_NEW_PAYLOAD,
+            NewPayloadValidationResult.INVALID_NEW_PAYLOAD_PARAMS,
             "Payload excessDataGas does not match calculated excessDataGas");
       }
     }
@@ -124,7 +125,7 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
     if (header.getDataGasUsed().isPresent()) {
       if (!validateDataGasUsed(header, versionedHashesParam, protocolSpec)) {
         return ValidationResult.invalid(
-            NewPayloadValidationReason.INVALID_NEW_PAYLOAD,
+            NewPayloadValidationResult.INVALID_NEW_PAYLOAD_PARAMS,
             "Payload DataGasUsed does not match calculated DataGasUsed");
       }
     }
