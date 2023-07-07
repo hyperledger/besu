@@ -15,37 +15,66 @@
  */
 package org.hyperledger.besu.plugin.services.storage;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
+/**
+ * The GlobalKeyValueStorageTransaction class allows managing multiple columns with a single
+ * transaction. In cases where we have a single transaction (Persisted), it handles committing the
+ * transaction for all the columns. However, there are scenarios where we might not have a single
+ * transaction (e.g., InMemory, Snapshot, Layered). This class detects the presence of a global
+ * transaction and, if present, only commits the global transaction. Otherwise, it commits each
+ * transaction per column.
+ *
+ * @param <S> transaction type
+ */
 public abstract class GlobalKeyValueStorageTransaction<S> {
 
-  private final List<KeyValueStorageTransaction> keyValueStorageTransactions;
+  private final Map<SegmentIdentifier, KeyValueStorageTransaction> keyValueStorageTransactions;
 
   public GlobalKeyValueStorageTransaction() {
-    this.keyValueStorageTransactions = new ArrayList<>();
+    this.keyValueStorageTransactions = new HashMap<>();
   }
 
   public KeyValueStorageTransaction includeInGlobalTransactionStorage(
-      final KeyValueStorage keyValueStorage) {
+      final SegmentIdentifier segmentIdentifier, final KeyValueStorage keyValueStorage) {
     final KeyValueStorageTransaction transaction = keyValueStorage.startTransaction(this);
-    this.keyValueStorageTransactions.add(transaction);
+    this.keyValueStorageTransactions.put(segmentIdentifier, transaction);
     return transaction;
   }
 
+  public void put(final SegmentIdentifier segmentIdentifier, final byte[] key, final byte[] value) {
+    keyValueStorageTransactions.get(segmentIdentifier).put(key, value);
+  }
+
+  public void remove(final SegmentIdentifier segmentIdentifier, final byte[] key) {
+    keyValueStorageTransactions.get(segmentIdentifier).remove(key);
+  }
+
+  public KeyValueStorageTransaction getKeyValueStorageTransaction(
+      final SegmentIdentifier segmentIdentifier) {
+    return keyValueStorageTransactions.get(segmentIdentifier);
+  }
+
   public void commit() {
-    getGlobalTransaction()
-        .ifPresentOrElse(
-            s -> commitGlobalTransaction(),
-            () -> keyValueStorageTransactions.forEach(KeyValueStorageTransaction::commit));
+    if (isGlobalTransaction()) {
+      commitGlobalTransaction();
+    } else {
+      keyValueStorageTransactions.values().forEach(KeyValueStorageTransaction::commit);
+    }
   }
 
   public void rollback() {
-    getGlobalTransaction()
-        .ifPresentOrElse(
-            s -> rollbackGlobalTransaction(),
-            () -> keyValueStorageTransactions.forEach(KeyValueStorageTransaction::rollback));
+    if (isGlobalTransaction()) {
+      rollbackGlobalTransaction();
+    } else {
+      keyValueStorageTransactions.values().forEach(KeyValueStorageTransaction::rollback);
+    }
+  }
+
+  private boolean isGlobalTransaction() {
+    return getGlobalTransaction().isPresent();
   }
 
   public abstract Optional<S> getGlobalTransaction();
