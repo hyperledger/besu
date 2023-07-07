@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -46,7 +46,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class PermissionTransactionValidatorTest {
+public class PermissionTransactionValidatorTest extends MainnetTransactionValidatorTest {
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -61,7 +61,7 @@ public class PermissionTransactionValidatorTest {
   @Test
   public void shouldRejectTransactionIfAccountIsNotPermitted() {
     final TransactionValidator baseValidator =
-        new MainnetTransactionValidator(
+        createTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
     final TransactionValidator validator =
         new PermissionTransactionValidator(baseValidator, transactionFilter(false));
@@ -75,7 +75,7 @@ public class PermissionTransactionValidatorTest {
   @Test
   public void shouldAcceptValidTransactionIfAccountIsPermitted() {
     final TransactionValidator baseValidator =
-        new MainnetTransactionValidator(
+        createTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
     final TransactionValidator validator =
         new PermissionTransactionValidator(baseValidator, transactionFilter(true));
@@ -101,7 +101,7 @@ public class PermissionTransactionValidatorTest {
         .thenReturn(true);
 
     final TransactionValidator baseValidator =
-        new MainnetTransactionValidator(
+        createTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
     final TransactionValidator validator =
         new PermissionTransactionValidator(baseValidator, permissionTransactionFilter);
@@ -121,7 +121,7 @@ public class PermissionTransactionValidatorTest {
         mock(PermissionTransactionFilter.class);
 
     final TransactionValidator baseValidator =
-        new MainnetTransactionValidator(
+        createTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
     final TransactionValidator validator =
         new PermissionTransactionValidator(baseValidator, permissionTransactionFilter);
