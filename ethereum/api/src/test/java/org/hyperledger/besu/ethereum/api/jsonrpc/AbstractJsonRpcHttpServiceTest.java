@@ -70,7 +70,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 
 public abstract class AbstractJsonRpcHttpServiceTest {
-  @TempDir private static Path folder;
+  @TempDir private Path folder;
 
   protected BlockchainSetupUtil blockchainSetupUtil;
 
@@ -208,7 +208,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     service =
         new JsonRpcHttpService(
             vertx,
-            Files.createTempDirectory(folder, "tempFolder"),
+            Files.createDirectory(folder),
             config,
             new NoOpMetricsSystem(),
             natService,

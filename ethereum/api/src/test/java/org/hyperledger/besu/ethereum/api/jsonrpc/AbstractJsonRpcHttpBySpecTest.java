@@ -59,8 +59,11 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("specs")
-  public void jsonRPCCallWithSpecFile(final URL specURL) throws Exception {
-    jsonRPCCall(specURL);
+  public void jsonRPCCallWithSpecFile(final Object[][] result) throws Exception {
+    for (Object[] spec : result) {
+      URL fileURL = (URL) spec[1];
+      jsonRPCCall(fileURL);
+    }
   }
 
   /**
