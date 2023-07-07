@@ -44,7 +44,6 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
   private final BonsaiWorldView context;
   private final boolean mutable;
-  private final boolean newAccount;
 
   private final Address address;
   private final Hash addressHash;
@@ -64,8 +63,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
       final Wei balance,
       final Hash storageRoot,
       final Hash codeHash,
-      final boolean mutable,
-      final boolean newAccount) {
+      final boolean mutable) {
     this.context = context;
     this.address = address;
     this.addressHash = addressHash;
@@ -75,7 +73,6 @@ public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
     this.codeHash = codeHash;
 
     this.mutable = mutable;
-    this.newAccount = newAccount;
   }
 
   public BonsaiAccount(
@@ -91,8 +88,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
         stateTrieAccount.getBalance(),
         stateTrieAccount.getStorageRoot(),
         stateTrieAccount.getCodeHash(),
-        mutable,
-        false);
+        mutable);
   }
 
   public BonsaiAccount(final BonsaiAccount toCopy) {
@@ -110,7 +106,6 @@ public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
     this.codeHash = toCopy.codeHash;
     this.code = toCopy.code;
     updatedStorage.putAll(toCopy.updatedStorage);
-    this.newAccount = toCopy.newAccount;
 
     this.mutable = mutable;
   }
@@ -128,7 +123,6 @@ public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
     updatedStorage.putAll(tracked.getUpdatedStorage());
 
     this.mutable = true;
-    this.newAccount = tracked.isNewAccount();
   }
 
   public static BonsaiAccount fromRLP(
@@ -148,20 +142,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
     in.leaveList();
 
     return new BonsaiAccount(
-        context,
-        address,
-        Hash.hash(address),
-        nonce,
-        balance,
-        storageRoot,
-        codeHash,
-        mutable,
-        false);
-  }
-
-  @Override
-  public boolean isNewAccount() {
-    return newAccount;
+        context, address, Hash.hash(address), nonce, balance, storageRoot, codeHash, mutable);
   }
 
   @Override

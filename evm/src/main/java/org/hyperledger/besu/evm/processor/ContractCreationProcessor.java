@@ -111,8 +111,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
       final MutableAccount sender = frame.getWorldUpdater().getSenderAccount(frame).getMutable();
       sender.decrementBalance(frame.getValue());
 
-      final MutableAccount contract =
-          frame.getWorldUpdater().getOrCreate(frame.getContractAddress()).getMutable();
+      final MutableAccount contract = frame.getOrCreate(frame.getContractAddress()).getMutable();
       if (accountExists(contract)) {
         LOG.trace(
             "Contract creation error: account has already been created for address {}",
@@ -166,8 +165,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
         frame.decrementRemainingGas(depositFee);
 
         // Finalize contract creation, setting the contract code.
-        final MutableAccount contract =
-            frame.getWorldUpdater().getOrCreate(frame.getContractAddress()).getMutable();
+        final MutableAccount contract = frame.getOrCreate(frame.getContractAddress()).getMutable();
         contract.setCode(contractCode);
         LOG.trace(
             "Successful creation of contract {} with code of size {} (Gas remaining: {})",

@@ -139,7 +139,6 @@ public class BonsaiWorldStateUpdateAccumulator
             balance,
             Hash.EMPTY_TRIE_HASH,
             Hash.EMPTY,
-            true,
             true);
     bonsaiValue.setUpdated(newAccount);
     return new WrappedEvmAccount(track(new UpdateTrackingAccount<>(newAccount)));

@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.code.CodeSection;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
@@ -218,6 +219,7 @@ public class MessageFrame {
   private final List<Log> logs;
   private long gasRefund;
   private final Set<Address> selfDestructs;
+  private final Set<Address> creates;
   private final Map<Address, Wei> refunds;
   private final Set<Address> warmedUpAddresses;
   private final Multimap<Address, Bytes32> warmedUpStorage;
@@ -305,6 +307,7 @@ public class MessageFrame {
     this.logs = new ArrayList<>();
     this.gasRefund = 0L;
     this.selfDestructs = new HashSet<>();
+    this.creates = new HashSet<>();
     this.refunds = new HashMap<>();
     this.recipient = recipient;
     this.originator = originator;
@@ -972,6 +975,42 @@ public class MessageFrame {
   }
 
   /**
+   * Add recipient to the create set if not already present.
+   *
+   * @param address The recipient to create
+   */
+  public void addCreate(final Address address) {
+    creates.add(address);
+  }
+  /**
+   * Add addresses to the create set if they are not already present.
+   *
+   * @param addresses The addresses to create
+   */
+  public void addCreates(final Set<Address> addresses) {
+    creates.addAll(addresses);
+  }
+
+  /** Removes all entries in the create set. */
+  public void clearCreates() {
+    creates.clear();
+  }
+
+  /**
+   * Returns the create set.
+   *
+   * @return the create set
+   */
+  public Set<Address> getCreates() {
+    return creates;
+  }
+
+  public boolean wasCreatedInTransaction(final Address address) {
+    return creates.contains((address))
+        || (parentMessageFrame != null && parentMessageFrame.wasCreatedInTransaction(address));
+  }
+
+  /**
    * Add refund to the refunds map if not already present.
    *
    * @param beneficiary the beneficiary of the refund.
@@ -1053,6 +1092,15 @@ public class MessageFrame {
 
     warmedUpAddresses.addAll(childFrame.warmedUpAddresses);
     warmedUpStorage.putAll(childFrame.warmedUpStorage);
+  }
+
+  public EvmAccount getOrCreate(final Address address) {
+    EvmAccount account = worldUpdater.getAccount(address);
+    if (account == null) {
+      addCreate(address);
+      account = worldUpdater.createAccount(address);
+    }
+    return account;
   }
 
   /**

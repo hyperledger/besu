@@ -47,7 +47,6 @@ import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -221,10 +220,10 @@ public class Create2OperationTest {
     when(account.getMutable()).thenReturn(mutableAccount);
     when(account.getNonce()).thenReturn(55L);
     when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
-    when(worldUpdater.getAccount(any())).thenReturn(account);
+    when(worldUpdater.getAccount(messageFrame.getSenderAddress())).thenReturn(account);
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);
-    when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
+    when(worldUpdater.createAccount(any())).thenReturn(newAccount);
     when(newAccount.getMutable()).thenReturn(newMutableAccount);
     when(newMutableAccount.getCode()).thenReturn(Bytes.EMPTY);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
@@ -266,7 +265,6 @@ public class Create2OperationTest {
     assertThat(result.getHaltReason()).isEqualTo(CODE_TOO_LARGE);
   }
 
-  @NotNull
   private MessageFrame testMemoryFrame(
       final UInt256 memoryOffset,
       final UInt256 memoryLength,

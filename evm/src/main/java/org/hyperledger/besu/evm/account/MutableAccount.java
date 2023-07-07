@@ -25,14 +25,6 @@ import org.apache.tuweni.units.bigints.UInt256;
 public interface MutableAccount extends Account {
 
   /**
-   * Is this account being created from an empty account?
-   *
-   * @return if the state being mutated from represents an empty account (either never written or
-   *     has become empty)
-   */
-  boolean isNewAccount();
-
-  /**
    * Increments (by 1) the nonce of this account.
    *
    * @return the previous value of the nonce.

@@ -44,6 +44,7 @@ import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
+import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -98,6 +99,7 @@ public class StateTestSubCommand implements Runnable {
 
   @Override
   public void run() {
+    LogConfigurator.setLevel("", "OFF");
     final ObjectMapper stateTestMapper = JsonUtils.createObjectMapper();
 
     final JavaType javaType =

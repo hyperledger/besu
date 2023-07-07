@@ -149,11 +149,6 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   }
 
   @Override
-  public boolean isNewAccount() {
-    return account instanceof MutableAccount mAccount ? mAccount.isNewAccount() : account == null;
-  }
-
-  @Override
   public Address getAddress() {
     return address;
   }
@@ -248,6 +243,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
       final Bytes32 startKeyHash, final int limit) {
     final NavigableMap<Bytes32, AccountStorageEntry> entries;

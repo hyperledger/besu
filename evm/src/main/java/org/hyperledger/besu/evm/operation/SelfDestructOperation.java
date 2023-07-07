@@ -75,21 +75,21 @@ public class SelfDestructOperation extends AbstractOperation {
     final Address address = frame.getRecipientAddress();
     final MutableAccount account = frame.getWorldUpdater().getAccount(address).getMutable();
 
-    if (!eip6780Semantics || account.isNewAccount()) {
+    if (!eip6780Semantics || frame.wasCreatedInTransaction(address)) {
       frame.addSelfDestruct(address);
     }
 
-    final MutableAccount recipient =
-        frame.getWorldUpdater().getOrCreate(recipientAddress).getMutable();
+    final MutableAccount recipient = frame.getOrCreate(recipientAddress).getMutable();
 
-    if (!account.getAddress().equals(recipient.getAddress())) {
-      recipient.incrementBalance(account.getBalance());
+    Wei contractBalance = account.getBalance();
+    if (eip6780Semantics || !account.getAddress().equals(recipient.getAddress())) {
+      recipient.incrementBalance(contractBalance);
     }
 
     // add refund in message frame
-    frame.addRefund(recipient.getAddress(), account.getBalance());
+    frame.addRefund(recipient.getAddress(), contractBalance);
 
-    account.setBalance(Wei.ZERO);
+    account.decrementBalance(contractBalance);
 
     frame.setState(MessageFrame.State.CODE_SUCCESS);
     return new OperationResult(cost, null);
