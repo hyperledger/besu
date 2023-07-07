@@ -1005,6 +1005,15 @@ public class MessageFrame {
     return creates;
   }
 
+  /**
+   * Was the account at this address created in this transaction? (in any of the previously executed
+   * message frames in this transaction).
+   *
+   * @param address the address to check
+   * @return true if the account was created in any parent or prior message frame in this
+   *     transaction. False if the account existed in the world state at the beginning of the
+   *     transaction.
+   */
   public boolean wasCreatedInTransaction(final Address address) {
     return creates.contains((address))
         || (parentMessageFrame != null && parentMessageFrame.wasCreatedInTransaction(address));
@@ -1094,6 +1103,12 @@ public class MessageFrame {
     warmedUpStorage.putAll(childFrame.warmedUpStorage);
   }
 
+  /**
+   * Gets or creates an account based on the address. If an account is created it is tracked.
+   *
+   * @param address address of account
+   * @return the account
+   */
   public EvmAccount getOrCreate(final Address address) {
     EvmAccount account = worldUpdater.getAccount(address);
     if (account == null) {
