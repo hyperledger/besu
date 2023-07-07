@@ -207,7 +207,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     // Validate transactions
     ValidationResult<NewPayloadValidationReason> transactionValidationResult =
         validateTransactions(blockParam, reqId, transactions, maybeVersionedHashParam);
-    if (transactionValidationResult.isValid()) {
+    if (!transactionValidationResult.isValid()) {
       return respondWithInvalid(
           reqId,
           blockParam,
