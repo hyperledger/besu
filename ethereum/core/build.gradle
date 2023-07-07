@@ -60,7 +60,6 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-rlp'
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.immutables:value-annotations'
-  implementation 'org.openquantumsafe:liboqs-java'
 
   implementation 'io.prometheus:simpleclient_guava'
 

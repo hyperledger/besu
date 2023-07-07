@@ -40,7 +40,6 @@ dependencies {
   implementation 'com.github.ben-manes.caffeine:caffeine'
   implementation 'com.google.guava:guava'
   implementation 'net.java.dev.jna:jna'
-  implementation 'org.openquantumsafe:liboqs-java'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'org.hyperledger.besu:arithmetic'

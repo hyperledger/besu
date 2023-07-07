@@ -156,9 +156,9 @@ dependencyManagement {
 
     dependency 'org.awaitility:awaitility:4.2.0'
 
-    dependencySet(group: 'org.bouncycastle', version: '1.70') {
-      entry'bcpkix-jdk15on'
-      entry'bcprov-jdk15on'
+    dependencySet(group: 'org.bouncycastle', version: '1.75') {
+      entry'bcpkix-jdk18on'
+      entry'bcprov-jdk18on'
     }
 
     dependency 'org.fusesource.jansi:jansi:2.4.0'
@@ -219,7 +219,6 @@ dependencyManagement {
     }
 
     dependency 'org.springframework.security:spring-security-crypto:6.0.2'
-    dependency  'org.openquantumsafe:liboqs-java:1.1-SNAPSHOT'
 
     dependency 'org.testcontainers:testcontainers:1.17.6'
 
