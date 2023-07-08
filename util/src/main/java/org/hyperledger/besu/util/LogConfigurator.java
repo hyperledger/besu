@@ -34,7 +34,6 @@ public interface LogConfigurator {
       LoggerFactory.getLogger(LogConfigurator.class);
       Log4j2ConfiguratorUtil.setAllLevels(parentLogger, level);
     } catch (NoClassDefFoundError | ClassCastException | NoSuchElementException e) {
-      e.printStackTrace();
       // This is expected when Log4j support is not in the classpath, so ignore
     }
   }
