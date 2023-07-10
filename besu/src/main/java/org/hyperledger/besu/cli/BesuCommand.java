@@ -2113,15 +2113,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return genesisConfigOptions;
   }
 
-  private boolean isEthashEnabled() {
-    if (genesisFile == null) {
-      return GenesisConfigFile.fromConfig(ethNetworkConfig.getGenesisConfig())
-          .getConfigOptions()
-          .isEthHash();
-    }
-    return genesisConfigOptions.isEthHash();
-  }
-
   private void issueOptionWarnings() {
 
     // Check that P2P options are able to work
@@ -2142,7 +2133,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--remote-connections-max-percentage"));
 
     // Check that block producer options work
-    if (!isMergeEnabled() && isEthashEnabled()) {
+    if (!isMergeEnabled() && getActualGenesisConfigOptions().isEthHash()) {
       CommandLineUtils.checkOptionDependencies(
           logger,
           commandLine,
@@ -2153,10 +2144,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               "--min-gas-price",
               "--min-block-occupancy-ratio",
               "--miner-extra-data"));
-    }
 
-    // Check that mining options are able to work
-    if (!isMergeEnabled() && isEthashEnabled()) {
+      // Check that mining options are able to work
       CommandLineUtils.checkOptionDependencies(
           logger,
           commandLine,
