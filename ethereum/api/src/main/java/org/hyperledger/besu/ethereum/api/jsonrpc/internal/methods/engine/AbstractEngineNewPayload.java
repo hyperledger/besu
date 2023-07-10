@@ -27,6 +27,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRp
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -53,6 +54,9 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessDataGasCalculator;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -66,6 +70,7 @@ import java.util.stream.Collectors;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,14 +108,17 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     Object reqId = requestContext.getRequest().getId();
 
+    final Optional<BlockHeader> maybeParentHeader =
+        protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
+
     LOG.atTrace()
         .setMessage("blockparam: {}")
         .addArgument(() -> Json.encodePrettily(blockParam))
         .log();
 
-    var forkValidationResult = validateForkSupported(reqId, blockParam);
-    if (forkValidationResult.isPresent()) {
-      return forkValidationResult.get();
+    ValidationResult<JsonRpcError> forkValidationResult = validateForkSupported(reqId, blockParam);
+    if (!forkValidationResult.isValid()) {
+      return new JsonRpcErrorResponse(reqId, forkValidationResult.getInvalidReason());
     }
 
     final Optional<List<Withdrawal>> maybeWithdrawals =
@@ -199,11 +207,20 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return respondWithInvalid(reqId, blockParam, null, getInvalidBlockHashStatus(), errorMessage);
     }
 
-    // Validate transactions
-    var transactionValidationResult =
-        validateTransactions(blockParam, reqId, transactions, maybeVersionedHashParam);
-    if (transactionValidationResult.isPresent()) {
-      return transactionValidationResult.get();
+    ValidationResult<JsonRpcError> blobValidationResult =
+        validateBlobs(
+            transactions,
+            newBlockHeader,
+            maybeParentHeader,
+            maybeVersionedHashParam,
+            protocolSchedule.getByBlockHeader(newBlockHeader));
+    if (!blobValidationResult.isValid()) {
+      return respondWithInvalid(
+          reqId,
+          blockParam,
+          null,
+          getInvalidBlockHashStatus(),
+          blobValidationResult.getErrorMessage());
     }
 
     // do we already have this payload
@@ -222,8 +239,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           "Block already present in bad block manager.");
     }
 
-    final Optional<BlockHeader> maybeParentHeader =
-        protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
     if (maybeParentHeader.isPresent()
         && (blockParam.getTimestamp() <= maybeParentHeader.get().getTimestamp())) {
       return respondWithInvalid(
@@ -245,7 +260,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           .addArgument(block::toLogString)
           .log();
       mergeCoordinator.appendNewPayloadToSync(block);
-
       return respondWith(reqId, blockParam, null, SYNCING);
     }
 
@@ -361,17 +375,79 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     return INVALID;
   }
 
-  protected Optional<JsonRpcResponse> validateForkSupported(
+  protected ValidationResult<JsonRpcError> validateForkSupported(
       final Object id, final EnginePayloadParameter payloadParameter) {
-    return Optional.empty();
+    return ValidationResult.valid();
   }
 
-  protected Optional<JsonRpcResponse> validateTransactions(
-      final EnginePayloadParameter blockParam,
-      final Object reqId,
+  protected ValidationResult<JsonRpcError> validateBlobs(
       final List<Transaction> transactions,
-      final Optional<List<String>> maybeVersionedHashParam) {
-    return Optional.empty();
+      final BlockHeader header,
+      final Optional<BlockHeader> maybeParentHeader,
+      final Optional<List<String>> maybeVersionedHashParam,
+      final ProtocolSpec protocolSpec) {
+
+    var blobTransactions =
+        transactions.stream().filter(transaction -> transaction.getType().supportsBlob()).toList();
+
+    List<Bytes32> versionedHashesParam =
+        maybeVersionedHashParam
+            .map(strings -> strings.stream().map(Bytes32::fromHexStringStrict).toList())
+            .orElseGet(ArrayList::new);
+
+    final List<Bytes32> transactionVersionedHashes = new ArrayList<>();
+    for (Transaction transaction : blobTransactions) {
+      var versionedHashes = transaction.getVersionedHashes();
+      // blob transactions must have at least one blob
+      if (versionedHashes.isEmpty()) {
+        return ValidationResult.invalid(
+            JsonRpcError.INVALID_PARAMS, "There must be at least one blob");
+      }
+      transactionVersionedHashes.addAll(
+          versionedHashes.get().stream().map(VersionedHash::toBytes).toList());
+    }
+
+    // Validate versionedHashesParam
+    if (!versionedHashesParam.equals(transactionVersionedHashes)) {
+      return ValidationResult.invalid(
+          JsonRpcError.INVALID_PARAMS,
+          "Versioned hashes from blob transactions do not match expected values");
+    }
+
+    // Validate excessDataGas
+    if (maybeParentHeader.isPresent()) {
+      if (!validateExcessDataGas(header, maybeParentHeader.get(), protocolSpec)) {
+        return ValidationResult.invalid(
+            JsonRpcError.INVALID_PARAMS,
+            "Payload excessDataGas does not match calculated excessDataGas");
+      }
+    }
+
+    // Validate dataGasUsed
+    if (header.getDataGasUsed().isPresent()) {
+      if (!validateDataGasUsed(header, versionedHashesParam, protocolSpec)) {
+        return ValidationResult.invalid(
+            JsonRpcError.INVALID_PARAMS,
+            "Payload DataGasUsed does not match calculated DataGasUsed");
+      }
+    }
+    return ValidationResult.valid();
+  }
+
+  private boolean validateExcessDataGas(
+      final BlockHeader header, final BlockHeader parentHeader, final ProtocolSpec protocolSpec) {
+    DataGas calculatedDataGas =
+        ExcessDataGasCalculator.calculateExcessDataGasForParent(protocolSpec, parentHeader);
+    return header.getExcessDataGas().orElse(DataGas.ZERO).equals(calculatedDataGas);
+  }
+
+  private boolean validateDataGasUsed(
+      final BlockHeader header,
+      final List<Bytes32> maybeVersionedHashParam,
+      final ProtocolSpec protocolSpec) {
+    var calculatedDataGas =
+        protocolSpec.getGasCalculator().dataGasUsed(maybeVersionedHashParam.size());
+    return header.getDataGasUsed().orElse(0L).equals(calculatedDataGas);
   }
 
   private void logImportedBlockInfo(final Block block, final double timeInS) {

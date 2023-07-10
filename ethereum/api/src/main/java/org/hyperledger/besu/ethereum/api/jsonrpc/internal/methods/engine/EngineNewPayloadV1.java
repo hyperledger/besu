@@ -19,8 +19,16 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+
+import java.util.List;
+import java.util.Optional;
 
 import io.vertx.core.Vertx;
 
@@ -49,5 +57,15 @@ public class EngineNewPayloadV1 extends AbstractEngineNewPayload {
   @Override
   protected EngineStatus getInvalidBlockHashStatus() {
     return INVALID_BLOCK_HASH;
+  }
+
+  @Override
+  protected ValidationResult<JsonRpcError> validateBlobs(
+      final List<Transaction> transactions,
+      final BlockHeader header,
+      final Optional<BlockHeader> maybeParentHeader,
+      final Optional<List<String>> maybeVersionedHashParam,
+      final ProtocolSpec protocolSpec) {
+    return ValidationResult.valid();
   }
 }
