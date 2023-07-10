@@ -117,7 +117,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
       if (accountExists(contract)) {
         LOG.trace(
             "Contract creation error: account has already been created for address {}",
-                contractAddress);
+            contractAddress);
         frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
         operationTracer.traceAccountCreationResult(

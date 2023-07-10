@@ -221,7 +221,7 @@ public class Create2OperationTest {
     when(account.getMutable()).thenReturn(mutableAccount);
     when(account.getNonce()).thenReturn(55L);
     when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
-    when(worldUpdater.getAccount(messageFrame.getSenderAddress())).thenReturn(account);
+    when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);
     when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
