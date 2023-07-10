@@ -79,7 +79,8 @@ public class SelfDestructOperation extends AbstractOperation {
       frame.addSelfDestruct(address);
     }
 
-    final MutableAccount recipient = frame.getOrCreate(recipientAddress).getMutable();
+    final MutableAccount recipient =
+        frame.getWorldUpdater().getOrCreate(recipientAddress).getMutable();
 
     Wei contractBalance = account.getBalance();
     if (eip6780Semantics || !account.getAddress().equals(recipient.getAddress())) {

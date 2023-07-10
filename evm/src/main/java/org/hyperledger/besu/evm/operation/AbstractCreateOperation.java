@@ -141,6 +141,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     final Wei value = Wei.wrap(frame.getStackItem(0));
 
     final Address contractAddress = targetContractAddress(frame);
+    frame.addCreate(contractAddress);
 
     final long childGasStipend =
         gasCalculator().gasAvailableForChildCreate(frame.getRemainingGas());

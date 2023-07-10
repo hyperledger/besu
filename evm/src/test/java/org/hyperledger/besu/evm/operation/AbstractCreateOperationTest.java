@@ -177,7 +177,7 @@ class AbstractCreateOperationTest {
     when(worldUpdater.getAccount(messageFrame.getSenderAddress())).thenReturn(account);
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);
-    when(worldUpdater.createAccount(any())).thenReturn(newAccount);
+    when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
     when(newAccount.getMutable()).thenReturn(newMutableAccount);
     when(newMutableAccount.getCode()).thenReturn(Bytes.EMPTY);
     when(worldUpdater.updater()).thenReturn(worldUpdater);

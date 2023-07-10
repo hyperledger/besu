@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.code.CodeSection;
 import org.hyperledger.besu.evm.internal.FixedStack.UnderflowException;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
@@ -1101,21 +1100,6 @@ public class MessageFrame {
 
     warmedUpAddresses.addAll(childFrame.warmedUpAddresses);
     warmedUpStorage.putAll(childFrame.warmedUpStorage);
-  }
-
-  /**
-   * Gets or creates an account based on the address. If an account is created it is tracked.
-   *
-   * @param address address of account
-   * @return the account
-   */
-  public EvmAccount getOrCreate(final Address address) {
-    EvmAccount account = worldUpdater.getAccount(address);
-    if (account == null) {
-      addCreate(address);
-      account = worldUpdater.createAccount(address);
-    }
-    return account;
   }
 
   /**

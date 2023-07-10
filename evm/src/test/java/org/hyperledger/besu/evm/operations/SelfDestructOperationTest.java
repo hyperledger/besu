@@ -102,8 +102,8 @@ public class SelfDestructOperationTest {
       messageFrame.addCreate(contractAddress);
     }
 
+    when(accountContract.getMutable()).thenReturn(mutableAccountContract);
     if (!contract.equals(beneficiary)) {
-      when(accountContract.getMutable()).thenReturn(mutableAccountContract);
       when(mutableAccountContract.getBalance()).thenReturn(Wei.fromHexString(balanceHex));
     }
     when(accountBeneficiary.getMutable()).thenReturn(mutableAccountBeneficiary);
@@ -111,7 +111,7 @@ public class SelfDestructOperationTest {
     when(worldUpdater.getAccount(contractAddress)).thenReturn(accountContract);
     when(worldUpdater.get(contractAddress)).thenReturn(accountContract);
     when(worldUpdater.get(beneficiaryAddress)).thenReturn(accountBeneficiary);
-    when(worldUpdater.getAccount(beneficiaryAddress)).thenReturn(accountBeneficiary);
+    when(worldUpdater.getOrCreate(beneficiaryAddress)).thenReturn(accountBeneficiary);
 
     final Operation.OperationResult operationResult = operation.execute(messageFrame, evm);
     assertThat(operationResult).isNotNull();
@@ -164,9 +164,7 @@ public class SelfDestructOperationTest {
       final String beneficiary,
       final boolean newAccount,
       final String balanceHex) {
-    if (!contract.equals(beneficiary)) {
-      when(mutableAccountContract.getAddress()).thenReturn(Address.fromHexString(contract));
-    }
+    when(mutableAccountContract.getAddress()).thenReturn(Address.fromHexString(contract));
     checkContractDeletionCommon(contract, beneficiary, balanceHex, newAccount, frontierOperation);
 
     assertThat(messageFrame.getSelfDestructs()).contains(Address.fromHexString(contract));
