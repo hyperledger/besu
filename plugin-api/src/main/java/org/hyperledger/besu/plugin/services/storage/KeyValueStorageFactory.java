@@ -53,6 +53,11 @@ public interface KeyValueStorageFactory extends Closeable {
       SegmentIdentifier segment, BesuConfiguration configuration, MetricsSystem metricsSystem)
       throws StorageException;
 
+  /**
+   * Creates a global key-value storage transaction that can be shared across multiple segments.
+   *
+   * @return the global transaction.
+   */
   GlobalKeyValueStorageTransaction<?> createGlobalKeyValueStorageTransaction()
       throws StorageException;
   /**
