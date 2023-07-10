@@ -34,6 +34,13 @@ public abstract class GlobalKeyValueStorageTransaction<S> {
 
   private final Map<SegmentIdentifier, KeyValueStorageTransaction> keyValueStorageTransactions;
 
+  /**
+   * Constructs a new GlobalKeyValueStorageTransaction. This class represents a transaction for
+   * managing key-value storage operations across multiple segments. It provides functionality for
+   * including storage transactions, putting key-value pairs, removing keys, committing the
+   * transaction, and rolling back the transaction. The transaction is initialized with an empty map
+   * of keyValueStorageTransactions.
+   */
   public GlobalKeyValueStorageTransaction() {
     this.keyValueStorageTransactions = new HashMap<>();
   }
