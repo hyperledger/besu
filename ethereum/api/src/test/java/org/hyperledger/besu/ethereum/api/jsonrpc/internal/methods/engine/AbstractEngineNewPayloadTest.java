@@ -69,7 +69,6 @@ import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -430,6 +429,7 @@ public abstract class AbstractEngineNewPayloadTest {
                 createBlockHeader(Optional.of(Collections.emptyList()), Optional.empty()),
                 Collections.emptyList(),
                 withdrawals,
+                null,
                 null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
@@ -448,7 +448,7 @@ public abstract class AbstractEngineNewPayloadTest {
             Optional.empty(),
             Optional.empty());
 
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), withdrawals, null));
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), withdrawals, null, null));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -518,7 +518,7 @@ public abstract class AbstractEngineNewPayloadTest {
             Optional.empty(),
             Optional.empty());
 
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), null, deposits));
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), null, deposits, null));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -565,6 +565,8 @@ public abstract class AbstractEngineNewPayloadTest {
   }
 
   protected EnginePayloadParameter mockPayload(final BlockHeader header, final List<String> txs) {
+    return mockPayload(header, txs, null, null, null);
+    /*
     return new EnginePayloadParameter(
         header.getHash(),
         header.getParentHash(),
@@ -585,6 +587,8 @@ public abstract class AbstractEngineNewPayloadTest {
         header.getExcessDataGas().map(DataGas::toHexString).orElse(null),
         new ArrayList<>(),
         null); // deposits
+
+     */
   }
 
   private EnginePayloadParameter mockPayload(
@@ -592,6 +596,16 @@ public abstract class AbstractEngineNewPayloadTest {
       final List<String> txs,
       final List<WithdrawalParameter> withdrawals,
       final List<DepositParameter> deposits) {
+    return mockPayload(
+        header, txs, withdrawals, deposits, List.of(DEFAULT_VERSIONED_HASH.toBytes()));
+  }
+
+  private EnginePayloadParameter mockPayload(
+      final BlockHeader header,
+      final List<String> txs,
+      final List<WithdrawalParameter> withdrawals,
+      final List<DepositParameter> deposits,
+      final List<Bytes32> versionedHashes) {
     return new EnginePayloadParameter(
         header.getHash(),
         header.getParentHash(),
@@ -610,7 +624,7 @@ public abstract class AbstractEngineNewPayloadTest {
         withdrawals,
         header.getDataGasUsed().map(UnsignedLongParameter::new).orElse(null),
         header.getExcessDataGas().map(DataGas::toHexString).orElse(null),
-        List.of(DEFAULT_VERSIONED_HASH.toBytes()),
+        versionedHashes,
         deposits);
   }
 

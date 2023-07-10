@@ -28,7 +28,8 @@ import org.apache.tuweni.bytes.Bytes32;
 public class VersionedHash {
 
   /**
-   * The versionedHash value. The first byte is the version id, the remainder is the subsequent bytes of the hash.
+   * The versionedHash value. The first byte is the version id, the remainder is the subsequent
+   * bytes of the hash.
    */
   Bytes32 hashish;
 
@@ -42,7 +43,7 @@ public class VersionedHash {
     if (versionId != 1) {
       throw new IllegalArgumentException("Only supported hash version is 0x01, sha256 hash.");
     }
-    this.hashish = Bytes32.wrap(Bytes.concatenate(Bytes.of(1), hash.slice(1,hash.size()-1)));
+    this.hashish = Bytes32.wrap(Bytes.concatenate(Bytes.of(1), hash.slice(1, hash.size() - 1)));
   }
 
   /**
