@@ -19,6 +19,7 @@ package org.hyperledger.besu.ethereum.bonsai.worldview;
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiAccount.fromRLP;
 import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
 import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
+import static org.hyperledger.besu.plugin.services.storage.GlobalKeyValueStorageTransaction.DISABLED_GLOBAL_TRANSACTION_SUPPLIER;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -41,7 +42,6 @@ import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.services.storage.GlobalKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -436,7 +436,7 @@ public class BonsaiWorldState
     return calculateRootHash(
         Optional.of(
             new BonsaiWorldStateKeyValueStorage.Updater(
-                GlobalKeyValueStorageTransaction.NON_GLOBAL_TRANSACTION_FIELD,
+                DISABLED_GLOBAL_TRANSACTION_SUPPLIER.get(),
                 new InMemoryKeyValueStorage(),
                 new InMemoryKeyValueStorage(),
                 new InMemoryKeyValueStorage(),

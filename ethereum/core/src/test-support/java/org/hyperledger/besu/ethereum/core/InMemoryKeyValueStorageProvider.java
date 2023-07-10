@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import static org.hyperledger.besu.plugin.services.storage.GlobalKeyValueStorageTransaction.NON_GLOBAL_TRANSACTION_FIELD;
+import static org.hyperledger.besu.plugin.services.storage.GlobalKeyValueStorageTransaction.DISABLED_GLOBAL_TRANSACTION_SUPPLIER;
 
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
@@ -34,14 +34,13 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.GlobalKeyValueStorageTransaction;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
 
   public InMemoryKeyValueStorageProvider() {
     super(
-        () -> NON_GLOBAL_TRANSACTION_FIELD,
+        () -> DISABLED_GLOBAL_TRANSACTION_SUPPLIER.get(),
         segmentIdentifier -> new InMemoryKeyValueStorage(),
         new InMemoryKeyValueStorage(),
         SEGMENT_ISOLATION_SUPPORTED,
@@ -111,10 +110,5 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
 
   public static VariablesStorage createInMemoryVariablesStorage() {
     return new VariablesKeyValueStorage(new InMemoryKeyValueStorage());
-  }
-
-  @Override
-  public GlobalKeyValueStorageTransaction<?> createGlobalKeyValueStorageTransaction() {
-    return NON_GLOBAL_TRANSACTION_FIELD;
   }
 }

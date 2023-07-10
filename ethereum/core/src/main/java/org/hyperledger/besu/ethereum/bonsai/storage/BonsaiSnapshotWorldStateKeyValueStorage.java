@@ -15,12 +15,13 @@
  */
 package org.hyperledger.besu.ethereum.bonsai.storage;
 
+import static org.hyperledger.besu.plugin.services.storage.GlobalKeyValueStorageTransaction.DISABLED_GLOBAL_TRANSACTION_SUPPLIER;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
-import org.hyperledger.besu.plugin.services.storage.GlobalKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
@@ -87,8 +88,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   @Override
   public BonsaiUpdater updater() {
     return new Updater(
-        GlobalKeyValueStorageTransaction
-            .NON_GLOBAL_TRANSACTION_FIELD, // no global transaction for snapshot
+        DISABLED_GLOBAL_TRANSACTION_SUPPLIER.get(), // no global transaction for snapshot
         accountStorage,
         codeStorage,
         storageStorage,

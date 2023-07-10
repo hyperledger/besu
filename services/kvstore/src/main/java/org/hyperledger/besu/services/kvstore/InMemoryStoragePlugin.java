@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.services.kvstore;
 
+import static org.hyperledger.besu.plugin.services.storage.GlobalKeyValueStorageTransaction.DISABLED_GLOBAL_TRANSACTION_SUPPLIER;
+
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
@@ -122,7 +124,7 @@ public class InMemoryStoragePlugin implements BesuPlugin {
     public GlobalKeyValueStorageTransaction<?> createGlobalKeyValueStorageTransaction()
         throws StorageException {
       // In memory storage does not support global transactions
-      return GlobalKeyValueStorageTransaction.NON_GLOBAL_TRANSACTION_FIELD;
+      return DISABLED_GLOBAL_TRANSACTION_SUPPLIER.get();
     }
 
     @Override

@@ -16,7 +16,7 @@
 package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.plugin.services.storage.GlobalKeyValueStorageTransaction.NON_GLOBAL_TRANSACTION_FIELD;
+import static org.hyperledger.besu.plugin.services.storage.GlobalKeyValueStorageTransaction.DISABLED_GLOBAL_TRANSACTION_SUPPLIER;
 
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -154,7 +154,7 @@ public class GlobalKeyValueStorageTransactionTest<S> {
     final StorageProvider store = createKeyValueStorageProvider();
 
     GlobalKeyValueStorageTransaction<?> globalKeyValueStorageTransaction =
-        NON_GLOBAL_TRANSACTION_FIELD;
+        DISABLED_GLOBAL_TRANSACTION_SUPPLIER.get();
 
     final KeyValueStorage barSegment =
         store.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
@@ -190,7 +190,7 @@ public class GlobalKeyValueStorageTransactionTest<S> {
     final StorageProvider store = createKeyValueStorageProvider();
 
     GlobalKeyValueStorageTransaction<?> globalKeyValueStorageTransaction =
-        NON_GLOBAL_TRANSACTION_FIELD;
+        DISABLED_GLOBAL_TRANSACTION_SUPPLIER.get();
 
     final KeyValueStorage barSegment =
         ((SnappableKeyValueStorage)
