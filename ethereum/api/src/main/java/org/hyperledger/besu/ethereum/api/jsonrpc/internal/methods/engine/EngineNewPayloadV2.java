@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -52,7 +53,7 @@ public class EngineNewPayloadV2 extends AbstractEngineNewPayload {
       final List<Transaction> transactions,
       final BlockHeader header,
       final Optional<BlockHeader> maybeParentHeader,
-      final Optional<List<String>> maybeVersionedHashParam,
+      final Optional<List<VersionedHash>> maybeVersionedHashParam,
       final ProtocolSpec protocolSpec) {
     return ValidationResult.valid();
   }

@@ -106,6 +106,14 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     Optional<List<String>> maybeVersionedHashParam =
         requestContext.getOptionalList(1, String.class);
 
+    Optional<List<VersionedHash>> maybeVersionedHashes =
+        maybeVersionedHashParam.map(
+            versionedHashes ->
+                versionedHashes.stream()
+                    .map(Bytes32::fromHexString)
+                    .map(VersionedHash::new)
+                    .collect(Collectors.toList()));
+
     Object reqId = requestContext.getRequest().getId();
 
     final Optional<BlockHeader> maybeParentHeader =
@@ -212,7 +220,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             transactions,
             newBlockHeader,
             maybeParentHeader,
-            maybeVersionedHashParam,
+            maybeVersionedHashes,
             protocolSchedule.getByBlockHeader(newBlockHeader));
     if (!blobValidationResult.isValid()) {
       return respondWithInvalid(
@@ -384,16 +392,11 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       final List<Transaction> transactions,
       final BlockHeader header,
       final Optional<BlockHeader> maybeParentHeader,
-      final Optional<List<String>> maybeVersionedHashParam,
+      final Optional<List<VersionedHash>> maybeVersionedHashes,
       final ProtocolSpec protocolSpec) {
 
     var blobTransactions =
         transactions.stream().filter(transaction -> transaction.getType().supportsBlob()).toList();
-
-    List<Bytes32> versionedHashesParam =
-        maybeVersionedHashParam
-            .map(strings -> strings.stream().map(Bytes32::fromHexStringStrict).toList())
-            .orElseGet(ArrayList::new);
 
     final List<Bytes32> transactionVersionedHashes = new ArrayList<>();
     for (Transaction transaction : blobTransactions) {
@@ -407,8 +410,14 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           versionedHashes.get().stream().map(VersionedHash::toBytes).toList());
     }
 
+    if (maybeVersionedHashes.isEmpty() && !transactionVersionedHashes.isEmpty()) {
+      return ValidationResult.invalid(
+          JsonRpcError.INVALID_PARAMS, "Payload must contain versioned hashes for transactions");
+    }
+
     // Validate versionedHashesParam
-    if (!versionedHashesParam.equals(transactionVersionedHashes)) {
+    if (maybeVersionedHashes.isPresent()
+        && !maybeVersionedHashes.get().equals(transactionVersionedHashes)) {
       return ValidationResult.invalid(
           JsonRpcError.INVALID_PARAMS,
           "Versioned hashes from blob transactions do not match expected values");
@@ -425,7 +434,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     // Validate dataGasUsed
     if (header.getDataGasUsed().isPresent()) {
-      if (!validateDataGasUsed(header, versionedHashesParam, protocolSpec)) {
+      if (!validateDataGasUsed(header, maybeVersionedHashes.get(), protocolSpec)) {
         return ValidationResult.invalid(
             JsonRpcError.INVALID_PARAMS,
             "Payload DataGasUsed does not match calculated DataGasUsed");
@@ -443,10 +452,10 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
   private boolean validateDataGasUsed(
       final BlockHeader header,
-      final List<Bytes32> maybeVersionedHashParam,
+      final List<VersionedHash> maybeVersionedHashes,
       final ProtocolSpec protocolSpec) {
     var calculatedDataGas =
-        protocolSpec.getGasCalculator().dataGasUsed(maybeVersionedHashParam.size());
+        protocolSpec.getGasCalculator().dataGasUsed(maybeVersionedHashes.size());
     return header.getDataGasUsed().orElse(0L).equals(calculatedDataGas);
   }
 
