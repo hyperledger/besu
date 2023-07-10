@@ -18,6 +18,7 @@ import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -46,19 +47,19 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
   }
 
   @Override
-  protected ValidationResult<NewPayloadValidationResult> validateForkSupported(
+  protected ValidationResult<JsonRpcError> validateForkSupported(
       final Object reqId, final EnginePayloadParameter payloadParameter) {
     var cancun = timestampSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
 
     if (cancun.isPresent() && payloadParameter.getTimestamp() >= cancun.get().milestone()) {
       if (payloadParameter.getDataGasUsed() == null
           || payloadParameter.getExcessDataGas() == null) {
-        return ValidationResult.invalid(NewPayloadValidationResult.INVALID_NEW_PAYLOAD_PARAMS);
+        return ValidationResult.invalid(JsonRpcError.INVALID_PARAMS);
       }
     } else {
       if (payloadParameter.getDataGasUsed() != null
           || payloadParameter.getExcessDataGas() != null) {
-        return ValidationResult.invalid(NewPayloadValidationResult.UNSUPPORTED_FORK);
+        return ValidationResult.invalid(JsonRpcError.UNSUPPORTED_FORK);
       }
     }
     return ValidationResult.valid();

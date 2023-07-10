@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.AbstractEngineNewPayload.NewPayloadValidationResult.INVALID_NEW_PAYLOAD_PARAMS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.DepositsValidatorProvider.getDepositsValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidatorProvider.getWithdrawalsValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
@@ -117,11 +116,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         .addArgument(() -> Json.encodePrettily(blockParam))
         .log();
 
-    ValidationResult<NewPayloadValidationResult> forkValidationResult =
-        validateForkSupported(reqId, blockParam);
+    ValidationResult<JsonRpcError> forkValidationResult = validateForkSupported(reqId, blockParam);
     if (!forkValidationResult.isValid()) {
-      return new JsonRpcErrorResponse(
-          reqId, forkValidationResult.getInvalidReason().getJsonRpcError());
+      return new JsonRpcErrorResponse(reqId, forkValidationResult.getInvalidReason());
     }
 
     final Optional<List<Withdrawal>> maybeWithdrawals =
@@ -210,7 +207,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return respondWithInvalid(reqId, blockParam, null, getInvalidBlockHashStatus(), errorMessage);
     }
 
-    ValidationResult<NewPayloadValidationResult> blobValidationResult =
+    ValidationResult<JsonRpcError> blobValidationResult =
         validateBlobs(
             transactions,
             newBlockHeader,
@@ -378,12 +375,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     return INVALID;
   }
 
-  protected ValidationResult<NewPayloadValidationResult> validateForkSupported(
+  protected ValidationResult<JsonRpcError> validateForkSupported(
       final Object id, final EnginePayloadParameter payloadParameter) {
     return ValidationResult.valid();
   }
 
-  protected ValidationResult<NewPayloadValidationResult> validateBlobs(
+  protected ValidationResult<JsonRpcError> validateBlobs(
       final List<Transaction> transactions,
       final BlockHeader header,
       final Optional<BlockHeader> maybeParentHeader,
@@ -404,7 +401,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       // blob transactions must have at least one blob
       if (versionedHashes.isEmpty()) {
         return ValidationResult.invalid(
-            INVALID_NEW_PAYLOAD_PARAMS, "There must be at least one blob");
+            JsonRpcError.INVALID_PARAMS, "There must be at least one blob");
       }
       transactionVersionedHashes.addAll(
           versionedHashes.get().stream().map(VersionedHash::toBytes).toList());
@@ -413,7 +410,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     // Validate versionedHashesParam
     if (!versionedHashesParam.equals(transactionVersionedHashes)) {
       return ValidationResult.invalid(
-          INVALID_NEW_PAYLOAD_PARAMS,
+          JsonRpcError.INVALID_PARAMS,
           "Versioned hashes from blob transactions do not match expected values");
     }
 
@@ -421,7 +418,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (maybeParentHeader.isPresent()) {
       if (!validateExcessDataGas(header, maybeParentHeader.get(), protocolSpec)) {
         return ValidationResult.invalid(
-            NewPayloadValidationResult.INVALID_NEW_PAYLOAD_PARAMS,
+            JsonRpcError.INVALID_PARAMS,
             "Payload excessDataGas does not match calculated excessDataGas");
       }
     }
@@ -430,7 +427,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (header.getDataGasUsed().isPresent()) {
       if (!validateDataGasUsed(header, versionedHashesParam, protocolSpec)) {
         return ValidationResult.invalid(
-            NewPayloadValidationResult.INVALID_NEW_PAYLOAD_PARAMS,
+            JsonRpcError.INVALID_PARAMS,
             "Payload DataGasUsed does not match calculated DataGasUsed");
       }
     }
@@ -477,20 +474,5 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             timeInS,
             ethPeers.peerCount()));
     LOG.info(String.format(message.toString(), messageArgs.toArray()));
-  }
-
-  protected enum NewPayloadValidationResult {
-    INVALID_NEW_PAYLOAD_PARAMS(JsonRpcError.INVALID_PARAMS),
-    UNSUPPORTED_FORK(JsonRpcError.UNSUPPORTED_FORK);
-
-    private final JsonRpcError jsonRpcError;
-
-    NewPayloadValidationResult(final JsonRpcError jsonRpcError) {
-      this.jsonRpcError = jsonRpcError;
-    }
-
-    public JsonRpcError getJsonRpcError() {
-      return jsonRpcError;
-    }
   }
 }
