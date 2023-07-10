@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
+import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 
 import java.util.List;
 import java.util.Optional;
@@ -54,6 +55,12 @@ public class EngineNewPayloadV3Test extends AbstractEngineNewPayloadTest {
   @Test
   public void shouldReturnExpectedMethodName() {
     assertThat(method.getName()).isEqualTo("engine_newPayloadV3");
+  }
+
+  @Override
+  public void before() {
+    super.before();
+    when(protocolSpec.getGasCalculator()).thenReturn(new CancunGasCalculator());
   }
 
   @Test
