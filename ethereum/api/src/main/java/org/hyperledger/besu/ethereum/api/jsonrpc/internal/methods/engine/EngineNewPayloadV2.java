@@ -17,8 +17,15 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+
+import java.util.List;
+import java.util.Optional;
 
 import io.vertx.core.Vertx;
 
@@ -37,5 +44,15 @@ public class EngineNewPayloadV2 extends AbstractEngineNewPayload {
   @Override
   public String getName() {
     return RpcMethod.ENGINE_NEW_PAYLOAD_V2.getMethodName();
+  }
+
+  @Override
+  protected ValidationResult<NewPayloadValidationResult> validateBlobs(
+      final List<Transaction> transactions,
+      final BlockHeader header,
+      final Optional<BlockHeader> maybeParentHeader,
+      final Optional<List<String>> maybeVersionedHashParam,
+      final ProtocolSpec protocolSpec) {
+    return ValidationResult.valid();
   }
 }

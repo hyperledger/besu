@@ -558,20 +558,6 @@ public abstract class AbstractEngineNewPayloadTest {
     assertValidResponse(mockHeader, resp);
   }
 
-  @Test
-  public void shouldReturnValidIfProtocolScheduleIsEmpty() {
-    when(protocolSchedule.getByBlockHeader(any())).thenReturn(null);
-    BlockHeader mockHeader =
-        setupValidPayload(
-            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
-            Optional.empty(),
-            Optional.empty());
-
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
-
-    assertValidResponse(mockHeader, resp);
-  }
-
   protected JsonRpcResponse resp(final EnginePayloadParameter payload) {
     return method.response(
         new JsonRpcRequestContext(
@@ -629,7 +615,7 @@ public abstract class AbstractEngineNewPayloadTest {
   }
 
   @NotNull
-  private BlockHeader setupValidPayload(
+  BlockHeader setupValidPayload(
       final BlockProcessingResult value,
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final Optional<List<Deposit>> maybeDeposits) {
@@ -689,7 +675,7 @@ public abstract class AbstractEngineNewPayloadTest {
     return mockHeader;
   }
 
-  private void assertValidResponse(final BlockHeader mockHeader, final JsonRpcResponse resp) {
+  void assertValidResponse(final BlockHeader mockHeader, final JsonRpcResponse resp) {
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash().get()).isEqualTo(mockHeader.getHash());
     assertThat(res.getStatusAsString()).isEqualTo(VALID.name());

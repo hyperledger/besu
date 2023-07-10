@@ -14,28 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.AbstractEngineNewPayload.NewPayloadValidationResult.INVALID_NEW_PAYLOAD_PARAMS;
-
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
-import org.hyperledger.besu.datatypes.DataGas;
-import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessDataGasCalculator;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 import io.vertx.core.Vertx;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
 
@@ -71,80 +58,9 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
     } else {
       if (payloadParameter.getDataGasUsed() != null
           || payloadParameter.getExcessDataGas() != null) {
-        return ValidationResult.invalid(NewPayloadValidationResult.INVALID_NEW_PAYLOAD_PARAMS);
+        return ValidationResult.invalid(NewPayloadValidationResult.UNSUPPORTED_FORK);
       }
     }
     return ValidationResult.valid();
-  }
-
-  @Override
-  protected ValidationResult<NewPayloadValidationResult> validateBlobs(
-      final List<Transaction> transactions,
-      final BlockHeader header,
-      final Optional<BlockHeader> maybeParentHeader,
-      final Optional<List<String>> maybeVersionedHashParam,
-      final ProtocolSpec protocolSpec) {
-
-    var blobTransactions =
-        transactions.stream().filter(transaction -> transaction.getType().supportsBlob()).toList();
-
-    List<Bytes32> versionedHashesParam =
-        maybeVersionedHashParam
-            .map(strings -> strings.stream().map(Bytes32::fromHexStringStrict).toList())
-            .orElseGet(ArrayList::new);
-
-    final List<Bytes32> transactionVersionedHashes = new ArrayList<>();
-    for (Transaction transaction : blobTransactions) {
-      var versionedHashes = transaction.getVersionedHashes();
-      // blob transactions must have at least one blob
-      if (versionedHashes.isEmpty()) {
-        return ValidationResult.invalid(
-            INVALID_NEW_PAYLOAD_PARAMS, "There must be at least one blob");
-      }
-      transactionVersionedHashes.addAll(
-          versionedHashes.get().stream().map(VersionedHash::toBytes).toList());
-    }
-
-    // Validate versionedHashesParam
-    if (!versionedHashesParam.equals(transactionVersionedHashes)) {
-      return ValidationResult.invalid(
-          INVALID_NEW_PAYLOAD_PARAMS,
-          "Versioned hashes from blob transactions do not match expected values");
-    }
-
-    // Validate excessDataGas
-    if (maybeParentHeader.isPresent()) {
-      if (!validateExcessDataGas(header, maybeParentHeader.get(), protocolSpec)) {
-        return ValidationResult.invalid(
-            NewPayloadValidationResult.INVALID_NEW_PAYLOAD_PARAMS,
-            "Payload excessDataGas does not match calculated excessDataGas");
-      }
-    }
-
-    // Validate dataGasUsed
-    if (header.getDataGasUsed().isPresent()) {
-      if (!validateDataGasUsed(header, versionedHashesParam, protocolSpec)) {
-        return ValidationResult.invalid(
-            NewPayloadValidationResult.INVALID_NEW_PAYLOAD_PARAMS,
-            "Payload DataGasUsed does not match calculated DataGasUsed");
-      }
-    }
-    return ValidationResult.valid();
-  }
-
-  private boolean validateExcessDataGas(
-      final BlockHeader header, final BlockHeader parentHeader, final ProtocolSpec protocolSpec) {
-    DataGas calculatedDataGas =
-        ExcessDataGasCalculator.calculateExcessDataGasForParent(protocolSpec, parentHeader);
-    return header.getExcessDataGas().orElse(DataGas.ZERO).equals(calculatedDataGas);
-  }
-
-  private boolean validateDataGasUsed(
-      final BlockHeader header,
-      final List<Bytes32> maybeVersionedHashParam,
-      final ProtocolSpec protocolSpec) {
-    var calculatedDataGas =
-        protocolSpec.getGasCalculator().dataGasUsed(maybeVersionedHashParam.size());
-    return header.getDataGasUsed().orElse(0L).equals(calculatedDataGas);
   }
 }
