@@ -145,6 +145,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public boolean isPoa() {
+    return isQbft() || isClique() || isIbft2() || isIbftLegacy();
+  }
+
+  @Override
   public BftConfigOptions getBftConfigOptions() {
     final String fieldKey = isIbft2() ? IBFT2_CONFIG_KEY : QBFT_CONFIG_KEY;
     return JsonUtil.getObjectNode(configRoot, fieldKey)

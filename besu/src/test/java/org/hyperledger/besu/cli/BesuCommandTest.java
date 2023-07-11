@@ -168,6 +168,20 @@ public class BesuCommandTest extends CommandTestAbstract {
       (new JsonObject()).put("config", new JsonObject().put("ecCurve", "secp256k1"));
   private static final String ENCLAVE_PUBLIC_KEY_PATH =
       BesuCommand.class.getResource("/orion_publickey.pub").getPath();
+  private static final JsonObject VALID_GENESIS_QBFT_POST_LONDON =
+      (new JsonObject())
+          .put(
+              "config",
+              new JsonObject()
+                  .put("londonBlock", 0)
+                  .put("qbft", new JsonObject().put("blockperiodseconds", 5)));
+  private static final JsonObject VALID_GENESIS_IBFT2_POST_LONDON =
+      (new JsonObject())
+          .put(
+              "config",
+              new JsonObject()
+                  .put("londonBlock", 0)
+                  .put("ibft2", new JsonObject().put("blockperiodseconds", 5)));
 
   private static final String[] VALID_ENODE_STRINGS = {
     "enode://" + VALID_NODE_ID + "@192.168.0.1:4567",
@@ -3684,7 +3698,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void stratumMiningOptionsRequiresServiceToBeEnabled() {
 
-    parseCommand("--miner-stratum-enabled");
+    parseCommand("--network", "dev", "--miner-stratum-enabled");
 
     verifyOptionsConstraintLoggerCall("--miner-enabled", "--miner-stratum-enabled");
 
@@ -3698,7 +3712,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void stratumMiningOptionsRequiresServiceToBeEnabledToml() throws IOException {
     final Path toml = createTempFile("toml", "miner-stratum-enabled=true\n");
 
-    parseCommand("--config-file", toml.toString());
+    parseCommand("--network", "dev", "--config-file", toml.toString());
 
     verifyOptionsConstraintLoggerCall("--miner-enabled", "--miner-stratum-enabled");
 
@@ -3754,6 +3768,46 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void blockProducingOptionsDoNotWarnWhenPoA() throws IOException {
+
+    final Path genesisFileQBFT = createFakeGenesisFile(VALID_GENESIS_QBFT_POST_LONDON);
+    parseCommand(
+        "--genesis-file",
+        genesisFileQBFT.toString(),
+        "--min-gas-price",
+        "42",
+        "--miner-extra-data",
+        "0x1122334455667788990011223344556677889900112233445566778899001122");
+
+    verify(mockLogger, atMost(0))
+        .warn(
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    final Path genesisFileIBFT2 = createFakeGenesisFile(VALID_GENESIS_IBFT2_POST_LONDON);
+    parseCommand(
+        "--genesis-file",
+        genesisFileIBFT2.toString(),
+        "--min-gas-price",
+        "42",
+        "--miner-extra-data",
+        "0x1122334455667788990011223344556677889900112233445566778899001122");
+
+    verify(mockLogger, atMost(0))
+        .warn(
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void blockProducingOptionsDoNotWarnWhenMergeEnabled() {
 
     final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
@@ -3796,6 +3850,33 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--config-file", toml.toString());
 
     verifyOptionsConstraintLoggerCall("--miner-enabled", "--min-gas-price");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void minGasPriceDoesNotRequireMainOptionWhenPoA() throws IOException {
+    final Path genesisFileQBFT = createFakeGenesisFile(VALID_GENESIS_QBFT_POST_LONDON);
+    parseCommand("--genesis-file", genesisFileQBFT.toString(), "--min-gas-price", "0");
+
+    verify(mockLogger, atMost(0))
+        .warn(
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    final Path genesisFileIBFT2 = createFakeGenesisFile(VALID_GENESIS_IBFT2_POST_LONDON);
+    parseCommand("--genesis-file", genesisFileIBFT2.toString(), "--min-gas-price", "0");
+
+    verify(mockLogger, atMost(0))
+        .warn(
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
