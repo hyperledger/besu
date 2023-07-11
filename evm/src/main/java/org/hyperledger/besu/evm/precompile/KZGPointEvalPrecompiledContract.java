@@ -103,11 +103,8 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
       final Bytes input, @NotNull final MessageFrame messageFrame) {
 
     if (input.size() != 192) {
-      return new PrecompileContractResult(
-          Bytes.EMPTY,
-          false,
-          MessageFrame.State.COMPLETED_FAILED,
-          Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      return PrecompileContractResult.halt(
+          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
     Bytes32 versionedHash = Bytes32.wrap(input.slice(0, 32));
     Bytes z = input.slice(32, 32);
@@ -115,50 +112,32 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
     Bytes commitment = input.slice(96, 48);
     Bytes proof = input.slice(144, 48);
     if (versionedHash.get(0) != 0x01) { // unsupported hash version
-      return new PrecompileContractResult(
-          Bytes.EMPTY,
-          false,
-          MessageFrame.State.COMPLETED_FAILED,
-          Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      return PrecompileContractResult.halt(
+          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     } else {
       byte[] hash = Hash.sha256(commitment).toArray();
       hash[0] = 0x01;
       if (!versionedHash.equals(Bytes32.wrap(hash))) {
-        return new PrecompileContractResult(
-            Bytes.EMPTY,
-            false,
-            MessageFrame.State.COMPLETED_FAILED,
-            Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+        return PrecompileContractResult.halt(
+            null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
       }
     }
-    PrecompileContractResult result;
     try {
       boolean proved =
           CKZG4844JNI.verifyKzgProof(
               commitment.toArray(), z.toArray(), y.toArray(), proof.toArray());
 
       if (proved) {
-        result =
-            new PrecompileContractResult(
-                successResult, false, MessageFrame.State.COMPLETED_SUCCESS, Optional.empty());
+        return PrecompileContractResult.success(successResult);
       } else {
-        result =
-            new PrecompileContractResult(
-                Bytes.EMPTY,
-                false,
-                MessageFrame.State.COMPLETED_FAILED,
-                Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+        return PrecompileContractResult.halt(
+            null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
       }
-      return result;
     } catch (RuntimeException kzgFailed) {
       System.out.println(kzgFailed.getMessage());
-      result =
-          new PrecompileContractResult(
-              Bytes.EMPTY,
-              false,
-              MessageFrame.State.COMPLETED_FAILED,
-              Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+
+      return PrecompileContractResult.halt(
+          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
-    return result;
   }
 }
