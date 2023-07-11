@@ -112,7 +112,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     try {
       maybeVersionedHashes = extractVersionedHashes(maybeVersionedHashParam);
     } catch (RuntimeException ex) {
-      return new JsonRpcErrorResponse(reqId, INVALID_PARAMS);
+      return respondWithInvalid(reqId, blockParam, null, INVALID, "Invalid versionedHash");
     }
 
     final Optional<BlockHeader> maybeParentHeader =
