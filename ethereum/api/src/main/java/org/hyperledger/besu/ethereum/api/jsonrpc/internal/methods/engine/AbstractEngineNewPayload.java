@@ -61,6 +61,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -106,15 +107,13 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     Optional<List<String>> maybeVersionedHashParam =
         requestContext.getOptionalList(1, String.class);
 
-    Optional<List<VersionedHash>> maybeVersionedHashes =
-        maybeVersionedHashParam.map(
-            versionedHashes ->
-                versionedHashes.stream()
-                    .map(Bytes32::fromHexString)
-                    .map(VersionedHash::new)
-                    .collect(Collectors.toList()));
-
     Object reqId = requestContext.getRequest().getId();
+    Optional<List<VersionedHash>> maybeVersionedHashes;
+    try {
+      maybeVersionedHashes = extractVersionedHashes(maybeVersionedHashParam);
+    } catch (RuntimeException ex) {
+      return new JsonRpcErrorResponse(reqId, INVALID_PARAMS);
+    }
 
     final Optional<BlockHeader> maybeParentHeader =
         protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
@@ -456,6 +455,23 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     var calculatedDataGas =
         protocolSpec.getGasCalculator().dataGasUsed(maybeVersionedHashes.size());
     return header.getDataGasUsed().orElse(0L).equals(calculatedDataGas);
+  }
+
+  private Optional<List<VersionedHash>> extractVersionedHashes(
+      final Optional<List<String>> maybeVersionedHashParam) {
+    return maybeVersionedHashParam.map(
+        versionedHashes ->
+            versionedHashes.stream()
+                .map(Bytes32::fromHexString)
+                .map(
+                    hash -> {
+                      try {
+                        return new VersionedHash(hash);
+                      } catch (InvalidParameterException e) {
+                        throw new RuntimeException(e);
+                      }
+                    })
+                .collect(Collectors.toList()));
   }
 
   private void logImportedBlockInfo(final Block block, final double timeInS) {
