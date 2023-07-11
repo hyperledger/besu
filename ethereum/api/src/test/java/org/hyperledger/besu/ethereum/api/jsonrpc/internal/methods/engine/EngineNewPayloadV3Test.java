@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -27,8 +28,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePaylo
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EnginePayloadStatusResult;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
@@ -64,7 +65,7 @@ public class EngineNewPayloadV3Test extends AbstractEngineNewPayloadTest {
   }
 
   @Test
-  public void shouldInvalidParamsOnShortVersionedHash() {
+  public void shouldInvalidPayloadOnShortVersionedHash() {
     Bytes shortHash = Bytes.repeat((byte) 0x69, 31);
     EnginePayloadParameter payload = mock(EnginePayloadParameter.class);
     JsonRpcResponse badParam =
@@ -74,7 +75,9 @@ public class EngineNewPayloadV3Test extends AbstractEngineNewPayloadTest {
                     "2.0",
                     RpcMethod.ENGINE_NEW_PAYLOAD_V3.getMethodName(),
                     new Object[] {payload, List.of(shortHash.toHexString())})));
-    assertThat(badParam.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+    EnginePayloadStatusResult res = fromSuccessResp(badParam);
+    assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
+    assertThat(res.getError()).isEqualTo("Invalid versionedHash");
   }
 
   private void mockAfterCancun() {
