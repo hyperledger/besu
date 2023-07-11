@@ -398,7 +398,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     var blobTransactions =
         transactions.stream().filter(transaction -> transaction.getType().supportsBlob()).toList();
 
-    final List<Bytes32> transactionVersionedHashes = new ArrayList<>();
+    final List<VersionedHash> transactionVersionedHashes = new ArrayList<>();
     for (Transaction transaction : blobTransactions) {
       var versionedHashes = transaction.getVersionedHashes();
       // blob transactions must have at least one blob
@@ -406,8 +406,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         return ValidationResult.invalid(
             JsonRpcError.INVALID_PARAMS, "There must be at least one blob");
       }
-      transactionVersionedHashes.addAll(
-          versionedHashes.get().stream().map(VersionedHash::toBytes).toList());
+      transactionVersionedHashes.addAll(versionedHashes.get());
     }
 
     if (maybeVersionedHashes.isEmpty() && !transactionVersionedHashes.isEmpty()) {
