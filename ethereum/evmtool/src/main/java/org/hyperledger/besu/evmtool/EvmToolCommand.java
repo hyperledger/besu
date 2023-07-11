@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -42,7 +43,6 @@ import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
-import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
@@ -53,10 +53,15 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.time.Instant;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Deque;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.NavigableMap;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
@@ -64,8 +69,6 @@ import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -91,8 +94,6 @@ import picocli.CommandLine.Option;
       T8nServerSubCommand.class
     })
 public class EvmToolCommand implements Runnable {
-
-  private static final Logger LOG = LoggerFactory.getLogger(EvmToolCommand.class);
 
   @Option(
       names = {"--code"},
@@ -246,13 +247,42 @@ public class EvmToolCommand implements Runnable {
             .addPattern("^--trace.(\\w(-|\\w)*)$", "--trace.no$1", "--trace.[no]$1")
             .build());
 
+    // Enumerate forks to support execution-spec-tests
+    addForkHelp(commandLine.getSubcommands().get("t8n"));
+    addForkHelp(commandLine.getSubcommands().get("t8n-server"));
+
     commandLine.setExecutionStrategy(new CommandLine.RunLast());
     commandLine.execute(args);
   }
 
+  private static void addForkHelp(final CommandLine subCommandLine) {
+    subCommandLine
+        .getHelpSectionMap()
+        .put("forks_header", help -> help.createHeading("%nKnown Forks:%n"));
+    subCommandLine
+        .getHelpSectionMap()
+        .put(
+            "forks",
+            help ->
+                help.createTextTable(
+                        Arrays.stream(EvmSpecVersion.values())
+                            .collect(
+                                Collectors.toMap(
+                                    EvmSpecVersion::getName,
+                                    EvmSpecVersion::getDescription,
+                                    (a, b) -> b,
+                                    LinkedHashMap::new)))
+                    .toString());
+    List<String> keys = new ArrayList<>(subCommandLine.getHelpSectionKeys());
+    int index = keys.indexOf(CommandLine.Model.UsageMessageSpec.SECTION_KEY_FOOTER_HEADING);
+    keys.add(index, "forks_header");
+    keys.add(index + 1, "forks");
+
+    subCommandLine.setHelpSectionKeys(keys);
+  }
+
   @Override
   public void run() {
-    LogConfigurator.setLevel("", "OFF");
     try {
       final EvmToolComponent component =
           DaggerEvmToolComponent.builder()
@@ -402,7 +432,8 @@ public class EvmToolCommand implements Runnable {
       } while (remainingIters-- > 0);
 
     } catch (final IOException e) {
-      LOG.error("Unable to create Genesis module", e);
+      System.err.println("Unable to create Genesis module");
+      e.printStackTrace(System.out);
     }
   }
 

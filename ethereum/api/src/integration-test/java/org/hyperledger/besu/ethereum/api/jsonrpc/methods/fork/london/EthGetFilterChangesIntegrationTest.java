@@ -112,7 +112,7 @@ public class EthGetFilterChangesIntegrationTest {
 
     transactionPool =
         new TransactionPool(
-            transactions,
+            () -> transactions,
             executionContext.getProtocolSchedule(),
             protocolContext,
             batchAddedListener,
@@ -120,6 +120,7 @@ public class EthGetFilterChangesIntegrationTest {
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             new TransactionPoolMetrics(metricsSystem),
             TransactionPoolConfiguration.DEFAULT);
+    transactionPool.setEnabled();
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, protocolContext.getWorldStateArchive());
     filterManager =

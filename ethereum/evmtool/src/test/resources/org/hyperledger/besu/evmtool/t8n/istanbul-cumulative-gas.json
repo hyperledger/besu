@@ -366,7 +366,7 @@
       "parentDifficulty": "131072",
       "parentGasUsed": "50000000000000000",
       "parentGasLimit": "100000000000000000",
-      "parentTimstamp": "0",
+      "parentTimestamp": "0",
       "blockHashes": {
         "0": "0xa2886eb8890eda7143a5d6bcb16949db9f3871f4c2dcc8618ab62c0632a23ab7"
       },

@@ -32,7 +32,7 @@ class NewPooledTransactionHashesMessageHandler implements EthMessages.MessageCal
   private final NewPooledTransactionHashesMessageProcessor transactionsMessageProcessor;
   private final EthScheduler scheduler;
   private final Duration txMsgKeepAlive;
-  private final AtomicBoolean isEnabled = new AtomicBoolean(true);
+  private final AtomicBoolean isEnabled = new AtomicBoolean(false);
 
   public NewPooledTransactionHashesMessageHandler(
       final EthScheduler scheduler,

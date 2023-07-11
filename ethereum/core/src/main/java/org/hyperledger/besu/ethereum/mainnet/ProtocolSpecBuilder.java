@@ -53,7 +53,7 @@ public class ProtocolSpecBuilder {
   private DifficultyCalculator difficultyCalculator;
   private EvmConfiguration evmConfiguration;
   private BiFunction<GasCalculator, EvmConfiguration, EVM> evmBuilder;
-  private BiFunction<GasCalculator, GasLimitCalculator, MainnetTransactionValidator>
+  private BiFunction<GasCalculator, GasLimitCalculator, TransactionValidator>
       transactionValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> ommerHeaderValidatorBuilder;
@@ -81,6 +81,7 @@ public class ProtocolSpecBuilder {
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
   private boolean isPoS = false;
+  private boolean isReplayProtectionSupported = false;
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -125,7 +126,7 @@ public class ProtocolSpecBuilder {
   }
 
   public ProtocolSpecBuilder transactionValidatorBuilder(
-      final BiFunction<GasCalculator, GasLimitCalculator, MainnetTransactionValidator>
+      final BiFunction<GasCalculator, GasLimitCalculator, TransactionValidator>
           transactionValidatorBuilder) {
     this.transactionValidatorBuilder = transactionValidatorBuilder;
     return this;
@@ -270,6 +271,12 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder isReplayProtectionSupported(
+      final boolean isReplayProtectionSupported) {
+    this.isReplayProtectionSupported = isReplayProtectionSupported;
+    return this;
+  }
+
   public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculator, "Missing gasLimitCalculator");
@@ -302,7 +309,7 @@ public class ProtocolSpecBuilder {
     final EVM evm = evmBuilder.apply(gasCalculator, evmConfiguration);
     final PrecompiledContractConfiguration precompiledContractConfiguration =
         new PrecompiledContractConfiguration(gasCalculator, privacyParameters);
-    final MainnetTransactionValidator transactionValidator =
+    final TransactionValidator transactionValidator =
         transactionValidatorBuilder.apply(gasCalculator, gasLimitCalculator);
     final AbstractMessageProcessor contractCreationProcessor =
         contractCreationProcessorBuilder.apply(gasCalculator, evm);
@@ -374,11 +381,12 @@ public class ProtocolSpecBuilder {
         withdrawalsValidator,
         Optional.ofNullable(withdrawalsProcessor),
         depositsValidator,
-        isPoS);
+        isPoS,
+        isReplayProtectionSupported);
   }
 
   private PrivateTransactionProcessor createPrivateTransactionProcessor(
-      final MainnetTransactionValidator transactionValidator,
+      final TransactionValidator transactionValidator,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
       final PrecompileContractRegistry precompileContractRegistry) {
@@ -435,14 +443,14 @@ public class ProtocolSpecBuilder {
   public interface TransactionProcessorBuilder {
     MainnetTransactionProcessor apply(
         GasCalculator gasCalculator,
-        MainnetTransactionValidator transactionValidator,
+        TransactionValidator transactionValidator,
         AbstractMessageProcessor contractCreationProcessor,
         AbstractMessageProcessor messageCallProcessor);
   }
 
   public interface PrivateTransactionProcessorBuilder {
     PrivateTransactionProcessor apply(
-        MainnetTransactionValidator transactionValidator,
+        TransactionValidator transactionValidator,
         AbstractMessageProcessor contractCreationProcessor,
         AbstractMessageProcessor messageCallProcessor,
         PrivateTransactionValidator privateTransactionValidator);

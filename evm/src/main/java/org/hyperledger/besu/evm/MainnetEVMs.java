@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm;
 
-import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
@@ -547,7 +546,26 @@ public class MainnetEVMs {
    * @return the evm
    */
   public static EVM berlin(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return istanbul(new BerlinGasCalculator(), chainId, evmConfiguration);
+    return berlin(new IstanbulGasCalculator(), chainId, evmConfiguration);
+  }
+
+  /**
+   * Berlin evm.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM berlin(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(
+        istanbulOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.BERLIN);
   }
 
   /**
@@ -622,6 +640,27 @@ public class MainnetEVMs {
   /**
    * Paris evm.
    *
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM paris(final EvmConfiguration evmConfiguration) {
+    return paris(DEV_NET_CHAIN_ID, evmConfiguration);
+  }
+
+  /**
+   * Paris evm.
+   *
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM paris(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return paris(new LondonGasCalculator(), chainId, evmConfiguration);
+  }
+
+  /**
+   * Paris evm.
+   *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
    * @param evmConfiguration the evm configuration
@@ -665,6 +704,16 @@ public class MainnetEVMs {
       final BigInteger chainID) {
     registerLondonOperations(registry, gasCalculator, chainID);
     registry.put(new PrevRanDaoOperation(gasCalculator));
+  }
+
+  /**
+   * Shanghai evm.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM shanghai(final EvmConfiguration evmConfiguration) {
+    return shanghai(DEV_NET_CHAIN_ID, evmConfiguration);
   }
 
   /**

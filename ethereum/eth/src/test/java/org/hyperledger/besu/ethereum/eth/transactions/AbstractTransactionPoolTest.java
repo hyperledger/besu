@@ -58,10 +58,10 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
-import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -97,7 +97,7 @@ public abstract class AbstractTransactionPoolTest {
 
   private static final KeyPair KEY_PAIR2 =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
-  @Mock protected MainnetTransactionValidator transactionValidator;
+  @Mock protected TransactionValidator transactionValidator;
   @Mock protected PendingTransactionAddedListener listener;
   @Mock protected MiningParameters miningParameters;
   @Mock protected TransactionsMessageSender transactionsMessageSender;
@@ -154,7 +154,6 @@ public abstract class AbstractTransactionPoolTest {
         spy(
             new TransactionBroadcaster(
                 ethContext,
-                transactions,
                 peerTransactionTracker,
                 transactionsMessageSender,
                 newPooledTransactionHashesMessageSender));
@@ -175,15 +174,19 @@ public abstract class AbstractTransactionPoolTest {
     configConsumer.accept(configBuilder);
     final TransactionPoolConfiguration config = configBuilder.build();
 
-    return new TransactionPool(
-        transactions,
-        protocolSchedule,
-        protocolContext,
-        transactionBroadcaster,
-        ethContext,
-        miningParameters,
-        new TransactionPoolMetrics(metricsSystem),
-        config);
+    final TransactionPool txPool =
+        new TransactionPool(
+            () -> transactions,
+            protocolSchedule,
+            protocolContext,
+            transactionBroadcaster,
+            ethContext,
+            miningParameters,
+            new TransactionPoolMetrics(metricsSystem),
+            config);
+
+    txPool.setEnabled();
+    return txPool;
   }
 
   @ParameterizedTest
@@ -438,7 +441,6 @@ public abstract class AbstractTransactionPoolTest {
 
     verify(transactions).containsTransaction(transaction1);
     verifyNoInteractions(transactionValidator);
-    verifyNoMoreInteractions(transactions);
   }
 
   @Test
