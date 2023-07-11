@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.NatManager;
@@ -69,6 +70,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -147,6 +149,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
   private final CountDownLatch shutdownLatch = new CountDownLatch(2);
   private final Duration shutdownTimeout = Duration.ofSeconds(15);
   private DNSDaemon dnsDaemon;
+  private final AtomicLong numBondedPeers = new AtomicLong();
+  private final AtomicLong numTrying = new AtomicLong();
 
   /**
    * Creates a peer networking service for production purposes.
@@ -164,6 +168,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
    * @param maintainedPeers A collection of peers for which we are expected to maintain connections
    * @param reputationManager An object that inspect disconnections for misbehaving peers that can
    *     then be blacklisted.
+   * @param metricsSystem The metrics system
    */
   DefaultP2PNetwork(
       final MutableLocalNode localNode,
@@ -174,7 +179,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
       final PeerPermissions peerPermissions,
       final NatService natService,
       final MaintainedPeers maintainedPeers,
-      final PeerDenylistManager reputationManager) {
+      final PeerDenylistManager reputationManager,
+      final MetricsSystem metricsSystem) {
     this.localNode = localNode;
     this.peerDiscoveryAgent = peerDiscoveryAgent;
     this.rlpxAgent = rlpxAgent;
@@ -190,6 +196,18 @@ public class DefaultP2PNetwork implements P2PNetwork {
     LOG.debug("setting peerLowerBound {}", peerLowerBound);
     peerDiscoveryAgent.addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= peerLowerBound);
     subscribeDisconnect(reputationManager);
+
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.PEERS,
+        "bonded_peers_streamed_from_peer_table",
+        "Bonded peers streamed from PeerTable to try to connect to",
+        numBondedPeers::get);
+
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.PEERS,
+        "bonded_peers_streamed_actually_trying_to_connect",
+        "Bonded peers streamed from PeerTable we are actually trying to connect to",
+        numTrying::get);
   }
 
   public static Builder builder() {
@@ -379,11 +397,14 @@ public class DefaultP2PNetwork implements P2PNetwork {
   @VisibleForTesting
   void attemptPeerConnections() {
     LOG.trace("Initiating connections to discovered peers.");
-    rlpxAgent.connect(
+    final Stream<DiscoveryPeer> toTry =
         streamDiscoveredPeers()
             .filter(peer -> peer.getStatus() == PeerDiscoveryStatus.BONDED)
+            .peek(peer -> numBondedPeers.getAndIncrement())
             .filter(peerDiscoveryAgent::checkForkId)
-            .sorted(Comparator.comparing(DiscoveryPeer::getLastAttemptedConnection)));
+            .peek(peer -> numTrying.getAndIncrement())
+            .sorted(Comparator.comparing(DiscoveryPeer::getLastAttemptedConnection));
+    toTry.forEach(rlpxAgent::connect);
   }
 
   @Override
@@ -538,7 +559,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
           peerPermissions,
           natService,
           maintainedPeers,
-          reputationManager);
+          reputationManager,
+          metricsSystem);
     }
 
     private void validate() {

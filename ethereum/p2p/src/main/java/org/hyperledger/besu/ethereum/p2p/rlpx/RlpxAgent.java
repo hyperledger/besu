@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.Subscribers;
@@ -47,6 +48,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -81,6 +83,9 @@ public class RlpxAgent {
           .concurrencyLevel(1)
           .build();
 
+  private final AtomicLong outgoingTried = new AtomicLong(0L);
+  private final AtomicLong incomingTried = new AtomicLong(0L);
+
   private RlpxAgent(
       final LocalNode localNode,
       final PeerConnectionEvents connectionEvents,
@@ -89,7 +94,8 @@ public class RlpxAgent {
       final PeerPrivileges peerPrivileges,
       final int peersLowerBound,
       final Supplier<Stream<PeerConnection>> allConnectionsSupplier,
-      final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier) {
+      final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier,
+      final MetricsSystem metricsSystem) {
     this.localNode = localNode;
     this.connectionEvents = connectionEvents;
     this.connectionInitializer = connectionInitializer;
@@ -98,6 +104,18 @@ public class RlpxAgent {
     this.lowerBound = peersLowerBound;
     this.allConnectionsSupplier = allConnectionsSupplier;
     this.allActiveConnectionsSupplier = allActiveConnectionsSupplier;
+
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.PEERS,
+        "rlpx_try_connect_outgoing",
+        "RlpxAgent connect called for outgoing connection",
+        outgoingTried::get);
+
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.PEERS,
+        "rlpx_try_connect_incoming",
+        "RlpxAgent connect called for incoming connection",
+        incomingTried::get);
   }
 
   public static Builder builder() {
@@ -163,13 +181,6 @@ public class RlpxAgent {
     }
   }
 
-  public void connect(final Stream<? extends Peer> peerStream) {
-    if (!localNode.isReady()) {
-      return;
-    }
-    peerStream.forEach(this::connect);
-  }
-
   public void disconnect(final Bytes peerId, final DisconnectReason reason) {
     try {
       allActiveConnectionsSupplier
@@ -207,6 +218,9 @@ public class RlpxAgent {
                   + this.getClass().getSimpleName()
                   + " has finished starting"));
     }
+
+    outgoingTried.getAndIncrement();
+
     // Check peer is valid
     final EnodeURL enode = peer.getEnodeURL();
     if (!enode.isListening()) {
@@ -324,6 +338,8 @@ public class RlpxAgent {
       return;
     }
 
+    incomingTried.getAndIncrement();
+
     // Disconnect if not permitted
     if (!peerPermissions.allowNewInboundConnectionFrom(peer)) {
       LOG.debug(
@@ -421,7 +437,8 @@ public class RlpxAgent {
           peerPrivileges,
           peersLowerBound,
           allConnectionsSupplier,
-          allActiveConnectionsSupplier);
+          allActiveConnectionsSupplier,
+          metricsSystem);
     }
 
     private void validate() {

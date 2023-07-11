@@ -1004,7 +1004,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         synchronizerConfiguration,
         scheduler,
         genesisConfig.getForkBlockNumbers(),
-        genesisConfig.getForkTimestamps());
+        genesisConfig.getForkTimestamps(),
+        metricsSystem);
   }
 
   /**
