@@ -107,6 +107,9 @@ public class T8nExecutor {
           } else {
             Transaction.Builder builder = Transaction.builder();
             int type = Bytes.fromHexStringLenient(txNode.get("type").textValue()).toInt();
+            BigInteger chainId =
+                Bytes.fromHexStringLenient(txNode.get("chainId").textValue())
+                    .toUnsignedBigInteger();
             TransactionType transactionType = TransactionType.of(type == 0 ? 0xf8 : type);
             builder.type(transactionType);
             builder.nonce(Bytes.fromHexStringLenient(txNode.get("nonce").textValue()).toLong());
@@ -136,11 +139,7 @@ public class T8nExecutor {
             if (transactionType.requiresChainId()
                 || (txNode.has("protected") && txNode.get("protected").asBoolean(false))) {
               // chainid if protected
-              builder.chainId(
-                  new BigInteger(
-                      1,
-                      Bytes.fromHexStringLenient(txNode.get("chainId").textValue())
-                          .toArrayUnsafe()));
+              builder.chainId(chainId);
             }
 
             if (txNode.has("accessList")) {
@@ -196,7 +195,10 @@ public class T8nExecutor {
                   Bytes.fromHexStringLenient(txNode.get("v").textValue()).toUnsignedBigInteger();
               if (transactionType == TransactionType.FRONTIER) {
                 if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
-                  v = v.subtract(REPLAY_PROTECTED_V_BASE).mod(BigInteger.TWO);
+                  v =
+                      v.subtract(REPLAY_PROTECTED_V_BASE)
+                          .subtract(chainId.multiply(BigInteger.TWO));
+                  builder.chainId(chainId);
                 } else {
                   v = v.subtract(REPLAY_UNPROTECTED_V_BASE);
                 }
