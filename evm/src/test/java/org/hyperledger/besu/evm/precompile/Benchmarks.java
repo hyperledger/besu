@@ -35,12 +35,16 @@ import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
@@ -613,6 +617,41 @@ public class Benchmarks {
         (int) gasSpent, contract.gasRequirement(arg));
   }
 
+  private static void benchFalcon512() {
+    final FalconPrecompiledContract contract =
+        new FalconPrecompiledContract(new IstanbulGasCalculator());
+    final JsonNode falconVectors;
+    try (final InputStream testVectors =
+        FalconPrecompiledBenchmark.class.getResourceAsStream("falconBenchVectors.json")) {
+      falconVectors = new ObjectMapper().readTree(testVectors);
+
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    for (int i = 0; i < MATH_WARMUP; i++) {
+      contract.computePrecompile(
+          Bytes.fromHexString(falconVectors.get(0).get("Input").asText()), fakeFrame);
+    }
+    for (int len = 0; len < falconVectors.size(); len += 1) {
+      Bytes bytes = Bytes.fromHexString(falconVectors.get(len).get("Input").asText());
+      final Stopwatch timer = Stopwatch.createStarted();
+      for (int i = 0; i < HASH_ITERATIONS; i++) {
+        contract.computePrecompile(bytes, fakeFrame);
+      }
+      timer.stop();
+
+      final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
+      final double perCall = elapsed / HASH_ITERATIONS;
+      final double gasSpent = perCall * GAS_PER_SECOND_STANDARD;
+      System.out.printf(
+          "falcon512 - iter #%,d - %,d message bytes for %,d gas. Charging %,d gas.%n",
+          len,
+          (len + 1) * 33,
+          (int) gasSpent,
+          contract.gasRequirement(bytes)); // every message increases in 33 bytes
+    }
+  }
+
   private static double runBenchmark(final Bytes arg, final PrecompiledContract contract) {
     if (contract.computePrecompile(arg, fakeFrame).getOutput() == null) {
       throw new RuntimeException("Input is Invalid");
@@ -650,5 +689,6 @@ public class Benchmarks {
     benchBLS12Pair();
     benchBLS12MapFPTOG1();
     benchBLS12MapFP2TOG2();
+    benchFalcon512();
   }
 }
