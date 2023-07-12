@@ -23,6 +23,7 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.DatabaseMetadata;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
@@ -45,7 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** The Rocks db key value storage factory. */
-public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
+public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory<RocksDbSegmentIdentifier> {
 
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBKeyValueStorageFactory.class);
   private static final int DEFAULT_VERSION = 1;
@@ -207,6 +208,12 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
               "Developer error: A supported database version (%d) was detected but there is no associated creation logic.",
               databaseVersion));
     }
+  }
+
+  @Override
+  public SegmentedKeyValueStorage<RocksDbSegmentIdentifier> create(final List<SegmentIdentifier> segments, final BesuConfiguration configuration, final MetricsSystem metricsSystem) throws StorageException {
+    //TODO: write me
+    return null;
   }
 
   /**

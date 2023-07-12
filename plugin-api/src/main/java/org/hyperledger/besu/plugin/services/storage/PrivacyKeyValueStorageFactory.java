@@ -18,7 +18,7 @@ import org.hyperledger.besu.plugin.Unstable;
 
 /** The interface Privacy key value storage factory. */
 @Unstable
-public interface PrivacyKeyValueStorageFactory extends KeyValueStorageFactory {
+public interface PrivacyKeyValueStorageFactory<S> extends KeyValueStorageFactory<S> {
   /**
    * Retrieves the version of the key-value storage factory.
    *

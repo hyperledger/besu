@@ -12,12 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.services.kvstore;
+package org.hyperledger.besu.plugin.services.storage;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
 import java.io.Closeable;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -39,6 +40,8 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
    * @return the segment identifier by name
    */
   S getSegmentIdentifierByName(SegmentIdentifier segment);
+
+  SegmentedKeyValueStorage<S> getComposedSegmentStorage(List<SegmentIdentifier> segments);
 
   /**
    * Get the value from the associated segment and key.
@@ -68,7 +71,7 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
    * @return An object representing the transaction.
    * @throws StorageException the storage exception
    */
-  Transaction<S> startTransaction() throws StorageException;
+  KeyValueStorageTransaction startTransaction() throws StorageException;
 
   /**
    * Returns a stream of all keys for the segment.
@@ -140,45 +143,4 @@ public interface SegmentedKeyValueStorage<S> extends Closeable {
    * @return boolean indicating whether the underlying storage is closed.
    */
   boolean isClosed();
-
-  /**
-   * Represents a set of changes to be committed atomically. A single transaction is not
-   * thread-safe, but multiple transactions can execute concurrently.
-   *
-   * @param <S> the segment identifier type
-   */
-  interface Transaction<S> {
-
-    /**
-     * Add the given key-value pair to the set of updates to be committed.
-     *
-     * @param segment the database segment
-     * @param key The key to set / modify.
-     * @param value The value to be set.
-     */
-    void put(S segment, byte[] key, byte[] value);
-
-    /**
-     * Schedules the given key to be deleted from storage.
-     *
-     * @param segment the database segment
-     * @param key The key to delete
-     */
-    void remove(S segment, byte[] key);
-
-    /**
-     * Atomically commit the set of changes contained in this transaction to the underlying
-     * key-value storage from which this transaction was started. After committing, the transaction
-     * is no longer usable and will throw exceptions if modifications are attempted.
-     *
-     * @throws StorageException the storage exception
-     */
-    void commit() throws StorageException;
-
-    /**
-     * Cancel this transaction. After rolling back, the transaction is no longer usable and will
-     * throw exceptions if modifications are attempted.
-     */
-    void rollback();
-  }
 }

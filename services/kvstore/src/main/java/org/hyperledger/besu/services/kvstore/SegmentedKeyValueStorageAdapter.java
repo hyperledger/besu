@@ -18,8 +18,10 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -30,9 +32,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The type Segmented key value storage adapter.
+ * This class will adapt a SegmentedKeyValueStorage to a KeyValueStorage instance.
  *
- * @param <S> the type parameter
+ * @param <S> type parameter for the segment handle
  */
 public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
 
@@ -41,7 +43,7 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
   private final SegmentedKeyValueStorage<S> storage;
 
   /**
-   * Instantiates a new Segmented key value storage adapter.
+   * Instantiates a new Segmented key value storage adapter for a single segment.
    *
    * @param segment the segment
    * @param storage the storage
@@ -112,33 +114,7 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
 
   @Override
   public KeyValueStorageTransaction startTransaction() throws StorageException {
-    final SegmentedKeyValueStorage.Transaction<S> transaction = storage.startTransaction();
-    return new KeyValueStorageTransaction() {
-
-      @Override
-      public void put(final byte[] key, final byte[] value) {
-        throwIfClosed();
-        transaction.put(segmentHandle, key, value);
-      }
-
-      @Override
-      public void remove(final byte[] key) {
-        throwIfClosed();
-        transaction.remove(segmentHandle, key);
-      }
-
-      @Override
-      public void commit() throws StorageException {
-        throwIfClosed();
-        transaction.commit();
-      }
-
-      @Override
-      public void rollback() {
-        throwIfClosed();
-        transaction.rollback();
-      }
-    };
+    return storage.startTransaction();
   }
 
   @Override

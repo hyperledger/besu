@@ -27,7 +27,7 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbIterator;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbUtil;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
-import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -96,7 +96,6 @@ public abstract class RocksDBColumnarKeyValueStorage
   private final MetricsSystem metricsSystem;
   private final RocksDBMetricsFactory rocksDBMetricsFactory;
   private final RocksDBConfiguration configuration;
-  private Map<Bytes, String> segmentsById;
   /** RocksDB DB options */
   protected DBOptions options;
 
@@ -211,7 +210,7 @@ public abstract class RocksDBColumnarKeyValueStorage
 
   void initColumnHandler() throws RocksDBException {
 
-    segmentsById =
+    Map<Bytes, String> segmentsById =
         trimmedSegments.stream()
             .collect(
                 Collectors.toMap(
@@ -242,6 +241,12 @@ public abstract class RocksDBColumnarKeyValueStorage
   @Override
   public RocksDbSegmentIdentifier getSegmentIdentifierByName(final SegmentIdentifier segment) {
     return columnHandlesByName.get(segment.getName());
+  }
+
+  @Override
+  public SegmentedKeyValueStorage getComposedSegmentStorage(final List<SegmentIdentifier> segments) {
+    //TODO: write me
+    return null;
   }
 
   @Override
@@ -341,85 +346,6 @@ public abstract class RocksDBColumnarKeyValueStorage
     if (closed.get()) {
       LOG.error("Attempting to use a closed RocksDbKeyValueStorage");
       throw new IllegalStateException("Storage has been closed");
-    }
-  }
-
-  class RocksDbTransaction implements Transaction<RocksDbSegmentIdentifier> {
-
-    private final org.rocksdb.Transaction innerTx;
-    private final WriteOptions options;
-
-    /**
-     * Instantiates a new RocksDb transaction.
-     *
-     * @param innerTx the inner tx
-     * @param options the write options
-     */
-    RocksDbTransaction(final org.rocksdb.Transaction innerTx, final WriteOptions options) {
-      this.innerTx = innerTx;
-      this.options = options;
-    }
-
-    @Override
-    public void put(final RocksDbSegmentIdentifier segment, final byte[] key, final byte[] value) {
-      try (final OperationTimer.TimingContext ignored = metrics.getWriteLatency().startTimer()) {
-        innerTx.put(segment.get(), key, value);
-      } catch (final RocksDBException e) {
-        if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
-          LOG.error(e.getMessage());
-          System.exit(0);
-        }
-        throw new StorageException(e);
-      }
-    }
-
-    @Override
-    public void remove(final RocksDbSegmentIdentifier segment, final byte[] key) {
-      try (final OperationTimer.TimingContext ignored = metrics.getRemoveLatency().startTimer()) {
-        innerTx.delete(segment.get(), key);
-      } catch (final RocksDBException e) {
-        if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
-          LOG.error(e.getMessage());
-          System.exit(0);
-        }
-        throw new StorageException(e);
-      }
-    }
-
-    @Override
-    public synchronized void commit() throws StorageException {
-      try (final OperationTimer.TimingContext ignored = metrics.getCommitLatency().startTimer()) {
-        innerTx.commit();
-      } catch (final RocksDBException e) {
-        if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
-          LOG.error(e.getMessage());
-          System.exit(0);
-        }
-        throw new StorageException(e);
-      } finally {
-        close();
-      }
-    }
-
-    @Override
-    public void rollback() {
-      try {
-        innerTx.rollback();
-        metrics.getRollbackCount().inc();
-      } catch (final RocksDBException e) {
-        if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
-          LOG.error(e.getMessage());
-          System.exit(0);
-        }
-        throw new StorageException(e);
-      } finally {
-        close();
-      }
-    }
-
-    private void close() {
-      innerTx.close();
-      options.close();
     }
   }
 

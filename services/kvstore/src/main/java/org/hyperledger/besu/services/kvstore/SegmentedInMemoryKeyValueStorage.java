@@ -1,30 +1,17 @@
-/*
- * Copyright ConsenSys AG.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
- */
 package org.hyperledger.besu.services.kvstore;
 
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SnappableSegmentedKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SnappedSegmentedKeyValueStorage;
 
-import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -34,22 +21,20 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 
-/** The In memory key value storage. */
-public class InMemoryKeyValueStorage
-    implements SnappedKeyValueStorage, SnappableKeyValueStorage, KeyValueStorage {
-
+public class SegmentedInMemoryKeyValueStorage<S extends SegmentIdentifier> implements SnappedSegmentedKeyValueStorage<S>, SnappableSegmentedKeyValueStorage<S>, SegmentedKeyValueStorage<S> {
   /** protected access for the backing hash map. */
-  protected final Map<Bytes, Optional<byte[]>> hashValueStore;
+  final Map<S, Map<Bytes, Optional<byte[]>>> hashValueStore;
 
   /** protected access to the rw lock. */
   protected final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
   /** Instantiates a new In memory key value storage. */
-  public InMemoryKeyValueStorage() {
+  public SegmentedInMemoryKeyValueStorage() {
     this(new HashMap<>());
   }
 
@@ -58,79 +43,96 @@ public class InMemoryKeyValueStorage
    *
    * @param hashValueStore the hash value store
    */
-  protected InMemoryKeyValueStorage(final Map<Bytes, Optional<byte[]>> hashValueStore) {
+  SegmentedInMemoryKeyValueStorage(final Map<S, Map<Bytes, Optional<byte[]>>> hashValueStore) {
     this.hashValueStore = hashValueStore;
   }
 
   @Override
-  public void clear() {
+  public void clear(final S segmentIdentifier) {
     final Lock lock = rwLock.writeLock();
     lock.lock();
     try {
-      hashValueStore.clear();
+      hashValueStore.computeIfAbsent(segmentIdentifier, s -> new HashMap<>()).clear();
     } finally {
       lock.unlock();
     }
   }
 
   @Override
-  public boolean containsKey(final byte[] key) throws StorageException {
-    return get(key).isPresent();
+  public boolean containsKey(final S segmentIdentifier, final byte[] key) throws StorageException {
+    return get(segmentIdentifier, key).isPresent();
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public S getSegmentIdentifierByName(final SegmentIdentifier segment) {
+    // this is tautological since we are using SegmentIdentifier as our Map key
+    return (S) segment;
   }
 
   @Override
-  public Optional<byte[]> get(final byte[] key) throws StorageException {
+  public SegmentedKeyValueStorage getComposedSegmentStorage(final List<SegmentIdentifier> segments) {
+    return null;
+  }
+
+  @Override
+  public Optional<byte[]> get(final S segmentIdentifier, final byte[] key) throws StorageException {
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      return hashValueStore.getOrDefault(Bytes.wrap(key), Optional.empty());
+      return hashValueStore.computeIfAbsent(segmentIdentifier, s -> new HashMap<>())
+          .getOrDefault(Bytes.wrap(key), Optional.empty());
     } finally {
       lock.unlock();
     }
   }
 
   @Override
-  public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
-    return stream()
+  public Set<byte[]> getAllKeysThat(final S segmentIdentifier, final Predicate<byte[]> returnCondition) {
+    return stream(segmentIdentifier)
         .filter(pair -> returnCondition.test(pair.getKey()))
         .map(Pair::getKey)
         .collect(toUnmodifiableSet());
   }
 
   @Override
-  public Set<byte[]> getAllValuesFromKeysThat(final Predicate<byte[]> returnCondition) {
-    return stream()
+  public Set<byte[]> getAllValuesFromKeysThat(final S segmentIdentifier, final Predicate<byte[]> returnCondition) {
+    return stream(segmentIdentifier)
         .filter(pair -> returnCondition.test(pair.getKey()))
         .map(Pair::getValue)
         .collect(toUnmodifiableSet());
   }
 
   @Override
-  public Stream<Pair<byte[], byte[]>> stream() {
+  public Stream<Pair<byte[], byte[]>> stream(final S segmentIdentifier) {
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      return ImmutableSet.copyOf(hashValueStore.entrySet()).stream()
+      return ImmutableSet.copyOf(
+          hashValueStore.computeIfAbsent(segmentIdentifier, s -> new HashMap<>())
+              .entrySet())
+          .stream()
           .filter(bytesEntry -> bytesEntry.getValue().isPresent())
-          .map(
-              bytesEntry ->
-                  Pair.of(bytesEntry.getKey().toArrayUnsafe(), bytesEntry.getValue().get()));
+          .map(bytesEntry -> Pair.of(bytesEntry.getKey().toArrayUnsafe(), bytesEntry.getValue().get()));
     } finally {
       lock.unlock();
     }
   }
 
   @Override
-  public Stream<Pair<byte[], byte[]>> streamFromKey(final byte[] startKey) {
-    return stream().filter(e -> Bytes.wrap(startKey).compareTo(Bytes.wrap(e.getKey())) <= 0);
+  public Stream<Pair<byte[], byte[]>> streamFromKey(final S segmentIdentifier, final byte[] startKey) {
+    return stream(segmentIdentifier).filter(e -> Bytes.wrap(startKey).compareTo(Bytes.wrap(e.getKey())) <= 0);
   }
 
   @Override
-  public Stream<byte[]> streamKeys() {
+  public Stream<byte[]> streamKeys(final S segmentIdentifier) {
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      return ImmutableSet.copyOf(hashValueStore.entrySet()).stream()
+      return ImmutableMap.copyOf(hashValueStore.computeIfAbsent(segmentIdentifier, s -> new HashMap<>()))
+          .entrySet()
+          .stream()
+          .filter(bytesEntry -> bytesEntry.getValue().isPresent())
           .map(bytesEntry -> bytesEntry.getKey().toArrayUnsafe());
     } finally {
       lock.unlock();
@@ -138,11 +140,12 @@ public class InMemoryKeyValueStorage
   }
 
   @Override
-  public boolean tryDelete(final byte[] key) {
+  public boolean tryDelete(final S segmentIdentifier, final byte[] key) {
     final Lock lock = rwLock.writeLock();
     if (lock.tryLock()) {
       try {
-        hashValueStore.remove(Bytes.wrap(key));
+        Optional.ofNullable(hashValueStore.get(segmentIdentifier))
+            .ifPresent(store -> store.remove(Bytes.wrap(key)));
       } finally {
         lock.unlock();
       }
@@ -156,7 +159,7 @@ public class InMemoryKeyValueStorage
 
   @Override
   public KeyValueStorageTransaction startTransaction() {
-    return new KeyValueStorageTransactionValidatorDecorator(new InMemoryTransaction());
+    return new KeyValueStorageTransactionValidatorDecorator(new InMemoryKeyValueStorage.InMemoryTransaction());
   }
 
   @Override
@@ -164,18 +167,9 @@ public class InMemoryKeyValueStorage
     return false;
   }
 
-  /**
-   * Key set.
-   *
-   * @return the set of keys
-   */
-  public Set<Bytes> keySet() {
-    return Set.copyOf(hashValueStore.keySet());
-  }
-
   @Override
-  public SnappedKeyValueStorage takeSnapshot() {
-    return new InMemoryKeyValueStorage(new HashMap<>(hashValueStore));
+  public SnappedSegmentedKeyValueStorage takeSnapshot() {
+    return new SegmentedInMemoryKeyValueStorage(new HashMap<>(hashValueStore));
   }
 
   @Override
@@ -184,7 +178,7 @@ public class InMemoryKeyValueStorage
   }
 
   /** In memory transaction. */
-  public static class InMemoryTransaction implements KeyValueStorageTransaction {
+  public class InMemoryTransaction implements KeyValueStorageTransaction {
 
     /** protected access to updatedValues map for the transaction. */
     protected Map<Bytes, Optional<byte[]>> updatedValues = new HashMap<>();
@@ -208,7 +202,8 @@ public class InMemoryKeyValueStorage
       final Lock lock = rwLock.writeLock();
       lock.lock();
       try {
-        hashValueStore.putAll(updatedValues);
+        //TODO fix/adapt me to know about segments:
+//        hashValueStore.putAll(updatedValues);
         removedKeys.forEach(hashValueStore::remove);
         updatedValues = null;
         removedKeys = null;
@@ -221,28 +216,6 @@ public class InMemoryKeyValueStorage
     public void rollback() {
       updatedValues.clear();
       removedKeys.clear();
-    }
-  }
-
-  /**
-   * Dump.
-   *
-   * @param ps the PrintStream where to report the dump
-   */
-  public void dump(final PrintStream ps) {
-    final Lock lock = rwLock.readLock();
-    lock.lock();
-    try {
-      ImmutableSet.copyOf(hashValueStore.entrySet()).stream()
-          .filter(bytesEntry -> bytesEntry.getValue().isPresent())
-          .forEach(
-              entry ->
-                  ps.printf(
-                      "  %s : %s%n",
-                      entry.getKey().toHexString(),
-                      Bytes.wrap(entry.getValue().get()).toHexString()));
-    } finally {
-      lock.unlock();
     }
   }
 }
