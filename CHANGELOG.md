@@ -5,7 +5,7 @@
 
 ### Breaking Changes
 
-- Deprecated version 0 of the database as it is no longer used by any active nodes.
+- Removed support for version 0 of the database as it is no longer used by any active node.
 
 ### Additions and Improvements
 - EvmTool now executes the `execution-spec-tests` via the `t8n` and `b11r`. See the [README](ethereum/evmtool/README.md) in EvmTool for more instructions.
