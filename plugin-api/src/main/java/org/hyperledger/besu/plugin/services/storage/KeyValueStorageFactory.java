@@ -68,7 +68,7 @@ public interface KeyValueStorageFactory<S> extends Closeable {
    * @return the storage instance reserved for the given segment.
    * @exception StorageException problem encountered when creating storage for the segment.
    */
-  SegmentedKeyValueStorage<S> create(
+  SegmentedKeyValueStorage create(
       List<SegmentIdentifier> segments, BesuConfiguration configuration, MetricsSystem metricsSystem)
       throws StorageException;
 
@@ -90,7 +90,5 @@ public interface KeyValueStorageFactory<S> extends Closeable {
    * @return <code>true</code> when the created storage supports snapshots <code>false</code> when
    *     it does not.
    */
-  default boolean isSnapshotIsolationSupported() {
-    return false;
-  }
+  boolean isSnapshotIsolationSupported();
 }

@@ -14,13 +14,14 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
-import static java.util.Objects.requireNonNullElse;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbIterator;
@@ -41,9 +42,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.tuweni.bytes.Bytes;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.BloomFilter;
 import org.rocksdb.ColumnFamilyDescriptor;
@@ -67,7 +66,7 @@ import org.slf4j.LoggerFactory;
 
 /** The RocksDb columnar key value storage. */
 public abstract class RocksDBColumnarKeyValueStorage
-    implements SegmentedKeyValueStorage<RocksDbSegmentIdentifier> {
+    implements SegmentedKeyValueStorage, SnappableKeyValueStorage<SegmentedKeyValueStorageTransaction> {
 
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBColumnarKeyValueStorage.class);
   static final String DEFAULT_COLUMN = "default";
@@ -108,7 +107,7 @@ public abstract class RocksDBColumnarKeyValueStorage
   protected RocksDBMetrics metrics;
 
   /** Map of the columns handles by name */
-  protected Map<String, RocksDbSegmentIdentifier> columnHandlesByName;
+  protected Map<SegmentIdentifier, RocksDbSegmentIdentifier> columnHandlesBySegmentIdentifier;
   /** Column descriptors */
   protected List<ColumnFamilyDescriptor> columnDescriptors;
   /** Column handles */
@@ -208,21 +207,26 @@ public abstract class RocksDBColumnarKeyValueStorage
     metrics = rocksDBMetricsFactory.create(metricsSystem, configuration, getDB(), stats);
   }
 
-  void initColumnHandler() throws RocksDBException {
-
-    Map<Bytes, String> segmentsById =
+  void initColumnHandles() throws RocksDBException {
+    // will not include the DEFAULT columnHandle, we do not use it:
+    columnHandlesBySegmentIdentifier =
         trimmedSegments.stream()
             .collect(
                 Collectors.toMap(
-                    segment -> Bytes.wrap(segment.getId()), SegmentIdentifier::getName));
-    final ImmutableMap.Builder<String, RocksDbSegmentIdentifier> builder = ImmutableMap.builder();
-
-    for (ColumnFamilyHandle columnHandle : columnHandles) {
-      final String segmentName =
-          requireNonNullElse(segmentsById.get(Bytes.wrap(columnHandle.getName())), DEFAULT_COLUMN);
-      builder.put(segmentName, new RocksDbSegmentIdentifier(getDB(), columnHandle));
-    }
-    columnHandlesByName = builder.build();
+                    segmentId -> segmentId,
+                    segment -> {
+                      var columnHandle = columnHandles.stream()
+                          .filter(ch -> {
+                            try {
+                              return ch.getName() == segment.getId();
+                            } catch (RocksDBException e) {
+                              throw new RuntimeException(e);
+                            }
+                          })
+                          .findFirst()
+                          .orElseThrow(() -> new RuntimeException("Column handle not found for segment " + segment.getName()));
+                      return new RocksDbSegmentIdentifier(getDB(), columnHandle);
+                    }));
   }
 
   BlockBasedTableConfig createBlockBasedTableConfig(final RocksDBConfiguration config) {
@@ -238,55 +242,52 @@ public abstract class RocksDBColumnarKeyValueStorage
         .setBlockSize(ROCKSDB_BLOCK_SIZE);
   }
 
-  @Override
-  public RocksDbSegmentIdentifier getSegmentIdentifierByName(final SegmentIdentifier segment) {
-    return columnHandlesByName.get(segment.getName());
+  ColumnFamilyHandle safeColumnHandle(final SegmentIdentifier segment) {
+    RocksDbSegmentIdentifier safeRef = columnHandlesBySegmentIdentifier.get(segment);
+    if (safeRef == null) {
+      throw new RuntimeException("Column handle not found for segment " + segment.getName());
+    }
+    return safeRef.get();
   }
 
   @Override
-  public SegmentedKeyValueStorage getComposedSegmentStorage(final List<SegmentIdentifier> segments) {
-    //TODO: write me
-    return null;
-  }
-
-  @Override
-  public Optional<byte[]> get(final RocksDbSegmentIdentifier segment, final byte[] key)
+  public Optional<byte[]> get(final SegmentIdentifier segment, final byte[] key)
       throws StorageException {
     throwIfClosed();
 
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
-      return Optional.ofNullable(getDB().get(segment.get(), readOptions, key));
+      return Optional.ofNullable(getDB().get(safeColumnHandle(segment), readOptions, key));
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
   }
 
   @Override
-  public Stream<Pair<byte[], byte[]>> stream(final RocksDbSegmentIdentifier segmentHandle) {
-    final RocksIterator rocksIterator = getDB().newIterator(segmentHandle.get());
+  public Stream<Pair<byte[], byte[]>> stream(final SegmentIdentifier segmentIdentifier) {
+    final RocksIterator rocksIterator = getDB().newIterator(safeColumnHandle(segmentIdentifier));
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStream();
   }
 
   @Override
   public Stream<Pair<byte[], byte[]>> streamFromKey(
-      final RocksDbSegmentIdentifier segmentHandle, final byte[] startKey) {
-    final RocksIterator rocksIterator = getDB().newIterator(segmentHandle.get());
+      final SegmentIdentifier segmentIdentifier, final byte[] startKey) {
+    final RocksIterator rocksIterator = getDB().newIterator(safeColumnHandle(segmentIdentifier));
     rocksIterator.seek(startKey);
     return RocksDbIterator.create(rocksIterator).toStream();
   }
 
   @Override
-  public Stream<byte[]> streamKeys(final RocksDbSegmentIdentifier segmentHandle) {
-    final RocksIterator rocksIterator = getDB().newIterator(segmentHandle.get());
+  public Stream<byte[]> streamKeys(final SegmentIdentifier segmentIdentifier) {
+    final RocksIterator rocksIterator = getDB().newIterator(safeColumnHandle(segmentIdentifier));
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStreamKeys();
   }
 
   @Override
-  public boolean tryDelete(final RocksDbSegmentIdentifier segmentHandle, final byte[] key) {
+  public boolean tryDelete(final SegmentIdentifier segmentIdentifier, final byte[] key) {
     try {
-      getDB().delete(segmentHandle.get(), tryDeleteOptions, key);
+      getDB().delete(safeColumnHandle(segmentIdentifier), tryDeleteOptions, key);
       return true;
     } catch (RocksDBException e) {
       if (e.getStatus().getCode() == Status.Code.Incomplete) {
@@ -299,8 +300,8 @@ public abstract class RocksDBColumnarKeyValueStorage
 
   @Override
   public Set<byte[]> getAllKeysThat(
-      final RocksDbSegmentIdentifier segmentHandle, final Predicate<byte[]> returnCondition) {
-    return stream(segmentHandle)
+      final SegmentIdentifier segmentIdentifier, final Predicate<byte[]> returnCondition) {
+    return stream(segmentIdentifier)
         .filter(pair -> returnCondition.test(pair.getKey()))
         .map(Pair::getKey)
         .collect(toUnmodifiableSet());
@@ -308,19 +309,16 @@ public abstract class RocksDBColumnarKeyValueStorage
 
   @Override
   public Set<byte[]> getAllValuesFromKeysThat(
-      final RocksDbSegmentIdentifier segmentHandle, final Predicate<byte[]> returnCondition) {
-    return stream(segmentHandle)
+      final SegmentIdentifier segmentIdentifier, final Predicate<byte[]> returnCondition) {
+    return stream(segmentIdentifier)
         .filter(pair -> returnCondition.test(pair.getKey()))
         .map(Pair::getValue)
         .collect(toUnmodifiableSet());
   }
 
   @Override
-  public void clear(final RocksDbSegmentIdentifier segmentHandle) {
-
-    columnHandlesByName.values().stream()
-        .filter(e -> e.equals(segmentHandle))
-        .findAny()
+  public void clear(final SegmentIdentifier segmentIdentifier) {
+    Optional.ofNullable(columnHandlesBySegmentIdentifier.get(segmentIdentifier))
         .ifPresent(RocksDbSegmentIdentifier::reset);
   }
 
@@ -330,7 +328,7 @@ public abstract class RocksDBColumnarKeyValueStorage
       txOptions.close();
       options.close();
       tryDeleteOptions.close();
-      columnHandlesByName.values().stream()
+      columnHandlesBySegmentIdentifier.values().stream()
           .map(RocksDbSegmentIdentifier::get)
           .forEach(ColumnFamilyHandle::close);
       getDB().close();

@@ -56,7 +56,6 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory<Roc
 
   private final int defaultVersion;
   private Integer databaseVersion;
-  private Boolean isSegmentIsolationSupported;
   private RocksDBColumnarKeyValueStorage segmentedStorage;
   private RocksDBConfiguration rocksDBConfiguration;
 
@@ -236,7 +235,6 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory<Roc
               + " could not be found. You may not have the appropriate permission to access the item.";
       throw new StorageException(message, e);
     }
-    isSegmentIsolationSupported = databaseVersion >= 1;
     rocksDBConfiguration =
         RocksDBConfigurationBuilder.from(configuration.get())
             .databaseDir(storagePath(commonConfiguration))
@@ -285,9 +283,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory<Roc
 
   @Override
   public boolean isSegmentIsolationSupported() {
-    return checkNotNull(
-        isSegmentIsolationSupported,
-        "Whether segment isolation is supported will be determined during creation. Call a creation method first");
+    return true;
   }
 
   @Override

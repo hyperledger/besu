@@ -25,9 +25,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +35,8 @@ public class InMemoryStoragePlugin implements BesuPlugin {
 
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryStoragePlugin.class);
   private BesuContext context;
-  private MemoryKeyValueStorageFactory factory;
-  private MemoryKeyValueStorageFactory privacyFactory;
+  private InMemoryKeyValueStorageFactory factory;
+  private InMemoryKeyValueStorageFactory privacyFactory;
 
   @Override
   public void register(final BesuContext context) {
@@ -75,8 +73,8 @@ public class InMemoryStoragePlugin implements BesuPlugin {
 
   private void createAndRegister(final StorageService service) {
 
-    factory = new MemoryKeyValueStorageFactory("memory");
-    privacyFactory = new MemoryKeyValueStorageFactory("memory-privacy");
+    factory = new InMemoryKeyValueStorageFactory("memory");
+    privacyFactory = new InMemoryKeyValueStorageFactory("memory-privacy");
 
     service.registerKeyValueStorage(factory);
     service.registerKeyValueStorage(privacyFactory);
@@ -91,17 +89,16 @@ public class InMemoryStoragePlugin implements BesuPlugin {
   }
 
   /** The Memory key value storage factory. */
-  public static class MemoryKeyValueStorageFactory implements KeyValueStorageFactory<SegmentIdentifier> {
+  public static class InMemoryKeyValueStorageFactory implements KeyValueStorageFactory<SegmentIdentifier> {
 
     private final String name;
-    private final Map<SegmentIdentifier, InMemoryKeyValueStorage> storageMap = new HashMap<>();
 
     /**
      * Instantiates a new Memory key value storage factory.
      *
      * @param name the name
      */
-    public MemoryKeyValueStorageFactory(final String name) {
+    public InMemoryKeyValueStorageFactory(final String name) {
       this.name = name;
     }
 
@@ -116,13 +113,12 @@ public class InMemoryStoragePlugin implements BesuPlugin {
         final BesuConfiguration configuration,
         final MetricsSystem metricsSystem)
         throws StorageException {
-      return storageMap.computeIfAbsent(segment, __ -> new InMemoryKeyValueStorage());
+      return new InMemoryKeyValueStorage();
     }
 
     @Override
-    public SegmentedKeyValueStorage<SegmentIdentifier> create(final List<SegmentIdentifier> segments, final BesuConfiguration configuration, final MetricsSystem metricsSystem) throws StorageException {
-      //TODO: write me
-      return null;
+    public SegmentedKeyValueStorage create(final List<SegmentIdentifier> segments, final BesuConfiguration configuration, final MetricsSystem metricsSystem) throws StorageException {
+      return new SegmentedInMemoryKeyValueStorage();
     }
 
     @Override
@@ -131,8 +127,13 @@ public class InMemoryStoragePlugin implements BesuPlugin {
     }
 
     @Override
+    public boolean isSnapshotIsolationSupported() {
+      return true;
+    }
+
+    @Override
     public void close() {
-      storageMap.clear();
+      // Nothing to do
     }
   }
 }

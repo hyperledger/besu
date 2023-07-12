@@ -19,9 +19,9 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -34,77 +34,76 @@ import org.slf4j.LoggerFactory;
 /**
  * This class will adapt a SegmentedKeyValueStorage to a KeyValueStorage instance.
  *
- * @param <S> type parameter for the segment handle
  */
-public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
+public class SegmentedKeyValueStorageAdapter implements KeyValueStorage {
 
   private static final Logger LOG = LoggerFactory.getLogger(SegmentedKeyValueStorageAdapter.class);
-  private final S segmentHandle;
-  private final SegmentedKeyValueStorage<S> storage;
+  private final SegmentIdentifier segmentIdentifier;
+  protected final SegmentedKeyValueStorage storage;
 
   /**
    * Instantiates a new Segmented key value storage adapter for a single segment.
    *
-   * @param segment the segment
+   * @param segmentIdentifier the segmentIdentifier to wrap as a KeyValueStorage
    * @param storage the storage
    */
   public SegmentedKeyValueStorageAdapter(
-      final SegmentIdentifier segment, final SegmentedKeyValueStorage<S> storage) {
-    segmentHandle = storage.getSegmentIdentifierByName(segment);
+      final SegmentIdentifier segmentIdentifier, final SegmentedKeyValueStorage storage) {
+    this.segmentIdentifier = segmentIdentifier;
     this.storage = storage;
   }
 
   @Override
   public void clear() {
     throwIfClosed();
-    storage.clear(segmentHandle);
+    storage.clear(segmentIdentifier);
   }
 
   @Override
   public boolean containsKey(final byte[] key) throws StorageException {
     throwIfClosed();
-    return storage.containsKey(segmentHandle, key);
+    return storage.containsKey(segmentIdentifier, key);
   }
 
   @Override
   public Optional<byte[]> get(final byte[] key) throws StorageException {
     throwIfClosed();
-    return storage.get(segmentHandle, key);
+    return storage.get(segmentIdentifier, key);
   }
 
   @Override
   public Set<byte[]> getAllKeysThat(final Predicate<byte[]> returnCondition) {
     throwIfClosed();
-    return storage.getAllKeysThat(segmentHandle, returnCondition);
+    return storage.getAllKeysThat(segmentIdentifier, returnCondition);
   }
 
   @Override
   public Set<byte[]> getAllValuesFromKeysThat(final Predicate<byte[]> returnCondition) {
     throwIfClosed();
-    return storage.getAllValuesFromKeysThat(segmentHandle, returnCondition);
+    return storage.getAllValuesFromKeysThat(segmentIdentifier, returnCondition);
   }
 
   @Override
   public Stream<Pair<byte[], byte[]>> stream() {
     throwIfClosed();
-    return storage.stream(segmentHandle);
+    return storage.stream(segmentIdentifier);
   }
 
   @Override
   public Stream<Pair<byte[], byte[]>> streamFromKey(final byte[] startKey) throws StorageException {
-    return storage.streamFromKey(segmentHandle, startKey);
+    return storage.streamFromKey(segmentIdentifier, startKey);
   }
 
   @Override
   public Stream<byte[]> streamKeys() {
     throwIfClosed();
-    return storage.streamKeys(segmentHandle);
+    return storage.streamKeys(segmentIdentifier);
   }
 
   @Override
   public boolean tryDelete(final byte[] key) {
     throwIfClosed();
-    return storage.tryDelete(segmentHandle, key);
+    return storage.tryDelete(segmentIdentifier, key);
   }
 
   @Override
@@ -114,7 +113,7 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
 
   @Override
   public KeyValueStorageTransaction startTransaction() throws StorageException {
-    return storage.startTransaction();
+    return new KeyValueStorageTransactionAdapter(segmentIdentifier, storage);
   }
 
   @Override
@@ -126,6 +125,37 @@ public class SegmentedKeyValueStorageAdapter<S> implements KeyValueStorage {
     if (storage.isClosed()) {
       LOG.error("Attempting to use a closed Storage instance.");
       throw new StorageException("Storage has been closed");
+    }
+  }
+
+  public static class KeyValueStorageTransactionAdapter implements KeyValueStorageTransaction {
+    private final SegmentedKeyValueStorageTransaction segmentedTransaction;
+    private final SegmentIdentifier segmentIdentifier;
+
+    public KeyValueStorageTransactionAdapter(final SegmentIdentifier segmentIdentifier, final SegmentedKeyValueStorage storage) {
+      this.segmentedTransaction = storage.startTransaction();
+      this.segmentIdentifier = segmentIdentifier;
+    }
+
+    @Override
+    public void put(final byte[] key, final byte[] value) {
+      segmentedTransaction.put(segmentIdentifier, key, value);
+    }
+
+    @Override
+    public void remove(final byte[] key) {
+      segmentedTransaction.remove(segmentIdentifier, key);
+
+    }
+
+    @Override
+    public void commit() throws StorageException {
+      segmentedTransaction.commit();
+    }
+
+    @Override
+    public void rollback() {
+      segmentedTransaction.rollback();
     }
   }
 }

@@ -81,6 +81,11 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
   }
 
   @Override
+  public boolean isSnapshotIsolationSupported() {
+    return publicFactory.isSegmentIsolationSupported();
+  }
+
+  @Override
   public void close() throws IOException {
     publicFactory.close();
   }

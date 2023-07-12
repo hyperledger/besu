@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
@@ -53,19 +54,17 @@ public class RocksDBColumnarKeyValueSnapshot implements SnappedKeyValueStorage {
    * Instantiates a new RocksDb columnar key value snapshot.
    *
    * @param db the db
-   * @param segment the segment
    * @param metrics the metrics
    */
   RocksDBColumnarKeyValueSnapshot(
       final OptimisticTransactionDB db,
-      final RocksDbSegmentIdentifier segment,
       final RocksDBMetrics metrics) {
     this.db = db;
     this.snapTx = new RocksDBSnapshotTransaction(db, segment.get(), metrics);
   }
 
   @Override
-  public Optional<byte[]> get(final byte[] key) throws StorageException {
+  public Optional<SegmentIdentifier segmentIdentifier, byte[]> get(final byte[] key) throws StorageException {
     throwIfClosed();
     return snapTx.get(key);
   }

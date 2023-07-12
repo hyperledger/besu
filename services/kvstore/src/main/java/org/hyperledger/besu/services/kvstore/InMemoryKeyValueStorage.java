@@ -19,8 +19,6 @@ import static java.util.stream.Collectors.toUnmodifiableSet;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.io.PrintStream;
 import java.util.HashMap;
@@ -38,9 +36,11 @@ import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 
-/** The In memory key value storage. */
-public class InMemoryKeyValueStorage
-    implements SnappedKeyValueStorage, SnappableKeyValueStorage, KeyValueStorage {
+/**
+ * Unsegmented In memory key value storage.  This class will be deprecated in favor of InMemoryKeyValueStorageAdapter.
+ *
+ */
+public class InMemoryKeyValueStorage implements KeyValueStorage {
 
   /** protected access for the backing hash map. */
   protected final Map<Bytes, Optional<byte[]>> hashValueStore;
@@ -156,7 +156,7 @@ public class InMemoryKeyValueStorage
 
   @Override
   public KeyValueStorageTransaction startTransaction() {
-    return new KeyValueStorageTransactionValidatorDecorator(new InMemoryTransaction());
+    return new InMemoryTransaction();
   }
 
   @Override
@@ -173,18 +173,8 @@ public class InMemoryKeyValueStorage
     return Set.copyOf(hashValueStore.keySet());
   }
 
-  @Override
-  public SnappedKeyValueStorage takeSnapshot() {
-    return new InMemoryKeyValueStorage(new HashMap<>(hashValueStore));
-  }
-
-  @Override
-  public KeyValueStorageTransaction getSnapshotTransaction() {
-    return startTransaction();
-  }
-
   /** In memory transaction. */
-  public static class InMemoryTransaction implements KeyValueStorageTransaction {
+  public class InMemoryTransaction implements KeyValueStorageTransaction {
 
     /** protected access to updatedValues map for the transaction. */
     protected Map<Bytes, Optional<byte[]>> updatedValues = new HashMap<>();
