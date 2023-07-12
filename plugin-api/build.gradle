@@ -30,8 +30,8 @@ jar {
 dependencies {
   api project(':datatypes')
   api 'org.apache.commons:commons-lang3'
-  api 'org.apache.tuweni:tuweni-bytes'
-  api 'org.apache.tuweni:tuweni-units'
+  api 'io.tmio:tuweni-bytes'
+  api 'io.tmio:tuweni-units'
   implementation 'com.google.guava:guava'
   implementation project(':evm')
 }
