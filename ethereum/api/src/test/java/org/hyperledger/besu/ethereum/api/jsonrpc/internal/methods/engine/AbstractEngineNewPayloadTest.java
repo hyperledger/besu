@@ -77,7 +77,6 @@ import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes32;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -183,10 +182,6 @@ public abstract class AbstractEngineNewPayloadTest {
         .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.empty());
-    if (validateTerminalPoWBlock()) {
-      when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
-          .thenReturn(true);
-    }
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
@@ -268,10 +263,6 @@ public abstract class AbstractEngineNewPayloadTest {
         .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
-    if (validateTerminalPoWBlock()) {
-      when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
-          .thenReturn(true);
-    }
     when(mergeCoordinator.rememberBlock(any())).thenThrow(new MerkleTrieException("missing leaf"));
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
@@ -370,14 +361,6 @@ public abstract class AbstractEngineNewPayloadTest {
     assertThat(res.getStatusAsString()).isEqualTo(SYNCING.name());
     assertThat(res.getError()).isNull();
     verify(engineCallListener, times(1)).executionEngineCalled();
-  }
-
-  @Test
-  @Ignore
-  public void shouldRespondWithInvalidTerminalPowBlock() {
-    // TODO: implement this as part of https://github.com/hyperledger/besu/issues/3141
-    // mergeContext is a mock
-    //    assertThat(mergeContext.getTerminalTotalDifficulty()).isNull();
   }
 
   @Test
@@ -625,16 +608,8 @@ public abstract class AbstractEngineNewPayloadTest {
         .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
-    if (validateTerminalPoWBlock()) {
-      when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
-          .thenReturn(true);
-    }
     when(mergeCoordinator.rememberBlock(any())).thenReturn(value);
     return mockHeader;
-  }
-
-  protected boolean validateTerminalPoWBlock() {
-    return false;
   }
 
   protected ExecutionEngineJsonRpcMethod.EngineStatus getExpectedInvalidBlockHashStatus() {
