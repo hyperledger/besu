@@ -49,7 +49,6 @@ import org.hyperledger.besu.nat.NatService;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStoreException;
@@ -179,7 +178,7 @@ public class JsonRpcHttpServiceLoginTest {
 
     return new JsonRpcHttpService(
         vertx,
-        Files.createTempDirectory(folder, "tempDir"),
+        folder,
         config,
         new NoOpMetricsSystem(),
         natService,

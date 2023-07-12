@@ -74,7 +74,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 public class JsonRpcHttpServiceTlsTest {
-  @TempDir private static Path folder;
+  @TempDir private Path folder;
 
   protected static final Vertx vertx = Vertx.vertx();
 
@@ -139,7 +139,7 @@ public class JsonRpcHttpServiceTlsTest {
       throws Exception {
     return new JsonRpcHttpService(
         vertx,
-        Files.createTempDirectory(folder, "tempDir"),
+        Files.createTempDirectory(folder, "newFolder"),
         jsonRpcConfig,
         new NoOpMetricsSystem(),
         natService,
@@ -177,7 +177,7 @@ public class JsonRpcHttpServiceTlsTest {
 
   private Path createTempFile() {
     try {
-      return Files.createFile(folder.resolve("newFile"));
+      return Files.createFile(folder.resolve("tempFile"));
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
@@ -211,9 +211,11 @@ public class JsonRpcHttpServiceTlsTest {
       final ResponseBody body = response.body();
       assertThat(body).isNotNull();
       final JsonObject jsonObject = new JsonObject(body.string());
+      System.out.println(jsonObject);
       testHelper.assertValidJsonRpcResult(jsonObject, id);
       // Check result
       final String result = jsonObject.getString("result");
+      System.out.println(result);
       assertThat(result).isEqualTo(String.valueOf(CHAIN_ID));
     } catch (final Exception e) {
       e.printStackTrace();

@@ -35,14 +35,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
 import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,6 +52,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 public class WebSocketHostAllowlistTest {
 
   protected static Vertx vertx;
+  private VertxTestContext testContext;
   private final List<String> hostsAllowlist = Arrays.asList("ally", "friend");
 
   private final WebSocketConfiguration webSocketConfiguration =
@@ -66,6 +67,7 @@ public class WebSocketHostAllowlistTest {
   public void initServerAndClient() {
     webSocketConfiguration.setPort(0);
     vertx = Vertx.vertx();
+    testContext = new VertxTestContext();
 
     final Map<String, JsonRpcMethod> websocketMethods =
         new WebSocketMethodsFactory(
@@ -107,8 +109,8 @@ public class WebSocketHostAllowlistTest {
   }
 
   @Test
-  public void httpRequestWithDefaultHeaderAndDefaultConfigIsAccepted(final TestContext context) {
-    doHttpRequestAndVerify(context, "localhost:50012", 400);
+  public void httpRequestWithDefaultHeaderAndDefaultConfigIsAccepted() throws InterruptedException {
+    doHttpRequestAndVerify(testContext, "localhost:50012", 400);
   }
 
   @Test
@@ -117,8 +119,8 @@ public class WebSocketHostAllowlistTest {
   }
 
   @Test
-  public void httpRequestWithEmptyHeaderAndDefaultConfigIsRejected(final TestContext context) {
-    doHttpRequestAndVerify(context, "", 403);
+  public void httpRequestWithEmptyHeaderAndDefaultConfigIsRejected() throws InterruptedException {
+    doHttpRequestAndVerify(testContext, "", 403);
   }
 
   @Test
@@ -129,10 +131,10 @@ public class WebSocketHostAllowlistTest {
   }
 
   @Test
-  public void httpRequestWithAnyHostnameAndWildcardConfigIsAccepted(final TestContext context) {
+  public void httpRequestWithAnyHostnameAndWildcardConfigIsAccepted() throws InterruptedException {
     webSocketConfiguration.setHostsAllowlist(Collections.singletonList("*"));
-    doHttpRequestAndVerify(context, "ally", 400);
-    doHttpRequestAndVerify(context, "foe", 400);
+    doHttpRequestAndVerify(testContext, "ally", 400);
+    doHttpRequestAndVerify(testContext, "foe", 400);
   }
 
   @Test
@@ -144,11 +146,11 @@ public class WebSocketHostAllowlistTest {
   }
 
   @Test
-  public void httpRequestWithAllowedHostIsAccepted(final TestContext context) {
+  public void httpRequestWithAllowedHostIsAccepted() throws InterruptedException {
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
-    doHttpRequestAndVerify(context, "ally", 400);
-    doHttpRequestAndVerify(context, "ally:12345", 400);
-    doHttpRequestAndVerify(context, "friend", 400);
+    doHttpRequestAndVerify(testContext, "ally", 400);
+    doHttpRequestAndVerify(testContext, "ally:12345", 400);
+    doHttpRequestAndVerify(testContext, "friend", 400);
   }
 
   @Test
@@ -158,9 +160,9 @@ public class WebSocketHostAllowlistTest {
   }
 
   @Test
-  public void httpRequestWithUnknownHostIsRejected(final TestContext context) {
+  public void httpRequestWithUnknownHostIsRejected() throws InterruptedException {
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
-    doHttpRequestAndVerify(context, "foe", 403);
+    doHttpRequestAndVerify(testContext, "foe", 403);
   }
 
   @Test
@@ -174,17 +176,17 @@ public class WebSocketHostAllowlistTest {
   }
 
   @Test
-  public void httpRequestWithMalformedHostIsRejected(final TestContext context) {
+  public void httpRequestWithMalformedHostIsRejected() throws InterruptedException {
     webSocketConfiguration.setAuthenticationEnabled(false);
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
-    doHttpRequestAndVerify(context, "ally:friend", 400);
-    doHttpRequestAndVerify(context, "ally:123456", 403);
-    doHttpRequestAndVerify(context, "ally:friend:1234", 403);
+    doHttpRequestAndVerify(testContext, "ally:friend", 400);
+    doHttpRequestAndVerify(testContext, "ally:123456", 403);
+    doHttpRequestAndVerify(testContext, "ally:friend:1234", 403);
   }
 
   private void doHttpRequestAndVerify(
-      final TestContext context, final String hostname, final int expectedResponse) {
-    final Async async = context.async();
+      final VertxTestContext testContext, final String hostname, final int expectedResponse)
+      throws InterruptedException {
 
     httpClient.request(
         HttpMethod.POST,
@@ -199,9 +201,9 @@ public class WebSocketHostAllowlistTest {
               .send(
                   response -> {
                     assertThat(response.result().statusCode()).isEqualTo(expectedResponse);
-                    async.complete();
+                    testContext.completeNow();
                   });
         });
-    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+    testContext.awaitCompletion(VERTX_AWAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
   }
 }

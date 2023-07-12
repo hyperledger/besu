@@ -93,7 +93,6 @@ dependencies {
   testImplementation 'com.squareup.okhttp3:okhttp'
   testImplementation 'io.vertx:vertx-auth-jwt'
   testImplementation 'io.vertx:vertx-junit5'
-  testImplementation 'io.vertx:vertx-unit'
   testImplementation 'io.vertx:vertx-web-client'
   testImplementation 'org.apache.logging.log4j:log4j-core'
   testImplementation 'org.assertj:assertj-core'

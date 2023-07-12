@@ -57,13 +57,13 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
   private static final Pattern GAS_MATCH_FOR_TRACE =
       Pattern.compile("\"gasUsed\":\"[x0-9a-fA-F]+\",");
 
+  private URL specURL;
+
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("specs")
-  public void jsonRPCCallWithSpecFile(final Object[][] result) throws Exception {
-    for (Object[] spec : result) {
-      URL fileURL = (URL) spec[1];
-      jsonRPCCall(fileURL);
-    }
+  public void jsonRPCCallWithSpecFile(final String specName, final URL specURL) throws Exception {
+    this.specURL = specURL;
+    jsonRPCCall(this.specURL);
   }
 
   /**

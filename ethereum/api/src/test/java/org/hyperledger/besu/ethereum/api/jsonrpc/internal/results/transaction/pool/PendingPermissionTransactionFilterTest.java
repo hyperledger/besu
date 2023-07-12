@@ -38,7 +38,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -91,33 +90,20 @@ public class PendingPermissionTransactionFilterTest {
 
   private final PendingTransactionFilter pendingTransactionFilter = new PendingTransactionFilter();
 
-  private final List<Filter> filters;
-  private final int limit;
-  private final List<String> expectedListOfTransactionHash;
-
-  public PendingPermissionTransactionFilterTest(
+  @ParameterizedTest
+  @MethodSource("data")
+  public void PendingPermissionTransactionFilterTest(
       final List<Filter> filters,
       final int limit,
       final List<String> expectedListOfTransactionHash) {
-    this.filters = filters;
-    this.limit = limit;
-    this.expectedListOfTransactionHash =
-        expectedListOfTransactionHash.stream()
-            .map(Hash::fromHexStringLenient)
-            .map(Hash::toHexString)
-            .collect(Collectors.toList());
-  }
-
-  @ParameterizedTest
-  @MethodSource("data")
-  public void localAndRemoteAddressShouldNotStartWithForwardSlash() {
 
     final Collection<Transaction> filteredList =
         pendingTransactionFilter.reduce(getPendingTransactions(), filters, limit);
 
     assertThat(filteredList.size()).isEqualTo(expectedListOfTransactionHash.size());
     for (Transaction trx : filteredList) {
-      assertThat(expectedListOfTransactionHash).contains(trx.getHash().toHexString());
+      assertThat(expectedListOfTransactionHash)
+          .contains(String.valueOf(trx.getHash().toBigInteger()));
     }
   }
 

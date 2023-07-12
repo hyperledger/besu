@@ -68,7 +68,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 public class JsonRpcHttpServiceHostAllowlistTest {
 
-  @TempDir private static Path folder;
+  @TempDir private Path folder;
 
   protected static final Vertx vertx = Vertx.vertx();
 

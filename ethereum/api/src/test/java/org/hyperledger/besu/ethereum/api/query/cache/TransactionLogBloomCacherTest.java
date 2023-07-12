@@ -36,6 +36,7 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -51,12 +52,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 @SuppressWarnings("unused")
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class TransactionLogBloomCacherTest {
 
-  @TempDir private static Path cacheDir;
+  @TempDir private Path cacheDir;
 
   private Hash testHash;
   private static LogsBloomFilter testLogsBloomFilter;
@@ -126,14 +130,14 @@ public class TransactionLogBloomCacherTest {
   public void shouldSplitLogsIntoSeveralFiles() {
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(200003L);
-    assertThat(cacheDir.getRoot().toFile().list().length).isEqualTo(0);
+    assertThat(cacheDir.toFile().list().length).isEqualTo(0);
     transactionLogBloomCacher.cacheAll();
-    assertThat(cacheDir.getRoot().toFile().list().length).isEqualTo(2);
+    assertThat(cacheDir.toFile().list().length).isEqualTo(2);
   }
 
   @Test
   public void shouldUpdateCacheWhenBlockAdded() throws IOException {
-    final File logBloom = cacheDir.resolve("logBloom-0.cache").toFile();
+    final File logBloom = Files.createFile(cacheDir.resolve("logBloom-0.cache")).toFile();
 
     createLogBloomCache(logBloom);
 
@@ -145,12 +149,12 @@ public class TransactionLogBloomCacherTest {
         header, Optional.empty(), Optional.of(logBloom));
 
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 4);
-    assertThat(cacheDir.getRoot().toFile().list().length).isEqualTo(1);
+    assertThat(cacheDir.toFile().list().length).isEqualTo(1);
   }
 
   @Test
   public void shouldReloadCacheWhenBLockIsMissing() throws IOException {
-    final File logBloom = cacheDir.resolve("logBloom-0.cache").toFile();
+    final File logBloom = Files.createFile(cacheDir.resolve("logBloom-0.cache")).toFile();
 
     createLogBloomCache(logBloom);
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 3);
@@ -169,31 +173,32 @@ public class TransactionLogBloomCacherTest {
     }
 
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 5);
-    assertThat(cacheDir.getRoot().toFile().list().length).isEqualTo(1);
+    assertThat(cacheDir.toFile().list().length).isEqualTo(1);
   }
 
   @Test
   public void shouldReloadCacheWhenFileIsInvalid() throws IOException {
-    final File logBloom = cacheDir.resolve("logBloom-0.cache").toFile();
-    final File logBloom1 = cacheDir.resolve("logBloom-1.cache").toFile();
+    final File logBloom = Files.createFile(cacheDir.resolve("logBloom-0.cache")).toFile();
+
+    final File logBloom1 = Files.createFile(cacheDir.resolve("logBloom-1.cache")).toFile();
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(100003L);
     assertThat(logBloom.length()).isEqualTo(0);
     assertThat(logBloom1.length()).isEqualTo(0);
 
-    assertThat(cacheDir.getRoot().toFile().list().length).isEqualTo(2);
+    assertThat(cacheDir.toFile().list().length).isEqualTo(2);
 
     transactionLogBloomCacher.cacheAll();
 
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * BLOCKS_PER_BLOOM_CACHE);
     assertThat(logBloom1.length()).isEqualTo(0);
 
-    assertThat(cacheDir.getRoot().toFile().list().length).isEqualTo(2);
+    assertThat(cacheDir.toFile().list().length).isEqualTo(2);
   }
 
   @Test
   public void shouldUpdateCacheWhenChainReorgFired() throws IOException {
-    final File logBloom = cacheDir.resolve("logBloom-0.cache").toFile();
+    final File logBloom = Files.createFile(cacheDir.resolve("logBloom-0.cache")).toFile();
 
     final List<BlockHeader> firstBranch = new ArrayList<>();
 
@@ -228,7 +233,7 @@ public class TransactionLogBloomCacherTest {
         forkBranch.get(1), Optional.empty(), Optional.of(logBloom));
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 2);
 
-    assertThat(cacheDir.getRoot().toFile().list().length).isEqualTo(1);
+    assertThat(cacheDir.toFile().list().length).isEqualTo(1);
   }
 
   private void createLogBloomCache(final File logBloom) throws IOException {

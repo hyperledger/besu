@@ -216,7 +216,7 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
 
   private Path createTempFile() {
     try {
-      return Files.createFile(folder.resolve("newFile"));
+      return Files.createTempFile(folder, "newFile", "");
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }

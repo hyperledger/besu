@@ -34,15 +34,16 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.http.WebSocketFrame;
 import io.vertx.core.json.Json;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
 import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,6 +54,7 @@ import org.mockito.stubbing.Answer;
 public class EthUnsubscribeIntegrationTest {
 
   private Vertx vertx;
+  private VertxTestContext testContext;
   private WebSocketMessageHandler webSocketMessageHandler;
   private SubscriptionManager subscriptionManager;
   private WebSocketMethodsFactory webSocketMethodsFactory;
@@ -61,7 +63,8 @@ public class EthUnsubscribeIntegrationTest {
 
   @BeforeEach
   public void before() {
-    vertx = Vertx.vertx();
+    vertx = Vertx.vertx(new VertxOptions().setPreferNativeTransport(true));
+    testContext = new VertxTestContext();
     subscriptionManager = new SubscriptionManager(new NoOpMetricsSystem());
     webSocketMethodsFactory = new WebSocketMethodsFactory(subscriptionManager, new HashMap<>());
     webSocketMessageHandler =
@@ -73,8 +76,7 @@ public class EthUnsubscribeIntegrationTest {
   }
 
   @Test
-  public void shouldRemoveConnectionWithSingleSubscriptionFromMap(final TestContext context) {
-    final Async async = context.async();
+  public void shouldRemoveConnectionWithSingleSubscriptionFromMap() throws InterruptedException {
 
     // Add the subscription we'd like to remove
     final SubscribeRequest subscribeRequest =
@@ -90,20 +92,20 @@ public class EthUnsubscribeIntegrationTest {
 
     final ServerWebSocket websocketMock = mock(ServerWebSocket.class);
     when(websocketMock.textHandlerID()).thenReturn(CONNECTION_ID);
-    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame)))
+        .then(completeOnLastFrame(testContext));
 
     webSocketMessageHandler.handle(
         websocketMock, Json.encodeToBuffer(unsubscribeRequestBody), Optional.empty());
 
-    async.awaitSuccess(ASYNC_TIMEOUT);
+    testContext.awaitCompletion(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS);
     assertThat(subscriptionManager.getSubscriptionById(subscriptionId)).isNull();
     verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedResponse))));
     verify(websocketMock).writeFrame(argThat(this::isFinalFrame));
   }
 
   @Test
-  public void shouldRemoveSubscriptionAndKeepConnection(final TestContext context) {
-    final Async async = context.async();
+  public void shouldRemoveSubscriptionAndKeepConnection() throws InterruptedException {
 
     // Add the subscriptions we'd like to remove
     final SubscribeRequest subscribeRequest =
@@ -122,12 +124,13 @@ public class EthUnsubscribeIntegrationTest {
 
     final ServerWebSocket websocketMock = mock(ServerWebSocket.class);
     when(websocketMock.textHandlerID()).thenReturn(CONNECTION_ID);
-    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame)))
+        .then(completeOnLastFrame(testContext));
 
     webSocketMessageHandler.handle(
         websocketMock, Json.encodeToBuffer(unsubscribeRequestBody), Optional.empty());
 
-    async.awaitSuccess(ASYNC_TIMEOUT);
+    testContext.awaitCompletion(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS);
     assertThat(subscriptionManager.getSubscriptionById(subscriptionId1)).isNotNull();
     assertThat(subscriptionManager.getSubscriptionById(subscriptionId2)).isNull();
     verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedResponse))));
@@ -153,9 +156,9 @@ public class EthUnsubscribeIntegrationTest {
     return frame.isFinal();
   }
 
-  private Answer<Future<Void>> completeOnLastFrame(final Async async) {
+  private Answer<Future<Void>> completeOnLastFrame(final VertxTestContext testContext) {
     return invocation -> {
-      async.complete();
+      testContext.completeNow();
       return Future.succeededFuture();
     };
   }

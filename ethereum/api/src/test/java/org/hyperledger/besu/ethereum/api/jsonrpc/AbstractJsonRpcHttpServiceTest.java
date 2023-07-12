@@ -51,7 +51,6 @@ import org.hyperledger.besu.testutil.BlockTestUtil.ChainResources;
 
 import java.math.BigInteger;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
@@ -208,7 +207,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     service =
         new JsonRpcHttpService(
             vertx,
-            Files.createDirectory(folder),
+            folder,
             config,
             new NoOpMetricsSystem(),
             natService,
