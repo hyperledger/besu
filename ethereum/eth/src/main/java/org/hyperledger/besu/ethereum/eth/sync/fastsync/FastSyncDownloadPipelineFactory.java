@@ -23,13 +23,16 @@ import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.SKIP_DE
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadPipelineFactory;
+import org.hyperledger.besu.ethereum.eth.sync.FastAndSnapImportBlocksStep;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.ValidateBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeadersFetcher;
 import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeadersValidationStep;
@@ -136,15 +139,11 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         new DownloadBodiesStep(protocolSchedule, ethContext, metricsSystem);
     final DownloadReceiptsStep downloadReceiptsStep =
         new DownloadReceiptsStep(ethContext, metricsSystem);
-    final FastImportBlocksStep importBlockStep =
-        new FastImportBlocksStep(
-            protocolSchedule,
-            protocolContext,
-            attachedValidationPolicy,
-            ommerValidationPolicy,
-            ethContext,
-            fastSyncState.getPivotBlockHeader().get());
+    final FastAndSnapImportBlocksStep importBlocksStep =
+        new FastAndSnapImportBlocksStep(protocolContext.getBlockchain());
 
+    final ValidateBodiesStep validateBodiesStep =
+        new ValidateBodiesStep(protocolContext, protocolSchedule);
     return PipelineBuilder.createPipelineFrom(
             "fetchCheckpoints",
             checkpointRangeSource,
@@ -162,7 +161,9 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         .inBatches(headerRequestSize)
         .thenProcessAsyncOrdered("downloadBodies", downloadBodiesStep, downloaderParallelism)
         .thenProcessAsyncOrdered("downloadReceipts", downloadReceiptsStep, downloaderParallelism)
-        .andFinishWith("importBlock", importBlockStep);
+        .thenProcessInParallel("validateBodies", validateBodiesStep, downloaderParallelism)
+        .thenProcessInParallel("importBlocks", importBlocksStep, downloaderParallelism)
+        .andFinishWith("setLastBoundHeaders", headers -> {protocolContext.getBlockchain().unsafeSetChainHead(headers.get(headers.size()-1), Difficulty.ZERO);});
   }
 
   protected BlockHeader getCommonAncestor(final SyncTarget syncTarget) {
