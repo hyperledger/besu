@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.plugin.data.Transaction;
 
 import java.util.Optional;
@@ -58,11 +58,11 @@ public class EthGetTransactionByHashTest {
   private final String JSON_RPC_VERSION = "2.0";
   private final String ETH_METHOD = "eth_getTransactionByHash";
 
-  @Mock private PendingTransactions pendingTransactions;
+  @Mock private TransactionPool transactionPool;
 
   @Before
   public void setUp() {
-    method = new EthGetTransactionByHash(blockchainQueries, pendingTransactions);
+    method = new EthGetTransactionByHash(blockchainQueries, transactionPool);
   }
 
   @Test
@@ -87,7 +87,7 @@ public class EthGetTransactionByHashTest {
   public void shouldReturnNullResultWhenTransactionDoesNotExist() {
     final String transactionHash =
         "0xf9ef5f0cf02685711cdf687b72d4754901729b942f4ea7f956e7fb206cae2f9e";
-    when(pendingTransactions.getTransactionByHash(eq(Hash.fromHexString(transactionHash))))
+    when(transactionPool.getTransactionByHash(eq(Hash.fromHexString(transactionHash))))
         .thenReturn(Optional.empty());
     when(blockchainQueries.transactionByHash(eq(Hash.fromHexString(transactionHash))))
         .thenReturn(Optional.empty());
@@ -110,7 +110,7 @@ public class EthGetTransactionByHashTest {
         org.hyperledger.besu.ethereum.core.Transaction.readFrom(
             Bytes.fromHexString(VALID_TRANSACTION));
 
-    when(pendingTransactions.getTransactionByHash(eq(transaction.getHash())))
+    when(transactionPool.getTransactionByHash(eq(transaction.getHash())))
         .thenReturn(Optional.of(transaction));
     verifyNoInteractions(blockchainQueries);
 
@@ -135,9 +135,9 @@ public class EthGetTransactionByHashTest {
     final TransactionWithMetadata transactionWithMetadata =
         new TransactionWithMetadata(transaction, 1, Optional.empty(), Hash.ZERO, 0);
 
-    when(pendingTransactions.getTransactionByHash(eq(transaction.getHash())))
+    when(transactionPool.getTransactionByHash(eq(transaction.getHash())))
         .thenReturn(Optional.empty());
-    verifyNoMoreInteractions(pendingTransactions);
+    verifyNoMoreInteractions(transactionPool);
     when(blockchainQueries.transactionByHash(eq(transaction.getHash())))
         .thenReturn(Optional.of(transactionWithMetadata));
 
@@ -158,9 +158,9 @@ public class EthGetTransactionByHashTest {
   @Test
   public void validateResultSpec() {
 
-    PendingTransaction pendingTx = getPendingTransactions().stream().findFirst().get();
+    PendingTransaction pendingTx = getTransactionPool().stream().findFirst().get();
     Hash hash = pendingTx.getHash();
-    when(this.pendingTransactions.getTransactionByHash(hash))
+    when(this.transactionPool.getTransactionByHash(hash))
         .thenReturn(Optional.of(pendingTx.getTransaction()));
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -188,7 +188,7 @@ public class EthGetTransactionByHashTest {
     assertThat(result.getS()).isNotNull();
   }
 
-  private Set<PendingTransaction> getPendingTransactions() {
+  private Set<PendingTransaction> getTransactionPool() {
 
     final BlockDataGenerator gen = new BlockDataGenerator();
     Transaction pendingTransaction = gen.transaction();

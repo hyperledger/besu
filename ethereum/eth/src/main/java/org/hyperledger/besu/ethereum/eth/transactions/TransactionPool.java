@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.TRANSACTION_ALREADY_KNOWN;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -56,6 +57,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.IntSummaryStatistics;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
@@ -198,20 +200,25 @@ public class TransactionPool implements BlockAddedObserver {
         .sorted(Comparator.comparing(Transaction::getSender).thenComparing(Transaction::getNonce));
   }
 
-  public void addRemoteTransactions(final Collection<Transaction> transactions) {
+  public Map<Hash, ValidationResult<TransactionInvalidReason>> addRemoteTransactions(
+      final Collection<Transaction> transactions) {
     final long started = System.currentTimeMillis();
     final int initialCount = transactions.size();
     final List<Transaction> addedTransactions = new ArrayList<>(initialCount);
     LOG.debug("Adding {} remote transactions", initialCount);
 
-    sortedBySenderAndNonce(transactions)
-        .forEach(
-            transaction -> {
-              final var result = addRemoteTransaction(transaction);
-              if (result.isValid()) {
-                addedTransactions.add(transaction);
-              }
-            });
+    final var validationResults =
+        sortedBySenderAndNonce(transactions)
+            .collect(
+                Collectors.toMap(
+                    Transaction::getHash,
+                    transaction -> {
+                      final var result = addRemoteTransaction(transaction);
+                      if (result.isValid()) {
+                        addedTransactions.add(transaction);
+                      }
+                      return result;
+                    }));
 
     LOG_FOR_REPLAY
         .atTrace()
@@ -231,6 +238,7 @@ public class TransactionPool implements BlockAddedObserver {
     if (!addedTransactions.isEmpty()) {
       transactionBroadcaster.onTransactionsAdded(addedTransactions);
     }
+    return validationResults;
   }
 
   private ValidationResult<TransactionInvalidReason> addRemoteTransaction(
@@ -359,10 +367,6 @@ public class TransactionPool implements BlockAddedObserver {
         .getTransactionValidator();
   }
 
-  public PendingTransactions getPendingTransactions() {
-    return pendingTransactions;
-  }
-
   private ValidationResultAndAccount validateLocalTransaction(final Transaction transaction) {
     return validateTransaction(transaction, true);
   }
@@ -489,6 +493,44 @@ public class TransactionPool implements BlockAddedObserver {
   private Optional<BlockHeader> getChainHeadBlockHeader() {
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
     return blockchain.getBlockHeader(blockchain.getChainHeadHash());
+  }
+
+  public boolean isLocalSender(final Address sender) {
+    return pendingTransactions.isLocalSender(sender);
+  }
+
+  public int count() {
+    return pendingTransactions.size();
+  }
+
+  public Collection<PendingTransaction> getPendingTransactions() {
+    return pendingTransactions.getPendingTransactions();
+  }
+
+  public OptionalLong getNextNonceForSender(final Address address) {
+    return pendingTransactions.getNextNonceForSender(address);
+  }
+
+  public long maxSize() {
+    return pendingTransactions.maxSize();
+  }
+
+  public void evictOldTransactions() {
+    pendingTransactions.evictOldTransactions();
+  }
+
+  public void selectTransactions(
+      final PendingTransactions.TransactionSelector transactionSelector) {
+    pendingTransactions.selectTransactions(transactionSelector);
+  }
+
+  public String logStats() {
+    return pendingTransactions.logStats();
+  }
+
+  @VisibleForTesting
+  Class<? extends PendingTransactions> pendingTransactionsImplementation() {
+    return pendingTransactions.getClass();
   }
 
   public interface TransactionBatchAddedListener {

@@ -49,7 +49,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
         new PoWMinerExecutor(
             protocolContext,
             protocolSchedule,
-            transactionPool.getPendingTransactions(),
+            transactionPool,
             miningParameters,
             new DefaultBlockScheduler(
                 MainnetBlockHeaderValidator.MINIMUM_SECONDS_SINCE_PARENT,
