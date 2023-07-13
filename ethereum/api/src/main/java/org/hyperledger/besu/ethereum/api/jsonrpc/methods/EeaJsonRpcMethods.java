@@ -46,8 +46,7 @@ public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
     super(blockchainQueries, protocolSchedule, transactionPool, privacyParameters);
     this.transactionPool = transactionPool;
     this.privacyParameters = privacyParameters;
-    this.nonceProvider =
-        new LatestNonceProvider(blockchainQueries, transactionPool.getPendingTransactions());
+    this.nonceProvider = new LatestNonceProvider(blockchainQueries, transactionPool);
   }
 
   @Override
