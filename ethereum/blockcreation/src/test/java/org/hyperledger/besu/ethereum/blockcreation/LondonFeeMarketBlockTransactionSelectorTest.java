@@ -95,7 +95,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
 
   @Test
   public void eip1559TransactionCurrentGasPriceLessThanMinimumIsSkippedAndKeptInThePool() {
-    final ProcessableBlockHeader blockHeader = createBlock(301, Wei.ONE);
+    final ProcessableBlockHeader blockHeader = createBlock(301_000, Wei.ONE);
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
@@ -109,7 +109,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
 
     // tx is willing to pay max 7 wei for gas, but current network condition (baseFee == 1)
     // result in it paying 2 wei, that is below the minimum accepted by the node, so it is skipped
-    final Transaction tx = createEIP1559Transaction(1, Wei.of(6L), Wei.ONE, 100_000);
+    final Transaction tx = createEIP1559Transaction(1, Wei.of(7L), Wei.ONE, 100_000);
     final var addResults = transactionPool.addRemoteTransactions(List.of(tx));
     assertThat(addResults).extractingByKey(tx.getHash()).isEqualTo(ValidationResult.valid());
 
@@ -162,7 +162,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             Wei.ZERO,
             MIN_OCCUPANCY_80_PERCENT);
 
-    // tx is willing to pay max 6 wei for gas, but current network condition (baseFee == 1)
+    // tx is willing to pay max 7 wei for gas, but current network condition (baseFee == 1)
     // result in it paying 2 wei, that is below the minimum accepted by the node, but since it is
     // a local sender it is accepted anyway
     final Transaction tx = createEIP1559Transaction(1, Wei.of(7L), Wei.ONE, 100_000);
