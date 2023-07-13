@@ -559,8 +559,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     MutableBlockchain blockchain = protocolContext.getBlockchain();
     final Optional<BlockHeader> newFinalized = blockchain.getBlockHeader(finalizedBlockHash);
 
-    final boolean isNewHeadDescendantOf = isDescendantOf(newHead, blockchain.getChainHeadHeader());
-    if (newHead.getNumber() < blockchain.getChainHeadBlockNumber() && isNewHeadDescendantOf) {
+    if (newHead.getNumber() < blockchain.getChainHeadBlockNumber()
+        && isDescendantOf(newHead, blockchain.getChainHeadHeader())) {
       LOG.atDebug()
           .setMessage("Ignoring update to old head {}")
           .addArgument(newHead::toLogString)
@@ -577,7 +577,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           INVALID, "new head timestamp not greater than parent", latestValid);
     }
 
-    setNewHead(blockchain, newHead, isNewHeadDescendantOf);
+    setNewHead(blockchain, newHead);
 
     // set and persist the new finalized block if it is present
     newFinalized.ifPresent(
@@ -597,10 +597,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     return ForkchoiceResult.withResult(newFinalized, Optional.of(newHead));
   }
 
-  private boolean setNewHead(
-      final MutableBlockchain blockchain,
-      final BlockHeader newHead,
-      final boolean isNewHeadDescendantOf) {
+  private boolean setNewHead(final MutableBlockchain blockchain, final BlockHeader newHead) {
 
     if (newHead.getHash().equals(blockchain.getChainHeadHash())) {
       LOG.atDebug()
@@ -611,7 +608,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     }
 
     if (moveWorldStateTo(newHead)) {
-      if (isNewHeadDescendantOf && newHead.getNumber() > blockchain.getChainHeadBlockNumber()) {
+      if (newHead.getParentHash().equals(blockchain.getChainHeadHash())) {
         LOG.atDebug()
             .setMessage(
                 "Forwarding chain head to the block {} saved from a previous newPayload invocation")
