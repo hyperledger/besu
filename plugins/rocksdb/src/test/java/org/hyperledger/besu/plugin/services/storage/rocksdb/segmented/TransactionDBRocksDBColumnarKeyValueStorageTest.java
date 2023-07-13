@@ -34,7 +34,7 @@ public class TransactionDBRocksDBColumnarKeyValueStorageTest
     extends RocksDBColumnarKeyValueStorageTest {
 
   @Override
-  protected SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore()
+  protected SegmentedKeyValueStorage createSegmentedStore()
       throws Exception {
     return new TransactionDBRocksDBColumnarKeyValueStorage(
         new RocksDBConfigurationBuilder().databaseDir(getTempSubFolder(folder)).build(),
@@ -45,7 +45,7 @@ public class TransactionDBRocksDBColumnarKeyValueStorageTest
   }
 
   @Override
-  protected SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore(
+  protected SegmentedKeyValueStorage createSegmentedStore(
       final Path path,
       final List<SegmentIdentifier> segments,
       final List<SegmentIdentifier> ignorableSegments) {
@@ -58,7 +58,7 @@ public class TransactionDBRocksDBColumnarKeyValueStorageTest
   }
 
   @Override
-  protected SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore(
+  protected SegmentedKeyValueStorage createSegmentedStore(
       final Path path,
       final MetricsSystem metricsSystem,
       final List<SegmentIdentifier> segments,
