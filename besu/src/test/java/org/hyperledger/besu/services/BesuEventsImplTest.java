@@ -63,6 +63,7 @@ import org.hyperledger.besu.plugin.data.LogWithMetadata;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
+import org.hyperledger.besu.plugin.data.Transaction;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;

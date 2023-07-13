@@ -17,8 +17,8 @@ package org.hyperledger.besu.services.kvstore;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
@@ -30,7 +30,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
@@ -43,14 +42,14 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
 
   private static final Logger LOG = LoggerFactory.getLogger(LayeredKeyValueStorage.class);
 
-  private final KeyValueStorage parent;
+  private final SegmentedKeyValueStorage parent;
 
   /**
    * Instantiates a new Layered key value storage.
    *
    * @param parent the parent key value storage for this layered storage.
    */
-  public LayeredKeyValueStorage(final KeyValueStorage parent) {
+  public LayeredKeyValueStorage(final SegmentedKeyValueStorage parent) {
     this(new ConcurrentHashMap<>(), parent);
   }
 
@@ -61,7 +60,7 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
    * @param parent the parent key value storage for this layered storage.
    */
   public LayeredKeyValueStorage(
-      final Map<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> map, final KeyValueStorage parent) {
+      final Map<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> map, final SegmentedKeyValueStorage parent) {
     super(map);
     this.parent = parent;
   }
@@ -82,7 +81,7 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
       final Optional<byte[]> foundKey = hashValueStore.computeIfAbsent(segmentId, __ -> new HashMap<>())
           .get(wrapKey);
       if (foundKey == null) {
-        return parent.get(key);
+        return parent.get(segmentId, key);
       } else {
         return foundKey;
       }
@@ -98,18 +97,19 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      // immutable copy of our in memory store to use for streaming and filtering:
-      var ourLayerState = ImmutableMap.copyOf(hashValueStore);
+      // copy of our in memory store to use for streaming and filtering:
+      var ourLayerState = Optional.ofNullable(hashValueStore.get(segmentId)).map(HashMap::new)
+          .orElse(new HashMap<>());
 
       return Streams.concat(
-          ourLayerState.computeIfAbsent(segmentId, __ -> new HashMap()).entrySet().stream()
+          ourLayerState.entrySet().stream()
               .filter(entry -> entry.getValue().isPresent())
               .map(
                   bytesEntry ->
                       Pair.of(bytesEntry.getKey().toArrayUnsafe(), bytesEntry.getValue().get()))
           // since we are layered, concat a parent stream filtered by our map entries:
           ,
-          parent.stream().filter(e -> !ourLayerState.containsKey(Bytes.of(e.getLeft()))));
+          parent.stream(segmentId).filter(e -> !ourLayerState.containsKey(Bytes.of(e.getLeft()))));
     } finally {
       lock.unlock();
     }
@@ -127,16 +127,17 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      // immutable copy of our in memory store to use for streaming and filtering:
-      var ourLayerState = ImmutableMap.copyOf(hashValueStore);
+      // copy of our in memory store to use for streaming and filtering:
+      var ourLayerState = Optional.ofNullable(hashValueStore.get(segmentId)).map(HashMap::new)
+          .orElse(new HashMap<>());
 
       return Streams.concat(
-          ourLayerState.computeIfAbsent(segmentId, __ -> new HashMap<>()).entrySet().stream()
+          ourLayerState.entrySet().stream()
               .filter(entry -> entry.getValue().isPresent())
               .map(bytesEntry -> bytesEntry.getKey().toArrayUnsafe())
           // since we are layered, concat a parent stream filtered by our map entries:
           ,
-          parent.streamKeys().filter(e -> !ourLayerState.containsKey(Bytes.of(e))));
+          parent.streamKeys(segmentId).filter(e -> !ourLayerState.containsKey(Bytes.of(e))));
 
     } finally {
       lock.unlock();

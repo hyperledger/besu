@@ -89,7 +89,7 @@ public class InMemoryStoragePlugin implements BesuPlugin {
   }
 
   /** The Memory key value storage factory. */
-  public static class InMemoryKeyValueStorageFactory implements KeyValueStorageFactory<SegmentIdentifier> {
+  public static class InMemoryKeyValueStorageFactory implements KeyValueStorageFactory {
 
     private final String name;
 

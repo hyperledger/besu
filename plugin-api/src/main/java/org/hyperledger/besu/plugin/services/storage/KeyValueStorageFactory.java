@@ -24,7 +24,7 @@ import java.util.List;
 
 /** Factory for creating key-value storage instances. */
 @Unstable
-public interface KeyValueStorageFactory<S> extends Closeable {
+public interface KeyValueStorageFactory extends Closeable {
 
   /**
    * Retrieves the identity of the key-value storage factory.
@@ -61,8 +61,7 @@ public interface KeyValueStorageFactory<S> extends Closeable {
    * key-space. Segments created with the identifier of an existing segment should have the same
    * data as that existing segment.
    *
-   * @param segments list of segments identifiers that comprise the created segmented storage
-   *     will contain.
+   * @param segments list of segments identifiers that comprise the created segmented storage.
    * @param configuration common configuration available to plugins, in a populated state.
    * @param metricsSystem metrics component for recording key-value storage events.
    * @return the storage instance reserved for the given segment.

@@ -48,7 +48,6 @@ public class KeyValueStorageProvider implements StorageProvider {
   protected final Function<List<SegmentIdentifier>, SegmentedKeyValueStorage> segmentedStorageCreator;
   private final KeyValueStorage worldStatePreimageStorage;
   private final boolean isWorldStateIterable;
-  private final boolean isWorldStateSnappable;
   protected final Map<List<SegmentIdentifier>, SegmentedKeyValueStorage> storageInstances = new HashMap<>();
   private final ObservableMetricsSystem metricsSystem;
 
@@ -56,12 +55,10 @@ public class KeyValueStorageProvider implements StorageProvider {
       final Function<List<SegmentIdentifier>, SegmentedKeyValueStorage> segmentedStorageCreator,
       final KeyValueStorage worldStatePreimageStorage,
       final boolean segmentIsolationSupported,
-      final boolean storageSnapshotIsolationSupported,
       final ObservableMetricsSystem metricsSystem) {
     this.segmentedStorageCreator = segmentedStorageCreator;
     this.worldStatePreimageStorage = worldStatePreimageStorage;
     this.isWorldStateIterable = segmentIsolationSupported;
-    this.isWorldStateSnappable = storageSnapshotIsolationSupported;
     this.metricsSystem = metricsSystem;
   }
 
@@ -124,7 +121,8 @@ public class KeyValueStorageProvider implements StorageProvider {
                     .addArgument(storage.getKey().stream()
                         .map(SegmentIdentifier::getName)
                         .collect(Collectors.joining(",")))
-                    .setCause(e);
+                    .setCause(e)
+                    .log();
               }
             });
   }

@@ -36,7 +36,6 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage.Transaction;
-import org.hyperledger.besu.services.kvstore.SnappableSegmentedKeyValueStorageAdapter;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;

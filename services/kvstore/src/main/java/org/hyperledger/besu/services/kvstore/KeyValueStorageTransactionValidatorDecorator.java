@@ -27,13 +27,6 @@ public class KeyValueStorageTransactionValidatorDecorator
   private final Supplier<Boolean> isClosed;
   private boolean active = true;
 
-  //TODO: get rid of this constructor, it is here just for unsegmented / V0 usage
-  public KeyValueStorageTransactionValidatorDecorator(
-      final KeyValueStorageTransaction toDecorate) {
-    this(toDecorate, () -> false);
-  }
-
-
   /**
    * Instantiates a new Key value storage transaction transition validator decorator.
    *

@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -66,11 +67,10 @@ import org.slf4j.LoggerFactory;
 
 /** The RocksDb columnar key value storage. */
 public abstract class RocksDBColumnarKeyValueStorage
-    implements SegmentedKeyValueStorage, SnappableKeyValueStorage<SegmentedKeyValueStorageTransaction> {
+    implements SegmentedKeyValueStorage {
 
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBColumnarKeyValueStorage.class);
   static final String DEFAULT_COLUMN = "default";
-  private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
   private static final int ROCKSDB_FORMAT_VERSION = 5;
   private static final long ROCKSDB_BLOCK_SIZE = 32768;
   /** RocksDb blockcache size when using the high spec option */
@@ -242,7 +242,7 @@ public abstract class RocksDBColumnarKeyValueStorage
         .setBlockSize(ROCKSDB_BLOCK_SIZE);
   }
 
-  ColumnFamilyHandle safeColumnHandle(final SegmentIdentifier segment) {
+  protected ColumnFamilyHandle safeColumnHandle(final SegmentIdentifier segment) {
     RocksDbSegmentIdentifier safeRef = columnHandlesBySegmentIdentifier.get(segment);
     if (safeRef == null) {
       throw new RuntimeException("Column handle not found for segment " + segment.getName());

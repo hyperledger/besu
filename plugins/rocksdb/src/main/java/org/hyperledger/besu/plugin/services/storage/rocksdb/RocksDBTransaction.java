@@ -17,7 +17,12 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
+import java.util.function.Function;
+
+import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.Transaction;
 import org.rocksdb.WriteOptions;
@@ -25,13 +30,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** The RocksDb transaction. */
-public class RocksDBTransaction implements KeyValueStorageTransaction {
+public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
   private static final Logger logger = LoggerFactory.getLogger(RocksDBTransaction.class);
   private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
 
   private final RocksDBMetrics metrics;
   private final Transaction innerTx;
   private final WriteOptions options;
+  private final Function<SegmentIdentifier, ColumnFamilyHandle> columnFamilyMapper;
 
   /**
    * Instantiates a new RocksDb transaction.
@@ -41,16 +47,18 @@ public class RocksDBTransaction implements KeyValueStorageTransaction {
    * @param metrics the metrics
    */
   public RocksDBTransaction(
+      final Function<SegmentIdentifier, ColumnFamilyHandle> columnFamilyMapper,
       final Transaction innerTx, final WriteOptions options, final RocksDBMetrics metrics) {
+    this.columnFamilyMapper = columnFamilyMapper;
     this.innerTx = innerTx;
     this.options = options;
     this.metrics = metrics;
   }
 
   @Override
-  public void put(final byte[] key, final byte[] value) {
+  public void put(final SegmentIdentifier segmentId, final byte[] key, final byte[] value) {
     try (final OperationTimer.TimingContext ignored = metrics.getWriteLatency().startTimer()) {
-      innerTx.put(key, value);
+      innerTx.put(columnFamilyMapper.apply(segmentId), key, value);
     } catch (final RocksDBException e) {
       if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
         logger.error(e.getMessage());
@@ -61,9 +69,9 @@ public class RocksDBTransaction implements KeyValueStorageTransaction {
   }
 
   @Override
-  public void remove(final byte[] key) {
+  public void remove(final SegmentIdentifier segmentId, final byte[] key) {
     try (final OperationTimer.TimingContext ignored = metrics.getRemoveLatency().startTimer()) {
-      innerTx.delete(key);
+      innerTx.delete(columnFamilyMapper.apply(segmentId), key);
     } catch (final RocksDBException e) {
       if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
         logger.error(e.getMessage());

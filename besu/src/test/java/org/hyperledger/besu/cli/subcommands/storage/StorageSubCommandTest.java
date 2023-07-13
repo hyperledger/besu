@@ -29,7 +29,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cli.CommandTestAbstract;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
-import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

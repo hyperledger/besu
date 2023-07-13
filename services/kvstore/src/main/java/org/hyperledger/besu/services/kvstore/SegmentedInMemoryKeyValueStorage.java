@@ -176,7 +176,7 @@ public class SegmentedInMemoryKeyValueStorage implements SnappedKeyValueStorage,
 
 
     @Override
-    public void put(final SegmentIdentifier segmentIdentifier, byte[] key, final byte[] value) {
+    public void put(final SegmentIdentifier segmentIdentifier, final byte[] key, final byte[] value) {
       updatedValues.computeIfAbsent(segmentIdentifier, __ -> new HashMap<>())
           .put(Bytes.wrap(key), Optional.of(value));
       removedKeys.computeIfAbsent(segmentIdentifier, __ -> new HashSet<>())

@@ -16,13 +16,13 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBTransaction;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
-import org.hyperledger.besu.services.kvstore.KeyValueStorageTransactionValidatorDecorator;
+import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageTransactionValidatorDecorator;
 
 import java.util.List;
 
@@ -32,7 +32,7 @@ import org.rocksdb.RocksDBException;
 import org.rocksdb.WriteOptions;
 
 /** Optimistic RocksDB Columnar key value storage */
-public class OptimisticRocksDBColumnarKeyValueStorage extends RocksDBColumnarKeyValueStorage {
+public class OptimisticRocksDBColumnarKeyValueStorage extends RocksDBColumnarKeyValueStorage implements SnappableKeyValueStorage {
   private final OptimisticTransactionDB db;
 
   /**
@@ -78,24 +78,24 @@ public class OptimisticRocksDBColumnarKeyValueStorage extends RocksDBColumnarKey
    * @throws StorageException the storage exception
    */
   @Override
-  public KeyValueStorageTransaction startTransaction() throws StorageException {
+  public SegmentedKeyValueStorageTransaction startTransaction() throws StorageException {
     throwIfClosed();
     final WriteOptions writeOptions = new WriteOptions();
     writeOptions.setIgnoreMissingColumnFamilies(true);
-    return new KeyValueStorageTransactionValidatorDecorator(
-        new RocksDBTransaction(db.beginTransaction(writeOptions), writeOptions, this.metrics), this.closed::get);
+    return new SegmentedKeyValueStorageTransactionValidatorDecorator(
+        new RocksDBTransaction(this::safeColumnHandle, db.beginTransaction(writeOptions), writeOptions, this.metrics), this.closed::get);
   }
 
   /**
    * Take snapshot RocksDb columnar key value snapshot.
    *
-   * @param segment the segment
    * @return the RocksDb columnar key value snapshot
    * @throws StorageException the storage exception
    */
-  public RocksDBColumnarKeyValueSnapshot takeSnapshot(final RocksDbSegmentIdentifier segment)
+  @Override
+  public RocksDBColumnarKeyValueSnapshot takeSnapshot()
       throws StorageException {
     throwIfClosed();
-    return new RocksDBColumnarKeyValueSnapshot(db, segment, metrics);
+    return new RocksDBColumnarKeyValueSnapshot(db, this::safeColumnHandle, metrics);
   }
 }
