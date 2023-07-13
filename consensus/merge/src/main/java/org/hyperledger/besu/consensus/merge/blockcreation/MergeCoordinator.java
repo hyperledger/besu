@@ -559,8 +559,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     MutableBlockchain blockchain = protocolContext.getBlockchain();
     final Optional<BlockHeader> newFinalized = blockchain.getBlockHeader(finalizedBlockHash);
 
-    if (newHead.getNumber() < blockchain.getChainHeadBlockNumber()
-        && isDescendantOf(newHead, blockchain.getChainHeadHeader())) {
+    final boolean isNewHeadDescendantOf = isDescendantOf(newHead, blockchain.getChainHeadHeader());
+    if (newHead.getNumber() < blockchain.getChainHeadBlockNumber() && isNewHeadDescendantOf) {
       LOG.atDebug()
           .setMessage("Ignoring update to old head {}")
           .addArgument(newHead::toLogString)
@@ -577,7 +577,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           INVALID, "new head timestamp not greater than parent", latestValid);
     }
 
-    setNewHead(blockchain, newHead);
+    setNewHead(blockchain, newHead, isNewHeadDescendantOf);
 
     // set and persist the new finalized block if it is present
     newFinalized.ifPresent(
@@ -597,7 +597,10 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     return ForkchoiceResult.withResult(newFinalized, Optional.of(newHead));
   }
 
-  private boolean setNewHead(final MutableBlockchain blockchain, final BlockHeader newHead) {
+  private boolean setNewHead(
+      final MutableBlockchain blockchain,
+      final BlockHeader newHead,
+      final boolean isNewHeadDescendantOf) {
 
     if (newHead.getHash().equals(blockchain.getChainHeadHash())) {
       LOG.atDebug()
@@ -607,33 +610,30 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       return true;
     }
 
-    if (newHead.getParentHash().equals(blockchain.getChainHeadHash())) {
-      LOG.atDebug()
-          .setMessage(
-              "Forwarding chain head to the block {} saved from a previous newPayload invocation")
-          .addArgument(newHead::toLogString)
-          .log();
-
-      if (forwardWorldStateTo(newHead)) {
-        // move chain head forward:
+    if (moveWorldStateTo(newHead)) {
+      if (isNewHeadDescendantOf && newHead.getNumber() > blockchain.getChainHeadBlockNumber()) {
+        LOG.atDebug()
+            .setMessage(
+                "Forwarding chain head to the block {} saved from a previous newPayload invocation")
+            .addArgument(newHead::toLogString)
+            .log();
         return blockchain.forwardToBlock(newHead);
       } else {
         LOG.atDebug()
-            .setMessage("Failed to move the worldstate forward to hash {}, not moving chain head")
+            .setMessage("New head {} is a chain reorg, rewind chain head to it")
             .addArgument(newHead::toLogString)
             .log();
-        return false;
+        return blockchain.rewindToBlock(newHead.getHash());
       }
     }
-
     LOG.atDebug()
-        .setMessage("New head {} is a chain reorg, rewind chain head to it")
+        .setMessage("Failed to move the worldstate forward to hash {}, not moving chain head")
         .addArgument(newHead::toLogString)
         .log();
-    return blockchain.rewindToBlock(newHead.getHash());
+    return false;
   }
 
-  private boolean forwardWorldStateTo(final BlockHeader newHead) {
+  private boolean moveWorldStateTo(final BlockHeader newHead) {
     Optional<MutableWorldState> newWorldState =
         protocolContext
             .getWorldStateArchive()
