@@ -48,7 +48,7 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
   @Mock private SegmentIdentifier segment;
 
   @Test
-  public void shouldDetectVersion0DatabaseIfNoMetadataFileFound() throws Exception {
+  public void shouldDetectVersion1DatabaseIfNoMetadataFileFound() throws Exception {
     final Path tempDataDir = temporaryFolder.newFolder().toPath().resolve("data");
     final Path tempDatabaseDir = temporaryFolder.newFolder().toPath().resolve("db");
     final Path tempPrivateDatabaseDir = tempDatabaseDir.resolve("private");
@@ -69,9 +69,10 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
 
     assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion()).isNotEmpty();
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isEqualTo(0);
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isEqualTo(DEFAULT_VERSION);
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion().get()).isEqualTo(0);
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion().get())
+        .isEqualTo(DEFAULT_VERSION);
   }
 
   @Test
