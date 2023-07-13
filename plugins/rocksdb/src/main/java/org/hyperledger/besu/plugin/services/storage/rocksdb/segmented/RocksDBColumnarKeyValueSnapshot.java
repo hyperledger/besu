@@ -18,13 +18,11 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -42,7 +40,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** The RocksDb columnar key value snapshot. */
-public class RocksDBColumnarKeyValueSnapshot implements SegmentedKeyValueStorage, SnappedKeyValueStorage {
+public class RocksDBColumnarKeyValueSnapshot
+    implements SegmentedKeyValueStorage, SnappedKeyValueStorage {
 
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBColumnarKeyValueSnapshot.class);
 
@@ -69,7 +68,8 @@ public class RocksDBColumnarKeyValueSnapshot implements SegmentedKeyValueStorage
   }
 
   @Override
-  public Optional<byte[]> get(final SegmentIdentifier segment, final byte[] key) throws StorageException {
+  public Optional<byte[]> get(final SegmentIdentifier segment, final byte[] key)
+      throws StorageException {
     throwIfClosed();
     return snapTx.get(segment, key);
   }
@@ -81,7 +81,8 @@ public class RocksDBColumnarKeyValueSnapshot implements SegmentedKeyValueStorage
   }
 
   @Override
-  public Stream<Pair<byte[], byte[]>> streamFromKey(final SegmentIdentifier segment, final byte[] startKey) {
+  public Stream<Pair<byte[], byte[]>> streamFromKey(
+      final SegmentIdentifier segment, final byte[] startKey) {
     return stream(segment).filter(e -> Bytes.wrap(startKey).compareTo(Bytes.wrap(e.getKey())) <= 0);
   }
 
@@ -92,19 +93,22 @@ public class RocksDBColumnarKeyValueSnapshot implements SegmentedKeyValueStorage
   }
 
   @Override
-  public boolean tryDelete(final SegmentIdentifier segment, final byte[] key) throws StorageException {
+  public boolean tryDelete(final SegmentIdentifier segment, final byte[] key)
+      throws StorageException {
     throwIfClosed();
     snapTx.remove(segment, key);
     return true;
   }
 
   @Override
-  public Set<byte[]> getAllKeysThat(final SegmentIdentifier segment, final Predicate<byte[]> returnCondition) {
+  public Set<byte[]> getAllKeysThat(
+      final SegmentIdentifier segment, final Predicate<byte[]> returnCondition) {
     return streamKeys(segment).filter(returnCondition).collect(toUnmodifiableSet());
   }
 
   @Override
-  public Set<byte[]> getAllValuesFromKeysThat(final SegmentIdentifier segment, final Predicate<byte[]> returnCondition) {
+  public Set<byte[]> getAllValuesFromKeysThat(
+      final SegmentIdentifier segment, final Predicate<byte[]> returnCondition) {
     return stream(segment)
         .filter(pair -> returnCondition.test(pair.getKey()))
         .map(Pair::getValue)
@@ -130,7 +134,8 @@ public class RocksDBColumnarKeyValueSnapshot implements SegmentedKeyValueStorage
   }
 
   @Override
-  public boolean containsKey(final SegmentIdentifier segment, final byte[] key) throws StorageException {
+  public boolean containsKey(final SegmentIdentifier segment, final byte[] key)
+      throws StorageException {
     throwIfClosed();
     return snapTx.get(segment, key).isPresent();
   }

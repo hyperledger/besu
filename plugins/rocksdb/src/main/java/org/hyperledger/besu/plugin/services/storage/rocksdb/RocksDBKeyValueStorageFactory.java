@@ -45,7 +45,6 @@ import org.slf4j.LoggerFactory;
 /**
  * The Rocks db key value storage factory creates segmented storage and uses a adapter to support
  * unsegmented keyvalue storage.
- *
  */
 public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
 
@@ -115,7 +114,12 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       final List<SegmentIdentifier> configuredSegments,
       final List<SegmentIdentifier> ignorableSegments,
       final RocksDBMetricsFactory rocksDBMetricsFactory) {
-    this(configuration, configuredSegments, ignorableSegments, DEFAULT_VERSION, rocksDBMetricsFactory);
+    this(
+        configuration,
+        configuredSegments,
+        ignorableSegments,
+        DEFAULT_VERSION,
+        rocksDBMetricsFactory);
   }
 
   /**
@@ -152,7 +156,8 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       final BesuConfiguration commonConfiguration,
       final MetricsSystem metricsSystem)
       throws StorageException {
-    return new SegmentedKeyValueStorageAdapter(segment, create(List.of(segment), commonConfiguration, metricsSystem));
+    return new SegmentedKeyValueStorageAdapter(
+        segment, create(List.of(segment), commonConfiguration, metricsSystem));
   }
 
   @Override
@@ -189,20 +194,22 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
                   .collect(Collectors.toList());
           if (isForestStorageFormat) {
             LOG.debug("FOREST mode detected, using TransactionDB.");
-            segmentedStorage = new TransactionDBRocksDBColumnarKeyValueStorage(
-                rocksDBConfiguration,
-                segmentsForVersion,
-                ignorableSegments,
-                metricsSystem,
-                rocksDBMetricsFactory);
+            segmentedStorage =
+                new TransactionDBRocksDBColumnarKeyValueStorage(
+                    rocksDBConfiguration,
+                    segmentsForVersion,
+                    ignorableSegments,
+                    metricsSystem,
+                    rocksDBMetricsFactory);
           } else {
             LOG.debug("Using OptimisticTransactionDB.");
-            segmentedStorage = new OptimisticRocksDBColumnarKeyValueStorage(
-                rocksDBConfiguration,
-                segmentsForVersion,
-                ignorableSegments,
-                metricsSystem,
-                rocksDBMetricsFactory);
+            segmentedStorage =
+                new OptimisticRocksDBColumnarKeyValueStorage(
+                    rocksDBConfiguration,
+                    segmentsForVersion,
+                    ignorableSegments,
+                    metricsSystem,
+                    rocksDBMetricsFactory);
           }
         }
         return segmentedStorage;

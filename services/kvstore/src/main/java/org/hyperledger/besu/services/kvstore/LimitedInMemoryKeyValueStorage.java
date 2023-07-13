@@ -146,7 +146,8 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
 
   @Override
   public KeyValueStorageTransaction startTransaction() throws StorageException {
-    return new KeyValueStorageTransactionValidatorDecorator(new MemoryTransaction(), this::isClosed);
+    return new KeyValueStorageTransactionValidatorDecorator(
+        new MemoryTransaction(), this::isClosed);
   }
 
   @Override

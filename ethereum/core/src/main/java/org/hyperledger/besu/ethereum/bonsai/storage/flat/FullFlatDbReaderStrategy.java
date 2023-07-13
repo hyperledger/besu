@@ -20,12 +20,10 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 
 import java.util.Optional;
@@ -83,7 +81,9 @@ public class FullFlatDbReaderStrategy extends FlatDbReaderStrategy {
     getStorageValueCounter.inc();
     final Optional<Bytes> storageFound =
         storage
-            .get(ACCOUNT_STORAGE_STORAGE, Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
+            .get(
+                ACCOUNT_STORAGE_STORAGE,
+                Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
             .map(Bytes::wrap);
     if (storageFound.isPresent()) {
       getStorageValueFlatDatabaseCounter.inc();
@@ -95,8 +95,7 @@ public class FullFlatDbReaderStrategy extends FlatDbReaderStrategy {
   }
 
   @Override
-  public void resetOnResync(
-      final SegmentedKeyValueStorage storage) {
+  public void resetOnResync(final SegmentedKeyValueStorage storage) {
     // NOOP
     // not need to reset anything in full mode
   }

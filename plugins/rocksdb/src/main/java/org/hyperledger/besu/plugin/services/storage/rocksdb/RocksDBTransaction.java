@@ -16,7 +16,6 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
@@ -48,7 +47,9 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
    */
   public RocksDBTransaction(
       final Function<SegmentIdentifier, ColumnFamilyHandle> columnFamilyMapper,
-      final Transaction innerTx, final WriteOptions options, final RocksDBMetrics metrics) {
+      final Transaction innerTx,
+      final WriteOptions options,
+      final RocksDBMetrics metrics) {
     this.columnFamilyMapper = columnFamilyMapper;
     this.innerTx = innerTx;
     this.options = options;

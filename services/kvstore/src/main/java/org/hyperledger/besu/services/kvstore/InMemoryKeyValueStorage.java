@@ -25,30 +25,33 @@ import java.util.concurrent.locks.ReadWriteLock;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
- * InMemoryKeyValueStorage is just a wrapper around a single segment instance of SegmentedInMemoryKeyValueStorage.
- *
+ * InMemoryKeyValueStorage is just a wrapper around a single segment instance of
+ * SegmentedInMemoryKeyValueStorage.
  */
 public class InMemoryKeyValueStorage extends SegmentedKeyValueStorageAdapter {
 
-  private static final SegmentIdentifier SEGMENT_IDENTIFIER = new SegmentIdentifier() {
-    private static final String NAME = "SEGMENT_IDENTIFIER";
-    @Override
-    public String getName() {
-      return NAME;
-    }
+  private static final SegmentIdentifier SEGMENT_IDENTIFIER =
+      new SegmentIdentifier() {
+        private static final String NAME = "SEGMENT_IDENTIFIER";
 
-    @Override
-    public byte[] getId() {
-      return NAME.getBytes(StandardCharsets.UTF_8);
-    }
+        @Override
+        public String getName() {
+          return NAME;
+        }
 
-    @Override
-    public boolean containsStaticData() {
-      return false;
-    }
-  };
+        @Override
+        public byte[] getId() {
+          return NAME.getBytes(StandardCharsets.UTF_8);
+        }
 
-  private static Map<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> asSegmentMap(final Map<Bytes, Optional<byte[]>> initialMap) {
+        @Override
+        public boolean containsStaticData() {
+          return false;
+        }
+      };
+
+  private static Map<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> asSegmentMap(
+      final Map<Bytes, Optional<byte[]>> initialMap) {
     final Map<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> segmentMap = new HashMap<>();
     segmentMap.put(SEGMENT_IDENTIFIER, initialMap);
     return segmentMap;

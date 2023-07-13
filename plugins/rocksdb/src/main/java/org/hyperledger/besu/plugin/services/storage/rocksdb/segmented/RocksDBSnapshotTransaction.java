@@ -17,14 +17,11 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbIterator;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
 
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -42,7 +39,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** The Rocks db snapshot transaction. */
-public class RocksDBSnapshotTransaction implements SegmentedKeyValueStorageTransaction, AutoCloseable {
+public class RocksDBSnapshotTransaction
+    implements SegmentedKeyValueStorageTransaction, AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBSnapshotTransaction.class);
   private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
   private final RocksDBMetrics metrics;
@@ -145,7 +143,8 @@ public class RocksDBSnapshotTransaction implements SegmentedKeyValueStorageTrans
   public Stream<Pair<byte[], byte[]>> stream(final SegmentIdentifier segmentId) {
     throwIfClosed();
 
-    final RocksIterator rocksIterator = db.newIterator(columnFamilyMapper.apply(segmentId), readOptions);
+    final RocksIterator rocksIterator =
+        db.newIterator(columnFamilyMapper.apply(segmentId), readOptions);
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStream();
   }
@@ -158,7 +157,8 @@ public class RocksDBSnapshotTransaction implements SegmentedKeyValueStorageTrans
   public Stream<byte[]> streamKeys(final SegmentIdentifier segmentId) {
     throwIfClosed();
 
-    final RocksIterator rocksIterator = db.newIterator(columnFamilyMapper.apply(segmentId), readOptions);
+    final RocksIterator rocksIterator =
+        db.newIterator(columnFamilyMapper.apply(segmentId), readOptions);
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStreamKeys();
   }

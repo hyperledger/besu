@@ -117,7 +117,11 @@ public class InMemoryStoragePlugin implements BesuPlugin {
     }
 
     @Override
-    public SegmentedKeyValueStorage create(final List<SegmentIdentifier> segments, final BesuConfiguration configuration, final MetricsSystem metricsSystem) throws StorageException {
+    public SegmentedKeyValueStorage create(
+        final List<SegmentIdentifier> segments,
+        final BesuConfiguration configuration,
+        final MetricsSystem metricsSystem)
+        throws StorageException {
       return new SegmentedInMemoryKeyValueStorage();
     }
 

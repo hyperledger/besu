@@ -20,15 +20,13 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
-import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbIterator;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbUtil;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -38,7 +36,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -66,8 +63,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** The RocksDb columnar key value storage. */
-public abstract class RocksDBColumnarKeyValueStorage
-    implements SegmentedKeyValueStorage {
+public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValueStorage {
 
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBColumnarKeyValueStorage.class);
   static final String DEFAULT_COLUMN = "default";
@@ -215,16 +211,22 @@ public abstract class RocksDBColumnarKeyValueStorage
                 Collectors.toMap(
                     segmentId -> segmentId,
                     segment -> {
-                      var columnHandle = columnHandles.stream()
-                          .filter(ch -> {
-                            try {
-                              return ch.getName() == segment.getId();
-                            } catch (RocksDBException e) {
-                              throw new RuntimeException(e);
-                            }
-                          })
-                          .findFirst()
-                          .orElseThrow(() -> new RuntimeException("Column handle not found for segment " + segment.getName()));
+                      var columnHandle =
+                          columnHandles.stream()
+                              .filter(
+                                  ch -> {
+                                    try {
+                                      return ch.getName() == segment.getId();
+                                    } catch (RocksDBException e) {
+                                      throw new RuntimeException(e);
+                                    }
+                                  })
+                              .findFirst()
+                              .orElseThrow(
+                                  () ->
+                                      new RuntimeException(
+                                          "Column handle not found for segment "
+                                              + segment.getName()));
                       return new RocksDbSegmentIdentifier(getDB(), columnHandle);
                     }));
   }

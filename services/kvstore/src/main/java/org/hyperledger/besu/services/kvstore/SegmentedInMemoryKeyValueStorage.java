@@ -3,7 +3,6 @@ package org.hyperledger.besu.services.kvstore;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
@@ -12,7 +11,6 @@ import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -27,7 +25,8 @@ import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 
-public class SegmentedInMemoryKeyValueStorage implements SnappedKeyValueStorage, SnappableKeyValueStorage, SegmentedKeyValueStorage {
+public class SegmentedInMemoryKeyValueStorage
+    implements SnappedKeyValueStorage, SnappableKeyValueStorage, SegmentedKeyValueStorage {
   /** protected access for the backing hash map. */
   final Map<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> hashValueStore;
 
@@ -44,7 +43,8 @@ public class SegmentedInMemoryKeyValueStorage implements SnappedKeyValueStorage,
    *
    * @param hashValueStore the hash value store
    */
-  SegmentedInMemoryKeyValueStorage(final Map<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> hashValueStore) {
+  SegmentedInMemoryKeyValueStorage(
+      final Map<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> hashValueStore) {
     this.hashValueStore = hashValueStore;
   }
 
@@ -60,16 +60,19 @@ public class SegmentedInMemoryKeyValueStorage implements SnappedKeyValueStorage,
   }
 
   @Override
-  public boolean containsKey(final SegmentIdentifier segmentIdentifier, final byte[] key) throws StorageException {
+  public boolean containsKey(final SegmentIdentifier segmentIdentifier, final byte[] key)
+      throws StorageException {
     return get(segmentIdentifier, key).isPresent();
   }
 
   @Override
-  public Optional<byte[]> get(final SegmentIdentifier segmentIdentifier, final byte[] key) throws StorageException {
+  public Optional<byte[]> get(final SegmentIdentifier segmentIdentifier, final byte[] key)
+      throws StorageException {
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      return hashValueStore.computeIfAbsent(segmentIdentifier, s -> new HashMap<>())
+      return hashValueStore
+          .computeIfAbsent(segmentIdentifier, s -> new HashMap<>())
           .getOrDefault(Bytes.wrap(key), Optional.empty());
     } finally {
       lock.unlock();
@@ -77,7 +80,8 @@ public class SegmentedInMemoryKeyValueStorage implements SnappedKeyValueStorage,
   }
 
   @Override
-  public Set<byte[]> getAllKeysThat(final SegmentIdentifier segmentIdentifier, final Predicate<byte[]> returnCondition) {
+  public Set<byte[]> getAllKeysThat(
+      final SegmentIdentifier segmentIdentifier, final Predicate<byte[]> returnCondition) {
     return stream(segmentIdentifier)
         .filter(pair -> returnCondition.test(pair.getKey()))
         .map(Pair::getKey)
@@ -85,7 +89,8 @@ public class SegmentedInMemoryKeyValueStorage implements SnappedKeyValueStorage,
   }
 
   @Override
-  public Set<byte[]> getAllValuesFromKeysThat(final SegmentIdentifier segmentIdentifier, final Predicate<byte[]> returnCondition) {
+  public Set<byte[]> getAllValuesFromKeysThat(
+      final SegmentIdentifier segmentIdentifier, final Predicate<byte[]> returnCondition) {
     return stream(segmentIdentifier)
         .filter(pair -> returnCondition.test(pair.getKey()))
         .map(Pair::getValue)
@@ -98,19 +103,22 @@ public class SegmentedInMemoryKeyValueStorage implements SnappedKeyValueStorage,
     lock.lock();
     try {
       return ImmutableSet.copyOf(
-          hashValueStore.computeIfAbsent(segmentIdentifier, s -> new HashMap<>())
-              .entrySet())
+              hashValueStore.computeIfAbsent(segmentIdentifier, s -> new HashMap<>()).entrySet())
           .stream()
           .filter(bytesEntry -> bytesEntry.getValue().isPresent())
-          .map(bytesEntry -> Pair.of(bytesEntry.getKey().toArrayUnsafe(), bytesEntry.getValue().get()));
+          .map(
+              bytesEntry ->
+                  Pair.of(bytesEntry.getKey().toArrayUnsafe(), bytesEntry.getValue().get()));
     } finally {
       lock.unlock();
     }
   }
 
   @Override
-  public Stream<Pair<byte[], byte[]>> streamFromKey(final SegmentIdentifier segmentIdentifier, final byte[] startKey) {
-    return stream(segmentIdentifier).filter(e -> Bytes.wrap(startKey).compareTo(Bytes.wrap(e.getKey())) <= 0);
+  public Stream<Pair<byte[], byte[]>> streamFromKey(
+      final SegmentIdentifier segmentIdentifier, final byte[] startKey) {
+    return stream(segmentIdentifier)
+        .filter(e -> Bytes.wrap(startKey).compareTo(Bytes.wrap(e.getKey())) <= 0);
   }
 
   @Override
@@ -118,7 +126,8 @@ public class SegmentedInMemoryKeyValueStorage implements SnappedKeyValueStorage,
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
-      return ImmutableMap.copyOf(hashValueStore.computeIfAbsent(segmentIdentifier, s -> new HashMap<>()))
+      return ImmutableMap.copyOf(
+              hashValueStore.computeIfAbsent(segmentIdentifier, s -> new HashMap<>()))
           .entrySet()
           .stream()
           .filter(bytesEntry -> bytesEntry.getValue().isPresent())
@@ -174,20 +183,20 @@ public class SegmentedInMemoryKeyValueStorage implements SnappedKeyValueStorage,
     /** protected access to deletedValues set for the transaction. */
     protected Map<SegmentIdentifier, Set<Bytes>> removedKeys = new HashMap<>();
 
-
     @Override
-    public void put(final SegmentIdentifier segmentIdentifier, final byte[] key, final byte[] value) {
-      updatedValues.computeIfAbsent(segmentIdentifier, __ -> new HashMap<>())
+    public void put(
+        final SegmentIdentifier segmentIdentifier, final byte[] key, final byte[] value) {
+      updatedValues
+          .computeIfAbsent(segmentIdentifier, __ -> new HashMap<>())
           .put(Bytes.wrap(key), Optional.of(value));
-      removedKeys.computeIfAbsent(segmentIdentifier, __ -> new HashSet<>())
-          .remove(Bytes.wrap(key));
+      removedKeys.computeIfAbsent(segmentIdentifier, __ -> new HashSet<>()).remove(Bytes.wrap(key));
     }
 
     @Override
     public void remove(final SegmentIdentifier segmentIdentifier, final byte[] key) {
-      removedKeys.computeIfAbsent(segmentIdentifier, __ -> new HashSet<>())
-          .add(Bytes.wrap(key));
-      updatedValues.computeIfAbsent(segmentIdentifier, __ -> new HashMap<>())
+      removedKeys.computeIfAbsent(segmentIdentifier, __ -> new HashSet<>()).add(Bytes.wrap(key));
+      updatedValues
+          .computeIfAbsent(segmentIdentifier, __ -> new HashMap<>())
           .remove(Bytes.wrap(key));
     }
 
@@ -197,12 +206,19 @@ public class SegmentedInMemoryKeyValueStorage implements SnappedKeyValueStorage,
       lock.lock();
       try {
         updatedValues.entrySet().stream()
-                .forEach(entry -> hashValueStore.computeIfAbsent(entry.getKey(), __ -> new HashMap<>())
+            .forEach(
+                entry ->
+                    hashValueStore
+                        .computeIfAbsent(entry.getKey(), __ -> new HashMap<>())
                         .putAll(entry.getValue()));
 
         removedKeys.entrySet().stream()
-            .forEach(entry -> hashValueStore.computeIfAbsent(entry.getKey(), __ -> new HashMap<>())
-                .keySet().removeAll(entry.getValue()));
+            .forEach(
+                entry ->
+                    hashValueStore
+                        .computeIfAbsent(entry.getKey(), __ -> new HashMap<>())
+                        .keySet()
+                        .removeAll(entry.getValue()));
 
         updatedValues.clear();
         removedKeys.clear();

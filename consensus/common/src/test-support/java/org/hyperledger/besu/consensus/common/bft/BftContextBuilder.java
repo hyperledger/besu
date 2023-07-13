@@ -29,7 +29,8 @@ import org.mockito.quality.Strictness;
 public class BftContextBuilder {
 
   public static BftContext setupContextWithValidators(final Collection<Address> validators) {
-    final BftContext bftContext = mock(BftContext.class, withSettings().strictness(Strictness.LENIENT));
+    final BftContext bftContext =
+        mock(BftContext.class, withSettings().strictness(Strictness.LENIENT));
     final ValidatorProvider mockValidatorProvider =
         mock(ValidatorProvider.class, withSettings().strictness(Strictness.LENIENT));
     final BftBlockInterface mockBftBlockInterface =

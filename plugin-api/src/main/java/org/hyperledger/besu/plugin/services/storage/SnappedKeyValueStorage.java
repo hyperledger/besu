@@ -24,5 +24,4 @@ public interface SnappedKeyValueStorage extends SegmentedKeyValueStorage {
    * @return the snapshot transaction
    */
   SegmentedKeyValueStorageTransaction getSnapshotTransaction();
-
 }

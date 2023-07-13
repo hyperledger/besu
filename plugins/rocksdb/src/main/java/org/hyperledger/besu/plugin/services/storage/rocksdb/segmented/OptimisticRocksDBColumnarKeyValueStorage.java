@@ -32,7 +32,8 @@ import org.rocksdb.RocksDBException;
 import org.rocksdb.WriteOptions;
 
 /** Optimistic RocksDB Columnar key value storage */
-public class OptimisticRocksDBColumnarKeyValueStorage extends RocksDBColumnarKeyValueStorage implements SnappableKeyValueStorage {
+public class OptimisticRocksDBColumnarKeyValueStorage extends RocksDBColumnarKeyValueStorage
+    implements SnappableKeyValueStorage {
   private final OptimisticTransactionDB db;
 
   /**
@@ -83,7 +84,9 @@ public class OptimisticRocksDBColumnarKeyValueStorage extends RocksDBColumnarKey
     final WriteOptions writeOptions = new WriteOptions();
     writeOptions.setIgnoreMissingColumnFamilies(true);
     return new SegmentedKeyValueStorageTransactionValidatorDecorator(
-        new RocksDBTransaction(this::safeColumnHandle, db.beginTransaction(writeOptions), writeOptions, this.metrics), this.closed::get);
+        new RocksDBTransaction(
+            this::safeColumnHandle, db.beginTransaction(writeOptions), writeOptions, this.metrics),
+        this.closed::get);
   }
 
   /**
@@ -93,8 +96,7 @@ public class OptimisticRocksDBColumnarKeyValueStorage extends RocksDBColumnarKey
    * @throws StorageException the storage exception
    */
   @Override
-  public RocksDBColumnarKeyValueSnapshot takeSnapshot()
-      throws StorageException {
+  public RocksDBColumnarKeyValueSnapshot takeSnapshot() throws StorageException {
     throwIfClosed();
     return new RocksDBColumnarKeyValueSnapshot(db, this::safeColumnHandle, metrics);
   }

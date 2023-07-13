@@ -24,9 +24,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-/**
- * Service provided by Besu to facilitate persistent data storage.
- */
+/** Service provided by Besu to facilitate persistent data storage. */
 public interface SegmentedKeyValueStorage extends Closeable {
 
   /**
@@ -47,7 +45,8 @@ public interface SegmentedKeyValueStorage extends Closeable {
    * @return the boolean
    * @throws StorageException the storage exception
    */
-  default boolean containsKey(final SegmentIdentifier segment, final byte[] key) throws StorageException {
+  default boolean containsKey(final SegmentIdentifier segment, final byte[] key)
+      throws StorageException {
     return get(segment, key).isPresent();
   }
 
@@ -76,7 +75,8 @@ public interface SegmentedKeyValueStorage extends Closeable {
    * @param startKey The key from which the stream should start.
    * @return A stream of key-value pairs starting from the specified key.
    */
-  Stream<Pair<byte[], byte[]>> streamFromKey(final SegmentIdentifier segmentIdentifier, final byte[] startKey);
+  Stream<Pair<byte[], byte[]>> streamFromKey(
+      final SegmentIdentifier segmentIdentifier, final byte[] startKey);
 
   /**
    * Stream keys.
@@ -105,7 +105,8 @@ public interface SegmentedKeyValueStorage extends Closeable {
    * @param returnCondition the return condition
    * @return set of result
    */
-  Set<byte[]> getAllKeysThat(SegmentIdentifier segmentIdentifier, Predicate<byte[]> returnCondition);
+  Set<byte[]> getAllKeysThat(
+      SegmentIdentifier segmentIdentifier, Predicate<byte[]> returnCondition);
 
   /**
    * Gets all values from keys that matches condition.
@@ -114,7 +115,8 @@ public interface SegmentedKeyValueStorage extends Closeable {
    * @param returnCondition the return condition
    * @return the set of result
    */
-  Set<byte[]> getAllValuesFromKeysThat(final SegmentIdentifier segmentIdentifier, Predicate<byte[]> returnCondition);
+  Set<byte[]> getAllValuesFromKeysThat(
+      final SegmentIdentifier segmentIdentifier, Predicate<byte[]> returnCondition);
 
   /**
    * Clear.

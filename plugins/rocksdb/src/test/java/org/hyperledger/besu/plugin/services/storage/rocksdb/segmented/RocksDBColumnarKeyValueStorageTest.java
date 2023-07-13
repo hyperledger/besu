@@ -68,7 +68,8 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     final byte[] val2 = bytesFromHexString("1337");
     final SegmentedKeyValueStorage store = createSegmentedStore();
     var segment = TestSegment.FOO;
-    KeyValueStorage duplicateSegmentRef = new SegmentedKeyValueStorageAdapter(TestSegment.FOO, store);
+    KeyValueStorage duplicateSegmentRef =
+        new SegmentedKeyValueStorageAdapter(TestSegment.FOO, store);
 
     final Consumer<byte[]> insert =
         value -> {
@@ -100,14 +101,10 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     final SegmentedKeyValueStorage store = createSegmentedStore();
 
     final SegmentedKeyValueStorageTransaction tx = store.startTransaction();
-    tx.put(
-        TestSegment.BAR,
-        bytesFromHexString("0001"),
-        bytesFromHexString("0FFF"));
+    tx.put(TestSegment.BAR, bytesFromHexString("0001"), bytesFromHexString("0FFF"));
     tx.commit();
 
-    final Optional<byte[]> result =
-        store.get(TestSegment.FOO, bytesFromHexString("0001"));
+    final Optional<byte[]> result = store.get(TestSegment.FOO, bytesFromHexString("0001"));
 
     assertThat(result).isEmpty();
 
@@ -298,8 +295,7 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
         createSegmentedStore(
             folder, metricsSystemMock, List.of(TestSegment.FOO), List.of(TestSegment.EXPERIMENTAL));
 
-    KeyValueStorage keyValueStorage =
-        new SegmentedKeyValueStorageAdapter(TestSegment.FOO, store);
+    KeyValueStorage keyValueStorage = new SegmentedKeyValueStorageAdapter(TestSegment.FOO, store);
 
     // Assertions
     assertThat(keyValueStorage).isNotNull();
@@ -383,8 +379,7 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     }
   }
 
-  protected abstract SegmentedKeyValueStorage createSegmentedStore()
-      throws Exception;
+  protected abstract SegmentedKeyValueStorage createSegmentedStore() throws Exception;
 
   protected abstract SegmentedKeyValueStorage createSegmentedStore(
       final Path path,

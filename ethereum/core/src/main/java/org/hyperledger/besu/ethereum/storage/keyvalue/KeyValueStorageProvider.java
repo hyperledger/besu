@@ -45,10 +45,12 @@ public class KeyValueStorageProvider implements StorageProvider {
   public static final boolean SEGMENT_ISOLATION_SUPPORTED = true;
   public static final boolean SNAPSHOT_ISOLATION_UNSUPPORTED = false;
 
-  protected final Function<List<SegmentIdentifier>, SegmentedKeyValueStorage> segmentedStorageCreator;
+  protected final Function<List<SegmentIdentifier>, SegmentedKeyValueStorage>
+      segmentedStorageCreator;
   private final KeyValueStorage worldStatePreimageStorage;
   private final boolean isWorldStateIterable;
-  protected final Map<List<SegmentIdentifier>, SegmentedKeyValueStorage> storageInstances = new HashMap<>();
+  protected final Map<List<SegmentIdentifier>, SegmentedKeyValueStorage> storageInstances =
+      new HashMap<>();
   private final ObservableMetricsSystem metricsSystem;
 
   public KeyValueStorageProvider(
@@ -94,11 +96,13 @@ public class KeyValueStorageProvider implements StorageProvider {
 
   @Override
   public KeyValueStorage getStorageBySegmentIdentifier(final SegmentIdentifier segment) {
-    return new SegmentedKeyValueStorageAdapter(segment, storageInstances.computeIfAbsent(List.of(segment), segmentedStorageCreator));
+    return new SegmentedKeyValueStorageAdapter(
+        segment, storageInstances.computeIfAbsent(List.of(segment), segmentedStorageCreator));
   }
 
   @Override
-  public SegmentedKeyValueStorage getStorageBySegmentIdentifiers(final List<SegmentIdentifier> segments) {
+  public SegmentedKeyValueStorage getStorageBySegmentIdentifiers(
+      final List<SegmentIdentifier> segments) {
     return segmentedStorageCreator.apply(segments);
   }
 
@@ -118,9 +122,10 @@ public class KeyValueStorageProvider implements StorageProvider {
               } catch (final IOException e) {
                 LOG.atWarn()
                     .setMessage("Failed to close storage instance {}")
-                    .addArgument(storage.getKey().stream()
-                        .map(SegmentIdentifier::getName)
-                        .collect(Collectors.joining(",")))
+                    .addArgument(
+                        storage.getKey().stream()
+                            .map(SegmentIdentifier::getName)
+                            .collect(Collectors.joining(",")))
                     .setCause(e)
                     .log();
               }

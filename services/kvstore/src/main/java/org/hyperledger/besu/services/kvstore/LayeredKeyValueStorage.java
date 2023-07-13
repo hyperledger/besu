@@ -16,7 +16,6 @@
 package org.hyperledger.besu.services.kvstore;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
@@ -60,26 +59,29 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
    * @param parent the parent key value storage for this layered storage.
    */
   public LayeredKeyValueStorage(
-      final Map<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> map, final SegmentedKeyValueStorage parent) {
+      final Map<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> map,
+      final SegmentedKeyValueStorage parent) {
     super(map);
     this.parent = parent;
   }
 
   @Override
-  public boolean containsKey(final SegmentIdentifier segmentId, final byte[] key) throws StorageException {
+  public boolean containsKey(final SegmentIdentifier segmentId, final byte[] key)
+      throws StorageException {
     return get(segmentId, key).isPresent();
   }
 
   @Override
-  public Optional<byte[]> get(final SegmentIdentifier segmentId, final byte[] key) throws StorageException {
+  public Optional<byte[]> get(final SegmentIdentifier segmentId, final byte[] key)
+      throws StorageException {
     throwIfClosed();
 
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
       Bytes wrapKey = Bytes.wrap(key);
-      final Optional<byte[]> foundKey = hashValueStore.computeIfAbsent(segmentId, __ -> new HashMap<>())
-          .get(wrapKey);
+      final Optional<byte[]> foundKey =
+          hashValueStore.computeIfAbsent(segmentId, __ -> new HashMap<>()).get(wrapKey);
       if (foundKey == null) {
         return parent.get(segmentId, key);
       } else {
@@ -98,8 +100,10 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
     lock.lock();
     try {
       // copy of our in memory store to use for streaming and filtering:
-      var ourLayerState = Optional.ofNullable(hashValueStore.get(segmentId)).map(HashMap::new)
-          .orElse(new HashMap<>());
+      var ourLayerState =
+          Optional.ofNullable(hashValueStore.get(segmentId))
+              .map(HashMap::new)
+              .orElse(new HashMap<>());
 
       return Streams.concat(
           ourLayerState.entrySet().stream()
@@ -116,8 +120,10 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
   }
 
   @Override
-  public Stream<Pair<byte[], byte[]>> streamFromKey(final SegmentIdentifier segmentId, final byte[] startKey) {
-    return stream(segmentId).filter(e -> Bytes.wrap(startKey).compareTo(Bytes.wrap(e.getKey())) <= 0);
+  public Stream<Pair<byte[], byte[]>> streamFromKey(
+      final SegmentIdentifier segmentId, final byte[] startKey) {
+    return stream(segmentId)
+        .filter(e -> Bytes.wrap(startKey).compareTo(Bytes.wrap(e.getKey())) <= 0);
   }
 
   @Override
@@ -128,8 +134,10 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
     lock.lock();
     try {
       // copy of our in memory store to use for streaming and filtering:
-      var ourLayerState = Optional.ofNullable(hashValueStore.get(segmentId)).map(HashMap::new)
-          .orElse(new HashMap<>());
+      var ourLayerState =
+          Optional.ofNullable(hashValueStore.get(segmentId))
+              .map(HashMap::new)
+              .orElse(new HashMap<>());
 
       return Streams.concat(
           ourLayerState.entrySet().stream()
@@ -146,7 +154,8 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
 
   @Override
   public boolean tryDelete(final SegmentIdentifier segmentId, final byte[] key) {
-    hashValueStore.computeIfAbsent(segmentId, __ -> new HashMap<>())
+    hashValueStore
+        .computeIfAbsent(segmentId, __ -> new HashMap<>())
         .put(Bytes.wrap(key), Optional.empty());
     return true;
   }
@@ -155,21 +164,30 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
   public SegmentedKeyValueStorageTransaction startTransaction() {
     throwIfClosed();
 
-    return new SegmentedKeyValueStorageTransactionValidatorDecorator(new SegmentedInMemoryTransaction() {
+    return new SegmentedKeyValueStorageTransactionValidatorDecorator(
+        new SegmentedInMemoryTransaction() {
           @Override
           public void commit() throws StorageException {
             final Lock lock = rwLock.writeLock();
             lock.lock();
             try {
               updatedValues.entrySet().stream()
-                  .forEach(entry -> hashValueStore.computeIfAbsent(entry.getKey(), __ -> new HashMap<>())
-                      .putAll(entry.getValue()));
+                  .forEach(
+                      entry ->
+                          hashValueStore
+                              .computeIfAbsent(entry.getKey(), __ -> new HashMap<>())
+                              .putAll(entry.getValue()));
 
               // put empty rather than remove in order to not ask parent in case of deletion
               removedKeys.entrySet().stream()
-                  .forEach(segmentEntry -> hashValueStore.computeIfAbsent(segmentEntry.getKey(), __ -> new HashMap<>())
-                      .putAll(segmentEntry.getValue().stream().collect(Collectors.toMap(
-                          key -> key, __ -> Optional.empty()))));
+                  .forEach(
+                      segmentEntry ->
+                          hashValueStore
+                              .computeIfAbsent(segmentEntry.getKey(), __ -> new HashMap<>())
+                              .putAll(
+                                  segmentEntry.getValue().stream()
+                                      .collect(
+                                          Collectors.toMap(key -> key, __ -> Optional.empty()))));
 
               updatedValues.clear();
               removedKeys.clear();
@@ -177,7 +195,8 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
               lock.unlock();
             }
           }
-        }, this::isClosed);
+        },
+        this::isClosed);
   }
 
   @Override

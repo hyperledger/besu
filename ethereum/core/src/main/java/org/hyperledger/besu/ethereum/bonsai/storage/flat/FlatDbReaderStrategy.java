@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 
 import java.util.Map;
@@ -119,15 +118,13 @@ public abstract class FlatDbReaderStrategy {
     }
   }
 
-  public void clearAll(
-      final SegmentedKeyValueStorage storage) {
+  public void clearAll(final SegmentedKeyValueStorage storage) {
     storage.clear(ACCOUNT_INFO_STATE);
     storage.clear(ACCOUNT_STORAGE_STORAGE);
     storage.clear(CODE_STORAGE);
   }
 
-  public void resetOnResync(
-      final SegmentedKeyValueStorage storage) {
+  public void resetOnResync(final SegmentedKeyValueStorage storage) {
     storage.clear(ACCOUNT_INFO_STATE);
     storage.clear(ACCOUNT_STORAGE_STORAGE);
   }
@@ -159,7 +156,9 @@ public abstract class FlatDbReaderStrategy {
       final long max) {
     final Stream<Pair<Bytes32, Bytes>> pairStream =
         storage
-            .streamFromKey(ACCOUNT_STORAGE_STORAGE, Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe())
+            .streamFromKey(
+                ACCOUNT_STORAGE_STORAGE,
+                Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe())
             .takeWhile(pair -> Bytes.wrap(pair.getKey()).slice(0, Hash.SIZE).equals(accountHash))
             .limit(max)
             .map(

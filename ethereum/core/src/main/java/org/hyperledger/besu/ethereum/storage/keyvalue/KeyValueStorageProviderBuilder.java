@@ -61,7 +61,8 @@ public class KeyValueStorageProviderBuilder {
         new LimitedInMemoryKeyValueStorage(DEFAULT_WORLD_STATE_PRE_IMAGE_CACHE_SIZE);
 
     // this tickles init needed for isSegmentIsolationSupported
-    storageFactory.create(List.of(KeyValueSegmentIdentifier.BLOCKCHAIN), commonConfiguration, metricsSystem);
+    storageFactory.create(
+        List.of(KeyValueSegmentIdentifier.BLOCKCHAIN), commonConfiguration, metricsSystem);
 
     return new KeyValueStorageProvider(
         segments -> storageFactory.create(segments, commonConfiguration, metricsSystem),

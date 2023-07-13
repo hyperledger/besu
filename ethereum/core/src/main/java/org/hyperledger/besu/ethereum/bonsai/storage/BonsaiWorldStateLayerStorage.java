@@ -38,11 +38,7 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
       final KeyValueStorage trieLogStorage,
       final BonsaiWorldStateKeyValueStorage parent,
       final ObservableMetricsSystem metricsSystem) {
-    super(
-        parent,
-        composedWorldStateStorage,
-        trieLogStorage,
-        metricsSystem);
+    super(parent, composedWorldStateStorage, trieLogStorage, metricsSystem);
   }
 
   @Override

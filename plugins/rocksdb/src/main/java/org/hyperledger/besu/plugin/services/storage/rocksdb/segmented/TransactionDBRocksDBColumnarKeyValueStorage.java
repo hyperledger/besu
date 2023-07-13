@@ -16,13 +16,11 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBTransaction;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfiguration;
-import org.hyperledger.besu.services.kvstore.KeyValueStorageTransactionValidatorDecorator;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageTransactionValidatorDecorator;
 
 import java.util.List;
@@ -89,6 +87,8 @@ public class TransactionDBRocksDBColumnarKeyValueStorage extends RocksDBColumnar
     final WriteOptions writeOptions = new WriteOptions();
     writeOptions.setIgnoreMissingColumnFamilies(true);
     return new SegmentedKeyValueStorageTransactionValidatorDecorator(
-        new RocksDBTransaction(this::safeColumnHandle, db.beginTransaction(writeOptions), writeOptions, metrics), this.closed::get);
+        new RocksDBTransaction(
+            this::safeColumnHandle, db.beginTransaction(writeOptions), writeOptions, metrics),
+        this.closed::get);
   }
 }

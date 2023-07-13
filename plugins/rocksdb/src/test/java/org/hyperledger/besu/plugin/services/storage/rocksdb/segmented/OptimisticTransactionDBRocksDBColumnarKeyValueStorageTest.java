@@ -17,10 +17,9 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,8 +34,7 @@ public class OptimisticTransactionDBRocksDBColumnarKeyValueStorageTest
     extends RocksDBColumnarKeyValueStorageTest {
 
   @Override
-  protected SegmentedKeyValueStorage createSegmentedStore()
-      throws Exception {
+  protected SegmentedKeyValueStorage createSegmentedStore() throws Exception {
     return new OptimisticRocksDBColumnarKeyValueStorage(
         new RocksDBConfigurationBuilder()
             .databaseDir(Files.createTempDirectory("segmentedStore"))

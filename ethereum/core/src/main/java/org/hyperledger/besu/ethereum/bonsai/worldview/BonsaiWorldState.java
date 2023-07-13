@@ -186,7 +186,11 @@ public class BonsaiWorldState
         bonsaiUpdater -> {
           accountTrie.commit(
               (location, hash, value) ->
-                  writeTrieNode(ACCOUNT_INFO_STATE, bonsaiUpdater.getWorldStateTransaction(), location, value));
+                  writeTrieNode(
+                      ACCOUNT_INFO_STATE,
+                      bonsaiUpdater.getWorldStateTransaction(),
+                      location,
+                      value));
         });
     final Bytes32 rootHash = accountTrie.getRootHash();
     return Hash.wrap(rootHash);
@@ -462,7 +466,8 @@ public class BonsaiWorldState
       new SegmentedKeyValueStorageTransaction() {
 
         @Override
-        public void put(final SegmentIdentifier segmentIdentifier, final byte[] key, final byte[] value) {
+        public void put(
+            final SegmentIdentifier segmentIdentifier, final byte[] key, final byte[] value) {
           // no-op
         }
 
@@ -485,8 +490,7 @@ public class BonsaiWorldState
   @Override
   public Hash frontierRootHash() {
     return calculateRootHash(
-        Optional.of(
-            new BonsaiWorldStateKeyValueStorage.Updater(noOpSegmentedTx, noOpTx)),
+        Optional.of(new BonsaiWorldStateKeyValueStorage.Updater(noOpSegmentedTx, noOpTx)),
         accumulator.copy());
   }
 
@@ -511,8 +515,11 @@ public class BonsaiWorldState
     return worldStateStorage.getAccountStateTrieNode(location, nodeHash);
   }
 
-  private void writeTrieNode(final SegmentIdentifier segmentId,
-      final SegmentedKeyValueStorageTransaction tx, final Bytes location, final Bytes value) {
+  private void writeTrieNode(
+      final SegmentIdentifier segmentId,
+      final SegmentedKeyValueStorageTransaction tx,
+      final Bytes location,
+      final Bytes value) {
     tx.put(segmentId, location.toArrayUnsafe(), value.toArrayUnsafe());
   }
 

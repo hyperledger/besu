@@ -388,7 +388,9 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
     final Bytes rootHashKey = Bytes32.fromHexString("0x01");
-    updater.getWorldStateTransaction().put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, rootHashKey.toArrayUnsafe());
+    updater
+        .getWorldStateTransaction()
+        .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, rootHashKey.toArrayUnsafe());
     updater.commit();
     assertThat(storage.isWorldStateAvailable(Hash.wrap(Bytes32.wrap(rootHashKey)), Hash.EMPTY))
         .isTrue();

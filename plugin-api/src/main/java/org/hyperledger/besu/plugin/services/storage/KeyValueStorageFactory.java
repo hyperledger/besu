@@ -68,7 +68,9 @@ public interface KeyValueStorageFactory extends Closeable {
    * @exception StorageException problem encountered when creating storage for the segment.
    */
   SegmentedKeyValueStorage create(
-      List<SegmentIdentifier> segments, BesuConfiguration configuration, MetricsSystem metricsSystem)
+      List<SegmentIdentifier> segments,
+      BesuConfiguration configuration,
+      MetricsSystem metricsSystem)
       throws StorageException;
 
   /**

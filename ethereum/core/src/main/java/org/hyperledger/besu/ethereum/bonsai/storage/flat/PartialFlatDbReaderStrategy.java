@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 
 import java.util.Optional;
@@ -87,7 +86,8 @@ public class PartialFlatDbReaderStrategy extends FlatDbReaderStrategy {
       final Hash accountHash,
       final SegmentedKeyValueStorage storage) {
     getAccountCounter.inc();
-    Optional<Bytes> response = storage.get(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe()).map(Bytes::wrap);
+    Optional<Bytes> response =
+        storage.get(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe()).map(Bytes::wrap);
     if (response.isEmpty()) {
       // after a snapsync/fastsync we only have the trie branches.
       final Optional<Bytes> worldStateRootHash = worldStateRootHashSupplier.get();
@@ -121,7 +121,9 @@ public class PartialFlatDbReaderStrategy extends FlatDbReaderStrategy {
     getStorageValueCounter.inc();
     Optional<Bytes> response =
         storage
-            .get(ACCOUNT_STORAGE_STORAGE, Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
+            .get(
+                ACCOUNT_STORAGE_STORAGE,
+                Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
             .map(Bytes::wrap);
     if (response.isEmpty()) {
       final Optional<Hash> storageRoot = storageRootSupplier.get();

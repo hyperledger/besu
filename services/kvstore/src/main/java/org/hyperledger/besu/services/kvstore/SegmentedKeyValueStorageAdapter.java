@@ -31,10 +31,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * This class will adapt a SegmentedKeyValueStorage to a KeyValueStorage instance.
- *
- */
+/** This class will adapt a SegmentedKeyValueStorage to a KeyValueStorage instance. */
 public class SegmentedKeyValueStorageAdapter implements KeyValueStorage {
 
   private static final Logger LOG = LoggerFactory.getLogger(SegmentedKeyValueStorageAdapter.class);
@@ -132,7 +129,8 @@ public class SegmentedKeyValueStorageAdapter implements KeyValueStorage {
     private final SegmentedKeyValueStorageTransaction segmentedTransaction;
     private final SegmentIdentifier segmentIdentifier;
 
-    public KeyValueStorageTransactionAdapter(final SegmentIdentifier segmentIdentifier, final SegmentedKeyValueStorage storage) {
+    public KeyValueStorageTransactionAdapter(
+        final SegmentIdentifier segmentIdentifier, final SegmentedKeyValueStorage storage) {
       this.segmentedTransaction = storage.startTransaction();
       this.segmentIdentifier = segmentIdentifier;
     }
@@ -145,7 +143,6 @@ public class SegmentedKeyValueStorageAdapter implements KeyValueStorage {
     @Override
     public void remove(final byte[] key) {
       segmentedTransaction.remove(segmentIdentifier, key);
-
     }
 
     @Override

@@ -14,12 +14,14 @@
  */
 
 package org.hyperledger.besu.services.kvstore;
+
 import static com.google.common.base.Preconditions.checkState;
-import java.util.function.Supplier;
+
 import org.hyperledger.besu.plugin.services.exception.StorageException;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
+
+import java.util.function.Supplier;
 
 /** The Key value storage transaction validator decorator. */
 public class SegmentedKeyValueStorageTransactionValidatorDecorator
@@ -35,8 +37,7 @@ public class SegmentedKeyValueStorageTransactionValidatorDecorator
    * @param toDecorate the to decorate
    */
   public SegmentedKeyValueStorageTransactionValidatorDecorator(
-      final SegmentedKeyValueStorageTransaction toDecorate,
-      final Supplier<Boolean> isClosed) {
+      final SegmentedKeyValueStorageTransaction toDecorate, final Supplier<Boolean> isClosed) {
     this.isClosed = isClosed;
     this.transaction = toDecorate;
   }
