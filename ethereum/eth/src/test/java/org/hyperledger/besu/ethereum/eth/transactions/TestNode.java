@@ -269,6 +269,6 @@ public class TestNode implements Closeable {
   }
 
   public int getPendingTransactionCount() {
-    return transactionPool.getPendingTransactions().size();
+    return transactionPool.count();
   }
 }

@@ -15,6 +15,10 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -27,10 +31,16 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
@@ -94,19 +104,14 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             1000,
             8);
 
-    final BaseFeePendingTransactionsSorter pendingTransactions =
-        new BaseFeePendingTransactionsSorter(
-            ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build(),
-            TestClock.fixed(),
-            metricsSystem,
-            executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader);
+    final TransactionPool transactionPool = createTransactionPool(executionContextTestFixture);
 
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             BLOCK_1_COINBASE,
             Optional::empty,
             parent -> BLOCK_1_EXTRA_DATA,
-            pendingTransactions,
+            transactionPool,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             solver,
@@ -155,19 +160,14 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             1000,
             8);
 
-    final BaseFeePendingTransactionsSorter pendingTransactions =
-        new BaseFeePendingTransactionsSorter(
-            ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build(),
-            TestClock.fixed(),
-            metricsSystem,
-            executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader);
+    final TransactionPool transactionPool = createTransactionPool(executionContextTestFixture);
 
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             BLOCK_1_COINBASE,
             Optional::empty,
             parent -> BLOCK_1_EXTRA_DATA,
-            pendingTransactions,
+            transactionPool,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             solver,
@@ -207,19 +207,14 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             1000,
             8);
 
-    final BaseFeePendingTransactionsSorter pendingTransactions =
-        new BaseFeePendingTransactionsSorter(
-            ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build(),
-            TestClock.fixed(),
-            metricsSystem,
-            executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader);
+    final TransactionPool transactionPool = createTransactionPool(executionContextTestFixture);
 
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             BLOCK_1_COINBASE,
             () -> Optional.of(10_000_000L),
             parent -> BLOCK_1_EXTRA_DATA,
-            pendingTransactions,
+            transactionPool,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             solver,
@@ -281,19 +276,14 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             1000,
             8);
 
-    final BaseFeePendingTransactionsSorter pendingTransactions =
-        new BaseFeePendingTransactionsSorter(
-            ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build(),
-            TestClock.fixed(),
-            metricsSystem,
-            executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader);
+    final TransactionPool transactionPool = createTransactionPool(executionContextTestFixture);
 
     final PoWBlockCreator blockCreator =
         new PoWBlockCreator(
             BLOCK_1_COINBASE,
             () -> Optional.of(10_000_000L),
             parent -> BLOCK_1_EXTRA_DATA,
-            pendingTransactions,
+            transactionPool,
             executionContextTestFixture.getProtocolContext(),
             executionContextTestFixture.getProtocolSchedule(),
             solver,
@@ -325,5 +315,35 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
         protocolSchedule.getByBlockHeader(header));
 
     assertThat(mutableWorldState.get(BLOCK_1_COINBASE)).isNull();
+  }
+
+  private TransactionPool createTransactionPool(
+      final ExecutionContextTestFixture executionContextTestFixture) {
+    final TransactionPoolConfiguration poolConf =
+        ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();
+
+    final BaseFeePendingTransactionsSorter pendingTransactions =
+        new BaseFeePendingTransactionsSorter(
+            poolConf,
+            TestClock.fixed(),
+            metricsSystem,
+            executionContextTestFixture.getProtocolContext().getBlockchain()::getChainHeadHeader);
+
+    final EthContext ethContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
+    when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
+
+    final TransactionPool transactionPool =
+        new TransactionPool(
+            () -> pendingTransactions,
+            executionContextTestFixture.getProtocolSchedule(),
+            executionContextTestFixture.getProtocolContext(),
+            mock(TransactionBroadcaster.class),
+            ethContext,
+            mock(MiningParameters.class),
+            new TransactionPoolMetrics(metricsSystem),
+            poolConf);
+    transactionPool.setEnabled();
+
+    return transactionPool;
   }
 }

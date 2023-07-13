@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Optional;
@@ -46,7 +46,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
    * @param localAddress the local address
    * @param targetGasLimitSupplier the target gas limit supplier
    * @param extraDataCalculator the extra data calculator
-   * @param pendingTransactions the pending transactions
+   * @param transactionPool the pending transactions
    * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
    * @param minTransactionGasPrice the min transaction gas price
@@ -59,7 +59,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
       final Address localAddress,
       final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
-      final PendingTransactions pendingTransactions,
+      final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final Wei minTransactionGasPrice,
@@ -71,7 +71,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
         miningBeneficiaryCalculator(localAddress, forksSchedule),
         targetGasLimitSupplier,
         extraDataCalculator,
-        pendingTransactions,
+        transactionPool,
         protocolContext,
         protocolSchedule,
         minTransactionGasPrice,
