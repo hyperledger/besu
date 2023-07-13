@@ -18,6 +18,11 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 
+/**
+ * An extended operation tracer that can trace the start and end of a block.
+ *
+ * In both methods, the block header and body are provided.
+ */
 public interface BlockAwareOperationTracer extends OperationTracer {
   /**
    * Trace the start of a block.
