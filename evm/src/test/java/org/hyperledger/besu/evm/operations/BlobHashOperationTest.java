@@ -25,7 +25,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
-import org.hyperledger.besu.evm.operation.DataHashOperation;
+import org.hyperledger.besu.evm.operation.BlobHashOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 
 import java.util.ArrayList;
@@ -35,13 +35,13 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
-class DataHashOperationTest {
+class BlobHashOperationTest {
 
   @Test
   void putsHashOnStack() {
     Hash version0Hash = Hash.fromHexStringLenient("0xcafebabeb0b0facedeadbeef");
     List<Hash> versionedHashes = List.of(version0Hash);
-    DataHashOperation getHash = new DataHashOperation(new LondonGasCalculator());
+    BlobHashOperation getHash = new BlobHashOperation(new LondonGasCalculator());
     MessageFrame frame = mock(MessageFrame.class);
     when(frame.popStackItem()).thenReturn(Bytes.of(0));
     when(frame.getVersionedHashes()).thenReturn(Optional.of(versionedHashes));
@@ -57,7 +57,7 @@ class DataHashOperationTest {
 
     EVM fakeEVM = mock(EVM.class);
 
-    DataHashOperation getHash = new DataHashOperation(new LondonGasCalculator());
+    BlobHashOperation getHash = new BlobHashOperation(new LondonGasCalculator());
     MessageFrame frame = mock(MessageFrame.class);
     when(frame.popStackItem()).thenReturn(Bytes.of(0));
     when(frame.getVersionedHashes()).thenReturn(Optional.empty());
@@ -78,7 +78,7 @@ class DataHashOperationTest {
   void pushZeroOnVersionIndexOutOFBounds() {
     Hash version0Hash = Hash.fromHexStringLenient("0xcafebabeb0b0facedeadbeef");
     List<Hash> versionedHashes = List.of(version0Hash);
-    DataHashOperation getHash = new DataHashOperation(new LondonGasCalculator());
+    BlobHashOperation getHash = new BlobHashOperation(new LondonGasCalculator());
     MessageFrame frame = mock(MessageFrame.class);
     when(frame.popStackItem()).thenReturn(Bytes.of(1));
     when(frame.getVersionedHashes()).thenReturn(Optional.of(versionedHashes));
