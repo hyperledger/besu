@@ -83,7 +83,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
         new CliqueMinerExecutor(
             protocolContext,
             protocolSchedule,
-            transactionPool.getPendingTransactions(),
+            transactionPool,
             nodeKey,
             miningParameters,
             new CliqueBlockScheduler(

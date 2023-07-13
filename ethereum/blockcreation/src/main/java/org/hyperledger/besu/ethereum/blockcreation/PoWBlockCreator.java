@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.EthHash;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolver;
@@ -43,7 +43,7 @@ public class PoWBlockCreator extends AbstractBlockCreator {
       final Address coinbase,
       final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
-      final PendingTransactions pendingTransactions,
+      final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final PoWSolver nonceSolver,
@@ -55,7 +55,7 @@ public class PoWBlockCreator extends AbstractBlockCreator {
         __ -> coinbase,
         targetGasLimitSupplier,
         extraDataCalculator,
-        pendingTransactions,
+        transactionPool,
         protocolContext,
         protocolSchedule,
         minTransactionGasPrice,

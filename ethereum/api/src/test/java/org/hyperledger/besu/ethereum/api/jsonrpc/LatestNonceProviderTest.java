@@ -19,7 +19,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.OptionalLong;
 
@@ -37,17 +37,17 @@ public class LatestNonceProviderTest {
   @Mock private BlockchainQueries blockchainQueries;
   private LatestNonceProvider nonceProvider;
 
-  @Mock private PendingTransactions pendingTransactions;
+  @Mock private TransactionPool transactionPool;
 
   @Before
   public void setUp() {
-    nonceProvider = new LatestNonceProvider(blockchainQueries, pendingTransactions);
+    nonceProvider = new LatestNonceProvider(blockchainQueries, transactionPool);
   }
 
   @Test
   public void nextNonceUsesTxPool() {
     final long highestNonceInPendingTransactions = 123;
-    when(pendingTransactions.getNextNonceForSender(senderAddress))
+    when(transactionPool.getNextNonceForSender(senderAddress))
         .thenReturn(OptionalLong.of(highestNonceInPendingTransactions));
     assertThat(nonceProvider.getNonce(senderAddress)).isEqualTo(highestNonceInPendingTransactions);
   }
@@ -56,7 +56,7 @@ public class LatestNonceProviderTest {
   public void nextNonceIsTakenFromBlockchainIfNoPendingTransactionResponse() {
     final long headBlockNumber = 8;
     final long nonceInBlockchain = 56;
-    when(pendingTransactions.getNextNonceForSender(senderAddress)).thenReturn(OptionalLong.empty());
+    when(transactionPool.getNextNonceForSender(senderAddress)).thenReturn(OptionalLong.empty());
     when(blockchainQueries.headBlockNumber()).thenReturn(headBlockNumber);
     when(blockchainQueries.getTransactionCount(senderAddress, headBlockNumber))
         .thenReturn(nonceInBlockchain);
