@@ -23,6 +23,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.Depo
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameterTestFixture.WITHDRAWAL_PARAM_1;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -179,7 +180,7 @@ public abstract class AbstractEngineNewPayloadTest {
   public void shouldReturnAcceptedOnLatestValidAncestorEmpty() {
     BlockHeader mockHeader = createBlockHeader(Optional.empty(), Optional.empty());
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
-    when(blockchain.getBlockHeader(mockHeader.getParentHash()))
+    when(mergeCoordinator.getOrSyncHeadByHash(eq(mockHeader.getParentHash()), any(Hash.class)))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.empty());
@@ -264,7 +265,7 @@ public abstract class AbstractEngineNewPayloadTest {
   public void shouldNotReturnInvalidOnThrownMerkleTrieException() {
     BlockHeader mockHeader = createBlockHeader(Optional.empty(), Optional.empty());
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
-    when(blockchain.getBlockHeader(mockHeader.getParentHash()))
+    when(mergeCoordinator.getOrSyncHeadByHash(eq(mockHeader.getParentHash()), any(Hash.class)))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
@@ -333,7 +334,8 @@ public abstract class AbstractEngineNewPayloadTest {
             .timestamp(parent.getTimestamp())
             .buildHeader();
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
-    when(blockchain.getBlockHeader(parent.getHash())).thenReturn(Optional.of(parent));
+    when(mergeCoordinator.getOrSyncHeadByHash(eq(mockHeader.getParentHash()), any(Hash.class)))
+        .thenReturn(Optional.of(parent));
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
@@ -621,7 +623,7 @@ public abstract class AbstractEngineNewPayloadTest {
       final Optional<List<Deposit>> maybeDeposits) {
     BlockHeader mockHeader = createBlockHeader(maybeWithdrawals, maybeDeposits);
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
-    when(blockchain.getBlockHeader(mockHeader.getParentHash()))
+    when(mergeCoordinator.getOrSyncHeadByHash(eq(mockHeader.getParentHash()), any(Hash.class)))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
