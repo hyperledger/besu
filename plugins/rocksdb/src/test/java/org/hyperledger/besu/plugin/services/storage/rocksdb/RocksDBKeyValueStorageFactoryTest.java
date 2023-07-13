@@ -71,7 +71,7 @@ public class RocksDBKeyValueStorageFactoryTest {
   }
 
   @Test
-  public void shouldDetectVersion0DatabaseIfNoMetadataFileFound() throws Exception {
+  public void shouldDetectVersion1DatabaseIfNoMetadataFileFound() throws Exception {
     final Path tempDataDir = temporaryFolder.newFolder().toPath().resolve("data");
     final Path tempDatabaseDir = temporaryFolder.newFolder().toPath().resolve("db");
     Files.createDirectories(tempDatabaseDir);
@@ -85,7 +85,7 @@ public class RocksDBKeyValueStorageFactoryTest {
 
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isZero();
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isEqualTo(DEFAULT_VERSION);
   }
 
   @Test
@@ -118,14 +118,14 @@ public class RocksDBKeyValueStorageFactoryTest {
 
     final RocksDBKeyValueStorageFactory storageFactory =
         new RocksDBKeyValueStorageFactory(
-            () -> rocksDbConfiguration, segments, 1, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
+            () -> rocksDbConfiguration, segments, 2, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
 
     storageFactory.create(segment, commonConfiguration, metricsSystem);
     storageFactory.close();
 
     final RocksDBKeyValueStorageFactory rolledbackStorageFactory =
         new RocksDBKeyValueStorageFactory(
-            () -> rocksDbConfiguration, segments, 0, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
+            () -> rocksDbConfiguration, segments, 1, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
     rolledbackStorageFactory.create(segment, commonConfiguration, metricsSystem);
   }
 
