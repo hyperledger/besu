@@ -15,6 +15,9 @@
  */
 package org.hyperledger.besu.evmtool;
 
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_BASE;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_MIN;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
 import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules.shouldClearEmptyAccounts;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
@@ -104,6 +107,9 @@ public class T8nExecutor {
           } else {
             Transaction.Builder builder = Transaction.builder();
             int type = Bytes.fromHexStringLenient(txNode.get("type").textValue()).toInt();
+            BigInteger chainId =
+                Bytes.fromHexStringLenient(txNode.get("chainId").textValue())
+                    .toUnsignedBigInteger();
             TransactionType transactionType = TransactionType.of(type == 0 ? 0xf8 : type);
             builder.type(transactionType);
             builder.nonce(Bytes.fromHexStringLenient(txNode.get("nonce").textValue()).toLong());
@@ -131,14 +137,9 @@ public class T8nExecutor {
             }
 
             if (transactionType.requiresChainId()
-                || !txNode.has("protected")
-                || txNode.get("protected").booleanValue()) {
+                || (txNode.has("protected") && txNode.get("protected").asBoolean(false))) {
               // chainid if protected
-              builder.chainId(
-                  new BigInteger(
-                      1,
-                      Bytes.fromHexStringLenient(txNode.get("chainId").textValue())
-                          .toArrayUnsafe()));
+              builder.chainId(chainId);
             }
 
             if (txNode.has("accessList")) {
@@ -192,10 +193,15 @@ public class T8nExecutor {
             } else {
               BigInteger v =
                   Bytes.fromHexStringLenient(txNode.get("v").textValue()).toUnsignedBigInteger();
-              if (v.compareTo(BigInteger.valueOf(35)) >= 0) {
-                v = v.subtract(BigInteger.valueOf(35)).mod(BigInteger.TWO);
-              } else if (v.compareTo(BigInteger.valueOf(27)) >= 0) {
-                v = v.subtract(BigInteger.valueOf(27)).mod(BigInteger.TWO);
+              if (transactionType == TransactionType.FRONTIER) {
+                if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
+                  v =
+                      v.subtract(REPLAY_PROTECTED_V_BASE)
+                          .subtract(chainId.multiply(BigInteger.TWO));
+                  builder.chainId(chainId);
+                } else {
+                  v = v.subtract(REPLAY_UNPROTECTED_V_BASE);
+                }
               }
               builder.signature(
                   SignatureAlgorithmFactory.getInstance()
