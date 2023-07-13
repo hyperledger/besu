@@ -64,7 +64,7 @@ public interface OperationTracer {
       final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {}
 
   /**
-   * Trace the end of a transaction.
+   * Trace the start of a transaction.
    *
    * @param gasLimit the gas limit set for the transaction
    */
