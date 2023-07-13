@@ -479,7 +479,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           .thenRun(() -> updateFinalized(finalizedHash));
       return Optional.empty();
     }
-    return maybeHeadHeader;
   }
 
   private void updateFinalized(final Hash finalizedHash) {
