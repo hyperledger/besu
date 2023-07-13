@@ -458,13 +458,16 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   @Override
   public Optional<BlockHeader> getOrSyncHeadByHash(final Hash headHash, final Hash finalizedHash) {
     final var chain = protocolContext.getBlockchain();
+    final var chainHead = chain.getChainHeadBlockNumber();
     final var maybeHeadHeader = chain.getBlockHeader(headHash);
 
-    if (maybeHeadHeader.isPresent()) {
-      LOG.atDebug()
+    if (maybeHeadHeader.isPresent()
+        && Math.abs(maybeHeadHeader.get().getNumber() - chainHead) < 500) {
+      LOG.atInfo()
           .setMessage("BlockHeader {} is already present")
           .addArgument(maybeHeadHeader.get()::toLogString)
           .log();
+      return maybeHeadHeader;
     } else {
       LOG.atDebug()
           .setMessage("Appending new head block hash {} to backward sync")
@@ -474,6 +477,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       backwardSyncContext
           .syncBackwardsUntil(headHash)
           .thenRun(() -> updateFinalized(finalizedHash));
+      return Optional.empty();
     }
     return maybeHeadHeader;
   }

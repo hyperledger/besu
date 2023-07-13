@@ -203,7 +203,10 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     }
 
     final Optional<BlockHeader> maybeParentHeader =
-        protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
+        mergeCoordinator.getOrSyncHeadByHash(
+            blockParam.getParentHash(),
+            protocolContext.getBlockchain().getFinalized().orElse(blockParam.getParentHash()));
+    protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
     if (maybeParentHeader.isPresent()
         && (blockParam.getTimestamp() <= maybeParentHeader.get().getTimestamp())) {
       return respondWithInvalid(
