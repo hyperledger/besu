@@ -113,7 +113,7 @@ public class GraphQLDataFetchers {
     return dataFetchingEnvironment -> {
       final TransactionPool txPool =
           dataFetchingEnvironment.getGraphQlContext().get(GraphQLContextType.TRANSACTION_POOL);
-      return Optional.of(new PendingStateAdapter(txPool.getPendingTransactions()));
+      return Optional.of(new PendingStateAdapter(txPool));
     };
   }
 

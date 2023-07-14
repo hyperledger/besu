@@ -133,7 +133,7 @@ dependencyManagement {
       entry 'log4j-slf4j2-impl'
     }
 
-    dependencySet(group: 'io.tmio', version: '2.4.1') {
+    dependencySet(group: 'io.tmio', version: '2.4.2') {
       entry 'tuweni-bytes'
       entry 'tuweni-config'
       entry 'tuweni-concurrent'
@@ -151,9 +151,9 @@ dependencyManagement {
 
     dependency 'org.awaitility:awaitility:4.2.0'
 
-    dependencySet(group: 'org.bouncycastle', version: '1.70') {
-      entry'bcpkix-jdk15on'
-      entry'bcprov-jdk15on'
+    dependencySet(group: 'org.bouncycastle', version: '1.75') {
+      entry'bcpkix-jdk18on'
+      entry'bcprov-jdk18on'
     }
 
     dependency 'org.fusesource.jansi:jansi:2.4.0'

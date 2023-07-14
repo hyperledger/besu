@@ -29,7 +29,7 @@ jar {
 }
 
 dependencies {
-  api 'org.bouncycastle:bcprov-jdk15on'
+  api 'org.bouncycastle:bcprov-jdk18on'
   api 'org.slf4j:slf4j-api'
 
   implementation 'net.java.dev.jna:jna'

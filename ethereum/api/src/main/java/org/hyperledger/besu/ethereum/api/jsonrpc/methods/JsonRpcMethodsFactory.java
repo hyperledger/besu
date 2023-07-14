@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
@@ -76,13 +77,12 @@ public class JsonRpcMethodsFactory {
       final Path dataDir,
       final EthPeers ethPeers,
       final Vertx consensusEngineServer,
-      final Optional<Long> maxLogRange) {
+      final Optional<Long> maxLogRange,
+      final Optional<EnodeDnsConfiguration> enodeDnsConfiguration) {
     final Map<String, JsonRpcMethod> enabled = new HashMap<>();
-
     if (!rpcApis.isEmpty()) {
       final JsonRpcMethod modules = new RpcModules(rpcApis);
       enabled.put(modules.getName(), modules);
-
       final List<JsonRpcMethods> availableApiGroups =
           List.of(
               new AdminJsonRpcMethods(
@@ -93,7 +93,8 @@ public class JsonRpcMethodsFactory {
                   blockchainQueries,
                   namedPlugins,
                   natService,
-                  ethPeers),
+                  ethPeers,
+                  enodeDnsConfiguration),
               new DebugJsonRpcMethods(
                   blockchainQueries,
                   protocolContext,

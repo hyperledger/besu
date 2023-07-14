@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.eea;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.PRIVATE_TRANSACTION_FAILED;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.PRIVATE_TRANSACTION_INVALID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -139,11 +139,12 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
   @Test
   public void invalidTransactionIsNotSentToEnclaveAndIsNotAddedToTransactionPool() {
     when(privacyController.validatePrivateTransaction(any(), anyString()))
-        .thenReturn(ValidationResult.invalid(PRIVATE_TRANSACTION_FAILED));
+        .thenReturn(ValidationResult.invalid(PRIVATE_TRANSACTION_INVALID));
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            validPrivateForTransactionRequest.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+            validPrivateForTransactionRequest.getRequest().getId(),
+            JsonRpcError.PRIVATE_TRANSACTION_INVALID);
 
     final JsonRpcResponse actualResponse = method.response(validPrivateForTransactionRequest);
 

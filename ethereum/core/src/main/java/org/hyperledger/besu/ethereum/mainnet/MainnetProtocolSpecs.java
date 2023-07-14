@@ -69,7 +69,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.google.common.io.Resources;
@@ -97,6 +96,9 @@ public abstract class MainnetProtocolSpecs {
   private static final Wei BYZANTIUM_BLOCK_REWARD = Wei.fromEth(3);
 
   private static final Wei CONSTANTINOPLE_BLOCK_REWARD = Wei.fromEth(2);
+
+  public static final Address DEFAULT_DEPOSIT_CONTRACT_ADDRESS =
+      Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
 
   private MainnetProtocolSpecs() {}
 
@@ -172,19 +174,11 @@ public abstract class MainnetProtocolSpecs {
     if (powAlgorithm == null) {
       return PoWHasher.UNSUPPORTED;
     }
-    switch (powAlgorithm) {
-      case ETHASH:
-        return PoWHasher.ETHASH_LIGHT;
-      case UNSUPPORTED:
-      default:
-        return PoWHasher.UNSUPPORTED;
-    }
+    return powAlgorithm == PowAlgorithm.ETHASH ? PoWHasher.ETHASH_LIGHT : PoWHasher.UNSUPPORTED;
   }
 
   public static BlockValidatorBuilder blockValidatorBuilder() {
-    return (blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager) ->
-        new MainnetBlockValidator(
-            blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
+    return MainnetBlockValidator::new;
   }
 
   public static ProtocolSpecBuilder homesteadDefinition(
@@ -263,6 +257,7 @@ public abstract class MainnetProtocolSpecs {
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
 
     return tangerineWhistleDefinition(OptionalInt.empty(), configStackSizeLimit, evmConfiguration)
+        .isReplayProtectionSupported(true)
         .gasCalculator(SpuriousDragonGasCalculator::new)
         .skipZeroBlockRewards(true)
         .messageCallProcessorBuilder(
@@ -736,6 +731,7 @@ public abstract class MainnetProtocolSpecs {
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.futureEips(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::futureEips)
         .name("FutureEips");
   }
 
@@ -746,6 +742,9 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration) {
+
+    final Address depositContractAddress =
+        genesisConfigOptions.getDepositContractAddress().orElse(DEFAULT_DEPOSIT_CONTRACT_ADDRESS);
 
     return futureEipsDefinition(
             chainId,
@@ -758,7 +757,7 @@ public abstract class MainnetProtocolSpecs {
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.experimentalEips(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
-        .depositsValidator(new DepositsValidator.AllowedDeposits())
+        .depositsValidator(new DepositsValidator.AllowedDeposits(depositContractAddress))
         .name("ExperimentalEips");
   }
 
@@ -864,7 +863,7 @@ public abstract class MainnetProtocolSpecs {
             IntStream.range(0, json.size())
                 .mapToObj(json::getString)
                 .map(Address::fromHexString)
-                .collect(Collectors.toList());
+                .toList();
         final WorldUpdater worldUpdater = worldState.updater();
         final MutableAccount daoRefundContract =
             worldUpdater.getOrCreate(DAO_REFUND_CONTRACT_ADDRESS).getMutable();

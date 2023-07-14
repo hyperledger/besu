@@ -69,7 +69,7 @@ public class TransactionAnnouncementEncoder {
   /**
    * Encode a list of transactions for the NewPooledTransactionHashesMessage using the Eth/68
    *
-   * <p>format: [[type_0: B_1, type_1: B_1, ...], [size_0: B_4, size_1: B_4, ...], ...]
+   * <p>format: [[type_0: B_1, type_1: B_1, ...], [size_0: P, size_1: P, ...], ...]
    *
    * @param transactions the list to encode
    * @return the encoded value. The message data will contain hashes, types and sizes.
@@ -112,7 +112,7 @@ public class TransactionAnnouncementEncoder {
     }
     out.startList();
     out.writeBytes(Bytes.wrap((types)));
-    out.writeList(sizes, (h, w) -> w.writeInt(h));
+    out.writeList(sizes, (h, w) -> w.writeUnsignedInt(h));
     out.writeList(hashes, (h, w) -> w.writeBytes(h));
     out.endList();
     return out.encoded();

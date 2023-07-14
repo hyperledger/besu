@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
@@ -25,6 +26,10 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
 public class TransactionDBRocksDBColumnarKeyValueStorageTest
     extends RocksDBColumnarKeyValueStorageTest {
 
@@ -32,7 +37,7 @@ public class TransactionDBRocksDBColumnarKeyValueStorageTest
   protected SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore()
       throws Exception {
     return new TransactionDBRocksDBColumnarKeyValueStorage(
-        new RocksDBConfigurationBuilder().databaseDir(folder).build(),
+        new RocksDBConfigurationBuilder().databaseDir(getTempSubFolder(folder)).build(),
         Arrays.asList(TestSegment.FOO, TestSegment.BAR),
         List.of(),
         new NoOpMetricsSystem(),
@@ -49,6 +54,20 @@ public class TransactionDBRocksDBColumnarKeyValueStorageTest
         segments,
         ignorableSegments,
         new NoOpMetricsSystem(),
+        RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
+  }
+
+  @Override
+  protected SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore(
+      final Path path,
+      final MetricsSystem metricsSystem,
+      final List<SegmentIdentifier> segments,
+      final List<SegmentIdentifier> ignorableSegments) {
+    return new TransactionDBRocksDBColumnarKeyValueStorage(
+        new RocksDBConfigurationBuilder().databaseDir(path).build(),
+        segments,
+        ignorableSegments,
+        metricsSystem,
         RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
   }
 }

@@ -58,6 +58,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.core.dns.DnsClient;
 import org.apache.tuweni.bytes.Bytes32;
@@ -352,6 +353,7 @@ public final class DefaultP2PNetworkTest {
 
     Vertx vertx = mock(Vertx.class);
     when(vertx.createDnsClient(any())).thenReturn(mock(DnsClient.class));
+    when(vertx.getOrCreateContext()).thenReturn(mock(Context.class));
 
     // spy on DefaultP2PNetwork
     final DefaultP2PNetwork testClass =
@@ -374,6 +376,7 @@ public final class DefaultP2PNetworkTest {
 
     Vertx vertx = mock(Vertx.class);
     when(vertx.createDnsClient(any())).thenReturn(mock(DnsClient.class));
+    when(vertx.getOrCreateContext()).thenReturn(mock(Context.class));
 
     final DefaultP2PNetwork testClass =
         (DefaultP2PNetwork) builder().config(dnsConfig).vertx(vertx).build();

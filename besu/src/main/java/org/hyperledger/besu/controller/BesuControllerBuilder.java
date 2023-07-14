@@ -124,7 +124,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       () ->
           Optional.ofNullable(genesisConfig)
               .map(conf -> conf.getConfigOptions(genesisConfigOverrides))
-              .orElseGet(genesisConfig::getConfigOptions);
+              .orElseThrow();
 
   /** The Sync config. */
   protected SynchronizerConfiguration syncConfig;

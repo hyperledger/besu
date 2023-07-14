@@ -2133,7 +2133,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--remote-connections-max-percentage"));
 
     // Check that block producer options work
-    if (!isMergeEnabled()) {
+    if (!isMergeEnabled() && getActualGenesisConfigOptions().isEthHash()) {
       CommandLineUtils.checkOptionDependencies(
           logger,
           commandLine,
@@ -2144,17 +2144,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               "--min-gas-price",
               "--min-block-occupancy-ratio",
               "--miner-extra-data"));
+
+      // Check that mining options are able to work
+      CommandLineUtils.checkOptionDependencies(
+          logger,
+          commandLine,
+          "--miner-enabled",
+          !minerOptionGroup.isMiningEnabled,
+          asList(
+              "--miner-stratum-enabled",
+              "--Xminer-remote-sealers-limit",
+              "--Xminer-remote-sealers-hashrate-ttl"));
     }
-    // Check that mining options are able to work
-    CommandLineUtils.checkOptionDependencies(
-        logger,
-        commandLine,
-        "--miner-enabled",
-        !minerOptionGroup.isMiningEnabled,
-        asList(
-            "--miner-stratum-enabled",
-            "--Xminer-remote-sealers-limit",
-            "--Xminer-remote-sealers-hashrate-ttl"));
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
@@ -2167,6 +2168,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         "--Xcheckpoint-post-merge-enabled can only be used with X_CHECKPOINT sync-mode",
         SyncMode.X_CHECKPOINT.equals(getDefaultSyncModeIfNotSet()),
         singletonList("--Xcheckpoint-post-merge-enabled"));
+
+    CommandLineUtils.failIfOptionDoesntMeetRequirement(
+        commandLine,
+        "--Xsnapsync-synchronizer-flat option can only be used when -Xsnapsync-synchronizer-flat-db-healing-enabled is true",
+        unstableSynchronizerOptions.isSnapsyncFlatDbHealingEnabled(),
+        asList(
+            "--Xsnapsync-synchronizer-flat-account-healed-count-per-request",
+            "--Xsnapsync-synchronizer-flat-slot-healed-count-per-request"));
 
     if (!securityModuleName.equals(DEFAULT_SECURITY_MODULE)
         && nodePrivateKeyFileOption.getNodePrivateKeyFile() != null) {
@@ -3095,6 +3104,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .storageProvider(keyValueStorageProvider(keyValueStorageName))
             .rpcEndpointService(rpcEndpointServiceImpl)
             .rpcMaxLogsRange(rpcMaxLogsRange)
+            .enodeDnsConfiguration(getEnodeDnsConfiguration())
             .build();
 
     addShutdownHook(runner);
@@ -3664,6 +3674,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (rocksDBPlugin.isHighSpecEnabled()) {
       builder.setHighSpecEnabled();
+    }
+
+    if (buildTransactionPoolConfiguration().getLayeredTxPoolEnabled()) {
+      builder.setLayeredTxPoolEnabled();
     }
 
     return builder.build();

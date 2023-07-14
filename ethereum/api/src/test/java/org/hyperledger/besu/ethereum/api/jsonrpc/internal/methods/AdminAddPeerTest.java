@@ -26,6 +26,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.P2PDisabledException;
+import org.hyperledger.besu.ethereum.p2p.peers.ImmutableEnodeDnsConfiguration;
+
+import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -39,6 +42,8 @@ public class AdminAddPeerTest {
   @Mock private P2PNetwork p2pNetwork;
 
   private AdminAddPeer method;
+  private AdminAddPeer methodDNSDisabled;
+  private AdminAddPeer methodDNSUpdateDisabled;
 
   final String validEnode =
       "enode://"
@@ -48,13 +53,48 @@ public class AdminAddPeerTest {
           + "00000000000000000000000000000000"
           + "@127.0.0.1:30303";
 
+  final String validDNSEnode =
+      "enode://"
+          + "00000000000000000000000000000000"
+          + "00000000000000000000000000000000"
+          + "00000000000000000000000000000000"
+          + "00000000000000000000000000000000"
+          + "@node.acme.com:30303";
+
   final JsonRpcRequestContext validRequest =
       new JsonRpcRequestContext(
           new JsonRpcRequest("2.0", "admin_addPeer", new String[] {validEnode}));
 
+  final JsonRpcRequestContext validDNSRequest =
+      new JsonRpcRequestContext(
+          new JsonRpcRequest("2.0", "admin_addPeer", new String[] {validDNSEnode}));
+
   @Before
   public void setup() {
-    method = new AdminAddPeer(p2pNetwork);
+    method =
+        new AdminAddPeer(
+            p2pNetwork,
+            Optional.of(
+                ImmutableEnodeDnsConfiguration.builder()
+                    .dnsEnabled(true)
+                    .updateEnabled(true)
+                    .build()));
+    methodDNSDisabled =
+        new AdminAddPeer(
+            p2pNetwork,
+            Optional.of(
+                ImmutableEnodeDnsConfiguration.builder()
+                    .dnsEnabled(false)
+                    .updateEnabled(true)
+                    .build()));
+    methodDNSUpdateDisabled =
+        new AdminAddPeer(
+            p2pNetwork,
+            Optional.of(
+                ImmutableEnodeDnsConfiguration.builder()
+                    .dnsEnabled(true)
+                    .updateEnabled(false)
+                    .build()));
   }
 
   @Test
@@ -134,6 +174,42 @@ public class AdminAddPeerTest {
         new JsonRpcSuccessResponse(validRequest.getRequest().getId(), true);
 
     final JsonRpcResponse actualResponse = method.response(validRequest);
+
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
+  @Test
+  public void requestAddsValidDNSEnode() {
+    when(p2pNetwork.addMaintainedConnectionPeer(any())).thenReturn(true);
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(
+            validRequest.getRequest().getId(),
+            true); // DNS is mapped to an IP address, so we expect the non-DNS response
+
+    final JsonRpcResponse actualResponse = method.response(validDNSRequest);
+
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
+  @Test
+  public void requestAddsDNSEnodeButDNSDisabled() {
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(
+            validDNSRequest.getRequest().getId(), JsonRpcError.DNS_NOT_ENABLED);
+
+    final JsonRpcResponse actualResponse = methodDNSDisabled.response(validDNSRequest);
+
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
+  @Test
+  public void requestAddsDNSEnodeButDNSNotResolved() {
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(
+            validDNSRequest.getRequest().getId(), JsonRpcError.CANT_RESOLVE_PEER_ENODE_DNS);
+
+    final JsonRpcResponse actualResponse = methodDNSUpdateDisabled.response(validDNSRequest);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }

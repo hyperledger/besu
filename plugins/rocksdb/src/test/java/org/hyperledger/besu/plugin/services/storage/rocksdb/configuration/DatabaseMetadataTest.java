@@ -25,8 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class DatabaseMetadataTest {
-  @TempDir
-  public final Path temporaryFolder;
+  @TempDir public Path temporaryFolder;
 
   @Test
   void getVersion() {
@@ -62,10 +61,7 @@ class DatabaseMetadataTest {
   }
 
   private Path createAndWrite(
-      final Path temporaryFolder,
-      final String dir,
-      final String file,
-      final String content)
+      final Path temporaryFolder, final String dir, final String file, final String content)
       throws IOException {
     final Path tmpDir = temporaryFolder.resolve(dir);
     Files.createDirectories(tmpDir);

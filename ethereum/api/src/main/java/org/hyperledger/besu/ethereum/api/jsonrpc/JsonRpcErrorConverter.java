@@ -45,10 +45,18 @@ public class JsonRpcErrorConverter {
       case TX_SENDER_NOT_AUTHORIZED:
         return JsonRpcError.TX_SENDER_NOT_AUTHORIZED;
         // Private Transaction Invalid Reasons
+      case PRIVATE_TRANSACTION_INVALID:
+        return JsonRpcError.PRIVATE_TRANSACTION_INVALID;
+      case PRIVATE_TRANSACTION_FAILED:
+        return JsonRpcError.PRIVATE_TRANSACTION_FAILED;
+      case PRIVATE_UNIMPLEMENTED_TRANSACTION_TYPE:
+        return JsonRpcError.UNSUPPORTED_PRIVATE_TRANSACTION_TYPE;
       case CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE:
         return JsonRpcError.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
       case GAS_PRICE_TOO_LOW:
         return JsonRpcError.GAS_PRICE_TOO_LOW;
+      case GAS_PRICE_BELOW_CURRENT_BASE_FEE:
+        return JsonRpcError.GAS_PRICE_BELOW_CURRENT_BASE_FEE;
       case TX_FEECAP_EXCEEDED:
         return JsonRpcError.TX_FEECAP_EXCEEDED;
       case MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS:
@@ -67,8 +75,10 @@ public class JsonRpcErrorConverter {
         return JsonRpcError.LOWER_NONCE_INVALID_TRANSACTION_EXISTS;
       case TOTAL_DATA_GAS_TOO_HIGH:
         return JsonRpcError.TOTAL_DATA_GAS_TOO_HIGH;
+      case TX_POOL_DISABLED:
+        return JsonRpcError.TX_POOL_DISABLED;
       default:
-        return JsonRpcError.INVALID_PARAMS;
+        return JsonRpcError.INTERNAL_ERROR;
     }
   }
 }

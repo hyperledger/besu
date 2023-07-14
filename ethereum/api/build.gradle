@@ -69,14 +69,14 @@ dependencies {
   implementation 'io.tmio:tuweni-toml'
   implementation 'io.tmio:tuweni-units'
   implementation 'org.antlr:antlr4-runtime'
-  implementation 'org.bouncycastle:bcprov-jdk15on'
+  implementation 'org.bouncycastle:bcprov-jdk18on'
   implementation 'org.springframework.security:spring-security-crypto'
   implementation 'org.xerial.snappy:snappy-java'
 
   annotationProcessor "org.immutables:value"
   implementation "org.immutables:value-annotations"
 
-  runtimeOnly 'org.bouncycastle:bcpkix-jdk15on'
+  runtimeOnly 'org.bouncycastle:bcpkix-jdk18on'
   runtimeOnly 'io.netty:netty-transport-native-epoll'
   runtimeOnly 'io.netty:netty-transport-native-kqueue'
 
@@ -106,7 +106,7 @@ dependencies {
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 
-  testSupportImplementation 'org.bouncycastle:bcpkix-jdk15on'
+  testSupportImplementation 'org.bouncycastle:bcpkix-jdk18on'
 
   integrationTestImplementation project(':config')
   integrationTestImplementation project(path: ':config', configuration: 'testSupportArtifacts')
@@ -125,7 +125,7 @@ dependencies {
 
 artifacts { testSupportArtifacts testSupportJar }
 
-task generateTestBlockchain() {
+tasks.register('generateTestBlockchain') {
   def srcFiles = 'src/test/resources/org/hyperledger/besu/ethereum/api/jsonrpc/trace/chain-data'
   def dataPath = "$buildDir/generated/data"
   def blocksBin = "$buildDir/resources/test/org/hyperledger/besu/ethereum/api/jsonrpc/trace/chain-data/blocks.bin"

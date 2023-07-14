@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.config;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 
@@ -112,6 +113,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
 
   @Override
   public boolean isQbft() {
+    return false;
+  }
+
+  @Override
+  public boolean isPoa() {
     return false;
   }
 
@@ -371,6 +377,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
 
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmStackSize", l));
+    getDepositContractAddress().ifPresent(l -> builder.put("depositContractAddress", l));
     if (isClique()) {
       builder.put("clique", getCliqueConfigOptions().asMap());
     }
@@ -421,6 +428,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   @Override
   public List<Long> getForkBlockTimestamps() {
     return Collections.emptyList();
+  }
+
+  @Override
+  public Optional<Address> getDepositContractAddress() {
+    return Optional.empty();
   }
 
   /**

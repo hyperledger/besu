@@ -33,11 +33,10 @@ import java.nio.file.Path;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class RocksDBKeyValueStorageFactoryTest {
@@ -47,8 +46,7 @@ public class RocksDBKeyValueStorageFactoryTest {
 
   @Mock private RocksDBFactoryConfiguration rocksDbConfiguration;
   @Mock private BesuConfiguration commonConfiguration;
-  @TempDir
-  public final Path temporaryFolder;
+  @TempDir public Path temporaryFolder;
   private final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final List<SegmentIdentifier> segments = List.of();
   @Mock private SegmentIdentifier segment;
@@ -72,7 +70,7 @@ public class RocksDBKeyValueStorageFactoryTest {
   }
 
   @Test
-  public void shouldDetectVersion0DatabaseIfNoMetadataFileFound() throws Exception {
+  public void shouldDetectVersion1DatabaseIfNoMetadataFileFound() throws Exception {
     final Path tempDataDir = temporaryFolder.resolve("data");
     final Path tempDatabaseDir = temporaryFolder.resolve("db");
     Files.createDirectories(tempDatabaseDir);
@@ -86,7 +84,7 @@ public class RocksDBKeyValueStorageFactoryTest {
 
     storageFactory.create(segment, commonConfiguration, metricsSystem);
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isZero();
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isEqualTo(DEFAULT_VERSION);
   }
 
   @Test
@@ -119,14 +117,14 @@ public class RocksDBKeyValueStorageFactoryTest {
 
     final RocksDBKeyValueStorageFactory storageFactory =
         new RocksDBKeyValueStorageFactory(
-            () -> rocksDbConfiguration, segments, 1, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
+            () -> rocksDbConfiguration, segments, 2, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
 
     storageFactory.create(segment, commonConfiguration, metricsSystem);
     storageFactory.close();
 
     final RocksDBKeyValueStorageFactory rolledbackStorageFactory =
         new RocksDBKeyValueStorageFactory(
-            () -> rocksDbConfiguration, segments, 0, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
+            () -> rocksDbConfiguration, segments, 1, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
     rolledbackStorageFactory.create(segment, commonConfiguration, metricsSystem);
   }
 
@@ -203,11 +201,9 @@ public class RocksDBKeyValueStorageFactoryTest {
 
   @Test
   public void shouldCreateDBCorrectlyIfSymlink() throws Exception {
-    final Path tempRealDataDir =
-        Files.createDirectories(temporaryFolder.resolve("real-data-dir"));
+    final Path tempRealDataDir = Files.createDirectories(temporaryFolder.resolve("real-data-dir"));
     final Path tempSymLinkDataDir =
-        Files.createSymbolicLink(
-            temporaryFolder.resolve("symlink-data-dir"), tempRealDataDir);
+        Files.createSymbolicLink(temporaryFolder.resolve("symlink-data-dir"), tempRealDataDir);
     final Path tempDatabaseDir = temporaryFolder.resolve("db");
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempSymLinkDataDir);

@@ -29,11 +29,10 @@ import java.nio.file.Path;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class RocksDBKeyValuePrivacyStorageFactoryTest {
@@ -42,14 +41,13 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
 
   @Mock private RocksDBFactoryConfiguration rocksDbConfiguration;
   @Mock private BesuConfiguration commonConfiguration;
-  @TempDir
-  public final Path temporaryFolder;
+  @TempDir private Path temporaryFolder;
   private final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final List<SegmentIdentifier> segments = List.of();
   @Mock private SegmentIdentifier segment;
 
   @Test
-  public void shouldDetectVersion0DatabaseIfNoMetadataFileFound() throws Exception {
+  public void shouldDetectVersion1DatabaseIfNoMetadataFileFound() throws Exception {
     final Path tempDataDir = temporaryFolder.resolve("data");
     final Path tempDatabaseDir = temporaryFolder.resolve("db");
     final Path tempPrivateDatabaseDir = tempDatabaseDir.resolve("private");
@@ -70,9 +68,10 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
 
     assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion()).isNotEmpty();
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isEqualTo(0);
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersion()).isEqualTo(DEFAULT_VERSION);
 
-    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion().get()).isEqualTo(0);
+    assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).maybePrivacyVersion().get())
+        .isEqualTo(DEFAULT_VERSION);
   }
 
   @Test

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.config;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 
@@ -63,6 +64,13 @@ public interface GenesisConfigOptions {
    * @return the boolean
    */
   boolean isClique();
+
+  /**
+   * Is a Proof of Authority network.
+   *
+   * @return the boolean
+   */
+  boolean isPoa();
 
   /**
    * Is consensus migration boolean.
@@ -494,4 +502,12 @@ public interface GenesisConfigOptions {
    * @return true, if you want the next block to use zero for the base fee.
    */
   boolean isZeroBaseFee();
+
+  /**
+   * The deposit contract address that should be in the logger field in Receipt of Deposit
+   * transaction
+   *
+   * @return the deposit address
+   */
+  Optional<Address> getDepositContractAddress();
 }
