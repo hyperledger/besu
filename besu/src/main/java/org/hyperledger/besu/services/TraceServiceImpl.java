@@ -118,7 +118,7 @@ public class TraceServiceImpl implements TraceService {
                                     .flatMap(BlockHeader::getExcessDataGas)
                                     .orElse(DataGas.ZERO));
 
-                    tracer.traceStartTransaction(transaction.getGasLimit());
+                    tracer.traceStartTransaction(transaction);
 
                     final TransactionProcessingResult result =
                         transactionProcessor.processTransaction(

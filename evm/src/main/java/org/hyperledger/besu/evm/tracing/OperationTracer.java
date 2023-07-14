@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.tracing;
 
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
@@ -66,9 +67,9 @@ public interface OperationTracer {
   /**
    * Trace the start of a transaction.
    *
-   * @param gasLimit the gas limit set for the transaction
+   * @param transaction the transaction which will be processed
    */
-  default void traceStartTransaction(final long gasLimit) {}
+  default void traceStartTransaction(final Transaction transaction) {}
 
   /**
    * Trace the end of a transaction.
