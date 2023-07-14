@@ -48,7 +48,7 @@ public class FalconPrecompiledContract extends AbstractPrecompiledContract {
 
   @Override
   public long gasRequirement(final Bytes input) {
-    return gasCalculator().sha256PrecompiledContractGasCost(input);
+    return gasCalculator().falconVerifyPrecompiledContractGasCost(input);
   }
 
   @Nonnull
