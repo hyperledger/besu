@@ -41,8 +41,6 @@ import java.nio.file.Path;
 import java.util.concurrent.CompletionException;
 
 import org.apache.tuweni.units.bigints.UInt256;
-
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -52,8 +50,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public final class RlpBlockImporterTest {
 
-  @TempDir
-  Path dataDir;
+  @TempDir Path dataDir;
   private final RlpBlockImporter rlpBlockImporter = new RlpBlockImporter();
 
   @Test
