@@ -109,6 +109,8 @@ public abstract class AbstractEstimateGas implements JsonRpcMethod {
       if (resultTrx != null && resultTrx.getRevertReason().isPresent()) {
         jsonRpcError = JsonRpcError.REVERT_ERROR;
         jsonRpcError.setData(resultTrx.getRevertReason().get().toHexString());
+        JsonRpcErrorResponse.decodeRevertReason(resultTrx.getRevertReason().get())
+            .ifPresent(jsonRpcError::setReason);
       } else {
         jsonRpcError = JsonRpcError.INTERNAL_ERROR;
       }

@@ -14,18 +14,30 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.response;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.base.MoreObjects;
+import org.apache.tuweni.bytes.Bytes;
+import org.web3j.abi.FunctionReturnDecoder;
+import org.web3j.abi.TypeReference;
+import org.web3j.abi.datatypes.AbiTypes;
+import org.web3j.abi.datatypes.Type;
+import org.web3j.abi.datatypes.Utf8String;
 
 @JsonPropertyOrder({"jsonrpc", "id", "error"})
 public class JsonRpcErrorResponse implements JsonRpcResponse {
 
   private final Object id;
   private final JsonRpcError error;
+
+  // Encoding of "Error(string)" to check for at the start of the revert reason
+  static final String errorMethodABI = "0x08c379a0";
 
   public JsonRpcErrorResponse(final Object id, final JsonRpcError error) {
     this.id = id;
@@ -68,5 +80,25 @@ public class JsonRpcErrorResponse implements JsonRpcResponse {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this).add("id", id).add("error", error).toString();
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  public static Optional<String> decodeRevertReason(final Bytes revertReason) {
+    if (revertReason.toHexString().startsWith(errorMethodABI)) {
+      // Remove the "Error(string)" prefix
+      final String encodedReasonText =
+          revertReason.toHexString().substring(errorMethodABI.length());
+
+      List<TypeReference<Type>> revertReasonTypes =
+          Collections.singletonList(TypeReference.create((Class<Type>) AbiTypes.getType("string")));
+      List<Type> decoded = FunctionReturnDecoder.decode(encodedReasonText, revertReasonTypes);
+
+      // Expect a single decoded string
+      if (decoded.size() == 1 && (decoded.get(0) instanceof Utf8String)) {
+        Utf8String decodedRevertReason = (Utf8String) decoded.get(0);
+        return Optional.of(decodedRevertReason.getValue());
+      }
+    }
+    return Optional.empty();
   }
 }

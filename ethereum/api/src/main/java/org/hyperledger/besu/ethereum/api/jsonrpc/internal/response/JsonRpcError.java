@@ -221,15 +221,17 @@ public enum JsonRpcError {
   private final int code;
   private final String message;
   private String data;
+  private String reason;
 
-  JsonRpcError(final int code, final String message, final String data) {
+  JsonRpcError(final int code, final String message, final String data, final String reason) {
     this.code = code;
     this.message = message;
     this.data = data;
+    this.reason = reason;
   }
 
   JsonRpcError(final int code, final String message) {
-    this(code, message, null);
+    this(code, message, null, null);
   }
 
   @JsonGetter("code")
@@ -239,7 +241,7 @@ public enum JsonRpcError {
 
   @JsonGetter("message")
   public String getMessage() {
-    return message;
+    return (reason == null ? message : message + ": " + reason);
   }
 
   @JsonGetter("data")
@@ -249,6 +251,10 @@ public enum JsonRpcError {
 
   public void setData(final String data) {
     this.data = data;
+  }
+
+  public void setReason(final String reason) {
+    this.reason = reason;
   }
 
   @JsonCreator
