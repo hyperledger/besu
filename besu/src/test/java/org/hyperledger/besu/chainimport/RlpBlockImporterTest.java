@@ -41,23 +41,23 @@ import java.nio.file.Path;
 import java.util.concurrent.CompletionException;
 
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /** Tests for {@link RlpBlockImporter}. */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public final class RlpBlockImporterTest {
 
-  @Rule public final TemporaryFolder folder = new TemporaryFolder();
-
+  @TempDir
+  Path dataDir;
   private final RlpBlockImporter rlpBlockImporter = new RlpBlockImporter();
 
   @Test
   public void blockImport() throws IOException {
-    final Path dataDir = folder.newFolder().toPath();
     final Path source = dataDir.resolve("1000.blocks");
     BlockTestUtil.write1000Blocks(source);
     final BesuController targetController =
@@ -90,7 +90,6 @@ public final class RlpBlockImporterTest {
     // set merge flag to false, otherwise this test can fail if a merge test runs first
     MergeConfigOptions.setMergeEnabled(false);
 
-    final Path dataDir = folder.newFolder().toPath();
     final Path source = dataDir.resolve("badpow.blocks");
     BlockTestUtil.writeBadPowBlocks(source);
     final BesuController targetController =
@@ -120,7 +119,6 @@ public final class RlpBlockImporterTest {
 
   @Test
   public void blockImportCanSkipPow() throws IOException {
-    final Path dataDir = folder.newFolder().toPath();
     final Path source = dataDir.resolve("badpow.blocks");
     BlockTestUtil.writeBadPowBlocks(source);
     final BesuController targetController =
