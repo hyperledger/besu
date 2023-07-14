@@ -42,13 +42,9 @@ import org.slf4j.LoggerFactory;
 public class KeyValueStorageProvider implements StorageProvider {
   private static final Logger LOG = LoggerFactory.getLogger(StorageProvider.class);
 
-  public static final boolean SEGMENT_ISOLATION_SUPPORTED = true;
-  public static final boolean SNAPSHOT_ISOLATION_UNSUPPORTED = false;
-
   protected final Function<List<SegmentIdentifier>, SegmentedKeyValueStorage>
       segmentedStorageCreator;
   private final KeyValueStorage worldStatePreimageStorage;
-  private final boolean isWorldStateIterable;
   protected final Map<List<SegmentIdentifier>, SegmentedKeyValueStorage> storageInstances =
       new HashMap<>();
   private final ObservableMetricsSystem metricsSystem;
@@ -56,11 +52,9 @@ public class KeyValueStorageProvider implements StorageProvider {
   public KeyValueStorageProvider(
       final Function<List<SegmentIdentifier>, SegmentedKeyValueStorage> segmentedStorageCreator,
       final KeyValueStorage worldStatePreimageStorage,
-      final boolean segmentIsolationSupported,
       final ObservableMetricsSystem metricsSystem) {
     this.segmentedStorageCreator = segmentedStorageCreator;
     this.worldStatePreimageStorage = worldStatePreimageStorage;
-    this.isWorldStateIterable = segmentIsolationSupported;
     this.metricsSystem = metricsSystem;
   }
 
@@ -104,11 +98,6 @@ public class KeyValueStorageProvider implements StorageProvider {
   public SegmentedKeyValueStorage getStorageBySegmentIdentifiers(
       final List<SegmentIdentifier> segments) {
     return segmentedStorageCreator.apply(segments);
-  }
-
-  @Override
-  public boolean isWorldStateIterable() {
-    return isWorldStateIterable;
   }
 
   @Override

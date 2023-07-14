@@ -116,7 +116,7 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
    * Instantiates a new Rocks db columnar key value storage.
    *
    * @param configuration the configuration
-   * @param segments the segments
+   * @param defaultSegments the segments
    * @param ignorableSegments the ignorable segments
    * @param metricsSystem the metrics system
    * @param rocksDBMetricsFactory the rocks db metrics factory
@@ -124,7 +124,7 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
    */
   public RocksDBColumnarKeyValueStorage(
       final RocksDBConfiguration configuration,
-      final List<SegmentIdentifier> segments,
+      final List<SegmentIdentifier> defaultSegments,
       final List<SegmentIdentifier> ignorableSegments,
       final MetricsSystem metricsSystem,
       final RocksDBMetricsFactory rocksDBMetricsFactory)
@@ -136,7 +136,7 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
 
     try {
       final ColumnFamilyOptions columnFamilyOptions = new ColumnFamilyOptions();
-      trimmedSegments = new ArrayList<>(segments);
+      trimmedSegments = new ArrayList<>(defaultSegments);
       final List<byte[]> existingColumnFamilies =
           RocksDB.listColumnFamilies(new Options(), configuration.getDatabaseDir().toString());
       // Only ignore if not existed currently
@@ -216,7 +216,7 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
                               .filter(
                                   ch -> {
                                     try {
-                                      return ch.getName() == segment.getId();
+                                      return Arrays.equals(ch.getName(), segment.getId());
                                     } catch (RocksDBException e) {
                                       throw new RuntimeException(e);
                                     }
@@ -244,6 +244,12 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
         .setBlockSize(ROCKSDB_BLOCK_SIZE);
   }
 
+  /**
+   * Safe method to map segment identifier to column handle.
+   *
+   * @param segment segment identifier
+   * @return column handle
+   */
   protected ColumnFamilyHandle safeColumnHandle(final SegmentIdentifier segment) {
     RocksDbSegmentIdentifier safeRef = columnHandlesBySegmentIdentifier.get(segment);
     if (safeRef == null) {

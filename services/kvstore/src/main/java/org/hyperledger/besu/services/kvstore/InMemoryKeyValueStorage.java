@@ -16,6 +16,7 @@ package org.hyperledger.besu.services.kvstore;
 
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -60,13 +61,36 @@ public class InMemoryKeyValueStorage extends SegmentedKeyValueStorageAdapter {
   /** protected access to the rw lock. */
   protected final ReadWriteLock rwLock;
 
+  /**
+   * Instantiates a new In memory key value storage.
+   */
   public InMemoryKeyValueStorage() {
-    super(SEGMENT_IDENTIFIER, new SegmentedInMemoryKeyValueStorage());
-    rwLock = ((SegmentedInMemoryKeyValueStorage) storage).rwLock;
+    this(SEGMENT_IDENTIFIER);
   }
 
+  /**
+   * Instantiates a new In memory key value storage with an initial map.
+   * @param initialMap  the initial map
+   */
   public InMemoryKeyValueStorage(final Map<Bytes, Optional<byte[]>> initialMap) {
     super(SEGMENT_IDENTIFIER, new SegmentedInMemoryKeyValueStorage(asSegmentMap(initialMap)));
     rwLock = ((SegmentedInMemoryKeyValueStorage) storage).rwLock;
+  }
+
+  /**
+   * Instantiates a new In memory key value storage with a single segment identifier.
+   * @param segmentIdentifier the segment identifier
+   */
+  public InMemoryKeyValueStorage(final SegmentIdentifier segmentIdentifier) {
+    super(segmentIdentifier, new SegmentedInMemoryKeyValueStorage());
+    rwLock = ((SegmentedInMemoryKeyValueStorage) storage).rwLock;
+  }
+
+  /**
+   * Dump the contents of the storage to the print stream.
+   * @param ps the print stream.
+   */
+  public void dump(final PrintStream ps) {
+    ((SegmentedInMemoryKeyValueStorage) storage).dump(ps);
   }
 }

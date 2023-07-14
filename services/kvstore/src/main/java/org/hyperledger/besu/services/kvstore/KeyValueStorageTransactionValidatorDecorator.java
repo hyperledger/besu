@@ -32,6 +32,7 @@ public class KeyValueStorageTransactionValidatorDecorator implements KeyValueSto
    * Instantiates a new Key value storage transaction transition validator decorator.
    *
    * @param toDecorate the to decorate
+   * @param isClosed supplier function to determine if the storage is closed
    */
   public KeyValueStorageTransactionValidatorDecorator(
       final KeyValueStorageTransaction toDecorate, final Supplier<Boolean> isClosed) {

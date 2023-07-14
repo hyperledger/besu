@@ -23,8 +23,6 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.services.kvstore.LimitedInMemoryKeyValueStorage;
 
-import java.util.List;
-
 public class KeyValueStorageProviderBuilder {
 
   private static final long DEFAULT_WORLD_STATE_PRE_IMAGE_CACHE_SIZE = 5_000L;
@@ -60,14 +58,9 @@ public class KeyValueStorageProviderBuilder {
     final KeyValueStorage worldStatePreImageStorage =
         new LimitedInMemoryKeyValueStorage(DEFAULT_WORLD_STATE_PRE_IMAGE_CACHE_SIZE);
 
-    // this tickles init needed for isSegmentIsolationSupported
-    storageFactory.create(
-        List.of(KeyValueSegmentIdentifier.BLOCKCHAIN), commonConfiguration, metricsSystem);
-
     return new KeyValueStorageProvider(
         segments -> storageFactory.create(segments, commonConfiguration, metricsSystem),
         worldStatePreImageStorage,
-        storageFactory.isSegmentIsolationSupported(),
         (ObservableMetricsSystem) metricsSystem);
   }
 }

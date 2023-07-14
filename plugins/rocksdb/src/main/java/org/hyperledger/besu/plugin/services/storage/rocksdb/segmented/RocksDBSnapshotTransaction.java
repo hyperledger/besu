@@ -92,6 +92,7 @@ public class RocksDBSnapshotTransaction
   /**
    * Get data against given key.
    *
+   * @param segmentId the segment id
    * @param key the key
    * @return the optional data
    */
@@ -138,6 +139,7 @@ public class RocksDBSnapshotTransaction
   /**
    * Stream.
    *
+   * @param segmentId the segment id
    * @return the stream
    */
   public Stream<Pair<byte[], byte[]>> stream(final SegmentIdentifier segmentId) {
@@ -152,6 +154,7 @@ public class RocksDBSnapshotTransaction
   /**
    * Stream keys.
    *
+   * @param segmentId the segment id
    * @return the stream
    */
   public Stream<byte[]> streamKeys(final SegmentIdentifier segmentId) {

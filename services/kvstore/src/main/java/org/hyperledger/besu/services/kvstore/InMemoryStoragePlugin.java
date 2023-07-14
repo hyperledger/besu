@@ -25,7 +25,9 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,6 +94,8 @@ public class InMemoryStoragePlugin implements BesuPlugin {
   public static class InMemoryKeyValueStorageFactory implements KeyValueStorageFactory {
 
     private final String name;
+    private final Map<List<SegmentIdentifier>, SegmentedInMemoryKeyValueStorage> storageMap =
+        new HashMap<>();
 
     /**
      * Instantiates a new Memory key value storage factory.
@@ -113,7 +117,10 @@ public class InMemoryStoragePlugin implements BesuPlugin {
         final BesuConfiguration configuration,
         final MetricsSystem metricsSystem)
         throws StorageException {
-      return new InMemoryKeyValueStorage();
+      var kvStorage =
+          storageMap.computeIfAbsent(
+              List.of(segment), seg -> new SegmentedInMemoryKeyValueStorage(seg));
+      return new SegmentedKeyValueStorageAdapter(segment, kvStorage);
     }
 
     @Override
@@ -122,7 +129,9 @@ public class InMemoryStoragePlugin implements BesuPlugin {
         final BesuConfiguration configuration,
         final MetricsSystem metricsSystem)
         throws StorageException {
-      return new SegmentedInMemoryKeyValueStorage();
+      var kvStorage =
+          storageMap.computeIfAbsent(segments, __ -> new SegmentedInMemoryKeyValueStorage());
+      return kvStorage;
     }
 
     @Override
@@ -137,7 +146,7 @@ public class InMemoryStoragePlugin implements BesuPlugin {
 
     @Override
     public void close() {
-      // Nothing to do
+      storageMap.clear();
     }
   }
 }

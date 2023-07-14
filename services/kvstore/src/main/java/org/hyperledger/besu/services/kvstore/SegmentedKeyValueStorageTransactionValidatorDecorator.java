@@ -35,6 +35,7 @@ public class SegmentedKeyValueStorageTransactionValidatorDecorator
    * Instantiates a new Key value storage transaction transition validator decorator.
    *
    * @param toDecorate the to decorate
+   * @param isClosed supplier function to determine if the storage is closed
    */
   public SegmentedKeyValueStorageTransactionValidatorDecorator(
       final SegmentedKeyValueStorageTransaction toDecorate, final Supplier<Boolean> isClosed) {

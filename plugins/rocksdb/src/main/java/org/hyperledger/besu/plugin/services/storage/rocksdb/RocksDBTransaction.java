@@ -41,6 +41,7 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
   /**
    * Instantiates a new RocksDb transaction.
    *
+   * @param columnFamilyMapper mapper from segment identifier to column family handle
    * @param innerTx the inner tx
    * @param options the options
    * @param metrics the metrics

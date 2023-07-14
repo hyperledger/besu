@@ -17,6 +17,10 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -26,11 +30,15 @@ import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
+import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 import org.hyperledger.besu.util.io.RollingFileReader;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -51,26 +59,18 @@ public class RollingImport {
     final BonsaiWorldState bonsaiState =
         new BonsaiWorldState(
             archive, new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()));
-    //  TODO: fixme and use segmented/composed
-    //    final InMemoryKeyValueStorage accountStorage =
-    //        (InMemoryKeyValueStorage)
-    //
-    // provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
-    //    final InMemoryKeyValueStorage codeStorage =
-    //        (InMemoryKeyValueStorage)
-    //            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
-    //    final InMemoryKeyValueStorage storageStorage =
-    //        (InMemoryKeyValueStorage)
-    //            provider.getStorageBySegmentIdentifier(
-    //                KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE);
-    //    final InMemoryKeyValueStorage trieBranchStorage =
-    //        (InMemoryKeyValueStorage)
-    //
-    // provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
-    //    final InMemoryKeyValueStorage trieLogStorage =
-    //        (InMemoryKeyValueStorage)
-    //
-    // provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+    final SegmentedInMemoryKeyValueStorage worldStateStorage =
+        (SegmentedInMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifiers(
+                List.of(
+                    ACCOUNT_INFO_STATE,
+                    CODE_STORAGE,
+                    ACCOUNT_STORAGE_STORAGE,
+                    TRIE_BRANCH_STORAGE));
+
+    final InMemoryKeyValueStorage trieLogStorage =
+        (InMemoryKeyValueStorage)
+            provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
 
     int count = 0;
     while (!reader.isDone()) {
@@ -127,11 +127,7 @@ public class RollingImport {
       }
     }
     System.out.printf("Back to zero!%n");
-    // TODO: fixme, this is why we held onto allocated in-memory storage in the in mem factory
-    //    accountStorage.dump(System.out);
-    //    codeStorage.dump(System.out);
-    //    storageStorage.dump(System.out);
-    //    trieBranchStorage.dump(System.out);
-    //    trieLogStorage.dump(System.out);
+    worldStateStorage.dump(System.out);
+    trieLogStorage.dump(System.out);
   }
 }

@@ -41,6 +41,4 @@ public interface StorageProvider extends Closeable {
   KeyValueStorage getStorageBySegmentIdentifier(SegmentIdentifier segment);
 
   SegmentedKeyValueStorage getStorageBySegmentIdentifiers(List<SegmentIdentifier> segment);
-
-  boolean isWorldStateIterable();
 }

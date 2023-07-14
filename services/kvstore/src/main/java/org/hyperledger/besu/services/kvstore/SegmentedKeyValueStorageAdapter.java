@@ -129,6 +129,11 @@ public class SegmentedKeyValueStorageAdapter implements KeyValueStorage {
     private final SegmentedKeyValueStorageTransaction segmentedTransaction;
     private final SegmentIdentifier segmentIdentifier;
 
+    /**
+     * Instantiates a new Key value storage transaction adapter.
+     * @param segmentIdentifier the segmentIdentifier to use for the wrapped transaction
+     * @param storage the storage
+     */
     public KeyValueStorageTransactionAdapter(
         final SegmentIdentifier segmentIdentifier, final SegmentedKeyValueStorage storage) {
       this.segmentedTransaction = storage.startTransaction();

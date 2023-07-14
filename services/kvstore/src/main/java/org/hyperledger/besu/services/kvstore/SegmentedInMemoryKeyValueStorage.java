@@ -23,8 +23,10 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -32,6 +34,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableMap;
@@ -60,6 +63,20 @@ public class SegmentedInMemoryKeyValueStorage
   SegmentedInMemoryKeyValueStorage(
       final Map<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> hashValueStore) {
     this.hashValueStore = hashValueStore;
+  }
+
+  /**
+   * Instantiates a new In memory key value storage with specific set of segments.
+   *
+   * @param segments the segments to be used
+   * */
+  public SegmentedInMemoryKeyValueStorage(final List<SegmentIdentifier> segments) {
+    this(
+        segments.stream()
+            .collect(
+                Collectors
+                    .<SegmentIdentifier, SegmentIdentifier, Map<Bytes, Optional<byte[]>>>toMap(
+                        s -> s, s -> new HashMap<>())));
   }
 
   @Override
@@ -245,6 +262,32 @@ public class SegmentedInMemoryKeyValueStorage
     public void rollback() {
       updatedValues.clear();
       removedKeys.clear();
+    }
+  }
+
+  /**
+   * Dump the content of the store to the provided PrintStream.
+   * @param ps the PrintStream to dump the content to.
+   */
+  public void dump(final PrintStream ps) {
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      ImmutableSet.copyOf(hashValueStore.entrySet()).stream()
+          .forEach(
+              map -> {
+                ps.println("Segment: " + map.getKey().getName());
+                map.getValue().entrySet().stream()
+                    .filter(bytesEntry -> bytesEntry.getValue().isPresent())
+                    .forEach(
+                        entry ->
+                            ps.printf(
+                                "  %s : %s%n",
+                                entry.getKey().toHexString(),
+                                Bytes.wrap(entry.getValue().get()).toHexString()));
+              });
+    } finally {
+      lock.unlock();
     }
   }
 }

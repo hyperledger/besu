@@ -189,7 +189,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       case 1, 2 -> {
         if (segmentedStorage == null) {
           final List<SegmentIdentifier> segmentsForVersion =
-              segments.stream()
+              configuredSegments.stream()
                   .filter(segmentId -> segmentId.includeInDatabaseVersion(databaseVersion))
                   .collect(Collectors.toList());
           if (isForestStorageFormat) {
