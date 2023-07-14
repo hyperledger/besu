@@ -61,16 +61,15 @@ public class InMemoryKeyValueStorage extends SegmentedKeyValueStorageAdapter {
   /** protected access to the rw lock. */
   protected final ReadWriteLock rwLock;
 
-  /**
-   * Instantiates a new In memory key value storage.
-   */
+  /** Instantiates a new In memory key value storage. */
   public InMemoryKeyValueStorage() {
     this(SEGMENT_IDENTIFIER);
   }
 
   /**
    * Instantiates a new In memory key value storage with an initial map.
-   * @param initialMap  the initial map
+   *
+   * @param initialMap the initial map
    */
   public InMemoryKeyValueStorage(final Map<Bytes, Optional<byte[]>> initialMap) {
     super(SEGMENT_IDENTIFIER, new SegmentedInMemoryKeyValueStorage(asSegmentMap(initialMap)));
@@ -79,6 +78,7 @@ public class InMemoryKeyValueStorage extends SegmentedKeyValueStorageAdapter {
 
   /**
    * Instantiates a new In memory key value storage with a single segment identifier.
+   *
    * @param segmentIdentifier the segment identifier
    */
   public InMemoryKeyValueStorage(final SegmentIdentifier segmentIdentifier) {
@@ -88,6 +88,7 @@ public class InMemoryKeyValueStorage extends SegmentedKeyValueStorageAdapter {
 
   /**
    * Dump the contents of the storage to the print stream.
+   *
    * @param ps the print stream.
    */
   public void dump(final PrintStream ps) {

@@ -42,6 +42,7 @@ import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 
+/** Segmented in memory key value storage. */
 public class SegmentedInMemoryKeyValueStorage
     implements SnappedKeyValueStorage, SnappableKeyValueStorage, SegmentedKeyValueStorage {
   /** protected access for the backing hash map. */
@@ -69,7 +70,7 @@ public class SegmentedInMemoryKeyValueStorage
    * Instantiates a new In memory key value storage with specific set of segments.
    *
    * @param segments the segments to be used
-   * */
+   */
   public SegmentedInMemoryKeyValueStorage(final List<SegmentIdentifier> segments) {
     this(
         segments.stream()
@@ -267,6 +268,7 @@ public class SegmentedInMemoryKeyValueStorage
 
   /**
    * Dump the content of the store to the provided PrintStream.
+   *
    * @param ps the PrintStream to dump the content to.
    */
   public void dump(final PrintStream ps) {

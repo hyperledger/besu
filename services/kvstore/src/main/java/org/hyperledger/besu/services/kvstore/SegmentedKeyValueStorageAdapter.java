@@ -36,6 +36,7 @@ public class SegmentedKeyValueStorageAdapter implements KeyValueStorage {
 
   private static final Logger LOG = LoggerFactory.getLogger(SegmentedKeyValueStorageAdapter.class);
   private final SegmentIdentifier segmentIdentifier;
+  /** The storage to wrap. */
   protected final SegmentedKeyValueStorage storage;
 
   /**
@@ -125,12 +126,14 @@ public class SegmentedKeyValueStorageAdapter implements KeyValueStorage {
     }
   }
 
+  /** This class will adapt a SegmentedKeyValueStorageTransaction to a KeyValueStorageTransaction */
   public static class KeyValueStorageTransactionAdapter implements KeyValueStorageTransaction {
     private final SegmentedKeyValueStorageTransaction segmentedTransaction;
     private final SegmentIdentifier segmentIdentifier;
 
     /**
      * Instantiates a new Key value storage transaction adapter.
+     *
      * @param segmentIdentifier the segmentIdentifier to use for the wrapped transaction
      * @param storage the storage
      */
