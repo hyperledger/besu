@@ -79,11 +79,11 @@ public interface OperationTracer {
    */
   default void traceEndTransaction(final Bytes output, final long gasUsed, final long timeNs) {}
 
-   /**
-    * Returns a boolean indicating whether extended tracing is enabled.
-    *
-    * @return <code>true</code> if extended tracing is enabled, <code>false</code> otherwise.
-    */
+  /**
+   * Returns a boolean indicating whether extended tracing is enabled.
+   *
+   * @return <code>true</code> if extended tracing is enabled, <code>false</code> otherwise.
+   */
   default boolean isExtendedTracing() {
     return false;
   }
