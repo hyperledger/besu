@@ -51,7 +51,6 @@ import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.io.IOException;
 import java.io.PrintWriter;
