@@ -77,10 +77,10 @@ dependencies {
   implementation 'org.springframework.security:spring-security-crypto'
   implementation 'org.xerial.snappy:snappy-java'
   implementation 'tech.pegasys:jc-kzg-4844'
-    testImplementation 'org.testng:testng:7.1.0'
-    testImplementation 'org.testng:testng:7.1.0'
+  testImplementation 'org.testng:testng:7.1.0'
+  testImplementation 'org.testng:testng:7.1.0'
 
-    runtimeOnly 'org.apache.logging.log4j:log4j-jul'
+  runtimeOnly 'org.apache.logging.log4j:log4j-jul'
   runtimeOnly 'com.splunk.logging:splunk-library-javalogging'
   runtimeOnly 'org.fusesource.jansi:jansi' // for color logging in windows
 
