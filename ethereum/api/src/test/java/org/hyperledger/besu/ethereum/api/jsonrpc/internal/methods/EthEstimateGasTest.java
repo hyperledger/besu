@@ -140,7 +140,7 @@ public class EthEstimateGasTest {
     final Wei gasPrice = Wei.of(1000);
     final JsonRpcRequestContext request =
         ethEstimateGasRequest(defaultLegacyTransactionCallParameter(gasPrice));
-    mockTransientProcessorResultGasEstimate(1L, true, false, gasPrice);
+    mockTransientProcessorResultGasEstimate(1L, true, gasPrice, Optional.empty());
 
     final JsonRpcResponse expectedResponse = new JsonRpcSuccessResponse(null, Quantity.create(1L));
 
@@ -253,9 +253,60 @@ public class EthEstimateGasTest {
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.REVERT_ERROR);
 
-    Assertions.assertThat(method.response(request))
-        .usingRecursiveComparison()
-        .isEqualTo(expectedResponse);
+    JsonRpcResponse actualResponse = method.response(request);
+
+    Assertions.assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+
+    assertThat(((JsonRpcErrorResponse) actualResponse).getError().getMessage())
+        .isEqualTo("Execution reverted");
+  }
+
+  @Test
+  public void shouldReturnErrorReasonWhenTransactionReverted() {
+    final JsonRpcRequestContext request =
+        ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
+
+    // ABI encoding of EVM "Error(string)" prefix + "ERC20: transfer from the zero address"
+    final String executionRevertedReason =
+        "0x08c379a000000000000000000000000000000000000000000000000000000000"
+            + "000000200000000000000000000000000000000000000000000000000000000000"
+            + "00002545524332303a207472616e736665722066726f6d20746865207a65726f20"
+            + "61646472657373000000000000000000000000000000000000000000000000000000";
+
+    mockTransientProcessorTxReverted(1L, false, Bytes.fromHexString(executionRevertedReason));
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.REVERT_ERROR);
+
+    JsonRpcResponse actualResponse = method.response(request);
+
+    Assertions.assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+
+    assertThat(((JsonRpcErrorResponse) actualResponse).getError().getMessage())
+        .isEqualTo("Execution reverted: ERC20: transfer from the zero address");
+  }
+
+  @Test
+  public void shouldReturnABIDecodeErrorReasonWhenInvalidRevertReason() {
+    final JsonRpcRequestContext request =
+        ethEstimateGasRequest(defaultLegacyTransactionCallParameter(Wei.ZERO));
+
+    // Invalid ABI bytes
+    final String invalidRevertReason =
+        "0x08c379a000000000000000000000000000000000000000000000000000000000"
+            + "123451234512345123451234512345123451234512345123451234512345123451";
+
+    mockTransientProcessorTxReverted(1L, false, Bytes.fromHexString(invalidRevertReason));
+
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(null, JsonRpcError.REVERT_ERROR);
+
+    JsonRpcResponse actualResponse = method.response(request);
+
+    Assertions.assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+
+    assertThat(((JsonRpcErrorResponse) actualResponse).getError().getMessage())
+        .isEqualTo("Execution reverted: ABI decode error");
   }
 
   @Test
@@ -300,28 +351,38 @@ public class EthEstimateGasTest {
 
   private void mockTransientProcessorResultTxInvalidReason(final TransactionInvalidReason reason) {
     final TransactionSimulatorResult mockTxSimResult =
-        getMockTransactionSimulatorResult(false, false, 0, Wei.ZERO);
+        getMockTransactionSimulatorResult(false, 0, Wei.ZERO, Optional.empty());
     when(mockTxSimResult.getValidationResult()).thenReturn(ValidationResult.invalid(reason));
+  }
+
+  private void mockTransientProcessorTxReverted(
+      final long estimateGas, final boolean isSuccessful, final Bytes revertReason) {
+    mockTransientProcessorResultGasEstimate(
+        estimateGas, isSuccessful, Wei.ZERO, Optional.of(revertReason));
   }
 
   private void mockTransientProcessorResultGasEstimate(
       final long estimateGas, final boolean isSuccessful, final boolean isReverted) {
-    mockTransientProcessorResultGasEstimate(estimateGas, isSuccessful, isReverted, Wei.ZERO);
+    mockTransientProcessorResultGasEstimate(
+        estimateGas,
+        isSuccessful,
+        Wei.ZERO,
+        isReverted ? Optional.of(Bytes.of(0)) : Optional.empty());
   }
 
   private void mockTransientProcessorResultGasEstimate(
       final long estimateGas,
       final boolean isSuccessful,
-      final boolean isReverted,
-      final Wei gasPrice) {
-    getMockTransactionSimulatorResult(isSuccessful, isReverted, estimateGas, gasPrice);
+      final Wei gasPrice,
+      final Optional<Bytes> revertReason) {
+    getMockTransactionSimulatorResult(isSuccessful, estimateGas, gasPrice, revertReason);
   }
 
   private TransactionSimulatorResult getMockTransactionSimulatorResult(
       final boolean isSuccessful,
-      final boolean isReverted,
       final long estimateGas,
-      final Wei gasPrice) {
+      final Wei gasPrice,
+      final Optional<Bytes> revertReason) {
     final TransactionSimulatorResult mockTxSimResult = mock(TransactionSimulatorResult.class);
     when(transactionSimulator.process(
             eq(modifiedLegacyTransactionCallParameter(gasPrice)),
@@ -335,11 +396,11 @@ public class EthEstimateGasTest {
             any(OperationTracer.class),
             eq(1L)))
         .thenReturn(Optional.of(mockTxSimResult));
-    final TransactionProcessingResult mockResult = mock(TransactionProcessingResult.class);
-    when(mockResult.getEstimateGasUsedByTransaction()).thenReturn(estimateGas);
-    when(mockResult.getRevertReason())
-        .thenReturn(isReverted ? Optional.of(Bytes.of(0)) : Optional.empty());
-    when(mockTxSimResult.getResult()).thenReturn(mockResult);
+
+    final TransactionProcessingResult processingResult =
+        new TransactionProcessingResult(null, null, estimateGas, 0, null, null, revertReason);
+
+    when(mockTxSimResult.getResult()).thenReturn(processingResult);
     when(mockTxSimResult.isSuccessful()).thenReturn(isSuccessful);
     return mockTxSimResult;
   }
