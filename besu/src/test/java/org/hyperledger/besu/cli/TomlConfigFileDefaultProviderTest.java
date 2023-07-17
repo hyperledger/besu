@@ -26,28 +26,29 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.ParameterException;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class TomlConfigFileDefaultProviderTest {
   @Mock CommandLine mockCommandLine;
 
   @Mock CommandSpec mockCommandSpec;
 
-  @Rule public final TemporaryFolder temp = new TemporaryFolder();
+  @TempDir public Path temp;
 
   @Test
   public void defaultValueForMatchingKey() throws IOException {
@@ -58,7 +59,7 @@ public class TomlConfigFileDefaultProviderTest {
     validOptionsMap.put("--a-longer-option", null);
     when(mockCommandSpec.optionsMap()).thenReturn(validOptionsMap);
 
-    final File tempConfigFile = temp.newFile("config.toml");
+    final File tempConfigFile = temp.resolve("config.toml").toFile();
     try (final BufferedWriter fileWriter =
         Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
 
@@ -124,7 +125,7 @@ public class TomlConfigFileDefaultProviderTest {
 
     when(mockCommandSpec.optionsMap()).thenReturn(validOptionsMap);
 
-    final File tempConfigFile = temp.newFile("config.toml");
+    final File tempConfigFile = temp.resolve("config.toml").toFile();
     try (final BufferedWriter fileWriter =
         Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8)) {
 
@@ -240,7 +241,7 @@ public class TomlConfigFileDefaultProviderTest {
   @Test
   public void invalidConfigMustThrow() throws IOException {
 
-    final File tempConfigFile = temp.newFile("config.toml");
+    final File tempConfigFile = temp.resolve("config.toml").toFile();
 
     final TomlConfigFileDefaultProvider providerUnderTest =
         new TomlConfigFileDefaultProvider(mockCommandLine, tempConfigFile);
@@ -256,7 +257,7 @@ public class TomlConfigFileDefaultProviderTest {
   @Test
   public void invalidConfigContentMustThrow() throws IOException {
 
-    final File tempConfigFile = temp.newFile("config.toml");
+    final File tempConfigFile = temp.resolve("config.toml").toFile();
     final BufferedWriter fileWriter = Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8);
 
     fileWriter.write("an-invalid-syntax=======....");
@@ -282,7 +283,7 @@ public class TomlConfigFileDefaultProviderTest {
     Map<String, OptionSpec> validOptionsMap = new HashMap<>();
     when(mockCommandSpec.optionsMap()).thenReturn(validOptionsMap);
 
-    final File tempConfigFile = temp.newFile("config.toml");
+    final File tempConfigFile = temp.resolve("config.toml").toFile();
     final BufferedWriter fileWriter = Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8);
 
     fileWriter.write("invalid_option=true");
@@ -310,7 +311,7 @@ public class TomlConfigFileDefaultProviderTest {
     validOptionsMap.put("--onemore-valid-option", null);
     when(mockCommandSpec.optionsMap()).thenReturn(validOptionsMap);
 
-    final File tempConfigFile = temp.newFile("config.toml");
+    final File tempConfigFile = temp.resolve("config.toml").toFile();
     final BufferedWriter fileWriter = Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8);
 
     fileWriter.write("a-valid-option=123");
@@ -351,7 +352,7 @@ public class TomlConfigFileDefaultProviderTest {
     validOptionsMap.put("--a-valid-option", null);
     when(mockCommandSpec.optionsMap()).thenReturn(validOptionsMap);
 
-    final File tempConfigFile = temp.newFile("config.toml");
+    final File tempConfigFile = temp.resolve("config.toml").toFile();
     final BufferedWriter fileWriter = Files.newBufferedWriter(tempConfigFile.toPath(), UTF_8);
 
     fileWriter.write("[ignoreme]");

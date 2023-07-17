@@ -50,17 +50,17 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * We only bother testing transitionControllerBuilder for PoW and Clique since those are the only
  * network types that are transitioning to PoS.
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class TransitionControllerBuilderTest {
 
   @Mock ProtocolSchedule preMergeProtocolSchedule;
@@ -80,7 +80,7 @@ public class TransitionControllerBuilderTest {
 
   TransitionProtocolSchedule transitionProtocolSchedule;
 
-  @Before
+  @BeforeEach
   public void setup() {
     transitionProtocolSchedule =
         spy(

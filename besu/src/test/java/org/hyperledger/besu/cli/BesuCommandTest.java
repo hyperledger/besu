@@ -125,19 +125,19 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import picocli.CommandLine;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class BesuCommandTest extends CommandTestAbstract {
 
   private static final String ENCLAVE_URI = "http://1.2.3.4:5555";
@@ -211,12 +211,12 @@ public class BesuCommandTest extends CommandTestAbstract {
     DEFAULT_METRICS_CONFIGURATION = MetricsConfiguration.builder().build();
   }
 
-  @Before
+  @BeforeEach
   public void setup() {
     MergeConfigOptions.setMergeEnabled(false);
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     MergeConfigOptions.setMergeEnabled(false);
   }
@@ -374,7 +374,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void overrideDefaultValuesIfKeyIsPresentInConfigFile() throws IOException {
     final URL configFile = this.getClass().getResource("/complete_config.toml");
     final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
-    final File dataFolder = temp.newFolder();
+    final File dataFolder = temp.toFile();
     final String updatedConfig =
         Resources.toString(configFile, UTF_8)
             .replace("/opt/besu/genesis.json", escapeTomlString(genesisFile.toString()))
@@ -3916,7 +3916,7 @@ public class BesuCommandTest extends CommandTestAbstract {
             });
   }
 
-  @Ignore
+  @Disabled("")
   public void pruningIsEnabledIfSyncModeIsFast() {
     parseCommand("--sync-mode", "FAST");
 
@@ -3927,7 +3927,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
-  @Ignore
+  @Disabled("")
   public void pruningIsDisabledIfSyncModeIsFull() {
     parseCommand("--sync-mode", "FULL");
 
@@ -3949,7 +3949,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
-  @Ignore
+  @Disabled("")
   public void pruningDisabledExplicitly() {
     parseCommand("--pruning-enabled=false", "--sync-mode=FAST");
 
@@ -4568,13 +4568,13 @@ public class BesuCommandTest extends CommandTestAbstract {
         .contains("GoQuorum privacy is no longer supported in Besu");
   }
 
-  @Rule public TemporaryFolder testFolder = new TemporaryFolder();
+  @TempDir public Path testFolder;
 
   @Test
   public void errorIsRaisedIfStaticNodesAreNotAllowed() throws IOException {
-    final File staticNodesFile = testFolder.newFile("static-nodes.json");
+    final File staticNodesFile = testFolder.resolve("static-nodes.json").toFile();
     staticNodesFile.deleteOnExit();
-    final File permissioningConfig = testFolder.newFile("permissioning");
+    final File permissioningConfig = testFolder.resolve("permissioning").toFile();
     permissioningConfig.deleteOnExit();
 
     final EnodeURL staticNodeURI =
@@ -4601,7 +4601,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         ("nodes-allowlist=[\"" + allowedNode.toString() + "\"]").getBytes(UTF_8));
 
     parseCommand(
-        "--data-path=" + testFolder.getRoot().getPath(),
+        "--data-path=" + testFolder.getRoot(),
         "--bootnodes",
         "--permissions-nodes-config-file-enabled=true",
         "--permissions-nodes-config-file=" + permissioningConfig.getPath());
@@ -5442,12 +5442,11 @@ public class BesuCommandTest extends CommandTestAbstract {
             "File containing password to unlock keystore is required when PKI Block Creation is enabled");
   }
 
-  @Rule public TemporaryFolder pkiTempFolder = new TemporaryFolder();
-
+  @TempDir public Path pkiTempFolder;
   @Test
   public void pkiBlockCreationFullConfig() throws Exception {
     // Create temp file with password
-    final File pwdFile = pkiTempFolder.newFile("pwd");
+    final File pwdFile = pkiTempFolder.resolve("pwd").toFile();
     FileUtils.writeStringToFile(pwdFile, "foo", UTF_8);
 
     parseCommand(

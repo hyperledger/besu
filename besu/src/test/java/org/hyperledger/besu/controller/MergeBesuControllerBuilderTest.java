@@ -61,6 +61,7 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.time.Clock;
 import java.util.Collections;
 import java.util.Optional;
@@ -70,15 +71,15 @@ import com.google.common.collect.Range;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class MergeBesuControllerBuilderTest {
 
   private MergeBesuControllerBuilder besuControllerBuilder;
@@ -102,10 +103,9 @@ public class MergeBesuControllerBuilderTest {
   BigInteger networkId = BigInteger.ONE;
   private final BlockHeaderTestFixture headerGenerator = new BlockHeaderTestFixture();
   private final BaseFeeMarket feeMarket = new LondonFeeMarket(0, Optional.of(Wei.of(42)));
-
-  @Rule public final TemporaryFolder tempDirRule = new TemporaryFolder();
-
-  @Before
+  @TempDir
+  public Path tempDirRule;
+  @BeforeEach
   public void setup() {
     when(genesisConfigFile.getParentHash()).thenReturn(Hash.ZERO.toHexString());
     when(genesisConfigFile.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
@@ -160,7 +160,7 @@ public class MergeBesuControllerBuilderTest {
             .miningParameters(miningParameters)
             .metricsSystem(observableMetricsSystem)
             .privacyParameters(privacyParameters)
-            .dataDirectory(tempDirRule.getRoot().toPath())
+            .dataDirectory(tempDirRule.getRoot())
             .clock(clock)
             .transactionPoolConfiguration(poolConfiguration)
             .nodeKey(nodeKey)

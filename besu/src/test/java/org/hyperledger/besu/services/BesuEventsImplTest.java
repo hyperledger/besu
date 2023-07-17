@@ -76,14 +76,15 @@ import java.util.stream.Stream;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @SuppressWarnings("unchecked")
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class BesuEventsImplTest {
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
@@ -109,7 +110,7 @@ public class BesuEventsImplTest {
   private MutableBlockchain blockchain;
   private final BlockDataGenerator gen = new BlockDataGenerator();
 
-  @Before
+  @BeforeEach
   public void setUp() {
     blockchain =
         DefaultBlockchain.createMutable(

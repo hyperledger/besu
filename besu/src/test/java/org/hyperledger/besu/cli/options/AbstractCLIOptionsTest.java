@@ -18,11 +18,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.cli.CommandTestAbstract;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
-
-import org.junit.Test;
 
 public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
     extends CommandTestAbstract {

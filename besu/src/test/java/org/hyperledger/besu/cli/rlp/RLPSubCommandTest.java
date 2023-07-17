@@ -27,8 +27,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import picocli.CommandLine.Model.CommandSpec;
 
 public class RLPSubCommandTest extends CommandTestAbstract {
@@ -160,7 +160,7 @@ public class RLPSubCommandTest extends CommandTestAbstract {
   @Test
   public void encodeWithInputFilePathMustReadFromThisFile() throws Exception {
 
-    final File tempJsonFile = temp.newFile("test.json");
+    final File tempJsonFile = temp.resolve("test.json").toFile();
     try (final BufferedWriter fileWriter = Files.newBufferedWriter(tempJsonFile.toPath(), UTF_8)) {
 
       fileWriter.write(
@@ -181,7 +181,7 @@ public class RLPSubCommandTest extends CommandTestAbstract {
 
   @Test
   public void canEncodeToQbftExtraData() throws IOException {
-    final File tempJsonFile = temp.newFile("test.json");
+    final File tempJsonFile = temp.resolve("test.json").toFile();
     try (final BufferedWriter fileWriter = Files.newBufferedWriter(tempJsonFile.toPath(), UTF_8)) {
 
       fileWriter.write(
@@ -208,7 +208,7 @@ public class RLPSubCommandTest extends CommandTestAbstract {
   @Test
   public void encodeWithInvalidInputMustRaiseAnError() throws Exception {
 
-    final File tempJsonFile = temp.newFile("invalid_test.json");
+    final File tempJsonFile = temp.resolve("invalid_test.json").toFile();
     try (final BufferedWriter fileWriter = Files.newBufferedWriter(tempJsonFile.toPath(), UTF_8)) {
 
       fileWriter.write("{\"property\":0}");
@@ -228,7 +228,7 @@ public class RLPSubCommandTest extends CommandTestAbstract {
   @Test
   public void encodeWithEmptyInputMustRaiseAnError() throws Exception {
 
-    final File tempJsonFile = temp.newFile("empty.json");
+    final File tempJsonFile = temp.resolve("empty.json").toFile();
 
     parseCommand(RLP_SUBCOMMAND_NAME, RLP_ENCODE_SUBCOMMAND_NAME, "--from", tempJsonFile.getPath());
 
@@ -251,7 +251,7 @@ public class RLPSubCommandTest extends CommandTestAbstract {
         .startsWith("An error occurred while trying to read the JSON data.");
   }
 
-  @After
+  @AfterEach
   public void restoreStdin() {
     System.setIn(System.in);
   }

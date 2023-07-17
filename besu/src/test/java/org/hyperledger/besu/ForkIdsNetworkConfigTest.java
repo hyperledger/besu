@@ -50,6 +50,7 @@ import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+//TODO find something for Enclosed
 @RunWith(Enclosed.class)
 public class ForkIdsNetworkConfigTest {
 

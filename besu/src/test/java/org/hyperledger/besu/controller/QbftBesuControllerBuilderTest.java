@@ -56,20 +56,20 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.time.Clock;
 import java.util.List;
 
 import com.google.common.collect.Range;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class QbftBesuControllerBuilderTest {
 
   private BesuControllerBuilder qbftBesuControllerBuilder;
@@ -91,9 +91,9 @@ public class QbftBesuControllerBuilderTest {
   private static final BigInteger networkId = BigInteger.ONE;
   private static final NodeKey nodeKey = NodeKeyUtils.generate();
 
-  @Rule public final TemporaryFolder tempDirRule = new TemporaryFolder();
+  @TempDir public Path tempDirRule;
 
-  @Before
+  @BeforeEach
   public void setup() {
     // besu controller setup
     when(genesisConfigFile.getParentHash()).thenReturn(Hash.ZERO.toHexString());
@@ -142,7 +142,7 @@ public class QbftBesuControllerBuilderTest {
             .miningParameters(miningParameters)
             .metricsSystem(observableMetricsSystem)
             .privacyParameters(privacyParameters)
-            .dataDirectory(tempDirRule.getRoot().toPath())
+            .dataDirectory(tempDirRule.getRoot())
             .clock(clock)
             .transactionPoolConfiguration(poolConfiguration)
             .nodeKey(nodeKey)

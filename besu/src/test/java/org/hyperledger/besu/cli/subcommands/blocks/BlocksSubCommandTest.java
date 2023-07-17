@@ -36,17 +36,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.junit.jupiter.MockitoExtension;
 import picocli.CommandLine.Model.CommandSpec;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class BlocksSubCommandTest extends CommandTestAbstract {
 
-  @Rule public final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir public Path folder;
 
   private static final String EXPECTED_BLOCK_USAGE =
       "Usage: besu blocks [-hV] [COMMAND]"
@@ -187,7 +187,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
 
   @Test
   public void callingBlockImportSubCommandWithPathMustImportBlocksWithThisPath() throws Exception {
-    final File fileToImport = temp.newFile("blocks.file");
+    final File fileToImport = temp.resolve("blocks.file").toFile();
     parseCommand(
         BLOCK_SUBCOMMAND_NAME, BLOCK_IMPORT_SUBCOMMAND_NAME, "--from", fileToImport.getPath());
 
@@ -202,7 +202,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
 
   @Test
   public void blocksImport_rlpFormat() throws Exception {
-    final File fileToImport = temp.newFile("blocks.file");
+    final File fileToImport = temp.resolve("blocks.file").toFile();
     parseCommand(
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_IMPORT_SUBCOMMAND_NAME,
@@ -222,9 +222,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
 
   @Test
   public void blocksImport_rlpFormatMultiple() throws Exception {
-    final File fileToImport = temp.newFile("blocks.file");
-    final File file2ToImport = temp.newFile("blocks2.file");
-    final File file3ToImport = temp.newFile("blocks3.file");
+    final File fileToImport = temp.resolve("blocks.file").toFile();
+    final File file2ToImport = temp.resolve("blocks2.file").toFile();
+    final File file3ToImport = temp.resolve("blocks3.file").toFile();
     parseCommand(
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_IMPORT_SUBCOMMAND_NAME,
@@ -248,7 +248,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void blocksImport_jsonFormat() throws Exception {
     final String fileContent = "test";
-    final File fileToImport = temp.newFile("blocks.file");
+    final File fileToImport = temp.resolve("blocks.file").toFile();
     final Writer fileWriter = Files.newBufferedWriter(fileToImport.toPath(), UTF_8);
     fileWriter.write(fileContent);
     fileWriter.close();
@@ -273,7 +273,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   public void blocksExport_missingFileParam() throws IOException {
     createDbDirectory(true);
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        "--data-path=" + folder.toAbsolutePath(),
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME);
     final String expectedErrorOutputStart = "Missing required option: '--to=<FILE>'";
@@ -285,16 +285,16 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
 
   @Test
   public void blocksExport_noDbDirectory() throws IOException {
-    final File outputFile = folder.newFile("blocks.bin");
+    final File outputFile = folder.resolve("blocks.bin").toFile();
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        "--data-path=" + folder.getRoot().toAbsolutePath(),
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME,
         "--to",
         outputFile.getPath());
     final String expectedErrorOutputStart =
         "Chain is empty.  Unable to export blocks from specified data directory: "
-            + folder.getRoot().getAbsolutePath()
+            + folder.getRoot().toAbsolutePath()
             + File.separator
             + BesuController.DATABASE_PATH;
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -306,16 +306,16 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void blocksExport_emptyDbDirectory() throws IOException {
     createDbDirectory(false);
-    final File outputFile = folder.newFile("blocks.bin");
+    final File outputFile = folder.resolve("blocks.bin").toFile();
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        "--data-path=" + folder.getRoot().toAbsolutePath(),
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME,
         "--to",
         outputFile.getPath());
     final String expectedErrorOutputStart =
         "Chain is empty.  Unable to export blocks from specified data directory: "
-            + folder.getRoot().getAbsolutePath()
+            + folder.getRoot().toAbsolutePath()
             + File.separator
             + BesuController.DATABASE_PATH;
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -327,9 +327,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void blocksExport_noStartOrEnd() throws IOException {
     createDbDirectory(true);
-    final File outputFile = folder.newFile("blocks.bin");
+    final File outputFile = folder.resolve("blocks.bin").toFile();
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        "--data-path=" + folder.getRoot().toAbsolutePath(),
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME,
         "--to",
@@ -343,9 +343,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void blocksExport_withStartAndNoEnd() throws IOException {
     createDbDirectory(true);
-    final File outputFile = folder.newFile("blocks.bin");
+    final File outputFile = folder.resolve("blocks.bin").toFile();
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        "--data-path=" + folder.getRoot().toAbsolutePath(),
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME,
         "--to",
@@ -360,9 +360,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void blocksExport_withEndAndNoStart() throws IOException {
     createDbDirectory(true);
-    final File outputFile = folder.newFile("blocks.bin");
+    final File outputFile = folder.resolve("blocks.bin").toFile();
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        "--data-path=" + folder.getRoot().toAbsolutePath(),
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME,
         "--to",
@@ -377,9 +377,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void blocksExport_withStartAndEnd() throws IOException {
     createDbDirectory(true);
-    final File outputFile = folder.newFile("blocks.bin");
+    final File outputFile = folder.resolve("blocks.bin").toFile();
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        "--data-path=" + folder.getRoot().toAbsolutePath(),
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME,
         "--to",
@@ -395,9 +395,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void blocksExport_withOutOfOrderStartAndEnd() throws IOException {
     createDbDirectory(true);
-    final File outputFile = folder.newFile("blocks.bin");
+    final File outputFile = folder.resolve("blocks.bin").toFile();
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        "--data-path=" + folder.getRoot().toAbsolutePath(),
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME,
         "--to",
@@ -414,9 +414,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void blocksExport_withEmptyRange() throws IOException {
     createDbDirectory(true);
-    final File outputFile = folder.newFile("blocks.bin");
+    final File outputFile = folder.resolve("blocks.bin").toFile();
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        "--data-path=" + folder.getRoot().toAbsolutePath(),
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME,
         "--to",
@@ -433,9 +433,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void blocksExport_withInvalidStart() throws IOException {
     createDbDirectory(true);
-    final File outputFile = folder.newFile("blocks.bin");
+    final File outputFile = folder.resolve("blocks.bin").toFile();
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        "--data-path=" + folder.getRoot().toAbsolutePath(),
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME,
         "--to",
@@ -451,9 +451,9 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   @Test
   public void blocksExport_withInvalidEnd() throws IOException {
     createDbDirectory(true);
-    final File outputFile = folder.newFile("blocks.bin");
+    final File outputFile = folder.resolve("blocks.bin").toFile();
     parseCommand(
-        "--data-path=" + folder.getRoot().getAbsolutePath(),
+        "--data-path=" + folder.getRoot().toAbsolutePath(),
         BLOCK_SUBCOMMAND_NAME,
         BLOCK_EXPORT_SUBCOMMAND_NAME,
         "--to",
@@ -481,7 +481,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
   }
 
   private void createDbDirectory(final boolean createDataFiles) throws IOException {
-    final File dbDir = folder.newFolder(BesuController.DATABASE_PATH);
+    final File dbDir = folder.resolve(BesuController.DATABASE_PATH).toFile();
     if (createDataFiles) {
       final Path dataFilePath = Paths.get(dbDir.getAbsolutePath(), "0000001.sst");
       final boolean success = new File(dataFilePath.toString()).createNewFile();
@@ -491,7 +491,7 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
 
   @Test
   public void blocksImportWithNoSyncModeDoesNotRaiseNPE() throws IOException {
-    final File fileToImport = temp.newFile("blocks.file");
+    final File fileToImport = temp.resolve("blocks.file").toFile();
     parseCommand(
         BLOCK_SUBCOMMAND_NAME, BLOCK_IMPORT_SUBCOMMAND_NAME, "--from", fileToImport.getPath());
 

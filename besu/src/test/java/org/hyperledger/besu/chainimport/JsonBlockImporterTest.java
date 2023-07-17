@@ -54,16 +54,15 @@ import java.util.List;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public abstract class JsonBlockImporterTest {
-
-  @Rule public final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir
+  Path dataDir;
+  private final RlpBlockImporter rlpBlockImporter = new RlpBlockImporter();
 
   protected final String consensusEngine;
   protected final GenesisConfigFile genesisConfigFile;
@@ -96,14 +95,14 @@ public abstract class JsonBlockImporterTest {
     }
   }
 
-  @RunWith(Parameterized.class)
   public static class ParameterizedTests extends JsonBlockImporterTest {
 
     public ParameterizedTests(final String consensusEngine) throws IOException {
       super(consensusEngine);
     }
 
-    @Parameters(name = "Name: {0}")
+    @ParameterizedTest
+    @ValueSource(strings = {"Name: {0}"})
     public static Collection<Object[]> getParameters() {
       final Object[][] params = {{"ethash"}, {"clique"}};
       return Arrays.asList(params);
@@ -413,7 +412,6 @@ public abstract class JsonBlockImporterTest {
 
   protected BesuController createController(final GenesisConfigFile genesisConfigFile)
       throws IOException {
-    final Path dataDir = folder.newFolder().toPath();
     return new BesuController.Builder()
         .fromGenesisConfig(genesisConfigFile, SyncMode.FAST)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())

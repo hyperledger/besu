@@ -19,11 +19,12 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 
 import org.hyperledger.besu.cli.converter.exception.PercentageConversionException;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.class)
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
 public class PercentageConverterTest {
 
   private final PercentageConverter percentageConverter = new PercentageConverter();
