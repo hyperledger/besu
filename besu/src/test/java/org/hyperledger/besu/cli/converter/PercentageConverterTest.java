@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 
 import org.hyperledger.besu.cli.converter.exception.PercentageConversionException;
 
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;

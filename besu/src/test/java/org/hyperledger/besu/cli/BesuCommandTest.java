@@ -125,7 +125,6 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -5443,6 +5442,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @TempDir public Path pkiTempFolder;
+
   @Test
   public void pkiBlockCreationFullConfig() throws Exception {
     // Create temp file with password

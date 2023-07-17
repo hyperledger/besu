@@ -99,6 +99,7 @@ public class BesuControllerBuilderTest {
   BigInteger networkId = BigInteger.ONE;
 
   @TempDir public Path tempDirRule;
+
   @BeforeEach
   public void setup() {
     when(genesisConfigFile.getParentHash()).thenReturn(Hash.ZERO.toHexString());

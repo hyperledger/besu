@@ -17,17 +17,14 @@ package org.hyperledger.besu.cli.custom;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.junit.jupiter.MockitoExtension;
 import picocli.CommandLine;
 import picocli.CommandLine.ParameterException;
 
-//TODO @RunWith(MockitoJUnitRunner.StrictStubs.class)
+// TODO @RunWith(MockitoJUnitRunner.StrictStubs.class)
 @ExtendWith(MockitoExtension.class)
 public class RpcAuthFileValidatorTest {
 

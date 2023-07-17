@@ -60,9 +60,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 public abstract class JsonBlockImporterTest {
-  @TempDir
-  Path dataDir;
-  private final RlpBlockImporter rlpBlockImporter = new RlpBlockImporter();
+  @TempDir Path dataDir;
 
   protected final String consensusEngine;
   protected final GenesisConfigFile genesisConfigFile;

@@ -75,7 +75,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
-import org.junit.rules.TemporaryFolder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -103,8 +102,8 @@ public class MergeBesuControllerBuilderTest {
   BigInteger networkId = BigInteger.ONE;
   private final BlockHeaderTestFixture headerGenerator = new BlockHeaderTestFixture();
   private final BaseFeeMarket feeMarket = new LondonFeeMarket(0, Optional.of(Wei.of(42)));
-  @TempDir
-  public Path tempDirRule;
+  @TempDir public Path tempDirRule;
+
   @BeforeEach
   public void setup() {
     when(genesisConfigFile.getParentHash()).thenReturn(Hash.ZERO.toHexString());

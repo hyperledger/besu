@@ -20,10 +20,10 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 
 @ExtendWith(MockitoExtension.class)
 public class EthProtocolOptionsTest
