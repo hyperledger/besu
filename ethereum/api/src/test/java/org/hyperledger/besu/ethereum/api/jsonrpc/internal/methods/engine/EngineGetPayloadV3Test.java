@@ -16,25 +16,36 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobsBundleV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV3;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
+import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
+import org.hyperledger.besu.plugin.data.TransactionType;
 
+import java.math.BigInteger;
 import java.security.InvalidParameterException;
 import java.util.Collections;
 import java.util.List;
@@ -45,6 +56,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(
@@ -55,13 +67,16 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
   private static final long CANCUN_AT = 31337L;
 
   public EngineGetPayloadV3Test() {
-    super(EngineGetPayloadV3::new);
+    super();
   }
 
   @Before
   @Override
   public void before() {
-    super.before();
+    when(mergeContext.retrieveBlockById(mockPid)).thenReturn(Optional.of(mockBlockWithReceipts));
+    when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
+    when(protocolSchedule.hardforkFor(any()))
+        .thenReturn(Optional.of(new ScheduledProtocolSpec.Hardfork("shanghai", SHANGHAI_AT)));
     this.method =
         new EngineGetPayloadV3(
             vertx,
@@ -97,16 +112,30 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
             Address.fromHexString("0x42"),
             Optional.empty());
 
+    BlobsWithCommitments bwc = BlobTestFixture.createBlobsWithCommitments(1);
+    Transaction blobTx =
+        new TransactionTestFixture()
+            .to(Optional.of(Address.fromHexString("0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF")))
+            .type(TransactionType.BLOB)
+            .chainId(Optional.of(BigInteger.ONE))
+            .maxFeePerGas(Optional.of(Wei.of(15)))
+            .maxFeePerDataGas(Optional.of(Wei.of(128)))
+            .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
+            .blobsWithCommitments(Optional.of(bwc))
+            .versionedHashes(Optional.of(bwc.getVersionedHashes()))
+            .createTransaction(senderKeys);
+    TransactionReceipt blobReceipt = mock(TransactionReceipt.class);
+    when(blobReceipt.getCumulativeGasUsed()).thenReturn(100L);
     BlockWithReceipts postCancunBlock =
         new BlockWithReceipts(
             new Block(
                 cancunHeader,
                 new BlockBody(
-                    Collections.emptyList(),
+                    List.of(blobTx),
                     Collections.emptyList(),
                     Optional.of(Collections.emptyList()),
                     Optional.empty())),
-            Collections.emptyList());
+            List.of(blobReceipt));
 
     when(mergeContext.retrieveBlockById(postCancunPid)).thenReturn(Optional.of(postCancunBlock));
 

@@ -12,29 +12,51 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core.blobs;
+package org.hyperledger.besu.datatypes;
 
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** This class contains the data for a KZG proof for a KZG commitment. */
 public class KZGProof {
   final Bytes data;
 
+  /**
+   * Constructor for a KZG proof.
+   *
+   * @param data The data for the KZG proof.
+   */
   public KZGProof(final Bytes data) {
     this.data = data;
   }
 
+  /**
+   * Reads a KZG proof from the RLP input.
+   *
+   * @param input The RLP input.
+   * @return The KZG proof.
+   */
   public static KZGProof readFrom(final RLPInput input) {
     final Bytes bytes = input.readBytes();
     return new KZGProof(bytes);
   }
 
+  /**
+   * Writes the KZG proof to the RLP output.
+   *
+   * @param out The RLP output.
+   */
   public void writeTo(final RLPOutput out) {
     out.writeBytes(data);
   }
 
+  /**
+   * Gets the data for the KZG proof.
+   *
+   * @return The data for the KZG proof.
+   */
   public Bytes getData() {
     return data;
   }

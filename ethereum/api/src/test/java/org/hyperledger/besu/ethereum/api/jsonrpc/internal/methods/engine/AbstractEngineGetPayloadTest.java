@@ -23,6 +23,9 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -41,7 +44,9 @@ import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
 import java.util.Collections;
 import java.util.Optional;
+import java.util.function.Supplier;
 
+import com.google.common.base.Suppliers;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
@@ -53,6 +58,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public abstract class AbstractEngineGetPayloadTest {
+
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  protected static final KeyPair senderKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
 
   @FunctionalInterface
   interface MethodFactory {
@@ -69,6 +78,10 @@ public abstract class AbstractEngineGetPayloadTest {
 
   public AbstractEngineGetPayloadTest(final MethodFactory methodFactory) {
     this.methodFactory = methodFactory;
+  }
+
+  public AbstractEngineGetPayloadTest() {
+    this.methodFactory = null;
   }
 
   protected static final Vertx vertx = Vertx.vertx();

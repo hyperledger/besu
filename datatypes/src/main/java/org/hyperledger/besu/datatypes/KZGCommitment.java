@@ -12,30 +12,51 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core.blobs;
+package org.hyperledger.besu.datatypes;
 
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class Blob {
-
+/** This class contains the data for a KZG commitment. */
+public class KZGCommitment {
   final Bytes data;
 
-  public Blob(final Bytes data) {
+  /**
+   * Constructor for a KZG commitment.
+   *
+   * @param data The data for the KZG commitment.
+   */
+  public KZGCommitment(final Bytes data) {
     this.data = data;
   }
 
-  public static Blob readFrom(final RLPInput input) {
+  /**
+   * Reads a KZG commitment from the RLP input.
+   *
+   * @param input The RLP input.
+   * @return The KZG commitment.
+   */
+  public static KZGCommitment readFrom(final RLPInput input) {
     final Bytes bytes = input.readBytes();
-    return new Blob(bytes);
+    return new KZGCommitment(bytes);
   }
 
+  /**
+   * Writes the KZG commitment to the RLP output.
+   *
+   * @param out The RLP output.
+   */
   public void writeTo(final RLPOutput out) {
     out.writeBytes(data);
   }
 
+  /**
+   * Gets the data for the KZG commitment.
+   *
+   * @return The data for the KZG commitment.
+   */
   public Bytes getData() {
     return data;
   }

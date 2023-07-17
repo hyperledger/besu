@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.core;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
+import static org.hyperledger.besu.datatypes.VersionedHash.SHA256_VERSION_ID;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPublicKey;
@@ -24,14 +25,15 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Blob;
+import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.KZGCommitment;
+import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.datatypes.Quantity;
+import org.hyperledger.besu.datatypes.Sha256Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.blobs.Blob;
-import org.hyperledger.besu.ethereum.core.blobs.BlobsWithCommitments;
-import org.hyperledger.besu.ethereum.core.blobs.KZGCommitment;
-import org.hyperledger.besu.ethereum.core.blobs.KZGProof;
 import org.hyperledger.besu.ethereum.core.encoding.BlobTransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
@@ -1333,7 +1335,14 @@ public class Transaction
         final List<KZGCommitment> kzgCommitments,
         final List<Blob> blobs,
         final List<KZGProof> kzgProofs) {
-      this.blobsWithCommitments = new BlobsWithCommitments(kzgCommitments, blobs, kzgProofs);
+      if (this.versionedHashes == null || this.versionedHashes.isEmpty()) {
+        this.versionedHashes =
+            kzgCommitments.stream()
+                .map(c -> new VersionedHash(SHA256_VERSION_ID, Sha256Hash.hash(c.getData())))
+                .collect(Collectors.toList());
+      }
+      this.blobsWithCommitments =
+          new BlobsWithCommitments(kzgCommitments, blobs, kzgProofs, versionedHashes);
       return this;
     }
   }

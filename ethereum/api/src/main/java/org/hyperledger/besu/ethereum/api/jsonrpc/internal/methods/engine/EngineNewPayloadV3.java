@@ -55,13 +55,11 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
       if (payloadParameter.getDataGasUsed() == null
           || payloadParameter.getExcessDataGas() == null) {
         return ValidationResult.invalid(JsonRpcError.INVALID_PARAMS);
+      } else {
+        return ValidationResult.valid();
       }
     } else {
-      if (payloadParameter.getDataGasUsed() != null
-          || payloadParameter.getExcessDataGas() != null) {
-        return ValidationResult.invalid(JsonRpcError.UNSUPPORTED_FORK);
-      }
+      return ValidationResult.invalid(JsonRpcError.UNSUPPORTED_FORK);
     }
-    return ValidationResult.valid();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INVALID_TRANSACTION_FORMAT;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS;
@@ -32,26 +31,24 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Blob;
+import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.KZGCommitment;
+import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.datatypes.Sha256Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
-import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
+import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.core.blobs.Blob;
-import org.hyperledger.besu.ethereum.core.blobs.BlobsWithCommitments;
-import org.hyperledger.besu.ethereum.core.blobs.KZGCommitment;
-import org.hyperledger.besu.ethereum.core.blobs.KZGProof;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
@@ -59,7 +56,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
-import ethereum.ckzg4844.CKZG4844JNI;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
@@ -556,7 +552,8 @@ public class MainnetTransactionValidatorTest {
                     new BlobsWithCommitments(
                         List.of(new KZGCommitment(Bytes.EMPTY)),
                         List.of(new Blob(Bytes.EMPTY)),
-                        List.of(new KZGProof(Bytes.EMPTY)))))
+                        List.of(new KZGProof(Bytes.EMPTY)),
+                        List.of(new VersionedHash((byte) 1, Sha256Hash.wrap(Bytes32.ZERO))))))
             .versionedHashes(
                 Optional.of(List.of(new VersionedHash((byte) 1, Sha256Hash.wrap(Bytes32.ZERO)))))
             .createTransaction(senderKeys);
@@ -586,33 +583,7 @@ public class MainnetTransactionValidatorTest {
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559, TransactionType.BLOB),
             0xc000);
 
-    byte[] rawMaterial = {};
-    try (InputStream readme =
-        this.getClass()
-            .getResourceAsStream(
-                "/org/hyperledger/besu/ethereum/core/encoding/BlobDataFixture.bin")) {
-      rawMaterial = readme.readAllBytes();
-    } catch (IOException e) {
-      fail("Failed to read blob file", e);
-    }
-
-    Bytes commitment = Bytes.EMPTY;
-    try {
-      CKZG4844JNI.loadNativeLibrary(CKZG4844JNI.Preset.MAINNET);
-      CKZG4844JNI.loadTrustedSetupFromResource("/kzg-trusted-setups/mainnet.txt", this.getClass());
-      commitment = Bytes.wrap(CKZG4844JNI.blobToKzgCommitment(rawMaterial));
-    } catch (Exception e) {
-      fail("Failed to compute commitment", e);
-    }
-    assertThat(commitment.size()).isEqualTo(48);
-    Bytes proof = Bytes.wrap(CKZG4844JNI.computeBlobKzgProof(rawMaterial, commitment.toArray()));
-    VersionedHash versionedHash = new VersionedHash((byte) 1, Sha256Hash.sha256(commitment));
-    BlobsWithCommitments bwc =
-        new BlobsWithCommitments(
-            List.of(new KZGCommitment(commitment)),
-            List.of(new Blob(Bytes.wrap(rawMaterial))),
-            List.of(new KZGProof(proof)));
-
+    BlobsWithCommitments bwc = BlobTestFixture.createBlobsWithCommitments(1);
     var blobTx =
         new TransactionTestFixture()
             .to(Optional.of(Address.fromHexString("0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF")))
@@ -622,7 +593,7 @@ public class MainnetTransactionValidatorTest {
             .maxFeePerDataGas(Optional.of(Wei.of(128)))
             .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
             .blobsWithCommitments(Optional.of(bwc))
-            .versionedHashes(Optional.of(List.of(versionedHash)))
+            .versionedHashes(Optional.of(bwc.getVersionedHashes()))
             .createTransaction(senderKeys);
     var validationResult =
         validator.validate(blobTx, Optional.empty(), transactionValidationParams);

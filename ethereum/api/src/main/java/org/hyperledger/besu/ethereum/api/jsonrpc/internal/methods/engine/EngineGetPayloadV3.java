@@ -45,17 +45,6 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeMiningCoordinator,
       final BlockResultFactory blockResultFactory,
-      final EngineCallListener engineCallListener) {
-    super(vertx, protocolContext, mergeMiningCoordinator, blockResultFactory, engineCallListener);
-    this.shanghai = Optional.empty();
-    this.cancun = Optional.empty();
-  }
-
-  public EngineGetPayloadV3(
-      final Vertx vertx,
-      final ProtocolContext protocolContext,
-      final MergeMiningCoordinator mergeMiningCoordinator,
-      final BlockResultFactory blockResultFactory,
       final EngineCallListener engineCallListener,
       final ProtocolSchedule schedule) {
     super(vertx, protocolContext, mergeMiningCoordinator, blockResultFactory, engineCallListener);
@@ -77,21 +66,22 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
     try {
       long builtAt = blockWithReceipts.getHeader().getTimestamp();
 
-      if (cancun.isPresent() && builtAt >= cancun.get().milestone()) {
+      if (this.shanghai.isPresent() && builtAt < this.shanghai.get().milestone()) {
+        return new JsonRpcSuccessResponse(
+            request.getRequest().getId(),
+            blockResultFactory.payloadTransactionCompleteV1(blockWithReceipts.getBlock()));
+      } else if (this.shanghai.isPresent()
+          && builtAt >= this.shanghai.get().milestone()
+          && this.cancun.isPresent()
+          && builtAt < this.cancun.get().milestone()) {
+        return new JsonRpcSuccessResponse(
+            request.getRequest().getId(),
+            blockResultFactory.payloadTransactionCompleteV2(blockWithReceipts));
+      } else {
         return new JsonRpcSuccessResponse(
             request.getRequest().getId(),
             blockResultFactory.payloadTransactionCompleteV3(blockWithReceipts));
       }
-
-      if (shanghai.isPresent() && builtAt >= this.shanghai.get().milestone()) {
-        return new JsonRpcSuccessResponse(
-            request.getRequest().getId(),
-            blockResultFactory.payloadTransactionCompleteV2(blockWithReceipts));
-      }
-
-      return new JsonRpcSuccessResponse(
-          request.getRequest().getId(),
-          blockResultFactory.payloadTransactionCompleteV1(blockWithReceipts.getBlock()));
 
     } catch (ClassCastException e) {
       LOG.error("configuration error, can't call V3 endpoint with non-default protocol schedule");

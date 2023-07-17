@@ -19,10 +19,8 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameterTestFixture.DEPOSIT_PARAM_1;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameterTestFixture.WITHDRAWAL_PARAM_1;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -32,7 +30,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -79,7 +76,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -88,6 +84,12 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public abstract class AbstractEngineNewPayloadTest {
+
+  protected final long LONDON_TIMESTAMP = 0;
+  protected final long PARIS_TIMESTAMP = 10;
+  protected final long SHANGHAI_TIMESTAMP = 20;
+  protected final long CANCUN_TIMESTAMP = 30;
+  protected final long EXPERIMENTAL_TIMESTAMP = 40;
 
   @FunctionalInterface
   interface MethodFactory {
@@ -110,15 +112,13 @@ public abstract class AbstractEngineNewPayloadTest {
   }
 
   private static final Vertx vertx = Vertx.vertx();
-  private static final Hash mockHash = Hash.hash(Bytes32.fromHexStringLenient("0x1337deadbeef"));
-  private static final Address depositContractAddress =
-      Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
+  protected static final Hash mockHash = Hash.hash(Bytes32.fromHexStringLenient("0x1337deadbeef"));
 
   @Mock protected ProtocolSpec protocolSpec;
   @Mock protected ProtocolSchedule protocolSchedule;
   @Mock private ProtocolContext protocolContext;
 
-  @Mock private MergeContext mergeContext;
+  @Mock protected MergeContext mergeContext;
 
   @Mock protected MergeMiningCoordinator mergeCoordinator;
 
@@ -132,12 +132,14 @@ public abstract class AbstractEngineNewPayloadTest {
   public void before() {
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
-    when(protocolSpec.getWithdrawalsValidator())
+    lenient()
+        .when(protocolSpec.getWithdrawalsValidator())
         .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
-    when(protocolSpec.getDepositsValidator())
+    lenient()
+        .when(protocolSpec.getDepositsValidator())
         .thenReturn(new DepositsValidator.ProhibitedDeposits());
-    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    when(ethPeers.peerCount()).thenReturn(1);
+    lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
+    lenient().when(ethPeers.peerCount()).thenReturn(1);
     this.method =
         methodFactory.create(
             vertx,
@@ -151,6 +153,123 @@ public abstract class AbstractEngineNewPayloadTest {
   @Test
   public abstract void shouldReturnExpectedMethodName();
 
+  protected JsonRpcResponse resp(final EnginePayloadParameter payload) {
+    return method.response(
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", this.method.getName(), new Object[] {payload})));
+  }
+
+  protected EnginePayloadParameter mockPayload(final BlockHeader header, final List<String> txs) {
+    return mockPayload(header, txs, null, null, null);
+  }
+
+  protected EnginePayloadParameter mockPayload(
+      final BlockHeader header,
+      final List<String> txs,
+      final List<WithdrawalParameter> withdrawals,
+      final List<DepositParameter> deposits) {
+    return mockPayload(
+        header, txs, withdrawals, deposits, List.of(DEFAULT_VERSIONED_HASH.toBytes()));
+  }
+
+  protected EnginePayloadParameter mockPayload(
+      final BlockHeader header,
+      final List<String> txs,
+      final List<WithdrawalParameter> withdrawals,
+      final List<DepositParameter> deposits,
+      final List<Bytes32> versionedHashes) {
+    return new EnginePayloadParameter(
+        header.getHash(),
+        header.getParentHash(),
+        header.getCoinbase(),
+        header.getStateRoot(),
+        new UnsignedLongParameter(header.getNumber()),
+        header.getBaseFee().map(w -> w.toHexString()).orElse("0x0"),
+        new UnsignedLongParameter(header.getGasLimit()),
+        new UnsignedLongParameter(header.getGasUsed()),
+        new UnsignedLongParameter(header.getTimestamp()),
+        header.getExtraData() == null ? null : header.getExtraData().toHexString(),
+        header.getReceiptsRoot(),
+        header.getLogsBloom(),
+        header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
+        txs,
+        withdrawals,
+        header.getDataGasUsed().map(UnsignedLongParameter::new).orElse(null),
+        header.getExcessDataGas().map(DataGas::toHexString).orElse(null),
+        versionedHashes,
+        deposits);
+  }
+
+  @NotNull
+  BlockHeader setupValidPayload(
+      final BlockProcessingResult value,
+      final Optional<List<Withdrawal>> maybeWithdrawals,
+      final Optional<List<Deposit>> maybeDeposits) {
+    BlockHeader mockHeader = createBlockHeader(maybeWithdrawals, maybeDeposits);
+    when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
+    when(blockchain.getBlockHeader(mockHeader.getParentHash()))
+        .thenReturn(Optional.of(mock(BlockHeader.class)));
+    when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
+        .thenReturn(Optional.of(mockHash));
+    if (validateTerminalPoWBlock()) {
+      when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
+          .thenReturn(true);
+    }
+    when(mergeCoordinator.rememberBlock(any())).thenReturn(value);
+    return mockHeader;
+  }
+
+  @Test
+  public void shouldReturnInvalidBlockHashOnBadHashParameter() {
+    BlockHeader mockHeader = buildBlockHeader();
+
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
+    assertThat(res.getLatestValidHash()).isEmpty();
+    assertThat(res.getStatusAsString()).isEqualTo(getExpectedInvalidBlockHashStatus().name());
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  protected BlockHeader buildBlockHeader() {
+    return new BlockHeaderTestFixture().buildHeader();
+  }
+
+  @Test
+  public void shouldReturnInvalidOnOldTimestampInBlock() {
+    BlockHeader parent = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader mockHeader =
+        new BlockHeaderTestFixture()
+            .baseFeePerGas(Wei.ONE)
+            .parentHash(parent.getHash())
+            .timestamp(parent.getTimestamp())
+            .buildHeader();
+    when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
+    when(blockchain.getBlockHeader(parent.getHash())).thenReturn(Optional.of(parent));
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+
+    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    var res = ((JsonRpcSuccessResponse) resp).getResult();
+    assertThat(res).isInstanceOf(EnginePayloadStatusResult.class);
+    var payloadStatusResult = (EnginePayloadStatusResult) res;
+    assertThat(payloadStatusResult.getStatus()).isEqualTo(INVALID);
+    assertThat(payloadStatusResult.getError()).isEqualTo("block timestamp not greater than parent");
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldReturnInvalidWhenBadBlock() {
+    when(mergeCoordinator.isBadBlock(any(Hash.class))).thenReturn(true);
+    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
+    assertThat(res.getLatestValidHash()).contains(Hash.ZERO);
+    assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
+    assertThat(res.getError()).isEqualTo("Block already present in bad block manager.");
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
   @Test
   public void shouldReturnValid() {
     BlockHeader mockHeader =
@@ -162,21 +281,6 @@ public abstract class AbstractEngineNewPayloadTest {
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
     assertValidResponse(mockHeader, resp);
-  }
-
-  @Test
-  public void shouldReturnInvalidOnBlockExecutionError() {
-    BlockHeader mockHeader =
-        setupValidPayload(
-            new BlockProcessingResult("error 42"), Optional.empty(), Optional.empty());
-
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
-
-    EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash().get()).isEqualTo(mockHash);
-    assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
-    assertThat(res.getError()).isEqualTo("error 42");
-    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -202,16 +306,45 @@ public abstract class AbstractEngineNewPayloadTest {
   }
 
   @Test
-  public void shouldReturnSuccessOnAlreadyPresent() {
-    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    Block mockBlock =
-        new Block(mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
+  public void shouldCheckBlockValidityBeforeCheckingByHashForExisting() {
+    BlockHeader realHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader paramHeader = spy(realHeader);
+    when(paramHeader.getHash()).thenReturn(Hash.fromHexStringLenient("0x1337"));
 
-    when(blockchain.getBlockByHash(any())).thenReturn(Optional.of(mockBlock));
+    var resp = resp(mockPayload(paramHeader, Collections.emptyList()));
+
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
+    assertThat(res.getLatestValidHash()).isEmpty();
+    assertThat(res.getStatusAsString()).isEqualTo(getExpectedInvalidBlockHashStatus().name());
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldReturnInvalidOnBlockExecutionError() {
+    BlockHeader mockHeader =
+        setupValidPayload(
+            new BlockProcessingResult("error 42"), Optional.empty(), Optional.empty());
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
-    assertValidResponse(mockHeader, resp);
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
+    assertThat(res.getLatestValidHash().get()).isEqualTo(mockHash);
+    assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
+    assertThat(res.getError()).isEqualTo("error 42");
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldRespondWithSyncingDuringForwardSync() {
+    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    when(mergeContext.isSyncing()).thenReturn(Boolean.TRUE);
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
+    assertThat(res.getError()).isNull();
+    assertThat(res.getStatusAsString()).isEqualTo(SYNCING.name());
+    assertThat(res.getLatestValidHash()).isEmpty();
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
@@ -287,34 +420,8 @@ public abstract class AbstractEngineNewPayloadTest {
   }
 
   @Test
-  public void shouldReturnInvalidBlockHashOnBadHashParameter() {
-    BlockHeader mockHeader = new BlockHeaderTestFixture().buildHeader();
-
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
-
-    EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isEmpty();
-    assertThat(res.getStatusAsString()).isEqualTo(getExpectedInvalidBlockHashStatus().name());
-    verify(engineCallListener, times(1)).executionEngineCalled();
-  }
-
-  @Test
-  public void shouldCheckBlockValidityBeforeCheckingByHashForExisting() {
-    BlockHeader realHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    BlockHeader paramHeader = spy(realHeader);
-    when(paramHeader.getHash()).thenReturn(Hash.fromHexStringLenient("0x1337"));
-
-    var resp = resp(mockPayload(paramHeader, Collections.emptyList()));
-
-    EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isEmpty();
-    assertThat(res.getStatusAsString()).isEqualTo(getExpectedInvalidBlockHashStatus().name());
-    verify(engineCallListener, times(1)).executionEngineCalled();
-  }
-
-  @Test
   public void shouldReturnInvalidOnMalformedTransactions() {
-    BlockHeader mockHeader = new BlockHeaderTestFixture().buildHeader();
+    BlockHeader mockHeader = buildBlockHeader();
     when(mergeCoordinator.getLatestValidAncestor(any(Hash.class)))
         .thenReturn(Optional.of(mockHash));
 
@@ -328,38 +435,32 @@ public abstract class AbstractEngineNewPayloadTest {
   }
 
   @Test
-  public void shouldReturnInvalidOnOldTimestampInBlock() {
-    BlockHeader parent = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    BlockHeader mockHeader =
-        new BlockHeaderTestFixture()
-            .baseFeePerGas(Wei.ONE)
-            .parentHash(parent.getHash())
-            .timestamp(parent.getTimestamp())
-            .buildHeader();
-    when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
-    when(blockchain.getBlockHeader(parent.getHash())).thenReturn(Optional.of(parent));
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+  public void shouldRespondWithInvalidIfExtraDataIsNull() {
+    BlockHeader realHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
+    BlockHeader paramHeader = spy(realHeader);
+    when(paramHeader.getHash()).thenReturn(Hash.fromHexStringLenient("0x1337"));
+    when(paramHeader.getExtraData().toHexString()).thenReturn(null);
 
-    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
-    var res = ((JsonRpcSuccessResponse) resp).getResult();
-    assertThat(res).isInstanceOf(EnginePayloadStatusResult.class);
-    var payloadStatusResult = (EnginePayloadStatusResult) res;
-    assertThat(payloadStatusResult.getStatus()).isEqualTo(INVALID);
-    assertThat(payloadStatusResult.getError()).isEqualTo("block timestamp not greater than parent");
+    var resp = resp(mockPayload(paramHeader, Collections.emptyList()));
+
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
+    assertThat(res.getLatestValidHash()).isEmpty();
+    assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
+    assertThat(res.getError()).isEqualTo("Field extraData must not be null");
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   @Test
-  public void shouldRespondWithSyncingDuringForwardSync() {
+  public void shouldReturnSuccessOnAlreadyPresent() {
     BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    when(mergeContext.isSyncing()).thenReturn(Boolean.TRUE);
+    Block mockBlock =
+        new Block(mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
+
+    when(blockchain.getBlockByHash(any())).thenReturn(Optional.of(mockBlock));
+
     var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
 
-    EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getError()).isNull();
-    assertThat(res.getStatusAsString()).isEqualTo(SYNCING.name());
-    assertThat(res.getLatestValidHash()).isEmpty();
-    verify(engineCallListener, times(1)).executionEngineCalled();
+    assertValidResponse(mockHeader, resp);
   }
 
   @Test
@@ -380,273 +481,6 @@ public abstract class AbstractEngineNewPayloadTest {
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
-  @Test
-  @Ignore
-  public void shouldRespondWithInvalidTerminalPowBlock() {
-    // TODO: implement this as part of https://github.com/hyperledger/besu/issues/3141
-    // mergeContext is a mock
-    //    assertThat(mergeContext.getTerminalTotalDifficulty()).isNull();
-  }
-
-  @Test
-  public void shouldRespondWithInvalidIfExtraDataIsNull() {
-    BlockHeader realHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    BlockHeader paramHeader = spy(realHeader);
-    when(paramHeader.getHash()).thenReturn(Hash.fromHexStringLenient("0x1337"));
-    when(paramHeader.getExtraData().toHexString()).thenReturn(null);
-
-    var resp = resp(mockPayload(paramHeader, Collections.emptyList()));
-
-    EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isEmpty();
-    assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
-    assertThat(res.getError()).isEqualTo("Field extraData must not be null");
-    verify(engineCallListener, times(1)).executionEngineCalled();
-  }
-
-  @Test
-  public void shouldReturnInvalidWhenBadBlock() {
-    when(mergeCoordinator.isBadBlock(any(Hash.class))).thenReturn(true);
-    BlockHeader mockHeader = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
-
-    EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).contains(Hash.ZERO);
-    assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
-    assertThat(res.getError()).isEqualTo("Block already present in bad block manager.");
-    verify(engineCallListener, times(1)).executionEngineCalled();
-  }
-
-  @Test
-  public void shouldReturnInvalidIfWithdrawalsIsNotNull_WhenWithdrawalsProhibited() {
-    final List<WithdrawalParameter> withdrawals = List.of();
-    when(protocolSpec.getWithdrawalsValidator())
-        .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
-
-    var resp =
-        resp(
-            mockPayload(
-                createBlockHeader(Optional.of(Collections.emptyList()), Optional.empty()),
-                Collections.emptyList(),
-                withdrawals,
-                null,
-                null));
-
-    final JsonRpcError jsonRpcError = fromErrorResp(resp);
-    assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
-    verify(engineCallListener, times(1)).executionEngineCalled();
-  }
-
-  @Test
-  public void shouldReturnValidIfWithdrawalsIsNull_WhenWithdrawalsProhibited() {
-    final List<WithdrawalParameter> withdrawals = null;
-    when(protocolSpec.getWithdrawalsValidator())
-        .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
-    BlockHeader mockHeader =
-        setupValidPayload(
-            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
-            Optional.empty(),
-            Optional.empty());
-
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), withdrawals, null, null));
-
-    assertValidResponse(mockHeader, resp);
-  }
-
-  @Test
-  public void shouldReturnInvalidIfWithdrawalsIsNull_WhenWithdrawalsAllowed() {
-    final List<WithdrawalParameter> withdrawals = null;
-    when(protocolSpec.getWithdrawalsValidator())
-        .thenReturn(new WithdrawalsValidator.AllowedWithdrawals());
-
-    var resp =
-        resp(
-            mockPayload(
-                createBlockHeader(Optional.empty(), Optional.empty()),
-                Collections.emptyList(),
-                withdrawals,
-                null));
-
-    assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
-    verify(engineCallListener, times(1)).executionEngineCalled();
-  }
-
-  @Test
-  public void shouldReturnValidIfWithdrawalsIsNotNull_WhenWithdrawalsAllowed() {
-    final List<WithdrawalParameter> withdrawalsParam = List.of(WITHDRAWAL_PARAM_1);
-    final List<Withdrawal> withdrawals = List.of(WITHDRAWAL_PARAM_1.toWithdrawal());
-    when(protocolSpec.getWithdrawalsValidator())
-        .thenReturn(new WithdrawalsValidator.AllowedWithdrawals());
-    BlockHeader mockHeader =
-        setupValidPayload(
-            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
-            Optional.of(withdrawals),
-            Optional.empty());
-
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), withdrawalsParam, null));
-
-    assertValidResponse(mockHeader, resp);
-  }
-
-  @Test
-  public void shouldReturnInvalidIfDepositsIsNotNull_WhenDepositsProhibited() {
-    final List<DepositParameter> deposits = List.of();
-    when(protocolSpec.getDepositsValidator())
-        .thenReturn(new DepositsValidator.ProhibitedDeposits());
-
-    var resp =
-        resp(
-            mockPayload(
-                createBlockHeader(Optional.empty(), Optional.of(Collections.emptyList())),
-                Collections.emptyList(),
-                null,
-                deposits));
-
-    final JsonRpcError jsonRpcError = fromErrorResp(resp);
-    assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
-    verify(engineCallListener, times(1)).executionEngineCalled();
-  }
-
-  @Test
-  public void shouldReturnValidIfDepositsIsNull_WhenDepositsProhibited() {
-    final List<DepositParameter> deposits = null;
-    when(protocolSpec.getDepositsValidator())
-        .thenReturn(new DepositsValidator.ProhibitedDeposits());
-    BlockHeader mockHeader =
-        setupValidPayload(
-            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
-            Optional.empty(),
-            Optional.empty());
-
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), null, deposits, null));
-
-    assertValidResponse(mockHeader, resp);
-  }
-
-  @Test
-  public void shouldReturnInvalidIfDepositsIsNull_WhenDepositsAllowed() {
-    final List<DepositParameter> deposits = null;
-    when(protocolSpec.getDepositsValidator())
-        .thenReturn(new DepositsValidator.AllowedDeposits(depositContractAddress));
-
-    var resp =
-        resp(
-            mockPayload(
-                createBlockHeader(Optional.empty(), Optional.empty()),
-                Collections.emptyList(),
-                null,
-                deposits));
-
-    assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
-    verify(engineCallListener, times(1)).executionEngineCalled();
-  }
-
-  @Test
-  public void shouldReturnValidIfDepositsIsNotNull_WhenDepositsAllowed() {
-    final List<DepositParameter> depositsParam = List.of(DEPOSIT_PARAM_1);
-    final List<Deposit> deposits = List.of(DEPOSIT_PARAM_1.toDeposit());
-    when(protocolSpec.getDepositsValidator())
-        .thenReturn(new DepositsValidator.AllowedDeposits(depositContractAddress));
-    BlockHeader mockHeader =
-        setupValidPayload(
-            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
-            Optional.empty(),
-            Optional.of(deposits));
-
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), null, depositsParam));
-
-    assertValidResponse(mockHeader, resp);
-  }
-
-  protected JsonRpcResponse resp(final EnginePayloadParameter payload) {
-    return method.response(
-        new JsonRpcRequestContext(
-            new JsonRpcRequest("2.0", this.method.getName(), new Object[] {payload})));
-  }
-
-  protected EnginePayloadParameter mockPayload(final BlockHeader header, final List<String> txs) {
-    return mockPayload(header, txs, null, null, null);
-    /*
-    return new EnginePayloadParameter(
-        header.getHash(),
-        header.getParentHash(),
-        header.getCoinbase(),
-        header.getStateRoot(),
-        new UnsignedLongParameter(header.getNumber()),
-        header.getBaseFee().map(w -> w.toHexString()).orElse("0x0"),
-        new UnsignedLongParameter(header.getGasLimit()),
-        new UnsignedLongParameter(header.getGasUsed()),
-        new UnsignedLongParameter(header.getTimestamp()),
-        header.getExtraData() == null ? null : header.getExtraData().toHexString(),
-        header.getReceiptsRoot(),
-        header.getLogsBloom(),
-        header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
-        txs,
-        null,
-        header.getDataGasUsed().map(UnsignedLongParameter::new).orElse(null),
-        header.getExcessDataGas().map(DataGas::toHexString).orElse(null),
-        new ArrayList<>(),
-        null); // deposits
-
-     */
-  }
-
-  private EnginePayloadParameter mockPayload(
-      final BlockHeader header,
-      final List<String> txs,
-      final List<WithdrawalParameter> withdrawals,
-      final List<DepositParameter> deposits) {
-    return mockPayload(
-        header, txs, withdrawals, deposits, List.of(DEFAULT_VERSIONED_HASH.toBytes()));
-  }
-
-  private EnginePayloadParameter mockPayload(
-      final BlockHeader header,
-      final List<String> txs,
-      final List<WithdrawalParameter> withdrawals,
-      final List<DepositParameter> deposits,
-      final List<Bytes32> versionedHashes) {
-    return new EnginePayloadParameter(
-        header.getHash(),
-        header.getParentHash(),
-        header.getCoinbase(),
-        header.getStateRoot(),
-        new UnsignedLongParameter(header.getNumber()),
-        header.getBaseFee().map(w -> w.toHexString()).orElse("0x0"),
-        new UnsignedLongParameter(header.getGasLimit()),
-        new UnsignedLongParameter(header.getGasUsed()),
-        new UnsignedLongParameter(header.getTimestamp()),
-        header.getExtraData() == null ? null : header.getExtraData().toHexString(),
-        header.getReceiptsRoot(),
-        header.getLogsBloom(),
-        header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
-        txs,
-        withdrawals,
-        header.getDataGasUsed().map(UnsignedLongParameter::new).orElse(null),
-        header.getExcessDataGas().map(DataGas::toHexString).orElse(null),
-        versionedHashes,
-        deposits);
-  }
-
-  @NotNull
-  BlockHeader setupValidPayload(
-      final BlockProcessingResult value,
-      final Optional<List<Withdrawal>> maybeWithdrawals,
-      final Optional<List<Deposit>> maybeDeposits) {
-    BlockHeader mockHeader = createBlockHeader(maybeWithdrawals, maybeDeposits);
-    when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
-    when(blockchain.getBlockHeader(mockHeader.getParentHash()))
-        .thenReturn(Optional.of(mock(BlockHeader.class)));
-    when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
-        .thenReturn(Optional.of(mockHash));
-    if (validateTerminalPoWBlock()) {
-      when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
-          .thenReturn(true);
-    }
-    when(mergeCoordinator.rememberBlock(any())).thenReturn(value);
-    return mockHeader;
-  }
-
   protected boolean validateTerminalPoWBlock() {
     return false;
   }
@@ -664,12 +498,20 @@ public abstract class AbstractEngineNewPayloadTest {
         .get();
   }
 
-  private JsonRpcError fromErrorResp(final JsonRpcResponse resp) {
+  protected JsonRpcError fromErrorResp(final JsonRpcResponse resp) {
     assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
     return Optional.of(resp)
         .map(JsonRpcErrorResponse.class::cast)
         .map(JsonRpcErrorResponse::getError)
         .get();
+  }
+
+  void assertValidResponse(final BlockHeader mockHeader, final JsonRpcResponse resp) {
+    EnginePayloadStatusResult res = fromSuccessResp(resp);
+    assertThat(res.getLatestValidHash().get()).isEqualTo(mockHeader.getHash());
+    assertThat(res.getStatusAsString()).isEqualTo(VALID.name());
+    assertThat(res.getError()).isNull();
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
   protected BlockHeader createBlockHeader(
@@ -687,13 +529,5 @@ public abstract class AbstractEngineNewPayloadTest {
             .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
             .buildHeader();
     return mockHeader;
-  }
-
-  void assertValidResponse(final BlockHeader mockHeader, final JsonRpcResponse resp) {
-    EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash().get()).isEqualTo(mockHeader.getHash());
-    assertThat(res.getStatusAsString()).isEqualTo(VALID.name());
-    assertThat(res.getError()).isNull();
-    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 }

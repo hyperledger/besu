@@ -59,8 +59,9 @@ public class BlobTransactionEncodingTest {
 
     final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
     BlobTransactionEncoder.encodeForWireNetwork(transaction, bytesValueRLPOutput);
-
-    assertThat(bytesValueRLPOutput.encoded()).isEqualTo(bytes);
+    Bytes encodedRLP = bytesValueRLPOutput.encoded();
+    assertThat(encodedRLP.size()).isEqualTo(bytes.size());
+    assertThat(encodedRLP).isEqualTo(bytes);
   }
 
   @ParameterizedTest(name = "{index} {0}")

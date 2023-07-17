@@ -123,10 +123,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         .addArgument(() -> Json.encodePrettily(blockParam))
         .log();
 
+    /*
     ValidationResult<JsonRpcError> forkValidationResult = validateForkSupported(reqId, blockParam);
     if (!forkValidationResult.isValid()) {
       return new JsonRpcErrorResponse(reqId, forkValidationResult.getInvalidReason());
     }
+    */
 
     final Optional<List<Withdrawal>> maybeWithdrawals =
         Optional.ofNullable(blockParam.getWithdrawals())
@@ -211,7 +213,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               "Computed block hash %s does not match block hash parameter %s",
               newBlockHeader.getBlockHash(), blockParam.getBlockHash());
       LOG.debug(errorMessage);
-      return respondWithInvalid(reqId, blockParam, null, getInvalidBlockHashStatus(), errorMessage);
+      return respondWithInvalid(
+          reqId,
+          blockParam,
+          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+          getInvalidBlockHashStatus(),
+          errorMessage);
     }
 
     ValidationResult<JsonRpcError> blobValidationResult =
@@ -431,7 +438,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     }
 
     // Validate dataGasUsed
-    if (header.getDataGasUsed().isPresent()) {
+    if (header.getDataGasUsed().isPresent() && maybeVersionedHashes.isPresent()) {
       if (!validateDataGasUsed(header, maybeVersionedHashes.get(), protocolSpec)) {
         return ValidationResult.invalid(
             JsonRpcError.INVALID_PARAMS,

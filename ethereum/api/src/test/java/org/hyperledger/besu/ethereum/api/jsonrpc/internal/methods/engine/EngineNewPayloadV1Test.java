@@ -49,6 +49,16 @@ public class EngineNewPayloadV1Test extends AbstractEngineNewPayloadTest {
     assertThat(method.getName()).isEqualTo("engine_newPayloadV1");
   }
 
+  @Override
+  protected boolean validateTerminalPoWBlock() {
+    return true;
+  }
+
+  @Override
+  protected ExecutionEngineJsonRpcMethod.EngineStatus getExpectedInvalidBlockHashStatus() {
+    return INVALID_BLOCK_HASH;
+  }
+
   @Test
   public void shouldReturnInvalidOnBadTerminalBlock() {
     BlockHeader mockHeader = createBlockHeader(Optional.empty(), Optional.empty());
@@ -65,15 +75,5 @@ public class EngineNewPayloadV1Test extends AbstractEngineNewPayloadTest {
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
     verify(mergeCoordinator, atLeastOnce()).addBadBlock(any(), any());
     verify(engineCallListener, times(1)).executionEngineCalled();
-  }
-
-  @Override
-  protected boolean validateTerminalPoWBlock() {
-    return true;
-  }
-
-  @Override
-  protected ExecutionEngineJsonRpcMethod.EngineStatus getExpectedInvalidBlockHashStatus() {
-    return INVALID_BLOCK_HASH;
   }
 }

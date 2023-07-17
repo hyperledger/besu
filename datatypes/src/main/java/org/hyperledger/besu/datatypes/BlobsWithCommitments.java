@@ -12,38 +12,77 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core.blobs;
+package org.hyperledger.besu.datatypes;
 
 import java.security.InvalidParameterException;
 import java.util.List;
 
+/** A class to hold the blobs, commitments, proofs and versioned hashes for a set of blobs. */
 public class BlobsWithCommitments {
   private final List<KZGCommitment> kzgCommitments;
   private final List<Blob> blobs;
   private final List<KZGProof> kzgProofs;
 
+  private final List<VersionedHash> versionedHashes;
+
+  /**
+   * A class to hold the blobs, commitments and proofs for a set of blobs.
+   *
+   * @param kzgCommitments commitments for the blobs
+   * @param blobs list of blobs to be committed to
+   * @param kzgProofs proofs for the commitments
+   * @param versionedHashes hashes of the commitments
+   */
   public BlobsWithCommitments(
       final List<KZGCommitment> kzgCommitments,
       final List<Blob> blobs,
-      final List<KZGProof> kzgProofs) {
-    if (blobs.size() != kzgCommitments.size() || blobs.size() != kzgProofs.size()) {
+      final List<KZGProof> kzgProofs,
+      final List<VersionedHash> versionedHashes) {
+    if (blobs.size() != kzgCommitments.size()
+        || blobs.size() != kzgProofs.size()
+        || kzgCommitments.size() != versionedHashes.size()) {
       throw new InvalidParameterException(
           "There must be an equal number of blobs, commitments and proofs");
     }
     this.kzgCommitments = kzgCommitments;
     this.blobs = blobs;
     this.kzgProofs = kzgProofs;
+    this.versionedHashes = versionedHashes;
   }
 
+  /**
+   * Get the blobs.
+   *
+   * @return the blobs
+   */
   public List<Blob> getBlobs() {
     return blobs;
   }
 
+  /**
+   * Get the commitments.
+   *
+   * @return the commitments
+   */
   public List<KZGCommitment> getKzgCommitments() {
     return kzgCommitments;
   }
 
+  /**
+   * Get the proofs.
+   *
+   * @return the proofs
+   */
   public List<KZGProof> getKzgProofs() {
     return kzgProofs;
+  }
+
+  /**
+   * Get the hashes.
+   *
+   * @return the hashes
+   */
+  public List<VersionedHash> getVersionedHashes() {
+    return versionedHashes;
   }
 }

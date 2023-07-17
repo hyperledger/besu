@@ -23,9 +23,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.BlobsWithCommitments;
+import org.hyperledger.besu.datatypes.KZGCommitment;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.blobs.BlobsWithCommitments;
-import org.hyperledger.besu.ethereum.core.blobs.KZGCommitment;
 import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.plugin.data.TransactionType;
 
@@ -89,7 +89,7 @@ public class TransactionBuilderTest {
                 InvalidParameterException.class,
                 () ->
                     new BlobsWithCommitments(
-                        List.of(new KZGCommitment(Bytes.of(1))), List.of(), List.of()))
+                        List.of(new KZGCommitment(Bytes.of(1))), List.of(), List.of(), List.of()))
             .getMessage();
     final String expectedMessage = "There must be an equal number of blobs, commitments and proofs";
     assertThat(actualMessage).isEqualTo(expectedMessage);

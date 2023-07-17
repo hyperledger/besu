@@ -16,11 +16,11 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import org.hyperledger.besu.datatypes.Blob;
+import org.hyperledger.besu.datatypes.KZGCommitment;
+import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.blobs.Blob;
-import org.hyperledger.besu.ethereum.core.blobs.KZGCommitment;
-import org.hyperledger.besu.ethereum.core.blobs.KZGProof;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 

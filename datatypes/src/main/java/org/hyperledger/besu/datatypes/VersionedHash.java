@@ -33,6 +33,9 @@ public class VersionedHash {
    */
   Bytes32 hashish;
 
+  /** The version id for sha256 hashes. */
+  public static final byte SHA256_VERSION_ID = 1;
+
   /**
    * Construct a VersionedHash from a Bytes32 value.
    *
@@ -40,10 +43,12 @@ public class VersionedHash {
    * @param hash The hash value being versioned.
    */
   public VersionedHash(final byte versionId, final Hash hash) {
-    if (versionId != 1) {
+    if (versionId != SHA256_VERSION_ID) {
       throw new IllegalArgumentException("Only supported hash version is 0x01, sha256 hash.");
     }
-    this.hashish = Bytes32.wrap(Bytes.concatenate(Bytes.of(1), hash.slice(1, hash.size() - 1)));
+    this.hashish =
+        Bytes32.wrap(
+            Bytes.concatenate(Bytes.of(SHA256_VERSION_ID), hash.slice(1, hash.size() - 1)));
   }
 
   /**
@@ -53,7 +58,7 @@ public class VersionedHash {
    */
   public VersionedHash(final Bytes32 typedHash) {
     byte versionId = typedHash.get(0);
-    if (versionId != 1) {
+    if (versionId != SHA256_VERSION_ID) {
       throw new IllegalArgumentException("Only supported hash version is 0x01, sha256 hash.");
     }
     this.hashish = typedHash;
