@@ -17,11 +17,9 @@ package org.hyperledger.besu.evm.precompile;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.crypto.Hash;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -58,8 +56,7 @@ public class FalconPrecompiledContract extends AbstractPrecompiledContract {
     Bytes methodAbi = methodInput.slice(0, METHOD_ABI.size());
     if (!methodAbi.xor(METHOD_ABI).isZero()) {
       LOG.trace("Unexpected method ABI: " + methodAbi.toHexString());
-      return PrecompileContractResult.halt(
-          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      return PrecompileContractResult.success(Bytes32.leftPad(Bytes.of(1)));
     }
 
     Bytes signatureSlice;
@@ -84,8 +81,7 @@ public class FalconPrecompiledContract extends AbstractPrecompiledContract {
       dataSlice = input.slice(dataOffset + 32, dataLength);
     } catch (Exception e) {
       LOG.trace("Error executing Falcon-512 precompiled contract: '{}'", "invalid input");
-      return PrecompileContractResult.halt(
-          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      return PrecompileContractResult.success(Bytes32.leftPad(Bytes.of(1)));
     }
 
     if (LOG.isTraceEnabled()) {
