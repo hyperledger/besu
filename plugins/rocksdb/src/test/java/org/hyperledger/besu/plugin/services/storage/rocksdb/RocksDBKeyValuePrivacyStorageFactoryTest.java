@@ -28,29 +28,28 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RocksDBKeyValuePrivacyStorageFactoryTest {
   private static final int DEFAULT_VERSION = 1;
   private static final int DEFAULT_PRIVACY_VERSION = 1;
 
   @Mock private RocksDBFactoryConfiguration rocksDbConfiguration;
   @Mock private BesuConfiguration commonConfiguration;
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @TempDir private Path temporaryFolder;
   private final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final List<SegmentIdentifier> segments = List.of();
   @Mock private SegmentIdentifier segment;
 
   @Test
   public void shouldDetectVersion1DatabaseIfNoMetadataFileFound() throws Exception {
-    final Path tempDataDir = temporaryFolder.newFolder().toPath().resolve("data");
-    final Path tempDatabaseDir = temporaryFolder.newFolder().toPath().resolve("db");
+    final Path tempDataDir = temporaryFolder.resolve("data");
+    final Path tempDatabaseDir = temporaryFolder.resolve("db");
     final Path tempPrivateDatabaseDir = tempDatabaseDir.resolve("private");
     Files.createDirectories(tempPrivateDatabaseDir);
     Files.createDirectories(tempDataDir);
@@ -77,8 +76,8 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
 
   @Test
   public void shouldCreateCorrectMetadataFileForLatestVersion() throws Exception {
-    final Path tempDataDir = temporaryFolder.newFolder().toPath().resolve("data");
-    final Path tempDatabaseDir = temporaryFolder.newFolder().toPath().resolve("db");
+    final Path tempDataDir = temporaryFolder.resolve("data");
+    final Path tempDatabaseDir = temporaryFolder.resolve("db");
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
     when(commonConfiguration.getDatabaseVersion()).thenReturn(DEFAULT_VERSION);
@@ -103,8 +102,8 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
 
   @Test
   public void shouldUpdateCorrectMetadataFileForLatestVersion() throws Exception {
-    final Path tempDataDir = temporaryFolder.newFolder().toPath().resolve("data");
-    final Path tempDatabaseDir = temporaryFolder.newFolder().toPath().resolve("db");
+    final Path tempDataDir = temporaryFolder.resolve("data");
+    final Path tempDatabaseDir = temporaryFolder.resolve("db");
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
     when(commonConfiguration.getDatabaseVersion()).thenReturn(DEFAULT_VERSION);
