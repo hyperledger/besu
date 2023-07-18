@@ -127,6 +127,10 @@ public class StateTestVersionedTransaction {
   }
 
   private static <T> List<T> parseArray(final String[] array, final Function<String, T> parseFct) {
+    if (array == null) {
+      return null;
+    }
+
     final List<T> res = new ArrayList<>(array.length);
     for (final String str : array) {
       try {
