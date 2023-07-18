@@ -130,6 +130,6 @@ public class CliqueGetSignersAtHashTest {
         .thenReturn(Optional.empty());
 
     final JsonRpcErrorResponse response = (JsonRpcErrorResponse) method.response(request);
-    assertThat(response.getErrorType().name()).isEqualTo(RpcErrorType.INTERNAL_ERROR.name());
+    assertThat(response.getErrorType()).isEqualTo(RpcErrorType.INTERNAL_ERROR);
   }
 }

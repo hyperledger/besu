@@ -78,6 +78,6 @@ public class JsonRpcError {
 
   @Override
   public int hashCode() {
-    return Objects.hash(code, message);
+    return Objects.hash(code, message, data);
   }
 }

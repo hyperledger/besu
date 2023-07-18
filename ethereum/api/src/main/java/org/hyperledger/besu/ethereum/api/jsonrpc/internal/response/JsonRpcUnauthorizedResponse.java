@@ -26,10 +26,12 @@ public class JsonRpcUnauthorizedResponse implements JsonRpcResponse {
 
   private final Object id;
   private final JsonRpcError error;
+  @JsonIgnore private final RpcErrorType errorType;
 
   public JsonRpcUnauthorizedResponse(final Object id, final JsonRpcError error) {
     this.id = id;
     this.error = error;
+    this.errorType = findErrorType(error.getCode(), error.getMessage());
   }
 
   public JsonRpcUnauthorizedResponse(final Object id, final RpcErrorType error) {
@@ -71,8 +73,12 @@ public class JsonRpcUnauthorizedResponse implements JsonRpcResponse {
 
   @JsonIgnore
   public RpcErrorType getErrorType() {
+    return errorType;
+  }
+
+  private RpcErrorType findErrorType(final int code, final String message) {
     return Arrays.stream(RpcErrorType.values())
-        .filter(e -> e.getCode() == error.getCode() && e.getMessage().equals(error.getMessage()))
+        .filter(e -> e.getCode() == code && e.getMessage().equals(message))
         .findFirst()
         .get();
   }
