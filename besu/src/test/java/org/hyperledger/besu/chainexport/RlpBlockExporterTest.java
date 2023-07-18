@@ -60,6 +60,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public final class RlpBlockExporterTest {
 
   @TempDir public static Path folder;
+  @TempDir public static File file;
   private static Blockchain blockchain;
   private static long chainHead;
   private static ProtocolSchedule protocolSchedule;
@@ -105,7 +106,7 @@ public final class RlpBlockExporterTest {
 
   @Test
   public void exportBlocks_noBounds() throws IOException {
-    final File outputPath = folder.toFile();
+    final File outputPath = file;
     final RlpBlockExporter exporter = new RlpBlockExporter(blockchain);
     exporter.exportBlocks(outputPath, Optional.empty(), Optional.empty());
 
@@ -125,7 +126,7 @@ public final class RlpBlockExporterTest {
 
   @Test
   public void exportBlocks_withLowerBound() throws IOException {
-    final File outputPath = folder.toFile();
+    final File outputPath = file;
     final RlpBlockExporter exporter = new RlpBlockExporter(blockchain);
 
     final long lowerBound = 990;
@@ -147,7 +148,7 @@ public final class RlpBlockExporterTest {
 
   @Test
   public void exportBlocks_withUpperBound() throws IOException {
-    final File outputPath = folder.toFile();
+    final File outputPath = file;
     final RlpBlockExporter exporter = new RlpBlockExporter(blockchain);
 
     final long upperBound = 10;
@@ -169,7 +170,7 @@ public final class RlpBlockExporterTest {
 
   @Test
   public void exportBlocks_withUpperAndLowerBounds() throws IOException {
-    final File outputPath = folder.toFile();
+    final File outputPath = file.getAbsoluteFile();
     final RlpBlockExporter exporter = new RlpBlockExporter(blockchain);
 
     final long lowerBound = 5;
@@ -192,7 +193,7 @@ public final class RlpBlockExporterTest {
 
   @Test
   public void exportBlocks_withRangeBeyondChainHead() throws IOException {
-    final File outputPath = folder.toFile();
+    final File outputPath = file;
     final RlpBlockExporter exporter = new RlpBlockExporter(blockchain);
 
     final long lowerBound = chainHead - 10;
@@ -215,7 +216,7 @@ public final class RlpBlockExporterTest {
 
   @Test
   public void exportBlocks_negativeStartNumber() throws IOException {
-    final File outputPath = folder.toFile();
+    final File outputPath = file;
     final RlpBlockExporter exporter = new RlpBlockExporter(blockchain);
 
     assertThatThrownBy(() -> exporter.exportBlocks(outputPath, Optional.of(-1L), Optional.empty()))
@@ -225,7 +226,7 @@ public final class RlpBlockExporterTest {
 
   @Test
   public void exportBlocks_negativeEndNumber() throws IOException {
-    final File outputPath = folder.toFile();
+    final File outputPath = file;
     final RlpBlockExporter exporter = new RlpBlockExporter(blockchain);
 
     assertThatThrownBy(() -> exporter.exportBlocks(outputPath, Optional.empty(), Optional.of(-1L)))
@@ -235,7 +236,7 @@ public final class RlpBlockExporterTest {
 
   @Test
   public void exportBlocks_outOfOrderBounds() throws IOException {
-    final File outputPath = folder.toFile();
+    final File outputPath = file;
     final RlpBlockExporter exporter = new RlpBlockExporter(blockchain);
 
     assertThatThrownBy(() -> exporter.exportBlocks(outputPath, Optional.of(10L), Optional.of(2L)))
