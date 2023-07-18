@@ -135,9 +135,9 @@ public class T8nExecutor {
             if (txNode.has("to")) {
               builder.to(Address.fromHexString(txNode.get("to").textValue()));
             }
-
-            if (transactionType.requiresChainId()
-                || (txNode.has("protected") && txNode.get("protected").asBoolean(false))) {
+            BigInteger v =
+                Bytes.fromHexStringLenient(txNode.get("v").textValue()).toUnsignedBigInteger();
+            if (transactionType.requiresChainId() || (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0)) {
               // chainid if protected
               builder.chainId(chainId);
             }
@@ -191,14 +191,11 @@ public class T8nExecutor {
 
               transactions.add(builder.signAndBuild(keys));
             } else {
-              BigInteger v =
-                  Bytes.fromHexStringLenient(txNode.get("v").textValue()).toUnsignedBigInteger();
               if (transactionType == TransactionType.FRONTIER) {
                 if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
                   v =
                       v.subtract(REPLAY_PROTECTED_V_BASE)
                           .subtract(chainId.multiply(BigInteger.TWO));
-                  builder.chainId(chainId);
                 } else {
                   v = v.subtract(REPLAY_UNPROTECTED_V_BASE);
                 }
