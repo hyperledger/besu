@@ -31,8 +31,8 @@ dependencies {
   api 'org.slf4j:slf4j-api'
 
   implementation 'com.google.guava:guava'
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.bouncycastle:bcpkix-jdk15on'
+  implementation 'io.tmio:tuweni-bytes'
+  implementation 'org.bouncycastle:bcpkix-jdk18on'
 
   testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
@@ -43,7 +43,7 @@ dependencies {
 }
 
 configurations { testArtifacts }
-task testJar(type: Jar) {
+tasks.register('testJar', Jar) {
   archiveBaseName = "${project.name}-test"
   from sourceSets.test.output
 }

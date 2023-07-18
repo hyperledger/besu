@@ -24,16 +24,19 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
+import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.unsegmented.RocksDBKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.OptimisticRocksDBColumnarKeyValueStorage;
+import org.hyperledger.besu.services.kvstore.SnappableSegmentedKeyValueStorageAdapter;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
@@ -58,11 +61,17 @@ public class OperationBenchmarkHelper {
 
   public static OperationBenchmarkHelper create() throws IOException {
     final Path storageDirectory = Files.createTempDirectory("benchmark");
-    final KeyValueStorage keyValueStorage =
-        new RocksDBKeyValueStorage(
+    final OptimisticRocksDBColumnarKeyValueStorage optimisticRocksDBColumnarKeyValueStorage =
+        new OptimisticRocksDBColumnarKeyValueStorage(
             new RocksDBConfigurationBuilder().databaseDir(storageDirectory).build(),
+            List.of(KeyValueSegmentIdentifier.BLOCKCHAIN),
+            emptyList(),
             new NoOpMetricsSystem(),
             RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
+
+    final KeyValueStorage keyValueStorage =
+        new SnappableSegmentedKeyValueStorageAdapter<>(
+            KeyValueSegmentIdentifier.BLOCKCHAIN, optimisticRocksDBColumnarKeyValueStorage);
 
     final ExecutionContextTestFixture executionContext =
         ExecutionContextTestFixture.builder().blockchainKeyValueStorage(keyValueStorage).build();

@@ -58,10 +58,10 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
-import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -97,7 +97,7 @@ public abstract class AbstractTransactionPoolTest {
 
   private static final KeyPair KEY_PAIR2 =
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
-  @Mock protected MainnetTransactionValidator transactionValidator;
+  @Mock protected TransactionValidator transactionValidator;
   @Mock protected PendingTransactionAddedListener listener;
   @Mock protected MiningParameters miningParameters;
   @Mock protected TransactionsMessageSender transactionsMessageSender;

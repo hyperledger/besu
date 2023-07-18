@@ -66,6 +66,13 @@ public interface GenesisConfigOptions {
   boolean isClique();
 
   /**
+   * Is a Proof of Authority network.
+   *
+   * @return the boolean
+   */
+  boolean isPoa();
+
+  /**
    * Is consensus migration boolean.
    *
    * @return the boolean

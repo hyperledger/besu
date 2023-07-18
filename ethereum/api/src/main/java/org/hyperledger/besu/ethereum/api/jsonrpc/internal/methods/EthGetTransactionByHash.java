@@ -24,19 +24,19 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionCompleteResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionPendingResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.Optional;
 
 public class EthGetTransactionByHash implements JsonRpcMethod {
 
   private final BlockchainQueries blockchain;
-  private final PendingTransactions pendingTransactions;
+  private final TransactionPool transactionPool;
 
   public EthGetTransactionByHash(
-      final BlockchainQueries blockchain, final PendingTransactions pendingTransactions) {
+      final BlockchainQueries blockchain, final TransactionPool transactionPool) {
     this.blockchain = blockchain;
-    this.pendingTransactions = pendingTransactions;
+    this.transactionPool = transactionPool;
   }
 
   @Override
@@ -58,7 +58,7 @@ public class EthGetTransactionByHash implements JsonRpcMethod {
 
   private Object getResult(final Hash hash) {
     final Optional<Object> transactionPendingResult =
-        pendingTransactions.getTransactionByHash(hash).map(TransactionPendingResult::new);
+        transactionPool.getTransactionByHash(hash).map(TransactionPendingResult::new);
     return transactionPendingResult.orElseGet(
         () -> blockchain.transactionByHash(hash).map(TransactionCompleteResult::new).orElse(null));
   }
