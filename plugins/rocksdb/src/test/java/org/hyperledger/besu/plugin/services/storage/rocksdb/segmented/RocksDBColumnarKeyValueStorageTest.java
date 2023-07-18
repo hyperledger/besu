@@ -214,8 +214,9 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
   }
 
   @Test
-  public void dbShouldNotIgnoreExperimentalSegmentsIfExisted(@TempDir final Path testPath)
+  public void dbShouldNotIgnoreExperimentalSegmentsIfExisted(@TempDir final Path tempDir)
       throws Exception {
+    final Path testPath = tempDir.resolve("testdb");
     // Create new db with experimental column family
     SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store =
         createSegmentedStore(

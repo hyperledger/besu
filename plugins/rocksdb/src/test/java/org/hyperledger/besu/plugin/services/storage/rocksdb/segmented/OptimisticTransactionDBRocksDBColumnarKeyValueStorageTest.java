@@ -22,11 +22,11 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdenti
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -39,7 +39,7 @@ public class OptimisticTransactionDBRocksDBColumnarKeyValueStorageTest
       throws Exception {
     return new OptimisticRocksDBColumnarKeyValueStorage(
         new RocksDBConfigurationBuilder()
-            .databaseDir(folder.resolve(Bytes.random(9).toString()))
+            .databaseDir(Files.createTempDirectory("segmentedStore"))
             .build(),
         Arrays.asList(TestSegment.FOO, TestSegment.BAR),
         List.of(),
