@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -56,7 +57,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 

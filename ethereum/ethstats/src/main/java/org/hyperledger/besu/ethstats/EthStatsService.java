@@ -402,7 +402,7 @@ public class EthStatsService {
 
   /** Sends the number of pending transactions in the pool */
   private void sendPendingTransactionReport() {
-    final int pendingTransactionsNumber = transactionPool.getPendingTransactions().size();
+    final int pendingTransactionsNumber = transactionPool.count();
 
     final PendingTransactionsReport pendingTransactionsReport =
         ImmutablePendingTransactionsReport.builder()

@@ -7,7 +7,7 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
   implementation 'io.vertx:vertx-web'
-  implementation 'org.apache.tuweni:tuweni-net'
+  implementation 'io.tmio:tuweni-net'
 
   runtimeOnly('org.bouncycastle:bcpkix-jdk18on')
 

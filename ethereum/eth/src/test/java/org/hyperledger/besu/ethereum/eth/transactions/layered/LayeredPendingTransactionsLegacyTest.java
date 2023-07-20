@@ -21,6 +21,7 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURE_REQUIRED;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -37,7 +38,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.List;

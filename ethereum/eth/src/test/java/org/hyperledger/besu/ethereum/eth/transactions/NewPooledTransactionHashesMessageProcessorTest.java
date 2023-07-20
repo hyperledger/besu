@@ -30,6 +30,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -43,7 +44,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.NewPooledTransactionHashes
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.time.Duration;
 import java.util.ArrayList;

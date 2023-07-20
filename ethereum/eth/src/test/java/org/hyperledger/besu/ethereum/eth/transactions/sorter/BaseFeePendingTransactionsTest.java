@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.time.Clock;

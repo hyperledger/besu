@@ -31,7 +31,7 @@ dependencies {
   api 'org.slf4j:slf4j-api'
 
   implementation 'com.google.guava:guava'
-  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'io.tmio:tuweni-bytes'
   implementation 'org.bouncycastle:bcpkix-jdk18on'
 
   testImplementation 'junit:junit'

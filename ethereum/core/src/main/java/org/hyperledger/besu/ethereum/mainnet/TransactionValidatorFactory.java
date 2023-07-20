@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Optional;

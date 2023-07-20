@@ -38,7 +38,7 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
   private static final Logger LOG =
       LoggerFactory.getLogger(RocksDBKeyValuePrivacyStorageFactory.class);
   private static final int DEFAULT_VERSION = 1;
-  private static final Set<Integer> SUPPORTED_VERSIONS = Set.of(0, 1);
+  private static final Set<Integer> SUPPORTED_VERSIONS = Set.of(1);
 
   private static final String PRIVATE_DATABASE_PATH = "private";
   private final RocksDBKeyValueStorageFactory publicFactory;
@@ -96,7 +96,7 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
         commonConfiguration.getStoragePath().resolve(PRIVATE_DATABASE_PATH).toFile().exists();
     final int privacyDatabaseVersion;
     if (privacyDatabaseExists) {
-      privacyDatabaseVersion = DatabaseMetadata.lookUpFrom(dataDir).maybePrivacyVersion().orElse(0);
+      privacyDatabaseVersion = DatabaseMetadata.lookUpFrom(dataDir).maybePrivacyVersion().orElse(1);
       LOG.info(
           "Existing private database detected at {}. Version {}", dataDir, privacyDatabaseVersion);
     } else {

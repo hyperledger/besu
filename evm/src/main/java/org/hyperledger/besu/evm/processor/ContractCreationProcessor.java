@@ -175,6 +175,9 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
             contractCode.size(),
             frame.getRemainingGas());
         frame.setState(MessageFrame.State.COMPLETED_SUCCESS);
+        if (operationTracer.isExtendedTracing()) {
+          operationTracer.traceAccountCreationResult(frame, Optional.empty());
+        }
       } else {
         final Optional<ExceptionalHaltReason> exceptionalHaltReason = invalidReason.get();
         frame.setExceptionalHaltReason(exceptionalHaltReason);

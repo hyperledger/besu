@@ -5,15 +5,20 @@
 
 ### Breaking Changes
 
+- Removed support for version 0 of the database as it is no longer used by any active node.
+
 ### Additions and Improvements
+- `evmtool` launcher binaries now ship as part of the standard distribution. [#5701](https://github.com/hyperledger/besu/pull/5701) 
 - EvmTool now executes the `execution-spec-tests` via the `t8n` and `b11r`. See the [README](ethereum/evmtool/README.md) in EvmTool for more instructions.
 - Improve lifecycle management of the transaction pool [#5634](https://github.com/hyperledger/besu/pull/5634)
 - Add extension points in AbstractCreateOperation for EVM libraries to react to contract creations [#5656](https://github.com/hyperledger/besu/pull/5656)
+- Update to Tuweni 2.4.2. [#5684](https://github.com/hyperledger/besu/pull/5684)
 
 ### Bug Fixes
 - Use the node's configuration to determine if DNS enode URLs are allowed in calls to `admin_addPeer` and `admin_removePeer` [#5584](https://github.com/hyperledger/besu/pull/5584)
 - Align the implementation of Eth/68 `NewPooledTransactionHashes` to other clients, using unsigned int for encoding size. [#5640](https://github.com/hyperledger/besu/pull/5640)
 - Failure at startup when enabling layered txpool before initial sync done [#5636](https://github.com/hyperledger/besu/issues/5636)
+- Remove miner-related option warnings if the change isn't using Ethash consensus algorithm [#5669](https://github.com/hyperledger/besu/pull/5669)
 
 ### Download Links
 
