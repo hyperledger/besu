@@ -121,7 +121,7 @@ public class PrivacyPluginPrecompiledContractTest {
                           @Override
                           public Optional<org.hyperledger.besu.plugin.data.PrivateTransaction>
                               getPrivateTransactionFromPayload(
-                                  final org.hyperledger.besu.plugin.data.Transaction transaction) {
+                                  final org.hyperledger.besu.datatypes.Transaction transaction) {
                             final BytesValueRLPInput bytesValueRLPInput =
                                 new BytesValueRLPInput(transaction.getPayload(), false);
                             return Optional.of(readFrom(bytesValueRLPInput));
