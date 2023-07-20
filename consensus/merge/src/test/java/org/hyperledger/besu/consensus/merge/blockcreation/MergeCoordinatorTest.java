@@ -61,8 +61,13 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -90,6 +95,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -121,6 +127,9 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   @Mock MergeContext mergeContext;
   @Mock BackwardSyncContext backwardSyncContext;
 
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  EthContext ethContext;
+
   @Mock ProposalBuilderExecutor proposalBuilderExecutor;
   private final Address coinbase = genesisAllocations(getPosGenesisConfigFile()).findFirst().get();
 
@@ -151,15 +160,19 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   private final org.hyperledger.besu.metrics.StubMetricsSystem metricsSystem =
       new StubMetricsSystem();
 
+  private final TransactionPoolConfiguration poolConf =
+      ImmutableTransactionPoolConfiguration.builder()
+          .txPoolMaxSize(10)
+          .txPoolLimitByAccountPercentage(100.0f)
+          .build();
   private final BaseFeePendingTransactionsSorter transactions =
       new BaseFeePendingTransactionsSorter(
-          ImmutableTransactionPoolConfiguration.builder()
-              .txPoolMaxSize(10)
-              .txPoolLimitByAccountPercentage(100.0f)
-              .build(),
+          poolConf,
           TestClock.system(ZoneId.systemDefault()),
           metricsSystem,
           MergeCoordinatorTest::mockBlockHeader);
+
+  private TransactionPool transactionPool;
 
   CompletableFuture<Void> blockCreationTask = CompletableFuture.completedFuture(null);
 
@@ -200,12 +213,26 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     MergeConfigOptions.setMergeEnabled(true);
 
+    when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
+    this.transactionPool =
+        new TransactionPool(
+            () -> transactions,
+            protocolSchedule,
+            protocolContext,
+            mock(TransactionBroadcaster.class),
+            ethContext,
+            miningParameters,
+            new TransactionPoolMetrics(metricsSystem),
+            poolConf);
+
+    this.transactionPool.setEnabled();
+
     this.coordinator =
         new MergeCoordinator(
             protocolContext,
             protocolSchedule,
             proposalBuilderExecutor,
-            transactions,
+            transactionPool,
             miningParameters,
             backwardSyncContext,
             Optional.empty());
@@ -252,7 +279,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                       address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                       () -> Optional.of(30000000L),
                       parent -> Bytes.EMPTY,
-                      transactions,
+                      transactionPool,
                       protocolContext,
                       protocolSchedule,
                       this.miningParameters.getMinTransactionGasPrice(),
@@ -657,7 +684,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             protocolContext,
             protocolSchedule,
             proposalBuilderExecutor,
-            transactions,
+            transactionPool,
             miningParameters,
             backwardSyncContext,
             Optional.empty());
