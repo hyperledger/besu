@@ -79,15 +79,12 @@ import org.slf4j.LoggerFactory;
  */
 public class BlockTransactionSelector {
 
-  public record TransactionValidationResult(
-      Transaction transaction, ValidationResult<TransactionInvalidReason> validationResult) {}
-
   public static class TransactionSelectionResults {
     private final List<Transaction> transactions = Lists.newArrayList();
     private final Map<TransactionType, List<Transaction>> transactionsByType =
         new EnumMap<>(TransactionType.class);
     private final List<TransactionReceipt> receipts = Lists.newArrayList();
-    private final List<TransactionValidationResult> invalidTransactions = Lists.newArrayList();
+    private final Map<Transaction, TransactionInvalidReason> invalidTransactions = new HashMap<>();
     private final List<TransactionSelectionResult> selectionResults = Lists.newArrayList();
     private long cumulativeGasUsed = 0;
     private long cumulativeDataGasUsed = 0;
@@ -115,9 +112,8 @@ public class BlockTransactionSelector {
     }
 
     private void updateWithInvalidTransaction(
-        final Transaction transaction,
-        final ValidationResult<TransactionInvalidReason> validationResult) {
-      invalidTransactions.add(new TransactionValidationResult(transaction, validationResult));
+        final Transaction transaction, final TransactionInvalidReason invalidReason) {
+      invalidTransactions.put(transaction, invalidReason);
     }
 
     public List<Transaction> getTransactions() {
@@ -140,7 +136,7 @@ public class BlockTransactionSelector {
       return cumulativeDataGasUsed;
     }
 
-    public List<TransactionValidationResult> getInvalidTransactions() {
+    public Map<Transaction, TransactionInvalidReason> getInvalidTransactions() {
       return invalidTransactions;
     }
 
@@ -382,7 +378,7 @@ public class BlockTransactionSelector {
             transactionReceiptFactory.create(
                 transaction.getType(), effectiveResult, worldState, cumulativeGasUsed);
 
-        final long dataGasUsed = gasCalculator.dataGasUsed(transaction.getBlobCount());
+        final long dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount());
 
         transactionSelectionResults.update(transaction, receipt, gasUsedByTransaction, dataGasUsed);
 
@@ -469,12 +465,8 @@ public class BlockTransactionSelector {
         || invalidReason.equals(TransactionInvalidReason.NONCE_TOO_HIGH);
   }
 
-  private boolean isIncorrectNonce(final ValidationResult<TransactionInvalidReason> result) {
-    return result.getInvalidReason().equals(TransactionInvalidReason.NONCE_TOO_HIGH);
-  }
-
   private boolean transactionTooLargeForBlock(final Transaction transaction) {
-    final long dataGasUsed = gasCalculator.dataGasUsed(transaction.getBlobCount());
+    final long dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount());
 
     if (dataGasUsed
         > gasLimitCalculator.currentDataGasLimit()

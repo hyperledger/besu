@@ -28,7 +28,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.account.Account;
@@ -187,7 +186,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
     }
 
     if (transaction.getType().supportsBlob()) {
-      final long txTotalDataGas = gasCalculator.dataGasUsed(transaction.getBlobCount());
+      final long txTotalDataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
       if (txTotalDataGas > gasLimitCalculator.currentDataGasLimit()) {
         return ValidationResult.invalid(
             TransactionInvalidReason.TOTAL_DATA_GAS_TOO_HIGH,
@@ -198,7 +197,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
     }
 
     if (transaction.getType().supportsBlob()) {
-      final long txTotalDataGas = gasCalculator.dataGasUsed(transaction.getBlobCount());
+      final long txTotalDataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
       if (txTotalDataGas > gasLimitCalculator.currentDataGasLimit()) {
         return ValidationResult.invalid(
             TransactionInvalidReason.TOTAL_DATA_GAS_TOO_HIGH,
@@ -239,7 +238,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
     }
 
     final Wei upfrontCost =
-        transaction.getUpfrontCost(gasCalculator.dataGasUsed(transaction.getBlobCount()));
+        transaction.getUpfrontCost(gasCalculator.dataGasCost(transaction.getBlobCount()));
     if (upfrontCost.compareTo(senderBalance) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,

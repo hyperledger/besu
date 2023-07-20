@@ -27,13 +27,10 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class TransactionTestFixture {
 
   private TransactionType transactionType = TransactionType.FRONTIER;
-  private final VersionedHash DEFAULT_VERSIONED_HASH =
-      new VersionedHash(Bytes32.wrap(Bytes.repeat((byte) 01, 32)));
 
   private long nonce = 0;
 
@@ -88,7 +85,8 @@ public class TransactionTestFixture {
         builder.maxFeePerGas(maxFeePerGas.orElse(Wei.of(5000)));
         builder.accessList(accessListEntries.orElse(List.of()));
         builder.maxFeePerDataGas(maxFeePerDataGas.orElse(Wei.ONE));
-        builder.versionedHashes(versionedHashes.orElse(List.of(DEFAULT_VERSIONED_HASH)));
+        builder.versionedHashes(
+            versionedHashes.orElse(List.of(VersionedHash.DEFAULT_VERSIONED_HASH)));
         blobs.ifPresent(
             bwc -> {
               builder.kzgBlobs(bwc.getKzgCommitments(), bwc.getBlobs(), bwc.getKzgProofs());

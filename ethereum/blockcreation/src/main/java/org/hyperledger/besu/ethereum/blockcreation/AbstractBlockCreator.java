@@ -230,30 +230,11 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      DataGas newExcessDataGas = null;
-      Long newDataGasUsed = null;
-      if (newProtocolSpec.getFeeMarket().implementsDataFee()) {
-        final var gasCalculator = newProtocolSpec.getGasCalculator();
-        newExcessDataGas =
-            DataGas.of(
-                gasCalculator.computeExcessDataGas(
-                    // casting parent excess data gas to long since for the moment it should be well
-                    // below that limit
-                    parentHeader.getExcessDataGas().map(DataGas::toLong).orElse(0L),
-                    parentHeader.getDataGasUsed().orElse(0L)));
-
-        final int newBlobsCount =
-            transactionResults.getTransactionsByType(TransactionType.BLOB).stream()
-                .map(tx -> tx.getVersionedHashes().orElseThrow())
-                .mapToInt(List::size)
-                .sum();
-
-        newDataGasUsed = gasCalculator.dataGasUsed(newBlobsCount);
-      }
+      final GasUsage usage = computeExcessDataGas(transactionResults, newProtocolSpec);
 
       throwIfStopped();
 
-      final SealableBlockHeader sealableBlockHeader =
+      BlockHeaderBuilder builder =
           BlockHeaderBuilder.create()
               .populateFrom(processableBlockHeader)
               .ommersHash(BodyValidation.ommersHash(ommers))
@@ -268,10 +249,12 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   withdrawalsCanBeProcessed
                       ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
                       : null)
-              .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
-              .dataGasUsed(newDataGasUsed)
-              .excessDataGas(newExcessDataGas)
-              .buildSealableBlockHeader();
+              .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null));
+      if (usage != null) {
+        builder.dataGasUsed(usage.used.toLong()).excessDataGas(usage.excessDataGas);
+      }
+
+      final SealableBlockHeader sealableBlockHeader = builder.buildSealableBlockHeader();
 
       final BlockHeader blockHeader = createFinalBlockHeader(sealableBlockHeader);
 
@@ -300,6 +283,31 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         .filter(log -> depositContractAddress.get().equals(log.getLogger()))
         .map(DepositDecoder::decodeFromLog)
         .toList();
+  }
+
+  record GasUsage(DataGas excessDataGas, DataGas used) {}
+  ;
+
+  private GasUsage computeExcessDataGas(
+      final TransactionSelectionResults transactionResults, final ProtocolSpec newProtocolSpec) {
+
+    if (newProtocolSpec.getFeeMarket().implementsDataFee()) {
+      final var gasCalculator = newProtocolSpec.getGasCalculator();
+      final int newBlobsCount =
+          transactionResults.getTransactionsByType(TransactionType.BLOB).stream()
+              .map(tx -> tx.getVersionedHashes().orElseThrow())
+              .mapToInt(List::size)
+              .sum();
+      // casting parent excess data gas to long since for the moment it should be well below that
+      // limit
+      DataGas ecessDataGas =
+          DataGas.of(
+              gasCalculator.computeExcessDataGas(
+                  parentHeader.getExcessDataGas().map(DataGas::toLong).orElse(0L), newBlobsCount));
+      DataGas used = DataGas.of(gasCalculator.dataGasCost(newBlobsCount));
+      return new GasUsage(ecessDataGas, used);
+    }
+    return null;
   }
 
   private TransactionSelectionResults selectTransactions(

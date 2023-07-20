@@ -305,7 +305,7 @@ public class MainnetTransactionProcessor {
       final Wei transactionGasPrice =
           feeMarket.getTransactionPriceCalculator().price(transaction, blockHeader.getBaseFee());
 
-      final long dataGas = gasCalculator.dataGasUsed(transaction.getBlobCount());
+      final long dataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
 
       final Wei upfrontGasCost =
           transaction.getUpfrontGasCost(transactionGasPrice, dataGasPrice, dataGas);

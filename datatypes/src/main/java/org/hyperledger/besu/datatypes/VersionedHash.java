@@ -36,6 +36,9 @@ public class VersionedHash {
   /** The version id for sha256 hashes. */
   public static final byte SHA256_VERSION_ID = 1;
 
+  public static VersionedHash DEFAULT_VERSIONED_HASH =
+      new VersionedHash(SHA256_VERSION_ID, Hash.ZERO);
+
   /**
    * Construct a VersionedHash from a Bytes32 value.
    *

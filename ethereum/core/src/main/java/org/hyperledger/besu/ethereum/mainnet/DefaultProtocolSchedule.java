@@ -131,7 +131,7 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
   }
 
   @Override
-  public void setTransactionFilter(final TransactionFilter transactionFilter) {
+  public void setTransactionFilter(final PermissionTransactionFilter permissionTransactionFilter) {
     protocolSpecs.forEach(
         spec ->
             spec.spec()

@@ -519,7 +519,7 @@ public interface GasCalculator {
    * @param blobCount the number of blobs
    * @return the total gas cost
    */
-  default long dataGasUsed(final int blobCount) {
+  default long dataGasCost(final int blobCount) {
     return 0L;
   }
 
@@ -528,10 +528,14 @@ public interface GasCalculator {
    * blobs
    *
    * @param parentExcessDataGas excess data gas from the parent
-   * @param parentDataGasUsed data gas used from the parent
+   * @param newBlobs count of new blobs
    * @return the new excess data gas value
    */
-  default long computeExcessDataGas(final long parentExcessDataGas, final long parentDataGasUsed) {
+  default long computeExcessDataGas(final long parentExcessDataGas, final int newBlobs) {
+    return 0L;
+  }
+
+  default long computeExcessDataGas(final long parentExcessDataGas, final long dataGasUsed) {
     return 0L;
   }
 }

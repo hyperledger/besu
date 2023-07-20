@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams.processingBlockParams;
+import static org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams.transactionPoolParams;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INVALID_TRANSACTION_FORMAT;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS;
@@ -36,11 +38,11 @@ import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.KZGCommitment;
 import org.hyperledger.besu.datatypes.KZGProof;
-import org.hyperledger.besu.datatypes.Sha256Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
+import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -57,7 +59,6 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -553,9 +554,8 @@ public class MainnetTransactionValidatorTest {
                         List.of(new KZGCommitment(Bytes.EMPTY)),
                         List.of(new Blob(Bytes.EMPTY)),
                         List.of(new KZGProof(Bytes.EMPTY)),
-                        List.of(new VersionedHash((byte) 1, Sha256Hash.wrap(Bytes32.ZERO))))))
-            .versionedHashes(
-                Optional.of(List.of(new VersionedHash((byte) 1, Sha256Hash.wrap(Bytes32.ZERO)))))
+                        List.of(VersionedHash.DEFAULT_VERSIONED_HASH))))
+            .versionedHashes(Optional.of(List.of(VersionedHash.DEFAULT_VERSIONED_HASH)))
             .createTransaction(senderKeys);
     var validationResult =
         validator.validate(blobTx, Optional.empty(), transactionValidationParams);
@@ -572,7 +572,7 @@ public class MainnetTransactionValidatorTest {
   @Test
   // @Ignore("This test is ignored because it requires a native library to be loaded")
   public void shouldAcceptTransactionWithAtLeastOneBlob() {
-    when(gasCalculator.dataGasUsed(anyInt())).thenReturn(2L);
+    when(gasCalculator.dataGasCost(anyInt())).thenReturn(2L);
     final MainnetTransactionValidator validator =
         new MainnetTransactionValidator(
             gasCalculator,

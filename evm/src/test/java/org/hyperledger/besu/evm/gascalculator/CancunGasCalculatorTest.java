@@ -26,22 +26,21 @@ public class CancunGasCalculatorTest {
 
   private final CancunGasCalculator gasCalculator = new CancunGasCalculator();
 
-  @ParameterizedTest(name = "{index} - target gas {0}, excess gas {1}")
+  @ParameterizedTest(name = "{index} - parent gas {0}, used gas {1}, new excess {2}")
   @MethodSource("dataGasses")
   public void shouldCalculateExcessDataGasCorrectly(
-      final long target, final long excess, final long expected) {
-    assertThat(gasCalculator.computeExcessDataGas(target, excess)).isEqualTo(expected);
+      final long parentExcess, final long used, final long expected) {
+    assertThat(gasCalculator.computeExcessDataGas(parentExcess, (int) used)).isEqualTo(expected);
   }
 
   static Iterable<Arguments> dataGasses() {
-    long targetGasPerBlock = 0x60000;
-    long excess = 1L;
+    long targetGasPerBlock = CancunGasCalculator.TARGET_DATA_GAS_PER_BLOCK;
     return List.of(
         Arguments.of(0L, 0L, 0L),
         Arguments.of(targetGasPerBlock, 0L, 0L),
-        Arguments.of(0L, targetGasPerBlock, 0L),
-        Arguments.of(excess, targetGasPerBlock, excess),
-        Arguments.of(targetGasPerBlock, excess, excess),
-        Arguments.of(targetGasPerBlock, targetGasPerBlock, targetGasPerBlock));
+        Arguments.of(0L, 3, 0L),
+        Arguments.of(1, 3, 1),
+        Arguments.of(targetGasPerBlock, 1, CancunGasCalculator.DATA_GAS_PER_BLOB),
+        Arguments.of(targetGasPerBlock, 3, targetGasPerBlock));
   }
 }

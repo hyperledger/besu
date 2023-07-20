@@ -27,8 +27,6 @@ jar {
   }
 }
 
-
-
 dependencies {
   api 'org.slf4j:slf4j-api'
   api 'org.web3j:core'
@@ -56,10 +54,10 @@ dependencies {
 
   implementation 'net.java.dev.jna:jna'
   implementation 'org.apache.commons:commons-lang3'
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.apache.tuweni:tuweni-concurrent'
-  implementation 'org.apache.tuweni:tuweni-units'
-  implementation 'org.apache.tuweni:tuweni-rlp'
+  implementation 'io.tmio:tuweni-bytes'
+  implementation 'io.tmio:tuweni-concurrent'
+  implementation 'io.tmio:tuweni-units'
+  implementation 'io.tmio:tuweni-rlp'
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.immutables:value-annotations'
   implementation 'tech.pegasys:jc-kzg-4844'
@@ -100,6 +98,7 @@ dependencies {
   integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   integrationTestImplementation 'org.mockito:mockito-core'
   integrationTestImplementation 'org.testcontainers:testcontainers'
+  integrationTestImplementation 'io.tmio:tuweni-bytes'
 
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 

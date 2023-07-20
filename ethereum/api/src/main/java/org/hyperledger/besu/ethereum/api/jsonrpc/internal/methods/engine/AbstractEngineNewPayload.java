@@ -460,7 +460,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       final List<VersionedHash> maybeVersionedHashes,
       final ProtocolSpec protocolSpec) {
     var calculatedDataGas =
-        protocolSpec.getGasCalculator().dataGasUsed(maybeVersionedHashes.size());
+        protocolSpec.getGasCalculator().dataGasCost(maybeVersionedHashes.size());
     return header.getDataGasUsed().orElse(0L).equals(calculatedDataGas);
   }
 

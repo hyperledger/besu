@@ -72,7 +72,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.Vertx;
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
@@ -104,8 +103,6 @@ public abstract class AbstractEngineNewPayloadTest {
 
   private final MethodFactory methodFactory;
   protected AbstractEngineNewPayload method;
-  private final VersionedHash DEFAULT_VERSIONED_HASH =
-      new VersionedHash(Bytes32.wrap(Bytes.repeat((byte) 01, 32)));
 
   public AbstractEngineNewPayloadTest(final MethodFactory methodFactory) {
     this.methodFactory = methodFactory;
@@ -169,7 +166,11 @@ public abstract class AbstractEngineNewPayloadTest {
       final List<WithdrawalParameter> withdrawals,
       final List<DepositParameter> deposits) {
     return mockPayload(
-        header, txs, withdrawals, deposits, List.of(DEFAULT_VERSIONED_HASH.toBytes()));
+        header,
+        txs,
+        withdrawals,
+        deposits,
+        List.of(VersionedHash.DEFAULT_VERSIONED_HASH.toBytes()));
   }
 
   protected EnginePayloadParameter mockPayload(

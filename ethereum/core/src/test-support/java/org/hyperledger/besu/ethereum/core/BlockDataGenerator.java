@@ -79,9 +79,6 @@ public class BlockDataGenerator {
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
   private Supplier<BlockOptions> blockOptionsSupplier = BlockOptions::create;
 
-  private final VersionedHash DEFAULT_VERSIONED_HASH =
-      new VersionedHash(Bytes32.wrap(Bytes.repeat((byte) 01, 32)));
-
   public BlockDataGenerator(final int seed) {
     this.random = new Random(seed);
     keyPairGenerator = createKeyPairGenerator(seed);
@@ -446,7 +443,7 @@ public class BlockDataGenerator {
         .payload(payload)
         .chainId(BigInteger.ONE)
         .maxFeePerDataGas(Wei.of(1))
-        .versionedHashes(List.of(DEFAULT_VERSIONED_HASH))
+        .versionedHashes(List.of(VersionedHash.DEFAULT_VERSIONED_HASH))
         .signAndBuild(generateKeyPair());
   }
 

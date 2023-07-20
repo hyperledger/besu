@@ -43,8 +43,8 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
   private static final long TLOAD_GAS = WARM_STORAGE_READ_COST;
   private static final long TSTORE_GAS = WARM_STORAGE_READ_COST;
 
-  private static final long DATA_GAS_PER_BLOB = 1 << 17;
-  private static final long TARGET_DATA_GAS_PER_BLOCK = 0x60000;
+  public static final long DATA_GAS_PER_BLOB = 1 << 17;
+  public static final long TARGET_DATA_GAS_PER_BLOCK = 0x60000;
 
   // EIP-1153
   @Override
@@ -58,7 +58,7 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
   }
 
   @Override
-  public long dataGasUsed(final int blobCount) {
+  public long dataGasCost(final int blobCount) {
     return DATA_GAS_PER_BLOB * blobCount;
   }
 
@@ -78,14 +78,27 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
    * the difference between the sum and the target data gas per block.
    *
    * @param parentExcessDataGas The excess data gas of the parent block.
-   * @param parentDataGasUsed The data gas used in the parent block.
+   * @param newBlobs data gas incurred by current block
    * @return The excess data gas for the current block.
    */
   @Override
-  public long computeExcessDataGas(final long parentExcessDataGas, final long parentDataGasUsed) {
-    if (parentExcessDataGas + parentDataGasUsed < TARGET_DATA_GAS_PER_BLOCK) {
+  public long computeExcessDataGas(final long parentExcessDataGas, final int newBlobs) {
+    final long consumedDataGas = dataGasCost(newBlobs);
+    final long currentExcessDataGas = parentExcessDataGas + consumedDataGas;
+
+    if (currentExcessDataGas < TARGET_DATA_GAS_PER_BLOCK) {
       return 0L;
     }
-    return parentExcessDataGas + parentDataGasUsed - TARGET_DATA_GAS_PER_BLOCK;
+    return currentExcessDataGas - TARGET_DATA_GAS_PER_BLOCK;
+  }
+
+  @Override
+  public long computeExcessDataGas(final long parentExcessDataGas, final long dataGasUsed) {
+    final long currentExcessDataGas = parentExcessDataGas + dataGasUsed;
+
+    if (currentExcessDataGas < TARGET_DATA_GAS_PER_BLOCK) {
+      return 0L;
+    }
+    return currentExcessDataGas - TARGET_DATA_GAS_PER_BLOCK;
   }
 }
