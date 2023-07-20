@@ -32,9 +32,8 @@ public final class BlockSyncTestUtils {
 
   public static List<Block> firstBlocks(final int count) {
     final List<Block> result = new ArrayList<>(count);
-    Path tempDir = null;
     try {
-      tempDir = Files.createTempDirectory("tempDir");
+      Path tempDir = Files.createTempDirectory("tempDir");
       final Path blocks = tempDir.resolve("blocks");
       final BlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
       BlockTestUtil.write1000Blocks(blocks);
@@ -45,19 +44,7 @@ public final class BlockSyncTestUtils {
       }
     } catch (final IOException ex) {
       throw new IllegalStateException(ex);
-    } finally {
-      tempDirCleanup(tempDir);
     }
     return result;
-  }
-
-  private static void tempDirCleanup(final Path temp) {
-    if (temp != null) {
-      try {
-        Files.deleteIfExists(temp);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
   }
 }

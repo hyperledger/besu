@@ -44,7 +44,6 @@ import org.hyperledger.besu.testutil.BlockTestUtil.ChainResources;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -162,9 +161,7 @@ public class BlockchainSetupUtil {
       final ProtocolScheduleProvider protocolScheduleProvider,
       final ProtocolContextProvider protocolContextProvider,
       final EthScheduler scheduler) {
-    Path temp = null;
     try {
-      temp = Files.createTempDirectory("tempDir");
       final String genesisJson = Resources.toString(chainResources.getGenesisURL(), Charsets.UTF_8);
 
       final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisJson);
@@ -202,18 +199,6 @@ public class BlockchainSetupUtil {
           scheduler);
     } catch (final IOException | URISyntaxException ex) {
       throw new IllegalStateException(ex);
-    } finally {
-      tempDirCleanup(temp);
-    }
-  }
-
-  private static void tempDirCleanup(final Path temp) {
-    if (temp != null) {
-      try {
-        Files.deleteIfExists(temp);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
     }
   }
 
