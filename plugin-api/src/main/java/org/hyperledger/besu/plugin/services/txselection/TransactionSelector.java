@@ -15,9 +15,9 @@
 
 package org.hyperledger.besu.plugin.services.txselection;
 
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.Log;
-import org.hyperledger.besu.plugin.data.Transaction;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import java.util.List;
