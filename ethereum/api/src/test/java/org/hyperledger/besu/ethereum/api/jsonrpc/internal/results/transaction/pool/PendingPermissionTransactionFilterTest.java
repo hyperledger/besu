@@ -42,7 +42,6 @@ import java.util.Set;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-
 public class PendingPermissionTransactionFilterTest {
 
   public static Collection<Object[]> data() {

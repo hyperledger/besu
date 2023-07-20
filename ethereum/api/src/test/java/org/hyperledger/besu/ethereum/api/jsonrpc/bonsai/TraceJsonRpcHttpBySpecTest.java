@@ -18,9 +18,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.AbstractJsonRpcHttpBySpecTest;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 
+import org.junit.jupiter.api.BeforeEach;
+
 public class TraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
 
   @Override
+  @BeforeEach
   public void setup() throws Exception {
     setupBonsaiBlockchain();
     startService();

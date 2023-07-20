@@ -16,9 +16,12 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.forest;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.AbstractJsonRpcHttpBySpecTest;
 
+import org.junit.jupiter.api.BeforeEach;
+
 public class DebugJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
 
   @Override
+  @BeforeEach
   public void setup() throws Exception {
     setupBlockchain();
     startService();
