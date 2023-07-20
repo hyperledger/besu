@@ -98,6 +98,13 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
    */
   Optional<Hash> getLatestValidAncestor(BlockHeader blockheader);
 
+  /**
+   * Checks if a block descends from another
+   *
+   * @param ancestorBlock the ancestor block
+   * @param newBlock the block we want to check if it is descendant
+   * @return true if newBlock is a descendant of ancestorBlock
+   */
   boolean isDescendantOf(final BlockHeader ancestorBlock, final BlockHeader newBlock);
 
   /**
