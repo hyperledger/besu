@@ -253,7 +253,7 @@ public class EthEstimateGasTest {
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.REVERT_ERROR);
 
-    JsonRpcResponse actualResponse = method.response(request);
+    final JsonRpcResponse actualResponse = method.response(request);
 
     Assertions.assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
 
@@ -278,7 +278,7 @@ public class EthEstimateGasTest {
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.REVERT_ERROR);
 
-    JsonRpcResponse actualResponse = method.response(request);
+    final JsonRpcResponse actualResponse = method.response(request);
 
     Assertions.assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
 
@@ -301,7 +301,7 @@ public class EthEstimateGasTest {
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, JsonRpcError.REVERT_ERROR);
 
-    JsonRpcResponse actualResponse = method.response(request);
+    final JsonRpcResponse actualResponse = method.response(request);
 
     Assertions.assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
 
@@ -397,10 +397,11 @@ public class EthEstimateGasTest {
             eq(1L)))
         .thenReturn(Optional.of(mockTxSimResult));
 
-    final TransactionProcessingResult processingResult =
-        new TransactionProcessingResult(null, null, estimateGas, 0, null, null, revertReason);
+    final TransactionProcessingResult mockResult = mock(TransactionProcessingResult.class);
+    when(mockResult.getEstimateGasUsedByTransaction()).thenReturn(estimateGas);
+    when(mockResult.getRevertReason()).thenReturn(revertReason);
 
-    when(mockTxSimResult.getResult()).thenReturn(processingResult);
+    when(mockTxSimResult.getResult()).thenReturn(mockResult);
     when(mockTxSimResult.isSuccessful()).thenReturn(isSuccessful);
     return mockTxSimResult;
   }
