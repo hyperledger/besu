@@ -56,9 +56,9 @@ public class SelfDestructOperationTest {
 
   private MessageFrame messageFrame;
   @Mock private WorldUpdater worldUpdater;
-  @Mock private WrappedEvmAccount accountContract;
+  @Mock private WrappedEvmAccount accountOriginator;
   @Mock private WrappedEvmAccount accountBeneficiary;
-  @Mock private MutableAccount mutableAccountContract;
+  @Mock private MutableAccount mutableAccountOriginator;
   @Mock private MutableAccount mutableAccountBeneficiary;
   @Mock private EVM evm;
 
@@ -69,12 +69,12 @@ public class SelfDestructOperationTest {
       new SelfDestructOperation(new ConstantinopleGasCalculator(), true);
 
   void checkContractDeletionCommon(
-      final String contract,
+      final String originator,
       final String beneficiary,
       final String balanceHex,
       final boolean newContract,
       final SelfDestructOperation operation) {
-    Address contractAddress = Address.fromHexString(contract);
+    Address originatorAddress = Address.fromHexString(originator);
     Address beneficiaryAddress = Address.fromHexString(beneficiary);
     messageFrame =
         MessageFrame.builder()
@@ -87,7 +87,7 @@ public class SelfDestructOperationTest {
             .code(CodeFactory.createCode(SELFDESTRUCT_CODE, 0, true))
             .depth(1)
             .completer(__ -> {})
-            .address(contractAddress)
+            .address(originatorAddress)
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
             .blockValues(mock(BlockValues.class))
             .gasPrice(Wei.ZERO)
@@ -99,33 +99,30 @@ public class SelfDestructOperationTest {
             .build();
     messageFrame.pushStackItem(Bytes.fromHexString(beneficiary));
     if (newContract) {
-      messageFrame.addCreate(contractAddress);
+      messageFrame.addCreate(originatorAddress);
     }
 
-    when(accountContract.getMutable()).thenReturn(mutableAccountContract);
-    if (!contract.equals(beneficiary)) {
-      when(mutableAccountContract.getBalance()).thenReturn(Wei.fromHexString(balanceHex));
+    when(worldUpdater.getAccount(originatorAddress)).thenReturn(accountOriginator);
+    when(worldUpdater.get(originatorAddress)).thenReturn(accountOriginator);
+    if (!originatorAddress.equals(beneficiaryAddress)) {
+      when(worldUpdater.get(beneficiaryAddress)).thenReturn(accountBeneficiary);
     }
-    when(accountBeneficiary.getMutable()).thenReturn(mutableAccountBeneficiary);
-    when(mutableAccountBeneficiary.getAddress()).thenReturn(beneficiaryAddress);
-    when(worldUpdater.getAccount(contractAddress)).thenReturn(accountContract);
-    when(worldUpdater.get(contractAddress)).thenReturn(accountContract);
-    when(worldUpdater.get(beneficiaryAddress)).thenReturn(accountBeneficiary);
     when(worldUpdater.getOrCreate(beneficiaryAddress)).thenReturn(accountBeneficiary);
+    when(accountOriginator.getMutable()).thenReturn(mutableAccountOriginator);
+    when(accountOriginator.getBalance()).thenReturn(Wei.fromHexString(balanceHex));
+    when(accountBeneficiary.getMutable()).thenReturn(mutableAccountBeneficiary);
 
     final Operation.OperationResult operationResult = operation.execute(messageFrame, evm);
     assertThat(operationResult).isNotNull();
 
     // The interactions with the contracts varies based on the parameterized tests, but it will be
     // some subset of these calls.
-    verify(accountContract, atLeast(0)).getBalance();
+    verify(accountOriginator, atLeast(0)).getBalance();
     verify(accountBeneficiary, atLeast(0)).getBalance();
-    verify(accountBeneficiary).isEmpty();
-    verify(mutableAccountContract, atLeast(0)).getBalance();
-    verify(mutableAccountContract, atLeast(0)).setBalance(Wei.ZERO);
-    if (!contract.equals(beneficiary)) {
-      verify(mutableAccountBeneficiary).incrementBalance(Wei.fromHexString(balanceHex));
-    }
+    verify(mutableAccountOriginator, atLeast(0)).getBalance();
+    verify(mutableAccountOriginator).decrementBalance(Wei.fromHexString(balanceHex));
+    verify(mutableAccountOriginator, atLeast(0)).setBalance(Wei.ZERO);
+    verify(mutableAccountBeneficiary).incrementBalance(Wei.fromHexString(balanceHex));
   }
 
   public static Object[][] params() {
@@ -160,32 +157,31 @@ public class SelfDestructOperationTest {
   @ParameterizedTest
   @MethodSource("params")
   void checkContractDeletionFrontier(
-      final String contract,
+      final String originator,
       final String beneficiary,
       final boolean newAccount,
       final String balanceHex) {
-    when(mutableAccountContract.getAddress()).thenReturn(Address.fromHexString(contract));
-    checkContractDeletionCommon(contract, beneficiary, balanceHex, newAccount, frontierOperation);
+    checkContractDeletionCommon(originator, beneficiary, balanceHex, newAccount, frontierOperation);
 
-    assertThat(messageFrame.getSelfDestructs()).contains(Address.fromHexString(contract));
+    assertThat(messageFrame.getSelfDestructs()).contains(Address.fromHexString(originator));
   }
 
   @ParameterizedTest
   @MethodSource("params")
   void checkContractDeletionEIP6780(
-      final String contract,
+      final String originator,
       final String beneficiary,
       final boolean newAccount,
       final String balanceHex) {
-    checkContractDeletionCommon(contract, beneficiary, balanceHex, newAccount, eip6780Operation);
+    checkContractDeletionCommon(originator, beneficiary, balanceHex, newAccount, eip6780Operation);
 
-    Address contractAddress = Address.fromHexString(contract);
+    Address orignatorAddress = Address.fromHexString(originator);
     if (newAccount) {
-      assertThat(messageFrame.getSelfDestructs()).contains(contractAddress);
-      assertThat(messageFrame.getCreates()).contains(contractAddress);
+      assertThat(messageFrame.getSelfDestructs()).contains(orignatorAddress);
+      assertThat(messageFrame.getCreates()).contains(orignatorAddress);
     } else {
       assertThat(messageFrame.getSelfDestructs()).isEmpty();
-      assertThat(messageFrame.getCreates()).doesNotContain(contractAddress);
+      assertThat(messageFrame.getCreates()).doesNotContain(orignatorAddress);
     }
   }
 }
