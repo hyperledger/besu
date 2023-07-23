@@ -18,7 +18,6 @@ package org.hyperledger.besu.ethereum.bonsai.storage.flat;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
@@ -112,7 +111,7 @@ public abstract class FlatDbReaderStrategy {
       return Optional.of(Bytes.EMPTY);
     } else {
       return storage
-          .get(TRIE_BRANCH_STORAGE, accountHash.toArrayUnsafe())
+          .get(CODE_STORAGE, accountHash.toArrayUnsafe())
           .map(Bytes::wrap)
           .filter(b -> Hash.hash(b).equals(codeHash));
     }

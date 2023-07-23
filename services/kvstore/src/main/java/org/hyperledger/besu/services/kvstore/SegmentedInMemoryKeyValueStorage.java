@@ -189,7 +189,8 @@ public class SegmentedInMemoryKeyValueStorage
 
   @Override
   public SegmentedKeyValueStorageTransaction startTransaction() {
-    return new SegmentedInMemoryTransaction();
+    return new SegmentedKeyValueStorageTransactionValidatorDecorator(
+        new SegmentedInMemoryTransaction(), this::isClosed);
   }
 
   @Override

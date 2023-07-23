@@ -422,7 +422,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
     @Override
     public BonsaiUpdater removeAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
-      composedWorldStateTransaction.remove(ACCOUNT_INFO_STATE, location.toArrayUnsafe());
+      composedWorldStateTransaction.remove(TRIE_BRANCH_STORAGE, location.toArrayUnsafe());
       return this;
     }
 

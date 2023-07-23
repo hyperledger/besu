@@ -19,7 +19,6 @@ package org.hyperledger.besu.ethereum.bonsai.worldview;
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiAccount.fromRLP;
 import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
 import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -187,7 +186,7 @@ public class BonsaiWorldState
           accountTrie.commit(
               (location, hash, value) ->
                   writeTrieNode(
-                      ACCOUNT_INFO_STATE,
+                      TRIE_BRANCH_STORAGE,
                       bonsaiUpdater.getWorldStateTransaction(),
                       location,
                       value));
