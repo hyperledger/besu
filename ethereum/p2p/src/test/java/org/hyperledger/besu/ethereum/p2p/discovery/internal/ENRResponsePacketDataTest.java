@@ -26,7 +26,7 @@ import org.ethereum.beacon.discovery.schema.IdentitySchema;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.ethereum.beacon.discovery.schema.NodeRecordFactory;
 import org.ethereum.beacon.discovery.util.Functions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ENRResponsePacketDataTest {
   @Test
