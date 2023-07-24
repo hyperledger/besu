@@ -32,8 +32,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.UnsubscribeRequest;
 
 import io.vertx.core.json.Json;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class EthUnsubscribeTest {
 
@@ -42,7 +42,7 @@ public class EthUnsubscribeTest {
   private SubscriptionRequestMapper mapperMock;
   private final String CONNECTION_ID = "test-connection-id";
 
-  @Before
+  @BeforeEach
   public void before() {
     subscriptionManagerMock = mock(SubscriptionManager.class);
     mapperMock = mock(SubscriptionRequestMapper.class);

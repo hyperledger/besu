@@ -49,6 +49,7 @@ import org.hyperledger.besu.nat.NatService;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -77,18 +78,17 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.assertj.core.api.Assertions;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.StrictStubs.class)
+@ExtendWith(MockitoExtension.class)
 public class JsonRpcHttpServiceLoginTest {
 
-  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir private static Path folder;
 
   private static final Vertx vertx = Vertx.vertx();
 
@@ -112,7 +112,7 @@ public class JsonRpcHttpServiceLoginTest {
   protected final JsonRpcTestHelper testHelper = new JsonRpcTestHelper();
   protected static final NatService natService = new NatService(Optional.empty());
 
-  @BeforeClass
+  @BeforeAll
   public static void initServerAndClient() throws Exception {
     peerDiscoveryMock = mock(P2PNetwork.class);
     blockchainQueries = mock(BlockchainQueries.class);
@@ -151,7 +151,7 @@ public class JsonRpcHttpServiceLoginTest {
                     mock(MetricsConfiguration.class),
                     natService,
                     new HashMap<>(),
-                    folder.getRoot().toPath(),
+                    folder,
                     mock(EthPeers.class),
                     vertx,
                     Optional.empty(),
@@ -178,7 +178,7 @@ public class JsonRpcHttpServiceLoginTest {
 
     return new JsonRpcHttpService(
         vertx,
-        folder.newFolder().toPath(),
+        folder,
         config,
         new NoOpMetricsSystem(),
         natService,
@@ -195,7 +195,7 @@ public class JsonRpcHttpServiceLoginTest {
   }
 
   /** Tears down the HTTP server. */
-  @AfterClass
+  @AfterAll
   public static void shutdownServer() {
     service.stop().join();
   }

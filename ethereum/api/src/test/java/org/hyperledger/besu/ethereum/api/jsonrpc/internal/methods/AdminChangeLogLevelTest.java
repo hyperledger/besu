@@ -25,19 +25,19 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.util.LogConfigurator;
 
 import org.apache.logging.log4j.Level;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class AdminChangeLogLevelTest {
 
   private AdminChangeLogLevel adminChangeLogLevel;
 
-  @Before
+  @BeforeEach
   public void before() {
     adminChangeLogLevel = new AdminChangeLogLevel();
     LogConfigurator.setLevel("", "INFO");
