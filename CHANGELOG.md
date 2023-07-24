@@ -5,16 +5,7 @@
 
 ### Breaking Changes
 - Removed deprecated GoQuorum permissioning interop [#5607](https://github.com/hyperledger/besu/pull/5607)
-
-### Additions and Improvements
-
-### Bug Fixes
-
-## 23.4.5
-
-### Breaking Changes
-
-- Removed support for version 0 of the database as it is no longer used by any active node.
+- Removed support for version 0 of the database as it is no longer used by any active node. [#5698](https://github.com/hyperledger/besu/pull/5698)
 
 ### Additions and Improvements
 - `evmtool` launcher binaries now ship as part of the standard distribution. [#5701](https://github.com/hyperledger/besu/pull/5701) 
@@ -32,7 +23,6 @@
 
 ### Download Links
 
----
 
 ## 23.4.4
 
