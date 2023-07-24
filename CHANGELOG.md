@@ -1,6 +1,15 @@
 
 # Changelog
 
+## 23.7.0
+
+### Breaking Changes
+- Removed deprecated GoQuorum permissioning interop [#5607](https://github.com/hyperledger/besu/pull/5607)
+
+### Additions and Improvements
+
+### Bug Fixes
+
 ## 23.4.5
 
 ### Breaking Changes
