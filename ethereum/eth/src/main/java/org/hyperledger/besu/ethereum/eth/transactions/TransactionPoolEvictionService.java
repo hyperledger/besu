@@ -37,7 +37,7 @@ public class TransactionPoolEvictionService {
                 TimeUnit.MINUTES.toMillis(1),
                 id -> {
                   if (transactionPool.isEnabled()) {
-                    transactionPool.getPendingTransactions().evictOldTransactions();
+                    transactionPool.evictOldTransactions();
                   }
                 }));
   }

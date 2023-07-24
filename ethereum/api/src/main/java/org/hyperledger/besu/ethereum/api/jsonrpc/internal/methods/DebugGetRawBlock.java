@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
@@ -51,6 +51,6 @@ public class DebugGetRawBlock extends AbstractBlockParameterMethod {
         .orElseGet(
             () ->
                 new JsonRpcErrorResponse(
-                    request.getRequest().getId(), JsonRpcError.BLOCK_NOT_FOUND));
+                    request.getRequest().getId(), RpcErrorType.BLOCK_NOT_FOUND));
   }
 }

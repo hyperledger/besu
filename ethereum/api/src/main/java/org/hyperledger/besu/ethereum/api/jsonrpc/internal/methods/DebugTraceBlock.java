@@ -20,10 +20,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.Transaction
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -71,7 +71,7 @@ public class DebugTraceBlock implements JsonRpcMethod {
     } catch (final RLPException e) {
       LOG.debug("Failed to parse block RLP", e);
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
     }
     final TraceOptions traceOptions =
         requestContext
@@ -95,7 +95,7 @@ public class DebugTraceBlock implements JsonRpcMethod {
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), results);
     } else {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.PARENT_BLOCK_NOT_FOUND);
+          requestContext.getRequest().getId(), RpcErrorType.PARENT_BLOCK_NOT_FOUND);
     }
   }
 }

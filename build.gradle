@@ -559,7 +559,7 @@ task evmToolStartScripts(type: CreateStartScripts) {
   mainClass = 'org.hyperledger.besu.evmtool.EvmTool'
   classpath = startScripts.classpath
   outputDir = startScripts.outputDir
-  applicationName = 'evm'
+  applicationName = 'evmtool'
   defaultJvmOpts = [
     "-Dsecp256k1.randomize=false"
   ]
@@ -586,10 +586,10 @@ task autocomplete(type: JavaExec) {
   }
 }
 
-installDist { dependsOn checkLicenses }
+installDist { dependsOn checkLicenses, evmToolStartScripts }
 
 distTar {
-  dependsOn checkLicenses, autocomplete
+  dependsOn checkLicenses, autocomplete, evmToolStartScripts
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
   }
@@ -598,7 +598,7 @@ distTar {
 }
 
 distZip {
-  dependsOn checkLicenses, autocomplete
+  dependsOn checkLicenses, autocomplete, evmToolStartScripts
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
@@ -1021,6 +1021,7 @@ tasks.register("verifyDistributions") {
 
 dependencies {
   implementation project(':besu')
+  implementation project(':ethereum:evmtool')
   errorprone 'com.google.errorprone:error_prone_core'
 }
 

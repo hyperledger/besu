@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.util.LogConfigurator;
 
 import java.util.Arrays;
@@ -47,7 +47,7 @@ public class AdminChangeLogLevel implements JsonRpcMethod {
       final String logLevel = requestContext.getRequiredParameter(0, String.class);
       if (!VALID_PARAMS.contains(logLevel)) {
         return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+            requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
       }
       final Optional<String[]> optionalLogFilters =
           requestContext.getOptionalParameter(1, String[].class);
@@ -58,7 +58,7 @@ public class AdminChangeLogLevel implements JsonRpcMethod {
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
     } catch (InvalidJsonRpcParameters invalidJsonRpcParameters) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
     }
   }
 

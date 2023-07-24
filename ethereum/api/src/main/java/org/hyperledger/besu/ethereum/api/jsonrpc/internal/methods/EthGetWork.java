@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
@@ -66,7 +66,7 @@ public class EthGetWork implements JsonRpcMethod {
       return new JsonRpcSuccessResponse(requestId, response);
     } else {
       LOG.trace("Mining is not operational, eth_getWork request cannot be processed");
-      return new JsonRpcErrorResponse(requestId, JsonRpcError.NO_MINING_WORK_FOUND);
+      return new JsonRpcErrorResponse(requestId, RpcErrorType.NO_MINING_WORK_FOUND);
     }
   }
 

@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CreateAccessListResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -143,7 +144,7 @@ public class EthCreateAccessListTest {
     mockTransactionSimulatorResult(false, false, 1L);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.WORLD_STATE_UNAVAILABLE);
+        new JsonRpcErrorResponse(null, RpcErrorType.WORLD_STATE_UNAVAILABLE);
 
     Assertions.assertThat(method.response(request))
         .usingRecursiveComparison()
@@ -156,8 +157,9 @@ public class EthCreateAccessListTest {
         ethCreateAccessListRequest(legacyTransactionCallParameter(Wei.ZERO));
     mockTransactionSimulatorResult(false, true, 1L);
 
+    final String errorReason = "0x00";
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.REVERT_ERROR);
+        new JsonRpcErrorResponse(null, new JsonRpcError(RpcErrorType.REVERT_ERROR, errorReason));
 
     Assertions.assertThat(method.response(request))
         .usingRecursiveComparison()

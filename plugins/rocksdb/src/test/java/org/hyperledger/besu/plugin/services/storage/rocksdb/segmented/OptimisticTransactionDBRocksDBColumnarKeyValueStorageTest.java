@@ -15,18 +15,22 @@
 package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class OptimisticTransactionDBRocksDBColumnarKeyValueStorageTest
     extends RocksDBColumnarKeyValueStorageTest {
 
@@ -35,7 +39,7 @@ public class OptimisticTransactionDBRocksDBColumnarKeyValueStorageTest
       throws Exception {
     return new OptimisticRocksDBColumnarKeyValueStorage(
         new RocksDBConfigurationBuilder()
-            .databaseDir(folder.resolve(Bytes.random(9).toString()))
+            .databaseDir(Files.createTempDirectory("segmentedStore"))
             .build(),
         Arrays.asList(TestSegment.FOO, TestSegment.BAR),
         List.of(),
@@ -53,6 +57,20 @@ public class OptimisticTransactionDBRocksDBColumnarKeyValueStorageTest
         segments,
         ignorableSegments,
         new NoOpMetricsSystem(),
+        RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
+  }
+
+  @Override
+  protected SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore(
+      final Path path,
+      final MetricsSystem metricsSystem,
+      final List<SegmentIdentifier> segments,
+      final List<SegmentIdentifier> ignorableSegments) {
+    return new OptimisticRocksDBColumnarKeyValueStorage(
+        new RocksDBConfigurationBuilder().databaseDir(path).build(),
+        segments,
+        ignorableSegments,
+        metricsSystem,
         RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
   }
 }
