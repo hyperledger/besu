@@ -736,19 +736,6 @@ public class Transaction
   }
 
   /**
-   * Returns whether or not the transaction is a GoQuorum private transaction. <br>
-   * <br>
-   * A GoQuorum private transaction has its <i>v</i> value equal to 37 or 38, and does not contain a
-   * chainId.
-   *
-   * @param goQuorumCompatibilityMode true if GoQuorum compatbility mode is set
-   * @return true if GoQuorum private transaction, false otherwise
-   */
-  public boolean isGoQuorumPrivateTransaction(final boolean goQuorumCompatibilityMode) {
-    return false;
-  }
-
-  /**
    * Return the list of transaction hashes extracted from the collection of Transaction passed as
    * argument
    *

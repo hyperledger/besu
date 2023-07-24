@@ -1,6 +1,15 @@
 
 # Changelog
 
+## 23.7.0
+
+### Breaking Changes
+- Removed deprecated GoQuorum permissioning interop [#5607](https://github.com/hyperledger/besu/pull/5607)
+
+### Additions and Improvements
+
+### Bug Fixes
+
 ## 23.4.5
 
 ### Breaking Changes
@@ -13,6 +22,7 @@
 - Improve lifecycle management of the transaction pool [#5634](https://github.com/hyperledger/besu/pull/5634)
 - Add extension points in AbstractCreateOperation for EVM libraries to react to contract creations [#5656](https://github.com/hyperledger/besu/pull/5656)
 - Update to Tuweni 2.4.2. [#5684](https://github.com/hyperledger/besu/pull/5684)
+- Decouple data field from Enum JsonRpcError by creating new enum holder RpcErrorType[#5629](https://github.com/hyperledger/besu/pull/5629)
 
 ### Bug Fixes
 - Use the node's configuration to determine if DNS enode URLs are allowed in calls to `admin_addPeer` and `admin_removePeer` [#5584](https://github.com/hyperledger/besu/pull/5584)

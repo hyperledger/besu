@@ -23,7 +23,7 @@ import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
@@ -71,7 +71,7 @@ public class EngineForkchoiceUpdatedV1Test extends AbstractEngineForkchoiceUpdat
   }
 
   @Override
-  protected JsonRpcError expectedInvalidPayloadError() {
-    return JsonRpcError.INVALID_PAYLOAD_ATTRIBUTES;
+  protected RpcErrorType expectedInvalidPayloadError() {
+    return RpcErrorType.INVALID_PAYLOAD_ATTRIBUTES;
   }
 }

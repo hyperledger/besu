@@ -19,7 +19,7 @@ import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIV
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -71,7 +71,7 @@ public class RestrictedFlexibleEeaSendRawTransaction extends AbstractEeaSendRawT
       final Optional<User> user) {
     final Optional<Bytes> maybePrivacyGroupId = privateTransaction.getPrivacyGroupId();
     if (maybePrivacyGroupId.isEmpty()) {
-      throw new JsonRpcErrorResponseException(JsonRpcError.FLEXIBLE_PRIVACY_GROUP_ID_NOT_AVAILABLE);
+      throw new JsonRpcErrorResponseException(RpcErrorType.FLEXIBLE_PRIVACY_GROUP_ID_NOT_AVAILABLE);
     }
     final Bytes privacyGroupId = maybePrivacyGroupId.get();
 
@@ -83,7 +83,7 @@ public class RestrictedFlexibleEeaSendRawTransaction extends AbstractEeaSendRawT
     final boolean isGroupAdditionTransaction =
         FlexibleUtil.isGroupAdditionTransaction(privateTransaction);
     if (maybePrivacyGroup.isEmpty() && !isGroupAdditionTransaction) {
-      throw new JsonRpcErrorResponseException(JsonRpcError.FLEXIBLE_PRIVACY_GROUP_DOES_NOT_EXIST);
+      throw new JsonRpcErrorResponseException(RpcErrorType.FLEXIBLE_PRIVACY_GROUP_DOES_NOT_EXIST);
     }
 
     if (isGroupAdditionTransaction) {
@@ -104,7 +104,7 @@ public class RestrictedFlexibleEeaSendRawTransaction extends AbstractEeaSendRawT
     }
 
     if (!maybePrivacyGroup.get().getMembers().contains(privacyUserId)) {
-      throw new JsonRpcErrorResponseException(JsonRpcError.FLEXIBLE_PRIVACY_GROUP_DOES_NOT_EXIST);
+      throw new JsonRpcErrorResponseException(RpcErrorType.FLEXIBLE_PRIVACY_GROUP_DOES_NOT_EXIST);
     }
 
     final String pmtPayload =

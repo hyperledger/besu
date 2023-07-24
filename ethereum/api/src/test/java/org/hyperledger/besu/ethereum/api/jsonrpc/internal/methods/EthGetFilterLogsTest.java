@@ -26,10 +26,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogsResult;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 
@@ -91,7 +91,7 @@ public class EthGetFilterLogsTest {
   public void shouldReturnFilterNotFoundWhenFilterManagerReturnsNull() {
     final JsonRpcRequestContext request = requestWithFilterId("NOT FOUND");
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.LOGS_FILTER_NOT_FOUND);
+        new JsonRpcErrorResponse(null, RpcErrorType.LOGS_FILTER_NOT_FOUND);
     when(filterManager.logs(eq("NOT FOUND"))).thenReturn(null);
 
     final JsonRpcResponse response = method.response(request);

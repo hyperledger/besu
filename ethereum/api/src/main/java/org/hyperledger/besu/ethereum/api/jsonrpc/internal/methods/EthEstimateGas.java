@@ -17,9 +17,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -50,12 +50,12 @@ public class EthEstimateGas extends AbstractEstimateGas {
 
     final BlockHeader blockHeader = blockHeader();
     if (blockHeader == null) {
-      return errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR);
+      return errorResponse(requestContext, RpcErrorType.INTERNAL_ERROR);
     }
     if (!blockchainQueries
         .getWorldStateArchive()
         .isWorldStateAvailable(blockHeader.getStateRoot(), blockHeader.getHash())) {
-      return errorResponse(requestContext, JsonRpcError.WORLD_STATE_UNAVAILABLE);
+      return errorResponse(requestContext, RpcErrorType.WORLD_STATE_UNAVAILABLE);
     }
 
     final CallParameter modifiedCallParams =
@@ -70,7 +70,7 @@ public class EthEstimateGas extends AbstractEstimateGas {
             blockHeader, modifiedCallParams, operationTracer, isAllowExceedingBalance);
 
     if (gasUsed.isEmpty()) {
-      return errorResponse(requestContext, JsonRpcError.INTERNAL_ERROR);
+      return errorResponse(requestContext, RpcErrorType.INTERNAL_ERROR);
     }
 
     // if the transaction is invalid or doesn't have enough gas with the max it never will!
