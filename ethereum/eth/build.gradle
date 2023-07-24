@@ -74,7 +74,6 @@ dependencies {
   testImplementation project(':testutil')
 
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
-  testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -82,9 +81,6 @@ dependencies {
   testImplementation 'org.mockito:mockito-junit-jupiter'
   testImplementation 'org.openjdk.jol:jol-core'
 
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
-
-  testSupportImplementation 'junit:junit'
   testSupportImplementation 'org.mockito:mockito-core'
   testSupportImplementation project(':testutil')
   testSupportImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
