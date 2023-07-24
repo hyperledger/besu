@@ -211,11 +211,9 @@ public class JsonRpcHttpServiceTlsTest {
       final ResponseBody body = response.body();
       assertThat(body).isNotNull();
       final JsonObject jsonObject = new JsonObject(body.string());
-      System.out.println(jsonObject);
       testHelper.assertValidJsonRpcResult(jsonObject, id);
       // Check result
       final String result = jsonObject.getString("result");
-      System.out.println(result);
       assertThat(result).isEqualTo(String.valueOf(CHAIN_ID));
     } catch (final Exception e) {
       e.printStackTrace();
