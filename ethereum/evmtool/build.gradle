@@ -59,7 +59,6 @@ dependencies {
   annotationProcessor 'com.google.dagger:dagger-compiler'
   annotationProcessor 'info.picocli:picocli-codegen'
 
-  testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
