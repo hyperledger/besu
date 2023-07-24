@@ -18,9 +18,9 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineCallListener;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -91,17 +91,17 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
                                 .log();
                           }
                           return new JsonRpcErrorResponse(
-                              request.getRequest().getId(), JsonRpcError.INVALID_REQUEST);
+                              request.getRequest().getId(), RpcErrorType.INVALID_REQUEST);
                         })
                     .result()));
     try {
       return cf.get();
     } catch (InterruptedException e) {
       LOG.error("Failed to get execution engine response", e);
-      return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.TIMEOUT_ERROR);
+      return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.TIMEOUT_ERROR);
     } catch (ExecutionException e) {
       LOG.error("Failed to get execution engine response", e);
-      return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
+      return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INTERNAL_ERROR);
     }
   }
 

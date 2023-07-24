@@ -24,11 +24,11 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -139,7 +139,7 @@ public class EthGetBlockByNumberTest {
     JsonRpcResponse resp = method.response(requestWithParams("finalized", "false"));
     assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
     JsonRpcErrorResponse errorResp = (JsonRpcErrorResponse) resp;
-    assertThat(errorResp.getError()).isEqualTo(JsonRpcError.UNKNOWN_BLOCK);
+    assertThat(errorResp.getErrorType()).isEqualTo(RpcErrorType.UNKNOWN_BLOCK);
   }
 
   @Test
@@ -147,7 +147,7 @@ public class EthGetBlockByNumberTest {
     JsonRpcResponse resp = method.response(requestWithParams("safe", "false"));
     assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
     JsonRpcErrorResponse errorResp = (JsonRpcErrorResponse) resp;
-    assertThat(errorResp.getError()).isEqualTo(JsonRpcError.UNKNOWN_BLOCK);
+    assertThat(errorResp.getErrorType()).isEqualTo(RpcErrorType.UNKNOWN_BLOCK);
   }
 
   @Test

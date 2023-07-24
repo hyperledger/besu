@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.api.handlers;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
 import org.hyperledger.besu.ethereum.api.jsonrpc.context.ContextKey;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import java.util.Collection;
 
@@ -58,7 +58,7 @@ public class AuthenticationHandler {
     if (!response.closed()) {
       response
           .setStatusCode(HttpResponseStatus.UNAUTHORIZED.code())
-          .end(Json.encode(new JsonRpcErrorResponse(null, JsonRpcError.UNAUTHORIZED)));
+          .end(Json.encode(new JsonRpcErrorResponse(null, RpcErrorType.UNAUTHORIZED)));
     }
   }
 }

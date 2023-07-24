@@ -155,13 +155,6 @@ public class BesuCommandTest extends CommandTestAbstract {
           .put("config", (new JsonObject()).put("chainId", GENESIS_CONFIG_TEST_CHAINID));
   private static final JsonObject GENESIS_INVALID_DATA =
       (new JsonObject()).put("config", new JsonObject());
-  private static final JsonObject VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID =
-      (new JsonObject())
-          .put(
-              "config",
-              new JsonObject().put("isQuorum", true).put("chainId", GENESIS_CONFIG_TEST_CHAINID));
-  private static final JsonObject INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET =
-      (new JsonObject()).put("config", new JsonObject().put("isQuorum", true));
   private static final JsonObject INVALID_GENESIS_EC_CURVE =
       (new JsonObject()).put("config", new JsonObject().put("ecCurve", "abcd"));
   private static final JsonObject VALID_GENESIS_EC_CURVE =
@@ -4229,7 +4222,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--privacy-url", ENCLAVE_URI, "--privacy-public-key-file", file.toString());
 
     verifyMultiOptionsConstraintLoggerCall(
-        "--privacy-url and/or --privacy-public-key-file ignored because none of --privacy-enabled or isQuorum (in genesis file) was defined.");
+        "--privacy-url and/or --privacy-public-key-file ignored because none of --privacy-enabled was defined.");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -4555,17 +4548,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Pruning cannot be enabled with privacy.");
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void privacyWithGoQuorumModeMustError() throws IOException {
-    final Path genesisFile =
-        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
-    parseCommand(
-        "--privacy-enabled", "--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("GoQuorum privacy is no longer supported in Besu");
   }
 
   @Rule public TemporaryFolder testFolder = new TemporaryFolder();
@@ -5239,42 +5221,6 @@ public class BesuCommandTest extends CommandTestAbstract {
             "--compatibility-eth64-forkid-enabled",
             "Enable the legacy Eth/64 fork id. (default: false)");
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void quorumInteropNotDefinedInGenesisDoesNotEnforceZeroGasPrice() throws IOException {
-    final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
-    parseCommand("--genesis-file", genesisFile.toString());
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void quorumInteropEnabledFailsWithoutGasPriceSet() throws IOException {
-    final Path genesisFile =
-        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
-    parseCommand("--genesis-file", genesisFile.toString());
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "--min-gas-price must be set to zero if isQuorum mode is enabled in the genesis file.");
-  }
-
-  @Test
-  public void quorumInteropEnabledFailsWithoutGasPriceSetToZero() throws IOException {
-    final Path genesisFile =
-        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
-    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "1");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "--min-gas-price must be set to zero if isQuorum mode is enabled in the genesis file.");
-  }
-
-  @Test
-  public void quorumInteropEnabledFailsWithMainnetChainId() throws IOException {
-    final Path genesisFile =
-        createFakeGenesisFile(INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET.put("chainId", "1"));
-    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("isQuorum mode cannot be used on Mainnet.");
   }
 
   @Test

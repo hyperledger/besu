@@ -20,10 +20,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.blockcreation.CoinbaseNotSetException;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 
@@ -76,7 +76,7 @@ public class MinerStartTest {
   public void shouldReturnCoinbaseNotSetErrorWhenCoinbaseHasNotBeenSet() {
     final JsonRpcRequestContext request = minerStart();
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.COINBASE_NOT_SET);
+        new JsonRpcErrorResponse(null, RpcErrorType.COINBASE_NOT_SET);
 
     doThrow(new CoinbaseNotSetException("")).when(miningCoordinator).enable();
 

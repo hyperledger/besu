@@ -61,9 +61,7 @@ public class NodeSmartContractPermissioningIbft2StallAcceptanceTest
         Address.fromHexString(CONTRACT_ADDRESS));
     final PermissioningConfiguration permissioningConfiguration =
         new PermissioningConfiguration(
-            Optional.empty(),
-            Optional.of(smartContractPermissioningConfiguration),
-            Optional.empty());
+            Optional.empty(), Optional.of(smartContractPermissioningConfiguration));
 
     // Set permissioning configurations on nodes
     bootnode.setPermissioningConfiguration(permissioningConfiguration);
