@@ -53,9 +53,9 @@ public class SelfDestructOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    // fist calculate cost.  There's a bit of yak shaving getting values to calculate the cost
+    // First calculate cost.  There's a bit of yak shaving getting values to calculate the cost.
     final Address beneficiaryAddress = Words.toAddress(frame.popStackItem());
-    // because of weird EIP150/158 reasons we care about a null account, so we can't merge this.
+    // Because of weird EIP150/158 reasons we care about a null account, so we can't merge this.
     final Account beneficiaryNullable = frame.getWorldUpdater().get(beneficiaryAddress);
     final boolean beneficiaryIsWarm =
         frame.warmUpAddress(beneficiaryAddress) || gasCalculator().isPrecompile(beneficiaryAddress);
@@ -67,7 +67,7 @@ public class SelfDestructOperation extends AbstractOperation {
         gasCalculator().selfDestructOperationGasCost(beneficiaryNullable, originatorBalance)
             + (beneficiaryIsWarm ? 0L : gasCalculator().getColdAccountAccessCost());
 
-    // with the cost we can test for two early exits: static or not enough gas
+    // With the cost we can test for two early exits: static or not enough gas.
     if (frame.isStatic()) {
       return new OperationResult(cost, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     } else if (frame.getRemainingGas() < cost) {
@@ -84,15 +84,15 @@ public class SelfDestructOperation extends AbstractOperation {
     originatorAccount.decrementBalance(originatorBalance);
     beneficiaryAccount.incrementBalance(originatorBalance);
 
-    // If we are actually destroying the contract (pre-Cancun or same-tx-create) we need to
-    // explicitly zero out the account balance (destroying ether if the originator is the
+    // If we are actually destroying the originator (pre-Cancun or same-tx-create) we need to
+    // explicitly zero out the account balance (destroying ether/value if the originator is the
     // beneficiary) as well as tag it for later self-destruct cleanup.
     if (!eip6780Semantics || frame.wasCreatedInTransaction(originatorAddress)) {
       frame.addSelfDestruct(originatorAddress);
       originatorAccount.setBalance(Wei.ZERO);
     }
 
-    // add refund in message frame
+    // Add refund in message frame.
     frame.addRefund(beneficiaryAddress, originatorBalance);
 
     // Set frame to CODE_SUCCESS so that the frame performs a normal halt.
