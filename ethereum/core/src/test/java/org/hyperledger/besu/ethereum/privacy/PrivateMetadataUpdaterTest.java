@@ -30,12 +30,12 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PrivateMetadataUpdaterTest {
 
   private PrivateMetadataUpdater updater;
@@ -46,7 +46,7 @@ public class PrivateMetadataUpdaterTest {
   private Hash stateRoot;
   private Hash pmtHash;
 
-  @Before
+  @BeforeEach
   public void before() {
     blockHeader = mock(BlockHeader.class);
     privateStateStorage = new InMemoryPrivacyStorageProvider().createPrivateStateStorage();

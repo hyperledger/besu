@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class TargetingGasLimitCalculatorTest {
   private static final long ADJUSTMENT_FACTOR = 1024L;

@@ -20,14 +20,14 @@ import static org.hyperledger.besu.ethereum.privacy.storage.PrivateStateKeyValue
 
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PrivateStateKeyValueStorageTest {
 
   private PrivateStateKeyValueStorage storage;
 
-  @Before
+  @BeforeEach
   public void before() {
     storage = new PrivateStateKeyValueStorage(new InMemoryKeyValueStorage());
   }
