@@ -31,10 +31,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivGetFilterChanges;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogsResult;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
@@ -150,7 +150,7 @@ public class PrivGetFilterChangesTest {
     when(filterManager.logsChanges(eq(FILTER_ID))).thenReturn(null);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.FILTER_NOT_FOUND);
+        new JsonRpcErrorResponse(null, RpcErrorType.FILTER_NOT_FOUND);
 
     final JsonRpcRequestContext request = privGetFilterChangesRequest(PRIVACY_GROUP_ID, FILTER_ID);
     final JsonRpcResponse response = method.response(request);

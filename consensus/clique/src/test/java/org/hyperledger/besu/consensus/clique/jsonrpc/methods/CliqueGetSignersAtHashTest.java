@@ -27,9 +27,9 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
@@ -130,6 +130,6 @@ public class CliqueGetSignersAtHashTest {
         .thenReturn(Optional.empty());
 
     final JsonRpcErrorResponse response = (JsonRpcErrorResponse) method.response(request);
-    assertThat(response.getError().name()).isEqualTo(JsonRpcError.INTERNAL_ERROR.name());
+    assertThat(response.getErrorType()).isEqualTo(RpcErrorType.INTERNAL_ERROR);
   }
 }

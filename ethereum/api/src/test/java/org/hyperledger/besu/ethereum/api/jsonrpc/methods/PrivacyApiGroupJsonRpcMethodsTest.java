@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.PRIVACY_NOT_ENABLED;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.PRIVACY_NOT_ENABLED;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
@@ -143,7 +143,7 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
     assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
 
     JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
-    assertThat(errorResponse.getError()).isEqualTo(PRIVACY_NOT_ENABLED);
+    assertThat(errorResponse.getErrorType()).isEqualTo(PRIVACY_NOT_ENABLED);
   }
 
   @Test
