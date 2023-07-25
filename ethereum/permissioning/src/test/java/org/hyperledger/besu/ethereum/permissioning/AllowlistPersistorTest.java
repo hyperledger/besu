@@ -30,9 +30,9 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AllowlistPersistorTest {
 
@@ -43,7 +43,7 @@ public class AllowlistPersistorTest {
   private final String nodesAllowlist =
       String.format("%s=[%s]", ALLOWLIST_TYPE.NODES.getTomlKey(), "\"node1\",\"node2\"");
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException {
     List<String> lines = Lists.newArrayList(nodesAllowlist, accountsAllowlist);
     tempFile = File.createTempFile("test", "test");
@@ -136,7 +136,7 @@ public class AllowlistPersistorTest {
         .isInstanceOf(AllowlistFileSyncException.class);
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     tempFile.delete();
   }
