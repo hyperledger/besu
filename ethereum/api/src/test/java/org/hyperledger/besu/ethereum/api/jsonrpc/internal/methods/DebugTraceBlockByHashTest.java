@@ -44,8 +44,8 @@ import java.util.OptionalLong;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Answers;
 
 public class DebugTraceBlockByHashTest {
@@ -62,7 +62,7 @@ public class DebugTraceBlockByHashTest {
   private final Hash blockHash =
       Hash.fromHexString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
-  @Before
+  @BeforeEach
   public void setUp() {
     doAnswer(
             invocation ->
