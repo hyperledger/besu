@@ -40,8 +40,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.impl.UserImpl;
 import org.assertj.core.util.Lists;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("MockNotUsedInProduction")
 public class PrivFindPrivacyGroupTest {
@@ -61,7 +61,7 @@ public class PrivFindPrivacyGroupTest {
   private JsonRpcRequestContext request;
   private PrivacyGroup privacyGroup;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     when(privacyParameters.getEnclave()).thenReturn(enclave);
     when(privacyParameters.isEnabled()).thenReturn(true);

@@ -37,20 +37,20 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class DebugStandardTraceBadBlockToFileTest {
 
-  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir private static Path folder;
 
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private final Blockchain blockchain = mock(Blockchain.class);
@@ -62,9 +62,9 @@ public class DebugStandardTraceBadBlockToFileTest {
 
   private final DebugStandardTraceBadBlockToFile debugStandardTraceBadBlockToFile =
       new DebugStandardTraceBadBlockToFile(
-          () -> transactionTracer, blockchainQueries, protocolSchedule, folder.getRoot().toPath());
+          () -> transactionTracer, blockchainQueries, protocolSchedule, folder);
 
-  @Before
+  @BeforeEach
   public void setup() {
     doAnswer(
             invocation ->

@@ -49,18 +49,20 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class TransactionTracerTest {
 
-  @Rule public TemporaryFolder traceDir = new TemporaryFolder();
+  @TempDir private static Path traceDir;
 
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private Blockchain blockchain;
@@ -98,7 +100,7 @@ public class TransactionTracerTest {
   private final Hash invalidBlockHash =
       Hash.fromHexString("1111111111111111111111111111111111111111111111111111111111111111");
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     transactionTracer = new TransactionTracer(new BlockReplay(protocolSchedule, blockchain));
     when(transaction.getHash()).thenReturn(transactionHash);
@@ -230,7 +232,7 @@ public class TransactionTracerTest {
             mutableWorldState,
             blockHash,
             Optional.of(ImmutableTransactionTraceParams.builder().build()),
-            traceDir.getRoot().toPath());
+            traceDir);
 
     assertThat(transactionTraces).isEmpty();
   }
@@ -273,7 +275,7 @@ public class TransactionTracerTest {
             mutableWorldState,
             blockHash,
             Optional.of(ImmutableTransactionTraceParams.builder().build()),
-            traceDir.getRoot().toPath());
+            traceDir);
 
     assertThat(transactionTraces.size()).isEqualTo(1);
     assertThat(Files.readString(Path.of(transactionTraces.get(0))))

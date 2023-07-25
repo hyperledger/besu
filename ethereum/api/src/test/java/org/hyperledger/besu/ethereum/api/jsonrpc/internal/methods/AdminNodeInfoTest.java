@@ -50,13 +50,16 @@ import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.StrictStubs.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class AdminNodeInfoTest {
 
   @Mock private P2PNetwork p2pNetwork;
@@ -81,7 +84,7 @@ public class AdminNodeInfoTest {
               .listeningPort(30303)
               .build());
 
-  @Before
+  @BeforeEach
   public void setup() {
     when(blockHeader.getHash()).thenReturn(Hash.EMPTY);
     final ChainHead testChainHead = new ChainHead(blockHeader, Difficulty.ONE, 1L);

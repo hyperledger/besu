@@ -48,7 +48,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256s;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class EthGetTransactionReceiptTest {
   private final TransactionReceipt statusReceipt =

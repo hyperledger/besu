@@ -36,14 +36,14 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class FilterManagerTest {
 
   private BlockDataGenerator blockGenerator;
@@ -55,7 +55,7 @@ public class FilterManagerTest {
   @Mock private TransactionPool transactionPool;
   @Spy final FilterRepository filterRepository = new FilterRepository();
 
-  @Before
+  @BeforeEach
   public void setupTest() {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     this.blockGenerator = new BlockDataGenerator();

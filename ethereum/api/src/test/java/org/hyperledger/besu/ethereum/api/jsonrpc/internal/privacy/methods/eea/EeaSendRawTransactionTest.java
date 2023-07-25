@@ -36,12 +36,12 @@ import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
 
   // RLP encode fails creating a transaction without privateFrom so must be manually encoded
@@ -58,7 +58,7 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
 
   RestrictedOffchainEeaSendRawTransaction method;
 
-  @Before
+  @BeforeEach
   public void before() {
 
     method =

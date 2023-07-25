@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -48,16 +49,15 @@ import graphql.GraphQL;
 import io.vertx.core.Vertx;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
 public abstract class AbstractEthGraphQLHttpServiceTest {
-  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir private static Path tempDir;
 
   private static BlockchainSetupUtil blockchainSetupUtil;
 
@@ -72,7 +72,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
   final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
   protected static final MediaType GRAPHQL = MediaType.parse("application/graphql; charset=utf-8");
 
-  @BeforeClass
+  @BeforeAll
   public static void setupConstants() {
     blockchainSetupUtil =
         BlockchainSetupUtil.createForEthashChain(
@@ -80,7 +80,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
     blockchainSetupUtil.importAllBlocks();
   }
 
-  @Before
+  @BeforeEach
   public void setupTest() throws Exception {
     final Synchronizer synchronizerMock = Mockito.mock(Synchronizer.class);
     final SyncStatus status = new DefaultSyncStatus(1, 2, 3, Optional.of(4L), Optional.of(5L));
@@ -133,7 +133,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
     service =
         new GraphQLHttpService(
             vertx,
-            folder.newFolder().toPath(),
+            tempDir,
             config,
             graphQL,
             Map.of(
@@ -154,7 +154,7 @@ public abstract class AbstractEthGraphQLHttpServiceTest {
     baseUrl = service.url() + "/graphql/";
   }
 
-  @After
+  @AfterEach
   public void shutdownServer() {
     client.dispatcher().executorService().shutdown();
     client.connectionPool().evictAll();

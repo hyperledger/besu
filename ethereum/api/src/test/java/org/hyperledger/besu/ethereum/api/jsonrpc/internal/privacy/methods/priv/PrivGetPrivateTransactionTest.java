@@ -42,13 +42,13 @@ import java.util.Optional;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.impl.UserImpl;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PrivGetPrivateTransactionTest {
 
   @Mock private PrivacyController privacyController;
@@ -63,7 +63,7 @@ public class PrivGetPrivateTransactionTest {
   private PrivGetPrivateTransaction privGetPrivateTransaction;
   private Transaction markerTransaction;
 
-  @Before
+  @BeforeEach
   public void before() {
     privGetPrivateTransaction = new PrivGetPrivateTransaction(privacyController, privacyIdProvider);
 

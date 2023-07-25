@@ -31,7 +31,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class EthJsonRpcHttpServiceTest extends AbstractJsonRpcHttpServiceTest {
 
