@@ -24,23 +24,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.UUID;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class HashRateMiningCoordinatorTest {
   private final Blockchain blockchain = mock(Blockchain.class);
   private final SyncState syncState = mock(SyncState.class);
   private final PoWMinerExecutor minerExecutor = mock(PoWMinerExecutor.class);
-  private final String id;
-  private final Long hashRate;
-  private final Long wantTotalHashrate;
-  private final int startSealersSize;
-  private final boolean wantAdded;
 
-  @Parameters
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
@@ -51,21 +42,14 @@ public class HashRateMiningCoordinatorTest {
         });
   }
 
-  public HashRateMiningCoordinatorTest(
+  @ParameterizedTest
+  @MethodSource("data")
+  public void test(
       final String id,
       final long hashRate,
       final long wantTotalHashrate,
       final int startSealersSize,
       final boolean wantAdded) {
-    this.id = id;
-    this.hashRate = hashRate;
-    this.startSealersSize = startSealersSize;
-    this.wantAdded = wantAdded;
-    this.wantTotalHashrate = wantTotalHashrate;
-  }
-
-  @Test
-  public void test() {
     final PoWMiningCoordinator miningCoordinator =
         new PoWMiningCoordinator(blockchain, minerExecutor, syncState, 1000, 10);
     for (int i = 0; i < startSealersSize; i++) {

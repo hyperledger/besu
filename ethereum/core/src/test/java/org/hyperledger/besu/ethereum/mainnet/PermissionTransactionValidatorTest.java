@@ -1,0 +1,161 @@
+/*
+ * Copyright Hyperledger Besu Contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package org.hyperledger.besu.ethereum.mainnet;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams.transactionPoolParams;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+
+import java.math.BigInteger;
+import java.util.Optional;
+import java.util.function.Supplier;
+
+import com.google.common.base.Suppliers;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+
+@RunWith(MockitoJUnitRunner.class)
+public class PermissionTransactionValidatorTest extends MainnetTransactionValidatorTest {
+
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final KeyPair senderKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
+  @Mock private GasCalculator gasCalculator;
+
+  private final Transaction basicTransaction =
+      new TransactionTestFixture()
+          .chainId(Optional.of(BigInteger.ONE))
+          .createTransaction(senderKeys);
+
+  @Test
+  public void shouldRejectTransactionIfAccountIsNotPermitted() {
+    final TransactionValidator baseValidator =
+        createTransactionValidator(
+            gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
+    final TransactionValidator validator =
+        new PermissionTransactionValidator(baseValidator, transactionFilter(false));
+
+    assertThat(
+            validator.validateForSender(
+                basicTransaction, accountWithNonce(0), transactionPoolParams))
+        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED));
+  }
+
+  @Test
+  public void shouldAcceptValidTransactionIfAccountIsPermitted() {
+    final TransactionValidator baseValidator =
+        createTransactionValidator(
+            gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
+    final TransactionValidator validator =
+        new PermissionTransactionValidator(baseValidator, transactionFilter(true));
+
+    assertThat(
+            validator.validateForSender(
+                basicTransaction, accountWithNonce(0), transactionPoolParams))
+        .isEqualTo(ValidationResult.valid());
+  }
+
+  @Test
+  public void shouldPropagateCorrectStateChangeParamToTransactionFilter() {
+    final ArgumentCaptor<Boolean> stateChangeLocalParamCaptor =
+        ArgumentCaptor.forClass(Boolean.class);
+    final ArgumentCaptor<Boolean> stateChangeOnchainParamCaptor =
+        ArgumentCaptor.forClass(Boolean.class);
+    final PermissionTransactionFilter permissionTransactionFilter =
+        mock(PermissionTransactionFilter.class);
+    when(permissionTransactionFilter.permitted(
+            any(Transaction.class),
+            stateChangeLocalParamCaptor.capture(),
+            stateChangeOnchainParamCaptor.capture()))
+        .thenReturn(true);
+
+    final TransactionValidator baseValidator =
+        createTransactionValidator(
+            gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
+    final TransactionValidator validator =
+        new PermissionTransactionValidator(baseValidator, permissionTransactionFilter);
+
+    final TransactionValidationParams validationParams =
+        ImmutableTransactionValidationParams.builder().checkOnchainPermissions(true).build();
+
+    validator.validateForSender(basicTransaction, accountWithNonce(0), validationParams);
+
+    assertThat(stateChangeLocalParamCaptor.getValue()).isTrue();
+    assertThat(stateChangeOnchainParamCaptor.getValue()).isTrue();
+  }
+
+  @Test
+  public void shouldNotCheckAccountPermissionIfBothValidationParamsCheckPermissionsAreFalse() {
+    final PermissionTransactionFilter permissionTransactionFilter =
+        mock(PermissionTransactionFilter.class);
+
+    final TransactionValidator baseValidator =
+        createTransactionValidator(
+            gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
+    final TransactionValidator validator =
+        new PermissionTransactionValidator(baseValidator, permissionTransactionFilter);
+
+    final TransactionValidationParams validationParams =
+        ImmutableTransactionValidationParams.builder()
+            .checkOnchainPermissions(false)
+            .checkLocalPermissions(false)
+            .build();
+
+    validator.validateForSender(basicTransaction, accountWithNonce(0), validationParams);
+
+    assertThat(validator.validateForSender(basicTransaction, accountWithNonce(0), validationParams))
+        .isEqualTo(ValidationResult.valid());
+
+    verifyNoInteractions(permissionTransactionFilter);
+  }
+
+  private Account accountWithNonce(final long nonce) {
+    return account(basicTransaction.getUpfrontCost(0L), nonce);
+  }
+
+  private Account account(final Wei balance, final long nonce) {
+    final Account account = mock(Account.class);
+    when(account.getBalance()).thenReturn(balance);
+    when(account.getNonce()).thenReturn(nonce);
+    return account;
+  }
+
+  private PermissionTransactionFilter transactionFilter(final boolean permitted) {
+    final PermissionTransactionFilter permissionTransactionFilter =
+        mock(PermissionTransactionFilter.class);
+    when(permissionTransactionFilter.permitted(any(Transaction.class), anyBoolean(), anyBoolean()))
+        .thenReturn(permitted);
+    return permissionTransactionFilter;
+  }
+}

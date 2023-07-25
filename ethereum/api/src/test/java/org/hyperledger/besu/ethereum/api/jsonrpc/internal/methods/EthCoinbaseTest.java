@@ -30,13 +30,13 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EthCoinbaseTest {
 
   @Mock private MiningCoordinator miningCoordinator;
@@ -44,7 +44,7 @@ public class EthCoinbaseTest {
   private final String JSON_RPC_VERSION = "2.0";
   private final String ETH_METHOD = "eth_coinbase";
 
-  @Before
+  @BeforeEach
   public void setUp() {
     method = new EthCoinbase(miningCoordinator);
   }
