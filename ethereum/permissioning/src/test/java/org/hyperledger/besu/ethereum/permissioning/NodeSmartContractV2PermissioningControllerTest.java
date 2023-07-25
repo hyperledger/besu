@@ -42,8 +42,8 @@ import java.net.UnknownHostException;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class NodeSmartContractV2PermissioningControllerTest {
 
@@ -77,7 +77,7 @@ public class NodeSmartContractV2PermissioningControllerTest {
 
   private NodeSmartContractV2PermissioningController permissioningController;
 
-  @Before
+  @BeforeEach
   public void beforeEach() {
     permissioningController =
         new NodeSmartContractV2PermissioningController(
