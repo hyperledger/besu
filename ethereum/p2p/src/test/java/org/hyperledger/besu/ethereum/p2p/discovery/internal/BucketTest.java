@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.internal;
 
-import static junit.framework.TestCase.assertFalse;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryTestHelper;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class BucketTest {
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();

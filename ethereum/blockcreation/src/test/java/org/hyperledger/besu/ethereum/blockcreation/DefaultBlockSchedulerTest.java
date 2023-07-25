@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
 import java.time.Clock;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class DefaultBlockSchedulerTest {
 

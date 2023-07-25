@@ -37,9 +37,6 @@ dependencies {
   implementation 'io.vertx:vertx-core'
   implementation 'io.tmio:tuweni-bytes'
 
-  testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
-
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }

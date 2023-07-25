@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions.Action;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PeerPermissionsTest {
   final Peer localPeer = createPeer();
