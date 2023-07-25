@@ -219,9 +219,11 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
    * @param permissionTransactionFilter the transaction filter
    */
   @Override
-  public void setTransactionFilter(final PermissionTransactionFilter permissionTransactionFilter) {
+  public void setPermissionTransactionFilter(
+      final PermissionTransactionFilter permissionTransactionFilter) {
     transitionUtils.dispatchConsumerAccordingToMergeState(
-        protocolSchedule -> protocolSchedule.setTransactionFilter(permissionTransactionFilter));
+        protocolSchedule ->
+            protocolSchedule.setPermissionTransactionFilter(permissionTransactionFilter));
   }
 
   /**

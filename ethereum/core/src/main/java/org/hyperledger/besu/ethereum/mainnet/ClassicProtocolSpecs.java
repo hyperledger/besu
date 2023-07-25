@@ -76,7 +76,7 @@ public class ClassicProtocolSpecs {
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(gasCalculator, gasLimitCalculator, true, chainId))
+                new TransactionValidatorFactory(gasCalculator, gasLimitCalculator, true, chainId))
         .name("ClassicTangerineWhistle");
   }
 
@@ -130,7 +130,7 @@ public class ClassicProtocolSpecs {
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_REMOVED)
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(gasCalculator, gasLimitCalculator, true, chainId))
+                new TransactionValidatorFactory(gasCalculator, gasLimitCalculator, true, chainId))
         .name("DefuseDifficultyBomb");
   }
 
@@ -293,7 +293,7 @@ public class ClassicProtocolSpecs {
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(
+                new TransactionValidatorFactory(
                     gasCalculator,
                     gasLimitCalculator,
                     true,

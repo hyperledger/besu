@@ -111,11 +111,12 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
   }
 
   @Override
-  public void setTransactionFilter(final PermissionTransactionFilter permissionTransactionFilter) {
+  public void setPermissionTransactionFilter(
+      final PermissionTransactionFilter permissionTransactionFilter) {
     protocolSpecs.forEach(
         spec ->
             spec.spec()
-                .getTransactionValidator()
+                .getTransactionValidatorFactory()
                 .setPermissionTransactionFilter(permissionTransactionFilter));
   }
 

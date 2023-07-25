@@ -51,7 +51,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidatorFactory;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
@@ -79,6 +79,7 @@ import com.google.common.base.Suppliers;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -99,7 +100,10 @@ public class BesuEventsImplTest {
   @Mock private EthContext mockEthContext;
   @Mock private EthMessages mockEthMessages;
   @Mock private EthScheduler mockEthScheduler;
-  @Mock private TransactionValidator mockTransactionValidator;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  private TransactionValidatorFactory mockTransactionValidatorFactory;
+
   @Mock private ProtocolSpec mockProtocolSpec;
   @Mock private WorldStateArchive mockWorldStateArchive;
   @Mock private MutableWorldState mockWorldState;
@@ -128,11 +132,12 @@ public class BesuEventsImplTest {
     when(mockProtocolContext.getBlockchain()).thenReturn(blockchain);
     when(mockProtocolContext.getWorldStateArchive()).thenReturn(mockWorldStateArchive);
     when(mockProtocolSchedule.getByBlockHeader(any())).thenReturn(mockProtocolSpec);
-    when(mockProtocolSpec.getTransactionValidator()).thenReturn(mockTransactionValidator);
+    when(mockProtocolSpec.getTransactionValidatorFactory())
+        .thenReturn(mockTransactionValidatorFactory);
     when(mockProtocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0L));
-    when(mockTransactionValidator.validate(any(), any(Optional.class), any()))
+    when(mockTransactionValidatorFactory.get().validate(any(), any(Optional.class), any()))
         .thenReturn(ValidationResult.valid());
-    when(mockTransactionValidator.validateForSender(any(), any(), any()))
+    when(mockTransactionValidatorFactory.get().validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
     when(mockWorldStateArchive.getMutable(any(), anyBoolean()))
         .thenReturn(Optional.of(mockWorldState));

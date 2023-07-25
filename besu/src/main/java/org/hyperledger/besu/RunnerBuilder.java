@@ -1136,7 +1136,7 @@ public class RunnerBuilder {
           permissioningController ->
               besuController
                   .getProtocolSchedule()
-                  .setTransactionFilter(permissioningController::isPermitted));
+                  .setPermissionTransactionFilter(permissioningController::isPermitted));
 
       return accountPermissioningController;
     } else {

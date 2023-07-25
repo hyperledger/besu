@@ -62,7 +62,7 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
     return new ProtocolSpec(
         original.getName(),
         original.getEvm(),
-        original.getTransactionValidator(),
+        original.getTransactionValidatorFactory(),
         original.getTransactionProcessor(),
         original.getPrivateTransactionProcessor(),
         original.getBlockHeaderValidator(),
@@ -121,8 +121,9 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
   }
 
   @Override
-  public void setTransactionFilter(final PermissionTransactionFilter permissionTransactionFilter) {
-    delegate.setTransactionFilter(permissionTransactionFilter);
+  public void setPermissionTransactionFilter(
+      final PermissionTransactionFilter permissionTransactionFilter) {
+    delegate.setPermissionTransactionFilter(permissionTransactionFilter);
   }
 
   @Override

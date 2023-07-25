@@ -43,6 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -53,7 +54,10 @@ public class MainnetTransactionProcessorTest {
   private static final int MAX_STACK_SIZE = 1024;
 
   private final GasCalculator gasCalculator = new LondonGasCalculator();
-  @Mock private TransactionValidator transactionValidator;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  private TransactionValidatorFactory transactionValidatorFactory;
+
   @Mock private AbstractMessageProcessor contractCreationProcessor;
   @Mock private AbstractMessageProcessor messageCallProcessor;
 
@@ -69,7 +73,7 @@ public class MainnetTransactionProcessorTest {
   MainnetTransactionProcessor createTransactionProcessor(final boolean warmCoinbase) {
     return new MainnetTransactionProcessor(
         gasCalculator,
-        transactionValidator,
+        transactionValidatorFactory,
         contractCreationProcessor,
         messageCallProcessor,
         false,
@@ -92,8 +96,9 @@ public class MainnetTransactionProcessorTest {
     when(transaction.getPayload()).thenReturn(Bytes.EMPTY);
     when(transaction.getSender()).thenReturn(senderAddress);
     when(transaction.getValue()).thenReturn(Wei.ZERO);
-    when(transactionValidator.validate(any(), any(), any())).thenReturn(ValidationResult.valid());
-    when(transactionValidator.validateForSender(any(), any(), any()))
+    when(transactionValidatorFactory.get().validate(any(), any(), any()))
+        .thenReturn(ValidationResult.valid());
+    when(transactionValidatorFactory.get().validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
     when(worldState.getOrCreate(any())).thenReturn(senderAccount);
     when(worldState.getOrCreateSenderAccount(any())).thenReturn(senderAccount);
@@ -168,9 +173,12 @@ public class MainnetTransactionProcessorTest {
   private ArgumentCaptor<TransactionValidationParams> transactionValidationParamCaptor() {
     final ArgumentCaptor<TransactionValidationParams> txValidationParamCaptor =
         ArgumentCaptor.forClass(TransactionValidationParams.class);
-    when(transactionValidator.validate(any(), any(), any())).thenReturn(ValidationResult.valid());
+    when(transactionValidatorFactory.get().validate(any(), any(), any()))
+        .thenReturn(ValidationResult.valid());
     // returning invalid transaction to halt method execution
-    when(transactionValidator.validateForSender(any(), any(), txValidationParamCaptor.capture()))
+    when(transactionValidatorFactory
+            .get()
+            .validateForSender(any(), any(), txValidationParamCaptor.capture()))
         .thenReturn(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_HIGH));
     return txValidationParamCaptor;
   }
