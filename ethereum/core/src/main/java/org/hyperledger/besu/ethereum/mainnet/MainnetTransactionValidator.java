@@ -22,7 +22,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
-import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -49,39 +48,9 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
   private final Optional<BigInteger> chainId;
 
-  private Optional<PermissionTransactionFilter> permissionTransactionFilter = Optional.empty();
   private final Set<TransactionType> acceptedTransactionTypes;
 
   private final int maxInitcodeSize;
-
-  public MainnetTransactionValidator(
-      final GasCalculator gasCalculator,
-      final GasLimitCalculator gasLimitCalculator,
-      final boolean checkSignatureMalleability,
-      final Optional<BigInteger> chainId) {
-    this(
-        gasCalculator,
-        gasLimitCalculator,
-        checkSignatureMalleability,
-        chainId,
-        Set.of(TransactionType.FRONTIER));
-  }
-
-  public MainnetTransactionValidator(
-      final GasCalculator gasCalculator,
-      final GasLimitCalculator gasLimitCalculator,
-      final boolean checkSignatureMalleability,
-      final Optional<BigInteger> chainId,
-      final Set<TransactionType> acceptedTransactionTypes) {
-    this(
-        gasCalculator,
-        gasLimitCalculator,
-        FeeMarket.legacy(),
-        checkSignatureMalleability,
-        chainId,
-        acceptedTransactionTypes,
-        Integer.MAX_VALUE);
-  }
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
@@ -239,12 +208,6 @@ public class MainnetTransactionValidator implements TransactionValidator {
               transaction.getSender()));
     }
 
-    if (!isSenderAllowed(transaction, validationParams)) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED,
-          String.format("Sender %s is not on the Account Allowlist", transaction.getSender()));
-    }
-
     return ValidationResult.valid();
   }
 
@@ -285,27 +248,5 @@ public class MainnetTransactionValidator implements TransactionValidator {
           "sender could not be extracted from transaction signature");
     }
     return ValidationResult.valid();
-  }
-
-  private boolean isSenderAllowed(
-      final Transaction transaction, final TransactionValidationParams validationParams) {
-    if (validationParams.checkLocalPermissions() || validationParams.checkOnchainPermissions()) {
-      return permissionTransactionFilter
-          .map(
-              c ->
-                  c.permitted(
-                      transaction,
-                      validationParams.checkLocalPermissions(),
-                      validationParams.checkOnchainPermissions()))
-          .orElse(true);
-    } else {
-      return true;
-    }
-  }
-
-  @Override
-  public void setPermissionTransactionFilter(
-      final PermissionTransactionFilter permissionTransactionFilter) {
-    this.permissionTransactionFilter = Optional.of(permissionTransactionFilter);
   }
 }

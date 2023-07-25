@@ -218,6 +218,7 @@ public class MessageFrame {
   private final List<Log> logs;
   private long gasRefund;
   private final Set<Address> selfDestructs;
+  private final Set<Address> creates;
   private final Map<Address, Wei> refunds;
   private final Set<Address> warmedUpAddresses;
   private final Multimap<Address, Bytes32> warmedUpStorage;
@@ -305,6 +306,7 @@ public class MessageFrame {
     this.logs = new ArrayList<>();
     this.gasRefund = 0L;
     this.selfDestructs = new HashSet<>();
+    this.creates = new HashSet<>();
     this.refunds = new HashMap<>();
     this.recipient = recipient;
     this.originator = originator;
@@ -969,6 +971,51 @@ public class MessageFrame {
    */
   public Set<Address> getSelfDestructs() {
     return selfDestructs;
+  }
+
+  /**
+   * Add recipient to the create set if not already present.
+   *
+   * @param address The recipient to create
+   */
+  public void addCreate(final Address address) {
+    creates.add(address);
+  }
+  /**
+   * Add addresses to the create set if they are not already present.
+   *
+   * @param addresses The addresses to create
+   */
+  public void addCreates(final Set<Address> addresses) {
+    creates.addAll(addresses);
+  }
+
+  /** Removes all entries in the create set. */
+  public void clearCreates() {
+    creates.clear();
+  }
+
+  /**
+   * Returns the create set.
+   *
+   * @return the create set
+   */
+  public Set<Address> getCreates() {
+    return creates;
+  }
+
+  /**
+   * Was the account at this address created in this transaction? (in any of the previously executed
+   * message frames in this transaction).
+   *
+   * @param address the address to check
+   * @return true if the account was created in any parent or prior message frame in this
+   *     transaction. False if the account existed in the world state at the beginning of the
+   *     transaction.
+   */
+  public boolean wasCreatedInTransaction(final Address address) {
+    return creates.contains((address))
+        || (parentMessageFrame != null && parentMessageFrame.wasCreatedInTransaction(address));
   }
 
   /**

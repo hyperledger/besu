@@ -141,6 +141,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     final Wei value = Wei.wrap(frame.getStackItem(0));
 
     final Address contractAddress = targetContractAddress(frame);
+    frame.addCreate(contractAddress);
 
     final long childGasStipend =
         gasCalculator().gasAvailableForChildCreate(frame.getRemainingGas());
@@ -184,6 +185,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       frame.incrementRemainingGas(childFrame.getRemainingGas());
       frame.addLogs(childFrame.getLogs());
       frame.addSelfDestructs(childFrame.getSelfDestructs());
+      frame.addCreates(childFrame.getCreates());
       frame.incrementGasRefund(childFrame.getGasRefund());
 
       if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
