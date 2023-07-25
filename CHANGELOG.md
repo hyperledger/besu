@@ -1,5 +1,15 @@
-
 # Changelog
+
+## 23.7.1
+
+### Breaking Changes
+
+### Additions and Improvements
+
+### Bug Fixes
+
+### Download Links
+
 
 ## 23.7.0
 
@@ -27,8 +37,8 @@
 - Fix for pending transactions reference leak [#5693](https://github.com/hyperledger/besu/pull/5693) 
 
 ### Download Links
-https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.0/besu-23.7.0.tar.gz / sha256: 
-https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.0/besu-23.7.0.zip / sha256: 
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.0/besu-23.7.0.tar.gz / sha256: 083efc26e22fa20bd04c9a6311e50dd93092f001e5d639d023fd7a61173616dd 
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.0/besu-23.7.0.zip / sha256: 019a5ce3b7b94e76a6bac08bc23e3fec9880e235928b3c5378541927690046d7
 
 
 ## 23.4.4
