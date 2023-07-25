@@ -36,6 +36,8 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -44,20 +46,20 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.http.WebSocketFrame;
 import io.vertx.core.json.Json;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(VertxExtension.class)
 public class EthSubscribeIntegrationTest {
 
   private Vertx vertx;
+  private VertxTestContext testContext;
   private WebSocketMessageHandler webSocketMessageHandler;
   private SubscriptionManager subscriptionManager;
   private WebSocketMethodsFactory webSocketMethodsFactory;
@@ -65,9 +67,10 @@ public class EthSubscribeIntegrationTest {
   private final String CONNECTION_ID_1 = "test-connection-id-1";
   private final String CONNECTION_ID_2 = "test-connection-id-2";
 
-  @Before
+  @BeforeEach
   public void before() {
     vertx = Vertx.vertx();
+    testContext = new VertxTestContext();
     subscriptionManager = new SubscriptionManager(new NoOpMetricsSystem());
     webSocketMethodsFactory = new WebSocketMethodsFactory(subscriptionManager, new HashMap<>());
     webSocketMessageHandler =
@@ -79,8 +82,7 @@ public class EthSubscribeIntegrationTest {
   }
 
   @Test
-  public void shouldAddConnectionToMap(final TestContext context) {
-    final Async async = context.async();
+  public void shouldAddConnectionToMap() throws InterruptedException {
 
     final JsonRpcRequest subscribeRequestBody = createEthSubscribeRequestBody(CONNECTION_ID_1);
 
@@ -90,12 +92,12 @@ public class EthSubscribeIntegrationTest {
     final ServerWebSocket websocketMock = mock(ServerWebSocket.class);
     when(websocketMock.textHandlerID()).thenReturn(CONNECTION_ID_1);
     when(websocketMock.writeFrame(argThat(this::isFinalFrame)))
-        .then(completeOnLastFrame(async, websocketMock));
+        .then(completeOnLastFrame(testContext, websocketMock));
 
     webSocketMessageHandler.handle(
         websocketMock, Json.encodeToBuffer(subscribeRequestBody), Optional.empty());
 
-    async.awaitSuccess(ASYNC_TIMEOUT);
+    testContext.awaitCompletion(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS);
 
     final List<SyncingSubscription> syncingSubscriptions = getSubscriptions();
     assertThat(syncingSubscriptions).hasSize(1);
@@ -105,8 +107,8 @@ public class EthSubscribeIntegrationTest {
   }
 
   @Test
-  public void shouldAddMultipleConnectionsToMap(final TestContext context) {
-    final Async async = context.async(2);
+  public void shouldAddMultipleConnectionsToMap() throws InterruptedException {
+    final CountDownLatch latch = new CountDownLatch(2);
 
     final JsonRpcRequest subscribeRequestBody1 = createEthSubscribeRequestBody(CONNECTION_ID_1);
     final JsonRpcRequest subscribeRequestBody2 = createEthSubscribeRequestBody(CONNECTION_ID_2);
@@ -118,18 +120,18 @@ public class EthSubscribeIntegrationTest {
 
     final ServerWebSocket websocketMock1 = mock(ServerWebSocket.class);
     when(websocketMock1.textHandlerID()).thenReturn(CONNECTION_ID_1);
-    when(websocketMock1.writeFrame(argThat(this::isFinalFrame))).then(countDownOnLastFrame(async));
+    when(websocketMock1.writeFrame(argThat(this::isFinalFrame))).then(countDownOnLastFrame(latch));
 
     final ServerWebSocket websocketMock2 = mock(ServerWebSocket.class);
     when(websocketMock2.textHandlerID()).thenReturn(CONNECTION_ID_2);
-    when(websocketMock2.writeFrame(argThat(this::isFinalFrame))).then(countDownOnLastFrame(async));
+    when(websocketMock2.writeFrame(argThat(this::isFinalFrame))).then(countDownOnLastFrame(latch));
 
     webSocketMessageHandler.handle(
         websocketMock1, Json.encodeToBuffer(subscribeRequestBody1), Optional.empty());
     webSocketMessageHandler.handle(
         websocketMock2, Json.encodeToBuffer(subscribeRequestBody2), Optional.empty());
 
-    async.awaitSuccess(ASYNC_TIMEOUT);
+    latch.await(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS);
 
     final List<SyncingSubscription> updatedSubscriptions = getSubscriptions();
     assertThat(updatedSubscriptions).hasSize(2);
@@ -176,16 +178,16 @@ public class EthSubscribeIntegrationTest {
   }
 
   private Answer<ServerWebSocket> completeOnLastFrame(
-      final Async async, final ServerWebSocket websocket) {
+      final VertxTestContext testContext, final ServerWebSocket websocket) {
     return invocation -> {
-      async.complete();
+      testContext.completeNow();
       return websocket;
     };
   }
 
-  private Answer<Future<Void>> countDownOnLastFrame(final Async async) {
+  private Answer<Future<Void>> countDownOnLastFrame(final CountDownLatch latch) {
     return invocation -> {
-      async.countDown();
+      latch.countDown();
       return Future.succeededFuture();
     };
   }

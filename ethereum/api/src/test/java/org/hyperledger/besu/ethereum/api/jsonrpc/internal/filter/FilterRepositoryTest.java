@@ -21,14 +21,14 @@ import java.util.Collection;
 import java.util.Optional;
 
 import org.assertj.core.util.Lists;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class FilterRepositoryTest {
 
   private FilterRepository repository;
 
-  @Before
+  @BeforeEach
   public void before() {
     repository = new FilterRepository();
   }
