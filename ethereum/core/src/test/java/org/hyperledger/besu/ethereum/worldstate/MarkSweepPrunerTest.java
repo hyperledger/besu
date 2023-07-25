@@ -147,7 +147,8 @@ public class MarkSweepPrunerTest {
     stateRoots.forEach(
         stateRoot -> {
           final InOrder thisRootsOrdering = inOrder(hashValueStore, worldStateStorage);
-          thisRootsOrdering.verify(hashValueStore).remove(stateRoot);
+          // disable this validation since the underlying storage no longer directly uses .remove()
+          // thisRootsOrdering.verify(hashValueStore).remove(stateRoot);
           thisRootsOrdering.verify(worldStateStorage).prune(any());
         });
   }
@@ -184,7 +185,8 @@ public class MarkSweepPrunerTest {
     stateRoots.forEach(
         stateRoot -> {
           final InOrder thisRootsOrdering = inOrder(hashValueStore, worldStateStorage);
-          thisRootsOrdering.verify(hashValueStore).remove(stateRoot);
+          // disable this validation since the underlying storage no longer directly uses .remove()
+          // thisRootsOrdering.verify(hashValueStore).remove(stateRoot);
           thisRootsOrdering.verify(worldStateStorage).prune(any());
         });
 

@@ -61,7 +61,7 @@ public class SegmentedInMemoryKeyValueStorage
    *
    * @param hashValueStore the hash value store
    */
-  SegmentedInMemoryKeyValueStorage(
+  protected SegmentedInMemoryKeyValueStorage(
       final Map<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> hashValueStore) {
     this.hashValueStore = hashValueStore;
   }
@@ -85,7 +85,7 @@ public class SegmentedInMemoryKeyValueStorage
     final Lock lock = rwLock.writeLock();
     lock.lock();
     try {
-      hashValueStore.computeIfAbsent(segmentIdentifier, s -> new HashMap<>()).clear();
+      Optional.ofNullable(hashValueStore.get(segmentIdentifier)).ifPresent(Map::clear);
     } finally {
       lock.unlock();
     }
@@ -200,7 +200,10 @@ public class SegmentedInMemoryKeyValueStorage
 
   @Override
   public SegmentedInMemoryKeyValueStorage takeSnapshot() {
-    return new SegmentedInMemoryKeyValueStorage(new HashMap<>(hashValueStore));
+    // need to clone the submaps also:
+    return new SegmentedInMemoryKeyValueStorage(
+        hashValueStore.entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, e -> new HashMap<>(e.getValue()))));
   }
 
   @Override
@@ -247,11 +250,13 @@ public class SegmentedInMemoryKeyValueStorage
 
         removedKeys.entrySet().stream()
             .forEach(
-                entry ->
-                    hashValueStore
-                        .computeIfAbsent(entry.getKey(), __ -> new HashMap<>())
-                        .keySet()
-                        .removeAll(entry.getValue()));
+                entry -> {
+                  var keyset =
+                      hashValueStore
+                          .computeIfAbsent(entry.getKey(), __ -> new HashMap<>())
+                          .keySet();
+                  keyset.removeAll(entry.getValue());
+                });
 
         updatedValues.clear();
         removedKeys.clear();
