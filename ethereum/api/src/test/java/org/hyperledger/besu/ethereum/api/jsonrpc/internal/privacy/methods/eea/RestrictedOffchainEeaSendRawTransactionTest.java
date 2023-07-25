@@ -30,12 +30,12 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RestrictedOffchainEeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
   static final String ENCLAVE_PUBLIC_KEY = "S28yYlZxRCtuTmxOWUw1RUU3eTNJZE9udmlmdGppaXo=";
 
@@ -43,7 +43,7 @@ public class RestrictedOffchainEeaSendRawTransactionTest extends BaseEeaSendRawT
 
   RestrictedOffchainEeaSendRawTransaction method;
 
-  @Before
+  @BeforeEach
   public void before() {
     method =
         new RestrictedOffchainEeaSendRawTransaction(

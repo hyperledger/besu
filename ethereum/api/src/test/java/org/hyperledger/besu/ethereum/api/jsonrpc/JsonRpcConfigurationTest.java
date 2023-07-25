@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class JsonRpcConfigurationTest {
 

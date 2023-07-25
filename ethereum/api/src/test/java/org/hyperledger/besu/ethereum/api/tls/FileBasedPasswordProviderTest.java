@@ -22,17 +22,16 @@ import java.nio.file.Path;
 import java.util.List;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class FileBasedPasswordProviderTest {
 
-  @Rule public final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir private Path folder;
 
   @Test
   public void passwordCanBeReadFromFile() throws IOException {
-    final Path passwordFile = folder.newFile().toPath();
+    final Path passwordFile = folder.resolve("pass1");
     Files.write(passwordFile, List.of("line1", "line2"));
 
     final String password = new FileBasedPasswordProvider(passwordFile).get();
@@ -41,7 +40,7 @@ public class FileBasedPasswordProviderTest {
 
   @Test
   public void exceptionRaisedFromReadingEmptyFile() throws IOException {
-    final Path passwordFile = folder.newFile().toPath();
+    final Path passwordFile = folder.resolve("pass2");
     Files.write(passwordFile, new byte[0]);
 
     Assertions.assertThatExceptionOfType(TlsConfigurationException.class)

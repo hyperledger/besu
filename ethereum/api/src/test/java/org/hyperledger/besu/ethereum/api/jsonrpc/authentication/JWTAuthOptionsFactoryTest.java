@@ -34,7 +34,7 @@ import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class JWTAuthOptionsFactoryTest {
 
