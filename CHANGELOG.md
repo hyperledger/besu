@@ -1,20 +1,21 @@
-
 # Changelog
 
-## 23.7.0
+## 23.7.1
 
 ### Breaking Changes
-- Removed deprecated GoQuorum permissioning interop [#5607](https://github.com/hyperledger/besu/pull/5607)
 
 ### Additions and Improvements
 
 ### Bug Fixes
 
-## 23.4.5
+### Download Links
+
+
+## 23.7.0
 
 ### Breaking Changes
-
-- Removed support for version 0 of the database as it is no longer used by any active node.
+- Removed deprecated GoQuorum permissioning interop [#5607](https://github.com/hyperledger/besu/pull/5607)
+- Removed support for version 0 of the database as it is no longer used by any active node. [#5698](https://github.com/hyperledger/besu/pull/5698)
 
 ### Additions and Improvements
 - `evmtool` launcher binaries now ship as part of the standard distribution. [#5701](https://github.com/hyperledger/besu/pull/5701) 
@@ -23,16 +24,22 @@
 - Add extension points in AbstractCreateOperation for EVM libraries to react to contract creations [#5656](https://github.com/hyperledger/besu/pull/5656)
 - Update to Tuweni 2.4.2. [#5684](https://github.com/hyperledger/besu/pull/5684)
 - Decouple data field from Enum JsonRpcError by creating new enum holder RpcErrorType[#5629](https://github.com/hyperledger/besu/pull/5629)
+- Update to bouncycastle 1.75 [#5675](https://github.com/hyperledger/besu/pull/5675) 
+- Extend OperationTracer with new methods [#5662](https://github.com/hyperledger/besu/pull/5662)
+- Eip 6780 selfdestruct [#5430](https://github.com/hyperledger/besu/pull/5430)
+- Add new debug_getRawTransaction to the DEBUG engine [#5635](https://github.com/hyperledger/besu/pull/5635)
 
 ### Bug Fixes
 - Use the node's configuration to determine if DNS enode URLs are allowed in calls to `admin_addPeer` and `admin_removePeer` [#5584](https://github.com/hyperledger/besu/pull/5584)
 - Align the implementation of Eth/68 `NewPooledTransactionHashes` to other clients, using unsigned int for encoding size. [#5640](https://github.com/hyperledger/besu/pull/5640)
 - Failure at startup when enabling layered txpool before initial sync done [#5636](https://github.com/hyperledger/besu/issues/5636)
 - Remove miner-related option warnings if the change isn't using Ethash consensus algorithm [#5669](https://github.com/hyperledger/besu/pull/5669)
+- Fix for pending transactions reference leak [#5693](https://github.com/hyperledger/besu/pull/5693) 
 
 ### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.0/besu-23.7.0.tar.gz / sha256: 083efc26e22fa20bd04c9a6311e50dd93092f001e5d639d023fd7a61173616dd 
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.0/besu-23.7.0.zip / sha256: 019a5ce3b7b94e76a6bac08bc23e3fec9880e235928b3c5378541927690046d7
 
----
 
 ## 23.4.4
 
