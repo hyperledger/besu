@@ -17,26 +17,26 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionCompleteResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionPendingResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.Optional;
 
 public class EthGetTransactionByHash implements JsonRpcMethod {
 
   private final BlockchainQueries blockchain;
-  private final PendingTransactions pendingTransactions;
+  private final TransactionPool transactionPool;
 
   public EthGetTransactionByHash(
-      final BlockchainQueries blockchain, final PendingTransactions pendingTransactions) {
+      final BlockchainQueries blockchain, final TransactionPool transactionPool) {
     this.blockchain = blockchain;
-    this.pendingTransactions = pendingTransactions;
+    this.transactionPool = transactionPool;
   }
 
   @Override
@@ -48,7 +48,7 @@ public class EthGetTransactionByHash implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     if (requestContext.getRequest().getParamLength() != 1) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
     }
     final Hash hash = requestContext.getRequiredParameter(0, Hash.class);
     final JsonRpcSuccessResponse jsonRpcSuccessResponse =
@@ -58,7 +58,7 @@ public class EthGetTransactionByHash implements JsonRpcMethod {
 
   private Object getResult(final Hash hash) {
     final Optional<Object> transactionPendingResult =
-        pendingTransactions.getTransactionByHash(hash).map(TransactionPendingResult::new);
+        transactionPool.getTransactionByHash(hash).map(TransactionPendingResult::new);
     return transactionPendingResult.orElseGet(
         () -> blockchain.transactionByHash(hash).map(TransactionCompleteResult::new).orElse(null));
   }

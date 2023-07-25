@@ -18,8 +18,8 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -216,12 +216,14 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   /**
    * Sets transaction filter.
    *
-   * @param transactionFilter the transaction filter
+   * @param permissionTransactionFilter the transaction filter
    */
   @Override
-  public void setTransactionFilter(final TransactionFilter transactionFilter) {
+  public void setPermissionTransactionFilter(
+      final PermissionTransactionFilter permissionTransactionFilter) {
     transitionUtils.dispatchConsumerAccordingToMergeState(
-        protocolSchedule -> protocolSchedule.setTransactionFilter(transactionFilter));
+        protocolSchedule ->
+            protocolSchedule.setPermissionTransactionFilter(permissionTransactionFilter));
   }
 
   /**

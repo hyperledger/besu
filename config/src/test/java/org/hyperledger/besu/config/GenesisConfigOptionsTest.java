@@ -19,13 +19,15 @@ import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+import org.hyperledger.besu.datatypes.Address;
+
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class GenesisConfigOptionsTest {
 
@@ -46,13 +48,22 @@ public class GenesisConfigOptionsTest {
   public void shouldUseIbft2WhenIbft2InConfig() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("ibft2", emptyMap()));
     assertThat(config.isIbft2()).isTrue();
+    assertThat(config.isPoa()).isTrue();
     assertThat(config.getConsensusEngine()).isEqualTo("ibft2");
+  }
+
+  public void shouldUseQbftWhenQbftInConfig() {
+    final GenesisConfigOptions config = fromConfigOptions(singletonMap("qbft", emptyMap()));
+    assertThat(config.isQbft()).isTrue();
+    assertThat(config.isPoa()).isTrue();
+    assertThat(config.getConsensusEngine()).isEqualTo("qbft");
   }
 
   @Test
   public void shouldUseCliqueWhenCliqueInConfig() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("clique", emptyMap()));
     assertThat(config.isClique()).isTrue();
+    assertThat(config.isPoa()).isTrue();
     assertThat(config.getCliqueConfigOptions()).isNotSameAs(CliqueConfigOptions.DEFAULT);
     assertThat(config.getConsensusEngine()).isEqualTo("clique");
   }
@@ -61,6 +72,7 @@ public class GenesisConfigOptionsTest {
   public void shouldNotUseCliqueIfCliqueNotPresent() {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.isClique()).isFalse();
+    assertThat(config.isPoa()).isFalse();
     assertThat(config.getCliqueConfigOptions()).isSameAs(CliqueConfigOptions.DEFAULT);
   }
 
@@ -228,6 +240,7 @@ public class GenesisConfigOptionsTest {
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig("{}").getConfigOptions();
     assertThat(config.isEthHash()).isFalse();
     assertThat(config.isClique()).isFalse();
+    assertThat(config.isPoa()).isFalse();
     assertThat(config.getHomesteadBlockNumber()).isEmpty();
   }
 
@@ -254,23 +267,6 @@ public class GenesisConfigOptionsTest {
   }
 
   @Test
-  public void isQuorumShouldDefaultToFalse() {
-    final GenesisConfigOptions config = GenesisConfigFile.fromConfig("{}").getConfigOptions();
-
-    assertThat(config.isQuorum()).isFalse();
-    assertThat(config.getQip714BlockNumber()).isEmpty();
-  }
-
-  @Test
-  public void isQuorumConfigParsedCorrectly() {
-    final GenesisConfigOptions config =
-        fromConfigOptions(Map.of("isQuorum", true, "qip714block", 99999L));
-
-    assertThat(config.isQuorum()).isTrue();
-    assertThat(config.getQip714BlockNumber()).hasValue(99999L);
-  }
-
-  @Test
   public void isZeroBaseFeeShouldDefaultToFalse() {
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig("{}").getConfigOptions();
 
@@ -289,6 +285,30 @@ public class GenesisConfigOptionsTest {
     final GenesisConfigOptions config = fromConfigOptions(Map.of("zerobasefee", true));
 
     assertThat(config.asMap()).containsOnlyKeys("zeroBaseFee").containsValue(true);
+  }
+
+  @Test
+  public void shouldGetDepositContractAddress() {
+    final GenesisConfigOptions config =
+        fromConfigOptions(
+            singletonMap("depositContractAddress", "0x00000000219ab540356cbb839cbe05303d7705fa"));
+    assertThat(config.getDepositContractAddress())
+        .hasValue(Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa"));
+  }
+
+  @Test
+  public void shouldNotHaveDepositContractAddressWhenEmpty() {
+    final GenesisConfigOptions config = fromConfigOptions(emptyMap());
+    assertThat(config.getDepositContractAddress()).isEmpty();
+  }
+
+  @Test
+  public void asMapIncludesDepositContractAddress() {
+    final GenesisConfigOptions config = fromConfigOptions(Map.of("depositContractAddress", "0x0"));
+
+    assertThat(config.asMap())
+        .containsOnlyKeys("depositContractAddress")
+        .containsValue(Address.ZERO);
   }
 
   private GenesisConfigOptions fromConfigOptions(final Map<String, Object> configOptions) {

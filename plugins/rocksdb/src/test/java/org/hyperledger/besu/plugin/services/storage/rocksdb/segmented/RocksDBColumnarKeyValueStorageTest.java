@@ -16,9 +16,21 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.kvstore.AbstractKeyValueStorageTest;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
@@ -33,15 +45,22 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.LongSupplier;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 
 public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageTest {
 
-  @Rule public final TemporaryFolder folder = new TemporaryFolder();
+  @Mock private ObservableMetricsSystem metricsSystemMock;
+  @Mock private LabelledMetric<OperationTimer> labelledMetricOperationTimerMock;
+  @Mock private LabelledMetric<Counter> labelledMetricCounterMock;
+  @Mock private OperationTimer operationTimerMock;
+
+  @TempDir public Path folder;
 
   @Test
   public void assertClear() throws Exception {
@@ -178,8 +197,8 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
   }
 
   @Test
-  public void dbShouldIgnoreExperimentalSegmentsIfNotExisted() throws Exception {
-    final Path testPath = folder.newFolder().toPath();
+  public void dbShouldIgnoreExperimentalSegmentsIfNotExisted(@TempDir final Path testPath)
+      throws Exception {
     // Create new db should ignore experimental column family
     SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store =
         createSegmentedStore(
@@ -195,8 +214,9 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
   }
 
   @Test
-  public void dbShouldNotIgnoreExperimentalSegmentsIfExisted() throws Exception {
-    final Path testPath = folder.newFolder().toPath();
+  public void dbShouldNotIgnoreExperimentalSegmentsIfExisted(@TempDir final Path tempDir)
+      throws Exception {
+    final Path testPath = tempDir.resolve("testdb");
     // Create new db with experimental column family
     SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store =
         createSegmentedStore(
@@ -225,8 +245,8 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
   }
 
   @Test
-  public void dbWillBeBackwardIncompatibleAfterExperimentalSegmentsAreAdded() throws Exception {
-    final Path testPath = folder.newFolder().toPath();
+  public void dbWillBeBackwardIncompatibleAfterExperimentalSegmentsAreAdded(
+      @TempDir final Path testPath) throws Exception {
     // Create new db should ignore experimental column family
     SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store =
         createSegmentedStore(
@@ -256,6 +276,80 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     } catch (StorageException e) {
       assertThat(e.getMessage()).contains("Column families not opened");
     }
+  }
+
+  @Test
+  public void createStoreMustCreateMetrics() throws Exception {
+    // Prepare mocks
+    when(labelledMetricOperationTimerMock.labels(any())).thenReturn(operationTimerMock);
+    when(metricsSystemMock.createLabelledTimer(
+            eq(BesuMetricCategory.KVSTORE_ROCKSDB), anyString(), anyString(), any()))
+        .thenReturn(labelledMetricOperationTimerMock);
+    when(metricsSystemMock.createLabelledCounter(
+            eq(BesuMetricCategory.KVSTORE_ROCKSDB), anyString(), anyString(), any()))
+        .thenReturn(labelledMetricCounterMock);
+    // Prepare argument captors
+    final ArgumentCaptor<String> labelledTimersMetricsNameArgs =
+        ArgumentCaptor.forClass(String.class);
+    final ArgumentCaptor<String> labelledTimersHelpArgs = ArgumentCaptor.forClass(String.class);
+    final ArgumentCaptor<String> labelledCountersMetricsNameArgs =
+        ArgumentCaptor.forClass(String.class);
+    final ArgumentCaptor<String> labelledCountersHelpArgs = ArgumentCaptor.forClass(String.class);
+    final ArgumentCaptor<String> longGaugesMetricsNameArgs = ArgumentCaptor.forClass(String.class);
+    final ArgumentCaptor<String> longGaugesHelpArgs = ArgumentCaptor.forClass(String.class);
+
+    // Actual call
+
+    final SegmentedKeyValueStorage<RocksDbSegmentIdentifier> store =
+        createSegmentedStore(
+            folder, metricsSystemMock, List.of(TestSegment.FOO), List.of(TestSegment.EXPERIMENTAL));
+
+    KeyValueStorage keyValueStorage =
+        new SnappableSegmentedKeyValueStorageAdapter<>(TestSegment.FOO, store);
+
+    // Assertions
+    assertThat(keyValueStorage).isNotNull();
+    verify(metricsSystemMock, times(4))
+        .createLabelledTimer(
+            eq(BesuMetricCategory.KVSTORE_ROCKSDB),
+            labelledTimersMetricsNameArgs.capture(),
+            labelledTimersHelpArgs.capture(),
+            any());
+    assertThat(labelledTimersMetricsNameArgs.getAllValues())
+        .containsExactly(
+            "read_latency_seconds",
+            "remove_latency_seconds",
+            "write_latency_seconds",
+            "commit_latency_seconds");
+    assertThat(labelledTimersHelpArgs.getAllValues())
+        .containsExactly(
+            "Latency for read from RocksDB.",
+            "Latency of remove requests from RocksDB.",
+            "Latency for write to RocksDB.",
+            "Latency for commits to RocksDB.");
+
+    verify(metricsSystemMock, times(2))
+        .createLongGauge(
+            eq(BesuMetricCategory.KVSTORE_ROCKSDB),
+            longGaugesMetricsNameArgs.capture(),
+            longGaugesHelpArgs.capture(),
+            any(LongSupplier.class));
+    assertThat(longGaugesMetricsNameArgs.getAllValues())
+        .containsExactly("rocks_db_table_readers_memory_bytes", "rocks_db_files_size_bytes");
+    assertThat(longGaugesHelpArgs.getAllValues())
+        .containsExactly(
+            "Estimated memory used for RocksDB index and filter blocks in bytes",
+            "Estimated database size in bytes");
+
+    verify(metricsSystemMock)
+        .createLabelledCounter(
+            eq(BesuMetricCategory.KVSTORE_ROCKSDB),
+            labelledCountersMetricsNameArgs.capture(),
+            labelledCountersHelpArgs.capture(),
+            any());
+    assertThat(labelledCountersMetricsNameArgs.getValue()).isEqualTo("rollback_count");
+    assertThat(labelledCountersHelpArgs.getValue())
+        .isEqualTo("Number of RocksDB transactions rolled back.");
   }
 
   public enum TestSegment implements SegmentIdentifier {
@@ -300,6 +394,12 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
 
   protected abstract SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore(
       final Path path,
+      final List<SegmentIdentifier> segments,
+      final List<SegmentIdentifier> ignorableSegments);
+
+  protected abstract SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore(
+      final Path path,
+      final MetricsSystem metricsSystem,
       final List<SegmentIdentifier> segments,
       final List<SegmentIdentifier> ignorableSegments);
 

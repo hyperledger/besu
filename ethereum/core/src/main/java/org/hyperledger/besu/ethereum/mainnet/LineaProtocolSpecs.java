@@ -15,14 +15,14 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.linea.CalldataLimits;
 import org.hyperledger.besu.ethereum.linea.LineaBlockBodyValidator;
 import org.hyperledger.besu.ethereum.linea.LineaParameters;
-import org.hyperledger.besu.ethereum.linea.LineaTransactionValidator;
+import org.hyperledger.besu.ethereum.linea.LineaTransactionValidatorFactory;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -65,7 +65,7 @@ public class LineaProtocolSpecs {
         .calldataLimits(calldataLimits)
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
-                new LineaTransactionValidator(
+                new LineaTransactionValidatorFactory(
                     gasCalculator,
                     gasLimitCalculator,
                     zeroBaseFeeMarket,

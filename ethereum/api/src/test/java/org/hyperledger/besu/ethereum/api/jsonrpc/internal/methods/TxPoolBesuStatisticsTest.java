@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PendingTransactionsStatisticsResult;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import com.google.common.collect.Sets;
 import org.junit.Before;
@@ -35,14 +35,14 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class TxPoolBesuStatisticsTest {
 
-  @Mock private PendingTransactions pendingTransactions;
+  @Mock private TransactionPool transactionPool;
   private TxPoolBesuStatistics method;
   private final String JSON_RPC_VERSION = "2.0";
   private final String TXPOOL_PENDING_TRANSACTIONS_METHOD = "txpool_besuStatistics";
 
   @Before
   public void setUp() {
-    method = new TxPoolBesuStatistics(pendingTransactions);
+    method = new TxPoolBesuStatistics(transactionPool);
   }
 
   @Test
@@ -60,8 +60,8 @@ public class TxPoolBesuStatisticsTest {
     final PendingTransaction local = createTransactionInfo(true);
     final PendingTransaction secondLocal = createTransactionInfo(true);
     final PendingTransaction remote = createTransactionInfo(false);
-    when(pendingTransactions.maxSize()).thenReturn(123L);
-    when(pendingTransactions.getPendingTransactions())
+    when(transactionPool.maxSize()).thenReturn(123L);
+    when(transactionPool.getPendingTransactions())
         .thenReturn(Sets.newHashSet(local, secondLocal, remote));
 
     final JsonRpcSuccessResponse actualResponse = (JsonRpcSuccessResponse) method.response(request);

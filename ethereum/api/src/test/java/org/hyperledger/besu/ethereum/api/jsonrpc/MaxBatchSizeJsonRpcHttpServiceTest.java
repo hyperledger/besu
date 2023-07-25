@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -74,7 +74,7 @@ public class MaxBatchSizeJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBa
     try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
       assertThat(resp.code()).isEqualTo(200);
       final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.EXCEEDS_RPC_MAX_BATCH_SIZE;
+      final RpcErrorType expectedError = RpcErrorType.EXCEEDS_RPC_MAX_BATCH_SIZE;
       testHelper.assertValidJsonRpcError(
           json, null, expectedError.getCode(), expectedError.getMessage());
     }

@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.plugin.services.privacy;
 
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.plugin.data.PrivateTransaction;
-import org.hyperledger.besu.plugin.data.Transaction;
 
 import java.util.Optional;
 

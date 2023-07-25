@@ -21,10 +21,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
@@ -92,7 +92,7 @@ public class RestrictedFlexibleEeaSendRawTransactionTest extends BaseEeaSendRawT
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
             validPrivateForTransactionRequest.getRequest().getId(),
-            JsonRpcError.FLEXIBLE_PRIVACY_GROUP_ID_NOT_AVAILABLE);
+            RpcErrorType.FLEXIBLE_PRIVACY_GROUP_ID_NOT_AVAILABLE);
 
     final JsonRpcResponse actualResponse = method.response(validPrivateForTransactionRequest);
 
@@ -109,7 +109,7 @@ public class RestrictedFlexibleEeaSendRawTransactionTest extends BaseEeaSendRawT
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
             validPrivacyGroupTransactionRequest.getRequest().getId(),
-            JsonRpcError.FLEXIBLE_PRIVACY_GROUP_DOES_NOT_EXIST);
+            RpcErrorType.FLEXIBLE_PRIVACY_GROUP_DOES_NOT_EXIST);
 
     final JsonRpcResponse actualResponse = method.response(validPrivacyGroupTransactionRequest);
 
@@ -124,7 +124,7 @@ public class RestrictedFlexibleEeaSendRawTransactionTest extends BaseEeaSendRawT
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
             validPrivacyGroupTransactionRequest.getRequest().getId(),
-            JsonRpcError.FLEXIBLE_PRIVACY_GROUP_DOES_NOT_EXIST);
+            RpcErrorType.FLEXIBLE_PRIVACY_GROUP_DOES_NOT_EXIST);
 
     final JsonRpcResponse actualResponse = method.response(validPrivacyGroupTransactionRequest);
 
@@ -139,7 +139,8 @@ public class RestrictedFlexibleEeaSendRawTransactionTest extends BaseEeaSendRawT
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            validPrivacyGroupTransactionRequest.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+            validPrivacyGroupTransactionRequest.getRequest().getId(),
+            RpcErrorType.UNSUPPORTED_PRIVATE_TRANSACTION_TYPE);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
@@ -152,7 +153,8 @@ public class RestrictedFlexibleEeaSendRawTransactionTest extends BaseEeaSendRawT
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            validPrivacyGroupTransactionRequest.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+            validPrivacyGroupTransactionRequest.getRequest().getId(),
+            RpcErrorType.UNSUPPORTED_PRIVATE_TRANSACTION_TYPE);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }

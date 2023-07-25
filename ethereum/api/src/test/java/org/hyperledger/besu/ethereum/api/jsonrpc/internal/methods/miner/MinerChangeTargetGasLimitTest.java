@@ -20,8 +20,8 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 
 import org.junit.Before;
@@ -50,7 +50,7 @@ public class MinerChangeTargetGasLimitTest {
 
     assertThat(minerChangeTargetGasLimit.response(request))
         .isEqualTo(
-            new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS));
+            new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS));
   }
 
   @Test
@@ -66,7 +66,7 @@ public class MinerChangeTargetGasLimitTest {
         .isEqualTo(
             new JsonRpcErrorResponse(
                 request.getRequest().getId(),
-                JsonRpcError.TARGET_GAS_LIMIT_MODIFICATION_UNSUPPORTED));
+                RpcErrorType.TARGET_GAS_LIMIT_MODIFICATION_UNSUPPORTED));
   }
 
   private JsonRpcRequestContext request(final long longParam) {

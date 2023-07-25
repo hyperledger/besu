@@ -18,10 +18,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.util.LogConfigurator;
 
 import org.apache.logging.log4j.Level;
@@ -117,7 +117,7 @@ public class AdminChangeLogLevelTest {
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "admin_changeLogLevel", new Object[] {null}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = adminChangeLogLevel.response(request);
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
@@ -129,7 +129,7 @@ public class AdminChangeLogLevelTest {
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "admin_changeLogLevel", new String[] {"INVALID"}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = adminChangeLogLevel.response(request);
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
@@ -141,7 +141,7 @@ public class AdminChangeLogLevelTest {
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "admin_changeLogLevel", new Object[] {"DEBUG", "INVALID"}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = adminChangeLogLevel.response(request);
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);

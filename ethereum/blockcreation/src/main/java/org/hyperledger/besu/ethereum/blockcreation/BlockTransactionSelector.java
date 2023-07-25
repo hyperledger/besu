@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -23,7 +24,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
@@ -37,12 +38,12 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
-import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.txselection.TransactionSelector;
 import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -78,15 +79,12 @@ import org.slf4j.LoggerFactory;
  */
 public class BlockTransactionSelector {
 
-  public record TransactionValidationResult(
-      Transaction transaction, ValidationResult<TransactionInvalidReason> validationResult) {}
-
   public static class TransactionSelectionResults {
     private final List<Transaction> transactions = Lists.newArrayList();
     private final Map<TransactionType, List<Transaction>> transactionsByType =
         new EnumMap<>(TransactionType.class);
     private final List<TransactionReceipt> receipts = Lists.newArrayList();
-    private final List<TransactionValidationResult> invalidTransactions = Lists.newArrayList();
+    private final Map<Transaction, TransactionInvalidReason> invalidTransactions = new HashMap<>();
     private final List<TransactionSelectionResult> selectionResults = Lists.newArrayList();
     private long cumulativeGasUsed = 0;
     private long cumulativeDataGasUsed = 0;
@@ -114,9 +112,8 @@ public class BlockTransactionSelector {
     }
 
     private void updateWithInvalidTransaction(
-        final Transaction transaction,
-        final ValidationResult<TransactionInvalidReason> validationResult) {
-      invalidTransactions.add(new TransactionValidationResult(transaction, validationResult));
+        final Transaction transaction, final TransactionInvalidReason invalidReason) {
+      invalidTransactions.put(transaction, invalidReason);
     }
 
     public List<Transaction> getTransactions() {
@@ -139,7 +136,7 @@ public class BlockTransactionSelector {
       return cumulativeDataGasUsed;
     }
 
-    public List<TransactionValidationResult> getInvalidTransactions() {
+    public Map<Transaction, TransactionInvalidReason> getInvalidTransactions() {
       return invalidTransactions;
     }
 
@@ -219,7 +216,7 @@ public class BlockTransactionSelector {
   private final ProcessableBlockHeader processableBlockHeader;
   private final Blockchain blockchain;
   private final MutableWorldState worldState;
-  private final PendingTransactions pendingTransactions;
+  private final TransactionPool transactionPool;
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private final Address miningBeneficiary;
   private final Wei dataGasPrice;
@@ -234,7 +231,7 @@ public class BlockTransactionSelector {
       final MainnetTransactionProcessor transactionProcessor,
       final Blockchain blockchain,
       final MutableWorldState worldState,
-      final PendingTransactions pendingTransactions,
+      final TransactionPool transactionPool,
       final ProcessableBlockHeader processableBlockHeader,
       final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
       final Wei minTransactionGasPrice,
@@ -249,7 +246,7 @@ public class BlockTransactionSelector {
     this.transactionProcessor = transactionProcessor;
     this.blockchain = blockchain;
     this.worldState = worldState;
-    this.pendingTransactions = pendingTransactions;
+    this.transactionPool = transactionPool;
     this.processableBlockHeader = processableBlockHeader;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.isCancelled = isCancelled;
@@ -273,11 +270,11 @@ public class BlockTransactionSelector {
   public TransactionSelectionResults buildTransactionListForBlock() {
     LOG.atDebug()
         .setMessage("Transaction pool stats {}")
-        .addArgument(pendingTransactions.logStats())
+        .addArgument(transactionPool::logStats)
         .log();
-    pendingTransactions.selectTransactions(
+    transactionPool.selectTransactions(
         pendingTransaction -> {
-          final var res = evaluateTransaction(pendingTransaction, false);
+          final var res = evaluateTransaction(pendingTransaction);
           transactionSelectionResults.addSelectionResult(res);
           return res;
         });
@@ -297,7 +294,7 @@ public class BlockTransactionSelector {
   public TransactionSelectionResults evaluateTransactions(final List<Transaction> transactions) {
     transactions.forEach(
         transaction ->
-            transactionSelectionResults.addSelectionResult(evaluateTransaction(transaction, true)));
+            transactionSelectionResults.addSelectionResult(evaluateTransaction(transaction)));
     return transactionSelectionResults;
   }
 
@@ -310,8 +307,7 @@ public class BlockTransactionSelector {
    * the space remaining in the block.
    *
    */
-  private TransactionSelectionResult evaluateTransaction(
-      final Transaction transaction, final boolean reportFutureNonceTransactionsAsInvalid) {
+  private TransactionSelectionResult evaluateTransaction(final Transaction transaction) {
     if (isCancelled.get()) {
       throw new CancellationException("Cancelled during transaction selection.");
     }
@@ -392,12 +388,9 @@ public class BlockTransactionSelector {
       }
       return txSelectionResult;
     } else {
+      transactionSelectionResults.updateWithInvalidTransaction(
+          transaction, effectiveResult.getValidationResult().getInvalidReason());
 
-      final boolean isIncorrectNonce = isIncorrectNonce(effectiveResult.getValidationResult());
-      if (!isIncorrectNonce || reportFutureNonceTransactionsAsInvalid) {
-        transactionSelectionResults.updateWithInvalidTransaction(
-            transaction, effectiveResult.getValidationResult());
-      }
       return transactionSelectionResultForInvalidResult(
           transaction, effectiveResult.getValidationResult());
     }
@@ -420,7 +413,7 @@ public class BlockTransactionSelector {
     // Here we only care about EIP1159 since for Frontier and local transactions the checks
     // that we do when accepting them in the pool are enough
     if (transaction.getType().supports1559FeeMarket()
-        && !pendingTransactions.isLocalSender(transaction.getSender())) {
+        && !transactionPool.isLocalSender(transaction.getSender())) {
 
       // For EIP1559 transactions, the price is dynamic and depends on network conditions, so we can
       // only calculate at this time the current minimum price the transaction is willing to pay
@@ -469,10 +462,6 @@ public class BlockTransactionSelector {
   private boolean isTransientValidationError(final TransactionInvalidReason invalidReason) {
     return invalidReason.equals(TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE)
         || invalidReason.equals(TransactionInvalidReason.NONCE_TOO_HIGH);
-  }
-
-  private boolean isIncorrectNonce(final ValidationResult<TransactionInvalidReason> result) {
-    return result.getInvalidReason().equals(TransactionInvalidReason.NONCE_TOO_HIGH);
   }
 
   private boolean transactionTooLargeForBlock(final Transaction transaction) {

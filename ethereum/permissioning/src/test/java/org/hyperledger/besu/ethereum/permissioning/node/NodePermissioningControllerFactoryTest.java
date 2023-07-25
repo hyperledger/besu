@@ -67,7 +67,7 @@ public class NodePermissioningControllerFactoryTest {
 
   @Test
   public void testCreateWithNeitherPermissioningEnabled() {
-    config = new PermissioningConfiguration(Optional.empty(), Optional.empty(), Optional.empty());
+    config = new PermissioningConfiguration(Optional.empty(), Optional.empty());
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
         factory.create(
@@ -93,9 +93,7 @@ public class NodePermissioningControllerFactoryTest {
     smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(true);
     config =
         new PermissioningConfiguration(
-            Optional.empty(),
-            Optional.of(smartContractPermissioningConfiguration),
-            Optional.empty());
+            Optional.empty(), Optional.of(smartContractPermissioningConfiguration));
 
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
@@ -123,8 +121,7 @@ public class NodePermissioningControllerFactoryTest {
     localPermissioningConfig.setNodeAllowlist(Collections.emptyList());
     localPermissioningConfig.setNodePermissioningConfigFilePath("fake-file-path");
     config =
-        new PermissioningConfiguration(
-            Optional.of(localPermissioningConfig), Optional.empty(), Optional.empty());
+        new PermissioningConfiguration(Optional.of(localPermissioningConfig), Optional.empty());
 
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
@@ -160,8 +157,7 @@ public class NodePermissioningControllerFactoryTest {
     config =
         new PermissioningConfiguration(
             Optional.of(localPermissioningConfig),
-            Optional.of(smartContractPermissioningConfiguration),
-            Optional.empty());
+            Optional.of(smartContractPermissioningConfiguration));
 
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
@@ -196,8 +192,7 @@ public class NodePermissioningControllerFactoryTest {
     config =
         new PermissioningConfiguration(
             Optional.of(localPermissioningConfig),
-            Optional.of(smartContractPermissioningConfiguration),
-            Optional.empty());
+            Optional.of(smartContractPermissioningConfiguration));
 
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
@@ -235,9 +230,7 @@ public class NodePermissioningControllerFactoryTest {
     smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(true);
     config =
         new PermissioningConfiguration(
-            Optional.empty(),
-            Optional.of(smartContractPermissioningConfiguration),
-            Optional.empty());
+            Optional.empty(), Optional.of(smartContractPermissioningConfiguration));
 
     NodePermissioningControllerFactory factory = new NodePermissioningControllerFactory();
     NodePermissioningController controller =
@@ -262,9 +255,7 @@ public class NodePermissioningControllerFactoryTest {
     smartContractPermissioningConfiguration.setSmartContractNodeAllowlistEnabled(true);
     config =
         new PermissioningConfiguration(
-            Optional.empty(),
-            Optional.of(smartContractPermissioningConfiguration),
-            Optional.empty());
+            Optional.empty(), Optional.of(smartContractPermissioningConfiguration));
 
     when(transactionSimulator.processAtHead(any())).thenThrow(new RuntimeException());
 

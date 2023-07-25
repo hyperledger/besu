@@ -28,9 +28,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcRequest;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 
@@ -166,7 +166,7 @@ public class WebSocketMessageHandlerTest {
     final JsonObject requestJson =
         new JsonObject().put("id", 1).put("method", "eth_nonexistentMethod");
     final JsonRpcErrorResponse expectedErrorResponse1 =
-        new JsonRpcErrorResponse(1, JsonRpcError.METHOD_NOT_FOUND);
+        new JsonRpcErrorResponse(1, RpcErrorType.METHOD_NOT_FOUND);
 
     final JsonArray arrayJson = new JsonArray(List.of(requestJson, requestJson));
 
@@ -190,7 +190,7 @@ public class WebSocketMessageHandlerTest {
     final Async async = context.async();
 
     final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.INVALID_REQUEST);
+        new JsonRpcErrorResponse(null, RpcErrorType.INVALID_REQUEST);
 
     when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
@@ -209,7 +209,7 @@ public class WebSocketMessageHandlerTest {
     final Async async = context.async();
 
     final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.INVALID_REQUEST);
+        new JsonRpcErrorResponse(null, RpcErrorType.INVALID_REQUEST);
 
     when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
@@ -230,7 +230,7 @@ public class WebSocketMessageHandlerTest {
     final JsonObject requestJson =
         new JsonObject().put("id", 1).put("method", "eth_nonexistentMethod");
     final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(1, JsonRpcError.METHOD_NOT_FOUND);
+        new JsonRpcErrorResponse(1, RpcErrorType.METHOD_NOT_FOUND);
 
     when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
@@ -254,7 +254,7 @@ public class WebSocketMessageHandlerTest {
     when(jsonRpcMethodMock.response(eq(expectedRequest)))
         .thenThrow(new InvalidJsonRpcParameters(""));
     final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(1, JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(1, RpcErrorType.INVALID_PARAMS);
 
     when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 
@@ -276,7 +276,7 @@ public class WebSocketMessageHandlerTest {
         new JsonRpcRequestContext(requestJson.mapTo(WebSocketRpcRequest.class));
     when(jsonRpcMethodMock.response(eq(expectedRequest))).thenThrow(new RuntimeException());
     final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(1, JsonRpcError.INTERNAL_ERROR);
+        new JsonRpcErrorResponse(1, RpcErrorType.INTERNAL_ERROR);
 
     when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
 

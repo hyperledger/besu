@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.FIND_PRIVACY_GROUP_ERROR;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.FIND_PRIVACY_GROUP_ERROR;
 
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
@@ -23,10 +23,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AbstractBlockParameterMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
@@ -80,18 +80,18 @@ public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
           requestContext.getRequest().getId(), FIND_PRIVACY_GROUP_ERROR);
     } catch (final EnclaveClientException e) {
       final Pattern pattern = Pattern.compile("^Privacy group.*not found$");
-      if (e.getMessage().equals(JsonRpcError.ENCLAVE_PRIVACY_GROUP_MISSING.getMessage())
+      if (e.getMessage().equals(RpcErrorType.ENCLAVE_PRIVACY_GROUP_MISSING.getMessage())
           || pattern.matcher(e.getMessage()).find()) {
         LOG.error("Failed to retrieve privacy group");
         return new JsonRpcErrorResponse(
             requestContext.getRequest().getId(), FIND_PRIVACY_GROUP_ERROR);
       } else {
         return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), JsonRpcError.ENCLAVE_ERROR);
+            requestContext.getRequest().getId(), RpcErrorType.ENCLAVE_ERROR);
       }
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
     }
 
     if (privacyGroup.isEmpty()) {
@@ -108,7 +108,7 @@ public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
                     requestContext.getRequest().getId(), stateRootHash.toString()))
         .orElse(
             new JsonRpcErrorResponse(
-                requestContext.getRequest().getId(), JsonRpcError.INTERNAL_ERROR));
+                requestContext.getRequest().getId(), RpcErrorType.INTERNAL_ERROR));
   }
 
   @Override

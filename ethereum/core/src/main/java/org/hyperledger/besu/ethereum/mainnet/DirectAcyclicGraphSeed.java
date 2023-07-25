@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.crypto.MessageDigestFactory.KECCAK256_ALG;
 import static org.hyperledger.besu.ethereum.mainnet.EthHash.EPOCH_LENGTH;
 
-import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.MessageDigestFactory;
 
 import java.security.DigestException;
@@ -25,11 +25,13 @@ import java.security.NoSuchAlgorithmException;
 
 public class DirectAcyclicGraphSeed {
 
+  private DirectAcyclicGraphSeed() {}
+
   public static final ThreadLocal<MessageDigest> KECCAK_256 =
       ThreadLocal.withInitial(
           () -> {
             try {
-              return MessageDigestFactory.create(Hash.KECCAK256_ALG);
+              return MessageDigestFactory.create(KECCAK256_ALG);
             } catch (final NoSuchAlgorithmException ex) {
               throw new IllegalStateException(ex);
             }

@@ -20,7 +20,7 @@ import org.hyperledger.besu.kvstore.AbstractKeyValueStorageTest;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class LimitedInMemoryKeyValueStorageTest extends AbstractKeyValueStorageTest {
 

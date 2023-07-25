@@ -42,8 +42,8 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableSet;
 import io.opentelemetry.api.GlobalOpenTelemetry;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PrometheusMetricsSystemTest {
 
@@ -52,7 +52,7 @@ public class PrometheusMetricsSystemTest {
           .thenComparing(Observation::getMetricName)
           .thenComparing((o1, o2) -> o1.getLabels().equals(o2.getLabels()) ? 0 : 1);
 
-  @Before
+  @BeforeEach
   public void resetGlobalOpenTelemetry() {
     GlobalOpenTelemetry.resetForTest();
   }

@@ -259,6 +259,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     frame.setReturnData(outputData);
     frame.addLogs(childFrame.getLogs());
     frame.addSelfDestructs(childFrame.getSelfDestructs());
+    frame.addCreates(childFrame.getCreates());
     frame.incrementGasRefund(childFrame.getGasRefund());
 
     final long gasRemaining = childFrame.getRemainingGas();

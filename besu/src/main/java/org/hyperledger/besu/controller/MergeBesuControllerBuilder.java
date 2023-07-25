@@ -20,6 +20,7 @@ import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionBestPeerComparator;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -162,6 +163,10 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
     final ExecutorService blockBuilderExecutor =
         MonitoredExecutors.newSingleThreadExecutor("PoS-Block-Builder", metricsSystem);
 
+    final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
+    final Optional<Address> depositContractAddress =
+        genesisConfigOptions.getDepositContractAddress();
+
     return new MergeCoordinator(
         protocolContext,
         protocolSchedule,
@@ -169,9 +174,10 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
           LOG.debug("Block builder executor status {}", blockBuilderExecutor);
           return CompletableFuture.runAsync(task, blockBuilderExecutor);
         },
-        transactionPool.getPendingTransactions(),
+        transactionPool,
         miningParameters,
-        backwardSyncContext);
+        backwardSyncContext,
+        depositContractAddress);
   }
 
   @Override
