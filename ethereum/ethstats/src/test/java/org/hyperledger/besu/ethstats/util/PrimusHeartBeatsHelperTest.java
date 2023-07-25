@@ -22,7 +22,7 @@ import static org.mockito.Mockito.verify;
 import java.util.regex.Pattern;
 
 import io.vertx.core.http.WebSocket;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 @SuppressWarnings("unchecked")
