@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PeerDiscoveryTimestampsTest {
   private final PeerDiscoveryTestHelper helper = new PeerDiscoveryTestHelper();

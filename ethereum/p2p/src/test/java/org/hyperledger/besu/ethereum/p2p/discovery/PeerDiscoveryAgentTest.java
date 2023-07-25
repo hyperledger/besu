@@ -54,7 +54,7 @@ import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PeerDiscoveryAgentTest {
 

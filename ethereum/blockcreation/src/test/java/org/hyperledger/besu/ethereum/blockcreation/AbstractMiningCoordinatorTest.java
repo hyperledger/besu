@@ -34,8 +34,8 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import java.util.Collections;
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AbstractMiningCoordinatorTest {
 
@@ -50,7 +50,7 @@ public class AbstractMiningCoordinatorTest {
   private final TestMiningCoordinator miningCoordinator =
       new TestMiningCoordinator(blockchain, minerExecutor, syncState);
 
-  @Before
+  @BeforeEach
   public void setUp() {
     when(minerExecutor.startAsyncMining(any(), any(), any())).thenReturn(Optional.of(blockMiner));
   }
