@@ -3,6 +3,17 @@
 ## 23.7.1
 
 ### Breaking Changes
+
+### Additions and Improvements
+
+### Bug Fixes
+
+### Download Links
+
+
+## 23.7.0
+
+### Breaking Changes
 - Removed deprecated GoQuorum permissioning interop [#5607](https://github.com/hyperledger/besu/pull/5607)
 - Removed support for version 0 of the database as it is no longer used by any active node. [#5698](https://github.com/hyperledger/besu/pull/5698)
 
@@ -24,14 +35,11 @@
 - Failure at startup when enabling layered txpool before initial sync done [#5636](https://github.com/hyperledger/besu/issues/5636)
 - Remove miner-related option warnings if the change isn't using Ethash consensus algorithm [#5669](https://github.com/hyperledger/besu/pull/5669)
 - Fix for pending transactions reference leak [#5693](https://github.com/hyperledger/besu/pull/5693) 
-- Address a performance regression observed in import testing [#5734](https://github.com/hyperledger/besu/pull/5734)
-- Update native libraries that have JPMS friendly module names [#5749](https://github.com/hyperledger/besu/pull/5749)
 
 ### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.0/besu-23.7.0.tar.gz / sha256: 083efc26e22fa20bd04c9a6311e50dd93092f001e5d639d023fd7a61173616dd 
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.0/besu-23.7.0.zip / sha256: 019a5ce3b7b94e76a6bac08bc23e3fec9880e235928b3c5378541927690046d7
 
-## 23.7.0 
-
-- Was not released (failed burn-in test)
 
 ## 23.4.4
 
@@ -63,7 +71,7 @@ https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.4.4/besu-23.4.4.z
 
 - Was not released (failed burn-in test)
 
-## 23.4.2
+- ## 23.4.2
 
 - Was not released (failed burn-in test)
 
