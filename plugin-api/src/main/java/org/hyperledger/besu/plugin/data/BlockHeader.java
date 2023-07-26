@@ -208,4 +208,12 @@ public interface BlockHeader {
    */
   @Unstable
   Optional<? extends Quantity> getExcessDataGas();
+
+  /**
+   * The data_gas_used of this header.
+   *
+   * @return The data_gas_used of this header.
+   */
+  @Unstable
+  Optional<? extends Long> getDataGasUsed();
 }

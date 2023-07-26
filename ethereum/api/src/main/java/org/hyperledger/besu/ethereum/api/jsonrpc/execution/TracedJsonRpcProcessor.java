@@ -41,7 +41,7 @@ public class TracedJsonRpcProcessor implements JsonRpcProcessor {
     JsonRpcResponse jsonRpcResponse = rpcProcessor.process(id, method, metricSpan, request);
     if (JsonRpcResponseType.ERROR == jsonRpcResponse.getType()) {
       JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) jsonRpcResponse;
-      switch (errorResponse.getError()) {
+      switch (errorResponse.getErrorType()) {
         case INVALID_PARAMS:
           metricSpan.setStatus(StatusCode.ERROR, "Invalid Params");
           break;

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.tracing;
 
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
@@ -64,6 +65,13 @@ public interface OperationTracer {
       final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {}
 
   /**
+   * Trace the start of a transaction.
+   *
+   * @param transaction the transaction which will be processed
+   */
+  default void traceStartTransaction(final Transaction transaction) {}
+
+  /**
    * Trace the end of a transaction.
    *
    * @param output the bytes output from the transaction
@@ -71,4 +79,13 @@ public interface OperationTracer {
    * @param timeNs the time in nanoseconds it took to execute the transaction
    */
   default void traceEndTransaction(final Bytes output, final long gasUsed, final long timeNs) {}
+
+  /**
+   * Returns a boolean indicating whether extended tracing is enabled.
+   *
+   * @return <code>true</code> if extended tracing is enabled, <code>false</code> otherwise.
+   */
+  default boolean isExtendedTracing() {
+    return false;
+  }
 }

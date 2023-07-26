@@ -29,15 +29,15 @@ import org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher.C
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.StrictStubs.class)
+@ExtendWith(MockitoExtension.class)
 public class AdminGenerateLogBloomCacheTest {
 
   @Mock private BlockchainQueries blockchainQueries;
@@ -47,7 +47,7 @@ public class AdminGenerateLogBloomCacheTest {
 
   private AdminGenerateLogBloomCache method;
 
-  @Before
+  @BeforeEach
   public void setup() {
     method = new AdminGenerateLogBloomCache(blockchainQueries);
   }

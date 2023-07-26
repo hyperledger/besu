@@ -23,33 +23,29 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
-import org.hyperledger.besu.ethereum.permissioning.GoQuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.TransactionSmartContractPermissioningController;
 
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class AccountPermissioningControllerTest {
 
   private AccountPermissioningController permissioningController;
 
   @Mock private AccountLocalConfigPermissioningController localConfigController;
   @Mock private TransactionSmartContractPermissioningController smartContractController;
-  @Mock private GoQuorumQip714Gate goQuorumQip714Gate;
 
-  @Before
+  @BeforeEach
   public void before() {
     permissioningController =
         new AccountPermissioningController(
-            Optional.of(localConfigController),
-            Optional.of(smartContractController),
-            Optional.empty());
+            Optional.of(localConfigController), Optional.of(smartContractController));
   }
 
   @Test
@@ -88,50 +84,5 @@ public class AccountPermissioningControllerTest {
 
     verify(localConfigController).isPermitted(any());
     verify(smartContractController).isPermitted(any());
-  }
-
-  @Test
-  public void whenQuorumQip714GateIsEmptyShouldDelegateToProviders() {
-    this.permissioningController =
-        new AccountPermissioningController(
-            Optional.of(localConfigController),
-            Optional.of(smartContractController),
-            Optional.empty());
-
-    permissioningController.isPermitted(mock(Transaction.class), true, false);
-
-    verify(localConfigController).isPermitted(any());
-  }
-
-  @Test
-  public void whenQuorumQip714GateIsNotActiveShouldBypassProviders() {
-    this.permissioningController =
-        new AccountPermissioningController(
-            Optional.of(localConfigController),
-            Optional.of(smartContractController),
-            Optional.of(goQuorumQip714Gate));
-
-    when(goQuorumQip714Gate.shouldCheckPermissions()).thenReturn(false);
-
-    boolean isPermitted = permissioningController.isPermitted(mock(Transaction.class), true, false);
-    assertThat(isPermitted).isTrue();
-
-    verifyNoInteractions(localConfigController);
-    verifyNoInteractions(smartContractController);
-  }
-
-  @Test
-  public void whenQuorumQip714GateIsActiveActiveShouldDelegateToProviders() {
-    this.permissioningController =
-        new AccountPermissioningController(
-            Optional.of(localConfigController),
-            Optional.of(smartContractController),
-            Optional.of(goQuorumQip714Gate));
-
-    when(goQuorumQip714Gate.shouldCheckPermissions()).thenReturn(true);
-
-    permissioningController.isPermitted(mock(Transaction.class), true, false);
-
-    verify(localConfigController).isPermitted(any());
   }
 }

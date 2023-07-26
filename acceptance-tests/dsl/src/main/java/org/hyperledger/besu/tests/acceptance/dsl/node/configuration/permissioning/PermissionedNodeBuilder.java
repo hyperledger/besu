@@ -186,7 +186,7 @@ public class PermissionedNodeBuilder {
     }
 
     final PermissioningConfiguration permissioningConfiguration =
-        new PermissioningConfiguration(localPermConfig, smartContractPermConfig, Optional.empty());
+        new PermissioningConfiguration(localPermConfig, smartContractPermConfig);
 
     final BesuNodeConfigurationBuilder builder = new BesuNodeConfigurationBuilder();
     builder

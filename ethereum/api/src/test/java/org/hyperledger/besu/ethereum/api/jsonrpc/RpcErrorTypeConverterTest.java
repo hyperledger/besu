@@ -16,75 +16,66 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
-public class JsonRpcErrorConverterTest {
+public class RpcErrorTypeConverterTest {
 
-  @Parameters
   public static Collection<Object[]> expectedErrorMapping() {
     return Arrays.asList(
         new Object[][] {
-          {TransactionInvalidReason.NONCE_TOO_LOW, JsonRpcError.NONCE_TOO_LOW},
-          {TransactionInvalidReason.PRIVATE_NONCE_TOO_LOW, JsonRpcError.NONCE_TOO_LOW},
-          {TransactionInvalidReason.NONCE_TOO_HIGH, JsonRpcError.NONCE_TOO_HIGH},
-          {TransactionInvalidReason.PRIVATE_NONCE_TOO_HIGH, JsonRpcError.NONCE_TOO_HIGH},
-          {TransactionInvalidReason.INVALID_SIGNATURE, JsonRpcError.INVALID_TRANSACTION_SIGNATURE},
+          {TransactionInvalidReason.NONCE_TOO_LOW, RpcErrorType.NONCE_TOO_LOW},
+          {TransactionInvalidReason.PRIVATE_NONCE_TOO_LOW, RpcErrorType.NONCE_TOO_LOW},
+          {TransactionInvalidReason.NONCE_TOO_HIGH, RpcErrorType.NONCE_TOO_HIGH},
+          {TransactionInvalidReason.PRIVATE_NONCE_TOO_HIGH, RpcErrorType.NONCE_TOO_HIGH},
+          {TransactionInvalidReason.INVALID_SIGNATURE, RpcErrorType.INVALID_TRANSACTION_SIGNATURE},
           {
             TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
-            JsonRpcError.INTRINSIC_GAS_EXCEEDS_LIMIT
+            RpcErrorType.INTRINSIC_GAS_EXCEEDS_LIMIT
           },
           {
             TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
-            JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE
+            RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE
           },
-          {TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT, JsonRpcError.EXCEEDS_BLOCK_GAS_LIMIT},
-          {TransactionInvalidReason.WRONG_CHAIN_ID, JsonRpcError.WRONG_CHAIN_ID},
+          {TransactionInvalidReason.EXCEEDS_BLOCK_GAS_LIMIT, RpcErrorType.EXCEEDS_BLOCK_GAS_LIMIT},
+          {TransactionInvalidReason.WRONG_CHAIN_ID, RpcErrorType.WRONG_CHAIN_ID},
           {
             TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED,
-            JsonRpcError.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED
+            RpcErrorType.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED
           },
           {
-            TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED, JsonRpcError.TX_SENDER_NOT_AUTHORIZED
+            TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED, RpcErrorType.TX_SENDER_NOT_AUTHORIZED
           },
           {
             TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE,
-            JsonRpcError.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE
+            RpcErrorType.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE
           },
-          {TransactionInvalidReason.GAS_PRICE_TOO_LOW, JsonRpcError.GAS_PRICE_TOO_LOW},
+          {TransactionInvalidReason.GAS_PRICE_TOO_LOW, RpcErrorType.GAS_PRICE_TOO_LOW},
           {
             TransactionInvalidReason.OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST,
-            JsonRpcError.OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST
+            RpcErrorType.OFFCHAIN_PRIVACY_GROUP_DOES_NOT_EXIST
           },
           {
             TransactionInvalidReason.TRANSACTION_ALREADY_KNOWN,
-            JsonRpcError.ETH_SEND_TX_ALREADY_KNOWN
+            RpcErrorType.ETH_SEND_TX_ALREADY_KNOWN
           },
           {
             TransactionInvalidReason.TRANSACTION_REPLACEMENT_UNDERPRICED,
-            JsonRpcError.ETH_SEND_TX_REPLACEMENT_UNDERPRICED
+            RpcErrorType.ETH_SEND_TX_REPLACEMENT_UNDERPRICED
           }
         });
   }
 
-  @Parameter(0)
-  public TransactionInvalidReason txInvalidReason;
-
-  @Parameter(1)
-  public JsonRpcError expectedJsonRpcError;
-
-  @Test
-  public void expectedTransactionValidationToJsonRpcErrorConversion() {
+  @ParameterizedTest
+  @MethodSource("expectedErrorMapping")
+  public void expectedTransactionValidationToJsonRpcErrorConversion(
+      final TransactionInvalidReason txInvalidReason, final RpcErrorType expectedJsonRpcError) {
     assertThat(JsonRpcErrorConverter.convertTransactionInvalidReason(txInvalidReason))
         .isEqualTo(expectedJsonRpcError);
   }

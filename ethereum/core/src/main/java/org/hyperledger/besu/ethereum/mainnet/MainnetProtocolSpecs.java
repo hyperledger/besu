@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -59,7 +60,6 @@ import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -124,16 +124,16 @@ public abstract class MainnetProtocolSpecs {
                     0))
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(
+                new TransactionValidatorFactory(
                     gasCalculator, gasLimitCalculator, false, Optional.empty()))
         .transactionProcessorBuilder(
             (gasCalculator,
-                transactionValidator,
+                transactionValidatorFactory,
                 contractCreationProcessor,
                 messageCallProcessor) ->
                 new MainnetTransactionProcessor(
                     gasCalculator,
-                    transactionValidator,
+                    transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
                     false,
@@ -142,12 +142,12 @@ public abstract class MainnetProtocolSpecs {
                     FeeMarket.legacy(),
                     CoinbaseFeePriceCalculator.frontier()))
         .privateTransactionProcessorBuilder(
-            (transactionValidator,
+            (transactionValidatorFactory,
                 contractCreationProcessor,
                 messageCallProcessor,
                 privateTransactionValidator) ->
                 new PrivateTransactionProcessor(
-                    transactionValidator,
+                    transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
                     false,
@@ -199,7 +199,7 @@ public abstract class MainnetProtocolSpecs {
                     0))
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(
+                new TransactionValidatorFactory(
                     gasCalculator, gasLimitCalculator, true, Optional.empty()))
         .difficultyCalculator(MainnetDifficultyCalculators.HOMESTEAD)
         .name("Homestead");
@@ -277,7 +277,7 @@ public abstract class MainnetProtocolSpecs {
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(gasCalculator, gasLimitCalculator, true, chainId))
+                new TransactionValidatorFactory(gasCalculator, gasLimitCalculator, true, chainId))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -412,7 +412,7 @@ public abstract class MainnetProtocolSpecs {
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(
+                new TransactionValidatorFactory(
                     gasCalculator,
                     gasLimitCalculator,
                     true,
@@ -452,7 +452,7 @@ public abstract class MainnetProtocolSpecs {
             new LondonTargetingGasLimitCalculator(londonForkBlockNumber, londonFeeMarket))
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(
+                new TransactionValidatorFactory(
                     gasCalculator,
                     gasLimitCalculator,
                     londonFeeMarket,
@@ -613,7 +613,7 @@ public abstract class MainnetProtocolSpecs {
         // Contract creation rules for EIP-3860 Limit and meter intitcode
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(
+                new TransactionValidatorFactory(
                     gasCalculator,
                     gasLimitCalculator,
                     londonFeeMarket,
@@ -696,7 +696,7 @@ public abstract class MainnetProtocolSpecs {
         // change to check for max data gas per block for EIP-4844
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(
+                new TransactionValidatorFactory(
                     gasCalculator,
                     gasLimitCalculator,
                     cancunFeeMarket,
@@ -709,6 +709,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.BLOB),
                     SHANGHAI_INIT_CODE_SIZE_LIMIT))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
+        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::cancunBlockHeaderValidator)
         .name("Cancun");
   }
 

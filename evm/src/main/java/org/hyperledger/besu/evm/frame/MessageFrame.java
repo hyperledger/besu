@@ -19,6 +19,7 @@ import static java.util.Collections.emptySet;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.code.CodeSection;
@@ -218,6 +219,7 @@ public class MessageFrame {
   private final List<Log> logs;
   private long gasRefund;
   private final Set<Address> selfDestructs;
+  private final Set<Address> creates;
   private final Map<Address, Wei> refunds;
   private final Set<Address> warmedUpAddresses;
   private final Multimap<Address, Bytes32> warmedUpStorage;
@@ -240,7 +242,7 @@ public class MessageFrame {
   private Optional<Bytes> revertReason;
 
   private final Map<String, Object> contextVariables;
-  private final Optional<List<Hash>> versionedHashes;
+  private final Optional<List<VersionedHash>> versionedHashes;
 
   private final Table<Address, Bytes32, Bytes32> transientStorage = HashBasedTable.create();
 
@@ -285,7 +287,7 @@ public class MessageFrame {
       final int maxStackSize,
       final Set<Address> accessListWarmAddresses,
       final Multimap<Address, Bytes32> accessListWarmStorage,
-      final Optional<List<Hash>> versionedHashes) {
+      final Optional<List<VersionedHash>> versionedHashes) {
     this.type = type;
     this.messageFrameStack = messageFrameStack;
     this.parentMessageFrame = messageFrameStack.peek();
@@ -305,6 +307,7 @@ public class MessageFrame {
     this.logs = new ArrayList<>();
     this.gasRefund = 0L;
     this.selfDestructs = new HashSet<>();
+    this.creates = new HashSet<>();
     this.refunds = new HashMap<>();
     this.recipient = recipient;
     this.originator = originator;
@@ -972,6 +975,51 @@ public class MessageFrame {
   }
 
   /**
+   * Add recipient to the create set if not already present.
+   *
+   * @param address The recipient to create
+   */
+  public void addCreate(final Address address) {
+    creates.add(address);
+  }
+  /**
+   * Add addresses to the create set if they are not already present.
+   *
+   * @param addresses The addresses to create
+   */
+  public void addCreates(final Set<Address> addresses) {
+    creates.addAll(addresses);
+  }
+
+  /** Removes all entries in the create set. */
+  public void clearCreates() {
+    creates.clear();
+  }
+
+  /**
+   * Returns the create set.
+   *
+   * @return the create set
+   */
+  public Set<Address> getCreates() {
+    return creates;
+  }
+
+  /**
+   * Was the account at this address created in this transaction? (in any of the previously executed
+   * message frames in this transaction).
+   *
+   * @param address the address to check
+   * @return true if the account was created in any parent or prior message frame in this
+   *     transaction. False if the account existed in the world state at the beginning of the
+   *     transaction.
+   */
+  public boolean wasCreatedInTransaction(final Address address) {
+    return creates.contains((address))
+        || (parentMessageFrame != null && parentMessageFrame.wasCreatedInTransaction(address));
+  }
+
+  /**
    * Add refund to the refunds map if not already present.
    *
    * @param beneficiary the beneficiary of the refund.
@@ -1379,7 +1427,7 @@ public class MessageFrame {
    *
    * @return optional list of hashes
    */
-  public Optional<List<Hash>> getVersionedHashes() {
+  public Optional<List<VersionedHash>> getVersionedHashes() {
     return versionedHashes;
   }
 
@@ -1417,7 +1465,7 @@ public class MessageFrame {
     private Set<Address> accessListWarmAddresses = emptySet();
     private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
 
-    private Optional<List<Hash>> versionedHashes;
+    private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
 
     /**
      * Sets Type.
@@ -1689,7 +1737,7 @@ public class MessageFrame {
      * @param versionedHashes the Optional list of versioned hashes
      * @return the builder
      */
-    public Builder versionedHashes(final Optional<List<Hash>> versionedHashes) {
+    public Builder versionedHashes(final Optional<List<VersionedHash>> versionedHashes) {
       this.versionedHashes = versionedHashes;
       return this;
     }
@@ -1713,6 +1761,7 @@ public class MessageFrame {
       checkState(completer != null, "Missing message frame completer");
       checkState(miningBeneficiary != null, "Missing mining beneficiary");
       checkState(blockHashLookup != null, "Missing block hash lookup");
+      checkState(versionedHashes != null, "Missing optional versioned hashes");
     }
 
     /**

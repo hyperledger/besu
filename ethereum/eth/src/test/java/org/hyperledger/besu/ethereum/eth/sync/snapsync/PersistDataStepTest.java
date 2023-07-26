@@ -33,8 +33,8 @@ import org.hyperledger.besu.services.tasks.Task;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PersistDataStepTest {
 
@@ -48,7 +48,7 @@ public class PersistDataStepTest {
   private final PersistDataStep persistDataStep =
       new PersistDataStep(snapSyncState, worldStateStorage, downloadState, snapSyncConfiguration);
 
-  @Before
+  @BeforeEach
   public void setUp() {
     when(downloadState.getMetricsManager()).thenReturn(mock(SnapsyncMetricsManager.class));
   }

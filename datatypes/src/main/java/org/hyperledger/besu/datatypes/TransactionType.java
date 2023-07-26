@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.data;
+package org.hyperledger.besu.datatypes;
 
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -69,7 +69,10 @@ public enum TransactionType {
   public static TransactionType of(final int serializedTypeValue) {
     return Arrays.stream(
             new TransactionType[] {
-              TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
+              TransactionType.FRONTIER,
+              TransactionType.ACCESS_LIST,
+              TransactionType.EIP1559,
+              TransactionType.BLOB
             })
         .filter(transactionType -> transactionType.typeValue == serializedTypeValue)
         .findFirst()

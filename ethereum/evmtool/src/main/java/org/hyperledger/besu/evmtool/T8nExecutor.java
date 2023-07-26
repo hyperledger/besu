@@ -15,6 +15,9 @@
  */
 package org.hyperledger.besu.evmtool;
 
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_BASE;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_MIN;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
 import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules.shouldClearEmptyAccounts;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
@@ -24,6 +27,8 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -50,7 +55,6 @@ import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -104,6 +108,9 @@ public class T8nExecutor {
           } else {
             Transaction.Builder builder = Transaction.builder();
             int type = Bytes.fromHexStringLenient(txNode.get("type").textValue()).toInt();
+            BigInteger chainId =
+                Bytes.fromHexStringLenient(txNode.get("chainId").textValue())
+                    .toUnsignedBigInteger();
             TransactionType transactionType = TransactionType.of(type == 0 ? 0xf8 : type);
             builder.type(transactionType);
             builder.nonce(Bytes.fromHexStringLenient(txNode.get("nonce").textValue()).toLong());
@@ -129,16 +136,11 @@ public class T8nExecutor {
             if (txNode.has("to")) {
               builder.to(Address.fromHexString(txNode.get("to").textValue()));
             }
-
-            if (transactionType.requiresChainId()
-                || !txNode.has("protected")
-                || txNode.get("protected").booleanValue()) {
+            BigInteger v =
+                Bytes.fromHexStringLenient(txNode.get("v").textValue()).toUnsignedBigInteger();
+            if (transactionType.requiresChainId() || (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0)) {
               // chainid if protected
-              builder.chainId(
-                  new BigInteger(
-                      1,
-                      Bytes.fromHexStringLenient(txNode.get("chainId").textValue())
-                          .toArrayUnsafe()));
+              builder.chainId(chainId);
             }
 
             if (txNode.has("accessList")) {
@@ -172,13 +174,13 @@ public class T8nExecutor {
                     txNode);
                 continue;
               }
-              // FUTURE: placeholder code until 4844 PR merges
-              // List<VersionedHash> entries = new ArrayList<>(blobVersionedHashes.size());
-              // for (JsonNode versionedHashNode : blobVersionedHashes) {
-              //   entries.add(
-              //       new VersionedHash(Bytes32.fromHexString(versionedHashNode.textValue())));
-              // }
-              // builder.versionedHashes(entries);
+
+              List<VersionedHash> entries = new ArrayList<>(blobVersionedHashes.size());
+              for (JsonNode versionedHashNode : blobVersionedHashes) {
+                entries.add(
+                    new VersionedHash(Bytes32.fromHexString(versionedHashNode.textValue())));
+              }
+              builder.versionedHashes(entries);
             }
 
             if (txNode.has("secretKey")) {
@@ -190,12 +192,14 @@ public class T8nExecutor {
 
               transactions.add(builder.signAndBuild(keys));
             } else {
-              BigInteger v =
-                  Bytes.fromHexStringLenient(txNode.get("v").textValue()).toUnsignedBigInteger();
-              if (v.compareTo(BigInteger.valueOf(35)) >= 0) {
-                v = v.subtract(BigInteger.valueOf(35)).mod(BigInteger.TWO);
-              } else if (v.compareTo(BigInteger.valueOf(27)) >= 0) {
-                v = v.subtract(BigInteger.valueOf(27)).mod(BigInteger.TWO);
+              if (transactionType == TransactionType.FRONTIER) {
+                if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
+                  v =
+                      v.subtract(REPLAY_PROTECTED_V_BASE)
+                          .subtract(chainId.multiply(BigInteger.TWO));
+                } else {
+                  v = v.subtract(REPLAY_UNPROTECTED_V_BASE);
+                }
               }
               builder.signature(
                   SignatureAlgorithmFactory.getInstance()
@@ -248,7 +252,7 @@ public class T8nExecutor {
     final WorldUpdater worldStateUpdater = worldState.updater();
     final ReferenceTestBlockchain blockchain = new ReferenceTestBlockchain(blockHeader.getNumber());
     // Todo: EIP-4844 use the excessDataGas of the parent instead of DataGas.ZERO
-    final Wei dataGasPrice = protocolSpec.getFeeMarket().dataPrice(DataGas.ZERO);
+    final Wei dataGasPrice = protocolSpec.getFeeMarket().dataPricePerGas(DataGas.ZERO);
 
     List<TransactionReceipt> receipts = new ArrayList<>();
     List<RejectedTransaction> invalidTransactions = new ArrayList<>(rejections);

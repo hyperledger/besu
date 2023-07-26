@@ -15,7 +15,7 @@
 package org.hyperledger.besu.tests.acceptance.dsl.transaction.account;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
-import org.hyperledger.besu.plugin.data.TransactionType;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Accounts;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;

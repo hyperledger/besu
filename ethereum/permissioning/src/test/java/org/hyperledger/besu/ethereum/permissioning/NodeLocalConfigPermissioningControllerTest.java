@@ -49,13 +49,13 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.StrictStubs.class)
+@ExtendWith(MockitoExtension.class)
 public class NodeLocalConfigPermissioningControllerTest {
 
   @Mock private AllowlistPersistor allowlistPersistor;
@@ -77,7 +77,7 @@ public class NodeLocalConfigPermissioningControllerTest {
   @Mock private Counter checkPermittedCounter;
   @Mock private Counter checkUnpermittedCounter;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     bootnodesList.clear();
 
