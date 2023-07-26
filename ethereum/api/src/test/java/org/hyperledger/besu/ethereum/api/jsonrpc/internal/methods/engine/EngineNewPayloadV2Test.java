@@ -142,9 +142,8 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
   }
 
   @Override
-  @Test
-  public void shouldReturnInvalidOnBadTerminalBlock() {
-    // no-op, terminal block validation is not required after v1
+  protected boolean validateTerminalPoWBlock() {
+    return false;
   }
 
   @Override

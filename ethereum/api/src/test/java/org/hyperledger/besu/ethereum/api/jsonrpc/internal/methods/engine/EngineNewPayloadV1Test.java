@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import java.util.Collections;
 import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -45,7 +46,7 @@ public class EngineNewPayloadV1Test extends AbstractEngineNewPayloadTest {
   public EngineNewPayloadV1Test() {}
 
   @Override
-  @Before
+  @BeforeEach
   public void before() {
     super.before();
     this.method =

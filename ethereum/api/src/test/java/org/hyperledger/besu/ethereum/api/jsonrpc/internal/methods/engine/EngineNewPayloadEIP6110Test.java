@@ -44,16 +44,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
   private static final Address depositContractAddress =
       Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
 
   public EngineNewPayloadEIP6110Test() {}
 
-  @Before
+  @BeforeEach
   @Override
   public void before() {
     super.before();

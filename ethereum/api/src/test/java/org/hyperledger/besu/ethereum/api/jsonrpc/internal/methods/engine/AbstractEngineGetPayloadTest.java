@@ -124,7 +124,6 @@ public abstract class AbstractEngineGetPayloadTest {
 
   @Mock protected EngineCallListener engineCallListener;
 
-
   @Mock protected ProtocolSchedule protocolSchedule;
 
   protected static final long SHANGHAI_AT = 1337L;

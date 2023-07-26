@@ -21,8 +21,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.security.InvalidParameterException;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class BlobsBundleV1Test {
   @Test
   public void blobsBundleV1MustHaveSameNumberOfElements() {

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -50,15 +51,14 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(
-    MockitoJUnitRunner.Silent
-        .class) // mocks in parent class may not be used, throwing unnecessary stubbing
+@ExtendWith(
+    MockitoExtension.class) // mocks in parent class may not be used, throwing unnecessary stubbing
 public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
 
   private static final long CANCUN_AT = 31337L;
@@ -67,10 +67,12 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
     super();
   }
 
-  @Before
+  @BeforeEach
   @Override
   public void before() {
-    when(mergeContext.retrieveBlockById(mockPid)).thenReturn(Optional.of(mockBlockWithReceipts));
+    lenient()
+        .when(mergeContext.retrieveBlockById(mockPid))
+        .thenReturn(Optional.of(mockBlockWithReceipts));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     when(protocolSchedule.hardforkFor(any()))
         .thenReturn(Optional.of(new ScheduledProtocolSpec.Hardfork("shanghai", SHANGHAI_AT)));

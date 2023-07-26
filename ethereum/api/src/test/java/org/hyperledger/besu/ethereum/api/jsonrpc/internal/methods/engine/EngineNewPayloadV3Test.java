@@ -39,12 +39,12 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
 
   public EngineNewPayloadV3Test() {}
@@ -55,7 +55,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
     assertThat(method.getName()).isEqualTo("engine_newPayloadV3");
   }
 
-  @Before
+  @BeforeEach
   @Override
   public void before() {
     super.before();

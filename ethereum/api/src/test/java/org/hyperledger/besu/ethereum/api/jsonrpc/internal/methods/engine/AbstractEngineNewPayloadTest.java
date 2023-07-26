@@ -73,9 +73,7 @@ import java.util.concurrent.CompletableFuture;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes32;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -464,11 +462,11 @@ public abstract class AbstractEngineNewPayloadTest {
         deposits);
   }
 
-  @NotNull
   protected BlockHeader setupValidPayload(
       final BlockProcessingResult value,
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final Optional<List<Deposit>> maybeDeposits) {
+
     BlockHeader mockHeader = createBlockHeader(maybeWithdrawals, maybeDeposits);
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
     when(blockchain.getBlockHeader(mockHeader.getParentHash()))
