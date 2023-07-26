@@ -22,7 +22,7 @@ import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public final class GetBlockHeadersMessageTest {
 

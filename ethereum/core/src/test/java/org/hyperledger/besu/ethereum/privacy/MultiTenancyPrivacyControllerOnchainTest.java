@@ -32,12 +32,12 @@ import java.util.ArrayList;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class MultiTenancyPrivacyControllerOnchainTest {
 
   private static final String ENCLAVE_PUBLIC_KEY1 = "Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=";
@@ -49,7 +49,7 @@ public class MultiTenancyPrivacyControllerOnchainTest {
 
   private MultiTenancyPrivacyController multiTenancyPrivacyController;
 
-  @Before
+  @BeforeEach
   public void setup() {
     multiTenancyPrivacyController = new MultiTenancyPrivacyController(privacyController);
   }

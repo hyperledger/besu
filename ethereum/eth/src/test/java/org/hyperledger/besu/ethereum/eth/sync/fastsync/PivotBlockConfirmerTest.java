@@ -36,20 +36,18 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
-@RunWith(Parameterized.class)
 public class PivotBlockConfirmerTest {
 
   private static final long PIVOT_BLOCK_NUMBER = 10;
@@ -64,19 +62,15 @@ public class PivotBlockConfirmerTest {
   private PivotBlockConfirmer pivotBlockConfirmer;
   private ProtocolSchedule protocolSchedule;
 
-  @Parameters
-  public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][] {{DataStorageFormat.BONSAI}, {DataStorageFormat.FOREST}});
+  static class PivotBlockConfirmerTestArguments implements ArgumentsProvider {
+    @Override
+    public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
+      return Stream.of(
+          Arguments.of(DataStorageFormat.BONSAI), Arguments.of(DataStorageFormat.FOREST));
+    }
   }
 
-  private final DataStorageFormat storageFormat;
-
-  public PivotBlockConfirmerTest(final DataStorageFormat storageFormat) {
-    this.storageFormat = storageFormat;
-  }
-
-  @Before
-  public void setUp() {
+  public void setUp(final DataStorageFormat storageFormat) {
     final BlockchainSetupUtil blockchainSetupUtil = BlockchainSetupUtil.forTesting(storageFormat);
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
@@ -107,8 +101,10 @@ public class PivotBlockConfirmerTest {
                 maxRetries));
   }
 
-  @Test
-  public void completeSuccessfully() {
+  @ParameterizedTest
+  @ArgumentsSource(PivotBlockConfirmerTestArguments.class)
+  public void completeSuccessfully(final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     pivotBlockConfirmer = createPivotBlockConfirmer(2, 2);
 
     final Responder responder =
@@ -136,8 +132,10 @@ public class PivotBlockConfirmerTest {
             new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
-  @Test
-  public void delayedResponse() {
+  @ParameterizedTest
+  @ArgumentsSource(PivotBlockConfirmerTestArguments.class)
+  public void delayedResponse(final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     pivotBlockConfirmer = createPivotBlockConfirmer(2, 2);
 
     final Responder responder =
@@ -169,8 +167,10 @@ public class PivotBlockConfirmerTest {
             new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
-  @Test
-  public void peerTimesOutThenIsUnresponsive() {
+  @ParameterizedTest
+  @ArgumentsSource(PivotBlockConfirmerTestArguments.class)
+  public void peerTimesOutThenIsUnresponsive(final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     pivotBlockConfirmer = createPivotBlockConfirmer(2, 2);
 
     final Responder responder =
@@ -209,8 +209,10 @@ public class PivotBlockConfirmerTest {
             new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
-  @Test
-  public void peerTimesOut() {
+  @ParameterizedTest
+  @ArgumentsSource(PivotBlockConfirmerTestArguments.class)
+  public void peerTimesOut(final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     pivotBlockConfirmer = createPivotBlockConfirmer(2, 2);
 
     final Responder responder =
@@ -249,8 +251,10 @@ public class PivotBlockConfirmerTest {
             new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
-  @Test
-  public void peerUnresponsive() {
+  @ParameterizedTest
+  @ArgumentsSource(PivotBlockConfirmerTestArguments.class)
+  public void peerUnresponsive(final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     pivotBlockConfirmer = createPivotBlockConfirmer(2, 2);
 
     final Responder responder =
@@ -291,8 +295,10 @@ public class PivotBlockConfirmerTest {
             new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
-  @Test
-  public void headerMismatch() {
+  @ParameterizedTest
+  @ArgumentsSource(PivotBlockConfirmerTestArguments.class)
+  public void headerMismatch(final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     pivotBlockConfirmer = createPivotBlockConfirmer(3, 2);
 
     final Responder responderA =

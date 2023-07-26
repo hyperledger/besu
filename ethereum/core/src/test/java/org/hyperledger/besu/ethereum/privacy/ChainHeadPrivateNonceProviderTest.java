@@ -32,12 +32,12 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ChainHeadPrivateNonceProviderTest {
   private static final Bytes32 PRIVACY_GROUP_ID =
       Bytes32.wrap(Bytes.fromBase64String("DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w="));
@@ -49,7 +49,7 @@ public class ChainHeadPrivateNonceProviderTest {
   private WorldStateArchive privateWorldStateArchive;
   private PrivateStateRootResolver privateStateRootResolver;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     final BlockDataGenerator gen = new BlockDataGenerator();
 

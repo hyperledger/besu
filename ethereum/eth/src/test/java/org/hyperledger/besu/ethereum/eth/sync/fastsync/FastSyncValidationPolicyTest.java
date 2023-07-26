@@ -22,7 +22,7 @@ import static org.hyperledger.besu.metrics.noop.NoOpMetricsSystem.NO_OP_LABELLED
 
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class FastSyncValidationPolicyTest {
   @Test

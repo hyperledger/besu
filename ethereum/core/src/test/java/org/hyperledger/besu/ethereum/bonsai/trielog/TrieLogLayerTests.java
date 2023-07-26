@@ -27,14 +27,14 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TrieLogLayerTests {
   private TrieLogLayer trieLogLayer;
   private TrieLogLayer otherTrieLogLayer;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     trieLogLayer = new TrieLogLayer();
     otherTrieLogLayer = new TrieLogLayer();

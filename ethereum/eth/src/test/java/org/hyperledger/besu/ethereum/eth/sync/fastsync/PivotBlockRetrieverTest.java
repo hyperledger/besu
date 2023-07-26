@@ -39,20 +39,18 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.ExceptionUtils;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
-@RunWith(Parameterized.class)
 public class PivotBlockRetrieverTest {
 
   private static final long PIVOT_BLOCK_NUMBER = 10;
@@ -67,19 +65,15 @@ public class PivotBlockRetrieverTest {
   private PivotBlockRetriever pivotBlockRetriever;
   private ProtocolSchedule protocolSchedule;
 
-  @Parameters
-  public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][] {{DataStorageFormat.BONSAI}, {DataStorageFormat.FOREST}});
+  static class PivotBlockRetrieverTestArguments implements ArgumentsProvider {
+    @Override
+    public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
+      return Stream.of(
+          Arguments.of(DataStorageFormat.BONSAI), Arguments.of(DataStorageFormat.FOREST));
+    }
   }
 
-  private final DataStorageFormat storageFormat;
-
-  public PivotBlockRetrieverTest(final DataStorageFormat storageFormat) {
-    this.storageFormat = storageFormat;
-  }
-
-  @Before
-  public void setUp() {
+  public void setUp(final DataStorageFormat storageFormat) {
     final BlockchainSetupUtil blockchainSetupUtil = BlockchainSetupUtil.forTesting(storageFormat);
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
@@ -112,8 +106,10 @@ public class PivotBlockRetrieverTest {
                 maxRetries));
   }
 
-  @Test
-  public void shouldSucceedWhenAllPeersAgree() {
+  @ParameterizedTest
+  @ArgumentsSource(PivotBlockRetrieverTestArguments.class)
+  public void shouldSucceedWhenAllPeersAgree(final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(
             blockchain, protocolContext.getWorldStateArchive(), transactionPool);
@@ -134,8 +130,10 @@ public class PivotBlockRetrieverTest {
             new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
-  @Test
-  public void shouldIgnorePeersThatDoNotHaveThePivotBlock() {
+  @ParameterizedTest
+  @ArgumentsSource(PivotBlockRetrieverTestArguments.class)
+  public void shouldIgnorePeersThatDoNotHaveThePivotBlock(final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     pivotBlockRetriever = createPivotBlockRetriever(3, 1, 1);
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
 
@@ -179,8 +177,10 @@ public class PivotBlockRetrieverTest {
             new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
-  @Test
-  public void shouldIgnorePeersThatAreNotFullyValidated() {
+  @ParameterizedTest
+  @ArgumentsSource(PivotBlockRetrieverTestArguments.class)
+  public void shouldIgnorePeersThatAreNotFullyValidated(final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     final PeerValidator peerValidator = mock(PeerValidator.class);
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.blockchainResponder(
@@ -237,8 +237,10 @@ public class PivotBlockRetrieverTest {
             new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
-  @Test
-  public void shouldQueryBestPeersFirst() {
+  @ParameterizedTest
+  @ArgumentsSource(PivotBlockRetrieverTestArguments.class)
+  public void shouldQueryBestPeersFirst(final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     pivotBlockRetriever = createPivotBlockRetriever(2, 1, 1);
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
 
@@ -265,8 +267,10 @@ public class PivotBlockRetrieverTest {
             new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
-  @Test
-  public void shouldRecoverFromUnresponsivePeer() {
+  @ParameterizedTest
+  @ArgumentsSource(PivotBlockRetrieverTestArguments.class)
+  public void shouldRecoverFromUnresponsivePeer(final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     pivotBlockRetriever = createPivotBlockRetriever(2, 1, 1);
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
 
@@ -300,8 +304,11 @@ public class PivotBlockRetrieverTest {
             new FastSyncState(blockchain.getBlockHeader(PIVOT_BLOCK_NUMBER).get()));
   }
 
-  @Test
-  public void shouldRetryWhenPeersDisagreeOnPivot_successfulRetry() {
+  @ParameterizedTest
+  @ArgumentsSource(PivotBlockRetrieverTestArguments.class)
+  public void shouldRetryWhenPeersDisagreeOnPivot_successfulRetry(
+      final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     final long pivotBlockDelta = 1;
     pivotBlockRetriever = createPivotBlockRetriever(2, pivotBlockDelta, 1);
 
@@ -334,8 +341,11 @@ public class PivotBlockRetrieverTest {
         .isCompletedWithValue(new FastSyncState(blockchain.getBlockHeader(newPivotBlock).get()));
   }
 
-  @Test
-  public void shouldRetryWhenPeersDisagreeOnPivot_exceedMaxRetries() {
+  @ParameterizedTest
+  @ArgumentsSource(PivotBlockRetrieverTestArguments.class)
+  public void shouldRetryWhenPeersDisagreeOnPivot_exceedMaxRetries(
+      final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     final long pivotBlockDelta = 1;
     pivotBlockRetriever = createPivotBlockRetriever(2, pivotBlockDelta, 1);
 
@@ -371,8 +381,11 @@ public class PivotBlockRetrieverTest {
         .isEqualTo(FastSyncError.PIVOT_BLOCK_HEADER_MISMATCH);
   }
 
-  @Test
-  public void shouldRetryWhenPeersDisagreeOnPivot_pivotInvalidOnRetry() {
+  @ParameterizedTest
+  @ArgumentsSource(PivotBlockRetrieverTestArguments.class)
+  public void shouldRetryWhenPeersDisagreeOnPivot_pivotInvalidOnRetry(
+      final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     final long pivotBlockDelta = PIVOT_BLOCK_NUMBER + 1;
     pivotBlockRetriever = createPivotBlockRetriever(2, pivotBlockDelta, 1);
 

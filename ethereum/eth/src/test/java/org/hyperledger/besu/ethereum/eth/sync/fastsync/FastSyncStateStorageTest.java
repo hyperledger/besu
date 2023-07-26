@@ -20,25 +20,22 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 
-import java.io.File;
+import java.nio.file.Path;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class FastSyncStateStorageTest {
-  @Rule public final TemporaryFolder tempDirRule = new TemporaryFolder();
+  @TempDir private Path tempDir;
 
   private FastSyncStateStorage storage;
   private final BlockHeader pivotBlockHeader = new BlockHeaderTestFixture().buildHeader();
   private final FastSyncState syncStateWithHeader = new FastSyncState(pivotBlockHeader);
-  private File tempDir;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
-    tempDir = tempDirRule.newFolder();
-    storage = new FastSyncStateStorage(tempDir.toPath());
+    storage = new FastSyncStateStorage(tempDir);
   }
 
   @Test
@@ -51,7 +48,7 @@ public class FastSyncStateStorageTest {
     storage.storeState(syncStateWithHeader);
     assertThat(storage.isFastSyncInProgress()).isTrue();
 
-    final FastSyncStateStorage newStorage = new FastSyncStateStorage(tempDir.toPath());
+    final FastSyncStateStorage newStorage = new FastSyncStateStorage(tempDir);
     assertThat(newStorage.isFastSyncInProgress()).isTrue();
   }
 
@@ -60,7 +57,7 @@ public class FastSyncStateStorageTest {
     storage.storeState(syncStateWithHeader);
     assertThat(storage.loadState(new MainnetBlockHeaderFunctions())).isEqualTo(syncStateWithHeader);
 
-    final FastSyncStateStorage newStorage = new FastSyncStateStorage(tempDir.toPath());
+    final FastSyncStateStorage newStorage = new FastSyncStateStorage(tempDir);
     assertThat(newStorage.loadState(new MainnetBlockHeaderFunctions()))
         .isEqualTo(syncStateWithHeader);
   }
