@@ -36,12 +36,12 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class WorldStateProofProviderTest {
 
   private static final Address address =
@@ -52,7 +52,7 @@ public class WorldStateProofProviderTest {
 
   private WorldStateProofProvider worldStateProofProvider;
 
-  @Before
+  @BeforeEach
   public void setup() {
     worldStateProofProvider = new WorldStateProofProvider(worldStateStorage);
   }

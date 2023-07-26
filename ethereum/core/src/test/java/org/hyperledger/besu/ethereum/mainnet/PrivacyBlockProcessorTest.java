@@ -53,12 +53,12 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PrivacyBlockProcessorTest {
 
   private PrivacyBlockProcessor privacyBlockProcessor;
@@ -69,7 +69,7 @@ public class PrivacyBlockProcessorTest {
   private ProtocolSchedule protocolSchedule;
   private WorldStateArchive publicWorldStateArchive;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     blockProcessor = mock(AbstractBlockProcessor.class);
     privateStateStorage = new PrivateStateKeyValueStorage(new InMemoryKeyValueStorage());

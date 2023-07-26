@@ -25,18 +25,18 @@ import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.operation.SStoreOperation;
 import org.hyperledger.besu.evm.tracing.EstimateGasOperationTracer;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EstimateGasOperationTracerTest {
 
   private EstimateGasOperationTracer operationTracer;
   private MessageFrameTestFixture messageFrameTestFixture;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     operationTracer = new EstimateGasOperationTracer();
     messageFrameTestFixture = new MessageFrameTestFixture();

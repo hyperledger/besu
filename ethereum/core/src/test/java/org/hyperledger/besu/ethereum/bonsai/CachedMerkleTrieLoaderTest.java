@@ -39,8 +39,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 public class CachedMerkleTrieLoaderTest {
@@ -55,7 +55,7 @@ public class CachedMerkleTrieLoaderTest {
 
   private MerkleTrie<Bytes, Bytes> trie;
 
-  @Before
+  @BeforeEach
   public void setup() {
     trie =
         TrieGenerator.generateTrie(

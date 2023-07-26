@@ -52,8 +52,8 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 public class BlockImportExceptionHandlingTest {
@@ -101,7 +101,7 @@ public class BlockImportExceptionHandlingTest {
 
   private MainnetBlockValidator mainnetBlockValidator;
 
-  @Before
+  @BeforeEach
   public void setup() {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);

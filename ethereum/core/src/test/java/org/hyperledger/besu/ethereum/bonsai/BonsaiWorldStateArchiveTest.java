@@ -46,15 +46,18 @@ import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BonsaiWorldStateArchiveTest {
 
   final BlockHeaderTestFixture blockBuilder = new BlockHeaderTestFixture();
@@ -69,7 +72,7 @@ public class BonsaiWorldStateArchiveTest {
 
   @Mock TrieLogManager trieLogManager;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     when(storageProvider.getStorageBySegmentIdentifier(any(KeyValueSegmentIdentifier.class)))
         .thenReturn(keyValueStorage);
@@ -237,7 +240,7 @@ public class BonsaiWorldStateArchiveTest {
   @SuppressWarnings({"unchecked"})
   @Test
   // TODO: refactor to test original intent
-  @Ignore("needs refactor, getMutable(hash, hash) cannot trigger saveTrieLog")
+  @Disabled("needs refactor, getMutable(hash, hash) cannot trigger saveTrieLog")
   public void testGetMutableWithRollbackNotOverrideTrieLogLayer() {
     final KeyValueStorageTransaction keyValueStorageTransaction =
         mock(KeyValueStorageTransaction.class);

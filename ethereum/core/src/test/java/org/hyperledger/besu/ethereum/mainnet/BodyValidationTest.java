@@ -23,7 +23,7 @@ import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link BodyValidation}. */
 public final class BodyValidationTest {
