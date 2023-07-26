@@ -25,7 +25,9 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -52,10 +54,14 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessDataGasCalculator;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -65,6 +71,7 @@ import java.util.stream.Collectors;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,12 +104,31 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     final EnginePayloadParameter blockParam =
         requestContext.getRequiredParameter(0, EnginePayloadParameter.class);
 
+    Optional<List<String>> maybeVersionedHashParam =
+        requestContext.getOptionalList(1, String.class);
+
     Object reqId = requestContext.getRequest().getId();
+    Optional<List<VersionedHash>> maybeVersionedHashes;
+    try {
+      maybeVersionedHashes = extractVersionedHashes(maybeVersionedHashParam);
+    } catch (RuntimeException ex) {
+      return respondWithInvalid(reqId, blockParam, null, INVALID, "Invalid versionedHash");
+    }
+
+    final Optional<BlockHeader> maybeParentHeader =
+        protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
 
     LOG.atTrace()
         .setMessage("blockparam: {}")
         .addArgument(() -> Json.encodePrettily(blockParam))
         .log();
+
+    /*
+    ValidationResult<JsonRpcError> forkValidationResult = validateForkSupported(reqId, blockParam);
+    if (!forkValidationResult.isValid()) {
+      return new JsonRpcErrorResponse(reqId, forkValidationResult.getInvalidReason());
+    }
+    */
 
     final Optional<List<Withdrawal>> maybeWithdrawals =
         Optional.ofNullable(blockParam.getWithdrawals())
@@ -172,7 +198,10 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             blockParam.getPrevRandao(),
             0,
             maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null),
-            null,
+            blockParam.getDataGasUsed() == null ? null : blockParam.getDataGasUsed(),
+            blockParam.getExcessDataGas() == null
+                ? null
+                : DataGas.fromHexString(blockParam.getExcessDataGas()),
             maybeDeposits.map(BodyValidation::depositsRoot).orElse(null),
             headerFunctions);
 
@@ -184,8 +213,30 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               "Computed block hash %s does not match block hash parameter %s",
               newBlockHeader.getBlockHash(), blockParam.getBlockHash());
       LOG.debug(errorMessage);
-      return respondWithInvalid(reqId, blockParam, null, getInvalidBlockHashStatus(), errorMessage);
+      return respondWithInvalid(
+          reqId,
+          blockParam,
+          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+          getInvalidBlockHashStatus(),
+          errorMessage);
     }
+
+    ValidationResult<RpcErrorType> blobValidationResult =
+        validateBlobs(
+            transactions,
+            newBlockHeader,
+            maybeParentHeader,
+            maybeVersionedHashes,
+            protocolSchedule.getByBlockHeader(newBlockHeader));
+    if (!blobValidationResult.isValid()) {
+      return respondWithInvalid(
+          reqId,
+          blockParam,
+          null,
+          getInvalidBlockHashStatus(),
+          blobValidationResult.getErrorMessage());
+    }
+
     // do we already have this payload
     if (protocolContext.getBlockchain().getBlockByHash(newBlockHeader.getBlockHash()).isPresent()) {
       LOG.debug("block already present");
@@ -202,8 +253,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           "Block already present in bad block manager.");
     }
 
-    final Optional<BlockHeader> maybeParentHeader =
-        protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
     if (maybeParentHeader.isPresent()
         && (blockParam.getTimestamp() <= maybeParentHeader.get().getTimestamp())) {
       return respondWithInvalid(
@@ -225,7 +274,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           .addArgument(block::toLogString)
           .log();
       mergeCoordinator.appendNewPayloadToSync(block);
-
       return respondWith(reqId, blockParam, null, SYNCING);
     }
 
@@ -339,6 +387,98 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
   protected EngineStatus getInvalidBlockHashStatus() {
     return INVALID;
+  }
+
+  protected ValidationResult<RpcErrorType> validateForkSupported(
+      final Object id, final EnginePayloadParameter payloadParameter) {
+    return ValidationResult.valid();
+  }
+
+  protected ValidationResult<RpcErrorType> validateBlobs(
+      final List<Transaction> transactions,
+      final BlockHeader header,
+      final Optional<BlockHeader> maybeParentHeader,
+      final Optional<List<VersionedHash>> maybeVersionedHashes,
+      final ProtocolSpec protocolSpec) {
+
+    var blobTransactions =
+        transactions.stream().filter(transaction -> transaction.getType().supportsBlob()).toList();
+
+    final List<VersionedHash> transactionVersionedHashes = new ArrayList<>();
+    for (Transaction transaction : blobTransactions) {
+      var versionedHashes = transaction.getVersionedHashes();
+      // blob transactions must have at least one blob
+      if (versionedHashes.isEmpty()) {
+        return ValidationResult.invalid(
+            RpcErrorType.INVALID_PARAMS, "There must be at least one blob");
+      }
+      transactionVersionedHashes.addAll(versionedHashes.get());
+    }
+
+    if (maybeVersionedHashes.isEmpty() && !transactionVersionedHashes.isEmpty()) {
+      return ValidationResult.invalid(
+          RpcErrorType.INVALID_PARAMS, "Payload must contain versioned hashes for transactions");
+    }
+
+    // Validate versionedHashesParam
+    if (maybeVersionedHashes.isPresent()
+        && !maybeVersionedHashes.get().equals(transactionVersionedHashes)) {
+      return ValidationResult.invalid(
+          RpcErrorType.INVALID_PARAMS,
+          "Versioned hashes from blob transactions do not match expected values");
+    }
+
+    // Validate excessDataGas
+    if (maybeParentHeader.isPresent()) {
+      if (!validateExcessDataGas(header, maybeParentHeader.get(), protocolSpec)) {
+        return ValidationResult.invalid(
+            RpcErrorType.INVALID_PARAMS,
+            "Payload excessDataGas does not match calculated excessDataGas");
+      }
+    }
+
+    // Validate dataGasUsed
+    if (header.getDataGasUsed().isPresent() && maybeVersionedHashes.isPresent()) {
+      if (!validateDataGasUsed(header, maybeVersionedHashes.get(), protocolSpec)) {
+        return ValidationResult.invalid(
+            RpcErrorType.INVALID_PARAMS,
+            "Payload DataGasUsed does not match calculated DataGasUsed");
+      }
+    }
+    return ValidationResult.valid();
+  }
+
+  private boolean validateExcessDataGas(
+      final BlockHeader header, final BlockHeader parentHeader, final ProtocolSpec protocolSpec) {
+    DataGas calculatedDataGas =
+        ExcessDataGasCalculator.calculateExcessDataGasForParent(protocolSpec, parentHeader);
+    return header.getExcessDataGas().orElse(DataGas.ZERO).equals(calculatedDataGas);
+  }
+
+  private boolean validateDataGasUsed(
+      final BlockHeader header,
+      final List<VersionedHash> maybeVersionedHashes,
+      final ProtocolSpec protocolSpec) {
+    var calculatedDataGas =
+        protocolSpec.getGasCalculator().dataGasCost(maybeVersionedHashes.size());
+    return header.getDataGasUsed().orElse(0L).equals(calculatedDataGas);
+  }
+
+  private Optional<List<VersionedHash>> extractVersionedHashes(
+      final Optional<List<String>> maybeVersionedHashParam) {
+    return maybeVersionedHashParam.map(
+        versionedHashes ->
+            versionedHashes.stream()
+                .map(Bytes32::fromHexString)
+                .map(
+                    hash -> {
+                      try {
+                        return new VersionedHash(hash);
+                      } catch (InvalidParameterException e) {
+                        throw new RuntimeException(e);
+                      }
+                    })
+                .collect(Collectors.toList()));
   }
 
   private void logImportedBlockInfo(final Block block, final double timeInS) {

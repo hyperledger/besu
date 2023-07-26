@@ -47,7 +47,12 @@ public class Hash extends DelegatingBytes32 {
    */
   public static final Hash EMPTY = hash(Bytes.EMPTY);
 
-  private Hash(final Bytes32 bytes) {
+  /**
+   * Instantiates a new Hash.
+   *
+   * @param bytes raw bytes
+   */
+  protected Hash(final Bytes32 bytes) {
     super(bytes);
   }
 
