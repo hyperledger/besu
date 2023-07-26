@@ -20,7 +20,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class BaseFeeMarketTest {
 
