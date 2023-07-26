@@ -58,9 +58,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @param <T> The type of data being requested from the network
@@ -92,7 +92,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
   protected AtomicBoolean peersDoTimeout;
   protected AtomicInteger peerCountToTimeout;
 
-  @BeforeClass
+  @BeforeAll
   public static void setup() {
     final BlockchainSetupUtil blockchainSetupUtil =
         BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST);
@@ -103,7 +103,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
     assertThat(blockchainSetupUtil.getMaxBlockNumber()).isGreaterThanOrEqualTo(20L);
   }
 
-  @Before
+  @BeforeEach
   public void setupTest() {
     peersDoTimeout = new AtomicBoolean(false);
     peerCountToTimeout = new AtomicInteger(0);

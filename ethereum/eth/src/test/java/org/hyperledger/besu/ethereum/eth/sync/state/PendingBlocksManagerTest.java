@@ -28,8 +28,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PendingBlocksManagerTest {
 
@@ -39,7 +39,7 @@ public class PendingBlocksManagerTest {
   private PendingBlocksManager pendingBlocksManager;
   private BlockDataGenerator gen;
 
-  @Before
+  @BeforeEach
   public void setup() {
     pendingBlocksManager =
         new PendingBlocksManager(

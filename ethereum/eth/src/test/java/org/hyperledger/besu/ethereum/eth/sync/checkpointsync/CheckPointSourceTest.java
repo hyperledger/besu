@@ -24,15 +24,15 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CheckPointSourceTest {
 
   private final SyncState syncState = mock(SyncState.class);
   private CheckpointSource checkPointSource;
 
-  @Before
+  @BeforeEach
   public void setup() {
     checkPointSource = new CheckpointSource(syncState, header(12), 1);
   }

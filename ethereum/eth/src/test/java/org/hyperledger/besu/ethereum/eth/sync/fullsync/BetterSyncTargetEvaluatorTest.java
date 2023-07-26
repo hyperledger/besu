@@ -28,8 +28,8 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class BetterSyncTargetEvaluatorTest {
 
@@ -47,7 +47,7 @@ public class BetterSyncTargetEvaluatorTest {
               .build(),
           ethPeers);
 
-  @Before
+  @BeforeEach
   public void setupMocks() {
     when(ethPeers.getBestChainComparator()).thenReturn(EthPeers.HEAVIEST_CHAIN);
   }

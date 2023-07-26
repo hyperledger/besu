@@ -35,20 +35,18 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 import org.hyperledger.besu.testutil.TestClock;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
-@RunWith(Parameterized.class)
 public class FastWorldDownloadStateTest {
 
   private static final Bytes ROOT_NODE_DATA = Bytes.of(1, 2, 3, 4);
@@ -70,19 +68,15 @@ public class FastWorldDownloadStateTest {
 
   private CompletableFuture<Void> future;
 
-  @Parameterized.Parameters
-  public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][] {{DataStorageFormat.BONSAI}, {DataStorageFormat.FOREST}});
+  static class FastWorldDownloadStateTestArguments implements ArgumentsProvider {
+    @Override
+    public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
+      return Stream.of(
+          Arguments.of(DataStorageFormat.BONSAI), Arguments.of(DataStorageFormat.FOREST));
+    }
   }
 
-  private final DataStorageFormat storageFormat;
-
-  public FastWorldDownloadStateTest(final DataStorageFormat storageFormat) {
-    this.storageFormat = storageFormat;
-  }
-
-  @Before
-  public void setUp() {
+  public void setUp(final DataStorageFormat storageFormat) {
     if (storageFormat == DataStorageFormat.BONSAI) {
       worldStateStorage =
           new BonsaiWorldStateKeyValueStorage(
@@ -102,16 +96,22 @@ public class FastWorldDownloadStateTest {
     future = downloadState.getDownloadFuture();
   }
 
-  @Test
-  public void shouldCompleteReturnedFutureWhenNoPendingTasksRemain() {
+  @ParameterizedTest
+  @ArgumentsSource(FastWorldDownloadStateTestArguments.class)
+  public void shouldCompleteReturnedFutureWhenNoPendingTasksRemain(
+      final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     downloadState.checkCompletion(header);
 
     assertThat(future).isCompleted();
     assertThat(downloadState.isDownloading()).isFalse();
   }
 
-  @Test
-  public void shouldStoreRootNodeBeforeReturnedFutureCompletes() {
+  @ParameterizedTest
+  @ArgumentsSource(FastWorldDownloadStateTestArguments.class)
+  public void shouldStoreRootNodeBeforeReturnedFutureCompletes(
+      final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     final CompletableFuture<Void> postFutureChecks =
         future.thenAccept(
             result ->
@@ -124,8 +124,10 @@ public class FastWorldDownloadStateTest {
     assertThat(postFutureChecks).isCompleted();
   }
 
-  @Test
-  public void shouldNotCompleteWhenThereArePendingTasks() {
+  @ParameterizedTest
+  @ArgumentsSource(FastWorldDownloadStateTestArguments.class)
+  public void shouldNotCompleteWhenThereArePendingTasks(final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     pendingRequests.add(
         NodeDataRequest.createAccountDataRequest(Hash.EMPTY_TRIE_HASH, Optional.empty()));
 
@@ -136,8 +138,11 @@ public class FastWorldDownloadStateTest {
     assertThat(downloadState.isDownloading()).isTrue();
   }
 
-  @Test
-  public void shouldCancelOutstandingTasksWhenFutureIsCancelled() {
+  @ParameterizedTest
+  @ArgumentsSource(FastWorldDownloadStateTestArguments.class)
+  public void shouldCancelOutstandingTasksWhenFutureIsCancelled(
+      final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     final EthTask<?> outstandingTask1 = mock(EthTask.class);
     final EthTask<?> outstandingTask2 = mock(EthTask.class);
     downloadState.addOutstandingTask(outstandingTask1);
@@ -158,8 +163,11 @@ public class FastWorldDownloadStateTest {
     assertThat(downloadState.isDownloading()).isFalse();
   }
 
-  @Test
-  public void shouldResetRequestsSinceProgressCountWhenProgressIsMade() {
+  @ParameterizedTest
+  @ArgumentsSource(FastWorldDownloadStateTestArguments.class)
+  public void shouldResetRequestsSinceProgressCountWhenProgressIsMade(
+      final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     downloadState.requestComplete(false);
     downloadState.requestComplete(false);
 
@@ -175,8 +183,11 @@ public class FastWorldDownloadStateTest {
     assertWorldStateStalled(downloadState);
   }
 
-  @Test
-  public void shouldNotBeStalledWhenMaxRequestsReachedUntilMinimumTimeAlsoReached() {
+  @ParameterizedTest
+  @ArgumentsSource(FastWorldDownloadStateTestArguments.class)
+  public void shouldNotBeStalledWhenMaxRequestsReachedUntilMinimumTimeAlsoReached(
+      final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     for (int i = 0; i < MAX_REQUESTS_WITHOUT_PROGRESS; i++) {
       downloadState.requestComplete(false);
       assertThat(downloadState.getDownloadFuture()).isNotDone();
@@ -192,15 +203,21 @@ public class FastWorldDownloadStateTest {
     assertWorldStateStalled(downloadState);
   }
 
-  @Test
-  public void shouldNotBeStalledIfMinimumTimeIsReachedButMaximumRequestsIsNot() {
+  @ParameterizedTest
+  @ArgumentsSource(FastWorldDownloadStateTestArguments.class)
+  public void shouldNotBeStalledIfMinimumTimeIsReachedButMaximumRequestsIsNot(
+      final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     clock.stepMillis(MIN_MILLIS_BEFORE_STALLING + 1);
     downloadState.requestComplete(false);
     assertThat(downloadState.getDownloadFuture()).isNotDone();
   }
 
-  @Test
-  public void shouldResetTimeSinceProgressWhenProgressIsMade() {
+  @ParameterizedTest
+  @ArgumentsSource(FastWorldDownloadStateTestArguments.class)
+  public void shouldResetTimeSinceProgressWhenProgressIsMade(
+      final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     // Enough time has progressed but the next request makes progress so we are not stalled.
     clock.stepMillis(MIN_MILLIS_BEFORE_STALLING + 1);
     downloadState.requestComplete(true);
@@ -214,8 +231,10 @@ public class FastWorldDownloadStateTest {
     assertThat(downloadState.getDownloadFuture()).isNotDone();
   }
 
-  @Test
-  public void shouldNotAddRequestsAfterDownloadIsCompleted() {
+  @ParameterizedTest
+  @ArgumentsSource(FastWorldDownloadStateTestArguments.class)
+  public void shouldNotAddRequestsAfterDownloadIsCompleted(final DataStorageFormat storageFormat) {
+    setUp(storageFormat);
     downloadState.checkCompletion(header);
 
     downloadState.enqueueRequests(
