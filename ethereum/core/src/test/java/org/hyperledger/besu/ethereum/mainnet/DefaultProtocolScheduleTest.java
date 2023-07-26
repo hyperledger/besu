@@ -30,8 +30,8 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class DefaultProtocolScheduleTest {
 
@@ -46,7 +46,7 @@ public class DefaultProtocolScheduleTest {
 
   private final long FIRST_TIMESTAMP_FORK = 9991L;
 
-  @Before
+  @BeforeEach
   public void setup() {
     config = new StubGenesisConfigOptions();
     config.chainId(DEFAULT_CHAIN_ID);

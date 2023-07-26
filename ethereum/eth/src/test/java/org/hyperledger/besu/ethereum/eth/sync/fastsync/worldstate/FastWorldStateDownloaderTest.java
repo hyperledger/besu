@@ -93,16 +93,13 @@ import java.util.stream.StreamSupport;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.After;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
-@Ignore("PIE-1434 - Ignored while working to make test more reliable")
+@Disabled("PIE-1434 - Ignored while working to make test more reliable")
 public class FastWorldStateDownloaderTest {
-
-  @Rule public Timeout globalTimeout = Timeout.seconds(60); // 1 minute max per test
 
   private static final Hash EMPTY_TRIE_ROOT = Hash.wrap(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
@@ -117,7 +114,7 @@ public class FastWorldStateDownloaderTest {
   final EthProtocolManager ethProtocolManager =
       EthProtocolManagerTestUtil.create(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     persistenceThread.shutdownNow();
     assertThat(persistenceThread.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
@@ -125,36 +122,43 @@ public class FastWorldStateDownloaderTest {
   }
 
   @Test
+  @Timeout(value = 60)
   public void downloadWorldStateFromPeers_onePeerOneWithManyRequestsOneAtATime() {
     downloadAvailableWorldStateFromPeers(1, 50, 1, 1);
   }
 
   @Test
+  @Timeout(value = 60)
   public void downloadWorldStateFromPeers_onePeerOneWithManyRequests() {
     downloadAvailableWorldStateFromPeers(1, 50, 1, 10);
   }
 
   @Test
+  @Timeout(value = 60)
   public void downloadWorldStateFromPeers_onePeerWithSingleRequest() {
     downloadAvailableWorldStateFromPeers(1, 1, 100, 10);
   }
 
   @Test
+  @Timeout(value = 60)
   public void downloadWorldStateFromPeers_largeStateFromMultiplePeers() {
     downloadAvailableWorldStateFromPeers(5, 100, 10, 10);
   }
 
   @Test
+  @Timeout(value = 60)
   public void downloadWorldStateFromPeers_smallStateFromMultiplePeers() {
     downloadAvailableWorldStateFromPeers(5, 5, 1, 10);
   }
 
   @Test
+  @Timeout(value = 60)
   public void downloadWorldStateFromPeers_singleRequestWithMultiplePeers() {
     downloadAvailableWorldStateFromPeers(5, 1, 50, 50);
   }
 
   @Test
+  @Timeout(value = 60)
   public void downloadEmptyWorldState() {
 
     final BlockHeader header =
@@ -188,6 +192,7 @@ public class FastWorldStateDownloaderTest {
   }
 
   @Test
+  @Timeout(value = 60)
   public void downloadAlreadyAvailableWorldState() {
     // Setup existing state
     final DefaultWorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
@@ -227,6 +232,7 @@ public class FastWorldStateDownloaderTest {
   }
 
   @Test
+  @Timeout(value = 60)
   public void canRecoverFromTimeouts() {
     final DeterministicEthScheduler.TimeoutPolicy timeoutPolicy =
         DeterministicEthScheduler.TimeoutPolicy.timeoutXTimes(2);
@@ -282,11 +288,13 @@ public class FastWorldStateDownloaderTest {
   }
 
   @Test
+  @Timeout(value = 60)
   public void handlesPartialResponsesFromNetwork() {
     downloadAvailableWorldStateFromPeers(5, 100, 10, 10, this::respondPartially);
   }
 
   @Test
+  @Timeout(value = 60)
   public void doesNotRequestKnownCodeFromNetwork() {
     // Setup "remote" state
     final WorldStateArchive remoteWorldStateArchive = createInMemoryWorldStateArchive();
@@ -353,11 +361,13 @@ public class FastWorldStateDownloaderTest {
   }
 
   @Test
+  @Timeout(value = 60)
   public void cancelDownloader() {
     testCancellation(false);
   }
 
   @Test
+  @Timeout(value = 60)
   public void cancelDownloaderFuture() {
     testCancellation(true);
   }
@@ -441,6 +451,7 @@ public class FastWorldStateDownloaderTest {
   }
 
   @Test
+  @Timeout(value = 60)
   public void doesNotRequestKnownAccountTrieNodesFromNetwork() {
     // Setup "remote" state
     final WorldStateStorage remoteStorage =
@@ -524,6 +535,7 @@ public class FastWorldStateDownloaderTest {
   }
 
   @Test
+  @Timeout(value = 60)
   public void doesNotRequestKnownStorageTrieNodesFromNetwork() {
     // Setup "remote" state
     final WorldStateStorage remoteStorage =
@@ -625,6 +637,7 @@ public class FastWorldStateDownloaderTest {
   }
 
   @Test
+  @Timeout(value = 60)
   public void stalledDownloader() {
     final EthProtocolManager ethProtocolManager =
         EthProtocolManagerTestUtil.create(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()));
@@ -688,6 +701,7 @@ public class FastWorldStateDownloaderTest {
   }
 
   @Test
+  @Timeout(value = 60)
   public void resumesFromNonEmptyQueue() {
     // Setup "remote" state
     final WorldStateStorage remoteStorage =

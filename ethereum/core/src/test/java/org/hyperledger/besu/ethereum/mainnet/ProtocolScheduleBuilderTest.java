@@ -33,14 +33,14 @@ import java.util.OptionalLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ProtocolScheduleBuilderTest {
   private final long PRE_SHANGHAI_TIMESTAMP = 1680488620L; // Mon, 03 Apr 2023 02:23:40 UTC
   @Mock GenesisConfigOptions configOptions;
@@ -48,7 +48,7 @@ public class ProtocolScheduleBuilderTest {
   private static final BigInteger CHAIN_ID = BigInteger.ONE;
   private ProtocolScheduleBuilder builder;
 
-  @Before
+  @BeforeEach
   public void setup() {
     builder =
         new ProtocolScheduleBuilder(

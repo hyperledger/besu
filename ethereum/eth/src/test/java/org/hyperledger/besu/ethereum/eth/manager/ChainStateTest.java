@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ChainStateTest {
 

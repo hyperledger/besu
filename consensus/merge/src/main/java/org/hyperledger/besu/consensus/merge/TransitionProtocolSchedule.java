@@ -203,6 +203,13 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
         "Should not use TransitionProtocolSchedule wrapper class to create milestones");
   }
 
+  @Override
+  public Optional<ScheduledProtocolSpec.Hardfork> hardforkFor(
+      final Predicate<ScheduledProtocolSpec> predicate) {
+    return this.transitionUtils.dispatchFunctionAccordingToMergeState(
+        schedule -> schedule.hardforkFor(predicate));
+  }
+
   /**
    * List milestones.
    *

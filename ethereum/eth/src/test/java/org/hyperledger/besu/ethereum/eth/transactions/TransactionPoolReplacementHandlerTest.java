@@ -30,14 +30,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class TransactionPoolReplacementHandlerTest {
 
-  @Parameterized.Parameters
   public static Collection<Object[]> data() {
     return asList(
         new Object[][] {
@@ -53,27 +50,20 @@ public class TransactionPoolReplacementHandlerTest {
         });
   }
 
-  private final List<TransactionPoolReplacementRule> rules;
-  private final PendingTransaction oldPendingTransaction;
-  private final PendingTransaction newPendingTransaction;
-  private final boolean expectedResult;
   private final BlockHeader header;
 
-  public TransactionPoolReplacementHandlerTest(
-      final List<TransactionPoolReplacementRule> rules,
-      final PendingTransaction oldPendingTransaction,
-      final PendingTransaction newPendingTransaction,
-      final boolean expectedResult) {
-    this.rules = rules;
-    this.oldPendingTransaction = oldPendingTransaction;
-    this.newPendingTransaction = newPendingTransaction;
-    this.expectedResult = expectedResult;
+  public TransactionPoolReplacementHandlerTest() {
     header = mock(BlockHeader.class);
     when(header.getBaseFee()).thenReturn(Optional.empty());
   }
 
-  @Test
-  public void shouldReplace() {
+  @ParameterizedTest
+  @MethodSource("data")
+  public void shouldReplace(
+      final List<TransactionPoolReplacementRule> rules,
+      final PendingTransaction oldPendingTransaction,
+      final PendingTransaction newPendingTransaction,
+      final boolean expectedResult) {
     assertThat(
             new TransactionPoolReplacementHandler(rules)
                 .shouldReplace(oldPendingTransaction, newPendingTransaction, header))

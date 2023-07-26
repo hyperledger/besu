@@ -51,7 +51,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.units.bigints.UInt64;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>> {
