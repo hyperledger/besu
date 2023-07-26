@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -23,6 +23,7 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -31,10 +32,16 @@ import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Blob;
+import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.KZGCommitment;
+import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -43,6 +50,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -467,12 +475,18 @@ public class MainnetTransactionValidatorTest {
   }
 
   @Test
-  public void shouldAcceptTransactionWithAtLeastOneBlob() {
+  public void shouldRejectContractCreateWithBlob() {
+    /*
+    https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md#blob-transaction
+    "The field to deviates slightly from the semantics with the exception that it
+    MUST NOT be nil and therefore must always represent a 20-byte address.
+    This means that blob transactions cannot have the form of a create transaction."
+     */
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator,
             GasLimitCalculator.constant(),
-            FeeMarket.london(0L),
+            FeeMarket.cancun(0L, Optional.empty()),
             false,
             Optional.of(BigInteger.ONE),
             Set.of(TransactionType.FRONTIER, TransactionType.EIP1559, TransactionType.BLOB),
@@ -480,11 +494,65 @@ public class MainnetTransactionValidatorTest {
 
     var blobTx =
         new TransactionTestFixture()
+            .to(Optional.empty())
             .type(TransactionType.BLOB)
             .chainId(Optional.of(BigInteger.ONE))
+            .maxFeePerGas(Optional.of(Wei.of(15)))
+            .maxFeePerDataGas(Optional.of(Wei.of(128)))
+            .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
+            .blobsWithCommitments(
+                Optional.of(
+                    new BlobsWithCommitments(
+                        List.of(new KZGCommitment(Bytes.EMPTY)),
+                        List.of(new Blob(Bytes.EMPTY)),
+                        List.of(new KZGProof(Bytes.EMPTY)),
+                        List.of(VersionedHash.DEFAULT_VERSIONED_HASH))))
+            .versionedHashes(Optional.of(List.of(VersionedHash.DEFAULT_VERSIONED_HASH)))
             .createTransaction(senderKeys);
     var validationResult =
         validator.validate(blobTx, Optional.empty(), transactionValidationParams);
+    if (!validationResult.isValid()) {
+      System.out.println(
+          validationResult.getInvalidReason() + " " + validationResult.getErrorMessage());
+    }
+
+    assertThat(validationResult.isValid()).isFalse();
+    assertThat(validationResult.getInvalidReason())
+        .isEqualTo(TransactionInvalidReason.INVALID_TRANSACTION_FORMAT);
+  }
+
+  @Test
+  public void shouldAcceptTransactionWithAtLeastOneBlob() {
+    when(gasCalculator.dataGasCost(anyInt())).thenReturn(2L);
+    final TransactionValidator validator =
+        createTransactionValidator(
+            gasCalculator,
+            GasLimitCalculator.constant(),
+            FeeMarket.cancun(0L, Optional.empty()),
+            false,
+            Optional.of(BigInteger.ONE),
+            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559, TransactionType.BLOB),
+            0xc000);
+
+    BlobTestFixture blobTestFixture = new BlobTestFixture();
+    BlobsWithCommitments bwc = blobTestFixture.createBlobsWithCommitments(1);
+    var blobTx =
+        new TransactionTestFixture()
+            .to(Optional.of(Address.fromHexString("0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF")))
+            .type(TransactionType.BLOB)
+            .chainId(Optional.of(BigInteger.ONE))
+            .maxFeePerGas(Optional.of(Wei.of(15)))
+            .maxFeePerDataGas(Optional.of(Wei.of(128)))
+            .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
+            .blobsWithCommitments(Optional.of(bwc))
+            .versionedHashes(Optional.of(bwc.getVersionedHashes()))
+            .createTransaction(senderKeys);
+    var validationResult =
+        validator.validate(blobTx, Optional.empty(), transactionValidationParams);
+    if (!validationResult.isValid()) {
+      System.out.println(
+          validationResult.getInvalidReason() + " " + validationResult.getErrorMessage());
+    }
 
     assertThat(validationResult.isValid()).isTrue();
   }

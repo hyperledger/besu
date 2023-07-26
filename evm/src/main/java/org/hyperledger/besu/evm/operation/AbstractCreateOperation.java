@@ -137,41 +137,42 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     frame.pushStackItem(FAILURE_STACK_ITEM);
   }
 
-  private void spawnChildMessage(final MessageFrame frame, final Code code, final EVM evm) {
-    final Wei value = Wei.wrap(frame.getStackItem(0));
+  private void spawnChildMessage(final MessageFrame parent, final Code code, final EVM evm) {
+    final Wei value = Wei.wrap(parent.getStackItem(0));
 
-    final Address contractAddress = targetContractAddress(frame);
-    frame.addCreate(contractAddress);
+    final Address contractAddress = targetContractAddress(parent);
+    parent.addCreate(contractAddress);
 
     final long childGasStipend =
-        gasCalculator().gasAvailableForChildCreate(frame.getRemainingGas());
-    frame.decrementRemainingGas(childGasStipend);
+        gasCalculator().gasAvailableForChildCreate(parent.getRemainingGas());
+    parent.decrementRemainingGas(childGasStipend);
 
     final MessageFrame childFrame =
         MessageFrame.builder()
             .type(MessageFrame.Type.CONTRACT_CREATION)
-            .messageFrameStack(frame.getMessageFrameStack())
-            .worldUpdater(frame.getWorldUpdater().updater())
+            .messageFrameStack(parent.getMessageFrameStack())
+            .worldUpdater(parent.getWorldUpdater().updater())
             .initialGas(childGasStipend)
             .address(contractAddress)
-            .originator(frame.getOriginatorAddress())
+            .originator(parent.getOriginatorAddress())
             .contract(contractAddress)
-            .gasPrice(frame.getGasPrice())
+            .gasPrice(parent.getGasPrice())
             .inputData(Bytes.EMPTY)
-            .sender(frame.getRecipientAddress())
+            .sender(parent.getRecipientAddress())
             .value(value)
             .apparentValue(value)
             .code(code)
-            .blockValues(frame.getBlockValues())
-            .depth(frame.getMessageStackDepth() + 1)
-            .completer(child -> complete(frame, child, evm))
-            .miningBeneficiary(frame.getMiningBeneficiary())
-            .blockHashLookup(frame.getBlockHashLookup())
-            .maxStackSize(frame.getMaxStackSize())
+            .blockValues(parent.getBlockValues())
+            .depth(parent.getMessageStackDepth() + 1)
+            .completer(child -> complete(parent, child, evm))
+            .miningBeneficiary(parent.getMiningBeneficiary())
+            .blockHashLookup(parent.getBlockHashLookup())
+            .maxStackSize(parent.getMaxStackSize())
+            .versionedHashes(parent.getVersionedHashes())
             .build();
 
-    frame.getMessageFrameStack().addFirst(childFrame);
-    frame.setState(MessageFrame.State.CODE_SUSPENDED);
+    parent.getMessageFrameStack().addFirst(childFrame);
+    parent.setState(MessageFrame.State.CODE_SUSPENDED);
   }
 
   private void complete(final MessageFrame frame, final MessageFrame childFrame, final EVM evm) {

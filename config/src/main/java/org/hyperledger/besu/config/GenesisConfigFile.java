@@ -248,6 +248,24 @@ public class GenesisConfigFile {
   }
 
   /**
+   * Gets excess data gas.
+   *
+   * @return the excess data gas
+   */
+  public String getExcessDataGas() {
+    return JsonUtil.getValueAsString(configRoot, "excessdatagas", "0x0");
+  }
+
+  /**
+   * Gets data gas used.
+   *
+   * @return the data gas used
+   */
+  public String getDataGasUsed() {
+    return JsonUtil.getValueAsString(configRoot, "datagasused", "0x0");
+  }
+
+  /**
    * Gets coinbase.
    *
    * @return the coinbase

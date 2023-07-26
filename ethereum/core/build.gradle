@@ -60,6 +60,7 @@ dependencies {
   implementation 'io.tmio:tuweni-rlp'
   implementation 'org.hyperledger.besu:bls12-381'
   implementation 'org.immutables:value-annotations'
+  implementation 'tech.pegasys:jc-kzg-4844'
 
   implementation 'io.prometheus:simpleclient_guava'
 
@@ -93,6 +94,7 @@ dependencies {
   integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   integrationTestImplementation 'org.mockito:mockito-core'
   integrationTestImplementation 'org.testcontainers:testcontainers'
+  integrationTestImplementation 'io.tmio:tuweni-bytes'
 
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
 

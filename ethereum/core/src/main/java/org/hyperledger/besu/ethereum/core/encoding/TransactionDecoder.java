@@ -52,7 +52,9 @@ public class TransactionDecoder {
           TransactionType.ACCESS_LIST,
           TransactionDecoder::decodeAccessList,
           TransactionType.EIP1559,
-          TransactionDecoder::decodeEIP1559);
+          TransactionDecoder::decodeEIP1559,
+          TransactionType.BLOB,
+          BlobTransactionDecoder::decode);
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);

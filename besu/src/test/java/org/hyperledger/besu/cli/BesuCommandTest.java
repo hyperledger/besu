@@ -5664,18 +5664,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void kzgTrustedSetupFileIsMandatoryWithCustomGenesisFile()
-      throws IOException, URISyntaxException {
-    final Path genesisFileWithBlobs = createFakeGenesisFile(GENESIS_WITH_DATA_BLOBS_ENABLED);
-    parseCommand("--genesis-file", genesisFileWithBlobs.toString());
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "--kzg-trusted-setup is mandatory when providing a custom genesis that support data blobs");
-  }
-
-  @Test
   public void kzgTrustedSetupFileLoadedWithCustomGenesisFile()
       throws IOException, URISyntaxException {
     final Path testSetupAbsolutePath =

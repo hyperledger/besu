@@ -19,7 +19,6 @@ package org.hyperledger.besu.ethereum.referencetests;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -134,7 +133,8 @@ public class ReferenceTestEnv extends BlockHeader {
         Optional.ofNullable(random).map(Difficulty::fromHexString).orElse(Difficulty.ZERO),
         0L,
         null, // withdrawalsRoot
-        currentExcessDataGas == null ? null : DataGas.fromHexString(currentExcessDataGas),
+        null, // dataGasUsed
+        null, // excessDataGas
         null, // depositsRoot
         new MainnetBlockHeaderFunctions());
     this.parentDifficulty = parentDifficulty;

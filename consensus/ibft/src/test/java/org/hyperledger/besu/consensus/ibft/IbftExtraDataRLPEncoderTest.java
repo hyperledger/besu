@@ -41,7 +41,7 @@ import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
-public class IbftExtraDataEncoderTest {
+public class IbftExtraDataRLPEncoderTest {
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);

@@ -47,6 +47,11 @@ public interface ProtocolSchedule extends PrivacySupportingProtocolSchedule {
 
   void putTimestampMilestone(final long timestamp, final ProtocolSpec protocolSpec);
 
+  default Optional<ScheduledProtocolSpec.Hardfork> hardforkFor(
+      final Predicate<ScheduledProtocolSpec> predicate) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
   boolean isOnMilestoneBoundary(final BlockHeader blockHeader);
 
   boolean anyMatch(Predicate<ScheduledProtocolSpec> predicate);

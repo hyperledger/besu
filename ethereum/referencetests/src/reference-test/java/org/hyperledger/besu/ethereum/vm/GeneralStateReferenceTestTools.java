@@ -147,7 +147,7 @@ public class GeneralStateReferenceTestTools {
     final WorldUpdater worldStateUpdater = worldState.updater();
     final ReferenceTestBlockchain blockchain = new ReferenceTestBlockchain(blockHeader.getNumber());
     // Todo: EIP-4844 use the excessDataGas of the parent instead of DataGas.ZERO
-    final Wei dataGasPrice = protocolSpec(spec.getFork()).getFeeMarket().dataPrice(DataGas.ZERO);
+    final Wei dataGasPrice = protocolSpec(spec.getFork()).getFeeMarket().dataPricePerGas(DataGas.ZERO);
     final TransactionProcessingResult result =
         processor.processTransaction(
             blockchain,

@@ -164,6 +164,7 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("nonce") final String nonce,
         @JsonProperty("withdrawalsRoot") final String withdrawalsRoot,
         @JsonProperty("depositsRoot") final String depositsRoot,
+        @JsonProperty("dataGasUsed") final String dataGasUsed,
         @JsonProperty("excessDataGas") final String excessDataGas,
         @JsonProperty("hash") final String hash) {
       super(
@@ -188,6 +189,7 @@ public class BlockchainReferenceTestCaseSpec {
           Hash.fromHexString(mixHash), // mixHash
           Bytes.fromHexStringLenient(nonce).toLong(),
           withdrawalsRoot != null ? Hash.fromHexString(withdrawalsRoot) : null,
+          dataGasUsed != null ? Long.parseLong(dataGasUsed) : 0,
           excessDataGas != null ? DataGas.fromHexString(excessDataGas) : null,
           depositsRoot != null ? Hash.fromHexString(depositsRoot) : null,
           new BlockHeaderFunctions() {

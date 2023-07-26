@@ -147,6 +147,6 @@ public class ZeroBaseFeeMarketTest {
 
   @Test
   public void dataPriceShouldReturnsZero() {
-    assertThat(zeroBaseFeeMarket.dataPrice(DataGas.ONE)).isEqualTo(Wei.ZERO);
+    assertThat(zeroBaseFeeMarket.dataPricePerGas(DataGas.ONE)).isEqualTo(Wei.ZERO);
   }
 }

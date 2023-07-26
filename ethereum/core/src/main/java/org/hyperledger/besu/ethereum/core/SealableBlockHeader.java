@@ -62,6 +62,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final Wei baseFee,
       final Bytes32 mixHashOrPrevRandao,
       final Hash withdrawalsRoot,
+      final Long dataGasUsed,
       final DataGas excessDataGas,
       final Hash depositsRoot) {
     super(
@@ -73,6 +74,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
         timestamp,
         baseFee,
         mixHashOrPrevRandao,
+        dataGasUsed,
         excessDataGas);
     this.ommersHash = ommersHash;
     this.stateRoot = stateRoot;

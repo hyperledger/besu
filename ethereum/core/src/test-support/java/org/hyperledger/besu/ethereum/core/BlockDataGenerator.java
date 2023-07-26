@@ -26,6 +26,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -442,7 +443,7 @@ public class BlockDataGenerator {
         .payload(payload)
         .chainId(BigInteger.ONE)
         .maxFeePerDataGas(Wei.of(1))
-        .versionedHashes(List.of(Hash.fromHexStringLenient("0x29")))
+        .versionedHashes(List.of(VersionedHash.DEFAULT_VERSIONED_HASH))
         .signAndBuild(generateKeyPair());
   }
 

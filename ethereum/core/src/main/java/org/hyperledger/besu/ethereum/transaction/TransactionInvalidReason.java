@@ -47,7 +47,7 @@ public enum TransactionInvalidReason {
   TX_FEECAP_EXCEEDED,
   INTERNAL_ERROR,
   TX_POOL_DISABLED,
-
+  INVALID_BLOBS,
   // Private Transaction Invalid Reasons
   PRIVATE_TRANSACTION_INVALID,
   PRIVATE_TRANSACTION_FAILED,

@@ -28,6 +28,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -173,13 +174,13 @@ public class T8nExecutor {
                     txNode);
                 continue;
               }
-              // FUTURE: placeholder code until 4844 PR merges
-              // List<VersionedHash> entries = new ArrayList<>(blobVersionedHashes.size());
-              // for (JsonNode versionedHashNode : blobVersionedHashes) {
-              //   entries.add(
-              //       new VersionedHash(Bytes32.fromHexString(versionedHashNode.textValue())));
-              // }
-              // builder.versionedHashes(entries);
+
+              List<VersionedHash> entries = new ArrayList<>(blobVersionedHashes.size());
+              for (JsonNode versionedHashNode : blobVersionedHashes) {
+                entries.add(
+                    new VersionedHash(Bytes32.fromHexString(versionedHashNode.textValue())));
+              }
+              builder.versionedHashes(entries);
             }
 
             if (txNode.has("secretKey")) {
@@ -251,7 +252,7 @@ public class T8nExecutor {
     final WorldUpdater worldStateUpdater = worldState.updater();
     final ReferenceTestBlockchain blockchain = new ReferenceTestBlockchain(blockHeader.getNumber());
     // Todo: EIP-4844 use the excessDataGas of the parent instead of DataGas.ZERO
-    final Wei dataGasPrice = protocolSpec.getFeeMarket().dataPrice(DataGas.ZERO);
+    final Wei dataGasPrice = protocolSpec.getFeeMarket().dataPricePerGas(DataGas.ZERO);
 
     List<TransactionReceipt> receipts = new ArrayList<>();
     List<RejectedTransaction> invalidTransactions = new ArrayList<>(rejections);

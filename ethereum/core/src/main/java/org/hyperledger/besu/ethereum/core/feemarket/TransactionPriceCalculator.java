@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,9 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.core.feemarket;
 
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
+import java.math.BigInteger;
 import java.util.Optional;
 
 @FunctionalInterface
@@ -41,5 +43,37 @@ public interface TransactionPriceCalculator {
       }
       return price;
     };
+  }
+
+  // curiously named as in the spec
+  // https://eips.ethereum.org/EIPS/eip-4844#cryptographic-helpers
+  private static BigInteger fakeExponential(
+      final BigInteger factor, final BigInteger numerator, final BigInteger denominator) {
+    int i = 1;
+    BigInteger output = BigInteger.ZERO;
+    BigInteger numeratorAccumulator = factor.multiply(denominator);
+    while (numeratorAccumulator.signum() > 0) {
+      output = output.add(numeratorAccumulator);
+      numeratorAccumulator =
+          (numeratorAccumulator.multiply(numerator))
+              .divide(denominator.multiply(BigInteger.valueOf(i)));
+      ++i;
+    }
+    return output.divide(denominator);
+  }
+
+  static TransactionPriceCalculator dataGas(
+      final int minDataGasPrice,
+      final int dataGasPriceUpdateFraction,
+      final DataGas excessDataGas) {
+    return ((transaction, baseFee) -> {
+      final var dataGasPrice =
+          Wei.of(
+              fakeExponential(
+                  BigInteger.valueOf(minDataGasPrice),
+                  excessDataGas.toBigInteger(),
+                  BigInteger.valueOf(dataGasPriceUpdateFraction)));
+      return dataGasPrice;
+    });
   }
 }

@@ -46,7 +46,9 @@ import org.apache.tuweni.bytes.Bytes;
   "transactionHash",
   "transactionIndex",
   "revertReason",
-  "type"
+  "type",
+  "dataGasUsed",
+  "dataGasPrice"
 })
 public abstract class TransactionReceiptResult {
 
@@ -67,6 +69,9 @@ public abstract class TransactionReceiptResult {
   protected final TransactionReceipt receipt;
   protected final String type;
 
+  private final String dataGasUsed;
+  private final String dataGasPrice;
+
   protected TransactionReceiptResult(final TransactionReceiptWithMetadata receiptWithMetadata) {
     final Transaction txn = receiptWithMetadata.getTransaction();
     this.receipt = receiptWithMetadata.getReceipt();
@@ -76,6 +81,8 @@ public abstract class TransactionReceiptResult {
     this.cumulativeGasUsed = Quantity.create(receipt.getCumulativeGasUsed());
     this.from = txn.getSender().toString();
     this.gasUsed = Quantity.create(receiptWithMetadata.getGasUsed());
+    this.dataGasUsed = receiptWithMetadata.getDataGasUsed().map(Quantity::create).orElse(null);
+    this.dataGasPrice = receiptWithMetadata.getDataGasPrice().map(Quantity::create).orElse(null);
     this.effectiveGasPrice =
         Quantity.create(txn.getEffectiveGasPrice(receiptWithMetadata.getBaseFee()));
 
@@ -125,6 +132,18 @@ public abstract class TransactionReceiptResult {
   @JsonGetter(value = "gasUsed")
   public String getGasUsed() {
     return gasUsed;
+  }
+
+  @JsonGetter(value = "dataGasUsed")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public String getDataGasUsed() {
+    return dataGasUsed;
+  }
+
+  @JsonGetter(value = "dataGasPrice")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public String getDataGasPrice() {
+    return dataGasPrice;
   }
 
   @JsonGetter(value = "effectiveGasPrice")

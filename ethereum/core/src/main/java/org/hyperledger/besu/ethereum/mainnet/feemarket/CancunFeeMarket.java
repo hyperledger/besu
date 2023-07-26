@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 public class CancunFeeMarket extends LondonFeeMarket {
   private static final Logger LOG = LoggerFactory.getLogger(CancunFeeMarket.class);
   private static final BigInteger MIN_DATA_GAS_PRICE = BigInteger.ONE;
-  private static final BigInteger DATA_GAS_PRICE_UPDATE_FRACTION = BigInteger.valueOf(2225652);
+  private static final BigInteger DATA_GAS_PRICE_UPDATE_FRACTION = BigInteger.valueOf(3338477);
 
   public CancunFeeMarket(
       final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
@@ -39,7 +39,7 @@ public class CancunFeeMarket extends LondonFeeMarket {
   }
 
   @Override
-  public Wei dataPrice(final DataGas excessDataGas) {
+  public Wei dataPricePerGas(final DataGas excessDataGas) {
     final var dataGasPrice =
         Wei.of(
             fakeExponential(
