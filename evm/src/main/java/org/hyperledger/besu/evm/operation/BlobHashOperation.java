@@ -24,24 +24,25 @@ import java.util.List;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
- * The DataHash operation. https://eips.ethereum.org/EIPS/eip-4844
+ * The BlobHash operation. As specified in <a
+ * href="https://eips.ethereum.org/EIPS/eip-4844">EIP-4844</a>
  *
  * <p>Reads index from the top of the stack as big-endian uint256, and replaces it on the stack with
  * tx.message.blob_versioned_hashes[index] if index &lt; len(tx.message.blob_versioned_hashes), and
  * otherwise with a zeroed bytes32 value.
  */
-public class DataHashOperation extends AbstractOperation {
+public class BlobHashOperation extends AbstractOperation {
 
-  /** DATAHASH opcode number */
+  /** BLOBHASH opcode number */
   public static final int OPCODE = 0x49;
 
   /**
-   * Instantiates a new DataHash operation.
+   * Instantiates a new BlobHash operation.
    *
    * @param gasCalculator the gas calculator
    */
-  public DataHashOperation(final GasCalculator gasCalculator) {
-    super(OPCODE, "DATAHASH", 1, 1, gasCalculator);
+  public BlobHashOperation(final GasCalculator gasCalculator) {
+    super(OPCODE, "BLOBHASH", 1, 1, gasCalculator);
   }
 
   @Override
@@ -66,10 +67,5 @@ public class DataHashOperation extends AbstractOperation {
       frame.pushStackItem(Bytes.EMPTY);
     }
     return new OperationResult(3, null);
-  }
-
-  @Override
-  public boolean isVirtualOperation() {
-    return super.isVirtualOperation();
   }
 }

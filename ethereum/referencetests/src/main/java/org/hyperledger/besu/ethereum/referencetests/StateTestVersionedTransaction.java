@@ -19,6 +19,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.evm.AccessListEntry;
@@ -71,6 +72,8 @@ public class StateTestVersionedTransaction {
   private final List<Wei> values;
   private final List<Bytes> payloads;
   private final Optional<List<List<AccessListEntry>>> maybeAccessLists;
+  private final Wei maxFeePerDataGas;
+  private final List<VersionedHash> blobVersionedHashes;
 
   /**
    * Constructor for populating a mock transaction with json data.
@@ -98,7 +101,9 @@ public class StateTestVersionedTransaction {
       @JsonProperty("secretKey") final String secretKey,
       @JsonProperty("data") final String[] data,
       @JsonDeserialize(using = StateTestAccessListDeserializer.class) @JsonProperty("accessLists")
-          final List<List<AccessListEntry>> maybeAccessLists) {
+          final List<List<AccessListEntry>> maybeAccessLists,
+      @JsonProperty("maxFeePerDataGas") final String maxFeePerDataGas,
+      @JsonProperty("blobVersionedHashes") final List<VersionedHash> blobVersionedHashes) {
 
     this.nonce = Bytes.fromHexStringLenient(nonce).toLong();
     this.gasPrice = Optional.ofNullable(gasPrice).map(Wei::fromHexString).orElse(null);
@@ -116,9 +121,16 @@ public class StateTestVersionedTransaction {
     this.values = parseArray(value, Wei::fromHexString);
     this.payloads = parseArray(data, Bytes::fromHexString);
     this.maybeAccessLists = Optional.ofNullable(maybeAccessLists);
+    this.maxFeePerDataGas =
+        Optional.ofNullable(maxFeePerDataGas).map(Wei::fromHexString).orElse(null);
+    this.blobVersionedHashes = blobVersionedHashes;
   }
 
   private static <T> List<T> parseArray(final String[] array, final Function<String, T> parseFct) {
+    if (array == null) {
+      return null;
+    }
+
     final List<T> res = new ArrayList<>(array.length);
     for (final String str : array) {
       try {
@@ -148,6 +160,8 @@ public class StateTestVersionedTransaction {
     Optional.ofNullable(maxPriorityFeePerGas).ifPresent(transactionBuilder::maxPriorityFeePerGas);
     maybeAccessLists.ifPresent(
         accessLists -> transactionBuilder.accessList(accessLists.get(indexes.data)));
+    Optional.ofNullable(maxFeePerDataGas).ifPresent(transactionBuilder::maxFeePerDataGas);
+    transactionBuilder.versionedHashes(blobVersionedHashes);
 
     transactionBuilder.guessType();
     if (transactionBuilder.getTransactionType().requiresChainId()) {
