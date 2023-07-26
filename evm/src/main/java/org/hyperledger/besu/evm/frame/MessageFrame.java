@@ -19,6 +19,7 @@ import static java.util.Collections.emptySet;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.code.CodeSection;
@@ -241,7 +242,7 @@ public class MessageFrame {
   private Optional<Bytes> revertReason;
 
   private final Map<String, Object> contextVariables;
-  private final Optional<List<Hash>> versionedHashes;
+  private final Optional<List<VersionedHash>> versionedHashes;
 
   private final Table<Address, Bytes32, Bytes32> transientStorage = HashBasedTable.create();
 
@@ -286,7 +287,7 @@ public class MessageFrame {
       final int maxStackSize,
       final Set<Address> accessListWarmAddresses,
       final Multimap<Address, Bytes32> accessListWarmStorage,
-      final Optional<List<Hash>> versionedHashes) {
+      final Optional<List<VersionedHash>> versionedHashes) {
     this.type = type;
     this.messageFrameStack = messageFrameStack;
     this.parentMessageFrame = messageFrameStack.peek();
@@ -1426,7 +1427,7 @@ public class MessageFrame {
    *
    * @return optional list of hashes
    */
-  public Optional<List<Hash>> getVersionedHashes() {
+  public Optional<List<VersionedHash>> getVersionedHashes() {
     return versionedHashes;
   }
 
@@ -1464,7 +1465,7 @@ public class MessageFrame {
     private Set<Address> accessListWarmAddresses = emptySet();
     private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
 
-    private Optional<List<Hash>> versionedHashes;
+    private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
 
     /**
      * Sets Type.
@@ -1736,7 +1737,7 @@ public class MessageFrame {
      * @param versionedHashes the Optional list of versioned hashes
      * @return the builder
      */
-    public Builder versionedHashes(final Optional<List<Hash>> versionedHashes) {
+    public Builder versionedHashes(final Optional<List<VersionedHash>> versionedHashes) {
       this.versionedHashes = versionedHashes;
       return this;
     }
@@ -1760,6 +1761,7 @@ public class MessageFrame {
       checkState(completer != null, "Missing message frame completer");
       checkState(miningBeneficiary != null, "Missing mining beneficiary");
       checkState(blockHashLookup != null, "Missing block hash lookup");
+      checkState(versionedHashes != null, "Missing optional versioned hashes");
     }
 
     /**

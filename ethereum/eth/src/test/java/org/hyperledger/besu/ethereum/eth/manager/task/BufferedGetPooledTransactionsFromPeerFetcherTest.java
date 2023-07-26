@@ -41,13 +41,16 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import io.netty.util.concurrent.ScheduledFuture;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BufferedGetPooledTransactionsFromPeerFetcherTest {
 
   @Mock EthPeer ethPeer;
@@ -61,7 +64,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
   private StubMetricsSystem metricsSystem;
   private PeerTransactionTracker transactionTracker;
 
-  @Before
+  @BeforeEach
   public void setup() {
     metricsSystem = new StubMetricsSystem();
     transactionTracker = new PeerTransactionTracker();

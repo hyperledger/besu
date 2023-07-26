@@ -46,8 +46,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class FastSyncDownloaderTest {
 
@@ -76,7 +76,7 @@ public class FastSyncDownloaderTest {
           fastSyncDataDirectory,
           FastSyncState.EMPTY_SYNC_STATE);
 
-  @Before
+  @BeforeEach
   public void setup() {
     when(worldStateStorage.getDataStorageFormat()).thenReturn(DataStorageFormat.FOREST);
     when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);

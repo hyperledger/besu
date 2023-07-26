@@ -31,7 +31,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class GetBlockFromPeerTaskTest
     extends AbstractMessageTaskTest<Block, AbstractPeerTask.PeerTaskResult<Block>> {

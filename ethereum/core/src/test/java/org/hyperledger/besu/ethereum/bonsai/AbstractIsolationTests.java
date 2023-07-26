@@ -70,8 +70,6 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStora
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
@@ -84,9 +82,8 @@ import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.io.TempDir;
 
 public abstract class AbstractIsolationTests {
   protected BonsaiWorldStateProvider archive;
@@ -136,9 +133,9 @@ public abstract class AbstractIsolationTests {
   KeyPair sender1 = asKeyPair.apply(accounts.get(0).getPrivateKey().get());
   TransactionPool transactionPool;
 
-  @Rule public final TemporaryFolder tempData = new TemporaryFolder();
+  @TempDir private Path tempData;
 
-  @Before
+  @BeforeEach
   public void createStorage() {
     bonsaiWorldStateStorage =
         (BonsaiWorldStateKeyValueStorage)
@@ -171,44 +168,38 @@ public abstract class AbstractIsolationTests {
 
   // storage provider which uses a temporary directory based rocksdb
   protected StorageProvider createKeyValueStorageProvider() {
-    try {
-      tempData.create();
-      return new KeyValueStorageProviderBuilder()
-          .withStorageFactory(
-              new RocksDBKeyValueStorageFactory(
-                  () ->
-                      new RocksDBFactoryConfiguration(
-                          1024 /* MAX_OPEN_FILES*/,
-                          4 /*BACKGROUND_THREAD_COUNT*/,
-                          8388608 /*CACHE_CAPACITY*/,
-                          false),
-                  Arrays.asList(KeyValueSegmentIdentifier.values()),
-                  2,
-                  RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
-          .withCommonConfiguration(
-              new BesuConfiguration() {
+    return new KeyValueStorageProviderBuilder()
+        .withStorageFactory(
+            new RocksDBKeyValueStorageFactory(
+                () ->
+                    new RocksDBFactoryConfiguration(
+                        1024 /* MAX_OPEN_FILES*/,
+                        4 /*BACKGROUND_THREAD_COUNT*/,
+                        8388608 /*CACHE_CAPACITY*/,
+                        false),
+                Arrays.asList(KeyValueSegmentIdentifier.values()),
+                2,
+                RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
+        .withCommonConfiguration(
+            new BesuConfiguration() {
 
-                @Override
-                public Path getStoragePath() {
-                  return new File(tempData.getRoot().toString() + File.pathSeparator + "database")
-                      .toPath();
-                }
+              @Override
+              public Path getStoragePath() {
+                return tempData.resolve("database");
+              }
 
-                @Override
-                public Path getDataPath() {
-                  return tempData.getRoot().toPath();
-                }
+              @Override
+              public Path getDataPath() {
+                return tempData;
+              }
 
-                @Override
-                public int getDatabaseVersion() {
-                  return 2;
-                }
-              })
-          .withMetricsSystem(new NoOpMetricsSystem())
-          .build();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+              @Override
+              public int getDatabaseVersion() {
+                return 2;
+              }
+            })
+        .withMetricsSystem(new NoOpMetricsSystem())
+        .build();
   }
 
   static class TestBlockCreator extends AbstractBlockCreator {
