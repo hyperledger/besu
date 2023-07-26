@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 
 public enum RpcMethod {
   ADMIN_ADD_PEER("admin_addPeer"),
@@ -190,7 +190,7 @@ public enum RpcMethod {
   }
 
   static {
-    allMethodNames = new ArrayList<>();
+    allMethodNames = new HashSet<>();
     for (RpcMethod m : RpcMethod.values()) {
       allMethodNames.add(m.getMethodName());
     }
