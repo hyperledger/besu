@@ -17,6 +17,7 @@ package org.hyperledger.besu.datatypes;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -37,7 +38,7 @@ public class VersionedHash {
   public static final byte SHA256_VERSION_ID = 1;
 
   /** A default versioned hash, nonsensical but valid. */
-  public static VersionedHash DEFAULT_VERSIONED_HASH =
+  public static final VersionedHash DEFAULT_VERSIONED_HASH =
       new VersionedHash(SHA256_VERSION_ID, Hash.ZERO);
 
   /**
@@ -66,6 +67,21 @@ public class VersionedHash {
       throw new IllegalArgumentException("Only supported hash version is 0x01, sha256 hash.");
     }
     this.hashish = typedHash;
+  }
+
+  /**
+   * Parse a hexadecimal string representing a versioned hash value.
+   *
+   * @param str A hexadecimal string (with or without the leading '0x') representing a valid hash
+   *     value.
+   * @return The parsed hash.
+   * @throws NullPointerException if the provided string is {@code null}.
+   * @throws IllegalArgumentException if the string is either not hexadecimal, or not the valid
+   *     representation of a versioned hash (not 32 bytes or bad version).
+   */
+  @JsonCreator
+  public static VersionedHash fromHexString(final String str) {
+    return new VersionedHash(Bytes32.fromHexString(str));
   }
 
   /**
