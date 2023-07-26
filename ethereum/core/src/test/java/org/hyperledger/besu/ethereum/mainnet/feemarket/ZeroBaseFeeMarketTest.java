@@ -26,8 +26,8 @@ import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ZeroBaseFeeMarketTest {
 
@@ -36,7 +36,7 @@ public class ZeroBaseFeeMarketTest {
   private static final long FORK_BLOCK = 0;
   private ZeroBaseFeeMarket zeroBaseFeeMarket;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     zeroBaseFeeMarket = new ZeroBaseFeeMarket(FORK_BLOCK);
   }
