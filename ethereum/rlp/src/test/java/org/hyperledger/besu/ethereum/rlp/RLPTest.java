@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.rlp.util.RLPTestUtil;
 import java.util.Random;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class RLPTest {
 

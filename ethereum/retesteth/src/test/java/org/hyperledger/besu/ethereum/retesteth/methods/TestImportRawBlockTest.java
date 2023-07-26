@@ -31,15 +31,15 @@ import java.io.IOException;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TestImportRawBlockTest {
   private TestImportRawBlock test_importRawBlock;
   private TestRewindToBlock test_rewindToBlock;
   private RetestethContext context;
 
-  @Before
+  @BeforeEach
   public void setupClass() throws IOException {
     context = new RetestethContext();
     test_importRawBlock = new TestImportRawBlock(context);
