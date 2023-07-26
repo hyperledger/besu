@@ -34,8 +34,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CompleteTaskStepTest {
 
@@ -50,7 +50,7 @@ public class CompleteTaskStepTest {
   private final CompleteTaskStep completeTaskStep =
       new CompleteTaskStep(snapSyncState, new NoOpMetricsSystem());
 
-  @Before
+  @BeforeEach
   public void setup() {
     when(snapSyncState.getPivotBlockHeader()).thenReturn(Optional.of(blockHeader));
   }

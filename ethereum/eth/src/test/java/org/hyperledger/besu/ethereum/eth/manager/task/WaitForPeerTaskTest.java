@@ -26,15 +26,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class WaitForPeerTaskTest {
   private EthProtocolManager ethProtocolManager;
   private EthContext ethContext;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
-  @Before
+  @BeforeEach
   public void setupTest() {
     ethProtocolManager = EthProtocolManagerTestUtil.create();
     ethContext = ethProtocolManager.ethContext();

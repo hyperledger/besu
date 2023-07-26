@@ -55,7 +55,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class MessageWrapperTest {
 

@@ -48,14 +48,14 @@ import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class StorageFlatDatabaseHealingRangeRequestTest {
 
   @Mock private SnapWorldDownloadState downloadState;
@@ -74,7 +74,7 @@ public class StorageFlatDatabaseHealingRangeRequestTest {
   private Hash account0Hash;
   private Hash account0StorageRoot;
 
-  @Before
+  @BeforeEach
   public void setup() {
     final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
     worldStateStorage =
