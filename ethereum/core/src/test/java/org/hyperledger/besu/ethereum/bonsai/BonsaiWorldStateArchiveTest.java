@@ -18,7 +18,10 @@ package org.hyperledger.besu.ethereum.bonsai;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
 import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.BLOCKCHAIN;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -39,10 +42,11 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.Optional;
 
@@ -59,36 +63,40 @@ import org.mockito.quality.Strictness;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class BonsaiWorldStateArchiveTest {
-
   final BlockHeaderTestFixture blockBuilder = new BlockHeaderTestFixture();
 
   @Mock Blockchain blockchain;
 
   @Mock StorageProvider storageProvider;
 
-  @Mock SnappableKeyValueStorage keyValueStorage;
-
+  @Mock SegmentedKeyValueStorage segmentedKeyValueStorage;
+  @Mock KeyValueStorage trieLogStorage;
+  @Mock SegmentedKeyValueStorageTransaction segmentedKeyValueStorageTransaction;
   BonsaiWorldStateProvider bonsaiWorldStateArchive;
 
   @Mock TrieLogManager trieLogManager;
 
   @BeforeEach
   public void setUp() {
-    when(storageProvider.getStorageBySegmentIdentifier(any(KeyValueSegmentIdentifier.class)))
-        .thenReturn(keyValueStorage);
+    when(storageProvider.getStorageBySegmentIdentifiers(anyList()))
+        .thenReturn(segmentedKeyValueStorage);
+    when(segmentedKeyValueStorage.startTransaction())
+        .thenReturn(segmentedKeyValueStorageTransaction);
+    when(storageProvider.getStorageBySegmentIdentifier(any())).thenReturn(trieLogStorage);
+    when(trieLogStorage.startTransaction()).thenReturn(mock(KeyValueStorageTransaction.class));
   }
 
   @Test
   public void testGetMutableReturnPersistedStateWhenNeeded() {
     final BlockHeader chainHead = blockBuilder.number(0).buildHeader();
 
-    when(keyValueStorage.get(WORLD_ROOT_HASH_KEY))
+    when(segmentedKeyValueStorage.get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY))
         .thenReturn(Optional.of(chainHead.getStateRoot().toArrayUnsafe()));
-    when(keyValueStorage.get(WORLD_BLOCK_HASH_KEY))
+    when(segmentedKeyValueStorage.get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY))
         .thenReturn(Optional.of(chainHead.getHash().toArrayUnsafe()));
-    when(keyValueStorage.get(WORLD_ROOT_HASH_KEY))
+    when(segmentedKeyValueStorage.get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY))
         .thenReturn(Optional.of(chainHead.getStateRoot().toArrayUnsafe()));
-    when(keyValueStorage.get(WORLD_BLOCK_HASH_KEY))
+    when(segmentedKeyValueStorage.get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY))
         .thenReturn(Optional.of(chainHead.getHash().toArrayUnsafe()));
     bonsaiWorldStateArchive =
         new BonsaiWorldStateProvider(
@@ -145,7 +153,6 @@ public class BonsaiWorldStateArchiveTest {
   @Test
   public void testGetMutableWithStorageInconsistencyRollbackTheState() {
 
-    when(keyValueStorage.startTransaction()).thenReturn(mock(KeyValueStorageTransaction.class));
     doAnswer(__ -> Optional.of(mock(TrieLogLayer.class)))
         .when(trieLogManager)
         .getTrieLogLayer(any(Hash.class));
@@ -170,11 +177,9 @@ public class BonsaiWorldStateArchiveTest {
     verify(trieLogManager).getTrieLogLayer(Hash.ZERO);
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  //    @SuppressWarnings({"unchecked", "rawtypes"})
   @Test
   public void testGetMutableWithStorageConsistencyNotRollbackTheState() {
-
-    when(keyValueStorage.startTransaction()).thenReturn(mock(KeyValueStorageTransaction.class));
 
     var worldStateStorage =
         new BonsaiWorldStateKeyValueStorage(storageProvider, new NoOpMetricsSystem());
@@ -201,7 +206,6 @@ public class BonsaiWorldStateArchiveTest {
   @SuppressWarnings({"unchecked"})
   @Test
   public void testGetMutableWithStorageConsistencyToRollbackAndRollForwardTheState() {
-    when(keyValueStorage.startTransaction()).thenReturn(mock(KeyValueStorageTransaction.class));
     final BlockHeader genesis = blockBuilder.number(0).buildHeader();
     final BlockHeader blockHeaderChainA =
         blockBuilder.number(1).timestamp(1).parentHash(genesis.getHash()).buildHeader();
@@ -242,9 +246,8 @@ public class BonsaiWorldStateArchiveTest {
   // TODO: refactor to test original intent
   @Disabled("needs refactor, getMutable(hash, hash) cannot trigger saveTrieLog")
   public void testGetMutableWithRollbackNotOverrideTrieLogLayer() {
-    final KeyValueStorageTransaction keyValueStorageTransaction =
-        mock(KeyValueStorageTransaction.class);
-    when(keyValueStorage.startTransaction()).thenReturn(keyValueStorageTransaction);
+    when(segmentedKeyValueStorage.startTransaction())
+        .thenReturn(segmentedKeyValueStorageTransaction);
     final BlockHeader genesis = blockBuilder.number(0).buildHeader();
     final BlockHeader blockHeaderChainA =
         blockBuilder.number(1).timestamp(1).parentHash(genesis.getHash()).buildHeader();
@@ -270,7 +273,7 @@ public class BonsaiWorldStateArchiveTest {
     final TrieLogLayer trieLogLayerBlockB = new TrieLogLayer();
     trieLogLayerBlockB.setBlockHash(blockHeaderChainB.getHash());
     TrieLogFactoryImpl.writeTo(trieLogLayerBlockB, rlpLogBlockB);
-    when(keyValueStorage.get(blockHeaderChainB.getHash().toArrayUnsafe()))
+    when(segmentedKeyValueStorage.get(BLOCKCHAIN, blockHeaderChainB.getHash().toArrayUnsafe()))
         .thenReturn(Optional.of(rlpLogBlockB.encoded().toArrayUnsafe()));
 
     when(blockchain.getBlockHeader(eq(blockHeaderChainB.getHash())))
@@ -281,9 +284,9 @@ public class BonsaiWorldStateArchiveTest {
         .containsInstanceOf(BonsaiWorldState.class);
 
     // verify is not persisting if already present
-    verify(keyValueStorageTransaction, never())
-        .put(eq(blockHeaderChainA.getHash().toArrayUnsafe()), any());
-    verify(keyValueStorageTransaction, never())
-        .put(eq(blockHeaderChainB.getHash().toArrayUnsafe()), any());
+    verify(segmentedKeyValueStorageTransaction, never())
+        .put(BLOCKCHAIN, eq(blockHeaderChainA.getHash().toArrayUnsafe()), any());
+    verify(segmentedKeyValueStorageTransaction, never())
+        .put(BLOCKCHAIN, eq(blockHeaderChainB.getHash().toArrayUnsafe()), any());
   }
 }

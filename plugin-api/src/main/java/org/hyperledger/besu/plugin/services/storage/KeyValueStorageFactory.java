@@ -20,6 +20,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.io.Closeable;
+import java.util.List;
 
 /** Factory for creating key-value storage instances. */
 @Unstable
@@ -54,6 +55,25 @@ public interface KeyValueStorageFactory extends Closeable {
       throws StorageException;
 
   /**
+   * Creates a new segmented key-value storage instance, appropriate for the given segment.
+   *
+   * <p>New segments may be introduced in future releases and should result in a new empty
+   * key-space. Segments created with the identifier of an existing segment should have the same
+   * data as that existing segment.
+   *
+   * @param segments list of segments identifiers that comprise the created segmented storage.
+   * @param configuration common configuration available to plugins, in a populated state.
+   * @param metricsSystem metrics component for recording key-value storage events.
+   * @return the storage instance reserved for the given segment.
+   * @exception StorageException problem encountered when creating storage for the segment.
+   */
+  SegmentedKeyValueStorage create(
+      List<SegmentIdentifier> segments,
+      BesuConfiguration configuration,
+      MetricsSystem metricsSystem)
+      throws StorageException;
+
+  /**
    * Whether storage segment isolation is supported by the factory created instances.
    *
    * <p>As supporting segment isolation is similar to a separating keys into distinct namespaces,
@@ -71,7 +91,5 @@ public interface KeyValueStorageFactory extends Closeable {
    * @return <code>true</code> when the created storage supports snapshots <code>false</code> when
    *     it does not.
    */
-  default boolean isSnapshotIsolationSupported() {
-    return false;
-  }
+  boolean isSnapshotIsolationSupported();
 }
