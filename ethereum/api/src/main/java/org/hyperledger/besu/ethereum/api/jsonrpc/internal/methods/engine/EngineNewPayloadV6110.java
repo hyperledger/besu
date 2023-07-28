@@ -14,27 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import io.vertx.core.Vertx;
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
-import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_PARAMS;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.UNSUPPORTED_FORK;
-
+import io.vertx.core.Vertx;
 public class EngineNewPayloadV6110 extends EngineNewPayloadV3 {
 
   private final ProtocolSchedule timestampSchedule;
@@ -57,20 +46,21 @@ public class EngineNewPayloadV6110 extends EngineNewPayloadV3 {
   }
 
   @Override
-  protected Optional<JsonRpcResponse> validateForkSupported(
+  protected ValidationResult<RpcErrorType> validateForkSupported(
       final Object reqId, final EnginePayloadParameter payloadParameter) {
     var eip6110 = timestampSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("ExperimentalEips"));
+
 
     // TODO-6110: Need to double check the condition on returning UNSUPPORTED_FORK
     if (eip6110.isPresent() && payloadParameter.getTimestamp() >= eip6110.get().milestone()) {
       if (payloadParameter.getDataGasUsed() == null
           || payloadParameter.getExcessDataGas() == null) {
-        return Optional.of(new JsonRpcErrorResponse(reqId, INVALID_PARAMS));
+        return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing data gas fields");
       } else {
-        return Optional.empty();
+        return ValidationResult.valid();
       }
     } else {
-        return Optional.of(new JsonRpcErrorResponse(reqId, UNSUPPORTED_FORK));
+      return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Fork not supported");
     }
   }
 }

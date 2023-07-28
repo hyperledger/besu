@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -79,12 +80,12 @@ public class EngineGetPayloadV6110 extends AbstractEngineGetPayload {
             blockResultFactory.payloadTransactionCompleteV6110(blockWithReceipts));
       } else {
         LOG.error("Timestamp of the built payload is less than EIP-6110 activation timestamp");
-        return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.UNSUPPORTED_FORK);
+        return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INTERNAL_ERROR); // TODO: For now
       }
 
     } catch (ClassCastException e) {
       LOG.error("configuration error, can't call V6110 endpoint with non-default protocol schedule");
-      return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
+      return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INTERNAL_ERROR);
     }
   }
 }
