@@ -17,9 +17,11 @@ package org.hyperledger.besu.evm.precompile;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.crypto.Hash;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -53,12 +55,18 @@ public class FalconPrecompiledContract extends AbstractPrecompiledContract {
   @Override
   public PrecompileContractResult computePrecompile(
       final Bytes methodInput, @Nonnull final MessageFrame messageFrame) {
-    Bytes methodAbi = methodInput.slice(0, METHOD_ABI.size());
-    if (!methodAbi.xor(METHOD_ABI).isZero()) {
-      LOG.trace("Unexpected method ABI: " + methodAbi.toHexString());
-      return PrecompileContractResult.success(Bytes32.leftPad(Bytes.of(1)));
+    Bytes methodAbi;
+    try {
+      methodAbi = methodInput.slice(0, METHOD_ABI.size());
+      if (!methodAbi.xor(METHOD_ABI).isZero()) {
+        LOG.trace("Unexpected method ABI: " + methodAbi.toHexString());
+        return PrecompileContractResult.halt(
+            null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      }
+    } catch (Exception e) {
+      return PrecompileContractResult.halt(
+          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
-
     Bytes signatureSlice;
     Bytes pubKeySlice;
     Bytes dataSlice;
