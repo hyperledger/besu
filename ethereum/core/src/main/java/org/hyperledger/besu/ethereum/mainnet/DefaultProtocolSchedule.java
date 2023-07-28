@@ -20,8 +20,8 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
-import org.hyperledger.besu.ethereum.core.TransactionFilter;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.BlockNumberProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.TimestampProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -40,7 +40,7 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
 
   @VisibleForTesting
   protected NavigableSet<ScheduledProtocolSpec> protocolSpecs =
-      new TreeSet<>(Comparator.comparing(ScheduledProtocolSpec::milestone).reversed());
+      new TreeSet<>(Comparator.comparing(ScheduledProtocolSpec::fork).reversed());
 
   private final Optional<BigInteger> chainId;
 
@@ -54,12 +54,23 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
     this.protocolSpecs = protocolSchedule.protocolSpecs;
   }
 
+  public ScheduledProtocolSpec specScheduledForBlock(final ProcessableBlockHeader blockHeader) {
+    return protocolSpecs.stream()
+        .filter(s -> s.isOnOrAfterMilestoneBoundary(blockHeader))
+        .findFirst()
+        .orElseThrow(
+            () ->
+                new IllegalStateException(
+                    "No protocol spec found for block " + blockHeader.getNumber()));
+  }
+
   @Override
   public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
     checkArgument(
         !protocolSpecs.isEmpty(), "At least 1 milestone must be provided to the protocol schedule");
     checkArgument(
-        protocolSpecs.last().milestone() == 0, "There must be a milestone starting from block 0");
+        protocolSpecs.last().fork().milestone() == 0,
+        "There must be a milestone starting from block 0");
 
     // protocolSpecs is sorted in descending block order, so the first one we find that's lower than
     // the requested level will be the most appropriate spec
@@ -79,8 +90,8 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
   @Override
   public String listMilestones() {
     return protocolSpecs.stream()
-        .sorted(Comparator.comparing(ScheduledProtocolSpec::milestone))
-        .map(scheduledSpec -> scheduledSpec.spec().getName() + ": " + scheduledSpec.milestone())
+        .sorted(Comparator.comparing(ScheduledProtocolSpec::fork))
+        .map(scheduledSpec -> scheduledSpec.fork().toString())
         .collect(Collectors.joining(", ", "[", "]"));
   }
 
@@ -111,9 +122,22 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
   }
 
   @Override
-  public void setTransactionFilter(final TransactionFilter transactionFilter) {
+  public Optional<ScheduledProtocolSpec.Hardfork> hardforkFor(
+      final Predicate<ScheduledProtocolSpec> predicate) {
+    return this.protocolSpecs.stream()
+        .filter(predicate)
+        .findFirst()
+        .map(ScheduledProtocolSpec::fork);
+  }
+
+  @Override
+  public void setPermissionTransactionFilter(
+      final PermissionTransactionFilter permissionTransactionFilter) {
     protocolSpecs.forEach(
-        spec -> spec.spec().getTransactionValidator().setTransactionFilter(transactionFilter));
+        spec ->
+            spec.spec()
+                .getTransactionValidatorFactory()
+                .setPermissionTransactionFilter(permissionTransactionFilter));
   }
 
   @Override

@@ -38,7 +38,7 @@ import java.util.TreeSet;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 
 public class TrieIteratorTest {
@@ -47,6 +47,7 @@ public class TrieIteratorTest {
       Bytes32.fromHexString("0x5555555555555555555555555555555555555555555555555555555555555555");
   private static final Bytes32 KEY_HASH2 =
       Bytes32.fromHexString("0x5555555555555555555555555555555555555555555555555555555555555556");
+
   private static final Bytes PATH1 = bytesToPath(KEY_HASH1);
   private static final Bytes PATH2 = bytesToPath(KEY_HASH2);
 

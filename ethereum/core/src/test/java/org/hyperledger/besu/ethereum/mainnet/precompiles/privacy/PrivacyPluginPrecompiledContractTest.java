@@ -62,8 +62,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PrivacyPluginPrecompiledContractTest {
   private final String DEFAULT_OUTPUT = "0x01";
@@ -72,7 +72,7 @@ public class PrivacyPluginPrecompiledContractTest {
 
   PrivacyPluginPrecompiledContract contract;
 
-  @Before
+  @BeforeEach
   public void setup() {
     messageFrame = mock(MessageFrame.class);
 
@@ -121,7 +121,7 @@ public class PrivacyPluginPrecompiledContractTest {
                           @Override
                           public Optional<org.hyperledger.besu.plugin.data.PrivateTransaction>
                               getPrivateTransactionFromPayload(
-                                  final org.hyperledger.besu.plugin.data.Transaction transaction) {
+                                  final org.hyperledger.besu.datatypes.Transaction transaction) {
                             final BytesValueRLPInput bytesValueRLPInput =
                                 new BytesValueRLPInput(transaction.getPayload(), false);
                             return Optional.of(readFrom(bytesValueRLPInput));

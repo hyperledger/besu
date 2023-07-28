@@ -38,7 +38,7 @@ public class ProtocolSpec {
 
   private final GasLimitCalculator gasLimitCalculator;
 
-  private final MainnetTransactionValidator transactionValidator;
+  private final TransactionValidatorFactory transactionValidatorFactory;
 
   private final MainnetTransactionProcessor transactionProcessor;
 
@@ -81,12 +81,13 @@ public class ProtocolSpec {
   private final DepositsValidator depositsValidator;
 
   private final boolean isPoS;
+  private final boolean isReplayProtectionSupported;
   /**
    * Creates a new protocol specification instance.
    *
    * @param name the protocol specification name
    * @param evm the EVM supporting the appropriate operations for this specification
-   * @param transactionValidator the transaction validator to use
+   * @param transactionValidatorFactory the transaction validator factory to use
    * @param transactionProcessor the transaction processor to use
    * @param privateTransactionProcessor the private transaction processor to use
    * @param blockHeaderValidator the block header validator to use
@@ -111,11 +112,13 @@ public class ProtocolSpec {
    * @param withdrawalsProcessor the Withdrawals processor to use
    * @param depositsValidator the withdrawals validator to use
    * @param isPoS indicates whether the current spec is PoS
+   * @param isReplayProtectionSupported indicates whether the current spec supports replay
+   *     protection
    */
   public ProtocolSpec(
       final String name,
       final EVM evm,
-      final MainnetTransactionValidator transactionValidator,
+      final TransactionValidatorFactory transactionValidatorFactory,
       final MainnetTransactionProcessor transactionProcessor,
       final PrivateTransactionProcessor privateTransactionProcessor,
       final BlockHeaderValidator blockHeaderValidator,
@@ -139,10 +142,11 @@ public class ProtocolSpec {
       final WithdrawalsValidator withdrawalsValidator,
       final Optional<WithdrawalsProcessor> withdrawalsProcessor,
       final DepositsValidator depositsValidator,
-      final boolean isPoS) {
+      final boolean isPoS,
+      final boolean isReplayProtectionSupported) {
     this.name = name;
     this.evm = evm;
-    this.transactionValidator = transactionValidator;
+    this.transactionValidatorFactory = transactionValidatorFactory;
     this.transactionProcessor = transactionProcessor;
     this.privateTransactionProcessor = privateTransactionProcessor;
     this.blockHeaderValidator = blockHeaderValidator;
@@ -167,6 +171,7 @@ public class ProtocolSpec {
     this.withdrawalsProcessor = withdrawalsProcessor;
     this.depositsValidator = depositsValidator;
     this.isPoS = isPoS;
+    this.isReplayProtectionSupported = isReplayProtectionSupported;
   }
 
   /**
@@ -179,16 +184,16 @@ public class ProtocolSpec {
   }
 
   /**
-   * Returns the transaction validator used in this specification.
+   * Returns the transaction validator factory used in this specification.
    *
-   * @return the transaction validator
+   * @return the transaction validator factory
    */
-  public MainnetTransactionValidator getTransactionValidator() {
-    return transactionValidator;
+  public TransactionValidatorFactory getTransactionValidatorFactory() {
+    return transactionValidatorFactory;
   }
 
   public boolean isReplayProtectionSupported() {
-    return transactionValidator.isReplayProtectionSupported();
+    return isReplayProtectionSupported;
   }
 
   /**

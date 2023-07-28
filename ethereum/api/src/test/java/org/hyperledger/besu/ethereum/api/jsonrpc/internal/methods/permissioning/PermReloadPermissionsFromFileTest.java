@@ -20,29 +20,29 @@ import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PermReloadPermissionsFromFileTest {
 
   @Mock private AccountLocalConfigPermissioningController accountLocalConfigPermissioningController;
   @Mock private NodeLocalConfigPermissioningController nodeLocalConfigPermissioningController;
   private PermReloadPermissionsFromFile method;
 
-  @Before
+  @BeforeEach
   public void before() {
     method =
         new PermReloadPermissionsFromFile(
@@ -58,7 +58,7 @@ public class PermReloadPermissionsFromFileTest {
   @Test
   public void whenBothControllersAreNotPresentMethodShouldReturnPermissioningDisabled() {
     JsonRpcResponse expectedErrorResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.PERMISSIONING_NOT_ENABLED);
+        new JsonRpcErrorResponse(null, RpcErrorType.PERMISSIONING_NOT_ENABLED);
 
     method = new PermReloadPermissionsFromFile(Optional.empty(), Optional.empty());
 
@@ -81,7 +81,7 @@ public class PermReloadPermissionsFromFileTest {
   public void whenControllerReloadFailsMethodShouldReturnError() {
     doThrow(new RuntimeException()).when(accountLocalConfigPermissioningController).reload();
     JsonRpcResponse expectedErrorResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.ALLOWLIST_RELOAD_ERROR);
+        new JsonRpcErrorResponse(null, RpcErrorType.ALLOWLIST_RELOAD_ERROR);
 
     JsonRpcResponse response = method.response(reloadRequest());
 

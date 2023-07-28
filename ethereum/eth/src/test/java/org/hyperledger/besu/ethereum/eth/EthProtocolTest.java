@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class EthProtocolTest {
 

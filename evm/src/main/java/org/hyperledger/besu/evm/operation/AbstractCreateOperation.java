@@ -22,10 +22,13 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeFactory;
+import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
+
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -134,31 +137,32 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     frame.pushStackItem(FAILURE_STACK_ITEM);
   }
 
-  private void spawnChildMessage(final MessageFrame frame, final Code code, final EVM evm) {
-    final Wei value = Wei.wrap(frame.getStackItem(0));
+  private void spawnChildMessage(final MessageFrame parent, final Code code, final EVM evm) {
+    final Wei value = Wei.wrap(parent.getStackItem(0));
 
-    final Address contractAddress = targetContractAddress(frame);
+    final Address contractAddress = targetContractAddress(parent);
+    parent.addCreate(contractAddress);
 
     final long childGasStipend =
-        gasCalculator().gasAvailableForChildCreate(frame.getRemainingGas());
-    frame.decrementRemainingGas(childGasStipend);
+        gasCalculator().gasAvailableForChildCreate(parent.getRemainingGas());
+    parent.decrementRemainingGas(childGasStipend);
 
     // frame addition is automatically handled by parent messageFrameStack
-    MessageFrame.builder()
-        .parentMessageFrame(frame)
-        .type(MessageFrame.Type.CONTRACT_CREATION)
-        .initialGas(childGasStipend)
-        .address(contractAddress)
-        .contract(contractAddress)
-        .inputData(Bytes.EMPTY)
-        .sender(frame.getRecipientAddress())
-        .value(value)
-        .apparentValue(value)
-        .code(code)
-        .completer(child -> complete(frame, child, evm))
-        .build();
+        MessageFrame.builder()
+        .parentMessageFrame(parent)
+            .type(MessageFrame.Type.CONTRACT_CREATION)
+            .initialGas(childGasStipend)
+            .address(contractAddress)
+            .contract(contractAddress)
+            .inputData(Bytes.EMPTY)
+            .sender(parent.getRecipientAddress())
+            .value(value)
+            .apparentValue(value)
+            .code(code)
+            .completer(child -> complete(parent, child, evm))
+            .build();
 
-    frame.setState(MessageFrame.State.CODE_SUSPENDED);
+    parent.setState(MessageFrame.State.CODE_SUSPENDED);
   }
 
   private void complete(final MessageFrame frame, final MessageFrame childFrame, final EVM evm) {
@@ -172,6 +176,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       frame.incrementRemainingGas(childFrame.getRemainingGas());
       frame.addLogs(childFrame.getLogs());
       frame.addSelfDestructs(childFrame.getSelfDestructs());
+      frame.addCreates(childFrame.getCreates());
       frame.incrementGasRefund(childFrame.getGasRefund());
 
       if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
@@ -179,14 +184,51 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       } else {
         frame.setReturnData(childFrame.getOutputData());
         frame.pushStackItem(FAILURE_STACK_ITEM);
+        onFailure(frame, childFrame.getExceptionalHaltReason());
       }
     } else {
       frame.getWorldUpdater().deleteAccount(childFrame.getRecipientAddress());
       frame.setReturnData(childFrame.getOutputData());
       frame.pushStackItem(FAILURE_STACK_ITEM);
+      onInvalid(frame, (CodeInvalid) outputCode);
     }
 
     final int currentPC = frame.getPC();
     frame.setPC(currentPC + 1);
+  }
+
+  /**
+   * Called when the child {@code CONTRACT_CREATION} message has completed successfully, used to
+   * give library users a chance to do implementation specific logic.
+   *
+   * @param frame the frame running the successful operation
+   * @param createdAddress the address of the newly created contract
+   */
+  protected void onSuccess(final MessageFrame frame, final Address createdAddress) {
+    // no-op by default
+  }
+
+  /**
+   * Called when the child {@code CONTRACT_CREATION} message has failed to execute, used to give
+   * library users a chance to do implementation specific logic.
+   *
+   * @param frame the frame running the successful operation
+   * @param haltReason the exceptional halt reason of the child frame
+   */
+  protected void onFailure(
+      final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {
+    // no-op by default
+  }
+
+  /**
+   * Called when the child {@code CONTRACT_CREATION} message has completed successfully but the
+   * returned contract is invalid per chain rules, used to give library users a chance to do
+   * implementation specific logic.
+   *
+   * @param frame the frame running the successful operation
+   * @param invalidCode the code object containing the invalid code
+   */
+  protected void onInvalid(final MessageFrame frame, final CodeInvalid invalidCode) {
+    // no-op by default
   }
 }

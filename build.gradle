@@ -559,7 +559,7 @@ task evmToolStartScripts(type: CreateStartScripts) {
   mainClass = 'org.hyperledger.besu.evmtool.EvmTool'
   classpath = startScripts.classpath
   outputDir = startScripts.outputDir
-  applicationName = 'evm'
+  applicationName = 'evmtool'
   defaultJvmOpts = [
     "-Dsecp256k1.randomize=false"
   ]
@@ -586,10 +586,10 @@ task autocomplete(type: JavaExec) {
   }
 }
 
-installDist { dependsOn checkLicenses }
+installDist { dependsOn checkLicenses, evmToolStartScripts }
 
 distTar {
-  dependsOn checkLicenses, autocomplete
+  dependsOn checkLicenses, autocomplete, evmToolStartScripts
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
   }
@@ -598,7 +598,7 @@ distTar {
 }
 
 distZip {
-  dependsOn checkLicenses, autocomplete
+  dependsOn checkLicenses, autocomplete, evmToolStartScripts
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
@@ -870,7 +870,7 @@ task manifestDockerRelease {
       archs.forEach { arch -> targets += "'${variantImage}-${arch}' " }
 
       exec {
-        def cmd = "docker manifest create '${variantImage}' ${targets}"
+        def cmd = "docker manifest create '${variantImage}' ${targets} --amend"
         println "Executing '${cmd}'"
         executable "sh"
         args "-c", cmd
@@ -886,7 +886,7 @@ task manifestDockerRelease {
     exec {
       def targets = ""
       archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
-      def cmd = "docker manifest create '${baseTag}' ${targets}"
+      def cmd = "docker manifest create '${baseTag}' ${targets} --amend"
       println "Executing '${cmd}'"
       executable "sh"
       args "-c", cmd

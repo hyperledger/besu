@@ -17,52 +17,33 @@ package org.hyperledger.besu.ethereum.api.query;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class BackendQueryTest<T> {
-
-  private final Supplier<Boolean> alive;
-  private final Object wantReturn;
-  private final boolean wantException;
-  private final Class<T> wantExceptionClass;
-  private final String wantExceptionMessage;
-
-  public BackendQueryTest(
-      final Supplier<Boolean> alive,
-      final Object wantReturn,
-      final boolean wantException,
-      final Class<T> wantExceptionClass,
-      final String wantExceptionMessage) {
-    this.alive = alive;
-    this.wantReturn = wantReturn;
-    this.wantException = wantException;
-    this.wantExceptionClass = wantExceptionClass;
-    this.wantExceptionMessage = wantExceptionMessage;
-  }
-
-  @Parameters
-  public static Collection<Object[]> data() {
-    return Arrays.asList(
-        new Object[][] {
-          {supplierOf(false), null, true, RuntimeException.class, "Timeout expired"},
-          {supplierOf(true), "expected return", false, null, null}
-        });
+  public static Stream<Arguments> data() {
+    return Stream.of(
+        Arguments.of(supplierOf(false), null, true, RuntimeException.class, "Timeout expired"),
+        Arguments.of(supplierOf(true), "expected return", false, null, null));
   }
 
   private static Supplier<Boolean> supplierOf(final boolean val) {
     return () -> val;
   }
 
-  @Test
-  public void test() throws Exception {
+  @ParameterizedTest
+  @MethodSource("data")
+  public void test(
+      final Supplier<Boolean> alive,
+      final Object wantReturn,
+      final boolean wantException,
+      final Class<T> wantExceptionClass,
+      final String wantExceptionMessage)
+      throws Exception {
     if (wantException) {
       assertThatThrownBy(() -> BackendQuery.runIfAlive(() -> wantReturn, alive))
           .isInstanceOf(wantExceptionClass)

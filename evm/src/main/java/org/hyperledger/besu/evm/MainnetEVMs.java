@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm;
 
-import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
@@ -33,6 +32,7 @@ import org.hyperledger.besu.evm.operation.AddressOperation;
 import org.hyperledger.besu.evm.operation.AndOperation;
 import org.hyperledger.besu.evm.operation.BalanceOperation;
 import org.hyperledger.besu.evm.operation.BaseFeeOperation;
+import org.hyperledger.besu.evm.operation.BlobHashOperation;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.operation.ByteOperation;
 import org.hyperledger.besu.evm.operation.CallCodeOperation;
@@ -49,7 +49,6 @@ import org.hyperledger.besu.evm.operation.CodeSizeOperation;
 import org.hyperledger.besu.evm.operation.CoinbaseOperation;
 import org.hyperledger.besu.evm.operation.Create2Operation;
 import org.hyperledger.besu.evm.operation.CreateOperation;
-import org.hyperledger.besu.evm.operation.DataHashOperation;
 import org.hyperledger.besu.evm.operation.DelegateCallOperation;
 import org.hyperledger.besu.evm.operation.DifficultyOperation;
 import org.hyperledger.besu.evm.operation.DivOperation;
@@ -71,6 +70,7 @@ import org.hyperledger.besu.evm.operation.JumpiOperation;
 import org.hyperledger.besu.evm.operation.Keccak256Operation;
 import org.hyperledger.besu.evm.operation.LogOperation;
 import org.hyperledger.besu.evm.operation.LtOperation;
+import org.hyperledger.besu.evm.operation.MCopyOperation;
 import org.hyperledger.besu.evm.operation.MLoadOperation;
 import org.hyperledger.besu.evm.operation.MSizeOperation;
 import org.hyperledger.besu.evm.operation.MStore8Operation;
@@ -546,7 +546,26 @@ public class MainnetEVMs {
    * @return the evm
    */
   public static EVM berlin(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return istanbul(new BerlinGasCalculator(), chainId, evmConfiguration);
+    return berlin(new IstanbulGasCalculator(), chainId, evmConfiguration);
+  }
+
+  /**
+   * Berlin evm.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM berlin(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(
+        istanbulOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.BERLIN);
   }
 
   /**
@@ -621,6 +640,27 @@ public class MainnetEVMs {
   /**
    * Paris evm.
    *
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM paris(final EvmConfiguration evmConfiguration) {
+    return paris(DEV_NET_CHAIN_ID, evmConfiguration);
+  }
+
+  /**
+   * Paris evm.
+   *
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM paris(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return paris(new LondonGasCalculator(), chainId, evmConfiguration);
+  }
+
+  /**
+   * Paris evm.
+   *
    * @param gasCalculator the gas calculator
    * @param chainId the chain id
    * @param evmConfiguration the evm configuration
@@ -664,6 +704,16 @@ public class MainnetEVMs {
       final BigInteger chainID) {
     registerLondonOperations(registry, gasCalculator, chainID);
     registry.put(new PrevRanDaoOperation(gasCalculator));
+  }
+
+  /**
+   * Shanghai evm.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM shanghai(final EvmConfiguration evmConfiguration) {
+    return shanghai(DEV_NET_CHAIN_ID, evmConfiguration);
   }
 
   /**
@@ -793,12 +843,18 @@ public class MainnetEVMs {
       final BigInteger chainID) {
     registerShanghaiOperations(registry, gasCalculator, chainID);
 
-    // EIP-4844
-    registry.put(new DataHashOperation(gasCalculator));
-
-    // TSTORE/TLOAD
+    // EIP-1153 TSTORE/TLOAD
     registry.put(new TStoreOperation(gasCalculator));
     registry.put(new TLoadOperation(gasCalculator));
+
+    // EIP-4844 BLOBHASH
+    registry.put(new BlobHashOperation(gasCalculator));
+
+    // EIP-5656 MCOPY
+    registry.put(new MCopyOperation(gasCalculator));
+
+    // EIP-6780 nerf self destruct
+    registry.put(new SelfDestructOperation(gasCalculator, true));
   }
 
   /**

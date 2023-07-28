@@ -53,6 +53,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.datagram.DatagramPacket;
 import io.vertx.core.datagram.DatagramSocket;
 import io.vertx.core.datagram.DatagramSocketOptions;
+import org.ethereum.beacon.discovery.util.DecodeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -262,7 +263,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
    * @param exception the exception that was raised
    */
   private void handleException(final Throwable exception) {
-    if (exception instanceof IOException) {
+    if (exception instanceof IOException || exception instanceof DecodeException) {
       LOG.debug("Packet handler exception", exception);
     } else {
       LOG.error("Packet handler exception", exception);
@@ -296,7 +297,8 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
             final Endpoint endpoint = new Endpoint(host, port, Optional.empty());
             handleIncomingPacket(endpoint, event.result());
           } else {
-            if (event.cause() instanceof PeerDiscoveryPacketDecodingException) {
+            if (event.cause() instanceof PeerDiscoveryPacketDecodingException
+                || event.cause() instanceof DecodeException) {
               LOG.debug(
                   "Discarding invalid peer discovery packet: {}, {}",
                   event.cause().getMessage(),

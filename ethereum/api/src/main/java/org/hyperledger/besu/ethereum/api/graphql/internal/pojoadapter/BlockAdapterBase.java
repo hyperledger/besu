@@ -142,16 +142,12 @@ public class BlockAdapterBase extends AdapterBase {
   }
 
   public AccountAdapter getAccount(final DataFetchingEnvironment environment) {
-
     final BlockchainQueries query = getBlockchainQueries(environment);
     final long bn = header.getNumber();
+    final Address address = environment.getArgument("address");
     return query
         .getAndMapWorldState(
-            bn,
-            ws -> {
-              final Address address = environment.getArgument("address");
-              return Optional.of(new AccountAdapter(ws.get(address)));
-            })
+            bn, ws -> Optional.of(new AccountAdapter(ws.get(address), Optional.of(bn))))
         .get();
   }
 

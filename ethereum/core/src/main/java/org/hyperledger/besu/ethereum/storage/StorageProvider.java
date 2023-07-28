@@ -15,19 +15,24 @@
 package org.hyperledger.besu.ethereum.storage;
 
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
+import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
-import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 
 import java.io.Closeable;
+import java.util.List;
 
 public interface StorageProvider extends Closeable {
 
-  BlockchainStorage createBlockchainStorage(ProtocolSchedule protocolSchedule);
+  VariablesStorage createVariablesStorage();
+
+  BlockchainStorage createBlockchainStorage(
+      ProtocolSchedule protocolSchedule, VariablesStorage variablesStorage);
 
   WorldStateStorage createWorldStateStorage(DataStorageFormat dataStorageFormat);
 
@@ -35,9 +40,5 @@ public interface StorageProvider extends Closeable {
 
   KeyValueStorage getStorageBySegmentIdentifier(SegmentIdentifier segment);
 
-  SnappableKeyValueStorage getSnappableStorageBySegmentIdentifier(SegmentIdentifier segment);
-
-  boolean isWorldStateIterable();
-
-  boolean isWorldStateSnappable();
+  SegmentedKeyValueStorage getStorageBySegmentIdentifiers(List<SegmentIdentifier> segment);
 }

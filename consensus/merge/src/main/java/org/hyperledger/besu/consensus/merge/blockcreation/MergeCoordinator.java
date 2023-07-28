@@ -38,7 +38,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BadChainListener;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -101,17 +101,19 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
    * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
    * @param blockBuilderExecutor the block builder executor
-   * @param pendingTransactions the pending transactions
+   * @param transactionPool the pending transactions
    * @param miningParams the mining params
    * @param backwardSyncContext the backward sync context
+   * @param depositContractAddress the address of the deposit contract
    */
   public MergeCoordinator(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final ProposalBuilderExecutor blockBuilderExecutor,
-      final PendingTransactions pendingTransactions,
+      final TransactionPool transactionPool,
       final MiningParameters miningParams,
-      final BackwardSyncContext backwardSyncContext) {
+      final BackwardSyncContext backwardSyncContext,
+      final Optional<Address> depositContractAddress) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.blockBuilderExecutor = blockBuilderExecutor;
@@ -131,12 +133,13 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                 () -> Optional.of(targetGasLimit.longValue()),
                 parent -> extraData.get(),
-                pendingTransactions,
+                transactionPool,
                 protocolContext,
                 protocolSchedule,
                 this.miningParameters.getMinTransactionGasPrice(),
                 address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
-                parentHeader);
+                parentHeader,
+                depositContractAddress);
 
     this.backwardSyncContext.subscribeBadChainListener(this);
   }
@@ -467,7 +470,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           .setMessage("Appending new head block hash {} to backward sync")
           .addArgument(headHash::toHexString)
           .log();
-      backwardSyncContext.updateHead(headHash);
+      backwardSyncContext.maybeUpdateTargetHeight(headHash);
       backwardSyncContext
           .syncBackwardsUntil(headHash)
           .thenRun(() -> updateFinalized(finalizedHash));

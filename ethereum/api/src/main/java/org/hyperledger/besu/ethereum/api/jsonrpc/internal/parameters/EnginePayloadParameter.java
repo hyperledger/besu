@@ -47,6 +47,10 @@ public class EnginePayloadParameter {
   private final LogsBloomFilter logsBloom;
   private final List<String> transactions;
   private final List<WithdrawalParameter> withdrawals;
+  private final Long dataGasUsed;
+  private final String excessDataGas;
+  private final List<Bytes32> versionedHashes;
+  private final List<DepositParameter> deposits;
 
   @JsonCreator
   public EnginePayloadParameter(
@@ -64,7 +68,11 @@ public class EnginePayloadParameter {
       @JsonProperty("logsBloom") final LogsBloomFilter logsBloom,
       @JsonProperty("prevRandao") final String prevRandao,
       @JsonProperty("transactions") final List<String> transactions,
-      @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals) {
+      @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals,
+      @JsonProperty("dataGasUsed") final UnsignedLongParameter dataGasUsed,
+      @JsonProperty("excessDataGas") final String excessDataGas,
+      @JsonProperty("versionedHashes") final List<Bytes32> versionedHashes,
+      @JsonProperty("deposits") final List<DepositParameter> deposits) {
     this.blockHash = blockHash;
     this.parentHash = parentHash;
     this.feeRecipient = feeRecipient;
@@ -80,6 +88,10 @@ public class EnginePayloadParameter {
     this.prevRandao = Bytes32.fromHexString(prevRandao);
     this.transactions = transactions;
     this.withdrawals = withdrawals;
+    this.dataGasUsed = dataGasUsed == null ? null : dataGasUsed.getValue();
+    this.excessDataGas = excessDataGas;
+    this.versionedHashes = versionedHashes;
+    this.deposits = deposits;
   }
 
   public Hash getBlockHash() {
@@ -140,5 +152,21 @@ public class EnginePayloadParameter {
 
   public List<WithdrawalParameter> getWithdrawals() {
     return withdrawals;
+  }
+
+  public Long getDataGasUsed() {
+    return dataGasUsed;
+  }
+
+  public String getExcessDataGas() {
+    return excessDataGas;
+  }
+
+  public List<DepositParameter> getDeposits() {
+    return deposits;
+  }
+
+  public List<Bytes32> getVersionedHashes() {
+    return versionedHashes;
   }
 }

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
@@ -59,7 +60,6 @@ import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -69,7 +69,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.google.common.io.Resources;
@@ -98,6 +97,9 @@ public abstract class MainnetProtocolSpecs {
 
   private static final Wei CONSTANTINOPLE_BLOCK_REWARD = Wei.fromEth(2);
 
+  public static final Address DEFAULT_DEPOSIT_CONTRACT_ADDRESS =
+      Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
+
   private MainnetProtocolSpecs() {}
 
   public static ProtocolSpecBuilder frontierDefinition(
@@ -122,16 +124,16 @@ public abstract class MainnetProtocolSpecs {
                     0))
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(
+                new TransactionValidatorFactory(
                     gasCalculator, gasLimitCalculator, false, Optional.empty()))
         .transactionProcessorBuilder(
             (gasCalculator,
-                transactionValidator,
+                transactionValidatorFactory,
                 contractCreationProcessor,
                 messageCallProcessor) ->
                 new MainnetTransactionProcessor(
                     gasCalculator,
-                    transactionValidator,
+                    transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
                     false,
@@ -140,12 +142,12 @@ public abstract class MainnetProtocolSpecs {
                     FeeMarket.legacy(),
                     CoinbaseFeePriceCalculator.frontier()))
         .privateTransactionProcessorBuilder(
-            (transactionValidator,
+            (transactionValidatorFactory,
                 contractCreationProcessor,
                 messageCallProcessor,
                 privateTransactionValidator) ->
                 new PrivateTransactionProcessor(
-                    transactionValidator,
+                    transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
                     false,
@@ -172,19 +174,11 @@ public abstract class MainnetProtocolSpecs {
     if (powAlgorithm == null) {
       return PoWHasher.UNSUPPORTED;
     }
-    switch (powAlgorithm) {
-      case ETHASH:
-        return PoWHasher.ETHASH_LIGHT;
-      case UNSUPPORTED:
-      default:
-        return PoWHasher.UNSUPPORTED;
-    }
+    return powAlgorithm == PowAlgorithm.ETHASH ? PoWHasher.ETHASH_LIGHT : PoWHasher.UNSUPPORTED;
   }
 
   public static BlockValidatorBuilder blockValidatorBuilder() {
-    return (blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager) ->
-        new MainnetBlockValidator(
-            blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
+    return MainnetBlockValidator::new;
   }
 
   public static ProtocolSpecBuilder homesteadDefinition(
@@ -205,7 +199,7 @@ public abstract class MainnetProtocolSpecs {
                     0))
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(
+                new TransactionValidatorFactory(
                     gasCalculator, gasLimitCalculator, true, Optional.empty()))
         .difficultyCalculator(MainnetDifficultyCalculators.HOMESTEAD)
         .name("Homestead");
@@ -263,6 +257,7 @@ public abstract class MainnetProtocolSpecs {
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
 
     return tangerineWhistleDefinition(OptionalInt.empty(), configStackSizeLimit, evmConfiguration)
+        .isReplayProtectionSupported(true)
         .gasCalculator(SpuriousDragonGasCalculator::new)
         .skipZeroBlockRewards(true)
         .messageCallProcessorBuilder(
@@ -282,7 +277,7 @@ public abstract class MainnetProtocolSpecs {
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(gasCalculator, gasLimitCalculator, true, chainId))
+                new TransactionValidatorFactory(gasCalculator, gasLimitCalculator, true, chainId))
         .transactionProcessorBuilder(
             (gasCalculator,
                 transactionValidator,
@@ -417,7 +412,7 @@ public abstract class MainnetProtocolSpecs {
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(
+                new TransactionValidatorFactory(
                     gasCalculator,
                     gasLimitCalculator,
                     true,
@@ -457,7 +452,7 @@ public abstract class MainnetProtocolSpecs {
             new LondonTargetingGasLimitCalculator(londonForkBlockNumber, londonFeeMarket))
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(
+                new TransactionValidatorFactory(
                     gasCalculator,
                     gasLimitCalculator,
                     londonFeeMarket,
@@ -618,7 +613,7 @@ public abstract class MainnetProtocolSpecs {
         // Contract creation rules for EIP-3860 Limit and meter intitcode
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(
+                new TransactionValidatorFactory(
                     gasCalculator,
                     gasLimitCalculator,
                     londonFeeMarket,
@@ -701,7 +696,7 @@ public abstract class MainnetProtocolSpecs {
         // change to check for max data gas per block for EIP-4844
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
-                new MainnetTransactionValidator(
+                new TransactionValidatorFactory(
                     gasCalculator,
                     gasLimitCalculator,
                     cancunFeeMarket,
@@ -714,6 +709,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.BLOB),
                     SHANGHAI_INIT_CODE_SIZE_LIMIT))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
+        .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::cancunBlockHeaderValidator)
         .name("Cancun");
   }
 
@@ -736,6 +732,7 @@ public abstract class MainnetProtocolSpecs {
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.futureEips(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::futureEips)
         .name("FutureEips");
   }
 
@@ -746,6 +743,9 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration) {
+
+    final Address depositContractAddress =
+        genesisConfigOptions.getDepositContractAddress().orElse(DEFAULT_DEPOSIT_CONTRACT_ADDRESS);
 
     return futureEipsDefinition(
             chainId,
@@ -758,7 +758,7 @@ public abstract class MainnetProtocolSpecs {
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.experimentalEips(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
-        .depositsValidator(new DepositsValidator.AllowedDeposits())
+        .depositsValidator(new DepositsValidator.AllowedDeposits(depositContractAddress))
         .name("ExperimentalEips");
   }
 
@@ -864,7 +864,7 @@ public abstract class MainnetProtocolSpecs {
             IntStream.range(0, json.size())
                 .mapToObj(json::getString)
                 .map(Address::fromHexString)
-                .collect(Collectors.toList());
+                .toList();
         final WorldUpdater worldUpdater = worldState.updater();
         final MutableAccount daoRefundContract =
             worldUpdater.getOrCreate(DAO_REFUND_CONTRACT_ADDRESS).getMutable();

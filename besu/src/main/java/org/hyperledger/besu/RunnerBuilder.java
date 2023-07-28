@@ -87,6 +87,7 @@ import org.hyperledger.besu.ethereum.p2p.network.NoopP2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
@@ -191,6 +192,7 @@ public class RunnerBuilder {
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private boolean legacyForkIdEnabled;
   private Optional<Long> rpcMaxLogsRange;
+  private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
 
   /**
    * Add Vertx.
@@ -585,6 +587,18 @@ public class RunnerBuilder {
   }
 
   /**
+   * Add enode DNS configuration
+   *
+   * @param enodeDnsConfiguration the DNS configuration for enodes
+   * @return the runner builder
+   */
+  public RunnerBuilder enodeDnsConfiguration(final EnodeDnsConfiguration enodeDnsConfiguration) {
+    this.enodeDnsConfiguration =
+        enodeDnsConfiguration != null ? Optional.of(enodeDnsConfiguration) : Optional.empty();
+    return this;
+  }
+
+  /**
    * Build Runner instance.
    *
    * @return the runner
@@ -769,10 +783,7 @@ public class RunnerBuilder {
 
     final Optional<AccountPermissioningController> accountPermissioningController =
         buildAccountPermissioningController(
-            permissioningConfiguration,
-            besuController,
-            transactionSimulator,
-            context.getBlockchain());
+            permissioningConfiguration, besuController, transactionSimulator);
 
     final Optional<AccountLocalConfigPermissioningController>
         accountLocalConfigPermissioningController =
@@ -1096,8 +1107,7 @@ public class RunnerBuilder {
       final NodePermissioningController nodePermissioningController =
           new NodePermissioningControllerFactory()
               .create(
-                  new PermissioningConfiguration(
-                      Optional.empty(), Optional.empty(), Optional.empty()),
+                  new PermissioningConfiguration(Optional.empty(), Optional.empty()),
                   synchronizer,
                   fixedNodes,
                   localNodeId,
@@ -1115,19 +1125,18 @@ public class RunnerBuilder {
   private Optional<AccountPermissioningController> buildAccountPermissioningController(
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final BesuController besuController,
-      final TransactionSimulator transactionSimulator,
-      final Blockchain blockchain) {
+      final TransactionSimulator transactionSimulator) {
 
     if (permissioningConfiguration.isPresent()) {
       final Optional<AccountPermissioningController> accountPermissioningController =
           AccountPermissioningControllerFactory.create(
-              permissioningConfiguration.get(), transactionSimulator, metricsSystem, blockchain);
+              permissioningConfiguration.get(), transactionSimulator, metricsSystem);
 
       accountPermissioningController.ifPresent(
           permissioningController ->
               besuController
                   .getProtocolSchedule()
-                  .setTransactionFilter(permissioningController::isPermitted));
+                  .setPermissionTransactionFilter(permissioningController::isPermitted));
 
       return accountPermissioningController;
     } else {
@@ -1224,7 +1233,8 @@ public class RunnerBuilder {
                 dataDir,
                 besuController.getProtocolManager().ethContext().getEthPeers(),
                 consensusEngineServer,
-                rpcMaxLogsRange);
+                rpcMaxLogsRange,
+                enodeDnsConfiguration);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
 
     final var pluginMethods =

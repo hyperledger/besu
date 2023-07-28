@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
+import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.testutil.MockExecutorService;
@@ -39,12 +40,12 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PrunerTest {
 
   private final NoOpMetricsSystem metricsSystem = new NoOpMetricsSystem();
@@ -60,7 +61,9 @@ public class PrunerTest {
   public void shouldMarkCorrectBlockAndSweep() throws ExecutionException, InterruptedException {
     final BlockchainStorage blockchainStorage =
         new KeyValueStoragePrefixedKeyBlockchainStorage(
-            new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
+            new InMemoryKeyValueStorage(),
+            new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
+            new MainnetBlockHeaderFunctions());
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, metricsSystem, 0);
 
@@ -81,7 +84,9 @@ public class PrunerTest {
   public void shouldOnlySweepAfterBlockConfirmationPeriodAndRetentionPeriodEnds() {
     final BlockchainStorage blockchainStorage =
         new KeyValueStoragePrefixedKeyBlockchainStorage(
-            new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
+            new InMemoryKeyValueStorage(),
+            new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
+            new MainnetBlockHeaderFunctions());
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, metricsSystem, 0);
 
@@ -107,7 +112,9 @@ public class PrunerTest {
   public void abortsPruningWhenFullyMarkedBlockNoLongerOnCanonicalChain() {
     final BlockchainStorage blockchainStorage =
         new KeyValueStoragePrefixedKeyBlockchainStorage(
-            new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
+            new InMemoryKeyValueStorage(),
+            new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
+            new MainnetBlockHeaderFunctions());
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, metricsSystem, 0);
 
@@ -177,7 +184,9 @@ public class PrunerTest {
   public void shouldCleanUpPruningStrategyOnShutdown() throws InterruptedException {
     final BlockchainStorage blockchainStorage =
         new KeyValueStoragePrefixedKeyBlockchainStorage(
-            new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
+            new InMemoryKeyValueStorage(),
+            new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
+            new MainnetBlockHeaderFunctions());
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, metricsSystem, 0);
 

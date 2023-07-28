@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -36,5 +37,9 @@ public abstract class ApiGroupJsonRpcMethods implements JsonRpcMethods {
   protected Map<String, JsonRpcMethod> mapOf(final JsonRpcMethod... methods) {
     return Arrays.stream(methods)
         .collect(Collectors.toMap(JsonRpcMethod::getName, method -> method));
+  }
+
+  protected Map<String, JsonRpcMethod> mapOf(final List<JsonRpcMethod> methods) {
+    return methods.stream().collect(Collectors.toMap(JsonRpcMethod::getName, method -> method));
   }
 }

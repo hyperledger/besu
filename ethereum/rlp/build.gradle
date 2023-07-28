@@ -31,8 +31,8 @@ jar {
 dependencies {
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
 
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'io.tmio:tuweni-bytes'
+  implementation 'io.tmio:tuweni-units'
   implementation 'com.google.guava:guava'
 
 
@@ -41,11 +41,8 @@ dependencies {
   testImplementation project(':testutil')
 
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
-  testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
-
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
 
 artifacts { testSupportArtifacts testSupportJar }

@@ -21,6 +21,7 @@ import org.hyperledger.besu.collections.undo.UndoSet;
 import org.hyperledger.besu.collections.undo.UndoTable;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.code.CodeSection;
@@ -220,7 +221,6 @@ public class MessageFrame {
   // Transaction state fields.
   private final List<Log> logs = new ArrayList<>();
   private long gasRefund = 0L;
-  private final Set<Address> selfDestructs = new HashSet<>();
   private final Map<Address, Wei> refunds = new HashMap<>();
 
   // Execution Environment fields.
@@ -776,6 +776,26 @@ public class MessageFrame {
     }
   }
 
+  /**
+   * Copies bytes within memory.
+   *
+   * <p>Copying behaves as if the values are copied to an intermediate buffer before writing.
+   *
+   * @param dst The destination address
+   * @param src The source address
+   * @param length the number of bytes to copy
+   * @param explicitMemoryUpdate true if triggered by a memory opcode, false otherwise
+   */
+  public void copyMemory(
+      final long dst, final long src, final long length, final boolean explicitMemoryUpdate) {
+    if (length > 0) {
+      memory.copy(dst, src, length);
+      if (explicitMemoryUpdate) {
+        setUpdatedMemory(dst, memory.getBytes(dst, length));
+      }
+    }
+  }
+
   private void setUpdatedMemory(
       final long offset, final long sourceOffset, final long length, final Bytes value) {
     final long endIndex = sourceOffset + length;
@@ -884,7 +904,7 @@ public class MessageFrame {
    * @param address The recipient to self-destruct
    */
   public void addSelfDestruct(final Address address) {
-    selfDestructs.add(address);
+    txValues.selfDestructs().add(address);
   }
 
   /**
@@ -893,12 +913,7 @@ public class MessageFrame {
    * @param addresses The addresses to self-destruct
    */
   public void addSelfDestructs(final Set<Address> addresses) {
-    selfDestructs.addAll(addresses);
-  }
-
-  /** Removes all entries in the self-destruct set. */
-  public void clearSelfDestructs() {
-    selfDestructs.clear();
+    txValues.selfDestructs().addAll(addresses);
   }
 
   /**
@@ -907,7 +922,46 @@ public class MessageFrame {
    * @return the self-destruct set
    */
   public Set<Address> getSelfDestructs() {
-    return selfDestructs;
+    return txValues.selfDestructs();
+  }
+
+  /**
+   * Add recipient to the create set if not already present.
+   *
+   * @param address The recipient to create
+   */
+  public void addCreate(final Address address) {
+    txValues.creates().add(address);
+  }
+  /**
+   * Add addresses to the create set if they are not already present.
+   *
+   * @param addresses The addresses to create
+   */
+  public void addCreates(final Set<Address> addresses) {
+    txValues.creates().addAll(addresses);
+  }
+
+  /**
+   * Returns the create set.
+   *
+   * @return the create set
+   */
+  public Set<Address> getCreates() {
+    return txValues.creates();
+  }
+
+  /**
+   * Was the account at this address created in this transaction? (in any of the previously executed
+   * message frames in this transaction).
+   *
+   * @param address the address to check
+   * @return true if the account was created in any parent or prior message frame in this
+   *     transaction. False if the account existed in the world state at the beginning of the
+   *     transaction.
+   */
+  public boolean wasCreatedInTransaction(final Address address) {
+    return txValues.creates().contains((address));
   }
 
   /**
@@ -1267,7 +1321,7 @@ public class MessageFrame {
    *
    * @return optional list of hashes
    */
-  public Optional<List<Hash>> getVersionedHashes() {
+  public Optional<List<VersionedHash>> getVersionedHashes() {
     return txValues.versionedHashes();
   }
 
@@ -1304,7 +1358,7 @@ public class MessageFrame {
     private Set<Address> accessListWarmAddresses = emptySet();
     private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
 
-    private Optional<List<Hash>> versionedHashes;
+    private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
 
     /**
      * The "parent" message frame. When present some fields will be populated from the parent and
@@ -1566,7 +1620,7 @@ public class MessageFrame {
      * @param versionedHashes the Optional list of versioned hashes
      * @return the builder
      */
-    public Builder versionedHashes(final Optional<List<Hash>> versionedHashes) {
+    public Builder versionedHashes(final Optional<List<VersionedHash>> versionedHashes) {
       this.versionedHashes = versionedHashes;
       return this;
     }
@@ -1616,7 +1670,9 @@ public class MessageFrame {
                 new ArrayDeque<>(),
                 miningBeneficiary,
                 versionedHashes,
-                UndoTable.of(HashBasedTable.create()));
+                UndoTable.of(HashBasedTable.create()),
+                UndoSet.of(new HashSet<>()),
+                UndoSet.of(new HashSet<>()));
         updater = worldUpdater;
         newStatic = isStatic;
       } else {

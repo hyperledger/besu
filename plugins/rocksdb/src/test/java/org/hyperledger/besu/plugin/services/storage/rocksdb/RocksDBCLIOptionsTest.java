@@ -26,7 +26,7 @@ import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
 
 public class RocksDBCLIOptionsTest {

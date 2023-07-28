@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 
 public enum RpcMethod {
   ADMIN_ADD_PEER("admin_addPeer"),
@@ -49,10 +49,13 @@ public enum RpcMethod {
   DEBUG_GET_RAW_HEADER("debug_getRawHeader"),
   DEBUG_GET_RAW_BLOCK("debug_getRawBlock"),
   DEBUG_GET_RAW_RECEIPTS("debug_getRawReceipts"),
+  DEBUG_GET_RAW_TRANSACTION("debug_getRawTransaction"),
   ENGINE_GET_PAYLOAD_V1("engine_getPayloadV1"),
   ENGINE_GET_PAYLOAD_V2("engine_getPayloadV2"),
+  ENGINE_GET_PAYLOAD_V3("engine_getPayloadV3"),
   ENGINE_NEW_PAYLOAD_V1("engine_newPayloadV1"),
   ENGINE_NEW_PAYLOAD_V2("engine_newPayloadV2"),
+  ENGINE_NEW_PAYLOAD_V3("engine_newPayloadV3"),
   ENGINE_FORKCHOICE_UPDATED_V1("engine_forkchoiceUpdatedV1"),
   ENGINE_FORKCHOICE_UPDATED_V2("engine_forkchoiceUpdatedV2"),
   ENGINE_EXCHANGE_TRANSITION_CONFIGURATION("engine_exchangeTransitionConfigurationV1"),
@@ -189,7 +192,7 @@ public enum RpcMethod {
   }
 
   static {
-    allMethodNames = new ArrayList<>();
+    allMethodNames = new HashSet<>();
     for (RpcMethod m : RpcMethod.values()) {
       allMethodNames.add(m.getMethodName());
     }

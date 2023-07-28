@@ -33,8 +33,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import io.vertx.core.json.Json;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SubscriptionRequestMapperTest {
 
@@ -43,7 +43,7 @@ public class SubscriptionRequestMapperTest {
   private final String CONNECTION_ID = null;
   private static final String ENCLAVE_PUBLIC_KEY = "enclave_public_key";
 
-  @Before
+  @BeforeEach
   public void before() {
     mapper = new SubscriptionRequestMapper();
   }

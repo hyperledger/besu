@@ -115,7 +115,6 @@ public abstract class AbstractMessageProcessor {
     frame.getWorldUpdater().commit();
 
     frame.clearLogs();
-    frame.clearSelfDestructs();
     frame.clearGasRefund();
 
     frame.rollback();

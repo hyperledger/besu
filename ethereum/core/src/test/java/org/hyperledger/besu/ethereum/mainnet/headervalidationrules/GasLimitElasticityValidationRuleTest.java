@@ -22,60 +22,41 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Optional;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
-@RunWith(Parameterized.class)
 public class GasLimitElasticityValidationRuleTest {
 
   private static final Optional<BaseFeeMarket> baseFeeMarket = Optional.of(new LondonFeeMarket(10));
 
-  @Parameter public long headerGasLimit;
-
-  @Parameter(1)
-  public long parentGasLimit;
-
-  @Parameterized.Parameter(2)
-  public long headerNumber;
-
-  @Parameter(3)
-  public boolean expectedResult;
-
   public GasLimitRangeAndDeltaValidationRule uut =
       new GasLimitRangeAndDeltaValidationRule(5000, MAX_VALUE, baseFeeMarket);
 
-  @Parameters
-  public static Collection<Object[]> data() {
-    return Arrays.asList(
-        new Object[][] {
-          {20000000, 10000000, 10, true},
-          {20019530, 10000000, 10, true},
-          {20019531, 10000000, 10, false},
-          {19980470, 10000000, 10, true},
-          {19980469, 10000000, 10, false},
-          {20000000, 20000000, 11, true},
-          {20019530, 20000000, 11, true},
-          {20019531, 20000000, 11, false},
-          {19980470, 20000000, 11, true},
-          {19980469, 20000000, 11, false},
-          {40039061, 40000000, 11, true},
-          {40039062, 40000000, 11, false},
-          {39960939, 40000000, 11, true},
-          {39960938, 40000000, 11, false},
-          {4999, 40000000, 11, false}
-        });
-  }
-
-  @Test
-  public void test() {
-
+  @ParameterizedTest
+  @CsvSource({
+    "20000000, 10000000, 10, true",
+    "20019530, 10000000, 10, true",
+    "20019531, 10000000, 10, false",
+    "19980470, 10000000, 10, true",
+    "19980469, 10000000, 10, false",
+    "20000000, 20000000, 11, true",
+    "20019530, 20000000, 11, true",
+    "20019531, 20000000, 11, false",
+    "19980470, 20000000, 11, true",
+    "19980469, 20000000, 11, false",
+    "40039061, 40000000, 11, true",
+    "40039062, 40000000, 11, false",
+    "39960939, 40000000, 11, true",
+    "39960938, 40000000, 11, false",
+    "4999, 40000000, 11, false"
+  })
+  public void testGasLimitElasticityValidationRule(
+      final long headerGasLimit,
+      final long parentGasLimit,
+      final long headerNumber,
+      final boolean expectedResult) {
     final BlockHeaderTestFixture blockHeaderBuilder = new BlockHeaderTestFixture();
 
     blockHeaderBuilder.number(headerNumber);

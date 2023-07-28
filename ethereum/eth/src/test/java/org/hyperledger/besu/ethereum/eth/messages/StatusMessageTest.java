@@ -27,7 +27,7 @@ import java.util.Random;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class StatusMessageTest {
 
@@ -91,7 +91,7 @@ public class StatusMessageTest {
   }
 
   @Test
-  public void toStringHasExpectedInfo() {
+  public void toStringDecodedHasExpectedInfo() {
     final int version = EthProtocolVersion.V64;
     final BigInteger networkId = BigInteger.ONE;
     final Difficulty td = Difficulty.of(1000L);
@@ -103,10 +103,10 @@ public class StatusMessageTest {
         StatusMessage.create(version, networkId, td, bestHash, genesisHash, forkId);
 
     final StatusMessage copy = new StatusMessage(msg.getData());
-    final String copyToString = copy.toString();
+    final String copyToStringDecoded = copy.toStringDecoded();
 
-    assertThat(copyToString).contains("bestHash=" + bestHash);
-    assertThat(copyToString).contains("genesisHash=" + genesisHash);
+    assertThat(copyToStringDecoded).contains("bestHash=" + bestHash);
+    assertThat(copyToStringDecoded).contains("genesisHash=" + genesisHash);
   }
 
   private Hash randHash(final long seed) {

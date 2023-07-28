@@ -18,8 +18,10 @@ import org.hyperledger.besu.collections.undo.UndoSet;
 import org.hyperledger.besu.collections.undo.UndoTable;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 
+import java.lang.Runtime.Version;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
@@ -42,8 +44,10 @@ public record TxValues(
     BlockValues blockValues,
     Deque<MessageFrame> messageFrameStack,
     Address miningBeneficiary,
-    Optional<List<Hash>> versionedHashes,
-    UndoTable<Address, Bytes32, Bytes32> transientStorage) {
+    Optional<List<VersionedHash>> versionedHashes,
+    UndoTable<Address, Bytes32, Bytes32> transientStorage,
+    UndoSet<Address> creates,
+    UndoSet<Address> selfDestructs) {
 
   /**
    * For all data stored in this record, undo the changes since the mark.
@@ -54,5 +58,7 @@ public record TxValues(
     warmedUpAddresses.undo(mark);
     warmedUpStorage.undo(mark);
     transientStorage.undo(mark);
+    creates.undo(mark);
+    selfDestructs.undo(mark);
   }
 }

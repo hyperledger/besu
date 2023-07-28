@@ -230,6 +230,58 @@ public class EVMExecutor {
     return executor;
   }
 
+  /**
+   * Instantiate Paris evm executor.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
+  public static EVMExecutor paris(final EvmConfiguration evmConfiguration) {
+    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.paris(evmConfiguration));
+    executor.precompileContractRegistry =
+        MainnetPrecompiledContracts.istanbul(executor.evm.getGasCalculator());
+    return executor;
+  }
+
+  /**
+   * Instantiate Shanghai evm executor.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
+  public static EVMExecutor shanghai(final EvmConfiguration evmConfiguration) {
+    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.shanghai(evmConfiguration));
+    executor.precompileContractRegistry =
+        MainnetPrecompiledContracts.istanbul(executor.evm.getGasCalculator());
+    return executor;
+  }
+
+  /**
+   * Instantiate Cancun evm executor.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
+  public static EVMExecutor cancun(final EvmConfiguration evmConfiguration) {
+    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.cancun(evmConfiguration));
+    executor.precompileContractRegistry =
+        MainnetPrecompiledContracts.cancun(executor.evm.getGasCalculator());
+    return executor;
+  }
+
+  /**
+   * Instantiate Future EIPs evm executor.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
+  public static EVMExecutor futureEIPs(final EvmConfiguration evmConfiguration) {
+    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.cancun(evmConfiguration));
+    executor.precompileContractRegistry =
+        MainnetPrecompiledContracts.futureEIPs(executor.evm.getGasCalculator());
+    return executor;
+  }
+
   private MessageCallProcessor thisMessageCallProcessor() {
     return Objects.requireNonNullElseGet(
         messageCallProcessor, () -> new MessageCallProcessor(evm, precompileContractRegistry));

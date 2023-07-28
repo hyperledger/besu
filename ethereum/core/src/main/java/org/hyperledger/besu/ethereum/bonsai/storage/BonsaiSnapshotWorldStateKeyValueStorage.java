@@ -42,17 +42,13 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
 
   public BonsaiSnapshotWorldStateKeyValueStorage(
       final BonsaiWorldStateKeyValueStorage parentWorldStateStorage,
-      final SnappedKeyValueStorage accountStorage,
-      final SnappedKeyValueStorage codeStorage,
-      final SnappedKeyValueStorage storageStorage,
-      final SnappedKeyValueStorage trieBranchStorage,
+      final SnappedKeyValueStorage segmentedWorldStateStorage,
       final KeyValueStorage trieLogStorage,
       final ObservableMetricsSystem metricsSystem) {
     super(
-        accountStorage,
-        codeStorage,
-        storageStorage,
-        trieBranchStorage,
+        parentWorldStateStorage.flatDbMode,
+        parentWorldStateStorage.flatDbReaderStrategy,
+        segmentedWorldStateStorage,
         trieLogStorage,
         metricsSystem);
     this.parentWorldStateStorage = parentWorldStateStorage;
@@ -64,10 +60,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final ObservableMetricsSystem metricsSystem) {
     this(
         worldStateStorage,
-        ((SnappableKeyValueStorage) worldStateStorage.accountStorage).takeSnapshot(),
-        ((SnappableKeyValueStorage) worldStateStorage.codeStorage).takeSnapshot(),
-        ((SnappableKeyValueStorage) worldStateStorage.storageStorage).takeSnapshot(),
-        ((SnappableKeyValueStorage) worldStateStorage.trieBranchStorage).takeSnapshot(),
+        ((SnappableKeyValueStorage) worldStateStorage.composedWorldStateStorage).takeSnapshot(),
         worldStateStorage.trieLogStorage,
         metricsSystem);
   }
@@ -83,10 +76,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   @Override
   public BonsaiUpdater updater() {
     return new Updater(
-        ((SnappedKeyValueStorage) accountStorage).getSnapshotTransaction(),
-        ((SnappedKeyValueStorage) codeStorage).getSnapshotTransaction(),
-        ((SnappedKeyValueStorage) storageStorage).getSnapshotTransaction(),
-        ((SnappedKeyValueStorage) trieBranchStorage).getSnapshotTransaction(),
+        ((SnappedKeyValueStorage) composedWorldStateStorage).getSnapshotTransaction(),
         trieLogStorage.startTransaction());
   }
 
@@ -221,10 +211,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
       subscribers.forEach(BonsaiStorageSubscriber::onCloseStorage);
 
       // close all of the SnappedKeyValueStorages:
-      accountStorage.close();
-      codeStorage.close();
-      storageStorage.close();
-      trieBranchStorage.close();
+      composedWorldStateStorage.close();
 
       // unsubscribe the parent worldstate
       parentWorldStateStorage.unSubscribe(subscribeParentId);

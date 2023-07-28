@@ -41,19 +41,19 @@ import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-public class CodeV0Test {
+class CodeV0Test {
 
   private static final IstanbulGasCalculator gasCalculator = new IstanbulGasCalculator();
 
   private static final int CURRENT_PC = 1;
   private EVM evm;
 
-  @Before
-  public void startUp() {
+  @BeforeEach
+  void startUp() {
     final OperationRegistry registry = new OperationRegistry();
     registry.put(new JumpOperation(gasCalculator));
     registry.put(new JumpDestOperation(gasCalculator));
@@ -61,7 +61,7 @@ public class CodeV0Test {
   }
 
   @Test
-  public void shouldReuseJumpDestMap() {
+  void shouldReuseJumpDestMap() {
     final JumpOperation operation = new JumpOperation(gasCalculator);
     final Bytes jumpBytes = Bytes.fromHexString("0x6003565b00");
     final CodeV0 getsCached = (CodeV0) spy(CodeFactory.createCode(jumpBytes, 0, false));

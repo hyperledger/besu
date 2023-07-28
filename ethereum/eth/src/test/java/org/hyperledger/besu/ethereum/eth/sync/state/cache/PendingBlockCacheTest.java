@@ -20,8 +20,8 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PendingBlockCacheTest {
 
@@ -34,7 +34,7 @@ public class PendingBlockCacheTest {
 
   private Block parentBlock;
 
-  @Before
+  @BeforeEach
   public void setup() {
     gen = new BlockDataGenerator();
     parentBlock = gen.block();

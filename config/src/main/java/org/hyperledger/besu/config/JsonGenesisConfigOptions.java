@@ -17,6 +17,7 @@ package org.hyperledger.besu.config;
 import static java.util.Collections.emptyMap;
 import static java.util.Objects.isNull;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 
@@ -47,6 +48,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String DISCOVERY_CONFIG_KEY = "discovery";
   private static final String CHECKPOINT_CONFIG_KEY = "checkpoint";
   private static final String ZERO_BASE_FEE_KEY = "zerobasefee";
+  private static final String DEPOSIT_CONTRACT_ADDRESS_KEY = "depositcontractaddress";
 
   private final ObjectNode configRoot;
   private final Map<String, String> configOverrides = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -142,6 +144,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public boolean isQbft() {
     return configRoot.has(QBFT_CONFIG_KEY);
+  }
+
+  @Override
+  public boolean isPoa() {
+    return isQbft() || isClique() || isIbft2() || isIbftLegacy();
   }
 
   @Override
@@ -394,16 +401,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public boolean isQuorum() {
-    return getOptionalBoolean("isquorum").orElse(false);
-  }
-
-  @Override
-  public OptionalLong getQip714BlockNumber() {
-    return getOptionalLong("qip714block");
-  }
-
-  @Override
   public PowAlgorithm getPowAlgorithm() {
     return isEthHash() ? PowAlgorithm.ETHASH : PowAlgorithm.UNSUPPORTED;
   }
@@ -416,6 +413,12 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public boolean isZeroBaseFee() {
     return getOptionalBoolean(ZERO_BASE_FEE_KEY).orElse(false);
+  }
+
+  @Override
+  public Optional<Address> getDepositContractAddress() {
+    Optional<String> inputAddress = JsonUtil.getString(configRoot, DEPOSIT_CONTRACT_ADDRESS_KEY);
+    return inputAddress.map(Address::fromHexString);
   }
 
   @Override
@@ -462,6 +465,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getEvmStackSize().ifPresent(l -> builder.put("evmstacksize", l));
     getEcip1017EraRounds().ifPresent(l -> builder.put("ecip1017EraRounds", l));
 
+    getDepositContractAddress().ifPresent(l -> builder.put("depositContractAddress", l));
+
     if (isClique()) {
       builder.put("clique", getCliqueConfigOptions().asMap());
     }
@@ -473,11 +478,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     }
     if (isQbft()) {
       builder.put("qbft", getQbftConfigOptions().asMap());
-    }
-
-    if (isQuorum()) {
-      builder.put("isQuorum", true);
-      getQip714BlockNumber().ifPresent(blockNumber -> builder.put("qip714block", blockNumber));
     }
 
     if (isZeroBaseFee()) {

@@ -15,15 +15,24 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionBroadcaster;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
@@ -32,7 +41,7 @@ import org.hyperledger.besu.util.Subscribers;
 import java.time.ZoneId;
 import java.util.Optional;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PoWMinerExecutorTest {
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
@@ -42,18 +51,13 @@ public class PoWMinerExecutorTest {
     final MiningParameters miningParameters =
         new MiningParameters.Builder().coinbase(null).minTransactionGasPrice(Wei.of(1000)).build();
 
-    final GasPricePendingTransactionsSorter pendingTransactions =
-        new GasPricePendingTransactionsSorter(
-            ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build(),
-            TestClock.system(ZoneId.systemDefault()),
-            metricsSystem,
-            PoWMinerExecutorTest::mockBlockHeader);
+    final TransactionPool transactionPool = createTransactionPool(miningParameters);
 
     final PoWMinerExecutor executor =
         new PoWMinerExecutor(
             null,
             null,
-            pendingTransactions,
+            transactionPool,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
             new EpochCalculator.DefaultEpochCalculator(),
@@ -69,18 +73,13 @@ public class PoWMinerExecutorTest {
   public void settingCoinbaseToNullThrowsException() {
     final MiningParameters miningParameters = new MiningParameters.Builder().build();
 
-    final GasPricePendingTransactionsSorter pendingTransactions =
-        new GasPricePendingTransactionsSorter(
-            ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build(),
-            TestClock.system(ZoneId.systemDefault()),
-            metricsSystem,
-            PoWMinerExecutorTest::mockBlockHeader);
+    final TransactionPool transactionPool = createTransactionPool(miningParameters);
 
     final PoWMinerExecutor executor =
         new PoWMinerExecutor(
             null,
             null,
-            pendingTransactions,
+            transactionPool,
             miningParameters,
             new DefaultBlockScheduler(1, 10, TestClock.fixed()),
             new EpochCalculator.DefaultEpochCalculator(),
@@ -96,5 +95,33 @@ public class PoWMinerExecutorTest {
     final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBaseFee()).thenReturn(Optional.empty());
     return blockHeader;
+  }
+
+  private TransactionPool createTransactionPool(final MiningParameters miningParameters) {
+    final TransactionPoolConfiguration poolConf =
+        ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();
+    final GasPricePendingTransactionsSorter pendingTransactions =
+        new GasPricePendingTransactionsSorter(
+            poolConf,
+            TestClock.system(ZoneId.systemDefault()),
+            metricsSystem,
+            PoWMinerExecutorTest::mockBlockHeader);
+
+    final EthContext ethContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
+    when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
+
+    final TransactionPool transactionPool =
+        new TransactionPool(
+            () -> pendingTransactions,
+            mock(ProtocolSchedule.class),
+            mock(ProtocolContext.class),
+            mock(TransactionBroadcaster.class),
+            ethContext,
+            miningParameters,
+            new TransactionPoolMetrics(new NoOpMetricsSystem()),
+            poolConf);
+    transactionPool.setEnabled();
+
+    return transactionPool;
   }
 }

@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.TransactionType.BLOB;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.toTransactionList;
-import static org.hyperledger.besu.plugin.data.TransactionType.BLOB;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -26,6 +26,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -33,7 +34,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,20 +43,22 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class TransactionBroadcasterTest {
 
   @Mock private EthContext ethContext;
   @Mock private EthPeers ethPeers;
   @Mock private EthScheduler ethScheduler;
-  @Mock private PendingTransactions pendingTransactions;
   @Mock private PeerTransactionTracker transactionTracker;
   @Mock private TransactionsMessageSender transactionsMessageSender;
   @Mock private NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
@@ -71,7 +73,7 @@ public class TransactionBroadcasterTest {
   private TransactionBroadcaster txBroadcaster;
   private ArgumentCaptor<Runnable> sendTaskCapture;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     when(ethPeerNoEth65.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES))
         .thenReturn(Boolean.FALSE);
@@ -93,7 +95,6 @@ public class TransactionBroadcasterTest {
     txBroadcaster =
         new TransactionBroadcaster(
             ethContext,
-            pendingTransactions,
             transactionTracker,
             transactionsMessageSender,
             newPooledTransactionHashesMessageSender);
@@ -101,19 +102,20 @@ public class TransactionBroadcasterTest {
 
   @Test
   public void doNotRelayTransactionsWhenPoolIsEmpty() {
-    setupTransactionPool(0, 0);
+    Collection<PendingTransaction> pendingTxs = setupTransactionPool(0, 0);
 
-    txBroadcaster.relayTransactionPoolTo(ethPeerNoEth65);
-    txBroadcaster.relayTransactionPoolTo(ethPeerWithEth65);
+    txBroadcaster.relayTransactionPoolTo(ethPeerNoEth65, pendingTxs);
+    txBroadcaster.relayTransactionPoolTo(ethPeerWithEth65, pendingTxs);
 
     verifyNothingSent();
   }
 
   @Test
   public void relayFullTransactionsFromPoolWhenPeerDoesNotSupportEth65() {
-    List<Transaction> txs = toTransactionList(setupTransactionPool(1, 1));
+    Collection<PendingTransaction> pendingTxs = setupTransactionPool(1, 1);
+    List<Transaction> txs = toTransactionList(pendingTxs);
 
-    txBroadcaster.relayTransactionPoolTo(ethPeerNoEth65);
+    txBroadcaster.relayTransactionPoolTo(ethPeerNoEth65, pendingTxs);
 
     verifyTransactionAddedToPeerSendingQueue(ethPeerNoEth65, txs);
 
@@ -125,9 +127,10 @@ public class TransactionBroadcasterTest {
 
   @Test
   public void relayTransactionHashesFromPoolWhenPeerSupportEth65() {
-    List<Transaction> txs = toTransactionList(setupTransactionPool(1, 1));
+    Collection<PendingTransaction> pendingTxs = setupTransactionPool(1, 1);
+    List<Transaction> txs = toTransactionList(pendingTxs);
 
-    txBroadcaster.relayTransactionPoolTo(ethPeerWithEth65);
+    txBroadcaster.relayTransactionPoolTo(ethPeerWithEth65, pendingTxs);
 
     verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65, txs);
 
@@ -308,8 +311,6 @@ public class TransactionBroadcasterTest {
     Set<PendingTransaction> pendingTxs = createPendingTransactionList(numLocalTransactions, true);
     pendingTxs.addAll(createPendingTransactionList(numRemoteTransactions, false));
 
-    when(pendingTransactions.getPendingTransactions()).thenReturn(pendingTxs);
-
     return pendingTxs;
   }
 
@@ -318,8 +319,6 @@ public class TransactionBroadcasterTest {
     Set<PendingTransaction> pendingTxs =
         createPendingTransactionList(type, numLocalTransactions, true);
     pendingTxs.addAll(createPendingTransactionList(type, numRemoteTransactions, false));
-
-    when(pendingTransactions.getPendingTransactions()).thenReturn(pendingTxs);
 
     return pendingTxs;
   }

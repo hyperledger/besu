@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
-import org.hyperledger.besu.ethereum.permissioning.GoQuorumQip714Gate;
 import org.hyperledger.besu.ethereum.permissioning.TransactionSmartContractPermissioningController;
 
 import java.util.Optional;
@@ -35,31 +34,21 @@ public class AccountPermissioningController {
       accountLocalConfigPermissioningController;
   private final Optional<TransactionSmartContractPermissioningController>
       transactionSmartContractPermissioningController;
-  private final Optional<GoQuorumQip714Gate> goQuorumQip714Gate;
 
   public AccountPermissioningController(
       final Optional<AccountLocalConfigPermissioningController>
           accountLocalConfigPermissioningController,
       final Optional<TransactionSmartContractPermissioningController>
-          transactionSmartContractPermissioningController,
-      final Optional<GoQuorumQip714Gate> goQuorumQip714Gate) {
+          transactionSmartContractPermissioningController) {
     this.accountLocalConfigPermissioningController = accountLocalConfigPermissioningController;
     this.transactionSmartContractPermissioningController =
         transactionSmartContractPermissioningController;
-    this.goQuorumQip714Gate = goQuorumQip714Gate;
   }
 
   public boolean isPermitted(
       final Transaction transaction,
       final boolean includeLocalCheck,
       final boolean includeOnchainCheck) {
-    final boolean checkPermissions =
-        goQuorumQip714Gate.map(GoQuorumQip714Gate::shouldCheckPermissions).orElse(true);
-    if (!checkPermissions) {
-      LOG.trace("Skipping account permissioning check due to qip714block config");
-
-      return true;
-    }
 
     final Hash transactionHash = transaction.getHash();
     final Address sender = transaction.getSender();

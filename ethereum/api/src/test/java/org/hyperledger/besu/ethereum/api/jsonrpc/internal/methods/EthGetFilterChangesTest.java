@@ -28,10 +28,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.LogsResult;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 
@@ -40,20 +40,20 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EthGetFilterChangesTest {
 
   private EthGetFilterChanges method;
 
   @Mock FilterManager filterManager;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     method = new EthGetFilterChanges(filterManager);
   }
@@ -92,7 +92,7 @@ public class EthGetFilterChangesTest {
   public void shouldReturnErrorResponseWhenFilterManagerDoesNotFindAnyFilters() {
     final JsonRpcRequestContext request = requestWithParams("0x1");
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.FILTER_NOT_FOUND);
+        new JsonRpcErrorResponse(null, RpcErrorType.FILTER_NOT_FOUND);
 
     when(filterManager.blockChanges(anyString())).thenReturn(null);
     when(filterManager.pendingTransactionChanges(anyString())).thenReturn(null);

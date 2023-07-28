@@ -16,8 +16,9 @@ package org.hyperledger.besu;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.BLOCKCHAIN;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.VARIABLES;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -127,7 +128,8 @@ public final class RunnerBuilderTest {
     when(besuController.getNodeKey()).thenReturn(nodeKey);
     when(besuController.getMiningParameters()).thenReturn(mock(MiningParameters.class));
     when(besuController.getPrivacyParameters()).thenReturn(mock(PrivacyParameters.class));
-    when(besuController.getTransactionPool()).thenReturn(mock(TransactionPool.class));
+    when(besuController.getTransactionPool())
+        .thenReturn(mock(TransactionPool.class, RETURNS_DEEP_STUBS));
     when(besuController.getSynchronizer()).thenReturn(mock(Synchronizer.class));
     when(besuController.getMiningCoordinator()).thenReturn(mock(MiningCoordinator.class));
     when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
@@ -163,7 +165,7 @@ public final class RunnerBuilderTest {
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(vertx)
             .dataDir(dataDir.getRoot())
-            .storageProvider(mock(KeyValueStorageProvider.class))
+            .storageProvider(mock(KeyValueStorageProvider.class, RETURNS_DEEP_STUBS))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .build();
     runner.startEthereumMainLoop();
@@ -223,7 +225,7 @@ public final class RunnerBuilderTest {
       inMemoryBlockchain.appendBlock(block, gen.receipts(block));
       assertThat(
               storageProvider
-                  .getStorageBySegmentIdentifier(BLOCKCHAIN)
+                  .getStorageBySegmentIdentifier(VARIABLES)
                   .get("local-enr-seqno".getBytes(StandardCharsets.UTF_8))
                   .map(Bytes::of)
                   .map(NodeRecordFactory.DEFAULT::fromBytes)
@@ -265,7 +267,7 @@ public final class RunnerBuilderTest {
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(Vertx.vertx())
             .dataDir(dataDir.getRoot())
-            .storageProvider(mock(KeyValueStorageProvider.class))
+            .storageProvider(mock(KeyValueStorageProvider.class, RETURNS_DEEP_STUBS))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .besuPluginContext(mock(BesuPluginContextImpl.class))
             .build();
@@ -307,7 +309,7 @@ public final class RunnerBuilderTest {
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(Vertx.vertx())
             .dataDir(dataDir.getRoot())
-            .storageProvider(mock(KeyValueStorageProvider.class))
+            .storageProvider(mock(KeyValueStorageProvider.class, RETURNS_DEEP_STUBS))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .besuPluginContext(mock(BesuPluginContextImpl.class))
             .build();
@@ -348,7 +350,7 @@ public final class RunnerBuilderTest {
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(Vertx.vertx())
             .dataDir(dataDir.getRoot())
-            .storageProvider(mock(KeyValueStorageProvider.class))
+            .storageProvider(mock(KeyValueStorageProvider.class, RETURNS_DEEP_STUBS))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .besuPluginContext(mock(BesuPluginContextImpl.class))
             .build();
@@ -390,7 +392,7 @@ public final class RunnerBuilderTest {
             .metricsConfiguration(mock(MetricsConfiguration.class))
             .vertx(Vertx.vertx())
             .dataDir(dataDir.getRoot())
-            .storageProvider(mock(KeyValueStorageProvider.class))
+            .storageProvider(mock(KeyValueStorageProvider.class, RETURNS_DEEP_STUBS))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .besuPluginContext(mock(BesuPluginContextImpl.class))
             .networkingConfiguration(NetworkingConfiguration.create())

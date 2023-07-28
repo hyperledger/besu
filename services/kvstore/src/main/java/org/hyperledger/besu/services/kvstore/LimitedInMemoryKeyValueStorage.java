@@ -114,6 +114,11 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
   }
 
   @Override
+  public Stream<Pair<byte[], byte[]>> streamFromKey(final byte[] startKey) {
+    return stream().filter(e -> Bytes.wrap(startKey).compareTo(Bytes.wrap(e.getKey())) <= 0);
+  }
+
+  @Override
   public Stream<byte[]> streamKeys() {
     final Lock lock = rwLock.readLock();
     lock.lock();
@@ -141,7 +146,8 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
 
   @Override
   public KeyValueStorageTransaction startTransaction() throws StorageException {
-    return new KeyValueStorageTransactionTransitionValidatorDecorator(new MemoryTransaction());
+    return new KeyValueStorageTransactionValidatorDecorator(
+        new MemoryTransaction(), this::isClosed);
   }
 
   @Override

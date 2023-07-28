@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
+import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -34,8 +35,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CheckPointBlockImportStepTest {
 
@@ -45,11 +46,13 @@ public class CheckPointBlockImportStepTest {
   private CheckpointBlockImportStep checkPointHeaderImportStep;
   private KeyValueStoragePrefixedKeyBlockchainStorage blockchainStorage;
 
-  @Before
+  @BeforeEach
   public void setup() {
     blockchainStorage =
         new KeyValueStoragePrefixedKeyBlockchainStorage(
-            new InMemoryKeyValueStorage(), new MainnetBlockHeaderFunctions());
+            new InMemoryKeyValueStorage(),
+            new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
+            new MainnetBlockHeaderFunctions());
     blockchain =
         DefaultBlockchain.createMutable(
             generateBlock(0), blockchainStorage, mock(MetricsSystem.class), 0);

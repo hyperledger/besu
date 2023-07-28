@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class BytesValueRLPOutputTest {
 
@@ -159,6 +159,24 @@ public class BytesValueRLPOutputTest {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.writeByte((byte) 0);
     assertThatThrownBy(() -> out.writeByte((byte) 1)).isInstanceOf(IllegalStateException.class);
+  }
+
+  @Test
+  public void unsignedIntScalar() {
+    // Scalar should be encoded as the minimal byte array representing the number. For 0, that means
+    // the empty byte array, which is a short element of zero-length, so 0x80.
+    assertUnsignedIntScalar(h("0x80"), 0);
+
+    assertUnsignedIntScalar(h("0x01"), 1);
+    assertUnsignedIntScalar(h("0x0F"), 15);
+    assertUnsignedIntScalar(h("0x820400"), 1024);
+    assertUnsignedIntScalar(h("0x84ffffffff"), (1L << 32) - 1);
+  }
+
+  private void assertUnsignedIntScalar(final Bytes expected, final long toTest) {
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.writeUnsignedInt(toTest);
+    assertThat(out.encoded()).isEqualTo(expected);
   }
 
   @Test

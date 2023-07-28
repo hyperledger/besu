@@ -15,25 +15,24 @@
 package org.hyperledger.besu.ethereum.core.feemarket;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.plugin.data.TransactionType.ACCESS_LIST;
-import static org.hyperledger.besu.plugin.data.TransactionType.EIP1559;
-import static org.hyperledger.besu.plugin.data.TransactionType.FRONTIER;
+import static org.hyperledger.besu.datatypes.TransactionType.ACCESS_LIST;
+import static org.hyperledger.besu.datatypes.TransactionType.EIP1559;
+import static org.hyperledger.besu.datatypes.TransactionType.FRONTIER;
 
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.stream.Stream;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class TransactionPriceCalculatorTest {
 
   private static final TransactionPriceCalculator FRONTIER_CALCULATOR =
@@ -41,15 +40,92 @@ public class TransactionPriceCalculatorTest {
   private static final TransactionPriceCalculator EIP_1559_CALCULATOR =
       TransactionPriceCalculator.eip1559();
 
-  private final TransactionPriceCalculator transactionPriceCalculator;
-  private final TransactionType transactionType;
-  private final Wei gasPrice;
-  private final Wei maxPriorityFeePerGas;
-  private final Wei maxFeePerGas;
-  private final Optional<Wei> baseFee;
-  private final Wei expectedPrice;
+  public static Stream<Arguments> data() {
+    return Arrays.stream(
+            new Object[][] {
+              // legacy transaction must return gas price
+              {
+                FRONTIER_CALCULATOR,
+                FRONTIER,
+                Wei.of(578L),
+                null,
+                null,
+                Optional.empty(),
+                Wei.of(578L)
+              },
+              // legacy transaction zero price
+              {FRONTIER_CALCULATOR, FRONTIER, Wei.ZERO, null, null, Optional.empty(), Wei.ZERO},
+              // ACCESSLIST transaction must return gas price
+              {
+                FRONTIER_CALCULATOR,
+                ACCESS_LIST,
+                Wei.of(578L),
+                null,
+                null,
+                Optional.empty(),
+                Wei.of(578L)
+              },
+              // legacy transaction must return gas price
+              {
+                EIP_1559_CALCULATOR,
+                FRONTIER,
+                Wei.of(578L),
+                null,
+                null,
+                Optional.of(Wei.of(150L)),
+                Wei.of(578L)
+              },
+              // london legacy transaction zero price
+              {
+                EIP_1559_CALCULATOR, FRONTIER, Wei.ZERO, null, null, Optional.of(Wei.ZERO), Wei.ZERO
+              },
+              // ACCESSLIST transaction must return gas price
+              {
+                EIP_1559_CALCULATOR,
+                ACCESS_LIST,
+                Wei.of(578L),
+                null,
+                null,
+                Optional.of(Wei.of(150L)),
+                Wei.of(578L)
+              },
+              // EIP-1559 must return maxPriorityFeePerGas + base fee
+              {
+                EIP_1559_CALCULATOR,
+                EIP1559,
+                null,
+                Wei.of(100L),
+                Wei.of(300L),
+                Optional.of(Wei.of(150L)),
+                Wei.of(250L)
+              },
+              // EIP-1559 must return fee cap
+              {
+                EIP_1559_CALCULATOR,
+                EIP1559,
+                null,
+                Wei.of(100L),
+                Wei.of(300L),
+                Optional.of(Wei.of(250L)),
+                Wei.of(300L)
+              },
+              // EIP-1559 transaction zero price
+              {
+                EIP_1559_CALCULATOR,
+                EIP1559,
+                null,
+                Wei.ZERO,
+                Wei.ZERO,
+                Optional.of(Wei.ZERO),
+                Wei.ZERO
+              }
+            })
+        .map(Arguments::of);
+  }
 
-  public TransactionPriceCalculatorTest(
+  @ParameterizedTest
+  @MethodSource("data")
+  public void assertThatCalculatorWorks(
       final TransactionPriceCalculator transactionPriceCalculator,
       final TransactionType transactionType,
       final Wei gasPrice,
@@ -57,82 +133,6 @@ public class TransactionPriceCalculatorTest {
       final Wei maxFeePerGas,
       final Optional<Wei> baseFee,
       final Wei expectedPrice) {
-    this.transactionPriceCalculator = transactionPriceCalculator;
-    this.transactionType = transactionType;
-    this.gasPrice = gasPrice;
-    this.maxPriorityFeePerGas = maxPriorityFeePerGas;
-    this.maxFeePerGas = maxFeePerGas;
-    this.baseFee = baseFee;
-    this.expectedPrice = expectedPrice;
-  }
-
-  @Parameterized.Parameters
-  public static Collection<Object[]> data() {
-    return Arrays.asList(
-        new Object[][] {
-          // legacy transaction must return gas price
-          {FRONTIER_CALCULATOR, FRONTIER, Wei.of(578L), null, null, Optional.empty(), Wei.of(578L)},
-          // legacy transaction zero price
-          {FRONTIER_CALCULATOR, FRONTIER, Wei.ZERO, null, null, Optional.empty(), Wei.ZERO},
-          // ACCESSLIST transaction must return gas price
-          {
-            FRONTIER_CALCULATOR,
-            ACCESS_LIST,
-            Wei.of(578L),
-            null,
-            null,
-            Optional.empty(),
-            Wei.of(578L)
-          },
-          // legacy transaction must return gas price
-          {
-            EIP_1559_CALCULATOR,
-            FRONTIER,
-            Wei.of(578L),
-            null,
-            null,
-            Optional.of(Wei.of(150L)),
-            Wei.of(578L)
-          },
-          // london legacy transaction zero price
-          {EIP_1559_CALCULATOR, FRONTIER, Wei.ZERO, null, null, Optional.of(Wei.ZERO), Wei.ZERO},
-          // ACCESSLIST transaction must return gas price
-          {
-            EIP_1559_CALCULATOR,
-            ACCESS_LIST,
-            Wei.of(578L),
-            null,
-            null,
-            Optional.of(Wei.of(150L)),
-            Wei.of(578L)
-          },
-          // EIP-1559 must return maxPriorityFeePerGas + base fee
-          {
-            EIP_1559_CALCULATOR,
-            EIP1559,
-            null,
-            Wei.of(100L),
-            Wei.of(300L),
-            Optional.of(Wei.of(150L)),
-            Wei.of(250L)
-          },
-          // EIP-1559 must return fee cap
-          {
-            EIP_1559_CALCULATOR,
-            EIP1559,
-            null,
-            Wei.of(100L),
-            Wei.of(300L),
-            Optional.of(Wei.of(250L)),
-            Wei.of(300L)
-          },
-          // EIP-1559 transaction zero price
-          {EIP_1559_CALCULATOR, EIP1559, null, Wei.ZERO, Wei.ZERO, Optional.of(Wei.ZERO), Wei.ZERO}
-        });
-  }
-
-  @Test
-  public void assertThatCalculatorWorks() {
     assertThat(
             transactionPriceCalculator.price(
                 Transaction.builder()

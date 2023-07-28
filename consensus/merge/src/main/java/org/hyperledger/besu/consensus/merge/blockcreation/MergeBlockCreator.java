@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Collections;
@@ -51,7 +51,7 @@ class MergeBlockCreator extends AbstractBlockCreator {
    * @param coinbase the coinbase
    * @param targetGasLimitSupplier the target gas limit supplier
    * @param extraDataCalculator the extra data calculator
-   * @param pendingTransactions the pending transactions
+   * @param transactionPool the pending transactions
    * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
    * @param minTransactionGasPrice the min transaction gas price
@@ -62,23 +62,25 @@ class MergeBlockCreator extends AbstractBlockCreator {
       final Address coinbase,
       final Supplier<Optional<Long>> targetGasLimitSupplier,
       final ExtraDataCalculator extraDataCalculator,
-      final PendingTransactions pendingTransactions,
+      final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final Wei minTransactionGasPrice,
       final Address miningBeneficiary,
-      final BlockHeader parentHeader) {
+      final BlockHeader parentHeader,
+      final Optional<Address> depositContractAddress) {
     super(
         miningBeneficiary,
         __ -> miningBeneficiary,
         targetGasLimitSupplier,
         extraDataCalculator,
-        pendingTransactions,
+        transactionPool,
         protocolContext,
         protocolSchedule,
         minTransactionGasPrice,
         TRY_FILL_BLOCK,
-        parentHeader);
+        parentHeader,
+        depositContractAddress);
   }
 
   /**

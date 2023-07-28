@@ -61,11 +61,6 @@ public final class DisconnectMessage extends AbstractMessageData {
     return Data.readFrom(RLP.input(data)).getReason();
   }
 
-  @Override
-  public String toString() {
-    return "DisconnectMessage{" + "data=" + data + '}';
-  }
-
   public static class Data {
     private final DisconnectReason reason;
 

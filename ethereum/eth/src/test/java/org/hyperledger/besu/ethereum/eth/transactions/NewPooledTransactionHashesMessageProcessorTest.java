@@ -30,6 +30,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -43,7 +44,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.NewPooledTransactionHashes
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -53,13 +53,16 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class NewPooledTransactionHashesMessageProcessorTest {
 
   @Mock private TransactionPool transactionPool;
@@ -82,7 +85,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   private NewPooledTransactionHashesMessageProcessor messageHandler;
   private StubMetricsSystem metricsSystem;
 
-  @Before
+  @BeforeEach
   public void setup() {
     metricsSystem = new StubMetricsSystem();
     when(transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod())
@@ -272,7 +275,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   public void shouldEncodeTransactionsCorrectly_Eth68() {
 
     final String expected =
-        "0xf87983000102cf840000000184000000028400000003f863a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003";
+        "0xf86d83000102c3010203f863a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003";
     final List<Hash> hashes =
         List.of(
             Hash.fromHexString(
@@ -291,6 +294,50 @@ public class NewPooledTransactionHashesMessageProcessorTest {
 
   @Test
   public void shouldDecodeBytesCorrectly_Eth68() {
+    /*
+     * [
+     * "0x0000102"]
+     * ["0x01","0x02","0x03"],
+     * ["0x0000000000000000000000000000000000000000000000000000000000000001",
+     *  "0x0000000000000000000000000000000000000000000000000000000000000002",
+     *  "0x0000000000000000000000000000000000000000000000000000000000000003"]
+     * ]
+     */
+
+    final Bytes bytes =
+        Bytes.fromHexString(
+            "0xf86d83000102c3010203f863a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003");
+
+    final List<TransactionAnnouncement> announcementList =
+        getDecoder(EthProtocol.ETH68).decode(RLP.input(bytes));
+
+    final TransactionAnnouncement frontier = announcementList.get(0);
+    assertThat(frontier.getHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0x0000000000000000000000000000000000000000000000000000000000000001"));
+    assertThat(frontier.getType()).hasValue(TransactionType.FRONTIER);
+    assertThat(frontier.getSize()).hasValue(1L);
+
+    final TransactionAnnouncement accessList = announcementList.get(1);
+    assertThat(accessList.getHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0x0000000000000000000000000000000000000000000000000000000000000002"));
+    assertThat(accessList.getType()).hasValue(TransactionType.ACCESS_LIST);
+    assertThat(accessList.getSize()).hasValue(2L);
+
+    final TransactionAnnouncement eip1559 = announcementList.get(2);
+    assertThat(eip1559.getHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0x0000000000000000000000000000000000000000000000000000000000000003"));
+    assertThat(eip1559.getType()).hasValue(TransactionType.EIP1559);
+    assertThat(eip1559.getSize()).hasValue(3L);
+  }
+
+  @Test
+  public void shouldDecodeBytesCorrectly_PreviousImplementations_Eth68() {
     /*
      * [
      * "0x0000102"]
@@ -453,9 +500,11 @@ public class NewPooledTransactionHashesMessageProcessorTest {
                 TransactionAnnouncementDecoder.getDecoder(EthProtocol.ETH68)
                     .decode(RLP.input(invalidMessageBytes)));
 
-    final String expectedMessage = "Value of size 5 has more than 4 bytes";
-    final String actualMessage = exception.getCause().getMessage();
-    assertThat(actualMessage).contains(expectedMessage);
+    final String expectedMessage = "Expected max 4 bytes for unsigned int, but got 5 bytes";
+    assertThat(exception)
+        .hasCauseInstanceOf(RLPException.class)
+        .cause()
+        .hasMessage(expectedMessage);
   }
 
   @Test

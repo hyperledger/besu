@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -96,24 +97,29 @@ public abstract class AbstractEstimateGas implements JsonRpcMethod {
 
   protected JsonRpcErrorResponse errorResponse(
       final JsonRpcRequestContext request, final TransactionSimulatorResult result) {
-    final JsonRpcError jsonRpcError;
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         result.getValidationResult();
     if (validationResult != null && !validationResult.isValid()) {
-      jsonRpcError =
+      return errorResponse(
+          request,
           JsonRpcErrorConverter.convertTransactionInvalidReason(
-              validationResult.getInvalidReason());
+              validationResult.getInvalidReason()));
     } else {
       final TransactionProcessingResult resultTrx = result.getResult();
       if (resultTrx != null && resultTrx.getRevertReason().isPresent()) {
-        jsonRpcError = JsonRpcError.REVERT_ERROR;
-        jsonRpcError.setData(resultTrx.getRevertReason().get().toHexString());
-      } else {
-        jsonRpcError = JsonRpcError.INTERNAL_ERROR;
+        return errorResponse(
+            request,
+            new JsonRpcError(
+                RpcErrorType.REVERT_ERROR, resultTrx.getRevertReason().get().toHexString()));
       }
+      return errorResponse(request, RpcErrorType.INTERNAL_ERROR);
     }
-    return errorResponse(request, jsonRpcError);
+  }
+
+  protected JsonRpcErrorResponse errorResponse(
+      final JsonRpcRequestContext request, final RpcErrorType rpcErrorType) {
+    return errorResponse(request, new JsonRpcError(rpcErrorType));
   }
 
   protected JsonRpcErrorResponse errorResponse(

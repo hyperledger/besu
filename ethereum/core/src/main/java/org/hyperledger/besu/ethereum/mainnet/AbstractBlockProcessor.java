@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessDataGasCalculator.calculateExcessDataGasForParent;
+
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
@@ -36,7 +38,6 @@ import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -112,14 +113,19 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
-      final Wei dataGasPrice =
-          protocolSpec
-              .getFeeMarket()
-              .dataPrice(
-                  blockchain
-                      .getBlockHeader(blockHeader.getParentHash())
-                      .flatMap(BlockHeader::getExcessDataGas)
-                      .orElse(DataGas.ZERO));
+
+      Optional<BlockHeader> maybeParentHeader =
+          blockchain.getBlockHeader(blockHeader.getParentHash());
+
+      Wei dataGasPrice =
+          maybeParentHeader
+              .map(
+                  (parentHeader) ->
+                      protocolSpec
+                          .getFeeMarket()
+                          .dataPricePerGas(
+                              calculateExcessDataGasForParent(protocolSpec, parentHeader)))
+              .orElse(Wei.ZERO);
 
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(

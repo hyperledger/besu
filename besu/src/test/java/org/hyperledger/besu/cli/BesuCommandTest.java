@@ -27,7 +27,6 @@ import static org.hyperledger.besu.cli.config.NetworkName.GOERLI;
 import static org.hyperledger.besu.cli.config.NetworkName.KOTTI;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
-import static org.hyperledger.besu.cli.config.NetworkName.RINKEBY;
 import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPRECATION_WARNING_MSG;
@@ -41,8 +40,6 @@ import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfigura
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.GOERLI_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_DISCOVERY_URL;
-import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.RINKEBY_BOOTSTRAP_NODES;
-import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.RINKEBY_DISCOVERY_URL;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageFormat.BONSAI;
 import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 import static org.junit.Assume.assumeThat;
@@ -158,19 +155,26 @@ public class BesuCommandTest extends CommandTestAbstract {
           .put("config", (new JsonObject()).put("chainId", GENESIS_CONFIG_TEST_CHAINID));
   private static final JsonObject GENESIS_INVALID_DATA =
       (new JsonObject()).put("config", new JsonObject());
-  private static final JsonObject VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID =
-      (new JsonObject())
-          .put(
-              "config",
-              new JsonObject().put("isQuorum", true).put("chainId", GENESIS_CONFIG_TEST_CHAINID));
-  private static final JsonObject INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET =
-      (new JsonObject()).put("config", new JsonObject().put("isQuorum", true));
   private static final JsonObject INVALID_GENESIS_EC_CURVE =
       (new JsonObject()).put("config", new JsonObject().put("ecCurve", "abcd"));
   private static final JsonObject VALID_GENESIS_EC_CURVE =
       (new JsonObject()).put("config", new JsonObject().put("ecCurve", "secp256k1"));
   private static final String ENCLAVE_PUBLIC_KEY_PATH =
       BesuCommand.class.getResource("/orion_publickey.pub").getPath();
+  private static final JsonObject VALID_GENESIS_QBFT_POST_LONDON =
+      (new JsonObject())
+          .put(
+              "config",
+              new JsonObject()
+                  .put("londonBlock", 0)
+                  .put("qbft", new JsonObject().put("blockperiodseconds", 5)));
+  private static final JsonObject VALID_GENESIS_IBFT2_POST_LONDON =
+      (new JsonObject())
+          .put(
+              "config",
+              new JsonObject()
+                  .put("londonBlock", 0)
+                  .put("ibft2", new JsonObject().put("blockperiodseconds", 5)));
 
   private static final String[] VALID_ENODE_STRINGS = {
     "enode://" + VALID_NODE_ID + "@192.168.0.1:4567",
@@ -1062,26 +1066,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void testGenesisPathRinkebyEthConfig() {
-    final ArgumentCaptor<EthNetworkConfig> networkArg =
-        ArgumentCaptor.forClass(EthNetworkConfig.class);
-
-    parseCommand("--network", "rinkeby");
-
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any(), any());
-    verify(mockControllerBuilder).build();
-
-    final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.getBootNodes()).isEqualTo(RINKEBY_BOOTSTRAP_NODES);
-    assertThat(config.getDnsDiscoveryUrl()).isEqualTo(RINKEBY_DISCOVERY_URL);
-    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(4));
-  }
-
-  @Test
   public void genesisAndNetworkMustNotBeUsedTogether() throws Exception {
     final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
 
-    parseCommand("--genesis-file", genesisFile.toString(), "--network", "rinkeby");
+    parseCommand("--genesis-file", genesisFile.toString(), "--network", "mainnet");
 
     Mockito.verifyNoInteractions(mockRunnerBuilder);
 
@@ -3703,7 +3691,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void stratumMiningOptionsRequiresServiceToBeEnabled() {
 
-    parseCommand("--miner-stratum-enabled");
+    parseCommand("--network", "dev", "--miner-stratum-enabled");
 
     verifyOptionsConstraintLoggerCall("--miner-enabled", "--miner-stratum-enabled");
 
@@ -3717,7 +3705,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void stratumMiningOptionsRequiresServiceToBeEnabledToml() throws IOException {
     final Path toml = createTempFile("toml", "miner-stratum-enabled=true\n");
 
-    parseCommand("--config-file", toml.toString());
+    parseCommand("--network", "dev", "--config-file", toml.toString());
 
     verifyOptionsConstraintLoggerCall("--miner-enabled", "--miner-stratum-enabled");
 
@@ -3773,6 +3761,46 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void blockProducingOptionsDoNotWarnWhenPoA() throws IOException {
+
+    final Path genesisFileQBFT = createFakeGenesisFile(VALID_GENESIS_QBFT_POST_LONDON);
+    parseCommand(
+        "--genesis-file",
+        genesisFileQBFT.toString(),
+        "--min-gas-price",
+        "42",
+        "--miner-extra-data",
+        "0x1122334455667788990011223344556677889900112233445566778899001122");
+
+    verify(mockLogger, atMost(0))
+        .warn(
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    final Path genesisFileIBFT2 = createFakeGenesisFile(VALID_GENESIS_IBFT2_POST_LONDON);
+    parseCommand(
+        "--genesis-file",
+        genesisFileIBFT2.toString(),
+        "--min-gas-price",
+        "42",
+        "--miner-extra-data",
+        "0x1122334455667788990011223344556677889900112233445566778899001122");
+
+    verify(mockLogger, atMost(0))
+        .warn(
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void blockProducingOptionsDoNotWarnWhenMergeEnabled() {
 
     final Address requestedCoinbase = Address.fromHexString("0000011111222223333344444");
@@ -3815,6 +3843,33 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--config-file", toml.toString());
 
     verifyOptionsConstraintLoggerCall("--miner-enabled", "--min-gas-price");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void minGasPriceDoesNotRequireMainOptionWhenPoA() throws IOException {
+    final Path genesisFileQBFT = createFakeGenesisFile(VALID_GENESIS_QBFT_POST_LONDON);
+    parseCommand("--genesis-file", genesisFileQBFT.toString(), "--min-gas-price", "0");
+
+    verify(mockLogger, atMost(0))
+        .warn(
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    final Path genesisFileIBFT2 = createFakeGenesisFile(VALID_GENESIS_IBFT2_POST_LONDON);
+    parseCommand("--genesis-file", genesisFileIBFT2.toString(), "--min-gas-price", "0");
+
+    verify(mockLogger, atMost(0))
+        .warn(
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture(),
+            stringArgumentCaptor.capture());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -3942,24 +3997,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rinkebyValuesAreUsed() {
-    parseCommand("--network", "rinkeby");
-
-    final ArgumentCaptor<EthNetworkConfig> networkArg =
-        ArgumentCaptor.forClass(EthNetworkConfig.class);
-
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any(), any());
-    verify(mockControllerBuilder).build();
-
-    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(RINKEBY));
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
-    verify(mockLogger, times(1)).warn(contains("Rinkeby is deprecated and will be shutdown"));
-  }
-
-  @Test
   public void goerliValuesAreUsed() {
     parseCommand("--network", "goerli");
 
@@ -4077,11 +4114,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void rinkebyValuesCanBeOverridden() throws Exception {
-    networkValuesCanBeOverridden("rinkeby");
-  }
-
-  @Test
   public void goerliValuesCanBeOverridden() throws Exception {
     networkValuesCanBeOverridden("goerli");
   }
@@ -4190,7 +4222,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--privacy-url", ENCLAVE_URI, "--privacy-public-key-file", file.toString());
 
     verifyMultiOptionsConstraintLoggerCall(
-        "--privacy-url and/or --privacy-public-key-file ignored because none of --privacy-enabled or isQuorum (in genesis file) was defined.");
+        "--privacy-url and/or --privacy-public-key-file ignored because none of --privacy-enabled was defined.");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -4516,17 +4548,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Pruning cannot be enabled with privacy.");
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void privacyWithGoQuorumModeMustError() throws IOException {
-    final Path genesisFile =
-        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
-    parseCommand(
-        "--privacy-enabled", "--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("GoQuorum privacy is no longer supported in Besu");
   }
 
   @Rule public TemporaryFolder testFolder = new TemporaryFolder();
@@ -5203,42 +5224,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void quorumInteropNotDefinedInGenesisDoesNotEnforceZeroGasPrice() throws IOException {
-    final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
-    parseCommand("--genesis-file", genesisFile.toString());
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void quorumInteropEnabledFailsWithoutGasPriceSet() throws IOException {
-    final Path genesisFile =
-        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
-    parseCommand("--genesis-file", genesisFile.toString());
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "--min-gas-price must be set to zero if isQuorum mode is enabled in the genesis file.");
-  }
-
-  @Test
-  public void quorumInteropEnabledFailsWithoutGasPriceSetToZero() throws IOException {
-    final Path genesisFile =
-        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
-    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "1");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "--min-gas-price must be set to zero if isQuorum mode is enabled in the genesis file.");
-  }
-
-  @Test
-  public void quorumInteropEnabledFailsWithMainnetChainId() throws IOException {
-    final Path genesisFile =
-        createFakeGenesisFile(INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET.put("chainId", "1"));
-    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("isQuorum mode cannot be used on Mainnet.");
-  }
-
-  @Test
   public void assertThatCheckPortClashAcceptsAsExpected() throws Exception {
     // use WS port for HTTP
     final int port = 8546;
@@ -5679,18 +5664,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void kzgTrustedSetupFileIsMandatoryWithCustomGenesisFile()
-      throws IOException, URISyntaxException {
-    final Path genesisFileWithBlobs = createFakeGenesisFile(GENESIS_WITH_DATA_BLOBS_ENABLED);
-    parseCommand("--genesis-file", genesisFileWithBlobs.toString());
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "--kzg-trusted-setup is mandatory when providing a custom genesis that support data blobs");
-  }
-
-  @Test
   public void kzgTrustedSetupFileLoadedWithCustomGenesisFile()
       throws IOException, URISyntaxException {
     final Path testSetupAbsolutePath =
@@ -5766,5 +5739,31 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void snapsyncHealingOptionShouldBeDisabledByDefault() {
+    final TestBesuCommand besuCommand = parseCommand();
+    assertThat(besuCommand.unstableSynchronizerOptions.isSnapsyncFlatDbHealingEnabled()).isFalse();
+  }
+
+  @Test
+  public void snapsyncHealingOptionShouldWork() {
+    final TestBesuCommand besuCommand =
+        parseCommand("--Xsnapsync-synchronizer-flat-db-healing-enabled", "true");
+    assertThat(besuCommand.unstableSynchronizerOptions.isSnapsyncFlatDbHealingEnabled()).isTrue();
+  }
+
+  @Test
+  public void snapsyncForHealingFeaturesShouldFailWhenHealingIsNotEnabled() {
+    parseCommand("--Xsnapsync-synchronizer-flat-account-healed-count-per-request", "100");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "--Xsnapsync-synchronizer-flat option can only be used when -Xsnapsync-synchronizer-flat-db-healing-enabled is true");
+
+    parseCommand("--Xsnapsync-synchronizer-flat-slot-healed-count-per-request", "100");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "--Xsnapsync-synchronizer-flat option can only be used when -Xsnapsync-synchronizer-flat-db-healing-enabled is true");
   }
 }

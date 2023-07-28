@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.BlockValidator;
@@ -47,7 +48,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
-import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -59,16 +59,20 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nonnull;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BackwardSyncContextTest {
 
   public static final int REMOTE_HEIGHT = 50;
@@ -104,7 +108,7 @@ public class BackwardSyncContextTest {
   private Block uncle;
   private Block genesisBlock;
 
-  @Before
+  @BeforeEach
   public void setup() {
     when(protocolSpec.getBlockValidator()).thenReturn(blockValidator);
     doReturn(protocolSpec).when(protocolSchedule).getByBlockHeader(any());
@@ -256,11 +260,43 @@ public class BackwardSyncContextTest {
   }
 
   @Test
-  public void testUpdatingHead() {
-    context.updateHead(localBlockchain.getBlockByNumber(4).orElseThrow().getHash());
-    context.possiblyMoveHead(null);
+  public void shouldMoveHead() {
+    final Block lastSavedBlock = localBlockchain.getBlockByNumber(4).orElseThrow();
+    context.possiblyMoveHead(lastSavedBlock);
 
     assertThat(localBlockchain.getChainHeadBlock().getHeader().getNumber()).isEqualTo(4);
+  }
+
+  @Test
+  public void shouldNotMoveHeadWhenAlreadyHead() {
+    final Block lastSavedBlock = localBlockchain.getBlockByNumber(25).orElseThrow();
+    context.possiblyMoveHead(lastSavedBlock);
+
+    assertThat(localBlockchain.getChainHeadBlock().getHeader().getNumber()).isEqualTo(25);
+  }
+
+  @Test
+  public void shouldUpdateTargetHeightWhenStatusPresent() {
+    // Given
+    BlockHeader blockHeader = Mockito.mock(BlockHeader.class);
+    when(blockHeader.getParentHash()).thenReturn(Hash.fromHexStringLenient("0x41"));
+    when(blockHeader.getHash()).thenReturn(Hash.fromHexStringLenient("0x42"));
+    when(blockHeader.getNumber()).thenReturn(42L);
+    Block unknownBlock = Mockito.mock(Block.class);
+    when(unknownBlock.getHeader()).thenReturn(blockHeader);
+    when(unknownBlock.getHash()).thenReturn(Hash.fromHexStringLenient("0x42"));
+    when(unknownBlock.toRlp()).thenReturn(Bytes.EMPTY);
+    context.syncBackwardsUntil(unknownBlock); // set the status
+    assertThat(context.getStatus().getTargetChainHeight()).isEqualTo(42);
+    final Hash backwardChainHash =
+        remoteBlockchain.getBlockByNumber(LOCAL_HEIGHT + 4).get().getHash();
+    final Block backwardChainBlock = backwardChain.getTrustedBlock(backwardChainHash);
+
+    // When
+    context.maybeUpdateTargetHeight(backwardChainBlock.getHash());
+
+    // Then
+    assertThat(context.getStatus().getTargetChainHeight()).isEqualTo(29);
   }
 
   @Test
