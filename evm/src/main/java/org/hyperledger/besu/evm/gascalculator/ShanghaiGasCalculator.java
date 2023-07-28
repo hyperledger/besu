@@ -25,6 +25,20 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
 
   private static final long INIT_CODE_COST = 2L;
 
+  /**
+   * Instantiates a new ShanghaiGasCalculator
+   *
+   * @param maxPrecompile the max precompile
+   */
+  protected ShanghaiGasCalculator(final int maxPrecompile) {
+    super(maxPrecompile);
+  }
+
+  /** Instantiates a new ShanghaiGasCalculator */
+  public ShanghaiGasCalculator() {
+    super();
+  }
+
   @Override
   public long transactionIntrinsicGasCost(final Bytes payload, final boolean isContractCreation) {
     long intrinsicGasCost = super.transactionIntrinsicGasCost(payload, isContractCreation);

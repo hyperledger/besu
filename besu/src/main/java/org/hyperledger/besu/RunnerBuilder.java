@@ -783,10 +783,7 @@ public class RunnerBuilder {
 
     final Optional<AccountPermissioningController> accountPermissioningController =
         buildAccountPermissioningController(
-            permissioningConfiguration,
-            besuController,
-            transactionSimulator,
-            context.getBlockchain());
+            permissioningConfiguration, besuController, transactionSimulator);
 
     final Optional<AccountLocalConfigPermissioningController>
         accountLocalConfigPermissioningController =
@@ -1110,8 +1107,7 @@ public class RunnerBuilder {
       final NodePermissioningController nodePermissioningController =
           new NodePermissioningControllerFactory()
               .create(
-                  new PermissioningConfiguration(
-                      Optional.empty(), Optional.empty(), Optional.empty()),
+                  new PermissioningConfiguration(Optional.empty(), Optional.empty()),
                   synchronizer,
                   fixedNodes,
                   localNodeId,
@@ -1129,19 +1125,18 @@ public class RunnerBuilder {
   private Optional<AccountPermissioningController> buildAccountPermissioningController(
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final BesuController besuController,
-      final TransactionSimulator transactionSimulator,
-      final Blockchain blockchain) {
+      final TransactionSimulator transactionSimulator) {
 
     if (permissioningConfiguration.isPresent()) {
       final Optional<AccountPermissioningController> accountPermissioningController =
           AccountPermissioningControllerFactory.create(
-              permissioningConfiguration.get(), transactionSimulator, metricsSystem, blockchain);
+              permissioningConfiguration.get(), transactionSimulator, metricsSystem);
 
       accountPermissioningController.ifPresent(
           permissioningController ->
               besuController
                   .getProtocolSchedule()
-                  .setTransactionFilter(permissioningController::isPermitted));
+                  .setPermissionTransactionFilter(permissioningController::isPermitted));
 
       return accountPermissioningController;
     } else {

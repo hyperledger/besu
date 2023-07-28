@@ -64,9 +64,9 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class RlpxAgentTest {
   private static final KeyPair KEY_PAIR = SignatureAlgorithmFactory.getInstance().generateKeyPair();
@@ -83,14 +83,14 @@ public class RlpxAgentTest {
   private final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier = Stream::empty;
   private RlpxAgent agent = agent();
 
-  @Before
+  @BeforeEach
   public void setup() {
     // Set basic defaults
     when(peerPrivileges.canExceedConnectionLimits(any())).thenReturn(false);
     agent.subscribeConnectRequest((a, b) -> true);
   }
 
-  @After
+  @AfterEach
   public void after() {
     connections = Collections.emptyList();
   }

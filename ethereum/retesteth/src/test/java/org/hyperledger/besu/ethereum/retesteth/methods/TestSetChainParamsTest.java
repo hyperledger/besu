@@ -29,15 +29,15 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class TestSetChainParamsTest {
 
   private static RetestethContext context;
   private static TestSetChainParams test_setChainParams;
 
-  @BeforeClass
+  @BeforeAll
   public static void setupClass() {
     context = new RetestethContext();
     test_setChainParams = new TestSetChainParams(context);

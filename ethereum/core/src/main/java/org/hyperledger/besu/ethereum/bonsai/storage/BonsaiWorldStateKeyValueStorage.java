@@ -14,6 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.bonsai.storage;
 
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.bonsai.storage.flat.FlatDbReaderStrategy;
@@ -29,9 +34,12 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -60,10 +68,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   protected FlatDbMode flatDbMode;
   protected FlatDbReaderStrategy flatDbReaderStrategy;
 
-  protected final KeyValueStorage accountStorage;
-  protected final KeyValueStorage codeStorage;
-  protected final KeyValueStorage storageStorage;
-  protected final KeyValueStorage trieBranchStorage;
+  protected final SegmentedKeyValueStorage composedWorldStateStorage;
   protected final KeyValueStorage trieLogStorage;
 
   protected final ObservableMetricsSystem metricsSystem;
@@ -76,14 +81,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   public BonsaiWorldStateKeyValueStorage(
       final StorageProvider provider, final ObservableMetricsSystem metricsSystem) {
-    this.accountStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE);
-    this.codeStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.CODE_STORAGE);
-    this.storageStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE);
-    this.trieBranchStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
+    this.composedWorldStateStorage =
+        provider.getStorageBySegmentIdentifiers(
+            List.of(
+                ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE));
     this.trieLogStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
     this.metricsSystem = metricsSystem;
@@ -93,18 +94,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   public BonsaiWorldStateKeyValueStorage(
       final FlatDbMode flatDbMode,
       final FlatDbReaderStrategy flatDbReaderStrategy,
-      final KeyValueStorage accountStorage,
-      final KeyValueStorage codeStorage,
-      final KeyValueStorage storageStorage,
-      final KeyValueStorage trieBranchStorage,
+      final SegmentedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage,
       final ObservableMetricsSystem metricsSystem) {
     this.flatDbMode = flatDbMode;
     this.flatDbReaderStrategy = flatDbReaderStrategy;
-    this.accountStorage = accountStorage;
-    this.codeStorage = codeStorage;
-    this.storageStorage = storageStorage;
-    this.trieBranchStorage = trieBranchStorage;
+    this.composedWorldStateStorage = composedWorldStateStorage;
     this.trieLogStorage = trieLogStorage;
     this.metricsSystem = metricsSystem;
   }
@@ -112,8 +107,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   public void loadFlatDbStrategy() {
     this.flatDbMode =
         FlatDbMode.fromVersion(
-            trieBranchStorage
-                .get(FLAT_DB_MODE)
+            composedWorldStateStorage
+                .get(TRIE_BRANCH_STORAGE, FLAT_DB_MODE)
                 .map(Bytes::wrap)
                 .orElse(
                     FlatDbMode.PARTIAL
@@ -146,7 +141,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
-      return getFlatDbReaderStrategy().getCode(codeHash, accountHash, codeStorage);
+      return getFlatDbReaderStrategy().getCode(codeHash, accountHash, composedWorldStateStorage);
     }
   }
 
@@ -156,7 +151,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
             this::getWorldStateRootHash,
             this::getAccountStateTrieNode,
             accountHash,
-            accountStorage);
+            composedWorldStateStorage);
   }
 
   @Override
@@ -164,8 +159,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else {
-      return trieBranchStorage
-          .get(location.toArrayUnsafe())
+      return composedWorldStateStorage
+          .get(TRIE_BRANCH_STORAGE, location.toArrayUnsafe())
           .map(Bytes::wrap)
           .filter(b -> Hash.hash(b).equals(nodeHash));
     }
@@ -186,8 +181,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     if (maybeNodeHash.filter(hash -> hash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)).isPresent()) {
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else {
-      return trieBranchStorage
-          .get(Bytes.concatenate(accountHash, location).toArrayUnsafe())
+      return composedWorldStateStorage
+          .get(TRIE_BRANCH_STORAGE, Bytes.concatenate(accountHash, location).toArrayUnsafe())
           .map(Bytes::wrap)
           .filter(data -> maybeNodeHash.map(hash -> Hash.hash(data).equals(hash)).orElse(true));
     }
@@ -204,15 +199,20 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   public Optional<Bytes> getStateTrieNode(final Bytes location) {
-    return trieBranchStorage.get(location.toArrayUnsafe()).map(Bytes::wrap);
+    return composedWorldStateStorage
+        .get(TRIE_BRANCH_STORAGE, location.toArrayUnsafe())
+        .map(Bytes::wrap);
   }
 
   public Optional<Bytes> getWorldStateRootHash() {
-    return trieBranchStorage.get(WORLD_ROOT_HASH_KEY).map(Bytes::wrap);
+    return composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY).map(Bytes::wrap);
   }
 
   public Optional<Hash> getWorldStateBlockHash() {
-    return trieBranchStorage.get(WORLD_BLOCK_HASH_KEY).map(Bytes32::wrap).map(Hash::wrap);
+    return composedWorldStateStorage
+        .get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY)
+        .map(Bytes32::wrap)
+        .map(Hash::wrap);
   }
 
   public Optional<Bytes> getStorageValueByStorageSlotKey(
@@ -240,21 +240,22 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
             (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
             accountHash,
             storageSlotKey,
-            storageStorage);
+            composedWorldStateStorage);
   }
 
   @Override
   public Map<Bytes32, Bytes> streamFlatAccounts(
       final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
     return getFlatDbReaderStrategy()
-        .streamAccountFlatDatabase(accountStorage, startKeyHash, endKeyHash, max);
+        .streamAccountFlatDatabase(composedWorldStateStorage, startKeyHash, endKeyHash, max);
   }
 
   @Override
   public Map<Bytes32, Bytes> streamFlatStorages(
       final Hash accountHash, final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
     return getFlatDbReaderStrategy()
-        .streamStorageFlatDatabase(storageStorage, accountHash, startKeyHash, endKeyHash, max);
+        .streamStorageFlatDatabase(
+            composedWorldStateStorage, accountHash, startKeyHash, endKeyHash, max);
   }
 
   @Override
@@ -264,23 +265,27 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   @Override
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
-    return trieBranchStorage
-        .get(WORLD_ROOT_HASH_KEY)
+    return composedWorldStateStorage
+        .get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY)
         .map(Bytes32::wrap)
         .map(hash -> hash.equals(rootHash) || trieLogStorage.containsKey(blockHash.toArrayUnsafe()))
         .orElse(false);
   }
 
   public void upgradeToFullFlatDbMode() {
-    final KeyValueStorageTransaction transaction = trieBranchStorage.startTransaction();
-    transaction.put(FLAT_DB_MODE, FlatDbMode.FULL.getVersion().toArrayUnsafe());
+    final SegmentedKeyValueStorageTransaction transaction =
+        composedWorldStateStorage.startTransaction();
+    transaction.put(
+        TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.FULL.getVersion().toArrayUnsafe());
     transaction.commit();
     loadFlatDbStrategy(); // force reload of flat db reader strategy
   }
 
   public void downgradeToPartialFlatDbMode() {
-    final KeyValueStorageTransaction transaction = trieBranchStorage.startTransaction();
-    transaction.put(FLAT_DB_MODE, FlatDbMode.PARTIAL.getVersion().toArrayUnsafe());
+    final SegmentedKeyValueStorageTransaction transaction =
+        composedWorldStateStorage.startTransaction();
+    transaction.put(
+        TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.PARTIAL.getVersion().toArrayUnsafe());
     transaction.commit();
     loadFlatDbStrategy(); // force reload of flat db reader strategy
   }
@@ -288,8 +293,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   @Override
   public void clear() {
     subscribers.forEach(BonsaiStorageSubscriber::onClearStorage);
-    getFlatDbReaderStrategy().clearAll(accountStorage, storageStorage, codeStorage);
-    trieBranchStorage.clear();
+    getFlatDbReaderStrategy().clearAll(composedWorldStateStorage);
+    composedWorldStateStorage.clear(TRIE_BRANCH_STORAGE);
     trieLogStorage.clear();
     loadFlatDbStrategy(); // force reload of flat db reader strategy
   }
@@ -303,17 +308,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   @Override
   public void clearFlatDatabase() {
     subscribers.forEach(BonsaiStorageSubscriber::onClearFlatDatabaseStorage);
-    getFlatDbReaderStrategy().resetOnResync(accountStorage, storageStorage);
+    getFlatDbReaderStrategy().resetOnResync(composedWorldStateStorage);
   }
 
   @Override
   public BonsaiUpdater updater() {
     return new Updater(
-        accountStorage.startTransaction(),
-        codeStorage.startTransaction(),
-        storageStorage.startTransaction(),
-        trieBranchStorage.startTransaction(),
-        trieLogStorage.startTransaction());
+        composedWorldStateStorage.startTransaction(), trieLogStorage.startTransaction());
   }
 
   @Override
@@ -343,36 +344,27 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
     void removeStorageValueBySlotHash(final Hash accountHash, final Hash slotHash);
 
-    KeyValueStorageTransaction getTrieBranchStorageTransaction();
+    SegmentedKeyValueStorageTransaction getWorldStateTransaction();
 
     KeyValueStorageTransaction getTrieLogStorageTransaction();
   }
 
   public static class Updater implements BonsaiUpdater {
 
-    private final KeyValueStorageTransaction accountStorageTransaction;
-    private final KeyValueStorageTransaction codeStorageTransaction;
-    private final KeyValueStorageTransaction storageStorageTransaction;
-    private final KeyValueStorageTransaction trieBranchStorageTransaction;
+    private final SegmentedKeyValueStorageTransaction composedWorldStateTransaction;
     private final KeyValueStorageTransaction trieLogStorageTransaction;
 
     public Updater(
-        final KeyValueStorageTransaction accountStorageTransaction,
-        final KeyValueStorageTransaction codeStorageTransaction,
-        final KeyValueStorageTransaction storageStorageTransaction,
-        final KeyValueStorageTransaction trieBranchStorageTransaction,
+        final SegmentedKeyValueStorageTransaction composedWorldStateTransaction,
         final KeyValueStorageTransaction trieLogStorageTransaction) {
 
-      this.accountStorageTransaction = accountStorageTransaction;
-      this.codeStorageTransaction = codeStorageTransaction;
-      this.storageStorageTransaction = storageStorageTransaction;
-      this.trieBranchStorageTransaction = trieBranchStorageTransaction;
+      this.composedWorldStateTransaction = composedWorldStateTransaction;
       this.trieLogStorageTransaction = trieLogStorageTransaction;
     }
 
     @Override
     public BonsaiUpdater removeCode(final Hash accountHash) {
-      codeStorageTransaction.remove(accountHash.toArrayUnsafe());
+      composedWorldStateTransaction.remove(CODE_STORAGE, accountHash.toArrayUnsafe());
       return this;
     }
 
@@ -382,13 +374,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         // Don't save empty values
         return this;
       }
-      codeStorageTransaction.put(accountHash.toArrayUnsafe(), code.toArrayUnsafe());
+      composedWorldStateTransaction.put(
+          CODE_STORAGE, accountHash.toArrayUnsafe(), code.toArrayUnsafe());
       return this;
     }
 
     @Override
     public BonsaiUpdater removeAccountInfoState(final Hash accountHash) {
-      accountStorageTransaction.remove(accountHash.toArrayUnsafe());
+      composedWorldStateTransaction.remove(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe());
       return this;
     }
 
@@ -398,16 +391,20 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         // Don't save empty values
         return this;
       }
-      accountStorageTransaction.put(accountHash.toArrayUnsafe(), accountValue.toArrayUnsafe());
+      composedWorldStateTransaction.put(
+          ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe(), accountValue.toArrayUnsafe());
       return this;
     }
 
     @Override
     public WorldStateStorage.Updater saveWorldState(
         final Bytes blockHash, final Bytes32 nodeHash, final Bytes node) {
-      trieBranchStorageTransaction.put(Bytes.EMPTY.toArrayUnsafe(), node.toArrayUnsafe());
-      trieBranchStorageTransaction.put(WORLD_ROOT_HASH_KEY, nodeHash.toArrayUnsafe());
-      trieBranchStorageTransaction.put(WORLD_BLOCK_HASH_KEY, blockHash.toArrayUnsafe());
+      composedWorldStateTransaction.put(
+          TRIE_BRANCH_STORAGE, Bytes.EMPTY.toArrayUnsafe(), node.toArrayUnsafe());
+      composedWorldStateTransaction.put(
+          TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, nodeHash.toArrayUnsafe());
+      composedWorldStateTransaction.put(
+          TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, blockHash.toArrayUnsafe());
       return this;
     }
 
@@ -418,13 +415,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         // Don't save empty nodes
         return this;
       }
-      trieBranchStorageTransaction.put(location.toArrayUnsafe(), node.toArrayUnsafe());
+      composedWorldStateTransaction.put(
+          TRIE_BRANCH_STORAGE, location.toArrayUnsafe(), node.toArrayUnsafe());
       return this;
     }
 
     @Override
     public BonsaiUpdater removeAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
-      trieBranchStorageTransaction.remove(location.toArrayUnsafe());
+      composedWorldStateTransaction.remove(TRIE_BRANCH_STORAGE, location.toArrayUnsafe());
       return this;
     }
 
@@ -435,28 +433,33 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         // Don't save empty nodes
         return this;
       }
-      trieBranchStorageTransaction.put(
-          Bytes.concatenate(accountHash, location).toArrayUnsafe(), node.toArrayUnsafe());
+      composedWorldStateTransaction.put(
+          TRIE_BRANCH_STORAGE,
+          Bytes.concatenate(accountHash, location).toArrayUnsafe(),
+          node.toArrayUnsafe());
       return this;
     }
 
     @Override
     public synchronized BonsaiUpdater putStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash, final Bytes storage) {
-      storageStorageTransaction.put(
-          Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(), storage.toArrayUnsafe());
+      composedWorldStateTransaction.put(
+          ACCOUNT_STORAGE_STORAGE,
+          Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(),
+          storage.toArrayUnsafe());
       return this;
     }
 
     @Override
     public synchronized void removeStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash) {
-      storageStorageTransaction.remove(Bytes.concatenate(accountHash, slotHash).toArrayUnsafe());
+      composedWorldStateTransaction.remove(
+          ACCOUNT_STORAGE_STORAGE, Bytes.concatenate(accountHash, slotHash).toArrayUnsafe());
     }
 
     @Override
-    public KeyValueStorageTransaction getTrieBranchStorageTransaction() {
-      return trieBranchStorageTransaction;
+    public SegmentedKeyValueStorageTransaction getWorldStateTransaction() {
+      return composedWorldStateTransaction;
     }
 
     @Override
@@ -466,19 +469,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
     @Override
     public void commit() {
-      accountStorageTransaction.commit();
-      codeStorageTransaction.commit();
-      storageStorageTransaction.commit();
-      trieBranchStorageTransaction.commit();
+      // write the log ahead, then the worldstate
       trieLogStorageTransaction.commit();
+      composedWorldStateTransaction.commit();
     }
 
     @Override
     public void rollback() {
-      accountStorageTransaction.rollback();
-      codeStorageTransaction.rollback();
-      storageStorageTransaction.rollback();
-      trieBranchStorageTransaction.rollback();
+      composedWorldStateTransaction.rollback();
       trieLogStorageTransaction.rollback();
     }
   }
@@ -521,10 +519,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       subscribers.forEach(BonsaiStorageSubscriber::onCloseStorage);
 
       // close all of the KeyValueStorages:
-      accountStorage.close();
-      codeStorage.close();
-      storageStorage.close();
-      trieBranchStorage.close();
+      composedWorldStateStorage.close();
       trieLogStorage.close();
 
       // set storage closed

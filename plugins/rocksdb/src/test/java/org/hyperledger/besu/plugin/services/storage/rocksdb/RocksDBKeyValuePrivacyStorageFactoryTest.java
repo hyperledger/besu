@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorageTest.TestSegment;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -43,8 +44,8 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
   @Mock private BesuConfiguration commonConfiguration;
   @TempDir private Path temporaryFolder;
   private final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
-  private final List<SegmentIdentifier> segments = List.of();
-  @Mock private SegmentIdentifier segment;
+  private final SegmentIdentifier segment = TestSegment.BAR;
+  private final List<SegmentIdentifier> segments = List.of(segment);
 
   @Test
   public void shouldDetectVersion1DatabaseIfNoMetadataFileFound() throws Exception {

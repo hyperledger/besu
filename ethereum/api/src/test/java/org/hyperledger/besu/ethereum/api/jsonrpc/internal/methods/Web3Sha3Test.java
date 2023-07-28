@@ -18,12 +18,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class Web3Sha3Test {
 
@@ -70,7 +70,7 @@ public class Web3Sha3Test {
             new JsonRpcRequest("2", "web3_sha3", new Object[] {"0x68656c6c6f20776f726c6"}));
 
     final JsonRpcResponse expected =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
@@ -83,7 +83,7 @@ public class Web3Sha3Test {
             new JsonRpcRequest("2", "web3_sha3", new Object[] {"0x68656c6c6fThisIsNotHex"}));
 
     final JsonRpcResponse expected =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
@@ -96,7 +96,7 @@ public class Web3Sha3Test {
             new JsonRpcRequest("2", "web3_sha3", new Object[] {"68656c6c6f20776f726c64"}));
 
     final JsonRpcResponse expected =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
@@ -109,7 +109,7 @@ public class Web3Sha3Test {
             new JsonRpcRequest("2", "web3_sha3", new Object[] {"68656c6c6fThisIsNotHex"}));
 
     final JsonRpcResponse expected =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
@@ -123,7 +123,7 @@ public class Web3Sha3Test {
                 "2", "web3_sha3", new Object[] {"0x68656c6c6f20776f726c64", "{encode:'hex'}"}));
 
     final JsonRpcResponse expected =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
@@ -135,7 +135,7 @@ public class Web3Sha3Test {
         new JsonRpcRequestContext(new JsonRpcRequest("2", "web3_sha3", new Object[] {}));
 
     final JsonRpcResponse expected =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);

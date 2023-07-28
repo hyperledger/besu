@@ -23,7 +23,7 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class BytesValueRLPInputTest {
 

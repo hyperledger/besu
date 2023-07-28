@@ -31,7 +31,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.VALID_APIS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService.EPHEMERAL_JWT_FILE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration.DEFAULT_WEBSOCKET_PORT;
-import static org.hyperledger.besu.ethereum.permissioning.GoQuorumPermissioningConfiguration.QIP714_DEFAULT_BLOCK;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
 import static org.hyperledger.besu.metrics.MetricsProtocol.PROMETHEUS;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
@@ -134,7 +133,6 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.StaticNodesParser;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
-import org.hyperledger.besu.ethereum.permissioning.GoQuorumPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfigurationBuilder;
@@ -219,7 +217,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
@@ -1387,8 +1384,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Vertx vertx;
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
-  /** Sets GoQuorum compatibility mode. */
-  protected Boolean isGoQuorumCompatibilityMode = false;
 
   /**
    * Besu command constructor.
@@ -1531,13 +1526,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     try {
       configureLogging(true);
-      // Set the goquorum compatibility mode based on the genesis file
+
       if (genesisFile != null) {
         genesisConfigOptions = readGenesisConfigOptions();
-
-        if (genesisConfigOptions.isQuorum()) {
-          enableGoQuorumCompatibilityMode();
-        }
       }
 
       // set merge config on the basis of genesis config
@@ -1571,6 +1562,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       runner.awaitStop();
 
     } catch (final Exception e) {
+      logger.error("Failed to start Besu", e);
       throw new ParameterException(this.commandLine, e.getMessage(), e);
     }
   }
@@ -1884,12 +1876,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (getActualGenesisConfigOptions().getCancunTime().isPresent()) {
-      // if custom genesis provided, then trusted setup file is mandatory
-      if (genesisFile != null && kzgTrustedSetupFile == null) {
-        throw new ParameterException(
-            this.commandLine,
-            "--kzg-trusted-setup is mandatory when providing a custom genesis that support data blobs");
-      }
       if (kzgTrustedSetupFile != null) {
         KZGPointEvalPrecompiledContract.init(kzgTrustedSetupFile);
       } else {
@@ -2199,8 +2185,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     syncMode = getDefaultSyncModeIfNotSet();
 
     ethNetworkConfig = updateNetworkConfig(network);
-
-    checkGoQuorumCompatibilityConfig(ethNetworkConfig);
 
     jsonRpcConfiguration =
         jsonRpcConfiguration(
@@ -2811,25 +2795,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final PermissioningConfiguration permissioningConfiguration =
         new PermissioningConfiguration(
             localPermissioningConfigurationOptional,
-            Optional.of(smartContractPermissioningConfiguration),
-            quorumPermissioningConfig());
+            Optional.of(smartContractPermissioningConfiguration));
 
     return Optional.of(permissioningConfiguration);
-  }
-
-  private Optional<GoQuorumPermissioningConfiguration> quorumPermissioningConfig() {
-    if (!isGoQuorumCompatibilityMode) {
-      return Optional.empty();
-    }
-
-    try {
-      final OptionalLong qip714BlockNumber = genesisConfigOptions.getQip714BlockNumber();
-      return Optional.of(
-          GoQuorumPermissioningConfiguration.enabled(
-              qip714BlockNumber.orElse(QIP714_DEFAULT_BLOCK)));
-    } catch (final Exception e) {
-      throw new IllegalStateException("Error reading GoQuorum permissioning options", e);
-    }
   }
 
   private boolean localPermissionsEnabled() {
@@ -2854,8 +2822,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     CommandLineUtils.checkMultiOptionDependencies(
         logger,
         commandLine,
-        "--privacy-url and/or --privacy-public-key-file ignored because none of --privacy-enabled or isQuorum (in genesis file) was defined.",
-        List.of(!privacyOptionGroup.isPrivacyEnabled, !isGoQuorumCompatibilityMode),
+        "--privacy-url and/or --privacy-public-key-file ignored because none of --privacy-enabled was defined.",
+        List.of(!privacyOptionGroup.isPrivacyEnabled),
         List.of("--privacy-url", "--privacy-public-key-file"));
 
     checkPrivacyTlsOptionsDependencies();
@@ -2868,10 +2836,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
       if (isPruningEnabled()) {
         throw new ParameterException(commandLine, String.format("%s %s", "Pruning", errorSuffix));
-      }
-      if (isGoQuorumCompatibilityMode) {
-        throw new ParameterException(
-            commandLine, String.format("GoQuorum privacy is no longer supported in Besu"));
       }
 
       if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyMultiTenancyEnabled)
@@ -3451,34 +3415,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
   }
 
-  private void checkGoQuorumCompatibilityConfig(final EthNetworkConfig ethNetworkConfig) {
-    if (isGoQuorumCompatibilityMode) {
-
-      logger.warn(
-          DEPRECATION_WARNING_MSG,
-          "isQuorum mode in genesis file (GoQuorum-compatible privacy mode)",
-          "--privacy-enabled");
-      if (!minTransactionGasPrice.isZero()) {
-        throw new ParameterException(
-            this.commandLine,
-            "--min-gas-price must be set to zero if isQuorum mode is enabled in the genesis file.");
-      }
-
-      if (ensureGoQuorumCompatibilityModeNotUsedOnMainnet(genesisConfigOptions, ethNetworkConfig)) {
-        throw new ParameterException(this.commandLine, "isQuorum mode cannot be used on Mainnet.");
-      }
-    }
-  }
-
-  private static boolean ensureGoQuorumCompatibilityModeNotUsedOnMainnet(
-      final GenesisConfigOptions genesisConfigOptions, final EthNetworkConfig ethNetworkConfig) {
-    return ethNetworkConfig.getNetworkId().equals(MAINNET.getNetworkId())
-        || genesisConfigOptions
-            .getChainId()
-            .map(chainId -> chainId.equals(MAINNET.getNetworkId()))
-            .orElse(false);
-  }
-
   @VisibleForTesting
   String getLogLevel() {
     return loggingLevelOption.getLogLevel();
@@ -3530,13 +3466,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       return Optional.empty();
     }
     return genesisConfigOptions.getEcCurve();
-  }
-
-  /** Enables Go Quorum Compatibility mode. Visible for testing. */
-  @VisibleForTesting
-  protected void enableGoQuorumCompatibilityMode() {
-    // this static flag is still used for GoQuorum permissioning compatibility
-    isGoQuorumCompatibilityMode = true;
   }
 
   private GenesisConfigOptions getActualGenesisConfigOptions() {

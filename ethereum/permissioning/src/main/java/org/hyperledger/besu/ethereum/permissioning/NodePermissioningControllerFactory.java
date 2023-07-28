@@ -88,21 +88,8 @@ public class NodePermissioningControllerFactory {
       syncStatusProviderOptional = Optional.empty();
     }
 
-    final Optional<GoQuorumQip714Gate> goQuorumQip714Gate =
-        permissioningConfiguration
-            .getQuorumPermissioningConfig()
-            .flatMap(
-                config -> {
-                  if (config.isEnabled()) {
-                    return Optional.of(
-                        GoQuorumQip714Gate.getInstance(config.getQip714Block(), blockchain));
-                  } else {
-                    return Optional.empty();
-                  }
-                });
-
     final NodePermissioningController nodePermissioningController =
-        new NodePermissioningController(syncStatusProviderOptional, providers, goQuorumQip714Gate);
+        new NodePermissioningController(syncStatusProviderOptional, providers);
 
     permissioningConfiguration
         .getSmartContractConfig()
@@ -159,7 +146,7 @@ public class NodePermissioningControllerFactory {
     // eliminate the sync status and other checks, so we can just check the smart contract function
     final NodePermissioningController tempControllerCheckingSmartContractOnly =
         new NodePermissioningController(
-            Optional.empty(), nodePermissioningController.getProviders(), Optional.empty());
+            Optional.empty(), nodePermissioningController.getProviders());
 
     try {
       // the enodeURLs don't matter. We just want to check if a call to the smart contract succeeds

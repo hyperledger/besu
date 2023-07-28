@@ -16,12 +16,12 @@
 package org.hyperledger.besu.plugin.services.storage;
 
 /** The interface Snapped key value storage. */
-public interface SnappedKeyValueStorage extends KeyValueStorage {
+public interface SnappedKeyValueStorage extends SegmentedKeyValueStorage {
 
   /**
    * Gets snapshot transaction.
    *
    * @return the snapshot transaction
    */
-  KeyValueStorageTransaction getSnapshotTransaction();
+  SegmentedKeyValueStorageTransaction getSnapshotTransaction();
 }

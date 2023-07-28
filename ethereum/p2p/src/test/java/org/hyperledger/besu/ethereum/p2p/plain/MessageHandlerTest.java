@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.netty.buffer.Unpooled;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class MessageHandlerTest {
 
@@ -33,7 +33,7 @@ public class MessageHandlerTest {
   private static final int DATA_CODE = 1000;
 
   @Test
-  public void buildPingMessage() throws Exception {
+  public void buildPingMessage() {
     Bytes message = MessageHandler.buildMessage(MessageType.PING, PING_DATA);
     assertThat(message).isNotNull();
     PlainMessage parsed = MessageHandler.parseMessage(Unpooled.wrappedBuffer(message.toArray()));
@@ -43,7 +43,7 @@ public class MessageHandlerTest {
   }
 
   @Test
-  public void buildPongMessage() throws Exception {
+  public void buildPongMessage() {
     Bytes message = MessageHandler.buildMessage(MessageType.PONG, PONG_DATA);
     assertThat(message).isNotNull();
     PlainMessage parsed = MessageHandler.parseMessage(Unpooled.wrappedBuffer(message.toArray()));
@@ -53,7 +53,7 @@ public class MessageHandlerTest {
   }
 
   @Test
-  public void buildDataMessage() throws Exception {
+  public void buildDataMessage() {
     Bytes message = MessageHandler.buildMessage(MessageType.DATA, DATA_CODE, MESSAGE);
     assertThat(message).isNotNull();
     PlainMessage parsed = MessageHandler.parseMessage(Unpooled.wrappedBuffer(message.toArray()));

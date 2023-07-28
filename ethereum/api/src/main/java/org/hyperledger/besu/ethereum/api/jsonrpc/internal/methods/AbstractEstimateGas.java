@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -41,7 +42,7 @@ public abstract class AbstractEstimateGas implements JsonRpcMethod {
   protected final TransactionSimulator transactionSimulator;
 
   public AbstractEstimateGas(
-      final BlockchainQueries blockchainQueries, final TransactionSimulator transactionSimulator) {
+          final BlockchainQueries blockchainQueries, final TransactionSimulator transactionSimulator) {
     this.blockchainQueries = blockchainQueries;
     this.transactionSimulator = transactionSimulator;
   }
@@ -52,17 +53,17 @@ public abstract class AbstractEstimateGas implements JsonRpcMethod {
   }
 
   protected CallParameter overrideGasLimitAndPrice(
-      final JsonCallParameter callParams, final long gasLimit) {
+          final JsonCallParameter callParams, final long gasLimit) {
     return new CallParameter(
-        callParams.getFrom(),
-        callParams.getTo(),
-        gasLimit,
-        Optional.ofNullable(callParams.getGasPrice()).orElse(Wei.ZERO),
-        callParams.getMaxPriorityFeePerGas(),
-        callParams.getMaxFeePerGas(),
-        callParams.getValue(),
-        callParams.getPayload(),
-        callParams.getAccessList());
+            callParams.getFrom(),
+            callParams.getTo(),
+            gasLimit,
+            Optional.ofNullable(callParams.getGasPrice()).orElse(Wei.ZERO),
+            callParams.getMaxPriorityFeePerGas(),
+            callParams.getMaxFeePerGas(),
+            callParams.getValue(),
+            callParams.getPayload(),
+            callParams.getAccessList());
   }
 
   /**
@@ -74,10 +75,10 @@ public abstract class AbstractEstimateGas implements JsonRpcMethod {
    * @return estimate gas
    */
   protected long processEstimateGas(
-      final TransactionSimulatorResult result, final EstimateGasOperationTracer operationTracer) {
+          final TransactionSimulatorResult result, final EstimateGasOperationTracer operationTracer) {
     // no more than 63/64s of the remaining gas can be passed to the sub calls
     final double subCallMultiplier =
-        Math.pow(SUB_CALL_REMAINING_GAS_RATIO, operationTracer.getMaxDepth());
+            Math.pow(SUB_CALL_REMAINING_GAS_RATIO, operationTracer.getMaxDepth());
     // and minimum gas remaining is necessary for some operation (additionalStipend)
     final long gasStipend = operationTracer.getStipendNeeded();
     final long gasUsedByTransaction = result.getResult().getEstimateGasUsedByTransaction();
@@ -87,7 +88,7 @@ public abstract class AbstractEstimateGas implements JsonRpcMethod {
   protected JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
     final JsonCallParameter callParams = request.getRequiredParameter(0, JsonCallParameter.class);
     if (callParams.getGasPrice() != null
-        && (callParams.getMaxFeePerGas().isPresent()
+            && (callParams.getMaxFeePerGas().isPresent()
             || callParams.getMaxPriorityFeePerGas().isPresent())) {
       throw new InvalidJsonRpcParameters("gasPrice cannot be used with baseFee or maxFeePerGas");
     }
@@ -95,31 +96,36 @@ public abstract class AbstractEstimateGas implements JsonRpcMethod {
   }
 
   protected JsonRpcErrorResponse errorResponse(
-      final JsonRpcRequestContext request, final TransactionSimulatorResult result) {
-    final JsonRpcError jsonRpcError;
+          final JsonRpcRequestContext request, final TransactionSimulatorResult result) {
 
     final ValidationResult<TransactionInvalidReason> validationResult =
-        result.getValidationResult();
+            result.getValidationResult();
     if (validationResult != null && !validationResult.isValid()) {
-      jsonRpcError =
-          JsonRpcErrorConverter.convertTransactionInvalidReason(
-              validationResult.getInvalidReason());
+      return errorResponse(
+              request,
+              JsonRpcErrorConverter.convertTransactionInvalidReason(
+                      validationResult.getInvalidReason()));
     } else {
       final TransactionProcessingResult resultTrx = result.getResult();
       if (resultTrx != null && resultTrx.getRevertReason().isPresent()) {
-        jsonRpcError = JsonRpcError.REVERT_ERROR;
-        jsonRpcError.setData(resultTrx.getRevertReason().get().toHexString());
         JsonRpcErrorResponse.decodeRevertReason(resultTrx.getRevertReason().get())
-            .ifPresent(jsonRpcError::setReason);
-      } else {
-        jsonRpcError = JsonRpcError.INTERNAL_ERROR;
+                .ifPresent(jsonRpcError::setReason);
+        return errorResponse(
+                request,
+                new JsonRpcError(
+                        RpcErrorType.REVERT_ERROR, resultTrx.getRevertReason().get().toHexString()));
       }
+      return errorResponse(request, RpcErrorType.INTERNAL_ERROR);
     }
-    return errorResponse(request, jsonRpcError);
   }
 
   protected JsonRpcErrorResponse errorResponse(
-      final JsonRpcRequestContext request, final JsonRpcError jsonRpcError) {
+          final JsonRpcRequestContext request, final RpcErrorType rpcErrorType) {
+    return errorResponse(request, new JsonRpcError(rpcErrorType));
+  }
+
+  protected JsonRpcErrorResponse errorResponse(
+          final JsonRpcRequestContext request, final JsonRpcError jsonRpcError) {
     return new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);
   }
 }

@@ -16,10 +16,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionNotFoundException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.InvalidSubscriptionRequestException;
@@ -48,13 +48,13 @@ public class EthUnsubscribe extends AbstractSubscriptionMethod {
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), unsubscribed);
     } catch (final InvalidSubscriptionRequestException isEx) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INVALID_REQUEST);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_REQUEST);
     } catch (final SubscriptionNotFoundException snfEx) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.SUBSCRIPTION_NOT_FOUND);
+          requestContext.getRequest().getId(), RpcErrorType.SUBSCRIPTION_NOT_FOUND);
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
+          requestContext.getRequest().getId(), RpcErrorType.INTERNAL_ERROR);
     }
   }
 }

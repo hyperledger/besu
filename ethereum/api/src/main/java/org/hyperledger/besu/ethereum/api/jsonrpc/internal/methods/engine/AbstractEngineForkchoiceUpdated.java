@@ -30,10 +30,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngin
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateForkchoiceResult;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
@@ -113,7 +113,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     if (!isValidForkchoiceState(
         forkChoice.getSafeBlockHash(), forkChoice.getFinalizedBlockHash(), newHead)) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
-      return new JsonRpcErrorResponse(requestId, JsonRpcError.INVALID_FORKCHOICE_STATE);
+      return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_FORKCHOICE_STATE);
     }
 
     // TODO: post-merge cleanup, this should be unnecessary after merge
@@ -310,8 +310,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     return false;
   }
 
-  protected JsonRpcError getInvalidPayloadError() {
-    return JsonRpcError.INVALID_PARAMS;
+  protected RpcErrorType getInvalidPayloadError() {
+    return RpcErrorType.INVALID_PARAMS;
   }
 
   // fcU calls are synchronous, no need to make volatile

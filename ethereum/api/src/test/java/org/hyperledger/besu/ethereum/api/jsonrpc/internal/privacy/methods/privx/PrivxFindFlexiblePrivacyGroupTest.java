@@ -24,10 +24,10 @@ import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
@@ -37,8 +37,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.impl.UserImpl;
 import org.assertj.core.util.Lists;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PrivxFindFlexiblePrivacyGroupTest {
   private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
@@ -57,7 +57,7 @@ public class PrivxFindFlexiblePrivacyGroupTest {
   private PrivacyGroup privacyGroup;
   private PrivxFindFlexiblePrivacyGroup privxFindFlexiblePrivacyGroup;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     request =
         new JsonRpcRequestContext(
@@ -94,7 +94,7 @@ public class PrivxFindFlexiblePrivacyGroupTest {
 
     final JsonRpcErrorResponse response =
         (JsonRpcErrorResponse) privxFindFlexiblePrivacyGroup.response(request);
-    assertThat(response.getError()).isEqualTo(JsonRpcError.FIND_FLEXIBLE_PRIVACY_GROUP_ERROR);
+    assertThat(response.getErrorType()).isEqualTo(RpcErrorType.FIND_FLEXIBLE_PRIVACY_GROUP_ERROR);
     verify(privacyController).findPrivacyGroupByMembers(ADDRESSES, ENCLAVE_PUBLIC_KEY);
   }
 
@@ -105,7 +105,7 @@ public class PrivxFindFlexiblePrivacyGroupTest {
 
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            request.getRequest().getId(), JsonRpcError.FIND_FLEXIBLE_PRIVACY_GROUP_ERROR);
+            request.getRequest().getId(), RpcErrorType.FIND_FLEXIBLE_PRIVACY_GROUP_ERROR);
     final JsonRpcResponse response = privxFindFlexiblePrivacyGroup.response(request);
     assertThat(response).isEqualTo(expectedResponse);
     verify(privacyController).findPrivacyGroupByMembers(ADDRESSES, ENCLAVE_PUBLIC_KEY);

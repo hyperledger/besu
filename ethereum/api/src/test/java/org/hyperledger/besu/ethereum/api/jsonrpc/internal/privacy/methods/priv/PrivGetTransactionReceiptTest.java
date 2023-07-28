@@ -49,13 +49,16 @@ import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.impl.UserImpl;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class PrivGetTransactionReceiptTest {
 
   final Bytes internalPrivacyGroupId = Bytes.random(32);
@@ -72,7 +75,7 @@ public class PrivGetTransactionReceiptTest {
   private final PrivacyIdProvider privacyIdProvider =
       (user) -> VALID_BASE64_ENCLAVE_KEY.toBase64String();
 
-  @Before
+  @BeforeEach
   public void setUp() {
     final PrivateTransactionReceipt receipt =
         new PrivateTransactionReceipt(1, Collections.emptyList(), Bytes.EMPTY, Optional.empty());

@@ -24,8 +24,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class RpcModulesTest {
 
@@ -34,7 +34,7 @@ public class RpcModulesTest {
 
   private RpcModules method;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     method = new RpcModules(ImmutableList.of(RpcApis.DEBUG.name()));
   }

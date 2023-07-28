@@ -33,9 +33,9 @@ import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PrivateStateRootResolverTest {
 
@@ -53,7 +53,7 @@ public class PrivateStateRootResolverTest {
 
   private PrivateStateStorage privateStateStorage;
 
-  @BeforeClass
+  @BeforeAll
   public static void setupClass() {
     BLOCKCHAIN =
         InMemoryKeyValueStorageProvider.createInMemoryBlockchain(BLOCK_GENERATOR.genesisBlock());
@@ -68,7 +68,7 @@ public class PrivateStateRootResolverTest {
     }
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     privateStateStorage = InMemoryKeyValueStorageProvider.createInMemoryPrivateStateStorage();
   }

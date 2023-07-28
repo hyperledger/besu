@@ -33,15 +33,14 @@ import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DefaultWorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
+import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 
 public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
 
   public InMemoryKeyValueStorageProvider() {
     super(
-        segmentIdentifier -> new InMemoryKeyValueStorage(),
+        segmentIdentifiers -> new SegmentedInMemoryKeyValueStorage(),
         new InMemoryKeyValueStorage(),
-        SEGMENT_ISOLATION_SUPPORTED,
-        SNAPSHOT_ISOLATION_UNSUPPORTED,
         new NoOpMetricsSystem());
   }
 

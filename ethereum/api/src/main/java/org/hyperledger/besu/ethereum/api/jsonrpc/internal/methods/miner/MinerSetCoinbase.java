@@ -18,10 +18,10 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 
 public class MinerSetCoinbase implements JsonRpcMethod {
@@ -45,7 +45,7 @@ public class MinerSetCoinbase implements JsonRpcMethod {
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
     } catch (final UnsupportedOperationException ex) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), JsonRpcError.INVALID_REQUEST);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_REQUEST);
     }
   }
 }

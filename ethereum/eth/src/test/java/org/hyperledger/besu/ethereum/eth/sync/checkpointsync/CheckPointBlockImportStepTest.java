@@ -35,8 +35,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CheckPointBlockImportStepTest {
 
@@ -46,7 +46,7 @@ public class CheckPointBlockImportStepTest {
   private CheckpointBlockImportStep checkPointHeaderImportStep;
   private KeyValueStoragePrefixedKeyBlockchainStorage blockchainStorage;
 
-  @Before
+  @BeforeEach
   public void setup() {
     blockchainStorage =
         new KeyValueStoragePrefixedKeyBlockchainStorage(

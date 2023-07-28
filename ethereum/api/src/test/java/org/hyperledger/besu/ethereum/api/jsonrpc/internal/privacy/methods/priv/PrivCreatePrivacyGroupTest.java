@@ -29,9 +29,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.parameters.CreatePrivacyGroupParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
@@ -41,8 +41,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.impl.UserImpl;
 import org.assertj.core.util.Lists;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("MockNotUsedInProduction")
 public class PrivCreatePrivacyGroupTest {
@@ -60,7 +60,7 @@ public class PrivCreatePrivacyGroupTest {
       new UserImpl(new JsonObject().put("privacyPublicKey", ENCLAVE_PUBLIC_KEY), new JsonObject());
   private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     when(privacyParameters.getEnclave()).thenReturn(enclave);
     when(privacyParameters.isEnabled()).thenReturn(true);
@@ -270,8 +270,8 @@ public class PrivCreatePrivacyGroupTest {
     final JsonRpcErrorResponse response =
         (JsonRpcErrorResponse) privCreatePrivacyGroup.response(request);
 
-    final JsonRpcError result = response.getError();
+    final RpcErrorType result = response.getErrorType();
 
-    assertThat(result).isEqualTo(JsonRpcError.ENCLAVE_ERROR);
+    assertThat(result).isEqualTo(RpcErrorType.ENCLAVE_ERROR);
   }
 }

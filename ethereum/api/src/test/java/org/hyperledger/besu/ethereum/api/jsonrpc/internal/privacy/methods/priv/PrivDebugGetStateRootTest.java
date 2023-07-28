@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.FIND_PRIVACY_GROUP_ERROR;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INTERNAL_ERROR;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.FIND_PRIVACY_GROUP_ERROR;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INTERNAL_ERROR;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -43,8 +43,8 @@ import java.util.Collections;
 import java.util.Optional;
 
 import org.bouncycastle.util.encoders.Base64;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PrivDebugGetStateRootTest {
 
@@ -64,7 +64,7 @@ public class PrivDebugGetStateRootTest {
   private final PrivacyController privacyController =
       mock(RestrictedDefaultPrivacyController.class);
 
-  @Before
+  @BeforeEach
   public void setUp() {
     method = new PrivDebugGetStateRoot(blockchainQueries, privacyIdProvider, privacyController);
   }

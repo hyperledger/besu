@@ -19,6 +19,7 @@ package org.hyperledger.besu.ethereum.bonsai.worldview;
 import static org.hyperledger.besu.ethereum.bonsai.BonsaiAccount.fromRLP;
 import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
 import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -43,6 +44,8 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.Map;
 import java.util.Optional;
@@ -182,7 +185,11 @@ public class BonsaiWorldState
         bonsaiUpdater -> {
           accountTrie.commit(
               (location, hash, value) ->
-                  writeTrieNode(bonsaiUpdater.getTrieBranchStorageTransaction(), location, value));
+                  writeTrieNode(
+                      TRIE_BRANCH_STORAGE,
+                      bonsaiUpdater.getWorldStateTransaction(),
+                      location,
+                      value));
         });
     final Bytes32 rootHash = accountTrie.getRootHash();
     return Hash.wrap(rootHash);
@@ -391,17 +398,17 @@ public class BonsaiWorldState
             };
 
         stateUpdater
-            .getTrieBranchStorageTransaction()
-            .put(WORLD_BLOCK_HASH_KEY, blockHeader.getHash().toArrayUnsafe());
+            .getWorldStateTransaction()
+            .put(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, blockHeader.getHash().toArrayUnsafe());
         worldStateBlockHash = blockHeader.getHash();
       } else {
-        stateUpdater.getTrieBranchStorageTransaction().remove(WORLD_BLOCK_HASH_KEY);
+        stateUpdater.getWorldStateTransaction().remove(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY);
         worldStateBlockHash = null;
       }
 
       stateUpdater
-          .getTrieBranchStorageTransaction()
-          .put(WORLD_ROOT_HASH_KEY, newWorldStateRootHash.toArrayUnsafe());
+          .getWorldStateTransaction()
+          .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, newWorldStateRootHash.toArrayUnsafe());
       worldStateRootHash = newWorldStateRootHash;
       success = true;
     } finally {
@@ -454,11 +461,35 @@ public class BonsaiWorldState
         }
       };
 
+  static final SegmentedKeyValueStorageTransaction noOpSegmentedTx =
+      new SegmentedKeyValueStorageTransaction() {
+
+        @Override
+        public void put(
+            final SegmentIdentifier segmentIdentifier, final byte[] key, final byte[] value) {
+          // no-op
+        }
+
+        @Override
+        public void remove(final SegmentIdentifier segmentIdentifier, final byte[] key) {
+          // no-op
+        }
+
+        @Override
+        public void commit() throws StorageException {
+          // no-op
+        }
+
+        @Override
+        public void rollback() {
+          // no-op
+        }
+      };
+
   @Override
   public Hash frontierRootHash() {
     return calculateRootHash(
-        Optional.of(
-            new BonsaiWorldStateKeyValueStorage.Updater(noOpTx, noOpTx, noOpTx, noOpTx, noOpTx)),
+        Optional.of(new BonsaiWorldStateKeyValueStorage.Updater(noOpSegmentedTx, noOpTx)),
         accumulator.copy());
   }
 
@@ -484,8 +515,11 @@ public class BonsaiWorldState
   }
 
   private void writeTrieNode(
-      final KeyValueStorageTransaction tx, final Bytes location, final Bytes value) {
-    tx.put(location.toArrayUnsafe(), value.toArrayUnsafe());
+      final SegmentIdentifier segmentId,
+      final SegmentedKeyValueStorageTransaction tx,
+      final Bytes location,
+      final Bytes value) {
+    tx.put(segmentId, location.toArrayUnsafe(), value.toArrayUnsafe());
   }
 
   protected Optional<Bytes> getStorageTrieNode(
