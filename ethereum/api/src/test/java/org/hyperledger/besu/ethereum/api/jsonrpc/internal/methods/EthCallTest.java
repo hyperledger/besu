@@ -33,6 +33,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -45,6 +46,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.PreCloseStateHandler;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -170,9 +172,12 @@ public class EthCallTest {
     final JsonRpcRequestContext request = ethCallRequest(callParameter(), "latest");
 
     // Expect a revert error with no decoded reason (error doesn't begin "Error(string)" so ignored)
-    final JsonRpcError expectedError = REVERT_ERROR;
     final String abiHexString = "0x1234";
+    final JsonRpcError expectedError = new JsonRpcError(REVERT_ERROR, abiHexString);
     final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, expectedError);
+
+    assertThat(((JsonRpcErrorResponse) expectedResponse).getError().getMessage())
+        .isEqualTo("Execution reverted");
 
     mockTransactionProcessorSuccessResult(expectedResponse);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
@@ -208,8 +213,11 @@ public class EthCallTest {
     // Expect a revert error with no decoded reason (error begins with "Error(string)" but trailing
     // bytes are invalid ABI)
     final String abiHexString = "0x08c379a002d36d";
-    final JsonRpcError expectedError = REVERT_ERROR;
+    final JsonRpcError expectedError = new JsonRpcError(REVERT_ERROR, abiHexString);
     final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, expectedError);
+
+    assertThat(((JsonRpcErrorResponse) expectedResponse).getError().getMessage())
+        .isEqualTo("Execution reverted: ABI decode error");
 
     mockTransactionProcessorSuccessResult(expectedResponse);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
@@ -245,8 +253,11 @@ public class EthCallTest {
     // = "ERC20: transfer from the zero address")
     final String abiHexString =
         "0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002545524332303a207472616e736665722066726f6d20746865207a65726f2061646472657373000000000000000000000000000000000000000000000000000000";
-    final JsonRpcError expectedError = REVERT_ERROR;
+    final JsonRpcError expectedError = new JsonRpcError(REVERT_ERROR, abiHexString);
     final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, expectedError);
+
+    assertThat(((JsonRpcErrorResponse) expectedResponse).getError().getMessage())
+        .isEqualTo("Execution reverted: ERC20: transfer from the zero address");
 
     mockTransactionProcessorSuccessResult(expectedResponse);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
@@ -257,6 +268,7 @@ public class EthCallTest {
     when(chainHead.getBlockHeader()).thenReturn(blockHeader);
 
     final JsonRpcResponse response = method.response(request);
+
     final TransactionProcessingResult processingResult =
         new TransactionProcessingResult(
             null, null, 0, 0, null, null, Optional.of(Bytes.fromHexString(abiHexString)));
@@ -265,7 +277,10 @@ public class EthCallTest {
     when(result.isSuccessful()).thenReturn(false);
     when(result.getValidationResult()).thenReturn(ValidationResult.valid());
     when(result.getResult()).thenReturn(processingResult);
+
     verify(transactionSimulator).process(any(), any(), any(), mapperCaptor.capture(), any());
+    System.out.println(result);
+    System.out.println(expectedResponse);
     assertThat(mapperCaptor.getValue().apply(mock(MutableWorldState.class), Optional.of(result)))
         .isEqualTo(Optional.of(expectedResponse));
 

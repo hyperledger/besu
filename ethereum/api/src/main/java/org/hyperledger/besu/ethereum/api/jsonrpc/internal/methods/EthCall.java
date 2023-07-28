@@ -108,7 +108,6 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
 
   private JsonRpcErrorResponse errorResponse(
       final JsonRpcRequestContext request, final TransactionSimulatorResult result) {
-    final JsonRpcError jsonRpcError;
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         result.getValidationResult();
@@ -120,8 +119,6 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
     } else {
       final TransactionProcessingResult resultTrx = result.getResult();
       if (resultTrx != null && resultTrx.getRevertReason().isPresent()) {
-        JsonRpcErrorResponse.decodeRevertReason(resultTrx.getRevertReason().get())
-                .ifPresent(jsonRpcError::setReason);
         return errorResponse(
             request,
             new JsonRpcError(
@@ -129,7 +126,6 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
       }
       return errorResponse(request, RpcErrorType.INTERNAL_ERROR);
     }
-    return errorResponse(request, jsonRpcError);
   }
 
   private JsonRpcErrorResponse errorResponse(

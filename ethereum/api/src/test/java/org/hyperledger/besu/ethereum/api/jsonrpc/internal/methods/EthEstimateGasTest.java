@@ -257,6 +257,9 @@ public class EthEstimateGasTest {
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(null, new JsonRpcError(RpcErrorType.REVERT_ERROR, "0x00"));
 
+    assertThat(((JsonRpcErrorResponse) expectedResponse).getError().getMessage())
+        .isEqualTo("Execution reverted");
+
     final JsonRpcResponse actualResponse = method.response(request);
 
     Assertions.assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
@@ -280,7 +283,11 @@ public class EthEstimateGasTest {
     mockTransientProcessorTxReverted(1L, false, Bytes.fromHexString(executionRevertedReason));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.REVERT_ERROR);
+        new JsonRpcErrorResponse(
+            null, new JsonRpcError(RpcErrorType.REVERT_ERROR, executionRevertedReason));
+
+    assertThat(((JsonRpcErrorResponse) expectedResponse).getError().getMessage())
+        .isEqualTo("Execution reverted: ERC20: transfer from the zero address");
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -303,7 +310,11 @@ public class EthEstimateGasTest {
     mockTransientProcessorTxReverted(1L, false, Bytes.fromHexString(invalidRevertReason));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.REVERT_ERROR);
+        new JsonRpcErrorResponse(
+            null, new JsonRpcError(RpcErrorType.REVERT_ERROR, invalidRevertReason));
+
+    assertThat(((JsonRpcErrorResponse) expectedResponse).getError().getMessage())
+        .isEqualTo("Execution reverted: ABI decode error");
 
     final JsonRpcResponse actualResponse = method.response(request);
 
