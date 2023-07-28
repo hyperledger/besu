@@ -6,14 +6,9 @@
       {
         "headBlockHash": "0x86be585a81cf0855b7a90735bc529530e658018b9da550c941cb37698dfa3fa6",
         "safeBlockHash": "0x86be585a81cf0855b7a90735bc529530e658018b9da550c941cb37698dfa3fa6",
-        "finalizedBlockHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+        "finalizedBlockHash": "0x86be585a81cf0855b7a90735bc529530e658018b9da550c941cb37698dfa3fa6"
       },
-      {
-        "timestamp": "0x20",
-        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
-        "suggestedFeeRecipient": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
-        "withdrawals": []
-      }
+      null
     ],
     "id": 67
   },
@@ -26,8 +21,8 @@
         "latestValidHash": "0x86be585a81cf0855b7a90735bc529530e658018b9da550c941cb37698dfa3fa6",
         "validationError": null
       },
-      "payloadId": "0x0065bd031ac6ca21"
+      "payloadId": null
     }
   },
-  "statusCode" : 200
+  "statusCode": 200
 }
