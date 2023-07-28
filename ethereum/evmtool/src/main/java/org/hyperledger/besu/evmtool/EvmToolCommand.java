@@ -53,7 +53,6 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.time.Instant;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -446,7 +445,7 @@ public class EvmToolCommand implements Runnable {
             account -> {
               out.println(
                   " \"" + account.getAddress().map(Address::toHexString).orElse("-") + "\": {");
-              if (account.getCode() != null && account.getCode().size() > 0) {
+              if (account.getCode() != null && !account.getCode().isEmpty()) {
                 out.println("  \"code\": \"" + account.getCode().toHexString() + "\",");
               }
               NavigableMap<Bytes32, AccountStorageEntry> storageEntries =

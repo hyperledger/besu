@@ -148,19 +148,19 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     parent.decrementRemainingGas(childGasStipend);
 
     // frame addition is automatically handled by parent messageFrameStack
-        MessageFrame.builder()
+    MessageFrame.builder()
         .parentMessageFrame(parent)
-            .type(MessageFrame.Type.CONTRACT_CREATION)
-            .initialGas(childGasStipend)
-            .address(contractAddress)
-            .contract(contractAddress)
-            .inputData(Bytes.EMPTY)
-            .sender(parent.getRecipientAddress())
-            .value(value)
-            .apparentValue(value)
-            .code(code)
-            .completer(child -> complete(parent, child, evm))
-            .build();
+        .type(MessageFrame.Type.CONTRACT_CREATION)
+        .initialGas(childGasStipend)
+        .address(contractAddress)
+        .contract(contractAddress)
+        .inputData(Bytes.EMPTY)
+        .sender(parent.getRecipientAddress())
+        .value(value)
+        .apparentValue(value)
+        .code(code)
+        .completer(child -> complete(parent, child, evm))
+        .build();
 
     parent.setState(MessageFrame.State.CODE_SUSPENDED);
   }

@@ -196,20 +196,20 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     if (code.isValid()) {
       // frame addition is automatically handled by parent messageFrameStack
-          MessageFrame.builder()
+      MessageFrame.builder()
           .parentMessageFrame(frame)
-              .type(MessageFrame.Type.MESSAGE_CALL)
-              .initialGas(gasAvailableForChildCall(frame))
-              .address(address(frame))
-              .contract(to)
-              .inputData(inputData)
-              .sender(sender(frame))
-              .value(value(frame))
-              .apparentValue(apparentValue(frame))
-              .code(code)
-              .isStatic(isStatic(frame))
-              .completer(child -> complete(frame, child))
-              .build();
+          .type(MessageFrame.Type.MESSAGE_CALL)
+          .initialGas(gasAvailableForChildCall(frame))
+          .address(address(frame))
+          .contract(to)
+          .inputData(inputData)
+          .sender(sender(frame))
+          .value(value(frame))
+          .apparentValue(apparentValue(frame))
+          .code(code)
+          .isStatic(isStatic(frame))
+          .completer(child -> complete(frame, child))
+          .build();
       frame.incrementRemainingGas(cost);
 
       frame.setState(MessageFrame.State.CODE_SUSPENDED);

@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 
-import java.lang.Runtime.Version;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
