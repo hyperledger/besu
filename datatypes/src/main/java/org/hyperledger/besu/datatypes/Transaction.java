@@ -259,5 +259,10 @@ public interface Transaction {
    */
   Optional<Address> contractAddress();
 
+  /**
+   * Return the access list in case of EIP-2930 transaction
+   *
+   * @return optional access list
+   */
   Optional<List<AccessListEntry>> getAccessList();
 }
