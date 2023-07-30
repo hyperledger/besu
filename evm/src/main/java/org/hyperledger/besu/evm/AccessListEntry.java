@@ -26,7 +26,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** The Access list entry. */
-public class AccessListEntry {
+public class AccessListEntry implements org.hyperledger.besu.datatypes.AccessListEntry {
   private final Address address;
   private final List<Bytes32> storageKeys;
 
@@ -62,6 +62,7 @@ public class AccessListEntry {
    * @return the address
    */
   @JsonIgnore
+  @Override
   public Address getAddress() {
     return address;
   }
@@ -72,6 +73,7 @@ public class AccessListEntry {
    * @return the storage keys
    */
   @JsonIgnore
+  @Override
   public List<Bytes32> getStorageKeys() {
     return storageKeys;
   }

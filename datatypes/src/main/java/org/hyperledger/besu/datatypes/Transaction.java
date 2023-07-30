@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.datatypes;
 
+import org.hyperledger.besu.crypto.SECPSignature;
+
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -183,4 +186,78 @@ public interface Transaction {
    * @return the type of the transaction
    */
   TransactionType getType();
+
+  /**
+   * Boolean which indicates the transaction has associated cost data, whether gas price or 1559 fee
+   * market parameters.
+   *
+   * @return whether cost params are present
+   */
+  boolean hasCostParams();
+
+  /**
+   * Returns the number of blobs this transaction has, or 0 if not a blob transaction type
+   *
+   * @return return the count
+   */
+  int getBlobCount();
+
+  /**
+   * Returns the signature used to sign the transaction.
+   *
+   * @return the signature used to sign the transaction
+   */
+  SECPSignature getSignature();
+
+  /**
+   * Returns the public key extracted from the signature.
+   *
+   * @return the public key
+   */
+  Optional<String> getPublicKey();
+
+  /**
+   * Returns whether the transaction is a contract creation
+   *
+   * @return {@code true} if this is a contract-creation transaction; otherwise {@code false}
+   */
+  boolean isContractCreation();
+
+  /**
+   * Return the maximum fee per gas the sender is willing to pay for this transaction.
+   *
+   * @return max fee per gas in wei
+   */
+  Wei getMaxGasPrice();
+
+  /**
+   * Return the maximum fee per gas the sender is willing to pay for this transaction.
+   *
+   * @param maybeBaseFee base fee in case of EIP-1559 transaction
+   * @return max fee per gas in wei
+   */
+  Wei getEffectivePriorityFeePerGas(final Optional<Wei> maybeBaseFee);
+
+  /**
+   * Return the versioned hashes for this transaction.
+   *
+   * @return optional list of versioned hashes
+   */
+  Optional<List<VersionedHash>> getVersionedHashes();
+
+  /**
+   * Return the blobs with commitments for this transaction.
+   *
+   * @return optional blobs with commitments
+   */
+  Optional<BlobsWithCommitments> getBlobsWithCommitments();
+
+  /**
+   * Return the address of the contract, if the transaction creates one
+   *
+   * @return address of new contract or empty otherwise
+   */
+  Optional<Address> contractAddress();
+
+  Optional<List<AccessListEntry>> getAccessList();
 }

@@ -24,6 +24,7 @@ import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Blob;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
@@ -42,7 +43,6 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.evm.AccessListEntry;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -437,6 +437,7 @@ public class Transaction
    *
    * @return whether cost params are present
    */
+  @Override
   public boolean hasCostParams() {
     return Arrays.asList(
             getGasPrice(), getMaxFeePerGas(), getMaxPriorityFeePerGas(), getMaxFeePerDataGas())
@@ -446,6 +447,7 @@ public class Transaction
         .anyMatch(q -> q.longValue() > 0L);
   }
 
+  @Override
   public Wei getEffectivePriorityFeePerGas(final Optional<Wei> maybeBaseFee) {
     return maybeBaseFee
         .map(
@@ -481,6 +483,7 @@ public class Transaction
    *
    * @return return the count
    */
+  @Override
   public int getBlobCount() {
     return versionedHashes.map(List::size).orElse(0);
   }
@@ -513,6 +516,7 @@ public class Transaction
    *
    * @return the signature used to sign the transaction
    */
+  @Override
   public SECPSignature getSignature() {
     return signature;
   }
@@ -547,6 +551,7 @@ public class Transaction
     return getTo().isPresent() ? Optional.of(payload) : Optional.empty();
   }
 
+  @Override
   public Optional<List<AccessListEntry>> getAccessList() {
     return maybeAccessList;
   }
@@ -589,6 +594,7 @@ public class Transaction
    *
    * @return the public key
    */
+  @Override
   public Optional<String> getPublicKey() {
     return signatureAlgorithm
         .recoverPublicKeyFromSignature(getOrComputeSenderRecoveryHash(), signature)
@@ -697,6 +703,7 @@ public class Transaction
    *
    * @return {@code true} if this is a contract-creation transaction; otherwise {@code false}
    */
+  @Override
   public boolean isContractCreation() {
     return getTo().isEmpty();
   }
@@ -772,6 +779,7 @@ public class Transaction
    *
    * @return max fee per gas in wei
    */
+  @Override
   public Wei getMaxGasPrice() {
     return maxFeePerGas.orElseGet(
         () ->
@@ -801,10 +809,12 @@ public class Transaction
     return this.transactionType;
   }
 
+  @Override
   public Optional<List<VersionedHash>> getVersionedHashes() {
     return versionedHashes;
   }
 
+  @Override
   public Optional<BlobsWithCommitments> getBlobsWithCommitments() {
     return blobsWithCommitments;
   }
@@ -1127,6 +1137,7 @@ public class Transaction
     return sb.append("}").toString();
   }
 
+  @Override
   public Optional<Address> contractAddress() {
     if (isContractCreation()) {
       return Optional.of(Address.contractAddress(getSender(), getNonce()));

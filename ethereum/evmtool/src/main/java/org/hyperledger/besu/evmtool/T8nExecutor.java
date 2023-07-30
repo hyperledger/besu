@@ -24,6 +24,7 @@ import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
@@ -48,7 +49,6 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
-import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.log.Log;
@@ -160,7 +160,9 @@ public class T8nExecutor {
                             false)
                         .map(JsonNode::textValue)
                         .toList();
-                var accessListEntry = AccessListEntry.createAccessListEntry(address, storageKeys);
+                var accessListEntry =
+                    org.hyperledger.besu.evm.AccessListEntry.createAccessListEntry(
+                        address, storageKeys);
                 entries.add(accessListEntry);
               }
               builder.accessList(entries);

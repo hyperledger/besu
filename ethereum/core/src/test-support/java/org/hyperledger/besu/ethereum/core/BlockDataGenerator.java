@@ -23,6 +23,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SecureRandomProvider;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -31,7 +32,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.log.Log;
@@ -410,7 +410,7 @@ public class BlockDataGenerator {
     final List<AccessListEntry> accessedStorage = new ArrayList<>();
     for (int i = 0; i < accessedAddresses.size(); ++i) {
       accessedStorage.add(
-          new AccessListEntry(
+          new org.hyperledger.besu.evm.AccessListEntry(
               accessedAddresses.get(i),
               Stream.generate(this::bytes32).limit(2L * i).collect(toUnmodifiableList())));
     }

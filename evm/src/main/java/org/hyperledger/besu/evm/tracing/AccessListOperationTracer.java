@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.evm.tracing;
 
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 
@@ -51,7 +51,9 @@ public class AccessListOperationTracer extends EstimateGasOperationTracer {
           .asMap()
           .forEach(
               (address, storageKeys) ->
-                  list.add(new AccessListEntry(address, new ArrayList<>(storageKeys))));
+                  list.add(
+                      new org.hyperledger.besu.evm.AccessListEntry(
+                          address, new ArrayList<>(storageKeys))));
     }
     return list;
   }

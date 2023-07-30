@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.evm.AccessListEntry;
 
 import java.util.ArrayList;
 import java.util.List;
