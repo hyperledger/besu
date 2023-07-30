@@ -17,10 +17,9 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
-import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage;
 
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -34,8 +33,7 @@ public class TransactionDBRocksDBColumnarKeyValueStorageTest
     extends RocksDBColumnarKeyValueStorageTest {
 
   @Override
-  protected SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore()
-      throws Exception {
+  protected SegmentedKeyValueStorage createSegmentedStore() throws Exception {
     return new TransactionDBRocksDBColumnarKeyValueStorage(
         new RocksDBConfigurationBuilder().databaseDir(getTempSubFolder(folder)).build(),
         Arrays.asList(TestSegment.FOO, TestSegment.BAR),
@@ -45,7 +43,7 @@ public class TransactionDBRocksDBColumnarKeyValueStorageTest
   }
 
   @Override
-  protected SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore(
+  protected SegmentedKeyValueStorage createSegmentedStore(
       final Path path,
       final List<SegmentIdentifier> segments,
       final List<SegmentIdentifier> ignorableSegments) {
@@ -58,7 +56,7 @@ public class TransactionDBRocksDBColumnarKeyValueStorageTest
   }
 
   @Override
-  protected SegmentedKeyValueStorage<RocksDbSegmentIdentifier> createSegmentedStore(
+  protected SegmentedKeyValueStorage createSegmentedStore(
       final Path path,
       final MetricsSystem metricsSystem,
       final List<SegmentIdentifier> segments,
