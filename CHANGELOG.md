@@ -5,6 +5,7 @@
 ### Breaking Changes
 
 ### Additions and Improvements
+- Add missing methods to the `Transaction` interface [#5732](https://github.com/hyperledger/besu/pull/5732)
 
 ### Bug Fixes
 
