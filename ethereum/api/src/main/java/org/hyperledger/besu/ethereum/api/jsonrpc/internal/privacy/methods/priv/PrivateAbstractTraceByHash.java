@@ -22,8 +22,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProce
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor.PrivateBlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor.PrivateTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor.PrivateTransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.privateTracing.PrivateFlatTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.privateTracing.PrivateTraceGenerator;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.FlatTrace;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -72,7 +72,7 @@ public abstract class PrivateAbstractTraceByHash implements JsonRpcMethod {
     this.privacyIdProvider = privacyIdProvider;
   }
 
-  public Stream<FlatTrace> resultByTransactionHash(
+  public Stream<PrivateFlatTrace> resultByTransactionHash(
       final Hash transactionHash, final JsonRpcRequestContext requestContext) {
 
     final String enclaveKey = privacyIdProvider.getPrivacyUserId(requestContext.getUser());
@@ -90,7 +90,7 @@ public abstract class PrivateAbstractTraceByHash implements JsonRpcMethod {
         .orElse(Stream.empty());
   }
 
-  private Stream<FlatTrace> getTraceBlock(
+  private Stream<PrivateFlatTrace> getTraceBlock(
       final Hash blockHash,
       final Hash transactionHash,
       final String enclaveKey,
@@ -151,15 +151,15 @@ public abstract class PrivateAbstractTraceByHash implements JsonRpcMethod {
         .orElseThrow();
   }
 
-  private Stream<FlatTrace> getTraceStream(
+  private Stream<PrivateFlatTrace> getTraceStream(
       final PrivateTransactionTrace transactionTrace, final Block block) {
 
     return PrivateTraceGenerator.generateFromTransactionTraceAndBlock(
             this.protocolSchedule, transactionTrace, block)
-        .map(FlatTrace.class::cast);
+        .map(PrivateFlatTrace.class::cast);
   }
 
-  protected JsonNode arrayNodeFromTraceStream(final Stream<FlatTrace> traceStream) {
+  protected JsonNode arrayNodeFromTraceStream(final Stream<PrivateFlatTrace> traceStream) {
     final ObjectMapper mapper = new ObjectMapper();
     final ArrayNode resultArrayNode = mapper.createArrayNode();
     traceStream.forEachOrdered(resultArrayNode::addPOJO);
