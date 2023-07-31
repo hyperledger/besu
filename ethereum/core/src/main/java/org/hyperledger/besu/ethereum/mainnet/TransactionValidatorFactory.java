@@ -24,17 +24,12 @@ import java.math.BigInteger;
 import java.util.Optional;
 import java.util.Set;
 
+import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 
 public class TransactionValidatorFactory {
-  private final GasCalculator gasCalculator;
-  private final GasLimitCalculator gasLimitCalculator;
-  private final FeeMarket feeMarket;
-  private final boolean disallowSignatureMalleability;
-  private final Optional<BigInteger> chainId;
-  private final Set<TransactionType> acceptedTransactionTypes;
-  private final int maxInitcodeSize;
-  private Optional<PermissionTransactionFilter> permissionTransactionFilter = Optional.empty();
+
+  private volatile Supplier<TransactionValidator> transactionValidatorSupplier;
 
   public TransactionValidatorFactory(
       final GasCalculator gasCalculator,
@@ -73,37 +68,29 @@ public class TransactionValidatorFactory {
       final Optional<BigInteger> chainId,
       final Set<TransactionType> acceptedTransactionTypes,
       final int maxInitcodeSize) {
-    this.gasCalculator = gasCalculator;
-    this.gasLimitCalculator = gasLimitCalculator;
-    this.feeMarket = feeMarket;
-    this.disallowSignatureMalleability = checkSignatureMalleability;
-    this.chainId = chainId;
-    this.acceptedTransactionTypes = acceptedTransactionTypes;
-    this.maxInitcodeSize = maxInitcodeSize;
+
+    this.transactionValidatorSupplier =
+        Suppliers.memoize(
+            () ->
+                new MainnetTransactionValidator(
+                    gasCalculator,
+                    gasLimitCalculator,
+                    feeMarket,
+                    checkSignatureMalleability,
+                    chainId,
+                    acceptedTransactionTypes,
+                    maxInitcodeSize));
   }
 
   public void setPermissionTransactionFilter(
       final PermissionTransactionFilter permissionTransactionFilter) {
-    this.permissionTransactionFilter = Optional.of(permissionTransactionFilter);
+    final TransactionValidator baseTxValidator = transactionValidatorSupplier.get();
+    transactionValidatorSupplier =
+        Suppliers.memoize(
+            () -> new PermissionTransactionValidator(baseTxValidator, permissionTransactionFilter));
   }
 
   public TransactionValidator get() {
-    return Suppliers.memoize(this::createTransactionValidator).get();
-  }
-
-  private TransactionValidator createTransactionValidator() {
-    final TransactionValidator baseValidator =
-        new MainnetTransactionValidator(
-            gasCalculator,
-            gasLimitCalculator,
-            feeMarket,
-            disallowSignatureMalleability,
-            chainId,
-            acceptedTransactionTypes,
-            maxInitcodeSize);
-    if (permissionTransactionFilter.isPresent()) {
-      return new PermissionTransactionValidator(baseValidator, permissionTransactionFilter.get());
-    }
-    return baseValidator;
+    return transactionValidatorSupplier.get();
   }
 }
