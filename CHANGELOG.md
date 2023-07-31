@@ -8,6 +8,7 @@
 
 ### Bug Fixes
 - Make smart contract permissioning features work with london fork [#5727](https://github.com/hyperledger/besu/pull/5727)
+- Add type to PendingTransactionDetail, fix eth_subscribe [#5729](https://github.com/hyperledger/besu/pull/5729)
 
 ### Download Links
 
@@ -35,8 +36,7 @@
 - Align the implementation of Eth/68 `NewPooledTransactionHashes` to other clients, using unsigned int for encoding size. [#5640](https://github.com/hyperledger/besu/pull/5640)
 - Failure at startup when enabling layered txpool before initial sync done [#5636](https://github.com/hyperledger/besu/issues/5636)
 - Remove miner-related option warnings if the change isn't using Ethash consensus algorithm [#5669](https://github.com/hyperledger/besu/pull/5669)
-- Fix for pending transactions reference leak [#5693](https://github.com/hyperledger/besu/pull/5693) 
-- Add type to PendingTransactionDetail, fix eth_subscribe [#5729](https://github.com/hyperledger/besu/pull/5729)
+- Fix for pending transactions reference leak [#5693](https://github.com/hyperledger/besu/pull/5693)
 
 ### Download Links
 https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.0/besu-23.7.0.tar.gz / sha256: 083efc26e22fa20bd04c9a6311e50dd93092f001e5d639d023fd7a61173616dd 
