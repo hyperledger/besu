@@ -82,6 +82,8 @@ public class Address extends DelegatingBytes {
 
   static LoadingCache<Address, Hash> hashCache =
       CacheBuilder.newBuilder()
+          .maximumSize(4000)
+          // .weakKeys() // unless we "intern" all addresses we cannot use weak or soft keys.
           .build(
               new CacheLoader<>() {
                 @Override

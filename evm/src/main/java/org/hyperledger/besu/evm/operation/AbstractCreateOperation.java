@@ -180,7 +180,9 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       frame.incrementGasRefund(childFrame.getGasRefund());
 
       if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-        frame.pushStackItem(Words.fromAddress(childFrame.getContractAddress()));
+        Address createdAddress = childFrame.getContractAddress();
+        frame.pushStackItem(Words.fromAddress(createdAddress));
+        onSuccess(frame, createdAddress);
       } else {
         frame.setReturnData(childFrame.getOutputData());
         frame.pushStackItem(FAILURE_STACK_ITEM);

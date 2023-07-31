@@ -65,13 +65,13 @@ public class BonsaiWorldState
 
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldState.class);
 
-  public BonsaiWorldStateKeyValueStorage worldStateStorage;
+  private BonsaiWorldStateKeyValueStorage worldStateStorage;
 
   private final BonsaiWorldStateProvider archive;
   private final BonsaiWorldStateUpdateAccumulator accumulator;
 
-  public Hash worldStateRootHash;
-  public Hash worldStateBlockHash;
+  private Hash worldStateRootHash;
+  Hash worldStateBlockHash;
 
   private boolean isFrozen;
 
@@ -182,15 +182,13 @@ public class BonsaiWorldState
     // TODO write to a cache and then generate a layer update from that and the
     // DB tx updates.  Right now it is just DB updates.
     maybeStateUpdater.ifPresent(
-        bonsaiUpdater -> {
-          accountTrie.commit(
-              (location, hash, value) ->
-                  writeTrieNode(
-                      TRIE_BRANCH_STORAGE,
-                      bonsaiUpdater.getWorldStateTransaction(),
-                      location,
-                      value));
-        });
+        bonsaiUpdater -> accountTrie.commit(
+            (location, hash, value) ->
+                writeTrieNode(
+                    TRIE_BRANCH_STORAGE,
+                    bonsaiUpdater.getWorldStateTransaction(),
+                    location,
+                    value)));
     final Bytes32 rootHash = accountTrie.getRootHash();
     return Hash.wrap(rootHash);
   }
@@ -234,8 +232,8 @@ public class BonsaiWorldState
           for (final Map.Entry<Address, BonsaiValue<Bytes>> codeUpdate :
               worldStateUpdater.getCodeToUpdate().entrySet()) {
             final Bytes updatedCode = codeUpdate.getValue().getUpdated();
-            final Hash accountHash = Hash.hash(codeUpdate.getKey());
-            if (updatedCode == null || updatedCode.size() == 0) {
+            final Hash accountHash = codeUpdate.getKey().addressHash();
+            if (updatedCode == null || updatedCode.isEmpty()) {
               bonsaiUpdater.removeCode(accountHash);
             } else {
               bonsaiUpdater.putCode(accountHash, null, updatedCode);
@@ -250,7 +248,7 @@ public class BonsaiWorldState
       final Map.Entry<Address, StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>>
           storageAccountUpdate) {
     final Address updatedAddress = storageAccountUpdate.getKey();
-    final Hash updatedAddressHash = Hash.hash(updatedAddress);
+    final Hash updatedAddressHash = updatedAddress.addressHash();
     if (worldStateUpdater.getAccountsToUpdate().containsKey(updatedAddress)) {
       final BonsaiValue<BonsaiAccount> accountValue =
           worldStateUpdater.getAccountsToUpdate().get(updatedAddress);
@@ -297,12 +295,10 @@ public class BonsaiWorldState
       final BonsaiAccount accountUpdated = accountValue.getUpdated();
       if (accountUpdated != null) {
         maybeStateUpdater.ifPresent(
-            bonsaiUpdater -> {
-              storageTrie.commit(
-                  (location, key, value) ->
-                      writeStorageTrieNode(
-                          bonsaiUpdater, updatedAddressHash, location, key, value));
-            });
+            bonsaiUpdater -> storageTrie.commit(
+                (location, key, value) ->
+                    writeStorageTrieNode(
+                        bonsaiUpdater, updatedAddressHash, location, key, value)));
         final Hash newStorageRoot = Hash.wrap(storageTrie.getRootHash());
         accountUpdated.setStorageRoot(newStorageRoot);
       }
