@@ -53,6 +53,10 @@ public class FrontierGasCalculator implements GasCalculator {
 
   private static final long SHA256_PRECOMPILED_WORD_GAS_COST = 12L;
 
+  private static final long FALCON512_VERIFY_PRECOMPILED_BASE_GAS_COST = 1465L;
+
+  private static final long FALCON512_VERIFY_PRECOMPILED_WORD_GAS_COST = 6L;
+
   private static final long RIPEMD160_PRECOMPILED_WORD_GAS_COST = 120L;
 
   private static final long RIPEMD160_PRECOMPILED_BASE_GAS_COST = 600L;
@@ -162,6 +166,12 @@ public class FrontierGasCalculator implements GasCalculator {
   public long sha256PrecompiledContractGasCost(final Bytes input) {
     return SHA256_PRECOMPILED_WORD_GAS_COST * Words.numWords(input)
         + SHA256_PRECOMPILED_BASE_GAS_COST;
+  }
+
+  @Override
+  public long falconVerifyPrecompiledContractGasCost(final Bytes input) {
+    return FALCON512_VERIFY_PRECOMPILED_WORD_GAS_COST * Words.numWords(input)
+        + FALCON512_VERIFY_PRECOMPILED_BASE_GAS_COST;
   }
 
   @Override

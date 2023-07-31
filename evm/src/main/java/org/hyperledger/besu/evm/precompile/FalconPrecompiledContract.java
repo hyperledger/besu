@@ -17,9 +17,11 @@ package org.hyperledger.besu.evm.precompile;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.crypto.Hash;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -46,32 +48,49 @@ public class FalconPrecompiledContract extends AbstractPrecompiledContract {
 
   @Override
   public long gasRequirement(final Bytes input) {
-    return gasCalculator().sha256PrecompiledContractGasCost(input);
+    return gasCalculator().falconVerifyPrecompiledContractGasCost(input);
   }
 
   @Nonnull
   @Override
   public PrecompileContractResult computePrecompile(
       final Bytes methodInput, @Nonnull final MessageFrame messageFrame) {
-    Bytes methodAbi = methodInput.slice(0, METHOD_ABI.size());
-    if (!methodAbi.xor(METHOD_ABI).isZero()) {
-      throw new IllegalArgumentException("Unexpected method ABI: " + methodAbi.toHexString());
+    Bytes methodAbi;
+    try {
+      methodAbi = methodInput.slice(0, METHOD_ABI.size());
+      if (!methodAbi.xor(METHOD_ABI).isZero()) {
+        LOG.trace("Unexpected method ABI: " + methodAbi.toHexString());
+        return PrecompileContractResult.halt(
+            null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
+      }
+    } catch (Exception e) {
+      return PrecompileContractResult.halt(
+          null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }
-    Bytes input = methodInput.slice(METHOD_ABI.size());
-    int signatureOffset = input.slice(0, 32).trimLeadingZeros().toInt();
-    int pubKeyOffset = input.slice(32, 32).trimLeadingZeros().toInt();
-    int dataOffset = input.slice(64, 32).trimLeadingZeros().toInt();
+    Bytes signatureSlice;
+    Bytes pubKeySlice;
+    Bytes dataSlice;
 
-    int signatureLength = input.slice(signatureOffset, 32).trimLeadingZeros().toInt();
-    int pubKeyLength = input.slice(pubKeyOffset, 32).trimLeadingZeros().toInt();
-    int dataLength = input.slice(dataOffset, 32).trimLeadingZeros().toInt();
+    try {
+      Bytes input = methodInput.slice(METHOD_ABI.size());
+      int signatureOffset = input.slice(0, 32).trimLeadingZeros().toInt();
+      int pubKeyOffset = input.slice(32, 32).trimLeadingZeros().toInt();
+      int dataOffset = input.slice(64, 32).trimLeadingZeros().toInt();
 
-    Bytes signatureSlice = input.slice(signatureOffset + 32, signatureLength);
-    Bytes pubKeySlice =
-        input.slice(
-            pubKeyOffset + 32 + 1,
-            pubKeyLength - 1); // BouncyCastle omits the first byte since it is always zero
-    Bytes dataSlice = input.slice(dataOffset + 32, dataLength);
+      int signatureLength = input.slice(signatureOffset, 32).trimLeadingZeros().toInt();
+      int pubKeyLength = input.slice(pubKeyOffset, 32).trimLeadingZeros().toInt();
+      int dataLength = input.slice(dataOffset, 32).trimLeadingZeros().toInt();
+
+      signatureSlice = input.slice(signatureOffset + 32, signatureLength);
+      pubKeySlice =
+          input.slice(
+              pubKeyOffset + 32 + 1,
+              pubKeyLength - 1); // BouncyCastle omits the first byte since it is always zero
+      dataSlice = input.slice(dataOffset + 32, dataLength);
+    } catch (Exception e) {
+      LOG.trace("Error executing Falcon-512 precompiled contract: '{}'", "invalid input");
+      return PrecompileContractResult.success(Bytes32.leftPad(Bytes.of(1)));
+    }
 
     if (LOG.isTraceEnabled()) {
       LOG.trace(

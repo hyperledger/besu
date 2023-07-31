@@ -76,6 +76,13 @@ public interface GasCalculator {
   long getEcrecPrecompiledContractGasCost();
 
   /**
+   * Returns the gas cost to execute the {@link FalconPrecompiledContract}.
+   *
+   * @return the gas cost to execute the Falcon Signature verification precompiled contract
+   */
+  long falconVerifyPrecompiledContractGasCost(Bytes input);
+
+  /**
    * Returns the gas cost to execute the {@link SHA256PrecompiledContract}.
    *
    * @param input The input to the SHA256 precompiled contract
