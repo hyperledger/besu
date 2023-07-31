@@ -216,9 +216,9 @@ public class BlockHeader extends SealableBlockHeader
     if (withdrawalsRoot != null) {
       out.writeBytes(withdrawalsRoot);
     }
-    if (excessDataGas != null && dataGasUsed != null) {
-      out.writeLongScalar(dataGasUsed);
-      out.writeUInt64Scalar(excessDataGas);
+    if (excessDataGas.isPresent() && dataGasUsed.isPresent()) {
+      out.writeLongScalar(dataGasUsed.get());
+      out.writeUInt64Scalar(excessDataGas.get());
     }
     if (depositsRoot != null) {
       out.writeBytes(depositsRoot);
