@@ -260,9 +260,20 @@ public class EVM {
                   0x9d,
                   0x9e,
                   0x9f -> SwapOperation.staticOperation(frame, opcode - SWAP_BASE);
-              default -> { // unoptimized operations
+                // unoptimized operations
+              default -> {
+                boolean isContextChange = frame.getMessageStackDepth() > 0;
+                if (isContextChange) {
+                  operationTracer.traceContextEnter(frame);
+                }
+
                 frame.setCurrentOperation(currentOperation);
-                yield currentOperation.execute(frame, this);
+                final OperationResult operationResult = currentOperation.execute(frame, this);
+
+                if (isContextChange) {
+                  operationTracer.traceContextExit(operationResult);
+                }
+                yield operationResult;
               }
             };
       } catch (final OverflowException oe) {

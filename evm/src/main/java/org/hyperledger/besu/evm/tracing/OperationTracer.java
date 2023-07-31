@@ -81,6 +81,20 @@ public interface OperationTracer {
   default void traceEndTransaction(final Bytes output, final long gasUsed, final long timeNs) {}
 
   /**
+   * Trace the entering of a new context(via call, create or selfdestruct)
+   *
+   * @param frame the frame
+   */
+  default void traceContextEnter(final MessageFrame frame) {}
+
+  /**
+   * Trace the exiting of a context
+   *
+   * @param operationResult the operation result
+   */
+  default void traceContextExit(final OperationResult operationResult) {}
+
+  /**
    * Returns a boolean indicating whether extended tracing is enabled.
    *
    * @return <code>true</code> if extended tracing is enabled, <code>false</code> otherwise.
