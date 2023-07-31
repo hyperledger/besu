@@ -189,7 +189,7 @@ public class BlockchainReferenceTestCaseSpec {
           Hash.fromHexString(mixHash), // mixHash
           Bytes.fromHexStringLenient(nonce).toLong(),
           withdrawalsRoot != null ? Hash.fromHexString(withdrawalsRoot) : null,
-          dataGasUsed != null ? Long.parseLong(dataGasUsed) : 0,
+          dataGasUsed != null ? Long.decode(dataGasUsed) : 0,
           excessDataGas != null ? DataGas.fromHexString(excessDataGas) : null,
           depositsRoot != null ? Hash.fromHexString(depositsRoot) : null,
           new BlockHeaderFunctions() {
@@ -207,6 +207,10 @@ public class BlockchainReferenceTestCaseSpec {
   }
 
   @JsonIgnoreProperties({
+    "blocknumber",
+    "chainname",
+    "chainnetwork",
+    "expectException",
     "expectExceptionByzantium",
     "expectExceptionConstantinople",
     "expectExceptionConstantinopleFix",
@@ -215,11 +219,8 @@ public class BlockchainReferenceTestCaseSpec {
     "expectExceptionEIP158",
     "expectExceptionFrontier",
     "expectExceptionHomestead",
-    "expectException",
-    "blocknumber",
-    "chainname",
     "expectExceptionALL",
-    "chainnetwork",
+    "hasBigInt",
     "transactionSequence"
   })
   public static class CandidateBlock {
