@@ -112,6 +112,24 @@ public class BonsaiWorldState
     this.accumulator = updater;
   }
 
+  /**
+   * Returns the world state block hash of this world state
+   *
+   * @return the world state block hash.
+   */
+  public Hash getWorldStateBlockHash() {
+    return worldStateBlockHash;
+  }
+
+  /**
+   * Returns the world state root hash of this world state
+   *
+   * @return the world state root hash.
+   */
+  public Hash getWorldStateRootHash() {
+    return worldStateRootHash;
+  }
+
   public BonsaiWorldStateProvider getArchive() {
     return archive;
   }
@@ -182,13 +200,14 @@ public class BonsaiWorldState
     // TODO write to a cache and then generate a layer update from that and the
     // DB tx updates.  Right now it is just DB updates.
     maybeStateUpdater.ifPresent(
-        bonsaiUpdater -> accountTrie.commit(
-            (location, hash, value) ->
-                writeTrieNode(
-                    TRIE_BRANCH_STORAGE,
-                    bonsaiUpdater.getWorldStateTransaction(),
-                    location,
-                    value)));
+        bonsaiUpdater ->
+            accountTrie.commit(
+                (location, hash, value) ->
+                    writeTrieNode(
+                        TRIE_BRANCH_STORAGE,
+                        bonsaiUpdater.getWorldStateTransaction(),
+                        location,
+                        value)));
     final Bytes32 rootHash = accountTrie.getRootHash();
     return Hash.wrap(rootHash);
   }
@@ -295,10 +314,11 @@ public class BonsaiWorldState
       final BonsaiAccount accountUpdated = accountValue.getUpdated();
       if (accountUpdated != null) {
         maybeStateUpdater.ifPresent(
-            bonsaiUpdater -> storageTrie.commit(
-                (location, key, value) ->
-                    writeStorageTrieNode(
-                        bonsaiUpdater, updatedAddressHash, location, key, value)));
+            bonsaiUpdater ->
+                storageTrie.commit(
+                    (location, key, value) ->
+                        writeStorageTrieNode(
+                            bonsaiUpdater, updatedAddressHash, location, key, value)));
         final Hash newStorageRoot = Hash.wrap(storageTrie.getRootHash());
         accountUpdated.setStorageRoot(newStorageRoot);
       }

@@ -105,11 +105,11 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     this.persistedState = new BonsaiWorldState(this, worldStateStorage);
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
     blockchain
-        .getBlockHeader(persistedState.worldStateBlockHash)
+        .getBlockHeader(persistedState.getWorldStateBlockHash())
         .ifPresent(
             blockHeader ->
                 this.trieLogManager.addCachedLayer(
-                    blockHeader, persistedState.worldStateRootHash, persistedState));
+                    blockHeader, persistedState.getWorldStateRootHash(), persistedState));
   }
 
   @VisibleForTesting
@@ -124,11 +124,11 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     this.persistedState = new BonsaiWorldState(this, worldStateStorage);
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
     blockchain
-        .getBlockHeader(persistedState.worldStateBlockHash)
+        .getBlockHeader(persistedState.getWorldStateBlockHash())
         .ifPresent(
             blockHeader ->
                 this.trieLogManager.addCachedLayer(
-                    blockHeader, persistedState.worldStateRootHash, persistedState));
+                    blockHeader, persistedState.getWorldStateRootHash(), persistedState));
   }
 
   @Override
@@ -310,7 +310,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
               }
               return node;
             },
-            persistedState.worldStateRootHash,
+            persistedState.getWorldStateRootHash(),
             Function.identity(),
             Function.identity());
     try {
@@ -359,7 +359,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     persistedState.resetWorldStateTo(blockHeader);
     this.trieLogManager.reset();
     this.trieLogManager.addCachedLayer(
-        blockHeader, persistedState.worldStateRootHash, persistedState);
+        blockHeader, persistedState.getWorldStateRootHash(), persistedState);
   }
 
   @Override
