@@ -123,12 +123,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         .addArgument(() -> Json.encodePrettily(blockParam))
         .log();
 
-    /*
-    ValidationResult<JsonRpcError> forkValidationResult = validateForkSupported(reqId, blockParam);
+
+    ValidationResult<RpcErrorType> forkValidationResult = validateForkSupported(reqId, blockParam);
     if (!forkValidationResult.isValid()) {
       return new JsonRpcErrorResponse(reqId, forkValidationResult.getInvalidReason());
     }
-    */
+
 
     final Optional<List<Withdrawal>> maybeWithdrawals =
         Optional.ofNullable(blockParam.getWithdrawals())
