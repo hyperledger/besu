@@ -8,6 +8,7 @@
 - Add missing methods to the `Transaction` interface [#5732](https://github.com/hyperledger/besu/pull/5732)
 
 ### Bug Fixes
+- Make smart contract permissioning features work with london fork [#5727](https://github.com/hyperledger/besu/pull/5727)
 
 ### Download Links
 
