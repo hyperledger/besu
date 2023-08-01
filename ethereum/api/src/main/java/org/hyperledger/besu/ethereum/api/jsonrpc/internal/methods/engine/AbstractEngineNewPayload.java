@@ -115,9 +115,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return respondWithInvalid(reqId, blockParam, null, INVALID, "Invalid versionedHash");
     }
 
-    final Optional<BlockHeader> maybeParentHeader =
-        protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
-
     LOG.atTrace()
         .setMessage("blockparam: {}")
         .addArgument(() -> Json.encodePrettily(blockParam))
@@ -221,6 +218,11 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           errorMessage);
     }
 
+    final Optional<BlockHeader> maybeParentHeader =
+        mergeCoordinator.getOrSyncHeadByHash(
+            blockParam.getParentHash(),
+            protocolContext.getBlockchain().getFinalized().orElse(blockParam.getParentHash()));
+
     ValidationResult<RpcErrorType> blobValidationResult =
         validateBlobs(
             transactions,
@@ -252,11 +254,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           INVALID,
           "Block already present in bad block manager.");
     }
-
-    final Optional<BlockHeader> maybeParentHeader =
-        mergeCoordinator.getOrSyncHeadByHash(
-            blockParam.getParentHash(),
-            protocolContext.getBlockchain().getFinalized().orElse(blockParam.getParentHash()));
 
     if (maybeParentHeader.isPresent()
         && (blockParam.getTimestamp() <= maybeParentHeader.get().getTimestamp())) {
