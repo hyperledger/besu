@@ -20,24 +20,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.plugin.data.TransactionType;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Optional;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class TransactionReplacementRulesTest {
 
-  @Parameterized.Parameters
   public static Collection<Object[]> data() {
     return asList(
         new Object[][] {
@@ -56,7 +53,6 @@ public class TransactionReplacementRulesTest {
           {frontierTx(100L), frontierTx(105L), Optional.of(Wei.of(3L)), 10, false},
           {frontierTx(100L), frontierTx(110L), Optional.of(Wei.of(3L)), 10, false},
           {frontierTx(100L), frontierTx(111L), Optional.of(Wei.of(3L)), 10, true},
-
           // TransactionReplacementByFeeMarketRule
           //  eip1559 replacing frontier
           {frontierTx(5L), eip1559Tx(3L, 6L), Optional.of(Wei.of(1L)), 0, false},
@@ -81,27 +77,14 @@ public class TransactionReplacementRulesTest {
         });
   }
 
-  private final PendingTransaction oldTx;
-  private final PendingTransaction newTx;
-  private final Optional<Wei> baseFee;
-  private final int priceBump;
-  private final boolean expected;
-
-  public TransactionReplacementRulesTest(
+  @ParameterizedTest
+  @MethodSource("data")
+  public void shouldReplace(
       final PendingTransaction oldTx,
       final PendingTransaction newTx,
       final Optional<Wei> baseFee,
       final int priceBump,
       final boolean expected) {
-    this.oldTx = oldTx;
-    this.newTx = newTx;
-    this.baseFee = baseFee;
-    this.priceBump = priceBump;
-    this.expected = expected;
-  }
-
-  @Test
-  public void shouldReplace() {
     BlockHeader mockHeader = mock(BlockHeader.class);
     when(mockHeader.getBaseFee()).thenReturn(baseFee);
 

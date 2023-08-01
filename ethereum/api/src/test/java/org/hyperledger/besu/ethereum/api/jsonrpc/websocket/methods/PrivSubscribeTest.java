@@ -22,10 +22,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.InvalidSubscriptionRequestException;
@@ -36,13 +36,13 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import io.vertx.core.json.Json;
 import io.vertx.ext.auth.User;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PrivSubscribeTest {
 
   private final String ENCLAVE_KEY = "enclave_key";
@@ -55,7 +55,7 @@ public class PrivSubscribeTest {
 
   private PrivSubscribe privSubscribe;
 
-  @Before
+  @BeforeEach
   public void before() {
     privSubscribe =
         new PrivSubscribe(
@@ -102,7 +102,7 @@ public class PrivSubscribeTest {
 
     final JsonRpcErrorResponse expectedResponse =
         new JsonRpcErrorResponse(
-            jsonRpcrequestContext.getRequest().getId(), JsonRpcError.INVALID_REQUEST);
+            jsonRpcrequestContext.getRequest().getId(), RpcErrorType.INVALID_REQUEST);
 
     assertThat(privSubscribe.response(jsonRpcrequestContext)).isEqualTo(expectedResponse);
   }

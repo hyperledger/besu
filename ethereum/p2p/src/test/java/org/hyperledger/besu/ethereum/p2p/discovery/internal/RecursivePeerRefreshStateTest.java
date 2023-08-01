@@ -35,8 +35,8 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class RecursivePeerRefreshStateTest {
   private static final Bytes TARGET = createId(0);
@@ -62,7 +62,7 @@ public class RecursivePeerRefreshStateTest {
           5,
           100);
 
-  @Before
+  @BeforeEach
   public void setup() {
     // Default peerPermissions to be permissive
     when(peerPermissions.isAllowedInPeerTable(any())).thenReturn(true);

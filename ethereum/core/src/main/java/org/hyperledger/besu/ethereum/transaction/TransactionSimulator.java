@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessDataGasCalculator.calculateExcessDataGasForParent;
+
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -26,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -100,7 +103,10 @@ public class TransactionSimulator {
   public Optional<TransactionSimulatorResult> processAtHead(final CallParameter callParams) {
     return process(
         callParams,
-        TransactionValidationParams.transactionSimulator(),
+        ImmutableTransactionValidationParams.builder()
+            .from(TransactionValidationParams.transactionSimulator())
+            .isAllowExceedingBalance(true)
+            .build(),
         OperationTracer.NO_TRACING,
         (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
         blockchain.getChainHeadHeader());
@@ -230,8 +236,10 @@ public class TransactionSimulator {
     final Wei dataGasPrice =
         protocolSpec
             .getFeeMarket()
-            .dataPrice(
-                maybeParentHeader.flatMap(BlockHeader::getExcessDataGas).orElse(DataGas.ZERO));
+            .dataPricePerGas(
+                maybeParentHeader
+                    .map(parent -> calculateExcessDataGasForParent(protocolSpec, parent))
+                    .orElse(DataGas.ZERO));
 
     final Transaction transaction = maybeTransaction.get();
     final TransactionProcessingResult result =

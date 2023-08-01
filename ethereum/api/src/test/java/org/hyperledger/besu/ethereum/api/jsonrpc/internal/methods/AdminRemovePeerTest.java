@@ -20,23 +20,23 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.P2PDisabledException;
 import org.hyperledger.besu.ethereum.p2p.peers.ImmutableEnodeDnsConfiguration;
 
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.StrictStubs.class)
+@ExtendWith(MockitoExtension.class)
 public class AdminRemovePeerTest {
 
   @Mock private P2PNetwork p2pNetwork;
@@ -69,7 +69,7 @@ public class AdminRemovePeerTest {
       new JsonRpcRequestContext(
           new JsonRpcRequest("2.0", "admin_removePeer", new String[] {validDNSEnode}));
 
-  @Before
+  @BeforeEach
   public void setup() {
     method =
         new AdminRemovePeer(
@@ -102,7 +102,7 @@ public class AdminRemovePeerTest {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "admin_removePeer", new String[] {}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -114,7 +114,7 @@ public class AdminRemovePeerTest {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "admin_removePeer", null));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -127,7 +127,7 @@ public class AdminRemovePeerTest {
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "admin_removePeer", new String[] {null}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -140,7 +140,7 @@ public class AdminRemovePeerTest {
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "admin_removePeer", new String[] {"asdf"}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.PARSE_ERROR);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.PARSE_ERROR);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -160,7 +160,7 @@ public class AdminRemovePeerTest {
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "admin_removePeer", new String[] {invalidLengthEnode}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.ENODE_ID_INVALID);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.ENODE_ID_INVALID);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -197,7 +197,7 @@ public class AdminRemovePeerTest {
   public void requestRemovesDNSEnodeButDNSDisabled() {
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            validDNSRequest.getRequest().getId(), JsonRpcError.DNS_NOT_ENABLED);
+            validDNSRequest.getRequest().getId(), RpcErrorType.DNS_NOT_ENABLED);
 
     final JsonRpcResponse actualResponse = methodDNSDisabled.response(validDNSRequest);
 
@@ -208,7 +208,7 @@ public class AdminRemovePeerTest {
   public void requestRemovesDNSEnodeButDNSNotResolved() {
     final JsonRpcResponse expectedResponse =
         new JsonRpcErrorResponse(
-            validDNSRequest.getRequest().getId(), JsonRpcError.CANT_RESOLVE_PEER_ENODE_DNS);
+            validDNSRequest.getRequest().getId(), RpcErrorType.CANT_RESOLVE_PEER_ENODE_DNS);
 
     final JsonRpcResponse actualResponse = methodDNSUpdateDisabled.response(validDNSRequest);
 
@@ -222,7 +222,7 @@ public class AdminRemovePeerTest {
             new JsonRpcRequest("2.0", "admin_removePeer", new String[] {validEnode, validEnode}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -249,7 +249,7 @@ public class AdminRemovePeerTest {
                 "P2P networking disabled.  Unable to connect to remove peer."));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(validRequest.getRequest().getId(), JsonRpcError.P2P_DISABLED);
+        new JsonRpcErrorResponse(validRequest.getRequest().getId(), RpcErrorType.P2P_DISABLED);
 
     final JsonRpcResponse actualResponse = method.response(validRequest);
 

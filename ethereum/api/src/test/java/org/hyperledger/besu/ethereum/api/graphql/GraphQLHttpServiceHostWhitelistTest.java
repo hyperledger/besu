@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -37,16 +38,15 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 
 public class GraphQLHttpServiceHostWhitelistTest {
 
-  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir private static Path folder;
 
   protected static Vertx vertx;
 
@@ -57,7 +57,7 @@ public class GraphQLHttpServiceHostWhitelistTest {
   private final GraphQLConfiguration graphQLConfig = createGraphQLConfig();
   private final List<String> hostsWhitelist = Arrays.asList("ally", "friend");
 
-  @Before
+  @BeforeEach
   public void initServerAndClient() throws Exception {
     vertx = Vertx.vertx();
 
@@ -92,12 +92,7 @@ public class GraphQLHttpServiceHostWhitelistTest {
     final GraphQL graphQL = GraphQLProvider.buildGraphQL(dataFetchers);
 
     return new GraphQLHttpService(
-        vertx,
-        folder.newFolder().toPath(),
-        graphQLConfig,
-        graphQL,
-        graphQLContextMap,
-        Mockito.mock(EthScheduler.class));
+        vertx, folder, graphQLConfig, graphQL, graphQLContextMap, Mockito.mock(EthScheduler.class));
   }
 
   private static GraphQLConfiguration createGraphQLConfig() {
@@ -106,7 +101,7 @@ public class GraphQLHttpServiceHostWhitelistTest {
     return config;
   }
 
-  @After
+  @AfterEach
   public void shutdownServer() {
     client.dispatcher().executorService().shutdown();
     client.connectionPool().evictAll();

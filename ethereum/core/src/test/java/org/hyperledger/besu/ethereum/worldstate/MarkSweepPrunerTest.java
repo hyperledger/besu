@@ -49,12 +49,12 @@ import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class MarkSweepPrunerTest {
 
   private final BlockDataGenerator gen = new BlockDataGenerator();
@@ -146,8 +146,10 @@ public class MarkSweepPrunerTest {
     // the full prune but without enforcing an ordering between the state root removals
     stateRoots.forEach(
         stateRoot -> {
-          final InOrder thisRootsOrdering = inOrder(hashValueStore, worldStateStorage);
-          thisRootsOrdering.verify(hashValueStore).remove(stateRoot);
+          final InOrder thisRootsOrdering =
+              inOrder(worldStateStorage, hashValueStore, worldStateStorage);
+          thisRootsOrdering.verify(worldStateStorage).isWorldStateAvailable(stateRoot, null);
+          thisRootsOrdering.verify(hashValueStore).keySet();
           thisRootsOrdering.verify(worldStateStorage).prune(any());
         });
   }
@@ -183,8 +185,10 @@ public class MarkSweepPrunerTest {
     // the full prune but without enforcing an ordering between the state root removals
     stateRoots.forEach(
         stateRoot -> {
-          final InOrder thisRootsOrdering = inOrder(hashValueStore, worldStateStorage);
-          thisRootsOrdering.verify(hashValueStore).remove(stateRoot);
+          final InOrder thisRootsOrdering =
+              inOrder(worldStateStorage, hashValueStore, worldStateStorage);
+          thisRootsOrdering.verify(worldStateStorage).isWorldStateAvailable(stateRoot, null);
+          thisRootsOrdering.verify(hashValueStore).keySet();
           thisRootsOrdering.verify(worldStateStorage).prune(any());
         });
 

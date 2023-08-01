@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionPendingResult;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,27 +34,30 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 @SuppressWarnings("unchecked")
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class TxPoolBesuPendingTransactionsTest {
 
-  @Mock private PendingTransactions pendingTransactions;
+  @Mock private TransactionPool transactionPool;
   private TxPoolBesuPendingTransactions method;
   private final String JSON_RPC_VERSION = "2.0";
   private final String TXPOOL_PENDING_TRANSACTIONS_METHOD = "txpool_besuPendingTransactions";
   private Set<PendingTransaction> listTrx;
 
-  @Before
+  @BeforeEach
   public void setUp() {
-    listTrx = getPendingTransactions();
-    method = new TxPoolBesuPendingTransactions(pendingTransactions);
-    when(this.pendingTransactions.getPendingTransactions()).thenReturn(listTrx);
+    listTrx = getTransactionPool();
+    method = new TxPoolBesuPendingTransactions(transactionPool);
+    when(transactionPool.getPendingTransactions()).thenReturn(listTrx);
   }
 
   @Test
@@ -72,7 +75,7 @@ public class TxPoolBesuPendingTransactionsTest {
     final JsonRpcSuccessResponse actualResponse = (JsonRpcSuccessResponse) method.response(request);
     final Set<TransactionPendingResult> result =
         (Set<TransactionPendingResult>) actualResponse.getResult();
-    assertThat(result.size()).isEqualTo(getPendingTransactions().size());
+    assertThat(result.size()).isEqualTo(getTransactionPool().size());
   }
 
   @Test
@@ -253,7 +256,7 @@ public class TxPoolBesuPendingTransactionsTest {
         .hasMessageContaining("The `to` filter only supports the `eq` or `action` operator");
   }
 
-  private Set<PendingTransaction> getPendingTransactions() {
+  private Set<PendingTransaction> getTransactionPool() {
 
     final BlockDataGenerator gen = new BlockDataGenerator();
     return gen.transactionsWithAllTypes(4).stream()

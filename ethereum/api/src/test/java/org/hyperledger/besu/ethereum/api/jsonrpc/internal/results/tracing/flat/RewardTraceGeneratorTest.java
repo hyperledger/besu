@@ -40,13 +40,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RewardTraceGeneratorTest {
 
   private final BlockDataGenerator gen = new BlockDataGenerator();
@@ -65,7 +65,7 @@ public class RewardTraceGeneratorTest {
   private final OptionalLong eraRounds = OptionalLong.of(5000000);
   private Block block;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     final BlockBody blockBody = new BlockBody(Collections.emptyList(), List.of(ommerHeader));
     final BlockHeader blockHeader =

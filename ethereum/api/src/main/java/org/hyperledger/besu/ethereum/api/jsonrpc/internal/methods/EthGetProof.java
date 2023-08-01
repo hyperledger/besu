@@ -19,10 +19,10 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.proof.GetProofResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
@@ -77,11 +77,11 @@ public class EthGetProof extends AbstractBlockParameterOrBlockHashMethod {
                           Optional.of(
                               new JsonRpcErrorResponse(
                                   requestContext.getRequest().getId(),
-                                  JsonRpcError.NO_ACCOUNT_FOUND)));
+                                  RpcErrorType.NO_ACCOUNT_FOUND)));
             })
         .orElse(
             new JsonRpcErrorResponse(
-                requestContext.getRequest().getId(), JsonRpcError.WORLD_STATE_UNAVAILABLE));
+                requestContext.getRequest().getId(), RpcErrorType.WORLD_STATE_UNAVAILABLE));
   }
 
   @Override

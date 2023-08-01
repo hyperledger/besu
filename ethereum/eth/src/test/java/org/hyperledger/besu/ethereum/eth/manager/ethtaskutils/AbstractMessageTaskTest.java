@@ -17,6 +17,11 @@ package org.hyperledger.besu.ethereum.eth.manager.ethtaskutils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.spy;
 
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SECPPrivateKey;
+import org.hyperledger.besu.crypto.SECPPublicKey;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -52,9 +57,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.apache.tuweni.bytes.Bytes32;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @param <T> The type of data being requested from the network
@@ -62,6 +68,19 @@ import org.junit.Test;
  */
 public abstract class AbstractMessageTaskTest<T, R> {
   protected static final int MAX_PEERS = 5;
+  protected static final KeyPair genesisAccountKeyPair =
+      new KeyPair(
+          SECPPrivateKey.create(
+              Bytes32.fromHexString(
+                  "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"),
+              "ECDSA"),
+          SECPPublicKey.create(
+              Bytes.fromHexString(
+                  "0x3a514176466fa815ed481ffad09110a2d344f6c9b78c1d14afc351c3a51be33d8072e77939dc03ba44790779b7a1025baf3003f6732430e20cd9b76d953391b3"),
+              "ECDSA"));
+  protected static final Address genesisAccountSender =
+      Address.extract(Hash.hash(genesisAccountKeyPair.getPublicKey().getEncodedBytes()));
+  protected static final long genesisAccountNonce = 32;
   protected static Blockchain blockchain;
   protected static ProtocolSchedule protocolSchedule;
   protected static ProtocolContext protocolContext;
@@ -73,7 +92,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
   protected AtomicBoolean peersDoTimeout;
   protected AtomicInteger peerCountToTimeout;
 
-  @BeforeClass
+  @BeforeAll
   public static void setup() {
     final BlockchainSetupUtil blockchainSetupUtil =
         BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST);
@@ -84,7 +103,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
     assertThat(blockchainSetupUtil.getMaxBlockNumber()).isGreaterThanOrEqualTo(20L);
   }
 
-  @Before
+  @BeforeEach
   public void setupTest() {
     peersDoTimeout = new AtomicBoolean(false);
     peerCountToTimeout = new AtomicInteger(0);
@@ -119,6 +138,8 @@ public abstract class AbstractMessageTaskTest<T, R> {
             syncState,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             TransactionPoolConfiguration.DEFAULT);
+    transactionPool.setEnabled();
+
     ethProtocolManager =
         EthProtocolManagerTestUtil.create(
             blockchain,

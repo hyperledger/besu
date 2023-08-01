@@ -26,7 +26,7 @@ import java.nio.charset.StandardCharsets;
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link InitiatorHandshakeMessageV4}. */
 public final class InitiatorHandshakeMessageV4Test {

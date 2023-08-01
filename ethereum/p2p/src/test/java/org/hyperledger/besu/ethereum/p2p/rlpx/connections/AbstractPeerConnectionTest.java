@@ -40,8 +40,8 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AbstractPeerConnectionTest {
   private final String connectionId = "1";
@@ -53,7 +53,7 @@ public class AbstractPeerConnectionTest {
 
   private TestPeerConnection connection;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     connection =
         new TestPeerConnection(

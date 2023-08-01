@@ -14,14 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_REQUEST;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_REQUEST;
 
 import org.hyperledger.besu.ethereum.api.handlers.IsAliveHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcRequest;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 
@@ -73,7 +73,7 @@ public class WebSocketMessageHandler {
   public void handle(
       final ServerWebSocket websocket, final Buffer buffer, final Optional<User> user) {
     if (buffer.length() == 0) {
-      replyToClient(websocket, errorResponse(null, JsonRpcError.INVALID_REQUEST));
+      replyToClient(websocket, errorResponse(null, RpcErrorType.INVALID_REQUEST));
     } else {
       try {
         final JsonObject jsonRpcRequest = buffer.toJsonObject();
@@ -104,9 +104,9 @@ public class WebSocketMessageHandler {
                 throwable -> {
                   try {
                     final Integer id = jsonRpcRequest.getInteger("id", null);
-                    replyToClient(websocket, errorResponse(id, JsonRpcError.INTERNAL_ERROR));
+                    replyToClient(websocket, errorResponse(id, RpcErrorType.INTERNAL_ERROR));
                   } catch (ClassCastException idNotIntegerException) {
-                    replyToClient(websocket, errorResponse(null, JsonRpcError.INTERNAL_ERROR));
+                    replyToClient(websocket, errorResponse(null, RpcErrorType.INTERNAL_ERROR));
                   }
                 });
       } catch (DecodeException jsonObjectDecodeException) {
@@ -152,9 +152,9 @@ public class WebSocketMessageHandler {
                   })
               .onFailure(
                   throwable ->
-                      replyToClient(websocket, errorResponse(null, JsonRpcError.INTERNAL_ERROR)));
+                      replyToClient(websocket, errorResponse(null, RpcErrorType.INTERNAL_ERROR)));
         } catch (RuntimeException jsonArrayDecodeException) {
-          replyToClient(websocket, errorResponse(null, JsonRpcError.INTERNAL_ERROR));
+          replyToClient(websocket, errorResponse(null, RpcErrorType.INTERNAL_ERROR));
         }
       }
     }
@@ -169,7 +169,7 @@ public class WebSocketMessageHandler {
     }
   }
 
-  private JsonRpcResponse errorResponse(final Object id, final JsonRpcError error) {
+  private JsonRpcResponse errorResponse(final Object id, final RpcErrorType error) {
     return new JsonRpcErrorResponse(id, error);
   }
 }

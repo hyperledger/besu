@@ -38,7 +38,7 @@ public class ProtocolSpec {
 
   private final GasLimitCalculator gasLimitCalculator;
 
-  private final TransactionValidator transactionValidator;
+  private final TransactionValidatorFactory transactionValidatorFactory;
 
   private final MainnetTransactionProcessor transactionProcessor;
 
@@ -87,7 +87,7 @@ public class ProtocolSpec {
    *
    * @param name the protocol specification name
    * @param evm the EVM supporting the appropriate operations for this specification
-   * @param transactionValidator the transaction validator to use
+   * @param transactionValidatorFactory the transaction validator factory to use
    * @param transactionProcessor the transaction processor to use
    * @param privateTransactionProcessor the private transaction processor to use
    * @param blockHeaderValidator the block header validator to use
@@ -118,7 +118,7 @@ public class ProtocolSpec {
   public ProtocolSpec(
       final String name,
       final EVM evm,
-      final TransactionValidator transactionValidator,
+      final TransactionValidatorFactory transactionValidatorFactory,
       final MainnetTransactionProcessor transactionProcessor,
       final PrivateTransactionProcessor privateTransactionProcessor,
       final BlockHeaderValidator blockHeaderValidator,
@@ -146,7 +146,7 @@ public class ProtocolSpec {
       final boolean isReplayProtectionSupported) {
     this.name = name;
     this.evm = evm;
-    this.transactionValidator = transactionValidator;
+    this.transactionValidatorFactory = transactionValidatorFactory;
     this.transactionProcessor = transactionProcessor;
     this.privateTransactionProcessor = privateTransactionProcessor;
     this.blockHeaderValidator = blockHeaderValidator;
@@ -184,12 +184,12 @@ public class ProtocolSpec {
   }
 
   /**
-   * Returns the transaction validator used in this specification.
+   * Returns the transaction validator factory used in this specification.
    *
-   * @return the transaction validator
+   * @return the transaction validator factory
    */
-  public TransactionValidator getTransactionValidator() {
-    return transactionValidator;
+  public TransactionValidatorFactory getTransactionValidatorFactory() {
+    return transactionValidatorFactory;
   }
 
   public boolean isReplayProtectionSupported() {

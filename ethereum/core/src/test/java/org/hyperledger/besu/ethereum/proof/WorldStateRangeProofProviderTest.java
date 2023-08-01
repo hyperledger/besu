@@ -33,8 +33,8 @@ import java.util.TreeMap;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class WorldStateRangeProofProviderTest {
 
@@ -46,7 +46,7 @@ public class WorldStateRangeProofProviderTest {
 
   private static WorldStateProofProvider worldStateProofProvider;
 
-  @Before
+  @BeforeEach
   public void setup() {
     worldStateProofProvider = new WorldStateProofProvider(worldStateStorage);
   }

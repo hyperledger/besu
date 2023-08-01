@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -50,13 +51,16 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class EthEstimateGasTest {
 
   private EthEstimateGas method;
@@ -67,7 +71,7 @@ public class EthEstimateGasTest {
   @Mock private TransactionSimulator transactionSimulator;
   @Mock private WorldStateArchive worldStateArchive;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     when(blockchainQueries.headBlockNumber()).thenReturn(1L);
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
@@ -97,7 +101,7 @@ public class EthEstimateGasTest {
         .thenReturn(Optional.empty());
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.INTERNAL_ERROR);
+        new JsonRpcErrorResponse(null, RpcErrorType.INTERNAL_ERROR);
 
     Assertions.assertThat(method.response(request))
         .usingRecursiveComparison()
@@ -115,7 +119,7 @@ public class EthEstimateGasTest {
         .thenReturn(Optional.empty());
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.INTERNAL_ERROR);
+        new JsonRpcErrorResponse(null, RpcErrorType.INTERNAL_ERROR);
 
     Assertions.assertThat(method.response(request))
         .usingRecursiveComparison()
@@ -179,7 +183,7 @@ public class EthEstimateGasTest {
     mockTransientProcessorResultGasEstimate(1L, false, false);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.INTERNAL_ERROR);
+        new JsonRpcErrorResponse(null, RpcErrorType.INTERNAL_ERROR);
 
     Assertions.assertThat(method.response(request))
         .usingRecursiveComparison()
@@ -193,7 +197,7 @@ public class EthEstimateGasTest {
     mockTransientProcessorResultGasEstimate(1L, false, false);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.INTERNAL_ERROR);
+        new JsonRpcErrorResponse(null, RpcErrorType.INTERNAL_ERROR);
 
     Assertions.assertThat(method.response(request))
         .usingRecursiveComparison()
@@ -208,7 +212,7 @@ public class EthEstimateGasTest {
         TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
+        new JsonRpcErrorResponse(null, RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
 
     Assertions.assertThat(method.response(request))
         .usingRecursiveComparison()
@@ -222,7 +226,7 @@ public class EthEstimateGasTest {
         TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
+        new JsonRpcErrorResponse(null, RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE);
 
     Assertions.assertThat(method.response(request))
         .usingRecursiveComparison()
@@ -237,7 +241,7 @@ public class EthEstimateGasTest {
     mockTransientProcessorResultGasEstimate(1L, false, false);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.WORLD_STATE_UNAVAILABLE);
+        new JsonRpcErrorResponse(null, RpcErrorType.WORLD_STATE_UNAVAILABLE);
 
     Assertions.assertThat(method.response(request))
         .usingRecursiveComparison()
@@ -251,7 +255,7 @@ public class EthEstimateGasTest {
     mockTransientProcessorResultGasEstimate(1L, false, true);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.REVERT_ERROR);
+        new JsonRpcErrorResponse(null, new JsonRpcError(RpcErrorType.REVERT_ERROR, "0x00"));
 
     Assertions.assertThat(method.response(request))
         .usingRecursiveComparison()

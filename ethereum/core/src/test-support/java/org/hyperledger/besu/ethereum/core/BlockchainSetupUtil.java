@@ -52,7 +52,6 @@ import java.util.Optional;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import org.junit.rules.TemporaryFolder;
 
 public class BlockchainSetupUtil {
   private final GenesisState genesisState;
@@ -162,9 +161,7 @@ public class BlockchainSetupUtil {
       final ProtocolScheduleProvider protocolScheduleProvider,
       final ProtocolContextProvider protocolContextProvider,
       final EthScheduler scheduler) {
-    final TemporaryFolder temp = new TemporaryFolder();
     try {
-      temp.create();
       final String genesisJson = Resources.toString(chainResources.getGenesisURL(), Charsets.UTF_8);
 
       final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisJson);
@@ -202,8 +199,6 @@ public class BlockchainSetupUtil {
           scheduler);
     } catch (final IOException | URISyntaxException ex) {
       throw new IllegalStateException(ex);
-    } finally {
-      temp.delete();
     }
   }
 

@@ -14,14 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.ipc;
 
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError.INVALID_REQUEST;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_REQUEST;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -81,7 +81,7 @@ public class JsonRpcIpcService {
               .handler(
                   buffer -> {
                     if (buffer.length() == 0) {
-                      errorReturn(socket, null, JsonRpcError.INVALID_REQUEST);
+                      errorReturn(socket, null, RpcErrorType.INVALID_REQUEST);
                     } else {
                       try {
                         final JsonObject jsonRpcRequest = buffer.toJsonObject();
@@ -112,16 +112,16 @@ public class JsonRpcIpcService {
                                 throwable -> {
                                   try {
                                     final Integer id = jsonRpcRequest.getInteger("id", null);
-                                    errorReturn(socket, id, JsonRpcError.INTERNAL_ERROR);
+                                    errorReturn(socket, id, RpcErrorType.INTERNAL_ERROR);
                                   } catch (ClassCastException idNotIntegerException) {
-                                    errorReturn(socket, null, JsonRpcError.INTERNAL_ERROR);
+                                    errorReturn(socket, null, RpcErrorType.INTERNAL_ERROR);
                                   }
                                 });
                       } catch (DecodeException jsonObjectDecodeException) {
                         try {
                           final JsonArray batchJsonRpcRequest = buffer.toJsonArray();
                           if (batchJsonRpcRequest.isEmpty()) {
-                            errorReturn(socket, null, JsonRpcError.INVALID_REQUEST);
+                            errorReturn(socket, null, RpcErrorType.INVALID_REQUEST);
                           } else {
                             vertx
                                 .<List<JsonRpcResponse>>executeBlocking(
@@ -167,10 +167,10 @@ public class JsonRpcIpcService {
                                     })
                                 .onFailure(
                                     throwable ->
-                                        errorReturn(socket, null, JsonRpcError.INTERNAL_ERROR));
+                                        errorReturn(socket, null, RpcErrorType.INTERNAL_ERROR));
                           }
                         } catch (DecodeException jsonArrayDecodeException) {
-                          errorReturn(socket, null, JsonRpcError.PARSE_ERROR);
+                          errorReturn(socket, null, RpcErrorType.PARSE_ERROR);
                         }
                       }
                     }
@@ -200,7 +200,7 @@ public class JsonRpcIpcService {
   }
 
   private Future<Void> errorReturn(
-      final NetSocket socket, final Integer id, final JsonRpcError rpcError) {
+      final NetSocket socket, final Integer id, final RpcErrorType rpcError) {
     return socket.write(Buffer.buffer(Json.encode(new JsonRpcErrorResponse(id, rpcError)) + '\n'));
   }
 
