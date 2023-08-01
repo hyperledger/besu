@@ -17,12 +17,14 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbIterator;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -37,12 +39,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** The Rocks db snapshot transaction. */
-public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, AutoCloseable {
+public class RocksDBSnapshotTransaction
+    implements SegmentedKeyValueStorageTransaction, AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBSnapshotTransaction.class);
   private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
   private final RocksDBMetrics metrics;
   private final OptimisticTransactionDB db;
-  private final ColumnFamilyHandle columnFamilyHandle;
+  private final Function<SegmentIdentifier, ColumnFamilyHandle> columnFamilyMapper;
   private final Transaction snapTx;
   private final RocksDBSnapshot snapshot;
   private final WriteOptions writeOptions;
@@ -53,16 +56,16 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
    * Instantiates a new RocksDb snapshot transaction.
    *
    * @param db the db
-   * @param columnFamilyHandle the column family handle
+   * @param columnFamilyMapper mapper from segment identifier to column family handle
    * @param metrics the metrics
    */
   RocksDBSnapshotTransaction(
       final OptimisticTransactionDB db,
-      final ColumnFamilyHandle columnFamilyHandle,
+      final Function<SegmentIdentifier, ColumnFamilyHandle> columnFamilyMapper,
       final RocksDBMetrics metrics) {
     this.metrics = metrics;
     this.db = db;
-    this.columnFamilyHandle = columnFamilyHandle;
+    this.columnFamilyMapper = columnFamilyMapper;
     this.snapshot = new RocksDBSnapshot(db);
     this.writeOptions = new WriteOptions();
     this.snapTx = db.beginTransaction(writeOptions);
@@ -72,14 +75,14 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
 
   private RocksDBSnapshotTransaction(
       final OptimisticTransactionDB db,
-      final ColumnFamilyHandle columnFamilyHandle,
+      final Function<SegmentIdentifier, ColumnFamilyHandle> columnFamilyMapper,
       final RocksDBMetrics metrics,
       final RocksDBSnapshot snapshot,
       final Transaction snapTx,
       final ReadOptions readOptions) {
     this.metrics = metrics;
     this.db = db;
-    this.columnFamilyHandle = columnFamilyHandle;
+    this.columnFamilyMapper = columnFamilyMapper;
     this.snapshot = snapshot;
     this.writeOptions = new WriteOptions();
     this.readOptions = readOptions;
@@ -89,25 +92,26 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
   /**
    * Get data against given key.
    *
+   * @param segmentId the segment id
    * @param key the key
    * @return the optional data
    */
-  public Optional<byte[]> get(final byte[] key) {
+  public Optional<byte[]> get(final SegmentIdentifier segmentId, final byte[] key) {
     throwIfClosed();
 
     try (final OperationTimer.TimingContext ignored = metrics.getReadLatency().startTimer()) {
-      return Optional.ofNullable(snapTx.get(columnFamilyHandle, readOptions, key));
+      return Optional.ofNullable(snapTx.get(columnFamilyMapper.apply(segmentId), readOptions, key));
     } catch (final RocksDBException e) {
       throw new StorageException(e);
     }
   }
 
   @Override
-  public void put(final byte[] key, final byte[] value) {
+  public void put(final SegmentIdentifier segmentId, final byte[] key, final byte[] value) {
     throwIfClosed();
 
     try (final OperationTimer.TimingContext ignored = metrics.getWriteLatency().startTimer()) {
-      snapTx.put(columnFamilyHandle, key, value);
+      snapTx.put(columnFamilyMapper.apply(segmentId), key, value);
     } catch (final RocksDBException e) {
       if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
         LOG.error(e.getMessage());
@@ -118,11 +122,11 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
   }
 
   @Override
-  public void remove(final byte[] key) {
+  public void remove(final SegmentIdentifier segmentId, final byte[] key) {
     throwIfClosed();
 
     try (final OperationTimer.TimingContext ignored = metrics.getRemoveLatency().startTimer()) {
-      snapTx.delete(columnFamilyHandle, key);
+      snapTx.delete(columnFamilyMapper.apply(segmentId), key);
     } catch (final RocksDBException e) {
       if (e.getMessage().contains(NO_SPACE_LEFT_ON_DEVICE)) {
         LOG.error(e.getMessage());
@@ -135,12 +139,14 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
   /**
    * Stream.
    *
+   * @param segmentId the segment id
    * @return the stream
    */
-  public Stream<Pair<byte[], byte[]>> stream() {
+  public Stream<Pair<byte[], byte[]>> stream(final SegmentIdentifier segmentId) {
     throwIfClosed();
 
-    final RocksIterator rocksIterator = db.newIterator(columnFamilyHandle, readOptions);
+    final RocksIterator rocksIterator =
+        db.newIterator(columnFamilyMapper.apply(segmentId), readOptions);
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStream();
   }
@@ -148,12 +154,14 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
   /**
    * Stream keys.
    *
+   * @param segmentId the segment id
    * @return the stream
    */
-  public Stream<byte[]> streamKeys() {
+  public Stream<byte[]> streamKeys(final SegmentIdentifier segmentId) {
     throwIfClosed();
 
-    final RocksIterator rocksIterator = db.newIterator(columnFamilyHandle, readOptions);
+    final RocksIterator rocksIterator =
+        db.newIterator(columnFamilyMapper.apply(segmentId), readOptions);
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStreamKeys();
   }
@@ -193,7 +201,7 @@ public class RocksDBSnapshotTransaction implements KeyValueStorageTransaction, A
       var copySnapTx = db.beginTransaction(writeOptions);
       copySnapTx.rebuildFromWriteBatch(snapTx.getWriteBatch().getWriteBatch());
       return new RocksDBSnapshotTransaction(
-          db, columnFamilyHandle, metrics, snapshot, copySnapTx, copyReadOptions);
+          db, columnFamilyMapper, metrics, snapshot, copySnapTx, copyReadOptions);
     } catch (Exception ex) {
       LOG.error("Failed to copy snapshot transaction", ex);
       snapshot.unMarkSnapshot();

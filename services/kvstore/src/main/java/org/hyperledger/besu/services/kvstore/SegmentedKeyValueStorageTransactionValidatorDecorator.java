@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,51 +12,49 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package org.hyperledger.besu.services.kvstore;
 
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
-import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorage.Transaction;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.function.Supplier;
 
-/**
- * The Segmented key value storage transaction transition validator decorator.
- *
- * @param <S> the type parameter
- */
-public class SegmentedKeyValueStorageTransactionTransitionValidatorDecorator<S>
-    implements Transaction<S> {
+/** The Key value storage transaction validator decorator. */
+public class SegmentedKeyValueStorageTransactionValidatorDecorator
+    implements SegmentedKeyValueStorageTransaction {
 
-  private final Transaction<S> transaction;
+  private final SegmentedKeyValueStorageTransaction transaction;
   private final Supplier<Boolean> isClosed;
   private boolean active = true;
 
   /**
-   * Instantiates a new Segmented key value storage transaction transition validator decorator.
+   * Instantiates a new Key value storage transaction transition validator decorator.
    *
    * @param toDecorate the to decorate
-   * @param isClosed supplier that returns true if the storage is closed
+   * @param isClosed supplier function to determine if the storage is closed
    */
-  public SegmentedKeyValueStorageTransactionTransitionValidatorDecorator(
-      final Transaction<S> toDecorate, final Supplier<Boolean> isClosed) {
-    this.transaction = toDecorate;
+  public SegmentedKeyValueStorageTransactionValidatorDecorator(
+      final SegmentedKeyValueStorageTransaction toDecorate, final Supplier<Boolean> isClosed) {
     this.isClosed = isClosed;
+    this.transaction = toDecorate;
   }
 
   @Override
-  public final void put(final S segment, final byte[] key, final byte[] value) {
+  public void put(final SegmentIdentifier segmentId, final byte[] key, final byte[] value) {
     checkState(active, "Cannot invoke put() on a completed transaction.");
     checkState(!isClosed.get(), "Cannot invoke put() on a closed storage.");
-    transaction.put(segment, key, value);
+    transaction.put(segmentId, key, value);
   }
 
   @Override
-  public final void remove(final S segment, final byte[] key) {
+  public void remove(final SegmentIdentifier segmentId, final byte[] key) {
     checkState(active, "Cannot invoke remove() on a completed transaction.");
     checkState(!isClosed.get(), "Cannot invoke remove() on a closed storage.");
-    transaction.remove(segment, key);
+    transaction.remove(segmentId, key);
   }
 
   @Override

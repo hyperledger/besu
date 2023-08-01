@@ -143,6 +143,15 @@ public class TransactionSelectionResult {
     return Status.SELECTED.equals(status);
   }
 
+  /**
+   * Optionally return the reason why the transaction is invalid if present
+   *
+   * @return an optional with the invalid reason
+   */
+  public Optional<String> maybeInvalidReason() {
+    return maybeInvalidReason;
+  }
+
   @Override
   public String toString() {
     return status.name() + maybeInvalidReason.map(ir -> "(" + ir + ")").orElse("");

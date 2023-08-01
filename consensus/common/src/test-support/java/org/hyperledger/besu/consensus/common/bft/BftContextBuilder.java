@@ -24,14 +24,17 @@ import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Collection;
 
+import org.mockito.quality.Strictness;
+
 public class BftContextBuilder {
 
   public static BftContext setupContextWithValidators(final Collection<Address> validators) {
-    final BftContext bftContext = mock(BftContext.class, withSettings().lenient());
+    final BftContext bftContext =
+        mock(BftContext.class, withSettings().strictness(Strictness.LENIENT));
     final ValidatorProvider mockValidatorProvider =
-        mock(ValidatorProvider.class, withSettings().lenient());
+        mock(ValidatorProvider.class, withSettings().strictness(Strictness.LENIENT));
     final BftBlockInterface mockBftBlockInterface =
-        mock(BftBlockInterface.class, withSettings().lenient());
+        mock(BftBlockInterface.class, withSettings().strictness(Strictness.LENIENT));
     when(bftContext.getValidatorProvider()).thenReturn(mockValidatorProvider);
     when(mockValidatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
     when(bftContext.getBlockInterface()).thenReturn(mockBftBlockInterface);
@@ -48,11 +51,11 @@ public class BftContextBuilder {
       final Class<T> contextClazz,
       final Collection<Address> validators,
       final BftExtraData bftExtraData) {
-    final T bftContext = mock(contextClazz, withSettings().lenient());
+    final T bftContext = mock(contextClazz, withSettings().strictness(Strictness.LENIENT));
     final ValidatorProvider mockValidatorProvider =
-        mock(ValidatorProvider.class, withSettings().lenient());
+        mock(ValidatorProvider.class, withSettings().strictness(Strictness.LENIENT));
     final BftBlockInterface mockBftBlockInterface =
-        mock(BftBlockInterface.class, withSettings().lenient());
+        mock(BftBlockInterface.class, withSettings().strictness(Strictness.LENIENT));
     when(bftContext.getValidatorProvider()).thenReturn(mockValidatorProvider);
     when(mockValidatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
     when(bftContext.getBlockInterface()).thenReturn(mockBftBlockInterface);
@@ -70,9 +73,9 @@ public class BftContextBuilder {
       final Class<T> contextClazz,
       final Collection<Address> validators,
       final BftExtraDataCodec bftExtraDataCodec) {
-    final T bftContext = mock(contextClazz, withSettings().lenient());
+    final T bftContext = mock(contextClazz, withSettings().strictness(Strictness.LENIENT));
     final ValidatorProvider mockValidatorProvider =
-        mock(ValidatorProvider.class, withSettings().lenient());
+        mock(ValidatorProvider.class, withSettings().strictness(Strictness.LENIENT));
     when(bftContext.getValidatorProvider()).thenReturn(mockValidatorProvider);
     when(mockValidatorProvider.getValidatorsAfterBlock(any())).thenReturn(validators);
     when(bftContext.getBlockInterface()).thenReturn(new BftBlockInterface(bftExtraDataCodec));

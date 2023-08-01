@@ -49,7 +49,7 @@ public class LineaBlockTransactionSelectorTest extends LondonFeeMarketBlockTrans
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 
-    assertThat(results.getTransactions()).containsExactly(tx);
+    assertThat(results.getSelectedTransactions()).containsExactly(tx);
   }
 
   @Test
@@ -80,7 +80,7 @@ public class LineaBlockTransactionSelectorTest extends LondonFeeMarketBlockTrans
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 
-    assertThat(results.getTransactions()).containsExactly(txs);
+    assertThat(results.getSelectedTransactions()).containsExactly(txs);
   }
 
   @Test
@@ -119,7 +119,7 @@ public class LineaBlockTransactionSelectorTest extends LondonFeeMarketBlockTrans
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 
-    assertThat(results.getTransactions()).containsExactly(txs);
+    assertThat(results.getSelectedTransactions()).containsExactly(txs);
   }
 
   @Test
@@ -143,7 +143,7 @@ public class LineaBlockTransactionSelectorTest extends LondonFeeMarketBlockTrans
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 
-    assertThat(results.getTransactions()).isEmpty();
+    assertThat(results.getSelectedTransactions()).isEmpty();
   }
 
   @Test
@@ -173,7 +173,7 @@ public class LineaBlockTransactionSelectorTest extends LondonFeeMarketBlockTrans
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 
-    assertThat(results.getTransactions()).containsExactly(txs);
+    assertThat(results.getSelectedTransactions()).containsExactly(txs);
   }
 
   private Transaction createCalldataTransaction(

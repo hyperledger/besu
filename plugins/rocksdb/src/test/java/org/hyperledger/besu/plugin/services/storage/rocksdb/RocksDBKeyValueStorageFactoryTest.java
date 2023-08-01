@@ -26,6 +26,7 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.DatabaseMetadata;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorageTest.TestSegment;
 
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -48,8 +49,8 @@ public class RocksDBKeyValueStorageFactoryTest {
   @Mock private BesuConfiguration commonConfiguration;
   @TempDir public Path temporaryFolder;
   private final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
-  private final List<SegmentIdentifier> segments = List.of();
-  @Mock private SegmentIdentifier segment;
+  private final SegmentIdentifier segment = TestSegment.FOO;
+  private final List<SegmentIdentifier> segments = List.of(segment);
 
   @Test
   public void shouldCreateCorrectMetadataFileForLatestVersion() throws Exception {
