@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.chain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -156,17 +155,27 @@ public final class GenesisStateTest {
   @Test
   public void genesisFromShanghai() throws Exception {
     final GenesisState genesisState =
-            GenesisState.fromJson(
-                    Resources.toString(GenesisStateTest.class.getResource("genesis_shanghai.json"), Charsets.UTF_8),
-                    ProtocolScheduleFixture.MAINNET);
+        GenesisState.fromJson(
+            Resources.toString(
+                GenesisStateTest.class.getResource("genesis_shanghai.json"), Charsets.UTF_8),
+            ProtocolScheduleFixture.MAINNET);
     final BlockHeader header = genesisState.getBlock().getHeader();
-    assertThat(header.getHash()).isEqualTo(Hash.fromHexString("0xfdc41f92053811b877be43e61cab6b0d9ee55501ae2443df0970c753747f12d8"));
+    assertThat(header.getHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0xfdc41f92053811b877be43e61cab6b0d9ee55501ae2443df0970c753747f12d8"));
     assertThat(header.getGasLimit()).isEqualTo(0x2fefd8);
     assertThat(header.getGasUsed()).isEqualTo(0);
     assertThat(header.getNumber()).isEqualTo(0);
-    assertThat(header.getReceiptsRoot()).isEqualTo(Hash.fromHexString("0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"));
+    assertThat(header.getReceiptsRoot())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"));
     assertThat(header.getTransactionsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
-    assertThat(header.getOmmersHash()).isEqualTo(Hash.fromHexString("0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"));
+    assertThat(header.getOmmersHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"));
     assertThat(header.getExtraData()).isEqualTo(Bytes.EMPTY);
     assertThat(header.getParentHash()).isEqualTo(Hash.ZERO);
 
@@ -174,34 +183,47 @@ public final class GenesisStateTest {
     genesisState.writeStateTo(worldState);
     Hash computedStateRoot = worldState.rootHash();
     assertThat(computedStateRoot).isEqualTo(header.getStateRoot());
-    assertThat(header.getStateRoot()).isEqualTo(Hash.fromHexString("0x7f5cfe1375a61009a22d24512d18035bc8f855129452fa9c6a6be2ef4e9da7db"));
+    assertThat(header.getStateRoot())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0x7f5cfe1375a61009a22d24512d18035bc8f855129452fa9c6a6be2ef4e9da7db"));
     final Account first =
-            worldState.get(Address.fromHexString("0000000000000000000000000000000000000100"));
+        worldState.get(Address.fromHexString("0000000000000000000000000000000000000100"));
     final Account last =
-            worldState.get(Address.fromHexString("fb289e2b2b65fb63299a682d000744671c50417b"));
+        worldState.get(Address.fromHexString("fb289e2b2b65fb63299a682d000744671c50417b"));
     assertThat(first).isNotNull();
     assertThat(first.getBalance().toLong()).isEqualTo(0);
-    assertThat(first.getCode()).isEqualTo(Bytes.fromHexString("0x5f804955600180495560028049556003804955"));
+    assertThat(first.getCode())
+        .isEqualTo(Bytes.fromHexString("0x5f804955600180495560028049556003804955"));
     assertThat(last).isNotNull();
     Wei lastBalance = last.getBalance();
     assertThat(lastBalance).isEqualTo(Wei.fromHexString("0x123450000000000000000"));
   }
 
-
   @Test
   public void genesisFromCancun() throws Exception {
     final GenesisState genesisState =
-            GenesisState.fromJson(
-                    Resources.toString(GenesisStateTest.class.getResource("genesis_cancun.json"), Charsets.UTF_8),
-                    ProtocolScheduleFixture.MAINNET);
+        GenesisState.fromJson(
+            Resources.toString(
+                GenesisStateTest.class.getResource("genesis_cancun.json"), Charsets.UTF_8),
+            ProtocolScheduleFixture.MAINNET);
     final BlockHeader header = genesisState.getBlock().getHeader();
-    assertThat(header.getHash()).isEqualTo(Hash.fromHexString("0xf48e1c6ee02ec8da09e8e5a0084e48c081ae26522d29e398db68d945cd5a6890"));
+    assertThat(header.getHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0xf48e1c6ee02ec8da09e8e5a0084e48c081ae26522d29e398db68d945cd5a6890"));
     assertThat(header.getGasLimit()).isEqualTo(0x2fefd8);
     assertThat(header.getGasUsed()).isEqualTo(0);
     assertThat(header.getNumber()).isEqualTo(0);
-    assertThat(header.getReceiptsRoot()).isEqualTo(Hash.fromHexString("0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"));
+    assertThat(header.getReceiptsRoot())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"));
     assertThat(header.getTransactionsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
-    assertThat(header.getOmmersHash()).isEqualTo(Hash.fromHexString("0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"));
+    assertThat(header.getOmmersHash())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"));
     assertThat(header.getExtraData()).isEqualTo(Bytes.EMPTY);
     assertThat(header.getParentHash()).isEqualTo(Hash.ZERO);
 
@@ -209,14 +231,18 @@ public final class GenesisStateTest {
     genesisState.writeStateTo(worldState);
     Hash computedStateRoot = worldState.rootHash();
     assertThat(computedStateRoot).isEqualTo(header.getStateRoot());
-    assertThat(header.getStateRoot()).isEqualTo(Hash.fromHexString("0x7f5cfe1375a61009a22d24512d18035bc8f855129452fa9c6a6be2ef4e9da7db"));
+    assertThat(header.getStateRoot())
+        .isEqualTo(
+            Hash.fromHexString(
+                "0x7f5cfe1375a61009a22d24512d18035bc8f855129452fa9c6a6be2ef4e9da7db"));
     final Account first =
-            worldState.get(Address.fromHexString("0000000000000000000000000000000000000100"));
+        worldState.get(Address.fromHexString("0000000000000000000000000000000000000100"));
     final Account last =
-            worldState.get(Address.fromHexString("fb289e2b2b65fb63299a682d000744671c50417b"));
+        worldState.get(Address.fromHexString("fb289e2b2b65fb63299a682d000744671c50417b"));
     assertThat(first).isNotNull();
     assertThat(first.getBalance().toLong()).isEqualTo(0);
-    assertThat(first.getCode()).isEqualTo(Bytes.fromHexString("0x5f804955600180495560028049556003804955"));
+    assertThat(first.getCode())
+        .isEqualTo(Bytes.fromHexString("0x5f804955600180495560028049556003804955"));
     assertThat(last).isNotNull();
     Wei lastBalance = last.getBalance();
     assertThat(lastBalance).isEqualTo(Wei.fromHexString("0x123450000000000000000"));
