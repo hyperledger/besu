@@ -105,7 +105,7 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
             .get()
             .updateWorldStateStorage(
                 new BonsaiSnapshotWorldStateKeyValueStorage(
-                        forWorldState.getWorldStateStorage(), metricsSystem));
+                    forWorldState.getWorldStateStorage(), metricsSystem));
       }
     } else {
       LOG.atDebug()
@@ -119,7 +119,7 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
             new CachedBonsaiWorldView(
                 blockHeader,
                 new BonsaiSnapshotWorldStateKeyValueStorage(
-                        forWorldState.getWorldStateStorage(), metricsSystem)));
+                    forWorldState.getWorldStateStorage(), metricsSystem)));
       } else {
         // otherwise, add the layer to the cache
         cachedWorldStatesByHash.put(
@@ -256,14 +256,12 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
   TrieLogProvider getTrieLogProvider() {
     return new TrieLogProvider() {
       @Override
-      public Optional<TrieLog> getTrieLogLayer(
-          final Hash blockHash) {
+      public Optional<TrieLog> getTrieLogLayer(final Hash blockHash) {
         return CachedWorldStorageManager.this.getTrieLogLayer(blockHash);
       }
 
       @Override
-      public Optional<TrieLog> getTrieLogLayer(
-          final long blockNumber) {
+      public Optional<TrieLog> getTrieLogLayer(final long blockNumber) {
         return CachedWorldStorageManager.this
             .blockchain
             .getBlockHeader(blockNumber)
