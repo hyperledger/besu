@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class FixedProtocolScheduleTest {
 

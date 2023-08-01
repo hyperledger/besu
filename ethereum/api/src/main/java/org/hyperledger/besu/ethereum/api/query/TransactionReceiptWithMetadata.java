@@ -30,6 +30,8 @@ public class TransactionReceiptWithMetadata {
   private final long blockNumber;
   private final Hash blockHash;
   private final Transaction transaction;
+  private final Optional<Long> dataGasUsed;
+  private final Optional<Wei> dataGasPrice;
 
   private TransactionReceiptWithMetadata(
       final TransactionReceipt receipt,
@@ -39,7 +41,9 @@ public class TransactionReceiptWithMetadata {
       final long gasUsed,
       final Optional<Wei> baseFee,
       final Hash blockHash,
-      final long blockNumber) {
+      final long blockNumber,
+      final Optional<Long> dataGasUsed,
+      final Optional<Wei> dataGasPrice) {
     this.receipt = receipt;
     this.transactionHash = transactionHash;
     this.transactionIndex = transactionIndex;
@@ -48,6 +52,8 @@ public class TransactionReceiptWithMetadata {
     this.blockHash = blockHash;
     this.blockNumber = blockNumber;
     this.transaction = transaction;
+    this.dataGasUsed = dataGasUsed;
+    this.dataGasPrice = dataGasPrice;
   }
 
   public static TransactionReceiptWithMetadata create(
@@ -58,7 +64,9 @@ public class TransactionReceiptWithMetadata {
       final long gasUsed,
       final Optional<Wei> baseFee,
       final Hash blockHash,
-      final long blockNumber) {
+      final long blockNumber,
+      final Optional<Long> dataGasUsed,
+      final Optional<Wei> dataGasPrice) {
     return new TransactionReceiptWithMetadata(
         receipt,
         transaction,
@@ -67,7 +75,9 @@ public class TransactionReceiptWithMetadata {
         gasUsed,
         baseFee,
         blockHash,
-        blockNumber);
+        blockNumber,
+        dataGasUsed,
+        dataGasPrice);
   }
 
   public TransactionReceipt getReceipt() {
@@ -102,5 +112,13 @@ public class TransactionReceiptWithMetadata {
 
   public Optional<Wei> getBaseFee() {
     return baseFee;
+  }
+
+  public Optional<Long> getDataGasUsed() {
+    return dataGasUsed;
+  }
+
+  public Optional<Wei> getDataGasPrice() {
+    return dataGasPrice;
   }
 }

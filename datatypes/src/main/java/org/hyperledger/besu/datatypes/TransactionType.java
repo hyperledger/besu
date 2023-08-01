@@ -69,7 +69,10 @@ public enum TransactionType {
   public static TransactionType of(final int serializedTypeValue) {
     return Arrays.stream(
             new TransactionType[] {
-              TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
+              TransactionType.FRONTIER,
+              TransactionType.ACCESS_LIST,
+              TransactionType.EIP1559,
+              TransactionType.BLOB
             })
         .filter(transactionType -> transactionType.typeValue == serializedTypeValue)
         .findFirst()

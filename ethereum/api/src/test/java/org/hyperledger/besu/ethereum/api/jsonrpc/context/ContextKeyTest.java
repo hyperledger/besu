@@ -26,15 +26,11 @@ import java.util.function.Supplier;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class ContextKeyTest<T> {
 
-  @Parameters
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
@@ -50,24 +46,14 @@ public class ContextKeyTest<T> {
   }
 
   private static final String JSON = "{\"key\": \"value\"}";
-  private final ContextKey key;
-  private final RoutingContext ctx;
-  private final Supplier<T> defaultSupplier;
-  private final T expected;
 
-  public ContextKeyTest(
+  @ParameterizedTest
+  @MethodSource("data")
+  public void test(
       final ContextKey key,
       final RoutingContext ctx,
       final Supplier<T> defaultSupplier,
       final T expected) {
-    this.key = key;
-    this.ctx = ctx;
-    this.defaultSupplier = defaultSupplier;
-    this.expected = expected;
-  }
-
-  @Test
-  public void test() {
     assertThat(key.extractFrom(ctx, defaultSupplier)).isEqualTo(expected);
   }
 

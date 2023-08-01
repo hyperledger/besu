@@ -30,13 +30,13 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EthSendRawTransactionTest {
 
   private static final String VALID_TRANSACTION =
@@ -45,7 +45,7 @@ public class EthSendRawTransactionTest {
   @Mock private TransactionPool transactionPool;
   private EthSendRawTransaction method;
 
-  @Before
+  @BeforeEach
   public void before() {
     method = new EthSendRawTransaction(transactionPool);
   }

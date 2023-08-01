@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.math.BigInteger;
 
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ElementTest {
 

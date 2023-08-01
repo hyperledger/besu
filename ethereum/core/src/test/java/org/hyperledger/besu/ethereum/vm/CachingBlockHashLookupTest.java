@@ -30,13 +30,13 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import java.util.Optional;
 
 import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class CachingBlockHashLookupTest {
 
   private static final int CURRENT_BLOCK_NUMBER = 256;
@@ -44,7 +44,7 @@ public class CachingBlockHashLookupTest {
   private final BlockHeader[] headers = new BlockHeader[CURRENT_BLOCK_NUMBER];
   private BlockHashLookup lookup;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     BlockHeader parentHeader = null;
     for (int i = 0; i < headers.length; i++) {
@@ -58,7 +58,7 @@ public class CachingBlockHashLookupTest {
             createHeader(CURRENT_BLOCK_NUMBER, headers[headers.length - 1]), blockchain);
   }
 
-  @After
+  @AfterEach
   public void verifyBlocksNeverLookedUpByNumber() {
     // Looking up the block by number is incorrect because it always uses the canonical chain even
     // if the block being imported is on a fork.

@@ -52,6 +52,7 @@ import org.hyperledger.besu.testutil.BlockTestUtil.ChainResources;
 
 import java.math.BigInteger;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -64,13 +65,12 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.io.TempDir;
 
 public abstract class AbstractJsonRpcHttpServiceTest {
-  @ClassRule public static final TemporaryFolder folder = new TemporaryFolder();
+  @TempDir private Path folder;
 
   protected BlockchainSetupUtil blockchainSetupUtil;
 
@@ -116,7 +116,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
         new ChainResources(genesisURL, blocksURL), storageFormat);
   }
 
-  @Before
+  @BeforeEach
   public void setup() throws Exception {
     setupBlockchain();
   }
@@ -186,7 +186,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             mock(MetricsConfiguration.class),
             natService,
             new HashMap<>(),
-            folder.getRoot().toPath(),
+            folder,
             mock(EthPeers.class),
             syncVertx,
             Optional.empty(),
@@ -209,7 +209,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     service =
         new JsonRpcHttpService(
             vertx,
-            folder.newFolder().toPath(),
+            folder,
             config,
             new NoOpMetricsSystem(),
             natService,
@@ -222,7 +222,7 @@ public abstract class AbstractJsonRpcHttpServiceTest {
     baseUrl = service.url();
   }
 
-  @After
+  @AfterEach
   public void shutdownServer() {
     client.dispatcher().executorService().shutdown();
     client.connectionPool().evictAll();

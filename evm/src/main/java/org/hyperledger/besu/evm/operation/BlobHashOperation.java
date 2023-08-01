@@ -14,46 +14,52 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
 /**
- * The DataHash operation. https://eips.ethereum.org/EIPS/eip-4844
+ * The BlobHash operation. As specified in <a
+ * href="https://eips.ethereum.org/EIPS/eip-4844">EIP-4844</a>
  *
  * <p>Reads index from the top of the stack as big-endian uint256, and replaces it on the stack with
  * tx.message.blob_versioned_hashes[index] if index &lt; len(tx.message.blob_versioned_hashes), and
  * otherwise with a zeroed bytes32 value.
  */
-public class DataHashOperation extends AbstractOperation {
+public class BlobHashOperation extends AbstractOperation {
 
-  /** DATAHASH opcode number */
+  /** BLOBHASH opcode number */
   public static final int OPCODE = 0x49;
 
   /**
-   * Instantiates a new DataHash operation.
+   * Instantiates a new BlobHash operation.
    *
    * @param gasCalculator the gas calculator
    */
-  public DataHashOperation(final GasCalculator gasCalculator) {
-    super(OPCODE, "DATAHASH", 1, 1, gasCalculator);
+  public BlobHashOperation(final GasCalculator gasCalculator) {
+    super(OPCODE, "BLOBHASH", 1, 1, gasCalculator);
   }
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    int blobIndex = frame.popStackItem().toInt();
-    final Optional<List<Hash>> maybeHashes = frame.getVersionedHashes();
+    Bytes versionedHashIndexParam = frame.popStackItem();
     if (frame.getVersionedHashes().isPresent()) {
-      List<Hash> versionedHashes = maybeHashes.get();
-      if (blobIndex < versionedHashes.size()) {
-        Hash requested = versionedHashes.get(blobIndex);
-        frame.pushStackItem(requested);
+      List<VersionedHash> versionedHashes = frame.getVersionedHashes().get();
+      Bytes trimmedIndex = versionedHashIndexParam.trimLeadingZeros();
+      if (trimmedIndex.size() > 4) {
+        // won't fit in an int
+        frame.pushStackItem(Bytes.EMPTY);
+        return new OperationResult(3, null);
+      }
+      int versionedHashIndex = trimmedIndex.toInt();
+      if (versionedHashIndex < versionedHashes.size() && versionedHashIndex >= 0) {
+        VersionedHash requested = versionedHashes.get(versionedHashIndex);
+        frame.pushStackItem(requested.toBytes());
       } else {
         frame.pushStackItem(Bytes.EMPTY);
       }
@@ -61,10 +67,5 @@ public class DataHashOperation extends AbstractOperation {
       frame.pushStackItem(Bytes.EMPTY);
     }
     return new OperationResult(3, null);
-  }
-
-  @Override
-  public boolean isVirtualOperation() {
-    return super.isVirtualOperation();
   }
 }

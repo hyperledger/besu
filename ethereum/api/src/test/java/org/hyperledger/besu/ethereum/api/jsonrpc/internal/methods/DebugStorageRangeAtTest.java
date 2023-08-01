@@ -55,8 +55,8 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Answers;
 import org.mockito.invocation.InvocationOnMock;
 
@@ -82,7 +82,7 @@ public class DebugStorageRangeAtTest {
       Hash.fromHexString("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
   private final Address accountAddress = Address.MODEXP;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     when(transaction.getHash()).thenReturn(transactionHash);
   }

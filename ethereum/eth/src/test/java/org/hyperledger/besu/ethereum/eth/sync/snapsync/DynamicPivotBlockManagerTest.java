@@ -30,8 +30,8 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.OptionalLong;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class DynamicPivotBlockManagerTest {
 
@@ -41,7 +41,7 @@ public class DynamicPivotBlockManagerTest {
   private final EthContext ethContext = mock(EthContext.class);
   private DynamicPivotBlockSelector dynamicPivotBlockManager;
 
-  @Before
+  @BeforeEach
   public void setup() {
     when(fastSyncActions.getSyncState()).thenReturn(syncState);
     when(ethContext.getScheduler()).thenReturn(new DeterministicEthScheduler());

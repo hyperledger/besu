@@ -47,11 +47,8 @@ dependencies {
 
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
-  testImplementation 'junit:junit'
   testImplementation 'io.tmio:tuweni-units'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
-
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }

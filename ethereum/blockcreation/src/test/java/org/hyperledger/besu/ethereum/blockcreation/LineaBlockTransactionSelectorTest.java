@@ -1,59 +1,36 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
-import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.plugin.data.TransactionType;
-import org.hyperledger.besu.testutil.TestClock;
 
-import java.math.BigInteger;
-import java.time.ZoneId;
-import java.util.Optional;
+import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class LineaBlockTransactionSelectorTest extends LondonFeeMarketBlockTransactionSelectorTest {
   private static final int BLOCK_MAX_CALLDATA_SIZE = 1000;
-  private static final int TXPOOL_MAX_SIZE = 1000;
-
-  @Override
-  protected PendingTransactions createPendingTransactions() {
-    return new BaseFeePendingTransactionsSorter(
-        ImmutableTransactionPoolConfiguration.builder()
-            .txPoolMaxSize(TXPOOL_MAX_SIZE)
-            .txPoolLimitByAccountPercentage(1)
-            .build(),
-        TestClock.system(ZoneId.systemDefault()),
-        metricsSystem,
-        LineaBlockTransactionSelectorTest::mockBlockHeader);
-  }
-
-  private static BlockHeader mockBlockHeader() {
-    final BlockHeader blockHeader = mock(BlockHeader.class);
-    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ZERO));
-    return blockHeader;
-  }
 
   @Override
   protected FeeMarket getFeeMarket() {
     return FeeMarket.zeroBaseFee(0L);
   }
 
+  @Override
+  protected Wei getMinGasPrice() {
+    return Wei.ZERO;
+  }
+
   @Test
   public void blockCalldataBelowLimitOneTransaction() {
-    final ProcessableBlockHeader blockHeader = createBlock(301, Wei.ZERO);
+    final ProcessableBlockHeader blockHeader = createBlock(301_000, Wei.ZERO);
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
@@ -67,18 +44,17 @@ public class LineaBlockTransactionSelectorTest extends LondonFeeMarketBlockTrans
 
     final Transaction tx = createCalldataTransaction(1, BLOCK_MAX_CALLDATA_SIZE / 10);
     ensureTransactionIsValid(tx);
-    pendingTransactions.addRemoteTransaction(tx, Optional.empty());
+    transactionPool.addRemoteTransactions(List.of(tx));
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 
-    assertThat(results.getTransactions()).hasSize(1);
-    assertThat(pendingTransactions.size()).isEqualTo(1);
+    assertThat(results.getTransactions()).containsExactly(tx);
   }
 
   @Test
   public void blockCalldataBelowLimitMoreTransactions() {
-    final ProcessableBlockHeader blockHeader = createBlock(301, Wei.ZERO);
+    final ProcessableBlockHeader blockHeader = createBlock(301_000, Wei.ZERO);
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
@@ -92,22 +68,24 @@ public class LineaBlockTransactionSelectorTest extends LondonFeeMarketBlockTrans
 
     final int numTxs = 5;
 
+    final Transaction[] txs = new Transaction[5];
+
     for (int i = 0; i < numTxs; i++) {
       final Transaction tx = createCalldataTransaction(i, BLOCK_MAX_CALLDATA_SIZE / (numTxs * 2));
+      txs[i] = tx;
       ensureTransactionIsValid(tx);
-      pendingTransactions.addRemoteTransaction(tx, Optional.empty());
+      transactionPool.addRemoteTransactions(List.of(tx));
     }
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 
-    assertThat(results.getTransactions()).hasSize(numTxs);
-    assertThat(pendingTransactions.size()).isEqualTo(numTxs);
+    assertThat(results.getTransactions()).containsExactly(txs);
   }
 
   @Test
   public void blockCalldataEqualsLimitMoreTransactions() {
-    final ProcessableBlockHeader blockHeader = createBlock(301, Wei.ZERO);
+    final ProcessableBlockHeader blockHeader = createBlock(301_000, Wei.ZERO);
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
@@ -121,30 +99,32 @@ public class LineaBlockTransactionSelectorTest extends LondonFeeMarketBlockTrans
 
     final int numTxs = 3;
     int currCalldataSize = 0;
+    final Transaction[] txs = new Transaction[6];
     for (int i = 0; i < numTxs; i++) {
       final int txCalldataSize = BLOCK_MAX_CALLDATA_SIZE / (numTxs * 2);
       currCalldataSize += txCalldataSize;
       final Transaction tx = createCalldataTransaction(i, txCalldataSize);
+      txs[i] = tx;
       ensureTransactionIsValid(tx);
-      pendingTransactions.addRemoteTransaction(tx, Optional.empty());
+      transactionPool.addRemoteTransactions(List.of(tx));
     }
 
     // last tx fill the remaining calldata space for the block
     final Transaction tx =
         createCalldataTransaction(numTxs + 1, BLOCK_MAX_CALLDATA_SIZE - currCalldataSize);
+    txs[5] = tx;
     ensureTransactionIsValid(tx);
-    pendingTransactions.addRemoteTransaction(tx, Optional.empty());
+    transactionPool.addRemoteTransactions(List.of(tx));
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 
-    assertThat(results.getTransactions()).hasSize(numTxs + 1);
-    assertThat(pendingTransactions.size()).isEqualTo(numTxs + 1);
+    assertThat(results.getTransactions()).containsExactly(txs);
   }
 
   @Test
   public void blockCalldataOverLimitOneTransaction() {
-    final ProcessableBlockHeader blockHeader = createBlock(301, Wei.ZERO);
+    final ProcessableBlockHeader blockHeader = createBlock(301_000, Wei.ZERO);
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
@@ -158,18 +138,17 @@ public class LineaBlockTransactionSelectorTest extends LondonFeeMarketBlockTrans
 
     final Transaction tx = createCalldataTransaction(1, BLOCK_MAX_CALLDATA_SIZE + 1);
     ensureTransactionIsValid(tx);
-    pendingTransactions.addRemoteTransaction(tx, Optional.empty());
+    transactionPool.addRemoteTransactions(List.of(tx));
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 
-    assertThat(results.getTransactions()).hasSize(0);
-    assertThat(pendingTransactions.size()).isEqualTo(1);
+    assertThat(results.getTransactions()).isEmpty();
   }
 
   @Test
   public void blockCalldataOverLimitAfterSomeTransactions() {
-    final ProcessableBlockHeader blockHeader = createBlock(301, Wei.ZERO);
+    final ProcessableBlockHeader blockHeader = createBlock(301_000, Wei.ZERO);
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
     final BlockTransactionSelector selector =
@@ -182,20 +161,19 @@ public class LineaBlockTransactionSelectorTest extends LondonFeeMarketBlockTrans
             BLOCK_MAX_CALLDATA_SIZE);
 
     final int numTxs = 5;
+    final Transaction[] txs = new Transaction[numTxs];
     for (int i = 0; i < numTxs; i++) {
       final int txCalldataSize = BLOCK_MAX_CALLDATA_SIZE / (numTxs - 1);
       final Transaction tx = createCalldataTransaction(i, txCalldataSize);
+      txs[i] = tx;
       ensureTransactionIsValid(tx);
-      pendingTransactions.addRemoteTransaction(tx, Optional.empty());
+      transactionPool.addRemoteTransactions(List.of(tx));
     }
 
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 
-    assertThat(results.getTransactions())
-        .map(Transaction::getNonce)
-        .containsExactlyInAnyOrder(0L, 1L, 2L, 3L);
-    assertThat(pendingTransactions.size()).isEqualTo(numTxs);
+    assertThat(results.getTransactions()).containsExactly(txs);
   }
 
   private Transaction createCalldataTransaction(
@@ -206,7 +184,7 @@ public class LineaBlockTransactionSelectorTest extends LondonFeeMarketBlockTrans
   private Transaction createCalldataTransaction(final int transactionNumber, final Bytes payload) {
     return Transaction.builder()
         .type(TransactionType.EIP1559)
-        .gasLimit(10)
+        .gasLimit(100_000)
         .maxFeePerGas(Wei.ZERO)
         .maxPriorityFeePerGas(Wei.ZERO)
         .nonce(transactionNumber)
@@ -214,8 +192,7 @@ public class LineaBlockTransactionSelectorTest extends LondonFeeMarketBlockTrans
         .to(Address.ID)
         .value(Wei.of(transactionNumber))
         .sender(Address.ID)
-        .chainId(BigInteger.ONE)
-        .guessType()
+        .chainId(CHAIN_ID)
         .signAndBuild(keyPair);
   }
 }

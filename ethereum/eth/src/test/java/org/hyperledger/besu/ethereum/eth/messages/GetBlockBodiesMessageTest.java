@@ -32,7 +32,7 @@ import java.util.List;
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link GetBlockBodiesMessage}. */
 public final class GetBlockBodiesMessageTest {

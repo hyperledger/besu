@@ -34,7 +34,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import com.google.common.base.Suppliers;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class TransactionBuilderTest {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
@@ -57,9 +57,7 @@ public class TransactionBuilderTest {
 
     assertThat(guessedTypes)
         .containsExactlyInAnyOrder(
-            new TransactionType[] {
-              TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
-            });
+            TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559);
   }
 
   @Test
@@ -68,7 +66,10 @@ public class TransactionBuilderTest {
       new TransactionTestFixture()
           .type(TransactionType.BLOB)
           .chainId(Optional.of(BigInteger.ONE))
-          .versionedHashes(List.of())
+          .versionedHashes(Optional.of(List.of()))
+          .maxFeePerGas(Optional.of(Wei.of(5)))
+          .maxPriorityFeePerGas(Optional.of(Wei.of(5)))
+          .maxFeePerDataGas(Optional.of(Wei.of(5)))
           .createTransaction(senderKeys);
       fail();
     } catch (IllegalArgumentException iea) {

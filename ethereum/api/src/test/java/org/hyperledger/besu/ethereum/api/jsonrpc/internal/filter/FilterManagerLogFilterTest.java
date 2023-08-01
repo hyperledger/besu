@@ -49,14 +49,14 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class FilterManagerLogFilterTest {
 
   private static final String PRIVACY_GROUP_ID = "Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs=";
@@ -70,7 +70,7 @@ public class FilterManagerLogFilterTest {
   @Mock private TransactionPool transactionPool;
   @Spy private final FilterRepository filterRepository = new FilterRepository();
 
-  @Before
+  @BeforeEach
   public void setupTest() {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     this.filterManager =

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessDataGasCalculator.calculateExcessDataGasForParent;
+
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -230,8 +232,10 @@ public class TransactionSimulator {
     final Wei dataGasPrice =
         protocolSpec
             .getFeeMarket()
-            .dataPrice(
-                maybeParentHeader.flatMap(BlockHeader::getExcessDataGas).orElse(DataGas.ZERO));
+            .dataPricePerGas(
+                maybeParentHeader
+                    .map(parent -> calculateExcessDataGasForParent(protocolSpec, parent))
+                    .orElse(DataGas.ZERO));
 
     final Transaction transaction = maybeTransaction.get();
     final TransactionProcessingResult result =

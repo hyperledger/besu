@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class BoundedQueueTest {
 

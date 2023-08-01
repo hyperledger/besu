@@ -340,14 +340,14 @@ public class MainnetTransactionProcessor {
               transaction.getPayload(), transaction.isContractCreation());
       final long accessListGas =
           gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
-
       final long gasAvailable = transaction.getGasLimit() - intrinsicGas - accessListGas;
       LOG.trace(
-          "Gas available for execution {} = {} - {} - {} (limit - intrinsic - accessList)",
+          "Gas available for execution {} = {} - {} - {} - {} (limit - intrinsic - accessList - data)",
           gasAvailable,
           transaction.getGasLimit(),
           intrinsicGas,
-          accessListGas);
+          accessListGas,
+          dataGas);
 
       final WorldUpdater worldUpdater = worldState.updater();
       final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
@@ -380,6 +380,13 @@ public class MainnetTransactionProcessor {
               .accessListWarmAddresses(addressList)
               .accessListWarmStorage(storageList);
 
+      if (transaction.getVersionedHashes().isPresent()) {
+        commonMessageFrameBuilder.versionedHashes(
+            Optional.of(transaction.getVersionedHashes().get().stream().toList()));
+      } else {
+        commonMessageFrameBuilder.versionedHashes(Optional.empty());
+      }
+
       final MessageFrame initialFrame;
       if (transaction.isContractCreation()) {
         final Address contractAddress =
@@ -392,7 +399,6 @@ public class MainnetTransactionProcessor {
                 .address(contractAddress)
                 .contract(contractAddress)
                 .inputData(Bytes.EMPTY)
-                .versionedHashes(transaction.getVersionedHashes())
                 .code(contractCreationProcessor.getCodeFromEVM(null, initCodeBytes))
                 .build();
       } else {
@@ -405,7 +411,6 @@ public class MainnetTransactionProcessor {
                 .address(to)
                 .contract(to)
                 .inputData(transaction.getPayload())
-                .versionedHashes(transaction.getVersionedHashes())
                 .code(
                     maybeContract
                         .map(c -> messageCallProcessor.getCodeFromEVM(c.getCodeHash(), c.getCode()))
@@ -414,7 +419,6 @@ public class MainnetTransactionProcessor {
       }
 
       messageFrameStack.addFirst(initialFrame);
-
       if (initialFrame.getCode().isValid()) {
         while (!messageFrameStack.isEmpty()) {
           process(messageFrameStack.peekFirst(), operationTracer);
@@ -442,8 +446,15 @@ public class MainnetTransactionProcessor {
       final long baseRefundGas = initialFrame.getGasRefund() + selfDestructRefund;
       final long refundedGas = refunded(transaction, initialFrame.getRemainingGas(), baseRefundGas);
       final Wei refundedWei = transactionGasPrice.multiply(refundedGas);
+      final Wei balancePriorToRefund = sender.getBalance();
       senderMutableAccount.incrementBalance(refundedWei);
-
+      LOG.atTrace()
+          .setMessage("refunded sender {}  {} wei ({} -> {})")
+          .addArgument(senderAddress)
+          .addArgument(refundedWei)
+          .addArgument(balancePriorToRefund)
+          .addArgument(sender.getBalance())
+          .log();
       final long gasUsedByTransaction = transaction.getGasLimit() - initialFrame.getRemainingGas();
 
       // update the coinbase

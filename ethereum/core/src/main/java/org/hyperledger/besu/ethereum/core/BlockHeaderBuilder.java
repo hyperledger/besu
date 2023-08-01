@@ -73,6 +73,7 @@ public class BlockHeaderBuilder {
   // instead of an invalid identifier such as -1.
   private OptionalLong nonce = OptionalLong.empty();
 
+  private Long dataGasUsed = null;
   private DataGas excessDataGas = null;
 
   public static BlockHeaderBuilder create() {
@@ -119,6 +120,7 @@ public class BlockHeaderBuilder {
         .nonce(header.getNonce())
         .prevRandao(header.getPrevRandao().orElse(null))
         .withdrawalsRoot(header.getWithdrawalsRoot().orElse(null))
+        .dataGasUsed(header.getDataGasUsed().orElse(null))
         .excessDataGas(header.getExcessDataGas().orElse(null))
         .depositsRoot(header.getDepositsRoot().orElse(null));
   }
@@ -170,6 +172,7 @@ public class BlockHeaderBuilder {
         mixHashOrPrevRandao,
         nonce.getAsLong(),
         withdrawalsRoot,
+        dataGasUsed,
         excessDataGas,
         depositsRoot,
         blockHeaderFunctions);
@@ -187,6 +190,7 @@ public class BlockHeaderBuilder {
         timestamp,
         baseFee,
         mixHashOrPrevRandao,
+        dataGasUsed,
         excessDataGas);
   }
 
@@ -210,6 +214,7 @@ public class BlockHeaderBuilder {
         baseFee,
         mixHashOrPrevRandao,
         withdrawalsRoot,
+        dataGasUsed,
         excessDataGas,
         depositsRoot);
   }
@@ -251,6 +256,7 @@ public class BlockHeaderBuilder {
     timestamp(processableBlockHeader.getTimestamp());
     baseFee(processableBlockHeader.getBaseFee().orElse(null));
     processableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
+    processableBlockHeader.getDataGasUsed().ifPresent(this::dataGasUsed);
     processableBlockHeader.getExcessDataGas().ifPresent(this::excessDataGas);
     return this;
   }
@@ -273,6 +279,7 @@ public class BlockHeaderBuilder {
     baseFee(sealableBlockHeader.getBaseFee().orElse(null));
     sealableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
     withdrawalsRoot(sealableBlockHeader.getWithdrawalsRoot().orElse(null));
+    sealableBlockHeader.getDataGasUsed().ifPresent(this::dataGasUsed);
     sealableBlockHeader.getExcessDataGas().ifPresent(this::excessDataGas);
     depositsRoot(sealableBlockHeader.getDepositsRoot().orElse(null));
     return this;
@@ -397,6 +404,11 @@ public class BlockHeaderBuilder {
 
   public BlockHeaderBuilder excessDataGas(final DataGas excessDataGas) {
     this.excessDataGas = excessDataGas;
+    return this;
+  }
+
+  public BlockHeaderBuilder dataGasUsed(final Long dataGasUsed) {
+    this.dataGasUsed = dataGasUsed;
     return this;
   }
 }

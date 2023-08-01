@@ -31,8 +31,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 
 public class BlockHeaderValidatorTest {
@@ -43,7 +43,7 @@ public class BlockHeaderValidatorTest {
   private final MutableBlockchain blockchain = mock(MutableBlockchain.class);
   private final BlockDataGenerator generator = new BlockDataGenerator();
 
-  @Before
+  @BeforeEach
   public void setUp() {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
   }

@@ -37,8 +37,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.impl.UserImpl;
 import org.assertj.core.util.Lists;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PrivxFindFlexiblePrivacyGroupTest {
   private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
@@ -57,7 +57,7 @@ public class PrivxFindFlexiblePrivacyGroupTest {
   private PrivacyGroup privacyGroup;
   private PrivxFindFlexiblePrivacyGroup privxFindFlexiblePrivacyGroup;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     request =
         new JsonRpcRequestContext(
