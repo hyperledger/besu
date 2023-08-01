@@ -240,7 +240,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .ommersHash(BodyValidation.ommersHash(ommers))
               .stateRoot(disposableWorldState.rootHash())
               .transactionsRoot(
-                  BodyValidation.transactionsRoot(transactionResults.getTransactions()))
+                  BodyValidation.transactionsRoot(transactionResults.getSelectedTransactions()))
               .receiptsRoot(BodyValidation.receiptsRoot(transactionResults.getReceipts()))
               .logsBloom(BodyValidation.logsBloom(transactionResults.getReceipts()))
               .gasUsed(transactionResults.getCumulativeGasUsed())
@@ -264,7 +264,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           new Block(
               blockHeader,
               new BlockBody(
-                  transactionResults.getTransactions(), ommers, withdrawals, maybeDeposits));
+                  transactionResults.getSelectedTransactions(),
+                  ommers,
+                  withdrawals,
+                  maybeDeposits));
       return new BlockCreationResult(block, transactionResults);
     } catch (final SecurityModuleException ex) {
       throw new IllegalStateException("Failed to create block signature", ex);

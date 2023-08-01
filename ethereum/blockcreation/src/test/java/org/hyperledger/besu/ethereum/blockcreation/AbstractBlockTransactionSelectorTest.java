@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
@@ -75,7 +76,6 @@ import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -195,19 +195,19 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 
-    assertThat(results.getTransactions().size()).isEqualTo(0);
-    assertThat(results.getReceipts().size()).isEqualTo(0);
+    assertThat(results.getSelectedTransactions()).isEmpty();
+    assertThat(results.getNotSelectedTransactions()).isEmpty();
+    assertThat(results.getReceipts()).isEmpty();
     assertThat(results.getCumulativeGasUsed()).isEqualTo(0);
   }
 
   @Test
-  public void failedTransactionsAreIncludedInTheBlock() {
+  public void validPendingTransactionIsIncludedInTheBlock() {
     final Transaction transaction = createTransaction(1, Wei.of(7L), 100_000);
     transactionPool.addRemoteTransactions(List.of(transaction));
 
     ensureTransactionIsValid(transaction, 0, 5);
 
-    // The block should fit 3 transactions only
     final ProcessableBlockHeader blockHeader = createBlock(500_000);
 
     final Address miningBeneficiary = AddressHelpers.ofValue(1);
@@ -224,14 +224,14 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 
-    assertThat(results.getTransactions().size()).isEqualTo(1);
-    Assertions.assertThat(results.getTransactions()).contains(transaction);
+    assertThat(results.getSelectedTransactions()).containsExactly(transaction);
+    assertThat(results.getNotSelectedTransactions()).isEmpty();
     assertThat(results.getReceipts().size()).isEqualTo(1);
     assertThat(results.getCumulativeGasUsed()).isEqualTo(99995L);
   }
 
   @Test
-  public void invalidTransactionsTransactionProcessingAreSkippedButBlockStillFills() {
+  public void invalidTransactionsAreSkippedButBlockStillFills() {
     final List<Transaction> transactionsToInject = Lists.newArrayList();
     for (int i = 0; i < 5; i++) {
       final Transaction tx = createTransaction(i, Wei.of(7), 100_000);
@@ -261,8 +261,16 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 
-    assertThat(results.getTransactions().size()).isEqualTo(4);
-    assertThat(results.getTransactions().contains(transactionsToInject.get(1))).isFalse();
+    final Transaction invalidTx = transactionsToInject.get(1);
+
+    assertThat(results.getNotSelectedTransactions())
+        .containsOnly(
+            entry(
+                invalidTx,
+                TransactionSelectionResult.invalid(
+                    TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE.name())));
+    assertThat(results.getSelectedTransactions().size()).isEqualTo(4);
+    assertThat(results.getSelectedTransactions().contains(invalidTx)).isFalse();
     assertThat(results.getReceipts().size()).isEqualTo(4);
     assertThat(results.getCumulativeGasUsed()).isEqualTo(400_000);
   }
@@ -293,48 +301,22 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 
-    assertThat(results.getTransactions().size()).isEqualTo(3);
+    assertThat(results.getSelectedTransactions().size()).isEqualTo(3);
 
-    assertThat(results.getTransactions().containsAll(transactionsToInject.subList(0, 3))).isTrue();
+    assertThat(results.getSelectedTransactions().containsAll(transactionsToInject.subList(0, 3)))
+        .isTrue();
+    assertThat(results.getNotSelectedTransactions())
+        .containsOnly(
+            entry(
+                transactionsToInject.get(3),
+                TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD));
     assertThat(results.getReceipts().size()).isEqualTo(3);
     assertThat(results.getCumulativeGasUsed()).isEqualTo(300_000);
 
     // Ensure receipts have the correct cumulative gas
-    Assertions.assertThat(results.getReceipts().get(0).getCumulativeGasUsed()).isEqualTo(100_000);
-    Assertions.assertThat(results.getReceipts().get(1).getCumulativeGasUsed()).isEqualTo(200_000);
-    Assertions.assertThat(results.getReceipts().get(2).getCumulativeGasUsed()).isEqualTo(300_000);
-  }
-
-  @Test
-  public void useSingleGasSpaceForAllTransactions() {
-    final ProcessableBlockHeader blockHeader = createBlock(300_000);
-
-    final Address miningBeneficiary = AddressHelpers.ofValue(1);
-
-    final BlockTransactionSelector selector =
-        createBlockSelector(
-            transactionProcessor,
-            blockHeader,
-            Wei.ZERO,
-            miningBeneficiary,
-            Wei.ZERO,
-            MIN_OCCUPANCY_80_PERCENT);
-
-    // this should fill up all the block space
-    final Transaction fillingLegacyTx = createTransaction(0, Wei.of(10), 300_000);
-
-    ensureTransactionIsValid(fillingLegacyTx);
-
-    // so we shouldn't include this
-    final Transaction extraEIP1559Tx = createEIP1559Transaction(0, Wei.of(10), Wei.of(10), 50_000);
-
-    ensureTransactionIsValid(extraEIP1559Tx);
-
-    transactionPool.addRemoteTransactions(List.of(fillingLegacyTx, extraEIP1559Tx));
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
-
-    assertThat(results.getTransactions().size()).isEqualTo(1);
+    assertThat(results.getReceipts().get(0).getCumulativeGasUsed()).isEqualTo(100_000);
+    assertThat(results.getReceipts().get(1).getCumulativeGasUsed()).isEqualTo(200_000);
+    assertThat(results.getReceipts().get(2).getCumulativeGasUsed()).isEqualTo(300_000);
   }
 
   @Test
@@ -369,9 +351,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 
-    assertThat(results.getTransactions().size()).isEqualTo(2);
-    Assertions.assertThat(results.getTransactions().get(0)).isEqualTo(txs[0]);
-    Assertions.assertThat(results.getTransactions().get(1)).isEqualTo(txs[2]);
+    assertThat(results.getSelectedTransactions()).containsExactly(txs[0], txs[2]);
+    assertThat(results.getNotSelectedTransactions())
+        .containsOnly(entry(txs[1], TransactionSelectionResult.TX_TOO_LARGE_FOR_REMAINING_GAS));
   }
 
   @Test
@@ -408,11 +390,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 
-    assertThat(results.getTransactions().size()).isEqualTo(2);
-    Assertions.assertThat(results.getTransactions().get(0)).isEqualTo(txs[0]);
-    Assertions.assertThat(results.getTransactions().get(1)).isEqualTo(txs[1]);
-    assertThat(results.getTransactions().contains(txs[3])).isFalse();
-    assertThat(results.getTransactions().contains(txs[2])).isFalse();
+    assertThat(results.getSelectedTransactions()).containsExactly(txs[0], txs[1]);
+    assertThat(results.getNotSelectedTransactions())
+        .containsOnly(entry(txs[2], TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD));
   }
 
   @Test
@@ -460,9 +440,17 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 
-    assertThat(results.getTransactions())
+    assertThat(results.getSelectedTransactions())
         .containsExactly(
             transactionsToInject.get(0), transactionsToInject.get(2), transactionsToInject.get(3));
+    assertThat(results.getNotSelectedTransactions())
+        .containsOnly(
+            entry(
+                transactionsToInject.get(1),
+                TransactionSelectionResult.TX_TOO_LARGE_FOR_REMAINING_GAS),
+            entry(
+                transactionsToInject.get(4),
+                TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD));
     assertThat(results.getCumulativeGasUsed()).isEqualTo(blockHeader.getGasLimit());
   }
 
@@ -508,8 +496,14 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 
-    assertThat(results.getTransactions())
+    assertThat(results.getSelectedTransactions())
         .containsExactly(transactionsToInject.get(0), transactionsToInject.get(2));
+    assertThat(results.getNotSelectedTransactions())
+        .containsOnly(
+            entry(
+                transactionsToInject.get(1),
+                TransactionSelectionResult.TX_TOO_LARGE_FOR_REMAINING_GAS),
+            entry(transactionsToInject.get(3), TransactionSelectionResult.BLOCK_FULL));
     assertThat(blockHeader.getGasLimit() - results.getCumulativeGasUsed()).isLessThan(minTxGasCost);
   }
 
@@ -536,12 +530,18 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     transactionPool.addRemoteTransactions(List.of(validTransaction, invalidTransaction));
 
-    selector.buildTransactionListForBlock();
+    final BlockTransactionSelector.TransactionSelectionResults results =
+        selector.buildTransactionListForBlock();
 
-    Assertions.assertThat(transactionPool.getTransactionByHash(validTransaction.getHash()))
-        .isPresent();
-    Assertions.assertThat(transactionPool.getTransactionByHash(invalidTransaction.getHash()))
-        .isNotPresent();
+    assertThat(transactionPool.getTransactionByHash(validTransaction.getHash())).isPresent();
+    assertThat(transactionPool.getTransactionByHash(invalidTransaction.getHash())).isNotPresent();
+    assertThat(results.getSelectedTransactions()).containsExactly(validTransaction);
+    assertThat(results.getNotSelectedTransactions())
+        .containsOnly(
+            entry(
+                invalidTransaction,
+                TransactionSelectionResult.invalid(
+                    TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE.name())));
   }
 
   @Test
@@ -586,9 +586,11 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     assertThat(transactionPool.getTransactionByHash(notSelectedTransient.getHash())).isPresent();
     assertThat(transactionPool.getTransactionByHash(notSelectedInvalid.getHash())).isNotPresent();
-    assertThat(transactionSelectionResults.getTransactions()).contains(selected);
-    assertThat(transactionSelectionResults.getTransactions()).doesNotContain(notSelectedTransient);
-    assertThat(transactionSelectionResults.getTransactions()).doesNotContain(notSelectedInvalid);
+    assertThat(transactionSelectionResults.getSelectedTransactions()).containsOnly(selected);
+    assertThat(transactionSelectionResults.getNotSelectedTransactions())
+        .containsOnly(
+            entry(notSelectedTransient, TransactionSelectionResult.invalidTransient("transient")),
+            entry(notSelectedInvalid, TransactionSelectionResult.invalid("invalid")));
   }
 
   @Test
@@ -613,9 +615,14 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final BlockTransactionSelector.TransactionSelectionResults results =
         selector.buildTransactionListForBlock();
 
-    Assertions.assertThat(transactionPool.getTransactionByHash(futureTransaction.getHash()))
-        .isPresent();
-    assertThat(results.getTransactions().size()).isEqualTo(0);
+    assertThat(transactionPool.getTransactionByHash(futureTransaction.getHash())).isPresent();
+    assertThat(results.getSelectedTransactions()).isEmpty();
+    assertThat(results.getNotSelectedTransactions())
+        .containsOnly(
+            entry(
+                futureTransaction,
+                TransactionSelectionResult.invalidTransient(
+                    TransactionInvalidReason.NONCE_TOO_HIGH.name())));
   }
 
   protected BlockTransactionSelector createBlockSelector(
