@@ -45,7 +45,7 @@ import java.util.function.Supplier;
 
 public class ProtocolSpecBuilder {
   private Supplier<GasCalculator> gasCalculatorBuilder;
-  private GasLimitCalculator gasLimitCalculator;
+  private Function<FeeMarket, GasLimitCalculator> gasLimitCalculatorBuilder;
   private Wei blockReward;
   private boolean skipZeroBlockRewards;
   private BlockHeaderFunctions blockHeaderFunctions;
@@ -53,8 +53,7 @@ public class ProtocolSpecBuilder {
   private DifficultyCalculator difficultyCalculator;
   private EvmConfiguration evmConfiguration;
   private BiFunction<GasCalculator, EvmConfiguration, EVM> evmBuilder;
-  private BiFunction<GasCalculator, GasLimitCalculator, TransactionValidatorFactory>
-      transactionValidatorFactoryBuilder;
+  private TransactionValidatorFactoryBuilder transactionValidatorFactoryBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder;
   private Function<FeeMarket, BlockHeaderValidator.Builder> ommerHeaderValidatorBuilder;
   private Function<ProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder;
@@ -88,8 +87,9 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder gasLimitCalculator(final GasLimitCalculator gasLimitCalculator) {
-    this.gasLimitCalculator = gasLimitCalculator;
+  public ProtocolSpecBuilder gasLimitCalculatorBuilder(
+      final Function<FeeMarket, GasLimitCalculator> gasLimitCalculatorBuilder) {
+    this.gasLimitCalculatorBuilder = gasLimitCalculatorBuilder;
     return this;
   }
 
@@ -125,9 +125,8 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder transactionValidatorBuilder(
-      final BiFunction<GasCalculator, GasLimitCalculator, TransactionValidatorFactory>
-          transactionValidatorFactoryBuilder) {
+  public ProtocolSpecBuilder transactionValidatorFactoryBuilder(
+      final TransactionValidatorFactoryBuilder transactionValidatorFactoryBuilder) {
     this.transactionValidatorFactoryBuilder = transactionValidatorFactoryBuilder;
     return this;
   }
@@ -279,7 +278,7 @@ public class ProtocolSpecBuilder {
 
   public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
-    checkNotNull(gasLimitCalculator, "Missing gasLimitCalculator");
+    checkNotNull(gasLimitCalculatorBuilder, "Missing gasLimitCalculatorBuilder");
     checkNotNull(evmBuilder, "Missing operation registry");
     checkNotNull(evmConfiguration, "Missing evm configuration");
     checkNotNull(transactionValidatorFactoryBuilder, "Missing transaction validator");
@@ -306,11 +305,12 @@ public class ProtocolSpecBuilder {
     checkNotNull(badBlockManager, "Missing bad blocks manager");
 
     final GasCalculator gasCalculator = gasCalculatorBuilder.get();
+    final GasLimitCalculator gasLimitCalculator = gasLimitCalculatorBuilder.apply(feeMarket);
     final EVM evm = evmBuilder.apply(gasCalculator, evmConfiguration);
     final PrecompiledContractConfiguration precompiledContractConfiguration =
         new PrecompiledContractConfiguration(gasCalculator, privacyParameters);
     final TransactionValidatorFactory transactionValidatorFactory =
-        transactionValidatorFactoryBuilder.apply(gasCalculator, gasLimitCalculator);
+        transactionValidatorFactoryBuilder.apply(gasCalculator, gasLimitCalculator, feeMarket);
     final AbstractMessageProcessor contractCreationProcessor =
         contractCreationProcessorBuilder.apply(gasCalculator, evm);
     final PrecompileContractRegistry precompileContractRegistry =
@@ -320,6 +320,7 @@ public class ProtocolSpecBuilder {
     final MainnetTransactionProcessor transactionProcessor =
         transactionProcessorBuilder.apply(
             gasCalculator,
+            feeMarket,
             transactionValidatorFactory,
             contractCreationProcessor,
             messageCallProcessor);
@@ -446,6 +447,7 @@ public class ProtocolSpecBuilder {
   public interface TransactionProcessorBuilder {
     MainnetTransactionProcessor apply(
         GasCalculator gasCalculator,
+        FeeMarket feeMarket,
         TransactionValidatorFactory transactionValidatorFactory,
         AbstractMessageProcessor contractCreationProcessor,
         AbstractMessageProcessor messageCallProcessor);
@@ -483,5 +485,10 @@ public class ProtocolSpecBuilder {
 
   public interface BlockImporterBuilder {
     BlockImporter apply(BlockValidator blockValidator);
+  }
+
+  public interface TransactionValidatorFactoryBuilder {
+    TransactionValidatorFactory apply(
+        GasCalculator gasCalculator, GasLimitCalculator gasLimitCalculator, FeeMarket feeMarket);
   }
 }
