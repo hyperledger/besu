@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.linea;
 
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
-import org.hyperledger.besu.ethereum.mainnet.PermissionTransactionValidator;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidatorFactory;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -26,10 +24,7 @@ import java.math.BigInteger;
 import java.util.Optional;
 import java.util.Set;
 
-import com.google.common.base.Suppliers;
-
 public class LineaTransactionValidatorFactory extends TransactionValidatorFactory {
-  private final int txCalldataMaxSize;
 
   public LineaTransactionValidatorFactory(
       final GasCalculator gasCalculator,
@@ -47,27 +42,6 @@ public class LineaTransactionValidatorFactory extends TransactionValidatorFactor
         chainId,
         acceptedTransactionTypes,
         Integer.MAX_VALUE);
-    this.txCalldataMaxSize = txCalldataMaxSize;
-  }
-
-  @Override
-  public TransactionValidator get() {
-    return Suppliers.memoize(this::createTransactionValidator).get();
-  }
-
-  private TransactionValidator createTransactionValidator() {
-    final TransactionValidator baseValidator =
-        new LineaTransactionValidator(
-            gasCalculator,
-            gasLimitCalculator,
-            feeMarket,
-            disallowSignatureMalleability,
-            chainId,
-            acceptedTransactionTypes,
-            txCalldataMaxSize);
-    if (permissionTransactionFilter.isPresent()) {
-      return new PermissionTransactionValidator(baseValidator, permissionTransactionFilter.get());
-    }
-    return baseValidator;
+    cacheValidator(new LineaTransactionValidator(super.get(), txCalldataMaxSize));
   }
 }

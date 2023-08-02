@@ -8,6 +8,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidatorTest;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidatorFactory;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -74,12 +75,15 @@ public class LineaTransactionValidatorTest extends MainnetTransactionValidatorTe
 
   private LineaTransactionValidator createValidator(final int txCalldataLimit) {
     return new LineaTransactionValidator(
-        gasCalculator,
-        GasLimitCalculator.constant(),
-        FeeMarket.zeroBaseFee(0L),
-        false,
-        Optional.of(BigInteger.valueOf(59140)),
-        EnumSet.allOf(TransactionType.class),
+        new TransactionValidatorFactory(
+                gasCalculator,
+                GasLimitCalculator.constant(),
+                FeeMarket.zeroBaseFee(0L),
+                false,
+                Optional.of(BigInteger.valueOf(59140)),
+                EnumSet.allOf(TransactionType.class),
+                Integer.MAX_VALUE)
+            .get(),
         txCalldataLimit);
   }
 

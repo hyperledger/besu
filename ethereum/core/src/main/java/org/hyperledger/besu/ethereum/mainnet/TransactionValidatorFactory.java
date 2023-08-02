@@ -29,7 +29,7 @@ import com.google.common.base.Suppliers;
 
 public class TransactionValidatorFactory {
 
-  private volatile Supplier<TransactionValidator> transactionValidatorSupplier;
+  protected volatile Supplier<TransactionValidator> transactionValidatorSupplier;
 
   public TransactionValidatorFactory(
       final GasCalculator gasCalculator,
@@ -69,28 +69,29 @@ public class TransactionValidatorFactory {
       final Set<TransactionType> acceptedTransactionTypes,
       final int maxInitcodeSize) {
 
-    this.transactionValidatorSupplier =
-        Suppliers.memoize(
-            () ->
-                new MainnetTransactionValidator(
-                    gasCalculator,
-                    gasLimitCalculator,
-                    feeMarket,
-                    checkSignatureMalleability,
-                    chainId,
-                    acceptedTransactionTypes,
-                    maxInitcodeSize));
+    cacheValidator(
+        new MainnetTransactionValidator(
+            gasCalculator,
+            gasLimitCalculator,
+            feeMarket,
+            checkSignatureMalleability,
+            chainId,
+            acceptedTransactionTypes,
+            maxInitcodeSize));
   }
 
   public void setPermissionTransactionFilter(
       final PermissionTransactionFilter permissionTransactionFilter) {
     final TransactionValidator baseTxValidator = transactionValidatorSupplier.get();
-    transactionValidatorSupplier =
-        Suppliers.memoize(
-            () -> new PermissionTransactionValidator(baseTxValidator, permissionTransactionFilter));
+    cacheValidator(
+        new PermissionTransactionValidator(baseTxValidator, permissionTransactionFilter));
   }
 
   public TransactionValidator get() {
     return transactionValidatorSupplier.get();
+  }
+
+  protected void cacheValidator(final TransactionValidator transactionValidator) {
+    transactionValidatorSupplier = Suppliers.memoize(() -> transactionValidator);
   }
 }

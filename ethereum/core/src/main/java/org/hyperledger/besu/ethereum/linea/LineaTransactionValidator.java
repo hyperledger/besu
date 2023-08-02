@@ -1,39 +1,22 @@
 package org.hyperledger.besu.ethereum.linea;
 
-import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.account.Account;
 
-import java.math.BigInteger;
 import java.util.Optional;
-import java.util.Set;
 
-public class LineaTransactionValidator extends MainnetTransactionValidator {
+public class LineaTransactionValidator implements TransactionValidator {
+  private final TransactionValidator baseTxValidator;
   private final int maxCalldataSize;
 
   public LineaTransactionValidator(
-      final GasCalculator gasCalculator,
-      final GasLimitCalculator gasLimitCalculator,
-      final FeeMarket feeMarket,
-      final boolean checkSignatureMalleability,
-      final Optional<BigInteger> chainId,
-      final Set<TransactionType> acceptedTransactionTypes,
-      final int maxCalldataSize) {
-    super(
-        gasCalculator,
-        gasLimitCalculator,
-        feeMarket,
-        checkSignatureMalleability,
-        chainId,
-        acceptedTransactionTypes,
-        Integer.MAX_VALUE);
+      final TransactionValidator baseValidator, final int maxCalldataSize) {
+    this.baseTxValidator = baseValidator;
     this.maxCalldataSize = maxCalldataSize >= 0 ? maxCalldataSize : Integer.MAX_VALUE;
   }
 
@@ -51,6 +34,14 @@ public class LineaTransactionValidator extends MainnetTransactionValidator {
               transaction.getPayload().size(), maxCalldataSize));
     }
 
-    return super.validate(transaction, baseFee, transactionValidationParams);
+    return baseTxValidator.validate(transaction, baseFee, transactionValidationParams);
+  }
+
+  @Override
+  public ValidationResult<TransactionInvalidReason> validateForSender(
+      final Transaction transaction,
+      final Account sender,
+      final TransactionValidationParams validationParams) {
+    return baseTxValidator.validateForSender(transaction, sender, validationParams);
   }
 }
