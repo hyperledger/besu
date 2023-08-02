@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.linea.CalldataLimits;
 import org.hyperledger.besu.ethereum.linea.LineaBlockBodyValidator;
 import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.ethereum.linea.LineaTransactionValidatorFactory;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -52,7 +53,10 @@ public class LineaProtocolSpecs {
     final CalldataLimits calldataLimits =
         new CalldataLimits(txCalldataMaxSize, blockCalldataMaxSize);
 
-    final FeeMarket zeroBaseFeeMarket = FeeMarket.zeroBaseFee(0L);
+    final BaseFeeMarket londonFeeMarket =
+        genesisConfigOptions.isZeroBaseFee()
+            ? FeeMarket.zeroBaseFee(0L)
+            : FeeMarket.london(0L, genesisConfigOptions.getBaseFeePerGas());
 
     return MainnetProtocolSpecs.londonDefinition(
             chainId,
@@ -61,14 +65,14 @@ public class LineaProtocolSpecs {
             enableRevertReason,
             genesisConfigOptions,
             evmConfiguration)
-        .feeMarket(zeroBaseFeeMarket)
+        .feeMarket(londonFeeMarket)
         .calldataLimits(calldataLimits)
         .transactionValidatorBuilder(
             (gasCalculator, gasLimitCalculator) ->
                 new LineaTransactionValidatorFactory(
                     gasCalculator,
                     gasLimitCalculator,
-                    zeroBaseFeeMarket,
+                    londonFeeMarket,
                     true,
                     chainId,
                     Set.of(
