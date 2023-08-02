@@ -8,6 +8,7 @@
 
 ### Bug Fixes
 - Make smart contract permissioning features work with london fork [#5727](https://github.com/hyperledger/besu/pull/5727)
+- Add type to PendingTransactionDetail, fix eth_subscribe [#5729](https://github.com/hyperledger/besu/pull/5729)
 
 ### Download Links
 
