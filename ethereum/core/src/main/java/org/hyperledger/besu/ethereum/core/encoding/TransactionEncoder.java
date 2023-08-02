@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -76,9 +77,10 @@ public class TransactionEncoder {
               TYPED_TRANSACTION_ENCODERS.get(transactionType),
               "Developer Error. A supported transaction type %s has no associated encoding logic",
               transactionType);
-      return Bytes.concatenate(
-          Bytes.of(transactionType.getSerializedType()),
-          RLP.encode(rlpOutput -> encoder.encode(transaction, rlpOutput)));
+      final BytesValueRLPOutput out = new BytesValueRLPOutput();
+      out.writeByte(transactionType.getSerializedType());
+      encoder.encode(transaction, out);
+      return out.encoded();
     }
   }
 
