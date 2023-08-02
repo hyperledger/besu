@@ -11,8 +11,8 @@ import picocli.CommandLine;
 
 /** Linea CLI options. */
 public class LineaOptions implements CLIOptions<LineaParameters> {
-  private static final String TRANSACTION_MAX_CALLDATA_SIZE = "--Xtransaction-max-calldata-size";
-  private static final String BLOCK_MAX_CALLDATA_SIZE = "--Xblock-max-calldata-size";
+  private static final String MAX_TX_CALLDATA_SIZE = "--plugin-linea-max-tx-calldata-size";
+  private static final String MAX_BLOCK_CALLDATA_SIZE = "--plugin-linea-max-block-calldata-size";
 
   /**
    * Create linea options.
@@ -25,7 +25,7 @@ public class LineaOptions implements CLIOptions<LineaParameters> {
 
   @CommandLine.Option(
       hidden = true,
-      names = {TRANSACTION_MAX_CALLDATA_SIZE},
+      names = {MAX_TX_CALLDATA_SIZE},
       paramLabel = "<INTEGER>",
       description =
           "If specified, overrides the max size in bytes allowed in the transaction calldata field, specified by the current hard fork")
@@ -33,7 +33,7 @@ public class LineaOptions implements CLIOptions<LineaParameters> {
 
   @CommandLine.Option(
       hidden = true,
-      names = {BLOCK_MAX_CALLDATA_SIZE},
+      names = {MAX_BLOCK_CALLDATA_SIZE},
       paramLabel = "<INTEGER>",
       description =
           "If specified, overrides the max size in bytes of the sum of all transaction calldata fields contained in a block, specified by the current hard fork")
@@ -66,9 +66,9 @@ public class LineaOptions implements CLIOptions<LineaParameters> {
   public List<String> getCLIOptions() {
     final List<String> cliOptions = new ArrayList<>(2);
     getTransactionMaxCalldataSize()
-        .ifPresent(size -> cliOptions.add(TRANSACTION_MAX_CALLDATA_SIZE + "=" + size));
+        .ifPresent(size -> cliOptions.add(MAX_TX_CALLDATA_SIZE + "=" + size));
     getBlockMaxCalldataSize()
-        .ifPresent(size -> cliOptions.add(BLOCK_MAX_CALLDATA_SIZE + "=" + size));
+        .ifPresent(size -> cliOptions.add(MAX_BLOCK_CALLDATA_SIZE + "=" + size));
     return cliOptions;
   }
 }
