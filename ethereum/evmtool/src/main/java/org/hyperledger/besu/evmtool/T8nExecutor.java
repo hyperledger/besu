@@ -407,10 +407,13 @@ public class T8nExecutor {
         .getDataGasUsed()
         .ifPresentOrElse(
             bgu -> resultObject.put("blobGasUsed", Bytes.ofUnsignedLong(bgu).toQuantityHexString()),
-            () -> resultObject.put("blobGasUsed", "0x0"));
+            () ->
+                blockHeader
+                    .getExcessDataGas()
+                    .ifPresent(ebg -> resultObject.put("blobGasUsed", "0x0")));
     blockHeader
         .getExcessDataGas()
-        .ifPresent(ebg -> resultObject.put("currentExcessBlobGas", ebg.toHexString()));
+        .ifPresent(ebg -> resultObject.put("currentExcessBlobGas", ebg.toShortHexString()));
 
     ObjectNode allocObject = objectMapper.createObjectNode();
     worldState

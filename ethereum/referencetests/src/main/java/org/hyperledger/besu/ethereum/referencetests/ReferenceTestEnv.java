@@ -115,7 +115,7 @@ public class ReferenceTestEnv extends BlockHeader {
       @JsonProperty("withdrawals") final List<EnvWithdrawal> withdrawals,
       @JsonProperty("blockHashes") final Map<String, String> blockHashes,
       @JsonProperty("currentExcessBlobGas") final String currentExcessBlobGas,
-      @JsonProperty("currentBobGasUsed") final String currentBlobGasUsed,
+      @JsonProperty("currentBlobGasUsed") final String currentBlobGasUsed,
       @JsonProperty("parentExcessBlobGas") final String parentExcessBlobGas,
       @JsonProperty("parentBlobGasUsed") final String parentBlobGasUsed,
       @JsonProperty("beaconRoot") final String beaconRoot) {
@@ -137,8 +137,8 @@ public class ReferenceTestEnv extends BlockHeader {
         Optional.ofNullable(random).map(Difficulty::fromHexString).orElse(Difficulty.ZERO),
         0L,
         null, // withdrawalsRoot
-        null, // dataGasUsed
-        null, // excessDataGas
+        currentBlobGasUsed == null ? null : Long.decode(currentBlobGasUsed),
+        currentExcessBlobGas == null ? null : DataGas.fromHexString(currentExcessBlobGas),
         null, // depositsRoot
         new MainnetBlockHeaderFunctions());
     this.parentDifficulty = parentDifficulty;
