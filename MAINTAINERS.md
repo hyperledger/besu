@@ -45,6 +45,7 @@
 | Frank Li         | frankisawesome   | frankliawesome   |
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
 | Madeline Murray  | MadelineMurray   | madelinemurray   |
+| Mark Terry       | mark-terry       | m.terry          |
 | Nicolas Massart  | NicolasMassart   | NicolasMassart   |
 | Trent Mohay      | rain-on          | trent.mohay      |
 | Rai Sur          | RatanRSur        | ratanraisur      |
@@ -53,6 +54,7 @@
 | Taccat Isid      | taccatisid       | taccatisid       |
 | Tim Beiko        | timbeiko         | timbeiko         |
 | Vijay Michalik   | vmichalik        | VijayMichalik    |
+| Zhenyang Shi     | wcgcyx           | wcgcyx           |
 
 ## Becoming a Maintainer
 
