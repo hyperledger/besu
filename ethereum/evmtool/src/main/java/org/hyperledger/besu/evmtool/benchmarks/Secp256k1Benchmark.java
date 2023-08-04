@@ -26,14 +26,10 @@ public class Secp256k1Benchmark extends BenchmarkExecutor {
   public void runBenchmark(
       final PrintStream output, final Boolean attemptNative, final String fork) {
     final SECP256K1 signatureAlgorithm = new SECP256K1();
-    if (attemptNative != null) {
-      if (attemptNative && signatureAlgorithm.maybeEnableNative()) {
-        output.println("Native secp256k1");
-      } else {
-        signatureAlgorithm.disableNative();
-        output.println("Java secp256k1");
-      }
+    if (attemptNative != null && (!attemptNative || !signatureAlgorithm.maybeEnableNative())) {
+      signatureAlgorithm.disableNative();
     }
+    output.println(signatureAlgorithm.isNative() ? "Native secp256k1" : "Java secp256k1");
 
     final SECPPrivateKey privateKey =
         signatureAlgorithm.createPrivateKey(
@@ -55,6 +51,6 @@ public class Secp256k1Benchmark extends BenchmarkExecutor {
     final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
     final double perCall = elapsed / MATH_ITERATIONS;
 
-    output.printf("secp256k1 signature recovery for %,.1f µs", perCall * 1_000_000);
+    output.printf("secp256k1 signature recovery for %,.1f µs%n", perCall * 1_000_000);
   }
 }

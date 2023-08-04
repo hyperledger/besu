@@ -44,10 +44,6 @@ public class BigIntegerModularExponentiationPrecompiledContract
   /** Use native Arithmetic libraries. */
   static boolean useNative;
 
-  static {
-    maybeEnableNative();
-  }
-
   /** The constant BASE_OFFSET. */
   public static final int BASE_OFFSET = 96;
 

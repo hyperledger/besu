@@ -1852,7 +1852,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (unstableNativeLibraryOptions.getNativeModExp()
-        && BigIntegerModularExponentiationPrecompiledContract.isNative()) {
+        && BigIntegerModularExponentiationPrecompiledContract.maybeEnableNative()) {
       logger.info("Using the native implementation of modexp");
     } else {
       BigIntegerModularExponentiationPrecompiledContract.disableNative();

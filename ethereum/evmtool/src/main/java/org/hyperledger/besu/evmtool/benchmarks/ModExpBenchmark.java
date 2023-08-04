@@ -107,14 +107,15 @@ public class ModExpBenchmark extends BenchmarkExecutor {
     final BigIntegerModularExponentiationPrecompiledContract contract =
         new BigIntegerModularExponentiationPrecompiledContract(gasCalculatorForFork(fork));
 
-    if (attemptNative != null) {
-      if (attemptNative && BigIntegerModularExponentiationPrecompiledContract.maybeEnableNative()) {
-        output.println("Native ModEXP");
-      } else {
-        BigIntegerModularExponentiationPrecompiledContract.disableNative();
-        output.println("Java ModEXP");
-      }
+    if (attemptNative != null
+        && (!attemptNative
+            || !BigIntegerModularExponentiationPrecompiledContract.maybeEnableNative())) {
+      BigIntegerModularExponentiationPrecompiledContract.disableNative();
     }
+    output.println(
+        BigIntegerModularExponentiationPrecompiledContract.isNative()
+            ? "Native ModExp"
+            : "Java modExp");
 
     for (final Map.Entry<String, Bytes> testCase : testcases.entrySet()) {
       final double execTime = runPrecompileBenchmark(testCase.getValue(), contract);

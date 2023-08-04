@@ -53,7 +53,7 @@ public class NativeLibraryOptions {
           "Per default a native library is used for modexp. "
               + "If the Java implementation should be used instead, this option must be set to false",
       arity = "1")
-  private final Boolean nativeModExp = Boolean.TRUE;
+  private final Boolean nativeModExp = Boolean.FALSE;
 
   /**
    * Create native library options.
