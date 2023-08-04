@@ -115,6 +115,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return respondWithInvalid(reqId, blockParam, null, INVALID, "Invalid versionedHash");
     }
 
+    final Optional<BlockHeader> maybeParentHeader =
+            protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
+
     LOG.atTrace()
         .setMessage("blockparam: {}")
         .addArgument(() -> Json.encodePrettily(blockParam))
@@ -217,11 +220,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           getInvalidBlockHashStatus(),
           errorMessage);
     }
-
-    final Optional<BlockHeader> maybeParentHeader =
-        mergeCoordinator.getOrSyncHeadByHash(
-            blockParam.getParentHash(),
-            protocolContext.getBlockchain().getFinalized().orElse(blockParam.getParentHash()));
 
     ValidationResult<RpcErrorType> blobValidationResult =
         validateBlobs(
