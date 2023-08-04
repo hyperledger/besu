@@ -45,10 +45,10 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
+import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.log.Log;
@@ -229,7 +229,7 @@ public class T8nExecutor {
       final String rewardString,
       final ObjectMapper objectMapper,
       final ReferenceTestEnv referenceTestEnv,
-      final MutableWorldState initialWorldState,
+      final ReferenceTestWorldState initialWorldState,
       final List<Transaction> transactions,
       final List<RejectedTransaction> rejections,
       final TracerManager tracerManager) {
@@ -238,7 +238,7 @@ public class T8nExecutor {
         ReferenceTestProtocolSchedules.create(
             new StubGenesisConfigOptions().chainId(BigInteger.valueOf(chainId)));
 
-    final MutableWorldState worldState = new DefaultMutableWorldState(initialWorldState);
+    final MutableWorldState worldState = initialWorldState.copy();
 
     final ProtocolSchedule protocolSchedule = referenceTestProtocolSchedules.getByName(fork);
     if (protocolSchedule == null) {

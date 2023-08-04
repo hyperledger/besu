@@ -87,6 +87,8 @@ public interface ReferenceTestWorldState extends MutableWorldState {
     }
   }
 
+  ReferenceTestWorldState copy();
+
   @JsonCreator
   static ReferenceTestWorldState create(final Map<String, AccountMock> accounts) {
     // delegate to a Bonsai reference test world state:

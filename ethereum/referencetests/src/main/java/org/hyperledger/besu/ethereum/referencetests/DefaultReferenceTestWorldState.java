@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
+import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -25,7 +26,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-class DefaultReferenceTestWorldState extends DefaultMutableWorldState
+public class DefaultReferenceTestWorldState extends DefaultMutableWorldState
     implements ReferenceTestWorldState {
 
   DefaultReferenceTestWorldState() {
@@ -34,8 +35,17 @@ class DefaultReferenceTestWorldState extends DefaultMutableWorldState
         new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()));
   }
 
+  public DefaultReferenceTestWorldState(final WorldState worldState) {
+    super(worldState);
+  }
+
+  @Override
+  public ReferenceTestWorldState copy() {
+    return new DefaultReferenceTestWorldState(this);
+  }
+
   @JsonCreator
-  static ReferenceTestWorldState create(final Map<String, AccountMock> accounts) {
+  public static ReferenceTestWorldState create(final Map<String, AccountMock> accounts) {
     final ReferenceTestWorldState worldState = new DefaultReferenceTestWorldState();
     final WorldUpdater updater = worldState.updater();
 

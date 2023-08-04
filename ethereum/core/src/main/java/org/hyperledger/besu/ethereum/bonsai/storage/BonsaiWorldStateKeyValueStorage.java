@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.bonsai.storage.flat.FlatDbReaderStrategy;
@@ -31,6 +32,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -41,10 +43,14 @@ import org.hyperledger.besu.util.Subscribers;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -53,7 +59,7 @@ import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("unused")
 public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoCloseable {
-
+  Bytes32 BYTES32_MAX_VALUE = Bytes32.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateKeyValueStorage.class);
 
   // 0x776f726c64526f6f74
@@ -78,6 +84,9 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   protected final AtomicBoolean isClosed = new AtomicBoolean(false);
 
   protected final Subscribers<BonsaiStorageSubscriber> subscribers = Subscribers.create();
+
+  // no-op default hash preImage mapper:
+  protected Function<Hash, Optional<Bytes>> hashPreImageMapper = __ -> Optional.empty();
 
   public BonsaiWorldStateKeyValueStorage(
       final StorageProvider provider, final ObservableMetricsSystem metricsSystem) {
@@ -248,6 +257,33 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return getFlatDbReaderStrategy()
         .streamStorageFlatDatabase(
             composedWorldStateStorage, accountHash, startKeyHash, endKeyHash, max);
+  }
+
+  /**
+   * Provide a function to map hash values to an Optional wrapping their corresponding preImage
+   * or empty if the preImage is not available.
+   *
+   * @param hashPreImageMapper preImage mapper function
+   */
+  public void setPreImageMapper(final Function<Hash, Optional<Bytes>> hashPreImageMapper) {
+    this.hashPreImageMapper = hashPreImageMapper;
+  }
+
+  public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(final Hash addressHash,
+      final Bytes32 startKeyHash, final int limit) {
+        return streamFlatStorages(addressHash, startKeyHash, BYTES32_MAX_VALUE, limit)
+            .entrySet()
+            .stream()
+            .collect(Collectors.toMap(
+                e -> e.getKey(),
+                e -> AccountStorageEntry.create(
+                    UInt256.fromBytes(e.getValue()),
+                    Hash.wrap(e.getKey()),
+                    hashPreImageMapper.apply(Hash.wrap(e.getKey()))
+                        .map(UInt256::fromBytes)),
+                (a,b) -> a,
+                TreeMap::new
+            ));
   }
 
   @Override

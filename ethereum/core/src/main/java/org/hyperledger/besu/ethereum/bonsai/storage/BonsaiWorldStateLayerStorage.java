@@ -39,6 +39,7 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
       final BonsaiWorldStateKeyValueStorage parent,
       final ObservableMetricsSystem metricsSystem) {
     super(parent, composedWorldStateStorage, trieLogStorage, metricsSystem);
+    setPreImageMapper(parent.hashPreImageMapper);
   }
 
   @Override

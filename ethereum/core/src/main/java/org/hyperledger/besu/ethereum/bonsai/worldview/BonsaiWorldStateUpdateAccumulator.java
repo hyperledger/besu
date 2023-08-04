@@ -66,6 +66,8 @@ public class BonsaiWorldStateUpdateAccumulator
   private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
   private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
 
+  private final Function<Bytes, Hash> preImageHasher;
+
   // storage sub mapped by _hashed_ key.  This is because in self_destruct calls we need to
   // enumerate the old storage and delete it.  Those are trie stored by hashed key by spec and the
   // alternative was to keep a giant pre-image cache of the entire trie.
@@ -78,11 +80,21 @@ public class BonsaiWorldStateUpdateAccumulator
       final BonsaiWorldView world,
       final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader,
       final Consumer<StorageSlotKey> storagePreloader) {
-    super(world);
-    this.accountsToUpdate = new AccountConsumingMap<>(new ConcurrentHashMap<>(), accountPreloader);
-    this.accountPreloader = accountPreloader;
-    this.storagePreloader = storagePreloader;
-    this.isAccumulatorStateChanged = false;
+        // create accumulator without a preImage-aware Hash function:
+        this(world, accountPreloader, storagePreloader, Hash::hash);
+  }
+
+  protected BonsaiWorldStateUpdateAccumulator(
+      final BonsaiWorldView world,
+      final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader,
+      final Consumer<StorageSlotKey> storagePreloader,
+      final Function<Bytes, Hash> preImageHasher) {
+      super(world);
+      this.accountsToUpdate = new AccountConsumingMap<>(new ConcurrentHashMap<>(), accountPreloader);
+      this.accountPreloader = accountPreloader;
+      this.storagePreloader = storagePreloader;
+      this.isAccumulatorStateChanged = false;
+      this.preImageHasher = preImageHasher;
   }
 
   public BonsaiWorldStateUpdateAccumulator copy() {
@@ -127,14 +139,18 @@ public class BonsaiWorldStateUpdateAccumulator
       bonsaiValue = new BonsaiValue<>(null, null);
       accountsToUpdate.put(address, bonsaiValue);
     } else if (bonsaiValue.getUpdated() != null) {
-      throw new IllegalStateException("Cannot create an account when one already exists");
+        if (bonsaiValue.getUpdated().isEmpty()) {
+          return new WrappedEvmAccount(track(new UpdateTrackingAccount<>(bonsaiValue.getUpdated())));
+        } else {
+          throw new IllegalStateException("Cannot create an account when one already exists");
+        }
     }
 
     final BonsaiAccount newAccount =
         new BonsaiAccount(
             this,
             address,
-            address.addressHash(),
+            preImageHasher.apply(address),
             nonce,
             balance,
             Hash.EMPTY_TRIE_HASH,
@@ -355,7 +371,7 @@ public class BonsaiWorldStateUpdateAccumulator
               entries.forEach(
                   storageUpdate -> {
                     final UInt256 keyUInt = storageUpdate.getKey();
-                    final Hash slotHash = Hash.hash(keyUInt);
+                    final Hash slotHash = preImageHasher.apply(keyUInt);
                     final StorageSlotKey slotKey =
                         new StorageSlotKey(slotHash, Optional.of(keyUInt));
                     final UInt256 value = storageUpdate.getValue();
@@ -399,7 +415,7 @@ public class BonsaiWorldStateUpdateAccumulator
 
   @Override
   public UInt256 getStorageValue(final Address address, final UInt256 slotKey) {
-    StorageSlotKey storageSlotKey = new StorageSlotKey(Hash.hash(slotKey), Optional.of(slotKey));
+    StorageSlotKey storageSlotKey = new StorageSlotKey(preImageHasher.apply(slotKey), Optional.of(slotKey));
     return getStorageValueByStorageSlotKey(address, storageSlotKey).orElse(UInt256.ZERO);
   }
 
@@ -443,7 +459,7 @@ public class BonsaiWorldStateUpdateAccumulator
   public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
     // TODO maybe log the read into the trie layer?
     StorageSlotKey storageSlotKey =
-        new StorageSlotKey(Hash.hash(storageKey), Optional.of(storageKey));
+        new StorageSlotKey(preImageHasher.apply(storageKey), Optional.of(storageKey));
     final Map<StorageSlotKey, BonsaiValue<UInt256>> localAccountStorage =
         storageToUpdate.get(address);
     if (localAccountStorage != null) {

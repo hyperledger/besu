@@ -16,11 +16,9 @@
 
 package org.hyperledger.besu.ethereum.bonsai.worldview;
 
-import static org.hyperledger.besu.ethereum.bonsai.BonsaiAccount.fromRLP;
-import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
-import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
-
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
@@ -47,19 +45,20 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.hyperledger.besu.ethereum.bonsai.BonsaiAccount.fromRLP;
+import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
+import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
 public class BonsaiWorldState
     implements MutableWorldState, BonsaiWorldView, BonsaiStorageSubscriber {
@@ -68,8 +67,8 @@ public class BonsaiWorldState
 
   private BonsaiWorldStateKeyValueStorage worldStateStorage;
 
-  private final CachedMerkleTrieLoader cachedMerkleTrieLoader;
-  private final TrieLogManager trieLogManager;
+  protected final CachedMerkleTrieLoader cachedMerkleTrieLoader;
+  protected final TrieLogManager trieLogManager;
   private final BonsaiWorldStateUpdateAccumulator accumulator;
 
   private Hash worldStateRootHash;
@@ -80,13 +79,14 @@ public class BonsaiWorldState
   public BonsaiWorldState(
       final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateStorage) {
-    this(worldStateStorage, archive.getCachedMerkleTrieLoader(), archive.getTrieLogManager());
+    this(worldStateStorage, archive.getCachedMerkleTrieLoader(), archive.getTrieLogManager(), Hash::hash);
   }
 
   protected BonsaiWorldState(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader,
-      final TrieLogManager trieLogManager) {
+      final TrieLogManager trieLogManager,
+      final Function<Bytes, Hash> preImageHasher) {
     this.worldStateStorage = worldStateStorage;
     this.worldStateRootHash =
         Hash.wrap(
@@ -100,7 +100,8 @@ public class BonsaiWorldState
                 cachedMerkleTrieLoader.preLoadAccount(
                     getWorldStateStorage(), worldStateRootHash, addr),
             (addr, value) ->
-                cachedMerkleTrieLoader.preLoadStorageSlot(getWorldStateStorage(), addr, value));
+                cachedMerkleTrieLoader.preLoadStorageSlot(getWorldStateStorage(), addr, value),
+            preImageHasher);
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
     this.trieLogManager = trieLogManager;
   }
