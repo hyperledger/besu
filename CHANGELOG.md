@@ -4,6 +4,8 @@
 
 ### Breaking Changes
 
+- Add ABI-decoded revert reason to `eth_call` and `eth_estimateGas` responses [#5705](https://github.com/hyperledger/besu/issues/5705)
+
 ### Additions and Improvements
 
 ### Bug Fixes
