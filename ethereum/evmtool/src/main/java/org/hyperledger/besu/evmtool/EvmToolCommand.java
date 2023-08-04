@@ -88,6 +88,7 @@ import picocli.CommandLine.Option;
     footerHeading = "%n",
     footer = "Hyperledger Besu is licensed under the Apache License 2.0",
     subcommands = {
+      BenchmarkSubCommand.class,
       B11rSubCommand.class,
       CodeValidateSubCommand.class,
       StateTestSubCommand.class,
@@ -448,7 +449,7 @@ public class EvmToolCommand implements Runnable {
             account -> {
               out.println(
                   " \"" + account.getAddress().map(Address::toHexString).orElse("-") + "\": {");
-              if (account.getCode() != null && account.getCode().size() > 0) {
+              if (account.getCode() != null && !account.getCode().isEmpty()) {
                 out.println("  \"code\": \"" + account.getCode().toHexString() + "\",");
               }
               NavigableMap<Bytes32, AccountStorageEntry> storageEntries =
