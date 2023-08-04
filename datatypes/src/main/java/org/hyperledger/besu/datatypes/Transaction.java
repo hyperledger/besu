@@ -234,7 +234,7 @@ public interface Transaction {
    * Return the effective priority fee per gas for this transaction.
    *
    * @param maybeBaseFee base fee in case of EIP-1559 transaction
-   * @return max fee per gas in wei
+   * @return priority fee per gas in wei
    */
   Wei getEffectivePriorityFeePerGas(final Optional<Wei> maybeBaseFee);
 
