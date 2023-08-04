@@ -116,7 +116,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     }
 
     final Optional<BlockHeader> maybeParentHeader =
-            protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
+        protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
 
     LOG.atTrace()
         .setMessage("blockparam: {}")
