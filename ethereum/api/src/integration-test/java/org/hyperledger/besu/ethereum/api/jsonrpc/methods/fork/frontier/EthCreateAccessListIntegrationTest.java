@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods.fork.frontier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.BlockchainImporter;
@@ -27,7 +28,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallPar
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CreateAccessListResult;
-import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
 import java.util.ArrayList;
