@@ -231,7 +231,7 @@ public interface Transaction {
   Wei getMaxGasPrice();
 
   /**
-   * Return the maximum fee per gas the sender is willing to pay for this transaction.
+   * Return the effective priority fee per gas for this transaction.
    *
    * @param maybeBaseFee base fee in case of EIP-1559 transaction
    * @return max fee per gas in wei
