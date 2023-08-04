@@ -1,0 +1,60 @@
+package org.hyperledger.besu.evmtool.benchmarks;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hyperledger.besu.crypto.Hash.keccak256;
+
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.crypto.SECPPrivateKey;
+import org.hyperledger.besu.crypto.SECPSignature;
+
+import java.io.PrintStream;
+import java.math.BigInteger;
+import java.util.concurrent.TimeUnit;
+
+import com.google.common.base.Stopwatch;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+
+public class Secp256k1Benchmark extends BenchmarkExecutor {
+
+  public Secp256k1Benchmark() {
+    super(MATH_WARMUP, MATH_ITERATIONS);
+  }
+
+  @Override
+  public void runBenchmark(
+      final PrintStream output, final Boolean attemptNative, final String fork) {
+    final SECP256K1 signatureAlgorithm = new SECP256K1();
+    if (attemptNative != null) {
+      if (attemptNative && signatureAlgorithm.maybeEnableNative()) {
+        output.println("Native secp256k1");
+      } else {
+        signatureAlgorithm.disableNative();
+        output.println("Java secp256k1");
+      }
+    }
+
+    final SECPPrivateKey privateKey =
+        signatureAlgorithm.createPrivateKey(
+            new BigInteger("c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4", 16));
+    final KeyPair keyPair = signatureAlgorithm.createKeyPair(privateKey);
+
+    final Bytes data = Bytes.wrap("This is an example of a signed message.".getBytes(UTF_8));
+    final Bytes32 dataHash = keccak256(data);
+    final SECPSignature signature = signatureAlgorithm.sign(dataHash, keyPair);
+    for (int i = 0; i < warmup; i++) {
+      signatureAlgorithm.recoverPublicKeyFromSignature(dataHash, signature);
+    }
+    final Stopwatch timer = Stopwatch.createStarted();
+    for (int i = 0; i < iterations; i++) {
+      signatureAlgorithm.recoverPublicKeyFromSignature(dataHash, signature);
+    }
+    timer.stop();
+
+    final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
+    final double perCall = elapsed / MATH_ITERATIONS;
+
+    output.printf("secp256k1 signature recovery for %,.1f µs", perCall * 1_000_000);
+  }
+}

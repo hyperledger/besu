@@ -5,7 +5,9 @@ import static picocli.CommandLine.ScopeType.INHERIT;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.evmtool.benchmarks.BenchmarkExecutor;
+import org.hyperledger.besu.evmtool.benchmarks.ECRecoverBenchmark;
 import org.hyperledger.besu.evmtool.benchmarks.ModExpBenchmark;
+import org.hyperledger.besu.evmtool.benchmarks.Secp256k1Benchmark;
 
 import java.io.PrintStream;
 import java.util.EnumSet;
@@ -25,7 +27,9 @@ public class BenchmarkSubCommand implements Runnable {
   private final PrintStream output;
 
   enum Benchmark {
-    ModExp(new ModExpBenchmark());
+    EcRecover(new ECRecoverBenchmark()),
+    ModExp(new ModExpBenchmark()),
+    Secp256k1(new Secp256k1Benchmark());
 
     final BenchmarkExecutor benchmarkExecutor;
 
@@ -35,11 +39,11 @@ public class BenchmarkSubCommand implements Runnable {
   }
 
   @Option(
-      names = {"--nonative"},
-      description = "Don't use the native libraries.",
+      names = {"--native"},
+      description = "Use the native libraries.",
       scope = INHERIT,
       negatable = true)
-  final Boolean noNative = false;
+  Boolean nativeCode;
 
   @Option(
       names = {"--fork"},
@@ -66,7 +70,7 @@ public class BenchmarkSubCommand implements Runnable {
     var benchmarksToRun = benchmarks.isEmpty() ? EnumSet.allOf(Benchmark.class) : benchmarks;
     for (var benchmark : benchmarksToRun) {
       System.out.println("Benchmarks for " + benchmark);
-      benchmark.benchmarkExecutor.runBenchmark(output, !noNative, fork);
+      benchmark.benchmarkExecutor.runBenchmark(output, nativeCode, fork);
     }
   }
 }

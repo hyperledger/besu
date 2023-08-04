@@ -59,15 +59,22 @@ public class SECP256K1 extends AbstractSECP256 {
     super(CURVE_NAME, SecP256K1Curve.q);
 
     // use the native library implementation, if it is available
-    useNative = LibSecp256k1.CONTEXT != null;
-    if (!useNative) {
-      LOG.info("Native secp256k1 not available");
-    }
+    maybeEnableNative();
   }
 
   @Override
   public void disableNative() {
     useNative = false;
+  }
+
+  public boolean maybeEnableNative() {
+    try {
+      useNative = LibSecp256k1.CONTEXT != null;
+    } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
+      LOG.info("Native secp256k1 not available - {}", e.getMessage());
+      useNative = false;
+    }
+    return useNative;
   }
 
   @Override

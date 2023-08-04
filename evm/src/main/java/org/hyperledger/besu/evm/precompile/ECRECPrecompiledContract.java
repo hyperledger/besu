@@ -35,14 +35,20 @@ import org.apache.tuweni.bytes.MutableBytes32;
 public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
 
   private static final int V_BASE = 27;
-
+  final SignatureAlgorithm signatureAlgorithm;
   /**
    * Instantiates a new ECREC precompiled contract.
    *
    * @param gasCalculator the gas calculator
    */
   public ECRECPrecompiledContract(final GasCalculator gasCalculator) {
+    this(gasCalculator, SignatureAlgorithmFactory.getInstance());
+  }
+
+  public ECRECPrecompiledContract(
+      final GasCalculator gasCalculator, final SignatureAlgorithm signatureAlgorithm) {
     super("ECREC", gasCalculator);
+    this.signatureAlgorithm = signatureAlgorithm;
   }
 
   @Override
@@ -68,7 +74,6 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
     final int recId = d.get(63) - V_BASE;
     final BigInteger r = d.slice(64, 32).toUnsignedBigInteger();
     final BigInteger s = d.slice(96, 32).toUnsignedBigInteger();
-    final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
     final SECPSignature signature;
     try {

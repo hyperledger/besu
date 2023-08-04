@@ -33,8 +33,8 @@ public abstract class BenchmarkExecutor {
   static final int MATH_WARMUP = 10_000;
   static final int MATH_ITERATIONS = 1_000;
 
-  final int warmup;
-  final int iterations;
+  int warmup;
+  int iterations;
 
   static final MessageFrame fakeFrame =
       MessageFrame.builder()
@@ -72,17 +72,17 @@ public abstract class BenchmarkExecutor {
       throw new RuntimeException("Input is Invalid");
     }
 
-    for (int i = 0; i < MATH_WARMUP; i++) {
+    for (int i = 0; i < warmup; i++) {
       contract.computePrecompile(arg, fakeFrame);
     }
     final Stopwatch timer = Stopwatch.createStarted();
-    for (int i = 0; i < MATH_ITERATIONS; i++) {
+    for (int i = 0; i < iterations; i++) {
       contract.computePrecompile(arg, fakeFrame);
     }
     timer.stop();
 
     final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
-    return elapsed / MATH_ITERATIONS;
+    return elapsed / iterations;
   }
 
   public static GasCalculator gasCalculatorForFork(final String fork) {
@@ -103,5 +103,5 @@ public abstract class BenchmarkExecutor {
   }
 
   public abstract void runBenchmark(
-      final PrintStream output, final boolean attemptNative, final String fork);
+      final PrintStream output, final Boolean attemptNative, final String fork);
 }
