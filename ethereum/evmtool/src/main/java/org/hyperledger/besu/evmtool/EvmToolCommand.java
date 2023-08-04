@@ -231,6 +231,9 @@ public class EvmToolCommand implements Runnable {
     out = output;
     in = input;
 
+    // don't require exact case to match enum values
+    commandLine.setCaseInsensitiveEnumValuesAllowed(true);
+
     // add dagger-injected options
     commandLine.addMixin("Dagger Options", daggerOptions);
 
