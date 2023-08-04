@@ -40,13 +40,19 @@ public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompil
   static boolean useNative;
 
   static {
+    maybeEnableNative();
+  }
+
+  public static boolean maybeEnableNative() {
     try {
       useNative = LibEthPairings.ENABLED;
-    } catch (UnsatisfiedLinkError ule) {
+    } catch (UnsatisfiedLinkError | NoClassDefFoundError ule) {
       LOG.info("altbn128 native precompile not available: {}", ule.getMessage());
       useNative = false;
     }
+    return useNative;
   }
+
 
   /** Disable native. */
   public static void disableNative() {

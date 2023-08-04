@@ -72,17 +72,25 @@ public abstract class BenchmarkExecutor {
       throw new RuntimeException("Input is Invalid");
     }
 
-    for (int i = 0; i < warmup; i++) {
+    final Stopwatch timer = Stopwatch.createStarted();
+    for (int i = 0; i < warmup && timer.elapsed().getSeconds() < 1; i++) {
       contract.computePrecompile(arg, fakeFrame);
     }
-    final Stopwatch timer = Stopwatch.createStarted();
-    for (int i = 0; i < iterations; i++) {
+    timer.reset();
+    timer.start();
+    int executions = 0;
+    while (executions < iterations && timer.elapsed().getSeconds() < 1) {
       contract.computePrecompile(arg, fakeFrame);
+      executions++;
     }
     timer.stop();
 
+    if (executions < 1) {
+      return Double.NaN;
+    }
+
     final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
-    return elapsed / iterations;
+    return elapsed / executions;
   }
 
   public static GasCalculator gasCalculatorForFork(final String fork) {

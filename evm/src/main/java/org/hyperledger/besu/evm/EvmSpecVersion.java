@@ -79,6 +79,10 @@ public enum EvmSpecVersion {
     this.description = description;
   }
 
+  public static EvmSpecVersion defaultVersion() {
+    return CANCUN;
+  }
+
   /**
    * Gets max eof version.
    *
@@ -119,5 +123,14 @@ public enum EvmSpecVersion {
           this.name());
     }
     versionWarned = true;
+  }
+
+  public static EvmSpecVersion fromName(final String name) {
+    for (var version : EvmSpecVersion.values()) {
+      if (version.name().equalsIgnoreCase(name)) {
+        return version;
+      }
+    }
+    return null;
   }
 }

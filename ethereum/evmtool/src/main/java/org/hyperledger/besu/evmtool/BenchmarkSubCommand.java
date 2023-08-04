@@ -4,6 +4,8 @@ import static org.hyperledger.besu.evmtool.BenchmarkSubCommand.COMMAND_NAME;
 import static picocli.CommandLine.ScopeType.INHERIT;
 
 import org.hyperledger.besu.BesuInfo;
+import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evmtool.benchmarks.AltBN128Benchmark;
 import org.hyperledger.besu.evmtool.benchmarks.BenchmarkExecutor;
 import org.hyperledger.besu.evmtool.benchmarks.ECRecoverBenchmark;
 import org.hyperledger.besu.evmtool.benchmarks.ModExpBenchmark;
@@ -27,6 +29,8 @@ public class BenchmarkSubCommand implements Runnable {
   private final PrintStream output;
 
   enum Benchmark {
+    AltBn128(new AltBN128Benchmark()),
+    //blake2f
     EcRecover(new ECRecoverBenchmark()),
     ModExp(new ModExpBenchmark()),
     Secp256k1(new Secp256k1Benchmark());
@@ -49,7 +53,7 @@ public class BenchmarkSubCommand implements Runnable {
       names = {"--fork"},
       paramLabel = "<String>",
       description = "Fork to evaluate, when it impacts gas costing.")
-  String fork = "Cancun";
+  String fork = EvmSpecVersion.defaultVersion().getName();
 
   @Parameters EnumSet<Benchmark> benchmarks = EnumSet.noneOf(Benchmark.class);
 
