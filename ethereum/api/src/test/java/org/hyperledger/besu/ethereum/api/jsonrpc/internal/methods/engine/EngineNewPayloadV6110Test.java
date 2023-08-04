@@ -14,45 +14,113 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.assertj.core.api.Assertions;
-import org.hyperledger.besu.datatypes.DataGas;
-import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLError.INVALID_PARAMS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameterTestFixture.DEPOSIT_PARAM_1;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
-public class EngineNewPayloadV6110Test extends AbstractEngineNewPayloadTest {
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 
-  public EngineNewPayloadV6110Test() {
-    super(EngineNewPayloadV6110::new);
-  }
+import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+
+@ExtendWith(MockitoExtension.class)
+public class EngineNewPayloadV6110Test extends EngineNewPayloadV2Test {
+
+  public EngineNewPayloadV6110Test() {}
 
   @Override
   @Test
   public void shouldReturnExpectedMethodName() {
     assertThat(method.getName()).isEqualTo("engine_newPayloadV6110");
+  }
+  @Test
+  public void shouldReturnValidIfDepositsIsNotNull_WhenDepositsAllowed() {
+    final List<DepositParameter> depositsParam = List.of(DEPOSIT_PARAM_1);
+    final List<Deposit> deposits = List.of(DEPOSIT_PARAM_1.toDeposit());
+    when(protocolSpec.getDepositsValidator())
+        .thenReturn(new DepositsValidator.AllowedDeposits(Address.ZERO));
+    BlockHeader mockHeader =
+        setupValidPayload(
+            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            Optional.empty(),
+            Optional.of(deposits));
+
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), null, depositsParam));
+
+    assertValidResponse(mockHeader, resp);
+  }
+
+  @Test
+  public void shouldReturnValidIfDepositsIsNull_WhenDepositsProhibited() {
+    final List<DepositParameter> deposits = null;
+    when(protocolSpec.getDepositsValidator())
+        .thenReturn(new DepositsValidator.ProhibitedDeposits());
+    BlockHeader mockHeader =
+        setupValidPayload(
+            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            Optional.empty(),
+            Optional.empty());
+
+    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), null, deposits, null));
+
+    assertValidResponse(mockHeader, resp);
+  }
+
+  @Test
+  public void shouldReturnInvalidIfDepositsIsNotNull_WhenDepositsProhibited() {
+    final List<DepositParameter> deposits = List.of();
+    lenient()
+        .when(protocolSpec.getDepositsValidator())
+        .thenReturn(new DepositsValidator.ProhibitedDeposits());
+
+    var resp =
+        resp(
+            mockPayload(
+                createBlockHeader(Optional.of(Collections.emptyList()), Optional.empty()),
+                Collections.emptyList(),
+                null,
+                deposits,
+                null));
+
+    final JsonRpcError jsonRpcError = fromErrorResp(resp);
+    assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldReturnInvalidIfDepositsIsNull_WhenDepositsAllowed() {
+    final List<DepositParameter> deposits = null;
+    when(protocolSpec.getDepositsValidator())
+        .thenReturn(new DepositsValidator.AllowedDeposits(Address.ZERO));
+
+    var resp =
+        resp(
+            mockPayload(
+                createBlockHeader(Optional.empty(), Optional.empty()),
+                Collections.emptyList(),
+                null,
+                deposits));
+
+    assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
+    verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
 }

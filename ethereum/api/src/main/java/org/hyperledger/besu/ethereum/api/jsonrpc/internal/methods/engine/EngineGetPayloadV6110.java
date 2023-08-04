@@ -80,7 +80,7 @@ public class EngineGetPayloadV6110 extends AbstractEngineGetPayload {
             blockResultFactory.payloadTransactionCompleteV6110(blockWithReceipts));
       } else {
         LOG.error("Timestamp of the built payload is less than EIP-6110 activation timestamp");
-        return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INTERNAL_ERROR); // TODO: For now
+        return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.UNSUPPORTED_FORK);
       }
 
     } catch (ClassCastException e) {

@@ -51,16 +51,14 @@ public class EngineNewPayloadV6110 extends EngineNewPayloadV3 {
     var eip6110 = timestampSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("ExperimentalEips"));
 
 
-    // TODO-6110: Need to double check the condition on returning UNSUPPORTED_FORK
     if (eip6110.isPresent() && payloadParameter.getTimestamp() >= eip6110.get().milestone()) {
-      if (payloadParameter.getDataGasUsed() == null
-          || payloadParameter.getExcessDataGas() == null) {
-        return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing data gas fields");
+      if (payloadParameter.getDeposits() == null) {
+        return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing deposit receipts");
       } else {
         return ValidationResult.valid();
       }
     } else {
-      return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Fork not supported");
+      return ValidationResult.invalid(RpcErrorType.UNSUPPORTED_FORK, "Fork not supported");
     }
   }
 }

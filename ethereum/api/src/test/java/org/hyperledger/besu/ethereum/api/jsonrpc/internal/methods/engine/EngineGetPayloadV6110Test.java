@@ -30,10 +30,6 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import java.security.InvalidParameterException;
 import java.util.Collections;
@@ -46,9 +42,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(
-    MockitoJUnitRunner.Silent
-        .class) // mocks in parent class may not be used, throwing unnecessary stubbing
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(
+    MockitoExtension.class) // mocks in parent class may not be used, throwing unnecessary stubbing
 public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
 
   private static final long EIP_6110_AT = 31337L;
@@ -57,7 +57,7 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
     super(EngineGetPayloadV6110::new);
   }
 
-  @Before
+  @BeforeEach
   @Override
   public void before() {
     super.before();
@@ -146,7 +146,9 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
 
   @Test
   public void shouldReturnUnsupportedFork() {
-    // TODO
+    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V6110.getMethodName(), mockPid);
+
+    assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
   }
 
   @Override
