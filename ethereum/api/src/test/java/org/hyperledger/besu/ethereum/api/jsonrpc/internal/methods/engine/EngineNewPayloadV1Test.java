@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -70,7 +69,7 @@ public class EngineNewPayloadV1Test extends AbstractEngineNewPayloadTest {
   public void shouldReturnInvalidOnBadTerminalBlock() {
     BlockHeader mockHeader = createBlockHeader(Optional.empty(), Optional.empty());
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
-    when(mergeCoordinator.getOrSyncHeadByHash(eq(mockHeader.getParentHash()), any(Hash.class)))
+    when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
         .thenReturn(false);
