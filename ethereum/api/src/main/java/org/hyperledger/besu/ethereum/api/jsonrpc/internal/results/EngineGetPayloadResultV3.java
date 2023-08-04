@@ -74,10 +74,9 @@ public class EngineGetPayloadResultV3 {
     private final String timestamp;
     private final String extraData;
     private final String baseFeePerGas;
-
-    private final String excessDataGas;
-
     private final String dataGasUsed;
+    private final String excessDataGas;
+    private final String parentBeaconBlockRoot;
 
     protected final List<String> transactions;
     private final List<WithdrawalParameter> withdrawals;
@@ -111,6 +110,7 @@ public class EngineGetPayloadResultV3 {
       this.dataGasUsed = header.getDataGasUsed().map(Quantity::create).orElse(Quantity.HEX_ZERO);
       this.excessDataGas =
           header.getExcessDataGas().map(Quantity::create).orElse(Quantity.HEX_ZERO);
+      this.parentBeaconBlockRoot = header.getParentBeaconBlockRoot().map(Bytes32::toHexString).orElse(null);
     }
 
     @JsonGetter(value = "blockNumber")
@@ -197,6 +197,11 @@ public class EngineGetPayloadResultV3 {
     @JsonGetter(value = "dataGasUsed")
     public String getDataGasUseds() {
       return dataGasUsed;
+    }
+
+    @JsonGetter(value = "parentBeaconBlockRoot")
+    public String getParentBeaconBlockRoot() {
+      return parentBeaconBlockRoot;
     }
   }
 }

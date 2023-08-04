@@ -152,23 +152,24 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<BlockHeader>> maybeOmmers,
       final long timestamp) {
     return createBlock(
-        maybeTransactions, maybeOmmers, Optional.empty(), Optional.empty(), timestamp, true);
+        maybeTransactions, maybeOmmers, Optional.empty(), Optional.empty(), Optional.empty(), timestamp, true);
   }
 
   protected BlockCreationResult createBlock(
-      final Optional<List<Transaction>> maybeTransactions,
-      final Optional<List<BlockHeader>> maybeOmmers,
-      final Optional<List<Withdrawal>> maybeWithdrawals,
-      final Optional<Bytes32> maybePrevRandao,
-      final long timestamp,
-      boolean rewardCoinbase) {
+          final Optional<List<Transaction>> maybeTransactions,
+          final Optional<List<BlockHeader>> maybeOmmers,
+          final Optional<List<Withdrawal>> maybeWithdrawals,
+          final Optional<Bytes32> maybePrevRandao,
+          final Optional<Bytes32> maybeParentBeaconBlockRoot,
+          final long timestamp,
+          boolean rewardCoinbase) {
 
     try (final MutableWorldState disposableWorldState = duplicateWorldStateAtParent()) {
       final ProtocolSpec newProtocolSpec =
           protocolSchedule.getForNextBlockHeader(parentHeader, timestamp);
 
       final ProcessableBlockHeader processableBlockHeader =
-          createPendingBlockHeader(timestamp, maybePrevRandao, newProtocolSpec);
+          createPendingBlockHeader(timestamp, maybePrevRandao, maybeParentBeaconBlockRoot, newProtocolSpec);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.getMiningBeneficiary(processableBlockHeader.getNumber());
       Wei dataGasPrice =
@@ -369,9 +370,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   }
 
   private ProcessableBlockHeader createPendingBlockHeader(
-      final long timestamp,
-      final Optional<Bytes32> maybePrevRandao,
-      final ProtocolSpec protocolSpec) {
+          final long timestamp,
+          final Optional<Bytes32> maybePrevRandao,
+          final Optional<Bytes32> maybeParentBeaconBlockRoot,
+          final ProtocolSpec protocolSpec) {
     final long newBlockNumber = parentHeader.getNumber() + 1;
     long gasLimit =
         protocolSpec
@@ -399,6 +401,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             .orElse(null);
 
     final Bytes32 prevRandao = maybePrevRandao.orElse(null);
+    final Bytes32 parentBeaconBlockRoot = maybeParentBeaconBlockRoot.orElse(null);
     return BlockHeaderBuilder.create()
         .parentHash(parentHeader.getHash())
         .coinbase(coinbase)
@@ -408,6 +411,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         .timestamp(timestamp)
         .baseFee(baseFee)
         .prevRandao(prevRandao)
+        .parentBeaconBlockRoot(parentBeaconBlockRoot)
         .buildProcessableBlockHeader();
   }
 

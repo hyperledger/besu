@@ -99,12 +99,12 @@ public class EnginePayloadAttributesParameterTest {
 
   private EnginePayloadAttributesParameter parameterWithdrawalsOmitted() {
     return new EnginePayloadAttributesParameter(
-        TIMESTAMP, PREV_RANDAO, SUGGESTED_FEE_RECIPIENT_ADDRESS, null);
+        TIMESTAMP, PREV_RANDAO, SUGGESTED_FEE_RECIPIENT_ADDRESS, null, null);
   }
 
   private EnginePayloadAttributesParameter parameterWithdrawalsPresent() {
     final List<WithdrawalParameter> withdrawals = List.of(WITHDRAWAL_PARAM_1, WITHDRAWAL_PARAM_2);
     return new EnginePayloadAttributesParameter(
-        TIMESTAMP, PREV_RANDAO, SUGGESTED_FEE_RECIPIENT_ADDRESS, withdrawals);
+        TIMESTAMP, PREV_RANDAO, SUGGESTED_FEE_RECIPIENT_ADDRESS, withdrawals, null);
   }
 }

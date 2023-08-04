@@ -59,7 +59,7 @@ public class ChainForTestCreator {
         null,
         null,
         null,
-        null,
+            null, null,
         new MainnetBlockHeaderFunctions());
   }
 
@@ -86,7 +86,7 @@ public class ChainForTestCreator {
         blockHeader.getWithdrawalsRoot().orElse(null),
         blockHeader.getDataGasUsed().orElse(null),
         blockHeader.getExcessDataGas().orElse(null),
-        blockHeader.getDepositsRoot().orElse(null),
+            null, blockHeader.getDepositsRoot().orElse(null),
         new MainnetBlockHeaderFunctions());
   }
 
@@ -135,7 +135,7 @@ public class ChainForTestCreator {
         null,
         null,
         null,
-        null,
+            null, null,
         new MainnetBlockHeaderFunctions());
   }
 }

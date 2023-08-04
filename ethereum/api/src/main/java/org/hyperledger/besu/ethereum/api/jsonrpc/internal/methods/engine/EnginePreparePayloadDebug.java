@@ -67,6 +67,7 @@ public class EnginePreparePayloadDebug extends ExecutionEngineJsonRpcMethod {
                     Optional.empty(),
                     Optional.empty(),
                     Optional.empty(),
+                    Optional.empty(),
                     Optional.empty()));
 
     final var requestId = requestContext.getRequest().getId();
@@ -99,6 +100,7 @@ public class EnginePreparePayloadDebug extends ExecutionEngineJsonRpcMethod {
                     param.getTimestamp().orElse(parentHeader.getTimestamp() + 1L),
                     param.getPrevRandao(),
                     param.getFeeRecipient(),
-                    Optional.of(withdrawals)));
+                    Optional.of(withdrawals),
+                    param.getParentBeaconBlockRoot()));
   }
 }

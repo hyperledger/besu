@@ -31,6 +31,7 @@ public class EnginePreparePayloadParameter {
   private final Bytes32 prevRandao;
   private final Optional<Long> timestamp;
   final List<WithdrawalParameter> withdrawals;
+  private final Optional<Bytes32> parentBeaconBlockRoot;
 
   @JsonCreator
   public EnginePreparePayloadParameter(
@@ -38,12 +39,14 @@ public class EnginePreparePayloadParameter {
       @JsonProperty("feeRecipient") final Optional<Address> feeRecipient,
       @JsonProperty("timestamp") final Optional<UnsignedLongParameter> timestamp,
       @JsonProperty("prevRandao") final Optional<String> prevRandao,
-      @JsonProperty("withdrawals") final Optional<List<WithdrawalParameter>> withdrawals) {
+      @JsonProperty("withdrawals") final Optional<List<WithdrawalParameter>> withdrawals,
+      @JsonProperty("parentBeaconBlockRoot") final Optional<Bytes32> parentBeaconBlockRoot) {
     this.parentHash = parentHash;
     this.feeRecipient = feeRecipient.orElse(Address.ZERO);
     this.timestamp = timestamp.map(UnsignedLongParameter::getValue);
     this.prevRandao = Bytes32.fromHexStringLenient(prevRandao.orElse("deadbeef"));
     this.withdrawals = withdrawals.orElse(Collections.emptyList());
+    this.parentBeaconBlockRoot = parentBeaconBlockRoot;
   }
 
   public Optional<Hash> getParentHash() {
@@ -64,5 +67,9 @@ public class EnginePreparePayloadParameter {
 
   public List<WithdrawalParameter> getWithdrawals() {
     return withdrawals;
+  }
+
+  public Optional<Bytes32> getParentBeaconBlockRoot() {
+    return parentBeaconBlockRoot;
   }
 }

@@ -135,7 +135,7 @@ public class ReferenceTestEnv extends BlockHeader {
         null, // withdrawalsRoot
         null, // dataGasUsed
         null, // excessDataGas
-        null, // depositsRoot
+            null, null, // depositsRoot
         new MainnetBlockHeaderFunctions());
     this.parentDifficulty = parentDifficulty;
     this.parentBaseFee = parentBaseFee;

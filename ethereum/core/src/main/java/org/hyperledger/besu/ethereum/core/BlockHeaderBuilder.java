@@ -75,6 +75,7 @@ public class BlockHeaderBuilder {
 
   private Long dataGasUsed = null;
   private DataGas excessDataGas = null;
+  private Bytes32 parentBeaconBlockRoot = null;
 
   public static BlockHeaderBuilder create() {
     return new BlockHeaderBuilder();
@@ -122,8 +123,11 @@ public class BlockHeaderBuilder {
         .withdrawalsRoot(header.getWithdrawalsRoot().orElse(null))
         .dataGasUsed(header.getDataGasUsed().orElse(null))
         .excessDataGas(header.getExcessDataGas().orElse(null))
+            .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
         .depositsRoot(header.getDepositsRoot().orElse(null));
   }
+
+
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
     final BlockHeaderBuilder toBuilder =
@@ -145,6 +149,7 @@ public class BlockHeaderBuilder {
             .prevRandao(fromBuilder.mixHashOrPrevRandao)
             .withdrawalsRoot(fromBuilder.withdrawalsRoot)
             .excessDataGas(fromBuilder.excessDataGas)
+                .parentBeaconBlockRoot(fromBuilder.parentBeaconBlockRoot)
             .depositsRoot(fromBuilder.depositsRoot)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
@@ -174,7 +179,7 @@ public class BlockHeaderBuilder {
         withdrawalsRoot,
         dataGasUsed,
         excessDataGas,
-        depositsRoot,
+            null, depositsRoot,
         blockHeaderFunctions);
   }
 
@@ -191,7 +196,7 @@ public class BlockHeaderBuilder {
         baseFee,
         mixHashOrPrevRandao,
         dataGasUsed,
-        excessDataGas);
+        excessDataGas, parentBeaconBlockRoot);
   }
 
   public SealableBlockHeader buildSealableBlockHeader() {
@@ -216,7 +221,8 @@ public class BlockHeaderBuilder {
         withdrawalsRoot,
         dataGasUsed,
         excessDataGas,
-        depositsRoot);
+            parentBeaconBlockRoot,
+            depositsRoot);
   }
 
   private void validateBlockHeader() {
@@ -258,6 +264,7 @@ public class BlockHeaderBuilder {
     processableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
     processableBlockHeader.getDataGasUsed().ifPresent(this::dataGasUsed);
     processableBlockHeader.getExcessDataGas().ifPresent(this::excessDataGas);
+    processableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
     return this;
   }
 
@@ -281,6 +288,7 @@ public class BlockHeaderBuilder {
     withdrawalsRoot(sealableBlockHeader.getWithdrawalsRoot().orElse(null));
     sealableBlockHeader.getDataGasUsed().ifPresent(this::dataGasUsed);
     sealableBlockHeader.getExcessDataGas().ifPresent(this::excessDataGas);
+    sealableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
     depositsRoot(sealableBlockHeader.getDepositsRoot().orElse(null));
     return this;
   }
@@ -409,6 +417,11 @@ public class BlockHeaderBuilder {
 
   public BlockHeaderBuilder dataGasUsed(final Long dataGasUsed) {
     this.dataGasUsed = dataGasUsed;
+    return this;
+  }
+
+  public BlockHeaderBuilder parentBeaconBlockRoot(final Bytes32 parentBeaconBlockRoot) {
+    this.parentBeaconBlockRoot = parentBeaconBlockRoot;
     return this;
   }
 }

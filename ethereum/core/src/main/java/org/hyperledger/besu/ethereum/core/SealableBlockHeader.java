@@ -46,25 +46,26 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
   protected final Hash depositsRoot;
 
   protected SealableBlockHeader(
-      final Hash parentHash,
-      final Hash ommersHash,
-      final Address coinbase,
-      final Hash stateRoot,
-      final Hash transactionsRoot,
-      final Hash receiptsRoot,
-      final LogsBloomFilter logsBloom,
-      final Difficulty difficulty,
-      final long number,
-      final long gasLimit,
-      final long gasUsed,
-      final long timestamp,
-      final Bytes extraData,
-      final Wei baseFee,
-      final Bytes32 mixHashOrPrevRandao,
-      final Hash withdrawalsRoot,
-      final Long dataGasUsed,
-      final DataGas excessDataGas,
-      final Hash depositsRoot) {
+          final Hash parentHash,
+          final Hash ommersHash,
+          final Address coinbase,
+          final Hash stateRoot,
+          final Hash transactionsRoot,
+          final Hash receiptsRoot,
+          final LogsBloomFilter logsBloom,
+          final Difficulty difficulty,
+          final long number,
+          final long gasLimit,
+          final long gasUsed,
+          final long timestamp,
+          final Bytes extraData,
+          final Wei baseFee,
+          final Bytes32 mixHashOrPrevRandao,
+          final Hash withdrawalsRoot,
+          final Long dataGasUsed,
+          final DataGas excessDataGas,
+          final Bytes32 parentBeaconBlockRoot,
+          final Hash depositsRoot) {
     super(
         parentHash,
         coinbase,
@@ -75,7 +76,8 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
         baseFee,
         mixHashOrPrevRandao,
         dataGasUsed,
-        excessDataGas);
+        excessDataGas,
+        parentBeaconBlockRoot);
     this.ommersHash = ommersHash;
     this.stateRoot = stateRoot;
     this.transactionsRoot = transactionsRoot;

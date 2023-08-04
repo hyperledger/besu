@@ -45,28 +45,27 @@ public class BlockHeader extends SealableBlockHeader
   private final Supplier<ParsedExtraData> parsedExtraData;
 
   public BlockHeader(
-      final Hash parentHash,
-      final Hash ommersHash,
-      final Address coinbase,
-      final Hash stateRoot,
-      final Hash transactionsRoot,
-      final Hash receiptsRoot,
-      final LogsBloomFilter logsBloom,
-      final Difficulty difficulty,
-      final long number,
-      final long gasLimit,
-      final long gasUsed,
-      final long timestamp,
-      final Bytes extraData,
-      final Wei baseFee,
-      final Bytes32 mixHashOrPrevRandao,
-      final long nonce,
-      final Hash withdrawalsRoot,
-      final long dataGasUsed,
-      final DataGas excessDataGas,
-      final Hash depositsRoot,
-      final BlockHeaderFunctions blockHeaderFunctions,
-      final Optional<LogsBloomFilter> privateLogsBloom) {
+          final Hash parentHash,
+          final Hash ommersHash,
+          final Address coinbase,
+          final Hash stateRoot,
+          final Hash transactionsRoot,
+          final Hash receiptsRoot,
+          final LogsBloomFilter logsBloom,
+          final Difficulty difficulty,
+          final long number,
+          final long gasLimit,
+          final long gasUsed,
+          final long timestamp,
+          final Bytes extraData,
+          final Wei baseFee,
+          final Bytes32 mixHashOrPrevRandao,
+          final long nonce,
+          final Hash withdrawalsRoot,
+          final Long dataGasUsed,
+          final DataGas excessDataGas,
+          final Bytes32 parentBeaconBlockRoot, final Hash depositsRoot,
+          final BlockHeaderFunctions blockHeaderFunctions) {
     super(
         parentHash,
         ommersHash,
@@ -86,54 +85,7 @@ public class BlockHeader extends SealableBlockHeader
         withdrawalsRoot,
         dataGasUsed,
         excessDataGas,
-        depositsRoot);
-    this.nonce = nonce;
-    this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
-    this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
-  }
-
-  public BlockHeader(
-      final Hash parentHash,
-      final Hash ommersHash,
-      final Address coinbase,
-      final Hash stateRoot,
-      final Hash transactionsRoot,
-      final Hash receiptsRoot,
-      final LogsBloomFilter logsBloom,
-      final Difficulty difficulty,
-      final long number,
-      final long gasLimit,
-      final long gasUsed,
-      final long timestamp,
-      final Bytes extraData,
-      final Wei baseFee,
-      final Bytes32 mixHashOrPrevRandao,
-      final long nonce,
-      final Hash withdrawalsRoot,
-      final Long dataGasUsed,
-      final DataGas excessDataGas,
-      final Hash depositsRoot,
-      final BlockHeaderFunctions blockHeaderFunctions) {
-    super(
-        parentHash,
-        ommersHash,
-        coinbase,
-        stateRoot,
-        transactionsRoot,
-        receiptsRoot,
-        logsBloom,
-        difficulty,
-        number,
-        gasLimit,
-        gasUsed,
-        timestamp,
-        extraData,
-        baseFee,
-        mixHashOrPrevRandao,
-        withdrawalsRoot,
-        dataGasUsed,
-        excessDataGas,
-        depositsRoot);
+            parentBeaconBlockRoot, depositsRoot);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -275,7 +227,7 @@ public class BlockHeader extends SealableBlockHeader
         withdrawalHashRoot,
         dataGasUsed,
         excessDataGas,
-        depositHashRoot,
+            null, depositHashRoot,
         blockHeaderFunctions);
   }
 
@@ -358,7 +310,7 @@ public class BlockHeader extends SealableBlockHeader
             .orElse(null),
         pluginBlockHeader.getDataGasUsed().map(Long::longValue).orElse(null),
         pluginBlockHeader.getExcessDataGas().map(DataGas::fromQuantity).orElse(null),
-        pluginBlockHeader
+            null, pluginBlockHeader
             .getDepositsRoot()
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),

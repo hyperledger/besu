@@ -86,23 +86,26 @@ class MergeBlockCreator extends AbstractBlockCreator {
   /**
    * Create block and return block creation result.
    *
-   * @param maybeTransactions the maybe transactions
-   * @param random the random
-   * @param timestamp the timestamp
-   * @param withdrawals optional list of withdrawals
+   * @param maybeTransactions     the maybe transactions
+   * @param random                the random
+   * @param timestamp             the timestamp
+   * @param withdrawals           optional list of withdrawals
+   * @param parentBeaconBlockRoot optional root hash of the parent beacon block
    * @return the block creation result
    */
   public BlockCreationResult createBlock(
-      final Optional<List<Transaction>> maybeTransactions,
-      final Bytes32 random,
-      final long timestamp,
-      final Optional<List<Withdrawal>> withdrawals) {
+          final Optional<List<Transaction>> maybeTransactions,
+          final Bytes32 random,
+          final long timestamp,
+          final Optional<List<Withdrawal>> withdrawals,
+          final Optional<Bytes32> parentBeaconBlockRoot) {
 
     return createBlock(
         maybeTransactions,
         Optional.of(Collections.emptyList()),
         withdrawals,
         Optional.of(random),
+        parentBeaconBlockRoot,
         timestamp,
         false);
   }

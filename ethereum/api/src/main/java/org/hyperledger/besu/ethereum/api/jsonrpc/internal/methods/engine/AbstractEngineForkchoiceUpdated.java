@@ -178,7 +178,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
                     payloadAttributes.getTimestamp(),
                     payloadAttributes.getPrevRandao(),
                     payloadAttributes.getSuggestedFeeRecipient(),
-                    withdrawals));
+                    withdrawals,
+                    Optional.ofNullable(payloadAttributes.getParentBeaconBlockRoot())));
 
     payloadId.ifPresent(
         pid ->
@@ -210,6 +211,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
         && getWithdrawalsValidator(
                 protocolSchedule, headBlockHeader, payloadAttributes.getTimestamp())
             .validateWithdrawals(maybeWithdrawals);
+    // TODO: stefan Add a parentBeaconBlockRoot validator to the protocolSchedule
   }
 
   private JsonRpcResponse handleNonValidForkchoiceUpdate(
