@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
@@ -25,7 +26,6 @@ import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.BaseTransactionPoolTest;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.evm.AccessListEntry;
 
 import java.util.HashSet;
 import java.util.List;
@@ -250,7 +250,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
 
     assertThat(size.sum()).isEqualTo(PendingTransaction.ACCESS_LIST_ENTRY_BASE_MEMORY_SIZE);
 
-    final Bytes32 storageKey = ale.getStorageKeys().get(0);
+    final Bytes32 storageKey = ale.storageKeys().get(0);
     final ClassLayout cl4 = ClassLayout.parseInstance(storageKey);
     System.out.println(cl4.toPrintable());
     System.out.println("Single storage key size: " + cl4.instanceSize());

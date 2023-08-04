@@ -160,9 +160,7 @@ public class T8nExecutor {
                             false)
                         .map(JsonNode::textValue)
                         .toList();
-                var accessListEntry =
-                    org.hyperledger.besu.evm.AccessListEntry.createAccessListEntry(
-                        address, storageKeys);
+                var accessListEntry = AccessListEntry.createAccessListEntry(address, storageKeys);
                 entries.add(accessListEntry);
               }
               builder.accessList(entries);

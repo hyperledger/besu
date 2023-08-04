@@ -410,7 +410,7 @@ public class BlockDataGenerator {
     final List<AccessListEntry> accessedStorage = new ArrayList<>();
     for (int i = 0; i < accessedAddresses.size(); ++i) {
       accessedStorage.add(
-          new org.hyperledger.besu.evm.AccessListEntry(
+          new AccessListEntry(
               accessedAddresses.get(i),
               Stream.generate(this::bytes32).limit(2L * i).collect(toUnmodifiableList())));
     }

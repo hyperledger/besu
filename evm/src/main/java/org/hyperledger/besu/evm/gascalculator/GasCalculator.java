@@ -456,7 +456,7 @@ public interface GasCalculator {
   default long accessListGasCost(final List<AccessListEntry> accessListEntries) {
     return accessListGasCost(
         accessListEntries.size(),
-        accessListEntries.stream().mapToInt(e -> e.getStorageKeys().size()).sum());
+        accessListEntries.stream().mapToInt(e -> e.storageKeys().size()).sum());
   }
 
   /**

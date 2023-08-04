@@ -32,11 +32,11 @@ public class AccessListEntryAdapter extends AdapterBase {
   }
 
   public List<Bytes32> getStorageKeys() {
-    final var storage = accessListEntry.getStorageKeys();
+    final var storage = accessListEntry.storageKeys();
     return new ArrayList<>(storage);
   }
 
   public Optional<Address> getAddress() {
-    return Optional.of(accessListEntry.getAddress());
+    return Optional.of(accessListEntry.address());
   }
 }

@@ -51,9 +51,7 @@ public class AccessListOperationTracer extends EstimateGasOperationTracer {
           .asMap()
           .forEach(
               (address, storageKeys) ->
-                  list.add(
-                      new org.hyperledger.besu.evm.AccessListEntry(
-                          address, new ArrayList<>(storageKeys))));
+                  list.add(new AccessListEntry(address, new ArrayList<>(storageKeys))));
     }
     return list;
   }

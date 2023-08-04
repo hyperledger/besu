@@ -178,9 +178,9 @@ public class TransactionEncoder {
           accessListEntries.get(),
           (accessListEntry, accessListEntryRLPOutput) -> {
             accessListEntryRLPOutput.startList();
-            out.writeBytes(accessListEntry.getAddress());
+            out.writeBytes(accessListEntry.address());
             out.writeList(
-                accessListEntry.getStorageKeys(),
+                accessListEntry.storageKeys(),
                 (storageKeyBytes, storageKeyBytesRLPOutput) ->
                     storageKeyBytesRLPOutput.writeBytes(storageKeyBytes));
             accessListEntryRLPOutput.endList();

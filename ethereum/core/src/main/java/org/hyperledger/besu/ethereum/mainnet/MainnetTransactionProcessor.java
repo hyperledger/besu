@@ -325,9 +325,9 @@ public class MainnetTransactionProcessor {
       final Multimap<Address, Bytes32> storageList = HashMultimap.create();
       int accessListStorageCount = 0;
       for (final var entry : accessListEntries) {
-        final Address address = entry.getAddress();
+        final Address address = entry.address();
         addressList.add(address);
-        final List<Bytes32> storageKeys = entry.getStorageKeys();
+        final List<Bytes32> storageKeys = entry.storageKeys();
         storageList.putAll(address, storageKeys);
         accessListStorageCount += storageKeys.size();
       }
