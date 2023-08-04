@@ -129,7 +129,8 @@ public class JsonRpcResponseUtils {
             withdrawalsRoot,
             null, // ToDo 4844: set with the value of data_gas_used field
             null, // ToDo 4844: set with the value of excess_data_gas field
-                null, depositsRoot,
+            null,
+            depositsRoot,
             blockHeaderFunctions);
 
     return new JsonRpcSuccessResponse(

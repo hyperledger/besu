@@ -164,7 +164,8 @@ public class EthGasPriceTest {
                 null,
                 null,
                 null,
-                    null, null,
+                null,
+                null,
                 null),
             new BlockBody(
                 List.of(
@@ -205,7 +206,8 @@ public class EthGasPriceTest {
                 null,
                 null,
                 null,
-                    null, null,
+                null,
+                null,
                 null),
             new BlockBody(List.of(), List.of())));
   }

@@ -110,7 +110,8 @@ public class EngineGetPayloadResultV3 {
       this.dataGasUsed = header.getDataGasUsed().map(Quantity::create).orElse(Quantity.HEX_ZERO);
       this.excessDataGas =
           header.getExcessDataGas().map(Quantity::create).orElse(Quantity.HEX_ZERO);
-      this.parentBeaconBlockRoot = header.getParentBeaconBlockRoot().map(Bytes32::toHexString).orElse(null);
+      this.parentBeaconBlockRoot =
+          header.getParentBeaconBlockRoot().map(Bytes32::toHexString).orElse(null);
     }
 
     @JsonGetter(value = "blockNumber")

@@ -115,7 +115,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return respondWithInvalid(reqId, blockParam, null, INVALID, "Invalid versionedHash");
     }
 
-    Optional<String> maybeParentBeaconBlockRootParam = requestContext.getOptionalParameter(2, String.class);
+    Optional<String> maybeParentBeaconBlockRootParam =
+        requestContext.getOptionalParameter(2, String.class);
 
     final Optional<BlockHeader> maybeParentHeader =
         protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());

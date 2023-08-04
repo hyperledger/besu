@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -45,27 +44,28 @@ public class BlockHeader extends SealableBlockHeader
   private final Supplier<ParsedExtraData> parsedExtraData;
 
   public BlockHeader(
-          final Hash parentHash,
-          final Hash ommersHash,
-          final Address coinbase,
-          final Hash stateRoot,
-          final Hash transactionsRoot,
-          final Hash receiptsRoot,
-          final LogsBloomFilter logsBloom,
-          final Difficulty difficulty,
-          final long number,
-          final long gasLimit,
-          final long gasUsed,
-          final long timestamp,
-          final Bytes extraData,
-          final Wei baseFee,
-          final Bytes32 mixHashOrPrevRandao,
-          final long nonce,
-          final Hash withdrawalsRoot,
-          final Long dataGasUsed,
-          final DataGas excessDataGas,
-          final Bytes32 parentBeaconBlockRoot, final Hash depositsRoot,
-          final BlockHeaderFunctions blockHeaderFunctions) {
+      final Hash parentHash,
+      final Hash ommersHash,
+      final Address coinbase,
+      final Hash stateRoot,
+      final Hash transactionsRoot,
+      final Hash receiptsRoot,
+      final LogsBloomFilter logsBloom,
+      final Difficulty difficulty,
+      final long number,
+      final long gasLimit,
+      final long gasUsed,
+      final long timestamp,
+      final Bytes extraData,
+      final Wei baseFee,
+      final Bytes32 mixHashOrPrevRandao,
+      final long nonce,
+      final Hash withdrawalsRoot,
+      final Long dataGasUsed,
+      final DataGas excessDataGas,
+      final Bytes32 parentBeaconBlockRoot,
+      final Hash depositsRoot,
+      final BlockHeaderFunctions blockHeaderFunctions) {
     super(
         parentHash,
         ommersHash,
@@ -85,7 +85,8 @@ public class BlockHeader extends SealableBlockHeader
         withdrawalsRoot,
         dataGasUsed,
         excessDataGas,
-            parentBeaconBlockRoot, depositsRoot);
+        parentBeaconBlockRoot,
+        depositsRoot);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -227,7 +228,8 @@ public class BlockHeader extends SealableBlockHeader
         withdrawalHashRoot,
         dataGasUsed,
         excessDataGas,
-            null, depositHashRoot,
+        null,
+        depositHashRoot,
         blockHeaderFunctions);
   }
 
@@ -310,7 +312,8 @@ public class BlockHeader extends SealableBlockHeader
             .orElse(null),
         pluginBlockHeader.getDataGasUsed().map(Long::longValue).orElse(null),
         pluginBlockHeader.getExcessDataGas().map(DataGas::fromQuantity).orElse(null),
-            null, pluginBlockHeader
+        null,
+        pluginBlockHeader
             .getDepositsRoot()
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),

@@ -14,15 +14,15 @@
  */
 package org.hyperledger.besu.evm.precompile;
 
-import com.google.common.primitives.Longs;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.jetbrains.annotations.NotNull;
 
 /** The KZGPointEval precompile contract. */
@@ -46,9 +46,9 @@ public class ParentBeaconBlockRootPrecompiledContract implements PrecompiledCont
   @Override
   public PrecompileContractResult computePrecompile(
       final Bytes timestampBytes, @NotNull final MessageFrame messageFrame) {
-      if (timestampBytes.size() != 32) {
-        return PrecompileContractResult.revert(Bytes.EMPTY); // EIP 4788 pseudo code: evm.revert()
-      }
+    if (timestampBytes.size() != 32) {
+      return PrecompileContractResult.revert(Bytes.EMPTY); // EIP 4788 pseudo code: evm.revert()
+    }
     final long timestampLong = timestampBytes.getLong(0);
     final long timestampReduced = timestampLong % HISTORICAL_ROOTS_MODULUS;
     final UInt256 index = UInt256.valueOf(timestampReduced);
@@ -67,25 +67,27 @@ public class ParentBeaconBlockRootPrecompiledContract implements PrecompiledCont
     return PrecompileContractResult.success(root);
   }
 
-  public static void storeParentBeaconBlockRoot(final WorldUpdater worldUpdater, final long timestamp, final Bytes32 root) {
+  public static void storeParentBeaconBlockRoot(
+      final WorldUpdater worldUpdater, final long timestamp, final Bytes32 root) {
     final long timestampReduced = timestamp % HISTORICAL_ROOTS_MODULUS;
     final long timestampExtended = timestampReduced + HISTORICAL_ROOTS_MODULUS;
 
     final UInt256 timestampIndex = UInt256.valueOf(timestampReduced);
     final UInt256 rootIndex = UInt256.valueOf(timestampExtended);
 
-    final MutableAccount account = worldUpdater.getOrCreate(Address.PARENT_BEACON_BLOCK_ROOT_REGISTRY).getMutable();
+    final MutableAccount account =
+        worldUpdater.getOrCreate(Address.PARENT_BEACON_BLOCK_ROOT_REGISTRY).getMutable();
     account.setStorageValue(timestampIndex, UInt256.valueOf(timestamp));
     account.setStorageValue(rootIndex, UInt256.fromBytes(root));
     // TODO: Is UInt256 big endian?
     /*
-      from EIP 4788:
-      timestamp_as_uint256 = to_uint256_be(block_header.timestamp)
-      parent_beacon_block_root = block_header.parent_beacon_block_root
+     from EIP 4788:
+     timestamp_as_uint256 = to_uint256_be(block_header.timestamp)
+     parent_beacon_block_root = block_header.parent_beacon_block_root
 
-      sstore(HISTORY_STORAGE_ADDRESS, timestamp_index, timestamp_as_uint256)
-      sstore(HISTORY_STORAGE_ADDRESS, root_index, parent_beacon_block_root)
-     */
+     sstore(HISTORY_STORAGE_ADDRESS, timestamp_index, timestamp_as_uint256)
+     sstore(HISTORY_STORAGE_ADDRESS, root_index, parent_beacon_block_root)
+    */
     worldUpdater.commit();
   }
 }

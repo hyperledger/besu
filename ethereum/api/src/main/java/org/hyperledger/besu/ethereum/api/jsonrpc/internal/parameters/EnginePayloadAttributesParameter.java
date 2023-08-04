@@ -34,16 +34,17 @@ public class EnginePayloadAttributesParameter {
 
   @JsonCreator
   public EnginePayloadAttributesParameter(
-          @JsonProperty("timestamp") final String timestamp,
-          @JsonProperty("prevRandao") final String prevRandao,
-          @JsonProperty("suggestedFeeRecipient") final String suggestedFeeRecipient,
-          @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals,
-          @JsonProperty("parentBeaconBlockRoot") final String parentBeaconBlockRoot) {
+      @JsonProperty("timestamp") final String timestamp,
+      @JsonProperty("prevRandao") final String prevRandao,
+      @JsonProperty("suggestedFeeRecipient") final String suggestedFeeRecipient,
+      @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals,
+      @JsonProperty("parentBeaconBlockRoot") final String parentBeaconBlockRoot) {
     this.timestamp = Long.decode(timestamp);
     this.prevRandao = Bytes32.fromHexString(prevRandao);
     this.suggestedFeeRecipient = Address.fromHexString(suggestedFeeRecipient);
     this.withdrawals = withdrawals;
-    this.parentBeaconBlockRoot = parentBeaconBlockRoot == null ? null : Bytes32.fromHexString(parentBeaconBlockRoot);
+    this.parentBeaconBlockRoot =
+        parentBeaconBlockRoot == null ? null : Bytes32.fromHexString(parentBeaconBlockRoot);
   }
 
   public Long getTimestamp() {

@@ -146,7 +146,8 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.of(emptyList()),
             Optional.empty(),
-                Optional.empty(), 1L,
+            Optional.empty(),
+            1L,
             false);
 
     List<Deposit> deposits = emptyList();
@@ -165,7 +166,8 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.of(emptyList()),
             Optional.empty(),
-                Optional.empty(), 1L,
+            Optional.empty(),
+            1L,
             false);
 
     assertThat(blockCreationResult.getBlock().getHeader().getDepositsRoot()).isEmpty();
@@ -182,7 +184,8 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.of(emptyList()),
             Optional.empty(),
-                Optional.empty(), 1L,
+            Optional.empty(),
+            1L,
             false);
 
     assertThat(blockCreationResult.getBlock().getHeader().getDepositsRoot()).isEmpty();
@@ -214,7 +217,13 @@ abstract class AbstractBlockCreatorTest {
     final AbstractBlockCreator blockCreator = blockCreatorWithWithdrawalsProcessor();
     final BlockCreationResult blockCreationResult =
         blockCreator.createBlock(
-            Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), 1L, false);
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            1L,
+            false);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
     assertThat(blockCreationResult.getBlock().getHeader().getWithdrawalsRoot()).isEmpty();
     assertThat(blockCreationResult.getBlock().getBody().getWithdrawals()).isEmpty();
@@ -225,7 +234,13 @@ abstract class AbstractBlockCreatorTest {
     final AbstractBlockCreator blockCreator = blockCreatorWithoutWithdrawalsProcessor();
     final BlockCreationResult blockCreationResult =
         blockCreator.createBlock(
-            Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), 1L, false);
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            1L,
+            false);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
     assertThat(blockCreationResult.getBlock().getHeader().getWithdrawalsRoot()).isEmpty();
     assertThat(blockCreationResult.getBlock().getBody().getWithdrawals()).isEmpty();
@@ -242,7 +257,8 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.of(withdrawals),
             Optional.empty(),
-                Optional.empty(), 1L,
+            Optional.empty(),
+            1L,
             false);
 
     final Hash withdrawalsRoot = BodyValidation.withdrawalsRoot(withdrawals);
@@ -263,7 +279,8 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.of(withdrawals),
             Optional.empty(),
-                Optional.empty(), 1L,
+            Optional.empty(),
+            1L,
             false);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
     assertThat(blockCreationResult.getBlock().getHeader().getWithdrawalsRoot()).isEmpty();
@@ -295,7 +312,8 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.empty(),
             Optional.empty(),
-                Optional.empty(), 1L,
+            Optional.empty(),
+            1L,
             false);
     long dataGasUsage = blockCreationResult.getBlock().getHeader().getGasUsed();
     assertThat(dataGasUsage).isNotZero();

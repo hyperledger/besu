@@ -51,17 +51,17 @@ public class ProcessableBlockHeader implements BlockValues {
   private final Bytes32 parentBeaconBlockRoot;
 
   protected ProcessableBlockHeader(
-          final Hash parentHash,
-          final Address coinbase,
-          final Difficulty difficulty,
-          final long number,
-          final long gasLimit,
-          final long timestamp,
-          final Wei baseFee,
-          final Bytes32 mixHashOrPrevRandao,
-          final Long dataGasUsed,
-          final DataGas excessDataGas,
-          final Bytes32 parentBeaconBlockRoot) {
+      final Hash parentHash,
+      final Address coinbase,
+      final Difficulty difficulty,
+      final long number,
+      final long gasLimit,
+      final long timestamp,
+      final Wei baseFee,
+      final Bytes32 mixHashOrPrevRandao,
+      final Long dataGasUsed,
+      final DataGas excessDataGas,
+      final Bytes32 parentBeaconBlockRoot) {
     this.parentHash = parentHash;
     this.coinbase = coinbase;
     this.difficulty = difficulty;

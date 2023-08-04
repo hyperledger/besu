@@ -97,7 +97,8 @@ public class LogRollingTests {
           null,
           null, // dataGasUSed
           null,
-              null, null,
+          null,
+          null,
           new MainnetBlockHeaderFunctions());
   private static final BlockHeader headerTwo =
       new BlockHeader(
@@ -120,7 +121,8 @@ public class LogRollingTests {
           null,
           null, // dataGasUsed
           null,
-              null, null,
+          null,
+          null,
           new MainnetBlockHeaderFunctions());
 
   @BeforeEach

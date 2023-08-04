@@ -123,11 +123,9 @@ public class BlockHeaderBuilder {
         .withdrawalsRoot(header.getWithdrawalsRoot().orElse(null))
         .dataGasUsed(header.getDataGasUsed().orElse(null))
         .excessDataGas(header.getExcessDataGas().orElse(null))
-            .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
+        .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
         .depositsRoot(header.getDepositsRoot().orElse(null));
   }
-
-
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
     final BlockHeaderBuilder toBuilder =
@@ -149,7 +147,7 @@ public class BlockHeaderBuilder {
             .prevRandao(fromBuilder.mixHashOrPrevRandao)
             .withdrawalsRoot(fromBuilder.withdrawalsRoot)
             .excessDataGas(fromBuilder.excessDataGas)
-                .parentBeaconBlockRoot(fromBuilder.parentBeaconBlockRoot)
+            .parentBeaconBlockRoot(fromBuilder.parentBeaconBlockRoot)
             .depositsRoot(fromBuilder.depositsRoot)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
@@ -179,7 +177,8 @@ public class BlockHeaderBuilder {
         withdrawalsRoot,
         dataGasUsed,
         excessDataGas,
-            null, depositsRoot,
+        null,
+        depositsRoot,
         blockHeaderFunctions);
   }
 
@@ -196,7 +195,8 @@ public class BlockHeaderBuilder {
         baseFee,
         mixHashOrPrevRandao,
         dataGasUsed,
-        excessDataGas, parentBeaconBlockRoot);
+        excessDataGas,
+        parentBeaconBlockRoot);
   }
 
   public SealableBlockHeader buildSealableBlockHeader() {
@@ -221,8 +221,8 @@ public class BlockHeaderBuilder {
         withdrawalsRoot,
         dataGasUsed,
         excessDataGas,
-            parentBeaconBlockRoot,
-            depositsRoot);
+        parentBeaconBlockRoot,
+        depositsRoot);
   }
 
   private void validateBlockHeader() {
