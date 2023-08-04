@@ -15,6 +15,7 @@
 package org.hyperledger.besu.datatypes;
 
 import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -265,4 +266,45 @@ public interface Transaction {
    * @return optional access list
    */
   Optional<List<AccessListEntry>> getAccessList();
+
+  /**
+   * Writes the transaction to RLP
+   *
+   * @param out the output to write the transaction to
+   */
+  void writeTo(final RLPOutput out);
+
+  /**
+   * Calculates the up-front cost for the gas and data gas the transaction can use.
+   *
+   * @param gasPrice the gas price to use
+   * @param dataGasPrice the data gas price to use
+   * @return the up-front cost for the gas the transaction can use.
+   */
+  Wei getUpfrontGasCost(final Wei gasPrice, final Wei dataGasPrice, final long totalDataGas);
+
+  /**
+   * Calculates the up-front cost for the transaction.
+   *
+   * <p>The up-front cost is paid by the sender account before the transaction is executed. The
+   * sender must have the amount in its account balance to execute and some of this amount may be
+   * refunded after the transaction has executed.
+   *
+   * @return the up-front gas cost for the transaction
+   */
+  Wei getUpfrontCost(final long totalDataGas);
+
+  /**
+   * Calculates the effectiveGasPrice of a transaction on the basis of an {@code Optional<Long>}
+   * baseFee and handles unwrapping Optional fee parameters. If baseFee is present, effective gas is
+   * calculated as:
+   *
+   * <p>min((baseFeePerGas + maxPriorityFeePerGas), maxFeePerGas)
+   *
+   * <p>Otherwise, return gasPrice for legacy transactions.
+   *
+   * @param baseFeePerGas optional baseFee from the block header, if we are post-london
+   * @return the effective gas price.
+   */
+  Wei getEffectiveGasPrice(final Optional<Wei> baseFeePerGas);
 }

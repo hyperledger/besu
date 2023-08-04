@@ -627,6 +627,7 @@ public class Transaction
    *
    * @param out the output to write the transaction to
    */
+  @Override
   public void writeTo(final RLPOutput out) {
     TransactionEncoder.encodeForWire(this, out);
   }
@@ -734,6 +735,7 @@ public class Transaction
    * @param dataGasPrice the data gas price to use
    * @return the up-front cost for the gas the transaction can use.
    */
+  @Override
   public Wei getUpfrontGasCost(
       final Wei gasPrice, final Wei dataGasPrice, final long totalDataGas) {
     if (gasPrice == null || gasPrice.isZero()) {
@@ -770,6 +772,7 @@ public class Transaction
    *
    * @return the up-front gas cost for the transaction
    */
+  @Override
   public Wei getUpfrontCost(final long totalDataGas) {
     return getMaxUpfrontGasCost(totalDataGas).addExact(getValue());
   }
@@ -788,6 +791,7 @@ public class Transaction
                     new IllegalStateException(
                         "Transaction requires either gasPrice or maxFeePerGas")));
   }
+
   /**
    * Calculates the effectiveGasPrice of a transaction on the basis of an {@code Optional<Long>}
    * baseFee and handles unwrapping Optional fee parameters. If baseFee is present, effective gas is
@@ -800,6 +804,7 @@ public class Transaction
    * @param baseFeePerGas optional baseFee from the block header, if we are post-london
    * @return the effective gas price.
    */
+  @Override
   public final Wei getEffectiveGasPrice(final Optional<Wei> baseFeePerGas) {
     return getEffectivePriorityFeePerGas(baseFeePerGas).addExact(baseFeePerGas.orElse(Wei.ZERO));
   }
