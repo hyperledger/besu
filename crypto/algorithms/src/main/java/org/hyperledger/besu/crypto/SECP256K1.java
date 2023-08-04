@@ -67,6 +67,11 @@ public class SECP256K1 extends AbstractSECP256 {
     useNative = false;
   }
 
+  /**
+   * Attempt to enable the native library for secp256k1
+   *
+   * @return true if the native library was enabled.
+   */
   public boolean maybeEnableNative() {
     try {
       useNative = LibSecp256k1.CONTEXT != null;

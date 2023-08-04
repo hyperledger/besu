@@ -16,8 +16,10 @@ import com.google.common.base.Stopwatch;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
+/** Benchmark secp256k1 public key extraction */
 public class Secp256k1Benchmark extends BenchmarkExecutor {
 
+  /** secp256k1 benchmark using default math warmup and iterations */
   public Secp256k1Benchmark() {
     super(MATH_WARMUP, MATH_ITERATIONS);
   }

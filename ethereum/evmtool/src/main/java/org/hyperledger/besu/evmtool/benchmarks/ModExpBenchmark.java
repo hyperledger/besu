@@ -8,8 +8,10 @@ import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** Benchmark Modular Exponentiation */
 public class ModExpBenchmark extends BenchmarkExecutor {
 
+  /** Benchmark with default math warmups and iterations */
   public ModExpBenchmark() {
     super(MATH_WARMUP, MATH_ITERATIONS);
   }

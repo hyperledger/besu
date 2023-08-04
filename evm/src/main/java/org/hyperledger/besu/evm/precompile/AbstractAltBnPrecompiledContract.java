@@ -43,6 +43,11 @@ public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompil
     maybeEnableNative();
   }
 
+  /**
+   * Attempt to enable the native library for AltBn contracts
+   *
+   * @return true if the native library was enabled.
+   */
   public static boolean maybeEnableNative() {
     try {
       useNative = LibEthPairings.ENABLED;
@@ -52,7 +57,6 @@ public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompil
     }
     return useNative;
   }
-
 
   /** Disable native. */
   public static void disableNative() {

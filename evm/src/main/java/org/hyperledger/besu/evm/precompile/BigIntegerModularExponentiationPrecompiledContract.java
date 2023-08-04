@@ -66,6 +66,11 @@ public class BigIntegerModularExponentiationPrecompiledContract
     useNative = false;
   }
 
+  /**
+   * Attempt to enable the native library for ModExp
+   *
+   * @return true if the native library was enabled.
+   */
   public static boolean maybeEnableNative() {
     try {
       useNative = LibArithmetic.ENABLED;

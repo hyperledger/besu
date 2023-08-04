@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.base.Stopwatch;
 import org.apache.tuweni.bytes.Bytes;
 
+/** Abstract class to support benchmarking of various client algorithms */
 public abstract class BenchmarkExecutor {
 
   static final int MATH_WARMUP = 10_000;
@@ -58,15 +59,29 @@ public abstract class BenchmarkExecutor {
           .worldUpdater(new SimpleWorld())
           .build();
 
+  /**
+   * Run benchmarks with specified warmup and iterations
+   *
+   * @param warmup number of executions to run before timing
+   * @param iterations number of executions to time.
+   */
   protected BenchmarkExecutor(final int warmup, final int iterations) {
     this.warmup = warmup;
     this.iterations = iterations;
   }
 
+  /** Run benchmarks with warmup and iterations set to MATH style benchmarks. */
   protected BenchmarkExecutor() {
     this(MATH_WARMUP, MATH_ITERATIONS);
   }
 
+  /**
+   * Run the benchmark with the speicific args. Execution will be done warmup + iterations times
+   *
+   * @param arg the bytes areguments to pass into the contract
+   * @param contract the precompiled contract to benchmark
+   * @return the mean number of seconds each timed iteration took.
+   */
   protected double runPrecompileBenchmark(final Bytes arg, final PrecompiledContract contract) {
     if (contract.computePrecompile(arg, fakeFrame).getOutput() == null) {
       throw new RuntimeException("Input is Invalid");
@@ -93,6 +108,13 @@ public abstract class BenchmarkExecutor {
     return elapsed / executions;
   }
 
+  /**
+   * Return the gas calculator at a given fork. Some forks don't have a specific gas calculator and
+   * will return the prior one
+   *
+   * @param fork name of the fork
+   * @return a gas calculator
+   */
   public static GasCalculator gasCalculatorForFork(final String fork) {
     return switch (fork) {
       case "Homestead" -> new HomesteadGasCalculator();
@@ -110,6 +132,14 @@ public abstract class BenchmarkExecutor {
     };
   }
 
+  /**
+   * Run the benchmarks
+   *
+   * @param output stream to print results to (typicall System.out)
+   * @param attemptNative Should the benchmark attempt to us native libraries? (null use the
+   *     default, false disabled, true enabled)
+   * @param fork the fork name to run the benchmark against.
+   */
   public abstract void runBenchmark(
       final PrintStream output, final Boolean attemptNative, final String fork);
 }

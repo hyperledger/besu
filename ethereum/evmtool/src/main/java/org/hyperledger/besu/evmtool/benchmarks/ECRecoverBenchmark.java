@@ -9,8 +9,10 @@ import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** Benchmark ECRecover precompile (ECDSA key extraction + keccak hash) */
 public class ECRecoverBenchmark extends BenchmarkExecutor {
 
+  /** Use default math based warmup and interations */
   public ECRecoverBenchmark() {
     super(MATH_WARMUP, MATH_ITERATIONS);
   }

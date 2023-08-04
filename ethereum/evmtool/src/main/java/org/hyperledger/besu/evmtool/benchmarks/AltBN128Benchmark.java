@@ -1,10 +1,5 @@
 package org.hyperledger.besu.evmtool.benchmarks;
 
-import java.io.PrintStream;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import org.apache.tuweni.bytes.Bytes;
-
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
@@ -12,8 +7,16 @@ import org.hyperledger.besu.evm.precompile.AltBN128AddPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.AltBN128MulPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.AltBN128PairingPrecompiledContract;
 
+import java.io.PrintStream;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import org.apache.tuweni.bytes.Bytes;
+
+/** Benchmark AltBN128 add, mul, and pairings */
 public class AltBN128Benchmark extends BenchmarkExecutor {
 
+  /** Benchmark AltBN128 add, mul, and pairings with default warmup and iterations */
   public AltBN128Benchmark() {
     super(MATH_WARMUP, MATH_ITERATIONS);
   }

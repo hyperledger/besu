@@ -30,7 +30,7 @@ public class BenchmarkSubCommand implements Runnable {
 
   enum Benchmark {
     AltBn128(new AltBN128Benchmark()),
-    //blake2f
+    // blake2f
     EcRecover(new ECRecoverBenchmark()),
     ModExp(new ModExpBenchmark()),
     Secp256k1(new Secp256k1Benchmark());
