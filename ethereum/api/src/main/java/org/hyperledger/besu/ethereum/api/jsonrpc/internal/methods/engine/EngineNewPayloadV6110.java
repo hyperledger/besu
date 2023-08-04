@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import io.vertx.core.Vertx;
+
 public class EngineNewPayloadV6110 extends EngineNewPayloadV3 {
 
   private final ProtocolSchedule timestampSchedule;
@@ -48,8 +49,8 @@ public class EngineNewPayloadV6110 extends EngineNewPayloadV3 {
   @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(
       final Object reqId, final EnginePayloadParameter payloadParameter) {
-    var eip6110 = timestampSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("ExperimentalEips"));
-
+    var eip6110 =
+        timestampSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("ExperimentalEips"));
 
     if (eip6110.isPresent() && payloadParameter.getTimestamp() >= eip6110.get().milestone()) {
       if (payloadParameter.getDeposits() == null) {

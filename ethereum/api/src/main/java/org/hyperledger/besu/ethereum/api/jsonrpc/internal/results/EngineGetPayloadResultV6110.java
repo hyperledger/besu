@@ -14,10 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -27,6 +23,11 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import org.apache.tuweni.bytes.Bytes32;
 
 @JsonPropertyOrder({"executionPayload", "blockValue", "blobsBundle"})
 public class EngineGetPayloadResultV6110 {

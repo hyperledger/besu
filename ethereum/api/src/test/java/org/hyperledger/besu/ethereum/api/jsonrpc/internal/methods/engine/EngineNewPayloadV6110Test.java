@@ -17,29 +17,27 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLError.INVALID_PARAMS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameterTestFixture.DEPOSIT_PARAM_1;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.verify;
-
-import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
-import org.hyperledger.besu.ethereum.BlockProcessingResult;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class EngineNewPayloadV6110Test extends EngineNewPayloadV2Test {
@@ -51,6 +49,7 @@ public class EngineNewPayloadV6110Test extends EngineNewPayloadV2Test {
   public void shouldReturnExpectedMethodName() {
     assertThat(method.getName()).isEqualTo("engine_newPayloadV6110");
   }
+
   @Test
   public void shouldReturnValidIfDepositsIsNotNull_WhenDepositsAllowed() {
     final List<DepositParameter> depositsParam = List.of(DEPOSIT_PARAM_1);
@@ -122,5 +121,4 @@ public class EngineNewPayloadV6110Test extends EngineNewPayloadV2Test {
     assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
-
 }

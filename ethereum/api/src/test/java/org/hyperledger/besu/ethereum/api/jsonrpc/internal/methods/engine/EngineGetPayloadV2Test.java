@@ -72,7 +72,6 @@ public class EngineGetPayloadV2Test extends AbstractEngineGetPayloadTest {
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
-
   @Test
   public void shouldReturnExecutionPayloadWithoutWithdrawals_PreShanghaiBlock() {
     final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V2.getMethodName(), mockPid);
