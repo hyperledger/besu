@@ -16,6 +16,7 @@ package org.hyperledger.besu.evmtool.benchmarks;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.fluent.SimpleBlockValues;
 import org.hyperledger.besu.evm.fluent.SimpleWorld;
@@ -31,8 +32,6 @@ import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
-import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
-import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
 import java.io.PrintStream;
@@ -130,18 +129,16 @@ public abstract class BenchmarkExecutor {
    * @return a gas calculator
    */
   public static GasCalculator gasCalculatorForFork(final String fork) {
-    return switch (fork) {
-      case "Homestead" -> new HomesteadGasCalculator();
-      case "Frontier" -> new FrontierGasCalculator();
-      case "SpuriousDragon" -> new SpuriousDragonGasCalculator();
-      case "TangerineWhistle" -> new TangerineWhistleGasCalculator();
-      case "Byzantium" -> new ByzantiumGasCalculator();
-      case "Constantinople" -> new ConstantinopleGasCalculator();
-      case "Petersburg" -> new PetersburgGasCalculator();
-      case "Istanbul" -> new IstanbulGasCalculator();
-      case "Berlin" -> new BerlinGasCalculator();
-      case "London", "Paris" -> new LondonGasCalculator();
-      case "Shanghai" -> new ShanghaiGasCalculator();
+    return switch (EvmSpecVersion.valueOf(fork.toUpperCase())) {
+      case HOMESTEAD -> new HomesteadGasCalculator();
+      case FRONTIER -> new FrontierGasCalculator();
+      case BYZANTIUM -> new ByzantiumGasCalculator();
+      case CONSTANTINOPLE -> new ConstantinopleGasCalculator();
+      case PETERSBURG -> new PetersburgGasCalculator();
+      case ISTANBUL -> new IstanbulGasCalculator();
+      case BERLIN -> new BerlinGasCalculator();
+      case LONDON, PARIS ->  new LondonGasCalculator();
+      case SHANGHAI -> new ShanghaiGasCalculator();
       default -> new CancunGasCalculator();
     };
   }
