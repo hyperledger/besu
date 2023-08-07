@@ -69,7 +69,7 @@ public interface OperationTracer {
    *
    * @param transaction the transaction which will be processed
    */
-  default void traceStartTransaction(final Transaction transaction) {}
+  default void traceStartTransaction(@SuppressWarnings("unused") final Transaction transaction) {}
 
   /**
    * Trace the end of a transaction.
@@ -79,6 +79,20 @@ public interface OperationTracer {
    * @param timeNs the time in nanoseconds it took to execute the transaction
    */
   default void traceEndTransaction(final Bytes output, final long gasUsed, final long timeNs) {}
+
+  /**
+   * Trace the entering of a new context
+   *
+   * @param frame the frame
+   */
+  default void traceContextEnter(@SuppressWarnings("unused") final MessageFrame frame) {}
+
+  /**
+   * Trace the exiting of a context
+   *
+   * @param frame the frame
+   */
+  default void traceContextExit(@SuppressWarnings("unused") final MessageFrame frame) {}
 
   /**
    * Returns a boolean indicating whether extended tracing is enabled.
