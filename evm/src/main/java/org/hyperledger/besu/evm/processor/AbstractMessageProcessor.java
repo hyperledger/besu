@@ -214,7 +214,6 @@ public abstract class AbstractMessageProcessor {
       case COMPLETED_SUCCESS -> completedSuccess(frame, operationTracer);
       default -> {}
     }
-
   }
 
   /**
