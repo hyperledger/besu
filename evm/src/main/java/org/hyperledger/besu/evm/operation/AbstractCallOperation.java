@@ -32,7 +32,7 @@ import org.apache.tuweni.bytes.Bytes;
  * A skeleton class for implementing call operations.
  *
  * <p>A call operation creates a child message call from the current message context, allows it to
- * execute, and then updates the current message context based on its execution.</p>
+ * execute, and then updates the current message context based on its execution.
  */
 public abstract class AbstractCallOperation extends AbstractOperation {
 
