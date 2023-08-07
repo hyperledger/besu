@@ -58,10 +58,10 @@ import org.apache.tuweni.bytes.Bytes;
  * </tr>
  * <tr>
  * <td>{@link MessageFrame.State#COMPLETED_FAILED}</td>
- * <td>{@link AbstractMessageProcessor#completedFailed(MessageFrame)}</td>
+ * <td>{@link AbstractMessageProcessor#completedFailed(MessageFrame, OperationTracer)}</td>
  * <tr>
  * <td>{@link MessageFrame.State#COMPLETED_SUCCESS}</td>
- * <td>{@link AbstractMessageProcessor#completedSuccess(MessageFrame)}</td>
+ * <td>{@link AbstractMessageProcessor#completedSuccess(MessageFrame, OperationTracer)}</td>
  * </tr>
  * </table>
  */
@@ -125,7 +125,8 @@ public abstract class AbstractMessageProcessor {
    *
    * @param frame The message frame
    */
-  private void exceptionalHalt(final MessageFrame frame) {
+  private void exceptionalHalt(final MessageFrame frame, final OperationTracer operationTracer) {
+    operationTracer.traceContextExit(frame);
     clearAccumulatedStateBesidesGasAndOutput(frame);
     frame.clearGasRemaining();
     frame.clearOutputData();
@@ -137,7 +138,8 @@ public abstract class AbstractMessageProcessor {
    *
    * @param frame The message frame
    */
-  protected void revert(final MessageFrame frame) {
+  protected void revert(final MessageFrame frame, final OperationTracer operationTracer) {
+    operationTracer.traceContextExit(frame);
     clearAccumulatedStateBesidesGasAndOutput(frame);
     frame.setState(MessageFrame.State.COMPLETED_FAILED);
   }
@@ -147,7 +149,8 @@ public abstract class AbstractMessageProcessor {
    *
    * @param frame The message frame
    */
-  private void completedSuccess(final MessageFrame frame) {
+  private void completedSuccess(final MessageFrame frame, final OperationTracer operationTracer) {
+    operationTracer.traceContextExit(frame);
     frame.getWorldUpdater().commit();
     frame.getMessageFrameStack().removeFirst();
     frame.notifyCompletion();
@@ -158,7 +161,8 @@ public abstract class AbstractMessageProcessor {
    *
    * @param frame The message frame
    */
-  private void completedFailed(final MessageFrame frame) {
+  private void completedFailed(final MessageFrame frame, final OperationTracer operationTracer) {
+    operationTracer.traceContextExit(frame);
     frame.getMessageFrameStack().removeFirst();
     frame.notifyCompletion();
   }
@@ -184,6 +188,8 @@ public abstract class AbstractMessageProcessor {
    * @param operationTracer the operation tracer
    */
   public void process(final MessageFrame frame, final OperationTracer operationTracer) {
+    operationTracer.traceContextEnter(frame);
+
     if (frame.getState() == MessageFrame.State.NOT_STARTED) {
       start(frame, operationTracer);
     }
@@ -192,6 +198,7 @@ public abstract class AbstractMessageProcessor {
       codeExecute(frame, operationTracer);
 
       if (frame.getState() == MessageFrame.State.CODE_SUSPENDED) {
+        operationTracer.traceContextExit(frame);
         return;
       }
 
@@ -200,21 +207,14 @@ public abstract class AbstractMessageProcessor {
       }
     }
 
-    if (frame.getState() == MessageFrame.State.EXCEPTIONAL_HALT) {
-      exceptionalHalt(frame);
+    switch (frame.getState()) {
+      case EXCEPTIONAL_HALT -> exceptionalHalt(frame, operationTracer);
+      case REVERT -> revert(frame, operationTracer);
+      case COMPLETED_FAILED -> completedFailed(frame, operationTracer);
+      case COMPLETED_SUCCESS -> completedSuccess(frame, operationTracer);
+      default -> {}
     }
 
-    if (frame.getState() == MessageFrame.State.REVERT) {
-      revert(frame);
-    }
-
-    if (frame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-      completedSuccess(frame);
-    }
-
-    if (frame.getState() == MessageFrame.State.COMPLETED_FAILED) {
-      completedFailed(frame);
-    }
   }
 
   /**
