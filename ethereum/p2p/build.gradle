@@ -62,7 +62,13 @@ dependencies {
 
   annotationProcessor "org.immutables:value"
   implementation "org.immutables:value-annotations"
-  implementation 'tech.pegasys.discovery:discovery'
+  implementation('tech.pegasys.discovery:discovery') {
+    // version conflicts, prefer ours
+    exclude group: 'org.apache.tuweni', module:'tuweni-bytes'
+    exclude group: 'org.apache.tuweni', module:'tuweni-crypto'
+    exclude group: 'org.apache.tuweni', module:'tuweni-rlp'
+    exclude group: 'org.apache.tuweni', module:'tuweni-units'
+  }
 
   // test dependencies.
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
