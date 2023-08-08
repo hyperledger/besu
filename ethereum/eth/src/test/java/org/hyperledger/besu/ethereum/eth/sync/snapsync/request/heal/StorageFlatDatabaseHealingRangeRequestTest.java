@@ -56,7 +56,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class StorageFlatDatabaseHealingRangeRequestTest {
+class StorageFlatDatabaseHealingRangeRequestTest {
 
   @Mock private SnapWorldDownloadState downloadState;
   @Mock private SnapSyncProcessState snapSyncState;
@@ -82,8 +82,9 @@ public class StorageFlatDatabaseHealingRangeRequestTest {
     proofProvider = new WorldStateProofProvider(worldStateStorage);
     trie =
         TrieGenerator.generateTrie(
-            worldStateStorage, accounts.stream().map(Hash::hash).collect(Collectors.toList()));
-    account0Hash = Hash.hash(accounts.get(0));
+            worldStateStorage,
+            accounts.stream().map(Address::addressHash).collect(Collectors.toList()));
+    account0Hash = accounts.get(0).addressHash();
     account0StorageRoot =
         trie.get(account0Hash)
             .map(RLP::input)
@@ -93,7 +94,7 @@ public class StorageFlatDatabaseHealingRangeRequestTest {
   }
 
   @Test
-  public void shouldReturnChildRequests() {
+  void shouldReturnChildRequests() {
 
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
@@ -150,7 +151,7 @@ public class StorageFlatDatabaseHealingRangeRequestTest {
   }
 
   @Test
-  public void shouldNotReturnChildRequestsWhenNoMoreSlots() {
+  void shouldNotReturnChildRequestsWhenNoMoreSlots() {
 
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
@@ -191,7 +192,7 @@ public class StorageFlatDatabaseHealingRangeRequestTest {
   }
 
   @Test
-  public void doNotPersistWhenProofIsValid() {
+  void doNotPersistWhenProofIsValid() {
 
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
@@ -248,7 +249,7 @@ public class StorageFlatDatabaseHealingRangeRequestTest {
   }
 
   @Test
-  public void doHealAndPersistWhenProofIsInvalid() {
+  void doHealAndPersistWhenProofIsInvalid() {
 
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
