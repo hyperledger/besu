@@ -112,25 +112,19 @@ public class OperationBenchmarkHelper {
 
   public MessageFrame.Builder createMessageFrameBuilder() {
     return MessageFrame.builder()
+        .parentMessageFrame(messageFrame)
         .type(MessageFrame.Type.MESSAGE_CALL)
-        .messageFrameStack(messageFrame.getMessageFrameStack())
         .worldUpdater(messageFrame.getWorldUpdater())
         .initialGas(messageFrame.getRemainingGas())
         .address(messageFrame.getContractAddress())
-        .originator(messageFrame.getOriginatorAddress())
         .contract(messageFrame.getRecipientAddress())
-        .gasPrice(messageFrame.getGasPrice())
         .inputData(messageFrame.getInputData())
         .sender(messageFrame.getSenderAddress())
         .value(messageFrame.getValue())
         .apparentValue(messageFrame.getApparentValue())
         .code(messageFrame.getCode())
-        .blockValues(messageFrame.getBlockValues())
-        .depth(messageFrame.getMessageStackDepth())
         .isStatic(messageFrame.isStatic())
-        .completer(messageFrame -> {})
-        .miningBeneficiary(messageFrame.getMiningBeneficiary())
-        .maxStackSize(messageFrame.getMaxStackSize());
+        .completer(frame -> {});
   }
 
   public void cleanUp() throws IOException {

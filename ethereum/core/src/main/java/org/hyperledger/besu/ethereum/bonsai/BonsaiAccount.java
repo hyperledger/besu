@@ -83,7 +83,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
     this(
         context,
         address,
-        Hash.hash(address),
+        address.addressHash(),
         stateTrieAccount.getNonce(),
         stateTrieAccount.getBalance(),
         stateTrieAccount.getStorageRoot(),
@@ -142,7 +142,7 @@ public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
     in.leaveList();
 
     return new BonsaiAccount(
-        context, address, Hash.hash(address), nonce, balance, storageRoot, codeHash, mutable);
+        context, address, address.addressHash(), nonce, balance, storageRoot, codeHash, mutable);
   }
 
   @Override

@@ -36,7 +36,6 @@ import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
@@ -345,11 +344,9 @@ public class EVMExecutor {
   public Bytes execute() {
     final MessageCallProcessor mcp = thisMessageCallProcessor();
     final ContractCreationProcessor ccp = thisContractCreationProcessor();
-    final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
     final MessageFrame initialMessageFrame =
         MessageFrame.builder()
             .type(MessageFrame.Type.MESSAGE_CALL)
-            .messageFrameStack(messageFrameStack)
             .worldUpdater(worldUpdater.updater())
             .initialGas(gas)
             .contract(Address.ZERO)
@@ -362,15 +359,14 @@ public class EVMExecutor {
             .apparentValue(ethValue)
             .code(code)
             .blockValues(blockValues)
-            .depth(0)
             .completer(c -> {})
             .miningBeneficiary(Address.ZERO)
             .blockHashLookup(h -> null)
             .accessListWarmAddresses(accessListWarmAddresses)
             .accessListWarmStorage(accessListWarmStorage)
             .build();
-    messageFrameStack.add(initialMessageFrame);
 
+    final Deque<MessageFrame> messageFrameStack = initialMessageFrame.getMessageFrameStack();
     while (!messageFrameStack.isEmpty()) {
       final MessageFrame messageFrame = messageFrameStack.peek();
       if (messageFrame.getType() == MessageFrame.Type.CONTRACT_CREATION) {

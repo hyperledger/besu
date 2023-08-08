@@ -67,7 +67,7 @@ public class WorldStateProofProviderTest {
 
   @Test
   public void getProofWhenWorldStateAvailable() {
-    final Hash addressHash = Hash.hash(address);
+    final Hash addressHash = address.addressHash();
     final MerkleTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie(addressHash);
     final MerkleTrie<Bytes32, Bytes> storageTrie = emptyStorageTrie();
 
