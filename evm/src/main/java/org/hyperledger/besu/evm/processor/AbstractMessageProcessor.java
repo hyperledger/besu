@@ -126,7 +126,9 @@ public abstract class AbstractMessageProcessor {
    * @param frame The message frame
    */
   private void exceptionalHalt(final MessageFrame frame, final OperationTracer operationTracer) {
-    operationTracer.traceContextExit(frame);
+    if (operationTracer != null) {
+      operationTracer.traceContextExit(frame);
+    }
     clearAccumulatedStateBesidesGasAndOutput(frame);
     frame.clearGasRemaining();
     frame.clearOutputData();
@@ -139,7 +141,9 @@ public abstract class AbstractMessageProcessor {
    * @param frame The message frame
    */
   protected void revert(final MessageFrame frame, final OperationTracer operationTracer) {
-    operationTracer.traceContextExit(frame);
+    if (operationTracer != null) {
+      operationTracer.traceContextExit(frame);
+    }
     clearAccumulatedStateBesidesGasAndOutput(frame);
     frame.setState(MessageFrame.State.COMPLETED_FAILED);
   }
@@ -150,7 +154,9 @@ public abstract class AbstractMessageProcessor {
    * @param frame The message frame
    */
   private void completedSuccess(final MessageFrame frame, final OperationTracer operationTracer) {
-    operationTracer.traceContextExit(frame);
+    if (operationTracer != null) {
+      operationTracer.traceContextExit(frame);
+    }
     frame.getWorldUpdater().commit();
     frame.getMessageFrameStack().removeFirst();
     frame.notifyCompletion();
@@ -162,7 +168,9 @@ public abstract class AbstractMessageProcessor {
    * @param frame The message frame
    */
   private void completedFailed(final MessageFrame frame, final OperationTracer operationTracer) {
-    operationTracer.traceContextExit(frame);
+    if (operationTracer != null) {
+      operationTracer.traceContextExit(frame);
+    }
     frame.getMessageFrameStack().removeFirst();
     frame.notifyCompletion();
   }
@@ -188,7 +196,9 @@ public abstract class AbstractMessageProcessor {
    * @param operationTracer the operation tracer
    */
   public void process(final MessageFrame frame, final OperationTracer operationTracer) {
-    operationTracer.traceContextEnter(frame);
+    if (operationTracer != null) {
+      operationTracer.traceContextEnter(frame);
+    }
 
     if (frame.getState() == MessageFrame.State.NOT_STARTED) {
       start(frame, operationTracer);
@@ -198,7 +208,9 @@ public abstract class AbstractMessageProcessor {
       codeExecute(frame, operationTracer);
 
       if (frame.getState() == MessageFrame.State.CODE_SUSPENDED) {
-        operationTracer.traceContextExit(frame);
+        if (operationTracer != null) {
+          operationTracer.traceContextExit(frame);
+        }
         return;
       }
 
