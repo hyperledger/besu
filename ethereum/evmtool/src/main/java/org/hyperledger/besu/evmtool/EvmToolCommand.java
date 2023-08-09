@@ -36,8 +36,6 @@ import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
-import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
-import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -344,8 +342,6 @@ public class EvmToolCommand implements Runnable {
               .orElse(0L);
       long txGas = gas - intrinsicGasCost - accessListCost;
 
-      final PrecompileContractRegistry precompileContractRegistry =
-          protocolSpec.getPrecompileContractRegistry();
       final EVM evm = protocolSpec.getEvm();
       Code code = evm.getCode(Hash.hash(codeBytes), codeBytes);
       if (!code.isValid()) {
@@ -385,13 +381,12 @@ public class EvmToolCommand implements Runnable {
                 .miningBeneficiary(blockHeader.getCoinbase())
                 .blockHashLookup(new CachingBlockHashLookup(blockHeader, component.getBlockchain()))
                 .build();
+        Deque<MessageFrame> messageFrameStack = initialMessageFrame.getMessageFrameStack();
 
-        final MessageCallProcessor mcp = new MessageCallProcessor(evm, precompileContractRegistry);
-        final Deque<MessageFrame> messageFrameStack = initialMessageFrame.getMessageFrameStack();
         stopwatch.start();
         while (!messageFrameStack.isEmpty()) {
           final MessageFrame messageFrame = messageFrameStack.peek();
-          mcp.process(messageFrame, tracer);
+          protocolSpec.getTransactionProcessor().process(messageFrame, tracer);
           if (messageFrameStack.isEmpty()) {
             stopwatch.stop();
             if (lastTime == 0) {

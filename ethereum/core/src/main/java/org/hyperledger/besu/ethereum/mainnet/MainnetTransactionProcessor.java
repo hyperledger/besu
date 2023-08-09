@@ -506,21 +506,17 @@ public class MainnetTransactionProcessor {
     }
   }
 
-  protected void process(final MessageFrame frame, final OperationTracer operationTracer) {
+  public void process(final MessageFrame frame, final OperationTracer operationTracer) {
     final AbstractMessageProcessor executor = getMessageProcessor(frame.getType());
 
     executor.process(frame, operationTracer);
   }
 
   private AbstractMessageProcessor getMessageProcessor(final MessageFrame.Type type) {
-    switch (type) {
-      case MESSAGE_CALL:
-        return messageCallProcessor;
-      case CONTRACT_CREATION:
-        return contractCreationProcessor;
-      default:
-        throw new IllegalStateException("Request for unsupported message processor type " + type);
-    }
+    return switch (type) {
+      case MESSAGE_CALL -> messageCallProcessor;
+      case CONTRACT_CREATION -> contractCreationProcessor;
+    };
   }
 
   protected long refunded(
