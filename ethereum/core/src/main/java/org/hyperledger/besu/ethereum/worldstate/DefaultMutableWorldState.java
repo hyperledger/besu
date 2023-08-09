@@ -112,7 +112,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
   @Override
   public Account get(final Address address) {
-    final Hash addressHash = Hash.hash(address);
+    final Hash addressHash = address.addressHash();
     return accountStateTrie
         .get(addressHash)
         .map(bytes -> deserializeAccount(address, addressHash, bytes))
@@ -344,7 +344,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
     @Override
     protected WorldStateAccount getForMutation(final Address address) {
       final DefaultMutableWorldState wrapped = wrappedWorldView();
-      final Hash addressHash = Hash.hash(address);
+      final Hash addressHash = address.addressHash();
       return wrapped
           .accountStateTrie
           .get(addressHash)
@@ -373,7 +373,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
       final DefaultMutableWorldState wrapped = wrappedWorldView();
 
       for (final Address address : getDeletedAccounts()) {
-        final Hash addressHash = Hash.hash(address);
+        final Hash addressHash = address.addressHash();
         wrapped.accountStateTrie.remove(addressHash);
         wrapped.updatedStorageTries.remove(address);
         wrapped.updatedAccountCode.remove(address);

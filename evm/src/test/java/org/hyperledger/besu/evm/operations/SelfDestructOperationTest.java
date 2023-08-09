@@ -35,8 +35,6 @@ import org.hyperledger.besu.evm.operation.SelfDestructOperation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
-import java.util.ArrayDeque;
-
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -85,13 +83,11 @@ public class SelfDestructOperationTest {
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
             .code(CodeFactory.createCode(SELFDESTRUCT_CODE, 0, true))
-            .depth(1)
             .completer(__ -> {})
             .address(originatorAddress)
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
             .blockValues(mock(BlockValues.class))
             .gasPrice(Wei.ZERO)
-            .messageFrameStack(new ArrayDeque<>())
             .miningBeneficiary(Address.ZERO)
             .originator(Address.ZERO)
             .initialGas(100_000L)

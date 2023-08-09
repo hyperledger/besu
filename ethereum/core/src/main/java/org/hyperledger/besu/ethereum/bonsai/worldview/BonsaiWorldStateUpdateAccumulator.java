@@ -134,7 +134,7 @@ public class BonsaiWorldStateUpdateAccumulator
         new BonsaiAccount(
             this,
             address,
-            Hash.hash(address),
+            address.addressHash(),
             nonce,
             balance,
             Hash.EMPTY_TRIE_HASH,

@@ -17,6 +17,8 @@ package org.hyperledger.besu.evm.frame;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.emptySet;
 
+import org.hyperledger.besu.collections.undo.UndoSet;
+import org.hyperledger.besu.collections.undo.UndoTable;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -32,6 +34,7 @@ import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
@@ -42,7 +45,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
+import com.google.common.base.Suppliers;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -56,7 +61,7 @@ import org.apache.tuweni.units.bigints.UInt256;
  * A container object for all the states associated with a message.
  *
  * <p>A message corresponds to an interaction between two accounts. A Transaction spawns at least
- * one message when its processed. Messages can also spawn messages depending on the code executed
+ * one message when it's processed. Messages can also spawn messages depending on the code executed
  * within a message.
  *
  * <p>Note that there is no specific Message object in the code base. Instead, message executions
@@ -200,58 +205,47 @@ public class MessageFrame {
 
   // Metadata fields.
   private final Type type;
-  private State state;
+  private State state = State.NOT_STARTED;
 
   // Machine state fields.
   private long gasRemaining;
-  private final Function<Long, Hash> blockHashLookup;
-  private final int maxStackSize;
   private int pc;
-  private int section;
-  private final Memory memory;
+  private int section = 0;
+  private final Memory memory = new Memory();
   private final OperandStack stack;
-  private final ReturnStack returnStack;
-  private Bytes output;
-  private Bytes returnData;
+  private final Supplier<ReturnStack> returnStack;
+  private Bytes output = Bytes.EMPTY;
+  private Bytes returnData = Bytes.EMPTY;
   private final boolean isStatic;
 
-  // Transaction substate fields.
-  private final List<Log> logs;
-  private long gasRefund;
-  private final Set<Address> selfDestructs;
-  private final Set<Address> creates;
-  private final Map<Address, Wei> refunds;
-  private final Set<Address> warmedUpAddresses;
-  private final Multimap<Address, Bytes32> warmedUpStorage;
+  // Transaction state fields.
+  private final List<Log> logs = new ArrayList<>();
+  private long gasRefund = 0L;
+  private final Map<Address, Wei> refunds = new HashMap<>();
 
   // Execution Environment fields.
   private final Address recipient;
-  private final Address originator;
   private final Address contract;
-  private final Wei gasPrice;
   private final Bytes inputData;
   private final Address sender;
   private final Wei value;
   private final Wei apparentValue;
   private final Code code;
-  private final BlockValues blockValues;
-  private final int depth;
-  private final MessageFrame parentMessageFrame;
-  private final Deque<MessageFrame> messageFrameStack;
-  private final Address miningBeneficiary;
+
   private Optional<Bytes> revertReason;
 
   private final Map<String, Object> contextVariables;
-  private final Optional<List<VersionedHash>> versionedHashes;
 
-  private final Table<Address, Bytes32, Bytes32> transientStorage = HashBasedTable.create();
-
-  // Miscellaneous fields.
   private Optional<ExceptionalHaltReason> exceptionalHaltReason = Optional.empty();
   private Operation currentOperation;
   private final Consumer<MessageFrame> completer;
   private Optional<MemoryEntry> maybeUpdatedMemory = Optional.empty();
   private Optional<StorageEntry> maybeUpdatedStorage = Optional.empty();
+
+  private final TxValues txValues;
+
+  /** The mark of the undoable collections at the creation of this message frame */
+  private final long undoMark;
 
   /**
    * Builder builder.
@@ -264,87 +258,47 @@ public class MessageFrame {
 
   private MessageFrame(
       final Type type,
-      final Deque<MessageFrame> messageFrameStack,
       final WorldUpdater worldUpdater,
       final long initialGas,
       final Address recipient,
-      final Address originator,
       final Address contract,
-      final Wei gasPrice,
       final Bytes inputData,
       final Address sender,
       final Wei value,
       final Wei apparentValue,
       final Code code,
-      final BlockValues blockValues,
-      final int depth,
       final boolean isStatic,
       final Consumer<MessageFrame> completer,
-      final Address miningBeneficiary,
-      final Function<Long, Hash> blockHashLookup,
       final Map<String, Object> contextVariables,
       final Optional<Bytes> revertReason,
-      final int maxStackSize,
-      final Set<Address> accessListWarmAddresses,
-      final Multimap<Address, Bytes32> accessListWarmStorage,
-      final Optional<List<VersionedHash>> versionedHashes) {
+      final TxValues txValues) {
+
+    this.txValues = txValues;
     this.type = type;
-    this.messageFrameStack = messageFrameStack;
-    this.parentMessageFrame = messageFrameStack.peek();
     this.worldUpdater = worldUpdater;
     this.gasRemaining = initialGas;
-    this.blockHashLookup = blockHashLookup;
-    this.maxStackSize = maxStackSize;
-    this.pc = 0;
-    this.section = 0;
-    this.memory = new Memory();
-    this.stack = new OperandStack(maxStackSize);
-    this.returnStack = new ReturnStack();
-    returnStack.push(new ReturnStack.ReturnStackItem(0, 0, 0));
-    pc = code.isValid() ? code.getCodeSection(0).getEntryPoint() : 0;
-    this.output = Bytes.EMPTY;
-    this.returnData = Bytes.EMPTY;
-    this.logs = new ArrayList<>();
-    this.gasRefund = 0L;
-    this.selfDestructs = new HashSet<>();
-    this.creates = new HashSet<>();
-    this.refunds = new HashMap<>();
+    this.stack = new OperandStack(txValues.maxStackSize());
+    this.returnStack =
+        Suppliers.memoize(
+            () -> {
+              var rStack = new ReturnStack();
+              rStack.push(new ReturnStack.ReturnStackItem(0, 0, 0));
+              return rStack;
+            });
+    this.pc = code.isValid() ? code.getCodeSection(0).getEntryPoint() : 0;
     this.recipient = recipient;
-    this.originator = originator;
     this.contract = contract;
-    this.gasPrice = gasPrice;
     this.inputData = inputData;
     this.sender = sender;
     this.value = value;
     this.apparentValue = apparentValue;
     this.code = code;
-    this.blockValues = blockValues;
-    this.depth = depth;
-    this.state = State.NOT_STARTED;
     this.isStatic = isStatic;
     this.completer = completer;
-    this.miningBeneficiary = miningBeneficiary;
     this.contextVariables = contextVariables;
     this.revertReason = revertReason;
 
-    this.warmedUpAddresses = new HashSet<>(accessListWarmAddresses);
-    this.warmedUpAddresses.add(sender);
-    this.warmedUpAddresses.add(contract);
-    this.warmedUpStorage = HashMultimap.create(accessListWarmStorage);
-    this.versionedHashes = versionedHashes;
-
-    // the warmed up addresses will always be a superset of the address keys in the warmed up
-    // storage, so we can do both warm-ups in one pass
-    accessListWarmAddresses.forEach(
-        address ->
-            Optional.ofNullable(worldUpdater.get(address))
-                .ifPresent(
-                    account ->
-                        warmedUpStorage
-                            .get(address)
-                            .forEach(
-                                storageKeyBytes ->
-                                    account.getStorageValue(UInt256.fromBytes(storageKeyBytes)))));
+    this.undoMark = txValues.transientStorage().mark();
   }
 
   /**
@@ -393,13 +347,14 @@ public class MessageFrame {
     CodeSection info = code.getCodeSection(calledSection);
     if (info == null) {
       return ExceptionalHaltReason.CODE_SECTION_MISSING;
-    } else if (stack.size() + info.getMaxStackHeight() > maxStackSize) {
+    } else if (stack.size() + info.getMaxStackHeight() > txValues.maxStackSize()) {
       return ExceptionalHaltReason.TOO_MANY_STACK_ITEMS;
     } else if (stack.size() < info.getInputs()) {
       return ExceptionalHaltReason.TOO_FEW_INPUTS_FOR_CODE_SECTION;
     } else {
-      returnStack.push(
-          new ReturnStack.ReturnStackItem(section, pc + 2, stack.size() - info.getInputs()));
+      returnStack
+          .get()
+          .push(new ReturnStack.ReturnStackItem(section, pc + 2, stack.size() - info.getInputs()));
       pc = info.getEntryPoint() - 1; // will be +1ed at end of operations loop
       this.section = calledSection;
       return null;
@@ -407,10 +362,10 @@ public class MessageFrame {
   }
 
   /**
-   * Jump function exceptional halt reason.
+   * Execute the mechanics of the JUMPF operation.
    *
    * @param section the section
-   * @return the exceptional halt reason
+   * @return the exceptional halt reason, if the jump failed
    */
   public ExceptionalHaltReason jumpFunction(final int section) {
     CodeSection info = code.getCodeSection(section);
@@ -432,10 +387,11 @@ public class MessageFrame {
    */
   public ExceptionalHaltReason returnFunction() {
     CodeSection thisInfo = code.getCodeSection(this.section);
-    var returnInfo = returnStack.pop();
+    var rStack = returnStack.get();
+    var returnInfo = rStack.pop();
     if ((returnInfo.getStackHeight() + thisInfo.getOutputs()) != stack.size()) {
       return ExceptionalHaltReason.INCORRECT_CODE_SECTION_RETURN_OUTPUTS;
-    } else if (returnStack.isEmpty()) {
+    } else if (rStack.isEmpty()) {
       setState(MessageFrame.State.CODE_SUCCESS);
       setOutputData(Bytes.EMPTY);
       return null;
@@ -599,7 +555,7 @@ public class MessageFrame {
    * @return The current return stack size
    */
   public int returnStackSize() {
-    return returnStack.size();
+    return returnStack.get().size();
   }
 
   /**
@@ -608,7 +564,7 @@ public class MessageFrame {
    * @return The top item of the return stack, or null if the stack is empty
    */
   public ReturnStack.ReturnStackItem peekReturnStack() {
-    return returnStack.peek();
+    return returnStack.get().peek();
   }
 
   /**
@@ -617,7 +573,7 @@ public class MessageFrame {
    * @param returnStackItem item to be pushed
    */
   public void pushReturnStackItem(final ReturnStack.ReturnStackItem returnStackItem) {
-    returnStack.push(returnStackItem);
+    returnStack.get().push(returnStackItem);
   }
 
   /**
@@ -948,7 +904,7 @@ public class MessageFrame {
    * @param address The recipient to self-destruct
    */
   public void addSelfDestruct(final Address address) {
-    selfDestructs.add(address);
+    txValues.selfDestructs().add(address);
   }
 
   /**
@@ -957,12 +913,7 @@ public class MessageFrame {
    * @param addresses The addresses to self-destruct
    */
   public void addSelfDestructs(final Set<Address> addresses) {
-    selfDestructs.addAll(addresses);
-  }
-
-  /** Removes all entries in the self-destruct set. */
-  public void clearSelfDestructs() {
-    selfDestructs.clear();
+    txValues.selfDestructs().addAll(addresses);
   }
 
   /**
@@ -971,7 +922,7 @@ public class MessageFrame {
    * @return the self-destruct set
    */
   public Set<Address> getSelfDestructs() {
-    return selfDestructs;
+    return txValues.selfDestructs();
   }
 
   /**
@@ -980,7 +931,7 @@ public class MessageFrame {
    * @param address The recipient to create
    */
   public void addCreate(final Address address) {
-    creates.add(address);
+    txValues.creates().add(address);
   }
   /**
    * Add addresses to the create set if they are not already present.
@@ -988,12 +939,7 @@ public class MessageFrame {
    * @param addresses The addresses to create
    */
   public void addCreates(final Set<Address> addresses) {
-    creates.addAll(addresses);
-  }
-
-  /** Removes all entries in the create set. */
-  public void clearCreates() {
-    creates.clear();
+    txValues.creates().addAll(addresses);
   }
 
   /**
@@ -1002,7 +948,7 @@ public class MessageFrame {
    * @return the create set
    */
   public Set<Address> getCreates() {
-    return creates;
+    return txValues.creates();
   }
 
   /**
@@ -1015,8 +961,7 @@ public class MessageFrame {
    *     transaction.
    */
   public boolean wasCreatedInTransaction(final Address address) {
-    return creates.contains((address))
-        || (parentMessageFrame != null && parentMessageFrame.wasCreatedInTransaction(address));
+    return txValues.creates().contains((address));
   }
 
   /**
@@ -1045,22 +990,7 @@ public class MessageFrame {
    * @return true if the address was already warmed up
    */
   public boolean warmUpAddress(final Address address) {
-    if (warmedUpAddresses.add(address)) {
-      return parentMessageFrame != null && parentMessageFrame.isWarm(address);
-    } else {
-      return true;
-    }
-  }
-
-  private boolean isWarm(final Address address) {
-    MessageFrame frame = this;
-    while (frame != null) {
-      if (frame.warmedUpAddresses.contains(address)) {
-        return true;
-      }
-      frame = frame.parentMessageFrame;
-    }
-    return false;
+    return !txValues.warmedUpAddresses().add(address);
   }
 
   /**
@@ -1071,36 +1001,7 @@ public class MessageFrame {
    * @return true if the storage slot was already warmed up
    */
   public boolean warmUpStorage(final Address address, final Bytes32 slot) {
-    if (warmedUpStorage.put(address, slot)) {
-      return parentMessageFrame != null && parentMessageFrame.isWarm(address, slot);
-    } else {
-      return true;
-    }
-  }
-
-  private boolean isWarm(final Address address, final Bytes32 slot) {
-    MessageFrame frame = this;
-    while (frame != null) {
-      if (frame.warmedUpStorage.containsEntry(address, slot)) {
-        return true;
-      }
-      frame = frame.parentMessageFrame;
-    }
-    return false;
-  }
-
-  /**
-   * Merge warmed up fields.
-   *
-   * @param childFrame the child frame
-   */
-  public void mergeWarmedUpFields(final MessageFrame childFrame) {
-    if (childFrame == this) {
-      return;
-    }
-
-    warmedUpAddresses.addAll(childFrame.warmedUpAddresses);
-    warmedUpStorage.putAll(childFrame.warmedUpStorage);
+    return txValues.warmedUpStorage().put(address, slot, Boolean.TRUE) != null;
   }
 
   /**
@@ -1167,21 +1068,29 @@ public class MessageFrame {
   }
 
   /**
-   * Returns the message stack depth.
+   * Returns the message stack size.
    *
-   * @return the message stack depth
+   * @return the message stack size
    */
-  public int getMessageStackDepth() {
-    return depth;
+  public int getMessageStackSize() {
+    return txValues.messageFrameStack().size();
   }
 
+  /**
+   * Returns the Call Depth, where the rootmost call is depth 0
+   *
+   * @return the call depth
+   */
+  public int getDepth() {
+    return getMessageStackSize() - 1;
+  }
   /**
    * Returns the recipient that originated the message.
    *
    * @return the recipient that originated the message
    */
   public Address getOriginatorAddress() {
-    return originator;
+    return txValues.originator();
   }
 
   /**
@@ -1199,7 +1108,7 @@ public class MessageFrame {
    * @return the current gas price
    */
   public Wei getGasPrice() {
-    return gasPrice;
+    return txValues.gasPrice();
   }
 
   /**
@@ -1235,7 +1144,7 @@ public class MessageFrame {
    * @return the current block header
    */
   public BlockValues getBlockValues() {
-    return blockValues;
+    return txValues.blockValues();
   }
 
   /** Performs updates based on the message frame's execution. */
@@ -1249,7 +1158,7 @@ public class MessageFrame {
    * @return the current message frame stack
    */
   public Deque<MessageFrame> getMessageFrameStack() {
-    return messageFrameStack;
+    return txValues.messageFrameStack();
   }
 
   /**
@@ -1277,7 +1186,7 @@ public class MessageFrame {
    * @return the current mining beneficiary
    */
   public Address getMiningBeneficiary() {
-    return miningBeneficiary;
+    return txValues.miningBeneficiary();
   }
 
   /**
@@ -1286,7 +1195,7 @@ public class MessageFrame {
    * @return the block hash lookup
    */
   public Function<Long, Hash> getBlockHashLookup() {
-    return blockHashLookup;
+    return txValues.blockHashLookup();
   }
 
   /**
@@ -1304,7 +1213,7 @@ public class MessageFrame {
    * @return the max stack size
    */
   public int getMaxStackSize() {
-    return maxStackSize;
+    return txValues.maxStackSize();
   }
 
   /**
@@ -1356,8 +1265,8 @@ public class MessageFrame {
    *
    * @return the warmed up storage
    */
-  public Multimap<Address, Bytes32> getWarmedUpStorage() {
-    return warmedUpStorage;
+  public Table<Address, Bytes32, Boolean> getWarmedUpStorage() {
+    return txValues.warmedUpStorage();
   }
 
   /**
@@ -1386,21 +1295,8 @@ public class MessageFrame {
    * @return the data value read
    */
   public Bytes32 getTransientStorageValue(final Address accountAddress, final Bytes32 slot) {
-    Bytes32 data = transientStorage.get(accountAddress, slot);
-
-    if (data != null) {
-      return data;
-    }
-
-    if (parentMessageFrame != null) {
-      data = parentMessageFrame.getTransientStorageValue(accountAddress, slot);
-    }
-    if (data == null) {
-      data = Bytes32.ZERO;
-    }
-    transientStorage.put(accountAddress, slot, data);
-
-    return data;
+    Bytes32 v = txValues.transientStorage().get(accountAddress, slot);
+    return v == null ? Bytes32.ZERO : v;
   }
 
   /**
@@ -1412,14 +1308,12 @@ public class MessageFrame {
    */
   public void setTransientStorageValue(
       final Address accountAddress, final Bytes32 slot, final Bytes32 value) {
-    transientStorage.put(accountAddress, slot, value);
+    txValues.transientStorage().put(accountAddress, slot, value);
   }
 
-  /** Writes the transient storage to the parent frame, if one exists */
-  public void commitTransientStorage() {
-    if (parentMessageFrame != null) {
-      parentMessageFrame.transientStorage.putAll(transientStorage);
-    }
+  /** Undo all the changes done by this message frame, such as when a revert is called for. */
+  public void rollback() {
+    txValues.undoChanges(undoMark);
   }
 
   /**
@@ -1428,7 +1322,7 @@ public class MessageFrame {
    * @return optional list of hashes
    */
   public Optional<List<VersionedHash>> getVersionedHashes() {
-    return versionedHashes;
+    return txValues.versionedHashes();
   }
 
   /** Reset. */
@@ -1440,8 +1334,8 @@ public class MessageFrame {
   /** The MessageFrame Builder. */
   public static class Builder {
 
+    private MessageFrame parentMessageFrame;
     private Type type;
-    private Deque<MessageFrame> messageFrameStack;
     private WorldUpdater worldUpdater;
     private Long initialGas;
     private Address address;
@@ -1454,7 +1348,6 @@ public class MessageFrame {
     private Wei apparentValue;
     private Code code;
     private BlockValues blockValues;
-    private int depth = -1;
     private int maxStackSize = DEFAULT_MAX_STACK_SIZE;
     private boolean isStatic = false;
     private Consumer<MessageFrame> completer;
@@ -1468,6 +1361,18 @@ public class MessageFrame {
     private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
 
     /**
+     * The "parent" message frame. When present some fields will be populated from the parent and
+     * ignored if passed in via builder
+     *
+     * @param parentMessageFrame the parent message frame
+     * @return the builder
+     */
+    public Builder parentMessageFrame(final MessageFrame parentMessageFrame) {
+      this.parentMessageFrame = parentMessageFrame;
+      return this;
+    }
+
+    /**
      * Sets Type.
      *
      * @param type the type
@@ -1475,17 +1380,6 @@ public class MessageFrame {
      */
     public Builder type(final Type type) {
       this.type = type;
-      return this;
-    }
-
-    /**
-     * Sets Message frame stack.
-     *
-     * @param messageFrameStack the message frame stack
-     * @return the builder
-     */
-    public Builder messageFrameStack(final Deque<MessageFrame> messageFrameStack) {
-      this.messageFrameStack = messageFrameStack;
       return this;
     }
 
@@ -1622,17 +1516,6 @@ public class MessageFrame {
     }
 
     /**
-     * Sets Depth.
-     *
-     * @param depth the depth
-     * @return the builder
-     */
-    public Builder depth(final int depth) {
-      this.depth = depth;
-      return this;
-    }
-
-    /**
      * Sets Is static.
      *
      * @param isStatic the is static
@@ -1743,25 +1626,24 @@ public class MessageFrame {
     }
 
     private void validate() {
+      if (parentMessageFrame == null) {
+        checkState(worldUpdater != null, "Missing message frame world updater");
+        checkState(originator != null, "Missing message frame originator");
+        checkState(gasPrice != null, "Missing message frame getGasRemaining price");
+        checkState(blockValues != null, "Missing message frame block header");
+        checkState(miningBeneficiary != null, "Missing mining beneficiary");
+        checkState(blockHashLookup != null, "Missing block hash lookup");
+      }
       checkState(type != null, "Missing message frame type");
-      checkState(messageFrameStack != null, "Missing message frame message frame stack");
-      checkState(worldUpdater != null, "Missing message frame world updater");
       checkState(initialGas != null, "Missing message frame initial getGasRemaining");
       checkState(address != null, "Missing message frame recipient");
-      checkState(originator != null, "Missing message frame originator");
       checkState(contract != null, "Missing message frame contract");
-      checkState(gasPrice != null, "Missing message frame getGasRemaining price");
       checkState(inputData != null, "Missing message frame input data");
       checkState(sender != null, "Missing message frame sender");
       checkState(value != null, "Missing message frame value");
       checkState(apparentValue != null, "Missing message frame apparent value");
       checkState(code != null, "Missing message frame code");
-      checkState(blockValues != null, "Missing message frame block header");
-      checkState(depth > -1, "Missing message frame depth");
       checkState(completer != null, "Missing message frame completer");
-      checkState(miningBeneficiary != null, "Missing mining beneficiary");
-      checkState(blockHashLookup != null, "Missing block hash lookup");
-      checkState(versionedHashes != null, "Missing optional versioned hashes");
     }
 
     /**
@@ -1772,32 +1654,60 @@ public class MessageFrame {
     public MessageFrame build() {
       validate();
 
-      return new MessageFrame(
-          type,
-          messageFrameStack,
-          worldUpdater,
-          initialGas,
-          address,
-          originator,
-          contract,
-          gasPrice,
-          inputData,
-          sender,
-          value,
-          apparentValue,
-          code,
-          blockValues,
-          depth,
-          isStatic,
-          completer,
-          miningBeneficiary,
-          blockHashLookup,
-          contextVariables == null ? Map.of() : contextVariables,
-          reason,
-          maxStackSize,
-          accessListWarmAddresses,
-          accessListWarmStorage,
-          versionedHashes);
+      WorldUpdater updater;
+      boolean newStatic;
+      TxValues newTxValues;
+      if (parentMessageFrame == null) {
+        newTxValues =
+            new TxValues(
+                blockHashLookup,
+                maxStackSize,
+                UndoSet.of(new HashSet<>()),
+                UndoTable.of(HashBasedTable.create()),
+                originator,
+                gasPrice,
+                blockValues,
+                new ArrayDeque<>(),
+                miningBeneficiary,
+                versionedHashes,
+                UndoTable.of(HashBasedTable.create()),
+                UndoSet.of(new HashSet<>()),
+                UndoSet.of(new HashSet<>()));
+        updater = worldUpdater;
+        newStatic = isStatic;
+      } else {
+        newTxValues = parentMessageFrame.txValues;
+        updater = parentMessageFrame.worldUpdater.updater();
+        newStatic = isStatic || parentMessageFrame.isStatic;
+      }
+
+      MessageFrame messageFrame =
+          new MessageFrame(
+              type,
+              updater,
+              initialGas,
+              address,
+              contract,
+              inputData,
+              sender,
+              value,
+              apparentValue,
+              code,
+              newStatic,
+              completer,
+              contextVariables == null ? Map.of() : contextVariables,
+              reason,
+              newTxValues);
+      newTxValues.messageFrameStack().addFirst(messageFrame);
+      messageFrame.warmUpAddress(sender);
+      messageFrame.warmUpAddress(contract);
+      for (Address a : accessListWarmAddresses) {
+        messageFrame.warmUpAddress(a);
+      }
+      for (var e : accessListWarmStorage.entries()) {
+        messageFrame.warmUpStorage(e.getKey(), e.getValue());
+      }
+      return messageFrame;
     }
   }
 }
