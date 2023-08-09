@@ -81,6 +81,21 @@ public class StateTestSubCommand implements Runnable {
       description = "Force the state tests to run on a specific fork.")
   private String fork = null;
 
+  @Option(
+      names = {"--data-index"},
+      description = "Limit execution to one data variable.")
+  private Integer dataIndex = null;
+
+  @Option(
+      names = {"--gas-index"},
+      description = "Limit execution to one gas variable.")
+  private Integer gasIndex = null;
+
+  @Option(
+      names = {"--value-index"},
+      description = "Limit execution to one value variable.")
+  private Integer valueIndex = null;
+
   @ParentCommand private final EvmToolCommand parentCommand;
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") // picocli does it magically
@@ -169,6 +184,15 @@ public class StateTestSubCommand implements Runnable {
 
     final ObjectMapper objectMapper = JsonUtils.createObjectMapper();
     for (final GeneralStateTestCaseEipSpec spec : specs) {
+      if (dataIndex != null && spec.getDataIndex() != dataIndex) {
+        continue;
+      }
+      if (gasIndex != null && spec.getGasIndex() != gasIndex) {
+        continue;
+      }
+      if (valueIndex != null && spec.getValueIndex() != valueIndex) {
+        continue;
+      }
 
       final BlockHeader blockHeader = spec.getBlockHeader();
       final WorldState initialWorldState = spec.getInitialWorldState();

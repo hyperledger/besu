@@ -90,7 +90,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     }
 
     if (value.compareTo(account.getBalance()) > 0
-        || frame.getMessageStackDepth() >= 1024
+        || frame.getDepth() >= 1024
         || account.getNonce() == -1) {
       fail(frame);
     } else {
@@ -147,31 +147,21 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         gasCalculator().gasAvailableForChildCreate(parent.getRemainingGas());
     parent.decrementRemainingGas(childGasStipend);
 
-    final MessageFrame childFrame =
-        MessageFrame.builder()
-            .type(MessageFrame.Type.CONTRACT_CREATION)
-            .messageFrameStack(parent.getMessageFrameStack())
-            .worldUpdater(parent.getWorldUpdater().updater())
-            .initialGas(childGasStipend)
-            .address(contractAddress)
-            .originator(parent.getOriginatorAddress())
-            .contract(contractAddress)
-            .gasPrice(parent.getGasPrice())
-            .inputData(Bytes.EMPTY)
-            .sender(parent.getRecipientAddress())
-            .value(value)
-            .apparentValue(value)
-            .code(code)
-            .blockValues(parent.getBlockValues())
-            .depth(parent.getMessageStackDepth() + 1)
-            .completer(child -> complete(parent, child, evm))
-            .miningBeneficiary(parent.getMiningBeneficiary())
-            .blockHashLookup(parent.getBlockHashLookup())
-            .maxStackSize(parent.getMaxStackSize())
-            .versionedHashes(parent.getVersionedHashes())
-            .build();
+    // frame addition is automatically handled by parent messageFrameStack
+    MessageFrame.builder()
+        .parentMessageFrame(parent)
+        .type(MessageFrame.Type.CONTRACT_CREATION)
+        .initialGas(childGasStipend)
+        .address(contractAddress)
+        .contract(contractAddress)
+        .inputData(Bytes.EMPTY)
+        .sender(parent.getRecipientAddress())
+        .value(value)
+        .apparentValue(value)
+        .code(code)
+        .completer(child -> complete(parent, child, evm))
+        .build();
 
-    parent.getMessageFrameStack().addFirst(childFrame);
     parent.setState(MessageFrame.State.CODE_SUSPENDED);
   }
 
@@ -190,7 +180,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       frame.incrementGasRefund(childFrame.getGasRefund());
 
       if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-        frame.mergeWarmedUpFields(childFrame);
         Address createdAddress = childFrame.getContractAddress();
         frame.pushStackItem(Words.fromAddress(createdAddress));
         onSuccess(frame, createdAddress);
