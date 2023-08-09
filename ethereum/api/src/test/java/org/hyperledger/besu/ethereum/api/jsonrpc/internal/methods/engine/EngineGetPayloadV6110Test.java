@@ -151,7 +151,8 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
     final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V6110.getMethodName(), mockPid);
 
     assertThat(resp).isInstanceOf(JsonRpcErrorResponse.class);
-    assertThat(((JsonRpcErrorResponse) resp).getErrorType()).isEqualTo(RpcErrorType.UNSUPPORTED_FORK);
+    assertThat(((JsonRpcErrorResponse) resp).getErrorType())
+        .isEqualTo(RpcErrorType.UNSUPPORTED_FORK);
   }
 
   @Override
