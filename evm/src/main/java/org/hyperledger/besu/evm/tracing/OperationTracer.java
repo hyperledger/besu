@@ -69,7 +69,7 @@ public interface OperationTracer {
    *
    * @param transaction the transaction which will be processed
    */
-  default void traceStartTransaction(@SuppressWarnings("unused") final Transaction transaction) {}
+  default void traceStartTransaction(final Transaction transaction) {}
 
   /**
    * Trace the end of a transaction.

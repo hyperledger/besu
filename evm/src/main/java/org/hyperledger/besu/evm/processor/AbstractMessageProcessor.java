@@ -207,12 +207,20 @@ public abstract class AbstractMessageProcessor {
       }
     }
 
-    switch (frame.getState()) {
-      case EXCEPTIONAL_HALT -> exceptionalHalt(frame, operationTracer);
-      case REVERT -> revert(frame, operationTracer);
-      case COMPLETED_FAILED -> completedFailed(frame, operationTracer);
-      case COMPLETED_SUCCESS -> completedSuccess(frame, operationTracer);
-      default -> {}
+    if (frame.getState() == MessageFrame.State.EXCEPTIONAL_HALT) {
+      exceptionalHalt(frame, operationTracer);
+    }
+
+    if (frame.getState() == MessageFrame.State.REVERT) {
+      revert(frame, operationTracer);
+    }
+
+    if (frame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
+      completedSuccess(frame, operationTracer);
+    }
+
+    if (frame.getState() == MessageFrame.State.COMPLETED_FAILED) {
+      completedFailed(frame, operationTracer);
     }
   }
 
