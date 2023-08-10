@@ -184,8 +184,6 @@ public abstract class AbstractMessageProcessor {
    * @param operationTracer the operation tracer
    */
   public void process(final MessageFrame frame, final OperationTracer operationTracer) {
-    boolean exitTraced = false;
-
     if (operationTracer != null && frame.getMessageStackDepth() > 0) {
       operationTracer.traceContextEnter(frame);
     }
@@ -202,39 +200,27 @@ public abstract class AbstractMessageProcessor {
       }
 
       if (frame.getState() == MessageFrame.State.CODE_SUCCESS) {
-        if (operationTracer != null) {
-          operationTracer.traceContextExit(frame);
-        }
         codeSuccess(frame, operationTracer);
       }
     }
 
     if (frame.getState() == MessageFrame.State.EXCEPTIONAL_HALT) {
-      if (operationTracer != null && frame.getMessageStackDepth() > 0) {
-        operationTracer.traceContextExit(frame);
-        exitTraced = true;
-      }
       exceptionalHalt(frame);
     }
 
     if (frame.getState() == MessageFrame.State.REVERT) {
-      if (operationTracer != null && !exitTraced && frame.getMessageStackDepth() > 0) {
-        operationTracer.traceContextEnter(frame);
-        exitTraced = true;
-      }
       revert(frame);
     }
 
     if (frame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-      if (operationTracer != null && !exitTraced && frame.getMessageStackDepth() > 0) {
-        operationTracer.traceContextEnter(frame);
-        exitTraced = true;
+      if (operationTracer != null && frame.getMessageStackDepth() > 0) {
+        operationTracer.traceContextExit(frame);
       }
       completedSuccess(frame);
     }
     if (frame.getState() == MessageFrame.State.COMPLETED_FAILED) {
-      if (operationTracer != null && !exitTraced && frame.getMessageStackDepth() > 0) {
-        operationTracer.traceContextEnter(frame);
+      if (operationTracer != null && frame.getMessageStackDepth() > 0) {
+        operationTracer.traceContextExit(frame);
       }
       completedFailed(frame);
     }
