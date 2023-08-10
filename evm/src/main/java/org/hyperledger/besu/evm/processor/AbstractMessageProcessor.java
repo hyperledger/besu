@@ -58,10 +58,10 @@ import org.apache.tuweni.bytes.Bytes;
  * </tr>
  * <tr>
  * <td>{@link MessageFrame.State#COMPLETED_FAILED}</td>
- * <td>{@link AbstractMessageProcessor#completedFailed(MessageFrame, OperationTracer)}</td>
+ * <td>{@link AbstractMessageProcessor#completedFailed(MessageFrame)}</td>
  * <tr>
  * <td>{@link MessageFrame.State#COMPLETED_SUCCESS}</td>
- * <td>{@link AbstractMessageProcessor#completedSuccess(MessageFrame, OperationTracer)}</td>
+ * <td>{@link AbstractMessageProcessor#completedSuccess(MessageFrame)}</td>
  * </tr>
  * </table>
  */
@@ -125,10 +125,7 @@ public abstract class AbstractMessageProcessor {
    *
    * @param frame The message frame
    */
-  private void exceptionalHalt(final MessageFrame frame, final OperationTracer operationTracer) {
-    if (operationTracer != null) {
-      operationTracer.traceContextExit(frame);
-    }
+  private void exceptionalHalt(final MessageFrame frame) {
     clearAccumulatedStateBesidesGasAndOutput(frame);
     frame.clearGasRemaining();
     frame.clearOutputData();
@@ -140,10 +137,7 @@ public abstract class AbstractMessageProcessor {
    *
    * @param frame The message frame
    */
-  protected void revert(final MessageFrame frame, final OperationTracer operationTracer) {
-    if (operationTracer != null) {
-      operationTracer.traceContextExit(frame);
-    }
+  protected void revert(final MessageFrame frame) {
     clearAccumulatedStateBesidesGasAndOutput(frame);
     frame.setState(MessageFrame.State.COMPLETED_FAILED);
   }
@@ -153,10 +147,7 @@ public abstract class AbstractMessageProcessor {
    *
    * @param frame The message frame
    */
-  private void completedSuccess(final MessageFrame frame, final OperationTracer operationTracer) {
-    if (operationTracer != null) {
-      operationTracer.traceContextExit(frame);
-    }
+  private void completedSuccess(final MessageFrame frame) {
     frame.getWorldUpdater().commit();
     frame.getMessageFrameStack().removeFirst();
     frame.notifyCompletion();
@@ -167,10 +158,7 @@ public abstract class AbstractMessageProcessor {
    *
    * @param frame The message frame
    */
-  private void completedFailed(final MessageFrame frame, final OperationTracer operationTracer) {
-    if (operationTracer != null) {
-      operationTracer.traceContextExit(frame);
-    }
+  private void completedFailed(final MessageFrame frame) {
     frame.getMessageFrameStack().removeFirst();
     frame.notifyCompletion();
   }
@@ -196,7 +184,9 @@ public abstract class AbstractMessageProcessor {
    * @param operationTracer the operation tracer
    */
   public void process(final MessageFrame frame, final OperationTracer operationTracer) {
-    if (operationTracer != null) {
+    boolean exitTraced = false;
+
+    if (operationTracer != null && frame.getMessageStackDepth() > 0) {
       operationTracer.traceContextEnter(frame);
     }
 
@@ -208,31 +198,45 @@ public abstract class AbstractMessageProcessor {
       codeExecute(frame, operationTracer);
 
       if (frame.getState() == MessageFrame.State.CODE_SUSPENDED) {
-        if (operationTracer != null) {
-          operationTracer.traceContextExit(frame);
-        }
         return;
       }
 
       if (frame.getState() == MessageFrame.State.CODE_SUCCESS) {
+        if (operationTracer != null) {
+          operationTracer.traceContextExit(frame);
+        }
         codeSuccess(frame, operationTracer);
       }
     }
 
     if (frame.getState() == MessageFrame.State.EXCEPTIONAL_HALT) {
-      exceptionalHalt(frame, operationTracer);
+      if (operationTracer != null && frame.getMessageStackDepth() > 0) {
+        operationTracer.traceContextExit(frame);
+        exitTraced = true;
+      }
+      exceptionalHalt(frame);
     }
 
     if (frame.getState() == MessageFrame.State.REVERT) {
-      revert(frame, operationTracer);
+      if (operationTracer != null && !exitTraced && frame.getMessageStackDepth() > 0) {
+        operationTracer.traceContextEnter(frame);
+        exitTraced = true;
+      }
+      revert(frame);
     }
 
     if (frame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-      completedSuccess(frame, operationTracer);
+      if (operationTracer != null && !exitTraced && frame.getMessageStackDepth() > 0) {
+        operationTracer.traceContextEnter(frame);
+        exitTraced = true;
+      }
+      completedSuccess(frame);
     }
-
     if (frame.getState() == MessageFrame.State.COMPLETED_FAILED) {
-      completedFailed(frame, operationTracer);
+      if (operationTracer != null && !exitTraced && frame.getMessageStackDepth() > 0) {
+        operationTracer.traceContextEnter(frame);
+      }
+      completedFailed(frame);
     }
   }
 
