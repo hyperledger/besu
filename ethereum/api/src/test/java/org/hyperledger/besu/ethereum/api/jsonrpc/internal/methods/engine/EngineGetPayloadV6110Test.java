@@ -15,7 +15,8 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,7 +29,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobsBundleV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV6110;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -36,10 +36,9 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
-import java.security.InvalidParameterException;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -62,7 +61,12 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
   @BeforeEach
   @Override
   public void before() {
-    super.before();
+    lenient()
+        .when(mergeContext.retrieveBlockById(mockPid))
+        .thenReturn(Optional.of(mockBlockWithReceiptsAndDeposits));
+    when(protocolContext.safeConsensusContext(any())).thenReturn(Optional.of(mergeContext));
+    when(protocolSchedule.hardforkFor(any()))
+        .thenReturn(Optional.of(new ScheduledProtocolSpec.Hardfork("6110", EIP_6110_AT)));
     this.method =
         new EngineGetPayloadV6110(
             vertx,
@@ -106,7 +110,7 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
                     Collections.emptyList(),
                     Collections.emptyList(),
                     Optional.of(Collections.emptyList()),
-                    Optional.empty())),
+                    Optional.of(Collections.emptyList()))),
             Collections.emptyList());
 
     when(mergeContext.retrieveBlockById(postEip6110Pid)).thenReturn(Optional.of(postEip6110Block));
@@ -133,17 +137,6 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
                   .isEqualTo(expectedQuantityOf10);
             });
     verify(engineCallListener, times(1)).executionEngineCalled();
-  }
-
-  @Test
-  public void blobsBundleV1MustHaveSameNumberOfElements() {
-    String actualMessage =
-        assertThrows(
-                InvalidParameterException.class,
-                () -> new BlobsBundleV1(List.of(""), List.of(""), List.of()))
-            .getMessage();
-    final String expectedMessage = "There must be an equal number of blobs, commitments and proofs";
-    assertThat(actualMessage).isEqualTo(expectedMessage);
   }
 
   @Test
