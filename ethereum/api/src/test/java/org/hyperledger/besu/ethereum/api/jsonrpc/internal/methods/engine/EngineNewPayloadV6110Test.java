@@ -15,34 +15,63 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.api.graphql.internal.response.GraphQLError.INVALID_PARAMS;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameterTestFixture.DEPOSIT_PARAM_1;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
+import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class EngineNewPayloadV6110Test extends EngineNewPayloadV2Test {
+public class EngineNewPayloadV6110Test extends EngineNewPayloadV3Test {
 
   public EngineNewPayloadV6110Test() {}
+
+  @Override
+  @BeforeEach
+  public void before() {
+    super.before();
+    this.method =
+        new EngineNewPayloadV6110(
+            vertx,
+            protocolSchedule,
+            protocolContext,
+            mergeCoordinator,
+            ethPeers,
+            engineCallListener);
+
+    lenient().when(protocolSpec.getGasCalculator()).thenReturn(new CancunGasCalculator());
+    lenient()
+        .when(protocolSchedule.hardforkFor(any()))
+        .thenReturn(
+            Optional.of(new ScheduledProtocolSpec.Hardfork("6110", super.EXPERIMENTAL_TIMESTAMP)));
+  }
 
   @Override
   @Test
@@ -120,5 +149,31 @@ public class EngineNewPayloadV6110Test extends EngineNewPayloadV2Test {
 
     assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
     verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Override
+  protected BlockHeader createBlockHeader(
+      final Optional<List<Withdrawal>> maybeWithdrawals,
+      final Optional<List<Deposit>> maybeDeposits) {
+    BlockHeader parentBlockHeader =
+        new BlockHeaderTestFixture()
+            .baseFeePerGas(Wei.ONE)
+            .timestamp(super.EXPERIMENTAL_TIMESTAMP)
+            .excessDataGas(DataGas.ZERO)
+            .dataGasUsed(100L)
+            .buildHeader();
+
+    BlockHeader mockHeader =
+        new BlockHeaderTestFixture()
+            .baseFeePerGas(Wei.ONE)
+            .parentHash(parentBlockHeader.getParentHash())
+            .number(parentBlockHeader.getNumber() + 1)
+            .timestamp(parentBlockHeader.getTimestamp() + 1)
+            .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
+            .excessDataGas(DataGas.ZERO)
+            .dataGasUsed(100L)
+            .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
+            .buildHeader();
+    return mockHeader;
   }
 }
