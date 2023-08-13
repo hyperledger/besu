@@ -48,7 +48,8 @@ public class ProcessableBlockHeader implements BlockValues {
   protected final Long dataGasUsed;
   // excessDataGas is included for Cancun
   protected final DataGas excessDataGas;
-  private final Bytes32 parentBeaconBlockRoot;
+  // parentBeaconBlockRoot is included for Cancun
+  protected final Bytes32 parentBeaconBlockRoot;
 
   protected ProcessableBlockHeader(
       final Hash parentHash,

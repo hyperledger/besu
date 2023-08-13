@@ -48,6 +48,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BlockchainReferenceTestCaseSpec {
@@ -166,6 +167,7 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("depositsRoot") final String depositsRoot,
         @JsonProperty("dataGasUsed") final String dataGasUsed,
         @JsonProperty("excessDataGas") final String excessDataGas,
+        @JsonProperty("parentBeaconBlockRoot") final String parentBeaconBlockRoot,
         @JsonProperty("hash") final String hash) {
       super(
           Hash.fromHexString(parentHash), // parentHash
@@ -191,7 +193,7 @@ public class BlockchainReferenceTestCaseSpec {
           withdrawalsRoot != null ? Hash.fromHexString(withdrawalsRoot) : null,
           dataGasUsed != null ? Long.decode(dataGasUsed) : 0,
           excessDataGas != null ? DataGas.fromHexString(excessDataGas) : null,
-          null,
+          parentBeaconBlockRoot != null ? Bytes32.fromHexString(parentBeaconBlockRoot) : null,
           depositsRoot != null ? Hash.fromHexString(depositsRoot) : null,
           new BlockHeaderFunctions() {
             @Override

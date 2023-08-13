@@ -177,7 +177,7 @@ public class BlockHeaderBuilder {
         withdrawalsRoot,
         dataGasUsed,
         excessDataGas,
-        null,
+        parentBeaconBlockRoot,
         depositsRoot,
         blockHeaderFunctions);
   }

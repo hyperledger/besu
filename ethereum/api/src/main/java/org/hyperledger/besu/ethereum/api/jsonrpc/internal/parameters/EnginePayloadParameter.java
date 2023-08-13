@@ -48,7 +48,7 @@ public class EnginePayloadParameter {
   private final List<String> transactions;
   private final List<WithdrawalParameter> withdrawals;
   private final Long dataGasUsed;
-  private final String excessDataGas; // TODO: should be changed to Long
+  private final String excessDataGas;
   private final List<Bytes32> versionedHashes;
   private final List<DepositParameter> deposits;
 

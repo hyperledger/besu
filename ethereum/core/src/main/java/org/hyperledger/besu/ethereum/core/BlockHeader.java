@@ -205,6 +205,7 @@ public class BlockHeader extends SealableBlockHeader
     final Long dataGasUsed = !input.isEndOfCurrentList() ? input.readLongScalar() : null;
     final DataGas excessDataGas =
         !input.isEndOfCurrentList() ? DataGas.of(input.readLongScalar()) : null;
+    final Bytes32 parentBeaconBlockRoot = !input.isEndOfCurrentList() ? input.readBytes32() : null;
     final Hash depositHashRoot =
         !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
     input.leaveList();
@@ -228,7 +229,7 @@ public class BlockHeader extends SealableBlockHeader
         withdrawalHashRoot,
         dataGasUsed,
         excessDataGas,
-        null,
+        parentBeaconBlockRoot,
         depositHashRoot,
         blockHeaderFunctions);
   }
@@ -280,6 +281,9 @@ public class BlockHeader extends SealableBlockHeader
     if (excessDataGas != null) {
       sb.append("excessDataGas=").append(excessDataGas).append(", ");
     }
+    if (parentBeaconBlockRoot != null) {
+      sb.append("parentBeaconBlockRoot=").append(parentBeaconBlockRoot).append(", ");
+    }
     if (depositsRoot != null) {
       sb.append("depositsRoot=").append(depositsRoot);
     }
@@ -312,7 +316,7 @@ public class BlockHeader extends SealableBlockHeader
             .orElse(null),
         pluginBlockHeader.getDataGasUsed().map(Long::longValue).orElse(null),
         pluginBlockHeader.getExcessDataGas().map(DataGas::fromQuantity).orElse(null),
-        null,
+        pluginBlockHeader.getParentBeaconBlockRoot().orElse(null),
         pluginBlockHeader
             .getDepositsRoot()
             .map(h -> Hash.fromHexString(h.toHexString()))

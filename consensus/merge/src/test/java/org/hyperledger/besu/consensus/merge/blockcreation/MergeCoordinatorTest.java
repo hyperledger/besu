@@ -60,7 +60,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -122,7 +121,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                   "ae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f"));
   private static final KeyPair KEYS1 =
       new KeyPair(PRIVATE_KEY1, SIGNATURE_ALGORITHM.get().createPublicKey(PRIVATE_KEY1));
-  private static final Optional<List<Withdrawal>> EMPTY_WITHDRAWALS = Optional.empty();
 
   private static final long REPETITION_MIN_DURATION = 100;
   @Mock MergeContext mergeContext;
@@ -256,7 +254,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
-            EMPTY_WITHDRAWALS,
+            Optional.empty(),
             Optional.empty());
 
     ArgumentCaptor<BlockWithReceipts> blockWithReceipts =
@@ -296,7 +294,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
               .doCallRealMethod()
               .when(beingSpiedOn)
               .createBlock(
-                  any(), any(Bytes32.class), anyLong(), eq(Optional.empty()), Optional.empty());
+                  any(), any(Bytes32.class), anyLong(), eq(Optional.empty()), eq(Optional.empty()));
           return beingSpiedOn;
         };
 

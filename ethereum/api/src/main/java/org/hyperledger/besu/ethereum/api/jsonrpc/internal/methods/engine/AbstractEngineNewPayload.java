@@ -115,9 +115,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return respondWithInvalid(reqId, blockParam, null, INVALID, "Invalid versionedHash");
     }
 
-    Optional<String> maybeParentBeaconBlockRootParam =
-        requestContext.getOptionalParameter(2, String.class);
-
     final Optional<BlockHeader> maybeParentHeader =
         protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
 
@@ -126,12 +123,18 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         .addArgument(() -> Json.encodePrettily(blockParam))
         .log();
 
-    /*
-    ValidationResult<JsonRpcError> forkValidationResult = validateForkSupported(reqId, blockParam);
+    Optional<String> maybeParentBeaconBlockRootParam =
+        requestContext.getOptionalParameter(2, String.class);
+    final Optional<Bytes32> maybeParentBeaconBlockRoot =
+        maybeParentBeaconBlockRootParam.map(Bytes32::fromHexString);
+
+    // TODO: why WAS this commented out? Is the checking done somewhere else? See
+    // https://github.com/ethereum/execution-apis/blob/main/src/engine/cancun.md#executionpayloadv3
+    ValidationResult<RpcErrorType> forkValidationResult =
+        validateForkSupported(reqId, blockParam, maybeParentBeaconBlockRoot);
     if (!forkValidationResult.isValid()) {
       return new JsonRpcErrorResponse(reqId, forkValidationResult.getInvalidReason());
     }
-    */
 
     final Optional<List<Withdrawal>> maybeWithdrawals =
         Optional.ofNullable(blockParam.getWithdrawals())
@@ -205,7 +208,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             blockParam.getExcessDataGas() == null
                 ? null
                 : DataGas.fromHexString(blockParam.getExcessDataGas()),
-            maybeParentBeaconBlockRootParam.map(Bytes32::fromHexString).orElse(null),
+            maybeParentBeaconBlockRoot.orElse(null),
             maybeDeposits.map(BodyValidation::depositsRoot).orElse(null),
             headerFunctions);
 
@@ -394,7 +397,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   }
 
   protected ValidationResult<RpcErrorType> validateForkSupported(
-      final Object id, final EnginePayloadParameter payloadParameter) {
+      final Object id,
+      final EnginePayloadParameter payloadParameter,
+      final Optional<Bytes32> parentBeaconBlockRoot) {
     return ValidationResult.valid();
   }
 

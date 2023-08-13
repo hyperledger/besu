@@ -216,4 +216,7 @@ public interface BlockHeader {
    */
   @Unstable
   Optional<? extends Long> getDataGasUsed();
+
+  @Unstable
+  Optional<? extends Bytes32> getParentBeaconBlockRoot();
 }

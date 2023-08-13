@@ -49,6 +49,7 @@ import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.EvmAccount;
+import org.hyperledger.besu.evm.precompile.ParentBeaconBlockRootPrecompiledContract;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
@@ -187,6 +188,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       throwIfStopped();
 
       final List<BlockHeader> ommers = maybeOmmers.orElse(selectOmmers());
+
+      if (maybeParentBeaconBlockRoot.isPresent()) {
+        // set the parent beacon block root hash in the beacon root contract
+        // TDOD this is not a precompile anymore
+        ParentBeaconBlockRootPrecompiledContract.storeParentBeaconBlockRoot(
+            disposableWorldState.updater(), timestamp, maybeParentBeaconBlockRoot.get());
+      }
 
       throwIfStopped();
       final TransactionSelectionResults transactionResults =
