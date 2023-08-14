@@ -173,6 +173,9 @@ public class BlockHeader extends SealableBlockHeader
       out.writeLongScalar(dataGasUsed);
       out.writeUInt64Scalar(excessDataGas);
     }
+    if (parentBeaconBlockRoot != null) {
+      out.writeBytes(parentBeaconBlockRoot);
+    }
     if (depositsRoot != null) {
       out.writeBytes(depositsRoot);
     }

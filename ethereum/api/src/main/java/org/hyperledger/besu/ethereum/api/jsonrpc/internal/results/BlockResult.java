@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import static java.util.stream.Collectors.toList;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -86,6 +87,7 @@ public class BlockResult implements JsonRpcResult {
 
   private final String dataGasUsed;
   private final String excessDataGas;
+  private String parentBeaconBlockRoot;
 
   public BlockResult(
       final BlockHeader header,
@@ -134,6 +136,7 @@ public class BlockResult implements JsonRpcResult {
 
     this.dataGasUsed = header.getDataGasUsed().map(Quantity::create).orElse(null);
     this.excessDataGas = header.getExcessDataGas().map(Quantity::create).orElse(null);
+    this.parentBeaconBlockRoot = header.getParentBeaconBlockRoot().map(Bytes32::toHexString).orElse(null);
   }
 
   @JsonGetter(value = "number")
@@ -265,5 +268,10 @@ public class BlockResult implements JsonRpcResult {
   @JsonGetter(value = "excessDataGas")
   public String getExcessDataGas() {
     return excessDataGas;
+  }
+
+  @JsonGetter(value = "parentBeaconBlockRoot")
+  public String getParentBeaconBlockRoot() {
+    return parentBeaconBlockRoot;
   }
 }
