@@ -15,57 +15,25 @@
 package org.hyperledger.besu.evm.precompile;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.jetbrains.annotations.NotNull;
 
 /** The KZGPointEval precompile contract. */
-public class ParentBeaconBlockRootPrecompiledContract implements PrecompiledContract {
+public class ParentBeaconBlockRootPrecompiledContract {
 
+  // Modulus use to for the timestamp to store the  root
   public static final long HISTORICAL_ROOTS_MODULUS = 98304;
-  public static final int G_BEACON_ROOT = 4200;
 
-  @Override
-  public String getName() {
-    return "ParentBeaconBlockRoot";
-  }
+  // Address of the system user, that is used to call the contract for storing the root
+  // public static final Address SYSTEM_ADDRESS =
+  // Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe");
 
-  @Override
-  public long gasRequirement(final Bytes input) {
-    // As defined in EIP-4788
-    return G_BEACON_ROOT;
-  }
-
-  @NotNull
-  @Override
-  public PrecompileContractResult computePrecompile(
-      final Bytes timestampBytes, @NotNull final MessageFrame messageFrame) {
-    if (timestampBytes.size() != 32) {
-      return PrecompileContractResult.revert(Bytes.EMPTY); // EIP 4788 pseudo code: evm.revert()
-    }
-    final long timestampLong = timestampBytes.getLong(0);
-    final long timestampReduced = timestampLong % HISTORICAL_ROOTS_MODULUS;
-    final UInt256 index = UInt256.valueOf(timestampReduced);
-
-    final WorldUpdater worldUpdater = messageFrame.getWorldUpdater();
-    final EvmAccount account = worldUpdater.getAccount(Address.PARENT_BEACON_BLOCK_ROOT_REGISTRY);
-    final UInt256 recordedTimestamp = account.getStorageValue(index);
-
-    if (!recordedTimestamp.equals(timestampBytes)) {
-      return PrecompileContractResult.success(Bytes32.ZERO);
-    }
-
-    index.add(HISTORICAL_ROOTS_MODULUS);
-    final UInt256 root = account.getStorageValue(index);
-
-    return PrecompileContractResult.success(root);
-  }
+  // The address of the contract that stores the roots
+  // public static final Address BEACON_ROOTS_ADDRESS =
+  // Address.fromHexString("0x89e64Be8700cC37EB34f9209c96466DEEDc0d8a6");
 
   public static void storeParentBeaconBlockRoot(
       final WorldUpdater worldUpdater, final long timestamp, final Bytes32 root) {

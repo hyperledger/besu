@@ -225,13 +225,13 @@ public final class GenesisState {
 
   private static long parseDataGasUsed(final GenesisConfigFile genesis) {
     return withNiceErrorMessage(
-        "dataGasUsed", genesis.getDataGasUsed(), GenesisState::parseUnsignedLong);
+        "blobGasUsed", genesis.getDataGasUsed(), GenesisState::parseUnsignedLong);
   }
 
   private static DataGas parseExcessDataGas(final GenesisConfigFile genesis) {
     long excessDataGas =
         withNiceErrorMessage(
-            "excessDataGas", genesis.getExcessDataGas(), GenesisState::parseUnsignedLong);
+            "excessBlobGas", genesis.getExcessDataGas(), GenesisState::parseUnsignedLong);
     return DataGas.of(excessDataGas);
   }
 
