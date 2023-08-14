@@ -81,7 +81,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class T8nExecutor {
 
-  record RejectedTransaction(int index, String error) {}
+  public record RejectedTransaction(int index, String error) {}
 
   protected static List<Transaction> extractTransactions(
       final PrintWriter out,
@@ -128,9 +128,9 @@ public class T8nExecutor {
             if (txNode.has("maxFeePerGas")) {
               builder.maxFeePerGas(Wei.fromHexString(txNode.get("maxFeePerGas").textValue()));
             }
-            if (txNode.has("maxFeePerDataGas")) {
+            if (txNode.has("maxFeePerBlobGas")) {
               builder.maxFeePerDataGas(
-                  Wei.fromHexString(txNode.get("maxFeePerDataGas").textValue()));
+                  Wei.fromHexString(txNode.get("maxFeePerBlobGas").textValue()));
             }
 
             if (txNode.has("to")) {
@@ -251,8 +251,10 @@ public class T8nExecutor {
     final MainnetTransactionProcessor processor = protocolSpec.getTransactionProcessor();
     final WorldUpdater worldStateUpdater = worldState.updater();
     final ReferenceTestBlockchain blockchain = new ReferenceTestBlockchain(blockHeader.getNumber());
-    // Todo: EIP-4844 use the excessDataGas of the parent instead of DataGas.ZERO
-    final Wei dataGasPrice = protocolSpec.getFeeMarket().dataPricePerGas(DataGas.ZERO);
+    final Wei blobGasPrice =
+        protocolSpec
+            .getFeeMarket()
+            .dataPricePerGas(blockHeader.getExcessDataGas().orElse(DataGas.ZERO));
 
     List<TransactionReceipt> receipts = new ArrayList<>();
     List<RejectedTransaction> invalidTransactions = new ArrayList<>(rejections);
@@ -279,7 +281,7 @@ public class T8nExecutor {
                 false,
                 TransactionValidationParams.processingBlock(),
                 tracer,
-                dataGasPrice);
+                blobGasPrice);
         tracerManager.disposeTracer(tracer);
       } catch (Exception e) {
         throw new RuntimeException(e);
@@ -391,7 +393,7 @@ public class T8nExecutor {
 
     resultObject.put(
         "currentDifficulty",
-        blockHeader.getDifficultyBytes().trimLeadingZeros().size() > 0
+        !blockHeader.getDifficultyBytes().trimLeadingZeros().isEmpty()
             ? blockHeader.getDifficultyBytes().toShortHexString()
             : null);
     resultObject.put("gasUsed", Bytes.ofUnsignedLong(gasUsed).toQuantityHexString());
@@ -401,6 +403,17 @@ public class T8nExecutor {
     blockHeader
         .getWithdrawalsRoot()
         .ifPresent(wr -> resultObject.put("withdrawalsRoot", wr.toHexString()));
+    blockHeader
+        .getDataGasUsed()
+        .ifPresentOrElse(
+            bgu -> resultObject.put("blobGasUsed", Bytes.ofUnsignedLong(bgu).toQuantityHexString()),
+            () ->
+                blockHeader
+                    .getExcessDataGas()
+                    .ifPresent(ebg -> resultObject.put("blobGasUsed", "0x0")));
+    blockHeader
+        .getExcessDataGas()
+        .ifPresent(ebg -> resultObject.put("currentExcessBlobGas", ebg.toShortHexString()));
 
     ObjectNode allocObject = objectMapper.createObjectNode();
     worldState
@@ -411,7 +424,7 @@ public class T8nExecutor {
               ObjectNode accountObject =
                   allocObject.putObject(
                       account.getAddress().map(Address::toHexString).orElse("0x"));
-              if (account.getCode() != null && account.getCode().size() > 0) {
+              if (account.getCode() != null && !account.getCode().isEmpty()) {
                 accountObject.put("code", account.getCode().toHexString());
               }
               NavigableMap<Bytes32, AccountStorageEntry> storageEntries =

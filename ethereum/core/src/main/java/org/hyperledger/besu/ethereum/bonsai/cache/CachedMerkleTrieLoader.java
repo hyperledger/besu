@@ -52,9 +52,8 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
     CacheMetricsCollector cacheMetrics = new CacheMetricsCollector();
     cacheMetrics.addCache("accountsNodes", accountNodes);
     cacheMetrics.addCache("storageNodes", storageNodes);
-    if (metricsSystem instanceof PrometheusMetricsSystem)
-      ((PrometheusMetricsSystem) metricsSystem)
-          .addCollector(BesuMetricCategory.BLOCKCHAIN, () -> cacheMetrics);
+    if (metricsSystem instanceof PrometheusMetricsSystem prometheusMetricsSystem)
+      prometheusMetricsSystem.addCollector(BesuMetricCategory.BLOCKCHAIN, () -> cacheMetrics);
   }
 
   public void preLoadAccount(
@@ -82,7 +81,7 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
               worldStateRootHash,
               Function.identity(),
               Function.identity());
-      accountTrie.get(Hash.hash(account));
+      accountTrie.get(account.addressHash());
     } catch (MerkleTrieException e) {
       // ignore exception for the cache
     } finally {
@@ -102,7 +101,7 @@ public class CachedMerkleTrieLoader implements BonsaiStorageSubscriber {
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final Address account,
       final StorageSlotKey slotKey) {
-    final Hash accountHash = Hash.hash(account);
+    final Hash accountHash = account.addressHash();
     final long storageSubscriberId = worldStateStorage.subscribe(this);
     try {
       worldStateStorage

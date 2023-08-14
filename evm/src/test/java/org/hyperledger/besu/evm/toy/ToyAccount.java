@@ -40,7 +40,7 @@ public class ToyAccount implements EvmAccount, MutableAccount {
 
   private Address address;
   private final Supplier<Hash> addressHash =
-      Suppliers.memoize(() -> address == null ? Hash.ZERO : Hash.hash(address));
+      Suppliers.memoize(() -> address == null ? Hash.ZERO : address.addressHash());
   private long nonce;
   private Wei balance;
   private Bytes code;

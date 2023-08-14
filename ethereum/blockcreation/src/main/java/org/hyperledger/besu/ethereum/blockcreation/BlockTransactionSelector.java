@@ -72,6 +72,7 @@ import org.slf4j.LoggerFactory;
  *   <li>A list of receipts for inclusion in the block.
  *   <li>The root hash of the world state at the completion of transaction execution.
  *   <li>The amount of gas consumed when executing all transactions.
+ *   <li>A list of transactions evaluated but not included in the block being constructed.
  * </ul>
  *
  * Once "used" this class must be discarded and another created. This class contains state which is
@@ -80,21 +81,21 @@ import org.slf4j.LoggerFactory;
 public class BlockTransactionSelector {
 
   public static class TransactionSelectionResults {
-    private final List<Transaction> transactions = Lists.newArrayList();
+    private final List<Transaction> selectedTransactions = Lists.newArrayList();
     private final Map<TransactionType, List<Transaction>> transactionsByType =
         new EnumMap<>(TransactionType.class);
     private final List<TransactionReceipt> receipts = Lists.newArrayList();
-    private final Map<Transaction, TransactionInvalidReason> invalidTransactions = new HashMap<>();
-    private final List<TransactionSelectionResult> selectionResults = Lists.newArrayList();
+    private final Map<Transaction, TransactionSelectionResult> notSelectedTransactions =
+        new HashMap<>();
     private long cumulativeGasUsed = 0;
     private long cumulativeDataGasUsed = 0;
 
-    private void update(
+    private void updateSelected(
         final Transaction transaction,
         final TransactionReceipt receipt,
         final long gasUsed,
         final long dataGasUsed) {
-      transactions.add(transaction);
+      selectedTransactions.add(transaction);
       transactionsByType
           .computeIfAbsent(transaction.getType(), type -> new ArrayList<>())
           .add(transaction);
@@ -105,19 +106,19 @@ public class BlockTransactionSelector {
           .setMessage(
               "New selected transaction {}, total transactions {}, cumulative gas used {}, cumulative data gas used {}")
           .addArgument(transaction::toTraceLog)
-          .addArgument(transactions::size)
+          .addArgument(selectedTransactions::size)
           .addArgument(cumulativeGasUsed)
           .addArgument(cumulativeDataGasUsed)
           .log();
     }
 
-    private void updateWithInvalidTransaction(
-        final Transaction transaction, final TransactionInvalidReason invalidReason) {
-      invalidTransactions.put(transaction, invalidReason);
+    public void updateNotSelected(
+        final Transaction transaction, final TransactionSelectionResult res) {
+      notSelectedTransactions.put(transaction, res);
     }
 
-    public List<Transaction> getTransactions() {
-      return transactions;
+    public List<Transaction> getSelectedTransactions() {
+      return selectedTransactions;
     }
 
     public List<Transaction> getTransactionsByType(final TransactionType type) {
@@ -136,39 +137,27 @@ public class BlockTransactionSelector {
       return cumulativeDataGasUsed;
     }
 
-    public Map<Transaction, TransactionInvalidReason> getInvalidTransactions() {
-      return invalidTransactions;
-    }
-
-    public void addSelectionResult(final TransactionSelectionResult res) {
-      selectionResults.add(res);
+    public Map<Transaction, TransactionSelectionResult> getNotSelectedTransactions() {
+      return notSelectedTransactions;
     }
 
     public void logSelectionStats() {
       if (LOG.isDebugEnabled()) {
-        final Map<TransactionSelectionResult, Long> selectionStats =
-            selectionResults.stream()
+        final Map<TransactionSelectionResult, Long> notSelectedStats =
+            notSelectedTransactions.values().stream()
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
         LOG.debug(
-            "Selection stats: Totals[Evaluated={}, Selected={}, Skipped={}, Dropped={}]; Detailed[{}]",
-            selectionResults.size(),
-            selectionStats.entrySet().stream()
-                .filter(e -> e.getKey().selected())
-                .map(Map.Entry::getValue)
-                .mapToInt(Long::intValue)
-                .sum(),
-            selectionStats.entrySet().stream()
-                .filter(e -> !e.getKey().selected())
-                .map(Map.Entry::getValue)
-                .mapToInt(Long::intValue)
-                .sum(),
-            selectionStats.entrySet().stream()
+            "Selection stats: Totals[Evaluated={}, Selected={}, NotSelected={}, Discarded={}]; Detailed[{}]",
+            selectedTransactions.size() + notSelectedTransactions.size(),
+            selectedTransactions.size(),
+            notSelectedStats.size(),
+            notSelectedStats.entrySet().stream()
                 .filter(e -> e.getKey().discard())
                 .map(Map.Entry::getValue)
                 .mapToInt(Long::intValue)
                 .sum(),
-            selectionStats.entrySet().stream()
+            notSelectedStats.entrySet().stream()
                 .map(e -> e.getKey().toString() + "=" + e.getValue())
                 .sorted()
                 .collect(Collectors.joining(", ")));
@@ -186,15 +175,19 @@ public class BlockTransactionSelector {
       TransactionSelectionResults that = (TransactionSelectionResults) o;
       return cumulativeGasUsed == that.cumulativeGasUsed
           && cumulativeDataGasUsed == that.cumulativeDataGasUsed
-          && transactions.equals(that.transactions)
-          && receipts.equals(that.receipts)
-          && invalidTransactions.equals(that.invalidTransactions);
+          && selectedTransactions.equals(that.selectedTransactions)
+          && notSelectedTransactions.equals(that.notSelectedTransactions)
+          && receipts.equals(that.receipts);
     }
 
     @Override
     public int hashCode() {
       return Objects.hash(
-          transactions, receipts, invalidTransactions, cumulativeGasUsed, cumulativeDataGasUsed);
+          selectedTransactions,
+          notSelectedTransactions,
+          receipts,
+          cumulativeGasUsed,
+          cumulativeDataGasUsed);
     }
 
     public String toTraceLog() {
@@ -202,13 +195,20 @@ public class BlockTransactionSelector {
           + cumulativeGasUsed
           + ", cumulativeDataGasUsed="
           + cumulativeDataGasUsed
-          + ", transactions="
-          + transactions.stream().map(Transaction::toTraceLog).collect(Collectors.joining("; "));
+          + ", selectedTransactions="
+          + selectedTransactions.stream()
+              .map(Transaction::toTraceLog)
+              .collect(Collectors.joining("; "))
+          + ", notSelectedTransactions="
+          + notSelectedTransactions.entrySet().stream()
+              .map(e -> e.getValue() + ":" + e.getKey().toTraceLog())
+              .collect(Collectors.joining(";"));
     }
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(BlockTransactionSelector.class);
-
+  private static final TransactionSelector ALWAYS_SELECT =
+      (_1, _2, _3, _4) -> TransactionSelectionResult.SELECTED;
   private final Wei minTransactionGasPrice;
   private final Double minBlockOccupancyRatio;
   private final Supplier<Boolean> isCancelled;
@@ -224,7 +224,6 @@ public class BlockTransactionSelector {
   private final GasCalculator gasCalculator;
   private final GasLimitCalculator gasLimitCalculator;
   private final TransactionSelector transactionSelector;
-
   private final TransactionSelectionResults transactionSelectionResults =
       new TransactionSelectionResults();
 
@@ -259,13 +258,12 @@ public class BlockTransactionSelector {
     this.gasCalculator = gasCalculator;
     this.gasLimitCalculator = gasLimitCalculator;
     this.transactionSelector =
-        transactionSelectorFactory.map(TransactionSelectorFactory::create).orElse(null);
+        transactionSelectorFactory.map(TransactionSelectorFactory::create).orElse(ALWAYS_SELECT);
   }
 
   /*
   This function iterates over (potentially) all transactions in the PendingTransactions, this is a
-  long running process.
-  If running in a thread, it can be cancelled via the isCancelled supplier (which will result
+  long-running process. If running in a thread, it can be cancelled via the isCancelled supplier (which will result
   in this throwing an CancellationException).
    */
   public TransactionSelectionResults buildTransactionListForBlock() {
@@ -276,7 +274,9 @@ public class BlockTransactionSelector {
     transactionPool.selectTransactions(
         pendingTransaction -> {
           final var res = evaluateTransaction(pendingTransaction);
-          transactionSelectionResults.addSelectionResult(res);
+          if (!res.selected()) {
+            transactionSelectionResults.updateNotSelected(pendingTransaction, res);
+          }
           return res;
         });
     LOG.atTrace()
@@ -294,8 +294,12 @@ public class BlockTransactionSelector {
    */
   public TransactionSelectionResults evaluateTransactions(final List<Transaction> transactions) {
     transactions.forEach(
-        transaction ->
-            transactionSelectionResults.addSelectionResult(evaluateTransaction(transaction)));
+        transaction -> {
+          final var res = evaluateTransaction(transaction);
+          if (!res.selected()) {
+            transactionSelectionResults.updateNotSelected(transaction, res);
+          }
+        });
     return transactionSelectionResults;
   }
 
@@ -360,16 +364,13 @@ public class BlockTransactionSelector {
       final long cumulativeGasUsed =
           transactionSelectionResults.getCumulativeGasUsed() + gasUsedByTransaction;
 
-      TransactionSelectionResult txSelectionResult = TransactionSelectionResult.SELECTED;
-
-      if (transactionSelector != null) {
-        txSelectionResult =
-            transactionSelector.selectTransaction(
-                transaction,
-                effectiveResult.getStatus() == TransactionProcessingResult.Status.SUCCESSFUL,
-                getLogs(effectiveResult.getLogs()),
-                cumulativeGasUsed);
-      }
+      // check if the transaction is valid also for an optional configured plugin
+      final TransactionSelectionResult txSelectionResult =
+          transactionSelector.selectTransaction(
+              transaction,
+              effectiveResult.getStatus() == TransactionProcessingResult.Status.SUCCESSFUL,
+              getLogs(effectiveResult.getLogs()),
+              cumulativeGasUsed);
 
       if (txSelectionResult.equals(TransactionSelectionResult.SELECTED)) {
 
@@ -380,21 +381,23 @@ public class BlockTransactionSelector {
 
         final long dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount());
 
-        transactionSelectionResults.update(transaction, receipt, gasUsedByTransaction, dataGasUsed);
+        transactionSelectionResults.updateSelected(
+            transaction, receipt, gasUsedByTransaction, dataGasUsed);
 
         LOG.atTrace()
             .setMessage("Selected {} for block creation")
             .addArgument(transaction::toTraceLog)
             .log();
-      }
-      return txSelectionResult;
-    } else {
-      transactionSelectionResults.updateWithInvalidTransaction(
-          transaction, effectiveResult.getValidationResult().getInvalidReason());
 
-      return transactionSelectionResultForInvalidResult(
-          transaction, effectiveResult.getValidationResult());
+        return TransactionSelectionResult.SELECTED;
+      }
+
+      // the transaction is not valid for the plugin
+      return txSelectionResult;
     }
+
+    return transactionSelectionResultForInvalidResult(
+        transaction, effectiveResult.getValidationResult());
   }
 
   private List<org.hyperledger.besu.plugin.data.Log> getLogs(final List<Log> logs) {

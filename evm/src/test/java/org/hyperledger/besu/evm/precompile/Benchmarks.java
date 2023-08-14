@@ -36,7 +36,6 @@ import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
-import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -66,13 +65,11 @@ public class Benchmarks {
           .value(Wei.ZERO)
           .apparentValue(Wei.ZERO)
           .code(CodeV0.EMPTY_CODE)
-          .depth(1)
           .completer(__ -> {})
           .address(Address.ZERO)
           .blockHashLookup(n -> null)
           .blockValues(mock(BlockValues.class))
           .gasPrice(Wei.ZERO)
-          .messageFrameStack(new ArrayDeque<>())
           .miningBeneficiary(Address.ZERO)
           .originator(Address.ZERO)
           .initialGas(100_000L)
