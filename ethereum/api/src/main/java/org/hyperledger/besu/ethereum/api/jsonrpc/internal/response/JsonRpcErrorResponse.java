@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.response;
 
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -49,6 +51,13 @@ public class JsonRpcErrorResponse implements JsonRpcResponse {
 
   public JsonRpcErrorResponse(final Object id, final RpcErrorType error) {
     this(id, new JsonRpcError(error));
+  }
+
+  public JsonRpcErrorResponse(
+      final Object id, final ValidationResult<RpcErrorType> validationResult) {
+    this(
+        id,
+        new JsonRpcError(validationResult.getInvalidReason(), validationResult.getErrorMessage()));
   }
 
   @JsonGetter("id")

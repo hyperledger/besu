@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -34,7 +33,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 
 import java.util.List;
@@ -70,7 +68,6 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             ethPeers,
             engineCallListener);
     lenient().when(protocolSpec.getGasCalculator()).thenReturn(new CancunGasCalculator());
-
   }
 
   @Test
@@ -98,19 +95,20 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .baseFeePerGas(Wei.ONE)
             .timestamp(super.cancunHardfork.milestone())
             .buildHeader();
-    //protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
-    when(blockchain.getBlockHeader(parentBlockHeader.getBlockHash())).thenReturn(Optional.of(parentBlockHeader));
+    // protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
+    when(blockchain.getBlockHeader(parentBlockHeader.getBlockHash()))
+        .thenReturn(Optional.of(parentBlockHeader));
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     BlockHeader mockHeader =
         new BlockHeaderTestFixture()
             .baseFeePerGas(Wei.ONE)
             .parentHash(parentBlockHeader.getParentHash())
             .number(parentBlockHeader.getNumber() + 1)
-            .timestamp(parentBlockHeader.getTimestamp() + 1)
+            .timestamp(parentBlockHeader.getTimestamp() + 12)
             .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
             .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
-                .excessDataGas(DataGas.ZERO)
-                .dataGasUsed(0L)
+            .excessDataGas(DataGas.ZERO)
+            .dataGasUsed(0L)
             .buildHeader();
     return mockHeader;
   }
