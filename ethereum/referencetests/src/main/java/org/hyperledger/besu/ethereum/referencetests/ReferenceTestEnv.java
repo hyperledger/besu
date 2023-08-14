@@ -162,7 +162,7 @@ public class ReferenceTestEnv extends BlockHeader {
                         Map.entry(
                             Long.decode(entry.getKey()), Hash.fromHexString(entry.getValue())))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    this.beaconRoot = beaconRoot == null ? null : Bytes32.fromHexString(beaconRoot);
+    this.beaconRoot = beaconRoot == null ? null : Hash.fromHexString(beaconRoot);
   }
 
   @Override
