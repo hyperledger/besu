@@ -261,12 +261,12 @@ public class BlockResult implements JsonRpcResult {
     return withdrawals;
   }
 
-  @JsonGetter(value = "dataGasUsed")
+  @JsonGetter(value = "blobGasUsed")
   public String getDataGasUsed() {
     return dataGasUsed;
   }
 
-  @JsonGetter(value = "excessDataGas")
+  @JsonGetter(value = "excessBlobGas")
   public String getExcessDataGas() {
     return excessDataGas;
   }
