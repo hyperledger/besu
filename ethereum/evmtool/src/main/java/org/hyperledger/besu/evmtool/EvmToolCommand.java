@@ -36,8 +36,6 @@ import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
-import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
-import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -53,7 +51,6 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.time.Instant;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -349,8 +346,6 @@ public class EvmToolCommand implements Runnable {
               .orElse(0L);
       long txGas = gas - intrinsicGasCost - accessListCost;
 
-      final PrecompileContractRegistry precompileContractRegistry =
-          protocolSpec.getPrecompileContractRegistry();
       final EVM evm = protocolSpec.getEvm();
       Code code = evm.getCode(Hash.hash(codeBytes), codeBytes);
       if (!code.isValid()) {
@@ -371,11 +366,9 @@ public class EvmToolCommand implements Runnable {
         updater.getOrCreate(sender);
         updater.getOrCreate(receiver);
 
-        final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
-        messageFrameStack.add(
+        MessageFrame initialMessageFrame =
             MessageFrame.builder()
                 .type(MessageFrame.Type.MESSAGE_CALL)
-                .messageFrameStack(messageFrameStack)
                 .worldUpdater(updater)
                 .initialGas(txGas)
                 .contract(Address.ZERO)
@@ -388,17 +381,16 @@ public class EvmToolCommand implements Runnable {
                 .apparentValue(ethValue)
                 .code(code)
                 .blockValues(blockHeader)
-                .depth(0)
                 .completer(c -> {})
                 .miningBeneficiary(blockHeader.getCoinbase())
                 .blockHashLookup(new CachingBlockHashLookup(blockHeader, component.getBlockchain()))
-                .build());
+                .build();
+        Deque<MessageFrame> messageFrameStack = initialMessageFrame.getMessageFrameStack();
 
-        final MessageCallProcessor mcp = new MessageCallProcessor(evm, precompileContractRegistry);
         stopwatch.start();
         while (!messageFrameStack.isEmpty()) {
           final MessageFrame messageFrame = messageFrameStack.peek();
-          mcp.process(messageFrame, tracer);
+          protocolSpec.getTransactionProcessor().process(messageFrame, tracer);
           if (messageFrameStack.isEmpty()) {
             stopwatch.stop();
             if (lastTime == 0) {
