@@ -89,7 +89,7 @@ public abstract class BenchmarkExecutor {
   }
 
   /**
-   * Run the benchmark with the speicific args. Execution will be done warmup + iterations times
+   * Run the benchmark with the specific args. Execution will be done warmup + iterations times
    *
    * @param arg the bytes areguments to pass into the contract
    * @param contract the precompiled contract to benchmark
