@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.chain;
 
 import static java.util.Collections.emptyList;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.config.GenesisAllocation;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Address;
@@ -54,6 +53,7 @@ import java.util.stream.Stream;
 
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public final class GenesisState {
@@ -171,7 +171,8 @@ public final class GenesisState {
         .withdrawalsRoot(isShanghaiAtGenesis(genesis) ? Hash.EMPTY_TRIE_HASH : null)
         .dataGasUsed(isCancunAtGenesis(genesis) ? parseDataGasUsed(genesis) : null)
         .excessDataGas(isCancunAtGenesis(genesis) ? parseExcessDataGas(genesis) : null)
-        .parentBeaconBlockRoot((isCancunAtGenesis(genesis) ? parseParentBeaconBlockRoot(genesis) : null))
+        .parentBeaconBlockRoot(
+            (isCancunAtGenesis(genesis) ? parseParentBeaconBlockRoot(genesis) : null))
         .depositsRoot(isExperimentalEipsTimeAtGenesis(genesis) ? Hash.EMPTY_TRIE_HASH : null)
         .buildBlockHeader();
   }
@@ -236,7 +237,7 @@ public final class GenesisState {
 
   private static Bytes32 parseParentBeaconBlockRoot(final GenesisConfigFile genesis) {
     return withNiceErrorMessage(
-            "parentBeaconBlockRoot", genesis.getParentBeaconBlockRoot(), Bytes32::fromHexString);
+        "parentBeaconBlockRoot", genesis.getParentBeaconBlockRoot(), Bytes32::fromHexString);
   }
 
   private static long parseUnsignedLong(final String value) {

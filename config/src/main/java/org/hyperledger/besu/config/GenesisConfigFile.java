@@ -262,7 +262,10 @@ public class GenesisConfigFile {
    * @return the excess data gas
    */
   public String getParentBeaconBlockRoot() {
-    return JsonUtil.getValueAsString(configRoot, "parentBeaconBlockRoot", "0x0000000000000000000000000000000000000000000000000000000000000000");
+    return JsonUtil.getValueAsString(
+        configRoot,
+        "parentBeaconBlockRoot",
+        "0x0000000000000000000000000000000000000000000000000000000000000000");
   }
 
   /**

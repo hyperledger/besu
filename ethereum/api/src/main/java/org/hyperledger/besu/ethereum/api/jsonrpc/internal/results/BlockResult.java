@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import static java.util.stream.Collectors.toList;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -31,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.tuweni.bytes.Bytes32;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -87,7 +87,7 @@ public class BlockResult implements JsonRpcResult {
 
   private final String dataGasUsed;
   private final String excessDataGas;
-  private String parentBeaconBlockRoot;
+  private final String parentBeaconBlockRoot;
 
   public BlockResult(
       final BlockHeader header,
@@ -136,7 +136,8 @@ public class BlockResult implements JsonRpcResult {
 
     this.dataGasUsed = header.getDataGasUsed().map(Quantity::create).orElse(null);
     this.excessDataGas = header.getExcessDataGas().map(Quantity::create).orElse(null);
-    this.parentBeaconBlockRoot = header.getParentBeaconBlockRoot().map(Bytes32::toHexString).orElse(null);
+    this.parentBeaconBlockRoot =
+        header.getParentBeaconBlockRoot().map(Bytes32::toHexString).orElse(null);
   }
 
   @JsonGetter(value = "number")
