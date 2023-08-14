@@ -42,7 +42,7 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
-import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -157,13 +157,11 @@ public class Create2OperationTest {
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
             .code(CodeFactory.createCode(codeBytes, 0, true))
-            .depth(1)
             .completer(__ -> {})
             .address(Address.fromHexString(sender))
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
             .blockValues(mock(BlockValues.class))
             .gasPrice(Wei.ZERO)
-            .messageFrameStack(new ArrayDeque<>())
             .miningBeneficiary(Address.ZERO)
             .originator(Address.ZERO)
             .initialGas(100_000L)
@@ -214,9 +212,7 @@ public class Create2OperationTest {
   void shanghaiMaxInitCodeSizeCreate() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.fromHexString("0xc000");
-    final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
-    final MessageFrame messageFrame =
-        testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1, messageFrameStack);
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
 
     when(account.getMutable()).thenReturn(mutableAccount);
     when(account.getNonce()).thenReturn(55L);
@@ -231,7 +227,7 @@ public class Create2OperationTest {
 
     final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
     var result = maxInitCodeOperation.execute(messageFrame, evm);
-    final MessageFrame createFrame = messageFrameStack.peek();
+    final MessageFrame createFrame = messageFrame.getMessageFrameStack().peek();
     final ContractCreationProcessor ccp =
         new ContractCreationProcessor(evm.getGasCalculator(), evm, false, List.of(), 0, List.of());
     ccp.process(createFrame, OperationTracer.NO_TRACING);
@@ -246,9 +242,7 @@ public class Create2OperationTest {
   void shanghaiMaxInitCodeSizePlus1Create() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.fromHexString("0xc001");
-    final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
-    final MessageFrame messageFrame =
-        testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1, messageFrameStack);
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
 
     when(account.getMutable()).thenReturn(mutableAccount);
     when(account.getNonce()).thenReturn(55L);
@@ -271,8 +265,7 @@ public class Create2OperationTest {
       final UInt256 memoryOffset,
       final UInt256 memoryLength,
       final UInt256 value,
-      final int depth,
-      final ArrayDeque<MessageFrame> messageFrameStack) {
+      final int depth) {
     final MessageFrame messageFrame =
         MessageFrame.builder()
             .type(MessageFrame.Type.CONTRACT_CREATION)
@@ -282,13 +275,11 @@ public class Create2OperationTest {
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
             .code(CodeFactory.createCode(SIMPLE_CREATE, 0, true))
-            .depth(depth)
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
             .blockValues(mock(BlockValues.class))
             .gasPrice(Wei.ZERO)
-            .messageFrameStack(messageFrameStack)
             .miningBeneficiary(Address.ZERO)
             .originator(Address.ZERO)
             .initialGas(100000L)
@@ -301,6 +292,10 @@ public class Create2OperationTest {
     messageFrame.expandMemory(0, 500);
     messageFrame.writeMemory(
         memoryOffset.trimLeadingZeros().toInt(), SIMPLE_CREATE.size(), SIMPLE_CREATE);
+    final Deque<MessageFrame> messageFrameStack = messageFrame.getMessageFrameStack();
+    while (messageFrameStack.size() < depth) {
+      messageFrameStack.push(messageFrame);
+    }
     return messageFrame;
   }
 

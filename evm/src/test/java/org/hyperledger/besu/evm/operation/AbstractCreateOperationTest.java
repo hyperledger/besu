@@ -41,7 +41,7 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
-import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 
@@ -143,7 +143,6 @@ class AbstractCreateOperationTest {
 
   private void executeOperation(final Bytes contract, final EVM evm) {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final ArrayDeque<MessageFrame> messageFrameStack = new ArrayDeque<>();
     final MessageFrame messageFrame =
         MessageFrame.builder()
             .type(MessageFrame.Type.CONTRACT_CREATION)
@@ -153,18 +152,17 @@ class AbstractCreateOperationTest {
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
             .code(CodeFactory.createCode(SIMPLE_CREATE, 0, true))
-            .depth(1)
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
             .blockValues(mock(BlockValues.class))
             .gasPrice(Wei.ZERO)
-            .messageFrameStack(messageFrameStack)
             .miningBeneficiary(Address.ZERO)
             .originator(Address.ZERO)
             .initialGas(100000L)
             .worldUpdater(worldUpdater)
             .build();
+    final Deque<MessageFrame> messageFrameStack = messageFrame.getMessageFrameStack();
     messageFrame.pushStackItem(Bytes.ofUnsignedLong(contract.size()));
     messageFrame.pushStackItem(memoryOffset);
     messageFrame.pushStackItem(Bytes.EMPTY);

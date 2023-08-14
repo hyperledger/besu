@@ -62,7 +62,7 @@ public class WorldStateProofProvider {
     if (!worldStateStorage.isWorldStateAvailable(worldStateRoot, null)) {
       return Optional.empty();
     } else {
-      final Hash accountHash = Hash.hash(accountAddress);
+      final Hash accountHash = accountAddress.addressHash();
       final Proof<Bytes> accountProof =
           newAccountStateTrie(worldStateRoot).getValueWithProof(accountHash);
 
@@ -150,7 +150,7 @@ public class WorldStateProofProvider {
       final Bytes32 endKeyHash,
       final Bytes32 rootHash,
       final List<Bytes> proofs,
-      final TreeMap<Bytes32, Bytes> keys) {
+      final SortedMap<Bytes32, Bytes> keys) {
 
     // check if it's monotonic increasing
     if (!Ordering.natural().isOrdered(keys.keySet())) {
