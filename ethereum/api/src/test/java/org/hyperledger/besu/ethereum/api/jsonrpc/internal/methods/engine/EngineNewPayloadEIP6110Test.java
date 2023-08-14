@@ -71,7 +71,7 @@ public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
     lenient()
         .when(protocolSchedule.hardforkFor(any()))
         .thenReturn(
-            Optional.of(new ScheduledProtocolSpec.Hardfork("Cancun", super.CANCUN_TIMESTAMP)));
+            Optional.of(super.cancunHardfork));
     lenient().when(protocolSpec.getGasCalculator()).thenReturn(new CancunGasCalculator());
   }
 
@@ -159,7 +159,7 @@ public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
     BlockHeader parentBlockHeader =
         new BlockHeaderTestFixture()
             .baseFeePerGas(Wei.ONE)
-            .timestamp(super.EXPERIMENTAL_TIMESTAMP)
+            .timestamp(super.experimentalHardfork.milestone())
             .excessDataGas(DataGas.ZERO)
             .dataGasUsed(100L)
             .buildHeader();

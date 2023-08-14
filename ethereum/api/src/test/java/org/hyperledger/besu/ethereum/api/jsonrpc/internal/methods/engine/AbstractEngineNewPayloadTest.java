@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -59,9 +60,11 @@ import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
+import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -70,12 +73,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -83,11 +88,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public abstract class AbstractEngineNewPayloadTest {
 
-  protected final long LONDON_TIMESTAMP = 0;
-  protected final long PARIS_TIMESTAMP = 10;
-  protected final long SHANGHAI_TIMESTAMP = 20;
-  protected final long CANCUN_TIMESTAMP = 30;
-  protected final long EXPERIMENTAL_TIMESTAMP = 40;
+  protected final ScheduledProtocolSpec.Hardfork londonHardfork = new ScheduledProtocolSpec.Hardfork("London", 0);
+  protected final ScheduledProtocolSpec.Hardfork parisHardfork = new ScheduledProtocolSpec.Hardfork("Paris", 10);
+  protected final ScheduledProtocolSpec.Hardfork shanghaiHardfork = new ScheduledProtocolSpec.Hardfork("Shanghai", 20);
+  protected final ScheduledProtocolSpec.Hardfork cancunHardfork = new ScheduledProtocolSpec.Hardfork("Cancun", 30);
+  protected final ScheduledProtocolSpec.Hardfork experimentalHardfork = new ScheduledProtocolSpec.Hardfork("Experimental", 40);
 
   @FunctionalInterface
   interface MethodFactory {
@@ -100,6 +105,24 @@ public abstract class AbstractEngineNewPayloadTest {
         final EngineCallListener engineCallListener);
   }
 
+  static class HardforkMatcher implements ArgumentMatcher<Predicate<ScheduledProtocolSpec>> {
+    private final ScheduledProtocolSpec.Hardfork fork;
+    private final ScheduledProtocolSpec spec;
+
+    public HardforkMatcher(final ScheduledProtocolSpec.Hardfork hardfork) {
+      this.fork = hardfork;
+      this.spec = mock(ScheduledProtocolSpec.class);
+      when(spec.fork()).thenReturn(fork);
+    }
+
+    @Override
+    public boolean matches(final Predicate<ScheduledProtocolSpec> value) {
+      if(value == null) {
+        return false;
+      }
+      return value.test(spec);
+    }
+  }
   // private final MethodFactory methodFactory;
   protected AbstractEngineNewPayload method;
 
@@ -109,7 +132,7 @@ public abstract class AbstractEngineNewPayloadTest {
   protected static final Hash mockHash = Hash.hash(Bytes32.fromHexStringLenient("0x1337deadbeef"));
 
   @Mock protected ProtocolSpec protocolSpec;
-  @Mock protected ProtocolSchedule protocolSchedule;
+  @Mock protected DefaultProtocolSchedule protocolSchedule;
   @Mock protected ProtocolContext protocolContext;
 
   @Mock protected MergeContext mergeContext;
@@ -134,6 +157,14 @@ public abstract class AbstractEngineNewPayloadTest {
         .thenReturn(new DepositsValidator.ProhibitedDeposits());
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     lenient().when(ethPeers.peerCount()).thenReturn(1);
+    lenient()
+            .when(protocolSchedule.hardforkFor(argThat(new HardforkMatcher(cancunHardfork))))
+            .thenReturn(
+                    Optional.of(cancunHardfork));
+    lenient()
+            .when(protocolSchedule.hardforkFor(argThat(new HardforkMatcher(shanghaiHardfork))))
+            .thenReturn(
+                    Optional.of(shanghaiHardfork));
   }
 
   @Test
@@ -278,7 +309,7 @@ public abstract class AbstractEngineNewPayloadTest {
 
   @Test
   public void shouldReturnInvalidBlockHashOnBadHashParameter() {
-    BlockHeader mockHeader = new BlockHeaderTestFixture().buildHeader();
+    BlockHeader mockHeader = createBlockHeader(Optional.empty(), Optional.empty());
     lenient()
         .when(mergeCoordinator.getLatestValidAncestor(mockHeader.getBlockHash()))
         .thenReturn(Optional.empty());
@@ -469,8 +500,8 @@ public abstract class AbstractEngineNewPayloadTest {
 
     BlockHeader mockHeader = createBlockHeader(maybeWithdrawals, maybeDeposits);
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
-    when(blockchain.getBlockHeader(mockHeader.getParentHash()))
-        .thenReturn(Optional.of(mock(BlockHeader.class)));
+    //when(blockchain.getBlockHeader(mockHeader.getParentHash()))
+      //  .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(any(BlockHeader.class)))
         .thenReturn(Optional.of(mockHash));
     if (validateTerminalPoWBlock()) {
