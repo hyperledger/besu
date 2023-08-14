@@ -44,12 +44,12 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
   private static final long TSTORE_GAS = WARM_STORAGE_READ_COST;
 
   /**
-   * The data gas cost per blob. This is the gas cost for each blob of data that is added to the
+   * The blob gas cost per blob. This is the gas cost for each blob of data that is added to the
    * block.
    */
   public static final long DATA_GAS_PER_BLOB = 1 << 17;
 
-  /** The target data gas per block. */
+  /** The target blob gas per block. */
   public static final long TARGET_DATA_GAS_PER_BLOCK = 0x60000;
 
   // EIP-1153
@@ -64,47 +64,47 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
   }
 
   @Override
-  public long dataGasCost(final int blobCount) {
+  public long blobGasCost(final int blobCount) {
     return DATA_GAS_PER_BLOB * blobCount;
   }
 
   /**
-   * Retrieves the target data gas per block.
+   * Retrieves the target blob gas per block.
    *
-   * @return The target data gas per block.
+   * @return The target blob gas per block.
    */
-  public long getTargetDataGasPerBlock() {
+  public long getTargetBlobGasPerBlock() {
     return TARGET_DATA_GAS_PER_BLOCK;
   }
 
   /**
-   * Computes the excess data gas for a given block based on the parent's excess data gas and data
-   * gas used. If the sum of parent's excess data gas and parent's data gas used is less than the
-   * target data gas per block, the excess data gas is calculated as 0. Otherwise, it is computed as
-   * the difference between the sum and the target data gas per block.
+   * Computes the excess blob gas for a given block based on the parent's excess blob gas and data
+   * gas used. If the sum of parent's excess blob gas and parent's blob gas used is less than the
+   * target blob gas per block, the excess blob gas is calculated as 0. Otherwise, it is computed as
+   * the difference between the sum and the target blob gas per block.
    *
-   * @param parentExcessDataGas The excess data gas of the parent block.
-   * @param newBlobs data gas incurred by current block
-   * @return The excess data gas for the current block.
+   * @param parentExcessBlobGas The excess blob gas of the parent block.
+   * @param newBlobs blob gas incurred by current block
+   * @return The excess blob gas for the current block.
    */
   @Override
-  public long computeExcessDataGas(final long parentExcessDataGas, final int newBlobs) {
-    final long consumedDataGas = dataGasCost(newBlobs);
-    final long currentExcessDataGas = parentExcessDataGas + consumedDataGas;
+  public long computeExcessBlobGas(final long parentExcessBlobGas, final int newBlobs) {
+    final long consumedBlobGas = blobGasCost(newBlobs);
+    final long currentExcessBlobGas = parentExcessBlobGas + consumedBlobGas;
 
-    if (currentExcessDataGas < TARGET_DATA_GAS_PER_BLOCK) {
+    if (currentExcessBlobGas < TARGET_DATA_GAS_PER_BLOCK) {
       return 0L;
     }
-    return currentExcessDataGas - TARGET_DATA_GAS_PER_BLOCK;
+    return currentExcessBlobGas - TARGET_DATA_GAS_PER_BLOCK;
   }
 
   @Override
-  public long computeExcessDataGas(final long parentExcessDataGas, final long dataGasUsed) {
-    final long currentExcessDataGas = parentExcessDataGas + dataGasUsed;
+  public long computeExcessBlobGas(final long parentExcessBlobGas, final long blobGasUsed) {
+    final long currentExcessBlobGas = parentExcessBlobGas + blobGasUsed;
 
-    if (currentExcessDataGas < TARGET_DATA_GAS_PER_BLOCK) {
+    if (currentExcessBlobGas < TARGET_DATA_GAS_PER_BLOCK) {
       return 0L;
     }
-    return currentExcessDataGas - TARGET_DATA_GAS_PER_BLOCK;
+    return currentExcessBlobGas - TARGET_DATA_GAS_PER_BLOCK;
   }
 }

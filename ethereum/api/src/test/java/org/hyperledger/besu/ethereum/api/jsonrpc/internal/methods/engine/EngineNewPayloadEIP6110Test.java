@@ -25,7 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
@@ -160,8 +160,8 @@ public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
         new BlockHeaderTestFixture()
             .baseFeePerGas(Wei.ONE)
             .timestamp(super.EXPERIMENTAL_TIMESTAMP)
-            .excessDataGas(DataGas.ZERO)
-            .dataGasUsed(100L)
+            .excessBlobGas(BlobGas.ZERO)
+            .blobGasUsed(100L)
             .buildHeader();
 
     BlockHeader mockHeader =
@@ -171,8 +171,8 @@ public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
             .number(parentBlockHeader.getNumber() + 1)
             .timestamp(parentBlockHeader.getTimestamp() + 1)
             .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
-            .excessDataGas(DataGas.ZERO)
-            .dataGasUsed(100L)
+            .excessBlobGas(BlobGas.ZERO)
+            .blobGasUsed(100L)
             .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
             .buildHeader();
     return mockHeader;

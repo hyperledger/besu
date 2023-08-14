@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
   "gasPrice",
   "maxPriorityFeePerGas",
   "maxFeePerGas",
-  "maxFeePerDataGas",
+  "maxFeePerBlobGas",
   "hash",
   "input",
   "nonce",
@@ -66,7 +66,7 @@ public class TransactionPendingResult implements TransactionResult {
   private final String maxFeePerGas;
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  private final String maxFeePerDataGas;
+  private final String maxFeePerBlobGas;
 
   private final String hash;
   private final String input;
@@ -92,8 +92,8 @@ public class TransactionPendingResult implements TransactionResult {
     this.maxPriorityFeePerGas =
         transaction.getMaxPriorityFeePerGas().map(Wei::toShortHexString).orElse(null);
     this.maxFeePerGas = transaction.getMaxFeePerGas().map(Wei::toShortHexString).orElse(null);
-    this.maxFeePerDataGas =
-        transaction.getMaxFeePerDataGas().map(Wei::toShortHexString).orElse(null);
+    this.maxFeePerBlobGas =
+        transaction.getMaxFeePerBlobGas().map(Wei::toShortHexString).orElse(null);
     this.gasPrice = transaction.getGasPrice().map(Quantity::create).orElse(maxFeePerGas);
     this.hash = transaction.getHash().toString();
     this.input = transaction.getPayload().toString();
@@ -147,9 +147,9 @@ public class TransactionPendingResult implements TransactionResult {
     return maxFeePerGas;
   }
 
-  @JsonGetter(value = "maxFeePerDataGas")
-  public String getMaxFeePerDataGas() {
-    return maxFeePerDataGas;
+  @JsonGetter(value = "maxFeePerBlobGas")
+  public String getMaxFeePerBlobGas() {
+    return maxFeePerBlobGas;
   }
 
   @JsonGetter(value = "hash")

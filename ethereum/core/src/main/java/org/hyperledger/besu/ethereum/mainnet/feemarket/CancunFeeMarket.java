@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.math.BigInteger;
@@ -39,18 +39,18 @@ public class CancunFeeMarket extends LondonFeeMarket {
   }
 
   @Override
-  public Wei dataPricePerGas(final DataGas excessDataGas) {
-    final var dataGasPrice =
+  public Wei dataPricePerGas(final BlobGas excessBlobGas) {
+    final var blobGasPrice =
         Wei.of(
             fakeExponential(
-                MIN_DATA_GAS_PRICE, excessDataGas.toBigInteger(), DATA_GAS_PRICE_UPDATE_FRACTION));
+                MIN_DATA_GAS_PRICE, excessBlobGas.toBigInteger(), DATA_GAS_PRICE_UPDATE_FRACTION));
     LOG.atTrace()
-        .setMessage("parentExcessDataGas: {} dataGasPrice: {}")
-        .addArgument(excessDataGas::toShortHexString)
-        .addArgument(dataGasPrice::toHexString)
+        .setMessage("parentExcessBlobGas: {} blobGasPrice: {}")
+        .addArgument(excessBlobGas::toShortHexString)
+        .addArgument(blobGasPrice::toHexString)
         .log();
 
-    return dataGasPrice;
+    return blobGasPrice;
   }
 
   private BigInteger fakeExponential(

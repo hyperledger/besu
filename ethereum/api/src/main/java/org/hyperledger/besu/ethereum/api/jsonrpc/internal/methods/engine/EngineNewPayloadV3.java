@@ -52,9 +52,9 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
     var cancun = timestampSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
 
     if (cancun.isPresent() && payloadParameter.getTimestamp() >= cancun.get().milestone()) {
-      if (payloadParameter.getDataGasUsed() == null
-          || payloadParameter.getExcessDataGas() == null) {
-        return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing data gas fields");
+      if (payloadParameter.getBlobGasUsed() == null
+          || payloadParameter.getExcessBlobGas() == null) {
+        return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing blob gas fields");
       } else {
         return ValidationResult.valid();
       }

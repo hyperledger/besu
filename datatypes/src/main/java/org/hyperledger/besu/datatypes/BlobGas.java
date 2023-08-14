@@ -20,97 +20,97 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.BaseUInt64Value;
 import org.apache.tuweni.units.bigints.UInt64;
 
-/** A particular quantity of DataGas */
-public final class DataGas extends BaseUInt64Value<DataGas> implements Quantity {
+/** A particular quantity of BlobGas */
+public final class BlobGas extends BaseUInt64Value<BlobGas> implements Quantity {
 
   /** The constant ZERO. */
-  public static final DataGas ZERO = of(0);
+  public static final BlobGas ZERO = of(0);
 
   /** The constant ONE. */
-  public static final DataGas ONE = of(1);
+  public static final BlobGas ONE = of(1);
 
   /** The constant MAX_DATA_GAS. */
-  public static final DataGas MAX_DATA_GAS = of(UInt64.MAX_VALUE);
+  public static final BlobGas MAX_DATA_GAS = of(UInt64.MAX_VALUE);
 
   /**
-   * Instantiates a new DataGas.
+   * Instantiates a new BlobGas.
    *
    * @param value the value
    */
-  DataGas(final UInt64 value) {
-    super(value, DataGas::new);
+  BlobGas(final UInt64 value) {
+    super(value, BlobGas::new);
   }
 
-  private DataGas(final long v) {
+  private BlobGas(final long v) {
     this(UInt64.valueOf(v));
   }
 
-  private DataGas(final BigInteger v) {
+  private BlobGas(final BigInteger v) {
     this(UInt64.valueOf(v));
   }
 
-  private DataGas(final String hexString) {
+  private BlobGas(final String hexString) {
     this(UInt64.fromHexString(hexString));
   }
 
   /**
-   * data gas of value.
+   * blob gas of value.
    *
    * @param value the value
-   * @return the data gas
+   * @return the blob gas
    */
-  public static DataGas of(final long value) {
-    return new DataGas(value);
+  public static BlobGas of(final long value) {
+    return new BlobGas(value);
   }
 
   /**
-   * data gas of value.
+   * blob gas of value.
    *
    * @param value the value
-   * @return the data gas
+   * @return the blob gas
    */
-  public static DataGas of(final BigInteger value) {
-    return new DataGas(value);
+  public static BlobGas of(final BigInteger value) {
+    return new BlobGas(value);
   }
 
   /**
-   * data gas of value.
+   * blob gas of value.
    *
    * @param value the value
-   * @return the data gas
+   * @return the blob gas
    */
-  public static DataGas of(final UInt64 value) {
-    return new DataGas(value);
+  public static BlobGas of(final UInt64 value) {
+    return new BlobGas(value);
   }
 
   /**
-   * data gas of value.
+   * blob gas of value.
    *
    * @param value the value
-   * @return the data gas
+   * @return the blob gas
    */
-  public static DataGas ofNumber(final Number value) {
-    return new DataGas((BigInteger) value);
+  public static BlobGas ofNumber(final Number value) {
+    return new BlobGas((BigInteger) value);
   }
 
   /**
-   * Wrap data gas.
+   * Wrap blob gas.
    *
    * @param value the value
-   * @return the data gas
+   * @return the blob gas
    */
-  public static DataGas wrap(final Bytes value) {
-    return new DataGas(UInt64.fromBytes(value));
+  public static BlobGas wrap(final Bytes value) {
+    return new BlobGas(UInt64.fromBytes(value));
   }
 
   /**
-   * From hex string to data gas.
+   * From hex string to blob gas.
    *
    * @param str the str
-   * @return the data gas
+   * @return the blob gas
    */
-  public static DataGas fromHexString(final String str) {
-    return new DataGas(str);
+  public static BlobGas fromHexString(final String str) {
+    return new BlobGas(str);
   }
 
   @Override
@@ -134,12 +134,12 @@ public final class DataGas extends BaseUInt64Value<DataGas> implements Quantity 
   }
 
   /**
-   * From quantity to data gas.
+   * From quantity to blob gas.
    *
    * @param quantity the quantity
-   * @return the data gas
+   * @return the blob gas
    */
-  public static DataGas fromQuantity(final Quantity quantity) {
-    return DataGas.wrap((Bytes) quantity);
+  public static BlobGas fromQuantity(final Quantity quantity) {
+    return BlobGas.wrap((Bytes) quantity);
   }
 }

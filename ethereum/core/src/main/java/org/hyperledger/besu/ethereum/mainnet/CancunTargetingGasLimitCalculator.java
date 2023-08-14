@@ -25,7 +25,7 @@ public class CancunTargetingGasLimitCalculator extends LondonTargetingGasLimitCa
   }
 
   @Override
-  public long currentDataGasLimit() {
+  public long currentBlobGasLimit() {
     return MAX_DATA_GAS_PER_BLOCK;
   }
 }

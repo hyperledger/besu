@@ -27,13 +27,13 @@ public class CancunGasCalculatorTest {
   private final CancunGasCalculator gasCalculator = new CancunGasCalculator();
 
   @ParameterizedTest(name = "{index} - parent gas {0}, used gas {1}, new excess {2}")
-  @MethodSource("dataGasses")
-  public void shouldCalculateExcessDataGasCorrectly(
+  @MethodSource("blobGasses")
+  public void shouldCalculateExcessBlobGasCorrectly(
       final long parentExcess, final long used, final long expected) {
-    assertThat(gasCalculator.computeExcessDataGas(parentExcess, (int) used)).isEqualTo(expected);
+    assertThat(gasCalculator.computeExcessBlobGas(parentExcess, (int) used)).isEqualTo(expected);
   }
 
-  static Iterable<Arguments> dataGasses() {
+  static Iterable<Arguments> blobGasses() {
     long targetGasPerBlock = CancunGasCalculator.TARGET_DATA_GAS_PER_BLOCK;
     return List.of(
         Arguments.of(0L, 0L, 0L),

@@ -24,7 +24,7 @@ public interface GasLimitCalculator {
     return (currentGasLimit, targetGasLimit, newBlockNumber) -> currentGasLimit;
   }
 
-  default long currentDataGasLimit() {
+  default long currentBlobGasLimit() {
     return DATA_GAS_LIMIT;
   }
 }

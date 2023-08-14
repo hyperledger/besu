@@ -15,9 +15,9 @@
 package org.hyperledger.besu.services;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessDataGasCalculator.calculateExcessDataGasForParent;
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceBlock.ChainUpdater;
@@ -111,15 +111,15 @@ public class TraceServiceImpl implements TraceService {
                   transaction -> {
                     final Optional<BlockHeader> maybeParentHeader =
                         blockchain.getBlockHeader(header.getParentHash());
-                    final Wei dataGasPrice =
+                    final Wei blobGasPrice =
                         protocolSpec
                             .getFeeMarket()
                             .dataPricePerGas(
                                 maybeParentHeader
                                     .map(
                                         parent ->
-                                            calculateExcessDataGasForParent(protocolSpec, parent))
-                                    .orElse(DataGas.ZERO));
+                                            calculateExcessBlobGasForParent(protocolSpec, parent))
+                                    .orElse(BlobGas.ZERO));
 
                     tracer.traceStartTransaction(transaction);
 
@@ -133,7 +133,7 @@ public class TraceServiceImpl implements TraceService {
                             tracer,
                             new CachingBlockHashLookup(header, blockchain),
                             false,
-                            dataGasPrice);
+                            blobGasPrice);
 
                     long transactionGasUsed = transaction.getGasLimit() - result.getGasRemaining();
                     tracer.traceEndTransaction(result.getOutput(), transactionGasUsed, 0);

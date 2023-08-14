@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
@@ -25,54 +25,54 @@ import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-/** Tests for the {@link DataGasValidationRule} class. */
-public class DataGasValidationRuleTest {
+/** Tests for the {@link BlobGasValidationRule} class. */
+public class BlobGasValidationRuleTest {
 
   private CancunGasCalculator gasCalculator;
-  private DataGasValidationRule dataGasValidationRule;
+  private BlobGasValidationRule blobGasValidationRule;
 
   @BeforeEach
   public void setUp() {
     gasCalculator = new CancunGasCalculator();
-    dataGasValidationRule = new DataGasValidationRule(gasCalculator);
+    blobGasValidationRule = new BlobGasValidationRule(gasCalculator);
   }
 
-  /** Tests that the header data gas matches the calculated data gas and passes validation. */
+  /** Tests that the header blob gas matches the calculated blob gas and passes validation. */
   @Test
-  public void validateHeader_DataGasMatchesCalculated_SuccessValidation() {
-    long target = gasCalculator.getTargetDataGasPerBlock();
+  public void validateHeader_BlobGasMatchesCalculated_SuccessValidation() {
+    long target = gasCalculator.getTargetBlobGasPerBlock();
 
     // Create parent header
     final BlockHeaderTestFixture parentBuilder = new BlockHeaderTestFixture();
-    parentBuilder.excessDataGas(DataGas.of(1L));
-    parentBuilder.dataGasUsed(target);
+    parentBuilder.excessBlobGas(BlobGas.of(1L));
+    parentBuilder.blobGasUsed(target);
     final BlockHeader parentHeader = parentBuilder.buildHeader();
 
-    // Create block header with matching excessDataGas
+    // Create block header with matching excessBlobGas
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
-    headerBuilder.excessDataGas(DataGas.of(1L));
+    headerBuilder.excessBlobGas(BlobGas.of(1L));
     final BlockHeader header = headerBuilder.buildHeader();
 
-    assertThat(dataGasValidationRule.validate(header, parentHeader)).isTrue();
+    assertThat(blobGasValidationRule.validate(header, parentHeader)).isTrue();
   }
 
   /**
-   * Tests that the header data gas is different from the calculated data gas and fails validation.
+   * Tests that the header blob gas is different from the calculated blob gas and fails validation.
    */
   @Test
-  public void validateHeader_DataGasDifferentFromCalculated_FailsValidation() {
-    long target = gasCalculator.getTargetDataGasPerBlock();
+  public void validateHeader_BlobGasDifferentFromCalculated_FailsValidation() {
+    long target = gasCalculator.getTargetBlobGasPerBlock();
 
     // Create parent header
     final BlockHeaderTestFixture parentBuilder = new BlockHeaderTestFixture();
-    parentBuilder.excessDataGas(DataGas.of(1L));
-    parentBuilder.dataGasUsed(target);
+    parentBuilder.excessBlobGas(BlobGas.of(1L));
+    parentBuilder.blobGasUsed(target);
     final BlockHeader parentHeader = parentBuilder.buildHeader();
 
-    // Create block header with different excessDataGas
+    // Create block header with different excessBlobGas
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
     final BlockHeader header = headerBuilder.buildHeader();
 
-    assertThat(dataGasValidationRule.validate(header, parentHeader)).isFalse();
+    assertThat(blobGasValidationRule.validate(header, parentHeader)).isFalse();
   }
 }

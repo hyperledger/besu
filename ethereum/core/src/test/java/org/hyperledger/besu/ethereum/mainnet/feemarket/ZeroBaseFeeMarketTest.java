@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -147,6 +147,6 @@ public class ZeroBaseFeeMarketTest {
 
   @Test
   public void dataPriceShouldReturnsZero() {
-    assertThat(zeroBaseFeeMarket.dataPricePerGas(DataGas.ONE)).isEqualTo(Wei.ZERO);
+    assertThat(zeroBaseFeeMarket.dataPricePerGas(BlobGas.ONE)).isEqualTo(Wei.ZERO);
   }
 }

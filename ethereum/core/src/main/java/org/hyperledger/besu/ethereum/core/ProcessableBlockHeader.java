@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.frame.BlockValues;
@@ -44,10 +44,10 @@ public class ProcessableBlockHeader implements BlockValues {
   protected final Wei baseFee;
   // prevRandao is included for post-merge blocks
   protected final Bytes32 mixHashOrPrevRandao;
-  // dataGasUsed is included for Cancun
-  protected final Long dataGasUsed;
-  // excessDataGas is included for Cancun
-  protected final DataGas excessDataGas;
+  // blobGasUsed is included for Cancun
+  protected final Long blobGasUsed;
+  // excessBlobGas is included for Cancun
+  protected final BlobGas excessBlobGas;
 
   protected ProcessableBlockHeader(
       final Hash parentHash,
@@ -58,8 +58,8 @@ public class ProcessableBlockHeader implements BlockValues {
       final long timestamp,
       final Wei baseFee,
       final Bytes32 mixHashOrPrevRandao,
-      final Long dataGasUsed,
-      final DataGas excessDataGas) {
+      final Long blobGasUsed,
+      final BlobGas excessBlobGas) {
     this.parentHash = parentHash;
     this.coinbase = coinbase;
     this.difficulty = difficulty;
@@ -68,8 +68,8 @@ public class ProcessableBlockHeader implements BlockValues {
     this.timestamp = timestamp;
     this.baseFee = baseFee;
     this.mixHashOrPrevRandao = mixHashOrPrevRandao;
-    this.dataGasUsed = dataGasUsed;
-    this.excessDataGas = excessDataGas;
+    this.blobGasUsed = blobGasUsed;
+    this.excessBlobGas = excessBlobGas;
   }
 
   /**
@@ -168,12 +168,12 @@ public class ProcessableBlockHeader implements BlockValues {
     return Optional.ofNullable(mixHashOrPrevRandao);
   }
 
-  public Optional<DataGas> getExcessDataGas() {
-    return Optional.ofNullable(excessDataGas);
+  public Optional<BlobGas> getExcessBlobGas() {
+    return Optional.ofNullable(excessBlobGas);
   }
 
-  public Optional<Long> getDataGasUsed() {
-    return Optional.ofNullable(dataGasUsed);
+  public Optional<Long> getBlobGasUsed() {
+    return Optional.ofNullable(blobGasUsed);
   }
 
   public String toLogString() {

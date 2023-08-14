@@ -51,7 +51,7 @@ import org.bouncycastle.crypto.digests.SHA256Digest;
  */
 public class MainnetTransactionValidator implements TransactionValidator {
 
-  private final byte BLOB_COMMITMENT_VERSION_KZG = 0x01;
+  private static final byte BLOB_COMMITMENT_VERSION_KZG = 0x01;
 
   private final GasCalculator gasCalculator;
   private final GasLimitCalculator gasLimitCalculator;
@@ -155,24 +155,24 @@ public class MainnetTransactionValidator implements TransactionValidator {
     }
 
     if (transaction.getType().supportsBlob()) {
-      final long txTotalDataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
-      if (txTotalDataGas > gasLimitCalculator.currentDataGasLimit()) {
+      final long txTotalBlobGas = gasCalculator.blobGasCost(transaction.getBlobCount());
+      if (txTotalBlobGas > gasLimitCalculator.currentBlobGasLimit()) {
         return ValidationResult.invalid(
             TransactionInvalidReason.TOTAL_DATA_GAS_TOO_HIGH,
             String.format(
-                "total data gas %d exceeds max data gas per block %d",
-                txTotalDataGas, gasLimitCalculator.currentDataGasLimit()));
+                "total blob gas %d exceeds max blob gas per block %d",
+                txTotalBlobGas, gasLimitCalculator.currentBlobGasLimit()));
       }
     }
 
     if (transaction.getType().supportsBlob()) {
-      final long txTotalDataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
-      if (txTotalDataGas > gasLimitCalculator.currentDataGasLimit()) {
+      final long txTotalBlobGas = gasCalculator.blobGasCost(transaction.getBlobCount());
+      if (txTotalBlobGas > gasLimitCalculator.currentBlobGasLimit()) {
         return ValidationResult.invalid(
             TransactionInvalidReason.TOTAL_DATA_GAS_TOO_HIGH,
             String.format(
-                "total data gas %d exceeds max data gas per block %d",
-                txTotalDataGas, gasLimitCalculator.currentDataGasLimit()));
+                "total blob gas %d exceeds max blob gas per block %d",
+                txTotalBlobGas, gasLimitCalculator.currentBlobGasLimit()));
       }
     }
 
@@ -207,7 +207,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
     }
 
     final Wei upfrontCost =
-        transaction.getUpfrontCost(gasCalculator.dataGasCost(transaction.getBlobCount()));
+        transaction.getUpfrontCost(gasCalculator.blobGasCost(transaction.getBlobCount()));
     if (upfrontCost.compareTo(senderBalance) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,

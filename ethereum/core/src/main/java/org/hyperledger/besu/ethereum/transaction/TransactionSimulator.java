@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.transaction;
 
-import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessDataGasCalculator.calculateExcessDataGasForParent;
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -233,13 +233,13 @@ public class TransactionSimulator {
 
     final Optional<BlockHeader> maybeParentHeader =
         blockchain.getBlockHeader(blockHeaderToProcess.getParentHash());
-    final Wei dataGasPrice =
+    final Wei blobGasPrice =
         protocolSpec
             .getFeeMarket()
             .dataPricePerGas(
                 maybeParentHeader
-                    .map(parent -> calculateExcessDataGasForParent(protocolSpec, parent))
-                    .orElse(DataGas.ZERO));
+                    .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
+                    .orElse(BlobGas.ZERO));
 
     final Transaction transaction = maybeTransaction.get();
     final TransactionProcessingResult result =
@@ -255,7 +255,7 @@ public class TransactionSimulator {
             false,
             transactionValidationParams,
             operationTracer,
-            dataGasPrice);
+            blobGasPrice);
 
     return Optional.of(new TransactionSimulatorResult(transaction, result));
   }

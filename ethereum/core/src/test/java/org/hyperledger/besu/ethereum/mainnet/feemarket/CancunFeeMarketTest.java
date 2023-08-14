@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,34 +32,34 @@ class CancunFeeMarketTest {
   @Test
   void dataPricePerGas() {
     CancunFeeMarket cancunFeeMarket = new CancunFeeMarket(0, Optional.empty());
-    // when no excess data gas, data price per gas is 1
-    assertEquals(1, cancunFeeMarket.dataPricePerGas(DataGas.ZERO).getAsBigInteger().intValue());
+    // when no excess blob gas, data price per gas is 1
+    assertEquals(1, cancunFeeMarket.dataPricePerGas(BlobGas.ZERO).getAsBigInteger().intValue());
 
-    record DataGasPricing(long excess, long price) {}
-    List<DataGasPricing> testVector = new ArrayList<>();
+    record BlobGasPricing(long excess, long price) {}
+    List<BlobGasPricing> testVector = new ArrayList<>();
 
     int numBlobs = 1;
     long price = 1;
     while (price <= 1000) {
-      price = dataGasPrice(DataGas.of(numBlobs * DATA_GAS_PER_BLOB));
-      var testCase = new DataGasPricing(numBlobs * DATA_GAS_PER_BLOB, price);
+      price = blobGasPrice(BlobGas.of(numBlobs * DATA_GAS_PER_BLOB));
+      var testCase = new BlobGasPricing(numBlobs * DATA_GAS_PER_BLOB, price);
       testVector.add(testCase);
       numBlobs++;
     }
 
     testVector.stream()
         .forEach(
-            dataGasPricing -> {
+            blobGasPricing -> {
               assertEquals(
-                  dataGasPricing.price,
+                  blobGasPricing.price,
                   cancunFeeMarket
-                      .dataPricePerGas(DataGas.of(dataGasPricing.excess))
+                      .dataPricePerGas(BlobGas.of(blobGasPricing.excess))
                       .getAsBigInteger()
                       .intValue());
             });
   }
 
-  private long dataGasPrice(final DataGas excess) {
+  private long blobGasPrice(final BlobGas excess) {
     double dgufDenominator = 3338477;
     double fakeExpo = excess.getValue().longValue() / dgufDenominator;
     return (long) (1 * Math.exp(fakeExpo));
