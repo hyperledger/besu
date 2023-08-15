@@ -28,7 +28,8 @@
     "id": 67,
     "error": {
       "code": -32602,
-      "message": "Invalid params"
+      "message": "Invalid params",
+      "data": "Invalid withdrawals"
     }
   },
   "statusCode": 200
