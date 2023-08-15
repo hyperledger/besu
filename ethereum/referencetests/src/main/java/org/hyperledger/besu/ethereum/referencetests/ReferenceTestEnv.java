@@ -211,7 +211,7 @@ public class ReferenceTestEnv extends BlockHeader {
                           .buildBlockHeader(),
                       null)));
     }
-    if (excessDataGas == null && parentExcessBlobGas != null && parentBlobGasUsed != null) {
+    if (excessDataGas.isEmpty() && parentExcessBlobGas != null && parentBlobGasUsed != null) {
       builder.excessDataGas(
           DataGas.of(
               protocolSpec
