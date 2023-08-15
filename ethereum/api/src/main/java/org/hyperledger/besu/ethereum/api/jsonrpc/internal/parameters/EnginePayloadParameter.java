@@ -69,8 +69,8 @@ public class EnginePayloadParameter {
       @JsonProperty("prevRandao") final String prevRandao,
       @JsonProperty("transactions") final List<String> transactions,
       @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals,
-      @JsonProperty("dataGasUsed") final UnsignedLongParameter dataGasUsed,
-      @JsonProperty("excessDataGas") final String excessDataGas,
+      @JsonProperty("blobGasUsed") final UnsignedLongParameter dataGasUsed,
+      @JsonProperty("excessBlobGas") final String excessDataGas,
       @JsonProperty("versionedHashes") final List<Bytes32> versionedHashes,
       @JsonProperty("deposits") final List<DepositParameter> deposits) {
     this.blockHash = blockHash;
