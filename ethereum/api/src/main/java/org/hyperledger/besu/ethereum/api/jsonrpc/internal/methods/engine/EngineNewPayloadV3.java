@@ -27,8 +27,6 @@ import io.vertx.core.Vertx;
 
 public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
 
-  private final ProtocolSchedule timestampSchedule;
-
   public EngineNewPayloadV3(
       final Vertx vertx,
       final ProtocolSchedule timestampSchedule,
@@ -38,7 +36,6 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
       final EngineCallListener engineCallListener) {
     super(
         vertx, timestampSchedule, protocolContext, mergeCoordinator, ethPeers, engineCallListener);
-    this.timestampSchedule = timestampSchedule;
   }
 
   @Override

@@ -86,13 +86,13 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
       ValidationResult<RpcErrorType> forkValidationResult =
           validateForkSupported(payloadAttributes.getTimestamp());
       if (!forkValidationResult.isValid()) {
-        return new JsonRpcErrorResponse(requestId, forkValidationResult);
+        return new JsonRpcSuccessResponse(requestId, forkValidationResult);
       }
     }
 
     ValidationResult<RpcErrorType> parameterValidationResult = validateParameter(forkChoice);
     if (!parameterValidationResult.isValid()) {
-      return new JsonRpcErrorResponse(requestId, parameterValidationResult);
+      return new JsonRpcSuccessResponse(requestId, parameterValidationResult);
     }
 
     mergeContext
@@ -227,7 +227,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
         payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
     return newTimestampGreaterThanHead
         && getWithdrawalsValidator(
-                protocolSchedule, headBlockHeader, payloadAttributes.getTimestamp())
+                protocolSchedule.get(), headBlockHeader, payloadAttributes.getTimestamp())
             .validateWithdrawals(maybeWithdrawals);
   }
 

@@ -69,4 +69,9 @@ public class EngineNewPayloadV1 extends AbstractEngineNewPayload {
       final ProtocolSpec protocolSpec) {
     return ValidationResult.valid();
   }
+
+  @Override
+  protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
+    return ValidationResult.valid();
+  }
 }

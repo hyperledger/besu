@@ -138,7 +138,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()));
 
     if (!getWithdrawalsValidator(
-            protocolSchedule, blockParam.getTimestamp(), blockParam.getBlockNumber())
+            protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
         .validateWithdrawals(maybeWithdrawals)) {
       return new JsonRpcErrorResponse(
           reqId, new JsonRpcError(INVALID_PARAMS, "Invalid withdrawals"));
@@ -148,7 +148,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         Optional.ofNullable(blockParam.getDeposits())
             .map(ds -> ds.stream().map(DepositParameter::toDeposit).collect(toList()));
     if (!getDepositsValidator(
-            protocolSchedule, blockParam.getTimestamp(), blockParam.getBlockNumber())
+            protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
         .validateDepositParameter(maybeDeposits)) {
       return new JsonRpcErrorResponse(reqId, new JsonRpcError(INVALID_PARAMS, "Invalid deposits"));
     }
@@ -231,7 +231,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             newBlockHeader,
             maybeParentHeader,
             maybeVersionedHashes,
-            protocolSchedule.getByBlockHeader(newBlockHeader));
+            protocolSchedule.get().getByBlockHeader(newBlockHeader));
     if (!blobValidationResult.isValid()) {
       return respondWithInvalid(
           reqId,

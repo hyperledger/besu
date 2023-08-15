@@ -47,7 +47,7 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(ExecutionEngineJsonRpcMethod.class);
   protected final Optional<MergeContext> mergeContextOptional;
   protected final Supplier<MergeContext> mergeContext;
-  protected final ProtocolSchedule protocolSchedule;
+  protected final Optional<ProtocolSchedule> protocolSchedule;
   protected final ProtocolContext protocolContext;
   protected final EngineCallListener engineCallListener;
 
@@ -57,7 +57,19 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
       final ProtocolContext protocolContext,
       final EngineCallListener engineCallListener) {
     this.syncVertx = vertx;
-    this.protocolSchedule = protocolSchedule;
+    this.protocolSchedule = Optional.of(protocolSchedule);
+    this.protocolContext = protocolContext;
+    this.mergeContextOptional = protocolContext.safeConsensusContext(MergeContext.class);
+    this.mergeContext = mergeContextOptional::orElseThrow;
+    this.engineCallListener = engineCallListener;
+  }
+
+  protected ExecutionEngineJsonRpcMethod(
+      final Vertx vertx,
+      final ProtocolContext protocolContext,
+      final EngineCallListener engineCallListener) {
+    this.syncVertx = vertx;
+    this.protocolSchedule = Optional.empty();
     this.protocolContext = protocolContext;
     this.mergeContextOptional = protocolContext.safeConsensusContext(MergeContext.class);
     this.mergeContext = mergeContextOptional::orElseThrow;
@@ -113,14 +125,20 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
   public abstract JsonRpcResponse syncResponse(final JsonRpcRequestContext request);
 
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
-    var cancun = protocolSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
+    if (protocolSchedule.isPresent()) {
+      var cancun =
+          protocolSchedule.get().hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
 
-    if (cancun.isPresent() && blockTimestamp >= cancun.get().milestone()) {
-      return ValidationResult.valid();
+      if (cancun.isPresent() && blockTimestamp >= cancun.get().milestone()) {
+        return ValidationResult.valid();
+      } else {
+        return ValidationResult.invalid(
+            RpcErrorType.UNSUPPORTED_FORK,
+            "Cancun configured to start at timestamp: " + cancun.get().milestone());
+      }
     } else {
       return ValidationResult.invalid(
-          RpcErrorType.UNSUPPORTED_FORK,
-          "Cancun configured to start at timestamp: " + cancun.get().milestone());
+          RpcErrorType.UNSUPPORTED_FORK, "Configuration error, no schedule for Cancun fork set");
     }
   }
 }

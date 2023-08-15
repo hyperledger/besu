@@ -75,7 +75,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
     Bytes shortHash = Bytes.fromHexString("0x" + "69".repeat(31));
 
     EnginePayloadParameter payload = mock(EnginePayloadParameter.class);
-    when(payload.getTimestamp()).thenReturn(30l);
+    when(payload.getTimestamp()).thenReturn(cancunHardfork.milestone());
     when(payload.getExcessBlobGas()).thenReturn("99");
     when(payload.getBlobGasUsed()).thenReturn(9l);
 
