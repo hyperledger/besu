@@ -81,7 +81,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   private static final Hash OMMERS_HASH_CONSTANT = Hash.EMPTY_LIST_HASH;
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineNewPayload.class);
   private static final BlockHeaderFunctions headerFunctions = new MainnetBlockHeaderFunctions();
-  private final ProtocolSchedule protocolSchedule;
   private final MergeMiningCoordinator mergeCoordinator;
   private final EthPeers ethPeers;
 
@@ -92,8 +91,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       final MergeMiningCoordinator mergeCoordinator,
       final EthPeers ethPeers,
       final EngineCallListener engineCallListener) {
-    super(vertx, protocolContext, engineCallListener);
-    this.protocolSchedule = protocolSchedule;
+    super(vertx, protocolSchedule, protocolContext, engineCallListener);
     this.mergeCoordinator = mergeCoordinator;
     this.ethPeers = ethPeers;
   }
@@ -109,11 +107,14 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         requestContext.getOptionalList(1, String.class);
 
     final Object reqId = requestContext.getRequest().getId();
-
-    final ValidationResult<RpcErrorType> forkValidationResult =
-        validateForkSupported(reqId, blockParam);
+    final ValidationResult<RpcErrorType> forkValidationResult = validateForkSupported(blockParam.getTimestamp());
     if (!forkValidationResult.isValid()) {
       return new JsonRpcErrorResponse(reqId, forkValidationResult);
+    }
+
+    final ValidationResult<RpcErrorType> parameterValidationResult = validateParameter(blockParam);
+    if (!parameterValidationResult.isValid()) {
+      return new JsonRpcErrorResponse(reqId, parameterValidationResult);
     }
 
     final Optional<List<VersionedHash>> maybeVersionedHashes;
@@ -130,6 +131,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         .setMessage("blockparam: {}")
         .addArgument(() -> Json.encodePrettily(blockParam))
         .log();
+
+
+
 
     final Optional<List<Withdrawal>> maybeWithdrawals =
         Optional.ofNullable(blockParam.getWithdrawals())
@@ -391,8 +395,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     return INVALID;
   }
 
-  protected ValidationResult<RpcErrorType> validateForkSupported(
-      final Object id, final EnginePayloadParameter payloadParameter) {
+  protected ValidationResult<RpcErrorType> validateParameter(final EnginePayloadParameter parameter) {
     return ValidationResult.valid();
   }
 

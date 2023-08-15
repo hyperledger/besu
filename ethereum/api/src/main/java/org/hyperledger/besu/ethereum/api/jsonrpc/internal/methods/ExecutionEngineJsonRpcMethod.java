@@ -28,6 +28,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
 import io.vertx.core.Vertx;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,14 +47,17 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(ExecutionEngineJsonRpcMethod.class);
   protected final Optional<MergeContext> mergeContextOptional;
   protected final Supplier<MergeContext> mergeContext;
+  protected final ProtocolSchedule protocolSchedule;
   protected final ProtocolContext protocolContext;
   protected final EngineCallListener engineCallListener;
 
   protected ExecutionEngineJsonRpcMethod(
       final Vertx vertx,
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EngineCallListener engineCallListener) {
     this.syncVertx = vertx;
+    this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.mergeContextOptional = protocolContext.safeConsensusContext(MergeContext.class);
     this.mergeContext = mergeContextOptional::orElseThrow;
@@ -106,4 +111,14 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
   }
 
   public abstract JsonRpcResponse syncResponse(final JsonRpcRequestContext request);
+
+  protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
+    var cancun = protocolSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
+
+    if (cancun.isPresent() && blockTimestamp >= cancun.get().milestone()) {
+      return ValidationResult.valid();
+    } else {
+      return ValidationResult.invalid(RpcErrorType.UNSUPPORTED_FORK, "Cancun configured to start at timestamp: "+cancun.get().milestone());
+    }
+  }
 }

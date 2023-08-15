@@ -45,21 +45,13 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
   public String getName() {
     return RpcMethod.ENGINE_NEW_PAYLOAD_V3.getMethodName();
   }
-
   @Override
-  protected ValidationResult<RpcErrorType> validateForkSupported(
-      final Object reqId, final EnginePayloadParameter payloadParameter) {
-    var cancun = timestampSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
-
-    if (cancun.isPresent() && payloadParameter.getTimestamp() >= cancun.get().milestone()) {
-      if (payloadParameter.getBlobGasUsed() == null
-          || payloadParameter.getExcessBlobGas() == null) {
-        return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing blob gas fields");
-      } else {
-        return ValidationResult.valid();
-      }
+  protected ValidationResult<RpcErrorType> validateParameter(final EnginePayloadParameter payloadParameter) {
+    if (payloadParameter.getBlobGasUsed() == null
+        || payloadParameter.getExcessBlobGas() == null) {
+      return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing blob gas fields");
     } else {
-      return ValidationResult.invalid(RpcErrorType.UNSUPPORTED_FORK, "Fork not supported");
+      return ValidationResult.valid();
     }
   }
 }
