@@ -64,7 +64,7 @@ public class EnginePayloadParameter {
       @JsonProperty("gasUsed") final UnsignedLongParameter gasUsed,
       @JsonProperty("timestamp") final UnsignedLongParameter timestamp,
       @JsonProperty("extraData") final String extraData,
-      @JsonProperty("receiptRoot") final Hash receiptsRoot,
+      @JsonProperty("receiptsRoot") final Hash receiptsRoot,
       @JsonProperty("logsBloom") final LogsBloomFilter logsBloom,
       @JsonProperty("prevRandao") final String prevRandao,
       @JsonProperty("transactions") final List<String> transactions,
