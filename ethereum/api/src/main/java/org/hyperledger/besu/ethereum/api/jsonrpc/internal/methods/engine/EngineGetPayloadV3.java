@@ -36,10 +36,6 @@ import org.slf4j.LoggerFactory;
 
 public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
 
-  private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadV3.class);
-  private final Optional<ScheduledProtocolSpec.Hardfork> shanghai;
-  private final Optional<ScheduledProtocolSpec.Hardfork> cancun;
-
   public EngineGetPayloadV3(
       final Vertx vertx,
       final ProtocolContext protocolContext,
@@ -47,9 +43,7 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
       final BlockResultFactory blockResultFactory,
       final EngineCallListener engineCallListener,
       final ProtocolSchedule schedule) {
-    super(vertx, protocolContext, mergeMiningCoordinator, blockResultFactory, engineCallListener);
-    this.shanghai = schedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Shanghai"));
-    this.cancun = schedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
+    super(vertx, schedule, protocolContext, mergeMiningCoordinator, blockResultFactory, engineCallListener);
   }
 
   @Override
@@ -63,29 +57,9 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
       final PayloadIdentifier payloadId,
       final BlockWithReceipts blockWithReceipts) {
 
-    try {
-      long builtAt = blockWithReceipts.getHeader().getTimestamp();
-
-      if (this.shanghai.isPresent() && builtAt < this.shanghai.get().milestone()) {
-        return new JsonRpcSuccessResponse(
-            request.getRequest().getId(),
-            blockResultFactory.payloadTransactionCompleteV1(blockWithReceipts.getBlock()));
-      } else if (this.shanghai.isPresent()
-          && builtAt >= this.shanghai.get().milestone()
-          && this.cancun.isPresent()
-          && builtAt < this.cancun.get().milestone()) {
-        return new JsonRpcSuccessResponse(
-            request.getRequest().getId(),
-            blockResultFactory.payloadTransactionCompleteV2(blockWithReceipts));
-      } else {
         return new JsonRpcSuccessResponse(
             request.getRequest().getId(),
             blockResultFactory.payloadTransactionCompleteV3(blockWithReceipts));
-      }
 
-    } catch (ClassCastException e) {
-      LOG.error("configuration error, can't call V3 endpoint with non-default protocol schedule");
-      return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INTERNAL_ERROR);
-    }
   }
 }

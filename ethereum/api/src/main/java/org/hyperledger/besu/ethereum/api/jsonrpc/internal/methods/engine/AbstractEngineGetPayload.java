@@ -30,6 +30,8 @@ import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,11 +43,12 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
 
   public AbstractEngineGetPayload(
       final Vertx vertx,
+      final ProtocolSchedule schedule,
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeMiningCoordinator,
       final BlockResultFactory blockResultFactory,
       final EngineCallListener engineCallListener) {
-    super(vertx, protocolContext, engineCallListener);
+    super(vertx, schedule, protocolContext, engineCallListener);
     this.mergeMiningCoordinator = mergeMiningCoordinator;
     this.blockResultFactory = blockResultFactory;
   }
@@ -61,6 +64,10 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
     if (blockWithReceipts.isPresent()) {
       final var proposal = blockWithReceipts.get();
       LOG.atDebug().setMessage("assembledBlock {}").addArgument(() -> proposal).log();
+      ValidationResult<RpcErrorType> forkValidationResult = validateForkSupported(proposal.getHeader().getTimestamp());
+      if (!forkValidationResult.isValid()) {
+        return new JsonRpcErrorResponse(request.getRequest().getId(), forkValidationResult);
+      }
       return createResponse(request, payloadId, proposal);
     }
     return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.UNKNOWN_PAYLOAD);
