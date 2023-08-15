@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -44,6 +45,7 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 
 import io.vertx.core.Vertx;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,6 +63,11 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     super(vertx, protocolContext, engineCallListener);
     this.protocolSchedule = protocolSchedule;
     this.mergeCoordinator = mergeCoordinator;
+  }
+
+  protected ValidationResult<RpcErrorType> validateForkSupported(
+          final Object id, final EngineForkchoiceUpdatedParameter payloadParameter) {
+    return ValidationResult.valid();
   }
 
   @Override

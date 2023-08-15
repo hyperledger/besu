@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineE
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineExchangeTransitionConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV2;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV3;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByHashV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByRangeV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV1;
@@ -123,6 +124,12 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                   mergeCoordinator.get(),
                   engineQosTimer),
               new EngineForkchoiceUpdatedV2(
+                  consensusEngineServer,
+                  protocolSchedule,
+                  protocolContext,
+                  mergeCoordinator.get(),
+                  engineQosTimer),
+              new EngineForkchoiceUpdatedV3(
                   consensusEngineServer,
                   protocolSchedule,
                   protocolContext,
