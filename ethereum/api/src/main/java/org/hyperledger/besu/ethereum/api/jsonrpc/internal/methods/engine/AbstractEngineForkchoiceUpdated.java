@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -39,19 +38,18 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateFo
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
 import io.vertx.core.Vertx;
-import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineForkchoiceUpdated.class);
-  private final ProtocolSchedule protocolSchedule;
   private final MergeMiningCoordinator mergeCoordinator;
 
   public AbstractEngineForkchoiceUpdated(
@@ -60,13 +58,13 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
       final EngineCallListener engineCallListener) {
-    super(vertx, protocolContext, engineCallListener);
-    this.protocolSchedule = protocolSchedule;
+    super(vertx, protocolSchedule, protocolContext, engineCallListener);
+
     this.mergeCoordinator = mergeCoordinator;
   }
 
-  protected ValidationResult<RpcErrorType> validateForkSupported(
-          final Object id, final EngineForkchoiceUpdatedParameter payloadParameter) {
+  protected ValidationResult<RpcErrorType> validateParameter(
+      final EngineForkchoiceUpdatedParameter forkchoiceUpdatedParameter) {
     return ValidationResult.valid();
   }
 
@@ -82,6 +80,20 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
         requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
 
     LOG.debug("Forkchoice parameters {}", forkChoice);
+
+    if (maybePayloadAttributes.isPresent()) {
+      final EnginePayloadAttributesParameter payloadAttributes = maybePayloadAttributes.get();
+      ValidationResult<RpcErrorType> forkValidationResult =
+          validateForkSupported(payloadAttributes.getTimestamp());
+      if (!forkValidationResult.isValid()) {
+        return new JsonRpcErrorResponse(requestId, forkValidationResult);
+      }
+    }
+
+    ValidationResult<RpcErrorType> parameterValidationResult = validateParameter(forkChoice);
+    if (!parameterValidationResult.isValid()) {
+      return new JsonRpcErrorResponse(requestId, parameterValidationResult);
+    }
 
     mergeContext
         .get()

@@ -19,20 +19,13 @@ import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
-
-import java.util.Optional;
 
 import io.vertx.core.Vertx;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
 
@@ -43,7 +36,13 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
       final BlockResultFactory blockResultFactory,
       final EngineCallListener engineCallListener,
       final ProtocolSchedule schedule) {
-    super(vertx, schedule, protocolContext, mergeMiningCoordinator, blockResultFactory, engineCallListener);
+    super(
+        vertx,
+        schedule,
+        protocolContext,
+        mergeMiningCoordinator,
+        blockResultFactory,
+        engineCallListener);
   }
 
   @Override
@@ -57,9 +56,8 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
       final PayloadIdentifier payloadId,
       final BlockWithReceipts blockWithReceipts) {
 
-        return new JsonRpcSuccessResponse(
-            request.getRequest().getId(),
-            blockResultFactory.payloadTransactionCompleteV3(blockWithReceipts));
-
+    return new JsonRpcSuccessResponse(
+        request.getRequest().getId(),
+        blockResultFactory.payloadTransactionCompleteV3(blockWithReceipts));
   }
 }

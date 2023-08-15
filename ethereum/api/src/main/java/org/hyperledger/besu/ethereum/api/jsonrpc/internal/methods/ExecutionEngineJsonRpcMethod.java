@@ -21,6 +21,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineC
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -28,8 +30,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
 import io.vertx.core.Vertx;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,7 +118,9 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
     if (cancun.isPresent() && blockTimestamp >= cancun.get().milestone()) {
       return ValidationResult.valid();
     } else {
-      return ValidationResult.invalid(RpcErrorType.UNSUPPORTED_FORK, "Cancun configured to start at timestamp: "+cancun.get().milestone());
+      return ValidationResult.invalid(
+          RpcErrorType.UNSUPPORTED_FORK,
+          "Cancun configured to start at timestamp: " + cancun.get().milestone());
     }
   }
 }

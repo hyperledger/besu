@@ -107,7 +107,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         requestContext.getOptionalList(1, String.class);
 
     final Object reqId = requestContext.getRequest().getId();
-    final ValidationResult<RpcErrorType> forkValidationResult = validateForkSupported(blockParam.getTimestamp());
+    final ValidationResult<RpcErrorType> forkValidationResult =
+        validateForkSupported(blockParam.getTimestamp());
     if (!forkValidationResult.isValid()) {
       return new JsonRpcErrorResponse(reqId, forkValidationResult);
     }
@@ -131,9 +132,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         .setMessage("blockparam: {}")
         .addArgument(() -> Json.encodePrettily(blockParam))
         .log();
-
-
-
 
     final Optional<List<Withdrawal>> maybeWithdrawals =
         Optional.ofNullable(blockParam.getWithdrawals())
@@ -395,7 +393,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     return INVALID;
   }
 
-  protected ValidationResult<RpcErrorType> validateParameter(final EnginePayloadParameter parameter) {
+  protected ValidationResult<RpcErrorType> validateParameter(
+      final EnginePayloadParameter parameter) {
     return ValidationResult.valid();
   }
 

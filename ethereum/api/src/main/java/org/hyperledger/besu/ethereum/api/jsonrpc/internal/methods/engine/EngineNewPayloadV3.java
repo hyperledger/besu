@@ -45,6 +45,7 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
   public String getName() {
     return RpcMethod.ENGINE_NEW_PAYLOAD_V3.getMethodName();
   }
+
   @Override
   protected ValidationResult<RpcErrorType> validateParameter(final EnginePayloadParameter payloadParameter) {
     if (payloadParameter.getBlobGasUsed() == null

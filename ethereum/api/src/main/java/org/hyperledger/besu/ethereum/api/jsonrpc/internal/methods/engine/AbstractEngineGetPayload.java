@@ -26,12 +26,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +64,8 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
     if (blockWithReceipts.isPresent()) {
       final var proposal = blockWithReceipts.get();
       LOG.atDebug().setMessage("assembledBlock {}").addArgument(() -> proposal).log();
-      ValidationResult<RpcErrorType> forkValidationResult = validateForkSupported(proposal.getHeader().getTimestamp());
+      ValidationResult<RpcErrorType> forkValidationResult =
+          validateForkSupported(proposal.getHeader().getTimestamp());
       if (!forkValidationResult.isValid()) {
         return new JsonRpcErrorResponse(request.getRequest().getId(), forkValidationResult);
       }
