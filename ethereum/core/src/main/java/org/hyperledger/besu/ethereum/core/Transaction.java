@@ -1323,7 +1323,7 @@ public class Transaction
       if (this.versionedHashes == null || this.versionedHashes.isEmpty()) {
         this.versionedHashes =
             kzgCommitments.stream()
-                .map(c -> new VersionedHash(SHA256_VERSION_ID, Sha256Hash.hash(c.getData())))
+                .map(c -> new VersionedHash(SHA256_VERSION_ID, Sha256Hash.sha256(c.getData())))
                 .collect(Collectors.toList());
       }
       this.blobsWithCommitments =
