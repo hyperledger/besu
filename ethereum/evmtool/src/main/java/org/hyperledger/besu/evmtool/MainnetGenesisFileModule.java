@@ -62,8 +62,7 @@ class MainnetGenesisFileModule extends GenesisFileModule {
         SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create(ecCurve.get()));
       } catch (final IllegalArgumentException e) {
         throw new CommandLine.InitializationException(
-                "Invalid genesis file configuration for ecCurve. " +
-                e.getMessage());
+            "Invalid genesis file configuration for ecCurve. " + e.getMessage());
       }
     }
 
