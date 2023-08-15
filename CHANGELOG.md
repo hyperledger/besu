@@ -25,6 +25,7 @@
 - Remove miner-related option warnings if the change isn't using Ethash consensus algorithm [#5669](https://github.com/hyperledger/besu/pull/5669)
 - Fix for pending transactions reference leak [#5693](https://github.com/hyperledger/besu/pull/5693) 
 - Address a performance regression observed in import testing [#5734](https://github.com/hyperledger/besu/pull/5734)
+- Update native libraries that have JPMS friendly module names [#5749](https://github.com/hyperledger/besu/pull/5749)
 
 ### Download Links
 
