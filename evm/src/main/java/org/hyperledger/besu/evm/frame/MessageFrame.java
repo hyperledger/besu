@@ -993,18 +993,16 @@ public class MessageFrame {
     return !txValues.warmedUpAddresses().add(address);
   }
 
-
-   /**
-   * Returns whether an address has been warmed up.
-   * Is deliberately publicly exposed for access from tracers.
+  /**
+   * Returns whether an address has been warmed up. Is deliberately publicly exposed for access from
+   * tracers.
    *
    * @param address the address context
    * @return whether the address has been warmed up
    */
-  public boolean isWarm(final Address address) {
+  public boolean isAddressWarm(final Address address) {
     return txValues.warmedUpAddresses().contains(address);
   }
-
 
   /**
    * "Warms up" the storage slot as per EIP-2929
@@ -1018,14 +1016,14 @@ public class MessageFrame {
   }
 
   /**
-   * Returns whether an address' slot is warmed up.
-   * Is deliberately publicly exposed for access from trace
+   * Returns whether an address' slot is warmed up. Is deliberately publicly exposed for access from
+   * trace
    *
    * @param address the address context
    * @param slot the slot to query
    * @return whether the address/slot couple is warmed up
    */
-  public boolean isWarm(final Address address, final Bytes32 slot) {
+  public boolean isStorageWarm(final Address address, final Bytes32 slot) {
     return this.txValues.warmedUpStorage().contains(address, slot);
   }
 
