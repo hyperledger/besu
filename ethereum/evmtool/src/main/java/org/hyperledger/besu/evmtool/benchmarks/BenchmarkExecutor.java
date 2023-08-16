@@ -35,7 +35,6 @@ import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
 import java.io.PrintStream;
-import java.util.ArrayDeque;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
@@ -59,13 +58,11 @@ public abstract class BenchmarkExecutor {
           .value(Wei.ZERO)
           .apparentValue(Wei.ZERO)
           .code(CodeV0.EMPTY_CODE)
-          .depth(1)
           .completer(__ -> {})
           .address(Address.ZERO)
           .blockHashLookup(n -> null)
           .blockValues(new SimpleBlockValues())
           .gasPrice(Wei.ZERO)
-          .messageFrameStack(new ArrayDeque<>())
           .miningBeneficiary(Address.ZERO)
           .originator(Address.ZERO)
           .initialGas(100_000L)
