@@ -18,7 +18,6 @@ package org.hyperledger.besu.evm.precompile;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
-import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.KeyPair;
@@ -29,11 +28,11 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.code.CodeV0;
-import org.hyperledger.besu.evm.frame.BlockValues;
+import org.hyperledger.besu.evm.fluent.SimpleBlockValues;
+import org.hyperledger.besu.evm.fluent.SimpleWorld;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
 import java.util.Map;
@@ -45,6 +44,7 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
+@SuppressWarnings("UnusedMethod")
 public class Benchmarks {
 
   static final Random random = new Random();
@@ -68,12 +68,12 @@ public class Benchmarks {
           .completer(__ -> {})
           .address(Address.ZERO)
           .blockHashLookup(n -> null)
-          .blockValues(mock(BlockValues.class))
+          .blockValues(new SimpleBlockValues())
           .gasPrice(Wei.ZERO)
           .miningBeneficiary(Address.ZERO)
           .originator(Address.ZERO)
           .initialGas(100_000L)
-          .worldUpdater(mock(WorldUpdater.class))
+          .worldUpdater(new SimpleWorld())
           .build();
 
   private static void benchSecp256k1Recover() {
@@ -109,7 +109,7 @@ public class Benchmarks {
     final byte[] warmupData = new byte[240];
     final Bytes warmupBytes = Bytes.wrap(warmupData);
     for (int i = 0; i < HASH_WARMUP; i++) {
-      contract.compute(warmupBytes, fakeFrame);
+      contract.computePrecompile(warmupBytes, fakeFrame);
     }
     for (int len = 0; len <= 256; len += 8) {
       final byte[] data = new byte[len];
@@ -117,7 +117,7 @@ public class Benchmarks {
       final Bytes bytes = Bytes.wrap(data);
       final Stopwatch timer = Stopwatch.createStarted();
       for (int i = 0; i < HASH_ITERATIONS; i++) {
-        contract.compute(bytes, fakeFrame);
+        contract.computePrecompile(bytes, fakeFrame);
       }
       timer.stop();
 
@@ -165,7 +165,7 @@ public class Benchmarks {
     final byte[] warmupData = new byte[240];
     final Bytes warmupBytes = Bytes.wrap(warmupData);
     for (int i = 0; i < HASH_WARMUP; i++) {
-      contract.compute(warmupBytes, fakeFrame);
+      contract.computePrecompile(warmupBytes, fakeFrame);
     }
     for (int len = 0; len <= 256; len += 8) {
       final byte[] data = new byte[len];
@@ -173,7 +173,7 @@ public class Benchmarks {
       final Bytes bytes = Bytes.wrap(data);
       final Stopwatch timer = Stopwatch.createStarted();
       for (int i = 0; i < HASH_ITERATIONS; i++) {
-        contract.compute(bytes, fakeFrame);
+        contract.computePrecompile(bytes, fakeFrame);
       }
       timer.stop();
 
@@ -207,6 +207,14 @@ public class Benchmarks {
                         + "0000000000000000000000000000000000000000000000000000000000000020"
                         + "fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2e"
                         + "fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f"))
+            .put(
+                "even-modulus-1",
+                Bytes.fromHexString(
+                    "0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000003c2040160024518968061546464452029984405379963244433254832348165045983839181603600983245188119082741180552472823434126339186042653363989253518144015007104659260895861906540664936284389736130979465984263224400655133820675791338815252163142936101184074977707018635613728563507946963514079867296353079585444179075183175315953500862929638853495671020263166123912364061541662955981749424030252416330220564030645929402440479045589943839631409636357644094127401186503107365632233122371688639562179885062893961510897259834525401728081797411184820573804096446362924176080926052008070342876591822173915634645231182811305568049542955744148010693635112077769594038286419007643605441221736768092092706367136248982357930831050114862462054469804238839007660797444001134145988063087013657265067255538916788266246587774231646489345179567885975873995767749906187041937713976494258573504873269320274358396975658022816526738914029788471066595929777423497242252763504644221066495966982158816143636722736200299105017320500139589998102103536908651755056175006587609525845133254470473698921229697550145309121304642224273213418856615560961843245211567388930209839462064588566503446549415643465733541976019955544090933949692508519895293721888001835024288589127818157262958206047538648802179821901844091151603223229973835165715768557428338775055435040494382003663260090655173262271219880999454966135210800173588881197223814096778846598765822161982688788574265773201009190341430440400154076998270731076034021917712825351270109621323258567738829791704547404897555410847468529100600344699859551947494210268509149049419749744679372826553895949980386864014015247047775654329663958663391477680679444996526407026021137970100258833584773507489900747148344826790699325870056679710341571267983857125765234149331990149745571500943300684008078036054281629105618499442731182983775330888524074001975745730722737461725166625564316976464879780901853271273641654911641084141502464"))
+            .put(
+                "even-modulus-2",
+                Bytes.fromHexString(
+                    "000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000d80000000000000000000000000000000000000000000000000000000000000010e0060000a921212121212121ff0000212b212121ffff1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f00feffff212121212121ffffffff1fe1e0e0e01e1f1f169f1f1f1f490afcefffffffffffffffff82828282828282828282828282828282828282828200ffff28ff2b212121ffff1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1fffffffffff0afceffffff7ffffffffff7c8282828282a1828282828282828282828282828200ffff28ff2b212121ffff1f1f1f1f1f1fd11f1f1f1f1f1f1f1f1f1f1fffffffffffffffff21212121212121fb2121212121ffff1f1f1f1f1f1f1f1fffaf82828282828200ffff28ff2b218282000000000000000000"))
             .put(
                 "nagydani-1-square",
                 Bytes.fromHexString(
@@ -274,10 +282,16 @@ public class Benchmarks {
     for (final Map.Entry<String, Bytes> testCase : testcases.entrySet()) {
       final double gasSpent = runBenchmark(testCase.getValue(), contract);
 
+      long gasCost = contract.gasRequirement(testCase.getValue());
       System.out.printf(
-          "ModEXP %s for \t%,d gas. Charging %,d gas.%n",
-          testCase.getKey(), (int) gasSpent, contract.gasRequirement(testCase.getValue()));
+          "ModEXP %s for \t%,d gas. Charging %,d gas. \t@ %,.3f MGps%n",
+          testCase.getKey(),
+          (int) gasSpent,
+          gasCost,
+          gasCost / gasSpent * GAS_PER_SECOND_STANDARD / 1_000_000);
     }
+
+    System.getProperties().forEach((k, v) -> System.out.println(k + " = " + v));
   }
 
   private static void benchBNADD() {
@@ -403,7 +417,7 @@ public class Benchmarks {
                 + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
     final BLS12G1MulPrecompiledContract contract = new BLS12G1MulPrecompiledContract();
-    contract.compute(arg, fakeFrame);
+    contract.computePrecompile(arg, fakeFrame);
 
     final double gasSpent = runBenchmark(arg, contract);
 
