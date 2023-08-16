@@ -16,10 +16,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -32,7 +33,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 
 import java.util.List;
@@ -68,10 +68,6 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             ethPeers,
             engineCallListener);
     lenient().when(protocolSpec.getGasCalculator()).thenReturn(new CancunGasCalculator());
-    lenient()
-        .when(protocolSchedule.hardforkFor(any()))
-        .thenReturn(
-            Optional.of(new ScheduledProtocolSpec.Hardfork("Cancun", super.CANCUN_TIMESTAMP)));
   }
 
   @Test
@@ -97,16 +93,22 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
     BlockHeader parentBlockHeader =
         new BlockHeaderTestFixture()
             .baseFeePerGas(Wei.ONE)
-            .timestamp(super.CANCUN_TIMESTAMP)
+            .timestamp(super.cancunHardfork.milestone())
             .buildHeader();
+    // protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
+    when(blockchain.getBlockHeader(parentBlockHeader.getBlockHash()))
+        .thenReturn(Optional.of(parentBlockHeader));
+    when(protocolContext.getBlockchain()).thenReturn(blockchain);
     BlockHeader mockHeader =
         new BlockHeaderTestFixture()
             .baseFeePerGas(Wei.ONE)
             .parentHash(parentBlockHeader.getParentHash())
             .number(parentBlockHeader.getNumber() + 1)
-            .timestamp(parentBlockHeader.getTimestamp() + 1)
+            .timestamp(parentBlockHeader.getTimestamp() + 12)
             .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
             .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
+            .excessDataGas(DataGas.ZERO)
+            .dataGasUsed(0L)
             .buildHeader();
     return mockHeader;
   }

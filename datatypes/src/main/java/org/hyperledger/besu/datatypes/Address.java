@@ -22,7 +22,12 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
+import java.util.concurrent.ExecutionException;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.DelegatingBytes;
@@ -74,6 +79,18 @@ public class Address extends DelegatingBytes {
   public static final Address KZG_POINT_EVAL = Address.precompiled(0x14);
   /** The constant ZERO. */
   public static final Address ZERO = Address.fromHexString("0x0");
+
+  static LoadingCache<Address, Hash> hashCache =
+      CacheBuilder.newBuilder()
+          .maximumSize(4000)
+          // .weakKeys() // unless we "intern" all addresses we cannot use weak or soft keys.
+          .build(
+              new CacheLoader<>() {
+                @Override
+                public Hash load(final Address key) {
+                  return Hash.hash(key);
+                }
+              });
 
   /**
    * Instantiates a new Address.
@@ -236,5 +253,18 @@ public class Address extends DelegatingBytes {
                   out.writeBytes(privacyGroupId);
                   out.endList();
                 })));
+  }
+
+  /**
+   * Returns the hash of the address. Backed by a cache for performance reasons.
+   *
+   * @return the hash of the address.
+   */
+  public Hash addressHash() {
+    try {
+      return hashCache.get(this);
+    } catch (ExecutionException e) {
+      return Hash.hash(this);
+    }
   }
 }
