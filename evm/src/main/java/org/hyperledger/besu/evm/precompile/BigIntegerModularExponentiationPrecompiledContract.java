@@ -44,15 +44,6 @@ public class BigIntegerModularExponentiationPrecompiledContract
   /** Use native Arithmetic libraries. */
   static boolean useNative;
 
-  static {
-    try {
-      useNative = LibArithmetic.ENABLED;
-    } catch (UnsatisfiedLinkError | NoClassDefFoundError ule) {
-      LOG.info("modexp native precompile not available: {}", ule.getMessage());
-      useNative = false;
-    }
-  }
-
   /** The constant BASE_OFFSET. */
   public static final int BASE_OFFSET = 96;
 
@@ -73,6 +64,21 @@ public class BigIntegerModularExponentiationPrecompiledContract
   /** Disable native Arithmetic libraries. */
   public static void disableNative() {
     useNative = false;
+  }
+
+  /**
+   * Attempt to enable the native library for ModExp
+   *
+   * @return true if the native library was enabled.
+   */
+  public static boolean maybeEnableNative() {
+    try {
+      useNative = LibArithmetic.ENABLED;
+    } catch (UnsatisfiedLinkError | NoClassDefFoundError ule) {
+      LOG.info("modexp native precompile not available: {}", ule.getMessage());
+      useNative = false;
+    }
+    return useNative;
   }
 
   /**

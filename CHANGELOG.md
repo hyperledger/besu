@@ -4,11 +4,16 @@
 
 ### Breaking Changes
 
+- Add ABI-decoded revert reason to `eth_call` and `eth_estimateGas` responses [#5705](https://github.com/hyperledger/besu/issues/5705)
+
 ### Additions and Improvements
+- Added `benchmark` subcommand to `evmtool` [#5754](https://github.com/hyperledger/besu/issues/5754)
 
 ### Bug Fixes
 - Make smart contract permissioning features work with london fork [#5727](https://github.com/hyperledger/besu/pull/5727)
 - Add type to PendingTransactionDetail, fix eth_subscribe [#5729](https://github.com/hyperledger/besu/pull/5729)
+- EvmTool "run" mode did not reflect contracts created within the transaction. [#5755](https://github.com/hyperledger/besu/pull/5755)
+- Update native libraries that have JPMS friendly module names [#5749](https://github.com/hyperledger/besu/pull/5749)
 
 ### Download Links
 

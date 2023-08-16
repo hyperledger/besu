@@ -48,6 +48,7 @@ public class StandardJsonTracer implements OperationTracer {
   private String gas;
   private Bytes memory;
   private int memorySize;
+  private int depth;
 
   /**
    * Instantiates a new Standard json tracer.
@@ -125,6 +126,7 @@ public class StandardJsonTracer implements OperationTracer {
     } else {
       memory = null;
     }
+    depth = messageFrame.getMessageStackSize();
   }
 
   @Override
@@ -133,7 +135,6 @@ public class StandardJsonTracer implements OperationTracer {
     final Operation currentOp = messageFrame.getCurrentOperation();
     final int opcode = currentOp.getOpcode();
     final Bytes returnData = messageFrame.getReturnData();
-    final int depth = messageFrame.getMessageStackDepth() + 1;
 
     final StringBuilder sb = new StringBuilder(1024);
     sb.append("{");
