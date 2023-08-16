@@ -73,7 +73,7 @@ public class JsonRpcErrorConverter {
         return RpcErrorType.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
       case LOWER_NONCE_INVALID_TRANSACTION_EXISTS:
         return RpcErrorType.LOWER_NONCE_INVALID_TRANSACTION_EXISTS;
-      case TOTAL_DATA_GAS_TOO_HIGH:
+      case TOTAL_BLOB_GAS_TOO_HIGH:
         return RpcErrorType.TOTAL_DATA_GAS_TOO_HIGH;
       case TX_POOL_DISABLED:
         return RpcErrorType.TX_POOL_DISABLED;

@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngin
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -123,12 +124,10 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         .addArgument(() -> Json.encodePrettily(blockParam))
         .log();
 
-    /*
-    ValidationResult<JsonRpcError> forkValidationResult = validateForkSupported(reqId, blockParam);
+    ValidationResult<RpcErrorType> forkValidationResult = validateForkSupported(reqId, blockParam);
     if (!forkValidationResult.isValid()) {
-      return new JsonRpcErrorResponse(reqId, forkValidationResult.getInvalidReason());
+      return new JsonRpcErrorResponse(reqId, forkValidationResult);
     }
-    */
 
     final Optional<List<Withdrawal>> maybeWithdrawals =
         Optional.ofNullable(blockParam.getWithdrawals())
@@ -137,7 +136,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (!getWithdrawalsValidator(
             protocolSchedule, blockParam.getTimestamp(), blockParam.getBlockNumber())
         .validateWithdrawals(maybeWithdrawals)) {
-      return new JsonRpcErrorResponse(reqId, INVALID_PARAMS);
+      return new JsonRpcErrorResponse(
+          reqId, new JsonRpcError(INVALID_PARAMS, "Invalid withdrawals"));
     }
 
     final Optional<List<Deposit>> maybeDeposits =
@@ -146,7 +146,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (!getDepositsValidator(
             protocolSchedule, blockParam.getTimestamp(), blockParam.getBlockNumber())
         .validateDepositParameter(maybeDeposits)) {
-      return new JsonRpcErrorResponse(reqId, INVALID_PARAMS);
+      return new JsonRpcErrorResponse(reqId, new JsonRpcError(INVALID_PARAMS, "Invalid deposits"));
     }
 
     if (mergeContext.get().isSyncing()) {

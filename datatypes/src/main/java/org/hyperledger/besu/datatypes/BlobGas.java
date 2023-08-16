@@ -29,8 +29,8 @@ public final class BlobGas extends BaseUInt64Value<BlobGas> implements Quantity 
   /** The constant ONE. */
   public static final BlobGas ONE = of(1);
 
-  /** The constant MAX_DATA_GAS. */
-  public static final BlobGas MAX_DATA_GAS = of(UInt64.MAX_VALUE);
+  /** The constant MAX_BLOB_GAS. */
+  public static final BlobGas MAX_BLOB_GAS = of(UInt64.MAX_VALUE);
 
   /**
    * Instantiates a new BlobGas.

@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.Depo
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,7 +38,6 @@ import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 
 import java.util.Collections;
@@ -70,8 +70,7 @@ public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
             engineCallListener);
     lenient()
         .when(protocolSchedule.hardforkFor(any()))
-        .thenReturn(
-            Optional.of(new ScheduledProtocolSpec.Hardfork("Cancun", super.CANCUN_TIMESTAMP)));
+        .thenReturn(Optional.of(super.cancunHardfork));
     lenient().when(protocolSpec.getGasCalculator()).thenReturn(new CancunGasCalculator());
   }
 
@@ -85,11 +84,17 @@ public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
     final List<DepositParameter> deposits = null;
     when(protocolSpec.getDepositsValidator())
         .thenReturn(new DepositsValidator.ProhibitedDeposits());
+
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
             Optional.empty(),
             Optional.empty());
+    when(blockchain.getBlockHeader(mockHeader.getParentHash()))
+        .thenReturn(Optional.of(mock(BlockHeader.class)));
+    when(mergeCoordinator.getLatestValidAncestor(mockHeader))
+        .thenReturn(Optional.of(mockHeader.getHash()));
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
 
     var resp = resp(mockPayload(mockHeader, Collections.emptyList(), null, deposits, null));
 
@@ -126,7 +131,11 @@ public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
             Optional.empty(),
             Optional.of(deposits));
-
+    when(blockchain.getBlockHeader(mockHeader.getParentHash()))
+        .thenReturn(Optional.of(mock(BlockHeader.class)));
+    when(mergeCoordinator.getLatestValidAncestor(mockHeader))
+        .thenReturn(Optional.of(mockHeader.getHash()));
+    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
     var resp = resp(mockPayload(mockHeader, Collections.emptyList(), null, depositsParam));
 
     assertValidResponse(mockHeader, resp);
@@ -159,7 +168,7 @@ public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
     BlockHeader parentBlockHeader =
         new BlockHeaderTestFixture()
             .baseFeePerGas(Wei.ONE)
-            .timestamp(super.EXPERIMENTAL_TIMESTAMP)
+            .timestamp(super.experimentalHardfork.milestone())
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(100L)
             .buildHeader();

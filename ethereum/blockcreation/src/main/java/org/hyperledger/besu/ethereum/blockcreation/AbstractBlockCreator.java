@@ -302,12 +302,12 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .sum();
       // casting parent excess blob gas to long since for the moment it should be well below that
       // limit
-      BlobGas ecessBlobGas =
+      BlobGas excessBlobGas =
           BlobGas.of(
               gasCalculator.computeExcessBlobGas(
                   parentHeader.getExcessBlobGas().map(BlobGas::toLong).orElse(0L), newBlobsCount));
       BlobGas used = BlobGas.of(gasCalculator.blobGasCost(newBlobsCount));
-      return new GasUsage(ecessBlobGas, used);
+      return new GasUsage(excessBlobGas, used);
     }
     return null;
   }

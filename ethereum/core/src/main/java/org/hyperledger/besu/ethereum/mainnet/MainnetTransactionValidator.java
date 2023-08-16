@@ -158,7 +158,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
       final long txTotalBlobGas = gasCalculator.blobGasCost(transaction.getBlobCount());
       if (txTotalBlobGas > gasLimitCalculator.currentBlobGasLimit()) {
         return ValidationResult.invalid(
-            TransactionInvalidReason.TOTAL_DATA_GAS_TOO_HIGH,
+            TransactionInvalidReason.TOTAL_BLOB_GAS_TOO_HIGH,
             String.format(
                 "total blob gas %d exceeds max blob gas per block %d",
                 txTotalBlobGas, gasLimitCalculator.currentBlobGasLimit()));
@@ -169,7 +169,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
       final long txTotalBlobGas = gasCalculator.blobGasCost(transaction.getBlobCount());
       if (txTotalBlobGas > gasLimitCalculator.currentBlobGasLimit()) {
         return ValidationResult.invalid(
-            TransactionInvalidReason.TOTAL_DATA_GAS_TOO_HIGH,
+            TransactionInvalidReason.TOTAL_BLOB_GAS_TOO_HIGH,
             String.format(
                 "total blob gas %d exceeds max blob gas per block %d",
                 txTotalBlobGas, gasLimitCalculator.currentBlobGasLimit()));

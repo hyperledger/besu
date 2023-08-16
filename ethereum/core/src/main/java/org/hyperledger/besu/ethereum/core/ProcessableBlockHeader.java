@@ -45,9 +45,9 @@ public class ProcessableBlockHeader implements BlockValues {
   // prevRandao is included for post-merge blocks
   protected final Bytes32 mixHashOrPrevRandao;
   // blobGasUsed is included for Cancun
-  protected final Long blobGasUsed;
-  // excessBlobGas is included for Cancun
-  protected final BlobGas excessBlobGas;
+  protected final Optional<Long> blobGasUsed;
+  // excessBlogGas is included for Cancun
+  protected final Optional<BlobGas> excessBlobGas;
 
   protected ProcessableBlockHeader(
       final Hash parentHash,
@@ -68,8 +68,8 @@ public class ProcessableBlockHeader implements BlockValues {
     this.timestamp = timestamp;
     this.baseFee = baseFee;
     this.mixHashOrPrevRandao = mixHashOrPrevRandao;
-    this.blobGasUsed = blobGasUsed;
-    this.excessBlobGas = excessBlobGas;
+    this.blobGasUsed = Optional.ofNullable(blobGasUsed);
+    this.excessBlobGas = Optional.ofNullable(excessBlobGas);
   }
 
   /**
@@ -169,11 +169,11 @@ public class ProcessableBlockHeader implements BlockValues {
   }
 
   public Optional<BlobGas> getExcessBlobGas() {
-    return Optional.ofNullable(excessBlobGas);
+    return excessBlobGas;
   }
 
   public Optional<Long> getBlobGasUsed() {
-    return Optional.ofNullable(blobGasUsed);
+    return blobGasUsed;
   }
 
   public String toLogString() {
