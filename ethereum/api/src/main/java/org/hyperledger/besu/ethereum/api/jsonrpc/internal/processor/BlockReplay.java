@@ -54,7 +54,7 @@ public class BlockReplay {
           final Wei blobGasPrice =
               protocolSpec
                   .getFeeMarket()
-                  .dataPricePerGas(
+                  .blobGasPricePerGas(
                       blockchain
                           .getBlockHeader(header.getParentHash())
                           .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
@@ -88,7 +88,7 @@ public class BlockReplay {
           final Wei blobGasPrice =
               protocolSpec
                   .getFeeMarket()
-                  .dataPricePerGas(
+                  .blobGasPricePerGas(
                       blockchain
                           .getBlockHeader(header.getParentHash())
                           .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))

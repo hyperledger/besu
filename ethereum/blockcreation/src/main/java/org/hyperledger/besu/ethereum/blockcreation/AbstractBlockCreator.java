@@ -174,7 +174,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       Wei blobGasPrice =
           newProtocolSpec
               .getFeeMarket()
-              .dataPricePerGas(calculateExcessBlobGasForParent(newProtocolSpec, parentHeader));
+              .blobGasPricePerGas(calculateExcessBlobGasForParent(newProtocolSpec, parentHeader));
 
       throwIfStopped();
 

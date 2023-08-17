@@ -119,7 +119,7 @@ public class TransactionTracer {
               final Wei blobGasPrice =
                   protocolSpec
                       .getFeeMarket()
-                      .dataPricePerGas(
+                      .blobGasPricePerGas(
                           blockchain
                               .getBlockHeader(header.getParentHash())
                               .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))

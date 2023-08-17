@@ -238,7 +238,7 @@ public class StateTestSubCommand implements Runnable {
             new ReferenceTestBlockchain(blockHeader.getNumber());
         final Stopwatch timer = Stopwatch.createStarted();
         // Todo: EIP-4844 use the excessBlobGas of the parent instead of BlobGas.ZERO
-        final Wei blobGasPrice = protocolSpec.getFeeMarket().dataPricePerGas(BlobGas.ZERO);
+        final Wei blobGasPrice = protocolSpec.getFeeMarket().blobGasPricePerGas(BlobGas.ZERO);
         final TransactionProcessingResult result =
             processor.processTransaction(
                 blockchain,

@@ -148,7 +148,7 @@ public class GeneralStateReferenceTestTools {
     final Wei blobGasPrice =
         protocolSpec(spec.getFork())
             .getFeeMarket()
-            .dataPricePerGas(blockHeader.getExcessBlobGas().orElse(BlobGas.ZERO));
+            .blobGasPricePerGas(blockHeader.getExcessBlobGas().orElse(BlobGas.ZERO));
     final TransactionProcessingResult result =
         processor.processTransaction(
             blockchain,

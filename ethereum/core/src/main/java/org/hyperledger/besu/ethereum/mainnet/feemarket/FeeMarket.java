@@ -57,7 +57,7 @@ public interface FeeMarket {
     return new LegacyFeeMarket();
   }
 
-  default Wei dataPricePerGas(final BlobGas excessBlobGas) {
+  default Wei blobGasPricePerGas(final BlobGas excessBlobGas) {
     return Wei.ZERO;
   }
 }

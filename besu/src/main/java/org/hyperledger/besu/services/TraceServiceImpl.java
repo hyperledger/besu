@@ -114,7 +114,7 @@ public class TraceServiceImpl implements TraceService {
                     final Wei blobGasPrice =
                         protocolSpec
                             .getFeeMarket()
-                            .dataPricePerGas(
+                            .blobGasPricePerGas(
                                 maybeParentHeader
                                     .map(
                                         parent ->

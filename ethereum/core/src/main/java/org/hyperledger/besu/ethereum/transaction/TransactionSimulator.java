@@ -236,7 +236,7 @@ public class TransactionSimulator {
     final Wei blobGasPrice =
         protocolSpec
             .getFeeMarket()
-            .dataPricePerGas(
+            .blobGasPricePerGas(
                 maybeParentHeader
                     .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
                     .orElse(BlobGas.ZERO));

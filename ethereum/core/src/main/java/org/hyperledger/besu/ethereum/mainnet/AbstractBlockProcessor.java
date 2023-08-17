@@ -123,7 +123,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                   (parentHeader) ->
                       protocolSpec
                           .getFeeMarket()
-                          .dataPricePerGas(
+                          .blobGasPricePerGas(
                               calculateExcessBlobGasForParent(protocolSpec, parentHeader)))
               .orElse(Wei.ZERO);
 

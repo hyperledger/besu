@@ -254,7 +254,7 @@ public class T8nExecutor {
     final Wei blobGasPrice =
         protocolSpec
             .getFeeMarket()
-            .dataPricePerGas(blockHeader.getExcessBlobGas().orElse(BlobGas.ZERO));
+            .blobGasPricePerGas(blockHeader.getExcessBlobGas().orElse(BlobGas.ZERO));
 
     List<TransactionReceipt> receipts = new ArrayList<>();
     List<RejectedTransaction> invalidTransactions = new ArrayList<>(rejections);
