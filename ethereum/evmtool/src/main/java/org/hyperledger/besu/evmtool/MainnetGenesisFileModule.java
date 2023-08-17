@@ -17,6 +17,8 @@ package org.hyperledger.besu.evmtool;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.crypto.SignatureAlgorithmType;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -32,6 +34,8 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.inject.Named;
+
+import picocli.CommandLine;
 
 class MainnetGenesisFileModule extends GenesisFileModule {
 
@@ -49,6 +53,19 @@ class MainnetGenesisFileModule extends GenesisFileModule {
       final GenesisConfigOptions configOptions,
       @Named("Fork") final Optional<String> fork,
       @Named("RevertReasonEnabled") final boolean revertReasonEnabled) {
+
+    final Optional<String> ecCurve = configOptions.getEcCurve();
+    if (ecCurve.isEmpty()) {
+      SignatureAlgorithmFactory.setDefaultInstance();
+    } else {
+      try {
+        SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create(ecCurve.get()));
+      } catch (final IllegalArgumentException e) {
+        throw new CommandLine.InitializationException(
+            "Invalid genesis file configuration for ecCurve. " + e.getMessage());
+      }
+    }
+
     if (fork.isPresent()) {
       var schedules = createSchedules();
       var schedule = schedules.get(fork.map(String::toLowerCase).get());

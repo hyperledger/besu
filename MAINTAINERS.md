@@ -24,14 +24,12 @@
 | Joshua Fernandes | joshuafernandes  | joshuafernandes  |
 | Lucas Saldanha   | lucassaldanha    | lucassaldanha    |
 | Sally MacFarlane | macfarla         | macfarla         |
-| Mark Terry       | mark-terry       | m.terry          |
 | Karim Taam       | matkt            | matkt            |
 | Meredith Baxter  | mbaxter          | mbaxter          |
 | Stefan Pingel    | pinges           | pinges           |
 | Danno Ferrin     | shemnon          | shemnon          |
 | Simon Dudley     | siladu           | siladu           |
 | Usman Saleem     | usmansaleem      | usmansaleem      |
-| Zhenyang Shi     | wcgcyx           | wcgcyx           |
 
 
 ## Emeritus Maintainers
@@ -47,6 +45,7 @@
 | Frank Li         | frankisawesome   | frankliawesome   |
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
 | Madeline Murray  | MadelineMurray   | madelinemurray   |
+| Mark Terry       | mark-terry       | m.terry          |
 | Nicolas Massart  | NicolasMassart   | NicolasMassart   |
 | Trent Mohay      | rain-on          | trent.mohay      |
 | Rai Sur          | RatanRSur        | ratanraisur      |
@@ -55,6 +54,7 @@
 | Taccat Isid      | taccatisid       | taccatisid       |
 | Tim Beiko        | timbeiko         | timbeiko         |
 | Vijay Michalik   | vmichalik        | VijayMichalik    |
+| Zhenyang Shi     | wcgcyx           | wcgcyx           |
 
 ## Becoming a Maintainer
 

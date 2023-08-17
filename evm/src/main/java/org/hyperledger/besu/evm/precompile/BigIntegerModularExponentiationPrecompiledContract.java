@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.precompile;
 
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
 import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
@@ -154,9 +155,9 @@ public class BigIntegerModularExponentiationPrecompiledContract
     if (x <= 64) {
       return square(x);
     } else if (x <= 1024) {
-      return (square(x) / 4) + (x * 96) - 3072;
+      return clampedAdd((square(x) / 4), clampedMultiply(x, 96)) - 3072;
     } else {
-      return (square(x) / 16) + (480 * x) - 199680;
+      return clampedAdd((square(x) / 16), clampedMultiply(480, x)) - 199680;
     }
   }
 
