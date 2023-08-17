@@ -21,7 +21,7 @@ import static org.hyperledger.besu.datatypes.Address.KZG_POINT_EVAL;
  *
  * <UL>
  *   <LI>Gas costs for TSTORE/TLOAD
- *   <LI>Data gas for EIP-4844
+ *   <LI>Blob gas for EIP-4844
  * </UL>
  */
 public class CancunGasCalculator extends ShanghaiGasCalculator {
@@ -44,13 +44,13 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
   private static final long TSTORE_GAS = WARM_STORAGE_READ_COST;
 
   /**
-   * The blob gas cost per blob. This is the gas cost for each blob of data that is added to the
+   * The blob gas cost per blob. This is the gas cost for each blob of blob that is added to the
    * block.
    */
-  public static final long DATA_GAS_PER_BLOB = 1 << 17;
+  public static final long BLOB_GAS_PER_BLOB = 1 << 17;
 
   /** The target blob gas per block. */
-  public static final long TARGET_DATA_GAS_PER_BLOCK = 0x60000;
+  public static final long TARGET_BLOB_GAS_PER_BLOCK = 0x60000;
 
   // EIP-1153
   @Override
@@ -65,7 +65,7 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
 
   @Override
   public long blobGasCost(final int blobCount) {
-    return DATA_GAS_PER_BLOB * blobCount;
+    return BLOB_GAS_PER_BLOB * blobCount;
   }
 
   /**
@@ -74,11 +74,11 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
    * @return The target blob gas per block.
    */
   public long getTargetBlobGasPerBlock() {
-    return TARGET_DATA_GAS_PER_BLOCK;
+    return TARGET_BLOB_GAS_PER_BLOCK;
   }
 
   /**
-   * Computes the excess blob gas for a given block based on the parent's excess blob gas and data
+   * Computes the excess blob gas for a given block based on the parent's excess blob gas and blob
    * gas used. If the sum of parent's excess blob gas and parent's blob gas used is less than the
    * target blob gas per block, the excess blob gas is calculated as 0. Otherwise, it is computed as
    * the difference between the sum and the target blob gas per block.
@@ -92,19 +92,19 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
     final long consumedBlobGas = blobGasCost(newBlobs);
     final long currentExcessBlobGas = parentExcessBlobGas + consumedBlobGas;
 
-    if (currentExcessBlobGas < TARGET_DATA_GAS_PER_BLOCK) {
+    if (currentExcessBlobGas < TARGET_BLOB_GAS_PER_BLOCK) {
       return 0L;
     }
-    return currentExcessBlobGas - TARGET_DATA_GAS_PER_BLOCK;
+    return currentExcessBlobGas - TARGET_BLOB_GAS_PER_BLOCK;
   }
 
   @Override
   public long computeExcessBlobGas(final long parentExcessBlobGas, final long blobGasUsed) {
     final long currentExcessBlobGas = parentExcessBlobGas + blobGasUsed;
 
-    if (currentExcessBlobGas < TARGET_DATA_GAS_PER_BLOCK) {
+    if (currentExcessBlobGas < TARGET_BLOB_GAS_PER_BLOCK) {
       return 0L;
     }
-    return currentExcessBlobGas - TARGET_DATA_GAS_PER_BLOCK;
+    return currentExcessBlobGas - TARGET_BLOB_GAS_PER_BLOCK;
   }
 }

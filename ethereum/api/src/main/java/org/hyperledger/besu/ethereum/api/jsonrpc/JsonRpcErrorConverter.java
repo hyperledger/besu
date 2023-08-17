@@ -74,7 +74,7 @@ public class JsonRpcErrorConverter {
       case LOWER_NONCE_INVALID_TRANSACTION_EXISTS:
         return RpcErrorType.LOWER_NONCE_INVALID_TRANSACTION_EXISTS;
       case TOTAL_BLOB_GAS_TOO_HIGH:
-        return RpcErrorType.TOTAL_DATA_GAS_TOO_HIGH;
+        return RpcErrorType.TOTAL_BLOB_GAS_TOO_HIGH;
       case TX_POOL_DISABLED:
         return RpcErrorType.TX_POOL_DISABLED;
       default:

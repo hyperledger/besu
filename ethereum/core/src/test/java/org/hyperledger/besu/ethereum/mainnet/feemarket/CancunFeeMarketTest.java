@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
 
 class CancunFeeMarketTest {
 
-  private static final int DATA_GAS_PER_BLOB = 131072;
+  private static final int BLOB_GAS_PER_BLOB = 131072;
 
   @Test
   void dataPricePerGas() {
@@ -41,8 +41,8 @@ class CancunFeeMarketTest {
     int numBlobs = 1;
     long price = 1;
     while (price <= 1000) {
-      price = blobGasPrice(BlobGas.of(numBlobs * DATA_GAS_PER_BLOB));
-      var testCase = new BlobGasPricing(numBlobs * DATA_GAS_PER_BLOB, price);
+      price = blobGasPrice(BlobGas.of(numBlobs * BLOB_GAS_PER_BLOB));
+      var testCase = new BlobGasPricing(numBlobs * BLOB_GAS_PER_BLOB, price);
       testVector.add(testCase);
       numBlobs++;
     }

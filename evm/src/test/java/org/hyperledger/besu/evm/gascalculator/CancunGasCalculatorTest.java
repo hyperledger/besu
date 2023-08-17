@@ -34,13 +34,13 @@ public class CancunGasCalculatorTest {
   }
 
   static Iterable<Arguments> blobGasses() {
-    long targetGasPerBlock = CancunGasCalculator.TARGET_DATA_GAS_PER_BLOCK;
+    long targetGasPerBlock = CancunGasCalculator.TARGET_BLOB_GAS_PER_BLOCK;
     return List.of(
         Arguments.of(0L, 0L, 0L),
         Arguments.of(targetGasPerBlock, 0L, 0L),
         Arguments.of(0L, 3, 0L),
         Arguments.of(1, 3, 1),
-        Arguments.of(targetGasPerBlock, 1, CancunGasCalculator.DATA_GAS_PER_BLOB),
+        Arguments.of(targetGasPerBlock, 1, CancunGasCalculator.BLOB_GAS_PER_BLOB),
         Arguments.of(targetGasPerBlock, 3, targetGasPerBlock));
   }
 }

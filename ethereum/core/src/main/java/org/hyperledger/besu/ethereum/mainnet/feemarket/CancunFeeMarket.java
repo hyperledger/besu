@@ -25,8 +25,8 @@ import org.slf4j.LoggerFactory;
 
 public class CancunFeeMarket extends LondonFeeMarket {
   private static final Logger LOG = LoggerFactory.getLogger(CancunFeeMarket.class);
-  private static final BigInteger MIN_DATA_GAS_PRICE = BigInteger.ONE;
-  private static final BigInteger DATA_GAS_PRICE_UPDATE_FRACTION = BigInteger.valueOf(3338477);
+  private static final BigInteger BLOB_GAS_PRICE = BigInteger.ONE;
+  private static final BigInteger BLOB_GAS_PRICE_UPDATE_FRACTION = BigInteger.valueOf(3338477);
 
   public CancunFeeMarket(
       final long londonForkBlockNumber, final Optional<Wei> baseFeePerGasOverride) {
@@ -43,7 +43,7 @@ public class CancunFeeMarket extends LondonFeeMarket {
     final var blobGasPrice =
         Wei.of(
             fakeExponential(
-                MIN_DATA_GAS_PRICE, excessBlobGas.toBigInteger(), DATA_GAS_PRICE_UPDATE_FRACTION));
+                    BLOB_GAS_PRICE, excessBlobGas.toBigInteger(), BLOB_GAS_PRICE_UPDATE_FRACTION));
     LOG.atTrace()
         .setMessage("parentExcessBlobGas: {} blobGasPrice: {}")
         .addArgument(excessBlobGas::toShortHexString)
