@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameterTestFixture.WITHDRAWAL_PARAM_1;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -80,7 +81,9 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
             Optional.of(withdrawals),
             Optional.empty());
-
+    lenient()
+        .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
+        .thenReturn(Optional.of(mock(BlockHeader.class)));
     var resp = resp(mockPayload(mockHeader, Collections.emptyList(), withdrawalsParam, null));
 
     assertValidResponse(mockHeader, resp);
@@ -96,7 +99,9 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
             Optional.empty(),
             Optional.empty());
-
+    lenient()
+        .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
+        .thenReturn(Optional.of(mock(BlockHeader.class)));
     var resp = resp(mockPayload(mockHeader, Collections.emptyList(), withdrawals, null, null));
 
     assertValidResponse(mockHeader, resp);

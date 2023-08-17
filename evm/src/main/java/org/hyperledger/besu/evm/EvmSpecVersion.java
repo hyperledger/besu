@@ -81,6 +81,16 @@ public enum EvmSpecVersion {
   }
 
   /**
+   * What is the "default" version of EVM that should be made. Newer versions of Besu will adjust
+   * this to reflect mainnet fork development.
+   *
+   * @return the current mainnet for as of the release of this version of Besu
+   */
+  public static EvmSpecVersion defaultVersion() {
+    return SHANGHAI;
+  }
+
+  /**
    * Gets max eof version.
    *
    * @return the max eof version
@@ -120,5 +130,20 @@ public enum EvmSpecVersion {
           this.name());
     }
     versionWarned = true;
+  }
+
+  /**
+   * Calculate a spec version from a text fork name.
+   *
+   * @param name The name of the fork, such as "shahghai" or "berlin"
+   * @return the EVM spec version for that fork, or null if no fork matched.
+   */
+  public static EvmSpecVersion fromName(final String name) {
+    for (var version : EvmSpecVersion.values()) {
+      if (version.name().equalsIgnoreCase(name)) {
+        return version;
+      }
+    }
+    return null;
   }
 }

@@ -17,6 +17,7 @@ package org.hyperledger.besu.evmtool;
 
 import static org.hyperledger.besu.evmtool.T8nExecutor.extractTransactions;
 
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
@@ -26,6 +27,8 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evmtool.T8nExecutor.RejectedTransaction;
 import org.hyperledger.besu.util.LogConfigurator;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -63,6 +66,8 @@ public class T8nServerSubCommand implements Runnable {
   @Override
   public void run() {
     LogConfigurator.setLevel("", "OFF");
+    // presume ethereum mainnet for reference and state tests
+    SignatureAlgorithmFactory.setDefaultInstance();
     Vertx.vertx()
         .createHttpServer(
             new HttpServerOptions()
@@ -168,8 +173,16 @@ public class T8nServerSubCommand implements Runnable {
         req.response().setStatusCode(500).end(e.getMessage());
       }
     } catch (Throwable t) {
-      t.printStackTrace();
-      throw t;
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      PrintStream ps = new PrintStream(baos, true, StandardCharsets.UTF_8);
+      t.printStackTrace(ps);
+      ObjectNode json = objectMapper.createObjectNode();
+      json.put("error", t.getMessage());
+      json.put("stacktrace", baos.toString(StandardCharsets.UTF_8));
+
+      t.printStackTrace(System.out);
+
+      req.response().setStatusCode(500).end(json.toString());
     }
   }
 

@@ -39,7 +39,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
@@ -106,7 +105,7 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
             .get()
             .updateWorldStateStorage(
                 new BonsaiSnapshotWorldStateKeyValueStorage(
-                    forWorldState.worldStateStorage, metricsSystem));
+                    forWorldState.getWorldStateStorage(), metricsSystem));
       }
     } else {
       LOG.atDebug()
@@ -120,7 +119,7 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
             new CachedBonsaiWorldView(
                 blockHeader,
                 new BonsaiSnapshotWorldStateKeyValueStorage(
-                    forWorldState.worldStateStorage, metricsSystem)));
+                    forWorldState.getWorldStateStorage(), metricsSystem)));
       } else {
         // otherwise, add the layer to the cache
         cachedWorldStatesByHash.put(
@@ -257,14 +256,12 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
   TrieLogProvider getTrieLogProvider() {
     return new TrieLogProvider() {
       @Override
-      public <T extends TrieLog.LogTuple<?>> Optional<TrieLog> getTrieLogLayer(
-          final Hash blockHash) {
+      public Optional<TrieLog> getTrieLogLayer(final Hash blockHash) {
         return CachedWorldStorageManager.this.getTrieLogLayer(blockHash);
       }
 
       @Override
-      public <T extends TrieLog.LogTuple<?>> Optional<TrieLog> getTrieLogLayer(
-          final long blockNumber) {
+      public Optional<TrieLog> getTrieLogLayer(final long blockNumber) {
         return CachedWorldStorageManager.this
             .blockchain
             .getBlockHeader(blockNumber)
@@ -273,7 +270,7 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
       }
 
       @Override
-      public <T extends TrieLog.LogTuple<?>> List<TrieLogRangeTuple> getTrieLogsByRange(
+      public List<TrieLogRangeTuple> getTrieLogsByRange(
           final long fromBlockNumber, final long toBlockNumber) {
         return rangeAsStream(fromBlockNumber, toBlockNumber)
             .map(blockchain::getBlockHeader)
@@ -289,7 +286,7 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
                                             header.getBlockHash(), header.getNumber(), layer))))
             .filter(Optional::isPresent)
             .map(Optional::get)
-            .collect(Collectors.toList());
+            .toList();
       }
 
       Stream<Long> rangeAsStream(final long fromBlockNumber, final long toBlockNumber) {

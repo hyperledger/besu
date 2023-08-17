@@ -20,7 +20,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
-import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -110,7 +109,7 @@ public abstract class MainnetProtocolSpecs {
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return new ProtocolSpecBuilder()
         .gasCalculator(FrontierGasCalculator::new)
-        .gasLimitCalculator(new FrontierTargetingGasLimitCalculator())
+        .gasLimitCalculatorBuilder(feeMarket -> new FrontierTargetingGasLimitCalculator())
         .evmBuilder(MainnetEVMs::frontier)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::frontier)
         .messageCallProcessorBuilder(MessageCallProcessor::new)
@@ -122,12 +121,13 @@ public abstract class MainnetProtocolSpecs {
                     false,
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
                     0))
-        .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
+        .transactionValidatorFactoryBuilder(
+            (gasCalculator, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
                     gasCalculator, gasLimitCalculator, false, Optional.empty()))
         .transactionProcessorBuilder(
             (gasCalculator,
+                feeMarket,
                 transactionValidatorFactory,
                 contractCreationProcessor,
                 messageCallProcessor) ->
@@ -197,8 +197,8 @@ public abstract class MainnetProtocolSpecs {
                     true,
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
                     0))
-        .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
+        .transactionValidatorFactoryBuilder(
+            (gasCalculator, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
                     gasCalculator, gasLimitCalculator, true, Optional.empty()))
         .difficultyCalculator(MainnetDifficultyCalculators.HOMESTEAD)
@@ -275,11 +275,12 @@ public abstract class MainnetProtocolSpecs {
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
-        .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
+        .transactionValidatorFactoryBuilder(
+            (gasCalculator, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(gasCalculator, gasLimitCalculator, true, chainId))
         .transactionProcessorBuilder(
             (gasCalculator,
+                feeMarket,
                 transactionValidator,
                 contractCreationProcessor,
                 messageCallProcessor) ->
@@ -291,7 +292,7 @@ public abstract class MainnetProtocolSpecs {
                     true,
                     false,
                     stackSizeLimit,
-                    FeeMarket.legacy(),
+                    feeMarket,
                     CoinbaseFeePriceCalculator.frontier()))
         .name("SpuriousDragon");
   }
@@ -316,12 +317,12 @@ public abstract class MainnetProtocolSpecs {
         .blockReward(BYZANTIUM_BLOCK_REWARD)
         .privateTransactionValidatorBuilder(() -> new PrivateTransactionValidator(chainId))
         .privateTransactionProcessorBuilder(
-            (transactionValidator,
+            (transactionValidatorFactory,
                 contractCreationProcessor,
                 messageCallProcessor,
                 privateTransactionValidator) ->
                 new PrivateTransactionProcessor(
-                    transactionValidator,
+                    transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
                     false,
@@ -410,8 +411,8 @@ public abstract class MainnetProtocolSpecs {
     return muirGlacierDefinition(
             chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason, evmConfiguration)
         .gasCalculator(BerlinGasCalculator::new)
-        .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
+        .transactionValidatorFactoryBuilder(
+            (gasCalculator, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
                     gasCalculator,
                     gasLimitCalculator,
@@ -447,15 +448,18 @@ public abstract class MainnetProtocolSpecs {
             configStackSizeLimit,
             enableRevertReason,
             evmConfiguration)
+        .feeMarket(londonFeeMarket)
         .gasCalculator(LondonGasCalculator::new)
-        .gasLimitCalculator(
-            new LondonTargetingGasLimitCalculator(londonForkBlockNumber, londonFeeMarket))
-        .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
+        .gasLimitCalculatorBuilder(
+            feeMarket ->
+                new LondonTargetingGasLimitCalculator(
+                    londonForkBlockNumber, (BaseFeeMarket) feeMarket))
+        .transactionValidatorFactoryBuilder(
+            (gasCalculator, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
                     gasCalculator,
                     gasLimitCalculator,
-                    londonFeeMarket,
+                    feeMarket,
                     true,
                     chainId,
                     Set.of(
@@ -465,18 +469,19 @@ public abstract class MainnetProtocolSpecs {
                     Integer.MAX_VALUE))
         .transactionProcessorBuilder(
             (gasCalculator,
-                transactionValidator,
+                feeMarket,
+                transactionValidatorFactory,
                 contractCreationProcessor,
                 messageCallProcessor) ->
                 new MainnetTransactionProcessor(
                     gasCalculator,
-                    transactionValidator,
+                    transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
                     true,
                     false,
                     stackSizeLimit,
-                    londonFeeMarket,
+                    feeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
@@ -491,13 +496,14 @@ public abstract class MainnetProtocolSpecs {
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.london(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
-        .feeMarket(londonFeeMarket)
         .difficultyCalculator(MainnetDifficultyCalculators.LONDON)
         .blockHeaderValidatorBuilder(
-            feeMarket -> MainnetBlockHeaderValidator.createBaseFeeMarketValidator(londonFeeMarket))
+            feeMarket ->
+                MainnetBlockHeaderValidator.createBaseFeeMarketValidator((BaseFeeMarket) feeMarket))
         .ommerHeaderValidatorBuilder(
             feeMarket ->
-                MainnetBlockHeaderValidator.createBaseFeeMarketOmmerValidator(londonFeeMarket))
+                MainnetBlockHeaderValidator.createBaseFeeMarketOmmerValidator(
+                    (BaseFeeMarket) feeMarket))
         .blockBodyValidatorBuilder(BaseFeeBlockBodyValidator::new)
         .name("London");
   }
@@ -574,11 +580,6 @@ public abstract class MainnetProtocolSpecs {
 
     // extra variables need to support flipping the warm coinbase flag.
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
-    final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
-    final BaseFeeMarket londonFeeMarket =
-        genesisConfigOptions.isZeroBaseFee()
-            ? FeeMarket.zeroBaseFee(londonForkBlockNumber)
-            : FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
 
     return parisDefinition(
             chainId,
@@ -597,26 +598,27 @@ public abstract class MainnetProtocolSpecs {
         // we need to flip the Warm Coinbase flag for EIP-3651 warm coinbase
         .transactionProcessorBuilder(
             (gasCalculator,
-                transactionValidator,
+                feeMarket,
+                transactionValidatorFactory,
                 contractCreationProcessor,
                 messageCallProcessor) ->
                 new MainnetTransactionProcessor(
                     gasCalculator,
-                    transactionValidator,
+                    transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
                     true,
                     true,
                     stackSizeLimit,
-                    londonFeeMarket,
+                    feeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
         // Contract creation rules for EIP-3860 Limit and meter intitcode
-        .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
+        .transactionValidatorFactoryBuilder(
+            (gasCalculator, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
                     gasCalculator,
                     gasLimitCalculator,
-                    londonFeeMarket,
+                    feeMarket,
                     true,
                     chainId,
                     Set.of(
@@ -646,9 +648,6 @@ public abstract class MainnetProtocolSpecs {
             ? FeeMarket.zeroBaseFee(londonForkBlockNumber)
             : FeeMarket.cancun(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
 
-    final GasLimitCalculator cancunGasLimitCalculator =
-        new CancunTargetingGasLimitCalculator(londonForkBlockNumber, cancunFeeMarket);
-
     return shanghaiDefinition(
             chainId,
             configContractSizeLimit,
@@ -660,7 +659,10 @@ public abstract class MainnetProtocolSpecs {
         // gas calculator for EIP-4844 data gas
         .gasCalculator(CancunGasCalculator::new)
         // gas limit with EIP-4844 max data gas per block
-        .gasLimitCalculator(cancunGasLimitCalculator)
+        .gasLimitCalculatorBuilder(
+            feeMarket ->
+                new CancunTargetingGasLimitCalculator(
+                    londonForkBlockNumber, (BaseFeeMarket) feeMarket))
         // EVM changes to support EOF EIPs (3670, 4200, 4750, 5450)
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
@@ -680,6 +682,7 @@ public abstract class MainnetProtocolSpecs {
         // use Cancun fee market
         .transactionProcessorBuilder(
             (gasCalculator,
+                feeMarket,
                 transactionValidator,
                 contractCreationProcessor,
                 messageCallProcessor) ->
@@ -691,15 +694,15 @@ public abstract class MainnetProtocolSpecs {
                     true,
                     true,
                     stackSizeLimit,
-                    cancunFeeMarket,
+                    feeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
         // change to check for max data gas per block for EIP-4844
-        .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
+        .transactionValidatorFactoryBuilder(
+            (gasCalculator, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
                     gasCalculator,
                     gasLimitCalculator,
-                    cancunFeeMarket,
+                    feeMarket,
                     true,
                     chainId,
                     Set.of(

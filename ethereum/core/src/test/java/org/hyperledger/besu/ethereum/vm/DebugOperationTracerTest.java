@@ -83,6 +83,11 @@ public class DebugOperationTracerTest {
   @Test
   public void shouldRecordDepth() {
     final MessageFrame frame = validMessageFrame();
+    // simulate 4 calls
+    frame.getMessageFrameStack().add(frame);
+    frame.getMessageFrameStack().add(frame);
+    frame.getMessageFrameStack().add(frame);
+    frame.getMessageFrameStack().add(frame);
     final TraceFrame traceFrame = traceFrame(frame);
     assertThat(traceFrame.getDepth()).isEqualTo(DEPTH);
   }
@@ -201,8 +206,7 @@ public class DebugOperationTracerTest {
         .worldUpdater(worldUpdater)
         .gasPrice(Wei.of(25))
         .blockHeader(blockHeader)
-        .blockchain(blockchain)
-        .depth(DEPTH);
+        .blockchain(blockchain);
   }
 
   private Map<UInt256, UInt256> setupStorageForCapture(final MessageFrame frame) {

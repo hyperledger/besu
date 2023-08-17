@@ -43,7 +43,6 @@ import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
@@ -350,7 +349,6 @@ public class MainnetTransactionProcessor {
           dataGas);
 
       final WorldUpdater worldUpdater = worldState.updater();
-      final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
       final ImmutableMap.Builder<String, Object> contextVariablesBuilder =
           ImmutableMap.<String, Object>builder()
               .put(KEY_IS_PERSISTING_PRIVATE_STATE, isPersistingPrivateState)
@@ -362,7 +360,6 @@ public class MainnetTransactionProcessor {
 
       final MessageFrame.Builder commonMessageFrameBuilder =
           MessageFrame.builder()
-              .messageFrameStack(messageFrameStack)
               .maxStackSize(maxStackSize)
               .worldUpdater(worldUpdater.updater())
               .initialGas(gasAvailable)
@@ -372,7 +369,6 @@ public class MainnetTransactionProcessor {
               .value(transaction.getValue())
               .apparentValue(transaction.getValue())
               .blockValues(blockHeader)
-              .depth(0)
               .completer(__ -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
@@ -417,8 +413,8 @@ public class MainnetTransactionProcessor {
                         .orElse(CodeV0.EMPTY_CODE))
                 .build();
       }
+      Deque<MessageFrame> messageFrameStack = initialFrame.getMessageFrameStack();
 
-      messageFrameStack.addFirst(initialFrame);
       if (initialFrame.getCode().isValid()) {
         while (!messageFrameStack.isEmpty()) {
           process(messageFrameStack.peekFirst(), operationTracer);
@@ -510,21 +506,17 @@ public class MainnetTransactionProcessor {
     }
   }
 
-  protected void process(final MessageFrame frame, final OperationTracer operationTracer) {
+  public void process(final MessageFrame frame, final OperationTracer operationTracer) {
     final AbstractMessageProcessor executor = getMessageProcessor(frame.getType());
 
     executor.process(frame, operationTracer);
   }
 
   private AbstractMessageProcessor getMessageProcessor(final MessageFrame.Type type) {
-    switch (type) {
-      case MESSAGE_CALL:
-        return messageCallProcessor;
-      case CONTRACT_CREATION:
-        return contractCreationProcessor;
-      default:
-        throw new IllegalStateException("Request for unsupported message processor type " + type);
-    }
+    return switch (type) {
+      case MESSAGE_CALL -> messageCallProcessor;
+      case CONTRACT_CREATION -> contractCreationProcessor;
+    };
   }
 
   protected long refunded(
