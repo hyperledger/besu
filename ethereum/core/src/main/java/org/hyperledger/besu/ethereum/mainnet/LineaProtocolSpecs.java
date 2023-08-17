@@ -67,12 +67,12 @@ public class LineaProtocolSpecs {
             evmConfiguration)
         .feeMarket(londonFeeMarket)
         .calldataLimits(calldataLimits)
-        .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
+        .transactionValidatorFactoryBuilder(
+            (gasCalculator, gasLimitCalculator, feeMarket) ->
                 new LineaTransactionValidatorFactory(
                     gasCalculator,
                     gasLimitCalculator,
-                    londonFeeMarket,
+                    feeMarket,
                     true,
                     chainId,
                     Set.of(
