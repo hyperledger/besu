@@ -54,12 +54,12 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
     if (cancun.isPresent() && payloadParameter.getTimestamp() >= cancun.get().milestone()) {
       if (payloadParameter.getDataGasUsed() == null
           || payloadParameter.getExcessDataGas() == null) {
-        return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing data gas fields");
+        return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing blob gas fields");
       } else {
         return ValidationResult.valid();
       }
     } else {
-      return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Fork not supported");
+      return ValidationResult.invalid(RpcErrorType.UNSUPPORTED_FORK, "Fork not supported");
     }
   }
 }
