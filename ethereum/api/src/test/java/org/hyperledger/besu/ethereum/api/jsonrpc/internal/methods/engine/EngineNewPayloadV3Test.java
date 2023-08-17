@@ -73,7 +73,12 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
   @Test
   public void shouldInvalidPayloadOnShortVersionedHash() {
     Bytes shortHash = Bytes.fromHexString("0x" + "69".repeat(31));
+
     EnginePayloadParameter payload = mock(EnginePayloadParameter.class);
+    when(payload.getTimestamp()).thenReturn(30l);
+    when(payload.getExcessBlobGas()).thenReturn("99");
+    when(payload.getBlobGasUsed()).thenReturn(9l);
+
     JsonRpcResponse badParam =
         method.response(
             new JsonRpcRequestContext(

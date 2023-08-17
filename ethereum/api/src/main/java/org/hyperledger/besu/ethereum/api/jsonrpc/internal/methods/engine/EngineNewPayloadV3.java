@@ -59,7 +59,7 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
         return ValidationResult.valid();
       }
     } else {
-      return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Fork not supported");
+      return ValidationResult.invalid(RpcErrorType.UNSUPPORTED_FORK, "Fork not supported");
     }
   }
 }
