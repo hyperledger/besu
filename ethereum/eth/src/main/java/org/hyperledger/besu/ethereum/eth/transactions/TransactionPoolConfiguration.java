@@ -25,6 +25,11 @@ import org.immutables.value.Value;
 @Value.Immutable
 @Value.Style(allParameters = true)
 public interface TransactionPoolConfiguration {
+  enum Implementation {
+    LEGACY,
+    LAYERED;
+  }
+
   String DEFAULT_SAVE_FILE_NAME = "txpool.dump";
   int DEFAULT_TX_MSG_KEEP_ALIVE = 60;
   int DEFAULT_MAX_PENDING_TRANSACTIONS = 4096;
@@ -41,7 +46,7 @@ public interface TransactionPoolConfiguration {
   long DEFAULT_PENDING_TRANSACTIONS_LAYER_MAX_CAPACITY_BYTES = 50_000_000L;
   int DEFAULT_MAX_PRIORITIZED_TRANSACTIONS = 2000;
   int DEFAULT_MAX_FUTURE_BY_SENDER = 200;
-  boolean DEFAULT_LAYERED_TX_POOL_ENABLED = false;
+  Implementation DEFAULT_TX_POOL_IMPLEMENTATION = Implementation.LAYERED;
 
   TransactionPoolConfiguration DEFAULT = ImmutableTransactionPoolConfiguration.builder().build();
 
@@ -106,8 +111,8 @@ public interface TransactionPoolConfiguration {
   }
 
   @Value.Default
-  default Boolean getLayeredTxPoolEnabled() {
-    return DEFAULT_LAYERED_TX_POOL_ENABLED;
+  default Implementation getTxPoolImplementation() {
+    return DEFAULT_TX_POOL_IMPLEMENTATION;
   }
 
   @Value.Default

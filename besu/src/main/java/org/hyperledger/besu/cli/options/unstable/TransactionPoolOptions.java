@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
+
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -41,13 +43,12 @@ public class TransactionPoolOptions
   private static final String STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG =
       "--strict-tx-replay-protection-enabled";
 
-  private static final String LAYERED_TX_POOL_ENABLED_FLAG = "--Xlayered-tx-pool";
+  private static final String TX_POOL_IMPLEMENTATION = "--tx-pool";
   private static final String LAYERED_TX_POOL_LAYER_MAX_CAPACITY =
-      "--Xlayered-tx-pool-layer-max-capacity";
-  private static final String LAYERED_TX_POOL_MAX_PRIORITIZED =
-      "--Xlayered-tx-pool-max-prioritized";
+      "--layered-tx-pool-layer-max-capacity";
+  private static final String LAYERED_TX_POOL_MAX_PRIORITIZED = "--layered-tx-pool-max-prioritized";
   private static final String LAYERED_TX_POOL_MAX_FUTURE_BY_SENDER =
-      "--Xlayered-tx-pool-max-future-by-sender";
+      "--layered-tx-pool-max-future-by-sender";
 
   @CommandLine.Option(
       names = {STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG},
@@ -79,13 +80,11 @@ public class TransactionPoolOptions
       TransactionPoolConfiguration.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD.toMillis();
 
   @CommandLine.Option(
-      names = {LAYERED_TX_POOL_ENABLED_FLAG},
-      paramLabel = "<Boolean>",
-      hidden = true,
-      description = "Enable the Layered Transaction Pool (default: ${DEFAULT-VALUE})",
+      names = {TX_POOL_IMPLEMENTATION},
+      paramLabel = "<Enum>",
+      description = "The Transaction Pool implementation to use(default: ${DEFAULT-VALUE})",
       arity = "0..1")
-  private Boolean layeredTxPoolEnabled =
-      TransactionPoolConfiguration.DEFAULT_LAYERED_TX_POOL_ENABLED;
+  private TransactionPoolConfiguration.Implementation txPoolImplementation = LAYERED;
 
   @CommandLine.Option(
       names = {LAYERED_TX_POOL_LAYER_MAX_CAPACITY},
@@ -140,7 +139,7 @@ public class TransactionPoolOptions
     options.eth65TrxAnnouncedBufferingPeriod =
         config.getEth65TrxAnnouncedBufferingPeriod().toMillis();
     options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
-    options.layeredTxPoolEnabled = config.getLayeredTxPoolEnabled();
+    options.txPoolImplementation = config.getTxPoolImplementation();
     options.layeredTxPoolLayerMaxCapacity = config.getPendingTransactionsLayerMaxCapacityBytes();
     options.layeredTxPoolMaxPrioritized = config.getMaxPrioritizedTransactions();
     options.layeredTxPoolMaxFutureBySender = config.getMaxFutureBySender();
@@ -149,7 +148,7 @@ public class TransactionPoolOptions
 
   @Override
   public ImmutableTransactionPoolConfiguration.Builder toDomainObject() {
-    if (layeredTxPoolEnabled) {
+    if (txPoolImplementation.equals(LAYERED)) {
       LOG.warn(
           "Layered transaction pool enabled, ignoring settings for "
               + "--tx-pool-max-size and --tx-pool-limit-by-account-percentage");
@@ -159,7 +158,7 @@ public class TransactionPoolOptions
         .strictTransactionReplayProtectionEnabled(strictTxReplayProtectionEnabled)
         .txMessageKeepAliveSeconds(txMessageKeepAliveSeconds)
         .eth65TrxAnnouncedBufferingPeriod(Duration.ofMillis(eth65TrxAnnouncedBufferingPeriod))
-        .layeredTxPoolEnabled(layeredTxPoolEnabled)
+        .txPoolImplementation(txPoolImplementation)
         .pendingTransactionsLayerMaxCapacityBytes(layeredTxPoolLayerMaxCapacity)
         .maxPrioritizedTransactions(layeredTxPoolMaxPrioritized)
         .maxFutureBySender(layeredTxPoolMaxFutureBySender);
@@ -173,7 +172,7 @@ public class TransactionPoolOptions
         OptionParser.format(txMessageKeepAliveSeconds),
         ETH65_TX_ANNOUNCED_BUFFERING_PERIOD_FLAG,
         OptionParser.format(eth65TrxAnnouncedBufferingPeriod),
-        LAYERED_TX_POOL_ENABLED_FLAG + "=" + layeredTxPoolEnabled,
+        TX_POOL_IMPLEMENTATION + "=" + txPoolImplementation,
         LAYERED_TX_POOL_LAYER_MAX_CAPACITY,
         OptionParser.format(layeredTxPoolLayerMaxCapacity),
         LAYERED_TX_POOL_MAX_PRIORITIZED,

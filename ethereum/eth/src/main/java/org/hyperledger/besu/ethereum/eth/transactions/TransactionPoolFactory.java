@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
+
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -194,8 +196,7 @@ public class TransactionPoolFactory {
         protocolSchedule.anyMatch(
             scheduledSpec -> scheduledSpec.spec().getFeeMarket().implementsBaseFee());
 
-    if (transactionPoolConfiguration.getLayeredTxPoolEnabled()) {
-      LOG.info("Using layered transaction pool");
+    if (transactionPoolConfiguration.getTxPoolImplementation().equals(LAYERED)) {
       return createLayeredPendingTransactions(
           protocolSchedule,
           protocolContext,

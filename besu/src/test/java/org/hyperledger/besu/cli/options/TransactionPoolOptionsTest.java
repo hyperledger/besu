@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.options;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
 
 import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -121,7 +122,7 @@ public class TransactionPoolOptionsTest
         .strictTransactionReplayProtectionEnabled(false)
         .txMessageKeepAliveSeconds(defaultValue.getTxMessageKeepAliveSeconds())
         .eth65TrxAnnouncedBufferingPeriod(defaultValue.getEth65TrxAnnouncedBufferingPeriod())
-        .layeredTxPoolEnabled(defaultValue.getLayeredTxPoolEnabled())
+        .txPoolImplementation(defaultValue.getTxPoolImplementation())
         .pendingTransactionsLayerMaxCapacityBytes(
             defaultValue.getPendingTransactionsLayerMaxCapacityBytes())
         .maxPrioritizedTransactions(defaultValue.getMaxPrioritizedTransactions())
@@ -136,7 +137,7 @@ public class TransactionPoolOptionsTest
         .eth65TrxAnnouncedBufferingPeriod(
             TransactionPoolConfiguration.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD.plus(
                 Duration.ofMillis(100)))
-        .layeredTxPoolEnabled(true)
+        .txPoolImplementation(LAYERED)
         .pendingTransactionsLayerMaxCapacityBytes(1_000_000L)
         .maxPrioritizedTransactions(1000)
         .maxFutureBySender(10);
