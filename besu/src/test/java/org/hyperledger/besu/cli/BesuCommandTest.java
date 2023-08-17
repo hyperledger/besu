@@ -4693,9 +4693,9 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void senderLimitedTxPoolCeiling_violated() {
     TestBesuCommand commandTest = parseCommand("--tx-pool-limit-by-account-percentage=1.00002341");
 
-    TransactionPoolOptions txPoolOption = commandTest.getTransactionPoolOptions();
+    TransactionPoolOptions txPoolOption = commandTest.getUnstableTransactionPoolOptions();
 
-    final TransactionPoolConfiguration config = txPoolOption.toDomainObject().build();
+    final TransactionPoolConfiguration config = txPoolOption.toDomainObject();
     assertThat(config.getTxPoolLimitByAccountPercentage())
         .isEqualTo(TransactionPoolConfiguration.DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();

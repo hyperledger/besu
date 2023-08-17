@@ -87,9 +87,9 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
         .isEqualTo(defaultOptions);
   }
 
-  abstract D createDefaultDomainObject();
+  protected abstract D createDefaultDomainObject();
 
-  abstract D createCustomizedDomainObject();
+  protected abstract D createCustomizedDomainObject();
 
   protected List<String> getFieldsWithComputedDefaults() {
     return Collections.emptyList();
@@ -99,7 +99,7 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
     return Collections.emptyList();
   }
 
-  abstract T optionsFromDomainObject(D domainObject);
+  protected abstract T optionsFromDomainObject(D domainObject);
 
-  abstract T getOptionsFromBesuCommand(final TestBesuCommand besuCommand);
+  protected abstract T getOptionsFromBesuCommand(final TestBesuCommand besuCommand);
 }
