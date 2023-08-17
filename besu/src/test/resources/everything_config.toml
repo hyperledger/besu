@@ -170,6 +170,7 @@ privacy-onchain-groups-enabled=false
 privacy-flexible-groups-enabled=false
 
 # Transaction Pool
+tx-pool="layered"
 tx-pool-retention-hours=999
 tx-pool-price-bump=13
 tx-pool-max-size=1234
