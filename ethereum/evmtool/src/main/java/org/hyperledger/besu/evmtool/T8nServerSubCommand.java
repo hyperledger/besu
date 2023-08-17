@@ -17,6 +17,7 @@ package org.hyperledger.besu.evmtool;
 
 import static org.hyperledger.besu.evmtool.T8nExecutor.extractTransactions;
 
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
@@ -65,6 +66,8 @@ public class T8nServerSubCommand implements Runnable {
   @Override
   public void run() {
     LogConfigurator.setLevel("", "OFF");
+    // presume ethereum mainnet for reference and state tests
+    SignatureAlgorithmFactory.setDefaultInstance();
     Vertx.vertx()
         .createHttpServer(
             new HttpServerOptions()
