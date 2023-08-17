@@ -105,13 +105,6 @@ public class BlockHeaderValidator {
   }
 
   private static class Rule {
-    // TODO: do we need a rule that parentBeaconBlockRoot needs to be available for cancun and
-    // cannot be available before cancun?
-    // TODO: A check for after cancun timestamp is more important, as this case will cause a fork
-    // (stored in world state)
-    // TODO: If it is available before the account storage should be removed, as it would be an
-    // empty account?
-    // TODO: For ForkChoiceUpdated it is checked to be available after cancun
     private final boolean detachedSupported;
     private final AttachedBlockHeaderValidationRule wrappedRule;
     private final boolean includeInLightValidation;

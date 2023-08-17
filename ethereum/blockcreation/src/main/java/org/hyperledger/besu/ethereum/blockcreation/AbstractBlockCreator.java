@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
 import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -49,7 +50,6 @@ import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.EvmAccount;
-import org.hyperledger.besu.evm.precompile.ParentBeaconBlockRootPrecompiledContract;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
@@ -192,7 +192,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       if (maybeParentBeaconBlockRoot.isPresent()) {
         // set the parent beacon block root hash in the beacon root contract
         // TDOD this is not a precompile anymore
-        ParentBeaconBlockRootPrecompiledContract.storeParentBeaconBlockRoot(
+        ParentBeaconBlockRootHelper.storeParentBeaconBlockRoot(
             disposableWorldState.updater(), timestamp, maybeParentBeaconBlockRoot.get());
       }
 
@@ -319,12 +319,12 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .sum();
       // casting parent excess data gas to long since for the moment it should be well below that
       // limit
-      DataGas ecessDataGas =
+      DataGas excessDataGas =
           DataGas.of(
               gasCalculator.computeExcessDataGas(
                   parentHeader.getExcessDataGas().map(DataGas::toLong).orElse(0L), newBlobsCount));
       DataGas used = DataGas.of(gasCalculator.dataGasCost(newBlobsCount));
-      return new GasUsage(ecessDataGas, used);
+      return new GasUsage(excessDataGas, used);
     }
     return null;
   }

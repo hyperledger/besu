@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.evm.precompile;
+package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -21,8 +21,8 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-/** The KZGPointEval precompile contract. */
-public class ParentBeaconBlockRootPrecompiledContract {
+/** A helper class to store the parent beacon block root. */
+public class ParentBeaconBlockRootHelper {
 
   // Modulus use to for the timestamp to store the  root
   public static final long HISTORICAL_ROOTS_MODULUS = 98304;
@@ -37,6 +37,14 @@ public class ParentBeaconBlockRootPrecompiledContract {
 
   public static void storeParentBeaconBlockRoot(
       final WorldUpdater worldUpdater, final long timestamp, final Bytes32 root) {
+    /*
+     pseudo code from EIP 4788:
+     timestamp_as_uint256 = to_uint256_be(block_header.timestamp)
+     parent_beacon_block_root = block_header.parent_beacon_block_root
+
+     sstore(HISTORY_STORAGE_ADDRESS, timestamp_index, timestamp_as_uint256)
+     sstore(HISTORY_STORAGE_ADDRESS, root_index, parent_beacon_block_root)
+    */
     final long timestampReduced = timestamp % HISTORICAL_ROOTS_MODULUS;
     final long timestampExtended = timestampReduced + HISTORICAL_ROOTS_MODULUS;
 
@@ -47,15 +55,6 @@ public class ParentBeaconBlockRootPrecompiledContract {
         worldUpdater.getOrCreate(Address.PARENT_BEACON_BLOCK_ROOT_REGISTRY).getMutable();
     account.setStorageValue(timestampIndex, UInt256.valueOf(timestamp));
     account.setStorageValue(rootIndex, UInt256.fromBytes(root));
-    // TODO: Is UInt256 big endian?
-    /*
-     from EIP 4788:
-     timestamp_as_uint256 = to_uint256_be(block_header.timestamp)
-     parent_beacon_block_root = block_header.parent_beacon_block_root
-
-     sstore(HISTORY_STORAGE_ADDRESS, timestamp_index, timestamp_as_uint256)
-     sstore(HISTORY_STORAGE_ADDRESS, root_index, parent_beacon_block_root)
-    */
     worldUpdater.commit();
   }
 }

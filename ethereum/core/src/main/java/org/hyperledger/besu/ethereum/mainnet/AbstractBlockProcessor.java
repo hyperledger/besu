@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
-import org.hyperledger.besu.evm.precompile.ParentBeaconBlockRootPrecompiledContract;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -106,10 +105,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
 
     if (blockHeader.getParentBeaconBlockRoot().isPresent()) {
-      // TODO: Have we checked that we are cancun?????
-      // TODO: if we have to set the nonce for the contract to one this can happen here as well
       final WorldUpdater updater = worldState.updater();
-      ParentBeaconBlockRootPrecompiledContract.storeParentBeaconBlockRoot(
+      ParentBeaconBlockRootHelper.storeParentBeaconBlockRoot(
           updater, blockHeader.getTimestamp(), blockHeader.getParentBeaconBlockRoot().get());
     }
 

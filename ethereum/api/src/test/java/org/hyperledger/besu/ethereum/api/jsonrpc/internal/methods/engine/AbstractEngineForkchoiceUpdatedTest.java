@@ -446,8 +446,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
     var forkchoiceRes = (EngineUpdateForkchoiceResult) resp.getResult();
 
-    verify(mergeCoordinator, never())
-        .preparePayload(any(), any(), any(), any(), any(), Optional.empty());
+    verify(mergeCoordinator, never()).preparePayload(any(), any(), any(), any(), any(), any());
 
     assertThat(forkchoiceRes.getPayloadStatus().getStatus()).isEqualTo(VALID);
     assertThat(forkchoiceRes.getPayloadStatus().getError()).isNull();

@@ -169,9 +169,9 @@ public class BlockHeader extends SealableBlockHeader
     if (withdrawalsRoot != null) {
       out.writeBytes(withdrawalsRoot);
     }
-    if (excessDataGas != null && dataGasUsed != null) {
-      out.writeLongScalar(dataGasUsed);
-      out.writeUInt64Scalar(excessDataGas);
+    if (excessDataGas.isPresent() && dataGasUsed.isPresent()) {
+      out.writeLongScalar(dataGasUsed.get());
+      out.writeUInt64Scalar(excessDataGas.get());
     }
     if (parentBeaconBlockRoot != null) {
       out.writeBytes(parentBeaconBlockRoot);
@@ -278,12 +278,8 @@ public class BlockHeader extends SealableBlockHeader
     if (withdrawalsRoot != null) {
       sb.append("withdrawalsRoot=").append(withdrawalsRoot).append(", ");
     }
-    if (dataGasUsed != null) {
-      sb.append("blobGasUsed=").append(dataGasUsed).append(", ");
-    }
-    if (excessDataGas != null) {
-      sb.append("excessBlobGas=").append(excessDataGas).append(", ");
-    }
+    dataGasUsed.ifPresent(aLong -> sb.append("dataGasUsed=").append(aLong).append(", "));
+    excessDataGas.ifPresent(dataGas -> sb.append("excessDataGas=").append(dataGas).append(", "));
     if (parentBeaconBlockRoot != null) {
       sb.append("parentBeaconBlockRoot=").append(parentBeaconBlockRoot).append(", ");
     }

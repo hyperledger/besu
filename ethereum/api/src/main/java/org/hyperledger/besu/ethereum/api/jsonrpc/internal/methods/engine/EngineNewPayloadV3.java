@@ -72,13 +72,4 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
       return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Fork not supported");
     }
   }
-  // TODO: I think we should check this, unless this is done somewhere else
-  /*
-    from https://github.com/ethereum/execution-apis/blob/main/src/engine/cancun.md#executionpayloadv3
-    Given the expected array of blob versioned hashes client software MUST run its validation by taking the following steps:
-
-  Obtain the actual array by concatenating blob versioned hashes lists (tx.blob_versioned_hashes) of each blob transaction included in the payload, respecting the order of inclusion. If the payload has no blob transactions the expected array MUST be [].
-  Return {status: INVALID, latestValidHash: null, validationError: errorMessage | null} if the expected and the actual arrays don't match.
-
-     */
 }

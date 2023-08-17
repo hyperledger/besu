@@ -45,9 +45,9 @@ public class ProcessableBlockHeader implements BlockValues {
   // prevRandao is included for post-merge blocks
   protected final Bytes32 mixHashOrPrevRandao;
   // dataGasUsed is included for Cancun
-  protected final Long dataGasUsed;
+  protected final Optional<Long> dataGasUsed;
   // excessDataGas is included for Cancun
-  protected final DataGas excessDataGas;
+  protected final Optional<DataGas> excessDataGas;
   // parentBeaconBlockRoot is included for Cancun
   protected final Bytes32 parentBeaconBlockRoot;
 
@@ -71,8 +71,8 @@ public class ProcessableBlockHeader implements BlockValues {
     this.timestamp = timestamp;
     this.baseFee = baseFee;
     this.mixHashOrPrevRandao = mixHashOrPrevRandao;
-    this.dataGasUsed = dataGasUsed;
-    this.excessDataGas = excessDataGas;
+    this.dataGasUsed = Optional.ofNullable(dataGasUsed);
+    this.excessDataGas = Optional.ofNullable(excessDataGas);
     this.parentBeaconBlockRoot = parentBeaconBlockRoot;
   }
 
@@ -173,11 +173,11 @@ public class ProcessableBlockHeader implements BlockValues {
   }
 
   public Optional<DataGas> getExcessDataGas() {
-    return Optional.ofNullable(excessDataGas);
+    return excessDataGas;
   }
 
   public Optional<Long> getDataGasUsed() {
-    return Optional.ofNullable(dataGasUsed);
+    return dataGasUsed;
   }
 
   public Optional<Bytes32> getParentBeaconBlockRoot() {

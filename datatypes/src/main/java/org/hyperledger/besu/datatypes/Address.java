@@ -60,10 +60,9 @@ public class Address extends DelegatingBytes {
   /** The constant KZG_POINT_EVAL aka POINT_EVALUATION_PRECOMPILE_ADDRESS. */
   public static final Address KZG_POINT_EVAL = Address.precompiled(0xA);
   /** The constant PARENT_BEACON_BLOCK_ROOT_REGISTRY aka HISTORY_STORAGE_ADDRESS. */
-  public static final Address PARENT_BEACON_BLOCK_ROOT_REGISTRY =
-      Address.precompiled(
-          0xB); // TODO: this is not a precompile anymore. Fix after testnet 8 when we know what the
-  // actual address is.
+  public static final Address PARENT_BEACON_BLOCK_ROOT_REGISTRY = Address.precompiled(0xB);
+  // TODO: this is not a precompile anymore. The address is correct for testnet 8. Fix after testnet
+  // 8 when we know what the real address is
   /** The constant BLS12_G1ADD. */
   public static final Address BLS12_G1ADD = Address.precompiled(0xC);
   /** The constant BLS12_G1MUL. */

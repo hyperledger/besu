@@ -129,7 +129,7 @@ public class JsonRpcResponseUtils {
             withdrawalsRoot,
             null, // ToDo 4844: set with the value of data_gas_used field
             null, // ToDo 4844: set with the value of excess_data_gas field
-            null,
+            null, // TODO 4788: set with the value of the parent beacon block root field
             depositsRoot,
             blockHeaderFunctions);
 
