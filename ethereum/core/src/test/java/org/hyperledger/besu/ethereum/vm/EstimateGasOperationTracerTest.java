@@ -49,23 +49,26 @@ public class EstimateGasOperationTracerTest {
 
     assertThat(operationTracer.getMaxDepth()).isZero();
 
-    final MessageFrame firstFrame = messageFrameTestFixture.depth(0).build();
+    final MessageFrame firstFrame = messageFrameTestFixture.build();
     operationTracer.tracePostExecution(firstFrame, testResult);
     assertThat(operationTracer.getMaxDepth()).isZero();
 
-    final MessageFrame secondFrame = messageFrameTestFixture.depth(1).build();
+    final MessageFrame secondFrame = messageFrameTestFixture.parentFrame(firstFrame).build();
     operationTracer.tracePostExecution(secondFrame, testResult);
     assertThat(operationTracer.getMaxDepth()).isEqualTo(1);
+    firstFrame.getMessageFrameStack().removeFirst();
 
-    final MessageFrame thirdFrame = messageFrameTestFixture.depth(1).build();
+    final MessageFrame thirdFrame = messageFrameTestFixture.parentFrame(firstFrame).build();
     operationTracer.tracePostExecution(thirdFrame, testResult);
     assertThat(operationTracer.getMaxDepth()).isEqualTo(1);
 
-    final MessageFrame fourthFrame = messageFrameTestFixture.depth(2).build();
+    final MessageFrame fourthFrame = messageFrameTestFixture.parentFrame(thirdFrame).build();
     operationTracer.tracePostExecution(fourthFrame, testResult);
     assertThat(operationTracer.getMaxDepth()).isEqualTo(2);
+    firstFrame.getMessageFrameStack().removeFirst();
+    firstFrame.getMessageFrameStack().removeFirst();
 
-    final MessageFrame fifthFrame = messageFrameTestFixture.depth(0).build();
+    final MessageFrame fifthFrame = messageFrameTestFixture.build();
     operationTracer.tracePostExecution(fifthFrame, testResult);
     assertThat(operationTracer.getMaxDepth()).isEqualTo(2);
   }

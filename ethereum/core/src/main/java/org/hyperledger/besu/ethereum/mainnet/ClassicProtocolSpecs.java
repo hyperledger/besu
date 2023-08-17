@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
@@ -74,8 +73,8 @@ public class ClassicProtocolSpecs {
             contractSizeLimit, configStackSizeLimit, evmConfiguration)
         .isReplayProtectionSupported(true)
         .gasCalculator(TangerineWhistleGasCalculator::new)
-        .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
+        .transactionValidatorFactoryBuilder(
+            (gasCalculator, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(gasCalculator, gasLimitCalculator, true, chainId))
         .name("ClassicTangerineWhistle");
   }
@@ -128,8 +127,8 @@ public class ClassicProtocolSpecs {
     return gothamDefinition(
             chainId, contractSizeLimit, configStackSizeLimit, ecip1017EraRounds, evmConfiguration)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_REMOVED)
-        .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
+        .transactionValidatorFactoryBuilder(
+            (gasCalculator, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(gasCalculator, gasLimitCalculator, true, chainId))
         .name("DefuseDifficultyBomb");
   }
@@ -171,18 +170,19 @@ public class ClassicProtocolSpecs {
                     1))
         .transactionProcessorBuilder(
             (gasCalculator,
-                transactionValidator,
+                feeMarket,
+                transactionValidatorFactory,
                 contractCreationProcessor,
                 messageCallProcessor) ->
                 new MainnetTransactionProcessor(
                     gasCalculator,
-                    transactionValidator,
+                    transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
                     true,
                     false,
                     stackSizeLimit,
-                    FeeMarket.legacy(),
+                    feeMarket,
                     CoinbaseFeePriceCalculator.frontier()))
         .name("Atlantis");
   }
@@ -291,8 +291,8 @@ public class ClassicProtocolSpecs {
             ecip1017EraRounds,
             evmConfiguration)
         .gasCalculator(BerlinGasCalculator::new)
-        .transactionValidatorBuilder(
-            (gasCalculator, gasLimitCalculator) ->
+        .transactionValidatorFactoryBuilder(
+            (gasCalculator, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
                     gasCalculator,
                     gasLimitCalculator,
