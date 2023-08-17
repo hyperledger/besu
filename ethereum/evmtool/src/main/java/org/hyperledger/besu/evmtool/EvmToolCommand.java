@@ -85,6 +85,7 @@ import picocli.CommandLine.Option;
     footerHeading = "%n",
     footer = "Hyperledger Besu is licensed under the Apache License 2.0",
     subcommands = {
+      BenchmarkSubCommand.class,
       B11rSubCommand.class,
       CodeValidateSubCommand.class,
       StateTestSubCommand.class,
@@ -226,6 +227,9 @@ public class EvmToolCommand implements Runnable {
     final CommandLine commandLine = new CommandLine(this).setOut(output);
     out = output;
     in = input;
+
+    // don't require exact case to match enum values
+    commandLine.setCaseInsensitiveEnumValuesAllowed(true);
 
     // add dagger-injected options
     commandLine.addMixin("Dagger Options", daggerOptions);
