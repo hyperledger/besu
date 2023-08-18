@@ -30,8 +30,8 @@ public class TransactionReceiptWithMetadata {
   private final long blockNumber;
   private final Hash blockHash;
   private final Transaction transaction;
-  private final Optional<Long> dataGasUsed;
-  private final Optional<Wei> dataGasPrice;
+  private final Optional<Long> blobGasUsed;
+  private final Optional<Wei> blobGasPrice;
 
   private TransactionReceiptWithMetadata(
       final TransactionReceipt receipt,
@@ -42,8 +42,8 @@ public class TransactionReceiptWithMetadata {
       final Optional<Wei> baseFee,
       final Hash blockHash,
       final long blockNumber,
-      final Optional<Long> dataGasUsed,
-      final Optional<Wei> dataGasPrice) {
+      final Optional<Long> blobGasUsed,
+      final Optional<Wei> blobGasPrice) {
     this.receipt = receipt;
     this.transactionHash = transactionHash;
     this.transactionIndex = transactionIndex;
@@ -52,8 +52,8 @@ public class TransactionReceiptWithMetadata {
     this.blockHash = blockHash;
     this.blockNumber = blockNumber;
     this.transaction = transaction;
-    this.dataGasUsed = dataGasUsed;
-    this.dataGasPrice = dataGasPrice;
+    this.blobGasUsed = blobGasUsed;
+    this.blobGasPrice = blobGasPrice;
   }
 
   public static TransactionReceiptWithMetadata create(
@@ -65,8 +65,8 @@ public class TransactionReceiptWithMetadata {
       final Optional<Wei> baseFee,
       final Hash blockHash,
       final long blockNumber,
-      final Optional<Long> dataGasUsed,
-      final Optional<Wei> dataGasPrice) {
+      final Optional<Long> blobGasUsed,
+      final Optional<Wei> blobGasPrice) {
     return new TransactionReceiptWithMetadata(
         receipt,
         transaction,
@@ -76,8 +76,8 @@ public class TransactionReceiptWithMetadata {
         baseFee,
         blockHash,
         blockNumber,
-        dataGasUsed,
-        dataGasPrice);
+        blobGasUsed,
+        blobGasPrice);
   }
 
   public TransactionReceipt getReceipt() {
@@ -114,11 +114,11 @@ public class TransactionReceiptWithMetadata {
     return baseFee;
   }
 
-  public Optional<Long> getDataGasUsed() {
-    return dataGasUsed;
+  public Optional<Long> getBlobGasUsed() {
+    return blobGasUsed;
   }
 
-  public Optional<Wei> getDataGasPrice() {
-    return dataGasPrice;
+  public Optional<Wei> getBlobGasPrice() {
+    return blobGasPrice;
   }
 }

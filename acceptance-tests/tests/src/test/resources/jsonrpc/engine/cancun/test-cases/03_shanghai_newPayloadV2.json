@@ -20,8 +20,8 @@
         "blockHash": "0x50c02dc77082fe2060b600cba0e6ce5a491af6d5323b2a90a7bc6359dd18e97b",
         "transactions": [],
         "withdrawals": [],
-        "dataGasUsed": null,
-        "excessDataGas": null
+        "blobGasUsed": null,
+        "excessBlobGas": null
       }
     ]
   },

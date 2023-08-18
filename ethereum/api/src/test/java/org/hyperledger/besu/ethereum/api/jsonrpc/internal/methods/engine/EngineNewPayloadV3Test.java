@@ -20,7 +20,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -76,8 +76,8 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
 
     EnginePayloadParameter payload = mock(EnginePayloadParameter.class);
     when(payload.getTimestamp()).thenReturn(30l);
-    when(payload.getExcessDataGas()).thenReturn("99");
-    when(payload.getDataGasUsed()).thenReturn(9l);
+    when(payload.getExcessBlobGas()).thenReturn("99");
+    when(payload.getBlobGasUsed()).thenReturn(9l);
 
     JsonRpcResponse badParam =
         method.response(
@@ -112,8 +112,8 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .timestamp(parentBlockHeader.getTimestamp() + 12)
             .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
             .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
-            .excessDataGas(DataGas.ZERO)
-            .dataGasUsed(0L)
+            .excessBlobGas(BlobGas.ZERO)
+            .blobGasUsed(0L)
             .buildHeader();
     return mockHeader;
   }

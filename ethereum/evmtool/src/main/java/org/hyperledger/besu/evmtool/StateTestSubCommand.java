@@ -21,7 +21,7 @@ import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocol
 import static org.hyperledger.besu.evmtool.StateTestSubCommand.COMMAND_NAME;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -237,8 +237,8 @@ public class StateTestSubCommand implements Runnable {
         final ReferenceTestBlockchain blockchain =
             new ReferenceTestBlockchain(blockHeader.getNumber());
         final Stopwatch timer = Stopwatch.createStarted();
-        // Todo: EIP-4844 use the excessDataGas of the parent instead of DataGas.ZERO
-        final Wei dataGasPrice = protocolSpec.getFeeMarket().dataPricePerGas(DataGas.ZERO);
+        // Todo: EIP-4844 use the excessBlobGas of the parent instead of BlobGas.ZERO
+        final Wei blobGasPrice = protocolSpec.getFeeMarket().blobGasPricePerGas(BlobGas.ZERO);
         final TransactionProcessingResult result =
             processor.processTransaction(
                 blockchain,
@@ -250,7 +250,7 @@ public class StateTestSubCommand implements Runnable {
                 false,
                 TransactionValidationParams.processingBlock(),
                 tracer,
-                dataGasPrice);
+                blobGasPrice);
         timer.stop();
         if (shouldClearEmptyAccounts(spec.getFork())) {
           final Account coinbase =
