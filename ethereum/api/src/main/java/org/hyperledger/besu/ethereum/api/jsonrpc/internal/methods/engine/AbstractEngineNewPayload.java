@@ -105,11 +105,23 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     final EnginePayloadParameter blockParam =
         requestContext.getRequiredParameter(0, EnginePayloadParameter.class);
 
-    Optional<List<String>> maybeVersionedHashParam =
+    final Optional<List<String>> maybeVersionedHashParam =
         requestContext.getOptionalList(1, String.class);
 
-    Object reqId = requestContext.getRequest().getId();
-    Optional<List<VersionedHash>> maybeVersionedHashes;
+    final Object reqId = requestContext.getRequest().getId();
+
+    Optional<String> maybeParentBeaconBlockRootParam =
+            requestContext.getOptionalParameter(2, String.class);
+    final Optional<Bytes32> maybeParentBeaconBlockRoot =
+            maybeParentBeaconBlockRootParam.map(Bytes32::fromHexString);
+
+    ValidationResult<RpcErrorType> forkValidationResult =
+            validateForkSupported(reqId, blockParam, maybeParentBeaconBlockRoot);
+    if (!forkValidationResult.isValid()) {
+      return new JsonRpcErrorResponse(reqId, forkValidationResult);
+    }
+
+    final Optional<List<VersionedHash>> maybeVersionedHashes;
     try {
       maybeVersionedHashes = extractVersionedHashes(maybeVersionedHashParam);
     } catch (RuntimeException ex) {
@@ -124,16 +136,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         .addArgument(() -> Json.encodePrettily(blockParam))
         .log();
 
-    Optional<String> maybeParentBeaconBlockRootParam =
-        requestContext.getOptionalParameter(2, String.class);
-    final Optional<Bytes32> maybeParentBeaconBlockRoot =
-        maybeParentBeaconBlockRootParam.map(Bytes32::fromHexString);
 
-    ValidationResult<RpcErrorType> forkValidationResult =
-        validateForkSupported(reqId, blockParam, maybeParentBeaconBlockRoot);
-    if (!forkValidationResult.isValid()) {
-      return new JsonRpcErrorResponse(reqId, forkValidationResult);
-    }
 
     final Optional<List<Withdrawal>> maybeWithdrawals =
         Optional.ofNullable(blockParam.getWithdrawals())

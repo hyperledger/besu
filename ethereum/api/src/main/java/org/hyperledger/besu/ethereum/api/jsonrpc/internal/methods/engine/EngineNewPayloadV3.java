@@ -61,7 +61,7 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
     if (payloadParameter.getTimestamp() >= cancunTimestamp) {
       if (payloadParameter.getDataGasUsed() == null
           || payloadParameter.getExcessDataGas() == null) {
-        return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing data gas fields");
+        return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing blob gas fields");
       } else if (maybeParentBeaconBlockRoot.isEmpty()) {
         return ValidationResult.invalid(
             RpcErrorType.INVALID_PARAMS, "Missing parent beacon block root");
@@ -69,7 +69,7 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
         return ValidationResult.valid();
       }
     } else {
-      return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Fork not supported");
+      return ValidationResult.invalid(RpcErrorType.UNSUPPORTED_FORK, "Fork not supported");
     }
   }
 }
