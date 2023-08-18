@@ -43,20 +43,10 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   private static final String TX_POOL_DISABLE_LOCALS = "--tx-pool-disable-locals";
   private static final String TX_POOL_ENABLE_SAVE_RESTORE = "--tx-pool-enable-save-restore";
   private static final String TX_POOL_SAVE_FILE = "--tx-pool-save-file";
-  private static final String TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE =
-      "--tx-pool-limit-by-account-percentage";
-  private static final String TX_POOL_MAX_SIZE = "--tx-pool-max-size";
-  private static final String TX_POOL_RETENTION_HOURS = "--tx-pool-retention-hours";
   private static final String TX_POOL_PRICE_BUMP = "--tx-pool-price-bump";
   private static final String RPC_TX_FEECAP = "--rpc-tx-feecap";
   private static final String STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG =
       "--strict-tx-replay-protection-enabled";
-
-  private static final String LAYERED_TX_POOL_LAYER_MAX_CAPACITY =
-      "--layered-tx-pool-layer-max-capacity";
-  private static final String LAYERED_TX_POOL_MAX_PRIORITIZED = "--layered-tx-pool-max-prioritized";
-  private static final String LAYERED_TX_POOL_MAX_FUTURE_BY_SENDER =
-      "--layered-tx-pool-max-future-by-sender";
 
   @CommandLine.Option(
       names = {TX_POOL_IMPLEMENTATION},
@@ -92,33 +82,6 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   private File saveFile = TransactionPoolConfiguration.DEFAULT_SAVE_FILE;
 
   @CommandLine.Option(
-      names = {TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE},
-      paramLabel = MANDATORY_DOUBLE_FORMAT_HELP,
-      converter = FractionConverter.class,
-      description =
-          "Maximum portion of the transaction pool which a single account may occupy with future transactions (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private Fraction txPoolLimitByAccountPercentage =
-      TransactionPoolConfiguration.DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE;
-
-  @CommandLine.Option(
-      names = {TX_POOL_MAX_SIZE},
-      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-      description =
-          "Maximum number of pending transactions that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private Integer txPoolMaxSize = TransactionPoolConfiguration.DEFAULT_MAX_PENDING_TRANSACTIONS;
-
-  @CommandLine.Option(
-      names = {TX_POOL_RETENTION_HOURS},
-      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-      description =
-          "Maximum retention period of pending transactions in hours (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private Integer pendingTxRetentionPeriod =
-      TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
-
-  @CommandLine.Option(
       names = {TX_POOL_PRICE_BUMP},
       paramLabel = "<Percentage>",
       converter = PercentageConverter.class,
@@ -143,32 +106,80 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
       arity = "0..1")
   private Boolean strictTxReplayProtectionEnabled = false;
 
-  @CommandLine.Option(
-      names = {LAYERED_TX_POOL_LAYER_MAX_CAPACITY},
-      paramLabel = MANDATORY_LONG_FORMAT_HELP,
-      description =
-          "Max amount of memory space, in bytes, that any layer within the transaction pool could occupy (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private long layeredTxPoolLayerMaxCapacity =
-      TransactionPoolConfiguration.DEFAULT_PENDING_TRANSACTIONS_LAYER_MAX_CAPACITY_BYTES;
+  @CommandLine.ArgGroup(
+      validate = false,
+      heading = "@|bold Tx Pool Layered Implementation Options|@%n")
+  private final Layered layeredOptions = new Layered();
 
-  @CommandLine.Option(
-      names = {LAYERED_TX_POOL_MAX_PRIORITIZED},
-      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-      description =
-          "Max number of pending transactions that are prioritized and thus kept sorted (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private int layeredTxPoolMaxPrioritized =
-      TransactionPoolConfiguration.DEFAULT_MAX_PRIORITIZED_TRANSACTIONS;
+  static class Layered {
+    private static final String TX_POOL_LAYER_MAX_CAPACITY = "--tx-pool-layer-max-capacity";
+    private static final String TX_POOL_MAX_PRIORITIZED = "--tx-pool-max-prioritized";
+    private static final String TX_POOL_MAX_FUTURE_BY_SENDER = "--tx-pool-max-future-by-sender";
 
-  @CommandLine.Option(
-      names = {LAYERED_TX_POOL_MAX_FUTURE_BY_SENDER},
-      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-      description =
-          "Max number of future pending transactions allowed for a single sender (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private int layeredTxPoolMaxFutureBySender =
-      TransactionPoolConfiguration.DEFAULT_MAX_FUTURE_BY_SENDER;
+    @CommandLine.Option(
+        names = {TX_POOL_LAYER_MAX_CAPACITY},
+        paramLabel = MANDATORY_LONG_FORMAT_HELP,
+        description =
+            "Max amount of memory space, in bytes, that any layer within the transaction pool could occupy (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private long txPoolLayerMaxCapacity =
+        TransactionPoolConfiguration.DEFAULT_PENDING_TRANSACTIONS_LAYER_MAX_CAPACITY_BYTES;
+
+    @CommandLine.Option(
+        names = {TX_POOL_MAX_PRIORITIZED},
+        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+        description =
+            "Max number of pending transactions that are prioritized and thus kept sorted (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    int txPoolMaxPrioritized = TransactionPoolConfiguration.DEFAULT_MAX_PRIORITIZED_TRANSACTIONS;
+
+    @CommandLine.Option(
+        names = {TX_POOL_MAX_FUTURE_BY_SENDER},
+        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+        description =
+            "Max number of future pending transactions allowed for a single sender (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    int txPoolMaxFutureBySender = TransactionPoolConfiguration.DEFAULT_MAX_FUTURE_BY_SENDER;
+  }
+
+  @CommandLine.ArgGroup(
+      validate = false,
+      heading = "@|bold Tx Pool Legacy Implementation Options|@%n")
+  private final Legacy legacy = new Legacy();
+
+  static class Legacy {
+    private static final String TX_POOL_RETENTION_HOURS = "--tx-pool-retention-hours";
+    private static final String TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE =
+        "--tx-pool-limit-by-account-percentage";
+    private static final String TX_POOL_MAX_SIZE = "--tx-pool-max-size";
+
+    @CommandLine.Option(
+        names = {TX_POOL_RETENTION_HOURS},
+        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+        description =
+            "Maximum retention period of pending transactions in hours (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private Integer pendingTxRetentionPeriod =
+        TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
+
+    @CommandLine.Option(
+        names = {TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE},
+        paramLabel = MANDATORY_DOUBLE_FORMAT_HELP,
+        converter = FractionConverter.class,
+        description =
+            "Maximum portion of the transaction pool which a single account may occupy with future transactions (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private Fraction txPoolLimitByAccountPercentage =
+        TransactionPoolConfiguration.DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE;
+
+    @CommandLine.Option(
+        names = {TX_POOL_MAX_SIZE},
+        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+        description =
+            "Maximum number of pending transactions that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private Integer txPoolMaxSize = TransactionPoolConfiguration.DEFAULT_MAX_PENDING_TRANSACTIONS;
+  }
 
   private TransactionPoolOptions() {}
 
@@ -192,16 +203,18 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
     options.txPoolImplementation = config.getTxPoolImplementation();
     options.saveRestoreEnabled = config.getEnableSaveRestore();
     options.disableLocalTxs = config.getDisableLocalTransactions();
-    options.txPoolLimitByAccountPercentage = config.getTxPoolLimitByAccountPercentage();
-    options.txPoolMaxSize = config.getTxPoolMaxSize();
-    options.pendingTxRetentionPeriod = config.getPendingTxRetentionPeriod();
     options.priceBump = config.getPriceBump();
     options.txFeeCap = config.getTxFeeCap();
     options.saveFile = config.getSaveFile();
     options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
-    options.layeredTxPoolLayerMaxCapacity = config.getPendingTransactionsLayerMaxCapacityBytes();
-    options.layeredTxPoolMaxPrioritized = config.getMaxPrioritizedTransactions();
-    options.layeredTxPoolMaxFutureBySender = config.getMaxFutureBySender();
+    options.layeredOptions.txPoolLayerMaxCapacity =
+        config.getPendingTransactionsLayerMaxCapacityBytes();
+    options.layeredOptions.txPoolMaxPrioritized = config.getMaxPrioritizedTransactions();
+    options.layeredOptions.txPoolMaxFutureBySender = config.getMaxFutureBySender();
+    options.legacy.txPoolLimitByAccountPercentage = config.getTxPoolLimitByAccountPercentage();
+    options.legacy.txPoolMaxSize = config.getTxPoolMaxSize();
+    options.legacy.pendingTxRetentionPeriod = config.getPendingTxRetentionPeriod();
+
     return options;
   }
 
@@ -217,16 +230,16 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         .txPoolImplementation(txPoolImplementation)
         .enableSaveRestore(saveRestoreEnabled)
         .disableLocalTransactions(disableLocalTxs)
-        .txPoolLimitByAccountPercentage(txPoolLimitByAccountPercentage)
-        .txPoolMaxSize(txPoolMaxSize)
-        .pendingTxRetentionPeriod(pendingTxRetentionPeriod)
         .priceBump(priceBump)
         .txFeeCap(txFeeCap)
         .saveFile(saveFile)
         .strictTransactionReplayProtectionEnabled(strictTxReplayProtectionEnabled)
-        .pendingTransactionsLayerMaxCapacityBytes(layeredTxPoolLayerMaxCapacity)
-        .maxPrioritizedTransactions(layeredTxPoolMaxPrioritized)
-        .maxFutureBySender(layeredTxPoolMaxFutureBySender)
+        .pendingTransactionsLayerMaxCapacityBytes(layeredOptions.txPoolLayerMaxCapacity)
+        .maxPrioritizedTransactions(layeredOptions.txPoolMaxPrioritized)
+        .maxFutureBySender(layeredOptions.txPoolMaxFutureBySender)
+        .txPoolLimitByAccountPercentage(legacy.txPoolLimitByAccountPercentage)
+        .txPoolMaxSize(legacy.txPoolMaxSize)
+        .pendingTxRetentionPeriod(legacy.pendingTxRetentionPeriod)
         .build();
   }
 
@@ -237,18 +250,18 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         TX_POOL_ENABLE_SAVE_RESTORE + "=" + saveRestoreEnabled,
         TX_POOL_DISABLE_LOCALS + "=" + disableLocalTxs,
         TX_POOL_SAVE_FILE + "=" + saveFile,
-        TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE,
-        OptionParser.format(txPoolLimitByAccountPercentage.getValue()),
-        TX_POOL_MAX_SIZE + "=" + txPoolMaxSize,
-        TX_POOL_RETENTION_HOURS + "=" + pendingTxRetentionPeriod,
         TX_POOL_PRICE_BUMP + "=" + priceBump,
         RPC_TX_FEECAP + "=" + OptionParser.format(txFeeCap),
         STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG + "=" + strictTxReplayProtectionEnabled,
-        LAYERED_TX_POOL_LAYER_MAX_CAPACITY,
-        OptionParser.format(layeredTxPoolLayerMaxCapacity),
-        LAYERED_TX_POOL_MAX_PRIORITIZED,
-        OptionParser.format(layeredTxPoolMaxPrioritized),
-        LAYERED_TX_POOL_MAX_FUTURE_BY_SENDER,
-        OptionParser.format(layeredTxPoolMaxFutureBySender));
+        Layered.TX_POOL_LAYER_MAX_CAPACITY,
+        OptionParser.format(layeredOptions.txPoolLayerMaxCapacity),
+        Layered.TX_POOL_MAX_PRIORITIZED,
+        OptionParser.format(layeredOptions.txPoolMaxPrioritized),
+        Layered.TX_POOL_MAX_FUTURE_BY_SENDER,
+        OptionParser.format(layeredOptions.txPoolMaxFutureBySender),
+        Legacy.TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE,
+        OptionParser.format(legacy.txPoolLimitByAccountPercentage.getValue()),
+        Legacy.TX_POOL_MAX_SIZE + "=" + legacy.txPoolMaxSize,
+        Legacy.TX_POOL_RETENTION_HOURS + "=" + legacy.pendingTxRetentionPeriod);
   }
 }
