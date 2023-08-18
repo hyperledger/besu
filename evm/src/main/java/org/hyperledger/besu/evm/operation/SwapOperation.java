@@ -53,6 +53,11 @@ public class SwapOperation extends AbstractFixedCostOperation {
   }
 
   @Override
+  public long getGasCost(MessageFrame frame) {
+    return gasCalculator().getVeryLowTierGasCost();
+  }
+
+  @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     return staticOperation(frame, index);

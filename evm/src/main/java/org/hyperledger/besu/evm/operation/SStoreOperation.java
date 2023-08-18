@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -61,6 +60,28 @@ public class SStoreOperation extends AbstractOperation {
   }
 
   @Override
+  public long getGasCost(MessageFrame frame) throws Throwable {
+    final MutableAccount account =
+            frame.getWorldUpdater().getAccount(frame.getRecipientAddress()).getMutable();
+    if (account == null) {
+      throw (Throwable) ExceptionalHaltReason.ILLEGAL_STATE_CHANGE;
+    }
+
+    final UInt256 key = UInt256.fromBytes(frame.getStackItem(0));
+    final UInt256 newValue = UInt256.fromBytes(frame.getStackItem(1));
+
+    final Supplier<UInt256> currentValueSupplier =
+            Suppliers.memoize(() -> account.getStorageValue(key));
+    final Supplier<UInt256> originalValueSupplier =
+            Suppliers.memoize(() -> account.getOriginalStorageValue(key));
+
+    final boolean slotIsWarm = frame.warmUpStorage(account.getAddress(), key);
+
+    return gasCalculator().calculateStorageCost(newValue, currentValueSupplier, originalValueSupplier)
+            + (slotIsWarm ? 0L : gasCalculator().getColdSloadCost());
+  }
+
+  @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
 
     final UInt256 key = UInt256.fromBytes(frame.popStackItem());
@@ -72,16 +93,12 @@ public class SStoreOperation extends AbstractOperation {
       return ILLEGAL_STATE_CHANGE;
     }
 
-    final Address address = account.getAddress();
-    final boolean slotIsWarm = frame.warmUpStorage(address, key);
     final Supplier<UInt256> currentValueSupplier =
         Suppliers.memoize(() -> account.getStorageValue(key));
     final Supplier<UInt256> originalValueSupplier =
         Suppliers.memoize(() -> account.getOriginalStorageValue(key));
 
-    final long cost =
-        gasCalculator().calculateStorageCost(newValue, currentValueSupplier, originalValueSupplier)
-            + (slotIsWarm ? 0L : gasCalculator().getColdSloadCost());
+    final long cost = this.getGasCost(frame);
 
     final long remainingGas = frame.getRemainingGas();
     if (frame.isStatic()) {

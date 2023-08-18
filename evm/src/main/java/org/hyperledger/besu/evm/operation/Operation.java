@@ -134,4 +134,12 @@ public interface Operation {
   default boolean isVirtualOperation() {
     return false;
   }
+
+  /**
+   * Returns the execution cost of the operation within the given context.
+   *
+   * @param frame the execution context
+   * @return the operation gas cost
+   */
+  long getGasCost(final MessageFrame frame) throws Throwable;
 }
