@@ -215,7 +215,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
           "Payload attributes timestamp is smaller than timestamp of header in fork choice update");
       return false;
     }
-    if (headBlockHeader.getTimestamp() < cancunTimestamp) {
+    if (payloadAttributes.getTimestamp() < cancunTimestamp) {
       LOG.warn("Payload attributes are present before cancun hardfork");
     } else if (payloadAttributes.getParentBeaconBlockRoot() == null) {
       LOG.warn("Parent beacon block root not present in payload attributes after cancun hardfork");

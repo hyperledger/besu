@@ -111,12 +111,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     final Object reqId = requestContext.getRequest().getId();
 
     Optional<String> maybeParentBeaconBlockRootParam =
-            requestContext.getOptionalParameter(2, String.class);
+        requestContext.getOptionalParameter(2, String.class);
     final Optional<Bytes32> maybeParentBeaconBlockRoot =
-            maybeParentBeaconBlockRootParam.map(Bytes32::fromHexString);
+        maybeParentBeaconBlockRootParam.map(Bytes32::fromHexString);
 
     ValidationResult<RpcErrorType> forkValidationResult =
-            validateForkSupported(reqId, blockParam, maybeParentBeaconBlockRoot);
+        validateForkSupported(reqId, blockParam, maybeParentBeaconBlockRoot);
     if (!forkValidationResult.isValid()) {
       return new JsonRpcErrorResponse(reqId, forkValidationResult);
     }
@@ -135,8 +135,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         .setMessage("blockparam: {}")
         .addArgument(() -> Json.encodePrettily(blockParam))
         .log();
-
-
 
     final Optional<List<Withdrawal>> maybeWithdrawals =
         Optional.ofNullable(blockParam.getWithdrawals())
