@@ -73,7 +73,8 @@ public class StateTestVersionedTransaction {
   private final List<Bytes> payloads;
   private final Optional<List<List<AccessListEntry>>> maybeAccessLists;
   private final Wei maxFeePerDataGas;
-  private final List<VersionedHash> blobVersionedHashes;
+  // String instead of VersionedHash because reference tests intentionally use bad hashes.
+  private final List<String> blobVersionedHashes;
 
   /**
    * Constructor for populating a mock transaction with json data.
@@ -103,7 +104,7 @@ public class StateTestVersionedTransaction {
       @JsonDeserialize(using = StateTestAccessListDeserializer.class) @JsonProperty("accessLists")
           final List<List<AccessListEntry>> maybeAccessLists,
       @JsonProperty("maxFeePerDataGas") final String maxFeePerDataGas,
-      @JsonProperty("blobVersionedHashes") final List<VersionedHash> blobVersionedHashes) {
+      @JsonProperty("blobVersionedHashes") final List<String> blobVersionedHashes) {
 
     this.nonce = Bytes.fromHexStringLenient(nonce).toLong();
     this.gasPrice = Optional.ofNullable(gasPrice).map(Wei::fromHexString).orElse(null);
@@ -161,7 +162,15 @@ public class StateTestVersionedTransaction {
     maybeAccessLists.ifPresent(
         accessLists -> transactionBuilder.accessList(accessLists.get(indexes.data)));
     Optional.ofNullable(maxFeePerDataGas).ifPresent(transactionBuilder::maxFeePerDataGas);
-    transactionBuilder.versionedHashes(blobVersionedHashes);
+    try {
+      transactionBuilder.versionedHashes(
+          blobVersionedHashes == null
+              ? null
+              : blobVersionedHashes.stream().map(VersionedHash::fromHexString).toList());
+    } catch (IllegalArgumentException iae) {
+      // versioned hash string was bad, so this is an invalid transaciton
+      return null;
+    }
 
     transactionBuilder.guessType();
     if (transactionBuilder.getTransactionType().requiresChainId()) {
