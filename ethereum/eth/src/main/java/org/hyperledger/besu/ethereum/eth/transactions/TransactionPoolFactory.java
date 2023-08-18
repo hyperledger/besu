@@ -117,7 +117,7 @@ public class TransactionPoolFactory {
         new TransactionsMessageHandler(
             ethContext.getScheduler(),
             new TransactionsMessageProcessor(transactionTracker, transactionPool, metrics),
-            transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
+            transactionPoolConfiguration.getUnstable().getTxMessageKeepAliveSeconds());
 
     final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler =
         new NewPooledTransactionHashesMessageHandler(
@@ -128,7 +128,7 @@ public class TransactionPoolFactory {
                 transactionPoolConfiguration,
                 ethContext,
                 metrics),
-            transactionPoolConfiguration.getTxMessageKeepAliveSeconds());
+            transactionPoolConfiguration.getUnstable().getTxMessageKeepAliveSeconds());
 
     subscribeTransactionHandlers(
         protocolContext,

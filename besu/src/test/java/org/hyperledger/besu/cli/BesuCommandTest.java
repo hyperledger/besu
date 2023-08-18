@@ -58,7 +58,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -4693,9 +4692,9 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void senderLimitedTxPoolCeiling_violated() {
     TestBesuCommand commandTest = parseCommand("--tx-pool-limit-by-account-percentage=1.00002341");
 
-    TransactionPoolOptions txPoolOption = commandTest.getUnstableTransactionPoolOptions();
+    var txPoolStableOptions = commandTest.getStableTransactionPoolOptions();
 
-    final TransactionPoolConfiguration config = txPoolOption.toDomainObject();
+    final TransactionPoolConfiguration config = txPoolStableOptions.toDomainObject();
     assertThat(config.getTxPoolLimitByAccountPercentage())
         .isEqualTo(TransactionPoolConfiguration.DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();

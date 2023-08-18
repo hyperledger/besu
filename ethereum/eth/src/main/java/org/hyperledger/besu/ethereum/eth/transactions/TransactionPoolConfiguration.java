@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.io.File;
@@ -24,21 +25,41 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @Value.Style(allParameters = true)
+@Value.Enclosing
 public interface TransactionPoolConfiguration {
+
+  @Value.Immutable
+  public interface Unstable {
+    Duration ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD = Duration.ofMillis(500);
+    int DEFAULT_TX_MSG_KEEP_ALIVE = 60;
+
+    TransactionPoolConfiguration.Unstable DEFAULT =
+        ImmutableTransactionPoolConfiguration.Unstable.builder().build();
+
+    @Value.Default
+    default Duration getEth65TrxAnnouncedBufferingPeriod() {
+      return ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD;
+    }
+
+    @Value.Default
+    default int getTxMessageKeepAliveSeconds() {
+      return DEFAULT_TX_MSG_KEEP_ALIVE;
+    }
+  }
+
   enum Implementation {
     LEGACY,
     LAYERED;
   }
 
   String DEFAULT_SAVE_FILE_NAME = "txpool.dump";
-  int DEFAULT_TX_MSG_KEEP_ALIVE = 60;
+
   int DEFAULT_MAX_PENDING_TRANSACTIONS = 4096;
-  float DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE = 0.001f; // 0.1%
+  Fraction DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE = Fraction.fromFloat(0.001f); // 0.1%
   int DEFAULT_TX_RETENTION_HOURS = 13;
   boolean DEFAULT_STRICT_TX_REPLAY_PROTECTION_ENABLED = false;
   Percentage DEFAULT_PRICE_BUMP = Percentage.fromInt(10);
   Wei DEFAULT_RPC_TX_FEE_CAP = Wei.fromEth(1);
-  Duration ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD = Duration.ofMillis(500);
   boolean DEFAULT_DISABLE_LOCAL_TXS = false;
   boolean DEFAULT_ENABLE_SAVE_RESTORE = false;
 
@@ -56,13 +77,13 @@ public interface TransactionPoolConfiguration {
   }
 
   @Value.Default
-  default float getTxPoolLimitByAccountPercentage() {
+  default Fraction getTxPoolLimitByAccountPercentage() {
     return DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE;
   }
 
   @Value.Derived
   default int getTxPoolMaxFutureTransactionByAccount() {
-    return (int) Math.ceil(getTxPoolLimitByAccountPercentage() * getTxPoolMaxSize());
+    return (int) Math.ceil(getTxPoolLimitByAccountPercentage().getValue() * getTxPoolMaxSize());
   }
 
   @Value.Default
@@ -71,18 +92,8 @@ public interface TransactionPoolConfiguration {
   }
 
   @Value.Default
-  default int getTxMessageKeepAliveSeconds() {
-    return DEFAULT_TX_MSG_KEEP_ALIVE;
-  }
-
-  @Value.Default
   default Percentage getPriceBump() {
     return DEFAULT_PRICE_BUMP;
-  }
-
-  @Value.Default
-  default Duration getEth65TrxAnnouncedBufferingPeriod() {
-    return ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD;
   }
 
   @Value.Default
@@ -128,5 +139,10 @@ public interface TransactionPoolConfiguration {
   @Value.Default
   default int getMaxFutureBySender() {
     return DEFAULT_MAX_FUTURE_BY_SENDER;
+  }
+
+  @Value.Default
+  default Unstable getUnstable() {
+    return Unstable.DEFAULT;
   }
 }

@@ -76,6 +76,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
+import org.hyperledger.besu.util.number.Fraction;
 
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -162,7 +163,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   private final TransactionPoolConfiguration poolConf =
       ImmutableTransactionPoolConfiguration.builder()
           .txPoolMaxSize(10)
-          .txPoolLimitByAccountPercentage(100.0f)
+          .txPoolLimitByAccountPercentage(Fraction.fromPercentage(100))
           .build();
   private final BaseFeePendingTransactionsSorter transactions =
       new BaseFeePendingTransactionsSorter(

@@ -29,7 +29,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TransactionPoolOptionsTest
-    extends AbstractCLIOptionsTest<TransactionPoolConfiguration, TransactionPoolOptions> {
+    extends AbstractCLIOptionsTest<TransactionPoolConfiguration.Unstable, TransactionPoolOptions> {
 
   @Test
   public void txMessageKeepAliveSeconds() {
@@ -40,7 +40,7 @@ public class TransactionPoolOptionsTest
             String.valueOf(txMessageKeepAliveSeconds));
 
     final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
-    final TransactionPoolConfiguration config = options.toDomainObject();
+    final TransactionPoolConfiguration.Unstable config = options.toDomainObject();
     assertThat(config.getTxMessageKeepAliveSeconds()).isEqualTo(txMessageKeepAliveSeconds);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -56,7 +56,7 @@ public class TransactionPoolOptionsTest
             String.valueOf(eth65TrxAnnouncedBufferingPeriod));
 
     final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
-    final TransactionPoolConfiguration config = options.toDomainObject();
+    final TransactionPoolConfiguration.Unstable config = options.toDomainObject();
     assertThat(config.getEth65TrxAnnouncedBufferingPeriod())
         .hasMillis(eth65TrxAnnouncedBufferingPeriod);
 
@@ -65,10 +65,10 @@ public class TransactionPoolOptionsTest
   }
 
   @Override
-  protected TransactionPoolConfiguration createDefaultDomainObject() {
-    final ImmutableTransactionPoolConfiguration defaultValue =
-        ImmutableTransactionPoolConfiguration.builder().build();
-    return ImmutableTransactionPoolConfiguration.builder()
+  protected TransactionPoolConfiguration.Unstable createDefaultDomainObject() {
+    final ImmutableTransactionPoolConfiguration.Unstable defaultValue =
+        ImmutableTransactionPoolConfiguration.Unstable.builder().build();
+    return ImmutableTransactionPoolConfiguration.Unstable.builder()
         .from(defaultValue)
         .txMessageKeepAliveSeconds(defaultValue.getTxMessageKeepAliveSeconds())
         .eth65TrxAnnouncedBufferingPeriod(defaultValue.getEth65TrxAnnouncedBufferingPeriod())
@@ -76,18 +76,19 @@ public class TransactionPoolOptionsTest
   }
 
   @Override
-  protected TransactionPoolConfiguration createCustomizedDomainObject() {
-    return ImmutableTransactionPoolConfiguration.builder()
-        .txMessageKeepAliveSeconds(TransactionPoolConfiguration.DEFAULT_TX_MSG_KEEP_ALIVE + 1)
+  protected TransactionPoolConfiguration.Unstable createCustomizedDomainObject() {
+    return ImmutableTransactionPoolConfiguration.Unstable.builder()
+        .txMessageKeepAliveSeconds(
+            TransactionPoolConfiguration.Unstable.DEFAULT_TX_MSG_KEEP_ALIVE + 1)
         .eth65TrxAnnouncedBufferingPeriod(
-            TransactionPoolConfiguration.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD.plus(
+            TransactionPoolConfiguration.Unstable.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD.plus(
                 Duration.ofMillis(100)))
         .build();
   }
 
   @Override
   protected TransactionPoolOptions optionsFromDomainObject(
-      final TransactionPoolConfiguration domainObject) {
+      final TransactionPoolConfiguration.Unstable domainObject) {
     return TransactionPoolOptions.fromConfig(domainObject);
   }
 

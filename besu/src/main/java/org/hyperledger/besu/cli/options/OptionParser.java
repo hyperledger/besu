@@ -16,6 +16,8 @@ package org.hyperledger.besu.cli.options;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.datatypes.Wei;
+
 import java.util.Iterator;
 
 import com.google.common.base.Splitter;
@@ -95,5 +97,15 @@ public class OptionParser {
    */
   public static String format(final UInt256 value) {
     return value.toBigInteger().toString(10);
+  }
+
+  /**
+   * Format Wei to string.
+   *
+   * @param value the value
+   * @return the string
+   */
+  public static String format(final Wei value) {
+    return format(value.toUInt256());
   }
 }

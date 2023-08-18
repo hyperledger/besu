@@ -194,6 +194,7 @@ import org.hyperledger.besu.util.LogConfigurator;
 import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.PermissioningConfigurationValidator;
 import org.hyperledger.besu.util.number.Fraction;
+import org.hyperledger.besu.util.number.Percentage;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.io.File;
@@ -459,10 +460,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "The maximum percentage of P2P connections that can be initiated remotely. Must be between 0 and 100 inclusive. (default: ${DEFAULT-VALUE})",
         arity = "1",
         converter = PercentageConverter.class)
-    private final Integer maxRemoteConnectionsPercentage =
-        Fraction.fromFloat(DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED)
-            .toPercentage()
-            .getValue();
+    private final Percentage maxRemoteConnectionsPercentage =
+        Fraction.fromFloat(DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED).toPercentage();
 
     @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
     @CommandLine.Option(
@@ -1116,14 +1115,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       arity = "1")
   private final Wei minTransactionGasPrice = DEFAULT_MIN_TRANSACTION_GAS_PRICE;
 
-  //  @Option(
-  //      names = {"--rpc-tx-feecap"},
-  //      description =
-  //          "Maximum transaction fees (in Wei) accepted for transaction submitted through RPC
-  // (default: ${DEFAULT-VALUE})",
-  //      arity = "1")
-  //  private final Wei txFeeCap = DEFAULT_RPC_TX_FEE_CAP;
-
   @Option(
       names = {"--min-block-occupancy-ratio"},
       description = "Minimum occupancy ratio for a mined block (default: ${DEFAULT-VALUE})",
@@ -1214,84 +1205,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "Sets target gas limit per block. If set, each block's gas limit will approach this setting over time if the current gas limit is different.")
   private final Long targetGasLimit = null;
-
-  // Tx Pool Option Group
-  //  @CommandLine.ArgGroup(validate = false, heading = "@|bold Tx Pool Options|@%n")
-  //  TxPoolOptionGroup txPoolOptionGroup = new TxPoolOptionGroup();
-
-  //  static class TxPoolOptionGroup {
-  //    @CommandLine.Option(
-  //        names = {"--tx-pool-disable-locals"},
-  //        paramLabel = "<Boolean>",
-  //        description =
-  //            "Set to true if transactions sent via RPC should have the same checks and not be
-  // prioritized over remote ones (default: ${DEFAULT-VALUE})",
-  //        fallbackValue = "true",
-  //        arity = "0..1")
-  //    private Boolean disableLocalTxs = TransactionPoolConfiguration.DEFAULT_DISABLE_LOCAL_TXS;
-  //
-  //    @CommandLine.Option(
-  //        names = {"--tx-pool-enable-save-restore"},
-  //        paramLabel = "<Boolean>",
-  //        description =
-  //            "Set to true to enable saving the txpool content to file on shutdown and reloading
-  // it on startup (default: ${DEFAULT-VALUE})",
-  //        fallbackValue = "true",
-  //        arity = "0..1")
-  //    private Boolean saveRestoreEnabled =
-  // TransactionPoolConfiguration.DEFAULT_ENABLE_SAVE_RESTORE;
-  //
-  //    @CommandLine.Option(
-  //        names = {"--tx-pool-limit-by-account-percentage"},
-  //        paramLabel = "<DOUBLE>",
-  //        converter = FractionConverter.class,
-  //        description =
-  //            "Maximum portion of the transaction pool which a single account may occupy with
-  // future transactions (default: ${DEFAULT-VALUE})",
-  //        arity = "1")
-  //    private Float txPoolLimitByAccountPercentage =
-  //        TransactionPoolConfiguration.DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE;
-  //
-  //    @CommandLine.Option(
-  //        names = {"--tx-pool-save-file"},
-  //        paramLabel = "<STRING>",
-  //        description =
-  //            "If saving the txpool content is enabled, define a custom path for the save file
-  // (default: ${DEFAULT-VALUE} in the data-dir)",
-  //        arity = "1")
-  //    private File saveFile = TransactionPoolConfiguration.DEFAULT_SAVE_FILE;
-  //
-  //    @Option(
-  //        names = {"--tx-pool-max-size"},
-  //        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-  //        description =
-  //            "Maximum number of pending transactions that will be kept in the transaction pool
-  // (default: ${DEFAULT-VALUE})",
-  //        arity = "1")
-  //    private final Integer txPoolMaxSize =
-  //        TransactionPoolConfiguration.DEFAULT_MAX_PENDING_TRANSACTIONS;
-  //
-  //    @Option(
-  //        names = {"--tx-pool-retention-hours"},
-  //        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-  //        description =
-  //            "Maximum retention period of pending transactions in hours (default:
-  // ${DEFAULT-VALUE})",
-  //        arity = "1")
-  //    private final Integer pendingTxRetentionPeriod =
-  //        TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
-  //
-  //    @Option(
-  //        names = {"--tx-pool-price-bump"},
-  //        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-  //        converter = PercentageConverter.class,
-  //        description =
-  //            "Price bump percentage to replace an already existing transaction  (default:
-  // ${DEFAULT-VALUE})",
-  //        arity = "1")
-  //    private final Integer priceBump =
-  // TransactionPoolConfiguration.DEFAULT_PRICE_BUMP.getValue();
-  //  }
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
@@ -3004,19 +2917,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private TransactionPoolConfiguration buildTransactionPoolConfiguration() {
     final var stableTxPoolOption = stableTransactionPoolOptions.toDomainObject();
     return ImmutableTransactionPoolConfiguration.builder()
-        .from(unstableTransactionPoolOptions.toDomainObject())
         .from(stableTxPoolOption)
-        .saveFile(dataPath.resolve(stableTxPoolOption.getSaveFile().getPath()).toFile())
+        .unstable(unstableTransactionPoolOptions.toDomainObject())
+        .saveFile((dataPath.resolve(stableTxPoolOption.getSaveFile().getPath()).toFile()))
         .build();
-    //        .enableSaveRestore(txPoolOptionGroup.saveRestoreEnabled)
-    //        .disableLocalTransactions(txPoolOptionGroup.disableLocalTxs)
-    //        .txPoolLimitByAccountPercentage(txPoolOptionGroup.txPoolLimitByAccountPercentage)
-    //        .txPoolMaxSize(txPoolOptionGroup.txPoolMaxSize)
-    //        .pendingTxRetentionPeriod(txPoolOptionGroup.pendingTxRetentionPeriod)
-    //        .priceBump(Percentage.fromInt(txPoolOptionGroup.priceBump))
-    //        .txFeeCap(txFeeCap)
-    //        .saveFile(dataPath.resolve(txPoolOptionGroup.saveFile.getPath()).toFile())
-    //        .build();
   }
 
   private boolean isPruningEnabled() {

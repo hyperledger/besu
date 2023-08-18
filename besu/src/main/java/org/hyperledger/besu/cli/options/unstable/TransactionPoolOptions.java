@@ -26,7 +26,7 @@ import java.util.List;
 import picocli.CommandLine;
 
 /** The Transaction pool Cli options. */
-public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfiguration> {
+public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfiguration.Unstable> {
   private static final String TX_MESSAGE_KEEP_ALIVE_SEC_FLAG =
       "--Xincoming-tx-messages-keep-alive-seconds";
 
@@ -41,7 +41,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
           "Keep alive of incoming transaction messages in seconds (default: ${DEFAULT-VALUE})",
       arity = "1")
   private Integer txMessageKeepAliveSeconds =
-      TransactionPoolConfiguration.DEFAULT_TX_MSG_KEEP_ALIVE;
+      TransactionPoolConfiguration.Unstable.DEFAULT_TX_MSG_KEEP_ALIVE;
 
   @CommandLine.Option(
       names = {ETH65_TX_ANNOUNCED_BUFFERING_PERIOD_FLAG},
@@ -51,7 +51,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
           "The period for which the announced transactions remain in the buffer before being requested from the peers in milliseconds (default: ${DEFAULT-VALUE})",
       arity = "1")
   private long eth65TrxAnnouncedBufferingPeriod =
-      TransactionPoolConfiguration.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD.toMillis();
+      TransactionPoolConfiguration.Unstable.ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD.toMillis();
 
   private TransactionPoolOptions() {}
 
@@ -70,7 +70,8 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
    * @param config the Transaction Pool Configuration
    * @return the transaction pool options
    */
-  public static TransactionPoolOptions fromConfig(final TransactionPoolConfiguration config) {
+  public static TransactionPoolOptions fromConfig(
+      final TransactionPoolConfiguration.Unstable config) {
     final TransactionPoolOptions options = TransactionPoolOptions.create();
     options.txMessageKeepAliveSeconds = config.getTxMessageKeepAliveSeconds();
     options.eth65TrxAnnouncedBufferingPeriod =
@@ -79,8 +80,8 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   }
 
   @Override
-  public TransactionPoolConfiguration toDomainObject() {
-    return ImmutableTransactionPoolConfiguration.builder()
+  public TransactionPoolConfiguration.Unstable toDomainObject() {
+    return ImmutableTransactionPoolConfiguration.Unstable.builder()
         .txMessageKeepAliveSeconds(txMessageKeepAliveSeconds)
         .eth65TrxAnnouncedBufferingPeriod(Duration.ofMillis(eth65TrxAnnouncedBufferingPeriod))
         .build();
