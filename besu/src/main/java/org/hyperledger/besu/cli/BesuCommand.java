@@ -782,9 +782,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     private final Long rpcHttpMaxRequestContentLength = DEFAULT_MAX_REQUEST_CONTENT_LENGTH;
 
     @Option(
-        names = {"--pretty-json-enabled"},
+            names = {"--json-pretty-print-enabled"},
         description =
-            "Force pretty format output to be enabled/disabled (default: ${DEFAULT-VALUE})")
+            "Enable JSON pretty print format (default: ${DEFAULT-VALUE})")
     private final Boolean prettyJsonEnabled = DEFAULT_PRETTY_JSON_ENABLED;
   }
 
