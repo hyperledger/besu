@@ -75,9 +75,9 @@ public class EngineGetPayloadResultV3 {
     private final String extraData;
     private final String baseFeePerGas;
 
-    private final String excessDataGas;
+    private final String excessBlobGas;
 
-    private final String dataGasUsed;
+    private final String blobGasUsed;
 
     protected final List<String> transactions;
     private final List<WithdrawalParameter> withdrawals;
@@ -108,9 +108,9 @@ public class EngineGetPayloadResultV3 {
                           .map(WithdrawalParameter::fromWithdrawal)
                           .collect(Collectors.toList()))
               .orElse(null);
-      this.dataGasUsed = header.getDataGasUsed().map(Quantity::create).orElse(Quantity.HEX_ZERO);
-      this.excessDataGas =
-          header.getExcessDataGas().map(Quantity::create).orElse(Quantity.HEX_ZERO);
+      this.blobGasUsed = header.getBlobGasUsed().map(Quantity::create).orElse(Quantity.HEX_ZERO);
+      this.excessBlobGas =
+          header.getExcessBlobGas().map(Quantity::create).orElse(Quantity.HEX_ZERO);
     }
 
     @JsonGetter(value = "blockNumber")
@@ -189,14 +189,14 @@ public class EngineGetPayloadResultV3 {
       return feeRecipient;
     }
 
-    @JsonGetter(value = "excessDataGas")
-    public String getExcessDataGas() {
-      return excessDataGas;
+    @JsonGetter(value = "excessBlobGas")
+    public String getExcessBlobGas() {
+      return excessBlobGas;
     }
 
-    @JsonGetter(value = "dataGasUsed")
-    public String getDataGasUseds() {
-      return dataGasUsed;
+    @JsonGetter(value = "blobGasUsed")
+    public String getBlobGasUseds() {
+      return blobGasUsed;
     }
   }
 }

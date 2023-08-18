@@ -49,7 +49,7 @@ public class TransactionTestFixture {
 
   private Optional<Wei> maxPriorityFeePerGas = Optional.empty();
   private Optional<Wei> maxFeePerGas = Optional.empty();
-  private Optional<Wei> maxFeePerDataGas = Optional.empty();
+  private Optional<Wei> maxFeePerBlobGas = Optional.empty();
 
   private Optional<List<AccessListEntry>> accessListEntries = Optional.empty();
   private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
@@ -84,7 +84,7 @@ public class TransactionTestFixture {
         builder.maxPriorityFeePerGas(maxPriorityFeePerGas.orElse(Wei.of(500)));
         builder.maxFeePerGas(maxFeePerGas.orElse(Wei.of(5000)));
         builder.accessList(accessListEntries.orElse(List.of()));
-        builder.maxFeePerDataGas(maxFeePerDataGas.orElse(Wei.ONE));
+        builder.maxFeePerBlobGas(maxFeePerBlobGas.orElse(Wei.ONE));
         builder.versionedHashes(
             versionedHashes.orElse(List.of(VersionedHash.DEFAULT_VERSIONED_HASH)));
         blobs.ifPresent(
@@ -156,8 +156,8 @@ public class TransactionTestFixture {
     return this;
   }
 
-  public TransactionTestFixture maxFeePerDataGas(final Optional<Wei> maxFeePerDataGas) {
-    this.maxFeePerDataGas = maxFeePerDataGas;
+  public TransactionTestFixture maxFeePerBlobGas(final Optional<Wei> maxFeePerBlobGas) {
+    this.maxFeePerBlobGas = maxFeePerBlobGas;
     return this;
   }
 

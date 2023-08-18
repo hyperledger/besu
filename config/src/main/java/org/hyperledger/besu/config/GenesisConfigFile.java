@@ -248,21 +248,21 @@ public class GenesisConfigFile {
   }
 
   /**
-   * Gets excess data gas.
+   * Gets excess blob gas.
    *
-   * @return the excess data gas
+   * @return the excess blob gas
    */
-  public String getExcessDataGas() {
-    return JsonUtil.getValueAsString(configRoot, "excessdatagas", "0x0");
+  public String getExcessBlobGas() {
+    return JsonUtil.getValueAsString(configRoot, "excessblobgas", "0x0");
   }
 
   /**
-   * Gets data gas used.
+   * Gets blob gas used.
    *
-   * @return the data gas used
+   * @return the blob gas used
    */
-  public String getDataGasUsed() {
-    return JsonUtil.getValueAsString(configRoot, "datagasused", "0x0");
+  public String getBlobGasUsed() {
+    return JsonUtil.getValueAsString(configRoot, "blobgasused", "0x0");
   }
 
   /**
