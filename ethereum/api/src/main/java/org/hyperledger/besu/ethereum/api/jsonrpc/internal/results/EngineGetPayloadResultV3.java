@@ -190,12 +190,12 @@ public class EngineGetPayloadResultV3 {
       return feeRecipient;
     }
 
-    @JsonGetter(value = "excessBlobData")
+    @JsonGetter(value = "excessBlobGas")
     public String getExcessDataGas() {
       return excessDataGas;
     }
 
-    @JsonGetter(value = "blobDataUsed")
+    @JsonGetter(value = "blobGasUsed")
     public String getDataGasUseds() {
       return dataGasUsed;
     }
