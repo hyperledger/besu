@@ -72,7 +72,7 @@ public class StateTestVersionedTransaction {
   private final List<Wei> values;
   private final List<Bytes> payloads;
   private final Optional<List<List<AccessListEntry>>> maybeAccessLists;
-  private final Wei maxFeePerDataGas;
+  private final Wei maxFeePerBlobGas;
   // String instead of VersionedHash because reference tests intentionally use bad hashes.
   private final List<String> blobVersionedHashes;
 
@@ -103,6 +103,7 @@ public class StateTestVersionedTransaction {
       @JsonProperty("data") final String[] data,
       @JsonDeserialize(using = StateTestAccessListDeserializer.class) @JsonProperty("accessLists")
           final List<List<AccessListEntry>> maybeAccessLists,
+      @JsonProperty("maxFeePerBlobGas") final String maxFeePerBlobGas,
       @JsonProperty("maxFeePerDataGas") final String maxFeePerDataGas,
       @JsonProperty("blobVersionedHashes") final List<String> blobVersionedHashes) {
 
@@ -122,8 +123,10 @@ public class StateTestVersionedTransaction {
     this.values = parseArray(value, Wei::fromHexString);
     this.payloads = parseArray(data, Bytes::fromHexString);
     this.maybeAccessLists = Optional.ofNullable(maybeAccessLists);
-    this.maxFeePerDataGas =
-        Optional.ofNullable(maxFeePerDataGas).map(Wei::fromHexString).orElse(null);
+    this.maxFeePerBlobGas =
+        Optional.ofNullable(maxFeePerBlobGas == null ? maxFeePerDataGas : maxFeePerBlobGas)
+            .map(Wei::fromHexString)
+            .orElse(null);
     this.blobVersionedHashes = blobVersionedHashes;
   }
 
@@ -161,7 +164,7 @@ public class StateTestVersionedTransaction {
     Optional.ofNullable(maxPriorityFeePerGas).ifPresent(transactionBuilder::maxPriorityFeePerGas);
     maybeAccessLists.ifPresent(
         accessLists -> transactionBuilder.accessList(accessLists.get(indexes.data)));
-    Optional.ofNullable(maxFeePerDataGas).ifPresent(transactionBuilder::maxFeePerDataGas);
+    Optional.ofNullable(maxFeePerBlobGas).ifPresent(transactionBuilder::maxFeePerBlobGas);
     try {
       transactionBuilder.versionedHashes(
           blobVersionedHashes == null

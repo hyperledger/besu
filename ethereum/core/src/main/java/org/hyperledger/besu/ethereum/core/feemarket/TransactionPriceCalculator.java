@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core.feemarket;
 
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
@@ -62,18 +62,18 @@ public interface TransactionPriceCalculator {
     return output.divide(denominator);
   }
 
-  static TransactionPriceCalculator dataGas(
-      final int minDataGasPrice,
-      final int dataGasPriceUpdateFraction,
-      final DataGas excessDataGas) {
+  static TransactionPriceCalculator blobGas(
+      final int minBlobGasPrice,
+      final int blobGasPriceUpdateFraction,
+      final BlobGas excessBlobGas) {
     return ((transaction, baseFee) -> {
-      final var dataGasPrice =
+      final var blobGasPrice =
           Wei.of(
               fakeExponential(
-                  BigInteger.valueOf(minDataGasPrice),
-                  excessDataGas.toBigInteger(),
-                  BigInteger.valueOf(dataGasPriceUpdateFraction)));
-      return dataGasPrice;
+                  BigInteger.valueOf(minBlobGasPrice),
+                  excessBlobGas.toBigInteger(),
+                  BigInteger.valueOf(blobGasPriceUpdateFraction)));
+      return blobGasPrice;
     });
   }
 }

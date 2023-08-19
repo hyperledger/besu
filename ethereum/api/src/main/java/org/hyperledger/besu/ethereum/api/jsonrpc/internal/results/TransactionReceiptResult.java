@@ -47,8 +47,8 @@ import org.apache.tuweni.bytes.Bytes;
   "transactionIndex",
   "revertReason",
   "type",
-  "dataGasUsed",
-  "dataGasPrice"
+  "blobGasUsed",
+  "blobGasPrice"
 })
 public abstract class TransactionReceiptResult {
 
@@ -69,8 +69,8 @@ public abstract class TransactionReceiptResult {
   protected final TransactionReceipt receipt;
   protected final String type;
 
-  private final String dataGasUsed;
-  private final String dataGasPrice;
+  private final String blobGasUsed;
+  private final String blobGasPrice;
 
   protected TransactionReceiptResult(final TransactionReceiptWithMetadata receiptWithMetadata) {
     final Transaction txn = receiptWithMetadata.getTransaction();
@@ -81,8 +81,8 @@ public abstract class TransactionReceiptResult {
     this.cumulativeGasUsed = Quantity.create(receipt.getCumulativeGasUsed());
     this.from = txn.getSender().toString();
     this.gasUsed = Quantity.create(receiptWithMetadata.getGasUsed());
-    this.dataGasUsed = receiptWithMetadata.getDataGasUsed().map(Quantity::create).orElse(null);
-    this.dataGasPrice = receiptWithMetadata.getDataGasPrice().map(Quantity::create).orElse(null);
+    this.blobGasUsed = receiptWithMetadata.getBlobGasUsed().map(Quantity::create).orElse(null);
+    this.blobGasPrice = receiptWithMetadata.getBlobGasPrice().map(Quantity::create).orElse(null);
     this.effectiveGasPrice =
         Quantity.create(txn.getEffectiveGasPrice(receiptWithMetadata.getBaseFee()));
 
@@ -134,16 +134,16 @@ public abstract class TransactionReceiptResult {
     return gasUsed;
   }
 
-  @JsonGetter(value = "dataGasUsed")
+  @JsonGetter(value = "blobGasUsed")
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  public String getDataGasUsed() {
-    return dataGasUsed;
+  public String getBlobGasUsed() {
+    return blobGasUsed;
   }
 
-  @JsonGetter(value = "dataGasPrice")
+  @JsonGetter(value = "blobGasPrice")
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  public String getDataGasPrice() {
-    return dataGasPrice;
+  public String getBlobGasPrice() {
+    return blobGasPrice;
   }
 
   @JsonGetter(value = "effectiveGasPrice")

@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -148,8 +148,10 @@ public class GeneralStateReferenceTestTools {
     final MainnetTransactionProcessor processor = transactionProcessor(spec.getFork());
     final WorldUpdater worldStateUpdater = worldState.updater();
     final ReferenceTestBlockchain blockchain = new ReferenceTestBlockchain(blockHeader.getNumber());
-    // Todo: EIP-4844 use the excessDataGas of the parent instead of DataGas.ZERO
-    final Wei dataGasPrice = protocolSpec(spec.getFork()).getFeeMarket().dataPricePerGas(DataGas.ZERO);
+    final Wei blobGasPrice =
+        protocolSpec(spec.getFork())
+            .getFeeMarket()
+            .blobGasPricePerGas(blockHeader.getExcessBlobGas().orElse(BlobGas.ZERO));
     final TransactionProcessingResult result =
         processor.processTransaction(
             blockchain,
@@ -160,7 +162,7 @@ public class GeneralStateReferenceTestTools {
             new CachingBlockHashLookup(blockHeader, blockchain),
             false,
             TransactionValidationParams.processingBlock(),
-            dataGasPrice);
+            blobGasPrice);
     if (result.isInvalid()) {
       assertThat(spec.getExpectException())
           .withFailMessage(() -> result.getValidationResult().getErrorMessage())

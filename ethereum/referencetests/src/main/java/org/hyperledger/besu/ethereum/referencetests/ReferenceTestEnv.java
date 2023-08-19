@@ -19,7 +19,7 @@ package org.hyperledger.besu.ethereum.referencetests;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -145,8 +145,8 @@ public class ReferenceTestEnv extends BlockHeader {
             ? currentDataGasUsed == null ? null : Long.decode(currentDataGasUsed)
             : Long.decode(currentBlobGasUsed),
         currentExcessBlobGas == null
-            ? currentExcessDataGas == null ? null : DataGas.fromHexString(currentExcessDataGas)
-            : DataGas.fromHexString(currentExcessBlobGas),
+            ? currentExcessDataGas == null ? null : BlobGas.fromHexString(currentExcessDataGas)
+            : BlobGas.fromHexString(currentExcessBlobGas),
         null, // depositsRoot
         new MainnetBlockHeaderFunctions());
     this.parentDifficulty = parentDifficulty;
@@ -220,12 +220,12 @@ public class ReferenceTestEnv extends BlockHeader {
                           .buildBlockHeader(),
                       null)));
     }
-    if (excessDataGas.isEmpty() && parentExcessBlobGas != null && parentBlobGasUsed != null) {
-      builder.excessDataGas(
-          DataGas.of(
+    if (excessBlobGas.isEmpty() && parentExcessBlobGas != null && parentBlobGasUsed != null) {
+      builder.excessBlobGas(
+          BlobGas.of(
               protocolSpec
                   .getGasCalculator()
-                  .computeExcessDataGas(
+                  .computeExcessBlobGas(
                       Long.decode(parentExcessBlobGas), Long.decode(parentGasUsed))));
     }
 

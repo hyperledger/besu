@@ -14,29 +14,29 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
-/** Calculates the excess data gas for a parent block header. */
-public class ExcessDataGasCalculator {
+/** Calculates the excess blob gas for a parent block header. */
+public class ExcessBlobGasCalculator {
   /**
-   * public class ExcessDataGasCalculator { /** Calculates the excess data gas for a parent block
+   * public class ExcessBlobGasCalculator { /** Calculates the excess blob gas for a parent block
    * header.
    *
    * @param protocolSpec The protocol specification.
    * @param parentHeader The parent block header.
-   * @return The excess data gas.
+   * @return The excess blob gas.
    */
-  public static DataGas calculateExcessDataGasForParent(
+  public static BlobGas calculateExcessBlobGasForParent(
       final ProtocolSpec protocolSpec, final BlockHeader parentHeader) {
     // Blob Data Excess
     long headerExcess =
         protocolSpec
             .getGasCalculator()
-            .computeExcessDataGas(
-                parentHeader.getExcessDataGas().map(DataGas::toLong).orElse(0L),
-                parentHeader.getDataGasUsed().orElse(0L));
-    return DataGas.of(headerExcess);
+            .computeExcessBlobGas(
+                parentHeader.getExcessBlobGas().map(BlobGas::toLong).orElse(0L),
+                parentHeader.getBlobGasUsed().orElse(0L));
+    return BlobGas.of(headerExcess);
   }
 }

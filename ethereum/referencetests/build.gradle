@@ -221,9 +221,10 @@ Full git output : ${result}
 If this is accidental you can correct the reference test versions with the 
 following commands:
     pushd ${submodulePath}
+    git fetch
     git checkout ${expectedHash}
     cd ..
-    git add resources
+    git add ${submodulePath}
     popd""")
     }
   }

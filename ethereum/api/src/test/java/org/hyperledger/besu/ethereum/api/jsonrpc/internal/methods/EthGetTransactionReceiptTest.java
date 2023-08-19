@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
@@ -263,11 +263,11 @@ public class EthGetTransactionReceiptTest {
   }
 
   /**
-   * Test case to verify that the TransactionReceiptStatusResult contains data gas used and data gas
+   * Test case to verify that the TransactionReceiptStatusResult contains blob gas used and blob gas
    * price when the transaction type is TransactionType#BLOB
    */
   @Test
-  public void shouldContainDataGasUsedAndDataGasPriceWhenBlobTransaction() {
+  public void shouldContainBlobGasUsedAndBlobGasPriceWhenBlobTransaction() {
 
     var hash = Hash.wrap(Bytes32.random());
     mockBlockWithBlobTransaction(hash, 1L);
@@ -282,8 +282,8 @@ public class EthGetTransactionReceiptTest {
         (TransactionReceiptStatusResult) response.getResult();
 
     assertThat(result.getType()).isEqualTo("0x3");
-    assertThat(result.getDataGasUsed()).isEqualTo("0x20000");
-    assertThat(result.getDataGasPrice()).isEqualTo("0x1");
+    assertThat(result.getBlobGasUsed()).isEqualTo("0x20000");
+    assertThat(result.getBlobGasPrice()).isEqualTo("0x1");
   }
 
   private void mockBlockWithBlobTransaction(final Hash blockHash, final long blockNumber) {
@@ -303,7 +303,7 @@ public class EthGetTransactionReceiptTest {
     when(block.getBody()).thenReturn(body);
     when(body.getTransactions())
         .thenReturn(List.of(new BlockDataGenerator().transaction(TransactionType.BLOB)));
-    when(parentHeader.getExcessDataGas()).thenReturn(Optional.of(DataGas.of(1000)));
+    when(parentHeader.getExcessBlobGas()).thenReturn(Optional.of(BlobGas.of(1000)));
     when(blockchain.getBlockByHash(blockHash)).thenReturn(Optional.of(block));
     mockProtocolSpec(header);
     when(blockchain.getTransactionLocation(receiptHash))
@@ -312,7 +312,7 @@ public class EthGetTransactionReceiptTest {
 
   private void mockProtocolSpec(final BlockHeader blockHeader) {
     FeeMarket feeMarket = mock(CancunFeeMarket.class);
-    when(feeMarket.dataPricePerGas(any())).thenCallRealMethod();
+    when(feeMarket.blobGasPricePerGas(any())).thenCallRealMethod();
     ProtocolSpec spec = mock(ProtocolSpec.class);
     when(spec.getFeeMarket()).thenReturn(feeMarket);
     when(spec.getGasCalculator()).thenReturn(new CancunGasCalculator());
