@@ -154,8 +154,9 @@ public class ReferenceTestEnv extends BlockHeader {
     this.parentGasUsed = parentGasUsed;
     this.parentGasLimit = parentGasLimit;
     this.parentTimestamp = parentTimestamp;
-    this.parentExcessBlobGas = parentExcessBlobGas == null ? parentExcessDataGas : null;
-    this.parentBlobGasUsed = parentBlobGasUsed == null ? parentDataGasUsed : null;
+    this.parentExcessBlobGas =
+        parentExcessBlobGas == null ? parentExcessDataGas : parentExcessBlobGas;
+    this.parentBlobGasUsed = parentBlobGasUsed == null ? parentDataGasUsed : parentBlobGasUsed;
     this.withdrawals =
         withdrawals == null
             ? List.of()
