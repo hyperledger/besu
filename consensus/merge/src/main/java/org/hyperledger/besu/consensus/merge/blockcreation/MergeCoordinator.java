@@ -607,33 +607,30 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       return true;
     }
 
-    if (newHead.getParentHash().equals(blockchain.getChainHeadHash())) {
-      LOG.atDebug()
-          .setMessage(
-              "Forwarding chain head to the block {} saved from a previous newPayload invocation")
-          .addArgument(newHead::toLogString)
-          .log();
-
-      if (forwardWorldStateTo(newHead)) {
-        // move chain head forward:
+    if (moveWorldStateTo(newHead)) {
+      if (newHead.getParentHash().equals(blockchain.getChainHeadHash())) {
+        LOG.atDebug()
+            .setMessage(
+                "Forwarding chain head to the block {} saved from a previous newPayload invocation")
+            .addArgument(newHead::toLogString)
+            .log();
         return blockchain.forwardToBlock(newHead);
       } else {
         LOG.atDebug()
-            .setMessage("Failed to move the worldstate forward to hash {}, not moving chain head")
+            .setMessage("New head {} is a chain reorg, rewind chain head to it")
             .addArgument(newHead::toLogString)
             .log();
-        return false;
+        return blockchain.rewindToBlock(newHead.getHash());
       }
     }
-
     LOG.atDebug()
-        .setMessage("New head {} is a chain reorg, rewind chain head to it")
+        .setMessage("Failed to move the worldstate forward to hash {}, not moving chain head")
         .addArgument(newHead::toLogString)
         .log();
-    return blockchain.rewindToBlock(newHead.getHash());
+    return false;
   }
 
-  private boolean forwardWorldStateTo(final BlockHeader newHead) {
+  private boolean moveWorldStateTo(final BlockHeader newHead) {
     Optional<MutableWorldState> newWorldState =
         protocolContext
             .getWorldStateArchive()

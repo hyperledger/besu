@@ -88,27 +88,27 @@ public class BlockTransactionSelector {
     private final Map<Transaction, TransactionSelectionResult> notSelectedTransactions =
         new HashMap<>();
     private long cumulativeGasUsed = 0;
-    private long cumulativeDataGasUsed = 0;
+    private long cumulativeBlobGasUsed = 0;
 
     private void updateSelected(
         final Transaction transaction,
         final TransactionReceipt receipt,
         final long gasUsed,
-        final long dataGasUsed) {
+        final long blobGasUsed) {
       selectedTransactions.add(transaction);
       transactionsByType
           .computeIfAbsent(transaction.getType(), type -> new ArrayList<>())
           .add(transaction);
       receipts.add(receipt);
       cumulativeGasUsed += gasUsed;
-      cumulativeDataGasUsed += dataGasUsed;
+      cumulativeBlobGasUsed += blobGasUsed;
       LOG.atTrace()
           .setMessage(
-              "New selected transaction {}, total transactions {}, cumulative gas used {}, cumulative data gas used {}")
+              "New selected transaction {}, total transactions {}, cumulative gas used {}, cumulative blob gas used {}")
           .addArgument(transaction::toTraceLog)
           .addArgument(selectedTransactions::size)
           .addArgument(cumulativeGasUsed)
-          .addArgument(cumulativeDataGasUsed)
+          .addArgument(cumulativeBlobGasUsed)
           .log();
     }
 
@@ -133,8 +133,8 @@ public class BlockTransactionSelector {
       return cumulativeGasUsed;
     }
 
-    public long getCumulativeDataGasUsed() {
-      return cumulativeDataGasUsed;
+    public long getCumulativeBlobGasUsed() {
+      return cumulativeBlobGasUsed;
     }
 
     public Map<Transaction, TransactionSelectionResult> getNotSelectedTransactions() {
@@ -174,7 +174,7 @@ public class BlockTransactionSelector {
       }
       TransactionSelectionResults that = (TransactionSelectionResults) o;
       return cumulativeGasUsed == that.cumulativeGasUsed
-          && cumulativeDataGasUsed == that.cumulativeDataGasUsed
+          && cumulativeBlobGasUsed == that.cumulativeBlobGasUsed
           && selectedTransactions.equals(that.selectedTransactions)
           && notSelectedTransactions.equals(that.notSelectedTransactions)
           && receipts.equals(that.receipts);
@@ -187,14 +187,14 @@ public class BlockTransactionSelector {
           notSelectedTransactions,
           receipts,
           cumulativeGasUsed,
-          cumulativeDataGasUsed);
+          cumulativeBlobGasUsed);
     }
 
     public String toTraceLog() {
       return "cumulativeGasUsed="
           + cumulativeGasUsed
-          + ", cumulativeDataGasUsed="
-          + cumulativeDataGasUsed
+          + ", cumulativeBlobGasUsed="
+          + cumulativeBlobGasUsed
           + ", selectedTransactions="
           + selectedTransactions.stream()
               .map(Transaction::toTraceLog)
@@ -219,7 +219,7 @@ public class BlockTransactionSelector {
   private final TransactionPool transactionPool;
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private final Address miningBeneficiary;
-  private final Wei dataGasPrice;
+  private final Wei blobGasPrice;
   private final FeeMarket feeMarket;
   private final GasCalculator gasCalculator;
   private final GasLimitCalculator gasLimitCalculator;
@@ -238,7 +238,7 @@ public class BlockTransactionSelector {
       final Double minBlockOccupancyRatio,
       final Supplier<Boolean> isCancelled,
       final Address miningBeneficiary,
-      final Wei dataGasPrice,
+      final Wei blobGasPrice,
       final FeeMarket feeMarket,
       final GasCalculator gasCalculator,
       final GasLimitCalculator gasLimitCalculator,
@@ -253,7 +253,7 @@ public class BlockTransactionSelector {
     this.minTransactionGasPrice = minTransactionGasPrice;
     this.minBlockOccupancyRatio = minBlockOccupancyRatio;
     this.miningBeneficiary = miningBeneficiary;
-    this.dataGasPrice = dataGasPrice;
+    this.blobGasPrice = blobGasPrice;
     this.feeMarket = feeMarket;
     this.gasCalculator = gasCalculator;
     this.gasLimitCalculator = gasLimitCalculator;
@@ -354,7 +354,7 @@ public class BlockTransactionSelector {
             blockHashLookup,
             false,
             TransactionValidationParams.mining(),
-            dataGasPrice);
+            blobGasPrice);
 
     if (!effectiveResult.isInvalid()) {
 
@@ -379,10 +379,10 @@ public class BlockTransactionSelector {
             transactionReceiptFactory.create(
                 transaction.getType(), effectiveResult, worldState, cumulativeGasUsed);
 
-        final long dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount());
+        final long blobGasUsed = gasCalculator.blobGasCost(transaction.getBlobCount());
 
         transactionSelectionResults.updateSelected(
-            transaction, receipt, gasUsedByTransaction, dataGasUsed);
+            transaction, receipt, gasUsedByTransaction, blobGasUsed);
 
         LOG.atTrace()
             .setMessage("Selected {} for block creation")
@@ -406,7 +406,7 @@ public class BlockTransactionSelector {
 
   private boolean transactionDataPriceBelowMin(final Transaction transaction) {
     if (transaction.getType().supportsBlob()) {
-      if (transaction.getMaxFeePerDataGas().orElseThrow().lessThan(dataGasPrice)) {
+      if (transaction.getMaxFeePerBlobGas().orElseThrow().lessThan(blobGasPrice)) {
         return true;
       }
     }
@@ -469,15 +469,15 @@ public class BlockTransactionSelector {
   }
 
   private boolean transactionTooLargeForBlock(final Transaction transaction) {
-    final long dataGasUsed = gasCalculator.dataGasCost(transaction.getBlobCount());
+    final long blobGasUsed = gasCalculator.blobGasCost(transaction.getBlobCount());
 
-    if (dataGasUsed
-        > gasLimitCalculator.currentDataGasLimit()
-            - transactionSelectionResults.getCumulativeDataGasUsed()) {
+    if (blobGasUsed
+        > gasLimitCalculator.currentBlobGasLimit()
+            - transactionSelectionResults.getCumulativeBlobGasUsed()) {
       return true;
     }
 
-    return transaction.getGasLimit() + dataGasUsed
+    return transaction.getGasLimit() + blobGasUsed
         > processableBlockHeader.getGasLimit() - transactionSelectionResults.getCumulativeGasUsed();
   }
 

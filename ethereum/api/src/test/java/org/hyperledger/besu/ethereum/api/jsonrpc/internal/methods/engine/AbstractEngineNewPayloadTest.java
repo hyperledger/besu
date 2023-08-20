@@ -31,7 +31,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -486,8 +486,8 @@ public abstract class AbstractEngineNewPayloadTest {
         header.getPrevRandao().map(Bytes32::toHexString).orElse("0x0"),
         txs,
         withdrawals,
-        header.getDataGasUsed().map(UnsignedLongParameter::new).orElse(null),
-        header.getExcessDataGas().map(DataGas::toHexString).orElse(null),
+        header.getBlobGasUsed().map(UnsignedLongParameter::new).orElse(null),
+        header.getExcessBlobGas().map(BlobGas::toHexString).orElse(null),
         versionedHashes,
         deposits);
   }
