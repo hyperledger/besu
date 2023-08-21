@@ -278,11 +278,11 @@ public interface Transaction {
    * Calculates the up-front cost for the gas and data gas the transaction can use.
    *
    * @param gasPrice the gas price to use
-   * @param dataGasPrice the data gas price to use
-   * @param totalDataGas the gas the transaction can use
+   * @param blobGasPrice the data gas price to use
+   * @param totalBlobGas the gas the transaction can use
    * @return the up-front cost for the gas the transaction can use.
    */
-  Wei getUpfrontGasCost(final Wei gasPrice, final Wei dataGasPrice, final long totalDataGas);
+  Wei getUpfrontGasCost(final Wei gasPrice, final Wei blobGasPrice, final long totalBlobGas);
 
   /**
    * Calculates the up-front cost for the transaction.
@@ -291,10 +291,10 @@ public interface Transaction {
    * sender must have the amount in its account balance to execute and some of this amount may be
    * refunded after the transaction has executed.
    *
-   * @param totalDataGas the gas the transaction can use
+   * @param totalBlobGas the gas the transaction can use
    * @return the up-front gas cost for the transaction
    */
-  Wei getUpfrontCost(final long totalDataGas);
+  Wei getUpfrontCost(final long totalBlobGas);
 
   /**
    * Calculates the effectiveGasPrice of a transaction on the basis of an {@code Optional<Long>}
