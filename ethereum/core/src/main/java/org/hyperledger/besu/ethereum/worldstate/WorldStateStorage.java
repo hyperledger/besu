@@ -33,6 +33,8 @@ public interface WorldStateStorage {
 
   Optional<Bytes> getAccountStorageTrieNode(Hash accountHash, Bytes location, Bytes32 nodeHash);
 
+  Optional<Bytes> getUnSafeTrieNode(Bytes key);
+
   Optional<Bytes> getNodeData(Bytes location, Bytes32 hash);
 
   FlatDbMode getFlatDbMode();

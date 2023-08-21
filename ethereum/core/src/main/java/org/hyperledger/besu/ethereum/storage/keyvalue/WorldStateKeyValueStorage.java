@@ -79,6 +79,11 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
+  public Optional<Bytes> getUnSafeTrieNode(final Bytes key) {
+    return keyValueStorage.get(key.toArrayUnsafe()).map(Bytes::wrap);
+  }
+
+  @Override
   public FlatDbMode getFlatDbMode() {
     return FlatDbMode.NO_FLATTENED;
   }

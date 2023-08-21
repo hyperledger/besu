@@ -166,32 +166,28 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     }
   }
 
-  /**
-   * Retrieves the storage trie node associated with the specified account and location, if
-   * available.
-   *
-   * @param accountHash The hash of the account.
-   * @param location The location within the storage trie.
-   * @param maybeNodeHash The optional hash of the storage trie node to validate the retrieved data
-   *     against.
-   * @return The optional bytes of the storage trie node.
-   */
+  @Override
   public Optional<Bytes> getAccountStorageTrieNode(
-      final Hash accountHash, final Bytes location, final Optional<Bytes32> maybeNodeHash) {
-    if (maybeNodeHash.filter(hash -> hash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)).isPresent()) {
+      final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
+    if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else {
       return composedWorldStateStorage
           .get(TRIE_BRANCH_STORAGE, Bytes.concatenate(accountHash, location).toArrayUnsafe())
           .map(Bytes::wrap)
-          .filter(data -> maybeNodeHash.map(hash -> Hash.hash(data).equals(hash)).orElse(true));
+          .filter(b -> Hash.hash(b).equals(nodeHash));
     }
   }
 
   @Override
-  public Optional<Bytes> getAccountStorageTrieNode(
-      final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
-    return getAccountStorageTrieNode(accountHash, location, Optional.ofNullable(nodeHash));
+  public Optional<Bytes> getUnSafeTrieNode(final Bytes key) {
+    /*This method allows obtaining a TrieNode in an unsafe manner,
+    without verifying the consistency of the obtained node. Checks such as
+    node hash verification are not performed here.
+     */
+    return composedWorldStateStorage
+        .get(TRIE_BRANCH_STORAGE, Bytes.concatenate(key).toArrayUnsafe())
+        .map(Bytes::wrap);
   }
 
   public Optional<byte[]> getTrieLog(final Hash blockHash) {
