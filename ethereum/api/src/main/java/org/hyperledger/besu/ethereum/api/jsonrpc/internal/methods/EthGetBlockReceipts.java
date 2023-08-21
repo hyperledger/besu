@@ -22,16 +22,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockReceiptsR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionReceiptResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionReceiptRootResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionReceiptStatusResult;
-import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionReceiptType;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Suppliers;
@@ -42,12 +41,7 @@ public class EthGetBlockReceipts extends AbstractBlockParameterOrBlockHashMethod
 
   public EthGetBlockReceipts(
       final BlockchainQueries blockchain, final ProtocolSchedule protocolSchedule) {
-    this(Suppliers.ofInstance(blockchain), protocolSchedule);
-  }
-
-  public EthGetBlockReceipts(
-      final Supplier<BlockchainQueries> blockchain, final ProtocolSchedule protocolSchedule) {
-    super(blockchain);
+    super(Suppliers.ofInstance(blockchain));
     this.protocolSchedule = protocolSchedule;
   }
 
@@ -67,6 +61,9 @@ public class EthGetBlockReceipts extends AbstractBlockParameterOrBlockHashMethod
     return getBlockReceiptsResult(blockHash);
   }
 
+  /*
+   * For a given transaction, get its receipt and if it exists, wrap in a transaction receipt of the correct type
+   */
   private Optional<TransactionReceiptResult> txReceipt(final TransactionWithMetadata tx) {
     Optional<TransactionReceiptWithMetadata> receipt =
         blockchainQueries
@@ -83,14 +80,17 @@ public class EthGetBlockReceipts extends AbstractBlockParameterOrBlockHashMethod
   }
 
   private BlockReceiptsResult getBlockReceiptsResult(final Hash blockHash) {
-    BlockchainQueries blockchain = blockchainQueries.get();
-    BlockWithMetadata<TransactionWithMetadata, Hash> theBlock =
-        blockchain.blockByHash(blockHash).get();
-    final List<TransactionReceiptResult> txs2 =
-        theBlock.getTransactions().stream()
-            .map(tx -> txReceipt(tx).get())
-            .collect(Collectors.toList());
+    final List<TransactionReceiptResult> receiptList =
+        blockchainQueries
+            .get()
+            .blockByHash(blockHash)
+            .map(
+                block ->
+                    block.getTransactions().stream()
+                        .map(tx -> txReceipt(tx).get())
+                        .collect(Collectors.toList()))
+            .orElse(new ArrayList<>());
 
-    return new BlockReceiptsResult(txs2);
+    return new BlockReceiptsResult(receiptList);
   }
 }

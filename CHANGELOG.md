@@ -7,6 +7,7 @@
 - Add ABI-decoded revert reason to `eth_call` and `eth_estimateGas` responses [#5705](https://github.com/hyperledger/besu/issues/5705)
 
 ### Additions and Improvements
+- New `eth_getBlockReceipts` JSON/RPC method to retrieve all receipts for a block in a single call [#5771](https://github.com/hyperledger/besu/pull/5771) 
 
 ### Bug Fixes
 - Make smart contract permissioning features work with london fork [#5727](https://github.com/hyperledger/besu/pull/5727)
