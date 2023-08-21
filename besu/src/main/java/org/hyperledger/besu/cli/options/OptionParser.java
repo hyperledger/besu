@@ -18,6 +18,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.datatypes.Wei;
 
+import java.lang.invoke.MethodType;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Iterator;
 
 import com.google.common.base.Splitter;
@@ -107,5 +110,26 @@ public class OptionParser {
    */
   public static String format(final Wei value) {
     return format(value.toUInt256());
+  }
+
+  public static String format(final Object value) {
+    Method formatMethod;
+    try {
+      formatMethod = OptionParser.class.getMethod("format", value.getClass());
+    } catch (NoSuchMethodException e) {
+      try {
+        formatMethod =
+            OptionParser.class.getMethod(
+                "format", MethodType.methodType(value.getClass()).unwrap().returnType());
+      } catch (NoSuchMethodException ex) {
+        return value.toString();
+      }
+    }
+
+    try {
+      return (String) formatMethod.invoke(null, value);
+    } catch (InvocationTargetException | IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

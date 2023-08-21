@@ -300,7 +300,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       NodePrivateKeyFileOption.create();
   private final LoggingLevelOption loggingLevelOption = LoggingLevelOption.create();
 
-  @CommandLine.ArgGroup(validate = false, heading = "@|bold Tx Pool Options|@%n")
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold Tx Pool Common Options|@%n")
   final org.hyperledger.besu.cli.options.stable.TransactionPoolOptions
       stableTransactionPoolOptions = TransactionPoolOptions.create();
 
@@ -1834,8 +1834,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateRpcOptionsParams();
     validateChainDataPruningParams();
     validatePostMergeCheckpointBlockRequirements();
+    validateTransactionPoolOptions();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
     pkiBlockCreationOptions.checkPkiBlockCreationOptionsDependencies(logger, commandLine);
+  }
+
+  private void validateTransactionPoolOptions() {
+    stableTransactionPoolOptions.validate(commandLine);
   }
 
   private void validateRequiredOptions() {

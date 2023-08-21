@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,11 +18,13 @@ import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_DOUBLE_FOR
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_INTEGER_FORMAT_HELP;
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LEGACY;
 
 import org.hyperledger.besu.cli.converter.FractionConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.options.OptionParser;
+import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -30,15 +32,17 @@ import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.io.File;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfiguration> {
-  private static final Logger LOG = LoggerFactory.getLogger(TransactionPoolOptions.class);
   private static final String TX_POOL_IMPLEMENTATION = "--tx-pool";
   private static final String TX_POOL_DISABLE_LOCALS = "--tx-pool-disable-locals";
   private static final String TX_POOL_ENABLE_SAVE_RESTORE = "--tx-pool-enable-save-restore";
@@ -122,7 +126,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         description =
             "Max amount of memory space, in bytes, that any layer within the transaction pool could occupy (default: ${DEFAULT-VALUE})",
         arity = "1")
-    private long txPoolLayerMaxCapacity =
+    long txPoolLayerMaxCapacity =
         TransactionPoolConfiguration.DEFAULT_PENDING_TRANSACTIONS_LAYER_MAX_CAPACITY_BYTES;
 
     @CommandLine.Option(
@@ -145,7 +149,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   @CommandLine.ArgGroup(
       validate = false,
       heading = "@|bold Tx Pool Legacy Implementation Options|@%n")
-  private final Legacy legacy = new Legacy();
+  private final Legacy legacyOptions = new Legacy();
 
   static class Legacy {
     private static final String TX_POOL_RETENTION_HOURS = "--tx-pool-retention-hours";
@@ -159,8 +163,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         description =
             "Maximum retention period of pending transactions in hours (default: ${DEFAULT-VALUE})",
         arity = "1")
-    private Integer pendingTxRetentionPeriod =
-        TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
+    int pendingTxRetentionPeriod = TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
 
     @CommandLine.Option(
         names = {TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE},
@@ -169,7 +172,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         description =
             "Maximum portion of the transaction pool which a single account may occupy with future transactions (default: ${DEFAULT-VALUE})",
         arity = "1")
-    private Fraction txPoolLimitByAccountPercentage =
+    Fraction txPoolLimitByAccountPercentage =
         TransactionPoolConfiguration.DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE;
 
     @CommandLine.Option(
@@ -178,7 +181,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         description =
             "Maximum number of pending transactions that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
         arity = "1")
-    private Integer txPoolMaxSize = TransactionPoolConfiguration.DEFAULT_MAX_PENDING_TRANSACTIONS;
+    int txPoolMaxSize = TransactionPoolConfiguration.DEFAULT_MAX_PENDING_TRANSACTIONS;
   }
 
   private TransactionPoolOptions() {}
@@ -211,21 +214,46 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         config.getPendingTransactionsLayerMaxCapacityBytes();
     options.layeredOptions.txPoolMaxPrioritized = config.getMaxPrioritizedTransactions();
     options.layeredOptions.txPoolMaxFutureBySender = config.getMaxFutureBySender();
-    options.legacy.txPoolLimitByAccountPercentage = config.getTxPoolLimitByAccountPercentage();
-    options.legacy.txPoolMaxSize = config.getTxPoolMaxSize();
-    options.legacy.pendingTxRetentionPeriod = config.getPendingTxRetentionPeriod();
+    options.legacyOptions.txPoolLimitByAccountPercentage =
+        config.getTxPoolLimitByAccountPercentage();
+    options.legacyOptions.txPoolMaxSize = config.getTxPoolMaxSize();
+    options.legacyOptions.pendingTxRetentionPeriod = config.getPendingTxRetentionPeriod();
 
     return options;
   }
 
+  public void validate(final CommandLine commandLine) {
+    CommandLineUtils.failIfOptionDoesntMeetRequirement(
+        commandLine,
+        "Could not use legacy transaction pool options with layered implementation",
+        !txPoolImplementation.equals(LAYERED),
+        allOptionsOfGroup(Legacy.class));
+
+    CommandLineUtils.failIfOptionDoesntMeetRequirement(
+        commandLine,
+        "Could not use layered transaction pool options with legacy implementation",
+        !txPoolImplementation.equals(LEGACY),
+        allOptionsOfGroup(Layered.class));
+  }
+
+  private List<String> allOptionsOfGroup(final Class<?> group) {
+    return Arrays.stream(group.getDeclaredFields())
+        .filter(f -> Modifier.isStatic(f.getModifiers()))
+        .map(
+            f -> {
+              try {
+                return f.get(null);
+              } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+              }
+            })
+        .filter(o -> o instanceof String)
+        .map(String.class::cast)
+        .toList();
+  }
+
   @Override
   public TransactionPoolConfiguration toDomainObject() {
-    if (txPoolImplementation.equals(LAYERED)) {
-      LOG.warn(
-          "Layered transaction pool enabled, ignoring settings for "
-              + "--tx-pool-max-size and --tx-pool-limit-by-account-percentage");
-    }
-
     return ImmutableTransactionPoolConfiguration.builder()
         .txPoolImplementation(txPoolImplementation)
         .enableSaveRestore(saveRestoreEnabled)
@@ -237,31 +265,47 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         .pendingTransactionsLayerMaxCapacityBytes(layeredOptions.txPoolLayerMaxCapacity)
         .maxPrioritizedTransactions(layeredOptions.txPoolMaxPrioritized)
         .maxFutureBySender(layeredOptions.txPoolMaxFutureBySender)
-        .txPoolLimitByAccountPercentage(legacy.txPoolLimitByAccountPercentage)
-        .txPoolMaxSize(legacy.txPoolMaxSize)
-        .pendingTxRetentionPeriod(legacy.pendingTxRetentionPeriod)
+        .txPoolLimitByAccountPercentage(legacyOptions.txPoolLimitByAccountPercentage)
+        .txPoolMaxSize(legacyOptions.txPoolMaxSize)
+        .pendingTxRetentionPeriod(legacyOptions.pendingTxRetentionPeriod)
         .build();
   }
 
   @Override
   public List<String> getCLIOptions() {
-    return Arrays.asList(
-        TX_POOL_IMPLEMENTATION + "=" + txPoolImplementation,
-        TX_POOL_ENABLE_SAVE_RESTORE + "=" + saveRestoreEnabled,
-        TX_POOL_DISABLE_LOCALS + "=" + disableLocalTxs,
-        TX_POOL_SAVE_FILE + "=" + saveFile,
-        TX_POOL_PRICE_BUMP + "=" + priceBump,
-        RPC_TX_FEECAP + "=" + OptionParser.format(txFeeCap),
-        STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG + "=" + strictTxReplayProtectionEnabled,
-        Layered.TX_POOL_LAYER_MAX_CAPACITY,
-        OptionParser.format(layeredOptions.txPoolLayerMaxCapacity),
-        Layered.TX_POOL_MAX_PRIORITIZED,
-        OptionParser.format(layeredOptions.txPoolMaxPrioritized),
-        Layered.TX_POOL_MAX_FUTURE_BY_SENDER,
-        OptionParser.format(layeredOptions.txPoolMaxFutureBySender),
-        Legacy.TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE,
-        OptionParser.format(legacy.txPoolLimitByAccountPercentage.getValue()),
-        Legacy.TX_POOL_MAX_SIZE + "=" + legacy.txPoolMaxSize,
-        Legacy.TX_POOL_RETENTION_HOURS + "=" + legacy.pendingTxRetentionPeriod);
+    return getCLIOptions(getClass(), this, new TransactionPoolOptions());
+  }
+
+  private List<String> getCLIOptions(
+      final Class<?> startClass, final Object currOptions, final Object defaults) {
+    List<String> cliOpts = new ArrayList<>();
+    Field[] fields = startClass.getDeclaredFields();
+    for (Field field : fields) {
+      Annotation optionAnnotation = field.getAnnotation(CommandLine.Option.class);
+      if (optionAnnotation != null) {
+        try {
+          var optVal = field.get(currOptions);
+          if (!Objects.equals(optVal, field.get(defaults))) {
+            var optAnn = CommandLine.Option.class.cast(optionAnnotation);
+            String optName = optAnn.names()[0];
+            cliOpts.add(optName);
+            cliOpts.add(OptionParser.format(optVal));
+          }
+        } catch (IllegalAccessException e) {
+          throw new RuntimeException(e);
+        }
+      } else {
+        Annotation groupAnnotation = field.getAnnotation(CommandLine.ArgGroup.class);
+        if (groupAnnotation != null) {
+          try {
+            cliOpts.addAll(
+                getCLIOptions(field.getType(), field.get(currOptions), field.get(defaults)));
+          } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }
+    }
+    return cliOpts;
   }
 }

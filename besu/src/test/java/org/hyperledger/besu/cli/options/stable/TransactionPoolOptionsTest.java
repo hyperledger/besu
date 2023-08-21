@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,10 +17,13 @@ package org.hyperledger.besu.cli.options.stable;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LEGACY;
 
 import org.hyperledger.besu.cli.options.AbstractCLIOptionsTest;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+
+import java.util.function.Consumer;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,65 +35,95 @@ public class TransactionPoolOptionsTest
 
   @Test
   public void strictTxReplayProtection_enabled() {
-    final TestBesuCommand cmd = parseCommand("--strict-tx-replay-protection-enabled");
-
-    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
-    final TransactionPoolConfiguration config = options.toDomainObject();
-    assertThat(config.getStrictTransactionReplayProtectionEnabled()).isTrue();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    internalTestSuccess(
+        config -> assertThat(config.getStrictTransactionReplayProtectionEnabled()).isTrue(),
+        "--strict-tx-replay-protection-enabled");
   }
 
   @Test
   public void strictTxReplayProtection_enabledWithBooleanArg() {
-    final TestBesuCommand cmd = parseCommand("--strict-tx-replay-protection-enabled=true");
-
-    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
-    final TransactionPoolConfiguration config = options.toDomainObject();
-    assertThat(config.getStrictTransactionReplayProtectionEnabled()).isTrue();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    internalTestSuccess(
+        config -> assertThat(config.getStrictTransactionReplayProtectionEnabled()).isTrue(),
+        "--strict-tx-replay-protection-enabled=true");
   }
 
   @Test
   public void strictTxReplayProtection_disabled() {
-    final TestBesuCommand cmd = parseCommand("--strict-tx-replay-protection-enabled=false");
-
-    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
-    final TransactionPoolConfiguration config = options.toDomainObject();
-    assertThat(config.getStrictTransactionReplayProtectionEnabled()).isFalse();
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    internalTestSuccess(
+        config -> assertThat(config.getStrictTransactionReplayProtectionEnabled()).isFalse(),
+        "--strict-tx-replay-protection-enabled=false");
   }
 
   @Test
   public void strictTxReplayProtection_default() {
-    final TestBesuCommand cmd = parseCommand();
+    internalTestSuccess(
+        config -> assertThat(config.getStrictTransactionReplayProtectionEnabled()).isFalse());
+  }
+
+  @Test
+  public void selectLayeredImplementationByDefault() {
+    internalTestSuccess(config -> assertThat(config.getTxPoolImplementation()).isEqualTo(LAYERED));
+  }
+
+  @Test
+  public void selectLayeredImplementationByArg() {
+    internalTestSuccess(
+        config -> assertThat(config.getTxPoolImplementation()).isEqualTo(LAYERED),
+        "--tx-pool=layered");
+  }
+
+  @Test
+  public void selectLegacyImplementationByArg() {
+    internalTestSuccess(
+        config -> assertThat(config.getTxPoolImplementation()).isEqualTo(LEGACY),
+        "--tx-pool=legacy");
+  }
+
+  @Test
+  public void failIfLegacyOptionsWhenLayeredSelectedByDefault() {
+    internalTestFailure(
+        "Could not use legacy transaction pool options with layered implementation",
+        "--tx-pool-max-size=1000");
+  }
+
+  @Test
+  public void failIfLegacyOptionsWhenLayeredSelectedByArg() {
+    internalTestFailure(
+        "Could not use legacy transaction pool options with layered implementation",
+        "--tx-pool=layered",
+        "--tx-pool-max-size=1000");
+  }
+
+  @Test
+  public void failIfLayeredOptionsWhenLegacySelectedByArg() {
+    internalTestFailure(
+        "Could not use layered transaction pool options with legacy implementation",
+        "--tx-pool=legacy",
+        "--tx-pool-max-prioritized=1000");
+  }
+
+  private void internalTestSuccess(
+      final Consumer<TransactionPoolConfiguration> assertion, final String... args) {
+    final TestBesuCommand cmd = parseCommand(args);
 
     final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
     final TransactionPoolConfiguration config = options.toDomainObject();
-    assertThat(config.getStrictTransactionReplayProtectionEnabled()).isFalse();
+    assertion.accept(config);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
+  private void internalTestFailure(final String errorMsg, final String... args) {
+    parseCommand(args);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).contains(errorMsg);
+  }
+
   @Override
   protected TransactionPoolConfiguration createDefaultDomainObject() {
-    final ImmutableTransactionPoolConfiguration defaultValue =
-        ImmutableTransactionPoolConfiguration.builder().build();
-    return ImmutableTransactionPoolConfiguration.builder()
-        .from(defaultValue)
-        .strictTransactionReplayProtectionEnabled(false)
-        .txPoolImplementation(defaultValue.getTxPoolImplementation())
-        .pendingTransactionsLayerMaxCapacityBytes(
-            defaultValue.getPendingTransactionsLayerMaxCapacityBytes())
-        .maxPrioritizedTransactions(defaultValue.getMaxPrioritizedTransactions())
-        .maxFutureBySender(defaultValue.getMaxFutureBySender())
-        .build();
+    return ImmutableTransactionPoolConfiguration.builder().build();
   }
 
   @Override
