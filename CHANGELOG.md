@@ -1,6 +1,6 @@
 # Changelog
 
-## 23.7.1
+## 23.7.2
 
 ### Breaking Changes
 
@@ -14,26 +14,25 @@
 - Make smart contract permissioning features work with london fork [#5727](https://github.com/hyperledger/besu/pull/5727)
 - Add type to PendingTransactionDetail, fix eth_subscribe [#5729](https://github.com/hyperledger/besu/pull/5729)
 - EvmTool "run" mode did not reflect contracts created within the transaction. [#5755](https://github.com/hyperledger/besu/pull/5755)
-- Update native libraries that have JPMS friendly module names [#5749](https://github.com/hyperledger/besu/pull/5749)
 - Fixing snapsync issue with forest during the heal step [#5776](https://github.com/hyperledger/besu/pull/5776)
 
 ### Download Links
 
 
-## 23.7.0
+## 23.7.1
 
 ### Breaking Changes
 - Removed deprecated GoQuorum permissioning interop [#5607](https://github.com/hyperledger/besu/pull/5607)
 - Removed support for version 0 of the database as it is no longer used by any active node. [#5698](https://github.com/hyperledger/besu/pull/5698)
 
 ### Additions and Improvements
-- `evmtool` launcher binaries now ship as part of the standard distribution. [#5701](https://github.com/hyperledger/besu/pull/5701) 
+- `evmtool` launcher binaries now ship as part of the standard distribution. [#5701](https://github.com/hyperledger/besu/pull/5701)
 - EvmTool now executes the `execution-spec-tests` via the `t8n` and `b11r`. See the [README](ethereum/evmtool/README.md) in EvmTool for more instructions.
 - Improve lifecycle management of the transaction pool [#5634](https://github.com/hyperledger/besu/pull/5634)
 - Add extension points in AbstractCreateOperation for EVM libraries to react to contract creations [#5656](https://github.com/hyperledger/besu/pull/5656)
 - Update to Tuweni 2.4.2. [#5684](https://github.com/hyperledger/besu/pull/5684)
 - Decouple data field from Enum JsonRpcError by creating new enum holder RpcErrorType[#5629](https://github.com/hyperledger/besu/pull/5629)
-- Update to bouncycastle 1.75 [#5675](https://github.com/hyperledger/besu/pull/5675) 
+- Update to bouncycastle 1.75 [#5675](https://github.com/hyperledger/besu/pull/5675)
 - Extend OperationTracer with new methods [#5662](https://github.com/hyperledger/besu/pull/5662)
 - Eip 6780 selfdestruct [#5430](https://github.com/hyperledger/besu/pull/5430)
 - Add new debug_getRawTransaction to the DEBUG engine [#5635](https://github.com/hyperledger/besu/pull/5635)
@@ -43,11 +42,18 @@
 - Align the implementation of Eth/68 `NewPooledTransactionHashes` to other clients, using unsigned int for encoding size. [#5640](https://github.com/hyperledger/besu/pull/5640)
 - Failure at startup when enabling layered txpool before initial sync done [#5636](https://github.com/hyperledger/besu/issues/5636)
 - Remove miner-related option warnings if the change isn't using Ethash consensus algorithm [#5669](https://github.com/hyperledger/besu/pull/5669)
-- Fix for pending transactions reference leak [#5693](https://github.com/hyperledger/besu/pull/5693) 
+- Fix for pending transactions reference leak [#5693](https://github.com/hyperledger/besu/pull/5693)
+- Address a performance regression observed in import testing [#5734](https://github.com/hyperledger/besu/pull/5734)
+- Update native libraries that have JPMS friendly module names [#5749](https://github.com/hyperledger/besu/pull/5749)
 
 ### Download Links
-https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.0/besu-23.7.0.tar.gz / sha256: 083efc26e22fa20bd04c9a6311e50dd93092f001e5d639d023fd7a61173616dd 
-https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.0/besu-23.7.0.zip / sha256: 019a5ce3b7b94e76a6bac08bc23e3fec9880e235928b3c5378541927690046d7
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.1/besu-23.7.1.tar.gz / sha256: 85dce66c2dbd21b4e5d3310770434dd373018a046b78d5037f6d4955256793cd
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.1/besu-23.7.1.zip / sha256: dfac11b2d6d9e8076ab2f86324d48d563badf76fd2a4aadc4469a97aef374ef5
+
+
+## 23.7.0
+
+- Was not released (failed burn-in test)
 
 
 ## 23.4.4
