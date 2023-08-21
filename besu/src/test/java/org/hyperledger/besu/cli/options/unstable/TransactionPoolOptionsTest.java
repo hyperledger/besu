@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.cli.converter.DurationMillisConverter;
 import org.hyperledger.besu.cli.options.AbstractCLIOptionsTest;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -34,45 +34,51 @@ public class TransactionPoolOptionsTest
   @Test
   public void txMessageKeepAliveSeconds() {
     final int txMessageKeepAliveSeconds = 999;
-    final TestBesuCommand cmd =
-        parseCommand(
-            "--Xincoming-tx-messages-keep-alive-seconds",
-            String.valueOf(txMessageKeepAliveSeconds));
+    internalTestSuccess(
+        config ->
+            assertThat(config.getTxMessageKeepAliveSeconds()).isEqualTo(txMessageKeepAliveSeconds),
+        "--Xincoming-tx-messages-keep-alive-seconds",
+        String.valueOf(txMessageKeepAliveSeconds));
+  }
 
-    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
-    final TransactionPoolConfiguration.Unstable config = options.toDomainObject();
-    assertThat(config.getTxMessageKeepAliveSeconds()).isEqualTo(txMessageKeepAliveSeconds);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  @Test
+  public void txMessageKeepAliveSecondsWithInvalidInputShouldFail() {
+    internalTestFailure(
+        "Invalid value for option '--Xincoming-tx-messages-keep-alive-seconds': 'acbd' is not an int",
+        "--Xincoming-tx-messages-keep-alive-seconds",
+        "acbd");
   }
 
   @Test
   public void eth65TrxAnnouncedBufferingPeriod() {
-    final long eth65TrxAnnouncedBufferingPeriod = 999;
-    final TestBesuCommand cmd =
-        parseCommand(
-            "--Xeth65-tx-announced-buffering-period-milliseconds",
-            String.valueOf(eth65TrxAnnouncedBufferingPeriod));
+    final Duration eth65TrxAnnouncedBufferingPeriod = Duration.ofMillis(999);
+    internalTestSuccess(
+        config ->
+            assertThat(config.getEth65TrxAnnouncedBufferingPeriod())
+                .isEqualTo(eth65TrxAnnouncedBufferingPeriod),
+        "--Xeth65-tx-announced-buffering-period-milliseconds",
+        new DurationMillisConverter().format(eth65TrxAnnouncedBufferingPeriod));
+  }
 
-    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
-    final TransactionPoolConfiguration.Unstable config = options.toDomainObject();
-    assertThat(config.getEth65TrxAnnouncedBufferingPeriod())
-        .hasMillis(eth65TrxAnnouncedBufferingPeriod);
+  @Test
+  public void eth65TrxAnnouncedBufferingPeriodWithInvalidInputShouldFail() {
+    internalTestFailure(
+        "Invalid value for option '--Xeth65-tx-announced-buffering-period-milliseconds': cannot convert 'acbd' to Duration (org.hyperledger.besu.cli.converter.exception.DurationConversionException: 'acbd' is not a long)",
+        "--Xeth65-tx-announced-buffering-period-milliseconds",
+        "acbd");
+  }
 
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  @Test
+  public void eth65TrxAnnouncedBufferingPeriodWithInvalidInputShouldFail2() {
+    internalTestFailure(
+        "Invalid value for option '--Xeth65-tx-announced-buffering-period-milliseconds': cannot convert '-1' to Duration (org.hyperledger.besu.cli.converter.exception.DurationConversionException: negative value '-1' is not allowed)",
+        "--Xeth65-tx-announced-buffering-period-milliseconds",
+        "-1");
   }
 
   @Override
   protected TransactionPoolConfiguration.Unstable createDefaultDomainObject() {
-    final ImmutableTransactionPoolConfiguration.Unstable defaultValue =
-        ImmutableTransactionPoolConfiguration.Unstable.builder().build();
-    return ImmutableTransactionPoolConfiguration.Unstable.builder()
-        .from(defaultValue)
-        .txMessageKeepAliveSeconds(defaultValue.getTxMessageKeepAliveSeconds())
-        .eth65TrxAnnouncedBufferingPeriod(defaultValue.getEth65TrxAnnouncedBufferingPeriod())
-        .build();
+    return TransactionPoolConfiguration.Unstable.DEFAULT;
   }
 
   @Override

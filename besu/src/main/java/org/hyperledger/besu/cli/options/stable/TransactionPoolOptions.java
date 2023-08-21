@@ -23,7 +23,6 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConf
 import org.hyperledger.besu.cli.converter.FractionConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.options.CLIOptions;
-import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -32,16 +31,11 @@ import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.io.File;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 import picocli.CommandLine;
 
+/** The Transaction pool Cli stable options. */
 public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfiguration> {
   private static final String TX_POOL_IMPLEMENTATION = "--tx-pool";
   private static final String TX_POOL_DISABLE_LOCALS = "--tx-pool-disable-locals";
@@ -126,7 +120,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         description =
             "Max amount of memory space, in bytes, that any layer within the transaction pool could occupy (default: ${DEFAULT-VALUE})",
         arity = "1")
-    long txPoolLayerMaxCapacity =
+    Long txPoolLayerMaxCapacity =
         TransactionPoolConfiguration.DEFAULT_PENDING_TRANSACTIONS_LAYER_MAX_CAPACITY_BYTES;
 
     @CommandLine.Option(
@@ -135,7 +129,8 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         description =
             "Max number of pending transactions that are prioritized and thus kept sorted (default: ${DEFAULT-VALUE})",
         arity = "1")
-    int txPoolMaxPrioritized = TransactionPoolConfiguration.DEFAULT_MAX_PRIORITIZED_TRANSACTIONS;
+    Integer txPoolMaxPrioritized =
+        TransactionPoolConfiguration.DEFAULT_MAX_PRIORITIZED_TRANSACTIONS;
 
     @CommandLine.Option(
         names = {TX_POOL_MAX_FUTURE_BY_SENDER},
@@ -143,7 +138,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         description =
             "Max number of future pending transactions allowed for a single sender (default: ${DEFAULT-VALUE})",
         arity = "1")
-    int txPoolMaxFutureBySender = TransactionPoolConfiguration.DEFAULT_MAX_FUTURE_BY_SENDER;
+    Integer txPoolMaxFutureBySender = TransactionPoolConfiguration.DEFAULT_MAX_FUTURE_BY_SENDER;
   }
 
   @CommandLine.ArgGroup(
@@ -163,7 +158,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         description =
             "Maximum retention period of pending transactions in hours (default: ${DEFAULT-VALUE})",
         arity = "1")
-    int pendingTxRetentionPeriod = TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
+    Integer pendingTxRetentionPeriod = TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
 
     @CommandLine.Option(
         names = {TX_POOL_LIMIT_BY_ACCOUNT_PERCENTAGE},
@@ -181,7 +176,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         description =
             "Maximum number of pending transactions that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
         arity = "1")
-    int txPoolMaxSize = TransactionPoolConfiguration.DEFAULT_MAX_PENDING_TRANSACTIONS;
+    Integer txPoolMaxSize = TransactionPoolConfiguration.DEFAULT_MAX_PENDING_TRANSACTIONS;
   }
 
   private TransactionPoolOptions() {}
@@ -222,34 +217,24 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
     return options;
   }
 
+  /**
+   * Validate that there are no inconsistencies in the specified options. For example that the
+   * options are valid for the selected implementation.
+   *
+   * @param commandLine the full commandLine to check all the options specified by the user
+   */
   public void validate(final CommandLine commandLine) {
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
         "Could not use legacy transaction pool options with layered implementation",
         !txPoolImplementation.equals(LAYERED),
-        allOptionsOfGroup(Legacy.class));
+        CommandLineUtils.getCLIOptionNames(Legacy.class));
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
         "Could not use layered transaction pool options with legacy implementation",
         !txPoolImplementation.equals(LEGACY),
-        allOptionsOfGroup(Layered.class));
-  }
-
-  private List<String> allOptionsOfGroup(final Class<?> group) {
-    return Arrays.stream(group.getDeclaredFields())
-        .filter(f -> Modifier.isStatic(f.getModifiers()))
-        .map(
-            f -> {
-              try {
-                return f.get(null);
-              } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-              }
-            })
-        .filter(o -> o instanceof String)
-        .map(String.class::cast)
-        .toList();
+        CommandLineUtils.getCLIOptionNames(Layered.class));
   }
 
   @Override
@@ -273,39 +258,6 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
 
   @Override
   public List<String> getCLIOptions() {
-    return getCLIOptions(getClass(), this, new TransactionPoolOptions());
-  }
-
-  private List<String> getCLIOptions(
-      final Class<?> startClass, final Object currOptions, final Object defaults) {
-    List<String> cliOpts = new ArrayList<>();
-    Field[] fields = startClass.getDeclaredFields();
-    for (Field field : fields) {
-      Annotation optionAnnotation = field.getAnnotation(CommandLine.Option.class);
-      if (optionAnnotation != null) {
-        try {
-          var optVal = field.get(currOptions);
-          if (!Objects.equals(optVal, field.get(defaults))) {
-            var optAnn = CommandLine.Option.class.cast(optionAnnotation);
-            String optName = optAnn.names()[0];
-            cliOpts.add(optName);
-            cliOpts.add(OptionParser.format(optVal));
-          }
-        } catch (IllegalAccessException e) {
-          throw new RuntimeException(e);
-        }
-      } else {
-        Annotation groupAnnotation = field.getAnnotation(CommandLine.ArgGroup.class);
-        if (groupAnnotation != null) {
-          try {
-            cliOpts.addAll(
-                getCLIOptions(field.getType(), field.get(currOptions), field.get(defaults)));
-          } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-          }
-        }
-      }
-    }
-    return cliOpts;
+    return CommandLineUtils.getCLIOptions(this, new TransactionPoolOptions());
   }
 }

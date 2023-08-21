@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTran
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -264,11 +264,10 @@ public class TransactionPoolFactory {
 
     final AbstractPrioritizedTransactions pendingTransactionsSorter;
     if (isFeeMarketImplementBaseFee) {
-      final BaseFeeMarket baseFeeMarket =
-          (BaseFeeMarket)
-              protocolSchedule
-                  .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
-                  .getFeeMarket();
+      final FeeMarket feeMarket =
+          protocolSchedule
+              .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
+              .getFeeMarket();
 
       pendingTransactionsSorter =
           new BaseFeePrioritizedTransactions(
@@ -277,7 +276,7 @@ public class TransactionPoolFactory {
               readyTransactions,
               metrics,
               transactionReplacementTester,
-              baseFeeMarket);
+              feeMarket);
     } else {
       pendingTransactionsSorter =
           new GasPricePrioritizedTransactions(

@@ -168,8 +168,9 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
-   * Sets experimental layered txpool enabled.
+   * Sets the txpool implementation in use.
    *
+   * @param implementation the txpool implementation
    * @return the builder
    */
   public ConfigurationOverviewBuilder setTxPoolImplementation(

@@ -112,12 +112,21 @@ public class OptionParser {
     return format(value.toUInt256());
   }
 
+  /**
+   * Format any object to string. This implementation tries to find an existing format method, in
+   * this class, that matches the type of the passed object, and if not found just invoke, to string
+   * on the passed object
+   *
+   * @param value the object
+   * @return the string
+   */
   public static String format(final Object value) {
     Method formatMethod;
     try {
       formatMethod = OptionParser.class.getMethod("format", value.getClass());
     } catch (NoSuchMethodException e) {
       try {
+        // maybe a primitive version of the method exists
         formatMethod =
             OptionParser.class.getMethod(
                 "format", MethodType.methodType(value.getClass()).unwrap().returnType());

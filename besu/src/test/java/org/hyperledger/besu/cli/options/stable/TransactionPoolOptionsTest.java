@@ -14,16 +14,16 @@
  */
 package org.hyperledger.besu.cli.options.stable;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LEGACY;
 
 import org.hyperledger.besu.cli.options.AbstractCLIOptionsTest;
+import org.hyperledger.besu.cli.options.OptionParser;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
-
-import java.util.function.Consumer;
+import org.hyperledger.besu.util.number.Percentage;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,6 +58,118 @@ public class TransactionPoolOptionsTest
   public void strictTxReplayProtection_default() {
     internalTestSuccess(
         config -> assertThat(config.getStrictTransactionReplayProtectionEnabled()).isFalse());
+  }
+
+  @Test
+  public void pendingTransactionRetentionPeriod() {
+    final int pendingTxRetentionHours = 999;
+    internalTestSuccess(
+        config ->
+            assertThat(config.getPendingTxRetentionPeriod()).isEqualTo(pendingTxRetentionHours),
+        "--tx-pool-retention-hours",
+        String.valueOf(pendingTxRetentionHours),
+        "--tx-pool=legacy");
+  }
+
+  @Test
+  public void disableLocalsDefault() {
+    internalTestSuccess(config -> assertThat(config.getDisableLocalTransactions()).isFalse());
+  }
+
+  @Test
+  public void disableLocalsOn() {
+    internalTestSuccess(
+        config -> assertThat(config.getDisableLocalTransactions()).isTrue(),
+        "--tx-pool-disable-locals=true");
+  }
+
+  @Test
+  public void disableLocalsOff() {
+    internalTestSuccess(
+        config -> assertThat(config.getDisableLocalTransactions()).isFalse(),
+        "--tx-pool-disable-locals=false");
+  }
+
+  @Test
+  public void saveToFileDisabledByDefault() {
+    internalTestSuccess(config -> assertThat(config.getEnableSaveRestore()).isFalse());
+  }
+
+  @Test
+  public void saveToFileEnabledDefaultPath() {
+    internalTestSuccess(
+        config -> assertThat(config.getEnableSaveRestore()).isTrue(),
+        "--tx-pool-enable-save-restore=true");
+  }
+
+  @Test
+  public void saveToFileEnabledCustomPath() {
+    internalTestSuccess(
+        config -> {
+          assertThat(config.getEnableSaveRestore()).isTrue();
+          assertThat(config.getSaveFile()).hasName("my.save.file");
+        },
+        "--tx-pool-enable-save-restore=true",
+        "--tx-pool-save-file=my.save.file");
+  }
+
+  @Test
+  public void senderLimited_derived() {
+    internalTestSuccess(
+        config -> assertThat(config.getTxPoolMaxFutureTransactionByAccount()).isEqualTo(9),
+        "--tx-pool-limit-by-account-percentage=0.002",
+        "--tx-pool=legacy");
+  }
+
+  @Test
+  public void senderLimitedFloor_derived() {
+    internalTestSuccess(
+        config -> assertThat(config.getTxPoolMaxFutureTransactionByAccount()).isEqualTo(1),
+        "--tx-pool-limit-by-account-percentage=0.0001",
+        "--tx-pool=legacy");
+  }
+
+  @Test
+  public void senderLimitedCeiling_violated() {
+    internalTestFailure(
+        "Invalid value for option '--tx-pool-limit-by-account-percentage'",
+        "--tx-pool-limit-by-account-percentage=1.00002341",
+        "--tx-pool=legacy");
+  }
+
+  @Test
+  public void priceBump() {
+    final Percentage priceBump = Percentage.fromInt(13);
+    internalTestSuccess(
+        config -> assertThat(config.getPriceBump()).isEqualTo(priceBump),
+        "--tx-pool-price-bump",
+        priceBump.toString());
+  }
+
+  @Test
+  public void invalidPriceBumpShouldFail() {
+    internalTestFailure(
+        "Invalid value: 101, should be a number between 0 and 100 inclusive",
+        "--tx-pool-price-bump",
+        "101");
+  }
+
+  @Test
+  public void txFeeCap() {
+    final Wei txFeeCap = Wei.fromEth(2);
+    internalTestSuccess(
+        config -> assertThat(config.getTxFeeCap()).isEqualTo(txFeeCap),
+        "--rpc-tx-feecap",
+        OptionParser.format(txFeeCap));
+  }
+
+  @Test
+  public void invalidTxFeeCapShouldFail() {
+    internalTestFailure(
+        "Invalid value for option '--rpc-tx-feecap'",
+        "cannot convert 'abcd' to Wei",
+        "--rpc-tx-feecap",
+        "abcd");
   }
 
   @Test
@@ -102,28 +214,9 @@ public class TransactionPoolOptionsTest
         "--tx-pool-max-prioritized=1000");
   }
 
-  private void internalTestSuccess(
-      final Consumer<TransactionPoolConfiguration> assertion, final String... args) {
-    final TestBesuCommand cmd = parseCommand(args);
-
-    final TransactionPoolOptions options = getOptionsFromBesuCommand(cmd);
-    final TransactionPoolConfiguration config = options.toDomainObject();
-    assertion.accept(config);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  private void internalTestFailure(final String errorMsg, final String... args) {
-    parseCommand(args);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).contains(errorMsg);
-  }
-
   @Override
   protected TransactionPoolConfiguration createDefaultDomainObject() {
-    return ImmutableTransactionPoolConfiguration.builder().build();
+    return TransactionPoolConfiguration.DEFAULT;
   }
 
   @Override

@@ -29,7 +29,7 @@ import org.immutables.value.Value;
 public interface TransactionPoolConfiguration {
 
   @Value.Immutable
-  public interface Unstable {
+  interface Unstable {
     Duration ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD = Duration.ofMillis(500);
     int DEFAULT_TX_MSG_KEEP_ALIVE = 60;
 
