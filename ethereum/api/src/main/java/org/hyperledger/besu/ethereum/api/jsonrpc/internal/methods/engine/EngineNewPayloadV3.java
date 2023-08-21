@@ -44,9 +44,9 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
   }
 
   @Override
-  protected ValidationResult<RpcErrorType> validateParameter(final EnginePayloadParameter payloadParameter) {
-    if (payloadParameter.getBlobGasUsed() == null
-        || payloadParameter.getExcessBlobGas() == null) {
+  protected ValidationResult<RpcErrorType> validateParameter(
+      final EnginePayloadParameter payloadParameter) {
+    if (payloadParameter.getBlobGasUsed() == null || payloadParameter.getExcessBlobGas() == null) {
       return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing blob gas fields");
     } else {
       return ValidationResult.valid();
