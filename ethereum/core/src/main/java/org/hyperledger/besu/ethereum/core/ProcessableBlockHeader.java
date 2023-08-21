@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.frame.BlockValues;
@@ -44,10 +44,10 @@ public class ProcessableBlockHeader implements BlockValues {
   protected final Wei baseFee;
   // prevRandao is included for post-merge blocks
   protected final Bytes32 mixHashOrPrevRandao;
-  // dataGasUsed is included for Cancun
-  protected final Optional<Long> dataGasUsed;
-  // excessDataGas is included for Cancun
-  protected final Optional<DataGas> excessDataGas;
+  // blobGasUsed is included for Cancun
+  protected final Optional<Long> blobGasUsed;
+  // excessBlogGas is included for Cancun
+  protected final Optional<BlobGas> excessBlobGas;
   // parentBeaconBlockRoot is included for Cancun
   protected final Bytes32 parentBeaconBlockRoot;
 
@@ -60,8 +60,8 @@ public class ProcessableBlockHeader implements BlockValues {
       final long timestamp,
       final Wei baseFee,
       final Bytes32 mixHashOrPrevRandao,
-      final Long dataGasUsed,
-      final DataGas excessDataGas,
+      final Long blobGasUsed,
+      final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot) {
     this.parentHash = parentHash;
     this.coinbase = coinbase;
@@ -71,8 +71,8 @@ public class ProcessableBlockHeader implements BlockValues {
     this.timestamp = timestamp;
     this.baseFee = baseFee;
     this.mixHashOrPrevRandao = mixHashOrPrevRandao;
-    this.dataGasUsed = Optional.ofNullable(dataGasUsed);
-    this.excessDataGas = Optional.ofNullable(excessDataGas);
+    this.blobGasUsed = Optional.ofNullable(blobGasUsed);
+    this.excessBlobGas = Optional.ofNullable(excessBlobGas);
     this.parentBeaconBlockRoot = parentBeaconBlockRoot;
   }
 
@@ -172,12 +172,12 @@ public class ProcessableBlockHeader implements BlockValues {
     return Optional.ofNullable(mixHashOrPrevRandao);
   }
 
-  public Optional<DataGas> getExcessDataGas() {
-    return excessDataGas;
+  public Optional<BlobGas> getExcessBlobGas() {
+    return excessBlobGas;
   }
 
-  public Optional<Long> getDataGasUsed() {
-    return dataGasUsed;
+  public Optional<Long> getBlobGasUsed() {
+    return blobGasUsed;
   }
 
   public Optional<Bytes32> getParentBeaconBlockRoot() {

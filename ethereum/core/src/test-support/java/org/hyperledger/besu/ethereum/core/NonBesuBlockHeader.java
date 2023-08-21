@@ -125,12 +125,12 @@ public class NonBesuBlockHeader implements BlockHeader {
   }
 
   @Override
-  public Optional<? extends Quantity> getExcessDataGas() {
+  public Optional<? extends Quantity> getExcessBlobGas() {
     return Optional.empty();
   }
 
   @Override
-  public Optional<? extends Long> getDataGasUsed() {
+  public Optional<? extends Long> getBlobGasUsed() {
     return Optional.empty();
   }
 

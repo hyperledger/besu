@@ -248,12 +248,21 @@ public class GenesisConfigFile {
   }
 
   /**
-   * Gets excess data gas.
+   * Gets excess blob gas.
    *
-   * @return the excess data gas
+   * @return the excess blob gas
    */
-  public String getExcessDataGas() {
+  public String getExcessBlobGas() {
     return JsonUtil.getValueAsString(configRoot, "excessblobgas", "0x0");
+  }
+
+  /**
+   * Gets blob gas used.
+   *
+   * @return the blob gas used
+   */
+  public String getBlobGasUsed() {
+    return JsonUtil.getValueAsString(configRoot, "blobgasused", "0x0");
   }
 
   /**
@@ -266,15 +275,6 @@ public class GenesisConfigFile {
         configRoot,
         "parentbeaconblockroot",
         "0x0000000000000000000000000000000000000000000000000000000000000000");
-  }
-
-  /**
-   * Gets data gas used.
-   *
-   * @return the data gas used
-   */
-  public String getDataGasUsed() {
-    return JsonUtil.getValueAsString(configRoot, "blobgasused", "0x0");
   }
 
   /**

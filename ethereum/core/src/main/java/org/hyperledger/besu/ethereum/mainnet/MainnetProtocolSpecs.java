@@ -656,9 +656,9 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             evmConfiguration)
         .feeMarket(cancunFeeMarket)
-        // gas calculator for EIP-4844 data gas
+        // gas calculator for EIP-4844 blob gas
         .gasCalculator(CancunGasCalculator::new)
-        // gas limit with EIP-4844 max data gas per block
+        // gas limit with EIP-4844 max blob gas per block
         .gasLimitCalculatorBuilder(
             feeMarket ->
                 new CancunTargetingGasLimitCalculator(
@@ -696,7 +696,7 @@ public abstract class MainnetProtocolSpecs {
                     stackSizeLimit,
                     feeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
-        // change to check for max data gas per block for EIP-4844
+        // change to check for max blob gas per block for EIP-4844
         .transactionValidatorFactoryBuilder(
             (gasCalculator, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(

@@ -498,7 +498,7 @@ public class MainnetTransactionValidatorTest {
             .type(TransactionType.BLOB)
             .chainId(Optional.of(BigInteger.ONE))
             .maxFeePerGas(Optional.of(Wei.of(15)))
-            .maxFeePerDataGas(Optional.of(Wei.of(128)))
+            .maxFeePerBlobGas(Optional.of(Wei.of(128)))
             .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
             .blobsWithCommitments(
                 Optional.of(
@@ -523,7 +523,7 @@ public class MainnetTransactionValidatorTest {
 
   @Test
   public void shouldAcceptTransactionWithAtLeastOneBlob() {
-    when(gasCalculator.dataGasCost(anyInt())).thenReturn(2L);
+    when(gasCalculator.blobGasCost(anyInt())).thenReturn(2L);
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator,
@@ -542,7 +542,7 @@ public class MainnetTransactionValidatorTest {
             .type(TransactionType.BLOB)
             .chainId(Optional.of(BigInteger.ONE))
             .maxFeePerGas(Optional.of(Wei.of(15)))
-            .maxFeePerDataGas(Optional.of(Wei.of(128)))
+            .maxFeePerBlobGas(Optional.of(Wei.of(128)))
             .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
             .blobsWithCommitments(Optional.of(bwc))
             .versionedHashes(Optional.of(bwc.getVersionedHashes()))

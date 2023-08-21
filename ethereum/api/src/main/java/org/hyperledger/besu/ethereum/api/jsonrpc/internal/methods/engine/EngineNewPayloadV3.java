@@ -59,8 +59,8 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
       final Optional<Bytes32> maybeParentBeaconBlockRoot) {
 
     if (payloadParameter.getTimestamp() >= cancunTimestamp) {
-      if (payloadParameter.getDataGasUsed() == null
-          || payloadParameter.getExcessDataGas() == null) {
+      if (payloadParameter.getBlobGasUsed() == null
+          || payloadParameter.getExcessBlobGas() == null) {
         return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing blob gas fields");
       } else if (maybeParentBeaconBlockRoot.isEmpty()) {
         return ValidationResult.invalid(

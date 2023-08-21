@@ -74,8 +74,8 @@ public class EngineGetPayloadResultV3 {
     private final String timestamp;
     private final String extraData;
     private final String baseFeePerGas;
-    private final String dataGasUsed;
-    private final String excessDataGas;
+    private final String excessBlobGas;
+    private final String blobGasUsed;
     private final String parentBeaconBlockRoot;
 
     protected final List<String> transactions;
@@ -107,9 +107,9 @@ public class EngineGetPayloadResultV3 {
                           .map(WithdrawalParameter::fromWithdrawal)
                           .collect(Collectors.toList()))
               .orElse(null);
-      this.dataGasUsed = header.getDataGasUsed().map(Quantity::create).orElse(Quantity.HEX_ZERO);
-      this.excessDataGas =
-          header.getExcessDataGas().map(Quantity::create).orElse(Quantity.HEX_ZERO);
+      this.blobGasUsed = header.getBlobGasUsed().map(Quantity::create).orElse(Quantity.HEX_ZERO);
+      this.excessBlobGas =
+          header.getExcessBlobGas().map(Quantity::create).orElse(Quantity.HEX_ZERO);
       this.parentBeaconBlockRoot =
           header.getParentBeaconBlockRoot().map(Bytes32::toHexString).orElse(null);
     }
@@ -191,13 +191,13 @@ public class EngineGetPayloadResultV3 {
     }
 
     @JsonGetter(value = "excessBlobGas")
-    public String getExcessDataGas() {
-      return excessDataGas;
+    public String getExcessBlobGas() {
+      return excessBlobGas;
     }
 
     @JsonGetter(value = "blobGasUsed")
-    public String getDataGasUseds() {
-      return dataGasUsed;
+    public String getBlobGasUseds() {
+      return blobGasUsed;
     }
 
     @JsonGetter(value = "parentBeaconBlockRoot")

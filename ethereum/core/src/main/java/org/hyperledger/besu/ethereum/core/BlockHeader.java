@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -61,8 +61,8 @@ public class BlockHeader extends SealableBlockHeader
       final Bytes32 mixHashOrPrevRandao,
       final long nonce,
       final Hash withdrawalsRoot,
-      final Long dataGasUsed,
-      final DataGas excessDataGas,
+      final Long blobGasUsed,
+      final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot,
       final Hash depositsRoot,
       final BlockHeaderFunctions blockHeaderFunctions) {
@@ -83,8 +83,8 @@ public class BlockHeader extends SealableBlockHeader
         baseFee,
         mixHashOrPrevRandao,
         withdrawalsRoot,
-        dataGasUsed,
-        excessDataGas,
+        blobGasUsed,
+        excessBlobGas,
         parentBeaconBlockRoot,
         depositsRoot);
     this.nonce = nonce;
@@ -169,9 +169,9 @@ public class BlockHeader extends SealableBlockHeader
     if (withdrawalsRoot != null) {
       out.writeBytes(withdrawalsRoot);
     }
-    if (excessDataGas.isPresent() && dataGasUsed.isPresent()) {
-      out.writeLongScalar(dataGasUsed.get());
-      out.writeUInt64Scalar(excessDataGas.get());
+    if (excessBlobGas.isPresent() && blobGasUsed.isPresent()) {
+      out.writeLongScalar(blobGasUsed.get());
+      out.writeUInt64Scalar(excessBlobGas.get());
     }
     if (parentBeaconBlockRoot != null) {
       out.writeBytes(parentBeaconBlockRoot);
@@ -205,9 +205,9 @@ public class BlockHeader extends SealableBlockHeader
         !(input.isEndOfCurrentList() || input.isZeroLengthString())
             ? Hash.wrap(input.readBytes32())
             : null;
-    final Long dataGasUsed = !input.isEndOfCurrentList() ? input.readLongScalar() : null;
-    final DataGas excessDataGas =
-        !input.isEndOfCurrentList() ? DataGas.of(input.readLongScalar()) : null;
+    final Long blobGasUsed = !input.isEndOfCurrentList() ? input.readLongScalar() : null;
+    final BlobGas excessBlobGas =
+        !input.isEndOfCurrentList() ? BlobGas.of(input.readLongScalar()) : null;
     final Bytes32 parentBeaconBlockRoot = !input.isEndOfCurrentList() ? input.readBytes32() : null;
     final Hash depositHashRoot =
         !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
@@ -230,8 +230,8 @@ public class BlockHeader extends SealableBlockHeader
         mixHashOrPrevRandao,
         nonce,
         withdrawalHashRoot,
-        dataGasUsed,
-        excessDataGas,
+        blobGasUsed,
+        excessBlobGas,
         parentBeaconBlockRoot,
         depositHashRoot,
         blockHeaderFunctions);
@@ -278,8 +278,8 @@ public class BlockHeader extends SealableBlockHeader
     if (withdrawalsRoot != null) {
       sb.append("withdrawalsRoot=").append(withdrawalsRoot).append(", ");
     }
-    dataGasUsed.ifPresent(aLong -> sb.append("dataGasUsed=").append(aLong).append(", "));
-    excessDataGas.ifPresent(dataGas -> sb.append("excessDataGas=").append(dataGas).append(", "));
+    blobGasUsed.ifPresent(aLong -> sb.append("blobGasUsed=").append(aLong).append(", "));
+    excessBlobGas.ifPresent(blobGas -> sb.append("excessBlobGas=").append(blobGas).append(", "));
     if (parentBeaconBlockRoot != null) {
       sb.append("parentBeaconBlockRoot=").append(parentBeaconBlockRoot).append(", ");
     }
@@ -313,8 +313,8 @@ public class BlockHeader extends SealableBlockHeader
             .getWithdrawalsRoot()
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
-        pluginBlockHeader.getDataGasUsed().map(Long::longValue).orElse(null),
-        pluginBlockHeader.getExcessDataGas().map(DataGas::fromQuantity).orElse(null),
+        pluginBlockHeader.getBlobGasUsed().map(Long::longValue).orElse(null),
+        pluginBlockHeader.getExcessBlobGas().map(BlobGas::fromQuantity).orElse(null),
         pluginBlockHeader.getParentBeaconBlockRoot().orElse(null),
         pluginBlockHeader
             .getDepositsRoot()
