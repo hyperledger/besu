@@ -15,6 +15,7 @@
 - Add type to PendingTransactionDetail, fix eth_subscribe [#5729](https://github.com/hyperledger/besu/pull/5729)
 - EvmTool "run" mode did not reflect contracts created within the transaction. [#5755](https://github.com/hyperledger/besu/pull/5755)
 - Update native libraries that have JPMS friendly module names [#5749](https://github.com/hyperledger/besu/pull/5749)
+- Fixing snapsync issue with forest during the heal step [#5776](https://github.com/hyperledger/besu/pull/5776)
 
 ### Download Links
 
