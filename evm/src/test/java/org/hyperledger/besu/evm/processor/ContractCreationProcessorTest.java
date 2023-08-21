@@ -43,7 +43,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @Nested
 @ExtendWith(MockitoExtension.class)
-class ContractCreationProcessorTest extends AbstractMessageProcessorTest<ContractCreationProcessor> {
+class ContractCreationProcessorTest
+    extends AbstractMessageProcessorTest<ContractCreationProcessor> {
 
   @Mock GasCalculator gasCalculator;
   @Mock EVM evm;
@@ -299,6 +300,7 @@ class ContractCreationProcessorTest extends AbstractMessageProcessorTest<Contrac
 
   @Override
   protected ContractCreationProcessor getAbstractMessageProcessor() {
-    return new ContractCreationProcessor(gasCalculator, evm, true, Collections.emptyList(), 1, Collections.emptyList());
+    return new ContractCreationProcessor(
+        gasCalculator, evm, true, Collections.emptyList(), 1, Collections.emptyList());
   }
 }
