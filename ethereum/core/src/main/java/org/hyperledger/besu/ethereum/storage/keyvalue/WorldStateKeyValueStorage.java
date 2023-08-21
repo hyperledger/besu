@@ -79,7 +79,7 @@ public class WorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
-  public Optional<Bytes> getUnSafeTrieNode(final Bytes key) {
+  public Optional<Bytes> getTrieNodeUnsafe(final Bytes key) {
     return keyValueStorage.get(key.toArrayUnsafe()).map(Bytes::wrap);
   }
 

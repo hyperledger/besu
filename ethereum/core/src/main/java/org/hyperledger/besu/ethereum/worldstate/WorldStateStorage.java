@@ -33,7 +33,14 @@ public interface WorldStateStorage {
 
   Optional<Bytes> getAccountStorageTrieNode(Hash accountHash, Bytes location, Bytes32 nodeHash);
 
-  Optional<Bytes> getUnSafeTrieNode(Bytes key);
+  /**
+   * This method allows obtaining a TrieNode in an unsafe manner, without verifying the consistency
+   * of the obtained node. Checks such as node hash verification are not performed here.
+   *
+   * @param key of the trie node
+   * @return value of the trie node
+   */
+  Optional<Bytes> getTrieNodeUnsafe(Bytes key);
 
   Optional<Bytes> getNodeData(Bytes location, Bytes32 hash);
 

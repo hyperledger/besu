@@ -180,11 +180,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   @Override
-  public Optional<Bytes> getUnSafeTrieNode(final Bytes key) {
-    /*This method allows obtaining a TrieNode in an unsafe manner,
-    without verifying the consistency of the obtained node. Checks such as
-    node hash verification are not performed here.
-     */
+  public Optional<Bytes> getTrieNodeUnsafe(final Bytes key) {
     return composedWorldStateStorage
         .get(TRIE_BRANCH_STORAGE, Bytes.concatenate(key).toArrayUnsafe())
         .map(Bytes::wrap);

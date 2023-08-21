@@ -63,10 +63,10 @@ public class StorageTrieNodeHealingRequest extends TrieNodeHealingRequest {
 
     final Optional<Bytes> storageTrieNode;
     if (worldStateStorage.getDataStorageFormat().equals(DataStorageFormat.FOREST)) {
-      storageTrieNode = worldStateStorage.getUnSafeTrieNode(getNodeHash());
+      storageTrieNode = worldStateStorage.getTrieNodeUnsafe(getNodeHash());
     } else {
       storageTrieNode =
-          worldStateStorage.getUnSafeTrieNode(Bytes.concatenate(getAccountHash(), getLocation()));
+          worldStateStorage.getTrieNodeUnsafe(Bytes.concatenate(getAccountHash(), getLocation()));
     }
 
     if (storageTrieNode.isPresent()) {

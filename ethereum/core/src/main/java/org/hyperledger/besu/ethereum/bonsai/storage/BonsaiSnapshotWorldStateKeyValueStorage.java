@@ -96,8 +96,8 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   @Override
-  public Optional<Bytes> getUnSafeTrieNode(final Bytes key) {
-    return isClosedGet() ? Optional.empty() : super.getUnSafeTrieNode(key);
+  public Optional<Bytes> getTrieNodeUnsafe(final Bytes key) {
+    return isClosedGet() ? Optional.empty() : super.getTrieNodeUnsafe(key);
   }
 
   @Override
