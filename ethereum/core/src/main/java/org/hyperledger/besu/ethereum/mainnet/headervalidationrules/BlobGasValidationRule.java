@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.headervalidationrules;
 
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.DetachedBlockHeaderValidationRule;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -22,35 +22,35 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Validation rule to check if the block header's excess data gas matches the calculated value. */
-public class DataGasValidationRule implements DetachedBlockHeaderValidationRule {
+/** Validation rule to check if the block header's excess blob gas matches the calculated value. */
+public class BlobGasValidationRule implements DetachedBlockHeaderValidationRule {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DataGasValidationRule.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BlobGasValidationRule.class);
 
   private final GasCalculator gasCalculator;
 
-  public DataGasValidationRule(final GasCalculator gasCalculator) {
+  public BlobGasValidationRule(final GasCalculator gasCalculator) {
     this.gasCalculator = gasCalculator;
   }
 
   /**
-   * Validates the block header by checking if the header's excess data gas matches the calculated
+   * Validates the block header by checking if the header's excess blob gas matches the calculated
    * value based on the parent header.
    */
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
-    long headerExcessDataGas = header.getExcessDataGas().map(DataGas::toLong).orElse(0L);
-    long parentExcessDataGas = parent.getExcessDataGas().map(DataGas::toLong).orElse(0L);
-    long parentDataGasUsed = parent.getDataGasUsed().orElse(0L);
+    long headerExcessBlobGas = header.getExcessBlobGas().map(BlobGas::toLong).orElse(0L);
+    long parentExcessBlobGas = parent.getExcessBlobGas().map(BlobGas::toLong).orElse(0L);
+    long parentBlobGasUsed = parent.getBlobGasUsed().orElse(0L);
 
-    long calculatedExcessDataGas =
-        gasCalculator.computeExcessDataGas(parentExcessDataGas, parentDataGasUsed);
+    long calculatedExcessBlobGas =
+        gasCalculator.computeExcessBlobGas(parentExcessBlobGas, parentBlobGasUsed);
 
-    if (headerExcessDataGas != calculatedExcessDataGas) {
+    if (headerExcessBlobGas != calculatedExcessBlobGas) {
       LOG.info(
-          "Invalid block header: header excessDataGas {} and calculated excessDataGas {} do not match",
-          headerExcessDataGas,
-          calculatedExcessDataGas);
+          "Invalid block header: header excessBlobGas {} and calculated excessBlobGas {} do not match",
+          headerExcessBlobGas,
+          calculatedExcessBlobGas);
       return false;
     }
     return true;

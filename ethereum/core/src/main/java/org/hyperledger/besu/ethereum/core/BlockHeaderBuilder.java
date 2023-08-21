@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -73,8 +73,8 @@ public class BlockHeaderBuilder {
   // instead of an invalid identifier such as -1.
   private OptionalLong nonce = OptionalLong.empty();
 
-  private Long dataGasUsed = null;
-  private DataGas excessDataGas = null;
+  private Long blobGasUsed = null;
+  private BlobGas excessBlobGas = null;
 
   public static BlockHeaderBuilder create() {
     return new BlockHeaderBuilder();
@@ -120,8 +120,8 @@ public class BlockHeaderBuilder {
         .nonce(header.getNonce())
         .prevRandao(header.getPrevRandao().orElse(null))
         .withdrawalsRoot(header.getWithdrawalsRoot().orElse(null))
-        .dataGasUsed(header.getDataGasUsed().orElse(null))
-        .excessDataGas(header.getExcessDataGas().orElse(null))
+        .blobGasUsed(header.getBlobGasUsed().orElse(null))
+        .excessBlobGas(header.getExcessBlobGas().orElse(null))
         .depositsRoot(header.getDepositsRoot().orElse(null));
   }
 
@@ -144,7 +144,7 @@ public class BlockHeaderBuilder {
             .baseFee(fromBuilder.baseFee)
             .prevRandao(fromBuilder.mixHashOrPrevRandao)
             .withdrawalsRoot(fromBuilder.withdrawalsRoot)
-            .excessDataGas(fromBuilder.excessDataGas)
+            .excessBlobGas(fromBuilder.excessBlobGas)
             .depositsRoot(fromBuilder.depositsRoot)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
@@ -172,8 +172,8 @@ public class BlockHeaderBuilder {
         mixHashOrPrevRandao,
         nonce.getAsLong(),
         withdrawalsRoot,
-        dataGasUsed,
-        excessDataGas,
+        blobGasUsed,
+        excessBlobGas,
         depositsRoot,
         blockHeaderFunctions);
   }
@@ -190,8 +190,8 @@ public class BlockHeaderBuilder {
         timestamp,
         baseFee,
         mixHashOrPrevRandao,
-        dataGasUsed,
-        excessDataGas);
+        blobGasUsed,
+        excessBlobGas);
   }
 
   public SealableBlockHeader buildSealableBlockHeader() {
@@ -214,8 +214,8 @@ public class BlockHeaderBuilder {
         baseFee,
         mixHashOrPrevRandao,
         withdrawalsRoot,
-        dataGasUsed,
-        excessDataGas,
+        blobGasUsed,
+        excessBlobGas,
         depositsRoot);
   }
 
@@ -256,8 +256,8 @@ public class BlockHeaderBuilder {
     timestamp(processableBlockHeader.getTimestamp());
     baseFee(processableBlockHeader.getBaseFee().orElse(null));
     processableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
-    processableBlockHeader.getDataGasUsed().ifPresent(this::dataGasUsed);
-    processableBlockHeader.getExcessDataGas().ifPresent(this::excessDataGas);
+    processableBlockHeader.getBlobGasUsed().ifPresent(this::blobGasUsed);
+    processableBlockHeader.getExcessBlobGas().ifPresent(this::excessBlobGas);
     return this;
   }
 
@@ -279,8 +279,8 @@ public class BlockHeaderBuilder {
     baseFee(sealableBlockHeader.getBaseFee().orElse(null));
     sealableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
     withdrawalsRoot(sealableBlockHeader.getWithdrawalsRoot().orElse(null));
-    sealableBlockHeader.getDataGasUsed().ifPresent(this::dataGasUsed);
-    sealableBlockHeader.getExcessDataGas().ifPresent(this::excessDataGas);
+    sealableBlockHeader.getBlobGasUsed().ifPresent(this::blobGasUsed);
+    sealableBlockHeader.getExcessBlobGas().ifPresent(this::excessBlobGas);
     depositsRoot(sealableBlockHeader.getDepositsRoot().orElse(null));
     return this;
   }
@@ -402,13 +402,13 @@ public class BlockHeaderBuilder {
     return this;
   }
 
-  public BlockHeaderBuilder excessDataGas(final DataGas excessDataGas) {
-    this.excessDataGas = excessDataGas;
+  public BlockHeaderBuilder excessBlobGas(final BlobGas excessBlobGas) {
+    this.excessBlobGas = excessBlobGas;
     return this;
   }
 
-  public BlockHeaderBuilder dataGasUsed(final Long dataGasUsed) {
-    this.dataGasUsed = dataGasUsed;
+  public BlockHeaderBuilder blobGasUsed(final Long blobGasUsed) {
+    this.blobGasUsed = blobGasUsed;
     return this;
   }
 }

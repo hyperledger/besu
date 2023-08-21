@@ -120,7 +120,7 @@ public class TransactionTracerTest {
     when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
     when(protocolSpec.getBadBlocksManager()).thenReturn(new BadBlockManager());
     when(protocolSpec.getGasCalculator()).thenReturn(gasCalculator);
-    lenient().when(gasCalculator.computeExcessDataGas(anyLong(), anyInt())).thenReturn(0L);
+    lenient().when(gasCalculator.computeExcessBlobGas(anyLong(), anyInt())).thenReturn(0L);
   }
 
   @Test
