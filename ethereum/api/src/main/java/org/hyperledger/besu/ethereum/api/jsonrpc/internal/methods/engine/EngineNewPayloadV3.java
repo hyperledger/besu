@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
+import java.util.List;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
@@ -53,23 +54,24 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
   }
 
   @Override
-  protected ValidationResult<RpcErrorType> validateForkSupported(
+  protected ValidationResult<RpcErrorType> validateParamsAndForkSupported(
       final Object reqId,
       final EnginePayloadParameter payloadParameter,
+      final Optional<List<String>> maybeVersionedHashParam,
       final Optional<Bytes32> maybeParentBeaconBlockRoot) {
 
-    if (payloadParameter.getTimestamp() >= cancunTimestamp) {
-      if (payloadParameter.getBlobGasUsed() == null
-          || payloadParameter.getExcessBlobGas() == null) {
-        return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing blob gas fields");
-      } else if (maybeParentBeaconBlockRoot.isEmpty()) {
-        return ValidationResult.invalid(
-            RpcErrorType.INVALID_PARAMS, "Missing parent beacon block root");
-      } else {
-        return ValidationResult.valid();
-      }
-    } else {
+    if (payloadParameter.getBlobGasUsed() == null || payloadParameter.getExcessBlobGas() == null) {
+      return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing blob gas fields");
+    } else if (maybeVersionedHashParam == null) {
+      return ValidationResult.invalid(
+          RpcErrorType.INVALID_PARAMS, "Missing versioned hashes field");
+    } else if (maybeParentBeaconBlockRoot.isEmpty()) {
+      return ValidationResult.invalid(
+          RpcErrorType.INVALID_PARAMS, "Missing parent beacon block root field");
+    }
+    if (payloadParameter.getTimestamp() < cancunTimestamp) {
       return ValidationResult.invalid(RpcErrorType.UNSUPPORTED_FORK, "Fork not supported");
     }
+    return ValidationResult.valid();
   }
 }

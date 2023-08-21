@@ -116,7 +116,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         maybeParentBeaconBlockRootParam.map(Bytes32::fromHexString);
 
     ValidationResult<RpcErrorType> forkValidationResult =
-        validateForkSupported(reqId, blockParam, maybeParentBeaconBlockRoot);
+        validateParamsAndForkSupported(
+            reqId, blockParam, maybeVersionedHashParam, maybeParentBeaconBlockRoot);
     if (!forkValidationResult.isValid()) {
       return new JsonRpcErrorResponse(reqId, forkValidationResult);
     }
@@ -397,9 +398,10 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     return INVALID;
   }
 
-  protected ValidationResult<RpcErrorType> validateForkSupported(
+  protected ValidationResult<RpcErrorType> validateParamsAndForkSupported(
       final Object id,
       final EnginePayloadParameter payloadParameter,
+      final Optional<List<String>> maybeVersionedHashParam,
       final Optional<Bytes32> parentBeaconBlockRoot) {
     return ValidationResult.valid();
   }
