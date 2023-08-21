@@ -24,8 +24,8 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
-import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
@@ -100,7 +100,7 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
         new BlockHeaderTestFixture()
             .prevRandao(Bytes32.random())
             .timestamp(CANCUN_AT + 1)
-            .excessDataGas(DataGas.of(10L))
+            .excessBlobGas(BlobGas.of(10L))
             .buildHeader();
     // should return withdrawals and excessGas for a post-cancun block
     PayloadIdentifier postCancunPid =
@@ -119,7 +119,7 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
             .type(TransactionType.BLOB)
             .chainId(Optional.of(BigInteger.ONE))
             .maxFeePerGas(Optional.of(Wei.of(15)))
-            .maxFeePerDataGas(Optional.of(Wei.of(128)))
+            .maxFeePerBlobGas(Optional.of(Wei.of(128)))
             .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
             .blobsWithCommitments(Optional.of(bwc))
             .versionedHashes(Optional.of(bwc.getVersionedHashes()))
@@ -153,10 +153,10 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
               assertThat(res.getBlockValue()).isEqualTo(Quantity.create(0));
               assertThat(res.getExecutionPayload().getPrevRandao())
                   .isEqualTo(cancunHeader.getPrevRandao().map(Bytes32::toString).orElse(""));
-              // excessDataGas: QUANTITY, 256 bits
+              // excessBlobGas: QUANTITY, 256 bits
               String expectedQuantityOf10 = Bytes32.leftPad(Bytes.of(10)).toQuantityHexString();
-              assertThat(res.getExecutionPayload().getExcessDataGas()).isNotEmpty();
-              assertThat(res.getExecutionPayload().getExcessDataGas())
+              assertThat(res.getExecutionPayload().getExcessBlobGas()).isNotEmpty();
+              assertThat(res.getExecutionPayload().getExcessBlobGas())
                   .isEqualTo(expectedQuantityOf10);
             });
     verify(engineCallListener, times(1)).executionEngineCalled();

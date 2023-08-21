@@ -69,7 +69,7 @@ public class TransactionBuilderTest {
           .versionedHashes(Optional.of(List.of()))
           .maxFeePerGas(Optional.of(Wei.of(5)))
           .maxPriorityFeePerGas(Optional.of(Wei.of(5)))
-          .maxFeePerDataGas(Optional.of(Wei.of(5)))
+          .maxFeePerBlobGas(Optional.of(Wei.of(5)))
           .createTransaction(senderKeys);
       fail();
     } catch (IllegalArgumentException iea) {

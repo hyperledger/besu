@@ -43,7 +43,7 @@ public class BlobTransactionEncoder {
     out.writeUInt256Scalar(transaction.getValue());
     out.writeBytes(transaction.getPayload());
     TransactionEncoder.writeAccessList(out, transaction.getAccessList());
-    out.writeUInt256Scalar(transaction.getMaxFeePerDataGas().orElseThrow());
+    out.writeUInt256Scalar(transaction.getMaxFeePerBlobGas().orElseThrow());
     out.startList();
     transaction
         .getVersionedHashes()

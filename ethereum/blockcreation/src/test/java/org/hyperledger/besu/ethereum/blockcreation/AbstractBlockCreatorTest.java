@@ -32,8 +32,8 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.datatypes.BLSSignature;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
-import org.hyperledger.besu.datatypes.DataGas;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -274,7 +274,7 @@ abstract class AbstractBlockCreatorTest {
   @Test
   public void computesGasUsageFromIncludedTransactions() {
     final KeyPair senderKeys = SignatureAlgorithmFactory.getInstance().generateKeyPair();
-    final AbstractBlockCreator blockCreator = blockCreatorWithDataGasSupport();
+    final AbstractBlockCreator blockCreator = blockCreatorWithBlobGasSupport();
     BlobTestFixture blobTestFixture = new BlobTestFixture();
     BlobsWithCommitments bwc = blobTestFixture.createBlobsWithCommitments(6);
     TransactionTestFixture ttf = new TransactionTestFixture();
@@ -283,7 +283,7 @@ abstract class AbstractBlockCreatorTest {
             .type(TransactionType.BLOB)
             .chainId(Optional.of(BigInteger.valueOf(42)))
             .maxFeePerGas(Optional.of(Wei.of(15)))
-            .maxFeePerDataGas(Optional.of(Wei.of(128)))
+            .maxFeePerBlobGas(Optional.of(Wei.of(128)))
             .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
             .versionedHashes(Optional.of(bwc.getVersionedHashes()))
             .createTransaction(senderKeys);
@@ -297,13 +297,13 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             1L,
             false);
-    long dataGasUsage = blockCreationResult.getBlock().getHeader().getGasUsed();
-    assertThat(dataGasUsage).isNotZero();
-    DataGas excessDataGas = blockCreationResult.getBlock().getHeader().getExcessDataGas().get();
-    assertThat(excessDataGas).isNotNull();
+    long blobGasUsage = blockCreationResult.getBlock().getHeader().getGasUsed();
+    assertThat(blobGasUsage).isNotZero();
+    BlobGas excessBlobGas = blockCreationResult.getBlock().getHeader().getExcessBlobGas().get();
+    assertThat(excessBlobGas).isNotNull();
   }
 
-  private AbstractBlockCreator blockCreatorWithDataGasSupport() {
+  private AbstractBlockCreator blockCreatorWithBlobGasSupport() {
     final ProtocolSpecAdapters protocolSpecAdapters =
         ProtocolSpecAdapters.create(
             0,

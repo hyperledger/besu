@@ -16,7 +16,7 @@
     "parisBlock": 0,
     "terminalTotalDifficulty": 0,
     "shanghaiTime": 0,
-    "cancunTime": 4662
+    "cancunTime": 4660
   },
   "nonce": "0x0",
   "timestamp": "0x1234",
@@ -4072,7 +4072,5 @@
   "number": "0x0",
   "gasUsed": "0x0",
   "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-  "baseFeePerGas": null,
-  "blobGasUsed": null,
-  "excessBlobGas": null
+  "baseFeePerGas": "0x3b9aca00"
 }
