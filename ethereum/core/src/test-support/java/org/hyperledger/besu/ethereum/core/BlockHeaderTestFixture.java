@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -52,8 +52,8 @@ public class BlockHeaderTestFixture {
   private Optional<Hash> withdrawalsRoot = Optional.empty();
   private Optional<Hash> depositsRoot = Optional.empty();
   private BlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
-  private Optional<DataGas> excessDataGas = Optional.empty();
-  private Optional<Long> dataGasUsed = Optional.empty();
+  private Optional<BlobGas> excessBlobGas = Optional.empty();
+  private Optional<Long> blobGasUsed = Optional.empty();
 
   public BlockHeader buildHeader() {
     final BlockHeaderBuilder builder = BlockHeaderBuilder.create();
@@ -75,8 +75,8 @@ public class BlockHeaderTestFixture {
     builder.mixHash(mixHash);
     builder.nonce(nonce);
     withdrawalsRoot.ifPresent(builder::withdrawalsRoot);
-    excessDataGas.ifPresent(builder::excessDataGas);
-    dataGasUsed.ifPresent(builder::dataGasUsed);
+    excessBlobGas.ifPresent(builder::excessBlobGas);
+    blobGasUsed.ifPresent(builder::blobGasUsed);
     depositsRoot.ifPresent(builder::depositsRoot);
     builder.blockHeaderFunctions(blockHeaderFunctions);
 
@@ -178,13 +178,13 @@ public class BlockHeaderTestFixture {
     return this;
   }
 
-  public BlockHeaderTestFixture excessDataGas(final DataGas excessDataGas) {
-    this.excessDataGas = Optional.ofNullable(excessDataGas);
+  public BlockHeaderTestFixture excessBlobGas(final BlobGas excessBlobGas) {
+    this.excessBlobGas = Optional.ofNullable(excessBlobGas);
     return this;
   }
 
-  public BlockHeaderTestFixture dataGasUsed(final Long dataGasUsed) {
-    this.dataGasUsed = Optional.ofNullable(dataGasUsed);
+  public BlockHeaderTestFixture blobGasUsed(final Long blobGasUsed) {
+    this.blobGasUsed = Optional.ofNullable(blobGasUsed);
     return this;
   }
 

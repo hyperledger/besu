@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessDataGasCalculator.calculateExcessDataGasForParent;
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -88,13 +88,13 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
       BlockHeader header = block.getHeader();
       final Optional<BlockHeader> maybeParentHeader =
           blockchain.getBlockHeader(header.getParentHash());
-      final Wei dataGasPrice =
+      final Wei blobGasPrice =
           protocolSpec
               .getFeeMarket()
-              .dataPricePerGas(
+              .blobGasPricePerGas(
                   maybeParentHeader
-                      .map(parent -> calculateExcessDataGasForParent(protocolSpec, parent))
-                      .orElse(DataGas.ZERO));
+                      .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
+                      .orElse(BlobGas.ZERO));
       final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(header, blockchain);
       result =
           transactionProcessor.processTransaction(
@@ -106,7 +106,7 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
               tracer,
               blockHashLookup,
               false,
-              dataGasPrice);
+              blobGasPrice);
 
       traceFrames = tracer.copyTraceFrames();
       tracer.reset();

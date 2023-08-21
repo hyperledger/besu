@@ -442,7 +442,7 @@ public class BlockDataGenerator {
         .value(Wei.of(positiveLong()))
         .payload(payload)
         .chainId(BigInteger.ONE)
-        .maxFeePerDataGas(Wei.of(1))
+        .maxFeePerBlobGas(Wei.of(1))
         .versionedHashes(List.of(VersionedHash.DEFAULT_VERSIONED_HASH))
         .signAndBuild(generateKeyPair());
   }
@@ -674,7 +674,7 @@ public class BlockDataGenerator {
     private Optional<Hash> withdrawalsRoot = Optional.empty();
     private Optional<Hash> depositsRoot = Optional.empty();
 
-    private Optional<Optional<Wei>> maybeMaxFeePerDataGas = Optional.empty();
+    private Optional<Optional<Wei>> maybeMaxFeePerBlobGas = Optional.empty();
 
     public static BlockOptions create() {
       return new BlockOptions();
@@ -874,12 +874,12 @@ public class BlockDataGenerator {
       return this;
     }
 
-    public Optional<Wei> getMaxFeePerDataGas(final Optional<Wei> defaultValue) {
-      return maybeMaxFeePerDataGas.orElse(defaultValue);
+    public Optional<Wei> getMaxFeePerBlobGas(final Optional<Wei> defaultValue) {
+      return maybeMaxFeePerBlobGas.orElse(defaultValue);
     }
 
-    public BlockOptions setMaxFeePerDataGas(final Optional<Wei> maxFeePerDataGas) {
-      this.maybeMaxFeePerDataGas = Optional.of(maxFeePerDataGas);
+    public BlockOptions setMaxFeePerBlobGas(final Optional<Wei> maxFeePerBlobGas) {
+      this.maybeMaxFeePerBlobGas = Optional.of(maxFeePerBlobGas);
       return this;
     }
   }

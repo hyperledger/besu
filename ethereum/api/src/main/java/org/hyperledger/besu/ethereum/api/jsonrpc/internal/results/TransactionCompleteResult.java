@@ -38,7 +38,7 @@ import org.apache.tuweni.bytes.Bytes;
   "gasPrice",
   "maxPriorityFeePerGas",
   "maxFeePerGas",
-  "maxFeePerDataGas",
+  "maxFeePerBlobGas",
   "hash",
   "input",
   "nonce",
@@ -73,7 +73,7 @@ public class TransactionCompleteResult implements TransactionResult {
   private final String maxFeePerGas;
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  private final String maxFeePerDataGas;
+  private final String maxFeePerBlobGas;
 
   private final String hash;
   private final String input;
@@ -102,8 +102,8 @@ public class TransactionCompleteResult implements TransactionResult {
         tx.getTransaction().getMaxPriorityFeePerGas().map(Wei::toShortHexString).orElse(null);
     this.maxFeePerGas =
         tx.getTransaction().getMaxFeePerGas().map(Wei::toShortHexString).orElse(null);
-    this.maxFeePerDataGas =
-        transaction.getMaxFeePerDataGas().map(Wei::toShortHexString).orElse(null);
+    this.maxFeePerBlobGas =
+        transaction.getMaxFeePerBlobGas().map(Wei::toShortHexString).orElse(null);
     this.gasPrice =
         Quantity.create(
             transaction
@@ -165,9 +165,9 @@ public class TransactionCompleteResult implements TransactionResult {
     return maxFeePerGas;
   }
 
-  @JsonGetter(value = "maxFeePerDataGas")
-  public String getMaxFeePerDataGas() {
-    return maxFeePerDataGas;
+  @JsonGetter(value = "maxFeePerBlobGas")
+  public String getMaxFeePerBlobGas() {
+    return maxFeePerBlobGas;
   }
 
   @JsonGetter(value = "gasPrice")

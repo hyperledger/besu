@@ -18,7 +18,7 @@ package org.hyperledger.besu.ethereum.referencetests;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -166,6 +166,8 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("depositsRoot") final String depositsRoot,
         @JsonProperty("dataGasUsed") final String dataGasUsed,
         @JsonProperty("excessDataGas") final String excessDataGas,
+        @JsonProperty("blobGasUsed") final String blobGasUsed,
+        @JsonProperty("excessBlobGas") final String excessBlobGas,
         @JsonProperty("hash") final String hash) {
       super(
           Hash.fromHexString(parentHash), // parentHash
@@ -189,8 +191,12 @@ public class BlockchainReferenceTestCaseSpec {
           Hash.fromHexString(mixHash), // mixHash
           Bytes.fromHexStringLenient(nonce).toLong(),
           withdrawalsRoot != null ? Hash.fromHexString(withdrawalsRoot) : null,
-          dataGasUsed != null ? Long.decode(dataGasUsed) : 0,
-          excessDataGas != null ? DataGas.fromHexString(excessDataGas) : null,
+          dataGasUsed != null
+              ? Long.decode(dataGasUsed)
+              : blobGasUsed != null ? Long.decode(blobGasUsed) : 0,
+          excessDataGas != null
+              ? BlobGas.fromHexString(excessDataGas)
+              : excessBlobGas != null ? BlobGas.fromHexString(excessBlobGas) : null,
           depositsRoot != null ? Hash.fromHexString(depositsRoot) : null,
           new BlockHeaderFunctions() {
             @Override

@@ -79,7 +79,7 @@ public class BlobTransactionDecoder {
                   accessListEntryRLPInput.leaveList();
                   return accessListEntry;
                 }))
-        .maxFeePerDataGas(Wei.of(input.readUInt256Scalar()))
+        .maxFeePerBlobGas(Wei.of(input.readUInt256Scalar()))
         .versionedHashes(
             input.readList(versionedHashes -> new VersionedHash(versionedHashes.readBytes32())));
 
