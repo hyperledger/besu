@@ -127,8 +127,8 @@ public class JsonRpcResponseUtils {
             mixHash,
             nonce,
             withdrawalsRoot,
-            null, // ToDo 4844: set with the value of data_gas_used field
-            null, // ToDo 4844: set with the value of excess_data_gas field
+            null, // ToDo 4844: set with the value of blob_gas_used field
+            null, // ToDo 4844: set with the value of excess_blob_gas field
             depositsRoot,
             blockHeaderFunctions);
 

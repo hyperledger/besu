@@ -84,8 +84,8 @@ public class BlockResult implements JsonRpcResult {
   private final String withdrawalsRoot;
   private final List<WithdrawalParameter> withdrawals;
 
-  private final String dataGasUsed;
-  private final String excessDataGas;
+  private final String blobGasUsed;
+  private final String excessBlobGas;
 
   public BlockResult(
       final BlockHeader header,
@@ -132,8 +132,8 @@ public class BlockResult implements JsonRpcResult {
             .map(w -> w.stream().map(WithdrawalParameter::fromWithdrawal).collect(toList()))
             .orElse(null);
 
-    this.dataGasUsed = header.getDataGasUsed().map(Quantity::create).orElse(null);
-    this.excessDataGas = header.getExcessDataGas().map(Quantity::create).orElse(null);
+    this.blobGasUsed = header.getBlobGasUsed().map(Quantity::create).orElse(null);
+    this.excessBlobGas = header.getExcessBlobGas().map(Quantity::create).orElse(null);
   }
 
   @JsonGetter(value = "number")
@@ -257,13 +257,13 @@ public class BlockResult implements JsonRpcResult {
     return withdrawals;
   }
 
-  @JsonGetter(value = "dataGasUsed")
-  public String getDataGasUsed() {
-    return dataGasUsed;
+  @JsonGetter(value = "blobGasUsed")
+  public String getBlobGasUsed() {
+    return blobGasUsed;
   }
 
-  @JsonGetter(value = "excessDataGas")
-  public String getExcessDataGas() {
-    return excessDataGas;
+  @JsonGetter(value = "excessBlobGas")
+  public String getExcessBlobGas() {
+    return excessBlobGas;
   }
 }
