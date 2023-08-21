@@ -83,7 +83,7 @@ public class Transaction
   private final Optional<Wei> maxPriorityFeePerGas;
 
   private final Optional<Wei> maxFeePerGas;
-  private final Optional<Wei> maxFeePerDataGas;
+  private final Optional<Wei> maxFeePerBlobGas;
 
   private final long gasLimit;
 
@@ -139,7 +139,7 @@ public class Transaction
    * @param gasPrice the gas price
    * @param maxPriorityFeePerGas the max priority fee per gas
    * @param maxFeePerGas the max fee per gas
-   * @param maxFeePerDataGas the max fee per data gas
+   * @param maxFeePerBlobGas the max fee per blob gas
    * @param gasLimit the gas limit
    * @param to the transaction recipient
    * @param value the value being transferred to the recipient
@@ -160,7 +160,7 @@ public class Transaction
       final Optional<Wei> gasPrice,
       final Optional<Wei> maxPriorityFeePerGas,
       final Optional<Wei> maxFeePerGas,
-      final Optional<Wei> maxFeePerDataGas,
+      final Optional<Wei> maxFeePerBlobGas,
       final long gasLimit,
       final Optional<Address> to,
       final Wei value,
@@ -188,10 +188,10 @@ public class Transaction
           maybeAccessList.isPresent(), "Must specify access list for access list transaction");
     }
 
-    if (versionedHashes.isPresent() || maxFeePerDataGas.isPresent()) {
+    if (versionedHashes.isPresent() || maxFeePerBlobGas.isPresent()) {
       checkArgument(
           transactionType.supportsBlob(),
-          "Must not specify blob versioned hashes of max fee per data gas for transaction not supporting it");
+          "Must not specify blob versioned hashes of max fee per blob gas for transaction not supporting it");
     }
 
     if (transactionType.supportsBlob()) {
@@ -200,7 +200,7 @@ public class Transaction
       checkArgument(
           !versionedHashes.get().isEmpty(), "Blob transaction must have at least one blob");
       checkArgument(
-          maxFeePerDataGas.isPresent(), "Must specify max fee per data gas for blob transaction");
+          maxFeePerBlobGas.isPresent(), "Must specify max fee per blob gas for blob transaction");
     }
 
     this.transactionType = transactionType;
@@ -208,7 +208,7 @@ public class Transaction
     this.gasPrice = gasPrice;
     this.maxPriorityFeePerGas = maxPriorityFeePerGas;
     this.maxFeePerGas = maxFeePerGas;
-    this.maxFeePerDataGas = maxFeePerDataGas;
+    this.maxFeePerBlobGas = maxFeePerBlobGas;
     this.gasLimit = gasLimit;
     this.to = to;
     this.value = value;
@@ -230,7 +230,7 @@ public class Transaction
       final Optional<Wei> gasPrice,
       final Optional<Wei> maxPriorityFeePerGas,
       final Optional<Wei> maxFeePerGas,
-      final Optional<Wei> maxFeePerDataGas,
+      final Optional<Wei> maxFeePerBlobGas,
       final long gasLimit,
       final Optional<Address> to,
       final Wei value,
@@ -246,7 +246,7 @@ public class Transaction
         gasPrice,
         maxPriorityFeePerGas,
         maxFeePerGas,
-        maxFeePerDataGas,
+        maxFeePerBlobGas,
         gasLimit,
         to,
         value,
@@ -361,7 +361,7 @@ public class Transaction
       final Bytes payload,
       final Address sender,
       final Optional<BigInteger> chainId,
-      final Optional<Wei> maxFeePerDataGas,
+      final Optional<Wei> maxFeePerBlobGas,
       final Optional<List<VersionedHash>> versionedHashes,
       final Optional<BlobsWithCommitments> blobsWithCommitments) {
     this(
@@ -369,7 +369,7 @@ public class Transaction
         Optional.of(gasPrice),
         Optional.empty(),
         Optional.empty(),
-        maxFeePerDataGas,
+        maxFeePerBlobGas,
         gasLimit,
         to,
         value,
@@ -422,13 +422,13 @@ public class Transaction
   }
 
   /**
-   * Return the transaction max fee per data gas.
+   * Return the transaction max fee per blob gas.
    *
-   * @return the transaction max fee per data gas
+   * @return the transaction max fee per blob gas
    */
   @Override
-  public Optional<Wei> getMaxFeePerDataGas() {
-    return maxFeePerDataGas;
+  public Optional<Wei> getMaxFeePerBlobGas() {
+    return maxFeePerBlobGas;
   }
 
   /**
@@ -439,7 +439,7 @@ public class Transaction
    */
   public boolean hasCostParams() {
     return Arrays.asList(
-            getGasPrice(), getMaxFeePerGas(), getMaxPriorityFeePerGas(), getMaxFeePerDataGas())
+            getGasPrice(), getMaxFeePerGas(), getMaxPriorityFeePerGas(), getMaxFeePerBlobGas())
         .stream()
         .flatMap(Optional::stream)
         .map(Quantity::getAsBigInteger)
@@ -604,7 +604,7 @@ public class Transaction
               gasPrice.orElse(null),
               maxPriorityFeePerGas.orElse(null),
               maxFeePerGas.orElse(null),
-              maxFeePerDataGas.orElse(null),
+              maxFeePerBlobGas.orElse(null),
               gasLimit,
               to,
               value,
@@ -706,9 +706,9 @@ public class Transaction
    *
    * @return the max up-front cost for the gas the transaction can use.
    */
-  private Wei getMaxUpfrontGasCost(final long dataGasPerBlock) {
+  private Wei getMaxUpfrontGasCost(final long blobGasPerBlock) {
     return getUpfrontGasCost(
-        getMaxGasPrice(), getMaxFeePerDataGas().orElse(Wei.ZERO), dataGasPerBlock);
+        getMaxGasPrice(), getMaxFeePerBlobGas().orElse(Wei.ZERO), blobGasPerBlock);
   }
 
   /**
@@ -721,19 +721,19 @@ public class Transaction
   }
 
   /**
-   * Calculates the up-front cost for the gas and data gas the transaction can use.
+   * Calculates the up-front cost for the gas and blob gas the transaction can use.
    *
    * @param gasPrice the gas price to use
-   * @param dataGasPrice the data gas price to use
+   * @param blobGasPrice the blob gas price to use
    * @return the up-front cost for the gas the transaction can use.
    */
   public Wei getUpfrontGasCost(
-      final Wei gasPrice, final Wei dataGasPrice, final long totalDataGas) {
+      final Wei gasPrice, final Wei blobGasPrice, final long totalBlobGas) {
     if (gasPrice == null || gasPrice.isZero()) {
       return Wei.ZERO;
     }
 
-    final var cost = calculateUpfrontGasCost(gasPrice, dataGasPrice, totalDataGas);
+    final var cost = calculateUpfrontGasCost(gasPrice, blobGasPrice, totalBlobGas);
 
     if (cost.bitLength() > 256) {
       return Wei.MAX_WEI;
@@ -743,12 +743,12 @@ public class Transaction
   }
 
   private BigInteger calculateUpfrontGasCost(
-      final Wei gasPrice, final Wei dataGasPrice, final long totalDataGas) {
+      final Wei gasPrice, final Wei blobGasPrice, final long totalBlobGas) {
     var cost =
         new BigInteger(1, Longs.toByteArray(getGasLimit())).multiply(gasPrice.getAsBigInteger());
 
     if (transactionType.supportsBlob()) {
-      cost = cost.add(dataGasPrice.getAsBigInteger().multiply(BigInteger.valueOf(totalDataGas)));
+      cost = cost.add(blobGasPrice.getAsBigInteger().multiply(BigInteger.valueOf(totalBlobGas)));
     }
 
     return cost;
@@ -763,8 +763,8 @@ public class Transaction
    *
    * @return the up-front gas cost for the transaction
    */
-  public Wei getUpfrontCost(final long totalDataGas) {
-    return getMaxUpfrontGasCost(totalDataGas).addExact(getValue());
+  public Wei getUpfrontCost(final long totalBlobGas) {
+    return getMaxUpfrontGasCost(totalBlobGas).addExact(getValue());
   }
 
   /**
@@ -826,7 +826,7 @@ public class Transaction
       final Wei gasPrice,
       final Wei maxPriorityFeePerGas,
       final Wei maxFeePerGas,
-      final Wei maxFeePerDataGas,
+      final Wei maxFeePerBlobGas,
       final long gasLimit,
       final Optional<Address> to,
       final Wei value,
@@ -861,7 +861,7 @@ public class Transaction
                 nonce,
                 maxPriorityFeePerGas,
                 maxFeePerGas,
-                maxFeePerDataGas,
+                maxFeePerBlobGas,
                 gasLimit,
                 to,
                 value,
@@ -974,7 +974,7 @@ public class Transaction
       final long nonce,
       final Wei maxPriorityFeePerGas,
       final Wei maxFeePerGas,
-      final Wei maxFeePerDataGas,
+      final Wei maxFeePerBlobGas,
       final long gasLimit,
       final Optional<Address> to,
       final Wei value,
@@ -998,7 +998,7 @@ public class Transaction
                   chainId,
                   accessList,
                   rlpOutput);
-              rlpOutput.writeUInt256Scalar(maxFeePerDataGas);
+              rlpOutput.writeUInt256Scalar(maxFeePerBlobGas);
               BlobTransactionEncoder.writeBlobVersionedHashes(rlpOutput, versionedHashes);
               rlpOutput.endList();
             });
@@ -1036,7 +1036,7 @@ public class Transaction
         && Objects.equals(this.gasPrice, that.gasPrice)
         && Objects.equals(this.maxPriorityFeePerGas, that.maxPriorityFeePerGas)
         && Objects.equals(this.maxFeePerGas, that.maxFeePerGas)
-        && Objects.equals(this.maxFeePerDataGas, that.maxFeePerDataGas)
+        && Objects.equals(this.maxFeePerBlobGas, that.maxFeePerBlobGas)
         && this.nonce == that.nonce
         && Objects.equals(this.payload, that.payload)
         && Objects.equals(this.signature, that.signature)
@@ -1052,7 +1052,7 @@ public class Transaction
         gasPrice,
         maxPriorityFeePerGas,
         maxFeePerGas,
-        maxFeePerDataGas,
+        maxFeePerBlobGas,
         gasLimit,
         to,
         value,
@@ -1081,9 +1081,9 @@ public class Transaction
       sb.append("maxFeePerGas=")
           .append(getMaxFeePerGas().map(Wei::toShortHexString).get())
           .append(", ");
-      getMaxFeePerDataGas()
+      getMaxFeePerBlobGas()
           .ifPresent(
-              wei -> sb.append("maxFeePerDataGas=").append(wei.toShortHexString()).append(", "));
+              wei -> sb.append("maxFeePerBlobGas=").append(wei.toShortHexString()).append(", "));
     }
     sb.append("gasLimit=").append(getGasLimit()).append(", ");
     if (getTo().isPresent()) sb.append("to=").append(getTo().get()).append(", ");
@@ -1118,7 +1118,7 @@ public class Transaction
       sb.append("pf: ")
           .append(getMaxPriorityFeePerGas().map(Wei::toHumanReadableString).get())
           .append(", ");
-      getMaxFeePerDataGas()
+      getMaxFeePerBlobGas()
           .ifPresent(wei -> sb.append("df: ").append(wei.toHumanReadableString()).append(", "));
     }
     sb.append("gl: ").append(getGasLimit()).append(", ");
@@ -1146,7 +1146,7 @@ public class Transaction
     protected Wei maxPriorityFeePerGas;
 
     protected Wei maxFeePerGas;
-    protected Wei maxFeePerDataGas;
+    protected Wei maxFeePerBlobGas;
 
     protected long gasLimit = -1L;
 
@@ -1197,8 +1197,8 @@ public class Transaction
       return this;
     }
 
-    public Builder maxFeePerDataGas(final Wei maxFeePerDataGas) {
-      this.maxFeePerDataGas = maxFeePerDataGas;
+    public Builder maxFeePerBlobGas(final Wei maxFeePerBlobGas) {
+      this.maxFeePerBlobGas = maxFeePerBlobGas;
       return this;
     }
 
@@ -1275,7 +1275,7 @@ public class Transaction
           Optional.ofNullable(gasPrice),
           Optional.ofNullable(maxPriorityFeePerGas),
           Optional.ofNullable(maxFeePerGas),
-          Optional.ofNullable(maxFeePerDataGas),
+          Optional.ofNullable(maxFeePerBlobGas),
           gasLimit,
           to,
           value,
@@ -1305,7 +1305,7 @@ public class Transaction
                   gasPrice,
                   maxPriorityFeePerGas,
                   maxFeePerGas,
-                  maxFeePerDataGas,
+                  maxFeePerBlobGas,
                   gasLimit,
                   to,
                   value,
@@ -1323,7 +1323,7 @@ public class Transaction
       if (this.versionedHashes == null || this.versionedHashes.isEmpty()) {
         this.versionedHashes =
             kzgCommitments.stream()
-                .map(c -> new VersionedHash(SHA256_VERSION_ID, Sha256Hash.hash(c.getData())))
+                .map(c -> new VersionedHash(SHA256_VERSION_ID, Sha256Hash.sha256(c.getData())))
                 .collect(Collectors.toList());
       }
       this.blobsWithCommitments =

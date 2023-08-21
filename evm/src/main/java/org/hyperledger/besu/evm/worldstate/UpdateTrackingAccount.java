@@ -73,7 +73,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   UpdateTrackingAccount(final Address address) {
     checkNotNull(address);
     this.address = address;
-    this.addressHash = Hash.hash(this.address);
+    this.addressHash = this.address.addressHash();
     this.account = null;
 
     this.nonce = 0;
@@ -95,7 +95,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
     this.addressHash =
         (account instanceof UpdateTrackingAccount)
             ? ((UpdateTrackingAccount<?>) account).addressHash
-            : Hash.hash(this.address);
+            : this.address.addressHash();
     this.account = account;
 
     this.nonce = account.getNonce();
@@ -243,7 +243,6 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
       final Bytes32 startKeyHash, final int limit) {
     final NavigableMap<Bytes32, AccountStorageEntry> entries;

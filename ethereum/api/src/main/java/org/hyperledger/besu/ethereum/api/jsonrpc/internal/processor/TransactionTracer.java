@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 
 import static java.util.function.Predicate.isEqual;
-import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessDataGasCalculator.calculateExcessDataGasForParent;
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
@@ -74,7 +74,7 @@ public class TransactionTracer {
             mutableWorldState,
             blockHash,
             transactionHash,
-            (transaction, header, blockchain, transactionProcessor, dataGasPrice) -> {
+            (transaction, header, blockchain, transactionProcessor, blobGasPrice) -> {
               final TransactionProcessingResult result =
                   processTransaction(
                       header,
@@ -83,7 +83,7 @@ public class TransactionTracer {
                       transaction,
                       transactionProcessor,
                       tracer,
-                      dataGasPrice);
+                      blobGasPrice);
               return new TransactionTrace(transaction, result, tracer.getTraceFrames());
             });
     return transactionTrace;
@@ -116,14 +116,14 @@ public class TransactionTracer {
             (body, header, blockchain, transactionProcessor, protocolSpec) -> {
               WorldUpdater stackedUpdater = mutableWorldState.updater().updater();
               final List<String> traces = new ArrayList<>();
-              final Wei dataGasPrice =
+              final Wei blobGasPrice =
                   protocolSpec
                       .getFeeMarket()
-                      .dataPricePerGas(
+                      .blobGasPricePerGas(
                           blockchain
                               .getBlockHeader(header.getParentHash())
-                              .map(parent -> calculateExcessDataGasForParent(protocolSpec, parent))
-                              .orElse(DataGas.ZERO));
+                              .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
+                              .orElse(BlobGas.ZERO));
               for (int i = 0; i < body.getTransactions().size(); i++) {
                 ((StackedUpdater<?, ?>) stackedUpdater).markTransactionBoundary();
                 final Transaction transaction = body.getTransactions().get(i);
@@ -140,7 +140,7 @@ public class TransactionTracer {
                             transaction,
                             transactionProcessor,
                             new StandardJsonTracer(out, showMemory, true, true),
-                            dataGasPrice);
+                            blobGasPrice);
                     out.println(
                         summaryTrace(
                             transaction, timer.stop().elapsed(TimeUnit.NANOSECONDS), result));
@@ -157,7 +157,7 @@ public class TransactionTracer {
                       transaction,
                       transactionProcessor,
                       OperationTracer.NO_TRACING,
-                      dataGasPrice);
+                      blobGasPrice);
                 }
               }
               return Optional.of(traces);
@@ -188,7 +188,7 @@ public class TransactionTracer {
       final Transaction transaction,
       final MainnetTransactionProcessor transactionProcessor,
       final OperationTracer tracer,
-      final Wei dataGasPrice) {
+      final Wei blobGasPrice) {
     return transactionProcessor.processTransaction(
         blockchain,
         worldUpdater,
@@ -199,7 +199,7 @@ public class TransactionTracer {
         new CachingBlockHashLookup(header, blockchain),
         false,
         ImmutableTransactionValidationParams.builder().isAllowFutureNonce(true).build(),
-        dataGasPrice);
+        blobGasPrice);
   }
 
   public static String summaryTrace(

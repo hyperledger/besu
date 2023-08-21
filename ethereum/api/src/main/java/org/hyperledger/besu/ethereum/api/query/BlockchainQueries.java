@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.query;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
-import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessDataGasCalculator.calculateExcessDataGasForParent;
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -642,11 +642,11 @@ public class BlockchainQueries {
               - transactionReceipts.get(location.getTransactionIndex() - 1).getCumulativeGasUsed();
     }
 
-    Optional<Long> maybeDataGasUsed =
-        getDataGasUsed(transaction, protocolSchedule.getByBlockHeader(header));
+    Optional<Long> maybeBlobGasUsed =
+        getBlobGasUsed(transaction, protocolSchedule.getByBlockHeader(header));
 
-    Optional<Wei> maybeDataGasPrice =
-        getDataGasPrice(transaction, header, protocolSchedule.getByBlockHeader(header));
+    Optional<Wei> maybeBlobGasPrice =
+        getBlobGasPrice(transaction, header, protocolSchedule.getByBlockHeader(header));
 
     return Optional.of(
         TransactionReceiptWithMetadata.create(
@@ -658,35 +658,35 @@ public class BlockchainQueries {
             header.getBaseFee(),
             blockhash,
             header.getNumber(),
-            maybeDataGasUsed,
-            maybeDataGasPrice));
+            maybeBlobGasUsed,
+            maybeBlobGasPrice));
   }
 
   /**
-   * Calculates the data gas used for data in a transaction.
+   * Calculates the blob gas used for data in a transaction.
    *
    * @param transaction the transaction to calculate the gas for
    * @param protocolSpec the protocol specification to use for gas calculation
-   * @return an Optional containing the data gas used for data if the transaction type supports
+   * @return an Optional containing the blob gas used for data if the transaction type supports
    *     blobs, otherwise returns an empty Optional
    */
-  private Optional<Long> getDataGasUsed(
+  private Optional<Long> getBlobGasUsed(
       final Transaction transaction, final ProtocolSpec protocolSpec) {
     return transaction.getType().supportsBlob()
-        ? Optional.of(protocolSpec.getGasCalculator().dataGasCost(transaction.getBlobCount()))
+        ? Optional.of(protocolSpec.getGasCalculator().blobGasCost(transaction.getBlobCount()))
         : Optional.empty();
   }
 
   /**
-   * Calculates the data gas price for data in a transaction.
+   * Calculates the blob gas price for data in a transaction.
    *
    * @param transaction the transaction to calculate the gas price for
    * @param header the block header of the current block
    * @param protocolSpec the protocol specification to use for gas price calculation
-   * @return an Optional containing the data gas price for data if the transaction type supports
+   * @return an Optional containing the blob gas price for data if the transaction type supports
    *     blobs, otherwise returns an empty Optional
    */
-  private Optional<Wei> getDataGasPrice(
+  private Optional<Wei> getBlobGasPrice(
       final Transaction transaction, final BlockHeader header, final ProtocolSpec protocolSpec) {
     if (transaction.getType().supportsBlob()) {
       return blockchain
@@ -695,8 +695,8 @@ public class BlockchainQueries {
               parentHeader ->
                   protocolSpec
                       .getFeeMarket()
-                      .dataPricePerGas(
-                          calculateExcessDataGasForParent(protocolSpec, parentHeader)));
+                      .blobGasPricePerGas(
+                          calculateExcessBlobGasForParent(protocolSpec, parentHeader)));
     }
     return Optional.empty();
   }

@@ -43,7 +43,6 @@ import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
@@ -125,7 +124,7 @@ public class MainnetTransactionProcessor {
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
-      final Wei dataGasPrice) {
+      final Wei blobGasPrice) {
     return processTransaction(
         blockchain,
         worldState,
@@ -137,7 +136,7 @@ public class MainnetTransactionProcessor {
         isPersistingPrivateState,
         transactionValidationParams,
         null,
-        dataGasPrice);
+        blobGasPrice);
   }
 
   /**
@@ -167,7 +166,7 @@ public class MainnetTransactionProcessor {
       final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,
-      final Wei dataGasPrice) {
+      final Wei blobGasPrice) {
     return processTransaction(
         blockchain,
         worldState,
@@ -179,7 +178,7 @@ public class MainnetTransactionProcessor {
         isPersistingPrivateState,
         transactionValidationParams,
         null,
-        dataGasPrice);
+        blobGasPrice);
   }
 
   /**
@@ -204,7 +203,7 @@ public class MainnetTransactionProcessor {
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
-      final Wei dataGasPrice) {
+      final Wei blobGasPrice) {
     return processTransaction(
         blockchain,
         worldState,
@@ -216,7 +215,7 @@ public class MainnetTransactionProcessor {
         isPersistingPrivateState,
         ImmutableTransactionValidationParams.builder().build(),
         null,
-        dataGasPrice);
+        blobGasPrice);
   }
 
   /**
@@ -243,7 +242,7 @@ public class MainnetTransactionProcessor {
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
-      final Wei dataGasPrice) {
+      final Wei blobGasPrice) {
     return processTransaction(
         blockchain,
         worldState,
@@ -255,7 +254,7 @@ public class MainnetTransactionProcessor {
         isPersistingPrivateState,
         transactionValidationParams,
         null,
-        dataGasPrice);
+        blobGasPrice);
   }
 
   public TransactionProcessingResult processTransaction(
@@ -269,7 +268,7 @@ public class MainnetTransactionProcessor {
       final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
       final PrivateMetadataUpdater privateMetadataUpdater,
-      final Wei dataGasPrice) {
+      final Wei blobGasPrice) {
     try {
       final var transactionValidator = transactionValidatorFactory.get();
       LOG.trace("Starting execution of {}", transaction);
@@ -306,10 +305,10 @@ public class MainnetTransactionProcessor {
       final Wei transactionGasPrice =
           feeMarket.getTransactionPriceCalculator().price(transaction, blockHeader.getBaseFee());
 
-      final long dataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
+      final long blobGas = gasCalculator.blobGasCost(transaction.getBlobCount());
 
       final Wei upfrontGasCost =
-          transaction.getUpfrontGasCost(transactionGasPrice, dataGasPrice, dataGas);
+          transaction.getUpfrontGasCost(transactionGasPrice, blobGasPrice, blobGas);
       final Wei previousBalance = senderMutableAccount.decrementBalance(upfrontGasCost);
       LOG.trace(
           "Deducted sender {} upfront gas cost {} ({} -> {})",
@@ -347,10 +346,9 @@ public class MainnetTransactionProcessor {
           transaction.getGasLimit(),
           intrinsicGas,
           accessListGas,
-          dataGas);
+          blobGas);
 
       final WorldUpdater worldUpdater = worldState.updater();
-      final Deque<MessageFrame> messageFrameStack = new ArrayDeque<>();
       final ImmutableMap.Builder<String, Object> contextVariablesBuilder =
           ImmutableMap.<String, Object>builder()
               .put(KEY_IS_PERSISTING_PRIVATE_STATE, isPersistingPrivateState)
@@ -362,7 +360,6 @@ public class MainnetTransactionProcessor {
 
       final MessageFrame.Builder commonMessageFrameBuilder =
           MessageFrame.builder()
-              .messageFrameStack(messageFrameStack)
               .maxStackSize(maxStackSize)
               .worldUpdater(worldUpdater.updater())
               .initialGas(gasAvailable)
@@ -372,7 +369,6 @@ public class MainnetTransactionProcessor {
               .value(transaction.getValue())
               .apparentValue(transaction.getValue())
               .blockValues(blockHeader)
-              .depth(0)
               .completer(__ -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
@@ -417,8 +413,8 @@ public class MainnetTransactionProcessor {
                         .orElse(CodeV0.EMPTY_CODE))
                 .build();
       }
+      Deque<MessageFrame> messageFrameStack = initialFrame.getMessageFrameStack();
 
-      messageFrameStack.addFirst(initialFrame);
       if (initialFrame.getCode().isValid()) {
         while (!messageFrameStack.isEmpty()) {
           process(messageFrameStack.peekFirst(), operationTracer);
@@ -510,21 +506,17 @@ public class MainnetTransactionProcessor {
     }
   }
 
-  protected void process(final MessageFrame frame, final OperationTracer operationTracer) {
+  public void process(final MessageFrame frame, final OperationTracer operationTracer) {
     final AbstractMessageProcessor executor = getMessageProcessor(frame.getType());
 
     executor.process(frame, operationTracer);
   }
 
   private AbstractMessageProcessor getMessageProcessor(final MessageFrame.Type type) {
-    switch (type) {
-      case MESSAGE_CALL:
-        return messageCallProcessor;
-      case CONTRACT_CREATION:
-        return contractCreationProcessor;
-      default:
-        throw new IllegalStateException("Request for unsupported message processor type " + type);
-    }
+    return switch (type) {
+      case MESSAGE_CALL -> messageCallProcessor;
+      case CONTRACT_CREATION -> contractCreationProcessor;
+    };
   }
 
   protected long refunded(
