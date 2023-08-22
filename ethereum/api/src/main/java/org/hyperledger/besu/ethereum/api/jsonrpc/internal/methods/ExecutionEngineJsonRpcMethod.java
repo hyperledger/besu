@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.Optional;
@@ -50,6 +51,7 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
   protected final Optional<ProtocolSchedule> protocolSchedule;
   protected final ProtocolContext protocolContext;
   protected final EngineCallListener engineCallListener;
+  protected final Optional<ScheduledProtocolSpec.Hardfork> cancun;
 
   protected ExecutionEngineJsonRpcMethod(
       final Vertx vertx,
@@ -62,6 +64,7 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
     this.mergeContextOptional = protocolContext.safeConsensusContext(MergeContext.class);
     this.mergeContext = mergeContextOptional::orElseThrow;
     this.engineCallListener = engineCallListener;
+    this.cancun = protocolSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
   }
 
   protected ExecutionEngineJsonRpcMethod(
@@ -74,6 +77,7 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
     this.mergeContextOptional = protocolContext.safeConsensusContext(MergeContext.class);
     this.mergeContext = mergeContextOptional::orElseThrow;
     this.engineCallListener = engineCallListener;
+    this.cancun = Optional.empty();
   }
 
   @Override
@@ -126,9 +130,6 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
 
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
     if (protocolSchedule.isPresent()) {
-      var cancun =
-          protocolSchedule.get().hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
-
       if (cancun.isPresent() && blockTimestamp >= cancun.get().milestone()) {
         return ValidationResult.valid();
       } else {
