@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockReceiptsResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionReceiptResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -114,17 +115,47 @@ public class EthGetBlockReceiptsTest {
     assertThat(actualResponse).isInstanceOf(JsonRpcSuccessResponse.class);
     final BlockReceiptsResult result =
         (BlockReceiptsResult) ((JsonRpcSuccessResponse) actualResponse).getResult();
+
     assertThat(result.getResults().size()).isEqualTo(2);
+
+    // Check TX1 receipt is correct
+    TransactionReceiptResult tx1 = result.getResults().get(0);
+    assertThat(tx1.getBlockNumber()).isEqualTo("0x4");
+    assertThat(tx1.getEffectiveGasPrice()).isEqualTo("0x8331b584");
+    assertThat(tx1.getTo()).isEqualTo("0xffa87762dcd4bbf2d6b22390e68c1915d89292ae");
+    assertThat(tx1.getType()).isEqualTo("0x0");
+
+    // Check TX2 receipt is correct
+    TransactionReceiptResult tx2 = result.getResults().get(1);
+    assertThat(tx2.getBlockNumber()).isEqualTo("0x4");
+    assertThat(tx2.getEffectiveGasPrice()).isEqualTo("0x9f7cd42");
+    assertThat(tx2.getTo()).isEqualTo("0x46530778ec4a61cbea38698d2efc0c618ea0641f");
+    assertThat(tx2.getType()).isEqualTo("0x2");
   }
 
   @Test
-  public void twoReceiptsForBlockN() {
+  public void twoReceiptsForBlockOne() {
     /* Block generator defaults to 2 transactions per mocked block */
     JsonRpcResponse actualResponse = method.response(requestWithParams("0x01"));
     assertThat(actualResponse).isInstanceOf(JsonRpcSuccessResponse.class);
     final BlockReceiptsResult result =
         (BlockReceiptsResult) ((JsonRpcSuccessResponse) actualResponse).getResult();
+
     assertThat(result.getResults().size()).isEqualTo(2);
+
+    // Check TX1 receipt is correct
+    TransactionReceiptResult tx1 = result.getResults().get(0);
+    assertThat(tx1.getBlockNumber()).isEqualTo("0x1");
+    assertThat(tx1.getEffectiveGasPrice()).isEqualTo("0xf6c116f8");
+    assertThat(tx1.getTo()).isEqualTo("0xc7334b4639e5640d8cc44a6a17e14e78f99e0832");
+    assertThat(tx1.getType()).isEqualTo("0x1");
+
+    // Check TX2 receipt is correct
+    TransactionReceiptResult tx2 = result.getResults().get(1);
+    assertThat(tx2.getBlockNumber()).isEqualTo("0x1");
+    assertThat(tx2.getEffectiveGasPrice()).isEqualTo("0x2e29575b");
+    assertThat(tx2.getTo()).isEqualTo("0xed195a8b41b32a1b43e1a9b322fe5bfc4c71dc2e");
+    assertThat(tx2.getType()).isEqualTo("0x2");
   }
 
   @Test
