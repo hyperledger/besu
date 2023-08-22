@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.evm.AccessListEntry;
 
 import java.util.Collection;
 import java.util.List;
@@ -141,7 +141,7 @@ public abstract class PendingTransaction {
               int totalSize = OPTIONAL_ACCESS_LIST_MEMORY_SIZE;
               totalSize += al.size() * ACCESS_LIST_ENTRY_BASE_MEMORY_SIZE;
               totalSize +=
-                  al.stream().map(AccessListEntry::getStorageKeys).mapToInt(List::size).sum()
+                  al.stream().map(AccessListEntry::storageKeys).mapToInt(List::size).sum()
                       * ACCESS_LIST_STORAGE_KEY_MEMORY_SIZE;
               return totalSize;
             })
