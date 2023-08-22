@@ -146,15 +146,15 @@ public class EthGetBlockReceiptsTest {
     // Check TX1 receipt is correct
     TransactionReceiptResult tx1 = result.getResults().get(0);
     assertThat(tx1.getBlockNumber()).isEqualTo("0x1");
-    assertThat(tx1.getEffectiveGasPrice()).isEqualTo("0xf6c116f8");
-    assertThat(tx1.getTo()).isEqualTo("0xc7334b4639e5640d8cc44a6a17e14e78f99e0832");
-    assertThat(tx1.getType()).isEqualTo("0x1");
+    assertThat(tx1.getEffectiveGasPrice()).isEqualTo("0x4a7ebf2e");
+    assertThat(tx1.getTo()).isEqualTo("0x6ada2e11049e5fc54fcdf2a97996d9b2aa80fe71");
+    assertThat(tx1.getType()).isEqualTo("0x2");
 
     // Check TX2 receipt is correct
     TransactionReceiptResult tx2 = result.getResults().get(1);
     assertThat(tx2.getBlockNumber()).isEqualTo("0x1");
-    assertThat(tx2.getEffectiveGasPrice()).isEqualTo("0x2e29575b");
-    assertThat(tx2.getTo()).isEqualTo("0xed195a8b41b32a1b43e1a9b322fe5bfc4c71dc2e");
+    assertThat(tx2.getEffectiveGasPrice()).isEqualTo("0xa6e00cb5");
+    assertThat(tx2.getTo()).isEqualTo("0x429b96f49fb2e74ba0fda06cf6f380caffc2fac2");
     assertThat(tx2.getType()).isEqualTo("0x2");
   }
 
