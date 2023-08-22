@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateFo
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
 import java.util.List;
 import java.util.Optional;
@@ -51,6 +52,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineForkchoiceUpdated.class);
   private final ProtocolSchedule protocolSchedule;
   private final MergeMiningCoordinator mergeCoordinator;
+  private final Long cancunTimestamp;
 
   public AbstractEngineForkchoiceUpdated(
       final Vertx vertx,
@@ -61,6 +63,9 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     super(vertx, protocolContext, engineCallListener);
     this.protocolSchedule = protocolSchedule;
     this.mergeCoordinator = mergeCoordinator;
+    Optional<ScheduledProtocolSpec.Hardfork> cancun =
+        protocolSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
+    cancunTimestamp = cancun.map(ScheduledProtocolSpec.Hardfork::milestone).orElse(Long.MAX_VALUE);
   }
 
   @Override
@@ -178,7 +183,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
                     payloadAttributes.getTimestamp(),
                     payloadAttributes.getPrevRandao(),
                     payloadAttributes.getSuggestedFeeRecipient(),
-                    withdrawals));
+                    withdrawals,
+                    Optional.ofNullable(payloadAttributes.getParentBeaconBlockRoot())));
 
     payloadId.ifPresent(
         pid ->
@@ -204,12 +210,24 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final BlockHeader headBlockHeader) {
 
-    final boolean newTimestampGreaterThanHead =
-        payloadAttributes.getTimestamp() > headBlockHeader.getTimestamp();
-    return newTimestampGreaterThanHead
-        && getWithdrawalsValidator(
-                protocolSchedule, headBlockHeader, payloadAttributes.getTimestamp())
-            .validateWithdrawals(maybeWithdrawals);
+    if (payloadAttributes.getTimestamp() <= headBlockHeader.getTimestamp()) {
+      LOG.warn(
+          "Payload attributes timestamp is smaller than timestamp of header in fork choice update");
+      return false;
+    }
+    if (payloadAttributes.getTimestamp() < cancunTimestamp) {
+      LOG.warn("Payload attributes are present before cancun hardfork");
+    } else if (payloadAttributes.getParentBeaconBlockRoot() == null) {
+      LOG.warn("Parent beacon block root not present in payload attributes after cancun hardfork");
+      return false;
+    }
+    if (!getWithdrawalsValidator(
+            protocolSchedule, headBlockHeader, payloadAttributes.getTimestamp())
+        .validateWithdrawals(maybeWithdrawals)) {
+      return false;
+    }
+
+    return true;
   }
 
   private JsonRpcResponse handleNonValidForkchoiceUpdate(

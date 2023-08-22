@@ -64,6 +64,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final Hash withdrawalsRoot,
       final Long blobGasUsed,
       final BlobGas excessBlobGas,
+      final Bytes32 parentBeaconBlockRoot,
       final Hash depositsRoot) {
     super(
         parentHash,
@@ -75,7 +76,8 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
         baseFee,
         mixHashOrPrevRandao,
         blobGasUsed,
-        excessBlobGas);
+        excessBlobGas,
+        parentBeaconBlockRoot);
     this.ommersHash = ommersHash;
     this.stateRoot = stateRoot;
     this.transactionsRoot = transactionsRoot;

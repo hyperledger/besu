@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.tuweni.bytes.Bytes32;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -86,6 +87,7 @@ public class BlockResult implements JsonRpcResult {
 
   private final String blobGasUsed;
   private final String excessBlobGas;
+  private final String parentBeaconBlockRoot;
 
   public BlockResult(
       final BlockHeader header,
@@ -134,6 +136,8 @@ public class BlockResult implements JsonRpcResult {
 
     this.blobGasUsed = header.getBlobGasUsed().map(Quantity::create).orElse(null);
     this.excessBlobGas = header.getExcessBlobGas().map(Quantity::create).orElse(null);
+    this.parentBeaconBlockRoot =
+        header.getParentBeaconBlockRoot().map(Bytes32::toHexString).orElse(null);
   }
 
   @JsonGetter(value = "number")
@@ -265,5 +269,10 @@ public class BlockResult implements JsonRpcResult {
   @JsonGetter(value = "excessBlobGas")
   public String getExcessBlobGas() {
     return excessBlobGas;
+  }
+
+  @JsonGetter(value = "parentBeaconBlockRoot")
+  public String getParentBeaconBlockRoot() {
+    return parentBeaconBlockRoot;
   }
 }
