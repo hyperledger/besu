@@ -78,7 +78,7 @@ public abstract class PrivateAbstractTraceByHash implements JsonRpcMethod {
     final String enclaveKey = privacyIdProvider.getPrivacyUserId(requestContext.getUser());
     final String privacyGroupId = requestContext.getRequiredParameter(0, String.class);
     if (privacyController instanceof MultiTenancyPrivacyController) {
-      checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(
+      verifyPrivacyGroupMatchesAuthenticatedEnclaveKey(
           requestContext, privacyGroupId, Optional.empty());
     }
 
@@ -95,8 +95,8 @@ public abstract class PrivateAbstractTraceByHash implements JsonRpcMethod {
       final Hash transactionHash,
       final String enclaveKey,
       final String privacyGroupId) {
-    Block block = blockchainQueries.getBlockchain().getBlockByHash(blockHash).orElse(null);
-    PrivateBlockMetadata privateBlockMetadata =
+    final Block block = blockchainQueries.getBlockchain().getBlockByHash(blockHash).orElse(null);
+    final PrivateBlockMetadata privateBlockMetadata =
         privacyQueries.getPrivateBlockMetaData(privacyGroupId, blockHash).orElse(null);
 
     if (privateBlockMetadata == null || block == null) {
@@ -166,7 +166,7 @@ public abstract class PrivateAbstractTraceByHash implements JsonRpcMethod {
     return resultArrayNode;
   }
 
-  private void checkIfPrivacyGroupMatchesAuthenticatedEnclaveKey(
+  private void verifyPrivacyGroupMatchesAuthenticatedEnclaveKey(
       final JsonRpcRequestContext request,
       final String privacyGroupId,
       final Optional<Long> toBlock) {

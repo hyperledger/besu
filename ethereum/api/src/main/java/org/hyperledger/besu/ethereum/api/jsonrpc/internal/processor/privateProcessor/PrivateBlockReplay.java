@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor;
 
-import org.hyperledger.besu.datatypes.DataGas;
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
+
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -58,11 +60,11 @@ public class PrivateBlockReplay {
           final Wei dataGasPrice =
               protocolSpec
                   .getFeeMarket()
-                  .dataPricePerGas(
+                  .blobGasPricePerGas(
                       blockchain
                           .getBlockHeader(header.getParentHash())
-                          .flatMap(BlockHeader::getExcessDataGas)
-                          .orElse(DataGas.ZERO));
+                          .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
+                          .orElse(BlobGas.ZERO));
 
           final List<PrivateTransactionTrace> transactionTraces =
               privateBlockMetadata.getPrivateTransactionMetadataList().stream()

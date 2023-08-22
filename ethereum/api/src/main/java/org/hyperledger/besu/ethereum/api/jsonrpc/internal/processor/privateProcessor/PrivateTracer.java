@@ -46,7 +46,7 @@ public class PrivateTracer {
           final long blockNumber = header.getNumber();
           final Hash parentHash = header.getParentHash();
 
-          MutableWorldState disposablePrivateState =
+          final MutableWorldState disposablePrivateState =
               privacyParameters
                   .getPrivateWorldStateArchive()
                   .getMutable(
