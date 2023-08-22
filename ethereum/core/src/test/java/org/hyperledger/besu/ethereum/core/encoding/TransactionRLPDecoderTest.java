@@ -31,6 +31,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class TransactionRLPDecoderTest {
 
@@ -96,5 +97,13 @@ class TransactionRLPDecoderTest {
     final Transaction transaction = TransactionDecoder.decodeForWire(RLP.input(bytes));
     // Bytes size should be equal to transaction size
     assertThat(transaction.getSize()).isEqualTo(bytes.size());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {FRONTIER_TX_RLP, EIP1559_TX_RLP, NONCE_64_BIT_MAX_MINUS_2_TX_RLP})
+  void shouldReturnCorrectEncodedBytes(final String txRlp) {
+    final Transaction transaction =
+        TransactionDecoder.decodeForWire(RLP.input(Bytes.fromHexString(txRlp)));
+    assertThat(transaction.encoded()).isEqualTo(Bytes.fromHexString(txRlp));
   }
 }
