@@ -94,8 +94,8 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
         final EngineCallListener engineCallListener);
   }
 
-  // private final MethodFactory methodFactory;
   protected AbstractEngineNewPayload method;
+  protected Optional<Bytes32> maybeParentBeaconBlockRoot = Optional.empty();
 
   public AbstractEngineNewPayloadTest() {}
 
@@ -145,7 +145,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
     lenient()
         .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList()));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -158,7 +158,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
     lenient()
         .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash().get()).isEqualTo(mockHash);
@@ -181,7 +181,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
           .thenReturn(true);
     }
 
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEmpty();
@@ -198,7 +198,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
 
     when(blockchain.getBlockByHash(any())).thenReturn(Optional.of(mockBlock));
 
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList()));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -213,7 +213,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
     when(mergeCoordinator.getLatestValidHashOfBadBlock(mockHeader.getHash()))
         .thenReturn(Optional.of(latestValidHash));
 
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEqualTo(Optional.of(latestValidHash));
@@ -231,7 +231,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
     lenient()
         .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList()));
 
     fromErrorResp(resp);
     verify(engineCallListener, times(1)).executionEngineCalled();
@@ -250,7 +250,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
     lenient()
         .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList()));
 
     verify(engineCallListener, times(1)).executionEngineCalled();
     verify(mergeCoordinator, times(0)).addBadBlock(any(), any());
@@ -273,7 +273,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
     }
     when(mergeCoordinator.rememberBlock(any())).thenThrow(new MerkleTrieException("missing leaf"));
 
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList()));
 
     verify(engineCallListener, times(1)).executionEngineCalled();
     verify(mergeCoordinator, never()).addBadBlock(any(), any());
@@ -294,7 +294,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
         .when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
         .thenReturn(true);
     lenient().when(mockHeader.getHash()).thenReturn(Hash.fromHexStringLenient("0x1337"));
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getStatusAsString()).isEqualTo(getExpectedInvalidBlockHashStatus().name());
@@ -307,7 +307,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
     BlockHeader paramHeader = spy(realHeader);
     when(paramHeader.getHash()).thenReturn(Hash.fromHexStringLenient("0x1337"));
 
-    var resp = resp(mockPayload(paramHeader, Collections.emptyList()));
+    var resp = resp(mockEnginePayload(paramHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEmpty();
@@ -321,7 +321,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
     when(mergeCoordinator.getLatestValidAncestor(any(Hash.class)))
         .thenReturn(Optional.of(mockHash));
 
-    var resp = resp(mockPayload(mockHeader, List.of("0xDEAD", "0xBEEF")));
+    var resp = resp(mockEnginePayload(mockHeader, List.of("0xDEAD", "0xBEEF")));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash().get()).isEqualTo(mockHash);
@@ -334,7 +334,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
   public void shouldRespondWithSyncingDuringForwardSync() {
     BlockHeader mockHeader = createBlockHeader(Optional.empty(), Optional.empty());
     when(mergeContext.isSyncing()).thenReturn(Boolean.TRUE);
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getError()).isNull();
@@ -348,7 +348,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
     BlockHeader mockHeader = createBlockHeader(Optional.empty(), Optional.empty());
     when(mergeCoordinator.appendNewPayloadToSync(any()))
         .thenReturn(CompletableFuture.completedFuture(null));
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEmpty();
@@ -364,7 +364,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
     when(paramHeader.getHash()).thenReturn(Hash.fromHexStringLenient("0x1337"));
     when(paramHeader.getExtraData().toHexString()).thenReturn(null);
 
-    var resp = resp(mockPayload(paramHeader, Collections.emptyList()));
+    var resp = resp(mockEnginePayload(paramHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEmpty();
@@ -377,7 +377,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
   public void shouldReturnInvalidWhenBadBlock() {
     when(mergeCoordinator.isBadBlock(any(Hash.class))).thenReturn(true);
     BlockHeader mockHeader = createBlockHeader(Optional.empty(), Optional.empty());
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList()));
     when(protocolSpec.getWithdrawalsValidator())
         .thenReturn(new WithdrawalsValidator.AllowedWithdrawals());
     EnginePayloadStatusResult res = fromSuccessResp(resp);
@@ -398,27 +398,31 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
     lenient()
         .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList()));
 
     assertValidResponse(mockHeader, resp);
   }
 
   protected JsonRpcResponse resp(final EnginePayloadParameter payload) {
+    Object[] params =
+        maybeParentBeaconBlockRoot
+            .map(bytes32 -> new Object[] {payload, null, bytes32.toHexString()})
+            .orElseGet(() -> new Object[] {payload});
     return method.response(
-        new JsonRpcRequestContext(
-            new JsonRpcRequest("2.0", this.method.getName(), new Object[] {payload})));
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", this.method.getName(), params)));
   }
 
-  protected EnginePayloadParameter mockPayload(final BlockHeader header, final List<String> txs) {
-    return mockPayload(header, txs, null, null, null);
+  protected EnginePayloadParameter mockEnginePayload(
+      final BlockHeader header, final List<String> txs) {
+    return mockEnginePayload(header, txs, null, null, null);
   }
 
-  protected EnginePayloadParameter mockPayload(
+  protected EnginePayloadParameter mockEnginePayload(
       final BlockHeader header,
       final List<String> txs,
       final List<WithdrawalParameter> withdrawals,
       final List<DepositParameter> deposits) {
-    return mockPayload(
+    return mockEnginePayload(
         header,
         txs,
         withdrawals,
@@ -426,7 +430,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
         List.of(VersionedHash.DEFAULT_VERSIONED_HASH.toBytes()));
   }
 
-  protected EnginePayloadParameter mockPayload(
+  protected EnginePayloadParameter mockEnginePayload(
       final BlockHeader header,
       final List<String> txs,
       final List<WithdrawalParameter> withdrawals,
@@ -512,6 +516,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
             .timestamp(parentBlockHeader.getTimestamp() + 1)
             .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
             .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
+            .parentBeaconBlockRoot(maybeParentBeaconBlockRoot)
             .buildHeader();
     return mockHeader;
   }

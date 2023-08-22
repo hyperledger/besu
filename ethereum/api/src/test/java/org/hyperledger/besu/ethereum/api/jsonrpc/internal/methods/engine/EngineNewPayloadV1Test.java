@@ -74,7 +74,7 @@ public class EngineNewPayloadV1Test extends AbstractEngineNewPayloadTest {
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
         .thenReturn(false);
 
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList()));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList()));
 
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).isEqualTo(Optional.of(Hash.ZERO));

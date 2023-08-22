@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -62,56 +61,9 @@ public class BlockHeader extends SealableBlockHeader
       final Bytes32 mixHashOrPrevRandao,
       final long nonce,
       final Hash withdrawalsRoot,
-      final long blobGasUsed,
-      final BlobGas excessBlobGas,
-      final Hash depositsRoot,
-      final BlockHeaderFunctions blockHeaderFunctions,
-      final Optional<LogsBloomFilter> privateLogsBloom) {
-    super(
-        parentHash,
-        ommersHash,
-        coinbase,
-        stateRoot,
-        transactionsRoot,
-        receiptsRoot,
-        logsBloom,
-        difficulty,
-        number,
-        gasLimit,
-        gasUsed,
-        timestamp,
-        extraData,
-        baseFee,
-        mixHashOrPrevRandao,
-        withdrawalsRoot,
-        blobGasUsed,
-        excessBlobGas,
-        depositsRoot);
-    this.nonce = nonce;
-    this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
-    this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
-  }
-
-  public BlockHeader(
-      final Hash parentHash,
-      final Hash ommersHash,
-      final Address coinbase,
-      final Hash stateRoot,
-      final Hash transactionsRoot,
-      final Hash receiptsRoot,
-      final LogsBloomFilter logsBloom,
-      final Difficulty difficulty,
-      final long number,
-      final long gasLimit,
-      final long gasUsed,
-      final long timestamp,
-      final Bytes extraData,
-      final Wei baseFee,
-      final Bytes32 mixHashOrPrevRandao,
-      final long nonce,
-      final Hash withdrawalsRoot,
       final Long blobGasUsed,
       final BlobGas excessBlobGas,
+      final Bytes32 parentBeaconBlockRoot,
       final Hash depositsRoot,
       final BlockHeaderFunctions blockHeaderFunctions) {
     super(
@@ -133,6 +85,7 @@ public class BlockHeader extends SealableBlockHeader
         withdrawalsRoot,
         blobGasUsed,
         excessBlobGas,
+        parentBeaconBlockRoot,
         depositsRoot);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
@@ -220,6 +173,9 @@ public class BlockHeader extends SealableBlockHeader
       out.writeLongScalar(blobGasUsed.get());
       out.writeUInt64Scalar(excessBlobGas.get());
     }
+    if (parentBeaconBlockRoot != null) {
+      out.writeBytes(parentBeaconBlockRoot);
+    }
     if (depositsRoot != null) {
       out.writeBytes(depositsRoot);
     }
@@ -252,6 +208,7 @@ public class BlockHeader extends SealableBlockHeader
     final Long blobGasUsed = !input.isEndOfCurrentList() ? input.readLongScalar() : null;
     final BlobGas excessBlobGas =
         !input.isEndOfCurrentList() ? BlobGas.of(input.readLongScalar()) : null;
+    final Bytes32 parentBeaconBlockRoot = !input.isEndOfCurrentList() ? input.readBytes32() : null;
     final Hash depositHashRoot =
         !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
     input.leaveList();
@@ -275,6 +232,7 @@ public class BlockHeader extends SealableBlockHeader
         withdrawalHashRoot,
         blobGasUsed,
         excessBlobGas,
+        parentBeaconBlockRoot,
         depositHashRoot,
         blockHeaderFunctions);
   }
@@ -322,6 +280,9 @@ public class BlockHeader extends SealableBlockHeader
     }
     blobGasUsed.ifPresent(aLong -> sb.append("blobGasUsed=").append(aLong).append(", "));
     excessBlobGas.ifPresent(blobGas -> sb.append("excessBlobGas=").append(blobGas).append(", "));
+    if (parentBeaconBlockRoot != null) {
+      sb.append("parentBeaconBlockRoot=").append(parentBeaconBlockRoot).append(", ");
+    }
     if (depositsRoot != null) {
       sb.append("depositsRoot=").append(depositsRoot);
     }
@@ -354,6 +315,7 @@ public class BlockHeader extends SealableBlockHeader
             .orElse(null),
         pluginBlockHeader.getBlobGasUsed().map(Long::longValue).orElse(null),
         pluginBlockHeader.getExcessBlobGas().map(BlobGas::fromQuantity).orElse(null),
+        pluginBlockHeader.getParentBeaconBlockRoot().orElse(null),
         pluginBlockHeader
             .getDepositsRoot()
             .map(h -> Hash.fromHexString(h.toHexString()))

@@ -107,6 +107,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         requestContext.getOptionalList(1, String.class);
 
     final Object reqId = requestContext.getRequest().getId();
+
+    Optional<String> maybeParentBeaconBlockRootParam =
+        requestContext.getOptionalParameter(2, String.class);
+    final Optional<Bytes32> maybeParentBeaconBlockRoot =
+        maybeParentBeaconBlockRootParam.map(Bytes32::fromHexString);
+
     final ValidationResult<RpcErrorType> forkValidationResult =
         validateForkSupported(blockParam.getTimestamp());
     if (!forkValidationResult.isValid()) {
@@ -206,6 +212,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             blockParam.getExcessBlobGas() == null
                 ? null
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
+            maybeParentBeaconBlockRoot.orElse(null),
             maybeDeposits.map(BodyValidation::depositsRoot).orElse(null),
             headerFunctions);
 

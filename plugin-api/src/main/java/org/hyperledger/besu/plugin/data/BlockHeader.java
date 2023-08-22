@@ -216,4 +216,12 @@ public interface BlockHeader {
    */
   @Unstable
   Optional<? extends Long> getBlobGasUsed();
+
+  /**
+   * The parent beacon block root of this header.
+   *
+   * @return The parent_beacon_block_root of this header.
+   */
+  @Unstable
+  Optional<? extends Bytes32> getParentBeaconBlockRoot();
 }
