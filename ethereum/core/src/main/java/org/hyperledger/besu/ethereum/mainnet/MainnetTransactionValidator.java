@@ -93,11 +93,19 @@ public class MainnetTransactionValidator implements TransactionValidator {
       return signatureResult;
     }
 
-    if (transaction.getType().supportsBlob() && transaction.getBlobsWithCommitments().isPresent()) {
-      final ValidationResult<TransactionInvalidReason> blobsResult =
-          validateTransactionsBlobs(transaction);
-      if (!blobsResult.isValid()) {
-        return blobsResult;
+    if (transaction.getType().supportsBlob()) {
+      final ValidationResult<TransactionInvalidReason> blobTransactionResult =
+          validateBlobTransaction(transaction);
+      if (!blobTransactionResult.isValid()) {
+        return blobTransactionResult;
+      }
+
+      if (transaction.getBlobsWithCommitments().isPresent()) {
+        final ValidationResult<TransactionInvalidReason> blobsResult =
+            validateTransactionsBlobs(transaction);
+        if (!blobsResult.isValid()) {
+          return blobsResult;
+        }
       }
     }
 
@@ -282,7 +290,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
     return ValidationResult.valid();
   }
 
-  public ValidationResult<TransactionInvalidReason> validateTransactionsBlobs(
+  public ValidationResult<TransactionInvalidReason> validateBlobTransaction(
       final Transaction transaction) {
 
     if (transaction.getType().supportsBlob() && transaction.getTo().isEmpty()) {
@@ -290,6 +298,18 @@ public class MainnetTransactionValidator implements TransactionValidator {
           TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
           "transaction blob transactions cannot have a to address");
     }
+
+    if (transaction.getVersionedHashes().isEmpty()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_BLOBS,
+          "transaction blob transactions must specify one or more versioned hashes");
+    }
+
+    return ValidationResult.valid();
+  }
+
+  public ValidationResult<TransactionInvalidReason> validateTransactionsBlobs(
+      final Transaction transaction) {
 
     if (transaction.getBlobsWithCommitments().isEmpty()) {
       return ValidationResult.invalid(

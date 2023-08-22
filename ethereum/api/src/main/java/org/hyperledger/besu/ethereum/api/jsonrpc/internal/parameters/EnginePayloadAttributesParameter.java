@@ -30,17 +30,21 @@ public class EnginePayloadAttributesParameter {
   final Bytes32 prevRandao;
   final Address suggestedFeeRecipient;
   final List<WithdrawalParameter> withdrawals;
+  private final Bytes32 parentBeaconBlockRoot;
 
   @JsonCreator
   public EnginePayloadAttributesParameter(
       @JsonProperty("timestamp") final String timestamp,
       @JsonProperty("prevRandao") final String prevRandao,
       @JsonProperty("suggestedFeeRecipient") final String suggestedFeeRecipient,
-      @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals) {
+      @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals,
+      @JsonProperty("parentBeaconBlockRoot") final String parentBeaconBlockRoot) {
     this.timestamp = Long.decode(timestamp);
     this.prevRandao = Bytes32.fromHexString(prevRandao);
     this.suggestedFeeRecipient = Address.fromHexString(suggestedFeeRecipient);
     this.withdrawals = withdrawals;
+    this.parentBeaconBlockRoot =
+        parentBeaconBlockRoot == null ? null : Bytes32.fromHexString(parentBeaconBlockRoot);
   }
 
   public Long getTimestamp() {
@@ -53,6 +57,10 @@ public class EnginePayloadAttributesParameter {
 
   public Address getSuggestedFeeRecipient() {
     return suggestedFeeRecipient;
+  }
+
+  public Bytes32 getParentBeaconBlockRoot() {
+    return parentBeaconBlockRoot;
   }
 
   public List<WithdrawalParameter> getWithdrawals() {
@@ -69,6 +77,9 @@ public class EnginePayloadAttributesParameter {
       json.put(
           "withdrawals",
           withdrawals.stream().map(WithdrawalParameter::asJsonObject).collect(Collectors.toList()));
+    }
+    if (parentBeaconBlockRoot != null) {
+      json.put("parentBeaconBlockRoot", parentBeaconBlockRoot.toHexString());
     }
     return json.encode();
   }

@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -59,6 +60,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
   @Override
   public void before() {
     super.before();
+    maybeParentBeaconBlockRoot = Optional.of(Bytes32.ZERO);
     this.method =
         new EngineNewPayloadV3(
             vertx,
@@ -85,7 +87,11 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
                 new JsonRpcRequest(
                     "2.0",
                     RpcMethod.ENGINE_NEW_PAYLOAD_V3.getMethodName(),
-                    new Object[] {payload, List.of(shortHash.toHexString())})));
+                    new Object[] {
+                      payload,
+                      List.of(shortHash.toHexString()),
+                      "0x0000000000000000000000000000000000000000000000000000000000000000"
+                    })));
     EnginePayloadStatusResult res = fromSuccessResp(badParam);
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
     assertThat(res.getError()).isEqualTo("Invalid versionedHash");
@@ -100,7 +106,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .baseFeePerGas(Wei.ONE)
             .timestamp(super.cancunHardfork.milestone())
             .buildHeader();
-    // protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
+
     when(blockchain.getBlockHeader(parentBlockHeader.getBlockHash()))
         .thenReturn(Optional.of(parentBlockHeader));
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
@@ -114,6 +120,8 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(0L)
+            .parentBeaconBlockRoot(
+                maybeParentBeaconBlockRoot.isPresent() ? maybeParentBeaconBlockRoot : null)
             .buildHeader();
     return mockHeader;
   }

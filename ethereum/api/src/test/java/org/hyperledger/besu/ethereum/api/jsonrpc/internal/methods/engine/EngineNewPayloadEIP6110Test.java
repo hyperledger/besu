@@ -44,6 +44,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -60,6 +61,7 @@ public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
   @Override
   public void before() {
     super.before();
+    maybeParentBeaconBlockRoot = Optional.of(Bytes32.ZERO);
     this.method =
         new EngineNewPayloadV3(
             vertx,
@@ -96,7 +98,7 @@ public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
         .thenReturn(Optional.of(mockHeader.getHash()));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
 
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), null, deposits, null));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), null, deposits, null));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -110,7 +112,7 @@ public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
 
     var resp =
         resp(
-            mockPayload(
+            mockEnginePayload(
                 createBlockHeader(Optional.empty(), Optional.empty()),
                 Collections.emptyList(),
                 null,
@@ -136,7 +138,7 @@ public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
     when(mergeCoordinator.getLatestValidAncestor(mockHeader))
         .thenReturn(Optional.of(mockHeader.getHash()));
     when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), null, depositsParam));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), null, depositsParam));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -150,7 +152,7 @@ public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
 
     var resp =
         resp(
-            mockPayload(
+            mockEnginePayload(
                 createBlockHeader(Optional.empty(), Optional.of(Collections.emptyList())),
                 Collections.emptyList(),
                 null,
@@ -183,6 +185,8 @@ public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(100L)
             .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
+            .parentBeaconBlockRoot(
+                maybeParentBeaconBlockRoot.isPresent() ? maybeParentBeaconBlockRoot : null)
             .buildHeader();
     return mockHeader;
   }

@@ -21,13 +21,18 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePaylo
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
+import java.util.List;
+import java.util.Optional;
+
 import io.vertx.core.Vertx;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
 
-  private final ProtocolSchedule timestampSchedule;
+  private final Long cancunTimestamp;
 
   public EngineNewPayloadV3(
       final Vertx vertx,
@@ -38,7 +43,9 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
       final EngineCallListener engineCallListener) {
     super(
         vertx, timestampSchedule, protocolContext, mergeCoordinator, ethPeers, engineCallListener);
-    this.timestampSchedule = timestampSchedule;
+    Optional<ScheduledProtocolSpec.Hardfork> cancun =
+        timestampSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
+    cancunTimestamp = cancun.map(ScheduledProtocolSpec.Hardfork::milestone).orElse(Long.MAX_VALUE);
   }
 
   @Override
@@ -47,19 +54,24 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
   }
 
   @Override
-  protected ValidationResult<RpcErrorType> validateForkSupported(
-      final Object reqId, final EnginePayloadParameter payloadParameter) {
-    var cancun = timestampSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
+  protected ValidationResult<RpcErrorType> validateParamsAndForkSupported(
+      final Object reqId,
+      final EnginePayloadParameter payloadParameter,
+      final Optional<List<String>> maybeVersionedHashParam,
+      final Optional<Bytes32> maybeParentBeaconBlockRoot) {
 
-    if (cancun.isPresent() && payloadParameter.getTimestamp() >= cancun.get().milestone()) {
-      if (payloadParameter.getBlobGasUsed() == null
-          || payloadParameter.getExcessBlobGas() == null) {
-        return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing blob gas fields");
-      } else {
-        return ValidationResult.valid();
-      }
-    } else {
+    if (payloadParameter.getBlobGasUsed() == null || payloadParameter.getExcessBlobGas() == null) {
+      return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing blob gas fields");
+    } else if (maybeVersionedHashParam == null) {
+      return ValidationResult.invalid(
+          RpcErrorType.INVALID_PARAMS, "Missing versioned hashes field");
+    } else if (maybeParentBeaconBlockRoot.isEmpty()) {
+      return ValidationResult.invalid(
+          RpcErrorType.INVALID_PARAMS, "Missing parent beacon block root field");
+    }
+    if (payloadParameter.getTimestamp() < cancunTimestamp) {
       return ValidationResult.invalid(RpcErrorType.UNSUPPORTED_FORK, "Fork not supported");
     }
+    return ValidationResult.valid();
   }
 }
