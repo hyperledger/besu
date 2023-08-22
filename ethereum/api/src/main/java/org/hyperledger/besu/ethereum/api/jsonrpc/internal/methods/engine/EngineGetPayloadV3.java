@@ -21,9 +21,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import io.vertx.core.Vertx;
 
@@ -59,5 +61,21 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
     return new JsonRpcSuccessResponse(
         request.getRequest().getId(),
         blockResultFactory.payloadTransactionCompleteV3(blockWithReceipts));
+  }
+
+  @Override
+  protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
+    if (protocolSchedule.isPresent()) {
+      if (cancun.isPresent() && blockTimestamp >= cancun.get().milestone()) {
+        return ValidationResult.valid();
+      } else {
+        return ValidationResult.invalid(
+            RpcErrorType.UNSUPPORTED_FORK,
+            "Cancun configured to start at timestamp: " + cancun.get().milestone());
+      }
+    } else {
+      return ValidationResult.invalid(
+          RpcErrorType.UNSUPPORTED_FORK, "Configuration error, no schedule for Cancun fork set");
+    }
   }
 }

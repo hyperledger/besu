@@ -52,4 +52,20 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
       return ValidationResult.valid();
     }
   }
+
+  @Override
+  protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
+    if (protocolSchedule.isPresent()) {
+      if (cancun.isPresent() && blockTimestamp >= cancun.get().milestone()) {
+        return ValidationResult.valid();
+      } else {
+        return ValidationResult.invalid(
+            RpcErrorType.UNSUPPORTED_FORK,
+            "Cancun configured to start at timestamp: " + cancun.get().milestone());
+      }
+    } else {
+      return ValidationResult.invalid(
+          RpcErrorType.UNSUPPORTED_FORK, "Configuration error, no schedule for Cancun fork set");
+    }
+  }
 }
