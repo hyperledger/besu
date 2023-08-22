@@ -31,7 +31,6 @@ import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.KZGCommitment;
 import org.hyperledger.besu.datatypes.KZGProof;
-import org.hyperledger.besu.datatypes.Quantity;
 import org.hyperledger.besu.datatypes.Sha256Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -45,7 +44,6 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -432,22 +430,11 @@ public class Transaction
   }
 
   /**
-   * Boolean which indicates the transaction has associated cost data, whether gas price or 1559 fee
-   * market parameters.
+   * Return the effective priority fee per gas for this transaction.
    *
-   * @return whether cost params are present
+   * @param maybeBaseFee base fee in case of EIP-1559 transaction
+   * @return priority fee per gas in wei
    */
-  @Override
-  public boolean hasCostParams() {
-    return Arrays.asList(
-            getGasPrice(), getMaxFeePerGas(), getMaxPriorityFeePerGas(), getMaxFeePerBlobGas())
-        .stream()
-        .flatMap(Optional::stream)
-        .map(Quantity::getAsBigInteger)
-        .anyMatch(q -> q.longValue() > 0L);
-  }
-
-  @Override
   public Wei getEffectivePriorityFeePerGas(final Optional<Wei> maybeBaseFee) {
     return maybeBaseFee
         .map(
@@ -483,7 +470,6 @@ public class Transaction
    *
    * @return return the count
    */
-  @Override
   public int getBlobCount() {
     return versionedHashes.map(List::size).orElse(0);
   }
@@ -516,7 +502,6 @@ public class Transaction
    *
    * @return the signature used to sign the transaction
    */
-  @Override
   public SECPSignature getSignature() {
     return signature;
   }
@@ -594,7 +579,6 @@ public class Transaction
    *
    * @return the public key
    */
-  @Override
   public Optional<String> getPublicKey() {
     return signatureAlgorithm
         .recoverPublicKeyFromSignature(getOrComputeSenderRecoveryHash(), signature)
@@ -627,9 +611,15 @@ public class Transaction
    *
    * @param out the output to write the transaction to
    */
-  @Override
   public void writeTo(final RLPOutput out) {
     TransactionEncoder.encodeForWire(this, out);
+  }
+
+  @Override
+  public Bytes encoded() {
+    final BytesValueRLPOutput rplOutput = new BytesValueRLPOutput();
+    writeTo(rplOutput);
+    return rplOutput.encoded();
   }
 
   @Override
@@ -704,7 +694,6 @@ public class Transaction
    *
    * @return {@code true} if this is a contract-creation transaction; otherwise {@code false}
    */
-  @Override
   public boolean isContractCreation() {
     return getTo().isEmpty();
   }
@@ -735,7 +724,6 @@ public class Transaction
    * @param blobGasPrice the blob gas price to use
    * @return the up-front cost for the gas the transaction can use.
    */
-  @Override
   public Wei getUpfrontGasCost(
       final Wei gasPrice, final Wei blobGasPrice, final long totalBlobGas) {
     if (gasPrice == null || gasPrice.isZero()) {
@@ -772,7 +760,6 @@ public class Transaction
    *
    * @return the up-front gas cost for the transaction
    */
-  @Override
   public Wei getUpfrontCost(final long totalBlobGas) {
     return getMaxUpfrontGasCost(totalBlobGas).addExact(getValue());
   }
@@ -782,7 +769,6 @@ public class Transaction
    *
    * @return max fee per gas in wei
    */
-  @Override
   public Wei getMaxGasPrice() {
     return maxFeePerGas.orElseGet(
         () ->
@@ -804,7 +790,6 @@ public class Transaction
    * @param baseFeePerGas optional baseFee from the block header, if we are post-london
    * @return the effective gas price.
    */
-  @Override
   public final Wei getEffectiveGasPrice(final Optional<Wei> baseFeePerGas) {
     return getEffectivePriorityFeePerGas(baseFeePerGas).addExact(baseFeePerGas.orElse(Wei.ZERO));
   }

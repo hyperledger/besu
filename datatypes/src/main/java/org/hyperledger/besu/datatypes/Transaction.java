@@ -14,9 +14,6 @@
  */
 package org.hyperledger.besu.datatypes;
 
-import org.hyperledger.besu.crypto.SECPSignature;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
@@ -189,57 +186,6 @@ public interface Transaction {
   TransactionType getType();
 
   /**
-   * Boolean which indicates the transaction has associated cost data, whether gas price or 1559 fee
-   * market parameters.
-   *
-   * @return whether cost params are present
-   */
-  boolean hasCostParams();
-
-  /**
-   * Returns the number of blobs this transaction has, or 0 if not a blob transaction type
-   *
-   * @return return the count
-   */
-  int getBlobCount();
-
-  /**
-   * Returns the signature used to sign the transaction.
-   *
-   * @return the signature used to sign the transaction
-   */
-  SECPSignature getSignature();
-
-  /**
-   * Returns the public key extracted from the signature.
-   *
-   * @return the public key
-   */
-  Optional<String> getPublicKey();
-
-  /**
-   * Returns whether the transaction is a contract creation
-   *
-   * @return {@code true} if this is a contract-creation transaction; otherwise {@code false}
-   */
-  boolean isContractCreation();
-
-  /**
-   * Return the maximum fee per gas the sender is willing to pay for this transaction.
-   *
-   * @return max fee per gas in wei
-   */
-  Wei getMaxGasPrice();
-
-  /**
-   * Return the effective priority fee per gas for this transaction.
-   *
-   * @param maybeBaseFee base fee in case of EIP-1559 transaction
-   * @return priority fee per gas in wei
-   */
-  Wei getEffectivePriorityFeePerGas(final Optional<Wei> maybeBaseFee);
-
-  /**
    * Return the versioned hashes for this transaction.
    *
    * @return optional list of versioned hashes
@@ -268,45 +214,9 @@ public interface Transaction {
   Optional<List<AccessListEntry>> getAccessList();
 
   /**
-   * Writes the transaction to RLP
+   * Returns the transaction with the proper encoding
    *
-   * @param out the output to write the transaction to
+   * @return the encoded transaction as Bytes
    */
-  void writeTo(final RLPOutput out);
-
-  /**
-   * Calculates the up-front cost for the gas and data gas the transaction can use.
-   *
-   * @param gasPrice the gas price to use
-   * @param blobGasPrice the data gas price to use
-   * @param totalBlobGas the gas the transaction can use
-   * @return the up-front cost for the gas the transaction can use.
-   */
-  Wei getUpfrontGasCost(final Wei gasPrice, final Wei blobGasPrice, final long totalBlobGas);
-
-  /**
-   * Calculates the up-front cost for the transaction.
-   *
-   * <p>The up-front cost is paid by the sender account before the transaction is executed. The
-   * sender must have the amount in its account balance to execute and some of this amount may be
-   * refunded after the transaction has executed.
-   *
-   * @param totalBlobGas the gas the transaction can use
-   * @return the up-front gas cost for the transaction
-   */
-  Wei getUpfrontCost(final long totalBlobGas);
-
-  /**
-   * Calculates the effectiveGasPrice of a transaction on the basis of an {@code Optional<Long>}
-   * baseFee and handles unwrapping Optional fee parameters. If baseFee is present, effective gas is
-   * calculated as:
-   *
-   * <p>min((baseFeePerGas + maxPriorityFeePerGas), maxFeePerGas)
-   *
-   * <p>Otherwise, return gasPrice for legacy transactions.
-   *
-   * @param baseFeePerGas optional baseFee from the block header, if we are post-london
-   * @return the effective gas price.
-   */
-  Wei getEffectiveGasPrice(final Optional<Wei> baseFeePerGas);
+  Bytes encoded();
 }
