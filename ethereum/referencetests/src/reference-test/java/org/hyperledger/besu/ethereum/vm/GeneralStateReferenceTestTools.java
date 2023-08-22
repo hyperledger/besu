@@ -106,8 +106,11 @@ public class GeneralStateReferenceTestTools {
     params.ignore("CALLBlake2f_MaxRounds.*");
     params.ignore("loopMul-.*");
 
-    // EIP tests are explicitly meant to be works-in-progress with known failing tests
-    params.ignore("/EIPTests/");
+    // Reference Tests are old.  Max blob count is 6.
+    params.ignore("blobhashListBounds5");
+
+    // EOF tests are written against an older version of the spec
+    params.ignore("/stEOF/");
   }
 
   private GeneralStateReferenceTestTools() {
@@ -161,7 +164,9 @@ public class GeneralStateReferenceTestTools {
             TransactionValidationParams.processingBlock(),
             blobGasPrice);
     if (result.isInvalid()) {
-      assertThat(spec.getExpectException()).isNotNull();
+      assertThat(spec.getExpectException())
+          .withFailMessage(() -> result.getValidationResult().getErrorMessage())
+          .isNotNull();
       return;
     }
     assertThat(spec.getExpectException())

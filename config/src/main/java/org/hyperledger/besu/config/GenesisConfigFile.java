@@ -266,6 +266,18 @@ public class GenesisConfigFile {
   }
 
   /**
+   * Gets parent beacon block root.
+   *
+   * @return the parent beacon block root
+   */
+  public String getParentBeaconBlockRoot() {
+    return JsonUtil.getValueAsString(
+        configRoot,
+        "parentbeaconblockroot",
+        "0x0000000000000000000000000000000000000000000000000000000000000000");
+  }
+
+  /**
    * Gets coinbase.
    *
    * @return the coinbase
