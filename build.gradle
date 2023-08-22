@@ -641,11 +641,11 @@ artifactoryPublish {
   dependsOn distZip
 }
 
-def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
+def versionNumber = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
 def dockerOrgName = project.hasProperty('dockerOrgName') ? project.getProperty("dockerOrgName") : "hyperledger"
 def dockerArtifactName = project.hasProperty("dockerArtifactName") ? project.getProperty("dockerArtifactName") : "besu"
 def dockerImageName = "${dockerOrgName}/${dockerArtifactName}"
-def dockerVariants = project.hasProperty("dockerVariants") ? project.getProperty("dockerVariants").split(",") : [
+def jdkVariants = project.hasProperty("dockerVariants") ? project.getProperty("dockerVariants").split(",") : [
   "openjdk-17",
   "openjdk-17-debug",
   "openj9-jdk-17",
@@ -679,13 +679,13 @@ task distDocker {
   def dockerBuildDir = "build/docker-besu/"
 
   doLast {
-    for (def jvmVariant in dockerVariants) {
+    for (def jvmVariant in jdkVariants) {
       copy {
         from file("${projectDir}/docker/${jvmVariant}/Dockerfile")
         into(dockerBuildDir)
       }
       exec {
-        def image = "${dockerImageName}:${dockerBuildVersion}-${jvmVariant}"
+        def image = "${dockerImageName}:${versionNumber}-${jvmVariant}"
         def dockerPlatform = ""
         if (project.hasProperty('docker-platform')){
           dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
@@ -693,19 +693,19 @@ task distDocker {
         }
         executable "sh"
         workingDir dockerBuildDir
-        args "-c", "docker build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
+        args "-c", "docker build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${versionNumber} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
       }
     }
 
     // tag the "default" (which is the variant in the zero position)
     exec {
       executable "sh"
-      args "-c", "docker tag '${dockerImageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${dockerImageName}:${dockerBuildVersion}'"
+      args "-c", "docker tag '${dockerImageName}:${versionNumber}-${jdkVariants[0]}' '${dockerImageName}:${versionNumber}'"
     }
     // create a static tag for the benchmark target
     exec {
       executable "sh"
-      args "-c", "docker tag '${dockerImageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${dockerImageName}:benchmark'"
+      args "-c", "docker tag '${dockerImageName}:${versionNumber}-${jdkVariants[0]}' '${dockerImageName}:benchmark'"
     }
   }
 }
@@ -719,7 +719,7 @@ task testDocker {
   }
 
   doLast {
-    for (def variant in dockerVariants) {
+    for (def variant in jdkVariants) {
       exec {
         def image = project.hasProperty('release.releaseVersion') ? "${dockerImageName}:" + project.property('release.releaseVersion') : "${dockerImageName}:${project.version}"
         workingDir "${projectDir}/docker/${variant}"
@@ -733,20 +733,20 @@ task testDocker {
 task dockerUpload {
   dependsOn distDocker
   def architecture = System.getenv('architecture')
-  def image = "${dockerImageName}:${dockerBuildVersion}"
+  def versionedImageName = "${dockerImageName}:${versionNumber}"
   def additionalTags = []
 
   if (project.hasProperty('branch') && project.property('branch') == 'main') {
     additionalTags.add('develop')
   }
 
-  if (!isInterimBuild(dockerBuildVersion)) {
-    additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
+  if (!isInterimBuild(versionNumber)) {
+    additionalTags.add(versionNumber.split(/\./)[0..1].join('.'))
   }
 
   doLast {
-    for (def variant in dockerVariants) {
-      def variantImage = "${image}-${variant}"
+    for (def variant in jdkVariants) {
+      def variantImage = "${versionedImageName}-${variant}"
       exec {
         def archVariantImage = "${variantImage}-${architecture}"
         def cmd = "docker tag '${variantImage}' '${archVariantImage}' && docker push '${archVariantImage}'"
@@ -758,9 +758,9 @@ task dockerUpload {
     }
 
     exec {
-      def archImage = "${image}-${architecture}"
-      def cmd = "docker tag ${image} ${archImage} && docker push '${archImage}'"
-      additionalTags.each { tag -> cmd += " && docker tag '${image}' '${dockerImageName}:${tag.trim()}-${architecture}' && docker push '${dockerImageName}:${tag.trim()}-${architecture}'" }
+      def archImage = "${versionedImageName}-${architecture}"
+      def cmd = "docker tag ${versionedImageName} ${archImage} && docker push '${archImage}'"
+      additionalTags.each { tag -> cmd += " && docker tag '${versionedImageName}' '${dockerImageName}:${tag.trim()}-${architecture}' && docker push '${dockerImageName}:${tag.trim()}-${architecture}'" }
       println "Executing '${cmd}'"
       executable "sh"
       args "-c", cmd
@@ -770,18 +770,18 @@ task dockerUpload {
 
 task dockerUploadRelease {
   def archs = ["arm64", "amd64"]
-  def image = "${dockerImageName}:${dockerBuildVersion}"
+  def image = "${dockerImageName}:${versionNumber}"
 
   doLast {
     for (def architecture in archs) {
-      for (def variant in dockerVariants) {
-        def variantImage = "${image}-${variant}"
-        exec {
-          def cmd = "docker pull '${variantImage}-${architecture}' && docker tag '${variantImage}-${architecture}' '${dockerImageName}:latest-${variant}-${architecture}'"
+      for (def variant in jdkVariants) {
+        def versionedVariantImage = "${image}-${variant}"
+        exec { //moves the latest tag to the latest version for each architecture/variant
+          def cmd = "docker pull '${versionedVariantImage}-${architecture}' && docker tag '${versionedVariantImage}-${architecture}' '${dockerImageName}:latest-${variant}-${architecture}'"
           println "Executing '${cmd}'"
           executable "sh"
           args "-c", cmd
-        }
+        } //pushes the new tags
         exec {
           def cmd = "docker push '${dockerImageName}:latest-${variant}-${architecture}'"
           println "Executing '${cmd}'"
@@ -808,21 +808,21 @@ task dockerUploadRelease {
 }
 
 task manifestDocker {
-  def image = "${dockerImageName}:${dockerBuildVersion}"
+  def versionedImage = "${dockerImageName}:${versionNumber}"
   def archs = ["arm64", "amd64"]
-  def tags = ["${image}"]
+  def tags = ["${versionedImage}"]
 
   if (project.hasProperty('branch') && project.property('branch') == 'main') {
     tags.add("${dockerImageName}:develop")
   }
 
-  if (!isInterimBuild(dockerBuildVersion)) {
-    tags.add("${dockerImageName}:" + dockerBuildVersion.split(/\./)[0..1].join('.'))
+  if (!isInterimBuild(versionNumber)) {
+    tags.add("${dockerImageName}:" + versionNumber.split(/\./)[0..1].join('.'))
   }
 
   doLast {
     for (baseTag in tags) {
-      for (def variant in dockerVariants) {
+      for (def variant in jdkVariants) {
         def variantImage = "${baseTag}-${variant}"
         def targets = ""
         archs.forEach { arch -> targets += "'${variantImage}-${arch}' " }
@@ -864,7 +864,7 @@ task manifestDockerRelease {
   def baseTag = "${dockerImageName}:latest";
 
   doLast {
-    for (def variant in dockerVariants) {
+    for (def variant in jdkVariants) {
       def variantImage = "${baseTag}-${variant}"
       def targets = ""
       archs.forEach { arch -> targets += "'${variantImage}-${arch}' " }

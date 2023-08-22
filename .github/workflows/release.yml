@@ -17,5 +17,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
       - name: Docker upload
         run: ./gradlew "-Prelease.releaseVersion=${{ github.ref_name }}" "-PdockerOrgName=${{ secrets.DOCKER_ORG }}" dockerUploadRelease
-      - name: Docker manifest
+      - name: Docker upload
+        run: ./gradlew "-Prelease.releaseVersion=${{ github.ref_name }}" "-PdockerOrgName=${{ secrets.DOCKER_ORG }}" manifestDocker
+      - name: Docker manifestRelease
         run: ./gradlew "-Prelease.releaseVersion=${{ github.ref_name }}" "-PdockerOrgName=${{ secrets.DOCKER_ORG }}" manifestDockerRelease
