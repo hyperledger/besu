@@ -48,6 +48,8 @@ public class ProcessableBlockHeader implements BlockValues {
   protected final Optional<Long> blobGasUsed;
   // excessBlogGas is included for Cancun
   protected final Optional<BlobGas> excessBlobGas;
+  // parentBeaconBlockRoot is included for Cancun
+  protected final Bytes32 parentBeaconBlockRoot;
 
   protected ProcessableBlockHeader(
       final Hash parentHash,
@@ -59,7 +61,8 @@ public class ProcessableBlockHeader implements BlockValues {
       final Wei baseFee,
       final Bytes32 mixHashOrPrevRandao,
       final Long blobGasUsed,
-      final BlobGas excessBlobGas) {
+      final BlobGas excessBlobGas,
+      final Bytes32 parentBeaconBlockRoot) {
     this.parentHash = parentHash;
     this.coinbase = coinbase;
     this.difficulty = difficulty;
@@ -70,6 +73,7 @@ public class ProcessableBlockHeader implements BlockValues {
     this.mixHashOrPrevRandao = mixHashOrPrevRandao;
     this.blobGasUsed = Optional.ofNullable(blobGasUsed);
     this.excessBlobGas = Optional.ofNullable(excessBlobGas);
+    this.parentBeaconBlockRoot = parentBeaconBlockRoot;
   }
 
   /**
@@ -174,6 +178,10 @@ public class ProcessableBlockHeader implements BlockValues {
 
   public Optional<Long> getBlobGasUsed() {
     return blobGasUsed;
+  }
+
+  public Optional<Bytes32> getParentBeaconBlockRoot() {
+    return Optional.ofNullable(parentBeaconBlockRoot);
   }
 
   public String toLogString() {
