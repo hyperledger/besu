@@ -27,11 +27,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes32;
 
-@JsonPropertyOrder({"executionPayload", "blockValue", "blobsBundle"})
+@JsonPropertyOrder({"executionPayload", "blockValue", "blobsBundle", "shouldOverrideBuilder"})
 public class EngineGetPayloadResultV3 {
   protected final PayloadResult executionPayload;
   private final String blockValue;
   private final BlobsBundleV1 blobsBundle;
+  private final boolean shouldOverrideBuilder;
 
   public EngineGetPayloadResultV3(
       final BlockHeader header,
@@ -42,6 +43,7 @@ public class EngineGetPayloadResultV3 {
     this.executionPayload = new PayloadResult(header, transactions, withdrawals);
     this.blockValue = blockValue;
     this.blobsBundle = blobsBundle;
+    this.shouldOverrideBuilder = false;
   }
 
   @JsonGetter(value = "executionPayload")
@@ -57,6 +59,11 @@ public class EngineGetPayloadResultV3 {
   @JsonGetter(value = "blobsBundle")
   public BlobsBundleV1 getBlobsBundle() {
     return blobsBundle;
+  }
+
+  @JsonGetter(value = "shouldOverrideBuilder")
+  public boolean shouldOverrideBuilder() {
+    return shouldOverrideBuilder;
   }
 
   public static class PayloadResult {
