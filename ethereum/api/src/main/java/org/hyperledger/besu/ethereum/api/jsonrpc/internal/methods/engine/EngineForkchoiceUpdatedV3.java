@@ -21,8 +21,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import io.vertx.core.Vertx;
 
-// TODO Withdrawals use composition instead? Want to make it more obvious that there is no
-// difference between V1/V2/V3 code other than the method name
 public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
 
   public EngineForkchoiceUpdatedV3(

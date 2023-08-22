@@ -211,14 +211,7 @@ public final class GenesisStateTest {
     assertThat(header.getHash())
         .isEqualTo(
             Hash.fromHexString(
-                "0x87846b86c1026fa7d7be2da045716274231de1871065a320659c9b111287c688")); // TODO:
-    // check
-    // with
-    // Justin
-    // where the
-    // old magic
-    // number
-    // came from
+                "0x87846b86c1026fa7d7be2da045716274231de1871065a320659c9b111287c688"));
     assertThat(header.getGasLimit()).isEqualTo(0x2fefd8);
     assertThat(header.getGasUsed()).isEqualTo(0);
     assertThat(header.getNumber()).isEqualTo(0);

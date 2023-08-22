@@ -165,8 +165,10 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("nonce") final String nonce,
         @JsonProperty("withdrawalsRoot") final String withdrawalsRoot,
         @JsonProperty("depositsRoot") final String depositsRoot,
-        @JsonProperty("dataGasUsed") final String dataGasUsed,
-        @JsonProperty("excessDataGas") final String excessDataGas,
+        @JsonProperty("dataGasUsed")
+            final String dataGasUsed, // TODO: remove once reference tests have been updated
+        @JsonProperty("excessDataGas")
+            final String excessDataGas, // TODO: remove once reference tests have been updated
         @JsonProperty("blobGasUsed") final String blobGasUsed,
         @JsonProperty("excessBlobGas") final String excessBlobGas,
         @JsonProperty("parentBeaconBlockRoot") final String parentBeaconBlockRoot,
