@@ -18,7 +18,7 @@ package org.hyperledger.besu.ethereum.referencetests;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -48,6 +48,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BlockchainReferenceTestCaseSpec {
@@ -164,8 +165,13 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("nonce") final String nonce,
         @JsonProperty("withdrawalsRoot") final String withdrawalsRoot,
         @JsonProperty("depositsRoot") final String depositsRoot,
-        @JsonProperty("dataGasUsed") final String dataGasUsed,
-        @JsonProperty("excessDataGas") final String excessDataGas,
+        @JsonProperty("dataGasUsed")
+            final String dataGasUsed, // TODO: remove once reference tests have been updated
+        @JsonProperty("excessDataGas")
+            final String excessDataGas, // TODO: remove once reference tests have been updated
+        @JsonProperty("blobGasUsed") final String blobGasUsed,
+        @JsonProperty("excessBlobGas") final String excessBlobGas,
+        @JsonProperty("parentBeaconBlockRoot") final String parentBeaconBlockRoot,
         @JsonProperty("hash") final String hash) {
       super(
           Hash.fromHexString(parentHash), // parentHash
@@ -189,8 +195,13 @@ public class BlockchainReferenceTestCaseSpec {
           Hash.fromHexString(mixHash), // mixHash
           Bytes.fromHexStringLenient(nonce).toLong(),
           withdrawalsRoot != null ? Hash.fromHexString(withdrawalsRoot) : null,
-          dataGasUsed != null ? Long.decode(dataGasUsed) : 0,
-          excessDataGas != null ? DataGas.fromHexString(excessDataGas) : null,
+          dataGasUsed != null
+              ? Long.decode(dataGasUsed)
+              : blobGasUsed != null ? Long.decode(blobGasUsed) : 0,
+          excessDataGas != null
+              ? BlobGas.fromHexString(excessDataGas)
+              : excessBlobGas != null ? BlobGas.fromHexString(excessBlobGas) : null,
+          parentBeaconBlockRoot != null ? Bytes32.fromHexString(parentBeaconBlockRoot) : null,
           depositsRoot != null ? Hash.fromHexString(depositsRoot) : null,
           new BlockHeaderFunctions() {
             @Override

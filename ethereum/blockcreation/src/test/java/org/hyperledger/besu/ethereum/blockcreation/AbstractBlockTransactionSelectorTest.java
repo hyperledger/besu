@@ -634,7 +634,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final ProcessableBlockHeader blockHeader,
       final Wei minGasPrice,
       final Address miningBeneficiary,
-      final Wei dataGasPrice,
+      final Wei blobGasPrice,
       final double minBlockOccupancyRatio) {
     final BlockTransactionSelector selector =
         new BlockTransactionSelector(
@@ -648,7 +648,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             minBlockOccupancyRatio,
             this::isCancelled,
             miningBeneficiary,
-            dataGasPrice,
+            blobGasPrice,
             getFeeMarket(),
             new LondonGasCalculator(),
             GasLimitCalculator.constant(),
@@ -662,7 +662,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final ProcessableBlockHeader blockHeader,
       final Wei minGasPrice,
       final Address miningBeneficiary,
-      final Wei dataGasPrice,
+      final Wei blobGasPrice,
       final double minBlockOccupancyRatio,
       final TransactionSelectorFactory transactionSelectorFactory) {
     final BlockTransactionSelector selector =
@@ -677,7 +677,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             minBlockOccupancyRatio,
             this::isCancelled,
             miningBeneficiary,
-            dataGasPrice,
+            blobGasPrice,
             getFeeMarket(),
             new LondonGasCalculator(),
             GasLimitCalculator.constant(),

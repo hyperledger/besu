@@ -19,7 +19,7 @@ package org.hyperledger.besu.ethereum.referencetests;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -82,7 +82,7 @@ public class ReferenceTestEnv extends BlockHeader {
 
   private final String parentBlobGasUsed;
 
-  private final Hash beaconRoot;
+  private final Bytes32 beaconRoot;
 
   /**
    * Public constructor.
@@ -116,8 +116,12 @@ public class ReferenceTestEnv extends BlockHeader {
       @JsonProperty("blockHashes") final Map<String, String> blockHashes,
       @JsonProperty("currentExcessBlobGas") final String currentExcessBlobGas,
       @JsonProperty("currentBlobGasUsed") final String currentBlobGasUsed,
+      @JsonProperty("currentExcessDataGas") final String currentExcessDataGas,
+      @JsonProperty("currentDataGasUsed") final String currentDataGasUsed,
       @JsonProperty("parentExcessBlobGas") final String parentExcessBlobGas,
       @JsonProperty("parentBlobGasUsed") final String parentBlobGasUsed,
+      @JsonProperty("parentExcessDataGas") final String parentExcessDataGas,
+      @JsonProperty("parentDataGasUsed") final String parentDataGasUsed,
       @JsonProperty("beaconRoot") final String beaconRoot) {
     super(
         generateTestBlockHash(previousHash, number),
@@ -137,8 +141,13 @@ public class ReferenceTestEnv extends BlockHeader {
         Optional.ofNullable(random).map(Difficulty::fromHexString).orElse(Difficulty.ZERO),
         0L,
         null, // withdrawalsRoot
-        currentBlobGasUsed == null ? null : Long.decode(currentBlobGasUsed),
-        currentExcessBlobGas == null ? null : DataGas.fromHexString(currentExcessBlobGas),
+        currentBlobGasUsed == null
+            ? currentDataGasUsed == null ? null : Long.decode(currentDataGasUsed)
+            : Long.decode(currentBlobGasUsed),
+        currentExcessBlobGas == null
+            ? currentExcessDataGas == null ? null : BlobGas.fromHexString(currentExcessDataGas)
+            : BlobGas.fromHexString(currentExcessBlobGas),
+        beaconRoot == null ? null : Bytes32.fromHexString(beaconRoot),
         null, // depositsRoot
         new MainnetBlockHeaderFunctions());
     this.parentDifficulty = parentDifficulty;
@@ -146,8 +155,9 @@ public class ReferenceTestEnv extends BlockHeader {
     this.parentGasUsed = parentGasUsed;
     this.parentGasLimit = parentGasLimit;
     this.parentTimestamp = parentTimestamp;
-    this.parentExcessBlobGas = parentExcessBlobGas;
-    this.parentBlobGasUsed = parentBlobGasUsed;
+    this.parentExcessBlobGas =
+        parentExcessBlobGas == null ? parentExcessDataGas : parentExcessBlobGas;
+    this.parentBlobGasUsed = parentBlobGasUsed == null ? parentDataGasUsed : parentBlobGasUsed;
     this.withdrawals =
         withdrawals == null
             ? List.of()
@@ -211,12 +221,12 @@ public class ReferenceTestEnv extends BlockHeader {
                           .buildBlockHeader(),
                       null)));
     }
-    if (excessDataGas.isEmpty() && parentExcessBlobGas != null && parentBlobGasUsed != null) {
-      builder.excessDataGas(
-          DataGas.of(
+    if (excessBlobGas.isEmpty() && parentExcessBlobGas != null && parentBlobGasUsed != null) {
+      builder.excessBlobGas(
+          BlobGas.of(
               protocolSpec
                   .getGasCalculator()
-                  .computeExcessDataGas(
+                  .computeExcessBlobGas(
                       Long.decode(parentExcessBlobGas), Long.decode(parentGasUsed))));
     }
 

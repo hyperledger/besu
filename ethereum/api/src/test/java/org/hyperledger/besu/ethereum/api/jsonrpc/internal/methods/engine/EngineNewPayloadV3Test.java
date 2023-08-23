@@ -20,7 +20,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -59,6 +60,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
   @Override
   public void before() {
     super.before();
+    maybeParentBeaconBlockRoot = Optional.of(Bytes32.ZERO);
     this.method =
         new EngineNewPayloadV3(
             vertx,
@@ -73,14 +75,23 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
   @Test
   public void shouldInvalidPayloadOnShortVersionedHash() {
     Bytes shortHash = Bytes.fromHexString("0x" + "69".repeat(31));
+
     EnginePayloadParameter payload = mock(EnginePayloadParameter.class);
+    when(payload.getTimestamp()).thenReturn(30l);
+    when(payload.getExcessBlobGas()).thenReturn("99");
+    when(payload.getBlobGasUsed()).thenReturn(9l);
+
     JsonRpcResponse badParam =
         method.response(
             new JsonRpcRequestContext(
                 new JsonRpcRequest(
                     "2.0",
                     RpcMethod.ENGINE_NEW_PAYLOAD_V3.getMethodName(),
-                    new Object[] {payload, List.of(shortHash.toHexString())})));
+                    new Object[] {
+                      payload,
+                      List.of(shortHash.toHexString()),
+                      "0x0000000000000000000000000000000000000000000000000000000000000000"
+                    })));
     EnginePayloadStatusResult res = fromSuccessResp(badParam);
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
     assertThat(res.getError()).isEqualTo("Invalid versionedHash");
@@ -95,7 +106,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .baseFeePerGas(Wei.ONE)
             .timestamp(super.cancunHardfork.milestone())
             .buildHeader();
-    // protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
+
     when(blockchain.getBlockHeader(parentBlockHeader.getBlockHash()))
         .thenReturn(Optional.of(parentBlockHeader));
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
@@ -107,8 +118,10 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .timestamp(parentBlockHeader.getTimestamp() + 12)
             .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
             .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
-            .excessDataGas(DataGas.ZERO)
-            .dataGasUsed(0L)
+            .excessBlobGas(BlobGas.ZERO)
+            .blobGasUsed(0L)
+            .parentBeaconBlockRoot(
+                maybeParentBeaconBlockRoot.isPresent() ? maybeParentBeaconBlockRoot : null)
             .buildHeader();
     return mockHeader;
   }

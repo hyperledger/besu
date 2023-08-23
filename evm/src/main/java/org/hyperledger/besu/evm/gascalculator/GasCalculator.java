@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.BalanceOperation;
@@ -456,7 +456,7 @@ public interface GasCalculator {
   default long accessListGasCost(final List<AccessListEntry> accessListEntries) {
     return accessListGasCost(
         accessListEntries.size(),
-        accessListEntries.stream().mapToInt(e -> e.getStorageKeys().size()).sum());
+        accessListEntries.stream().mapToInt(e -> e.storageKeys().size()).sum());
   }
 
   /**
@@ -519,30 +519,30 @@ public interface GasCalculator {
    * @param blobCount the number of blobs
    * @return the total gas cost
    */
-  default long dataGasCost(final int blobCount) {
+  default long blobGasCost(final int blobCount) {
     return 0L;
   }
 
   /**
-   * Compute the new value for the excess data gas, given the parent value and the count of new
+   * Compute the new value for the excess blob gas, given the parent value and the count of new
    * blobs
    *
-   * @param parentExcessDataGas excess data gas from the parent
+   * @param parentExcessBlobGas excess blob gas from the parent
    * @param newBlobs count of new blobs
-   * @return the new excess data gas value
+   * @return the new excess blob gas value
    */
-  default long computeExcessDataGas(final long parentExcessDataGas, final int newBlobs) {
+  default long computeExcessBlobGas(final long parentExcessBlobGas, final int newBlobs) {
     return 0L;
   }
 
   /**
-   * Compute the new value for the excess data gas, given the parent value and the data gas used
+   * Compute the new value for the excess blob gas, given the parent value and the blob gas used
    *
-   * @param parentExcessDataGas excess data gas from the parent
-   * @param dataGasUsed data gas used
-   * @return the new excess data gas value
+   * @param parentExcessBlobGas excess blob gas from the parent
+   * @param blobGasUsed blob gas used
+   * @return the new excess blob gas value
    */
-  default long computeExcessDataGas(final long parentExcessDataGas, final long dataGasUsed) {
+  default long computeExcessBlobGas(final long parentExcessBlobGas, final long blobGasUsed) {
     return 0L;
   }
 }

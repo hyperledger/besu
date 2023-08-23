@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Blob;
 import org.hyperledger.besu.datatypes.KZGCommitment;
@@ -25,7 +26,6 @@ import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.evm.AccessListEntry;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -79,7 +79,7 @@ public class BlobTransactionDecoder {
                   accessListEntryRLPInput.leaveList();
                   return accessListEntry;
                 }))
-        .maxFeePerDataGas(Wei.of(input.readUInt256Scalar()))
+        .maxFeePerBlobGas(Wei.of(input.readUInt256Scalar()))
         .versionedHashes(
             input.readList(versionedHashes -> new VersionedHash(versionedHashes.readBytes32())));
 

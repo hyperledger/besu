@@ -95,7 +95,8 @@ public class LogRollingTests {
           Hash.ZERO,
           0,
           null,
-          null, // dataGasUSed
+          null, // blobGasUSed
+          null,
           null,
           null,
           new MainnetBlockHeaderFunctions());
@@ -118,7 +119,8 @@ public class LogRollingTests {
           Hash.ZERO,
           0,
           null,
-          null, // dataGasUsed
+          null, // blobGasUsed
+          null,
           null,
           null,
           new MainnetBlockHeaderFunctions());

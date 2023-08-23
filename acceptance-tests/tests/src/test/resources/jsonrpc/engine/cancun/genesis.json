@@ -4073,6 +4073,6 @@
   "gasUsed": "0x0",
   "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
   "baseFeePerGas": null,
-  "dataGasUsed": null,
-  "excessDataGas": null
+  "blobGasUsed": null,
+  "excessBlobGas": null
 }

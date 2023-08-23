@@ -22,9 +22,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.AccessListEntry;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -69,7 +69,7 @@ public class TransactionBuilderTest {
           .versionedHashes(Optional.of(List.of()))
           .maxFeePerGas(Optional.of(Wei.of(5)))
           .maxPriorityFeePerGas(Optional.of(Wei.of(5)))
-          .maxFeePerDataGas(Optional.of(Wei.of(5)))
+          .maxFeePerBlobGas(Optional.of(Wei.of(5)))
           .createTransaction(senderKeys);
       fail();
     } catch (IllegalArgumentException iea) {

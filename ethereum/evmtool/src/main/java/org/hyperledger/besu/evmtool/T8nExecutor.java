@@ -24,8 +24,9 @@ import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -48,7 +49,6 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
-import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.log.Log;
@@ -129,7 +129,7 @@ public class T8nExecutor {
               builder.maxFeePerGas(Wei.fromHexString(txNode.get("maxFeePerGas").textValue()));
             }
             if (txNode.has("maxFeePerBlobGas")) {
-              builder.maxFeePerDataGas(
+              builder.maxFeePerBlobGas(
                   Wei.fromHexString(txNode.get("maxFeePerBlobGas").textValue()));
             }
 
@@ -254,7 +254,7 @@ public class T8nExecutor {
     final Wei blobGasPrice =
         protocolSpec
             .getFeeMarket()
-            .dataPricePerGas(blockHeader.getExcessDataGas().orElse(DataGas.ZERO));
+            .blobGasPricePerGas(blockHeader.getExcessBlobGas().orElse(BlobGas.ZERO));
 
     List<TransactionReceipt> receipts = new ArrayList<>();
     List<RejectedTransaction> invalidTransactions = new ArrayList<>(rejections);
@@ -404,15 +404,15 @@ public class T8nExecutor {
         .getWithdrawalsRoot()
         .ifPresent(wr -> resultObject.put("withdrawalsRoot", wr.toHexString()));
     blockHeader
-        .getDataGasUsed()
+        .getBlobGasUsed()
         .ifPresentOrElse(
             bgu -> resultObject.put("blobGasUsed", Bytes.ofUnsignedLong(bgu).toQuantityHexString()),
             () ->
                 blockHeader
-                    .getExcessDataGas()
+                    .getExcessBlobGas()
                     .ifPresent(ebg -> resultObject.put("blobGasUsed", "0x0")));
     blockHeader
-        .getExcessDataGas()
+        .getExcessBlobGas()
         .ifPresent(ebg -> resultObject.put("currentExcessBlobGas", ebg.toShortHexString()));
 
     ObjectNode allocObject = objectMapper.createObjectNode();

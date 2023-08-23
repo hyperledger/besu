@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVAT
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -31,7 +32,6 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -124,7 +124,7 @@ public class MainnetTransactionProcessor {
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
-      final Wei dataGasPrice) {
+      final Wei blobGasPrice) {
     return processTransaction(
         blockchain,
         worldState,
@@ -136,7 +136,7 @@ public class MainnetTransactionProcessor {
         isPersistingPrivateState,
         transactionValidationParams,
         null,
-        dataGasPrice);
+        blobGasPrice);
   }
 
   /**
@@ -166,7 +166,7 @@ public class MainnetTransactionProcessor {
       final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,
-      final Wei dataGasPrice) {
+      final Wei blobGasPrice) {
     return processTransaction(
         blockchain,
         worldState,
@@ -178,7 +178,7 @@ public class MainnetTransactionProcessor {
         isPersistingPrivateState,
         transactionValidationParams,
         null,
-        dataGasPrice);
+        blobGasPrice);
   }
 
   /**
@@ -203,7 +203,7 @@ public class MainnetTransactionProcessor {
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
-      final Wei dataGasPrice) {
+      final Wei blobGasPrice) {
     return processTransaction(
         blockchain,
         worldState,
@@ -215,7 +215,7 @@ public class MainnetTransactionProcessor {
         isPersistingPrivateState,
         ImmutableTransactionValidationParams.builder().build(),
         null,
-        dataGasPrice);
+        blobGasPrice);
   }
 
   /**
@@ -242,7 +242,7 @@ public class MainnetTransactionProcessor {
       final BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
-      final Wei dataGasPrice) {
+      final Wei blobGasPrice) {
     return processTransaction(
         blockchain,
         worldState,
@@ -254,7 +254,7 @@ public class MainnetTransactionProcessor {
         isPersistingPrivateState,
         transactionValidationParams,
         null,
-        dataGasPrice);
+        blobGasPrice);
   }
 
   public TransactionProcessingResult processTransaction(
@@ -268,7 +268,7 @@ public class MainnetTransactionProcessor {
       final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
       final PrivateMetadataUpdater privateMetadataUpdater,
-      final Wei dataGasPrice) {
+      final Wei blobGasPrice) {
     try {
       final var transactionValidator = transactionValidatorFactory.get();
       LOG.trace("Starting execution of {}", transaction);
@@ -305,10 +305,10 @@ public class MainnetTransactionProcessor {
       final Wei transactionGasPrice =
           feeMarket.getTransactionPriceCalculator().price(transaction, blockHeader.getBaseFee());
 
-      final long dataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
+      final long blobGas = gasCalculator.blobGasCost(transaction.getBlobCount());
 
       final Wei upfrontGasCost =
-          transaction.getUpfrontGasCost(transactionGasPrice, dataGasPrice, dataGas);
+          transaction.getUpfrontGasCost(transactionGasPrice, blobGasPrice, blobGas);
       final Wei previousBalance = senderMutableAccount.decrementBalance(upfrontGasCost);
       LOG.trace(
           "Deducted sender {} upfront gas cost {} ({} -> {})",
@@ -324,9 +324,9 @@ public class MainnetTransactionProcessor {
       final Multimap<Address, Bytes32> storageList = HashMultimap.create();
       int accessListStorageCount = 0;
       for (final var entry : accessListEntries) {
-        final Address address = entry.getAddress();
+        final Address address = entry.address();
         addressList.add(address);
-        final List<Bytes32> storageKeys = entry.getStorageKeys();
+        final List<Bytes32> storageKeys = entry.storageKeys();
         storageList.putAll(address, storageKeys);
         accessListStorageCount += storageKeys.size();
       }
@@ -346,7 +346,7 @@ public class MainnetTransactionProcessor {
           transaction.getGasLimit(),
           intrinsicGas,
           accessListGas,
-          dataGas);
+          blobGas);
 
       final WorldUpdater worldUpdater = worldState.updater();
       final ImmutableMap.Builder<String, Object> contextVariablesBuilder =

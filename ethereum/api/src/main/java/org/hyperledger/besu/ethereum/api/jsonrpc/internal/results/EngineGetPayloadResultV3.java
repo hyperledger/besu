@@ -27,11 +27,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes32;
 
-@JsonPropertyOrder({"executionPayload", "blockValue", "blobsBundle"})
+@JsonPropertyOrder({"executionPayload", "blockValue", "blobsBundle", "shouldOverrideBuilder"})
 public class EngineGetPayloadResultV3 {
   protected final PayloadResult executionPayload;
   private final String blockValue;
   private final BlobsBundleV1 blobsBundle;
+  private final boolean shouldOverrideBuilder;
 
   public EngineGetPayloadResultV3(
       final BlockHeader header,
@@ -42,6 +43,7 @@ public class EngineGetPayloadResultV3 {
     this.executionPayload = new PayloadResult(header, transactions, withdrawals);
     this.blockValue = blockValue;
     this.blobsBundle = blobsBundle;
+    this.shouldOverrideBuilder = false;
   }
 
   @JsonGetter(value = "executionPayload")
@@ -59,6 +61,11 @@ public class EngineGetPayloadResultV3 {
     return blobsBundle;
   }
 
+  @JsonGetter(value = "shouldOverrideBuilder")
+  public boolean shouldOverrideBuilder() {
+    return shouldOverrideBuilder;
+  }
+
   public static class PayloadResult {
 
     protected final String blockHash;
@@ -74,10 +81,9 @@ public class EngineGetPayloadResultV3 {
     private final String timestamp;
     private final String extraData;
     private final String baseFeePerGas;
-
-    private final String excessDataGas;
-
-    private final String dataGasUsed;
+    private final String excessBlobGas;
+    private final String blobGasUsed;
+    private final String parentBeaconBlockRoot;
 
     protected final List<String> transactions;
     private final List<WithdrawalParameter> withdrawals;
@@ -108,9 +114,11 @@ public class EngineGetPayloadResultV3 {
                           .map(WithdrawalParameter::fromWithdrawal)
                           .collect(Collectors.toList()))
               .orElse(null);
-      this.dataGasUsed = header.getDataGasUsed().map(Quantity::create).orElse(Quantity.HEX_ZERO);
-      this.excessDataGas =
-          header.getExcessDataGas().map(Quantity::create).orElse(Quantity.HEX_ZERO);
+      this.blobGasUsed = header.getBlobGasUsed().map(Quantity::create).orElse(Quantity.HEX_ZERO);
+      this.excessBlobGas =
+          header.getExcessBlobGas().map(Quantity::create).orElse(Quantity.HEX_ZERO);
+      this.parentBeaconBlockRoot =
+          header.getParentBeaconBlockRoot().map(Bytes32::toHexString).orElse(null);
     }
 
     @JsonGetter(value = "blockNumber")
@@ -189,14 +197,19 @@ public class EngineGetPayloadResultV3 {
       return feeRecipient;
     }
 
-    @JsonGetter(value = "excessDataGas")
-    public String getExcessDataGas() {
-      return excessDataGas;
+    @JsonGetter(value = "excessBlobGas")
+    public String getExcessBlobGas() {
+      return excessBlobGas;
     }
 
-    @JsonGetter(value = "dataGasUsed")
-    public String getDataGasUseds() {
-      return dataGasUsed;
+    @JsonGetter(value = "blobGasUsed")
+    public String getBlobGasUseds() {
+      return blobGasUsed;
+    }
+
+    @JsonGetter(value = "parentBeaconBlockRoot")
+    public String getParentBeaconBlockRoot() {
+      return parentBeaconBlockRoot;
     }
   }
 }

@@ -36,7 +36,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
 public class JsonRpcObjectExecutor extends AbstractJsonRpcExecutor {
-  private static final ObjectWriter jsonObjectWriter = createObjectWriter();
+  private final ObjectWriter jsonObjectWriter = createObjectWriter();
 
   public JsonRpcObjectExecutor(
       final JsonRpcExecutor jsonRpcExecutor,
@@ -64,7 +64,7 @@ public class JsonRpcObjectExecutor extends AbstractJsonRpcExecutor {
     return jsonObject.getString("method");
   }
 
-  private static void handleJsonObjectResponse(
+  private void handleJsonObjectResponse(
       final HttpServerResponse response,
       final JsonRpcResponse jsonRpcResponse,
       final RoutingContext ctx)
@@ -90,9 +90,12 @@ public class JsonRpcObjectExecutor extends AbstractJsonRpcExecutor {
     };
   }
 
-  private static ObjectWriter createObjectWriter() {
-    return getJsonObjectMapper()
-        .writerWithDefaultPrettyPrinter()
+  private ObjectWriter createObjectWriter() {
+    ObjectWriter writer =
+        jsonRpcConfiguration.isPrettyJsonEnabled()
+            ? getJsonObjectMapper().writerWithDefaultPrettyPrinter()
+            : getJsonObjectMapper().writer();
+    return writer
         .without(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM)
         .with(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
   }

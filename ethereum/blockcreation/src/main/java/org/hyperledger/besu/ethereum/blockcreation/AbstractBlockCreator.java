@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
-import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessDataGasCalculator.calculateExcessDataGasForParent;
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
@@ -42,11 +42,13 @@ import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
 import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -152,7 +154,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<BlockHeader>> maybeOmmers,
       final long timestamp) {
     return createBlock(
-        maybeTransactions, maybeOmmers, Optional.empty(), Optional.empty(), timestamp, true);
+        maybeTransactions,
+        maybeOmmers,
+        Optional.empty(),
+        Optional.empty(),
+        Optional.empty(),
+        timestamp,
+        true);
   }
 
   protected BlockCreationResult createBlock(
@@ -160,6 +168,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<BlockHeader>> maybeOmmers,
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final Optional<Bytes32> maybePrevRandao,
+      final Optional<Bytes32> maybeParentBeaconBlockRoot,
       final long timestamp,
       boolean rewardCoinbase) {
 
@@ -168,17 +177,23 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           protocolSchedule.getForNextBlockHeader(parentHeader, timestamp);
 
       final ProcessableBlockHeader processableBlockHeader =
-          createPendingBlockHeader(timestamp, maybePrevRandao, newProtocolSpec);
+          createPendingBlockHeader(
+              timestamp, maybePrevRandao, maybeParentBeaconBlockRoot, newProtocolSpec);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.getMiningBeneficiary(processableBlockHeader.getNumber());
-      Wei dataGasPrice =
+      Wei blobGasPrice =
           newProtocolSpec
               .getFeeMarket()
-              .dataPricePerGas(calculateExcessDataGasForParent(newProtocolSpec, parentHeader));
+              .blobGasPricePerGas(calculateExcessBlobGasForParent(newProtocolSpec, parentHeader));
 
       throwIfStopped();
 
       final List<BlockHeader> ommers = maybeOmmers.orElse(selectOmmers());
+
+      if (maybeParentBeaconBlockRoot.isPresent()) {
+        ParentBeaconBlockRootHelper.storeParentBeaconBlockRoot(
+            disposableWorldState.updater(), timestamp, maybeParentBeaconBlockRoot.get());
+      }
 
       throwIfStopped();
       final TransactionSelectionResults transactionResults =
@@ -187,7 +202,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               disposableWorldState,
               maybeTransactions,
               miningBeneficiary,
-              dataGasPrice,
+              blobGasPrice,
               newProtocolSpec);
 
       transactionResults.logSelectionStats();
@@ -230,7 +245,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      final GasUsage usage = computeExcessDataGas(transactionResults, newProtocolSpec);
+      final GasUsage usage = computeExcessBlobGas(transactionResults, newProtocolSpec);
 
       throwIfStopped();
 
@@ -251,7 +266,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                       : null)
               .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null));
       if (usage != null) {
-        builder.dataGasUsed(usage.used.toLong()).excessDataGas(usage.excessDataGas);
+        builder.blobGasUsed(usage.used.toLong()).excessBlobGas(usage.excessBlobGas);
       }
 
       final SealableBlockHeader sealableBlockHeader = builder.buildSealableBlockHeader();
@@ -288,10 +303,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         .toList();
   }
 
-  record GasUsage(DataGas excessDataGas, DataGas used) {}
-  ;
+  record GasUsage(BlobGas excessBlobGas, BlobGas used) {}
 
-  private GasUsage computeExcessDataGas(
+  private GasUsage computeExcessBlobGas(
       final TransactionSelectionResults transactionResults, final ProtocolSpec newProtocolSpec) {
 
     if (newProtocolSpec.getFeeMarket().implementsDataFee()) {
@@ -301,14 +315,12 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .map(tx -> tx.getVersionedHashes().orElseThrow())
               .mapToInt(List::size)
               .sum();
-      // casting parent excess data gas to long since for the moment it should be well below that
+      // casting parent excess blob gas to long since for the moment it should be well below that
       // limit
-      DataGas excessDataGas =
-          DataGas.of(
-              gasCalculator.computeExcessDataGas(
-                  parentHeader.getExcessDataGas().map(DataGas::toLong).orElse(0L), newBlobsCount));
-      DataGas used = DataGas.of(gasCalculator.dataGasCost(newBlobsCount));
-      return new GasUsage(excessDataGas, used);
+      BlobGas excessBlobGas =
+          ExcessBlobGasCalculator.calculateExcessBlobGasForParent(newProtocolSpec, parentHeader);
+      BlobGas used = BlobGas.of(gasCalculator.blobGasCost(newBlobsCount));
+      return new GasUsage(excessBlobGas, used);
     }
     return null;
   }
@@ -318,7 +330,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final MutableWorldState disposableWorldState,
       final Optional<List<Transaction>> transactions,
       final Address miningBeneficiary,
-      final Wei dataGasPrice,
+      final Wei blobGasPrice,
       final ProtocolSpec protocolSpec)
       throws RuntimeException {
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
@@ -338,7 +350,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             minBlockOccupancyRatio,
             isCancelled::get,
             miningBeneficiary,
-            dataGasPrice,
+            blobGasPrice,
             protocolSpec.getFeeMarket(),
             protocolSpec.getGasCalculator(),
             protocolSpec.getGasLimitCalculator(),
@@ -374,6 +386,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   private ProcessableBlockHeader createPendingBlockHeader(
       final long timestamp,
       final Optional<Bytes32> maybePrevRandao,
+      final Optional<Bytes32> maybeParentBeaconBlockRoot,
       final ProtocolSpec protocolSpec) {
     final long newBlockNumber = parentHeader.getNumber() + 1;
     long gasLimit =
@@ -402,6 +415,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             .orElse(null);
 
     final Bytes32 prevRandao = maybePrevRandao.orElse(null);
+    final Bytes32 parentBeaconBlockRoot = maybeParentBeaconBlockRoot.orElse(null);
     return BlockHeaderBuilder.create()
         .parentHash(parentHeader.getHash())
         .coinbase(coinbase)
@@ -411,6 +425,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         .timestamp(timestamp)
         .baseFee(baseFee)
         .prevRandao(prevRandao)
+        .parentBeaconBlockRoot(parentBeaconBlockRoot)
         .buildProcessableBlockHeader();
   }
 
