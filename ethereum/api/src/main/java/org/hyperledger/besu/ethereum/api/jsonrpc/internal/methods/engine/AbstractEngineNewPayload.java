@@ -119,7 +119,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return new JsonRpcErrorResponse(reqId, forkValidationResult);
     }
 
-    final ValidationResult<RpcErrorType> parameterValidationResult = validateParameter(blockParam);
+    final ValidationResult<RpcErrorType> parameterValidationResult =
+        validateParameters(blockParam, maybeVersionedHashParam, maybeParentBeaconBlockRootParam);
     if (!parameterValidationResult.isValid()) {
       return new JsonRpcErrorResponse(reqId, parameterValidationResult);
     }
@@ -400,8 +401,10 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     return INVALID;
   }
 
-  protected ValidationResult<RpcErrorType> validateParameter(
-      final EnginePayloadParameter parameter) {
+  protected ValidationResult<RpcErrorType> validateParameters(
+      final EnginePayloadParameter parameter,
+      final Optional<List<String>> maybeVersionedHashParam,
+      final Optional<String> maybeBeaconBlockRootParam) {
     return ValidationResult.valid();
   }
 

@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -30,12 +29,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EnginePayloadStatusResult;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 
 import java.util.Collections;
@@ -111,20 +112,12 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
     final EnginePayloadParameter payload =
         mockEnginePayload(mockHeader, Collections.emptyList(), null, null);
 
-    final JsonRpcResponse resp =
-        method.response(
-            new JsonRpcRequestContext(
-                new JsonRpcRequest(
-                    "2.0",
-                    RpcMethod.ENGINE_NEW_PAYLOAD_V3.getMethodName(),
-                    new Object[] {
-                      payload,
-                      List.of(),
-                      "0x0000000000000000000000000000000000000000000000000000000000000000"
-                    })));
-    final EnginePayloadStatusResult res = fromSuccessResp(resp);
-    assertThat(res.getStatusAsString()).isEqualTo(SYNCING.name());
-    assertThat(res.getError()).isNull();
+    ValidationResult<RpcErrorType> res =
+        method.validateParameters(
+            payload,
+            Optional.of(List.of()),
+            Optional.of("0x0000000000000000000000000000000000000000000000000000000000000000"));
+    assertThat(res.isValid()).isTrue();
   }
 
   @Override
