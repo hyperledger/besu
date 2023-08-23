@@ -16,12 +16,15 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -35,6 +38,7 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -73,15 +77,15 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
   }
 
   @Test
-  public void shouldInvalidPayloadOnShortVersionedHash() {
-    Bytes shortHash = Bytes.fromHexString("0x" + "69".repeat(31));
+  public void shouldInvalidVersionedHash_whenShortVersionedHash() {
+    final Bytes shortHash = Bytes.fromHexString("0x" + "69".repeat(31));
 
-    EnginePayloadParameter payload = mock(EnginePayloadParameter.class);
+    final EnginePayloadParameter payload = mock(EnginePayloadParameter.class);
     when(payload.getTimestamp()).thenReturn(cancunHardfork.milestone());
     when(payload.getExcessBlobGas()).thenReturn("99");
     when(payload.getBlobGasUsed()).thenReturn(9l);
 
-    JsonRpcResponse badParam =
+    final JsonRpcResponse badParam =
         method.response(
             new JsonRpcRequestContext(
                 new JsonRpcRequest(
@@ -92,9 +96,35 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
                       List.of(shortHash.toHexString()),
                       "0x0000000000000000000000000000000000000000000000000000000000000000"
                     })));
-    EnginePayloadStatusResult res = fromSuccessResp(badParam);
+    final EnginePayloadStatusResult res = fromSuccessResp(badParam);
     assertThat(res.getStatusAsString()).isEqualTo(INVALID.name());
     assertThat(res.getError()).isEqualTo("Invalid versionedHash");
+  }
+
+  @Test
+  public void shouldValidVersionedHash_whenListIsEmpty() {
+    final BlockHeader mockHeader =
+        setupValidPayload(
+            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            Optional.empty(),
+            Optional.empty());
+    final EnginePayloadParameter payload =
+        mockEnginePayload(mockHeader, Collections.emptyList(), null, null);
+
+    final JsonRpcResponse resp =
+        method.response(
+            new JsonRpcRequestContext(
+                new JsonRpcRequest(
+                    "2.0",
+                    RpcMethod.ENGINE_NEW_PAYLOAD_V3.getMethodName(),
+                    new Object[] {
+                      payload,
+                      List.of(),
+                      "0x0000000000000000000000000000000000000000000000000000000000000000"
+                    })));
+    final EnginePayloadStatusResult res = fromSuccessResp(resp);
+    assertThat(res.getStatusAsString()).isEqualTo(SYNCING.name());
+    assertThat(res.getError()).isNull();
   }
 
   @Override
