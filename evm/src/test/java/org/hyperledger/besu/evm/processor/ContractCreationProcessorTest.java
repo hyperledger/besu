@@ -35,13 +35,16 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import java.util.Collections;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+@Nested
 @ExtendWith(MockitoExtension.class)
-class ContractCreationProcessorTest {
+class ContractCreationProcessorTest
+    extends AbstractMessageProcessorTest<ContractCreationProcessor> {
 
   @Mock GasCalculator gasCalculator;
   @Mock EVM evm;
@@ -293,5 +296,11 @@ class ContractCreationProcessorTest {
     when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
+  }
+
+  @Override
+  protected ContractCreationProcessor getAbstractMessageProcessor() {
+    return new ContractCreationProcessor(
+        gasCalculator, evm, true, Collections.emptyList(), 1, Collections.emptyList());
   }
 }
