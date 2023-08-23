@@ -31,9 +31,9 @@ public final class DurationConversionException extends Exception {
   /**
    * Instantiates a new Duration conversion exception for negative value.
    *
-   * @param millis the value
+   * @param value the millis
    */
-  public DurationConversionException(final long millis) {
-    super(format("negative value '%d' is not allowed", millis));
+  public DurationConversionException(final long value) {
+    super(format("negative value '%d' is not allowed", value));
   }
 }

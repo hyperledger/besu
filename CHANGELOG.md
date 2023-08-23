@@ -6,14 +6,14 @@
 
 - Add ABI-decoded revert reason to `eth_call` and `eth_estimateGas` responses [#5705](https://github.com/hyperledger/besu/issues/5705)
 - Layered transaction pool implementation is now stable and enabled by default, so the following changes to experimental options have been done [#5772](https://github.com/hyperledger/besu):
-  - `--Xlayered-tx-pool` is gone, to select the implementation use the new `--tx-pool` option with values `layered`(default) or `legacy`
+  - `--Xlayered-tx-pool` is gone, to select the implementation use the new `--tx-pool` option with values `layered` (default) or `legacy`
   - `--Xlayered-tx-pool-layer-max-capacity`, `--Xlayered-tx-pool-max-prioritized` and `--Xlayered-tx-pool-max-future-by-sender` just drop the `X` and keep the same behavior
 
 ### Additions and Improvements
 - Add missing methods to the `Transaction` interface [#5732](https://github.com/hyperledger/besu/pull/5732)
 - Added `benchmark` subcommand to `evmtool` [#5754](https://github.com/hyperledger/besu/issues/5754)
 - JSON output is now compact by default. This can be overridden by the new `--json-pretty-print-enabled` CLI option. [#5766](https://github.com/hyperledger/besu/pull/5766)
-- Layered transaction pool implementation is now stable and enabled by default. If you want still to use the legacy implementation use `--tx-pool=legacy` [#5772](https://github.com/hyperledger/besu)
+- Layered transaction pool implementation is now stable and enabled by default. If you want still to use the legacy implementation, use `--tx-pool=legacy` [#5772](https://github.com/hyperledger/besu)
 
 ### Bug Fixes
 - Make smart contract permissioning features work with london fork [#5727](https://github.com/hyperledger/besu/pull/5727)

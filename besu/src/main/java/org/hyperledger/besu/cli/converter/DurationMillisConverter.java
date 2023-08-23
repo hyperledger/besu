@@ -20,7 +20,7 @@ import java.time.Duration;
 
 import picocli.CommandLine;
 
-/** The Percentage Cli type converter. */
+/** The Duration (milliseconds) Cli type converter. */
 public class DurationMillisConverter
     implements CommandLine.ITypeConverter<Duration>, TypeFormatter<Duration> {
 
