@@ -12,6 +12,7 @@
 ### Additions and Improvements
 - Added `benchmark` subcommand to `evmtool` [#5754](https://github.com/hyperledger/besu/issues/5754)
 - JSON output is now compact by default. This can be overridden by the new `--json-pretty-print-enabled` CLI option. [#5766](https://github.com/hyperledger/besu/pull/5766)
+- Add new methods to `OperationTracer` to capture contexts enter/exit [#5756](https://github.com/hyperledger/besu/pull/5756)
 
 ### Bug Fixes
 - Make smart contract permissioning features work with london fork [#5727](https://github.com/hyperledger/besu/pull/5727)
