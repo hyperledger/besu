@@ -20,11 +20,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+
+import java.util.Optional;
 
 import io.vertx.core.Vertx;
 
 public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
+
+  private final Optional<ScheduledProtocolSpec.Hardfork> cancun;
 
   public EngineForkchoiceUpdatedV3(
       final Vertx vertx,
@@ -33,6 +38,7 @@ public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
       final MergeMiningCoordinator mergeCoordinator,
       final EngineCallListener engineCallListener) {
     super(vertx, protocolSchedule, protocolContext, mergeCoordinator, engineCallListener);
+    this.cancun = protocolSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
   }
 
   @Override

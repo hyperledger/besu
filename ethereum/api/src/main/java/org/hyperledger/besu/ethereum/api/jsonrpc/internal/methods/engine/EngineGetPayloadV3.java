@@ -25,11 +25,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+
+import java.util.Optional;
 
 import io.vertx.core.Vertx;
 
 public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
+
+  private final Optional<ScheduledProtocolSpec.Hardfork> cancun;
 
   public EngineGetPayloadV3(
       final Vertx vertx,
@@ -45,6 +50,7 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
         mergeMiningCoordinator,
         blockResultFactory,
         engineCallListener);
+    this.cancun = schedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
   }
 
   @Override
