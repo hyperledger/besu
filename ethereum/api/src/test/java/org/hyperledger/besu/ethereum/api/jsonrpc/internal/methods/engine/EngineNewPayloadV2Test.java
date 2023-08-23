@@ -84,7 +84,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     lenient()
         .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), withdrawalsParam, null));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), withdrawalsParam, null));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -102,7 +102,8 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     lenient()
         .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
-    var resp = resp(mockPayload(mockHeader, Collections.emptyList(), withdrawals, null, null));
+    var resp =
+        resp(mockEnginePayload(mockHeader, Collections.emptyList(), withdrawals, null, null));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -116,7 +117,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
 
     var resp =
         resp(
-            mockPayload(
+            mockEnginePayload(
                 createBlockHeader(Optional.of(Collections.emptyList()), Optional.empty()),
                 Collections.emptyList(),
                 withdrawals,
@@ -136,7 +137,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
 
     var resp =
         resp(
-            mockPayload(
+            mockEnginePayload(
                 createBlockHeader(Optional.empty(), Optional.empty()),
                 Collections.emptyList(),
                 withdrawals,

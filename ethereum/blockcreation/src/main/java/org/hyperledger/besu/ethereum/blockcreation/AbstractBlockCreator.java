@@ -42,11 +42,13 @@ import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
 import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -152,7 +154,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<BlockHeader>> maybeOmmers,
       final long timestamp) {
     return createBlock(
-        maybeTransactions, maybeOmmers, Optional.empty(), Optional.empty(), timestamp, true);
+        maybeTransactions,
+        maybeOmmers,
+        Optional.empty(),
+        Optional.empty(),
+        Optional.empty(),
+        timestamp,
+        true);
   }
 
   protected BlockCreationResult createBlock(
@@ -160,6 +168,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<BlockHeader>> maybeOmmers,
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final Optional<Bytes32> maybePrevRandao,
+      final Optional<Bytes32> maybeParentBeaconBlockRoot,
       final long timestamp,
       boolean rewardCoinbase) {
 
@@ -168,7 +177,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           protocolSchedule.getForNextBlockHeader(parentHeader, timestamp);
 
       final ProcessableBlockHeader processableBlockHeader =
-          createPendingBlockHeader(timestamp, maybePrevRandao, newProtocolSpec);
+          createPendingBlockHeader(
+              timestamp, maybePrevRandao, maybeParentBeaconBlockRoot, newProtocolSpec);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.getMiningBeneficiary(processableBlockHeader.getNumber());
       Wei blobGasPrice =
@@ -179,6 +189,11 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       throwIfStopped();
 
       final List<BlockHeader> ommers = maybeOmmers.orElse(selectOmmers());
+
+      if (maybeParentBeaconBlockRoot.isPresent()) {
+        ParentBeaconBlockRootHelper.storeParentBeaconBlockRoot(
+            disposableWorldState.updater(), timestamp, maybeParentBeaconBlockRoot.get());
+      }
 
       throwIfStopped();
       final TransactionSelectionResults transactionResults =
@@ -303,9 +318,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       // casting parent excess blob gas to long since for the moment it should be well below that
       // limit
       BlobGas excessBlobGas =
-          BlobGas.of(
-              gasCalculator.computeExcessBlobGas(
-                  parentHeader.getExcessBlobGas().map(BlobGas::toLong).orElse(0L), newBlobsCount));
+          ExcessBlobGasCalculator.calculateExcessBlobGasForParent(newProtocolSpec, parentHeader);
       BlobGas used = BlobGas.of(gasCalculator.blobGasCost(newBlobsCount));
       return new GasUsage(excessBlobGas, used);
     }
@@ -373,6 +386,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   private ProcessableBlockHeader createPendingBlockHeader(
       final long timestamp,
       final Optional<Bytes32> maybePrevRandao,
+      final Optional<Bytes32> maybeParentBeaconBlockRoot,
       final ProtocolSpec protocolSpec) {
     final long newBlockNumber = parentHeader.getNumber() + 1;
     long gasLimit =
@@ -401,6 +415,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             .orElse(null);
 
     final Bytes32 prevRandao = maybePrevRandao.orElse(null);
+    final Bytes32 parentBeaconBlockRoot = maybeParentBeaconBlockRoot.orElse(null);
     return BlockHeaderBuilder.create()
         .parentHash(parentHeader.getHash())
         .coinbase(coinbase)
@@ -410,6 +425,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         .timestamp(timestamp)
         .baseFee(baseFee)
         .prevRandao(prevRandao)
+        .parentBeaconBlockRoot(parentBeaconBlockRoot)
         .buildProcessableBlockHeader();
   }
 

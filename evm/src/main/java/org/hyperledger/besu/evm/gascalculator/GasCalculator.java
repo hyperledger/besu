@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.AccessListEntry;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.BalanceOperation;
@@ -456,7 +456,7 @@ public interface GasCalculator {
   default long accessListGasCost(final List<AccessListEntry> accessListEntries) {
     return accessListGasCost(
         accessListEntries.size(),
-        accessListEntries.stream().mapToInt(e -> e.getStorageKeys().size()).sum());
+        accessListEntries.stream().mapToInt(e -> e.storageKeys().size()).sum());
   }
 
   /**

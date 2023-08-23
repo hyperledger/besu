@@ -60,7 +60,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -122,7 +121,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                   "ae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f"));
   private static final KeyPair KEYS1 =
       new KeyPair(PRIVATE_KEY1, SIGNATURE_ALGORITHM.get().createPublicKey(PRIVATE_KEY1));
-  private static final Optional<List<Withdrawal>> EMPTY_WITHDRAWALS = Optional.empty();
 
   private static final long REPETITION_MIN_DURATION = 100;
   @Mock MergeContext mergeContext;
@@ -256,7 +254,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
-            EMPTY_WITHDRAWALS);
+            Optional.empty(),
+            Optional.empty());
 
     ArgumentCaptor<BlockWithReceipts> blockWithReceipts =
         ArgumentCaptor.forClass(BlockWithReceipts.class);
@@ -294,7 +293,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
               .doThrow(new MerkleTrieException("missing leaf"))
               .doCallRealMethod()
               .when(beingSpiedOn)
-              .createBlock(any(), any(Bytes32.class), anyLong(), eq(Optional.empty()));
+              .createBlock(
+                  any(), any(Bytes32.class), anyLong(), eq(Optional.empty()), eq(Optional.empty()));
           return beingSpiedOn;
         };
 
@@ -330,6 +330,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.random(),
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     verify(willThrow, never()).addBadBlock(any(), any());
@@ -362,6 +363,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         System.currentTimeMillis() / 1000,
         Bytes32.ZERO,
         suggestedFeeRecipient,
+        Optional.empty(),
         Optional.empty());
 
     verify(badBlockManager, never()).addBadBlock(any(), any());
@@ -394,6 +396,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     blockCreationTask.get();
@@ -445,6 +448,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     blockCreationTask.get();
@@ -491,6 +495,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     blockCreationTask.get();
@@ -525,6 +530,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     try {
@@ -567,6 +573,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     waitForBlockCreationInProgress.await();
@@ -613,6 +620,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             timestamp,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     final CompletableFuture<Void> task1 = blockCreationTask;
@@ -623,6 +631,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             timestamp,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     assertThat(payloadId1).isEqualTo(payloadId2);
@@ -658,6 +667,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             timestamp,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     assertThat(coordinator.isBlockCreationCancelled(payloadId1)).isFalse();
@@ -668,6 +678,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             timestamp + 1,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     assertThat(payloadId1).isNotEqualTo(payloadId2);
@@ -697,6 +708,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             1L,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     ArgumentCaptor<BlockWithReceipts> blockWithReceipts =

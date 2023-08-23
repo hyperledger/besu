@@ -104,12 +104,19 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
 
+    if (blockHeader.getParentBeaconBlockRoot().isPresent()) {
+      final WorldUpdater updater = worldState.updater();
+      ParentBeaconBlockRootHelper.storeParentBeaconBlockRoot(
+          updater, blockHeader.getTimestamp(), blockHeader.getParentBeaconBlockRoot().get());
+    }
+
     for (final Transaction transaction : transactions) {
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
         return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
       }
 
       final WorldUpdater worldStateUpdater = worldState.updater();
+
       final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);

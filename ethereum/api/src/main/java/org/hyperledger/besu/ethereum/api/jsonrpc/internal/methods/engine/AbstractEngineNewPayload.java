@@ -110,8 +110,14 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     final Object reqId = requestContext.getRequest().getId();
 
-    final ValidationResult<RpcErrorType> forkValidationResult =
-        validateForkSupported(reqId, blockParam);
+    Optional<String> maybeParentBeaconBlockRootParam =
+        requestContext.getOptionalParameter(2, String.class);
+    final Optional<Bytes32> maybeParentBeaconBlockRoot =
+        maybeParentBeaconBlockRootParam.map(Bytes32::fromHexString);
+
+    ValidationResult<RpcErrorType> forkValidationResult =
+        validateParamsAndForkSupported(
+            reqId, blockParam, maybeVersionedHashParam, maybeParentBeaconBlockRoot);
     if (!forkValidationResult.isValid()) {
       return new JsonRpcErrorResponse(reqId, forkValidationResult);
     }
@@ -204,6 +210,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             blockParam.getExcessBlobGas() == null
                 ? null
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
+            maybeParentBeaconBlockRoot.orElse(null),
             maybeDeposits.map(BodyValidation::depositsRoot).orElse(null),
             headerFunctions);
 
@@ -391,8 +398,11 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     return INVALID;
   }
 
-  protected ValidationResult<RpcErrorType> validateForkSupported(
-      final Object id, final EnginePayloadParameter payloadParameter) {
+  protected ValidationResult<RpcErrorType> validateParamsAndForkSupported(
+      final Object id,
+      final EnginePayloadParameter payloadParameter,
+      final Optional<List<String>> maybeVersionedHashParam,
+      final Optional<Bytes32> parentBeaconBlockRoot) {
     return ValidationResult.valid();
   }
 

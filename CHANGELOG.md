@@ -10,6 +10,7 @@
 - Add ABI-decoded revert reason to `eth_call` and `eth_estimateGas` responses [#5705](https://github.com/hyperledger/besu/issues/5705)
 
 ### Additions and Improvements
+- Add missing methods to the `Transaction` interface [#5732](https://github.com/hyperledger/besu/pull/5732)
 - Added `benchmark` subcommand to `evmtool` [#5754](https://github.com/hyperledger/besu/issues/5754)
 - JSON output is now compact by default. This can be overridden by the new `--json-pretty-print-enabled` CLI option. [#5766](https://github.com/hyperledger/besu/pull/5766)
 - Add new methods to `OperationTracer` to capture contexts enter/exit [#5756](https://github.com/hyperledger/besu/pull/5756)
