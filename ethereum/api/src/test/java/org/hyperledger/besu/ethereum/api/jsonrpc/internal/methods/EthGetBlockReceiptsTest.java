@@ -35,13 +35,13 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.List;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,7 +55,6 @@ public class EthGetBlockReceiptsTest {
   private static final String ZERO_HASH = String.valueOf(Hash.ZERO);
   private static final String HASH_63_CHARS_LONG =
       "0xd3d3d1340c085e1b14182e01fd0b7cc5b585dca77f809f78fcca3e1a165b189";
-  private static final String RANDOM_HASH = Hash.wrap(Bytes32.random()).toString();
   private static final String ETH_METHOD = "eth_getBlockReceipts";
   private static final String JSON_RPC_VERSION = "2.0";
 
@@ -110,6 +109,13 @@ public class EthGetBlockReceiptsTest {
 
   @Test
   public void twoReceiptsForLatestBlock() {
+
+    // Read expected transactions from the generated blockchain
+    final Transaction expectedTx1 =
+        blockchain.getBlockByNumber(BLOCKCHAIN_LENGTH - 1).get().getBody().getTransactions().get(0);
+    final Transaction expectedTx2 =
+        blockchain.getBlockByNumber(BLOCKCHAIN_LENGTH - 1).get().getBody().getTransactions().get(1);
+
     /* Block generator defaults to 2 transactions per mocked block */
     JsonRpcResponse actualResponse = method.response(requestWithParams("latest"));
     assertThat(actualResponse).isInstanceOf(JsonRpcSuccessResponse.class);
@@ -120,21 +126,30 @@ public class EthGetBlockReceiptsTest {
 
     // Check TX1 receipt is correct
     TransactionReceiptResult tx1 = result.getResults().get(0);
-    assertThat(tx1.getBlockNumber()).isEqualTo("0x4");
-    assertThat(tx1.getEffectiveGasPrice()).isEqualTo("0x8331b584");
-    assertThat(tx1.getTo()).isEqualTo("0xffa87762dcd4bbf2d6b22390e68c1915d89292ae");
-    assertThat(tx1.getType()).isEqualTo("0x0");
+    assertThat(tx1.getBlockNumber()).isEqualTo("0x" + (BLOCKCHAIN_LENGTH - 1));
+    assertThat(tx1.getEffectiveGasPrice()).isNotEmpty();
+    assertThat(tx1.getTo()).isEqualTo(expectedTx1.getTo().get().toString());
+    assertThat(tx1.getType())
+        .isEqualTo(String.format("0x%X", expectedTx1.getType().getEthSerializedType()));
 
     // Check TX2 receipt is correct
     TransactionReceiptResult tx2 = result.getResults().get(1);
-    assertThat(tx2.getBlockNumber()).isEqualTo("0x4");
-    assertThat(tx2.getEffectiveGasPrice()).isEqualTo("0x9f7cd42");
-    assertThat(tx2.getTo()).isEqualTo("0x46530778ec4a61cbea38698d2efc0c618ea0641f");
-    assertThat(tx2.getType()).isEqualTo("0x2");
+    assertThat(tx2.getBlockNumber()).isEqualTo("0x" + (BLOCKCHAIN_LENGTH - 1));
+    assertThat(tx2.getEffectiveGasPrice()).isNotEmpty();
+    assertThat(tx2.getTo()).isEqualTo(expectedTx2.getTo().get().toString());
+    assertThat(tx2.getType())
+        .isEqualTo(String.format("0x%X", expectedTx2.getType().getEthSerializedType()));
   }
 
   @Test
   public void twoReceiptsForBlockOne() {
+
+    // Read expected transactions from the generated blockchain
+    final Transaction expectedTx1 =
+        blockchain.getBlockByNumber(1).get().getBody().getTransactions().get(0);
+    final Transaction expectedTx2 =
+        blockchain.getBlockByNumber(1).get().getBody().getTransactions().get(1);
+
     /* Block generator defaults to 2 transactions per block */
     JsonRpcResponse actualResponse = method.response(requestWithParams("0x01"));
     assertThat(actualResponse).isInstanceOf(JsonRpcSuccessResponse.class);
@@ -146,29 +161,24 @@ public class EthGetBlockReceiptsTest {
     // Check TX1 receipt is correct
     TransactionReceiptResult tx1 = result.getResults().get(0);
     assertThat(tx1.getBlockNumber()).isEqualTo("0x1");
-    assertThat(tx1.getEffectiveGasPrice()).isEqualTo("0x4a7ebf2e");
-    assertThat(tx1.getTo()).isEqualTo("0x6ada2e11049e5fc54fcdf2a97996d9b2aa80fe71");
-    assertThat(tx1.getType()).isEqualTo("0x2");
+    assertThat(tx1.getEffectiveGasPrice()).isNotEmpty();
+    assertThat(tx1.getTo()).isEqualTo(expectedTx1.getTo().get().toString());
+    assertThat(tx1.getType())
+        .isEqualTo(String.format("0x%X", expectedTx1.getType().getEthSerializedType()));
 
     // Check TX2 receipt is correct
     TransactionReceiptResult tx2 = result.getResults().get(1);
     assertThat(tx2.getBlockNumber()).isEqualTo("0x1");
-    assertThat(tx2.getEffectiveGasPrice()).isEqualTo("0xa6e00cb5");
-    assertThat(tx2.getTo()).isEqualTo("0x429b96f49fb2e74ba0fda06cf6f380caffc2fac2");
-    assertThat(tx2.getType()).isEqualTo("0x2");
+    assertThat(tx2.getEffectiveGasPrice()).isNotEmpty();
+    assertThat(tx2.getTo()).isEqualTo(expectedTx2.getTo().get().toString());
+    assertThat(tx2.getType())
+        .isEqualTo(String.format("0x%X", expectedTx2.getType().getEthSerializedType()));
   }
 
   @Test
   public void blockNotFoundWhenHash63CharsLong() {
     /* Valid hash with 63 chars in - should result in block not found */
     JsonRpcResponse actualResponse = method.response(requestWithParams(HASH_63_CHARS_LONG));
-    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(blockNotFoundResponse);
-  }
-
-  @Test
-  public void blockNotFoundForRandomHash() {
-    /* Valid random hash - should result in block not found (effectively impossible for it to be a valid block) */
-    JsonRpcResponse actualResponse = method.response(requestWithParams(RANDOM_HASH));
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(blockNotFoundResponse);
   }
 

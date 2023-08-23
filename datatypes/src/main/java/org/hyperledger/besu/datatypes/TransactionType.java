@@ -51,6 +51,17 @@ public enum TransactionType {
   }
 
   /**
+   * Gets serialized type for returning in an eth transaction result, factoring in the special case
+   * for FRONTIER transactions which have enum type 0xf8 but are represented as 0x00 in transaction
+   * results.
+   *
+   * @return the serialized type
+   */
+  public byte getEthSerializedType() {
+    return (this == FRONTIER ? 0x00 : this.getSerializedType());
+  }
+
+  /**
    * Compare to serialized type.
    *
    * @param b the byte value
