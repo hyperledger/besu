@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -317,9 +318,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       // casting parent excess blob gas to long since for the moment it should be well below that
       // limit
       BlobGas excessBlobGas =
-          BlobGas.of(
-              gasCalculator.computeExcessBlobGas(
-                  parentHeader.getExcessBlobGas().map(BlobGas::toLong).orElse(0L), newBlobsCount));
+          ExcessBlobGasCalculator.calculateExcessBlobGasForParent(newProtocolSpec, parentHeader);
       BlobGas used = BlobGas.of(gasCalculator.blobGasCost(newBlobsCount));
       return new GasUsage(excessBlobGas, used);
     }
