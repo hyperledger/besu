@@ -56,9 +56,10 @@ abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> 
 
   protected abstract T getAbstractMessageProcessor();
 
-  @Test
-  void shouldNotTraceContextIfStackSizeIsZero() {
-    when(messageFrame.getMessageStackSize()).thenReturn(0);
+  @ParameterizedTest
+  @ValueSource(ints = {0, 1})
+  void shouldNotTraceContextIfStackSizeIsZero(final int stackSize) {
+    when(messageFrame.getMessageStackSize()).thenReturn(stackSize);
     when(messageFrame.getState())
         .thenReturn(MessageFrame.State.COMPLETED_SUCCESS, MessageFrame.State.COMPLETED_FAILED);
     when(messageFrame.getMessageFrameStack()).thenReturn(messageFrameStack);
@@ -70,7 +71,7 @@ abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> 
   }
 
   @ParameterizedTest
-  @ValueSource(ints = {1, 3, 5, 15, Integer.MAX_VALUE})
+  @ValueSource(ints = {2, 3, 5, 15, Integer.MAX_VALUE})
   void shouldTraceContextIfStackSizeIsGreaterZeroAndSuccess(final int stackSize) {
     when(messageFrame.getMessageStackSize()).thenReturn(stackSize);
     when(messageFrame.getState()).thenReturn(MessageFrame.State.COMPLETED_SUCCESS);
@@ -84,7 +85,7 @@ abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> 
   }
 
   @ParameterizedTest
-  @ValueSource(ints = {1, 3, 5, 15, Integer.MAX_VALUE})
+  @ValueSource(ints = {2, 3, 5, 15, Integer.MAX_VALUE})
   void shouldTraceContextIfStackSizeIsGreaterZeroAndFailure(final int stackSize) {
     when(messageFrame.getMessageStackSize()).thenReturn(stackSize);
     when(messageFrame.getState()).thenReturn(MessageFrame.State.COMPLETED_FAILED);
