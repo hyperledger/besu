@@ -10,7 +10,7 @@ jobs:
   all:
     runs-on: ubuntu-latest
     env:
-      GRADLE_OPTS: "-Xmx4g"
+      GRADLE_OPTS: "-Xmx4g -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2"
 
     steps:
       - name: Checkout
