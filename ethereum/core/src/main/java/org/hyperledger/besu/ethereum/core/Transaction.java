@@ -24,13 +24,13 @@ import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Blob;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.KZGCommitment;
 import org.hyperledger.besu.datatypes.KZGProof;
-import org.hyperledger.besu.datatypes.Quantity;
 import org.hyperledger.besu.datatypes.Sha256Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -42,10 +42,8 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.evm.AccessListEntry;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -432,20 +430,11 @@ public class Transaction
   }
 
   /**
-   * Boolean which indicates the transaction has associated cost data, whether gas price or 1559 fee
-   * market parameters.
+   * Return the effective priority fee per gas for this transaction.
    *
-   * @return whether cost params are present
+   * @param maybeBaseFee base fee in case of EIP-1559 transaction
+   * @return priority fee per gas in wei
    */
-  public boolean hasCostParams() {
-    return Arrays.asList(
-            getGasPrice(), getMaxFeePerGas(), getMaxPriorityFeePerGas(), getMaxFeePerBlobGas())
-        .stream()
-        .flatMap(Optional::stream)
-        .map(Quantity::getAsBigInteger)
-        .anyMatch(q -> q.longValue() > 0L);
-  }
-
   public Wei getEffectivePriorityFeePerGas(final Optional<Wei> maybeBaseFee) {
     return maybeBaseFee
         .map(
@@ -547,6 +536,7 @@ public class Transaction
     return getTo().isPresent() ? Optional.of(payload) : Optional.empty();
   }
 
+  @Override
   public Optional<List<AccessListEntry>> getAccessList() {
     return maybeAccessList;
   }
@@ -623,6 +613,13 @@ public class Transaction
    */
   public void writeTo(final RLPOutput out) {
     TransactionEncoder.encodeForWire(this, out);
+  }
+
+  @Override
+  public Bytes encoded() {
+    final BytesValueRLPOutput rplOutput = new BytesValueRLPOutput();
+    writeTo(rplOutput);
+    return rplOutput.encoded();
   }
 
   @Override
@@ -780,6 +777,7 @@ public class Transaction
                     new IllegalStateException(
                         "Transaction requires either gasPrice or maxFeePerGas")));
   }
+
   /**
    * Calculates the effectiveGasPrice of a transaction on the basis of an {@code Optional<Long>}
    * baseFee and handles unwrapping Optional fee parameters. If baseFee is present, effective gas is
@@ -801,10 +799,12 @@ public class Transaction
     return this.transactionType;
   }
 
+  @Override
   public Optional<List<VersionedHash>> getVersionedHashes() {
     return versionedHashes;
   }
 
+  @Override
   public Optional<BlobsWithCommitments> getBlobsWithCommitments() {
     return blobsWithCommitments;
   }
@@ -1127,6 +1127,7 @@ public class Transaction
     return sb.append("}").toString();
   }
 
+  @Override
   public Optional<Address> contractAddress() {
     if (isContractCreation()) {
       return Optional.of(Address.contractAddress(getSender(), getNonce()));

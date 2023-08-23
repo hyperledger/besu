@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.evm.AccessListEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,11 +32,11 @@ public class AccessListEntryAdapter extends AdapterBase {
   }
 
   public List<Bytes32> getStorageKeys() {
-    final var storage = accessListEntry.getStorageKeys();
+    final var storage = accessListEntry.storageKeys();
     return new ArrayList<>(storage);
   }
 
   public Optional<Address> getAddress() {
-    return Optional.of(accessListEntry.getAddress());
+    return Optional.of(accessListEntry.address());
   }
 }
