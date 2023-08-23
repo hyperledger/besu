@@ -99,8 +99,8 @@ public class CancunGasCalculator extends ShanghaiGasCalculator {
   }
 
   @Override
-  public long computeExcessBlobGas(final long parentExcessBlobGas, final long blobGasUsed) {
-    final long currentExcessBlobGas = parentExcessBlobGas + blobGasUsed;
+  public long computeExcessBlobGas(final long parentExcessBlobGas, final long parentBlobGasUsed) {
+    final long currentExcessBlobGas = parentExcessBlobGas + parentBlobGasUsed;
 
     if (currentExcessBlobGas < TARGET_BLOB_GAS_PER_BLOCK) {
       return 0L;
