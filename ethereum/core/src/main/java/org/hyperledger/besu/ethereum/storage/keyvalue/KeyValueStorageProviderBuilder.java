@@ -21,11 +21,13 @@ import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
-import org.hyperledger.besu.services.kvstore.LimitedInMemoryKeyValueStorage;
+
+import java.util.ArrayList;
+import java.util.EnumSet;
 
 public class KeyValueStorageProviderBuilder {
-
-  private static final long DEFAULT_WORLD_STATE_PRE_IMAGE_CACHE_SIZE = 5_000L;
+  // removed for preimage hack so spotless doesn't complain during build
+  //  private static final long DEFAULT_WORLD_STATE_PRE_IMAGE_CACHE_SIZE = 5_000L;
 
   private KeyValueStorageFactory storageFactory;
   private BesuConfiguration commonConfiguration;
@@ -55,8 +57,15 @@ public class KeyValueStorageProviderBuilder {
         "Cannot build a storage provider without the plugin common configuration.");
     checkNotNull(metricsSystem, "Cannot build a storage provider without a metrics system.");
 
+    // storage pre-init hack:
+    storageFactory.create(
+        new ArrayList<>(EnumSet.allOf(KeyValueSegmentIdentifier.class)),
+        commonConfiguration,
+        metricsSystem);
+
     final KeyValueStorage worldStatePreImageStorage =
-        new LimitedInMemoryKeyValueStorage(DEFAULT_WORLD_STATE_PRE_IMAGE_CACHE_SIZE);
+        storageFactory.create(
+            KeyValueSegmentIdentifier.HACK_PREIMAGE_STORE, commonConfiguration, metricsSystem);
 
     return new KeyValueStorageProvider(
         segments -> storageFactory.create(segments, commonConfiguration, metricsSystem),
