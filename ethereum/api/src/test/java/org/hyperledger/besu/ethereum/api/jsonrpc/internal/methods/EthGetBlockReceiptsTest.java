@@ -135,7 +135,7 @@ public class EthGetBlockReceiptsTest {
 
   @Test
   public void twoReceiptsForBlockOne() {
-    /* Block generator defaults to 2 transactions per mocked block */
+    /* Block generator defaults to 2 transactions per block */
     JsonRpcResponse actualResponse = method.response(requestWithParams("0x01"));
     assertThat(actualResponse).isInstanceOf(JsonRpcSuccessResponse.class);
     final BlockReceiptsResult result =
