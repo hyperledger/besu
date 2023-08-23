@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,35 +12,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.evm;
-
-import org.hyperledger.besu.datatypes.Address;
+package org.hyperledger.besu.datatypes;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-/** The Access list entry. */
-public class AccessListEntry {
-  private final Address address;
-  private final List<Bytes32> storageKeys;
-
-  /**
-   * Instantiates a new Access list entry.
-   *
-   * @param address the address
-   * @param storageKeys the storage keys
-   */
-  public AccessListEntry(final Address address, final List<Bytes32> storageKeys) {
-    this.address = address;
-    this.storageKeys = storageKeys;
-  }
-
+/** An access list entry as defined in EIP-2930 */
+public record AccessListEntry(Address address, List<Bytes32> storageKeys) {
   /**
    * Create access list entry.
    *
@@ -54,26 +37,6 @@ public class AccessListEntry {
       @JsonProperty("storageKeys") final List<String> storageKeys) {
     return new AccessListEntry(
         address, storageKeys.stream().map(Bytes32::fromHexString).collect(Collectors.toList()));
-  }
-
-  /**
-   * Gets address.
-   *
-   * @return the address
-   */
-  @JsonIgnore
-  public Address getAddress() {
-    return address;
-  }
-
-  /**
-   * Gets storage keys.
-   *
-   * @return the storage keys
-   */
-  @JsonIgnore
-  public List<Bytes32> getStorageKeys() {
-    return storageKeys;
   }
 
   /**
