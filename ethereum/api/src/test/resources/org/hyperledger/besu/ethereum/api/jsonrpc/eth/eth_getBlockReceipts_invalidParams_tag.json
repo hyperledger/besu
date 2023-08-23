@@ -1,0 +1,19 @@
+{
+  "request": {
+    "id": 301,
+    "jsonrpc": "2.0",
+    "method": "eth_getBlockReceipts",
+    "params": [
+      "invalidtag"
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 301,
+    "error" : {
+      "code" : -32602,
+      "message" : "Invalid params"
+    }
+  },
+  "statusCode": 200
+}
