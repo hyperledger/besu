@@ -113,6 +113,38 @@ jobs:
 #          curl -L https://github.com/goss-org/goss/releases/download/v0.3.22/goss-linux-amd64 -o ./docker/tests/goss-linux-amd64
 #          ./gradlew --no-daemon dockerTest
 
+  buildArm64:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        architecture: [ arm64 ]
+    env:
+      architecture: "arm64"
+      GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Setup JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          distribution: 'adopt'
+          architecture: aarch64
+      - name: Check Dockerfile syntax
+        run: |
+          docker run --rm -i hadolint/hadolint < docker/openjdk-17/Dockerfile
+          docker run --rm -i hadolint/hadolint < docker/openjdk-17-debug/Dockerfile
+          docker run --rm -i hadolint/hadolint < docker/openjdk-latest/Dockerfile
+          docker run --rm -i hadolint/hadolint < docker/graalvm/Dockerfile
+      - name: Build Docker Image
+        run: |
+          ./gradlew --no-daemon dockerDist
+#      - name: Test Docker Image
+#        run: |
+#          mkdir -p docker/reports
+#          curl -L https://github.com/goss-org/goss/releases/download/v0.3.22/goss-linux-arm64 -o ./docker/tests/goss-linux-arm64
+#          ./gradlew --no-daemon dockerTest
+
   publishDocker:
     needs: build
     if: github.event_name == 'push'
