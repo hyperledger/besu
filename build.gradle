@@ -18,6 +18,7 @@ import groovy.transform.Memoized
 import net.ltgt.gradle.errorprone.CheckSeverity
 
 import java.text.SimpleDateFormat
+import java.util.regex.Pattern
 
 plugins {
   id 'com.diffplug.spotless' version '6.12.0'
@@ -900,6 +901,8 @@ task manifestDockerRelease {
   }
 }
 
+def sc = Pattern.quote(File.separator)
+
 task checkSpdxHeader(type: CheckSpdxHeader) {
   apply plugin: 'groovy'
 
@@ -907,16 +910,16 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
   spdxHeader = "* SPDX-License-Identifier: Apache-2.0"
   filesRegex = "(.*.java)|(.*.groovy)"
   excludeRegex = [
-    "(.*/generalstate/GeneralStateRegressionReferenceTest.*)",
-    "(.*/generalstate/GeneralStateReferenceTest.*)",
-    "(.*/generalstate/LegacyGeneralStateReferenceTest.*)",
-    "(.*/blockchain/BlockchainReferenceTest.*)",
-    "(.*/blockchain/LegacyBlockchainReferenceTest.*)",
-    "(.*/.gradle/.*)",
-    "(.*/.idea/.*)",
-    "(.*/out/.*)",
-    "(.*/build/.*)",
-    "(.*/src/[^/]+/generated/.*)"
+    "(.*${sc}generalstate${sc}GeneralStateRegressionReferenceTest.*)",
+    "(.*${sc}generalstate${sc}GeneralStateReferenceTest.*)",
+    "(.*${sc}generalstate${sc}LegacyGeneralStateReferenceTest.*)",
+    "(.*${sc}blockchain${sc}BlockchainReferenceTest.*)",
+    "(.*${sc}blockchain${sc}LegacyBlockchainReferenceTest.*)",
+    "(.*${sc}.gradle${sc}.*)",
+    "(.*${sc}.idea${sc}.*)",
+    "(.*${sc}out${sc}.*)",
+    "(.*${sc}build${sc}.*)",
+    "(.*${sc}src${sc}[^${sc}]+${sc}generated${sc}.*)"
   ].join("|")
 
 }
