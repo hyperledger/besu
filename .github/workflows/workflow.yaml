@@ -195,7 +195,7 @@ jobs:
           ./gradlew --no-daemon dockerUpload
 
   publishManifest:
-    needs: ubuntu-latest
+    needs: [ publishDocker, publishDockerArm64 ]
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     env:
