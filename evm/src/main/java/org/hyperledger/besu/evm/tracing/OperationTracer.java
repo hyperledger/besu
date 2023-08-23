@@ -85,14 +85,14 @@ public interface OperationTracer {
    *
    * @param frame the frame
    */
-  default void traceContextEnter(@SuppressWarnings("unused") final MessageFrame frame) {}
+  default void traceContextEnter(final MessageFrame frame) {}
 
   /**
    * Trace the exiting of a context
    *
    * @param frame the frame
    */
-  default void traceContextExit(@SuppressWarnings("unused") final MessageFrame frame) {}
+  default void traceContextExit(final MessageFrame frame) {}
 
   /**
    * Returns a boolean indicating whether extended tracing is enabled.
