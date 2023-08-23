@@ -23,7 +23,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.bouncycastle.crypto.InvalidCipherTextException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link EncryptedMessage}. */
 public final class EncryptedMessageTest {

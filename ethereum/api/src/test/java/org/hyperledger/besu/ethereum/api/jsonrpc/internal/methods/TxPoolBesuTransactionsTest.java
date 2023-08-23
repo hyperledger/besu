@@ -30,13 +30,13 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import java.time.Instant;
 
 import com.google.common.collect.Sets;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class TxPoolBesuTransactionsTest {
 
   @Mock private TransactionPool transactionPool;
@@ -46,7 +46,7 @@ public class TxPoolBesuTransactionsTest {
   private static final String TRANSACTION_HASH =
       "0xbac263fb39f2a51053fb5e1e52aeb4e980fba9e151aa7e4f12eca95a697aeac9";
 
-  @Before
+  @BeforeEach
   public void setUp() {
     method = new TxPoolBesuTransactions(transactionPool);
   }

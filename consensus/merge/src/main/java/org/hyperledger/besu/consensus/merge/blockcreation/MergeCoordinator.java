@@ -245,7 +245,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final Long timestamp,
       final Bytes32 prevRandao,
       final Address feeRecipient,
-      final Optional<List<Withdrawal>> withdrawals) {
+      final Optional<List<Withdrawal>> withdrawals,
+      final Optional<Bytes32> parentBeaconBlockRoot) {
 
     // we assume that preparePayload is always called sequentially, since the RPC Engine calls
     // are sequential, if this assumption changes then more synchronization should be added to
@@ -272,7 +273,12 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     // put the empty block in first
     final Block emptyBlock =
         mergeBlockCreator
-            .createBlock(Optional.of(Collections.emptyList()), prevRandao, timestamp, withdrawals)
+            .createBlock(
+                Optional.of(Collections.emptyList()),
+                prevRandao,
+                timestamp,
+                withdrawals,
+                parentBeaconBlockRoot)
             .getBlock();
 
     BlockProcessingResult result = validateProposedBlock(emptyBlock);
@@ -293,7 +299,13 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       }
     }
 
-    tryToBuildBetterBlock(timestamp, prevRandao, payloadIdentifier, mergeBlockCreator, withdrawals);
+    tryToBuildBetterBlock(
+        timestamp,
+        prevRandao,
+        payloadIdentifier,
+        mergeBlockCreator,
+        withdrawals,
+        parentBeaconBlockRoot);
 
     return payloadIdentifier;
   }
@@ -333,10 +345,13 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final Bytes32 random,
       final PayloadIdentifier payloadIdentifier,
       final MergeBlockCreator mergeBlockCreator,
-      final Optional<List<Withdrawal>> withdrawals) {
+      final Optional<List<Withdrawal>> withdrawals,
+      final Optional<Bytes32> parentBeaconBlockRoot) {
 
     final Supplier<BlockCreationResult> blockCreator =
-        () -> mergeBlockCreator.createBlock(Optional.empty(), random, timestamp, withdrawals);
+        () ->
+            mergeBlockCreator.createBlock(
+                Optional.empty(), random, timestamp, withdrawals, parentBeaconBlockRoot);
 
     LOG.debug(
         "Block creation started for payload id {}, remaining time is {}ms",
@@ -606,33 +621,30 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       return true;
     }
 
-    if (newHead.getParentHash().equals(blockchain.getChainHeadHash())) {
-      LOG.atDebug()
-          .setMessage(
-              "Forwarding chain head to the block {} saved from a previous newPayload invocation")
-          .addArgument(newHead::toLogString)
-          .log();
-
-      if (forwardWorldStateTo(newHead)) {
-        // move chain head forward:
+    if (moveWorldStateTo(newHead)) {
+      if (newHead.getParentHash().equals(blockchain.getChainHeadHash())) {
+        LOG.atDebug()
+            .setMessage(
+                "Forwarding chain head to the block {} saved from a previous newPayload invocation")
+            .addArgument(newHead::toLogString)
+            .log();
         return blockchain.forwardToBlock(newHead);
       } else {
         LOG.atDebug()
-            .setMessage("Failed to move the worldstate forward to hash {}, not moving chain head")
+            .setMessage("New head {} is a chain reorg, rewind chain head to it")
             .addArgument(newHead::toLogString)
             .log();
-        return false;
+        return blockchain.rewindToBlock(newHead.getHash());
       }
     }
-
     LOG.atDebug()
-        .setMessage("New head {} is a chain reorg, rewind chain head to it")
+        .setMessage("Failed to move the worldstate forward to hash {}, not moving chain head")
         .addArgument(newHead::toLogString)
         .log();
-    return blockchain.rewindToBlock(newHead.getHash());
+    return false;
   }
 
-  private boolean forwardWorldStateTo(final BlockHeader newHead) {
+  private boolean moveWorldStateTo(final BlockHeader newHead) {
     Optional<MutableWorldState> newWorldState =
         protocolContext
             .getWorldStateArchive()

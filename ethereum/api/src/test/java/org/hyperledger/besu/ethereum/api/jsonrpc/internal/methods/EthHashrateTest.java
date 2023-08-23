@@ -25,13 +25,13 @@ import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EthHashrateTest {
 
   @Mock private PoWMiningCoordinator miningCoordinator;
@@ -39,7 +39,7 @@ public class EthHashrateTest {
   private final String JSON_RPC_VERSION = "2.0";
   private final String ETH_METHOD = "eth_hashrate";
 
-  @Before
+  @BeforeEach
   public void setUp() {
     method = new EthHashrate(miningCoordinator);
   }

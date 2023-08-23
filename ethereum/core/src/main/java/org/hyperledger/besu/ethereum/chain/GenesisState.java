@@ -19,6 +19,7 @@ import static java.util.Collections.emptyList;
 import org.hyperledger.besu.config.GenesisAllocation;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -52,6 +53,7 @@ import java.util.stream.Stream;
 
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public final class GenesisState {
@@ -167,6 +169,10 @@ public final class GenesisState {
         .blockHeaderFunctions(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule))
         .baseFee(genesis.getGenesisBaseFeePerGas().orElse(null))
         .withdrawalsRoot(isShanghaiAtGenesis(genesis) ? Hash.EMPTY_TRIE_HASH : null)
+        .blobGasUsed(isCancunAtGenesis(genesis) ? parseBlobGasUsed(genesis) : null)
+        .excessBlobGas(isCancunAtGenesis(genesis) ? parseExcessBlobGas(genesis) : null)
+        .parentBeaconBlockRoot(
+            (isCancunAtGenesis(genesis) ? parseParentBeaconBlockRoot(genesis) : null))
         .depositsRoot(isExperimentalEipsTimeAtGenesis(genesis) ? Hash.EMPTY_TRIE_HASH : null)
         .buildBlockHeader();
   }
@@ -217,18 +223,43 @@ public final class GenesisState {
     return withNiceErrorMessage("nonce", genesis.getNonce(), GenesisState::parseUnsignedLong);
   }
 
+  private static long parseBlobGasUsed(final GenesisConfigFile genesis) {
+    return withNiceErrorMessage(
+        "blobGasUsed", genesis.getBlobGasUsed(), GenesisState::parseUnsignedLong);
+  }
+
+  private static BlobGas parseExcessBlobGas(final GenesisConfigFile genesis) {
+    long excessBlobGas =
+        withNiceErrorMessage(
+            "excessBlobGas", genesis.getExcessBlobGas(), GenesisState::parseUnsignedLong);
+    return BlobGas.of(excessBlobGas);
+  }
+
+  private static Bytes32 parseParentBeaconBlockRoot(final GenesisConfigFile genesis) {
+    return withNiceErrorMessage(
+        "parentBeaconBlockRoot", genesis.getParentBeaconBlockRoot(), Bytes32::fromHexString);
+  }
+
   private static long parseUnsignedLong(final String value) {
-    String nonce = value.toLowerCase(Locale.US);
-    if (nonce.startsWith("0x")) {
-      nonce = nonce.substring(2);
+    String v = value.toLowerCase(Locale.US);
+    if (v.startsWith("0x")) {
+      v = v.substring(2);
     }
-    return Long.parseUnsignedLong(nonce, 16);
+    return Long.parseUnsignedLong(v, 16);
   }
 
   private static boolean isShanghaiAtGenesis(final GenesisConfigFile genesis) {
     final OptionalLong shanghaiTimestamp = genesis.getConfigOptions().getShanghaiTime();
     if (shanghaiTimestamp.isPresent()) {
-      return shanghaiTimestamp.getAsLong() == genesis.getTimestamp();
+      return genesis.getTimestamp() >= shanghaiTimestamp.getAsLong();
+    }
+    return false;
+  }
+
+  private static boolean isCancunAtGenesis(final GenesisConfigFile genesis) {
+    final OptionalLong cancunTimestamp = genesis.getConfigOptions().getCancunTime();
+    if (cancunTimestamp.isPresent()) {
+      return genesis.getTimestamp() >= cancunTimestamp.getAsLong();
     }
     return false;
   }
@@ -236,7 +267,7 @@ public final class GenesisState {
   private static boolean isExperimentalEipsTimeAtGenesis(final GenesisConfigFile genesis) {
     final OptionalLong experimentalEipsTime = genesis.getConfigOptions().getExperimentalEipsTime();
     if (experimentalEipsTime.isPresent()) {
-      return experimentalEipsTime.getAsLong() == genesis.getTimestamp();
+      return genesis.getTimestamp() >= experimentalEipsTime.getAsLong();
     }
     return false;
   }

@@ -44,12 +44,12 @@ import java.math.BigInteger;
 
 import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.StrictStubs.class)
+@ExtendWith(MockitoExtension.class)
 public class TransactionSmartContractPermissioningControllerTest {
   @Mock private MetricsSystem metricsSystem;
   @Mock private Counter checkCounter;

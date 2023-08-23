@@ -24,13 +24,13 @@ import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.evm.AccessListEntry;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -52,7 +52,9 @@ public class TransactionDecoder {
           TransactionType.ACCESS_LIST,
           TransactionDecoder::decodeAccessList,
           TransactionType.EIP1559,
-          TransactionDecoder::decodeEIP1559);
+          TransactionDecoder::decodeEIP1559,
+          TransactionType.BLOB,
+          BlobTransactionDecoder::decode);
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);

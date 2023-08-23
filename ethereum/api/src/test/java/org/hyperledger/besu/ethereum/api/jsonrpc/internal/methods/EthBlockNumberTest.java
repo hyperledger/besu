@@ -24,13 +24,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EthBlockNumberTest {
 
   private final String JSON_RPC_VERSION = "2.0";
@@ -39,7 +39,7 @@ public class EthBlockNumberTest {
   @Mock private BlockchainQueries blockchainQueries;
   private EthBlockNumber method;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     method = new EthBlockNumber(blockchainQueries);
   }

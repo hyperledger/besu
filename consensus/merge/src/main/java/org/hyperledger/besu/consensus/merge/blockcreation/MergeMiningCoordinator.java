@@ -41,6 +41,7 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
    * @param prevRandao the prev randao
    * @param feeRecipient the fee recipient
    * @param withdrawals the optional list of withdrawals
+   * @param parentBeaconBlockRoot optional root hash of the parent beacon block
    * @return the payload identifier
    */
   PayloadIdentifier preparePayload(
@@ -48,7 +49,8 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
       final Long timestamp,
       final Bytes32 prevRandao,
       final Address feeRecipient,
-      final Optional<List<Withdrawal>> withdrawals);
+      final Optional<List<Withdrawal>> withdrawals,
+      final Optional<Bytes32> parentBeaconBlockRoot);
 
   @Override
   default boolean isCompatibleWithEngineApi() {

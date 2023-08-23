@@ -41,7 +41,7 @@ import org.hyperledger.besu.util.Subscribers;
 import java.time.ZoneId;
 import java.util.Optional;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PoWMinerExecutorTest {
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();

@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.AncestryValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.BaseFeeMarketBlockHeaderGasPriceValidationRule;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.BlobGasValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.CalculatedDifficultyValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantFieldValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantOmmersHashRule;
@@ -32,6 +33,7 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.NoNonceRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ProofOfWorkValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
+import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 
 import java.util.Optional;
 
@@ -194,5 +196,10 @@ public final class MainnetBlockHeaderValidator {
         .addRule(new NoNonceRule())
         .addRule(new NoDifficultyRule())
         .addRule(new IncrementalTimestampRule());
+  }
+
+  public static BlockHeaderValidator.Builder cancunBlockHeaderValidator(final FeeMarket feeMarket) {
+    return mergeBlockHeaderValidator(feeMarket)
+        .addRule(new BlobGasValidationRule(new CancunGasCalculator()));
   }
 }

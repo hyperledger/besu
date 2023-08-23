@@ -42,14 +42,14 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.internal.verification.VerificationModeFactory;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EthGasPriceTest {
 
   @Mock private PoWMiningCoordinator miningCoordinator;
@@ -58,7 +58,7 @@ public class EthGasPriceTest {
   private final String JSON_RPC_VERSION = "2.0";
   private final String ETH_METHOD = "eth_gasPrice";
 
-  @Before
+  @BeforeEach
   public void setUp() {
     method =
         new EthGasPrice(
@@ -164,6 +164,8 @@ public class EthGasPriceTest {
                 null,
                 null,
                 null,
+                null,
+                null,
                 null),
             new BlockBody(
                 List.of(
@@ -201,6 +203,8 @@ public class EthGasPriceTest {
                 Wei.ZERO,
                 Hash.EMPTY,
                 0,
+                null,
+                null,
                 null,
                 null,
                 null,

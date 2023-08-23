@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -22,6 +23,9 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -35,21 +39,29 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
 import java.util.Collections;
 import java.util.Optional;
+import java.util.function.Supplier;
 
+import com.google.common.base.Suppliers;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public abstract class AbstractEngineGetPayloadTest {
+
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  protected static final KeyPair senderKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
 
   @FunctionalInterface
   interface MethodFactory {
@@ -68,7 +80,11 @@ public abstract class AbstractEngineGetPayloadTest {
     this.methodFactory = methodFactory;
   }
 
-  private static final Vertx vertx = Vertx.vertx();
+  public AbstractEngineGetPayloadTest() {
+    this.methodFactory = null;
+  }
+
+  protected static final Vertx vertx = Vertx.vertx();
   protected static final BlockResultFactory factory = new BlockResultFactory();
   protected static final PayloadIdentifier mockPid =
       PayloadIdentifier.forPayloadParams(
@@ -77,7 +93,7 @@ public abstract class AbstractEngineGetPayloadTest {
       new BlockHeaderTestFixture().prevRandao(Bytes32.random()).buildHeader();
   private static final Block mockBlock =
       new Block(mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
-  private static final BlockWithReceipts mockBlockWithReceipts =
+  protected static final BlockWithReceipts mockBlockWithReceipts =
       new BlockWithReceipts(mockBlock, Collections.emptyList());
   private static final Block mockBlockWithWithdrawals =
       new Block(
@@ -101,17 +117,23 @@ public abstract class AbstractEngineGetPayloadTest {
   protected static final BlockWithReceipts mockBlockWithReceiptsAndDeposits =
       new BlockWithReceipts(mockBlockWithDeposits, Collections.emptyList());
 
-  @Mock private ProtocolContext protocolContext;
+  @Mock protected ProtocolContext protocolContext;
 
   @Mock protected MergeContext mergeContext;
-  @Mock private MergeMiningCoordinator mergeMiningCoordinator;
+  @Mock protected MergeMiningCoordinator mergeMiningCoordinator;
 
   @Mock protected EngineCallListener engineCallListener;
 
-  @Before
+  @Mock protected ProtocolSchedule protocolSchedule;
+
+  protected static final long SHANGHAI_AT = 1337L;
+
+  @BeforeEach
   public void before() {
     when(mergeContext.retrieveBlockById(mockPid)).thenReturn(Optional.of(mockBlockWithReceipts));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
+    when(protocolSchedule.hardforkFor(any()))
+        .thenReturn(Optional.of(new ScheduledProtocolSpec.Hardfork("shanghai", SHANGHAI_AT)));
     this.method =
         methodFactory.create(
             vertx, protocolContext, mergeMiningCoordinator, factory, engineCallListener);

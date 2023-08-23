@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription;
 
-import static junit.framework.TestCase.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.JsonRpcResult;
@@ -24,36 +24,39 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.response
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(VertxExtension.class)
 public class SubscriptionManagerSendMessageTest {
 
   private static final int VERTX_AWAIT_TIMEOUT_MILLIS = 10000;
 
   private Vertx vertx;
+  private VertxTestContext testContext;
   private SubscriptionManager subscriptionManager;
 
-  @Before
-  public void before(final TestContext context) {
+  @BeforeEach
+  public void before() {
     vertx = Vertx.vertx();
+    testContext = new VertxTestContext();
     subscriptionManager = new SubscriptionManager(new NoOpMetricsSystem());
-    vertx.deployVerticle(subscriptionManager, context.asyncAssertSuccess());
+    vertx.deployVerticle(subscriptionManager, testContext.succeedingThenComplete());
   }
 
   @Test
-  @Ignore
-  public void shouldSendMessageOnTheConnectionIdEventBusAddressForExistingSubscription(
-      final TestContext context) {
+  @Disabled
+  public void shouldSendMessageOnTheConnectionIdEventBusAddressForExistingSubscription()
+      throws InterruptedException {
     final String connectionId = UUID.randomUUID().toString();
     final SubscribeRequest subscribeRequest =
         new SubscribeRequest(SubscriptionType.SYNCING, null, null, connectionId);
@@ -66,41 +69,37 @@ public class SubscriptionManagerSendMessageTest {
 
     final Long subscriptionId = subscriptionManager.subscribe(subscribeRequest);
 
-    final Async async = context.async();
-
     vertx
         .eventBus()
         .consumer(connectionId)
         .handler(
             msg -> {
-              context.assertEquals(Json.encode(expectedResponse), msg.body());
-              async.complete();
+              assertEquals(Json.encode(expectedResponse), msg.body());
+              testContext.completeNow();
             })
         .completionHandler(v -> subscriptionManager.sendMessage(subscriptionId, expectedResult));
 
-    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+    testContext.awaitCompletion(VERTX_AWAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
   }
 
   @Test
-  public void shouldNotSendMessageOnTheConnectionIdEventBusAddressForAbsentSubscription(
-      final TestContext context) {
+  public void shouldNotSendMessageOnTheConnectionIdEventBusAddressForAbsentSubscription()
+      throws InterruptedException {
     final String connectionId = UUID.randomUUID().toString();
-
-    final Async async = context.async();
 
     vertx
         .eventBus()
         .consumer(connectionId)
         .handler(
             msg -> {
-              fail("Shouldn't receive message");
-              async.complete();
+              Assertions.fail("Shouldn't receive message");
+              testContext.completeNow();
             })
         .completionHandler(v -> subscriptionManager.sendMessage(1L, mock(JsonRpcResult.class)));
 
     // if it doesn't receive the message in 5 seconds we assume it won't receive anymore
-    vertx.setPeriodic(5000, v -> async.complete());
+    vertx.setPeriodic(5000, v -> testContext.completeNow());
 
-    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+    testContext.awaitCompletion(VERTX_AWAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
   }
 }

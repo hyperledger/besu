@@ -56,6 +56,8 @@ public class BlockUtils {
         null,
         null,
         null,
+        null,
+        null,
         blockHeaderFunctions);
   }
 }

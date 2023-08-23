@@ -41,12 +41,12 @@ import java.util.TreeMap;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class DebugOperationTracerTest {
 
   private static final int DEPTH = 4;
@@ -83,6 +83,11 @@ public class DebugOperationTracerTest {
   @Test
   public void shouldRecordDepth() {
     final MessageFrame frame = validMessageFrame();
+    // simulate 4 calls
+    frame.getMessageFrameStack().add(frame);
+    frame.getMessageFrameStack().add(frame);
+    frame.getMessageFrameStack().add(frame);
+    frame.getMessageFrameStack().add(frame);
     final TraceFrame traceFrame = traceFrame(frame);
     assertThat(traceFrame.getDepth()).isEqualTo(DEPTH);
   }
@@ -201,8 +206,7 @@ public class DebugOperationTracerTest {
         .worldUpdater(worldUpdater)
         .gasPrice(Wei.of(25))
         .blockHeader(blockHeader)
-        .blockchain(blockchain)
-        .depth(DEPTH);
+        .blockchain(blockchain);
   }
 
   private Map<UInt256, UInt256> setupStorageForCapture(final MessageFrame frame) {

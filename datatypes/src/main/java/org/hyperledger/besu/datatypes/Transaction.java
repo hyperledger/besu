@@ -15,6 +15,7 @@
 package org.hyperledger.besu.datatypes;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -73,12 +74,12 @@ public interface Transaction {
   }
 
   /**
-   * A scalar value equal to the max number of Wei to be paid for data gas, as specified in
+   * A scalar value equal to the max number of Wei to be paid for blob gas, as specified in
    * EIP-4844.
    *
-   * @return the quantity of Wei for fee per data gas.
+   * @return the quantity of Wei for fee per blob gas.
    */
-  default Optional<? extends Quantity> getMaxFeePerDataGas() {
+  default Optional<? extends Quantity> getMaxFeePerBlobGas() {
     return Optional.empty();
   }
 
@@ -183,4 +184,39 @@ public interface Transaction {
    * @return the type of the transaction
    */
   TransactionType getType();
+
+  /**
+   * Return the versioned hashes for this transaction.
+   *
+   * @return optional list of versioned hashes
+   */
+  Optional<List<VersionedHash>> getVersionedHashes();
+
+  /**
+   * Return the blobs with commitments for this transaction.
+   *
+   * @return optional blobs with commitments
+   */
+  Optional<BlobsWithCommitments> getBlobsWithCommitments();
+
+  /**
+   * Return the address of the contract, if the transaction creates one
+   *
+   * @return address of new contract or empty otherwise
+   */
+  Optional<Address> contractAddress();
+
+  /**
+   * Return the access list in case of EIP-2930 transaction
+   *
+   * @return optional access list
+   */
+  Optional<List<AccessListEntry>> getAccessList();
+
+  /**
+   * Returns the transaction with the proper encoding
+   *
+   * @return the encoded transaction as Bytes
+   */
+  Bytes encoded();
 }

@@ -18,9 +18,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationSe
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestId;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcUnauthorizedResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import java.util.Collection;
 
@@ -50,6 +50,6 @@ public class AuthenticatedJsonRpcProcessor implements JsonRpcProcessor {
     if (authenticationService.isPermitted(request.getUser(), method, noAuthRpcApis)) {
       return rpcProcessor.process(id, method, metricSpan, request);
     }
-    return new JsonRpcUnauthorizedResponse(id, JsonRpcError.UNAUTHORIZED);
+    return new JsonRpcUnauthorizedResponse(id, RpcErrorType.UNAUTHORIZED);
   }
 }

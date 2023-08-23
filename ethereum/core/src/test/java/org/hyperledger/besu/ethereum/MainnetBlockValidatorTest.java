@@ -39,8 +39,8 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class MainnetBlockValidatorTest {
 
@@ -55,7 +55,7 @@ public class MainnetBlockValidatorTest {
   private MainnetBlockValidator mainnetBlockValidator;
   private Block badBlock;
 
-  @Before
+  @BeforeEach
   public void setup() {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);

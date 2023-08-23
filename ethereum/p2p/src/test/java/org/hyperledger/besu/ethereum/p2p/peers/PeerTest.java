@@ -17,13 +17,14 @@ package org.hyperledger.besu.ethereum.p2p.peers;
 import static org.apache.tuweni.bytes.Bytes.fromHexString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 
 import com.google.common.net.InetAddresses;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PeerTest {
 
@@ -112,20 +113,24 @@ public class PeerTest {
     assertThat(peer.getEnodeURL().getDiscoveryPortOrZero()).isEqualTo(30403);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void createFromURIFailsForWrongScheme() {
-    DefaultPeer.fromURI("http://user@foo:80");
+    assertThrows(IllegalArgumentException.class, () -> DefaultPeer.fromURI("http://user@foo:80"));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void createFromURIFailsForMissingId() {
-    DefaultPeer.fromURI("enode://172.20.0.4:30303");
+    assertThrows(
+        IllegalArgumentException.class, () -> DefaultPeer.fromURI("enode://172.20.0.4:30303"));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void createFromURIFailsForMissingHost() {
-    DefaultPeer.fromURI(
-        "enode://c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b@:30303");
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            DefaultPeer.fromURI(
+                "enode://c7849b663d12a2b5bf05b1ebf5810364f4870d5f1053fbd7500d38bc54c705b453d7511ca8a4a86003d34d4c8ee0bbfcd387aa724f5b240b3ab4bbb994a1e09b@:30303"));
   }
 
   @Test

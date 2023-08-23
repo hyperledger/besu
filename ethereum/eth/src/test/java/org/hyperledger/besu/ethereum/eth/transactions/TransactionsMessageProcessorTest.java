@@ -28,13 +28,13 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class TransactionsMessageProcessorTest {
 
   @Mock private TransactionPool transactionPool;
@@ -49,7 +49,7 @@ public class TransactionsMessageProcessorTest {
   private TransactionsMessageProcessor messageHandler;
   private StubMetricsSystem metricsSystem;
 
-  @Before
+  @BeforeEach
   public void setup() {
     metricsSystem = new StubMetricsSystem();
 

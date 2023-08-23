@@ -33,7 +33,7 @@ import java.util.function.Predicate;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link MockNetwork}. */
 public final class MockNetworkTest {

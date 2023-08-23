@@ -55,7 +55,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class MessageWrapperTest {
 
@@ -319,6 +319,7 @@ public class MessageWrapperTest {
                   recIdAndChainId(Byte.decode(v)).getKey()),
           Bytes.fromHexString(data),
           recIdAndChainId(Byte.decode(v)).getValue(),
+          Optional.empty(),
           Optional.empty());
     }
   }
@@ -387,6 +388,8 @@ public class MessageWrapperTest {
           null,
           Hash.fromHexString(mixHash),
           Bytes.fromHexStringLenient(nonce).toLong(),
+          null,
+          null,
           null,
           null,
           null,

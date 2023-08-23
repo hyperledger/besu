@@ -37,9 +37,9 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class DownloadReceiptsStepTest {
 
@@ -49,7 +49,7 @@ public class DownloadReceiptsStepTest {
   private EthProtocolManager ethProtocolManager;
   private DownloadReceiptsStep downloadReceiptsStep;
 
-  @BeforeClass
+  @BeforeAll
   public static void setUpClass() {
     final BlockchainSetupUtil setupUtil = BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST);
     setupUtil.importFirstBlocks(20);
@@ -57,7 +57,7 @@ public class DownloadReceiptsStepTest {
     blockchain = setupUtil.getBlockchain();
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     TransactionPool transactionPool = mock(TransactionPool.class);
     ethProtocolManager =

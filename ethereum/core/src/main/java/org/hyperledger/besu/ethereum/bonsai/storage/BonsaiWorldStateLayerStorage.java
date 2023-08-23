@@ -27,31 +27,18 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
 
   public BonsaiWorldStateLayerStorage(final BonsaiWorldStateKeyValueStorage parent) {
     this(
-        new LayeredKeyValueStorage(parent.accountStorage),
-        new LayeredKeyValueStorage(parent.codeStorage),
-        new LayeredKeyValueStorage(parent.storageStorage),
-        new LayeredKeyValueStorage(parent.trieBranchStorage),
+        new LayeredKeyValueStorage(parent.composedWorldStateStorage),
         parent.trieLogStorage,
         parent,
         parent.metricsSystem);
   }
 
   public BonsaiWorldStateLayerStorage(
-      final SnappedKeyValueStorage accountStorage,
-      final SnappedKeyValueStorage codeStorage,
-      final SnappedKeyValueStorage storageStorage,
-      final SnappedKeyValueStorage trieBranchStorage,
+      final SnappedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage,
       final BonsaiWorldStateKeyValueStorage parent,
       final ObservableMetricsSystem metricsSystem) {
-    super(
-        parent,
-        accountStorage,
-        codeStorage,
-        storageStorage,
-        trieBranchStorage,
-        trieLogStorage,
-        metricsSystem);
+    super(parent, composedWorldStateStorage, trieLogStorage, metricsSystem);
   }
 
   @Override
@@ -62,10 +49,7 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
   @Override
   public BonsaiWorldStateLayerStorage clone() {
     return new BonsaiWorldStateLayerStorage(
-        ((LayeredKeyValueStorage) accountStorage).clone(),
-        ((LayeredKeyValueStorage) codeStorage).clone(),
-        ((LayeredKeyValueStorage) storageStorage).clone(),
-        ((LayeredKeyValueStorage) trieBranchStorage).clone(),
+        ((LayeredKeyValueStorage) composedWorldStateStorage).clone(),
         trieLogStorage,
         parentWorldStateStorage,
         metricsSystem);

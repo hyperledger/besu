@@ -20,7 +20,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules.shouldClearEmptyAccounts;
 import static org.hyperledger.besu.evmtool.StateTestSubCommand.COMMAND_NAME;
 
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -81,6 +82,21 @@ public class StateTestSubCommand implements Runnable {
       description = "Force the state tests to run on a specific fork.")
   private String fork = null;
 
+  @Option(
+      names = {"--data-index"},
+      description = "Limit execution to one data variable.")
+  private Integer dataIndex = null;
+
+  @Option(
+      names = {"--gas-index"},
+      description = "Limit execution to one gas variable.")
+  private Integer gasIndex = null;
+
+  @Option(
+      names = {"--value-index"},
+      description = "Limit execution to one value variable.")
+  private Integer valueIndex = null;
+
   @ParentCommand private final EvmToolCommand parentCommand;
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") // picocli does it magically
@@ -100,6 +116,8 @@ public class StateTestSubCommand implements Runnable {
   @Override
   public void run() {
     LogConfigurator.setLevel("", "OFF");
+    // presume ethereum mainnet for reference and state tests
+    SignatureAlgorithmFactory.setDefaultInstance();
     final ObjectMapper stateTestMapper = JsonUtils.createObjectMapper();
 
     final JavaType javaType =
@@ -169,6 +187,15 @@ public class StateTestSubCommand implements Runnable {
 
     final ObjectMapper objectMapper = JsonUtils.createObjectMapper();
     for (final GeneralStateTestCaseEipSpec spec : specs) {
+      if (dataIndex != null && spec.getDataIndex() != dataIndex) {
+        continue;
+      }
+      if (gasIndex != null && spec.getGasIndex() != gasIndex) {
+        continue;
+      }
+      if (valueIndex != null && spec.getValueIndex() != valueIndex) {
+        continue;
+      }
 
       final BlockHeader blockHeader = spec.getBlockHeader();
       final WorldState initialWorldState = spec.getInitialWorldState();
@@ -210,8 +237,8 @@ public class StateTestSubCommand implements Runnable {
         final ReferenceTestBlockchain blockchain =
             new ReferenceTestBlockchain(blockHeader.getNumber());
         final Stopwatch timer = Stopwatch.createStarted();
-        // Todo: EIP-4844 use the excessDataGas of the parent instead of DataGas.ZERO
-        final Wei dataGasPrice = protocolSpec.getFeeMarket().dataPrice(DataGas.ZERO);
+        // Todo: EIP-4844 use the excessBlobGas of the parent instead of BlobGas.ZERO
+        final Wei blobGasPrice = protocolSpec.getFeeMarket().blobGasPricePerGas(BlobGas.ZERO);
         final TransactionProcessingResult result =
             processor.processTransaction(
                 blockchain,
@@ -223,7 +250,7 @@ public class StateTestSubCommand implements Runnable {
                 false,
                 TransactionValidationParams.processingBlock(),
                 tracer,
-                dataGasPrice);
+                blobGasPrice);
         timer.stop();
         if (shouldClearEmptyAccounts(spec.getFork())) {
           final Account coinbase =

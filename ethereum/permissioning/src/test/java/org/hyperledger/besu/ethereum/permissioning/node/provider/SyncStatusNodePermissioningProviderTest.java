@@ -37,14 +37,14 @@ import java.util.Collection;
 import java.util.function.IntSupplier;
 
 import com.google.common.collect.Lists;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class SyncStatusNodePermissioningProviderTest {
   @Mock private MetricsSystem metricsSystem;
   @Mock private Counter checkCounter;
@@ -67,7 +67,7 @@ public class SyncStatusNodePermissioningProviderTest {
   private SyncStatusNodePermissioningProvider provider;
   private InSyncListener inSyncListener;
 
-  @Before
+  @BeforeEach
   public void before() {
     final ArgumentCaptor<InSyncListener> inSyncSubscriberCaptor =
         ArgumentCaptor.forClass(InSyncListener.class);

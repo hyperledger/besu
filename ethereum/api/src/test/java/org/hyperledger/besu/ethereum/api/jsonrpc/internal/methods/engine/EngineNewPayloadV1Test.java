@@ -19,15 +19,31 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class EngineNewPayloadV1Test extends AbstractEngineNewPayloadTest {
 
-  public EngineNewPayloadV1Test() {
-    super(EngineNewPayloadV1::new);
+  public EngineNewPayloadV1Test() {}
+
+  @Override
+  @BeforeEach
+  public void before() {
+    super.before();
+    this.method =
+        new EngineNewPayloadV1(
+            vertx,
+            protocolSchedule,
+            protocolContext,
+            mergeCoordinator,
+            ethPeers,
+            engineCallListener);
   }
 
   @Override
