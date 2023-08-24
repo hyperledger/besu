@@ -96,9 +96,8 @@ public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
         .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(mockHeader))
         .thenReturn(Optional.of(mockHeader.getHash()));
-    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
 
-    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), null, deposits, null));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), null, deposits));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -137,7 +136,6 @@ public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
         .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(mockHeader))
         .thenReturn(Optional.of(mockHeader.getHash()));
-    when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
     var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), null, depositsParam));
 
     assertValidResponse(mockHeader, resp);

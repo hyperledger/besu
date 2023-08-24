@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright Hyperledger Besu contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,29 +14,21 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.hyperledger.besu.datatypes.AccessListEntry;
-
-import java.util.Collection;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonValue;
 
-public class CreateAccessListResult {
-  List<AccessListEntry> accessListList;
-  String gasUsed;
+/** The result set from querying the receipts for a given block. */
+public class BlockReceiptsResult {
 
-  public CreateAccessListResult(final List<AccessListEntry> accessListEntries, final long gasUsed) {
-    this.accessListList = accessListEntries;
-    this.gasUsed = Quantity.create(gasUsed);
+  private final List<TransactionReceiptResult> results;
+
+  public BlockReceiptsResult(final List<TransactionReceiptResult> receipts) {
+    results = receipts;
   }
 
-  @JsonGetter(value = "accessList")
-  public Collection<AccessListEntry> getAccessList() {
-    return accessListList;
-  }
-
-  @JsonGetter(value = "gasUsed")
-  public String getGasUsed() {
-    return gasUsed;
+  @JsonValue
+  public List<TransactionReceiptResult> getResults() {
+    return results;
   }
 }

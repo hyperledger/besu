@@ -21,6 +21,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineC
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -45,14 +47,29 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(ExecutionEngineJsonRpcMethod.class);
   protected final Optional<MergeContext> mergeContextOptional;
   protected final Supplier<MergeContext> mergeContext;
+  protected final Optional<ProtocolSchedule> protocolSchedule;
   protected final ProtocolContext protocolContext;
   protected final EngineCallListener engineCallListener;
+
+  protected ExecutionEngineJsonRpcMethod(
+      final Vertx vertx,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final EngineCallListener engineCallListener) {
+    this.syncVertx = vertx;
+    this.protocolSchedule = Optional.of(protocolSchedule);
+    this.protocolContext = protocolContext;
+    this.mergeContextOptional = protocolContext.safeConsensusContext(MergeContext.class);
+    this.mergeContext = mergeContextOptional::orElseThrow;
+    this.engineCallListener = engineCallListener;
+  }
 
   protected ExecutionEngineJsonRpcMethod(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final EngineCallListener engineCallListener) {
     this.syncVertx = vertx;
+    this.protocolSchedule = Optional.empty();
     this.protocolContext = protocolContext;
     this.mergeContextOptional = protocolContext.safeConsensusContext(MergeContext.class);
     this.mergeContext = mergeContextOptional::orElseThrow;
@@ -106,4 +123,8 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
   }
 
   public abstract JsonRpcResponse syncResponse(final JsonRpcRequestContext request);
+
+  protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
+    return ValidationResult.valid();
+  }
 }
