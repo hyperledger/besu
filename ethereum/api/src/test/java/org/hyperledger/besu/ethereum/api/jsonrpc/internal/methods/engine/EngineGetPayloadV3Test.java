@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -42,7 +41,6 @@ import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -61,8 +59,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
     MockitoExtension.class) // mocks in parent class may not be used, throwing unnecessary stubbing
 public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
 
-  private static final long CANCUN_AT = 31337L;
-
   public EngineGetPayloadV3Test() {
     super();
   }
@@ -70,12 +66,11 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
   @BeforeEach
   @Override
   public void before() {
+    super.before();
     lenient()
         .when(mergeContext.retrieveBlockById(mockPid))
         .thenReturn(Optional.of(mockBlockWithReceipts));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
-    when(protocolSchedule.hardforkFor(any()))
-        .thenReturn(Optional.of(new ScheduledProtocolSpec.Hardfork("shanghai", SHANGHAI_AT)));
     this.method =
         new EngineGetPayloadV3(
             vertx,
@@ -99,14 +94,14 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
     BlockHeader cancunHeader =
         new BlockHeaderTestFixture()
             .prevRandao(Bytes32.random())
-            .timestamp(CANCUN_AT + 1)
+            .timestamp(cancunHardfork.milestone() + 1)
             .excessBlobGas(BlobGas.of(10L))
             .buildHeader();
     // should return withdrawals and excessGas for a post-cancun block
     PayloadIdentifier postCancunPid =
         PayloadIdentifier.forPayloadParams(
             Hash.ZERO,
-            CANCUN_AT,
+            cancunHardfork.milestone(),
             Bytes32.random(),
             Address.fromHexString("0x42"),
             Optional.empty());
