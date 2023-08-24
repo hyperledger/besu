@@ -500,7 +500,7 @@ public class EnodeURLImplTest {
         "enode://"
             + VALID_NODE_ID
             + "@"
-            + InetAddress.getLocalHost().getCanonicalHostName()
+            + InetAddress.getLocalHost().getHostName()
             + ":"
             + P2P_PORT;
     final URI expectedURI = URI.create(enodeURLString);
