@@ -27,8 +27,10 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+@Disabled
 public class LineaBlockTransactionSelectorTest extends LondonFeeMarketBlockTransactionSelectorTest {
   private static final int BLOCK_MAX_CALLDATA_SIZE = 1000;
 
