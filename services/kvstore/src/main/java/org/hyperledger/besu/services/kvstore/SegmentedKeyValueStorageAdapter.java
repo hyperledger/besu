@@ -88,8 +88,9 @@ public class SegmentedKeyValueStorageAdapter implements KeyValueStorage {
   }
 
   @Override
-  public Stream<Pair<byte[], byte[]>> streamFromKey(final byte[] startKey) throws StorageException {
-    return storage.streamFromKey(segmentIdentifier, startKey);
+  public Stream<Pair<byte[], byte[]>> streamFromKey(final byte[] startKeyHash)
+      throws StorageException {
+    return storage.streamFromKey(segmentIdentifier, startKeyHash);
   }
 
   @Override

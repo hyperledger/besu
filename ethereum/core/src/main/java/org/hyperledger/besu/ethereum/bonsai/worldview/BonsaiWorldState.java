@@ -67,7 +67,7 @@ public class BonsaiWorldState
 
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldState.class);
 
-  private BonsaiWorldStateKeyValueStorage worldStateStorage;
+  protected BonsaiWorldStateKeyValueStorage worldStateStorage;
 
   protected final CachedMerkleTrieLoader cachedMerkleTrieLoader;
   protected final TrieLogManager trieLogManager;
@@ -218,7 +218,7 @@ public class BonsaiWorldState
       final BonsaiAccount updatedAccount = bonsaiValue.getUpdated();
       try {
         if (updatedAccount == null) {
-          final Hash addressHash = Hash.hash(accountKey);
+          final Hash addressHash = preImageProxy.hashAndSavePreImage(accountKey);
           accountTrie.remove(addressHash);
           maybeStateUpdater.ifPresent(
               bonsaiUpdater -> bonsaiUpdater.removeAccountInfoState(addressHash));
@@ -227,7 +227,8 @@ public class BonsaiWorldState
           final Bytes accountValue = updatedAccount.serializeAccount();
           maybeStateUpdater.ifPresent(
               bonsaiUpdater ->
-                  bonsaiUpdater.putAccountInfoState(Hash.hash(accountKey), accountValue));
+                  bonsaiUpdater.putAccountInfoState(
+                      preImageProxy.hashAndSavePreImage(accountKey), accountValue));
           accountTrie.put(addressHash, accountValue);
         }
       } catch (MerkleTrieException e) {

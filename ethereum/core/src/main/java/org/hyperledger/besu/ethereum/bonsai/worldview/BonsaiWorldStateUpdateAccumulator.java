@@ -338,7 +338,8 @@ public class BonsaiWorldStateUpdateAccumulator
                 pendingCode.setUpdated(updatedAccount.getCode());
               }
 
-              // This is especially to avoid unnecessary computation for withdrawals
+              // This is especially to avoid unnecessary computation for withdrawals and
+              // self-destruct beneficiaries
               if (updatedAccount.getUpdatedStorage().isEmpty()) {
                 return;
               }

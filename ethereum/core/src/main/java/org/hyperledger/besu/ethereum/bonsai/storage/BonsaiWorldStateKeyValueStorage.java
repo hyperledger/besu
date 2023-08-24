@@ -58,6 +58,7 @@ import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.rlp.RLP;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -285,7 +286,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                 e -> e.getKey(),
                 e ->
                     AccountStorageEntry.create(
-                        UInt256.fromBytes(e.getValue()),
+                        UInt256.fromBytes(RLP.decodeValue(e.getValue())),
                         Hash.wrap(e.getKey()),
                         preImageProxy.getStorageTrieKeyPreimage(e.getKey())),
                 (a, b) -> a,
