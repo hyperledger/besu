@@ -97,7 +97,7 @@ public class EngineNewPayloadEIP6110Test extends EngineNewPayloadV3Test {
     when(mergeCoordinator.getLatestValidAncestor(mockHeader))
         .thenReturn(Optional.of(mockHeader.getHash()));
 
-    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), null, deposits, null));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), null, deposits));
 
     assertValidResponse(mockHeader, resp);
   }
