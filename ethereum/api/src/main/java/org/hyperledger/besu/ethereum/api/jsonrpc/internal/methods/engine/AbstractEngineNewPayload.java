@@ -289,21 +289,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return respondWith(reqId, blockParam, null, SYNCING);
     }
 
-    // TODO: post-merge cleanup
-    if (requireTerminalPoWBlockValidation()
-        && !mergeContext.get().isCheckpointPostMergeSync()
-        && !mergeContext.get().isPostMergeAtGenesis()
-        && !mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)
-        && !mergeContext.get().isChainPruningEnabled()) {
-      mergeCoordinator.addBadBlock(block, Optional.empty());
-      return respondWithInvalid(
-          reqId,
-          blockParam,
-          Hash.ZERO,
-          INVALID,
-          newBlockHeader.getHash() + " did not descend from terminal block");
-    }
-
     final var latestValidAncestor = mergeCoordinator.getLatestValidAncestor(newBlockHeader);
 
     if (latestValidAncestor.isEmpty()) {
