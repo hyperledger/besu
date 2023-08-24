@@ -98,6 +98,7 @@ public enum RpcMethod {
   ETH_GET_BALANCE("eth_getBalance"),
   ETH_GET_BLOCK_BY_HASH("eth_getBlockByHash"),
   ETH_GET_BLOCK_BY_NUMBER("eth_getBlockByNumber"),
+  ETH_GET_BLOCK_RECEIPTS("eth_getBlockReceipts"),
   ETH_GET_BLOCK_TRANSACTION_COUNT_BY_HASH("eth_getBlockTransactionCountByHash"),
   ETH_GET_BLOCK_TRANSACTION_COUNT_BY_NUMBER("eth_getBlockTransactionCountByNumber"),
   ETH_GET_CODE("eth_getCode"),
