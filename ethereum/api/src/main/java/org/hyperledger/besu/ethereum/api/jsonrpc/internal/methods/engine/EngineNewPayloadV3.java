@@ -28,11 +28,10 @@ import java.util.List;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
 
-  private final Long cancunTimestamp;
+  private final Optional<ScheduledProtocolSpec.Hardfork> cancun;
 
   public EngineNewPayloadV3(
       final Vertx vertx,
@@ -43,9 +42,7 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
       final EngineCallListener engineCallListener) {
     super(
         vertx, timestampSchedule, protocolContext, mergeCoordinator, ethPeers, engineCallListener);
-    Optional<ScheduledProtocolSpec.Hardfork> cancun =
-        timestampSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
-    cancunTimestamp = cancun.map(ScheduledProtocolSpec.Hardfork::milestone).orElse(Long.MAX_VALUE);
+    this.cancun = timestampSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
   }
 
   @Override
@@ -54,24 +51,36 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
   }
 
   @Override
-  protected ValidationResult<RpcErrorType> validateParamsAndForkSupported(
-      final Object reqId,
+  protected ValidationResult<RpcErrorType> validateParameters(
       final EnginePayloadParameter payloadParameter,
       final Optional<List<String>> maybeVersionedHashParam,
-      final Optional<Bytes32> maybeParentBeaconBlockRoot) {
-
+      final Optional<String> maybeBeaconBlockRootParam) {
     if (payloadParameter.getBlobGasUsed() == null || payloadParameter.getExcessBlobGas() == null) {
       return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing blob gas fields");
     } else if (maybeVersionedHashParam == null) {
       return ValidationResult.invalid(
           RpcErrorType.INVALID_PARAMS, "Missing versioned hashes field");
-    } else if (maybeParentBeaconBlockRoot.isEmpty()) {
+    } else if (maybeBeaconBlockRootParam.isEmpty()) {
       return ValidationResult.invalid(
           RpcErrorType.INVALID_PARAMS, "Missing parent beacon block root field");
+    } else {
+      return ValidationResult.valid();
     }
-    if (payloadParameter.getTimestamp() < cancunTimestamp) {
-      return ValidationResult.invalid(RpcErrorType.UNSUPPORTED_FORK, "Fork not supported");
+  }
+
+  @Override
+  protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
+    if (protocolSchedule.isPresent()) {
+      if (cancun.isPresent() && blockTimestamp >= cancun.get().milestone()) {
+        return ValidationResult.valid();
+      } else {
+        return ValidationResult.invalid(
+            RpcErrorType.UNSUPPORTED_FORK,
+            "Cancun configured to start at timestamp: " + cancun.get().milestone());
+      }
+    } else {
+      return ValidationResult.invalid(
+          RpcErrorType.UNSUPPORTED_FORK, "Configuration error, no schedule for Cancun fork set");
     }
-    return ValidationResult.valid();
   }
 }

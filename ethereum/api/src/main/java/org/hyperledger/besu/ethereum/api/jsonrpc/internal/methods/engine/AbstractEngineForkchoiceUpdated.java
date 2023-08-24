@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.List;
 import java.util.Optional;
@@ -50,7 +51,6 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineForkchoiceUpdated.class);
-  private final ProtocolSchedule protocolSchedule;
   private final MergeMiningCoordinator mergeCoordinator;
   private final Long cancunTimestamp;
 
@@ -60,12 +60,17 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
       final ProtocolContext protocolContext,
       final MergeMiningCoordinator mergeCoordinator,
       final EngineCallListener engineCallListener) {
-    super(vertx, protocolContext, engineCallListener);
-    this.protocolSchedule = protocolSchedule;
+    super(vertx, protocolSchedule, protocolContext, engineCallListener);
+
     this.mergeCoordinator = mergeCoordinator;
     Optional<ScheduledProtocolSpec.Hardfork> cancun =
         protocolSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
     cancunTimestamp = cancun.map(ScheduledProtocolSpec.Hardfork::milestone).orElse(Long.MAX_VALUE);
+  }
+
+  protected ValidationResult<RpcErrorType> validateParameter(
+      final EngineForkchoiceUpdatedParameter forkchoiceUpdatedParameter) {
+    return ValidationResult.valid();
   }
 
   @Override
@@ -80,6 +85,20 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
         requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
 
     LOG.debug("Forkchoice parameters {}", forkChoice);
+
+    if (maybePayloadAttributes.isPresent()) {
+      final EnginePayloadAttributesParameter payloadAttributes = maybePayloadAttributes.get();
+      ValidationResult<RpcErrorType> forkValidationResult =
+          validateForkSupported(payloadAttributes.getTimestamp());
+      if (!forkValidationResult.isValid()) {
+        return new JsonRpcSuccessResponse(requestId, forkValidationResult);
+      }
+    }
+
+    ValidationResult<RpcErrorType> parameterValidationResult = validateParameter(forkChoice);
+    if (!parameterValidationResult.isValid()) {
+      return new JsonRpcSuccessResponse(requestId, parameterValidationResult);
+    }
 
     mergeContext
         .get()
@@ -206,7 +225,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
       return false;
     }
     if (!getWithdrawalsValidator(
-            protocolSchedule, headBlockHeader, payloadAttributes.getTimestamp())
+            protocolSchedule.get(), headBlockHeader, payloadAttributes.getTimestamp())
         .validateWithdrawals(maybeWithdrawals)) {
       return false;
     }
