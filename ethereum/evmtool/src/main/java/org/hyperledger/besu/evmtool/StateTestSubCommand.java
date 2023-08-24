@@ -56,12 +56,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -76,7 +78,10 @@ import picocli.CommandLine.ParentCommand;
 public class StateTestSubCommand implements Runnable {
   public static final String COMMAND_NAME = "state-test";
 
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
+  static final Supplier<ReferenceTestProtocolSchedules> referenceTestProtocolSchedules =
+          Suppliers.memoize(ReferenceTestProtocolSchedules::create);
+
+  @SuppressWarnings({"FieldCanBeFinal"})
   @Option(
       names = {"--fork"},
       description = "Force the state tests to run on a specific fork.")
@@ -99,7 +104,7 @@ public class StateTestSubCommand implements Runnable {
 
   @ParentCommand private final EvmToolCommand parentCommand;
 
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") // picocli does it magically
+  // picocli does it magically
   @Parameters
   private final List<Path> stateTestFiles = new ArrayList<>();
 
@@ -174,8 +179,6 @@ public class StateTestSubCommand implements Runnable {
   }
 
   private void traceTestSpecs(final String test, final List<GeneralStateTestCaseEipSpec> specs) {
-    final var referenceTestProtocolSchedules = ReferenceTestProtocolSchedules.create();
-
     final OperationTracer tracer = // You should have picked Mercy.
         parentCommand.showJsonResults
             ? new StandardJsonTracer(
@@ -226,7 +229,7 @@ public class StateTestSubCommand implements Runnable {
 
         final String forkName = fork == null ? spec.getFork() : fork;
         final ProtocolSchedule protocolSchedule =
-            referenceTestProtocolSchedules.getByName(forkName);
+            referenceTestProtocolSchedules.get().getByName(forkName);
         if (protocolSchedule == null) {
           throw new UnsupportedForkException(forkName);
         }
