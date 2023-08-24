@@ -27,6 +27,9 @@ public enum NetworkName {
   SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111)),
   /** Goerli network name. */
   GOERLI("/goerli.json", BigInteger.valueOf(5)),
+  /** Holešky network name. */
+  HOLESKY("/holesky.json", BigInteger.valueOf(17000)),
+
   /** Dev network name. */
   DEV("/dev.json", BigInteger.valueOf(2018), false),
   /** Future EIPs network name. */
@@ -38,9 +41,7 @@ public enum NetworkName {
   /** Kotti network name. */
   KOTTI("/kotti.json", BigInteger.valueOf(6)),
   /** Mordor network name. */
-  MORDOR("/mordor.json", BigInteger.valueOf(7)),
-  /** Holešky network name. */
-  HOLESKY("/holesky.json", BigInteger.valueOf(17000));
+  MORDOR("/mordor.json", BigInteger.valueOf(7));
 
   private final String genesisFile;
   private final BigInteger networkId;
