@@ -81,7 +81,7 @@ public class TransactionAnnouncementEncoder {
 
     for (int i = 0; i < transactions.size(); i++) {
       final TransactionType type = transactions.get(i).getType();
-      types[i] = type == TransactionType.FRONTIER ? 0x00 : type.getSerializedType();
+      types[i] = type.getEthSerializedType();
       sizes.add(transactions.get(i).getSize());
       hashes.add(transactions.get(i).getHash());
     }
@@ -96,7 +96,7 @@ public class TransactionAnnouncementEncoder {
     final byte[] byteTypes = new byte[types.size()];
     for (int i = 0; i < types.size(); i++) {
       final TransactionType type = types.get(i);
-      byteTypes[i] = type == TransactionType.FRONTIER ? 0x00 : type.getSerializedType();
+      byteTypes[i] = type.getEthSerializedType();
     }
     return encodeForEth68(byteTypes, sizes, hashes);
   }
