@@ -319,9 +319,6 @@ public abstract class AbstractEngineNewPayloadTest {
     lenient()
         .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
-    lenient()
-        .when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(any(BlockHeader.class)))
-        .thenReturn(true);
     lenient().when(mockHeader.getHash()).thenReturn(Hash.fromHexStringLenient("0x1337"));
     var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList()));
 
