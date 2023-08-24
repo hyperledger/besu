@@ -19,7 +19,6 @@ import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -27,17 +26,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFac
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
 
-  private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadV3.class);
-  private final Optional<ScheduledProtocolSpec.Hardfork> shanghai;
   private final Optional<ScheduledProtocolSpec.Hardfork> cancun;
 
   public EngineGetPayloadV3(
@@ -47,8 +43,13 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
       final BlockResultFactory blockResultFactory,
       final EngineCallListener engineCallListener,
       final ProtocolSchedule schedule) {
-    super(vertx, protocolContext, mergeMiningCoordinator, blockResultFactory, engineCallListener);
-    this.shanghai = schedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Shanghai"));
+    super(
+        vertx,
+        schedule,
+        protocolContext,
+        mergeMiningCoordinator,
+        blockResultFactory,
+        engineCallListener);
     this.cancun = schedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
   }
 
@@ -63,29 +64,24 @@ public class EngineGetPayloadV3 extends AbstractEngineGetPayload {
       final PayloadIdentifier payloadId,
       final BlockWithReceipts blockWithReceipts) {
 
-    try {
-      long builtAt = blockWithReceipts.getHeader().getTimestamp();
+    return new JsonRpcSuccessResponse(
+        request.getRequest().getId(),
+        blockResultFactory.payloadTransactionCompleteV3(blockWithReceipts));
+  }
 
-      if (this.shanghai.isPresent() && builtAt < this.shanghai.get().milestone()) {
-        return new JsonRpcSuccessResponse(
-            request.getRequest().getId(),
-            blockResultFactory.payloadTransactionCompleteV1(blockWithReceipts.getBlock()));
-      } else if (this.shanghai.isPresent()
-          && builtAt >= this.shanghai.get().milestone()
-          && this.cancun.isPresent()
-          && builtAt < this.cancun.get().milestone()) {
-        return new JsonRpcSuccessResponse(
-            request.getRequest().getId(),
-            blockResultFactory.payloadTransactionCompleteV2(blockWithReceipts));
+  @Override
+  protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
+    if (protocolSchedule.isPresent()) {
+      if (cancun.isPresent() && blockTimestamp >= cancun.get().milestone()) {
+        return ValidationResult.valid();
       } else {
-        return new JsonRpcSuccessResponse(
-            request.getRequest().getId(),
-            blockResultFactory.payloadTransactionCompleteV3(blockWithReceipts));
+        return ValidationResult.invalid(
+            RpcErrorType.UNSUPPORTED_FORK,
+            "Cancun configured to start at timestamp: " + cancun.get().milestone());
       }
-
-    } catch (ClassCastException e) {
-      LOG.error("configuration error, can't call V3 endpoint with non-default protocol schedule");
-      return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INTERNAL_ERROR);
+    } else {
+      return ValidationResult.invalid(
+          RpcErrorType.UNSUPPORTED_FORK, "Configuration error, no schedule for Cancun fork set");
     }
   }
 }
