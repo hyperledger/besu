@@ -79,7 +79,7 @@ public class StateTestSubCommand implements Runnable {
   public static final String COMMAND_NAME = "state-test";
 
   static final Supplier<ReferenceTestProtocolSchedules> referenceTestProtocolSchedules =
-          Suppliers.memoize(ReferenceTestProtocolSchedules::create);
+      Suppliers.memoize(ReferenceTestProtocolSchedules::create);
 
   @SuppressWarnings({"FieldCanBeFinal"})
   @Option(
@@ -105,8 +105,7 @@ public class StateTestSubCommand implements Runnable {
   @ParentCommand private final EvmToolCommand parentCommand;
 
   // picocli does it magically
-  @Parameters
-  private final List<Path> stateTestFiles = new ArrayList<>();
+  @Parameters private final List<Path> stateTestFiles = new ArrayList<>();
 
   @SuppressWarnings("unused")
   public StateTestSubCommand() {
