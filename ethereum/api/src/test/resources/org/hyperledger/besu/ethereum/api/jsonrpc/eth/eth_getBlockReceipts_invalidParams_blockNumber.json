@@ -1,0 +1,19 @@
+{
+  "request": {
+    "id": 300,
+    "jsonrpc": "2.0",
+    "method": "eth_getBlockReceipts",
+    "params": [
+      "0x02020202020202020202020202"
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 300,
+    "error" : {
+      "code" : -32602,
+      "message" : "Invalid params"
+    }
+  },
+  "statusCode": 200
+}

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.forkid;
 
 import static java.util.Collections.emptyList;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -44,7 +45,7 @@ public class ForkIdTestUtil {
       final String genesisHash, final LongSupplier chainHeightSupplier, final long timestamp) {
     final Blockchain mockchain = mock(Blockchain.class);
     final BlockHeader mockHeader = mock(BlockHeader.class);
-    final Block block = new Block(mockHeader, null);
+    final Block block = spy(new Block(mockHeader, null));
     final BlockHeader mockChainHeadHeader = mock(BlockHeader.class);
     when(mockchain.getGenesisBlock()).thenReturn(block);
     when(mockchain.getChainHeadBlockNumber()).thenReturn(chainHeightSupplier.getAsLong());
@@ -52,6 +53,9 @@ public class ForkIdTestUtil {
     when(mockchain.getChainHeadHeader()).thenReturn(mockChainHeadHeader);
     when(mockChainHeadHeader.getNumber()).thenReturn(chainHeightSupplier.getAsLong());
     when(mockChainHeadHeader.getTimestamp()).thenReturn(timestamp);
+    final BlockHeader mockGenesisBlockHeader = mock(BlockHeader.class);
+    when(block.getHeader()).thenReturn(mockGenesisBlockHeader);
+    when(mockGenesisBlockHeader.getTimestamp()).thenReturn(1L);
     return mockchain;
   }
 
