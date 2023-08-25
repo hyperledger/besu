@@ -25,7 +25,7 @@ execution-spec-tests:
         https://github.com/ethereum/execution-spec-tests/issues/274)):
 
     ```zsh
-    brew install autoconf automake libconf
+    brew install autoconf automake libtool
     ```
 
 2. Zsh requires braces to be escaped in the command line, so the
@@ -38,7 +38,7 @@ execution-spec-tests:
 An all-in-one script, including homebrew, would look like
 
 ```zsh
-brew install autoconf automake libconf ethereum solidity
+brew install autoconf automake libtool ethereum solidity
 git clone https://github.com/ethereum/execution-spec-tests
 cd execution-spec-tests
 python3 -m venv ./venv/
