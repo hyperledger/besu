@@ -60,7 +60,7 @@ public class EngineNewPayloadV2 extends AbstractEngineNewPayload {
     }
     if (payloadParameter.getExcessBlobGas() != null) {
       return ValidationResult.invalid(
-          RpcErrorType.INVALID_PARAMS, "non-nil ExcessBlobGas pre-cancun");
+          RpcErrorType.INVALID_PARAMS, "non-null ExcessBlobGas pre-cancun");
     }
     return ValidationResult.valid();
   }
