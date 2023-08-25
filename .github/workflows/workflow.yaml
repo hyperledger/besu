@@ -10,6 +10,7 @@ jobs:
   all:
     runs-on: ubuntu-latest
     env:
+      architecture: "amd64"
       GRADLE_OPTS: "-Xmx6g -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2"
 
     steps:
