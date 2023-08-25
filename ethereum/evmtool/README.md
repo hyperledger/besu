@@ -16,22 +16,29 @@ for each invocation when run via the Java runtime.
 
 Current as of 25 Aug 2023.
 
-Note, homebrew only installs the latest version of Python which is 3.11,
-while earlier versions of ethereum/execution-spec-tests only supported
-3.10, 3.11 has been supported as of 06 Jul 2023 cf
-[ethereum/execution-spec-tests#193](https://github.com/ethereum/execution-spec-tests/pull/193).
+There are a couple of macOS-specific gotchas when installing
+execution-spec-tests:
 
-Note that, Zsh requires braces to be escaped in the command line, so the
-step to install python packages needs to escape the brackets:
+1. The following additional packages are required to install one of
+    the dependencies (coincurve) with Python 3.11 (will be resolved
+    by [ethereum/execution-spec-tests#274](
+        https://github.com/ethereum/execution-spec-tests/issues/274)):
 
-```zsh
-pip install -e .\[docs,lint,test\]
-```
+    ```zsh
+    brew install autoconf automake libconf
+    ```
+
+2. Zsh requires braces to be escaped in the command line, so the
+    step to install python packages needs to escape the brackets:
+
+    ```zsh
+    pip install -e .\[docs,lint,test\]
+    ```
 
 An all-in-one script, including homebrew, would look like
 
 ```zsh
-brew install ethereum solidity
+brew install autoconf automake libconf ethereum solidity
 git clone https://github.com/ethereum/execution-spec-tests
 cd execution-spec-tests
 python3 -m venv ./venv/
