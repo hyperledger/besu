@@ -14,8 +14,15 @@
  */
 package org.hyperledger.besu.services.pipeline.exception;
 
+/** This class allows throwing an exception in case of failure of an async task in the pipeline */
 public class AsyncOperationException extends RuntimeException {
 
+  /**
+   * Constructor of the exception that takes the message and the cause of it.
+   *
+   * @param message of the exception
+   * @param cause of the exception
+   */
   public AsyncOperationException(final String message, final Throwable cause) {
     super(message, cause);
   }
