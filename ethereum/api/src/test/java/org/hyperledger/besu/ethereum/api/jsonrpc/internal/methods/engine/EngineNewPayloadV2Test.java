@@ -139,7 +139,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null));
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
-    assertThat(jsonRpcError.getData()).isEqualTo("non-nil BlobGasUsed pre-cancun");
+    assertThat(jsonRpcError.getData()).isEqualTo("non-null BlobGasUsed pre-cancun");
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
