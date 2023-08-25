@@ -287,4 +287,14 @@ public class MainnetProtocolSpecFactory {
         ecip1017EraRounds,
         evmConfiguration);
   }
+
+  public ProtocolSpecBuilder spiralDefinition() {
+    return ClassicProtocolSpecs.spiralDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        ecip1017EraRounds,
+        evmConfiguration);
+  }
 }

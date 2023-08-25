@@ -17,6 +17,7 @@
 ### Deprecations
 
 ### Additions and Improvements
+- Ethereum Classic Spiral network upgrade [#6078](https://github.com/hyperledger/besu/pull/6078)
 
 ### Bug fixes
 

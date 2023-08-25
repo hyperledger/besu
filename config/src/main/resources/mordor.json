@@ -8,6 +8,7 @@
     "thanosBlock": 2520000,
     "magnetoBlock": 3985893,
     "mystiqueBlock": 5520000,
+    "spiralBlock": 9957000,
     "ethash": {},
     "discovery": {
       "dns": "enrtree://AJE62Q4DUX4QMMXEHCSSCSC65TDHZYSMONSD64P3WULVLSF6MRQ3K@all.mordor.blockd.info",
