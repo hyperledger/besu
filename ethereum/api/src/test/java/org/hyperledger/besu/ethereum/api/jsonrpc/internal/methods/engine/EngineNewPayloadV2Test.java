@@ -155,7 +155,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
-    assertThat(jsonRpcError.getData()).isEqualTo("non-nil ExcessBlobGas pre-cancun");
+    assertThat(jsonRpcError.getData()).isEqualTo("non-null ExcessBlobGas pre-cancun");
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
