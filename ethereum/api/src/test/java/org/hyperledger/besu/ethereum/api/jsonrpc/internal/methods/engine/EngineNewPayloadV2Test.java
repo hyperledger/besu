@@ -129,7 +129,8 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
   }
 
   @Test
-  public void shouldReturnInvalidIf_BloBGasUsed_NotNull() {
+  public void shouldValidateBlobGasUsedCorrectly() {
+    // V2 should return error if non-null blobGasUsed
     final List<WithdrawalParameter> withdrawals = List.of();
     lenient()
         .when(protocolSpec.getWithdrawalsValidator())
@@ -149,7 +150,8 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
   }
 
   @Test
-  public void shouldReturnInvalidIf_excessBlobGas_NotNull() {
+  public void shouldValidateExcessBlobGasCorrectly() {
+    // V2 should return error if non-null ExcessBlobGas
     final List<WithdrawalParameter> withdrawals = List.of();
     lenient()
         .when(protocolSpec.getWithdrawalsValidator())
