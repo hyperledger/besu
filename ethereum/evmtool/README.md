@@ -14,22 +14,15 @@ for each invocation when run via the Java runtime.
 
 ### Building Execution Tests on macOS
 
-Current as of 24 Jun 2023.
+Current as of 25 Aug 2023.
 
-MacOS users will typically encounter two problems,one relating to the
-version of Python used and one relating to zsh.
+Note, homebrew only installs the latest version of Python which is 3.11,
+while earlier versions of ethereum/execution-spec-tests only supported
+3.10, 3.11 has been supported as of 06 Jul 2023 cf
+[ethereum/execution-spec-tests#193](https://github.com/ethereum/execution-spec-tests/pull/193).
 
-Homebrew will only install the most recent version of Python
-as `python3`, and that is 3.11. The execution tests require 3.10. The
-solution is to use a 3.10 version of python to set up the virtual
-environment.
-
-```zsh
-python3.10 -m venv ./venv/
-```
-
-Zsh requires braces to be escaped in the command line, so the step to
-install python packages needs to escape the brackets
+Note that, Zsh requires braces to be escaped in the command line, so the
+step to install python packages needs to escape the brackets:
 
 ```zsh
 pip install -e .\[docs,lint,test\]
@@ -43,7 +36,7 @@ git clone https://github.com/ethereum/execution-spec-tests
 cd execution-spec-tests
 python3 -m venv ./venv/
 source ./venv/bin/activate
-pip install -e .[docs,lint,test]
+pip install -e .\[docs,lint,test\]
 ```
 
 ### Building EvmTool with GraalVM on macOS
