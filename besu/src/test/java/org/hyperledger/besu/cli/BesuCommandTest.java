@@ -208,6 +208,13 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Before
   public void setup() {
+    try {
+      // optimistically tear down a potential previous loaded trusted setup
+      KZGPointEvalPrecompiledContract.tearDown();
+    } catch (Throwable ignore) {
+      // and ignore errors in case no trusted setup was already loaded
+    }
+
     MergeConfigOptions.setMergeEnabled(false);
   }
 
@@ -215,13 +222,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void tearDown() {
 
     MergeConfigOptions.setMergeEnabled(false);
-    try {
-      // trusted setup can only be loaded once, so we optimistically try to free it in case the
-      // current test loaded it
-      KZGPointEvalPrecompiledContract.tearDown();
-    } catch (Throwable ignore) {
-      // not all the tests load a trusted setup, so the exception is expected in those cases
-    }
   }
 
   @Test
