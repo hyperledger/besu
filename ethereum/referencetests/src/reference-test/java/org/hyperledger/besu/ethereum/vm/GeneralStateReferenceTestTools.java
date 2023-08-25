@@ -21,8 +21,10 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
@@ -179,6 +181,7 @@ public class GeneralStateReferenceTestTools {
       worldStateUpdater.deleteAccount(coinbase.getAddress());
     }
     worldStateUpdater.commit();
+    worldState.persist(blockHeader);
 
     // Check the world state root hash.
     final Hash expectedRootHash = spec.getExpectedRootHash();

@@ -262,7 +262,7 @@ public class StateTestSubCommand implements Runnable {
           }
         }
         worldStateUpdater.commit();
-        worldState.freeze();
+        worldState.persist(blockHeader);
 
         summaryLine.put("output", result.getOutput().toUnprefixedHexString());
         final long gasUsed = transaction.getGasLimit() - result.getGasRemaining();
