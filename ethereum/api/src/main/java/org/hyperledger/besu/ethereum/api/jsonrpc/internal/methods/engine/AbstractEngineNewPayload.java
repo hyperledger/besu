@@ -225,12 +225,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               "Computed block hash %s does not match block hash parameter %s",
               newBlockHeader.getBlockHash(), blockParam.getBlockHash());
       LOG.debug(errorMessage);
-      return respondWithInvalid(
-          reqId,
-          blockParam,
-          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
-          getInvalidBlockHashStatus(),
-          errorMessage);
+      return respondWithInvalid(reqId, blockParam, null, getInvalidBlockHashStatus(), errorMessage);
     }
 
     ValidationResult<RpcErrorType> blobValidationResult =
