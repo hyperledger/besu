@@ -124,6 +124,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     if (!slots.isEmpty() || !proofs.isEmpty()) {
       if (!worldStateProofProvider.isValidRangeProof(
           startKeyHash, endKeyHash, storageRoot, proofs, slots)) {
+        downloadState.addAccountsToBeRepaired(CompactEncoding.bytesToPath(accountHash));
         downloadState.enqueueRequest(
             createAccountDataRequest(
                 getRootHash(), Hash.wrap(accountHash), startKeyHash, endKeyHash));
