@@ -86,6 +86,7 @@ import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningCon
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
+import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
@@ -212,7 +213,15 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @After
   public void tearDown() {
+
     MergeConfigOptions.setMergeEnabled(false);
+    try {
+      // trusted setup can only be loaded once, so we optimistically try to free it in case the
+      // current test loaded it
+      KZGPointEvalPrecompiledContract.tearDown();
+    } catch (Throwable ignore) {
+      // not all the tests load a trusted setup, so the exception is expected in those cases
+    }
   }
 
   @Test
