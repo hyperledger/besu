@@ -24,6 +24,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
@@ -124,6 +125,46 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldReturnInvalidIf_BloBGasUsed_NotNull() {
+    final List<WithdrawalParameter> withdrawals = List.of();
+    lenient()
+        .when(protocolSpec.getWithdrawalsValidator())
+        .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
+
+    BlockHeader blockHeader =
+        createBlockHeaderFixture(Optional.of(Collections.emptyList()), Optional.empty())
+            .blobGasUsed(100L)
+            .buildHeader();
+
+    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), withdrawals, null));
+
+    final JsonRpcError jsonRpcError = fromErrorResp(resp);
+    assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
+    assertThat(jsonRpcError.getData()).isEqualTo("non-nil BlobGasUsed pre-cancun");
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldReturnInvalidIf_excessBlobGas_NotNull() {
+    final List<WithdrawalParameter> withdrawals = List.of();
+    lenient()
+        .when(protocolSpec.getWithdrawalsValidator())
+        .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
+
+    BlockHeader blockHeader =
+        createBlockHeaderFixture(Optional.of(Collections.emptyList()), Optional.empty())
+            .excessBlobGas(BlobGas.MAX_BLOB_GAS)
+            .buildHeader();
+
+    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), withdrawals, null));
+
+    final JsonRpcError jsonRpcError = fromErrorResp(resp);
+    assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
+    assertThat(jsonRpcError.getData()).isEqualTo("non-nil BlobGasUsed pre-cancun");
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
