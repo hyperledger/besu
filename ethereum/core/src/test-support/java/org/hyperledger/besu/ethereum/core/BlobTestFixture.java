@@ -33,10 +33,17 @@ import ethereum.ckzg4844.CKZG4844JNI;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 
 public class BlobTestFixture {
 
   public BlobTestFixture() {
+    try {
+      // optimistically tear down a potential previous loaded trusted setup
+      KZGPointEvalPrecompiledContract.tearDown();
+    } catch (Throwable ignore) {
+      // and ignore errors in case no trusted setup was already loaded
+    }
     try {
       CKZG4844JNI.loadNativeLibrary(CKZG4844JNI.Preset.MAINNET);
       CKZG4844JNI.loadTrustedSetupFromResource(

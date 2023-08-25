@@ -33,11 +33,24 @@ jobs:
             ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/versions.gradle') }}
             ${{ runner.os }}-gradle-
 
-      - name: Assemble
-        run: ./gradlew --no-daemon clean spotlessCheck build
+      - name: Spotless
+        run: ./gradlew clean spotlessCheck
+
+      - name: Test & Build
+        run: ./gradlew build
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: JUnit Tests            # Name of the check run which will be created
+          path: '**/test-results/test/*.xml'    # Path to test results
+          reporter: java-junit        # Format of test results
+          only-summary: true
+          max-annotations: 50
 
       - name: Store distribution artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: distributions
           path: build/distributions
@@ -50,14 +63,11 @@ jobs:
           ./gradlew dockerDist
 
       - name: Login to Docker Hub for self hosted
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USER_RW }}
           password: ${{ secrets.DOCKER_PAT_RW }}
+
       - name: Publish Docker Image
         run: |
-          ./gradlew --no-daemon dockerUpload
-
-      - name: Publish Multi-arch Docker Image
-        run: |
-          ./gradlew --no-daemon dockerManifest
+          ./gradlew dockerUpload
