@@ -32,7 +32,6 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
@@ -401,7 +400,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
 
   protected EnginePayloadParameter mockEnginePayload(
       final BlockHeader header, final List<String> txs) {
-    return mockEnginePayload(header, txs, null, null, null);
+    return mockEnginePayload(header, txs, null, null);
   }
 
   protected EnginePayloadParameter mockEnginePayload(
@@ -409,20 +408,6 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
       final List<String> txs,
       final List<WithdrawalParameter> withdrawals,
       final List<DepositParameter> deposits) {
-    return mockEnginePayload(
-        header,
-        txs,
-        withdrawals,
-        deposits,
-        List.of(VersionedHash.DEFAULT_VERSIONED_HASH.toBytes()));
-  }
-
-  protected EnginePayloadParameter mockEnginePayload(
-      final BlockHeader header,
-      final List<String> txs,
-      final List<WithdrawalParameter> withdrawals,
-      final List<DepositParameter> deposits,
-      final List<Bytes32> versionedHashes) {
     return new EnginePayloadParameter(
         header.getHash(),
         header.getParentHash(),
@@ -441,7 +426,6 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
         withdrawals,
         header.getBlobGasUsed().map(UnsignedLongParameter::new).orElse(null),
         header.getExcessBlobGas().map(BlobGas::toHexString).orElse(null),
-        versionedHashes,
         deposits);
   }
 

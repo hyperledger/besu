@@ -23,6 +23,7 @@ import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.KZGCommitment;
 import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.datatypes.VersionedHash;
+import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,7 +34,6 @@ import ethereum.ckzg4844.CKZG4844JNI;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.crypto.digests.SHA256Digest;
-import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 
 public class BlobTestFixture {
 

@@ -901,7 +901,7 @@ task manifestDockerRelease {
   }
 }
 
-def sc = Pattern.quote(File.separator)
+def sep = Pattern.quote(File.separator)
 
 task checkSpdxHeader(type: CheckSpdxHeader) {
   apply plugin: 'groovy'
@@ -910,16 +910,16 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
   spdxHeader = "* SPDX-License-Identifier: Apache-2.0"
   filesRegex = "(.*.java)|(.*.groovy)"
   excludeRegex = [
-    "(.*${sc}generalstate${sc}GeneralStateRegressionReferenceTest.*)",
-    "(.*${sc}generalstate${sc}GeneralStateReferenceTest.*)",
-    "(.*${sc}generalstate${sc}LegacyGeneralStateReferenceTest.*)",
-    "(.*${sc}blockchain${sc}BlockchainReferenceTest.*)",
-    "(.*${sc}blockchain${sc}LegacyBlockchainReferenceTest.*)",
-    "(.*${sc}.gradle${sc}.*)",
-    "(.*${sc}.idea${sc}.*)",
-    "(.*${sc}out${sc}.*)",
-    "(.*${sc}build${sc}.*)",
-    "(.*${sc}src${sc}[^${sc}]+${sc}generated${sc}.*)"
+    "(.*${sep}generalstate${sep}GeneralStateRegressionReferenceTest.*)",
+    "(.*${sep}generalstate${sep}GeneralStateReferenceTest.*)",
+    "(.*${sep}generalstate${sep}LegacyGeneralStateReferenceTest.*)",
+    "(.*${sep}blockchain${sep}BlockchainReferenceTest.*)",
+    "(.*${sep}blockchain${sep}LegacyBlockchainReferenceTest.*)",
+    "(.*${sep}.gradle${sep}.*)",
+    "(.*${sep}.idea${sep}.*)",
+    "(.*${sep}out${sep}.*)",
+    "(.*${sep}build${sep}.*)",
+    "(.*${sep}src${sep}[^${sep}]+${sep}generated${sep}.*)"
   ].join("|")
 
 }
