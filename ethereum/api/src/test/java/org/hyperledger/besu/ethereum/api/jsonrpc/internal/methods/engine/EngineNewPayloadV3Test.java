@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -42,7 +41,6 @@ import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 
 import java.util.Collections;
@@ -165,18 +163,13 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
   @Override
   public void shouldValidateBlobGasUsedCorrectly() {
     // V3 must return error if null blobGasUsed
-    final List<WithdrawalParameter> withdrawals = List.of();
-    lenient()
-        .when(protocolSpec.getWithdrawalsValidator())
-        .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
-
     BlockHeader blockHeader =
         createBlockHeaderFixture(Optional.of(Collections.emptyList()), Optional.empty())
             .excessBlobGas(BlobGas.MAX_BLOB_GAS)
             .blobGasUsed(null)
             .buildHeader();
 
-    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), withdrawals, null));
+    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
@@ -188,18 +181,13 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
   @Override
   public void shouldValidateExcessBlobGasCorrectly() {
     // V3 must return error if null excessBlobGas
-    final List<WithdrawalParameter> withdrawals = List.of();
-    lenient()
-        .when(protocolSpec.getWithdrawalsValidator())
-        .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
-
     BlockHeader blockHeader =
         createBlockHeaderFixture(Optional.of(Collections.emptyList()), Optional.empty())
             .excessBlobGas(null)
             .blobGasUsed(100L)
             .buildHeader();
 
-    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), withdrawals, null));
+    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());

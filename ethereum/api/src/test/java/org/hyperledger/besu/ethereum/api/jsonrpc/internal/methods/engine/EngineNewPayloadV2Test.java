@@ -131,18 +131,12 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
   @Test
   public void shouldValidateBlobGasUsedCorrectly() {
     // V2 should return error if non-null blobGasUsed
-    final List<WithdrawalParameter> withdrawals = List.of();
-    lenient()
-        .when(protocolSpec.getWithdrawalsValidator())
-        .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
-
     BlockHeader blockHeader =
         createBlockHeaderFixture(Optional.of(Collections.emptyList()), Optional.empty())
             .blobGasUsed(100L)
             .buildHeader();
 
-    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), withdrawals, null));
-
+    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null));
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
     assertThat(jsonRpcError.getData()).isEqualTo("non-nil BlobGasUsed pre-cancun");
@@ -152,17 +146,12 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
   @Test
   public void shouldValidateExcessBlobGasCorrectly() {
     // V2 should return error if non-null ExcessBlobGas
-    final List<WithdrawalParameter> withdrawals = List.of();
-    lenient()
-        .when(protocolSpec.getWithdrawalsValidator())
-        .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
-
     BlockHeader blockHeader =
         createBlockHeaderFixture(Optional.of(Collections.emptyList()), Optional.empty())
             .excessBlobGas(BlobGas.MAX_BLOB_GAS)
             .buildHeader();
 
-    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), withdrawals, null));
+    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
