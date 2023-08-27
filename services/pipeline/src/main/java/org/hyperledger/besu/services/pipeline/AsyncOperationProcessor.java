@@ -16,6 +16,8 @@ package org.hyperledger.besu.services.pipeline;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
+import org.hyperledger.besu.services.pipeline.exception.AsyncOperationException;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -83,7 +85,7 @@ class AsyncOperationProcessor<I, O> implements Processor<I, O> {
     } catch (final InterruptedException e) {
       LOG.trace("Interrupted while waiting for processing to complete", e);
     } catch (final ExecutionException e) {
-      throw new RuntimeException("Async operation failed. " + e.getMessage(), e);
+      throw new AsyncOperationException("Async operation failed. " + e.getMessage(), e);
     } catch (final TimeoutException e) {
       // Ignore and go back around the loop.
     }
