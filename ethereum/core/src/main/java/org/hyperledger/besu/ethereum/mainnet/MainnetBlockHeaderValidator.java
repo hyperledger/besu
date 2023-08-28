@@ -189,7 +189,6 @@ public final class MainnetBlockHeaderValidator {
         .addRule(
             new GasLimitRangeAndDeltaValidationRule(
                 MIN_GAS_LIMIT, Long.MAX_VALUE, Optional.of(baseFeeMarket)))
-        .addRule(new TimestampBoundedByFutureParameter(TIMESTAMP_TOLERANCE_S))
         .addRule(new ExtraDataMaxLengthValidationRule(BlockHeader.MAX_EXTRA_DATA_BYTES))
         .addRule((new BaseFeeMarketBlockHeaderGasPriceValidationRule(baseFeeMarket)))
         .addRule(new ConstantOmmersHashRule())

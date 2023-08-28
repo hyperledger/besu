@@ -468,19 +468,22 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
   protected BlockHeader createBlockHeader(
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final Optional<List<Deposit>> maybeDeposits) {
+    return createBlockHeaderFixture(maybeWithdrawals, maybeDeposits).buildHeader();
+  }
+
+  protected BlockHeaderTestFixture createBlockHeaderFixture(
+      final Optional<List<Withdrawal>> maybeWithdrawals,
+      final Optional<List<Deposit>> maybeDeposits) {
     BlockHeader parentBlockHeader =
         new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
-    BlockHeader mockHeader =
-        new BlockHeaderTestFixture()
-            .baseFeePerGas(Wei.ONE)
-            .parentHash(parentBlockHeader.getParentHash())
-            .number(parentBlockHeader.getNumber() + 1)
-            .timestamp(parentBlockHeader.getTimestamp() + 1)
-            .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
-            .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
-            .parentBeaconBlockRoot(maybeParentBeaconBlockRoot)
-            .buildHeader();
-    return mockHeader;
+    return new BlockHeaderTestFixture()
+        .baseFeePerGas(Wei.ONE)
+        .parentHash(parentBlockHeader.getParentHash())
+        .number(parentBlockHeader.getNumber() + 1)
+        .timestamp(parentBlockHeader.getTimestamp() + 1)
+        .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
+        .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
+        .parentBeaconBlockRoot(maybeParentBeaconBlockRoot);
   }
 
   protected void assertValidResponse(final BlockHeader mockHeader, final JsonRpcResponse resp) {
