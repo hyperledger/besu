@@ -31,12 +31,12 @@ public class SynchronizerOptionsTest
     extends AbstractCLIOptionsTest<SynchronizerConfiguration.Builder, SynchronizerOptions> {
 
   @Override
-  SynchronizerConfiguration.Builder createDefaultDomainObject() {
+  protected SynchronizerConfiguration.Builder createDefaultDomainObject() {
     return SynchronizerConfiguration.builder();
   }
 
   @Override
-  SynchronizerConfiguration.Builder createCustomizedDomainObject() {
+  protected SynchronizerConfiguration.Builder createCustomizedDomainObject() {
     return SynchronizerConfiguration.builder()
         .fastSyncPivotDistance(SynchronizerConfiguration.DEFAULT_PIVOT_DISTANCE_FROM_HEAD + 10)
         .fastSyncFullValidationRate(SynchronizerConfiguration.DEFAULT_FULL_VALIDATION_RATE / 2)
@@ -87,7 +87,7 @@ public class SynchronizerOptionsTest
   }
 
   @Override
-  SynchronizerOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
+  protected SynchronizerOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
     return besuCommand.getSynchronizerOptions();
   }
 
@@ -97,7 +97,7 @@ public class SynchronizerOptionsTest
   }
 
   @Override
-  SynchronizerOptions optionsFromDomainObject(
+  protected SynchronizerOptions optionsFromDomainObject(
       final SynchronizerConfiguration.Builder domainObject) {
     return SynchronizerOptions.fromConfig(domainObject.build());
   }

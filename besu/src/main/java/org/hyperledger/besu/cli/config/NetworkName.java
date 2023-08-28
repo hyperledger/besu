@@ -38,8 +38,6 @@ public enum NetworkName {
   EXPERIMENTAL_EIPS("/experimental.json", BigInteger.valueOf(2023), false),
   /** Classic network name. */
   CLASSIC("/classic.json", BigInteger.valueOf(1)),
-  /** Kotti network name. */
-  KOTTI("/kotti.json", BigInteger.valueOf(6)),
   /** Mordor network name. */
   MORDOR("/mordor.json", BigInteger.valueOf(7));
 
