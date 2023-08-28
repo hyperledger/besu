@@ -82,4 +82,22 @@ public class RocksDBFactoryConfiguration {
   public boolean isHighSpec() {
     return isHighSpec;
   }
+
+  /**
+   * Gets default lock timeout
+   *
+   * @return the lock timeout
+   */
+  public long getDefaultLockTimeout() {
+    return defaultLockTimeout;
+  }
+
+  /**
+   * Gets the transaction lock timeout
+   *
+   * @return the lock timeout
+   */
+  public long getTransactionLockTimeout() {
+    return transactionLockTimeout;
+  }
 }

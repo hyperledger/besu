@@ -134,7 +134,9 @@ public class RocksDBConfigurationBuilder {
         .backgroundThreadCount(configuration.getBackgroundThreadCount())
         .cacheCapacity(configuration.getCacheCapacity())
         .maxOpenFiles(configuration.getMaxOpenFiles())
-        .isHighSpec(configuration.isHighSpec());
+        .isHighSpec(configuration.isHighSpec())
+        .defaultLockTimeout(configuration.getDefaultLockTimeout())
+        .transactionLockTimeout(configuration.getTransactionLockTimeout());
   }
 
   /**
