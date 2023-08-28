@@ -151,14 +151,11 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
     if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
       builder.add(createBytecodeRequest(accountHash, getRootHash(), accountValue.getCodeHash()));
     }
-    // Add storage, if appropriate
-    if (!accountValue.getStorageRoot().equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
-      // If we detect an account storage we fill it with snapsync before completing with a heal
-      final SnapDataRequest storageTrieRequest =
-          createStorageTrieNodeDataRequest(
-              accountValue.getStorageRoot(), accountHash, getRootHash(), Bytes.EMPTY);
-      builder.add(storageTrieRequest);
-    }
+    // If we detect an account storage we fill it with snapsync before completing with a heal
+    final SnapDataRequest storageTrieRequest =
+            createStorageTrieNodeDataRequest(
+                    accountValue.getStorageRoot(), accountHash, getRootHash(), Bytes.EMPTY);
+    builder.add(storageTrieRequest);
     return builder.build();
   }
 
