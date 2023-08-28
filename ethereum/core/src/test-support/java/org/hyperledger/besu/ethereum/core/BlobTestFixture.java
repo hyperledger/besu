@@ -23,6 +23,7 @@ import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.KZGCommitment;
 import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.datatypes.VersionedHash;
+import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,6 +38,12 @@ import org.bouncycastle.crypto.digests.SHA256Digest;
 public class BlobTestFixture {
 
   public BlobTestFixture() {
+    try {
+      // optimistically tear down a potential previous loaded trusted setup
+      KZGPointEvalPrecompiledContract.tearDown();
+    } catch (Throwable ignore) {
+      // and ignore errors in case no trusted setup was already loaded
+    }
     try {
       CKZG4844JNI.loadNativeLibrary(CKZG4844JNI.Preset.MAINNET);
       CKZG4844JNI.loadTrustedSetupFromResource(
