@@ -15,14 +15,11 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
-import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
@@ -31,7 +28,6 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
@@ -64,18 +60,20 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
     final FastSyncStateStorage fastSyncStateStorage =
         new FastSyncStateStorage(fastSyncDataDirectory);
 
-    if (SyncMode.isFullSync(syncConfig.getSyncMode())) {
+    /*if (SyncMode.isFullSync(syncConfig.getSyncMode())) {
       if (fastSyncStateStorage.isFastSyncInProgress()) {
         throw new IllegalStateException(
             "Unable to change the sync mode when snap sync is incomplete, please restart with snap sync mode");
       } else {
         return Optional.empty();
       }
-    }
+    }*/
 
     ensureDirectoryExists(fastSyncDataDirectory.toFile());
 
-    final FastSyncState fastSyncState =
+    snapContext.clear();
+    worldStateStorage.clear();
+    /*final FastSyncState fastSyncState =
         fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
     if (syncState.isResyncNeeded()) {
       snapContext.clear();
@@ -91,7 +89,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
       LOG.info(
           "Snap sync was requested, but cannot be enabled because the local blockchain is not empty.");
       return Optional.empty();
-    }
+    }*/
 
     final SnapSyncProcessState snapSyncState =
         new SnapSyncProcessState(

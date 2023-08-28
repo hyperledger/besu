@@ -184,11 +184,11 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
 
   @Override
   public long getPriority() {
-    return 0;
+    return priority;
   }
 
   @Override
   public int getDepth() {
-    return 0;
+    return depth;
   }
 }

@@ -51,6 +51,8 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
   private final Pipeline<Task<SnapDataRequest>> fetchCodePipeline;
   private final Pipeline<Task<SnapDataRequest>> trieHealingPipeline;
 
+  private final Pipeline<Task<SnapDataRequest>> getChildPipeline;
+
   private final Pipeline<Task<SnapDataRequest>> flatAccountHealingPipeline;
 
   private final Pipeline<Task<SnapDataRequest>> flatStorageHealingPipeline;
@@ -63,6 +65,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
       final Pipeline<Task<SnapDataRequest>> fetchLargeStorageDataPipeline,
       final Pipeline<Task<SnapDataRequest>> fetchCodePipeline,
       final Pipeline<Task<SnapDataRequest>> trieHealingPipeline,
+      final Pipeline<Task<SnapDataRequest>> getChildPipeline,
       final Pipeline<Task<SnapDataRequest>> flatAccountHealingPipeline,
       final Pipeline<Task<SnapDataRequest>> flatStorageHealingPipeline,
       final Pipeline<Task<SnapDataRequest>> completionPipeline,
@@ -72,6 +75,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
     this.fetchLargeStorageDataPipeline = fetchLargeStorageDataPipeline;
     this.fetchCodePipeline = fetchCodePipeline;
     this.trieHealingPipeline = trieHealingPipeline;
+    this.getChildPipeline = getChildPipeline;
     this.flatAccountHealingPipeline = flatAccountHealingPipeline;
     this.flatStorageHealingPipeline = flatStorageHealingPipeline;
     this.completionPipeline = completionPipeline;
@@ -93,6 +97,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
     final CompletableFuture<Void> fetchCodeFuture = ethScheduler.startPipeline(fetchCodePipeline);
     final CompletableFuture<Void> trieHealingFuture =
         ethScheduler.startPipeline(trieHealingPipeline);
+    final CompletableFuture<Void> getChildFuture = ethScheduler.startPipeline(getChildPipeline);
     final CompletableFuture<Void> flatAccountHealingFuture =
         ethScheduler.startPipeline(flatAccountHealingPipeline);
     final CompletableFuture<Void> flatStorageHealingFuture =
@@ -104,6 +109,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
         .thenCombine(fetchLargeStorageFuture, (unused, unused2) -> null)
         .thenCombine(fetchCodeFuture, (unused, unused2) -> null)
         .thenCombine(trieHealingFuture, (unused, unused2) -> null)
+        .thenCombine(getChildFuture, (unused, unused2) -> null)
         .thenCombine(flatAccountHealingFuture, (unused, unused2) -> null)
         .thenCombine(flatStorageHealingFuture, (unused, unused2) -> null)
         .whenComplete(
@@ -129,6 +135,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
           fetchLargeStorageDataPipeline.abort();
           fetchCodePipeline.abort();
           trieHealingPipeline.abort();
+          getChildPipeline.abort();
           flatAccountHealingPipeline.abort();
           flatStorageHealingPipeline.abort();
           return null;
@@ -143,6 +150,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
     fetchLargeStorageDataPipeline.abort();
     fetchCodePipeline.abort();
     trieHealingPipeline.abort();
+    getChildPipeline.abort();
     flatAccountHealingPipeline.abort();
     flatStorageHealingPipeline.abort();
     completionPipeline.abort();
@@ -395,6 +403,28 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
               .andFinishWith(
                   "batchTrieNodeDataDownloaded", tasks -> tasks.forEach(requestsToComplete::put));
 
+      final Pipeline<Task<SnapDataRequest>> getChildPipeline =
+          createPipelineFrom(
+                  "requestGetChildDequeued",
+                  new TaskQueueIterator<>(
+                      downloadState, () -> downloadState.dequeueGetChildBlocking()),
+                  bufferCapacity,
+                  outputCounter,
+                  true,
+                  "getChildTask")
+              .thenProcess(
+                  "retrieveGetChildTask",
+                  task -> {
+                    persistDataStep.getChildRequest(task);
+                    return task;
+                  })
+              .andFinishWith(
+                  "childTaskCreated",
+                  tasks -> {
+                    tasks.markCompleted();
+                    downloadState.notifyTaskAvailable();
+                  });
+
       final Pipeline<Task<SnapDataRequest>> accountFlatDatabaseHealingPipeline =
           createPipelineFrom(
                   "dequeueFlatAccountRequestBlocking",
@@ -439,6 +469,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
           fetchLargeStorageDataPipeline,
           fetchCodePipeline,
           trieHealingPipeline,
+          getChildPipeline,
           accountFlatDatabaseHealingPipeline,
           storageFlatDatabaseHealingPipeline,
           completionPipeline,

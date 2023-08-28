@@ -42,17 +42,24 @@ public class PersistDataStep {
     this.snapSyncConfiguration = snapSyncConfiguration;
   }
 
+  public void getChildRequest(final Task<SnapDataRequest> task) {
+    final Stream<SnapDataRequest> childRequests =
+        task.getData().getChildRequests(downloadState, worldStateStorage, snapSyncState);
+    enqueueChildren(childRequests);
+  }
+
   public List<Task<SnapDataRequest>> persist(final List<Task<SnapDataRequest>> tasks) {
     final WorldStateStorage.Updater updater = worldStateStorage.updater();
     for (Task<SnapDataRequest> task : tasks) {
       if (task.getData().isResponseReceived()) {
         // enqueue child requests
-        final Stream<SnapDataRequest> childRequests =
-            task.getData().getChildRequests(downloadState, worldStateStorage, snapSyncState);
+
         if (!(task.getData() instanceof TrieNodeHealingRequest)) {
-          enqueueChildren(childRequests);
+          downloadState.enqueueGetChildRequest(task.getData());
         } else {
           if (!task.getData().isExpired(snapSyncState)) {
+            final Stream<SnapDataRequest> childRequests =
+                task.getData().getChildRequests(downloadState, worldStateStorage, snapSyncState);
             enqueueChildren(childRequests);
           } else {
             continue;

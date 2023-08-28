@@ -67,6 +67,9 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   protected final InMemoryTasksPriorityQueues<SnapDataRequest> pendingTrieNodeRequests =
       new InMemoryTasksPriorityQueues<>();
 
+  protected final InMemoryTasksPriorityQueues<SnapDataRequest> pendingGetChildRequests =
+      new InMemoryTasksPriorityQueues<>();
+
   protected final InMemoryTasksPriorityQueues<SnapDataRequest>
       pendingAccountFlatDatabaseHealingRequests = new InMemoryTasksPriorityQueues<>();
 
@@ -162,6 +165,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         && pendingStorageRequests.allTasksCompleted()
         && pendingLargeStorageRequests.allTasksCompleted()
         && pendingTrieNodeRequests.allTasksCompleted()
+        && pendingGetChildRequests.allTasksCompleted()
         && pendingAccountFlatDatabaseHealingRequests.allTasksCompleted()
         && pendingStorageFlatDatabaseHealingRequests.allTasksCompleted()) {
       if (!snapSyncState.isHealTrieInProgress()) {
@@ -263,6 +267,13 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     }
   }
 
+  public void enqueueGetChildRequest(final SnapDataRequest request) {
+    if (!internalFuture.isDone()) {
+      pendingGetChildRequests.add(request);
+      notifyAll();
+    }
+  }
+
   public synchronized void setAccountsToBeRepaired(final HashSet<Bytes> accountsToBeRepaired) {
     this.accountsToBeRepaired = accountsToBeRepaired;
   }
@@ -352,6 +363,33 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         List.of(pendingAccountRequests, pendingStorageRequests, pendingLargeStorageRequests),
         pendingTrieNodeRequests,
         __ -> {});
+  }
+
+  public synchronized Task<SnapDataRequest> dequeueGetChildBlocking() {
+    List<InMemoryTaskQueue<SnapDataRequest>> getChildRequest =
+        List.of(pendingAccountRequests, pendingStorageRequests, pendingLargeStorageRequests);
+    while (!internalFuture.isDone()) {
+      while (getChildRequest.stream().mapToLong(TaskCollection::size).sum() > 1_000_000) {
+        try {
+          wait();
+        } catch (final InterruptedException e) {
+          Thread.currentThread().interrupt();
+          return null;
+        }
+      }
+      Task<SnapDataRequest> task = pendingGetChildRequests.remove();
+      if (task != null) {
+        return task;
+      }
+
+      try {
+        wait();
+      } catch (final InterruptedException e) {
+        Thread.currentThread().interrupt();
+        return null;
+      }
+    }
+    return null;
   }
 
   public synchronized Task<SnapDataRequest> dequeueAccountFlatDatabaseHealingRequestBlocking() {

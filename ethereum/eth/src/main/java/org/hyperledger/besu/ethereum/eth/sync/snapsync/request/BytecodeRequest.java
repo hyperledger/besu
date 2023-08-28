@@ -98,7 +98,7 @@ public class BytecodeRequest extends SnapDataRequest {
 
   @Override
   public long getPriority() {
-    return 0;
+    return 2;
   }
 
   @Override

@@ -237,4 +237,9 @@ public class AccountRangeDataRequest extends SnapDataRequest {
     in.leaveList();
     return createAccountRangeDataRequest(rootHash, startKeyHash, endKeyHash);
   }
+
+  @Override
+  public long getPriority() {
+    return 1;
+  }
 }
