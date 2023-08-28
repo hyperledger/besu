@@ -25,6 +25,8 @@ public class RocksDBConfiguration {
   private final int backgroundThreadCount;
   private final long cacheCapacity;
   private final boolean isHighSpec;
+  private final long defaultLockTimeout;
+  private final long transactionLockTimeout;
 
   /**
    * Instantiates a new RocksDb configuration.
@@ -35,6 +37,8 @@ public class RocksDBConfiguration {
    * @param cacheCapacity the cache capacity
    * @param label the label
    * @param isHighSpec the is high spec
+   * @param defaultLockTimeout default lock timeout
+   * @param transactionLockTimeout transaction lock timeout
    */
   public RocksDBConfiguration(
       final Path databaseDir,
@@ -42,13 +46,17 @@ public class RocksDBConfiguration {
       final int backgroundThreadCount,
       final long cacheCapacity,
       final String label,
-      final boolean isHighSpec) {
+      final boolean isHighSpec,
+      final long defaultLockTimeout,
+      final long transactionLockTimeout) {
     this.backgroundThreadCount = backgroundThreadCount;
     this.databaseDir = databaseDir;
     this.maxOpenFiles = maxOpenFiles;
     this.cacheCapacity = cacheCapacity;
     this.label = label;
     this.isHighSpec = isHighSpec;
+    this.defaultLockTimeout = defaultLockTimeout;
+    this.transactionLockTimeout = transactionLockTimeout;
   }
 
   /**
@@ -103,5 +111,23 @@ public class RocksDBConfiguration {
    */
   public boolean isHighSpec() {
     return isHighSpec;
+  }
+
+  /**
+   * Gets the default timeout
+   *
+   * @return the timeout
+   */
+  public long getDefaultTimeout() {
+    return defaultLockTimeout;
+  }
+
+  /**
+   * Gets the transaction lock timeout
+   *
+   * @return the timeout
+   */
+  public long getTransactionLockTimeout() {
+    return transactionLockTimeout;
   }
 }

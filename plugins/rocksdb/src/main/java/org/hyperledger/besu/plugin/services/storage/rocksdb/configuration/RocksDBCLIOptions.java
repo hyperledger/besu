@@ -29,6 +29,10 @@ public class RocksDBCLIOptions {
   public static final int DEFAULT_BACKGROUND_THREAD_COUNT = 4;
   /** The constant DEFAULT_IS_HIGH_SPEC. */
   public static final boolean DEFAULT_IS_HIGH_SPEC = false;
+  /** The constant DEFAULT_DEFAULT_LOCK_TIMEOUT */
+  public static final long DEFAULT_DEFAULT_LOCK_TIMEOUT = 1000;
+  /** The default DEFAULT_TRANSACTION_LOCK_TIMEOUT */
+  public static final long DEFAULT_TRANSACTION_LOCK_TIMEOUT = 1000;
 
   /** The constant MAX_OPEN_FILES_FLAG. */
   public static final String MAX_OPEN_FILES_FLAG = "--Xplugin-rocksdb-max-open-files";
@@ -39,6 +43,13 @@ public class RocksDBCLIOptions {
       "--Xplugin-rocksdb-background-thread-count";
   /** The constant IS_HIGH_SPEC. */
   public static final String IS_HIGH_SPEC = "--Xplugin-rocksdb-high-spec-enabled";
+
+  /** Default lock timeout */
+  public static final String DEFAULT_LOCK_TIMEOUT = "--Xplugin-rocksdb-default-lock-timeout";
+
+  /** Transaciton lock timeout */
+  public static final String TRANSACTION_LOCK_TIMEOUT =
+      "--Xplugin-rocksdb-transaction-lock-timeout";
 
   /** The Max open files. */
   @CommandLine.Option(
@@ -76,6 +87,24 @@ public class RocksDBCLIOptions {
           "Use this flag to boost Besu performance if you have a 16 GiB RAM hardware or more (default: ${DEFAULT-VALUE})")
   boolean isHighSpec;
 
+  /** The default lock timeout. */
+  @CommandLine.Option(
+      names = {DEFAULT_LOCK_TIMEOUT},
+      hidden = true,
+      defaultValue = "1000",
+      paramLabel = "<LONG>",
+      description = "Default lock timeout for RocksDB (default: ${DEFAULT-VALUE})")
+  long defaultLockTimeout;
+
+  /** The transaction lock timeout. */
+  @CommandLine.Option(
+      names = {TRANSACTION_LOCK_TIMEOUT},
+      hidden = true,
+      defaultValue = "1000",
+      paramLabel = "<LONG>",
+      description = "Transaction lock timeout for RocksDB (default: ${DEFAULT-VALUE})")
+  long transactionLockTimeout;
+
   private RocksDBCLIOptions() {}
 
   /**
@@ -99,6 +128,8 @@ public class RocksDBCLIOptions {
     options.cacheCapacity = config.getCacheCapacity();
     options.backgroundThreadCount = config.getBackgroundThreadCount();
     options.isHighSpec = config.isHighSpec();
+    options.defaultLockTimeout = config.getDefaultTimeout();
+    options.transactionLockTimeout = config.getTransactionLockTimeout();
     return options;
   }
 
@@ -109,7 +140,12 @@ public class RocksDBCLIOptions {
    */
   public RocksDBFactoryConfiguration toDomainObject() {
     return new RocksDBFactoryConfiguration(
-        maxOpenFiles, backgroundThreadCount, cacheCapacity, isHighSpec);
+        maxOpenFiles,
+        backgroundThreadCount,
+        cacheCapacity,
+        isHighSpec,
+        defaultLockTimeout,
+        transactionLockTimeout);
   }
 
   /**
@@ -128,6 +164,8 @@ public class RocksDBCLIOptions {
         .add("cacheCapacity", cacheCapacity)
         .add("backgroundThreadCount", backgroundThreadCount)
         .add("isHighSpec", isHighSpec)
+        .add("defaultLockTimeout", defaultLockTimeout)
+        .add("transactionLockTimeout", transactionLockTimeout)
         .toString();
   }
 }

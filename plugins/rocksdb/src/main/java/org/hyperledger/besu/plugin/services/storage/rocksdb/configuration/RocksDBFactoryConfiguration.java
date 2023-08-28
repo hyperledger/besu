@@ -21,6 +21,8 @@ public class RocksDBFactoryConfiguration {
   private final int backgroundThreadCount;
   private final long cacheCapacity;
   private final boolean isHighSpec;
+  private final long defaultLockTimeout;
+  private final long transactionLockTimeout;
 
   /**
    * Instantiates a new RocksDb factory configuration.
@@ -34,11 +36,15 @@ public class RocksDBFactoryConfiguration {
       final int maxOpenFiles,
       final int backgroundThreadCount,
       final long cacheCapacity,
-      final boolean isHighSpec) {
+      final boolean isHighSpec,
+      final long defaultLockTimeout,
+      final long transactionLockTimeout) {
     this.backgroundThreadCount = backgroundThreadCount;
     this.maxOpenFiles = maxOpenFiles;
     this.cacheCapacity = cacheCapacity;
     this.isHighSpec = isHighSpec;
+    this.defaultLockTimeout = defaultLockTimeout;
+    this.transactionLockTimeout = transactionLockTimeout;
   }
 
   /**

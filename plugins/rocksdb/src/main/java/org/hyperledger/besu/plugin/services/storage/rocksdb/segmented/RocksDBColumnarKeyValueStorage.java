@@ -158,7 +158,10 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
 
       setGlobalOptions(configuration, stats);
 
-      txOptions = new TransactionDBOptions();
+      txOptions =
+          new TransactionDBOptions()
+              .setDefaultLockTimeout(configuration.getDefaultTimeout())
+              .setTransactionLockTimeout(configuration.getTransactionLockTimeout());
       columnHandles = new ArrayList<>(columnDescriptors.size());
     } catch (RocksDBException e) {
       throw new StorageException(e);

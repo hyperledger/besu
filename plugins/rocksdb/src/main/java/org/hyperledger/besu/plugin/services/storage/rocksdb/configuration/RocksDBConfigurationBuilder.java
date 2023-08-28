@@ -16,8 +16,10 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_BACKGROUND_THREAD_COUNT;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_DEFAULT_LOCK_TIMEOUT;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_IS_HIGH_SPEC;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_OPEN_FILES;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_TRANSACTION_LOCK_TIMEOUT;
 
 import java.nio.file.Path;
 
@@ -30,6 +32,8 @@ public class RocksDBConfigurationBuilder {
   private long cacheCapacity = DEFAULT_CACHE_CAPACITY;
   private int backgroundThreadCount = DEFAULT_BACKGROUND_THREAD_COUNT;
   private boolean isHighSpec = DEFAULT_IS_HIGH_SPEC;
+  private long defaultLockTimeout = DEFAULT_DEFAULT_LOCK_TIMEOUT;
+  private long transactionLockTimeout = DEFAULT_TRANSACTION_LOCK_TIMEOUT;
 
   /**
    * Database dir.
@@ -98,6 +102,28 @@ public class RocksDBConfigurationBuilder {
   }
 
   /**
+   * Default lock timeout
+   *
+   * @param defaultLockTimeout the default lock timeout
+   * @return the rocks db configuration builder
+   */
+  public RocksDBConfigurationBuilder defaultLockTimeout(final long defaultLockTimeout) {
+    this.defaultLockTimeout = defaultLockTimeout;
+    return this;
+  }
+
+  /**
+   * Default lock timeout
+   *
+   * @param transactionLockTimeout the transaction lock timeout
+   * @return the rocks db configuration builder
+   */
+  public RocksDBConfigurationBuilder transactionLockTimeout(final long transactionLockTimeout) {
+    this.transactionLockTimeout = transactionLockTimeout;
+    return this;
+  }
+
+  /**
    * From.
    *
    * @param configuration the configuration
@@ -118,6 +144,13 @@ public class RocksDBConfigurationBuilder {
    */
   public RocksDBConfiguration build() {
     return new RocksDBConfiguration(
-        databaseDir, maxOpenFiles, backgroundThreadCount, cacheCapacity, label, isHighSpec);
+        databaseDir,
+        maxOpenFiles,
+        backgroundThreadCount,
+        cacheCapacity,
+        label,
+        isHighSpec,
+        defaultLockTimeout,
+        transactionLockTimeout);
   }
 }
