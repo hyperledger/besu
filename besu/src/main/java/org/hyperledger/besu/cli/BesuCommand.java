@@ -27,6 +27,7 @@ import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration.DEFAULT_GRAPHQL_HTTP_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_JSON_RPC_PORT;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_PRETTY_JSON_ENABLED;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.DEFAULT_RPC_APIS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.VALID_APIS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService.EPHEMERAL_JWT_FILE;
@@ -779,6 +780,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         paramLabel = MANDATORY_LONG_FORMAT_HELP,
         description = "Specifies the maximum request content length. (default: ${DEFAULT-VALUE})")
     private final Long rpcHttpMaxRequestContentLength = DEFAULT_MAX_REQUEST_CONTENT_LENGTH;
+
+    @Option(
+        names = {"--json-pretty-print-enabled"},
+        description = "Enable JSON pretty print format (default: ${DEFAULT-VALUE})")
+    private final Boolean prettyJsonEnabled = DEFAULT_PRETTY_JSON_ENABLED;
   }
 
   // JSON-RPC Websocket Options
@@ -1562,6 +1568,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       runner.awaitStop();
 
     } catch (final Exception e) {
+      logger.error("Failed to start Besu", e);
       throw new ParameterException(this.commandLine, e.getMessage(), e);
     }
   }
@@ -1851,7 +1858,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (unstableNativeLibraryOptions.getNativeModExp()
-        && BigIntegerModularExponentiationPrecompiledContract.isNative()) {
+        && BigIntegerModularExponentiationPrecompiledContract.maybeEnableNative()) {
       logger.info("Using the native implementation of modexp");
     } else {
       BigIntegerModularExponentiationPrecompiledContract.disableNative();
@@ -1875,12 +1882,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (getActualGenesisConfigOptions().getCancunTime().isPresent()) {
-      // if custom genesis provided, then trusted setup file is mandatory
-      if (genesisFile != null && kzgTrustedSetupFile == null) {
-        throw new ParameterException(
-            this.commandLine,
-            "--kzg-trusted-setup is mandatory when providing a custom genesis that support data blobs");
-      }
       if (kzgTrustedSetupFile != null) {
         KZGPointEvalPrecompiledContract.init(kzgTrustedSetupFile);
       } else {
@@ -2448,6 +2449,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     jsonRpcConfiguration.setMaxBatchSize(jsonRPCHttpOptionGroup.rpcHttpMaxBatchSize);
     jsonRpcConfiguration.setMaxRequestContentLength(
         jsonRPCHttpOptionGroup.rpcHttpMaxRequestContentLength);
+    jsonRpcConfiguration.setPrettyJsonEnabled(jsonRPCHttpOptionGroup.prettyJsonEnabled);
     return jsonRpcConfiguration;
   }
 

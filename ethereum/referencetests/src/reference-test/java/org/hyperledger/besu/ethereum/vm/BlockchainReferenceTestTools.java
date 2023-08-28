@@ -82,9 +82,12 @@ public class BlockchainReferenceTestTools {
     // Perfectly valid test pre-merge.
     params.ignore("UncleFromSideChain_(Merge|Shanghai|Cancun|Prague|Osaka|Bogota)");
 
-    // EIP tests are explicitly meant to be works-in-progress with known failing tests
-    // We want to however include withdrawals even though they are EIP tests
-    params.ignore("(?:/EIPTests/(?!\\bbc4895\\b))");
+    // Reference Tests are old.  Max blob count is 6.
+    params.ignore("blobhashListBounds5");
+    params.ignore("blockWithAllTransactionTypes");
+
+    // EOF tests are written against an older version of the spec
+    params.ignore("/stEOF/");
   }
 
   private BlockchainReferenceTestTools() {

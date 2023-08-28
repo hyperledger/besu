@@ -63,14 +63,14 @@ import java.util.stream.Stream;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @FunctionalInterface
@@ -111,7 +111,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Mock private EngineCallListener engineCallListener;
 
-  @Before
+  @BeforeEach
   public void before() {
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
@@ -167,9 +167,6 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     BlockHeader mockHeader = blockHeaderBuilder.buildHeader();
     when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
-    if (validateTerminalPoWBlock()) {
-      when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
-    }
 
     assertSuccessWithPayloadForForkchoiceResult(
         new EngineForkchoiceUpdatedParameter(mockHeader.getHash(), Hash.ZERO, Hash.ZERO),
@@ -187,9 +184,6 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
             .timestamp(parent.getTimestamp())
             .buildHeader();
     when(blockchain.getBlockHeader(parent.getHash())).thenReturn(Optional.of(parent));
-    if (validateTerminalPoWBlock()) {
-      when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
-    }
     when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
     when(mergeContext.isSyncing()).thenReturn(false);
     when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), parent.getHash()))
@@ -234,15 +228,13 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     BlockHeader mockHeader = blockHeaderBuilder.buildHeader();
     when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
-    if (validateTerminalPoWBlock()) {
-      when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
-    }
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
             String.valueOf(System.currentTimeMillis()),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
+            null,
             null);
     var mockPayloadId =
         PayloadIdentifier.forPayloadParams(
@@ -257,6 +249,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
             payloadParams.getTimestamp(),
             payloadParams.getPrevRandao(),
             Address.ECREC,
+            Optional.empty(),
             Optional.empty()))
         .thenReturn(mockPayloadId);
 
@@ -420,9 +413,6 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
     when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
-    if (validateTerminalPoWBlock()) {
-      when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
-    }
 
     var ignoreOldHeadUpdateRes = ForkchoiceResult.withIgnoreUpdateToOldHead(mockHeader);
     when(mergeCoordinator.updateForkChoice(any(), any(), any())).thenReturn(ignoreOldHeadUpdateRes);
@@ -432,6 +422,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
             String.valueOf(System.currentTimeMillis()),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
+            null,
             null);
 
     var resp =
@@ -443,7 +434,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
     var forkchoiceRes = (EngineUpdateForkchoiceResult) resp.getResult();
 
-    verify(mergeCoordinator, never()).preparePayload(any(), any(), any(), any(), any());
+    verify(mergeCoordinator, never()).preparePayload(any(), any(), any(), any(), any(), any());
 
     assertThat(forkchoiceRes.getPayloadStatus().getStatus()).isEqualTo(VALID);
     assertThat(forkchoiceRes.getPayloadStatus().getError()).isNull();
@@ -468,7 +459,8 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
             String.valueOf(timestampNotGreaterThanHead),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
-            emptyList());
+            emptyList(),
+            null);
 
     var resp =
         resp(
@@ -492,7 +484,8 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
             String.valueOf(System.currentTimeMillis()),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
-            emptyList());
+            emptyList(),
+            null);
 
     var resp =
         resp(
@@ -516,6 +509,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
             String.valueOf(System.currentTimeMillis()),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
+            null,
             null);
 
     var mockPayloadId =
@@ -531,6 +525,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
             payloadParams.getTimestamp(),
             payloadParams.getPrevRandao(),
             Address.ECREC,
+            Optional.empty(),
             Optional.empty()))
         .thenReturn(mockPayloadId);
 
@@ -557,6 +552,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
             String.valueOf(System.currentTimeMillis()),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
+            null,
             null);
 
     var resp =
@@ -592,7 +588,8 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
             String.valueOf(System.currentTimeMillis()),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
-            withdrawalParameters);
+            withdrawalParameters,
+            null);
 
     final Optional<List<Withdrawal>> withdrawals =
         Optional.of(
@@ -613,7 +610,8 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
             payloadParams.getTimestamp(),
             payloadParams.getPrevRandao(),
             Address.ECREC,
-            withdrawals))
+            withdrawals,
+            Optional.empty()))
         .thenReturn(mockPayloadId);
 
     assertSuccessWithPayloadForForkchoiceResult(
@@ -638,6 +636,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
             String.valueOf(System.currentTimeMillis()),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
+            null,
             null);
 
     var mockPayloadId =
@@ -653,6 +652,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
             payloadParams.getTimestamp(),
             payloadParams.getPrevRandao(),
             Address.ECREC,
+            Optional.empty(),
             Optional.empty()))
         .thenReturn(mockPayloadId);
 
@@ -668,9 +668,6 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
-    if (validateTerminalPoWBlock()) {
-      when(mergeCoordinator.latestValidAncestorDescendsFromTerminal(mockHeader)).thenReturn(true);
-    }
     when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
   }
 
@@ -725,10 +722,6 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     verify(engineCallListener, times(1)).executionEngineCalled();
 
     return res;
-  }
-
-  protected boolean validateTerminalPoWBlock() {
-    return false;
   }
 
   protected RpcErrorType expectedInvalidPayloadError() {

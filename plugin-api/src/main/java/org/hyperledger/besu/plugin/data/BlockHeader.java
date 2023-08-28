@@ -202,10 +202,26 @@ public interface BlockHeader {
   Optional<? extends Hash> getDepositsRoot();
 
   /**
-   * The excess_data_gas of this header.
+   * The excess_blob_gas of this header.
    *
-   * @return The excess_data_gas of this header.
+   * @return The excess_blob_gas of this header.
    */
   @Unstable
-  Optional<? extends Quantity> getExcessDataGas();
+  Optional<? extends Quantity> getExcessBlobGas();
+
+  /**
+   * The blob_gas_used of this header.
+   *
+   * @return The blob_gas_used of this header.
+   */
+  @Unstable
+  Optional<? extends Long> getBlobGasUsed();
+
+  /**
+   * The parent beacon block root of this header.
+   *
+   * @return The parent_beacon_block_root of this header.
+   */
+  @Unstable
+  Optional<? extends Bytes32> getParentBeaconBlockRoot();
 }

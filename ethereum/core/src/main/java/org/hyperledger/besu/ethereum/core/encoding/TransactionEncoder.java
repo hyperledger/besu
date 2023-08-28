@@ -16,15 +16,14 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.evm.AccessListEntry;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -45,7 +44,9 @@ public class TransactionEncoder {
           TransactionType.ACCESS_LIST,
           TransactionEncoder::encodeAccessList,
           TransactionType.EIP1559,
-          TransactionEncoder::encodeEIP1559);
+          TransactionEncoder::encodeEIP1559,
+          TransactionType.BLOB,
+          BlobTransactionEncoder::encodeEIP4844);
 
   public static void encodeForWire(final Transaction transaction, final RLPOutput rlpOutput) {
     final TransactionType transactionType =
@@ -177,9 +178,9 @@ public class TransactionEncoder {
           accessListEntries.get(),
           (accessListEntry, accessListEntryRLPOutput) -> {
             accessListEntryRLPOutput.startList();
-            out.writeBytes(accessListEntry.getAddress());
+            out.writeBytes(accessListEntry.address());
             out.writeList(
-                accessListEntry.getStorageKeys(),
+                accessListEntry.storageKeys(),
                 (storageKeyBytes, storageKeyBytesRLPOutput) ->
                     storageKeyBytesRLPOutput.writeBytes(storageKeyBytes));
             accessListEntryRLPOutput.endList();
@@ -187,17 +188,12 @@ public class TransactionEncoder {
     }
   }
 
-  public static void writeBlobVersionedHashes(
-      final RLPOutput rlpOutput, final List<Hash> versionedHashes) {
-    // ToDo 4844: implement
-  }
-
   private static void writeSignatureAndV(final Transaction transaction, final RLPOutput out) {
     out.writeBigIntegerScalar(transaction.getV());
     writeSignature(transaction, out);
   }
 
-  private static void writeSignatureAndRecoveryId(
+  public static void writeSignatureAndRecoveryId(
       final Transaction transaction, final RLPOutput out) {
     out.writeIntScalar(transaction.getSignature().getRecId());
     writeSignature(transaction, out);

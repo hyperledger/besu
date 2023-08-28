@@ -34,13 +34,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import io.vertx.core.json.Json;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PrivUnsubscribeTest {
 
   private final String PRIVACY_GROUP_ID = "B1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
@@ -53,7 +53,7 @@ public class PrivUnsubscribeTest {
 
   private PrivUnsubscribe privUnsubscribe;
 
-  @Before
+  @BeforeEach
   public void before() {
     privUnsubscribe =
         new PrivUnsubscribe(

@@ -43,13 +43,13 @@ import java.util.Optional;
 
 import com.google.common.base.Suppliers;
 import org.assertj.core.util.Arrays;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EthGetMinerDataByBlockHashTest {
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private ProtocolSchedule protocolSchedule;
@@ -59,7 +59,7 @@ public class EthGetMinerDataByBlockHashTest {
   private final String ETH_METHOD = "eth_getMinerDataByBlockHash";
   private final BlockHeaderTestFixture blockHeaderTestFixture = new BlockHeaderTestFixture();
 
-  @Before
+  @BeforeEach
   public void before() {
     this.method =
         new EthGetMinerDataByBlockHash(Suppliers.ofInstance(blockchainQueries), protocolSchedule);

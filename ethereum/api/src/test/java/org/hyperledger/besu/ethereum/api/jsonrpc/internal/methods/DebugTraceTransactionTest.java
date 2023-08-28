@@ -51,8 +51,8 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Answers;
 
 public class DebugTraceTransactionTest {
@@ -71,7 +71,7 @@ public class DebugTraceTransactionTest {
   private final Hash transactionHash =
       Hash.fromHexString("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
 
-  @Before
+  @BeforeEach
   public void setup() {
     doAnswer(__ -> Optional.of(blockHeader))
         .when(blockchainQueries)

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.BLOCK_NOT_FOUND;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INTERNAL_ERROR;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.REVERT_ERROR;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -32,6 +33,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -44,6 +46,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.PreCloseStateHandler;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -52,15 +55,18 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class EthCallTest {
 
   private EthCall method;
@@ -74,7 +80,7 @@ public class EthCallTest {
 
   @Captor ArgumentCaptor<PreCloseStateHandler<Optional<JsonRpcResponse>>> mapperCaptor;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     method = new EthCall(blockchainQueries, transactionSimulator);
     blockHeader = mock(BlockHeader.class);
@@ -159,6 +165,128 @@ public class EthCallTest {
     verify(transactionSimulator).process(eq(callParameter()), any(), any(), any(), any());
     verify(blockchainQueries, atLeastOnce()).getBlockchain();
     verifyNoMoreInteractions(blockchainQueries);
+  }
+
+  @Test
+  public void shouldReturnBasicExecutionRevertErrorWithoutReason() {
+    final JsonRpcRequestContext request = ethCallRequest(callParameter(), "latest");
+
+    // Expect a revert error with no decoded reason (error doesn't begin "Error(string)" so ignored)
+    final String abiHexString = "0x1234";
+    final JsonRpcError expectedError = new JsonRpcError(REVERT_ERROR, abiHexString);
+    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, expectedError);
+
+    assertThat(((JsonRpcErrorResponse) expectedResponse).getError().getMessage())
+        .isEqualTo("Execution reverted");
+
+    mockTransactionProcessorSuccessResult(expectedResponse);
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchain.getChainHead()).thenReturn(chainHead);
+
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ZERO));
+    when(chainHead.getBlockHeader()).thenReturn(blockHeader);
+
+    final JsonRpcResponse response = method.response(request);
+
+    final TransactionProcessingResult processingResult =
+        new TransactionProcessingResult(
+            null, null, 0, 0, null, null, Optional.of(Bytes.fromHexString(abiHexString)));
+
+    final TransactionSimulatorResult result = mock(TransactionSimulatorResult.class);
+    when(result.isSuccessful()).thenReturn(false);
+    when(result.getValidationResult()).thenReturn(ValidationResult.valid());
+    when(result.getResult()).thenReturn(processingResult);
+    verify(transactionSimulator).process(any(), any(), any(), mapperCaptor.capture(), any());
+    assertThat(mapperCaptor.getValue().apply(mock(MutableWorldState.class), Optional.of(result)))
+        .isEqualTo(Optional.of(expectedResponse));
+
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+    assertThat(((JsonRpcErrorResponse) response).getError().getMessage())
+        .isEqualTo("Execution reverted");
+  }
+
+  @Test
+  public void shouldReturnExecutionRevertErrorWithABIParseError() {
+    final JsonRpcRequestContext request = ethCallRequest(callParameter(), "latest");
+
+    // Expect a revert error with no decoded reason (error begins with "Error(string)" but trailing
+    // bytes are invalid ABI)
+    final String abiHexString = "0x08c379a002d36d";
+    final JsonRpcError expectedError = new JsonRpcError(REVERT_ERROR, abiHexString);
+    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, expectedError);
+
+    assertThat(((JsonRpcErrorResponse) expectedResponse).getError().getMessage())
+        .isEqualTo("Execution reverted: ABI decode error");
+
+    mockTransactionProcessorSuccessResult(expectedResponse);
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchain.getChainHead()).thenReturn(chainHead);
+
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ZERO));
+    when(chainHead.getBlockHeader()).thenReturn(blockHeader);
+
+    final JsonRpcResponse response = method.response(request);
+    final TransactionProcessingResult processingResult =
+        new TransactionProcessingResult(
+            null, null, 0, 0, null, null, Optional.of(Bytes.fromHexString(abiHexString)));
+
+    final TransactionSimulatorResult result = mock(TransactionSimulatorResult.class);
+    when(result.isSuccessful()).thenReturn(false);
+    when(result.getValidationResult()).thenReturn(ValidationResult.valid());
+    when(result.getResult()).thenReturn(processingResult);
+    verify(transactionSimulator).process(any(), any(), any(), mapperCaptor.capture(), any());
+    assertThat(mapperCaptor.getValue().apply(mock(MutableWorldState.class), Optional.of(result)))
+        .isEqualTo(Optional.of(expectedResponse));
+
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+    assertThat(((JsonRpcErrorResponse) response).getError().getMessage())
+        .isEqualTo("Execution reverted: ABI decode error");
+  }
+
+  @Test
+  public void shouldReturnExecutionRevertErrorWithParsedABI() {
+    final JsonRpcRequestContext request = ethCallRequest(callParameter(), "latest");
+
+    // Expect a revert error with decoded reason (error begins with "Error(string)", trailing bytes
+    // = "ERC20: transfer from the zero address")
+    final String abiHexString =
+        "0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002545524332303a207472616e736665722066726f6d20746865207a65726f2061646472657373000000000000000000000000000000000000000000000000000000";
+    final JsonRpcError expectedError = new JsonRpcError(REVERT_ERROR, abiHexString);
+    final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, expectedError);
+
+    assertThat(((JsonRpcErrorResponse) expectedResponse).getError().getMessage())
+        .isEqualTo("Execution reverted: ERC20: transfer from the zero address");
+
+    mockTransactionProcessorSuccessResult(expectedResponse);
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchain.getChainHead()).thenReturn(chainHead);
+
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ZERO));
+    when(chainHead.getBlockHeader()).thenReturn(blockHeader);
+
+    final JsonRpcResponse response = method.response(request);
+
+    final TransactionProcessingResult processingResult =
+        new TransactionProcessingResult(
+            null, null, 0, 0, null, null, Optional.of(Bytes.fromHexString(abiHexString)));
+
+    final TransactionSimulatorResult result = mock(TransactionSimulatorResult.class);
+    when(result.isSuccessful()).thenReturn(false);
+    when(result.getValidationResult()).thenReturn(ValidationResult.valid());
+    when(result.getResult()).thenReturn(processingResult);
+
+    verify(transactionSimulator).process(any(), any(), any(), mapperCaptor.capture(), any());
+    System.out.println(result);
+    System.out.println(expectedResponse);
+    assertThat(mapperCaptor.getValue().apply(mock(MutableWorldState.class), Optional.of(result)))
+        .isEqualTo(Optional.of(expectedResponse));
+
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+    assertThat(((JsonRpcErrorResponse) response).getError().getMessage())
+        .isEqualTo("Execution reverted: ERC20: transfer from the zero address");
   }
 
   @Test

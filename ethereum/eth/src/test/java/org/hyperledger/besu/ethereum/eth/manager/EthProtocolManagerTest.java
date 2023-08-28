@@ -99,8 +99,8 @@ import org.apache.tuweni.bytes.Bytes;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionFactory;
 import org.awaitility.core.ConditionTimeoutException;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 // NullPointerExceptions on optional.get() will result in test failures anyway
@@ -114,7 +114,7 @@ public final class EthProtocolManagerTest {
   private static ProtocolContext protocolContext;
   private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
-  @BeforeClass
+  @BeforeAll
   public static void setup() {
     gen = new BlockDataGenerator(0);
     final BlockchainSetupUtil blockchainSetupUtil =

@@ -58,14 +58,14 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 
 public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
 
-  @BeforeClass
+  @BeforeAll
   public static void setup() throws Exception {
     initServerAndClient();
   }
@@ -78,7 +78,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
   }
 
   /** Tears down the HTTP server. */
-  @AfterClass
+  @AfterAll
   public static void shutdownServer() {
     service.stop().join();
   }

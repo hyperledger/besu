@@ -27,15 +27,21 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.datatypes.BLSSignature;
+import org.hyperledger.besu.datatypes.BlobGas;
+import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -45,7 +51,9 @@ import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -61,6 +69,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.CancunFeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
@@ -76,6 +85,7 @@ import java.util.function.Supplier;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -136,6 +146,7 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.of(emptyList()),
             Optional.empty(),
+            Optional.empty(),
             1L,
             false);
 
@@ -155,6 +166,7 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.of(emptyList()),
             Optional.empty(),
+            Optional.empty(),
             1L,
             false);
 
@@ -171,6 +183,7 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.empty(),
             Optional.of(emptyList()),
+            Optional.empty(),
             Optional.empty(),
             1L,
             false);
@@ -204,7 +217,13 @@ abstract class AbstractBlockCreatorTest {
     final AbstractBlockCreator blockCreator = blockCreatorWithWithdrawalsProcessor();
     final BlockCreationResult blockCreationResult =
         blockCreator.createBlock(
-            Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), 1L, false);
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            1L,
+            false);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
     assertThat(blockCreationResult.getBlock().getHeader().getWithdrawalsRoot()).isEmpty();
     assertThat(blockCreationResult.getBlock().getBody().getWithdrawals()).isEmpty();
@@ -215,7 +234,13 @@ abstract class AbstractBlockCreatorTest {
     final AbstractBlockCreator blockCreator = blockCreatorWithoutWithdrawalsProcessor();
     final BlockCreationResult blockCreationResult =
         blockCreator.createBlock(
-            Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), 1L, false);
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            1L,
+            false);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
     assertThat(blockCreationResult.getBlock().getHeader().getWithdrawalsRoot()).isEmpty();
     assertThat(blockCreationResult.getBlock().getBody().getWithdrawals()).isEmpty();
@@ -231,6 +256,7 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.empty(),
             Optional.of(withdrawals),
+            Optional.empty(),
             Optional.empty(),
             1L,
             false);
@@ -253,11 +279,59 @@ abstract class AbstractBlockCreatorTest {
             Optional.empty(),
             Optional.of(withdrawals),
             Optional.empty(),
+            Optional.empty(),
             1L,
             false);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
     assertThat(blockCreationResult.getBlock().getHeader().getWithdrawalsRoot()).isEmpty();
     assertThat(blockCreationResult.getBlock().getBody().getWithdrawals()).isEmpty();
+  }
+
+  @Disabled
+  @Test
+  public void computesGasUsageFromIncludedTransactions() {
+    final KeyPair senderKeys = SignatureAlgorithmFactory.getInstance().generateKeyPair();
+    final AbstractBlockCreator blockCreator = blockCreatorWithBlobGasSupport();
+    BlobTestFixture blobTestFixture = new BlobTestFixture();
+    BlobsWithCommitments bwc = blobTestFixture.createBlobsWithCommitments(6);
+    TransactionTestFixture ttf = new TransactionTestFixture();
+    Transaction fullOfBlobs =
+        ttf.to(Optional.of(Address.ZERO))
+            .type(TransactionType.BLOB)
+            .chainId(Optional.of(BigInteger.valueOf(42)))
+            .maxFeePerGas(Optional.of(Wei.of(15)))
+            .maxFeePerBlobGas(Optional.of(Wei.of(128)))
+            .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
+            .versionedHashes(Optional.of(bwc.getVersionedHashes()))
+            .createTransaction(senderKeys);
+
+    ttf.blobsWithCommitments(Optional.of(bwc));
+    final BlockCreationResult blockCreationResult =
+        blockCreator.createBlock(
+            Optional.of(List.of(fullOfBlobs)),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            1L,
+            false);
+    long blobGasUsage = blockCreationResult.getBlock().getHeader().getGasUsed();
+    assertThat(blobGasUsage).isNotZero();
+    BlobGas excessBlobGas = blockCreationResult.getBlock().getHeader().getExcessBlobGas().get();
+    assertThat(excessBlobGas).isNotNull();
+  }
+
+  private AbstractBlockCreator blockCreatorWithBlobGasSupport() {
+    final ProtocolSpecAdapters protocolSpecAdapters =
+        ProtocolSpecAdapters.create(
+            0,
+            specBuilder -> {
+              specBuilder.feeMarket(new CancunFeeMarket(0, Optional.empty()));
+              specBuilder.isReplayProtectionSupported(true);
+              specBuilder.withdrawalsProcessor(withdrawalsProcessor);
+              return specBuilder;
+            });
+    return createBlockCreator(protocolSpecAdapters, EMPTY_DEPOSIT_CONTRACT_ADDRESS);
   }
 
   private AbstractBlockCreator blockCreatorWithWithdrawalsProcessor() {

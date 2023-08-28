@@ -22,7 +22,8 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 public interface PrivacySupportingProtocolSchedule {
 
-  void setTransactionFilter(final PermissionTransactionFilter permissionTransactionFilter);
+  void setPermissionTransactionFilter(
+      final PermissionTransactionFilter permissionTransactionFilter);
 
   void setPublicWorldStateArchiveForPrivacyBlockProcessor(
       final WorldStateArchive publicWorldStateArchive);

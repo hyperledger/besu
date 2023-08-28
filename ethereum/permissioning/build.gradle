@@ -52,10 +52,8 @@ dependencies {
   testImplementation project(':testutil')
 
   testImplementation 'io.vertx:vertx-core'
-  testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
-
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
 }

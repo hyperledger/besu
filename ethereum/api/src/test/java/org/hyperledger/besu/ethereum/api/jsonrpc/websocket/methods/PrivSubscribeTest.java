@@ -36,13 +36,13 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import io.vertx.core.json.Json;
 import io.vertx.ext.auth.User;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PrivSubscribeTest {
 
   private final String ENCLAVE_KEY = "enclave_key";
@@ -55,7 +55,7 @@ public class PrivSubscribeTest {
 
   private PrivSubscribe privSubscribe;
 
-  @Before
+  @BeforeEach
   public void before() {
     privSubscribe =
         new PrivSubscribe(

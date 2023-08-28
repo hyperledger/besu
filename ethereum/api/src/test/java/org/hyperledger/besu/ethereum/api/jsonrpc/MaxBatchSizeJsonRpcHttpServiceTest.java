@@ -23,7 +23,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class MaxBatchSizeJsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
 

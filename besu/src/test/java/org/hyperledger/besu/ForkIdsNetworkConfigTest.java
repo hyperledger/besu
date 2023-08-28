@@ -82,6 +82,14 @@ public class ForkIdsNetworkConfigTest {
                 new ForkId(Bytes.ofUnsignedInt(0xf7f9bc08L), 0L))
           },
           new Object[] {
+            NetworkName.HOLESKY,
+            List.of(
+                new ForkId(Bytes.ofUnsignedInt(0xa200f558L), 1694790240L),
+                new ForkId(Bytes.ofUnsignedInt(0x840a3b53L), 2000000000L),
+                new ForkId(Bytes.ofUnsignedInt(0x30771f90), 0L),
+                new ForkId(Bytes.ofUnsignedInt(0x30771f90), 0L))
+          },
+          new Object[] {
             NetworkName.GOERLI,
             List.of(
                 new ForkId(Bytes.ofUnsignedInt(0xa3f5ab08L), 1561651L),

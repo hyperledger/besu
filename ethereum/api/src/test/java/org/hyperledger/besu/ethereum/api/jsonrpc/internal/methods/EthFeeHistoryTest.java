@@ -43,8 +43,8 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class EthFeeHistoryTest {
   final BlockDataGenerator gen = new BlockDataGenerator();
@@ -52,7 +52,7 @@ public class EthFeeHistoryTest {
   private EthFeeHistory method;
   private ProtocolSchedule protocolSchedule;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     protocolSchedule = mock(ProtocolSchedule.class);
     final Block genesisBlock = gen.genesisBlock();

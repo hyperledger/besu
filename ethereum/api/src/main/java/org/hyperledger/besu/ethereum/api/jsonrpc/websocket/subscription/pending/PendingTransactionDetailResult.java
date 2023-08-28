@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.pending;
 
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.JsonRpcResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -30,6 +31,7 @@ import org.apache.tuweni.bytes.Bytes;
   "input",
   "nonce",
   "to",
+  "type",
   "value",
   "v",
   "r",
@@ -43,6 +45,7 @@ public class PendingTransactionDetailResult implements JsonRpcResult {
   private final String input;
   private final String nonce;
   private final String to;
+  private final String type;
   private final String value;
   private final String v;
   private final String r;
@@ -56,6 +59,10 @@ public class PendingTransactionDetailResult implements JsonRpcResult {
     this.input = tx.getPayload().toString();
     this.nonce = Quantity.create(tx.getNonce());
     this.to = tx.getTo().map(Bytes::toHexString).orElse(null);
+    this.type =
+        tx.getType().equals(TransactionType.FRONTIER)
+            ? Quantity.create(0)
+            : Quantity.create(tx.getType().getSerializedType());
     this.value = Quantity.create(tx.getValue());
     this.v = Quantity.create(tx.getV());
     this.r = Quantity.create(tx.getR());
@@ -95,6 +102,11 @@ public class PendingTransactionDetailResult implements JsonRpcResult {
   @JsonGetter(value = "to")
   public String getTo() {
     return to;
+  }
+
+  @JsonGetter(value = "type")
+  public String getType() {
+    return type;
   }
 
   @JsonGetter(value = "value")

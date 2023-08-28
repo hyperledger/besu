@@ -39,8 +39,8 @@ import java.util.OptionalLong;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
 
 public class EthPeersTest {
@@ -51,7 +51,7 @@ public class EthPeersTest {
   private final RequestManager.ResponseStream responseStream =
       mock(RequestManager.ResponseStream.class);
 
-  @Before
+  @BeforeEach
   public void setup() throws Exception {
     when(peerRequest.sendRequest(any())).thenReturn(responseStream);
     ethProtocolManager = EthProtocolManagerTestUtil.create();

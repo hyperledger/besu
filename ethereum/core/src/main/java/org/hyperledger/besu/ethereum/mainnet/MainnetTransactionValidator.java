@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,11 +18,15 @@ import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Blob;
+import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.KZGCommitment;
+import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
-import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
@@ -30,8 +34,14 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import ethereum.ckzg4844.CKZG4844JNI;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.bouncycastle.crypto.digests.SHA256Digest;
 
 /**
  * Validates a transaction based on Frontier protocol runtime requirements.
@@ -41,6 +51,8 @@ import java.util.Set;
  */
 public class MainnetTransactionValidator implements TransactionValidator {
 
+  private static final byte BLOB_COMMITMENT_VERSION_KZG = 0x01;
+
   private final GasCalculator gasCalculator;
   private final GasLimitCalculator gasLimitCalculator;
   private final FeeMarket feeMarket;
@@ -49,39 +61,9 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
   private final Optional<BigInteger> chainId;
 
-  private Optional<PermissionTransactionFilter> permissionTransactionFilter = Optional.empty();
   private final Set<TransactionType> acceptedTransactionTypes;
 
   private final int maxInitcodeSize;
-
-  public MainnetTransactionValidator(
-      final GasCalculator gasCalculator,
-      final GasLimitCalculator gasLimitCalculator,
-      final boolean checkSignatureMalleability,
-      final Optional<BigInteger> chainId) {
-    this(
-        gasCalculator,
-        gasLimitCalculator,
-        checkSignatureMalleability,
-        chainId,
-        Set.of(TransactionType.FRONTIER));
-  }
-
-  public MainnetTransactionValidator(
-      final GasCalculator gasCalculator,
-      final GasLimitCalculator gasLimitCalculator,
-      final boolean checkSignatureMalleability,
-      final Optional<BigInteger> chainId,
-      final Set<TransactionType> acceptedTransactionTypes) {
-    this(
-        gasCalculator,
-        gasLimitCalculator,
-        FeeMarket.legacy(),
-        checkSignatureMalleability,
-        chainId,
-        acceptedTransactionTypes,
-        Integer.MAX_VALUE);
-  }
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
@@ -109,6 +91,22 @@ public class MainnetTransactionValidator implements TransactionValidator {
         validateTransactionSignature(transaction);
     if (!signatureResult.isValid()) {
       return signatureResult;
+    }
+
+    if (transaction.getType().supportsBlob()) {
+      final ValidationResult<TransactionInvalidReason> blobTransactionResult =
+          validateBlobTransaction(transaction);
+      if (!blobTransactionResult.isValid()) {
+        return blobTransactionResult;
+      }
+
+      if (transaction.getBlobsWithCommitments().isPresent()) {
+        final ValidationResult<TransactionInvalidReason> blobsResult =
+            validateTransactionsBlobs(transaction);
+        if (!blobsResult.isValid()) {
+          return blobsResult;
+        }
+      }
     }
 
     final TransactionType transactionType = transaction.getType();
@@ -165,13 +163,24 @@ public class MainnetTransactionValidator implements TransactionValidator {
     }
 
     if (transaction.getType().supportsBlob()) {
-      final long txTotalDataGas = gasCalculator.dataGasCost(transaction.getBlobCount());
-      if (txTotalDataGas > gasLimitCalculator.currentDataGasLimit()) {
+      final long txTotalBlobGas = gasCalculator.blobGasCost(transaction.getBlobCount());
+      if (txTotalBlobGas > gasLimitCalculator.currentBlobGasLimit()) {
         return ValidationResult.invalid(
-            TransactionInvalidReason.TOTAL_DATA_GAS_TOO_HIGH,
+            TransactionInvalidReason.TOTAL_BLOB_GAS_TOO_HIGH,
             String.format(
-                "total data gas %d exceeds max data gas per block %d",
-                txTotalDataGas, gasLimitCalculator.currentDataGasLimit()));
+                "total blob gas %d exceeds max blob gas per block %d",
+                txTotalBlobGas, gasLimitCalculator.currentBlobGasLimit()));
+      }
+    }
+
+    if (transaction.getType().supportsBlob()) {
+      final long txTotalBlobGas = gasCalculator.blobGasCost(transaction.getBlobCount());
+      if (txTotalBlobGas > gasLimitCalculator.currentBlobGasLimit()) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.TOTAL_BLOB_GAS_TOO_HIGH,
+            String.format(
+                "total blob gas %d exceeds max blob gas per block %d",
+                txTotalBlobGas, gasLimitCalculator.currentBlobGasLimit()));
       }
     }
 
@@ -206,7 +215,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
     }
 
     final Wei upfrontCost =
-        transaction.getUpfrontCost(gasCalculator.dataGasCost(transaction.getBlobCount()));
+        transaction.getUpfrontCost(gasCalculator.blobGasCost(transaction.getBlobCount()));
     if (upfrontCost.compareTo(senderBalance) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
@@ -237,12 +246,6 @@ public class MainnetTransactionValidator implements TransactionValidator {
           String.format(
               "Sender %s has deployed code and so is not authorized to send transactions",
               transaction.getSender()));
-    }
-
-    if (!isSenderAllowed(transaction, validationParams)) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED,
-          String.format("Sender %s is not on the Account Allowlist", transaction.getSender()));
     }
 
     return ValidationResult.valid();
@@ -287,25 +290,120 @@ public class MainnetTransactionValidator implements TransactionValidator {
     return ValidationResult.valid();
   }
 
-  private boolean isSenderAllowed(
-      final Transaction transaction, final TransactionValidationParams validationParams) {
-    if (validationParams.checkLocalPermissions() || validationParams.checkOnchainPermissions()) {
-      return permissionTransactionFilter
-          .map(
-              c ->
-                  c.permitted(
-                      transaction,
-                      validationParams.checkLocalPermissions(),
-                      validationParams.checkOnchainPermissions()))
-          .orElse(true);
-    } else {
-      return true;
+  public ValidationResult<TransactionInvalidReason> validateBlobTransaction(
+      final Transaction transaction) {
+
+    if (transaction.getType().supportsBlob() && transaction.getTo().isEmpty()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
+          "transaction blob transactions cannot have a to address");
     }
+
+    if (transaction.getVersionedHashes().isEmpty()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_BLOBS,
+          "transaction blob transactions must specify one or more versioned hashes");
+    }
+
+    return ValidationResult.valid();
   }
 
-  @Override
-  public void setPermissionTransactionFilter(
-      final PermissionTransactionFilter permissionTransactionFilter) {
-    this.permissionTransactionFilter = Optional.of(permissionTransactionFilter);
+  public ValidationResult<TransactionInvalidReason> validateTransactionsBlobs(
+      final Transaction transaction) {
+
+    if (transaction.getBlobsWithCommitments().isEmpty()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_BLOBS,
+          "transaction blobs are empty, cannot verify without blobs");
+    }
+
+    BlobsWithCommitments blobsWithCommitments = transaction.getBlobsWithCommitments().get();
+
+    if (blobsWithCommitments.getBlobs().size() != blobsWithCommitments.getKzgCommitments().size()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_BLOBS,
+          "transaction blobs and commitments are not the same size");
+    }
+
+    if (transaction.getVersionedHashes().isEmpty()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_BLOBS,
+          "transaction versioned hashes are empty, cannot verify without versioned hashes");
+    }
+    final List<VersionedHash> versionedHashes = transaction.getVersionedHashes().get();
+
+    for (int i = 0; i < versionedHashes.size(); i++) {
+      final KZGCommitment commitment = blobsWithCommitments.getKzgCommitments().get(i);
+      final VersionedHash versionedHash = versionedHashes.get(i);
+
+      if (versionedHash.getVersionId() != BLOB_COMMITMENT_VERSION_KZG) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.INVALID_BLOBS,
+            "transaction blobs commitment version is not supported. Expected "
+                + BLOB_COMMITMENT_VERSION_KZG
+                + ", found "
+                + versionedHash.getVersionId());
+      }
+
+      final VersionedHash calculatedVersionedHash = hashCommitment(commitment);
+      if (!calculatedVersionedHash.equals(versionedHash)) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.INVALID_BLOBS,
+            "transaction blobs commitment hash does not match commitment");
+      }
+    }
+
+    final Bytes blobs =
+        blobsWithCommitments.getBlobs().stream()
+            .map(Blob::getData)
+            .reduce(Bytes::concatenate)
+            .orElseThrow();
+
+    final Bytes kzgCommitments =
+        blobsWithCommitments.getKzgCommitments().stream()
+            .map(KZGCommitment::getData)
+            .reduce(Bytes::concatenate)
+            .orElseThrow();
+
+    final Bytes kzgProofs =
+        blobsWithCommitments.getKzgProofs().stream()
+            .map(KZGProof::getData)
+            .reduce(Bytes::concatenate)
+            .orElseThrow();
+
+    final boolean kzgVerification =
+        CKZG4844JNI.verifyBlobKzgProofBatch(
+            blobs.toArrayUnsafe(),
+            kzgCommitments.toArrayUnsafe(),
+            kzgProofs.toArrayUnsafe(),
+            blobsWithCommitments.getBlobs().size());
+
+    if (!kzgVerification) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.INVALID_BLOBS,
+          "transaction blobs kzg proof verification failed");
+    }
+
+    return ValidationResult.valid();
+  }
+
+  /*
+  private VersionedHash hashCommitment(final Bytes32 commitment) {
+    return new VersionedHash(
+        VersionedHash.SHA256_VERSION_ID, Sha256Hash.hash(commitment));
+  }
+
+   */
+
+  private VersionedHash hashCommitment(final KZGCommitment commitment) {
+    final SHA256Digest digest = new SHA256Digest();
+    digest.update(commitment.getData().toArrayUnsafe(), 0, commitment.getData().size());
+
+    final byte[] dig = new byte[digest.getDigestSize()];
+
+    digest.doFinal(dig, 0);
+
+    dig[0] = BLOB_COMMITMENT_VERSION_KZG;
+    return new VersionedHash(Bytes32.wrap(dig));
   }
 }

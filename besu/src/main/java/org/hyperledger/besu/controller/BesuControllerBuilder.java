@@ -621,10 +621,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     Optional<Pruner> maybePruner = Optional.empty();
     if (isPruningEnabled) {
-      if (!storageProvider.isWorldStateIterable()) {
-        LOG.warn(
-            "Cannot enable pruning with current database version. Disabling. Resync to get the latest database version or disable pruning explicitly on the command line to remove this warning.");
-      } else if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
+      if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
         LOG.warn(
             "Cannot enable pruning with Bonsai data storage format. Disabling. Change the data storage format or disable pruning explicitly on the command line to remove this warning.");
       } else {

@@ -24,8 +24,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
 public class MinerChangeTargetGasLimitTest {
@@ -33,7 +33,7 @@ public class MinerChangeTargetGasLimitTest {
   @Mock MiningCoordinator miningCoordinator;
   private MinerChangeTargetGasLimit minerChangeTargetGasLimit;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     initMocks(this);
     minerChangeTargetGasLimit = new MinerChangeTargetGasLimit(miningCoordinator);

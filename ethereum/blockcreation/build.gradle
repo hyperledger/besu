@@ -35,12 +35,9 @@ dependencies {
   testImplementation project(':testutil')
 
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
-  testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
-
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }

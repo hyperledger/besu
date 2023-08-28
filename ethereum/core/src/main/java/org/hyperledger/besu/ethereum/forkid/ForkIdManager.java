@@ -70,7 +70,7 @@ public class ForkIdManager {
             .collect(Collectors.toUnmodifiableList());
     this.timestampForks =
         timestampForks.stream()
-            .filter(fork -> fork > 0L)
+            .filter(fork -> fork > blockchain.getGenesisBlock().getHeader().getTimestamp())
             .distinct()
             .sorted()
             .collect(Collectors.toUnmodifiableList());

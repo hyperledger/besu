@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
@@ -59,13 +60,17 @@ public class StorageTrieNodeHealingRequest extends TrieNodeHealingRequest {
   @Override
   public Optional<Bytes> getExistingData(
       final SnapWorldDownloadState downloadState, final WorldStateStorage worldStateStorage) {
-    Optional<Bytes> accountStorageTrieNode =
-        worldStateStorage.getAccountStorageTrieNode(
-            getAccountHash(),
-            getLocation(),
-            null); // push null to not check the hash in the getAccountStorageTrieNode method
-    if (accountStorageTrieNode.isPresent()) {
-      return accountStorageTrieNode
+
+    final Optional<Bytes> storageTrieNode;
+    if (worldStateStorage.getDataStorageFormat().equals(DataStorageFormat.FOREST)) {
+      storageTrieNode = worldStateStorage.getTrieNodeUnsafe(getNodeHash());
+    } else {
+      storageTrieNode =
+          worldStateStorage.getTrieNodeUnsafe(Bytes.concatenate(getAccountHash(), getLocation()));
+    }
+
+    if (storageTrieNode.isPresent()) {
+      return storageTrieNode
           .filter(node -> Hash.hash(node).equals(getNodeHash()))
           .or(
               () -> { // if we have a storage in database but not the good one we will need to fix

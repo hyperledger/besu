@@ -31,7 +31,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBConfigurationBuilder;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.OptimisticRocksDBColumnarKeyValueStorage;
-import org.hyperledger.besu.services.kvstore.SnappableSegmentedKeyValueStorageAdapter;
+import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -70,7 +70,7 @@ public class OperationBenchmarkHelper {
             RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
 
     final KeyValueStorage keyValueStorage =
-        new SnappableSegmentedKeyValueStorageAdapter<>(
+        new SegmentedKeyValueStorageAdapter(
             KeyValueSegmentIdentifier.BLOCKCHAIN, optimisticRocksDBColumnarKeyValueStorage);
 
     final ExecutionContextTestFixture executionContext =
@@ -112,25 +112,19 @@ public class OperationBenchmarkHelper {
 
   public MessageFrame.Builder createMessageFrameBuilder() {
     return MessageFrame.builder()
+        .parentMessageFrame(messageFrame)
         .type(MessageFrame.Type.MESSAGE_CALL)
-        .messageFrameStack(messageFrame.getMessageFrameStack())
         .worldUpdater(messageFrame.getWorldUpdater())
         .initialGas(messageFrame.getRemainingGas())
         .address(messageFrame.getContractAddress())
-        .originator(messageFrame.getOriginatorAddress())
         .contract(messageFrame.getRecipientAddress())
-        .gasPrice(messageFrame.getGasPrice())
         .inputData(messageFrame.getInputData())
         .sender(messageFrame.getSenderAddress())
         .value(messageFrame.getValue())
         .apparentValue(messageFrame.getApparentValue())
         .code(messageFrame.getCode())
-        .blockValues(messageFrame.getBlockValues())
-        .depth(messageFrame.getMessageStackDepth())
         .isStatic(messageFrame.isStatic())
-        .completer(messageFrame -> {})
-        .miningBeneficiary(messageFrame.getMiningBeneficiary())
-        .maxStackSize(messageFrame.getMaxStackSize());
+        .completer(frame -> {});
   }
 
   public void cleanUp() throws IOException {

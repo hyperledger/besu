@@ -35,9 +35,11 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import java.io.IOException;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class FullSyncChainDownloaderForkTest {
 
@@ -53,8 +55,8 @@ public class FullSyncChainDownloaderForkTest {
   protected Blockchain otherBlockchain;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
-  @Before
-  public void setupTest() {
+  @BeforeEach
+  public void setupTest() throws IOException {
     localBlockchainSetup = BlockchainSetupUtil.forUpgradedFork();
     localBlockchain = localBlockchainSetup.getBlockchain();
     otherBlockchainSetup = BlockchainSetupUtil.forOutdatedFork();
@@ -74,7 +76,7 @@ public class FullSyncChainDownloaderForkTest {
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     ethProtocolManager.stop();
   }

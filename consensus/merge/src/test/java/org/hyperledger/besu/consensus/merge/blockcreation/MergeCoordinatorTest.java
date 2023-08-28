@@ -60,7 +60,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
-import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -92,7 +91,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -122,7 +120,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                   "ae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f"));
   private static final KeyPair KEYS1 =
       new KeyPair(PRIVATE_KEY1, SIGNATURE_ALGORITHM.get().createPublicKey(PRIVATE_KEY1));
-  private static final Optional<List<Withdrawal>> EMPTY_WITHDRAWALS = Optional.empty();
 
   private static final long REPETITION_MIN_DURATION = 100;
   @Mock MergeContext mergeContext;
@@ -184,7 +181,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     when(mergeContext.as(MergeContext.class)).thenReturn(mergeContext);
     when(mergeContext.getTerminalTotalDifficulty())
         .thenReturn(genesisState.getBlock().getHeader().getDifficulty().plus(1L));
-    when(mergeContext.getTerminalPoWBlock()).thenReturn(Optional.of(terminalPowBlock()));
     doAnswer(
             getSpecInvocation -> {
               ProtocolSpec spec = (ProtocolSpec) spy(getSpecInvocation.callRealMethod());
@@ -256,7 +252,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
-            EMPTY_WITHDRAWALS);
+            Optional.empty(),
+            Optional.empty());
 
     ArgumentCaptor<BlockWithReceipts> blockWithReceipts =
         ArgumentCaptor.forClass(BlockWithReceipts.class);
@@ -294,7 +291,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
               .doThrow(new MerkleTrieException("missing leaf"))
               .doCallRealMethod()
               .when(beingSpiedOn)
-              .createBlock(any(), any(Bytes32.class), anyLong(), eq(Optional.empty()));
+              .createBlock(
+                  any(), any(Bytes32.class), anyLong(), eq(Optional.empty()), eq(Optional.empty()));
           return beingSpiedOn;
         };
 
@@ -330,6 +328,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.random(),
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     verify(willThrow, never()).addBadBlock(any(), any());
@@ -362,6 +361,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         System.currentTimeMillis() / 1000,
         Bytes32.ZERO,
         suggestedFeeRecipient,
+        Optional.empty(),
         Optional.empty());
 
     verify(badBlockManager, never()).addBadBlock(any(), any());
@@ -394,6 +394,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     blockCreationTask.get();
@@ -445,6 +446,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     blockCreationTask.get();
@@ -491,6 +493,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     blockCreationTask.get();
@@ -525,6 +528,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     try {
@@ -567,6 +571,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     waitForBlockCreationInProgress.await();
@@ -613,6 +618,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             timestamp,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     final CompletableFuture<Void> task1 = blockCreationTask;
@@ -623,6 +629,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             timestamp,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     assertThat(payloadId1).isEqualTo(payloadId2);
@@ -658,6 +665,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             timestamp,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     assertThat(coordinator.isBlockCreationCancelled(payloadId1)).isFalse();
@@ -668,6 +676,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             timestamp + 1,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     assertThat(payloadId1).isNotEqualTo(payloadId2);
@@ -697,6 +706,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             1L,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty());
 
     ArgumentCaptor<BlockWithReceipts> blockWithReceipts =
@@ -734,34 +744,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     verify(mergeContext, never()).setFinalized(childHeader);
     verify(blockchain, never()).setSafeBlock(childHeader.getHash());
     verify(mergeContext, never()).setSafeBlock(childHeader);
-
-    assertThat(this.coordinator.latestValidAncestorDescendsFromTerminal(child.getHeader()))
-        .isTrue();
-  }
-
-  @Test
-  public void latestValidAncestorDescendsFromTerminal() {
-    BlockHeader terminalHeader = terminalPowBlock();
-    sendNewPayloadAndForkchoiceUpdate(
-        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO);
-
-    BlockHeader parentHeader = nextBlockHeader(terminalHeader);
-    Block parent = new Block(parentHeader, BlockBody.empty());
-
-    // if latest valid ancestor is PoW, then latest valid hash should be Hash.ZERO
-    var lvh = this.coordinator.getLatestValidAncestor(parentHeader);
-    assertThat(lvh).isPresent();
-    assertThat(lvh.get()).isEqualTo(Hash.ZERO);
-
-    sendNewPayloadAndForkchoiceUpdate(parent, Optional.empty(), terminalHeader.getHash());
-    BlockHeader childHeader = nextBlockHeader(parentHeader);
-    Block child = new Block(childHeader, BlockBody.empty());
-    coordinator.validateBlock(child);
-    assertThat(this.coordinator.latestValidAncestorDescendsFromTerminal(child.getHeader()))
-        .isTrue();
-    var nextLvh = this.coordinator.getLatestValidAncestor(childHeader);
-    assertThat(nextLvh).isPresent();
-    assertThat(nextLvh.get()).isEqualTo(parentHeader.getHash());
   }
 
   @Test
@@ -787,9 +769,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     BlockHeader childHeader = nextBlockHeader(parentHeader);
     Block child = new Block(childHeader, BlockBody.empty());
     coordinator.validateBlock(child);
-
-    assertThat(this.coordinator.latestValidAncestorDescendsFromTerminal(child.getHeader()))
-        .isTrue();
 
     var nextLvh = this.coordinator.getLatestValidAncestor(childHeader);
     assertThat(nextLvh).isPresent();
@@ -913,152 +892,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   }
 
   @Test
-  public void ancestorIsValidTerminalProofOfWork() {
-    final long howDeep = 100L;
-    assertThat(
-            terminalAncestorMock(howDeep, true)
-                .ancestorIsValidTerminalProofOfWork(
-                    new BlockHeaderTestFixture().number(howDeep).buildHeader()))
-        .isTrue();
-  }
-
-  @Test
-  public void assertCachedUnfinalizedAncestorDescendsFromTTD() {
-    final long howDeep = 10;
-    var mockBlockHeader = new BlockHeaderTestFixture().number(howDeep).buildHeader();
-    var mockCoordinator = terminalAncestorMock(howDeep, true);
-    assertThat(
-            mockCoordinator.ancestorIsValidTerminalProofOfWork(
-                new BlockHeaderTestFixture().number(howDeep).buildHeader()))
-        .isTrue();
-
-    // assert that parent block was cached as descending from TTD
-    assertThat(
-            mockCoordinator.ancestorIsValidTerminalProofOfWork(
-                new BlockHeaderTestFixture()
-                    .number(howDeep + 1)
-                    .parentHash(mockBlockHeader.getHash())
-                    .buildHeader()))
-        .isTrue();
-  }
-
-  @Test
-  public void ancestorNotFoundValidTerminalProofOfWork() {
-    final long howDeep = 10L;
-    assertThat(
-            terminalAncestorMock(howDeep, false)
-                .ancestorIsValidTerminalProofOfWork(
-                    new BlockHeaderTestFixture().number(howDeep).buildHeader()))
-        .isFalse();
-  }
-
-  @Test
-  public void assertNonGenesisTerminalBlockSatisfiesDescendsFromTerminal() {
-
-    var mockConsensusContext = mock(MergeContext.class);
-    when(mockConsensusContext.getTerminalTotalDifficulty()).thenReturn(Difficulty.of(1337L));
-    var mockBlockchain = mock(MutableBlockchain.class);
-    var mockProtocolContext = mock(ProtocolContext.class);
-    when(mockProtocolContext.getBlockchain()).thenReturn(mockBlockchain);
-    when(mockProtocolContext.getConsensusContext(MergeContext.class))
-        .thenReturn(mockConsensusContext);
-
-    var mockHeaderBuilder = new BlockHeaderTestFixture();
-
-    MergeCoordinator mockCoordinator =
-        new MergeCoordinator(
-            mockProtocolContext,
-            protocolSchedule,
-            CompletableFuture::runAsync,
-            transactionPool,
-            new MiningParameters.Builder().coinbase(coinbase).build(),
-            mock(BackwardSyncContext.class),
-            Optional.empty());
-
-    var blockZero = mockHeaderBuilder.number(0L).difficulty(Difficulty.of(1336L)).buildHeader();
-    var blockOne =
-        mockHeaderBuilder
-            .number(1L)
-            .difficulty(Difficulty.ONE)
-            .parentHash(blockZero.getHash())
-            .buildHeader();
-    var blockTwo =
-        mockHeaderBuilder
-            .number(2L)
-            .difficulty(Difficulty.ZERO)
-            .parentHash(blockOne.getHash())
-            .buildHeader();
-    var blockThree = mockHeaderBuilder.number(3L).parentHash(blockTwo.getHash()).buildHeader();
-
-    when(mockBlockchain.getTotalDifficultyByHash(any()))
-        .thenReturn(Optional.of(Difficulty.of(1337L)));
-    when(mockBlockchain.getTotalDifficultyByHash(blockZero.getHash()))
-        .thenReturn(Optional.of(Difficulty.of(1336L)));
-
-    when(mockBlockchain.getBlockHeader(blockOne.getHash())).thenReturn(Optional.of(blockOne));
-    when(mockBlockchain.getBlockHeader(blockTwo.getHash())).thenReturn(Optional.of(blockTwo));
-    when(mockBlockchain.getBlockHeader(blockThree.getHash())).thenReturn(Optional.of(blockThree));
-
-    // assert pre-merge genesis block does not descend from terminal
-    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockZero)).isFalse();
-    assertThat(mockCoordinator.latestDescendsFromTerminal.get()).isNull();
-    // assert TTD merge block (1) descends from terminal returns true
-    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockOne)).isTrue();
-    assertThat(mockCoordinator.latestDescendsFromTerminal.get()).isNull();
-    // assert post-merge block (2) descends from terminal returns true
-    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockTwo)).isTrue();
-    assertThat(mockCoordinator.latestDescendsFromTerminal.get()).isEqualTo(blockTwo);
-    // assert post-merge block (3) descends from terminal returns true
-    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockThree)).isTrue();
-    assertThat(mockCoordinator.latestDescendsFromTerminal.get()).isEqualTo(blockThree);
-  }
-
-  @Test
-  public void assertMergeAtGenesisSatisifiesTerminalPoW() {
-    var mockConsensusContext = mock(MergeContext.class);
-    when(mockConsensusContext.getTerminalTotalDifficulty()).thenReturn(Difficulty.of(1337L));
-    var mockBlockchain = mock(MutableBlockchain.class);
-    when(mockBlockchain.getTotalDifficultyByHash(any(Hash.class)))
-        .thenReturn(Optional.of(Difficulty.of(1337L)));
-    var mockProtocolContext = mock(ProtocolContext.class);
-    when(mockProtocolContext.getBlockchain()).thenReturn(mockBlockchain);
-    when(mockProtocolContext.getConsensusContext(MergeContext.class))
-        .thenReturn(mockConsensusContext);
-
-    var mockHeaderBuilder = new BlockHeaderTestFixture();
-
-    MergeCoordinator mockCoordinator =
-        new MergeCoordinator(
-            mockProtocolContext,
-            protocolSchedule,
-            CompletableFuture::runAsync,
-            transactionPool,
-            new MiningParameters.Builder().coinbase(coinbase).build(),
-            mock(BackwardSyncContext.class),
-            Optional.empty());
-
-    var blockZero = mockHeaderBuilder.number(0L).buildHeader();
-    var blockOne = mockHeaderBuilder.number(1L).parentHash(blockZero.getHash()).buildHeader();
-
-    // assert total difficulty found for block 1 return true if post-merge
-    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockOne)).isTrue();
-    // change mock behavior to not find TTD for block 1 and defer to parent
-    when(mockBlockchain.getTotalDifficultyByHash(blockOne.getBlockHash()))
-        .thenReturn(Optional.empty());
-    // assert total difficulty NOT found for block 1 returns true if parent is post-merge
-    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockOne)).isTrue();
-    // assert true if we send in a merge-at-genesis block
-    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockZero)).isTrue();
-
-    // change mock TTD so that neither block satisfies TTD condition:
-    when(mockConsensusContext.getTerminalTotalDifficulty())
-        .thenReturn(Difficulty.of(UInt256.fromHexString("0xdeadbeef")));
-    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockOne)).isFalse();
-    // assert true if we send in a merge-at-genesis block
-    assertThat(mockCoordinator.latestValidAncestorDescendsFromTerminal(blockZero)).isFalse();
-  }
-
-  @Test
   public void forkchoiceUpdateShouldIgnoreAncestorOfChainHead() {
     BlockHeader terminalHeader = terminalPowBlock();
     sendNewPayloadAndForkchoiceUpdate(
@@ -1136,56 +969,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                 0,
                 15000000l))
         .buildHeader();
-  }
-
-  MergeCoordinator terminalAncestorMock(final long chainDepth, final boolean hasTerminalPoW) {
-    final Difficulty mockTTD = Difficulty.of(1000);
-    BlockHeaderTestFixture builder = new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
-    MutableBlockchain mockBlockchain = mock(MutableBlockchain.class);
-
-    BlockHeader terminal =
-        spy(
-            builder
-                .number(0L)
-                .difficulty(hasTerminalPoW ? mockTTD : Difficulty.ZERO)
-                .buildHeader());
-    when(terminal.getParentHash()).thenReturn(Hash.ZERO);
-
-    // return decreasing numbered blocks:
-    final var invocations = new AtomicLong(chainDepth);
-    when(mockBlockchain.getBlockHeader(any()))
-        .thenAnswer(
-            z ->
-                Optional.of(
-                    (invocations.decrementAndGet() < 1)
-                        ? terminal
-                        : builder
-                            .difficulty(Difficulty.ZERO)
-                            .number(invocations.get())
-                            .buildHeader()));
-
-    // mock total difficulty for isTerminalProofOfWorkBlock invocation:
-    when(mockBlockchain.getTotalDifficultyByHash(any())).thenReturn(Optional.of(Difficulty.ZERO));
-    when(mockBlockchain.getBlockHeader(Hash.ZERO)).thenReturn(Optional.empty());
-
-    var mockContext = mock(MergeContext.class);
-    when(mockContext.getTerminalTotalDifficulty()).thenReturn(mockTTD);
-    ProtocolContext mockProtocolContext = mock(ProtocolContext.class);
-    when(mockProtocolContext.getBlockchain()).thenReturn(mockBlockchain);
-    when(mockProtocolContext.getConsensusContext(any())).thenReturn(mockContext);
-
-    MergeCoordinator mockCoordinator =
-        spy(
-            new MergeCoordinator(
-                mockProtocolContext,
-                protocolSchedule,
-                CompletableFuture::runAsync,
-                transactionPool,
-                new MiningParameters.Builder().coinbase(coinbase).build(),
-                mock(BackwardSyncContext.class),
-                Optional.empty()));
-
-    return mockCoordinator;
   }
 
   private Transaction createTransaction(final long transactionNumber) {

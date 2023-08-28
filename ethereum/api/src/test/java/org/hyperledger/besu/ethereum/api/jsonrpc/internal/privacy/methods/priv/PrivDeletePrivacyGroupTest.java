@@ -33,8 +33,8 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.impl.UserImpl;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PrivDeletePrivacyGroupTest {
   private static final String ENCLAVE_PUBLIC_KEY = "A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=";
@@ -46,7 +46,7 @@ public class PrivDeletePrivacyGroupTest {
   private final PrivacyIdProvider privacyIdProvider = (user) -> ENCLAVE_PUBLIC_KEY;
   private JsonRpcRequestContext request;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     request =
         new JsonRpcRequestContext(

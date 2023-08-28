@@ -22,6 +22,9 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
+import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -38,18 +41,24 @@ import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 
 import java.util.Collections;
 import java.util.Optional;
+import java.util.function.Supplier;
 
+import com.google.common.base.Suppliers;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
-public abstract class AbstractEngineGetPayloadTest {
+@ExtendWith(MockitoExtension.class)
+public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiTest {
+
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  protected static final KeyPair senderKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
 
   @FunctionalInterface
   interface MethodFactory {
@@ -61,14 +70,18 @@ public abstract class AbstractEngineGetPayloadTest {
         final EngineCallListener engineCallListener);
   }
 
-  private final MethodFactory methodFactory;
+  private final Optional<MethodFactory> methodFactory;
   protected AbstractEngineGetPayload method;
 
   public AbstractEngineGetPayloadTest(final MethodFactory methodFactory) {
-    this.methodFactory = methodFactory;
+    this.methodFactory = Optional.of(methodFactory);
   }
 
-  private static final Vertx vertx = Vertx.vertx();
+  public AbstractEngineGetPayloadTest() {
+    this.methodFactory = Optional.empty();
+  }
+
+  protected static final Vertx vertx = Vertx.vertx();
   protected static final BlockResultFactory factory = new BlockResultFactory();
   protected static final PayloadIdentifier mockPid =
       PayloadIdentifier.forPayloadParams(
@@ -77,7 +90,7 @@ public abstract class AbstractEngineGetPayloadTest {
       new BlockHeaderTestFixture().prevRandao(Bytes32.random()).buildHeader();
   private static final Block mockBlock =
       new Block(mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
-  private static final BlockWithReceipts mockBlockWithReceipts =
+  protected static final BlockWithReceipts mockBlockWithReceipts =
       new BlockWithReceipts(mockBlock, Collections.emptyList());
   private static final Block mockBlockWithWithdrawals =
       new Block(
@@ -101,20 +114,25 @@ public abstract class AbstractEngineGetPayloadTest {
   protected static final BlockWithReceipts mockBlockWithReceiptsAndDeposits =
       new BlockWithReceipts(mockBlockWithDeposits, Collections.emptyList());
 
-  @Mock private ProtocolContext protocolContext;
+  @Mock protected ProtocolContext protocolContext;
 
   @Mock protected MergeContext mergeContext;
-  @Mock private MergeMiningCoordinator mergeMiningCoordinator;
+  @Mock protected MergeMiningCoordinator mergeMiningCoordinator;
 
   @Mock protected EngineCallListener engineCallListener;
 
-  @Before
+  @BeforeEach
+  @Override
   public void before() {
+    super.before();
     when(mergeContext.retrieveBlockById(mockPid)).thenReturn(Optional.of(mockBlockWithReceipts));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
-    this.method =
-        methodFactory.create(
-            vertx, protocolContext, mergeMiningCoordinator, factory, engineCallListener);
+    if (methodFactory.isPresent()) {
+      this.method =
+          methodFactory
+              .get()
+              .create(vertx, protocolContext, mergeMiningCoordinator, factory, engineCallListener);
+    }
   }
 
   @Test

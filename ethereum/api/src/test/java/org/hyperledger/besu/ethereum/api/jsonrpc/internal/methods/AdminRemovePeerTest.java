@@ -30,13 +30,13 @@ import org.hyperledger.besu.ethereum.p2p.peers.ImmutableEnodeDnsConfiguration;
 
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.StrictStubs.class)
+@ExtendWith(MockitoExtension.class)
 public class AdminRemovePeerTest {
 
   @Mock private P2PNetwork p2pNetwork;
@@ -69,7 +69,7 @@ public class AdminRemovePeerTest {
       new JsonRpcRequestContext(
           new JsonRpcRequest("2.0", "admin_removePeer", new String[] {validDNSEnode}));
 
-  @Before
+  @BeforeEach
   public void setup() {
     method =
         new AdminRemovePeer(

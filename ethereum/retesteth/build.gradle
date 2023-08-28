@@ -50,10 +50,7 @@ dependencies {
   implementation 'io.tmio:tuweni-bytes'
   implementation 'io.tmio:tuweni-units'
 
-  testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
-
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }

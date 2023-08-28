@@ -13,6 +13,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+configurations {
+  // we need this because referenceTestImplementation defaults to 'canBeResolved=false'.
+  tarConfig.extendsFrom referenceTestImplementation
+  tarConfig {
+    canBeResolved = true
+    canBeConsumed = false
+  }
+}
+
 def blockchainReferenceTests = tasks.register("blockchainReferenceTests")  {
   final referenceTestsPath = 'src/reference-test/external-resources/BlockchainTests'
   final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
@@ -29,13 +38,34 @@ def blockchainReferenceTests = tasks.register("blockchainReferenceTests")  {
     )
 }
 
-configurations {
-  // we need this because referenceTestImplementation defaults to 'canBeResolved=false'.
-  tarConfig.extendsFrom referenceTestImplementation
-  tarConfig {
-    canBeResolved = true
-    canBeConsumed = false
-  }
+def eipBlockchainReferenceTests = tasks.register("eipBlockchainReferenceTests")  {
+  final referenceTestsPath = 'src/reference-test/external-resources/EIPTests/BlockchainTests'
+  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
+  inputs.files fileTree(referenceTestsPath),
+    fileTree(generatedTestsPath)
+  outputs.files generatedTestsPath
+  generateTestFiles(
+    fileTree(referenceTestsPath),
+    file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
+    "EIPTests${File.separatorChar}BlockchainTests",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/eip",
+    "EIPBlockchainReferenceTest",
+    )
+}
+
+def eipStateReferenceTests = tasks.register("eipStateReferenceTests")  {
+  final referenceTestsPath = 'src/reference-test/external-resources/EIPTests/StateTests'
+  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
+  inputs.files fileTree(referenceTestsPath),
+    fileTree(generatedTestsPath)
+  outputs.files generatedTestsPath
+  generateTestFiles(
+    fileTree(referenceTestsPath),
+    file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
+    "EIPTests${File.separatorChar}StateTests",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/eip",
+    "EIPStateReferenceTest",
+    )
 }
 
 def executionSpecTests = tasks.register("executionSpecTests") {
@@ -97,6 +127,8 @@ sourceSets {
       runtimeClasspath += main.output
       srcDirs "src/reference-test/java",
         blockchainReferenceTests,
+        eipBlockchainReferenceTests,
+        eipStateReferenceTests,
         executionSpecTests,
         generalstateReferenceTests,
         generalstateRegressionReferenceTests
@@ -163,7 +195,7 @@ tasks.register('validateReferenceTestSubmodule') {
   description = "Checks that the reference tests submodule is not accidentally changed"
   doLast {
     def result = new ByteArrayOutputStream()
-    def expectedHash = '04f338a6e673a6b4d906ec9d6d2bc939309357a5'
+    def expectedHash = '06e276776bc87817c38f6efb492bf6f4527fa904'
     def submodulePath = java.nio.file.Path.of("${rootProject.projectDir}", "ethereum/referencetests/src/reference-test/external-resources").toAbsolutePath()
     try {
       exec {
@@ -189,9 +221,10 @@ Full git output : ${result}
 If this is accidental you can correct the reference test versions with the 
 following commands:
     pushd ${submodulePath}
+    git fetch
     git checkout ${expectedHash}
     cd ..
-    git add resources
+    git add ${submodulePath}
     popd""")
     }
   }

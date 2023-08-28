@@ -64,15 +64,15 @@ import io.vertx.core.dns.DnsClient;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.crypto.SECP256K1;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.StrictStubs.class)
+@ExtendWith(MockitoExtension.class)
 public final class DefaultP2PNetworkTest {
   final MaintainedPeers maintainedPeers = new MaintainedPeers();
   final SECP256K1.SecretKey mockKey =
@@ -92,7 +92,7 @@ public final class DefaultP2PNetworkTest {
                   .setBindPort(0)
                   .setSupportedProtocols(MockSubProtocol.create()));
 
-  @Before
+  @BeforeEach
   public void before() {
     lenient().when(rlpxAgent.start()).thenReturn(CompletableFuture.completedFuture(30303));
     lenient().when(rlpxAgent.stop()).thenReturn(CompletableFuture.completedFuture(null));

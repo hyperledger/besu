@@ -27,13 +27,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivUn
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class PrivUninstallFilterTest {
 
   private final String FILTER_ID = "0xdbdb02abb65a2ba57a1cc0336c17ef75";
@@ -45,7 +45,7 @@ public class PrivUninstallFilterTest {
 
   private PrivUninstallFilter method;
 
-  @Before
+  @BeforeEach
   public void before() {
     method = new PrivUninstallFilter(filterManager, privacyController, privacyIdProvider);
   }

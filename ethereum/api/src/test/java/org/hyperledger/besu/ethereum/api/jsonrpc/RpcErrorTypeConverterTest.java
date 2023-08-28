@@ -22,16 +22,11 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class RpcErrorTypeConverterTest {
 
-  @Parameters
   public static Collection<Object[]> expectedErrorMapping() {
     return Arrays.asList(
         new Object[][] {
@@ -77,14 +72,10 @@ public class RpcErrorTypeConverterTest {
         });
   }
 
-  @Parameter(0)
-  public TransactionInvalidReason txInvalidReason;
-
-  @Parameter(1)
-  public RpcErrorType expectedJsonRpcError;
-
-  @Test
-  public void expectedTransactionValidationToJsonRpcErrorConversion() {
+  @ParameterizedTest
+  @MethodSource("expectedErrorMapping")
+  public void expectedTransactionValidationToJsonRpcErrorConversion(
+      final TransactionInvalidReason txInvalidReason, final RpcErrorType expectedJsonRpcError) {
     assertThat(JsonRpcErrorConverter.convertTransactionInvalidReason(txInvalidReason))
         .isEqualTo(expectedJsonRpcError);
   }
