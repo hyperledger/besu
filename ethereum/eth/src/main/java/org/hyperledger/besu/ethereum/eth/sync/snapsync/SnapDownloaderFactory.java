@@ -36,12 +36,9 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class SnapDownloaderFactory extends FastDownloaderFactory {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SnapDownloaderFactory.class);
+  // private static final Logger LOG = LoggerFactory.getLogger(SnapDownloaderFactory.class);
 
   public static Optional<FastSyncDownloader<?>> createSnapDownloader(
       final SnapSyncStatePersistenceManager snapContext,
