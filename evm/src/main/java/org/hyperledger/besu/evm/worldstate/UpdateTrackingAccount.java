@@ -37,7 +37,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /**
- * A implementation of {@link MutableAccount} that tracks updates made to the account since the
+ * An implementation of {@link MutableAccount} that tracks updates made to the account since the
  * creation of the updater this is linked to.
  *
  * <p>Note that in practice this only track the modified value of the nonce and balance, but doesn't
@@ -57,9 +57,11 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   private Wei balance;
 
   @Nullable private Bytes updatedCode; // Null if the underlying code has not been updated.
+  private final Bytes oldCode;
   @Nullable private Hash updatedCodeHash;
+  private final Hash oldCodeHash;
 
-  // Only contains updated storage entries, but may contains entry with a value of 0 to signify
+  // Only contains updated storage entries, but may contain entry with a value of 0 to signify
   // deletion.
   private final NavigableMap<UInt256, UInt256> updatedStorage;
   private boolean storageWasCleared = false;
@@ -80,6 +82,8 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
     this.balance = Wei.ZERO;
 
     this.updatedCode = Bytes.EMPTY;
+    this.oldCode = Bytes.EMPTY;
+    this.oldCodeHash = Hash.EMPTY;
     this.updatedStorage = new TreeMap<>();
   }
 
@@ -100,6 +104,9 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
 
     this.nonce = account.getNonce();
     this.balance = account.getBalance();
+
+    this.oldCode = account.getCode();
+    this.oldCodeHash = account.getCodeHash();
 
     this.updatedStorage = new TreeMap<>();
   }
@@ -181,14 +188,14 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   @Override
   public Bytes getCode() {
     // Note that we set code for new account, so it's only null if account isn't.
-    return updatedCode == null ? account.getCode() : updatedCode;
+    return updatedCode == null ? oldCode : updatedCode;
   }
 
   @Override
   public Hash getCodeHash() {
     if (updatedCode == null) {
       // Note that we set code for new account, so it's only null if account isn't.
-      return account.getCodeHash();
+      return oldCodeHash;
     } else {
       // Cache the hash of updated code to avoid DOS attacks which repeatedly request hash
       // of updated code and cause us to regenerate it.
@@ -202,7 +209,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
   @Override
   public boolean hasCode() {
     // Note that we set code for new account, so it's only null if account isn't.
-    return updatedCode == null ? account.hasCode() : !updatedCode.isEmpty();
+    return updatedCode == null ? !oldCode.isEmpty() : !updatedCode.isEmpty();
   }
 
   @Override
@@ -226,7 +233,7 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
       return UInt256.ZERO;
     }
 
-    // We haven't updated the key-value yet, so either it's a new account and it doesn't have the
+    // We haven't updated the key-value yet, so either it's a new account, and it doesn't have the
     // key, or we should query the underlying storage for its existing value (which might be 0).
     return account == null ? UInt256.ZERO : account.getStorageValue(key);
   }
