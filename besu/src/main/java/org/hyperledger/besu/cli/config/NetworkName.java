@@ -27,6 +27,9 @@ public enum NetworkName {
   SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111)),
   /** Goerli network name. */
   GOERLI("/goerli.json", BigInteger.valueOf(5)),
+  /** Holešky network name. */
+  HOLESKY("/holesky.json", BigInteger.valueOf(17000)),
+
   /** Dev network name. */
   DEV("/dev.json", BigInteger.valueOf(2018), false),
   /** Future EIPs network name. */
