@@ -69,7 +69,7 @@ public interface BonsaiPreImageProxy extends WorldStatePreimageStorage {
     BiMap<Hash, Bytes> preImageCache = HashBiMap.create();
 
     @Override
-    public Hash hashAndSavePreImage(final Bytes value) {
+    public synchronized Hash hashAndSavePreImage(final Bytes value) {
       return preImageCache.inverse().computeIfAbsent(value, Hash::hash);
     }
 

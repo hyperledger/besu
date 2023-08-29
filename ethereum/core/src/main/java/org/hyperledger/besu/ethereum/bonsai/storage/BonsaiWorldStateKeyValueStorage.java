@@ -295,7 +295,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   public Stream<WorldState.StreamableAccount> streamAccounts(
       final BonsaiWorldView context, final Bytes32 startKeyHash, final int limit) {
-    return streamFlatAccounts(startKeyHash, BYTES32_MAX_VALUE, Long.MAX_VALUE)
+    return streamFlatAccounts(startKeyHash, BYTES32_MAX_VALUE, limit)
         .entrySet()
         // map back to addresses using preImage provider:
         .stream()
