@@ -68,7 +68,7 @@ public class LoadLocalDataStep {
         request.persist(
             worldStateStorage, updater, downloadState, snapSyncState, snapSyncConfiguration);
         updater.commit();
-        downloadState.enqueueRequests(request.getRootStorageRequests(worldStateStorage));
+        downloadState.enqueueRequests(request.fetchAllAccountsToHealInPath(worldStateStorage));
         completedTasks.put(task);
         return Stream.empty();
       }

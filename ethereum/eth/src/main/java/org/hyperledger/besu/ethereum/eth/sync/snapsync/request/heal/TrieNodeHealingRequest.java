@@ -173,7 +173,8 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
   protected abstract SnapDataRequest createChildNodeDataRequest(
       final Hash childHash, final Bytes location);
 
-  public Stream<SnapDataRequest> getRootStorageRequests(final WorldStateStorage worldStateStorage) {
+  public Stream<SnapDataRequest> fetchAllAccountsToHealInPath(
+      final WorldStateStorage worldStateStorage) {
     return Stream.empty();
   }
 

@@ -77,10 +77,10 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
   @Override
   protected SnapDataRequest createChildNodeDataRequest(final Hash childHash, final Bytes location) {
     return createAccountTrieNodeDataRequest(
-        childHash, getRootHash(), location, getSubLocation(location));
+        childHash, getRootHash(), location, filterAccountsByLocation(location));
   }
 
-  private HashSet<Bytes> getSubLocation(final Bytes location) {
+  private HashSet<Bytes> filterAccountsByLocation(final Bytes location) {
     final HashSet<Bytes> foundAccountsToHeal = new HashSet<>();
     for (Bytes account : inconsistentAccounts) {
       if (account.commonPrefixLength(location) == location.size()) {
@@ -91,7 +91,8 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
   }
 
   @Override
-  public Stream<SnapDataRequest> getRootStorageRequests(final WorldStateStorage worldStateStorage) {
+  public Stream<SnapDataRequest> fetchAllAccountsToHealInPath(
+      final WorldStateStorage worldStateStorage) {
     final List<SnapDataRequest> requests = new ArrayList<>();
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         new StoredMerklePatriciaTrie<>(

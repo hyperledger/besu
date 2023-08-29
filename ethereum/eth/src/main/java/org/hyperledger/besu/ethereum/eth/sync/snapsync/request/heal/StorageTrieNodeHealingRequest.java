@@ -73,8 +73,9 @@ public class StorageTrieNodeHealingRequest extends TrieNodeHealingRequest {
       return storageTrieNode
           .filter(node -> Hash.hash(node).equals(getNodeHash()))
           .or(
-              () -> { // if we have a storage in database but not the good one we will need to fix
-                // the account later
+              () -> {
+                // Compare the saved node with the desired node. If they are not the same, a healing
+                // process will be initiated later.
                 downloadState.addAccountsToBeRepaired(
                     CompactEncoding.bytesToPath(getAccountHash()));
                 return Optional.empty();

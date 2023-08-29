@@ -192,7 +192,7 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
               removedAccounts.remove(key);
             } else {
               final Hash accountHash = Hash.wrap(key);
-              // if the account was missing in the flat db we need to heal the storage
+              // if the account was missing or invalid in the flat db we need to heal the storage
               downloadState.addAccountsToBeRepaired(CompactEncoding.bytesToPath(accountHash));
               bonsaiUpdater.putAccountInfoState(accountHash, value);
             }
