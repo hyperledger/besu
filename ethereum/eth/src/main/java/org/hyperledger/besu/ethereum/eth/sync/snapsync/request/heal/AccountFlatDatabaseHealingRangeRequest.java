@@ -187,7 +187,8 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       // doing the fix
       existingAccounts.forEach(
           (key, value) -> {
-            if (removedAccounts.containsKey(key)) {
+            final Bytes accountValue = removedAccounts.get(key);
+            if (accountValue != null && accountValue.equals(value)) {
               removedAccounts.remove(key);
             } else {
               final Hash accountHash = Hash.wrap(key);
