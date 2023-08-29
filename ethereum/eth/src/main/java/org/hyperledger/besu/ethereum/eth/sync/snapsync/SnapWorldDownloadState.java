@@ -164,6 +164,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         && pendingTrieNodeRequests.allTasksCompleted()
         && pendingAccountFlatDatabaseHealingRequests.allTasksCompleted()
         && pendingStorageFlatDatabaseHealingRequests.allTasksCompleted()) {
+      System.out.println("all task completed");
       if (!snapSyncState.isHealTrieInProgress()) {
         startTrieHeal();
       } else if (pivotBlockSelector.isBlockchainBehind()) {
