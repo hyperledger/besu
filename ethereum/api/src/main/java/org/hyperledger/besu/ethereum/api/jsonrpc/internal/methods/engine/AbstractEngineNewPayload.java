@@ -66,7 +66,6 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -482,20 +481,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
    * @param requestContext the JSON-RPC request context
    * @return a new instance of EngineNewPayloadRequestParameter
    */
-  public EngineNewPayloadRequestParameter getEngineNewPayloadRequestParams(
-      final JsonRpcRequestContext requestContext) {
-
-    final EngineExecutionPayloadParameter payload =
-        requestContext.getRequiredParameter(0, EngineExecutionPayloadParameter.class);
-    final String[] versionedHashes = requestContext.getRequiredParameter(1, String[].class);
-
-    final String parentBeaconBlockRoot = requestContext.getRequiredParameter(2, String.class);
-
-    return new EngineNewPayloadRequestParameter(
-        payload,
-        Optional.of(Arrays.stream(versionedHashes).toList()),
-        Optional.of(parentBeaconBlockRoot));
-  }
+  public abstract EngineNewPayloadRequestParameter getEngineNewPayloadRequestParams(
+      final JsonRpcRequestContext requestContext);
 
   private void logImportedBlockInfo(final Block block, final double timeInS) {
     final StringBuilder message = new StringBuilder();

@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineExecutionPayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineNewPayloadRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -24,6 +26,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
@@ -47,6 +50,27 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
   @Override
   public String getName() {
     return RpcMethod.ENGINE_NEW_PAYLOAD_V3.getMethodName();
+  }
+
+  /**
+   * Retrieves the new payload request parameters from the given JSON-RPC request context.
+   *
+   * @param requestContext the JSON-RPC request context
+   * @return a new instance of EngineNewPayloadRequestParameter
+   */
+  public EngineNewPayloadRequestParameter getEngineNewPayloadRequestParams(
+      final JsonRpcRequestContext requestContext) {
+
+    final EngineExecutionPayloadParameter payload =
+        requestContext.getRequiredParameter(0, EngineExecutionPayloadParameter.class);
+    final String[] versionedHashes = requestContext.getRequiredParameter(1, String[].class);
+
+    final String parentBeaconBlockRoot = requestContext.getRequiredParameter(2, String.class);
+
+    return new EngineNewPayloadRequestParameter(
+        payload,
+        Optional.of(Arrays.stream(versionedHashes).toList()),
+        Optional.of(parentBeaconBlockRoot));
   }
 
   @Override
