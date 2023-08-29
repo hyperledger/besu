@@ -32,9 +32,11 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineExecutionPayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineNewPayloadRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -64,6 +66,7 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -99,26 +102,25 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
     engineCallListener.executionEngineCalled();
-
-    final EnginePayloadParameter blockParam =
-        requestContext.getRequiredParameter(0, EnginePayloadParameter.class);
-
-    final Optional<List<String>> maybeVersionedHashParam =
-        requestContext.getOptionalList(1, String.class);
-
     final Object reqId = requestContext.getRequest().getId();
 
-    Optional<String> maybeParentBeaconBlockRootParam =
-        requestContext.getOptionalParameter(2, String.class);
-    final Optional<Bytes32> maybeParentBeaconBlockRoot =
-        maybeParentBeaconBlockRootParam.map(Bytes32::fromHexString);
+    EngineNewPayloadRequestParameter requestParameters;
+    try {
+      requestParameters = getEngineNewPayloadRequestParams(requestContext);
+    } catch (InvalidJsonRpcParameters exception) {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(),
+          new JsonRpcError(INVALID_PARAMS, exception.getMessage()));
+    }
 
     final ValidationResult<RpcErrorType> parameterValidationResult =
-        validateParameters(blockParam, maybeVersionedHashParam, maybeParentBeaconBlockRootParam);
+        validateParameters(requestParameters);
+
     if (!parameterValidationResult.isValid()) {
       return new JsonRpcErrorResponse(reqId, parameterValidationResult);
     }
 
+    EngineExecutionPayloadParameter blockParam = requestParameters.getExecutionPayload();
     final ValidationResult<RpcErrorType> forkValidationResult =
         validateForkSupported(blockParam.getTimestamp());
     if (!forkValidationResult.isValid()) {
@@ -127,7 +129,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     final Optional<List<VersionedHash>> maybeVersionedHashes;
     try {
-      maybeVersionedHashes = extractVersionedHashes(maybeVersionedHashParam);
+      maybeVersionedHashes =
+          extractVersionedHashes(requestParameters.getExpectedBlobVersionedHashes());
     } catch (RuntimeException ex) {
       return respondWithInvalid(reqId, blockParam, null, INVALID, "Invalid versionedHash");
     }
@@ -213,7 +216,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             blockParam.getExcessBlobGas() == null
                 ? null
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
-            maybeParentBeaconBlockRoot.orElse(null),
+            requestParameters.getParentBeaconBlockRoot().map(Bytes32::fromHexString).orElse(null),
             maybeDeposits.map(BodyValidation::depositsRoot).orElse(null),
             headerFunctions);
 
@@ -318,7 +321,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
   JsonRpcResponse respondWith(
       final Object requestId,
-      final EnginePayloadParameter param,
+      final EngineExecutionPayloadParameter param,
       final Hash latestValidHash,
       final EngineStatus status) {
     if (INVALID.equals(status) || INVALID_BLOCK_HASH.equals(status)) {
@@ -343,7 +346,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
   JsonRpcResponse respondWithInvalid(
       final Object requestId,
-      final EnginePayloadParameter param,
+      final EngineExecutionPayloadParameter param,
       final Hash latestValidHash,
       final EngineStatus invalidStatus,
       final String validationError) {
@@ -382,9 +385,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   }
 
   protected ValidationResult<RpcErrorType> validateParameters(
-      final EnginePayloadParameter parameter,
-      final Optional<List<String>> maybeVersionedHashParam,
-      final Optional<String> maybeBeaconBlockRootParam) {
+      final EngineNewPayloadRequestParameter params) {
     return ValidationResult.valid();
   }
 
@@ -473,6 +474,27 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                       }
                     })
                 .collect(Collectors.toList()));
+  }
+
+  /**
+   * Retrieves the new payload request parameters from the given JSON-RPC request context.
+   *
+   * @param requestContext the JSON-RPC request context
+   * @return a new instance of EngineNewPayloadRequestParameter
+   */
+  public EngineNewPayloadRequestParameter getEngineNewPayloadRequestParams(
+      final JsonRpcRequestContext requestContext) {
+
+    final EngineExecutionPayloadParameter payload =
+        requestContext.getRequiredParameter(0, EngineExecutionPayloadParameter.class);
+    final String[] versionedHashes = requestContext.getRequiredParameter(1, String[].class);
+
+    final String parentBeaconBlockRoot = requestContext.getRequiredParameter(2, String.class);
+
+    return new EngineNewPayloadRequestParameter(
+        payload,
+        Optional.of(Arrays.stream(versionedHashes).toList()),
+        Optional.of(parentBeaconBlockRoot));
   }
 
   private void logImportedBlockInfo(final Block block, final double timeInS) {

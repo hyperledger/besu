@@ -18,7 +18,9 @@ import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineExecutionPayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineNewPayloadRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -51,18 +53,23 @@ public class EngineNewPayloadV2 extends AbstractEngineNewPayload {
 
   @Override
   protected ValidationResult<RpcErrorType> validateParameters(
-      final EnginePayloadParameter payloadParameter,
-      final Optional<List<String>> maybeVersionedHashParam,
-      final Optional<String> maybeBeaconBlockRootParam) {
-    if (payloadParameter.getBlobGasUsed() != null) {
+      final EngineNewPayloadRequestParameter params) {
+    if (params.getExecutionPayload().getBlobGasUsed() != null) {
       return ValidationResult.invalid(
           RpcErrorType.INVALID_PARAMS, "non-null BlobGasUsed pre-cancun");
     }
-    if (payloadParameter.getExcessBlobGas() != null) {
+    if (params.getExecutionPayload().getExcessBlobGas() != null) {
       return ValidationResult.invalid(
           RpcErrorType.INVALID_PARAMS, "non-null ExcessBlobGas pre-cancun");
     }
     return ValidationResult.valid();
+  }
+
+  @Override
+  public EngineNewPayloadRequestParameter getEngineNewPayloadRequestParams(
+      final JsonRpcRequestContext requestContext) {
+    return new EngineNewPayloadRequestParameter(
+        requestContext.getRequiredParameter(0, EngineExecutionPayloadParameter.class));
   }
 
   @Override

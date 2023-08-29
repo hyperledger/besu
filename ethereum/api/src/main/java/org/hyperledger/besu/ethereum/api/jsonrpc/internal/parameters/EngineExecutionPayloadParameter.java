@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class EnginePayloadParameter {
+public class EngineExecutionPayloadParameter {
   private final Hash blockHash;
   private final Hash parentHash;
   private final Address feeRecipient;
@@ -68,7 +68,7 @@ public class EnginePayloadParameter {
    * @param deposits List of deposit parameters.
    */
   @JsonCreator
-  public EnginePayloadParameter(
+  public EngineExecutionPayloadParameter(
       @JsonProperty("blockHash") final Hash blockHash,
       @JsonProperty("parentHash") final Hash parentHash,
       @JsonProperty("feeRecipient") final Address feeRecipient,

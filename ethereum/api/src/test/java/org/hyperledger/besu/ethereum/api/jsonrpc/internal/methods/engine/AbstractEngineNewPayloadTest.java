@@ -40,7 +40,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineExecutionPayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -389,7 +389,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
     assertValidResponse(mockHeader, resp);
   }
 
-  protected JsonRpcResponse resp(final EnginePayloadParameter payload) {
+  protected JsonRpcResponse resp(final EngineExecutionPayloadParameter payload) {
     Object[] params =
         maybeParentBeaconBlockRoot
             .map(bytes32 -> new Object[] {payload, null, bytes32.toHexString()})
@@ -398,17 +398,17 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", this.method.getName(), params)));
   }
 
-  protected EnginePayloadParameter mockEnginePayload(
+  protected EngineExecutionPayloadParameter mockEnginePayload(
       final BlockHeader header, final List<String> txs) {
     return mockEnginePayload(header, txs, null, null);
   }
 
-  protected EnginePayloadParameter mockEnginePayload(
+  protected EngineExecutionPayloadParameter mockEnginePayload(
       final BlockHeader header,
       final List<String> txs,
       final List<WithdrawalParameter> withdrawals,
       final List<DepositParameter> deposits) {
-    return new EnginePayloadParameter(
+    return new EngineExecutionPayloadParameter(
         header.getHash(),
         header.getParentHash(),
         header.getCoinbase(),

@@ -17,14 +17,13 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineNewPayloadRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
-import java.util.List;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
@@ -52,20 +51,12 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
 
   @Override
   protected ValidationResult<RpcErrorType> validateParameters(
-      final EnginePayloadParameter payloadParameter,
-      final Optional<List<String>> maybeVersionedHashParam,
-      final Optional<String> maybeBeaconBlockRootParam) {
-    if (payloadParameter.getBlobGasUsed() == null || payloadParameter.getExcessBlobGas() == null) {
+      final EngineNewPayloadRequestParameter params) {
+    if (params.getExecutionPayload().getBlobGasUsed() == null
+        || params.getExecutionPayload().getExcessBlobGas() == null) {
       return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing blob gas fields");
-    } else if (maybeVersionedHashParam == null) {
-      return ValidationResult.invalid(
-          RpcErrorType.INVALID_PARAMS, "Missing versioned hashes field");
-    } else if (maybeBeaconBlockRootParam.isEmpty()) {
-      return ValidationResult.invalid(
-          RpcErrorType.INVALID_PARAMS, "Missing parent beacon block root field");
-    } else {
-      return ValidationResult.valid();
     }
+    return ValidationResult.valid();
   }
 
   @Override
