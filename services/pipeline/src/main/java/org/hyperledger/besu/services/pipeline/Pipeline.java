@@ -16,12 +16,14 @@ package org.hyperledger.besu.services.pipeline;
 
 import static java.util.stream.Collectors.toList;
 
+import org.hyperledger.besu.services.pipeline.exception.AsyncOperationException;
 import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -169,7 +171,13 @@ public class Pipeline<I> {
             if (tracingEnabled) {
               taskSpan.setStatus(StatusCode.ERROR);
             }
-            LOG.debug("Unhandled exception in pipeline. Aborting.", t);
+            if (t instanceof CompletionException
+                || t instanceof CancellationException
+                || t instanceof AsyncOperationException) {
+              LOG.debug("Unhandled exception in pipeline. Aborting.", t);
+            } else {
+              LOG.info("Unexpected exception in pipeline. Aborting.", t);
+            }
             try {
               abort(t);
             } catch (final Throwable t2) {
