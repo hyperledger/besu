@@ -58,6 +58,7 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
    * @param requestContext the JSON-RPC request context
    * @return a new instance of EngineNewPayloadRequestParameter
    */
+  @Override
   public EngineNewPayloadRequestParameter getEngineNewPayloadRequestParams(
       final JsonRpcRequestContext requestContext) {
 
