@@ -44,7 +44,7 @@ public class TransactionDecoder {
 
   @FunctionalInterface
   interface Decoder {
-    Transaction decode(RLPInput input);
+    Transaction decode(RLPInput input, final DecodeType decodeType);
   }
 
   private static final ImmutableMap<TransactionType, Decoder> TYPED_TRANSACTION_DECODERS =
@@ -60,24 +60,30 @@ public class TransactionDecoder {
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   public static Transaction decodeForWire(final RLPInput rlpInput) {
+    // Call the original decodeForWire method with the default options.
+    return decodeForWire(rlpInput, DecodeType.DEFAULT);
+  }
+
+  public static Transaction decodeForWire(final RLPInput rlpInput, final DecodeType decodeType) {
     if (rlpInput.nextIsList()) {
       return decodeFrontier(rlpInput);
     } else {
       final Bytes typedTransactionBytes = rlpInput.readBytes();
       final TransactionType transactionType =
           TransactionType.of(typedTransactionBytes.get(0) & 0xff);
-      return getDecoder(transactionType).decode(RLP.input(typedTransactionBytes.slice(1)));
+      return getDecoder(transactionType)
+          .decode(RLP.input(typedTransactionBytes.slice(1)), decodeType);
     }
   }
 
-  public static Transaction decodeOpaqueBytes(final Bytes input) {
+  public static Transaction decodeOpaqueBytes(final Bytes input, final DecodeType decodeType) {
     final TransactionType transactionType;
     try {
       transactionType = TransactionType.of(input.get(0));
     } catch (final IllegalArgumentException __) {
-      return decodeForWire(RLP.input(input));
+      return decodeForWire(RLP.input(input), decodeType);
     }
-    return getDecoder(transactionType).decode(RLP.input(input.slice(1)));
+    return getDecoder(transactionType).decode(RLP.input(input.slice(1)), decodeType);
   }
 
   private static Decoder getDecoder(final TransactionType transactionType) {
@@ -121,7 +127,8 @@ public class TransactionDecoder {
     return builder.signature(signature).build();
   }
 
-  private static Transaction decodeAccessList(final RLPInput rlpInput) {
+  private static Transaction decodeAccessList(
+      final RLPInput rlpInput, final DecodeType decodeType) {
     rlpInput.enterList();
     final Transaction.Builder preSignatureTransactionBuilder =
         Transaction.builder()
@@ -161,7 +168,7 @@ public class TransactionDecoder {
     return transaction;
   }
 
-  static Transaction decodeEIP1559(final RLPInput input) {
+  static Transaction decodeEIP1559(final RLPInput input, final DecodeType decodeType) {
     input.enterList();
     final BigInteger chainId = input.readBigIntegerScalar();
     final Transaction.Builder builder =
@@ -199,5 +206,10 @@ public class TransactionDecoder {
             .build();
     input.leaveList();
     return transaction;
+  }
+
+  public enum DecodeType {
+    DEFAULT,
+    NETWORK
   }
 }

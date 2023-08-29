@@ -25,6 +25,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder.DecodeType;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.List;
@@ -36,12 +37,10 @@ public class BlobTransactionDecoder {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
-  static Transaction decode(final RLPInput input) {
+  static Transaction decode(final RLPInput input, final DecodeType decodeType) {
     Transaction transaction;
-
     input.enterList();
-    // BlobTransactionNetworkWrapper
-    if (input.nextIsList()) {
+    if (decodeType == DecodeType.NETWORK) {
       transaction = readNetworkWrapperInner(input);
     } else {
       transaction = readTransactionPayload(input);

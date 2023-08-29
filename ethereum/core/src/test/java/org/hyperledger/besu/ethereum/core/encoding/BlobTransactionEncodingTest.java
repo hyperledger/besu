@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder.DecodeType;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
@@ -55,7 +56,8 @@ public class BlobTransactionEncodingTest {
       final TypedTransactionBytesArgument argument) {
     Bytes bytes = argument.bytes;
     // Decode the transaction from the wire using the TransactionDecoder.
-    final Transaction transaction = TransactionDecoder.decodeForWire(RLP.input(bytes));
+    final Transaction transaction =
+        TransactionDecoder.decodeForWire(RLP.input(bytes), DecodeType.NETWORK);
 
     final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
     BlobTransactionEncoder.encodeForWireNetwork(transaction, bytesValueRLPOutput);
