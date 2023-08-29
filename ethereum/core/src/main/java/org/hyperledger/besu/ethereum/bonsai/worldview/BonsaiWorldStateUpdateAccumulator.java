@@ -297,6 +297,19 @@ public class BonsaiWorldStateUpdateAccumulator
               final BonsaiAccount updatedAccount;
               final BonsaiValue<BonsaiAccount> updatedAccountValue =
                   accountsToUpdate.get(updatedAddress);
+
+              final Map<StorageSlotKey, BonsaiValue<UInt256>> pendingStorageUpdates =
+                  storageToUpdate.computeIfAbsent(
+                      updatedAddress,
+                      k ->
+                          new StorageConsumingMap<>(
+                              updatedAddress, new ConcurrentHashMap<>(), storagePreloader));
+
+              if (tracked.getStorageWasCleared()) {
+                storageToClear.add(updatedAddress);
+                pendingStorageUpdates.clear();
+              }
+
               if (tracked.getWrappedAccount() == null) {
                 updatedAccount = new BonsaiAccount(this, tracked);
                 tracked.setWrappedAccount(updatedAccount);
@@ -316,6 +329,17 @@ public class BonsaiWorldStateUpdateAccumulator
                 }
                 if (tracked.getStorageWasCleared()) {
                   updatedAccount.clearStorage();
+                  wrappedWorldView()
+                      .getAllAccountStorage(updatedAddress, updatedAccount.getStorageRoot())
+                      .forEach(
+                          (keyHash, entryValue) -> {
+                            final StorageSlotKey storageSlotKey =
+                                new StorageSlotKey(Hash.wrap(keyHash), Optional.empty());
+                            final UInt256 value = UInt256.fromBytes(RLP.decodeOne(entryValue));
+                            pendingStorageUpdates.put(
+                                storageSlotKey, new BonsaiValue<>(value, null, true));
+                          });
+                  updatedAccount.setStorageRoot(Hash.EMPTY_TRIE_HASH);
                 }
                 tracked.getUpdatedStorage().forEach(updatedAccount::setStorageValue);
               }
@@ -342,19 +366,6 @@ public class BonsaiWorldStateUpdateAccumulator
               // self-destruct beneficiaries
               if (updatedAccount.getUpdatedStorage().isEmpty()) {
                 return;
-              }
-
-              final StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>
-                  pendingStorageUpdates =
-                      storageToUpdate.computeIfAbsent(
-                          updatedAddress,
-                          __ ->
-                              new StorageConsumingMap<>(
-                                  updatedAddress, new ConcurrentHashMap<>(), storagePreloader));
-
-              if (tracked.getStorageWasCleared()) {
-                storageToClear.add(updatedAddress);
-                pendingStorageUpdates.clear();
               }
 
               final TreeSet<Map.Entry<UInt256, UInt256>> entries =
