@@ -158,7 +158,7 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
             fastSyncStateStorage,
             snapTaskCollection,
             fastSyncDataDirectory,
-            snapSyncState);
+            FastSyncState.EMPTY_SYNC_STATE);
     syncState.setWorldStateDownloadStatus(snapWorldStateDownloader);
     return Optional.of(fastSyncDownloader);
   }

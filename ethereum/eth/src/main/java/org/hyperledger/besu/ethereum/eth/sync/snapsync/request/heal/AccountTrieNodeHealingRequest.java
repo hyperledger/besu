@@ -17,15 +17,14 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountTrieNodeDataRequest;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
@@ -103,25 +102,31 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
             Function.identity(),
             Function.identity());
     for (Bytes account : inconsistentAccounts) {
-      final Bytes32 accountHash = Bytes32.wrap(CompactEncoding.pathToBytes(account));
-      accountTrie
-          .getPath(
-              Bytes.wrap(
-                  account.toArrayUnsafe(),
-                  getLocation().size(),
-                  account.size() - getLocation().size()))
-          .map(RLP::input)
-          .map(StateTrieAccountValue::readFrom)
-          .ifPresent(
-              stateTrieAccountValue -> {
-                // an account need a heal step
-                requests.add(
-                    createStorageTrieNodeDataRequest(
-                        stateTrieAccountValue.getStorageRoot(),
-                        Hash.wrap(accountHash),
-                        getRootHash(),
-                        Bytes.EMPTY));
-              });
+      try {
+        final Bytes32 accountHash = Bytes32.wrap(CompactEncoding.pathToBytes(account));
+        accountTrie
+            .getPath(
+                Bytes.wrap(
+                    account.toArrayUnsafe(),
+                    getLocation().size(),
+                    account.size() - getLocation().size()))
+            .map(RLP::input)
+            .map(StateTrieAccountValue::readFrom)
+            .ifPresent(
+                stateTrieAccountValue -> {
+                  // an account need a heal step
+                  requests.add(
+                      createStorageTrieNodeDataRequest(
+                          stateTrieAccountValue.getStorageRoot(),
+                          Hash.wrap(accountHash),
+                          getRootHash(),
+                          Bytes.EMPTY));
+                });
+      } catch (Throwable e) {
+        System.out.println("......" + account + " " + getLocation() + " " + data + " ");
+
+        throw e;
+      }
     }
     return requests.stream();
   }
@@ -140,23 +145,18 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
         Hash.wrap(
             Bytes32.wrap(CompactEncoding.pathToBytes(Bytes.concatenate(getLocation(), path))));
 
-    // update the flat db only for bonsai
-    if (!worldStateStorage.getFlatDbMode().equals(FlatDbMode.NO_FLATTENED)) {
-      ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
-          .putAccountInfoState(accountHash, value)
-          .commit();
-    }
-
     // Add code, if appropriate
     if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
       builder.add(createBytecodeRequest(accountHash, getRootHash(), accountValue.getCodeHash()));
     }
     // Add storage, if appropriate
-    // If we detect an account storage we fill it with snapsync before completing with a heal
-    final SnapDataRequest storageTrieRequest =
-        createStorageTrieNodeDataRequest(
-            accountValue.getStorageRoot(), accountHash, getRootHash(), Bytes.EMPTY);
-    builder.add(storageTrieRequest);
+    if (!accountValue.getStorageRoot().equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
+      // If we detect an account storage we fill it with snapsync before completing with a heal
+      final SnapDataRequest storageTrieRequest =
+          createStorageTrieNodeDataRequest(
+              accountValue.getStorageRoot(), accountHash, getRootHash(), Bytes.EMPTY);
+      builder.add(storageTrieRequest);
+    }
 
     return builder.build();
   }

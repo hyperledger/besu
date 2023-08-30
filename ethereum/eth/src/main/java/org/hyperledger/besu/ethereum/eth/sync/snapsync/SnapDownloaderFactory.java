@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -40,12 +39,7 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class SnapDownloaderFactory extends FastDownloaderFactory {
-
-  private static final Logger LOG = LoggerFactory.getLogger(SnapDownloaderFactory.class);
 
   public static Optional<FastSyncDownloader<?>> createSnapDownloader(
       final SnapSyncStatePersistenceManager snapContext,
@@ -75,8 +69,6 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
 
     ensureDirectoryExists(fastSyncDataDirectory.toFile());
 
-    final FastSyncState fastSyncState =
-        fastSyncStateStorage.loadState(ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
     if (syncState.isResyncNeeded()) {
       snapContext.clear();
       syncState
@@ -85,18 +77,10 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
               address ->
                   snapContext.addAccountsToBeRepaired(
                       CompactEncoding.bytesToPath(address.addressHash())));
-    } else if (fastSyncState.getPivotBlockHeader().isEmpty()
-        && protocolContext.getBlockchain().getChainHeadBlockNumber()
-            != BlockHeader.GENESIS_BLOCK_NUMBER) {
-      LOG.info(
-          "Snap sync was requested, but cannot be enabled because the local blockchain is not empty.");
+    } else if (protocolContext.getBlockchain().getChainHeadBlockNumber()
+        != BlockHeader.GENESIS_BLOCK_NUMBER) {
       return Optional.empty();
     }
-
-    final SnapSyncProcessState snapSyncState =
-        new SnapSyncProcessState(
-            fastSyncStateStorage.loadState(
-                ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
 
     final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection =
         createSnapWorldStateDownloaderTaskCollection();
@@ -129,7 +113,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
             fastSyncStateStorage,
             snapTaskCollection,
             fastSyncDataDirectory,
-            snapSyncState);
+            FastSyncState.EMPTY_SYNC_STATE);
     syncState.setWorldStateDownloadStatus(snapWorldStateDownloader);
     return Optional.of(fastSyncDownloader);
   }
