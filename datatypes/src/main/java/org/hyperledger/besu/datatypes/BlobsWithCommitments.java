@@ -38,7 +38,7 @@ public class BlobsWithCommitments {
       final List<Blob> blobs,
       final List<KZGProof> kzgProofs,
       final List<VersionedHash> versionedHashes) {
-    if (blobs.size() < 1) {
+    if (blobs.size() == 0) {
       throw new InvalidParameterException(
           "There needs to be a minimum of one blob in a blob transaction with commitments");
     }
