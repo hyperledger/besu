@@ -73,7 +73,7 @@ public class TransactionBuilderTest {
           .createTransaction(senderKeys);
       fail();
     } catch (IllegalArgumentException iea) {
-      assertThat(iea).hasMessage("Blob transaction must have at least one blob");
+      assertThat(iea).hasMessage("Blob transaction must have at least one versioned hash");
     }
   }
 }
