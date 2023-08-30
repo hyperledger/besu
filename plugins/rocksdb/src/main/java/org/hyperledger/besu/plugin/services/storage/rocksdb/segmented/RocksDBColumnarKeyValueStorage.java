@@ -16,6 +16,9 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.Streams;
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -31,6 +34,7 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -161,7 +165,42 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
       txOptions = new TransactionDBOptions();
       columnHandles = new ArrayList<>(columnDescriptors.size());
     } catch (RocksDBException e) {
-      throw new StorageException(e);
+      List<SegmentIdentifier> knownSegments = Streams.concat(
+              defaultSegments.stream(),
+              ignorableSegments.stream())
+          .distinct()
+          .toList();
+      throw parseRocksDBException(e, knownSegments);
+    }
+  }
+
+  private static StorageException parseRocksDBException(
+      final RocksDBException ex,
+      final List<SegmentIdentifier> knownSegments) {
+    String message = ex.getMessage();
+
+    // parse out unprintable segment names for a more useful exception:
+    String columnExceptionMessagePrefix = "Column families not opened: ";
+    if (message.contains(columnExceptionMessagePrefix)) {
+      String substring = message.substring(message.indexOf(": ") + 2);
+
+      List<String> unHandledSegments = new ArrayList<>();
+      Splitter.on(", ").splitToStream(substring)
+          .forEach(part -> {
+            byte[] bytes = part.getBytes(StandardCharsets.UTF_8);
+            unHandledSegments.add(
+            knownSegments.stream().filter(seg -> Arrays.equals(seg.getId(), bytes))
+                .findFirst()
+                .map(SegmentIdentifier::getName)
+                .orElse("unknown segment:{" + Bytes.of(bytes).toHexString() + "}"));
+
+          });
+
+      return new StorageException(
+          "RocksDBException: Unhandled column families: [" +
+              unHandledSegments.stream().collect(Collectors.joining(", ")) + "]");
+    } else {
+      return new StorageException(ex);
     }
   }
 
