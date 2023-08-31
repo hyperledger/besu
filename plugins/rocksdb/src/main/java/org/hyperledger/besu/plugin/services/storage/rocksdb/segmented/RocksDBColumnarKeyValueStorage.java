@@ -168,6 +168,14 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
     }
   }
 
+  /**
+   * Parse RocksDBException and wrap in StorageException
+   *
+   * @param ex RocksDBException
+   * @param defaultSegments segments requested to open
+   * @param ignorableSegments segments which are ignorable if not present
+   * @return StorageException wrapping the RocksDB Exception
+   */
   protected static StorageException parseRocksDBException(
       final RocksDBException ex,
       final List<SegmentIdentifier> defaultSegments,
