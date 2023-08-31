@@ -164,15 +164,17 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
       txOptions = new TransactionDBOptions();
       columnHandles = new ArrayList<>(columnDescriptors.size());
     } catch (RocksDBException e) {
-      List<SegmentIdentifier> knownSegments =
-          Streams.concat(defaultSegments.stream(), ignorableSegments.stream()).distinct().toList();
-      throw parseRocksDBException(e, knownSegments);
+      throw parseRocksDBException(e, defaultSegments, ignorableSegments);
     }
   }
 
-  private static StorageException parseRocksDBException(
-      final RocksDBException ex, final List<SegmentIdentifier> knownSegments) {
+  protected static StorageException parseRocksDBException(
+      final RocksDBException ex,
+      final List<SegmentIdentifier> defaultSegments,
+      final List<SegmentIdentifier> ignorableSegments) {
     String message = ex.getMessage();
+    List<SegmentIdentifier> knownSegments =
+        Streams.concat(defaultSegments.stream(), ignorableSegments.stream()).distinct().toList();
 
     // parse out unprintable segment names for a more useful exception:
     String columnExceptionMessagePrefix = "Column families not opened: ";
@@ -189,8 +191,9 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
                     knownSegments.stream()
                         .filter(seg -> Arrays.equals(seg.getId(), bytes))
                         .findFirst()
-                        .map(SegmentIdentifier::getName)
-                        .orElse("unknown segment:{" + Bytes.of(bytes).toHexString() + "}"));
+                        .map(seg -> new SegmentRecord(seg.getName(), seg.getId()))
+                        .orElse(new SegmentRecord(part, bytes))
+                        .forDisplay());
               });
 
       return new StorageException(
@@ -393,4 +396,10 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
   }
 
   abstract RocksDB getDB();
+
+  record SegmentRecord(String name, byte[] id) {
+    public String forDisplay() {
+      return String.format("'%s'(%s)", name, Bytes.of(id).toHexString());
+    }
+  }
 }

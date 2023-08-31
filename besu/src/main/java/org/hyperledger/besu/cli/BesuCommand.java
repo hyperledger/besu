@@ -3489,7 +3489,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         getActualGenesisConfigOptions().getTerminalTotalDifficulty().isPresent());
   }
 
-  private void setIgnorableStorageSegments() {
+  public void setIgnorableStorageSegments() {
     if (!unstableChainPruningOptions.getChainDataPruningEnabled()) {
       rocksDBPlugin.addIgnorableSegmentIdentifier(KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE);
     }
