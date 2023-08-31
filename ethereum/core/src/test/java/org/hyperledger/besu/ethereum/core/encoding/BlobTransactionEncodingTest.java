@@ -27,7 +27,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;

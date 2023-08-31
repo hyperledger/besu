@@ -28,7 +28,8 @@ public class TransactionDecoder {
     Transaction decode(RLPInput input, EncodingContext context);
   }
 
-  private static final TypedTransactionDecoder TYPED_TRANSACTION_DECODER = new TypedTransactionDecoder();
+  private static final TypedTransactionDecoder TYPED_TRANSACTION_DECODER =
+      new TypedTransactionDecoder();
   private static final FrontierTransactionDecoder FRONTIER_DECODER =
       new FrontierTransactionDecoder();
 

@@ -70,7 +70,8 @@ class TransactionRLPEncoderTest {
   @Test
   void shouldEncodeWithHighNonce() {
     final Transaction transaction =
-        TransactionDecoder.decodeRLP(RLP.input(Bytes.fromHexString(NONCE_64_BIT_MAX_MINUS_2_TX_RLP)));
+        TransactionDecoder.decodeRLP(
+            RLP.input(Bytes.fromHexString(NONCE_64_BIT_MAX_MINUS_2_TX_RLP)));
     final BytesValueRLPOutput output = new BytesValueRLPOutput();
     TransactionEncoder.encodeForWire(transaction, output);
     assertThat(output.encoded().toHexString()).isEqualTo(NONCE_64_BIT_MAX_MINUS_2_TX_RLP);
