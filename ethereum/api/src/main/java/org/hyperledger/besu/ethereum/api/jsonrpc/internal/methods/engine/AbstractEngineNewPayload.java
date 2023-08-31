@@ -105,18 +105,11 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     EngineNewPayloadRequestParameter requestParameters;
     try {
-      requestParameters = getEngineNewPayloadRequestParams(requestContext);
+      requestParameters = getAndCheckEngineNewPayloadRequestParams(requestContext);
     } catch (InvalidJsonRpcParameters exception) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(),
           new JsonRpcError(INVALID_PARAMS, exception.getMessage()));
-    }
-
-    final ValidationResult<RpcErrorType> parameterValidationResult =
-        validateParameters(requestParameters);
-
-    if (!parameterValidationResult.isValid()) {
-      return new JsonRpcErrorResponse(reqId, parameterValidationResult);
     }
 
     EngineExecutionPayloadParameter blockParam = requestParameters.getExecutionPayload();
@@ -481,7 +474,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
    * @param requestContext the JSON-RPC request context
    * @return a new instance of EngineNewPayloadRequestParameter
    */
-  public abstract EngineNewPayloadRequestParameter getEngineNewPayloadRequestParams(
+  public abstract EngineNewPayloadRequestParameter getAndCheckEngineNewPayloadRequestParams(
       final JsonRpcRequestContext requestContext);
 
   private void logImportedBlockInfo(final Block block, final double timeInS) {

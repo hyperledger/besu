@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineExecutionPayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineNewPayloadRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -52,24 +53,23 @@ public class EngineNewPayloadV2 extends AbstractEngineNewPayload {
   }
 
   @Override
-  protected ValidationResult<RpcErrorType> validateParameters(
-      final EngineNewPayloadRequestParameter params) {
-    if (params.getExecutionPayload().getBlobGasUsed() != null) {
-      return ValidationResult.invalid(
-          RpcErrorType.INVALID_PARAMS, "non-null BlobGasUsed pre-cancun");
-    }
-    if (params.getExecutionPayload().getExcessBlobGas() != null) {
-      return ValidationResult.invalid(
-          RpcErrorType.INVALID_PARAMS, "non-null ExcessBlobGas pre-cancun");
-    }
-    return ValidationResult.valid();
-  }
-
-  @Override
-  public EngineNewPayloadRequestParameter getEngineNewPayloadRequestParams(
+  public EngineNewPayloadRequestParameter getAndCheckEngineNewPayloadRequestParams(
       final JsonRpcRequestContext requestContext) {
-    return new EngineNewPayloadRequestParameter(
-        requestContext.getRequiredParameter(0, EngineExecutionPayloadParameter.class));
+    final EngineExecutionPayloadParameter enginePayload =
+        requestContext.getRequiredParameter(0, EngineExecutionPayloadParameter.class);
+    if (enginePayload.getBlobGasUsed() != null) {
+      throw new InvalidJsonRpcParameters("non-null BlobGasUsed pre-cancun");
+    }
+    if (enginePayload.getExcessBlobGas() != null) {
+      throw new InvalidJsonRpcParameters("non-null ExcessBlobGas pre-cancun");
+    }
+    if (requestContext.getOptionalParameter(1, String[].class).isPresent()) {
+      throw new InvalidJsonRpcParameters("non-null VersionedHashes pre-cancun");
+    }
+    if (requestContext.getOptionalParameter(2, String.class).isPresent()) {
+      throw new InvalidJsonRpcParameters("non-null ParentBeaconBlockRoot pre-cancun");
+    }
+    return new EngineNewPayloadRequestParameter(enginePayload);
   }
 
   @Override

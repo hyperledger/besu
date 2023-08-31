@@ -18,6 +18,7 @@ import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineExecutionPayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineNewPayloadRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -59,7 +60,7 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
    * @return a new instance of EngineNewPayloadRequestParameter
    */
   @Override
-  public EngineNewPayloadRequestParameter getEngineNewPayloadRequestParams(
+  public EngineNewPayloadRequestParameter getAndCheckEngineNewPayloadRequestParams(
       final JsonRpcRequestContext requestContext) {
 
     final EngineExecutionPayloadParameter payload =
@@ -67,6 +68,10 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
     final String[] versionedHashes = requestContext.getRequiredParameter(1, String[].class);
 
     final String parentBeaconBlockRoot = requestContext.getRequiredParameter(2, String.class);
+
+    if (payload.getBlobGasUsed() == null || payload.getExcessBlobGas() == null) {
+      throw new InvalidJsonRpcParameters("Missing blob gas fields");
+    }
 
     return new EngineNewPayloadRequestParameter(
         payload,
