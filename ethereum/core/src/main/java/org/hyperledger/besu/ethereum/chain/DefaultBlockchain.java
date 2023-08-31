@@ -311,7 +311,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     }
 
     final Block block = blockWithReceipts.getBlock();
-    final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts();
+    // final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts();
     final Hash hash = block.getHash();
     final Difficulty td = calculateTotalDifficulty(block.getHeader());
 
@@ -319,7 +319,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     updater.putBlockHeader(hash, block.getHeader());
     updater.putBlockBody(hash, block.getBody());
-    updater.putTransactionReceipts(hash, receipts);
+    // updater.putTransactionReceipts(hash, receipts);
     updater.putTotalDifficulty(hash, td);
 
     final BlockAddedEvent blockAddedEvent;
@@ -422,10 +422,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     indexTransactionForBlock(
         updater, newBlockHash, blockWithReceipts.getBlock().getBody().getTransactions());
     return BlockAddedEvent.createForHeadAdvancement(
-        blockWithReceipts.getBlock(),
-        LogWithMetadata.generate(
-            blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), false),
-        blockWithReceipts.getReceipts());
+        blockWithReceipts.getBlock(), new ArrayList<>(), blockWithReceipts.getReceipts());
   }
 
   private BlockAddedEvent handleFork(final BlockchainStorage.Updater updater, final Block fork) {
