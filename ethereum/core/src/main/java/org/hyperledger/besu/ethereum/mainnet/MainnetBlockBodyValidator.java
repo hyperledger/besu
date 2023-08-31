@@ -30,6 +30,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("unused")
 public class MainnetBlockBodyValidator implements BlockBodyValidator {
 
   private static final Logger LOG = LoggerFactory.getLogger(MainnetBlockBodyValidator.class);
