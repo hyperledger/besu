@@ -469,7 +469,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   }
 
   /**
-   * Retrieves the new payload request parameters from the given JSON-RPC request context.
+   * Retrieves the new payload request parameters from the given JSON-RPC request context and checks
+   * the validity of these parameters.
    *
    * @param requestContext the JSON-RPC request context
    * @return a new instance of EngineNewPayloadRequestParameter
