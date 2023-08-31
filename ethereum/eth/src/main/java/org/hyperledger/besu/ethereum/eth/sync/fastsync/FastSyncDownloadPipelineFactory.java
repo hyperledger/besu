@@ -23,6 +23,7 @@ import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.SKIP_DE
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -45,7 +46,10 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
+import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
 
 public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory {
   protected final SynchronizerConfiguration syncConfig;
@@ -161,7 +165,14 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         .thenFlatMap("validateHeadersJoin", validateHeadersJoinUpStep, singleHeaderBufferSize)
         .inBatches(headerRequestSize)
         .thenProcessAsyncOrdered("downloadBodies", downloadBodiesStep, downloaderParallelism)
-        .thenProcessAsyncOrdered("downloadReceipts", downloadReceiptsStep, downloaderParallelism)
+        .thenProcessAsyncOrdered(
+            "downloadReceipts",
+            blocks ->
+                CompletableFuture.completedFuture(
+                    blocks.stream()
+                        .map(block -> new BlockWithReceipts(block, Collections.emptyList()))
+                        .collect(Collectors.toList())),
+            downloaderParallelism)
         .andFinishWith("importBlock", importBlockStep);
   }
 

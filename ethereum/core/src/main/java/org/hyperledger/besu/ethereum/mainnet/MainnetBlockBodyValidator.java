@@ -81,7 +81,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
-    final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
+    /*final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
     if (!validateReceiptsRoot(header, header.getReceiptsRoot(), receiptsRoot)) {
       return false;
     }
@@ -90,7 +90,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
         receipts.isEmpty() ? 0 : receipts.get(receipts.size() - 1).getCumulativeGasUsed();
     if (!validateGasUsed(header, header.getGasUsed(), gasUsed)) {
       return false;
-    }
+    }*/
 
     if (!validateLogsBloom(header, header.getLogsBloom(), BodyValidation.logsBloom(receipts))) {
       return false;

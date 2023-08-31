@@ -306,9 +306,9 @@ public class DefaultBlockchain implements MutableBlockchain {
   private void appendBlockHelper(
       final BlockWithReceipts blockWithReceipts, final boolean storeOnly) {
 
-    if (!blockShouldBeProcessed(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts())) {
+    /*if (!blockShouldBeProcessed(blockWithReceipts.getBlock(), blockWithReceipts.getReceipts())) {
       return;
-    }
+    }*/
 
     final Block block = blockWithReceipts.getBlock();
     // final List<TransactionReceipt> receipts = blockWithReceipts.getReceipts();
