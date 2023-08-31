@@ -190,14 +190,15 @@ public class Transaction
     if (versionedHashes.isPresent() || maxFeePerBlobGas.isPresent()) {
       checkArgument(
           transactionType.supportsBlob(),
-          "Must not specify blob versioned hashes of max fee per blob gas for transaction not supporting it");
+          "Must not specify blob versioned hashes or max fee per blob gas for transaction not supporting it");
     }
 
     if (transactionType.supportsBlob()) {
       checkArgument(
           versionedHashes.isPresent(), "Must specify blob versioned hashes for blob transaction");
       checkArgument(
-          !versionedHashes.get().isEmpty(), "Blob transaction must have at least one blob");
+          !versionedHashes.get().isEmpty(),
+          "Blob transaction must have at least one versioned hash");
       checkArgument(
           maxFeePerBlobGas.isPresent(), "Must specify max fee per blob gas for blob transaction");
     }
@@ -676,18 +677,18 @@ public class Transaction
   }
 
   private void memoizeHashAndSize() {
-    final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this);
+    final Bytes bytes = TransactionEncoder.encodeForNetwork(this);
     hash = Hash.hash(bytes);
 
     if (transactionType.supportsBlob()) {
       if (getBlobsWithCommitments().isPresent()) {
-        size = TransactionEncoder.encodeForNetwork(this).size();
+        size = bytes.size();
+        return;
       }
-    } else {
-      final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-      TransactionEncoder.encodeForWire(transactionType, bytes, rlpOutput);
-      size = rlpOutput.encodedSize();
     }
+    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+    TransactionEncoder.encodeForWire(transactionType, bytes, rlpOutput);
+    size = rlpOutput.encodedSize();
   }
 
   /**
