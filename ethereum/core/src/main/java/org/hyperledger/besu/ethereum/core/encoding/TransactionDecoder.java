@@ -29,7 +29,8 @@ public class TransactionDecoder {
   }
 
   private static final TypedTransactionDecoder TYPED_DECODER = new TypedTransactionDecoder();
-  private static final FrontierTransactionDecoder FRONTIER_DECODER = new FrontierTransactionDecoder();
+  private static final FrontierTransactionDecoder FRONTIER_DECODER =
+      new FrontierTransactionDecoder();
 
   /**
    * Decodes the given RLP input into a transaction.
@@ -54,7 +55,7 @@ public class TransactionDecoder {
   /**
    * Decodes the input into a Transaction object, considering network specifics.
    *
-   * This method is particularly important for certain types of transactions that need to be
+   * <p>This method is particularly important for certain types of transactions that need to be
    * wrapped into a different format when they are broadcast. An example of this is blob
    * transactions as per EIP-4844.
    *

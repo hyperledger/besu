@@ -32,7 +32,9 @@ public class TransactionEncoder {
   interface Encoder {
     void encode(Transaction transaction, RLPOutput output, EncodingContext context);
   }
-  private static final FrontierTransactionEncoder FRONTIER_ENCODER = new FrontierTransactionEncoder();
+
+  private static final FrontierTransactionEncoder FRONTIER_ENCODER =
+      new FrontierTransactionEncoder();
 
   private static final Map<TransactionType, Encoder> TYPED_TRANSACTION_ENCODERS =
       Map.of(
@@ -68,10 +70,12 @@ public class TransactionEncoder {
     return encodeTransaction(transaction, EncodingContext.INTERNAL);
   }
 
-  private static Bytes encodeTransaction(final Transaction transaction, final EncodingContext context) {
+  private static Bytes encodeTransaction(
+      final Transaction transaction, final EncodingContext context) {
     final TransactionType transactionType = getTransactionType(transaction);
     if (TransactionType.FRONTIER.equals(transactionType)) {
-      return RLP.encode(rlpOutput -> FRONTIER_ENCODER.encode(transaction, rlpOutput, EncodingContext.INTERNAL));
+      return RLP.encode(
+          rlpOutput -> FRONTIER_ENCODER.encode(transaction, rlpOutput, EncodingContext.INTERNAL));
     } else {
       final Encoder encoder = getEncoder(transactionType);
       final BytesValueRLPOutput out = new BytesValueRLPOutput();
@@ -82,12 +86,15 @@ public class TransactionEncoder {
   }
 
   private static TransactionType getTransactionType(final Transaction transaction) {
-    return checkNotNull(transaction.getType(), "Transaction type for %s was not specified.", transaction);
+    return checkNotNull(
+        transaction.getType(), "Transaction type for %s was not specified.", transaction);
   }
 
   private static Encoder getEncoder(final TransactionType transactionType) {
-    return checkNotNull(TYPED_TRANSACTION_ENCODERS.get(transactionType), "Developer Error. A supported transaction type %s has no associated encoding logic"
-        , transactionType);
+    return checkNotNull(
+        TYPED_TRANSACTION_ENCODERS.get(transactionType),
+        "Developer Error. A supported transaction type %s has no associated encoding logic",
+        transactionType);
   }
 
   static void writeSignatureAndV(final Transaction transaction, final RLPOutput out) {
@@ -95,8 +102,7 @@ public class TransactionEncoder {
     writeSignature(transaction, out);
   }
 
-  static void writeSignatureAndRecoveryId(
-      final Transaction transaction, final RLPOutput out) {
+  static void writeSignatureAndRecoveryId(final Transaction transaction, final RLPOutput out) {
     out.writeIntScalar(transaction.getSignature().getRecId());
     writeSignature(transaction, out);
   }

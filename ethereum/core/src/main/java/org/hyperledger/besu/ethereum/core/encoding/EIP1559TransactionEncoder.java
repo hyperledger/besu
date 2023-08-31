@@ -17,16 +17,17 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import static org.hyperledger.besu.ethereum.core.encoding.AccessListTransactionEncoder.writeAccessList;
 import static org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder.writeSignatureAndRecoveryId;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder.Encoder;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class EIP1559TransactionEncoder implements Encoder {
 
   @Override
-  public void encode(final Transaction transaction, final RLPOutput output,
-      final EncodingContext context) {
+  public void encode(
+      final Transaction transaction, final RLPOutput output, final EncodingContext context) {
     encodeEIP1559(transaction, output);
   }
 

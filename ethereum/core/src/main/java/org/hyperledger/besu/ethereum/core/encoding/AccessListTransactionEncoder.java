@@ -16,10 +16,6 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import static org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder.writeSignature;
 
-import java.math.BigInteger;
-import java.util.List;
-import java.util.Optional;
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -27,11 +23,17 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder.Encoder;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
+
 public class AccessListTransactionEncoder implements Encoder {
 
   @Override
-  public void encode(final Transaction transaction, final RLPOutput output,
-      final EncodingContext context) {
+  public void encode(
+      final Transaction transaction, final RLPOutput output, final EncodingContext context) {
     encodeAccessList(transaction, output);
   }
 

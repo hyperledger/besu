@@ -32,11 +32,11 @@ import org.slf4j.Logger;
 public class BlobTransactionEncoder {
   private static final Logger LOG = getLogger(BlobTransactionEncoder.class);
 
-
-  public static void encode(final Transaction transaction, final RLPOutput out, final EncodingContext context){
-    if (context.equals(EncodingContext.NETWORK)){
+  public static void encode(
+      final Transaction transaction, final RLPOutput out, final EncodingContext context) {
+    if (context.equals(EncodingContext.NETWORK)) {
       encodeEIP4844Network(transaction, out);
-    }else{
+    } else {
       encodeEIP4844(transaction, out);
     }
   }

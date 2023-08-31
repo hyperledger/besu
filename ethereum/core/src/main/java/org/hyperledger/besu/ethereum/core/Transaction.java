@@ -686,9 +686,7 @@ public class Transaction
         return;
       }
     }
-    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-    TransactionEncoder.encodeForWire(transactionType, bytes, rlpOutput);
-    size = rlpOutput.encodedSize();
+    size = bytes.size();
   }
 
   /**
