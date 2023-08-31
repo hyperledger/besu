@@ -25,7 +25,7 @@ public class TransactionDecoder {
 
   @FunctionalInterface
   interface Decoder {
-    Transaction decode(RLPInput input, DecodingContext context);
+    Transaction decode(RLPInput input, EncodingContext context);
   }
 
   private static final TypedTransactionDecoder TYPED_DECODER = new TypedTransactionDecoder();
@@ -38,7 +38,7 @@ public class TransactionDecoder {
    * @return the decoded transaction
    */
   public static Transaction decode(final RLPInput rlpInput) {
-    return getDecoder(rlpInput).decode(rlpInput, DecodingContext.INTERNAL);
+    return getDecoder(rlpInput).decode(rlpInput, EncodingContext.INTERNAL);
   }
 
   /**
@@ -48,7 +48,7 @@ public class TransactionDecoder {
    * @return the decoded transaction
    */
   public static Transaction decodeOpaqueBytes(final Bytes input) {
-    return decodeOpaqueBytes(input, DecodingContext.INTERNAL);
+    return decodeOpaqueBytes(input, EncodingContext.INTERNAL);
   }
 
   /**
@@ -62,10 +62,10 @@ public class TransactionDecoder {
    * @return The decoded Transaction.
    */
   public static Transaction decodeForNetwork(final Bytes input) {
-    return decodeOpaqueBytes(input, DecodingContext.NETWORK);
+    return decodeOpaqueBytes(input, EncodingContext.NETWORK);
   }
 
-  private static Transaction decodeOpaqueBytes(final Bytes input, final DecodingContext context) {
+  private static Transaction decodeOpaqueBytes(final Bytes input, final EncodingContext context) {
     try {
       final TransactionType transactionType = TransactionType.of(input.get(0));
       final Bytes transactionBytes = input.slice(1);

@@ -42,7 +42,7 @@ public class FrontierTransactionDecoder implements Decoder {
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   @Override
-  public Transaction decode(final RLPInput input, final DecodingContext context) {
+  public Transaction decode(final RLPInput input, final EncodingContext context) {
     input.enterList();
     final Transaction.Builder builder =
         Transaction.builder()

@@ -16,19 +16,13 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.datatypes.AccessListEntry;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-import java.math.BigInteger;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -36,7 +30,7 @@ public class TransactionEncoder {
 
   @FunctionalInterface
   interface Encoder {
-    void encode(Transaction transaction, RLPOutput output, DecodingContext context);
+    void encode(Transaction transaction, RLPOutput output, EncodingContext context);
   }
   private static final FrontierTransactionEncoder FRONTIER_ENCODER = new FrontierTransactionEncoder();
 
@@ -67,17 +61,17 @@ public class TransactionEncoder {
   }
 
   public static Bytes encodeForNetwork(final Transaction transaction) {
-    return encodeTransaction(transaction, DecodingContext.NETWORK);
+    return encodeTransaction(transaction, EncodingContext.NETWORK);
   }
 
   public static Bytes encodeOpaqueBytes(final Transaction transaction) {
-    return encodeTransaction(transaction, DecodingContext.INTERNAL);
+    return encodeTransaction(transaction, EncodingContext.INTERNAL);
   }
 
-  private static Bytes encodeTransaction(final Transaction transaction, final DecodingContext context) {
+  private static Bytes encodeTransaction(final Transaction transaction, final EncodingContext context) {
     final TransactionType transactionType = getTransactionType(transaction);
     if (TransactionType.FRONTIER.equals(transactionType)) {
-      return RLP.encode(rlpOutput -> FRONTIER_ENCODER.encode(transaction, rlpOutput, DecodingContext.INTERNAL));
+      return RLP.encode(rlpOutput -> FRONTIER_ENCODER.encode(transaction, rlpOutput, EncodingContext.INTERNAL));
     } else {
       final Encoder encoder = getEncoder(transactionType);
       final BytesValueRLPOutput out = new BytesValueRLPOutput();

@@ -677,12 +677,12 @@ public class Transaction
   }
 
   private void memoizeHashAndSize() {
-    final Bytes bytes = TransactionEncoder.encodeForNetwork(this);
+    final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this);
     hash = Hash.hash(bytes);
 
     if (transactionType.supportsBlob()) {
       if (getBlobsWithCommitments().isPresent()) {
-        size = bytes.size();
+        size = TransactionEncoder.encodeForNetwork(this).size();
         return;
       }
     }

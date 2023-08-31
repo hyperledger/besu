@@ -43,7 +43,7 @@ public class TypedTransactionDecoder implements Decoder {
    * @return The decoded Transaction.
    */
   @Override
-  public Transaction decode(final RLPInput input, final DecodingContext context) {
+  public Transaction decode(final RLPInput input, final EncodingContext context) {
     final Bytes typedTransactionBytes = input.readBytes();
     final TransactionType transactionType = TransactionType.of(typedTransactionBytes.get(0) & 0xff);
     return decode(transactionType, typedTransactionBytes.slice(1), context);
@@ -57,7 +57,7 @@ public class TypedTransactionDecoder implements Decoder {
    * @return The decoded Transaction.
    */
   public Transaction decode(
-      final TransactionType transactionType, final Bytes bytes, final DecodingContext context) {
+      final TransactionType transactionType, final Bytes bytes, final EncodingContext context) {
     final Decoder decoder = getDecoder(transactionType);
     return decoder.decode(RLP.input(bytes), context);
   }

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import static org.hyperledger.besu.ethereum.core.encoding.DecodingContext.NETWORK;
+import static org.hyperledger.besu.ethereum.core.encoding.EncodingContext.NETWORK;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -40,7 +40,7 @@ public class BlobTransactionDecoder implements Decoder {
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   @Override
-  public Transaction decode(final RLPInput input, final DecodingContext context) {
+  public Transaction decode(final RLPInput input, final EncodingContext context) {
     if (context == NETWORK) {
       return decodeNetwork(input);
     }
