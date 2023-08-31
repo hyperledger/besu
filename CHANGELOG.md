@@ -1,5 +1,19 @@
 # Changelog
 
+## 23.7.3
+### Additions and Improvements
+
+### Breaking Changes
+- Removed support for Kotti network (ETC) [#5816](https://github.com/hyperledger/besu/pull/5816)
+
+### Additions and Improvements
+
+### Bug Fixes
+- do not create ignorable storage on revert storage-variables subcommand [#5830](https://github.com/hyperledger/besu/pull/5830) 
+
+### Download Links
+
+
 ## 23.7.2
 
 ### Additions and Improvements
@@ -32,7 +46,6 @@ https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.2/besu-23.7.2.z
 ### Breaking Changes
 - Removed deprecated GoQuorum permissioning interop [#5607](https://github.com/hyperledger/besu/pull/5607)
 - Removed support for version 0 of the database as it is no longer used by any active node. [#5698](https://github.com/hyperledger/besu/pull/5698)
-- Removed support for Kotti network (ETC) [#5816](https://github.com/hyperledger/besu/pull/5816)
 
 ### Additions and Improvements
 - `evmtool` launcher binaries now ship as part of the standard distribution. [#5701](https://github.com/hyperledger/besu/pull/5701)
