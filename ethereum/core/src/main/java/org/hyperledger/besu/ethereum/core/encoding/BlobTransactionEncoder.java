@@ -32,6 +32,15 @@ import org.slf4j.Logger;
 public class BlobTransactionEncoder {
   private static final Logger LOG = getLogger(BlobTransactionEncoder.class);
 
+
+  public static void encode(final Transaction transaction, final RLPOutput out, final DecodingContext context){
+    if (context.equals(DecodingContext.NETWORK)){
+      encodeEIP4844Network(transaction, out);
+    }else{
+      encodeEIP4844(transaction, out);
+    }
+  }
+
   public static void encodeEIP4844(final Transaction transaction, final RLPOutput out) {
     out.startList();
     out.writeBigIntegerScalar(transaction.getChainId().orElseThrow());
@@ -42,7 +51,7 @@ public class BlobTransactionEncoder {
     out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
     out.writeUInt256Scalar(transaction.getValue());
     out.writeBytes(transaction.getPayload());
-    TransactionEncoder.writeAccessList(out, transaction.getAccessList());
+    AccessListTransactionEncoder.writeAccessList(out, transaction.getAccessList());
     out.writeUInt256Scalar(transaction.getMaxFeePerBlobGas().orElseThrow());
     out.startList();
     transaction

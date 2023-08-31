@@ -14,202 +14,89 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_BASE;
-import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_MIN;
-import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
-import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
-import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
-
-import org.hyperledger.besu.crypto.SECPSignature;
-import org.hyperledger.besu.crypto.SignatureAlgorithm;
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.datatypes.AccessListEntry;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
-import java.math.BigInteger;
-import java.util.Optional;
-import java.util.function.Supplier;
-
-import com.google.common.base.Suppliers;
-import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionDecoder {
 
   @FunctionalInterface
   interface Decoder {
-    Transaction decode(RLPInput input, final DecodeType decodeType);
+    Transaction decode(RLPInput input, DecodingContext context);
   }
 
-  private static final ImmutableMap<TransactionType, Decoder> TYPED_TRANSACTION_DECODERS =
-      ImmutableMap.of(
-          TransactionType.ACCESS_LIST,
-          TransactionDecoder::decodeAccessList,
-          TransactionType.EIP1559,
-          TransactionDecoder::decodeEIP1559,
-          TransactionType.BLOB,
-          BlobTransactionDecoder::decode);
+  private static final TypedTransactionDecoder TYPED_DECODER = new TypedTransactionDecoder();
+  private static final FrontierTransactionDecoder FRONTIER_DECODER = new FrontierTransactionDecoder();
 
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
-
-  public static Transaction decodeForWire(final RLPInput rlpInput) {
-    // Call the original decodeForWire method with the default options.
-    return decodeForWire(rlpInput, DecodeType.DEFAULT);
+  /**
+   * Decodes the given RLP input into a transaction.
+   *
+   * @param rlpInput the RLP input
+   * @return the decoded transaction
+   */
+  public static Transaction decode(final RLPInput rlpInput) {
+    return getDecoder(rlpInput).decode(rlpInput, DecodingContext.INTERNAL);
   }
 
-  public static Transaction decodeForWire(final RLPInput rlpInput, final DecodeType decodeType) {
-    if (rlpInput.nextIsList()) {
-      return decodeFrontier(rlpInput);
-    } else {
-      final Bytes typedTransactionBytes = rlpInput.readBytes();
-      final TransactionType transactionType =
-          TransactionType.of(typedTransactionBytes.get(0) & 0xff);
-      return getDecoder(transactionType)
-          .decode(RLP.input(typedTransactionBytes.slice(1)), decodeType);
-    }
+  /**
+   * Decodes the given input opaque bytes into a transaction.
+   *
+   * @param input the input bytes
+   * @return the decoded transaction
+   */
+  public static Transaction decodeOpaqueBytes(final Bytes input) {
+    return decodeOpaqueBytes(input, DecodingContext.INTERNAL);
   }
 
-  public static Transaction decodeOpaqueBytes(final Bytes input, final DecodeType decodeType) {
-    final TransactionType transactionType;
+  /**
+   * Decodes the input into a Transaction object, considering network specifics.
+   *
+   * This method is particularly important for certain types of transactions that need to be
+   * wrapped into a different format when they are broadcast. An example of this is blob
+   * transactions as per EIP-4844.
+   *
+   * @param input The RLPInput to decode.
+   * @return The decoded Transaction.
+   */
+  public static Transaction decodeForNetwork(final Bytes input) {
+    return decodeOpaqueBytes(input, DecodingContext.NETWORK);
+  }
+
+  private static Transaction decodeOpaqueBytes(final Bytes input, final DecodingContext context) {
     try {
-      transactionType = TransactionType.of(input.get(0));
+      final TransactionType transactionType = TransactionType.of(input.get(0));
+      final Bytes transactionBytes = input.slice(1);
+      return TYPED_DECODER.decode(transactionType, transactionBytes, context);
     } catch (final IllegalArgumentException __) {
-      return decodeForWire(RLP.input(input), decodeType);
+      return decode(RLP.input(input));
     }
-    return getDecoder(transactionType).decode(RLP.input(input.slice(1)), decodeType);
+  }
+  /**
+   * Returns the appropriate decoder for the given RLP input.
+   *
+   * @param rlpInput the RLP input
+   * @return the appropriate decoder
+   */
+  private static Decoder getDecoder(final RLPInput rlpInput) {
+    return isTypedTransaction(rlpInput) ? TYPED_DECODER : FRONTIER_DECODER;
   }
 
-  private static Decoder getDecoder(final TransactionType transactionType) {
-    return checkNotNull(
-        TYPED_TRANSACTION_DECODERS.get(transactionType),
-        "Developer Error. A supported transaction type %s has no associated decoding logic",
-        transactionType);
-  }
-
-  static Transaction decodeFrontier(final RLPInput input) {
-    input.enterList();
-    final Transaction.Builder builder =
-        Transaction.builder()
-            .type(TransactionType.FRONTIER)
-            .nonce(input.readLongScalar())
-            .gasPrice(Wei.of(input.readUInt256Scalar()))
-            .gasLimit(input.readLongScalar())
-            .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
-            .value(Wei.of(input.readUInt256Scalar()))
-            .payload(input.readBytes());
-
-    final BigInteger v = input.readBigIntegerScalar();
-    final byte recId;
-    Optional<BigInteger> chainId = Optional.empty();
-    if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
-      recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
-    } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
-      chainId = Optional.of(v.subtract(REPLAY_PROTECTED_V_BASE).divide(TWO));
-      recId = v.subtract(TWO.multiply(chainId.get()).add(REPLAY_PROTECTED_V_BASE)).byteValueExact();
-    } else {
-      throw new RuntimeException(
-          String.format("An unsupported encoded `v` value of %s was found", v));
-    }
-    final BigInteger r = input.readUInt256Scalar().toUnsignedBigInteger();
-    final BigInteger s = input.readUInt256Scalar().toUnsignedBigInteger();
-    final SECPSignature signature = SIGNATURE_ALGORITHM.get().createSignature(r, s, recId);
-
-    input.leaveList();
-
-    chainId.ifPresent(builder::chainId);
-    return builder.signature(signature).build();
-  }
-
-  private static Transaction decodeAccessList(
-      final RLPInput rlpInput, final DecodeType decodeType) {
-    rlpInput.enterList();
-    final Transaction.Builder preSignatureTransactionBuilder =
-        Transaction.builder()
-            .type(TransactionType.ACCESS_LIST)
-            .chainId(BigInteger.valueOf(rlpInput.readLongScalar()))
-            .nonce(rlpInput.readLongScalar())
-            .gasPrice(Wei.of(rlpInput.readUInt256Scalar()))
-            .gasLimit(rlpInput.readLongScalar())
-            .to(
-                rlpInput.readBytes(
-                    addressBytes -> addressBytes.size() == 0 ? null : Address.wrap(addressBytes)))
-            .value(Wei.of(rlpInput.readUInt256Scalar()))
-            .payload(rlpInput.readBytes())
-            .accessList(
-                rlpInput.readList(
-                    accessListEntryRLPInput -> {
-                      accessListEntryRLPInput.enterList();
-                      final AccessListEntry accessListEntry =
-                          new AccessListEntry(
-                              Address.wrap(accessListEntryRLPInput.readBytes()),
-                              accessListEntryRLPInput.readList(RLPInput::readBytes32));
-                      accessListEntryRLPInput.leaveList();
-                      return accessListEntry;
-                    }));
-    final byte recId = (byte) rlpInput.readIntScalar();
-    final Transaction transaction =
-        preSignatureTransactionBuilder
-            .signature(
-                SIGNATURE_ALGORITHM
-                    .get()
-                    .createSignature(
-                        rlpInput.readUInt256Scalar().toUnsignedBigInteger(),
-                        rlpInput.readUInt256Scalar().toUnsignedBigInteger(),
-                        recId))
-            .build();
-    rlpInput.leaveList();
-    return transaction;
-  }
-
-  static Transaction decodeEIP1559(final RLPInput input, final DecodeType decodeType) {
-    input.enterList();
-    final BigInteger chainId = input.readBigIntegerScalar();
-    final Transaction.Builder builder =
-        Transaction.builder()
-            .type(TransactionType.EIP1559)
-            .chainId(chainId)
-            .nonce(input.readLongScalar())
-            .maxPriorityFeePerGas(Wei.of(input.readUInt256Scalar()))
-            .maxFeePerGas(Wei.of(input.readUInt256Scalar()))
-            .gasLimit(input.readLongScalar())
-            .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
-            .value(Wei.of(input.readUInt256Scalar()))
-            .payload(input.readBytes())
-            .accessList(
-                input.readList(
-                    accessListEntryRLPInput -> {
-                      accessListEntryRLPInput.enterList();
-                      final AccessListEntry accessListEntry =
-                          new AccessListEntry(
-                              Address.wrap(accessListEntryRLPInput.readBytes()),
-                              accessListEntryRLPInput.readList(RLPInput::readBytes32));
-                      accessListEntryRLPInput.leaveList();
-                      return accessListEntry;
-                    }));
-    final byte recId = (byte) input.readIntScalar();
-    final Transaction transaction =
-        builder
-            .signature(
-                SIGNATURE_ALGORITHM
-                    .get()
-                    .createSignature(
-                        input.readUInt256Scalar().toUnsignedBigInteger(),
-                        input.readUInt256Scalar().toUnsignedBigInteger(),
-                        recId))
-            .build();
-    input.leaveList();
-    return transaction;
-  }
-
-  public enum DecodeType {
-    DEFAULT,
-    NETWORK
+  /**
+   * Checks if the given RLP input is a typed transaction.
+   *
+   * <p>EIP-2718 Clients can differentiate between the legacy transactions and typed transactions by
+   * looking at the first byte. If it starts with a value in the range [0, 0x7f] then it is a new
+   * transaction type, if it starts with a value in the range [0xc0, 0xfe] then it is a legacy
+   * transaction type. 0xff is not realistic for an RLP encoded transaction, so it is reserved for
+   * future use as an extension sentinel value.
+   *
+   * @param rlpInput the RLP input
+   * @return true if the RLP input is a typed transaction, false otherwise
+   */
+  private static boolean isTypedTransaction(final RLPInput rlpInput) {
+    return !rlpInput.nextIsList();
   }
 }

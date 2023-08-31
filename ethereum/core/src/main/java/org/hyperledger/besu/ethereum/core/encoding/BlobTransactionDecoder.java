@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
+import static org.hyperledger.besu.ethereum.core.encoding.DecodingContext.NETWORK;
+
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
@@ -25,7 +27,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder.DecodeType;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder.Decoder;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.List;
@@ -33,18 +35,30 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 
-public class BlobTransactionDecoder {
+public class BlobTransactionDecoder implements Decoder {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
-  static Transaction decode(final RLPInput input, final DecodeType decodeType) {
+  @Override
+  public Transaction decode(final RLPInput input, final DecodingContext context) {
+    if (context == NETWORK) {
+      return decodeNetwork(input);
+    }
+    return decode(input);
+  }
+
+  private Transaction decode(final RLPInput input) {
     Transaction transaction;
     input.enterList();
-    if (decodeType == DecodeType.NETWORK) {
-      transaction = readNetworkWrapperInner(input);
-    } else {
-      transaction = readTransactionPayload(input);
-    }
+    transaction = readTransactionPayload(input);
+    input.leaveList();
+    return transaction;
+  }
+
+  private Transaction decodeNetwork(final RLPInput input) {
+    Transaction transaction;
+    input.enterList();
+    transaction = readNetworkWrapperInner(input);
     input.leaveList();
     return transaction;
   }

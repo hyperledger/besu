@@ -36,17 +36,18 @@ public class TransactionEncoder {
 
   @FunctionalInterface
   interface Encoder {
-    void encode(Transaction transaction, RLPOutput output);
+    void encode(Transaction transaction, RLPOutput output, DecodingContext context);
   }
+  private static final FrontierTransactionEncoder FRONTIER_ENCODER = new FrontierTransactionEncoder();
 
   private static final Map<TransactionType, Encoder> TYPED_TRANSACTION_ENCODERS =
       Map.of(
           TransactionType.ACCESS_LIST,
-          TransactionEncoder::encodeAccessList,
+          new AccessListTransactionEncoder(),
           TransactionType.EIP1559,
-          TransactionEncoder::encodeEIP1559,
+          new EIP1559TransactionEncoder(),
           TransactionType.BLOB,
-          BlobTransactionEncoder::encodeEIP4844);
+          BlobTransactionEncoder::encode);
 
   public static void encodeForWire(final Transaction transaction, final RLPOutput rlpOutput) {
     final TransactionType transactionType =
@@ -65,141 +66,48 @@ public class TransactionEncoder {
     }
   }
 
+  public static Bytes encodeForNetwork(final Transaction transaction) {
+    return encodeTransaction(transaction, DecodingContext.NETWORK);
+  }
+
   public static Bytes encodeOpaqueBytes(final Transaction transaction) {
-    final TransactionType transactionType =
-        checkNotNull(
-            transaction.getType(), "Transaction type for %s was not specified.", transaction);
+    return encodeTransaction(transaction, DecodingContext.INTERNAL);
+  }
+
+  private static Bytes encodeTransaction(final Transaction transaction, final DecodingContext context) {
+    final TransactionType transactionType = getTransactionType(transaction);
     if (TransactionType.FRONTIER.equals(transactionType)) {
-      return RLP.encode(rlpOutput -> encodeFrontier(transaction, rlpOutput));
+      return RLP.encode(rlpOutput -> FRONTIER_ENCODER.encode(transaction, rlpOutput, DecodingContext.INTERNAL));
     } else {
-      final Encoder encoder =
-          checkNotNull(
-              TYPED_TRANSACTION_ENCODERS.get(transactionType),
-              "Developer Error. A supported transaction type %s has no associated encoding logic",
-              transactionType);
+      final Encoder encoder = getEncoder(transactionType);
       final BytesValueRLPOutput out = new BytesValueRLPOutput();
-      out.writeByte(transactionType.getSerializedType());
-      encoder.encode(transaction, out);
+      out.writeByte(transaction.getType().getSerializedType());
+      encoder.encode(transaction, out, context);
       return out.encoded();
     }
   }
 
-  static void encodeFrontier(final Transaction transaction, final RLPOutput out) {
-    out.startList();
-    out.writeLongScalar(transaction.getNonce());
-    out.writeUInt256Scalar(transaction.getGasPrice().orElseThrow());
-    out.writeLongScalar(transaction.getGasLimit());
-    out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
-    out.writeUInt256Scalar(transaction.getValue());
-    out.writeBytes(transaction.getPayload());
-    writeSignatureAndV(transaction, out);
-    out.endList();
+  private static TransactionType getTransactionType(final Transaction transaction) {
+    return checkNotNull(transaction.getType(), "Transaction type for %s was not specified.", transaction);
   }
 
-  static void encodeAccessList(final Transaction transaction, final RLPOutput rlpOutput) {
-    rlpOutput.startList();
-    encodeAccessListInner(
-        transaction.getChainId(),
-        transaction.getNonce(),
-        transaction.getGasPrice().orElseThrow(),
-        transaction.getGasLimit(),
-        transaction.getTo(),
-        transaction.getValue(),
-        transaction.getPayload(),
-        transaction
-            .getAccessList()
-            .orElseThrow(
-                () ->
-                    new IllegalStateException(
-                        "Developer error: access list should be guaranteed to be present")),
-        rlpOutput);
-    rlpOutput.writeIntScalar(transaction.getSignature().getRecId());
-    writeSignature(transaction, rlpOutput);
-    rlpOutput.endList();
+  private static Encoder getEncoder(final TransactionType transactionType) {
+    return checkNotNull(TYPED_TRANSACTION_ENCODERS.get(transactionType), "Developer Error. A supported transaction type %s has no associated encoding logic"
+        , transactionType);
   }
 
-  public static void encodeAccessListInner(
-      final Optional<BigInteger> chainId,
-      final long nonce,
-      final Wei gasPrice,
-      final long gasLimit,
-      final Optional<Address> to,
-      final Wei value,
-      final Bytes payload,
-      final List<AccessListEntry> accessList,
-      final RLPOutput rlpOutput) {
-    rlpOutput.writeBigIntegerScalar(chainId.orElseThrow());
-    rlpOutput.writeLongScalar(nonce);
-    rlpOutput.writeUInt256Scalar(gasPrice);
-    rlpOutput.writeLongScalar(gasLimit);
-    rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
-    rlpOutput.writeUInt256Scalar(value);
-    rlpOutput.writeBytes(payload);
-    /*
-    Access List encoding should look like this
-    where hex strings represent raw bytes
-    [
-      [
-        "0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae",
-        [
-          "0x0000000000000000000000000000000000000000000000000000000000000003",
-          "0x0000000000000000000000000000000000000000000000000000000000000007"
-        ]
-      ],
-      [
-        "0xbb9bc244d798123fde783fcc1c72d3bb8c189413",
-        []
-      ]
-    ] */
-    writeAccessList(rlpOutput, Optional.of(accessList));
-  }
-
-  static void encodeEIP1559(final Transaction transaction, final RLPOutput out) {
-    out.startList();
-    out.writeBigIntegerScalar(transaction.getChainId().orElseThrow());
-    out.writeLongScalar(transaction.getNonce());
-    out.writeUInt256Scalar(transaction.getMaxPriorityFeePerGas().orElseThrow());
-    out.writeUInt256Scalar(transaction.getMaxFeePerGas().orElseThrow());
-    out.writeLongScalar(transaction.getGasLimit());
-    out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
-    out.writeUInt256Scalar(transaction.getValue());
-    out.writeBytes(transaction.getPayload());
-    writeAccessList(out, transaction.getAccessList());
-    writeSignatureAndRecoveryId(transaction, out);
-    out.endList();
-  }
-
-  public static void writeAccessList(
-      final RLPOutput out, final Optional<List<AccessListEntry>> accessListEntries) {
-    if (accessListEntries.isEmpty()) {
-      out.writeEmptyList();
-    } else {
-      out.writeList(
-          accessListEntries.get(),
-          (accessListEntry, accessListEntryRLPOutput) -> {
-            accessListEntryRLPOutput.startList();
-            out.writeBytes(accessListEntry.address());
-            out.writeList(
-                accessListEntry.storageKeys(),
-                (storageKeyBytes, storageKeyBytesRLPOutput) ->
-                    storageKeyBytesRLPOutput.writeBytes(storageKeyBytes));
-            accessListEntryRLPOutput.endList();
-          });
-    }
-  }
-
-  private static void writeSignatureAndV(final Transaction transaction, final RLPOutput out) {
+  static void writeSignatureAndV(final Transaction transaction, final RLPOutput out) {
     out.writeBigIntegerScalar(transaction.getV());
     writeSignature(transaction, out);
   }
 
-  public static void writeSignatureAndRecoveryId(
+  static void writeSignatureAndRecoveryId(
       final Transaction transaction, final RLPOutput out) {
     out.writeIntScalar(transaction.getSignature().getRecId());
     writeSignature(transaction, out);
   }
 
-  private static void writeSignature(final Transaction transaction, final RLPOutput out) {
+  static void writeSignature(final Transaction transaction, final RLPOutput out) {
     out.writeBigIntegerScalar(transaction.getSignature().getR());
     out.writeBigIntegerScalar(transaction.getSignature().getS());
   }

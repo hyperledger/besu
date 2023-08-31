@@ -1,0 +1,100 @@
+package org.hyperledger.besu.ethereum.core.encoding;
+
+import static org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder.writeSignature;
+
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Optional;
+import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.datatypes.AccessListEntry;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder.Encoder;
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+
+public class AccessListTransactionEncoder implements Encoder {
+
+  @Override
+  public void encode(final Transaction transaction, final RLPOutput output,
+      final DecodingContext context) {
+    encodeAccessList(transaction, output);
+  }
+
+  private static void encodeAccessList(final Transaction transaction, final RLPOutput rlpOutput) {
+    rlpOutput.startList();
+    encodeAccessListInner(
+        transaction.getChainId(),
+        transaction.getNonce(),
+        transaction.getGasPrice().orElseThrow(),
+        transaction.getGasLimit(),
+        transaction.getTo(),
+        transaction.getValue(),
+        transaction.getPayload(),
+        transaction
+            .getAccessList()
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Developer error: access list should be guaranteed to be present")),
+        rlpOutput);
+    rlpOutput.writeIntScalar(transaction.getSignature().getRecId());
+    writeSignature(transaction, rlpOutput);
+    rlpOutput.endList();
+  }
+
+  public static void encodeAccessListInner(
+      final Optional<BigInteger> chainId,
+      final long nonce,
+      final Wei gasPrice,
+      final long gasLimit,
+      final Optional<Address> to,
+      final Wei value,
+      final Bytes payload,
+      final List<AccessListEntry> accessList,
+      final RLPOutput rlpOutput) {
+    rlpOutput.writeBigIntegerScalar(chainId.orElseThrow());
+    rlpOutput.writeLongScalar(nonce);
+    rlpOutput.writeUInt256Scalar(gasPrice);
+    rlpOutput.writeLongScalar(gasLimit);
+    rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
+    rlpOutput.writeUInt256Scalar(value);
+    rlpOutput.writeBytes(payload);
+    /*
+    Access List encoding should look like this
+    where hex strings represent raw bytes
+    [
+      [
+        "0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae",
+        [
+          "0x0000000000000000000000000000000000000000000000000000000000000003",
+          "0x0000000000000000000000000000000000000000000000000000000000000007"
+        ]
+      ],
+      [
+        "0xbb9bc244d798123fde783fcc1c72d3bb8c189413",
+        []
+      ]
+    ] */
+    writeAccessList(rlpOutput, Optional.of(accessList));
+  }
+
+  public static void writeAccessList(
+      final RLPOutput out, final Optional<List<AccessListEntry>> accessListEntries) {
+    if (accessListEntries.isEmpty()) {
+      out.writeEmptyList();
+    } else {
+      out.writeList(
+          accessListEntries.get(),
+          (accessListEntry, accessListEntryRLPOutput) -> {
+            accessListEntryRLPOutput.startList();
+            out.writeBytes(accessListEntry.address());
+            out.writeList(
+                accessListEntry.storageKeys(),
+                (storageKeyBytes, storageKeyBytesRLPOutput) ->
+                    storageKeyBytesRLPOutput.writeBytes(storageKeyBytes));
+            accessListEntryRLPOutput.endList();
+          });
+    }
+  }
+}

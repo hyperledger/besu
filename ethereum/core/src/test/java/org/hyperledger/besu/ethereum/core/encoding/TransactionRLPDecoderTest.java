@@ -20,7 +20,6 @@ import static org.hyperledger.besu.evm.account.Account.MAX_NONCE;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder.DecodeType;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
@@ -46,7 +45,7 @@ class TransactionRLPDecoderTest {
   @Test
   void decodeFrontierNominalCase() {
     final Transaction transaction =
-        TransactionDecoder.decodeForWire(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
+        TransactionDecoder.decode(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
     assertThat(transaction).isNotNull();
     assertThat(transaction.getGasPrice().get()).isEqualByComparingTo(Wei.of(50L));
     assertThat(transaction.getMaxPriorityFeePerGas()).isEmpty();
@@ -56,7 +55,7 @@ class TransactionRLPDecoderTest {
   @Test
   void decodeEIP1559NominalCase() {
     final Transaction transaction =
-        TransactionDecoder.decodeForWire(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
+        TransactionDecoder.decode(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
     assertThat(transaction).isNotNull();
     assertThat(transaction.getMaxPriorityFeePerGas()).hasValue(Wei.of(2L));
     assertThat(transaction.getMaxFeePerGas()).hasValue(Wei.of(new BigInteger("5000000000", 10)));
@@ -67,17 +66,14 @@ class TransactionRLPDecoderTest {
     final String txWithBigFees =
         "0x02f84e0101a1648a5f8b2dcad5ea5ba6b720ff069c1d87c21a4a6a5b3766b39e2c2792367bb066a1ffa5ffaf5b0560d3a9fb186c2ede2ae6751bc0b4fef9107cf36389630b6196a38805800180c0010203";
     assertThatThrownBy(
-            () ->
-                TransactionDecoder.decodeOpaqueBytes(
-                    Bytes.fromHexString(txWithBigFees), DecodeType.DEFAULT))
+            () -> TransactionDecoder.decodeOpaqueBytes(Bytes.fromHexString(txWithBigFees)))
         .isInstanceOf(RLPException.class);
   }
 
   @Test
   void shouldDecodeWithHighNonce() {
     final Transaction transaction =
-        TransactionDecoder.decodeForWire(
-            RLP.input(Bytes.fromHexString(NONCE_64_BIT_MAX_MINUS_2_TX_RLP)));
+        TransactionDecoder.decode(RLP.input(Bytes.fromHexString(NONCE_64_BIT_MAX_MINUS_2_TX_RLP)));
     assertThat(transaction).isNotNull();
     assertThat(transaction.getNonce()).isEqualTo(MAX_NONCE - 1);
   }
@@ -97,7 +93,7 @@ class TransactionRLPDecoderTest {
     // Create bytes from String
     final Bytes bytes = Bytes.fromHexString(rlp_tx);
     // Decode bytes into a transaction
-    final Transaction transaction = TransactionDecoder.decodeForWire(RLP.input(bytes));
+    final Transaction transaction = TransactionDecoder.decode(RLP.input(bytes));
     // Bytes size should be equal to transaction size
     assertThat(transaction.getSize()).isEqualTo(bytes.size());
   }
@@ -106,7 +102,7 @@ class TransactionRLPDecoderTest {
   @ValueSource(strings = {FRONTIER_TX_RLP, EIP1559_TX_RLP, NONCE_64_BIT_MAX_MINUS_2_TX_RLP})
   void shouldReturnCorrectEncodedBytes(final String txRlp) {
     final Transaction transaction =
-        TransactionDecoder.decodeForWire(RLP.input(Bytes.fromHexString(txRlp)));
+        TransactionDecoder.decode(RLP.input(Bytes.fromHexString(txRlp)));
     assertThat(transaction.encoded()).isEqualTo(Bytes.fromHexString(txRlp));
   }
 }
