@@ -281,7 +281,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
    *
    * @param account The account to be added for repair.
    */
-  public synchronized void addAccountsToBeRepaired(final Bytes account) {
+  public synchronized void addAccountToHealingList(final Bytes account) {
     if (!accountsToBeRepaired.contains(account)) {
       snapContext.addAccountsToBeRepaired(account);
       accountsToBeRepaired.add(account);

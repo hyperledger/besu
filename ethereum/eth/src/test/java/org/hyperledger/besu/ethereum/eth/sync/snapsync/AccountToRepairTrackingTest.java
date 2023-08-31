@@ -119,7 +119,7 @@ public class AccountToRepairTrackingTest {
     storageRangeDataRequest.addResponse(
         snapWorldDownloadState, worldStateProofProvider, slots, new ArrayDeque<>(proofs));
     storageRangeDataRequest.getChildRequests(snapWorldDownloadState, worldStateStorage, null);
-    verify(snapWorldDownloadState, never()).addAccountsToBeRepaired(any(Bytes.class));
+    verify(snapWorldDownloadState, never()).addAccountToHealingList(any(Bytes.class));
   }
 
   @Test
@@ -145,7 +145,7 @@ public class AccountToRepairTrackingTest {
     storageRangeDataRequest.addResponse(
         snapWorldDownloadState, worldStateProofProvider, new TreeMap<>(), new ArrayDeque<>(proofs));
 
-    verify(snapWorldDownloadState).addAccountsToBeRepaired(any(Bytes.class));
+    verify(snapWorldDownloadState).addAccountToHealingList(any(Bytes.class));
   }
 
   @Test
@@ -194,11 +194,11 @@ public class AccountToRepairTrackingTest {
             MAX_RANGE);
     storageRangeDataRequest.addResponse(
         snapWorldDownloadState, worldStateProofProvider, slots, new ArrayDeque<>(proofs));
-    verify(snapWorldDownloadState, never()).addAccountsToBeRepaired(any(Bytes.class));
+    verify(snapWorldDownloadState, never()).addAccountToHealingList(any(Bytes.class));
 
     // should mark during the getchild request
     storageRangeDataRequest.getChildRequests(snapWorldDownloadState, worldStateStorage, null);
-    verify(snapWorldDownloadState).addAccountsToBeRepaired(any(Bytes.class));
+    verify(snapWorldDownloadState).addAccountToHealingList(any(Bytes.class));
   }
 
   @Test
@@ -213,7 +213,7 @@ public class AccountToRepairTrackingTest {
             Hash.wrap(accountStateTrie.getRootHash()),
             Bytes.EMPTY);
     storageTrieNodeHealingRequest.getExistingData(snapWorldDownloadState, worldStateStorage);
-    verify(snapWorldDownloadState, never()).addAccountsToBeRepaired(any(Bytes.class));
+    verify(snapWorldDownloadState, never()).addAccountToHealingList(any(Bytes.class));
   }
 
   @Test
@@ -226,6 +226,6 @@ public class AccountToRepairTrackingTest {
             Hash.wrap(accountStateTrie.getRootHash()),
             Bytes.EMPTY);
     storageTrieNodeHealingRequest.getExistingData(snapWorldDownloadState, worldStateStorage);
-    verify(snapWorldDownloadState).addAccountsToBeRepaired(any(Bytes.class));
+    verify(snapWorldDownloadState).addAccountToHealingList(any(Bytes.class));
   }
 }

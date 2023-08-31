@@ -116,7 +116,6 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       return 0;
     }
 
-    // search incomplete nodes in the range
     final AtomicInteger nbNodesSaved = new AtomicInteger();
     final NodeUpdater nodeUpdater =
         (location, hash, value) -> {

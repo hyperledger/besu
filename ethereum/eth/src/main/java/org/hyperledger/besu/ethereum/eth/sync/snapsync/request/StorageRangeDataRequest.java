@@ -124,7 +124,11 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     if (!slots.isEmpty() || !proofs.isEmpty()) {
       if (!worldStateProofProvider.isValidRangeProof(
           startKeyHash, endKeyHash, storageRoot, proofs, slots)) {
-        downloadState.addAccountsToBeRepaired(CompactEncoding.bytesToPath(accountHash));
+        // If the proof is invalid, it means that the storage will be a mix of several blocks.
+        // Therefore, it will be necessary to heal the account's storage subsequently
+        downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));
+        // We will request the new storage root of the account because it is apparently no longer
+        // valid with the new pivot block.
         downloadState.enqueueRequest(
             createAccountDataRequest(
                 getRootHash(), Hash.wrap(accountHash), startKeyHash, endKeyHash));
@@ -158,7 +162,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     }
 
     final StackTrie.TaskElement taskElement = stackTrie.getElement(startKeyHash);
-
+    // new request is added if the response does not match all the requested range
     findNewBeginElementInRange(storageRoot, taskElement.proofs(), taskElement.keys(), endKeyHash)
         .ifPresent(
             missingRightElement -> {
@@ -173,8 +177,10 @@ public class StorageRangeDataRequest extends SnapDataRequest {
                         childRequests.add(storageRangeDataRequest);
                       });
               if (startKeyHash.equals(MIN_RANGE) && endKeyHash.equals(MAX_RANGE)) {
-                // need to heal this account storage
-                downloadState.addAccountsToBeRepaired(CompactEncoding.bytesToPath(accountHash));
+                // We were not able to complete the storage in a single request. This means that the
+                // top of the trie will not be saved in
+                // the database, and therefore we will need to heal it later.
+                downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));
               }
             });
 

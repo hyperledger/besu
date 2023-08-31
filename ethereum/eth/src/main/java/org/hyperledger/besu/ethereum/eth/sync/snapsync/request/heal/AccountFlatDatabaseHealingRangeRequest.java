@@ -57,8 +57,7 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
   private final Bytes32 startKeyHash;
   private final Bytes32 endKeyHash;
-  private TreeMap<Bytes32, Bytes> accountsInFlatDb;
-  private TreeMap<Bytes32, Bytes> accountsInTrieDb;
+  private TreeMap<Bytes32, Bytes> accountsInDb;
 
   private TreeMap<Bytes32, Bytes> accountsToDelete;
   private boolean isProofValid;
@@ -68,8 +67,7 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
     super(RequestType.ACCOUNT_RANGE, originalRootHash);
     this.startKeyHash = startKeyHash;
     this.endKeyHash = endKeyHash;
-    this.accountsInFlatDb = new TreeMap<>();
-    this.accountsInTrieDb = new TreeMap<>();
+    this.accountsInDb = new TreeMap<>();
     this.accountsToDelete = new TreeMap<>();
     this.isProofValid = false;
   }
@@ -80,10 +78,13 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       final WorldStateStorage worldStateStorage,
       final SnapSyncProcessState snapSyncState) {
     final List<SnapDataRequest> childRequests = new ArrayList<>();
-    if (!accountsInTrieDb.isEmpty()) {
-      // new request is added if the response does not match all the requested range
+
+    // If we have found some accounts, we will try to check if we have indeed gone through the
+    // entire range by making
+    // a new request with the address of the last account in the list as the startKeyHash
+    if (!accountsInDb.isEmpty()) {
       RangeManager.generateRanges(
-              accountsInTrieDb.lastKey().toUnsignedBigInteger().add(BigInteger.ONE),
+              accountsInDb.lastKey().toUnsignedBigInteger().add(BigInteger.ONE),
               endKeyHash.toUnsignedBigInteger(),
               1)
           .forEach(
@@ -97,7 +98,9 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       downloadState.getMetricsManager().notifyRangeProgress(HEAL_FLAT, endKeyHash, endKeyHash);
     }
 
-    Stream.of(accountsInTrieDb.entrySet(), accountsToDelete.entrySet())
+    // We will go through all the accounts in the range and look for those that need to be repaired.
+    // For those that need to be repaired, we will check their storage and fix it.
+    Stream.of(accountsInDb.entrySet(), accountsToDelete.entrySet())
         .flatMap(Collection::stream)
         .forEach(
             account -> {
@@ -140,7 +143,7 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       isProofValid =
           worldStateProofProvider.isValidRangeProof(
               startKeyHash, endKeyHash, getRootHash(), proofs, accounts);
-      this.accountsInFlatDb = accounts;
+      this.accountsInDb = accounts;
     }
   }
 
@@ -152,40 +155,47 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       final SnapSyncProcessState snapSyncState,
       final SnapSyncConfiguration syncConfig) {
 
-    if (!isProofValid) { // if proof is not valid we need to fix the flat database
+    if (!isProofValid) { // If the proof is not valid, we must compare the trie with the flat
+      // database to find what we need to fix.
 
       final BonsaiWorldStateKeyValueStorage.Updater bonsaiUpdater =
           (BonsaiWorldStateKeyValueStorage.Updater) updater;
 
+      final TreeMap<Bytes32, Bytes> accountsInFlatDb = new TreeMap<>(accountsInDb);
+      // put all flat accounts in the remove list, and gradually keep only those that are not in the
+      // trie
+      // to remove them.
+      accountsToDelete = new TreeMap<>(accountsInDb);
+
+      // retrieve the accounts from the trie in order to know what to fix in the flat database
       final MerkleTrie<Bytes, Bytes> accountTrie =
           new StoredMerklePatriciaTrie<>(
               worldStateStorage::getAccountStateTrieNode,
               getRootHash(),
               Function.identity(),
               Function.identity());
-
-      // retrieve the data from the trie in order to know what to fix in the flat database
       final RangeStorageEntriesCollector collector =
           RangeStorageEntriesCollector.createCollector(
               startKeyHash,
-              accountsInFlatDb.isEmpty() ? endKeyHash : accountsInFlatDb.lastKey(),
+              accountsInDb.isEmpty() ? endKeyHash : accountsInFlatDb.lastKey(),
               accountsInFlatDb.isEmpty()
                   ? syncConfig.getLocalFlatAccountCountToHealPerRequest()
                   : Integer.MAX_VALUE,
               Integer.MAX_VALUE);
 
-      // put all flat accounts in the list, and gradually keep only those that are not in the trie
-      // to remove and heal them.
-      accountsToDelete = new TreeMap<>(accountsInFlatDb);
-
       final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
-      accountsInTrieDb =
+      final TreeMap<Bytes32, Bytes> accountsInTrieDb =
           (TreeMap<Bytes32, Bytes>)
               accountTrie.entriesFrom(
                   root ->
                       RangeStorageEntriesCollector.collectEntries(
                           collector, visitor, root, startKeyHash));
 
+      // Iterate over the accounts in the trie. For each account, check if it matches the
+      // corresponding account in the flat database.
+      // For each account in the trie if it does, remove it from the deletion list. If it doesn't,
+      // mark it for repair and update its state in the flat db. all the account
+      // missing will be deleted
       accountsInTrieDb.forEach(
           (key, value) -> {
             final Bytes accountValue = accountsToDelete.get(key);
@@ -193,20 +203,26 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
               accountsToDelete.remove(key);
             } else {
               final Hash accountHash = Hash.wrap(key);
-              // if the account was missing or invalid in the flat db we need to heal the storage
-              downloadState.addAccountsToBeRepaired(CompactEncoding.bytesToPath(accountHash));
+              // if the account was invalid in the flat db we need to heal the storage
+              downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));
               bonsaiUpdater.putAccountInfoState(accountHash, value);
             }
           });
 
+      // Iterate over the accounts marked for deletion. For each account, mark it for repair and
+      // remove its state from the flat db.
+      // This is done to ensure that the state of the account will be consistent with the trie.
       accountsToDelete.forEach(
           (key, value) -> {
             final Hash accountHash = Hash.wrap(key);
             // if the account was removed we will have to heal the storage
-            downloadState.addAccountsToBeRepaired(CompactEncoding.bytesToPath(accountHash));
+            downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));
             bonsaiUpdater.removeAccountInfoState(accountHash);
           });
+
+      accountsInDb =
+          accountsInTrieDb; // switch to use the trie representation as the flat db is not valid
     }
-    return accountsInFlatDb.size() + accountsToDelete.size();
+    return accountsInDb.size() + accountsToDelete.size();
   }
 }
