@@ -71,7 +71,7 @@ public class TransactionEncoder {
   }
 
   private static Bytes encodeTransaction(
-      final Transaction transaction, final EncodingContext context) {
+      final Transaction transaction, final EncodingContext encodingContext) {
     final TransactionType transactionType = getTransactionType(transaction);
     if (TransactionType.FRONTIER.equals(transactionType)) {
       return RLP.encode(
@@ -80,7 +80,7 @@ public class TransactionEncoder {
       final Encoder encoder = getEncoder(transactionType);
       final BytesValueRLPOutput out = new BytesValueRLPOutput();
       out.writeByte(transaction.getType().getSerializedType());
-      encoder.encode(transaction, out, context);
+      encoder.encode(transaction, out, encodingContext);
       return out.encoded();
     }
   }

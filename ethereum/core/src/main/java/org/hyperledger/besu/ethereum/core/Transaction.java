@@ -127,7 +127,7 @@ public class Transaction
   }
 
   public static Transaction readFrom(final RLPInput rlpInput) {
-    return TransactionDecoder.decode(rlpInput);
+    return TransactionDecoder.decodeRLP(rlpInput);
   }
 
   /**
@@ -686,7 +686,9 @@ public class Transaction
         return;
       }
     }
-    size = bytes.size();
+    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+    TransactionEncoder.encodeForWire(transactionType, bytes, rlpOutput);
+    size = rlpOutput.encodedSize();
   }
 
   /**

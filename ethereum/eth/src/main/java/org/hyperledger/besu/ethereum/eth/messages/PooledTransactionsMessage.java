@@ -82,7 +82,7 @@ public final class PooledTransactionsMessage extends AbstractMessageData {
     if (pooledTransactions == null) {
       final BytesValueRLPInput in = new BytesValueRLPInput(getData(), false);
       pooledTransactions =
-          in.readList(rlpInput -> TransactionDecoder.decodeForNetwork(rlpInput.readBytes()));
+          in.readList(rlpInput -> TransactionDecoder.decodeBytesForNetwork(rlpInput.readBytes()));
     }
     return pooledTransactions;
   }

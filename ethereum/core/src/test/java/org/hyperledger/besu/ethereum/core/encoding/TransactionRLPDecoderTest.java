@@ -45,7 +45,7 @@ class TransactionRLPDecoderTest {
   @Test
   void decodeFrontierNominalCase() {
     final Transaction transaction =
-        TransactionDecoder.decode(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
+        TransactionDecoder.decodeRLP(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
     assertThat(transaction).isNotNull();
     assertThat(transaction.getGasPrice().get()).isEqualByComparingTo(Wei.of(50L));
     assertThat(transaction.getMaxPriorityFeePerGas()).isEmpty();
@@ -55,7 +55,7 @@ class TransactionRLPDecoderTest {
   @Test
   void decodeEIP1559NominalCase() {
     final Transaction transaction =
-        TransactionDecoder.decode(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
+        TransactionDecoder.decodeRLP(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
     assertThat(transaction).isNotNull();
     assertThat(transaction.getMaxPriorityFeePerGas()).hasValue(Wei.of(2L));
     assertThat(transaction.getMaxFeePerGas()).hasValue(Wei.of(new BigInteger("5000000000", 10)));
@@ -73,7 +73,7 @@ class TransactionRLPDecoderTest {
   @Test
   void shouldDecodeWithHighNonce() {
     final Transaction transaction =
-        TransactionDecoder.decode(RLP.input(Bytes.fromHexString(NONCE_64_BIT_MAX_MINUS_2_TX_RLP)));
+        TransactionDecoder.decodeRLP(RLP.input(Bytes.fromHexString(NONCE_64_BIT_MAX_MINUS_2_TX_RLP)));
     assertThat(transaction).isNotNull();
     assertThat(transaction.getNonce()).isEqualTo(MAX_NONCE - 1);
   }
@@ -93,7 +93,7 @@ class TransactionRLPDecoderTest {
     // Create bytes from String
     final Bytes bytes = Bytes.fromHexString(rlp_tx);
     // Decode bytes into a transaction
-    final Transaction transaction = TransactionDecoder.decode(RLP.input(bytes));
+    final Transaction transaction = TransactionDecoder.decodeRLP(RLP.input(bytes));
     // Bytes size should be equal to transaction size
     assertThat(transaction.getSize()).isEqualTo(bytes.size());
   }
@@ -102,7 +102,7 @@ class TransactionRLPDecoderTest {
   @ValueSource(strings = {FRONTIER_TX_RLP, EIP1559_TX_RLP, NONCE_64_BIT_MAX_MINUS_2_TX_RLP})
   void shouldReturnCorrectEncodedBytes(final String txRlp) {
     final Transaction transaction =
-        TransactionDecoder.decode(RLP.input(Bytes.fromHexString(txRlp)));
+        TransactionDecoder.decodeRLP(RLP.input(Bytes.fromHexString(txRlp)));
     assertThat(transaction.encoded()).isEqualTo(Bytes.fromHexString(txRlp));
   }
 }

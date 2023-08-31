@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -54,7 +55,7 @@ public class BlobTransactionEncodingTest {
       final TypedTransactionBytesArgument argument) {
     Bytes bytes = argument.bytes;
     // Decode the transaction from the wire using the TransactionDecoder.
-    final Transaction transaction = TransactionDecoder.decodeForNetwork(bytes);
+    final Transaction transaction = TransactionDecoder.decodeBytesForNetwork(bytes);
 
     final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
     BlobTransactionEncoder.encodeForWireNetwork(transaction, bytesValueRLPOutput);
@@ -71,7 +72,10 @@ public class BlobTransactionEncodingTest {
     Bytes encoded = TransactionEncoder.encodeOpaqueBytes(transaction);
     // Assert that the encoded transaction matches the original bytes.
     assertThat(encoded.toHexString()).isEqualTo(bytes.toHexString());
-    assertThat(transaction.getSize()).isEqualTo(bytes.size());
+
+    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+    TransactionEncoder.encodeForWire(transaction.getType(), bytes, rlpOutput);
+    assertThat(transaction.getSize()).isEqualTo(rlpOutput.encodedSize());
   }
 
   private static Arguments createArgumentFromFile(final String path) throws IOException {

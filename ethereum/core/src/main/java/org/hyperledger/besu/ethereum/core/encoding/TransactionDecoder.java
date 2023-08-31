@@ -28,7 +28,7 @@ public class TransactionDecoder {
     Transaction decode(RLPInput input, EncodingContext context);
   }
 
-  private static final TypedTransactionDecoder TYPED_DECODER = new TypedTransactionDecoder();
+  private static final TypedTransactionDecoder TYPED_TRANSACTION_DECODER = new TypedTransactionDecoder();
   private static final FrontierTransactionDecoder FRONTIER_DECODER =
       new FrontierTransactionDecoder();
 
@@ -38,41 +38,41 @@ public class TransactionDecoder {
    * @param rlpInput the RLP input
    * @return the decoded transaction
    */
-  public static Transaction decode(final RLPInput rlpInput) {
+  public static Transaction decodeRLP(final RLPInput rlpInput) {
     return getDecoder(rlpInput).decode(rlpInput, EncodingContext.INTERNAL);
   }
 
   /**
-   * Decodes the given input opaque bytes into a transaction.
+   * Decodes the given opaque bytes into a transaction.
    *
-   * @param input the input bytes
+   * @param bytes the bytes
    * @return the decoded transaction
    */
-  public static Transaction decodeOpaqueBytes(final Bytes input) {
-    return decodeOpaqueBytes(input, EncodingContext.INTERNAL);
+  public static Transaction decodeOpaqueBytes(final Bytes bytes) {
+    return decodeOpaqueBytes(bytes, EncodingContext.INTERNAL);
   }
 
   /**
-   * Decodes the input into a Transaction object, considering network specifics.
+   * Decodes the bytes into a Transaction object, considering network specifics.
    *
    * <p>This method is particularly important for certain types of transactions that need to be
    * wrapped into a different format when they are broadcast. An example of this is blob
    * transactions as per EIP-4844.
    *
-   * @param input The RLPInput to decode.
+   * @param bytes The opaque bytes to decode.
    * @return The decoded Transaction.
    */
-  public static Transaction decodeForNetwork(final Bytes input) {
-    return decodeOpaqueBytes(input, EncodingContext.NETWORK);
+  public static Transaction decodeBytesForNetwork(final Bytes bytes) {
+    return decodeOpaqueBytes(bytes, EncodingContext.NETWORK);
   }
 
-  private static Transaction decodeOpaqueBytes(final Bytes input, final EncodingContext context) {
+  private static Transaction decodeOpaqueBytes(final Bytes bytes, final EncodingContext context) {
     try {
-      final TransactionType transactionType = TransactionType.of(input.get(0));
-      final Bytes transactionBytes = input.slice(1);
-      return TYPED_DECODER.decode(transactionType, transactionBytes, context);
+      final TransactionType transactionType = TransactionType.of(bytes.get(0));
+      final Bytes transactionBytes = bytes.slice(1);
+      return TYPED_TRANSACTION_DECODER.decode(transactionType, transactionBytes, context);
     } catch (final IllegalArgumentException __) {
-      return decode(RLP.input(input));
+      return decodeRLP(RLP.input(bytes));
     }
   }
   /**
@@ -82,7 +82,7 @@ public class TransactionDecoder {
    * @return the appropriate decoder
    */
   private static Decoder getDecoder(final RLPInput rlpInput) {
-    return isTypedTransaction(rlpInput) ? TYPED_DECODER : FRONTIER_DECODER;
+    return isTypedTransaction(rlpInput) ? TYPED_TRANSACTION_DECODER : FRONTIER_DECODER;
   }
 
   /**
