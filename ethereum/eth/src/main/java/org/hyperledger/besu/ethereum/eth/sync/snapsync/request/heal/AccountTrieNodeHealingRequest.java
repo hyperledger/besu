@@ -149,7 +149,7 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
 
     // Only update the flat database in partial mode. In full mode (with the healing of the flat
     // database), we will fix it later.
-    if (!worldStateStorage.getFlatDbMode().equals(FlatDbMode.PARTIAL)) {
+    if (worldStateStorage.getFlatDbMode().equals(FlatDbMode.PARTIAL)) {
       ((BonsaiWorldStateKeyValueStorage.Updater) worldStateStorage.updater())
           .putAccountInfoState(accountHash, value)
           .commit();

@@ -197,15 +197,16 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       // mark it for repair and update its state in the flat db. all the account
       // missing will be deleted
       accountsInTrieDb.forEach(
-          (key, value) -> {
-            final Bytes accountValue = accountsToDelete.get(key);
-            if (accountValue != null && accountValue.equals(value)) {
+          (key, trieValue) -> {
+            final Bytes flatValue = accountsToDelete.get(key);
+            if (flatValue != null) {
               accountsToDelete.remove(key);
-            } else {
+            }
+            if (!trieValue.equals(flatValue)) {
               final Hash accountHash = Hash.wrap(key);
               // if the account was invalid in the flat db we need to heal the storage
               downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));
-              bonsaiUpdater.putAccountInfoState(accountHash, value);
+              bonsaiUpdater.putAccountInfoState(accountHash, trieValue);
             }
           });
 
