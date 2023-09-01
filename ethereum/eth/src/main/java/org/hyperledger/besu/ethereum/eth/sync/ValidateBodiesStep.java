@@ -45,6 +45,6 @@ public class ValidateBodiesStep
         protocolContext,
         blockWithReceipts.getBlock(),
         blockWithReceipts.getReceipts(),
-        HeaderValidationMode.LIGHT));
+        HeaderValidationMode.NONE));
   }
 }
