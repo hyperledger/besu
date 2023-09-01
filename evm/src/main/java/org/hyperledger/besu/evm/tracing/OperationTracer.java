@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.worldstate.WorldView;
 
 import java.util.Optional;
 
@@ -67,18 +68,21 @@ public interface OperationTracer {
   /**
    * Trace the start of a transaction.
    *
+   * @param worldView an immutable view of the execution context
    * @param transaction the transaction which will be processed
    */
-  default void traceStartTransaction(final Transaction transaction) {}
+  default void traceStartTransaction(final WorldView worldView, final Transaction transaction) {}
 
   /**
    * Trace the end of a transaction.
    *
+   * @param worldView an immutable view of the execution context
    * @param output the bytes output from the transaction
    * @param gasUsed the gas used by the entire transaction
    * @param timeNs the time in nanoseconds it took to execute the transaction
    */
-  default void traceEndTransaction(final Bytes output, final long gasUsed, final long timeNs) {}
+  default void traceEndTransaction(
+      final WorldView worldView, final Bytes output, final long gasUsed, final long timeNs) {}
 
   /**
    * Trace the entering of a new context
