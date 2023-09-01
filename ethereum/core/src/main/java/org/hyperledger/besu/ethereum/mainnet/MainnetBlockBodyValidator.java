@@ -270,7 +270,8 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
-    if (!ommerValidationMode.isFormOfLightValidation()) {
+    if (!ommerValidationMode.equals(HeaderValidationMode.NONE)
+        && !ommerValidationMode.isFormOfLightValidation()) {
       return isOmmerSiblingOfAncestor(context, current, ommer);
     } else {
       return true;
