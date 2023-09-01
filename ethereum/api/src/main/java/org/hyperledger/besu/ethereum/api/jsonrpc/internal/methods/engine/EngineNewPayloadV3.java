@@ -80,16 +80,6 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
   }
 
   @Override
-  protected ValidationResult<RpcErrorType> validateParameters(
-      final EngineNewPayloadRequestParameter params) {
-    if (params.getExecutionPayload().getBlobGasUsed() == null
-        || params.getExecutionPayload().getExcessBlobGas() == null) {
-      return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing blob gas fields");
-    }
-    return ValidationResult.valid();
-  }
-
-  @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
     if (protocolSchedule.isPresent()) {
       if (cancun.isPresent() && blockTimestamp >= cancun.get().milestone()) {

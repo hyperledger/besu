@@ -25,13 +25,10 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
-import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineExecutionPayloadParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineNewPayloadRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -41,7 +38,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
-import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 
 import java.util.Collections;
@@ -56,7 +52,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
+public class EngineNewPayloadV3Test extends AbstractEngineNewPayloadTest {
 
   public EngineNewPayloadV3Test() {}
 
@@ -109,22 +105,8 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
 
   @Test
   public void shouldValidVersionedHash_whenListIsEmpty() {
-    final BlockHeader mockHeader =
-        setupValidPayload(
-            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
-            Optional.empty(),
-            Optional.empty());
-    final EngineExecutionPayloadParameter payload =
-        mockEnginePayload(mockHeader, Collections.emptyList(), null, null);
-
-    EngineNewPayloadRequestParameter params =
-        new EngineNewPayloadRequestParameter(
-            payload,
-            Optional.of(List.of()),
-            Optional.of("0x0000000000000000000000000000000000000000000000000000000000000000"));
-
-    ValidationResult<RpcErrorType> res = method.validateParameters(params);
-    assertThat(res.isValid()).isTrue();
+    final JsonRpcRequestContext mock = getRequestContextMock(null, 1L, "1", new String[0], "0x0");
+    method.getAndCheckEngineNewPayloadRequestParams(mock);
   }
 
   @Override
@@ -137,8 +119,6 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .timestamp(super.cancunHardfork.milestone())
             .buildHeader();
 
-    when(blockchain.getBlockHeader(parentBlockHeader.getBlockHash()))
-        .thenReturn(Optional.of(parentBlockHeader));
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     BlockHeader mockHeader =
         new BlockHeaderTestFixture()
@@ -163,7 +143,6 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
   }
 
   @Test
-  @Override
   public void shouldValidateBlobGasUsedCorrectly() {
     // V3 must return error if null blobGasUsed
     BlockHeader blockHeader =
@@ -181,7 +160,6 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
   }
 
   @Test
-  @Override
   public void shouldValidateExcessBlobGasCorrectly() {
     // V3 must return error if null excessBlobGas
     BlockHeader blockHeader =

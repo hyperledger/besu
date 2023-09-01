@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameterTestFixture.WITHDRAWAL_PARAM_1;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
@@ -27,6 +28,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -175,6 +177,38 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
 
     assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
     verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldFailWhenVersionedHashesPresent() {
+    final JsonRpcRequestContext requestContextMock =
+        getRequestContextMock(null, null, null, new String[] {"1"}, null);
+    assertThatThrownBy(() -> method.getAndCheckEngineNewPayloadRequestParams(requestContextMock))
+        .hasMessage("non-null VersionedHashes pre-cancun");
+  }
+
+  @Test
+  public void shouldFailWhenParentBeaconBlockRootPresent() {
+    final JsonRpcRequestContext requestContextMock =
+        getRequestContextMock(null, null, null, null, "0x1");
+    assertThatThrownBy(() -> method.getAndCheckEngineNewPayloadRequestParams(requestContextMock))
+        .hasMessage("non-null ParentBeaconBlockRoot pre-cancun");
+  }
+
+  @Test
+  public void shouldFailWhenBlobGasUsedPresent() {
+    final JsonRpcRequestContext requestContextMock =
+        getRequestContextMock(null, 1L, null, null, null);
+    assertThatThrownBy(() -> method.getAndCheckEngineNewPayloadRequestParams(requestContextMock))
+        .hasMessage("non-null BlobGasUsed pre-cancun");
+  }
+
+  @Test
+  public void shouldFailWhenExcessBlobGasPresent() {
+    final JsonRpcRequestContext requestContextMock =
+        getRequestContextMock(null, null, "1", null, null);
+    assertThatThrownBy(() -> method.getAndCheckEngineNewPayloadRequestParams(requestContextMock))
+        .hasMessage("non-null ExcessBlobGas pre-cancun");
   }
 
   @Override

@@ -376,11 +376,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     return INVALID;
   }
 
-  protected ValidationResult<RpcErrorType> validateParameters(
-      final EngineNewPayloadRequestParameter params) {
-    return ValidationResult.valid();
-  }
-
   protected ValidationResult<RpcErrorType> validateBlobs(
       final List<Transaction> transactions,
       final BlockHeader header,

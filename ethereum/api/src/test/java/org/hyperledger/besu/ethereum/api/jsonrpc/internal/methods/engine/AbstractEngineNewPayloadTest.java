@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -38,6 +39,7 @@ import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineExecutionPayloadParameter;
@@ -120,7 +122,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
   public void before() {
     super.before();
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
-    when(protocolContext.getBlockchain()).thenReturn(blockchain);
+    lenient().when(protocolContext.getBlockchain()).thenReturn(blockchain);
     lenient()
         .when(protocolSpec.getWithdrawalsValidator())
         .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
@@ -364,7 +366,8 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
     when(mergeCoordinator.isBadBlock(any(Hash.class))).thenReturn(true);
     BlockHeader mockHeader = createBlockHeader(Optional.empty(), Optional.empty());
     var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList()));
-    when(protocolSpec.getWithdrawalsValidator())
+    lenient()
+        .when(protocolSpec.getWithdrawalsValidator())
         .thenReturn(new WithdrawalsValidator.AllowedWithdrawals());
     EnginePayloadStatusResult res = fromSuccessResp(resp);
     assertThat(res.getLatestValidHash()).contains(Hash.ZERO);
@@ -492,5 +495,43 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
     assertThat(res.getStatusAsString()).isEqualTo(VALID.name());
     assertThat(res.getError()).isNull();
     verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  protected static JsonRpcRequestContext getRequestContextMock(
+      final List<WithdrawalParameter> withdrawals,
+      final Long blobGasUsed,
+      final String exessBlobGas,
+      final String[] versionedHashes,
+      final String parentBeaconBlockRoot) {
+    final EngineExecutionPayloadParameter paramMock = mock(EngineExecutionPayloadParameter.class);
+    lenient().when(paramMock.getWithdrawals()).thenReturn(withdrawals);
+    lenient().when(paramMock.getBlobGasUsed()).thenReturn(blobGasUsed);
+    lenient().when(paramMock.getExcessBlobGas()).thenReturn(exessBlobGas);
+    final JsonRpcRequestContext contextMock = mock(JsonRpcRequestContext.class);
+    when(contextMock.getRequiredParameter(eq(0), eq(EngineExecutionPayloadParameter.class)))
+        .thenReturn(paramMock);
+    lenient()
+        .when(contextMock.getOptionalParameter(eq(1), eq(String[].class)))
+        .thenReturn(Optional.ofNullable(versionedHashes));
+    lenient()
+        .when(contextMock.getOptionalParameter(eq(2), eq(String.class)))
+        .thenReturn(Optional.ofNullable(parentBeaconBlockRoot));
+    if (versionedHashes == null) {
+      when(contextMock.getRequiredParameter(eq(1), eq(String[].class)))
+          .thenThrow(
+              new InvalidJsonRpcParameters("Missing required json rpc parameter at index 1"));
+    } else {
+      when(contextMock.getRequiredParameter(eq(1), eq(String[].class))).thenReturn(versionedHashes);
+    }
+    if (parentBeaconBlockRoot == null) {
+      when(contextMock.getRequiredParameter(eq(2), eq(String.class)))
+          .thenThrow(
+              new InvalidJsonRpcParameters("Missing required json rpc parameter at index 2"));
+    } else {
+      lenient()
+          .when(contextMock.getRequiredParameter(eq(2), eq(String.class)))
+          .thenReturn(parentBeaconBlockRoot);
+    }
+    return contextMock;
   }
 }
