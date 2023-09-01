@@ -41,7 +41,7 @@ public class TransactionDecoder {
           BlobTransactionDecoder::decode);
 
   private static final ImmutableMap<TransactionType, Decoder> NETWORK_TRANSACTION_DECODERS =
-      ImmutableMap.of(TransactionType.BLOB, BlobNetworkPackageDecoder::decode);
+      ImmutableMap.of(TransactionType.BLOB, BlobPooledTransactionDecoder::decode);
 
   /**
    * Decodes an RLP input into a transaction. If the input represents a typed transaction, it uses
@@ -50,9 +50,10 @@ public class TransactionDecoder {
    * @param rlpInput the RLP input
    * @return the decoded transaction
    */
-  public static Transaction decodeRLP(final RLPInput rlpInput) {
+  public static Transaction decodeRLP(
+      final RLPInput rlpInput, final EncodingContext encodingContext) {
     if (isTypedTransaction(rlpInput)) {
-      return decodeTypedTransaction(rlpInput);
+      return decodeTypedTransaction(rlpInput, encodingContext);
     } else {
       return FrontierTransactionDecoder.decode(rlpInput);
     }
@@ -65,10 +66,11 @@ public class TransactionDecoder {
    * @param rlpInput the RLP input
    * @return the decoded transaction
    */
-  private static Transaction decodeTypedTransaction(final RLPInput rlpInput) {
+  private static Transaction decodeTypedTransaction(
+      final RLPInput rlpInput, final EncodingContext context) {
     final Bytes typedTransactionBytes = rlpInput.readBytes();
     TransactionType transactionType = getTransactionType(typedTransactionBytes);
-    Decoder decoder = getDecoder(transactionType, EncodingContext.RLP);
+    Decoder decoder = getDecoder(transactionType, context);
     return decoder.decode(RLP.input(typedTransactionBytes.slice(1)));
   }
 
@@ -81,41 +83,16 @@ public class TransactionDecoder {
    * @param context the encoding context
    * @return the decoded transaction
    */
-  private static Transaction decodeOpaqueBytes(
+  public static Transaction decodeOpaqueBytes(
       final Bytes opaqueBytes, final EncodingContext context) {
     final TransactionType transactionType;
     try {
       transactionType = getTransactionType(opaqueBytes);
     } catch (IllegalArgumentException ex) {
-      return decodeRLP(RLP.input(opaqueBytes));
+      return decodeRLP(RLP.input(opaqueBytes), context);
     }
     final Bytes transactionBytes = opaqueBytes.slice(1);
     return getDecoder(transactionType, context).decode(RLP.input(transactionBytes));
-  }
-
-  /**
-   * Decodes the given opaque bytes into a transaction.
-   *
-   * @param bytes the bytes
-   * @return the decoded transaction
-   */
-  public static Transaction decodeOpaqueBytes(final Bytes bytes) {
-    return decodeOpaqueBytes(bytes, EncodingContext.RLP);
-  }
-
-  /**
-   * Decodes a transaction from bytes for network. It uses the network encoding context, which may
-   * involve different decoding rules than the RLP context
-   *
-   * <p>This method is particularly important for certain types of transactions that need to be
-   * wrapped into a different format when they are broadcast. An example of this is blob
-   * transactions as per EIP-4844..
-   *
-   * @param bytes the bytes
-   * @return the decoded transaction
-   */
-  public static Transaction decodeBytesForNetwork(final Bytes bytes) {
-    return decodeOpaqueBytes(bytes, EncodingContext.NETWORK);
   }
 
   /**
@@ -155,7 +132,7 @@ public class TransactionDecoder {
    */
   private static Decoder getDecoder(
       final TransactionType transactionType, final EncodingContext context) {
-    if (context.equals(EncodingContext.NETWORK)) {
+    if (context.equals(EncodingContext.TRANSACTION_POOL)) {
       return getNetworkDecoder(transactionType);
     }
     return getTypedDecoder(transactionType);

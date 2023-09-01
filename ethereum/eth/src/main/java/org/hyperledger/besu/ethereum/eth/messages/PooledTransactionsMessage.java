@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.BlobTransactionEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -82,7 +83,8 @@ public final class PooledTransactionsMessage extends AbstractMessageData {
     if (pooledTransactions == null) {
       final BytesValueRLPInput in = new BytesValueRLPInput(getData(), false);
       pooledTransactions =
-          in.readList(rlpInput -> TransactionDecoder.decodeBytesForNetwork(rlpInput.readBytes()));
+          in.readList(
+              input -> TransactionDecoder.decodeRLP(input, EncodingContext.TRANSACTION_POOL));
     }
     return pooledTransactions;
   }

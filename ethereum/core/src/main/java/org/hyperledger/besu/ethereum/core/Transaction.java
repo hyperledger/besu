@@ -37,6 +37,7 @@ import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.AccessListTransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.BlobTransactionEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -127,7 +128,7 @@ public class Transaction
   }
 
   public static Transaction readFrom(final RLPInput rlpInput) {
-    return TransactionDecoder.decodeRLP(rlpInput);
+    return TransactionDecoder.decodeRLP(rlpInput, EncodingContext.BLOCK_BODY);
   }
 
   /**

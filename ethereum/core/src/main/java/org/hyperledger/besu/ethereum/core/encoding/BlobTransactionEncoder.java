@@ -34,7 +34,7 @@ public class BlobTransactionEncoder {
 
   public static void encode(
       final Transaction transaction, final RLPOutput out, final EncodingContext context) {
-    if (context.equals(EncodingContext.NETWORK)) {
+    if (context.equals(EncodingContext.TRANSACTION_POOL)) {
       encodeEIP4844Network(transaction, out);
     } else {
       encodeEIP4844(transaction, out);

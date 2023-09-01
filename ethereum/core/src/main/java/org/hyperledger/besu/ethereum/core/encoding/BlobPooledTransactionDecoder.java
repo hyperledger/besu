@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.List;
 
-public class BlobNetworkPackageDecoder {
+public class BlobPooledTransactionDecoder {
   public static Transaction decode(final RLPInput input) {
     input.enterList();
     final Transaction.Builder builder = Transaction.builder();

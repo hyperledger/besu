@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-enum EncodingContext {
-  RLP,
-  NETWORK,
+public enum EncodingContext {
+  BLOCK_BODY,
+  TRANSACTION_POOL,
 }

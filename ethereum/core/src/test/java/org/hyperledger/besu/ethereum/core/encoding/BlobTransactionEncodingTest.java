@@ -54,7 +54,8 @@ public class BlobTransactionEncodingTest {
       final TypedTransactionBytesArgument argument) {
     Bytes bytes = argument.bytes;
     // Decode the transaction from the wire using the TransactionDecoder.
-    final Transaction transaction = TransactionDecoder.decodeBytesForNetwork(bytes);
+    final Transaction transaction =
+        TransactionDecoder.decodeOpaqueBytes(bytes, EncodingContext.TRANSACTION_POOL);
 
     final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
     BlobTransactionEncoder.encodeForWireNetwork(transaction, bytesValueRLPOutput);
@@ -66,7 +67,9 @@ public class BlobTransactionEncodingTest {
   public void blobTransactionEncodingDecodingTest(final TypedTransactionBytesArgument argument) {
     Bytes bytes = argument.bytes;
     // Decode the transaction from the wire using the TransactionDecoder.
-    final Transaction transaction = TransactionDecoder.decodeOpaqueBytes(bytes);
+    final Transaction transaction =
+        TransactionDecoder.decodeOpaqueBytes(bytes, EncodingContext.BLOCK_BODY);
+
     // Encode the transaction for wire using the TransactionEncoder.
     Bytes encoded = TransactionEncoder.encodeOpaqueBytes(transaction);
     // Assert that the encoded transaction matches the original bytes.

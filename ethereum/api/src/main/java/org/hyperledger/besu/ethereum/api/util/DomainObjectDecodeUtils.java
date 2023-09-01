@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.util;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
@@ -27,7 +28,7 @@ public class DomainObjectDecodeUtils {
       throws InvalidJsonRpcRequestException {
     try {
       Bytes txnBytes = Bytes.fromHexString(rawTransaction);
-      return TransactionDecoder.decodeBytesForNetwork(txnBytes);
+      return TransactionDecoder.decodeOpaqueBytes(txnBytes, EncodingContext.TRANSACTION_POOL);
     } catch (final IllegalArgumentException e) {
       throw new InvalidJsonRpcRequestException("Invalid raw transaction hex", e);
     } catch (final RLPException r) {
