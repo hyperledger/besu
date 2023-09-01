@@ -134,7 +134,6 @@ public class BesuControllerBuilderTest {
     when(storageProvider.createWorldStateStorage(DataStorageFormat.FOREST))
         .thenReturn(worldStateStorage);
     when(storageProvider.createWorldStatePreimageStorage()).thenReturn(worldStatePreimageStorage);
-    when(storageProvider.isWorldStateIterable()).thenReturn(true);
 
     when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
     when(worldStatePreimageStorage.updater())

@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import static java.util.stream.Collectors.joining;
-import static org.hyperledger.besu.consensus.merge.TransitionUtils.isTerminalProofOfWorkBlock;
 import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.INVALID;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
@@ -38,7 +37,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BadChainListener;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -101,7 +100,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
    * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
    * @param blockBuilderExecutor the block builder executor
-   * @param pendingTransactions the pending transactions
+   * @param transactionPool the pending transactions
    * @param miningParams the mining params
    * @param backwardSyncContext the backward sync context
    * @param depositContractAddress the address of the deposit contract
@@ -110,7 +109,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final ProposalBuilderExecutor blockBuilderExecutor,
-      final PendingTransactions pendingTransactions,
+      final TransactionPool transactionPool,
       final MiningParameters miningParams,
       final BackwardSyncContext backwardSyncContext,
       final Optional<Address> depositContractAddress) {
@@ -133,7 +132,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 address.or(miningParameters::getCoinbase).orElse(Address.ZERO),
                 () -> Optional.of(targetGasLimit.longValue()),
                 parent -> extraData.get(),
-                pendingTransactions,
+                transactionPool,
                 protocolContext,
                 protocolSchedule,
                 this.miningParameters.getMinTransactionGasPrice(),
@@ -246,7 +245,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final Long timestamp,
       final Bytes32 prevRandao,
       final Address feeRecipient,
-      final Optional<List<Withdrawal>> withdrawals) {
+      final Optional<List<Withdrawal>> withdrawals,
+      final Optional<Bytes32> parentBeaconBlockRoot) {
 
     // we assume that preparePayload is always called sequentially, since the RPC Engine calls
     // are sequential, if this assumption changes then more synchronization should be added to
@@ -273,7 +273,12 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     // put the empty block in first
     final Block emptyBlock =
         mergeBlockCreator
-            .createBlock(Optional.of(Collections.emptyList()), prevRandao, timestamp, withdrawals)
+            .createBlock(
+                Optional.of(Collections.emptyList()),
+                prevRandao,
+                timestamp,
+                withdrawals,
+                parentBeaconBlockRoot)
             .getBlock();
 
     BlockProcessingResult result = validateProposedBlock(emptyBlock);
@@ -294,7 +299,13 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       }
     }
 
-    tryToBuildBetterBlock(timestamp, prevRandao, payloadIdentifier, mergeBlockCreator, withdrawals);
+    tryToBuildBetterBlock(
+        timestamp,
+        prevRandao,
+        payloadIdentifier,
+        mergeBlockCreator,
+        withdrawals,
+        parentBeaconBlockRoot);
 
     return payloadIdentifier;
   }
@@ -334,10 +345,13 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final Bytes32 random,
       final PayloadIdentifier payloadIdentifier,
       final MergeBlockCreator mergeBlockCreator,
-      final Optional<List<Withdrawal>> withdrawals) {
+      final Optional<List<Withdrawal>> withdrawals,
+      final Optional<Bytes32> parentBeaconBlockRoot) {
 
     final Supplier<BlockCreationResult> blockCreator =
-        () -> mergeBlockCreator.createBlock(Optional.empty(), random, timestamp, withdrawals);
+        () ->
+            mergeBlockCreator.createBlock(
+                Optional.empty(), random, timestamp, withdrawals, parentBeaconBlockRoot);
 
     LOG.debug(
         "Block creation started for payload id {}, remaining time is {}ms",
@@ -607,33 +621,30 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       return true;
     }
 
-    if (newHead.getParentHash().equals(blockchain.getChainHeadHash())) {
-      LOG.atDebug()
-          .setMessage(
-              "Forwarding chain head to the block {} saved from a previous newPayload invocation")
-          .addArgument(newHead::toLogString)
-          .log();
-
-      if (forwardWorldStateTo(newHead)) {
-        // move chain head forward:
+    if (moveWorldStateTo(newHead)) {
+      if (newHead.getParentHash().equals(blockchain.getChainHeadHash())) {
+        LOG.atDebug()
+            .setMessage(
+                "Forwarding chain head to the block {} saved from a previous newPayload invocation")
+            .addArgument(newHead::toLogString)
+            .log();
         return blockchain.forwardToBlock(newHead);
       } else {
         LOG.atDebug()
-            .setMessage("Failed to move the worldstate forward to hash {}, not moving chain head")
+            .setMessage("New head {} is a chain reorg, rewind chain head to it")
             .addArgument(newHead::toLogString)
             .log();
-        return false;
+        return blockchain.rewindToBlock(newHead.getHash());
       }
     }
-
     LOG.atDebug()
-        .setMessage("New head {} is a chain reorg, rewind chain head to it")
+        .setMessage("Failed to move the worldstate forward to hash {}, not moving chain head")
         .addArgument(newHead::toLogString)
         .log();
-    return blockchain.rewindToBlock(newHead.getHash());
+    return false;
   }
 
-  private boolean forwardWorldStateTo(final BlockHeader newHead) {
+  private boolean moveWorldStateTo(final BlockHeader newHead) {
     Optional<MutableWorldState> newWorldState =
         protocolContext
             .getWorldStateArchive()
@@ -653,96 +664,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 newHead.getStateRoot(),
                 newHead.getHash()));
     return newWorldState.isPresent();
-  }
-
-  @Override
-  public boolean latestValidAncestorDescendsFromTerminal(final BlockHeader blockHeader) {
-    if (blockHeader.getNumber() <= 1L) {
-      // parent is a genesis block, check for merge-at-genesis
-      var blockchain = protocolContext.getBlockchain();
-
-      return blockchain
-          .getTotalDifficultyByHash(blockHeader.getBlockHash())
-          .map(Optional::of)
-          .orElse(blockchain.getTotalDifficultyByHash(blockHeader.getParentHash()))
-          .filter(
-              currDiff -> currDiff.greaterOrEqualThan(mergeContext.getTerminalTotalDifficulty()))
-          .isPresent();
-    }
-
-    Optional<Hash> validAncestorHash = this.getLatestValidAncestor(blockHeader);
-    if (validAncestorHash.isPresent()) {
-      final Optional<BlockHeader> maybeFinalized = mergeContext.getFinalized();
-      if (maybeFinalized.isPresent()) {
-        return isDescendantOf(maybeFinalized.get(), blockHeader);
-      } else {
-        Optional<BlockHeader> terminalBlockHeader = mergeContext.getTerminalPoWBlock();
-        if (terminalBlockHeader.isPresent()) {
-          return isDescendantOf(terminalBlockHeader.get(), blockHeader);
-        } else {
-          if (isTerminalProofOfWorkBlock(blockHeader, protocolContext)
-              || ancestorIsValidTerminalProofOfWork(blockHeader)) {
-            return true;
-          } else {
-            LOG.warn("Couldn't find terminal block, no blocks will be valid");
-            return false;
-          }
-        }
-      }
-    } else {
-      return false;
-    }
-  }
-
-  /**
-   * Ancestor is valid terminal proof of work boolean.
-   *
-   * @param blockheader the blockheader
-   * @return the boolean
-   */
-  // package visibility for testing
-  boolean ancestorIsValidTerminalProofOfWork(final BlockHeader blockheader) {
-    // this should only happen very close to the transition from PoW to PoS, prior to a finalized
-    // block.  For example, after a full sync of an already-merged chain which does not have
-    // terminal block info in the genesis config.
-
-    // check a 'cached' block which was determined to descend from terminal to short circuit
-    // in the case of a long period of non-finality
-    if (Optional.ofNullable(latestDescendsFromTerminal.get())
-        .map(latestDescendant -> isDescendantOf(latestDescendant, blockheader))
-        .orElse(Boolean.FALSE)) {
-      latestDescendsFromTerminal.set(blockheader);
-      return true;
-    }
-
-    var blockchain = protocolContext.getBlockchain();
-    Optional<BlockHeader> parent = blockchain.getBlockHeader(blockheader.getParentHash());
-    do {
-      LOG.debug(
-          "checking ancestor {} is valid terminal PoW for {}",
-          parent.map(BlockHeader::toLogString).orElse("empty"),
-          blockheader.toLogString());
-
-      if (parent.isPresent()) {
-        if (!parent.get().getDifficulty().equals(Difficulty.ZERO)) {
-          break;
-        }
-        parent = blockchain.getBlockHeader(parent.get().getParentHash());
-      }
-
-    } while (parent.isPresent());
-
-    boolean resp =
-        parent.filter(header -> isTerminalProofOfWorkBlock(header, protocolContext)).isPresent();
-    LOG.debug(
-        "checking ancestor {} is valid terminal PoW for {}\n {}",
-        parent.map(BlockHeader::toLogString).orElse("empty"),
-        blockheader.toLogString(),
-        resp);
-    if (resp) {
-      latestDescendsFromTerminal.set(blockheader);
-    }
-    return resp;
   }
 
   @Override

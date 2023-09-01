@@ -49,14 +49,17 @@ import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nonnull;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ForwardSyncStepTest {
 
   public static final int REMOTE_HEIGHT = 50;
@@ -77,7 +80,7 @@ public class ForwardSyncStepTest {
   GenericKeyValueStorageFacade<Hash, Hash> chainStorage;
   GenericKeyValueStorageFacade<String, BlockHeader> sessionDataStorage;
 
-  @Before
+  @BeforeEach
   public void setup() {
     headersStorage =
         new GenericKeyValueStorageFacade<>(

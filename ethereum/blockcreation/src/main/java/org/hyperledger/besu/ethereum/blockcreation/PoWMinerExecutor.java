@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWSolver;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -43,13 +43,13 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
   public PoWMinerExecutor(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
-      final PendingTransactions pendingTransactions,
+      final TransactionPool transactionPool,
       final MiningParameters miningParams,
       final AbstractBlockScheduler blockScheduler,
       final EpochCalculator epochCalculator,
       final long powJobTimeToLive,
       final int maxOmmerDepth) {
-    super(protocolContext, protocolSchedule, pendingTransactions, miningParams, blockScheduler);
+    super(protocolContext, protocolSchedule, transactionPool, miningParams, blockScheduler);
     this.coinbase = miningParams.getCoinbase();
     this.nonceGenerator = miningParams.getNonceGenerator().orElse(new RandomNonceGenerator());
     this.epochCalculator = epochCalculator;
@@ -92,7 +92,7 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
                 coinbase.orElse(Address.ZERO),
                 () -> targetGasLimit.map(AtomicLong::longValue),
                 parent -> extraData,
-                pendingTransactions,
+                transactionPool,
                 protocolContext,
                 protocolSchedule,
                 solver,

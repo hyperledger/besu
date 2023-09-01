@@ -15,12 +15,12 @@
 package org.hyperledger.besu.ethereum.eth.encoding;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAnnouncement;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayList;
 import java.util.List;

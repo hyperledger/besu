@@ -29,8 +29,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class EthSchedulerTest {
 
@@ -39,7 +39,7 @@ public class EthSchedulerTest {
   private MockScheduledExecutor scheduledExecutor;
   private AtomicBoolean shouldTimeout;
 
-  @Before
+  @BeforeEach
   public void setup() {
     shouldTimeout = new AtomicBoolean(false);
     ethScheduler = new DeterministicEthScheduler(shouldTimeout::get);

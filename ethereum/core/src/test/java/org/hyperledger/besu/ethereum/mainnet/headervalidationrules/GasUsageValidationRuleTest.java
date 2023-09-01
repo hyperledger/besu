@@ -19,38 +19,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.stream.Stream;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class GasUsageValidationRuleTest {
 
-  @Parameters
-  public static Collection<Object[]> data() {
-    return Arrays.asList(
-        new Object[][] {
-          {5, 6, true}, // gasUsed is less than gasLimit is valid
-          {5, 5, true}, // gasUsed is the same as gaslimit is valid
-          {5, 4, false}, // gasUsed is less than gasLimit
-        });
+  public static Stream<Arguments> data() {
+    return Stream.of(
+        Arguments.of(5, 6, true), // gasUsed is less than gasLimit is valid
+        Arguments.of(5, 5, true), // gasUsed is the same as gaslimit is valid
+        Arguments.of(5, 4, false) // gasUsed is less than gasLimit
+        );
   }
 
-  @Parameter public long gasUsed;
-
-  @Parameter(1)
-  public long gasLimit;
-
-  @Parameter(2)
-  public boolean expectedResult;
-
-  @Test
-  public void test() {
+  @ParameterizedTest
+  @MethodSource("data")
+  public void test(final long gasUsed, final long gasLimit, final boolean expectedResult) {
     final GasUsageValidationRule uut = new GasUsageValidationRule();
     final BlockHeaderTestFixture blockBuilder = new BlockHeaderTestFixture();
 

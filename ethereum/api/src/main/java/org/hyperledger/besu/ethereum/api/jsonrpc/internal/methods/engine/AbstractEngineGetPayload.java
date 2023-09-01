@@ -20,12 +20,15 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.Optional;
 
@@ -38,6 +41,18 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
   private final MergeMiningCoordinator mergeMiningCoordinator;
   protected final BlockResultFactory blockResultFactory;
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineGetPayload.class);
+
+  public AbstractEngineGetPayload(
+      final Vertx vertx,
+      final ProtocolSchedule schedule,
+      final ProtocolContext protocolContext,
+      final MergeMiningCoordinator mergeMiningCoordinator,
+      final BlockResultFactory blockResultFactory,
+      final EngineCallListener engineCallListener) {
+    super(vertx, schedule, protocolContext, engineCallListener);
+    this.mergeMiningCoordinator = mergeMiningCoordinator;
+    this.blockResultFactory = blockResultFactory;
+  }
 
   public AbstractEngineGetPayload(
       final Vertx vertx,
@@ -61,9 +76,14 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
     if (blockWithReceipts.isPresent()) {
       final var proposal = blockWithReceipts.get();
       LOG.atDebug().setMessage("assembledBlock {}").addArgument(() -> proposal).log();
+      ValidationResult<RpcErrorType> forkValidationResult =
+          validateForkSupported(proposal.getHeader().getTimestamp());
+      if (!forkValidationResult.isValid()) {
+        return new JsonRpcSuccessResponse(request.getRequest().getId(), forkValidationResult);
+      }
       return createResponse(request, payloadId, proposal);
     }
-    return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.UNKNOWN_PAYLOAD);
+    return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.UNKNOWN_PAYLOAD);
   }
 
   protected void logProposal(

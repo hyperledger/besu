@@ -24,8 +24,8 @@ dependencies {
 
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.apache.tuweni:tuweni-units'
+  implementation 'io.tmio:tuweni-bytes'
+  implementation 'io.tmio:tuweni-units'
 
   testImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
@@ -35,12 +35,9 @@ dependencies {
   testImplementation project(':testutil')
 
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
-  testImplementation 'junit:junit'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
-
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }

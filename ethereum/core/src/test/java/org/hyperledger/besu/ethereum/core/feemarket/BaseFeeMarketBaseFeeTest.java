@@ -23,25 +23,22 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class BaseFeeMarketBaseFeeTest {
 
   private final BaseFeeMarket baseFeeMarket = FeeMarket.london(0);
 
-  @Parameters
-  public static Collection<Object[]> data() {
+  public static Stream<Arguments> data() {
     try {
       final List<Object[]> data = new ArrayList<>();
       final String testFilePath = "basefee-test.json";
@@ -60,31 +57,20 @@ public class BaseFeeMarketBaseFeeTest {
               testCase.expectedBaseFee
             });
       }
-      return data;
+      return data.stream().map(Arguments::of);
     } catch (final Exception e) {
       throw new RuntimeException(e);
     }
   }
 
-  private final Wei parentBaseFee;
-  private final long parentGasUsed;
-  private final long parentTargetGasUsed;
-  private final Wei expectedBaseFee;
-
-  public BaseFeeMarketBaseFeeTest(
+  @ParameterizedTest
+  @MethodSource("data")
+  @Disabled("Need to have spec frozen to define correct values")
+  public void assertThatBaseFeeIsCorrect(
       final Wei parentBaseFee,
       final long parentGasUsed,
       final long parentTargetGasUsed,
       final Wei expectedBaseFee) {
-    this.parentBaseFee = parentBaseFee;
-    this.parentGasUsed = parentGasUsed;
-    this.parentTargetGasUsed = parentTargetGasUsed;
-    this.expectedBaseFee = expectedBaseFee;
-  }
-
-  @Test
-  @Ignore("Need to have spec frozen to define correct values")
-  public void assertThatBaseFeeIsCorrect() {
     assertThat(baseFeeMarket.computeBaseFee(0L, parentBaseFee, parentGasUsed, parentTargetGasUsed))
         .isEqualTo(expectedBaseFee);
   }

@@ -1,24 +1,80 @@
-
 # Changelog
 
-## 23.4.5
+## 23.7.3
+### Additions and Improvements
 
 ### Breaking Changes
+- Removed support for Kotti network (ETC) [#5816](https://github.com/hyperledger/besu/pull/5816)
 
 ### Additions and Improvements
+
+### Bug Fixes
+- do not create ignorable storage on revert storage-variables subcommand [#5830](https://github.com/hyperledger/besu/pull/5830) 
+
+### Download Links
+
+
+## 23.7.2
+
+### Additions and Improvements
+- Add new methods to `OperationTracer` to capture contexts enter/exit [#5756](https://github.com/hyperledger/besu/pull/5756)
+- Add Holešky as predefined network name [#5797](https://github.com/hyperledger/besu/pull/5797)
+
+### Breaking Changes
+- Add ABI-decoded revert reason to `eth_call` and `eth_estimateGas` responses [#5705](https://github.com/hyperledger/besu/issues/5705)
+
+### Additions and Improvements
+- Add missing methods to the `Transaction` interface [#5732](https://github.com/hyperledger/besu/pull/5732)
+- Add `benchmark` subcommand to `evmtool` [#5754](https://github.com/hyperledger/besu/issues/5754)
+- JSON output is now compact by default. This can be overridden by the new `--json-pretty-print-enabled` CLI option. [#5766](https://github.com/hyperledger/besu/pull/5766)
+- New `eth_getBlockReceipts` JSON-RPC method to retrieve all transaction receipts for a block in a single call [#5771](https://github.com/hyperledger/besu/pull/5771) 
+- Add new methods to `OperationTracer` to capture contexts enter/exit [#5756](https://github.com/hyperledger/besu/pull/5756)
+
+### Bug Fixes
+- Make smart contract permissioning features work with london fork [#5727](https://github.com/hyperledger/besu/pull/5727)
+- Add type to PendingTransactionDetail, fix eth_subscribe [#5729](https://github.com/hyperledger/besu/pull/5729)
+- EvmTool "run" mode did not reflect contracts created within the transaction. [#5755](https://github.com/hyperledger/besu/pull/5755)
+- Fixing snapsync issue with forest during the heal step [#5776](https://github.com/hyperledger/besu/pull/5776)
+
+### Download Links
+
+
+## 23.7.1
+
+### Breaking Changes
+- Removed deprecated GoQuorum permissioning interop [#5607](https://github.com/hyperledger/besu/pull/5607)
+- Removed support for version 0 of the database as it is no longer used by any active node. [#5698](https://github.com/hyperledger/besu/pull/5698)
+
+### Additions and Improvements
+- `evmtool` launcher binaries now ship as part of the standard distribution. [#5701](https://github.com/hyperledger/besu/pull/5701)
 - EvmTool now executes the `execution-spec-tests` via the `t8n` and `b11r`. See the [README](ethereum/evmtool/README.md) in EvmTool for more instructions.
 - Improve lifecycle management of the transaction pool [#5634](https://github.com/hyperledger/besu/pull/5634)
 - Add extension points in AbstractCreateOperation for EVM libraries to react to contract creations [#5656](https://github.com/hyperledger/besu/pull/5656)
+- Update to Tuweni 2.4.2. [#5684](https://github.com/hyperledger/besu/pull/5684)
+- Decouple data field from Enum JsonRpcError by creating new enum holder RpcErrorType[#5629](https://github.com/hyperledger/besu/pull/5629)
+- Update to bouncycastle 1.75 [#5675](https://github.com/hyperledger/besu/pull/5675)
+- Extend OperationTracer with new methods [#5662](https://github.com/hyperledger/besu/pull/5662)
+- Eip 6780 selfdestruct [#5430](https://github.com/hyperledger/besu/pull/5430)
+- Add new debug_getRawTransaction to the DEBUG engine [#5635](https://github.com/hyperledger/besu/pull/5635)
 
 ### Bug Fixes
 - Use the node's configuration to determine if DNS enode URLs are allowed in calls to `admin_addPeer` and `admin_removePeer` [#5584](https://github.com/hyperledger/besu/pull/5584)
 - Align the implementation of Eth/68 `NewPooledTransactionHashes` to other clients, using unsigned int for encoding size. [#5640](https://github.com/hyperledger/besu/pull/5640)
 - Failure at startup when enabling layered txpool before initial sync done [#5636](https://github.com/hyperledger/besu/issues/5636)
 - Remove miner-related option warnings if the change isn't using Ethash consensus algorithm [#5669](https://github.com/hyperledger/besu/pull/5669)
+- Fix for pending transactions reference leak [#5693](https://github.com/hyperledger/besu/pull/5693)
+- Address a performance regression observed in import testing [#5734](https://github.com/hyperledger/besu/pull/5734)
+- Update native libraries that have JPMS friendly module names [#5749](https://github.com/hyperledger/besu/pull/5749)
 
 ### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.1/besu-23.7.1.tar.gz / sha256: 85dce66c2dbd21b4e5d3310770434dd373018a046b78d5037f6d4955256793cd
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.1/besu-23.7.1.zip / sha256: dfac11b2d6d9e8076ab2f86324d48d563badf76fd2a4aadc4469a97aef374ef5
 
----
+
+## 23.7.0
+
+- Was not released (failed burn-in test)
+
 
 ## 23.4.4
 

@@ -37,7 +37,6 @@ import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.operation.OperationRegistry;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.util.ArrayDeque;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -86,7 +85,6 @@ class CodeV0Test {
     final MessageFrame frame =
         MessageFrame.builder()
             .type(MESSAGE_CALL)
-            .messageFrameStack(new ArrayDeque<>())
             .worldUpdater(mock(WorldUpdater.class))
             .initialGas(10_000L)
             .address(Address.ZERO)
@@ -99,7 +97,6 @@ class CodeV0Test {
             .apparentValue(Wei.ZERO)
             .code(getsCached)
             .blockValues(mock(BlockValues.class))
-            .depth(0)
             .completer(f -> {})
             .miningBeneficiary(Address.ZERO)
             .blockHashLookup(l -> Hash.EMPTY)

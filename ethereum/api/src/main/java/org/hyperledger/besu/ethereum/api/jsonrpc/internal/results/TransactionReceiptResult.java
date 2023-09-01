@@ -16,11 +16,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.plugin.data.TransactionType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +46,9 @@ import org.apache.tuweni.bytes.Bytes;
   "transactionHash",
   "transactionIndex",
   "revertReason",
-  "type"
+  "type",
+  "blobGasUsed",
+  "blobGasPrice"
 })
 public abstract class TransactionReceiptResult {
 
@@ -67,6 +69,9 @@ public abstract class TransactionReceiptResult {
   protected final TransactionReceipt receipt;
   protected final String type;
 
+  private final String blobGasUsed;
+  private final String blobGasPrice;
+
   protected TransactionReceiptResult(final TransactionReceiptWithMetadata receiptWithMetadata) {
     final Transaction txn = receiptWithMetadata.getTransaction();
     this.receipt = receiptWithMetadata.getReceipt();
@@ -76,6 +81,8 @@ public abstract class TransactionReceiptResult {
     this.cumulativeGasUsed = Quantity.create(receipt.getCumulativeGasUsed());
     this.from = txn.getSender().toString();
     this.gasUsed = Quantity.create(receiptWithMetadata.getGasUsed());
+    this.blobGasUsed = receiptWithMetadata.getBlobGasUsed().map(Quantity::create).orElse(null);
+    this.blobGasPrice = receiptWithMetadata.getBlobGasPrice().map(Quantity::create).orElse(null);
     this.effectiveGasPrice =
         Quantity.create(txn.getEffectiveGasPrice(receiptWithMetadata.getBaseFee()));
 
@@ -125,6 +132,18 @@ public abstract class TransactionReceiptResult {
   @JsonGetter(value = "gasUsed")
   public String getGasUsed() {
     return gasUsed;
+  }
+
+  @JsonGetter(value = "blobGasUsed")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public String getBlobGasUsed() {
+    return blobGasUsed;
+  }
+
+  @JsonGetter(value = "blobGasPrice")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public String getBlobGasPrice() {
+    return blobGasPrice;
   }
 
   @JsonGetter(value = "effectiveGasPrice")

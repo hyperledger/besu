@@ -28,20 +28,20 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Function;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class RawBlockIteratorTest {
 
-  @Rule public final TemporaryFolder tmp = new TemporaryFolder();
+  @TempDir private static Path tmp;
   private BlockDataGenerator gen;
 
-  @Before
+  @BeforeEach
   public void setup() {
     gen = new BlockDataGenerator(1);
   }
@@ -68,7 +68,7 @@ public class RawBlockIteratorTest {
 
     // Write a few blocks to a tmp file
     byte[] firstSerializedBlock = null;
-    final File blocksFile = tmp.newFolder().toPath().resolve("blocks").toFile();
+    final File blocksFile = tmp.resolve("blocks").toFile();
     final DataOutputStream writer = new DataOutputStream(new FileOutputStream(blocksFile));
     for (Block block : blocks) {
       final byte[] serializedBlock = serializeBlock(block);

@@ -33,15 +33,15 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SubscriptionManagerTest {
 
   private SubscriptionManager subscriptionManager;
   private final String CONNECTION_ID = "test-connection-id";
 
-  @Before
+  @BeforeEach
   public void before() {
     subscriptionManager = new SubscriptionManager(new NoOpMetricsSystem());
   }

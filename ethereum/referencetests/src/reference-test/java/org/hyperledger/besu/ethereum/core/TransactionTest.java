@@ -54,7 +54,7 @@ public class TransactionTest {
     return REFERENCE_TEST_PROTOCOL_SCHEDULES
         .getByName(name)
         .getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader())
-        .getTransactionValidator();
+        .getTransactionValidatorFactory().get();
   }
 
   private static final String TEST_CONFIG_FILE_DIR_PATH = "TransactionTests/";

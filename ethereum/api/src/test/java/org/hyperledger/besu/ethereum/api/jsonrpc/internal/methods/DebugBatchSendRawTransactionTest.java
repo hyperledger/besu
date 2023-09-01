@@ -29,13 +29,13 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 @SuppressWarnings("unchecked")
 public class DebugBatchSendRawTransactionTest {
 
@@ -44,7 +44,7 @@ public class DebugBatchSendRawTransactionTest {
   @Mock TransactionPool transactionPool;
   DebugBatchSendRawTransaction method;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     method = new DebugBatchSendRawTransaction(transactionPool);
   }

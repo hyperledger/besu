@@ -76,7 +76,7 @@ dependencies {
   testImplementation 'junit:junit'
   testImplementation 'org.apache.commons:commons-compress'
   testImplementation 'org.apache.logging.log4j:log4j-core'
-  testImplementation 'org.apache.tuweni:tuweni-crypto'
+  testImplementation 'io.tmio:tuweni-crypto'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.junit.jupiter:junit-jupiter'

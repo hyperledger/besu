@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.bonsai;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
@@ -44,67 +45,68 @@ import java.util.TreeMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 
-@RunWith(Parameterized.class)
 public class BonsaiWorldStateKeyValueStorageTest {
 
-  private final FlatDbMode flatDbMode;
-
-  public BonsaiWorldStateKeyValueStorageTest(final FlatDbMode flatDbMode) {
-    this.flatDbMode = flatDbMode;
-  }
-
-  @Parameterized.Parameters
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][] {{FlatDbMode.FULL}, {FlatDbMode.PARTIAL}});
   }
 
   final BonsaiWorldStateKeyValueStorage storage = emptyStorage();
 
-  @Before
-  public void setUp() {
+  public void setUp(final FlatDbMode flatDbMode) {
     if (flatDbMode.equals(FlatDbMode.FULL)) {
       storage.upgradeToFullFlatDbMode();
     }
   }
 
-  @Test
-  public void getCode_returnsEmpty() {
+  @ParameterizedTest
+  @MethodSource("data")
+  void getCode_returnsEmpty(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
     assertThat(storage.getCode(Hash.EMPTY, Hash.EMPTY)).contains(Bytes.EMPTY);
   }
 
-  @Test
-  public void getAccountStateTrieNode_returnsEmptyNode() {
+  @ParameterizedTest
+  @MethodSource("data")
+  void getAccountStateTrieNode_returnsEmptyNode(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
     assertThat(storage.getAccountStateTrieNode(Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH))
         .contains(MerkleTrie.EMPTY_TRIE_NODE);
   }
 
-  @Test
-  public void getAccountStorageTrieNode_returnsEmptyNode() {
+  @ParameterizedTest
+  @MethodSource("data")
+  void getAccountStorageTrieNode_returnsEmptyNode(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
     assertThat(
             storage.getAccountStorageTrieNode(
                 Hash.EMPTY, Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH))
         .contains(MerkleTrie.EMPTY_TRIE_NODE);
   }
 
-  @Test
-  public void getNodeData_returnsEmptyValue() {
+  @ParameterizedTest
+  @MethodSource("data")
+  void getNodeData_returnsEmptyValue(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
     assertThat(storage.getNodeData(null, null)).isEmpty();
   }
 
-  @Test
-  public void getNodeData_returnsEmptyNode() {
+  @ParameterizedTest
+  @MethodSource("data")
+  void getNodeData_returnsEmptyNode(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
     assertThat(storage.getNodeData(Bytes.EMPTY, MerkleTrie.EMPTY_TRIE_NODE_HASH)).isEmpty();
   }
 
-  @Test
-  public void getCode_saveAndGetSpecialValues() {
+  @ParameterizedTest
+  @MethodSource("data")
+  void getCode_saveAndGetSpecialValues(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
     storage
         .updater()
         .putCode(Hash.EMPTY, MerkleTrie.EMPTY_TRIE_NODE)
@@ -115,16 +117,20 @@ public class BonsaiWorldStateKeyValueStorageTest {
         .contains(MerkleTrie.EMPTY_TRIE_NODE);
   }
 
-  @Test
-  public void getCode_saveAndGetRegularValue() {
+  @ParameterizedTest
+  @MethodSource("data")
+  void getCode_saveAndGetRegularValue(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
     final Bytes bytes = Bytes.fromHexString("0x123456");
     storage.updater().putCode(Hash.EMPTY, bytes).commit();
 
     assertThat(storage.getCode(Hash.hash(bytes), Hash.EMPTY)).contains(bytes);
   }
 
-  @Test
-  public void getAccountStateTrieNode_saveAndGetSpecialValues() {
+  @ParameterizedTest
+  @MethodSource("data")
+  void getAccountStateTrieNode_saveAndGetSpecialValues(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
     storage
         .updater()
         .putAccountStateTrieNode(
@@ -137,8 +143,10 @@ public class BonsaiWorldStateKeyValueStorageTest {
     assertThat(storage.getAccountStateTrieNode(Bytes.EMPTY, Hash.EMPTY)).contains(Bytes.EMPTY);
   }
 
-  @Test
-  public void getAccountStateTrieNode_saveAndGetRegularValue() {
+  @ParameterizedTest
+  @MethodSource("data")
+  void getAccountStateTrieNode_saveAndGetRegularValue(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
     final Bytes location = Bytes.fromHexString("0x01");
     final Bytes bytes = Bytes.fromHexString("0x123456");
 
@@ -147,8 +155,10 @@ public class BonsaiWorldStateKeyValueStorageTest {
     assertThat(storage.getAccountStateTrieNode(location, Hash.hash(bytes))).contains(bytes);
   }
 
-  @Test
-  public void getAccountStorageTrieNode_saveAndGetSpecialValues() {
+  @ParameterizedTest
+  @MethodSource("data")
+  void getAccountStorageTrieNode_saveAndGetSpecialValues(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
 
     storage
         .updater()
@@ -168,9 +178,11 @@ public class BonsaiWorldStateKeyValueStorageTest {
         .contains(Bytes.EMPTY);
   }
 
-  @Test
-  public void getAccountStorageTrieNode_saveAndGetRegularValue() {
-    final Hash accountHash = Hash.hash(Address.fromHexString("0x1"));
+  @ParameterizedTest
+  @MethodSource("data")
+  void getAccountStorageTrieNode_saveAndGetRegularValue(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
+    final Hash accountHash = Address.fromHexString("0x1").addressHash();
     final Bytes location = Bytes.fromHexString("0x01");
     final Bytes bytes = Bytes.fromHexString("0x123456");
 
@@ -183,9 +195,11 @@ public class BonsaiWorldStateKeyValueStorageTest {
         .contains(bytes);
   }
 
-  @Test
-  public void getAccount_notLoadFromTrieWhenEmptyAndFlatDbFullMode() {
-    Assume.assumeTrue(flatDbMode == FlatDbMode.FULL);
+  @ParameterizedTest
+  @MethodSource("data")
+  void getAccount_notLoadFromTrieWhenEmptyAndFlatDbFullMode(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
+    Assumptions.assumeTrue(flatDbMode == FlatDbMode.FULL);
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
 
     final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
@@ -197,8 +211,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
     // save world state root hash
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
     updater
-        .getTrieBranchStorageTransaction()
-        .put(WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
+        .getWorldStateTransaction()
+        .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
     updater.commit();
 
     // remove flat database
@@ -213,9 +227,11 @@ public class BonsaiWorldStateKeyValueStorageTest {
     verify(storage, times(0)).getAccountStateTrieNode(any(), eq(trie.getRootHash()));
   }
 
-  @Test
-  public void getAccount_loadFromTrieWhenEmptyAndFlatDbPartialMode() {
-    Assume.assumeTrue(flatDbMode == FlatDbMode.PARTIAL);
+  @ParameterizedTest
+  @MethodSource("data")
+  void getAccount_loadFromTrieWhenEmptyAndFlatDbPartialMode(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
+    Assumptions.assumeTrue(flatDbMode == FlatDbMode.PARTIAL);
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
     final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
     final TreeMap<Bytes32, Bytes> accounts =
@@ -225,8 +241,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
     // save world state root hash
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
     updater
-        .getTrieBranchStorageTransaction()
-        .put(WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
+        .getWorldStateTransaction()
+        .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
     updater.commit();
 
     // remove flat database
@@ -240,9 +256,11 @@ public class BonsaiWorldStateKeyValueStorageTest {
     verify(storage, times(1)).getAccountStateTrieNode(any(), eq(trie.getRootHash()));
   }
 
-  @Test
-  public void shouldUsePartialDBStrategyAfterDowngradingMode() {
-    Assume.assumeTrue(flatDbMode == FlatDbMode.PARTIAL);
+  @ParameterizedTest
+  @MethodSource("data")
+  void shouldUsePartialDBStrategyAfterDowngradingMode(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
+    Assumptions.assumeTrue(flatDbMode == FlatDbMode.PARTIAL);
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
 
     final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
@@ -253,8 +271,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
     // save world state root hash
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
     updater
-        .getTrieBranchStorageTransaction()
-        .put(WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
+        .getWorldStateTransaction()
+        .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
     updater.commit();
 
     Mockito.reset(storage);
@@ -270,9 +288,11 @@ public class BonsaiWorldStateKeyValueStorageTest {
         .contains(accounts.firstEntry().getValue());
   }
 
-  @Test
-  public void getStorage_loadFromTrieWhenEmptyWithPartialMode() {
-    Assume.assumeTrue(flatDbMode == FlatDbMode.PARTIAL);
+  @ParameterizedTest
+  @MethodSource("data")
+  void getStorage_loadFromTrieWhenEmptyWithPartialMode(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
+    Assumptions.assumeTrue(flatDbMode == FlatDbMode.PARTIAL);
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
     final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
     final TreeMap<Bytes32, Bytes> accounts =
@@ -298,8 +318,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
     // save world state root hash
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
     updater
-        .getTrieBranchStorageTransaction()
-        .put(WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
+        .getWorldStateTransaction()
+        .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
     updater.commit();
 
     // remove flat database
@@ -317,9 +337,11 @@ public class BonsaiWorldStateKeyValueStorageTest {
             eq(Hash.wrap(accounts.firstKey())), any(), eq(storageTrie.getRootHash()));
   }
 
-  @Test
-  public void getStorage_loadFromTrieWhenEmptyWithFullMode() {
-    Assume.assumeTrue(flatDbMode == FlatDbMode.FULL);
+  @ParameterizedTest
+  @MethodSource("data")
+  void getStorage_loadFromTrieWhenEmptyWithFullMode(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
+    Assumptions.assumeTrue(flatDbMode == FlatDbMode.FULL);
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
     storage.upgradeToFullFlatDbMode();
     final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(storage, 1);
@@ -327,16 +349,18 @@ public class BonsaiWorldStateKeyValueStorageTest {
     // save world state root hash
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
     updater
-        .getTrieBranchStorageTransaction()
-        .put(WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
+        .getWorldStateTransaction()
+        .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
     updater.commit();
 
     // remove flat database
     storage.clearFlatDatabase();
   }
 
-  @Test
-  public void clear_reloadFlatDbStrategy() {
+  @ParameterizedTest
+  @MethodSource("data")
+  void clear_reloadFlatDbStrategy(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
     final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
 
     // save world state root hash
@@ -353,11 +377,13 @@ public class BonsaiWorldStateKeyValueStorageTest {
     assertThat(storage.getAccount(Hash.ZERO)).isEmpty();
   }
 
-  @Test
-  public void reconcilesNonConflictingUpdaters() {
-    final Hash accountHashA = Hash.hash(Address.fromHexString("0x1"));
-    final Hash accountHashB = Hash.hash(Address.fromHexString("0x2"));
-    final Hash accountHashD = Hash.hash(Address.fromHexString("0x4"));
+  @ParameterizedTest
+  @MethodSource("data")
+  void reconcilesNonConflictingUpdaters(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
+    final Hash accountHashA = Address.fromHexString("0x1").addressHash();
+    final Hash accountHashB = Address.fromHexString("0x2").addressHash();
+    final Hash accountHashD = Address.fromHexString("0x4").addressHash();
     final Bytes bytesA = Bytes.fromHexString("0x12");
     final Bytes bytesB = Bytes.fromHexString("0x1234");
     final Bytes bytesC = Bytes.fromHexString("0x123456");
@@ -377,24 +403,32 @@ public class BonsaiWorldStateKeyValueStorageTest {
     assertThat(storage.getCode(Hash.hash(bytesC), accountHashD)).contains(bytesC);
   }
 
-  @Test
-  public void isWorldStateAvailable_defaultIsFalse() {
+  @ParameterizedTest
+  @MethodSource("data")
+  void isWorldStateAvailable_defaultIsFalse(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
     assertThat(emptyStorage().isWorldStateAvailable(UInt256.valueOf(1), Hash.EMPTY)).isFalse();
   }
 
-  @Test
-  public void isWorldStateAvailable_StateAvailableByRootHash() {
+  @ParameterizedTest
+  @MethodSource("data")
+  void isWorldStateAvailable_StateAvailableByRootHash(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
 
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
     final Bytes rootHashKey = Bytes32.fromHexString("0x01");
-    updater.getTrieBranchStorageTransaction().put(WORLD_ROOT_HASH_KEY, rootHashKey.toArrayUnsafe());
+    updater
+        .getWorldStateTransaction()
+        .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, rootHashKey.toArrayUnsafe());
     updater.commit();
     assertThat(storage.isWorldStateAvailable(Hash.wrap(Bytes32.wrap(rootHashKey)), Hash.EMPTY))
         .isTrue();
   }
 
-  @Test
-  public void isWorldStateAvailable_afterCallingSaveWorldstate() {
+  @ParameterizedTest
+  @MethodSource("data")
+  void isWorldStateAvailable_afterCallingSaveWorldstate(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
 
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater updater = storage.updater();
 

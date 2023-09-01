@@ -37,8 +37,8 @@ import java.util.function.BiFunction;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class RequestDataStepTest {
 
@@ -62,7 +62,7 @@ public class RequestDataStepTest {
 
   private final RequestDataStep requestDataStep = new RequestDataStep(getNodeDataTaskFactory);
 
-  @Before
+  @BeforeEach
   public void setUp() {
     when(ethTask.run()).thenReturn(getDataFuture);
   }

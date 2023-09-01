@@ -24,34 +24,34 @@ import static org.mockito.Mockito.verify;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.QosTimer;
 
 import io.vertx.core.Vertx;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(VertxExtension.class)
 public class EngineQosTimerTest {
   private EngineQosTimer engineQosTimer;
   private Vertx vertx;
+  private VertxTestContext testContext;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     vertx = Vertx.vertx();
+    testContext = new VertxTestContext();
     engineQosTimer = new EngineQosTimer(vertx);
   }
 
-  @After
+  @AfterEach
   public void cleanUp() {
     vertx.close();
   }
 
   @Test
-  public void shouldNotWarnWhenCalledWithinTimeout(final TestContext ctx) {
+  public void shouldNotWarnWhenCalledWithinTimeout() {
     final long TEST_QOS_TIMEOUT = 75L;
-    final Async async = ctx.async();
     final var spyEngineQosTimer = spy(engineQosTimer);
     final var spyTimer =
         spy(new QosTimer(vertx, TEST_QOS_TIMEOUT, z -> spyEngineQosTimer.logTimeoutWarning()));
@@ -68,17 +68,16 @@ public class EngineQosTimerTest {
             verify(spyTimer, atLeast(2)).resetTimer();
             // should not warn
             verify(spyEngineQosTimer, never()).logTimeoutWarning();
-            async.complete();
+            testContext.completeNow();
           } catch (Exception ex) {
-            ctx.fail(ex);
+            testContext.failNow(ex);
           }
         });
   }
 
   @Test
-  public void shouldWarnWhenNotCalledWithinTimeout(final TestContext ctx) {
+  public void shouldWarnWhenNotCalledWithinTimeout() {
     final long TEST_QOS_TIMEOUT = 75L;
-    final Async async = ctx.async();
     final var spyEngineQosTimer = spy(engineQosTimer);
     final var spyTimer =
         spy(new QosTimer(vertx, TEST_QOS_TIMEOUT, z -> spyEngineQosTimer.logTimeoutWarning()));
@@ -92,9 +91,9 @@ public class EngineQosTimerTest {
             verify(spyTimer, atLeastOnce()).resetTimer();
             // should warn
             verify(spyEngineQosTimer, atLeastOnce()).logTimeoutWarning();
-            async.complete();
+            testContext.completeNow();
           } catch (Exception ex) {
-            ctx.fail(ex);
+            testContext.failNow(ex);
           }
         });
   }

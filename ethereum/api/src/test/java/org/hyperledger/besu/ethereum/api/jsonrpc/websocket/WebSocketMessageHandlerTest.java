@@ -28,9 +28,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcRequest;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 
@@ -39,40 +39,42 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.http.WebSocketFrame;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(VertxExtension.class)
 public class WebSocketMessageHandlerTest {
 
   private static final int VERTX_AWAIT_TIMEOUT_MILLIS = 10000;
-
   private Vertx vertx;
+  private VertxTestContext testContext;
   private WebSocketMessageHandler handler;
   private JsonRpcMethod jsonRpcMethodMock;
   private ServerWebSocket websocketMock;
   private final Map<String, JsonRpcMethod> methods = new HashMap<>();
 
-  @Before
-  public void before(final TestContext context) {
-    vertx = Vertx.vertx();
+  @BeforeEach
+  public void before() {
+    vertx = Vertx.vertx(new VertxOptions().setPreferNativeTransport(true));
+    testContext = new VertxTestContext();
 
     jsonRpcMethodMock = mock(JsonRpcMethod.class);
     websocketMock = mock(ServerWebSocket.class);
@@ -88,16 +90,14 @@ public class WebSocketMessageHandlerTest {
             TimeoutOptions.defaultOptions().getTimeoutSeconds());
   }
 
-  @After
-  public void after(final TestContext context) {
+  @AfterEach
+  public void after() throws Throwable {
     Mockito.reset(jsonRpcMethodMock);
     Mockito.reset(websocketMock);
-    vertx.close(context.asyncAssertSuccess());
   }
 
   @Test
-  public void handlerDeliversResponseSuccessfully(final TestContext context) {
-    final Async async = context.async();
+  public void handlerDeliversResponseSuccessfully() throws InterruptedException {
 
     final JsonObject requestJson = new JsonObject().put("id", 1).put("method", "eth_x");
     final JsonRpcRequest requestBody = requestJson.mapTo(WebSocketRpcRequest.class);
@@ -108,11 +108,13 @@ public class WebSocketMessageHandlerTest {
 
     when(jsonRpcMethodMock.response(eq(expectedRequest))).thenReturn(expectedResponse);
 
-    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame)))
+        .then(completeOnLastFrame(testContext));
 
     handler.handle(websocketMock, requestJson.toBuffer(), Optional.empty());
 
-    async.awaitSuccess(WebSocketMessageHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+    testContext.awaitCompletion(
+        WebSocketMessageHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 
     // can verify only after async not before
     verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedResponse))));
@@ -121,8 +123,7 @@ public class WebSocketMessageHandlerTest {
   }
 
   @Test
-  public void handlerBatchRequestDeliversResponseSuccessfully(final TestContext context) {
-    final Async async = context.async();
+  public void handlerBatchRequestDeliversResponseSuccessfully() throws InterruptedException {
 
     final JsonObject requestJson = new JsonObject().put("id", 1).put("method", "eth_x");
     final JsonArray arrayJson = new JsonArray(List.of(requestJson, requestJson));
@@ -136,11 +137,13 @@ public class WebSocketMessageHandlerTest {
 
     when(jsonRpcMethodMock.response(eq(expectedRequest))).thenReturn(expectedSingleResponse);
 
-    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame)))
+        .then(completeOnLastFrame(testContext));
 
     handler.handle(websocketMock, arrayJson.toBuffer(), Optional.empty());
 
-    async.awaitSuccess(WebSocketMessageHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+    testContext.awaitCompletion(
+        WebSocketMessageHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
     // can verify only after async not before
     verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedBatchResponse))));
     verify(websocketMock).writeFrame(argThat(this::isFinalFrame));
@@ -148,8 +151,8 @@ public class WebSocketMessageHandlerTest {
   }
 
   @Test
-  public void handlerBatchRequestContainingErrorsShouldRespondWithBatchErrors(
-      final TestContext context) {
+  public void handlerBatchRequestContainingErrorsShouldRespondWithBatchErrors()
+      throws InterruptedException {
     ServerWebSocket websocketMock = mock(ServerWebSocket.class);
 
     when(websocketMock.textHandlerID()).thenReturn(UUID.randomUUID().toString());
@@ -161,23 +164,23 @@ public class WebSocketMessageHandlerTest {
             mock(EthScheduler.class),
             TimeoutOptions.defaultOptions().getTimeoutSeconds());
 
-    final Async async = context.async();
-
     final JsonObject requestJson =
         new JsonObject().put("id", 1).put("method", "eth_nonexistentMethod");
     final JsonRpcErrorResponse expectedErrorResponse1 =
-        new JsonRpcErrorResponse(1, JsonRpcError.METHOD_NOT_FOUND);
+        new JsonRpcErrorResponse(1, RpcErrorType.METHOD_NOT_FOUND);
 
     final JsonArray arrayJson = new JsonArray(List.of(requestJson, requestJson));
 
     final JsonArray expectedBatchResponse =
         new JsonArray(List.of(expectedErrorResponse1, expectedErrorResponse1));
 
-    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame)))
+        .then(completeOnLastFrame(testContext));
 
     handleBadCalls.handle(websocketMock, arrayJson.toBuffer(), Optional.empty());
 
-    async.awaitSuccess(WebSocketMessageHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+    testContext.awaitCompletion(
+        WebSocketMessageHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 
     // can verify only after async not before
     verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedBatchResponse))));
@@ -186,17 +189,18 @@ public class WebSocketMessageHandlerTest {
   }
 
   @Test
-  public void jsonDecodeFailureShouldRespondInvalidRequest(final TestContext context) {
-    final Async async = context.async();
+  public void jsonDecodeFailureShouldRespondInvalidRequest() throws InterruptedException {
 
     final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.INVALID_REQUEST);
+        new JsonRpcErrorResponse(null, RpcErrorType.INVALID_REQUEST);
 
-    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame)))
+        .then(completeOnLastFrame(testContext));
 
     handler.handle(websocketMock, Buffer.buffer(), Optional.empty());
 
-    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+    testContext.awaitCompletion(
+        WebSocketMessageHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 
     // can verify only after async not before
     verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedResponse))));
@@ -205,17 +209,18 @@ public class WebSocketMessageHandlerTest {
   }
 
   @Test
-  public void objectMapperFailureShouldRespondInvalidRequest(final TestContext context) {
-    final Async async = context.async();
+  public void objectMapperFailureShouldRespondInvalidRequest() throws InterruptedException {
 
     final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(null, JsonRpcError.INVALID_REQUEST);
+        new JsonRpcErrorResponse(null, RpcErrorType.INVALID_REQUEST);
 
-    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame)))
+        .then(completeOnLastFrame(testContext));
 
     handler.handle(websocketMock, new JsonObject().toBuffer(), Optional.empty());
 
-    async.awaitSuccess(VERTX_AWAIT_TIMEOUT_MILLIS);
+    testContext.awaitCompletion(
+        WebSocketMessageHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 
     // can verify only after async not before
     verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedResponse))));
@@ -224,19 +229,20 @@ public class WebSocketMessageHandlerTest {
   }
 
   @Test
-  public void absentMethodShouldRespondMethodNotFound(final TestContext context) {
-    final Async async = context.async();
+  public void absentMethodShouldRespondMethodNotFound() throws InterruptedException {
 
     final JsonObject requestJson =
         new JsonObject().put("id", 1).put("method", "eth_nonexistentMethod");
     final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(1, JsonRpcError.METHOD_NOT_FOUND);
+        new JsonRpcErrorResponse(1, RpcErrorType.METHOD_NOT_FOUND);
 
-    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame)))
+        .then(completeOnLastFrame(testContext));
 
     handler.handle(websocketMock, requestJson.toBuffer(), Optional.empty());
 
-    async.awaitSuccess(WebSocketMessageHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+    testContext.awaitCompletion(
+        WebSocketMessageHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 
     verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedResponse))));
     verify(websocketMock).writeFrame(argThat(this::isFinalFrame));
@@ -244,9 +250,8 @@ public class WebSocketMessageHandlerTest {
   }
 
   @Test
-  public void onInvalidJsonRpcParametersExceptionProcessingRequestShouldRespondInvalidParams(
-      final TestContext context) {
-    final Async async = context.async();
+  public void onInvalidJsonRpcParametersExceptionProcessingRequestShouldRespondInvalidParams()
+      throws InterruptedException {
 
     final JsonObject requestJson = new JsonObject().put("id", 1).put("method", "eth_x");
     final JsonRpcRequestContext expectedRequest =
@@ -254,13 +259,15 @@ public class WebSocketMessageHandlerTest {
     when(jsonRpcMethodMock.response(eq(expectedRequest)))
         .thenThrow(new InvalidJsonRpcParameters(""));
     final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(1, JsonRpcError.INVALID_PARAMS);
+        new JsonRpcErrorResponse(1, RpcErrorType.INVALID_PARAMS);
 
-    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame)))
+        .then(completeOnLastFrame(testContext));
 
     handler.handle(websocketMock, requestJson.toBuffer(), Optional.empty());
 
-    async.awaitSuccess(WebSocketMessageHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+    testContext.awaitCompletion(
+        WebSocketMessageHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 
     // can verify only after async not before
     verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedResponse))));
@@ -268,21 +275,22 @@ public class WebSocketMessageHandlerTest {
   }
 
   @Test
-  public void onExceptionProcessingRequestShouldRespondInternalError(final TestContext context) {
-    final Async async = context.async();
+  public void onExceptionProcessingRequestShouldRespondInternalError() throws InterruptedException {
 
     final JsonObject requestJson = new JsonObject().put("id", 1).put("method", "eth_x");
     final JsonRpcRequestContext expectedRequest =
         new JsonRpcRequestContext(requestJson.mapTo(WebSocketRpcRequest.class));
     when(jsonRpcMethodMock.response(eq(expectedRequest))).thenThrow(new RuntimeException());
     final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(1, JsonRpcError.INTERNAL_ERROR);
+        new JsonRpcErrorResponse(1, RpcErrorType.INTERNAL_ERROR);
 
-    when(websocketMock.writeFrame(argThat(this::isFinalFrame))).then(completeOnLastFrame(async));
+    when(websocketMock.writeFrame(argThat(this::isFinalFrame)))
+        .then(completeOnLastFrame(testContext));
 
     handler.handle(websocketMock, requestJson.toBuffer(), Optional.empty());
 
-    async.awaitSuccess(WebSocketMessageHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS);
+    testContext.awaitCompletion(
+        WebSocketMessageHandlerTest.VERTX_AWAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 
     // can verify only after async not before
     verify(websocketMock).writeFrame(argThat(isFrameWithText(Json.encode(expectedResponse))));
@@ -297,9 +305,9 @@ public class WebSocketMessageHandlerTest {
     return frame.isFinal();
   }
 
-  private Answer<Future<Void>> completeOnLastFrame(final Async async) {
+  private Answer<Future<Void>> completeOnLastFrame(final VertxTestContext testContext) {
     return invocation -> {
-      async.complete();
+      testContext.completeNow();
       return Future.succeededFuture();
     };
   }

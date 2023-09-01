@@ -31,7 +31,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Optional;
@@ -59,7 +59,7 @@ public class QbftBlockCreatorFactoryTest {
 
     qbftBlockCreatorFactory =
         new QbftBlockCreatorFactory(
-            mock(PendingTransactions.class),
+            mock(TransactionPool.class),
             mock(ProtocolContext.class),
             mock(ProtocolSchedule.class),
             forksSchedule,

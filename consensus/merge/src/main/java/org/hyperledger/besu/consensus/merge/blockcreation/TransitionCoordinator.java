@@ -147,9 +147,10 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
       final Long timestamp,
       final Bytes32 prevRandao,
       final Address feeRecipient,
-      final Optional<List<Withdrawal>> withdrawals) {
+      final Optional<List<Withdrawal>> withdrawals,
+      final Optional<Bytes32> parentBeaconBlockRoot) {
     return mergeCoordinator.preparePayload(
-        parentHeader, timestamp, prevRandao, feeRecipient, withdrawals);
+        parentHeader, timestamp, prevRandao, feeRecipient, withdrawals, parentBeaconBlockRoot);
   }
 
   @Override
@@ -176,12 +177,6 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   @Override
   public Optional<Hash> getLatestValidAncestor(final BlockHeader blockHeader) {
     return mergeCoordinator.getLatestValidAncestor(blockHeader);
-  }
-
-  @Override
-  public boolean latestValidAncestorDescendsFromTerminal(final BlockHeader blockHeader) {
-    // this is nonsensical pre-merge, but should be fine to delegate
-    return mergeCoordinator.latestValidAncestorDescendsFromTerminal(blockHeader);
   }
 
   @Override

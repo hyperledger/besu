@@ -25,7 +25,7 @@ import java.util.Set;
 import graphql.GraphQLContext;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
@@ -43,7 +43,7 @@ public abstract class AbstractDataFetcherTest {
 
   @Mock protected BlockHeader header;
 
-  @Before
+  @BeforeEach
   public void before() {
     final GraphQLDataFetchers fetchers = new GraphQLDataFetchers(supportedCapabilities);
     fetcher = fetchers.getBlockDataFetcher();

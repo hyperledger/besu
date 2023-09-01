@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class EthProtocolVersionTest {
   private EthProtocolVersion method;

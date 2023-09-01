@@ -24,7 +24,7 @@ import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 import static org.hyperledger.besu.cli.config.NetworkName.EXPERIMENTAL_EIPS;
 import static org.hyperledger.besu.cli.config.NetworkName.FUTURE_EIPS;
 import static org.hyperledger.besu.cli.config.NetworkName.GOERLI;
-import static org.hyperledger.besu.cli.config.NetworkName.KOTTI;
+import static org.hyperledger.besu.cli.config.NetworkName.HOLESKY;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
@@ -85,6 +85,7 @@ import org.hyperledger.besu.ethereum.permissioning.SmartContractPermissioningCon
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.PrunerConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
+import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatMethod;
@@ -155,13 +156,6 @@ public class BesuCommandTest extends CommandTestAbstract {
           .put("config", (new JsonObject()).put("chainId", GENESIS_CONFIG_TEST_CHAINID));
   private static final JsonObject GENESIS_INVALID_DATA =
       (new JsonObject()).put("config", new JsonObject());
-  private static final JsonObject VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID =
-      (new JsonObject())
-          .put(
-              "config",
-              new JsonObject().put("isQuorum", true).put("chainId", GENESIS_CONFIG_TEST_CHAINID));
-  private static final JsonObject INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET =
-      (new JsonObject()).put("config", new JsonObject().put("isQuorum", true));
   private static final JsonObject INVALID_GENESIS_EC_CURVE =
       (new JsonObject()).put("config", new JsonObject().put("ecCurve", "abcd"));
   private static final JsonObject VALID_GENESIS_EC_CURVE =
@@ -213,11 +207,19 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Before
   public void setup() {
+    try {
+      // optimistically tear down a potential previous loaded trusted setup
+      KZGPointEvalPrecompiledContract.tearDown();
+    } catch (Throwable ignore) {
+      // and ignore errors in case no trusted setup was already loaded
+    }
+
     MergeConfigOptions.setMergeEnabled(false);
   }
 
   @After
   public void tearDown() {
+
     MergeConfigOptions.setMergeEnabled(false);
   }
 
@@ -4073,6 +4075,24 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void holeskyValuesAreUsed() {
+    parseCommand("--network", "holesky");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any(), any());
+    verify(mockControllerBuilder).build();
+
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(HOLESKY));
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+
+    verify(mockLogger, never()).warn(contains("Holesky is deprecated and will be shutdown"));
+  }
+
+  @Test
   public void classicValuesAreUsed() throws Exception {
     parseCommand("--network", "classic");
 
@@ -4083,22 +4103,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(CLASSIC));
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void kottiValuesAreUsed() throws Exception {
-    parseCommand("--network", "kotti");
-
-    final ArgumentCaptor<EthNetworkConfig> networkArg =
-        ArgumentCaptor.forClass(EthNetworkConfig.class);
-
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any(), any());
-    verify(mockControllerBuilder).build();
-
-    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(KOTTI));
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -4143,11 +4147,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void classicValuesCanBeOverridden() throws Exception {
     networkValuesCanBeOverridden("classic");
-  }
-
-  @Test
-  public void kottiValuesCanBeOverridden() throws Exception {
-    networkValuesCanBeOverridden("kotti");
   }
 
   @Test
@@ -4229,7 +4228,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--privacy-url", ENCLAVE_URI, "--privacy-public-key-file", file.toString());
 
     verifyMultiOptionsConstraintLoggerCall(
-        "--privacy-url and/or --privacy-public-key-file ignored because none of --privacy-enabled or isQuorum (in genesis file) was defined.");
+        "--privacy-url and/or --privacy-public-key-file ignored because none of --privacy-enabled was defined.");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -4555,17 +4554,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Pruning cannot be enabled with privacy.");
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void privacyWithGoQuorumModeMustError() throws IOException {
-    final Path genesisFile =
-        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
-    parseCommand(
-        "--privacy-enabled", "--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("GoQuorum privacy is no longer supported in Besu");
   }
 
   @Rule public TemporaryFolder testFolder = new TemporaryFolder();
@@ -5242,42 +5230,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void quorumInteropNotDefinedInGenesisDoesNotEnforceZeroGasPrice() throws IOException {
-    final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
-    parseCommand("--genesis-file", genesisFile.toString());
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void quorumInteropEnabledFailsWithoutGasPriceSet() throws IOException {
-    final Path genesisFile =
-        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
-    parseCommand("--genesis-file", genesisFile.toString());
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "--min-gas-price must be set to zero if isQuorum mode is enabled in the genesis file.");
-  }
-
-  @Test
-  public void quorumInteropEnabledFailsWithoutGasPriceSetToZero() throws IOException {
-    final Path genesisFile =
-        createFakeGenesisFile(VALID_GENESIS_QUORUM_INTEROP_ENABLED_WITH_CHAINID);
-    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "1");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "--min-gas-price must be set to zero if isQuorum mode is enabled in the genesis file.");
-  }
-
-  @Test
-  public void quorumInteropEnabledFailsWithMainnetChainId() throws IOException {
-    final Path genesisFile =
-        createFakeGenesisFile(INVALID_GENESIS_QUORUM_INTEROP_ENABLED_MAINNET.put("chainId", "1"));
-    parseCommand("--genesis-file", genesisFile.toString(), "--min-gas-price", "0");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("isQuorum mode cannot be used on Mainnet.");
-  }
-
-  @Test
   public void assertThatCheckPortClashAcceptsAsExpected() throws Exception {
     // use WS port for HTTP
     final int port = 8546;
@@ -5715,18 +5667,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("--kzg-trusted-setup can only be specified on networks with data blobs enabled");
-  }
-
-  @Test
-  public void kzgTrustedSetupFileIsMandatoryWithCustomGenesisFile()
-      throws IOException, URISyntaxException {
-    final Path genesisFileWithBlobs = createFakeGenesisFile(GENESIS_WITH_DATA_BLOBS_ENABLED);
-    parseCommand("--genesis-file", genesisFileWithBlobs.toString());
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "--kzg-trusted-setup is mandatory when providing a custom genesis that support data blobs");
   }
 
   @Test

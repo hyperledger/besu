@@ -18,6 +18,7 @@ import groovy.transform.Memoized
 import net.ltgt.gradle.errorprone.CheckSeverity
 
 import java.text.SimpleDateFormat
+import java.util.regex.Pattern
 
 plugins {
   id 'com.diffplug.spotless' version '6.12.0'
@@ -559,7 +560,7 @@ task evmToolStartScripts(type: CreateStartScripts) {
   mainClass = 'org.hyperledger.besu.evmtool.EvmTool'
   classpath = startScripts.classpath
   outputDir = startScripts.outputDir
-  applicationName = 'evm'
+  applicationName = 'evmtool'
   defaultJvmOpts = [
     "-Dsecp256k1.randomize=false"
   ]
@@ -586,10 +587,10 @@ task autocomplete(type: JavaExec) {
   }
 }
 
-installDist { dependsOn checkLicenses }
+installDist { dependsOn checkLicenses, evmToolStartScripts }
 
 distTar {
-  dependsOn checkLicenses, autocomplete
+  dependsOn checkLicenses, autocomplete, evmToolStartScripts
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
   }
@@ -598,7 +599,7 @@ distTar {
 }
 
 distZip {
-  dependsOn checkLicenses, autocomplete
+  dependsOn checkLicenses, autocomplete, evmToolStartScripts
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
@@ -900,6 +901,8 @@ task manifestDockerRelease {
   }
 }
 
+def sep = Pattern.quote(File.separator)
+
 task checkSpdxHeader(type: CheckSpdxHeader) {
   apply plugin: 'groovy'
 
@@ -907,16 +910,16 @@ task checkSpdxHeader(type: CheckSpdxHeader) {
   spdxHeader = "* SPDX-License-Identifier: Apache-2.0"
   filesRegex = "(.*.java)|(.*.groovy)"
   excludeRegex = [
-    "(.*/generalstate/GeneralStateRegressionReferenceTest.*)",
-    "(.*/generalstate/GeneralStateReferenceTest.*)",
-    "(.*/generalstate/LegacyGeneralStateReferenceTest.*)",
-    "(.*/blockchain/BlockchainReferenceTest.*)",
-    "(.*/blockchain/LegacyBlockchainReferenceTest.*)",
-    "(.*/.gradle/.*)",
-    "(.*/.idea/.*)",
-    "(.*/out/.*)",
-    "(.*/build/.*)",
-    "(.*/src/[^/]+/generated/.*)"
+    "(.*${sep}generalstate${sep}GeneralStateRegressionReferenceTest.*)",
+    "(.*${sep}generalstate${sep}GeneralStateReferenceTest.*)",
+    "(.*${sep}generalstate${sep}LegacyGeneralStateReferenceTest.*)",
+    "(.*${sep}blockchain${sep}BlockchainReferenceTest.*)",
+    "(.*${sep}blockchain${sep}LegacyBlockchainReferenceTest.*)",
+    "(.*${sep}.gradle${sep}.*)",
+    "(.*${sep}.idea${sep}.*)",
+    "(.*${sep}out${sep}.*)",
+    "(.*${sep}build${sep}.*)",
+    "(.*${sep}src${sep}[^${sep}]+${sep}generated${sep}.*)"
   ].join("|")
 
 }
@@ -1021,6 +1024,7 @@ tasks.register("verifyDistributions") {
 
 dependencies {
   implementation project(':besu')
+  implementation project(':ethereum:evmtool')
   errorprone 'com.google.errorprone:error_prone_core'
 }
 

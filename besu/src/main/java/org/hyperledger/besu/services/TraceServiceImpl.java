@@ -15,8 +15,9 @@
 package org.hyperledger.besu.services;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceBlock.ChainUpdater;
@@ -30,9 +31,9 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.services.TraceService;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,7 +69,7 @@ public class TraceServiceImpl implements TraceService {
    * @param tracer an instance of OperationTracer
    */
   @Override
-  public void traceBlock(final long blockNumber, final OperationTracer tracer) {
+  public void traceBlock(final long blockNumber, final BlockAwareOperationTracer tracer) {
     checkArgument(tracer != null);
     final Optional<Block> block = blockchainQueries.getBlockchain().getBlockByNumber(blockNumber);
     block.ifPresent(value -> trace(value, tracer));
@@ -81,13 +82,13 @@ public class TraceServiceImpl implements TraceService {
    * @param tracer an instance of OperationTracer
    */
   @Override
-  public void traceBlock(final Hash hash, final OperationTracer tracer) {
+  public void traceBlock(final Hash hash, final BlockAwareOperationTracer tracer) {
     checkArgument(tracer != null);
     final Optional<Block> block = blockchainQueries.getBlockchain().getBlockByHash(hash);
     block.ifPresent(value -> trace(value, tracer));
   }
 
-  private void trace(final Block block, final OperationTracer tracer) {
+  private void trace(final Block block, final BlockAwareOperationTracer tracer) {
     LOG.debug("Tracing block {}", block.toLogString());
     final List<TransactionProcessingResult> results = new ArrayList<>();
     Tracer.processTracing(
@@ -100,6 +101,9 @@ public class TraceServiceImpl implements TraceService {
           final MainnetTransactionProcessor transactionProcessor =
               protocolSpec.getTransactionProcessor();
           final BlockHeader header = block.getHeader();
+
+          tracer.traceStartBlock(block.getHeader(), block.getBody());
+
           block
               .getBody()
               .getTransactions()
@@ -107,13 +111,18 @@ public class TraceServiceImpl implements TraceService {
                   transaction -> {
                     final Optional<BlockHeader> maybeParentHeader =
                         blockchain.getBlockHeader(header.getParentHash());
-                    final Wei dataGasPrice =
+                    final Wei blobGasPrice =
                         protocolSpec
                             .getFeeMarket()
-                            .dataPrice(
+                            .blobGasPricePerGas(
                                 maybeParentHeader
-                                    .flatMap(BlockHeader::getExcessDataGas)
-                                    .orElse(DataGas.ZERO));
+                                    .map(
+                                        parent ->
+                                            calculateExcessBlobGasForParent(protocolSpec, parent))
+                                    .orElse(BlobGas.ZERO));
+
+                    tracer.traceStartTransaction(transaction);
+
                     final TransactionProcessingResult result =
                         transactionProcessor.processTransaction(
                             blockchain,
@@ -124,10 +133,16 @@ public class TraceServiceImpl implements TraceService {
                             tracer,
                             new CachingBlockHashLookup(header, blockchain),
                             false,
-                            dataGasPrice);
+                            blobGasPrice);
+
+                    long transactionGasUsed = transaction.getGasLimit() - result.getGasRemaining();
+                    tracer.traceEndTransaction(result.getOutput(), transactionGasUsed, 0);
+
                     results.add(result);
                   });
           return Optional.of(results);
         });
+
+    tracer.traceEndBlock(block.getHeader(), block.getBody());
   }
 }

@@ -62,7 +62,7 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
     return new ProtocolSpec(
         original.getName(),
         original.getEvm(),
-        original.getTransactionValidator(),
+        original.getTransactionValidatorFactory(),
         original.getTransactionProcessor(),
         original.getPrivateTransactionProcessor(),
         original.getBlockHeaderValidator(),
@@ -116,13 +116,20 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
   }
 
   @Override
+  public Optional<ScheduledProtocolSpec.Hardfork> hardforkFor(
+      final Predicate<ScheduledProtocolSpec> predicate) {
+    return delegate.hardforkFor(predicate);
+  }
+
+  @Override
   public String listMilestones() {
     return delegate.listMilestones();
   }
 
   @Override
-  public void setTransactionFilter(final PermissionTransactionFilter permissionTransactionFilter) {
-    delegate.setTransactionFilter(permissionTransactionFilter);
+  public void setPermissionTransactionFilter(
+      final PermissionTransactionFilter permissionTransactionFilter) {
+    delegate.setPermissionTransactionFilter(permissionTransactionFilter);
   }
 
   @Override

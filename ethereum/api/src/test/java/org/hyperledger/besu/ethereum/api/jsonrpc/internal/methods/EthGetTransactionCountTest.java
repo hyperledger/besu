@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
-import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.OptionalLong;
 
@@ -42,19 +42,19 @@ public class EthGetTransactionCountTest {
   private EthGetTransactionCount ethGetTransactionCount;
   private final String pendingTransactionString = "0x00000000000000000000000000000000000000AA";
   private final Object[] pendingParams = new Object[] {pendingTransactionString, "pending"};
-  private PendingTransactions pendingTransactions;
+  private TransactionPool transactionPool;
 
   @BeforeEach
   public void setup() {
-    pendingTransactions = mock(PendingTransactions.class);
-    ethGetTransactionCount = new EthGetTransactionCount(blockchainQueries, pendingTransactions);
+    transactionPool = mock(TransactionPool.class);
+    ethGetTransactionCount = new EthGetTransactionCount(blockchainQueries, transactionPool);
   }
 
   @Test
   public void shouldUsePendingTransactionsWhenToldTo() {
 
     final Address address = Address.fromHexString(pendingTransactionString);
-    when(pendingTransactions.getNextNonceForSender(address)).thenReturn(OptionalLong.of(12));
+    when(transactionPool.getNextNonceForSender(address)).thenReturn(OptionalLong.of(12));
     mockGetTransactionCount(address, 7L);
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -68,7 +68,7 @@ public class EthGetTransactionCountTest {
   public void shouldUseLatestTransactionsWhenNoPendingTransactions() {
 
     final Address address = Address.fromHexString(pendingTransactionString);
-    when(pendingTransactions.getNextNonceForSender(address)).thenReturn(OptionalLong.empty());
+    when(transactionPool.getNextNonceForSender(address)).thenReturn(OptionalLong.empty());
     mockGetTransactionCount(address, 7L);
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -83,7 +83,7 @@ public class EthGetTransactionCountTest {
 
     final Address address = Address.fromHexString(pendingTransactionString);
     mockGetTransactionCount(address, 8);
-    when(pendingTransactions.getNextNonceForSender(Address.fromHexString(pendingTransactionString)))
+    when(transactionPool.getNextNonceForSender(Address.fromHexString(pendingTransactionString)))
         .thenReturn(OptionalLong.of(4));
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -97,8 +97,7 @@ public class EthGetTransactionCountTest {
   public void shouldReturnPendingWithHighNonce() {
 
     final Address address = Address.fromHexString(pendingTransactionString);
-    when(pendingTransactions.getNextNonceForSender(address))
-        .thenReturn(OptionalLong.of(MAX_NONCE - 1));
+    when(transactionPool.getNextNonceForSender(address)).thenReturn(OptionalLong.of(MAX_NONCE - 1));
     mockGetTransactionCount(address, 7L);
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
@@ -112,8 +111,7 @@ public class EthGetTransactionCountTest {
   public void shouldReturnLatestWithHighNonce() {
 
     final Address address = Address.fromHexString(pendingTransactionString);
-    when(pendingTransactions.getNextNonceForSender(address))
-        .thenReturn(OptionalLong.of(MAX_NONCE - 2));
+    when(transactionPool.getNextNonceForSender(address)).thenReturn(OptionalLong.of(MAX_NONCE - 2));
     mockGetTransactionCount(address, MAX_NONCE - 1);
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(

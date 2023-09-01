@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.health.HealthService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -157,7 +157,7 @@ public class JsonRpcHttpServiceRpcApisTest {
       assertThat(resp.code()).isEqualTo(200);
       // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
-      final JsonRpcError expectedError = JsonRpcError.METHOD_NOT_ENABLED;
+      final RpcErrorType expectedError = RpcErrorType.METHOD_NOT_ENABLED;
       testHelper.assertValidJsonRpcError(
           json, id, expectedError.getCode(), expectedError.getMessage());
     }

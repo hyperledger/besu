@@ -16,7 +16,7 @@
 dependencyManagement {
   dependencies {
 
-    dependencySet(group: 'org.antlr', version: '4.10.1') {
+    dependencySet(group: 'org.antlr', version: '4.11.1') {
       entry 'antlr4'
       entry 'antlr4-runtime'
     }
@@ -133,7 +133,7 @@ dependencyManagement {
       entry 'log4j-slf4j2-impl'
     }
 
-    dependencySet(group: 'org.apache.tuweni', version: '2.3.1') {
+    dependencySet(group: 'io.tmio', version: '2.4.2') {
       entry 'tuweni-bytes'
       entry 'tuweni-config'
       entry 'tuweni-concurrent'
@@ -147,11 +147,6 @@ dependencyManagement {
       entry 'tuweni-units'
     }
 
-    // commons-net is a transitive dependency of tuweni.
-    // Tuweni 2.3.1 has commons-net:3.8.0 which we force here to 3.9.0
-    // Once tuweni is updated, can remove this line
-    dependency 'commons-net:commons-net:3.9.0'
-
     dependency 'org.assertj:assertj-core:3.24.2'
 
     dependency 'org.awaitility:awaitility:4.2.0'
@@ -163,9 +158,9 @@ dependencyManagement {
 
     dependency 'org.fusesource.jansi:jansi:2.4.0'
     dependency 'org.openjdk.jol:jol-core:0.17'
-    dependency 'tech.pegasys:jc-kzg-4844:0.4.0'
+    dependency 'tech.pegasys:jc-kzg-4844:0.7.0'
 
-    dependencySet(group: 'org.hyperledger.besu', version: '0.7.1') {
+    dependencySet(group: 'org.hyperledger.besu', version: '0.8.1') {
       entry 'arithmetic'
       entry 'ipa-multipoint'
       entry 'bls12-381'

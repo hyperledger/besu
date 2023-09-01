@@ -19,6 +19,7 @@ package org.hyperledger.besu.evmtool;
 import static org.hyperledger.besu.evmtool.T8nSubCommand.COMMAND_ALIAS;
 import static org.hyperledger.besu.evmtool.T8nSubCommand.COMMAND_NAME;
 
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -27,6 +28,7 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evmtool.T8nExecutor.RejectedTransaction;
+import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -167,6 +169,9 @@ public class T8nSubCommand implements Runnable {
 
   @Override
   public void run() {
+    LogConfigurator.setLevel("", "OFF");
+    // presume ethereum mainnet for reference and state tests
+    SignatureAlgorithmFactory.setDefaultInstance();
     final ObjectMapper objectMapper = JsonUtils.createObjectMapper();
     final ObjectReader t8nReader = objectMapper.reader();
 
@@ -319,7 +324,7 @@ public class T8nSubCommand implements Runnable {
         }
       }
 
-      if (outputObject.size() > 0) {
+      if (!outputObject.isEmpty()) {
         parentCommand.out.println(writer.writeValueAsString(outputObject));
       }
     } catch (IOException ioe) {

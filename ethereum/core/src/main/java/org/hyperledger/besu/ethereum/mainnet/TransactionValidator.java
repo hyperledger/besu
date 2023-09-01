@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.account.Account;
@@ -53,13 +52,4 @@ public interface TransactionValidator {
    */
   ValidationResult<TransactionInvalidReason> validateForSender(
       Transaction transaction, Account sender, TransactionValidationParams validationParams);
-
-  /**
-   * Set the permission transaction filter. This way of setting the filter is deprecated and will be
-   * removed.
-   *
-   * @param permissionTransactionFilter the permission transaction filter
-   */
-  @Deprecated
-  void setPermissionTransactionFilter(PermissionTransactionFilter permissionTransactionFilter);
 }

@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class EthPeerTest {
   private static final BlockDataGenerator gen = new BlockDataGenerator();

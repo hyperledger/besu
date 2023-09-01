@@ -22,9 +22,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.PrivateTransactionReceiptResult;
 import org.hyperledger.besu.ethereum.privacy.ExecutedPrivateTransaction;
@@ -159,7 +159,7 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
 
   private JsonRpcResponse handleEnclaveException(
       final JsonRpcRequestContext requestContext, final EnclaveClientException e) {
-    final JsonRpcError jsonRpcError =
+    final RpcErrorType jsonRpcError =
         JsonRpcEnclaveErrorConverter.convertEnclaveInvalidReason(e.getMessage());
     switch (jsonRpcError) {
       case ENCLAVE_PAYLOAD_NOT_FOUND:

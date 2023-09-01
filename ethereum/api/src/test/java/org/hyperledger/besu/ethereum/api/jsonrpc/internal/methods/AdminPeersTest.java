@@ -20,10 +20,10 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.api.jsonrpc.MockPeerConnection;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PeerResult;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -43,13 +43,13 @@ import com.google.common.collect.Lists;
 import io.vertx.core.json.Json;
 import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class AdminPeersTest {
 
   private AdminPeers adminPeers;
@@ -59,7 +59,7 @@ public class AdminPeersTest {
 
   @Mock private EthPeers ethPeers;
 
-  @Before
+  @BeforeEach
   public void before() {
     adminPeers = new AdminPeers(ethPeers);
   }
@@ -102,7 +102,7 @@ public class AdminPeersTest {
 
     final JsonRpcRequestContext request = adminPeers();
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.P2P_DISABLED);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.P2P_DISABLED);
 
     Assertions.assertThat(adminPeers.response(request))
         .usingRecursiveComparison()

@@ -19,7 +19,7 @@ import static org.hyperledger.besu.ethereum.api.handlers.AbstractJsonRpcExecutor
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.context.ContextKey;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -61,9 +61,9 @@ public class JsonRpcExecutorHandler {
                     throw new RuntimeException(e);
                   }
                 },
-                () -> handleJsonRpcError(ctx, null, JsonRpcError.PARSE_ERROR));
+                () -> handleJsonRpcError(ctx, null, RpcErrorType.PARSE_ERROR));
       } catch (final RuntimeException e) {
-        handleJsonRpcError(ctx, null, JsonRpcError.INTERNAL_ERROR);
+        handleJsonRpcError(ctx, null, RpcErrorType.INTERNAL_ERROR);
       }
     };
   }
