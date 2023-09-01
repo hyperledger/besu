@@ -14,49 +14,81 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionDecoder {
 
-  @FunctionalInterface
-  interface Decoder {
-    Transaction decode(RLPInput input, EncodingContext context);
-  }
+  private static final ImmutableMap<TransactionType, Decoder> TYPED_TRANSACTION_DECODERS =
+      ImmutableMap.of(
+          TransactionType.ACCESS_LIST,
+          new AccessListTransactionDecoder(),
+          TransactionType.EIP1559,
+          new EIP1559TransactionDecoder(),
+          TransactionType.BLOB,
+          new BlobTransactionDecoder());
 
-  private static final TypedTransactionDecoder TYPED_TRANSACTION_DECODER =
-      new TypedTransactionDecoder();
+  private static final ImmutableMap<TransactionType, Decoder> NETWORK_TRANSACTION_DECODERS =
+      ImmutableMap.of(TransactionType.BLOB, new BlobNetworkPackageDecoder());
+
   private static final FrontierTransactionDecoder FRONTIER_DECODER =
       new FrontierTransactionDecoder();
 
+  @FunctionalInterface
+  interface Decoder {
+    Transaction decode(RLPInput input);
+  }
+
   /**
-   * Decodes the given RLP input into a transaction.
+   * Decodes an RLP input into a transaction. If the input represents a typed transaction, it uses
+   * the appropriate decoder for that type. Otherwise, it uses the frontier decoder.
    *
    * @param rlpInput the RLP input
    * @return the decoded transaction
    */
   public static Transaction decodeRLP(final RLPInput rlpInput) {
-    return getDecoder(rlpInput).decode(rlpInput, EncodingContext.INTERNAL);
+    if (isTypedTransaction(rlpInput)) {
+      return decodeTypedTransaction(rlpInput);
+    } else {
+      return FRONTIER_DECODER.decode(rlpInput);
+    }
   }
 
   /**
-   * This method is responsible for decoding the opaque bytes of a transaction. Opaque bytes are the
-   * raw bytes of a transaction that need to be decoded to understand the transaction details.
+   * Decodes a typed transaction from an RLP input. It first reads the transaction type from the
+   * input, then uses the appropriate decoder for that type.
    *
-   * @param opaqueBytes The raw bytes of the transaction to be decoded.
-   * @param context The context in which the encoding is happening. This could be for internal use
-   *     or for network communication.
-   * @return The decoded transaction object which includes all the details of the transaction.
+   * @param rlpInput the RLP input
+   * @return the decoded transaction
+   */
+  private static Transaction decodeTypedTransaction(final RLPInput rlpInput) {
+    final Bytes typedTransactionBytes = rlpInput.readBytes();
+    TransactionType transactionType = getTransactionType(typedTransactionBytes);
+    Decoder decoder = getDecoder(transactionType, EncodingContext.RLP);
+    return decoder.decode(RLP.input(typedTransactionBytes.slice(1)));
+  }
+
+  /**
+   * Decodes a transaction from opaque bytes. It first reads the transaction type from the bytes. If
+   * the type is null, it decodes the bytes as an RLP input. Otherwise, it uses the appropriate
+   * decoder for the type.
+   *
+   * @param opaqueBytes the opaque bytes
+   * @param context the encoding context
+   * @return the decoded transaction
    */
   private static Transaction decodeOpaqueBytes(
       final Bytes opaqueBytes, final EncodingContext context) {
 
     // The first byte of the opaque bytes usually represents the transaction type.
-    final TransactionType transactionType = getTransactionTypeFromOpaqueBytes(opaqueBytes);
+    final TransactionType transactionType = getTransactionType(opaqueBytes);
 
     // If the transaction type is null, it is pre EIP-2718.
     if (transactionType == null) {
@@ -65,21 +97,7 @@ public class TransactionDecoder {
 
     // EIP-2718 - In this case, remove the first byte (the transaction type) and decode
     final Bytes transactionBytes = opaqueBytes.slice(1);
-    return TYPED_TRANSACTION_DECODER.decode(transactionType, transactionBytes, context);
-  }
-
-  /**
-   * Decodes the bytes into a Transaction object, considering network specifics.
-   *
-   * <p>This method is particularly important for certain types of transactions that need to be
-   * wrapped into a different format when they are broadcast. An example of this is blob
-   * transactions as per EIP-4844.
-   *
-   * @param bytes The opaque bytes to decode.
-   * @return The decoded Transaction.
-   */
-  public static Transaction decodeBytesForNetwork(final Bytes bytes) {
-    return decodeOpaqueBytes(bytes, EncodingContext.NETWORK);
+    return getDecoder(transactionType, context).decode(RLP.input(transactionBytes));
   }
 
   /**
@@ -89,10 +107,32 @@ public class TransactionDecoder {
    * @return the decoded transaction
    */
   public static Transaction decodeOpaqueBytes(final Bytes bytes) {
-    return decodeOpaqueBytes(bytes, EncodingContext.INTERNAL);
+    return decodeOpaqueBytes(bytes, EncodingContext.RLP);
   }
 
-  private static TransactionType getTransactionTypeFromOpaqueBytes(final Bytes opaqueBytes) {
+  /**
+   * Decodes a transaction from bytes for network. It uses the network encoding context, which may
+   * involve different decoding rules than the RLP context
+   *
+   * <p>This method is particularly important for certain types of transactions that need to be
+   * wrapped into a different format when they are broadcast. An example of this is blob
+   * transactions as per EIP-4844..
+   *
+   * @param bytes the bytes
+   * @return the decoded transaction
+   */
+  public static Transaction decodeBytesForNetwork(final Bytes bytes) {
+    return decodeOpaqueBytes(bytes, EncodingContext.NETWORK);
+  }
+
+  /**
+   * Gets the transaction type from opaque bytes. The type is represented by the first byte of the
+   * data. If the byte does not represent a valid type, it returns null.
+   *
+   * @param opaqueBytes the opaque bytes
+   * @return the transaction type, or null if the first byte does not represent a valid type
+   */
+  private static TransactionType getTransactionType(final Bytes opaqueBytes) {
     try {
       return TransactionType.of(opaqueBytes.get(0));
     } catch (final IllegalArgumentException __) {
@@ -101,28 +141,60 @@ public class TransactionDecoder {
   }
 
   /**
-   * Returns the appropriate decoder for the given RLP input.
-   *
-   * @param rlpInput the RLP input
-   * @return the appropriate decoder
-   */
-  private static Decoder getDecoder(final RLPInput rlpInput) {
-    return isTypedTransaction(rlpInput) ? TYPED_TRANSACTION_DECODER : FRONTIER_DECODER;
-  }
-
-  /**
    * Checks if the given RLP input is a typed transaction.
    *
-   * <p>EIP-2718 Clients can differentiate between the legacy transactions and typed transactions by
-   * looking at the first byte. If it starts with a value in the range [0, 0x7f] then it is a new
-   * transaction type, if it starts with a value in the range [0xc0, 0xfe] then it is a legacy
-   * transaction type. 0xff is not realistic for an RLP encoded transaction, so it is reserved for
-   * future use as an extension sentinel value.
+   * <p>See EIP-2718
+   *
+   * <p>If it starts with a value in the range [0, 0x7f] then it is a new transaction type
+   *
+   * <p>if it starts with a value in the range [0xc0, 0xfe] then it is a legacy transaction type
    *
    * @param rlpInput the RLP input
    * @return true if the RLP input is a typed transaction, false otherwise
    */
   private static boolean isTypedTransaction(final RLPInput rlpInput) {
     return !rlpInput.nextIsList();
+  }
+
+  /**
+   * Gets the decoder for a given transaction type and encoding context. If the context is NETWORK,
+   * it uses the network decoder for the type. Otherwise, it uses the typed decoder.
+   *
+   * @param transactionType the transaction type
+   * @param context the encoding context
+   * @return the decoder
+   */
+  private static Decoder getDecoder(
+      final TransactionType transactionType, final EncodingContext context) {
+    if (context.equals(EncodingContext.NETWORK)) {
+      return getNetworkDecoder(transactionType);
+    }
+    return getTypedDecoder(transactionType);
+  }
+
+  /**
+   * Gets the typed decoder for a given transaction type. If there is no decoder for the type, it
+   * throws an exception.
+   *
+   * @param transactionType the transaction type
+   * @return the decoder
+   */
+  private static Decoder getTypedDecoder(final TransactionType transactionType) {
+    return checkNotNull(
+        TYPED_TRANSACTION_DECODERS.get(transactionType),
+        "Developer Error. A supported transaction type %s has no associated decoding logic",
+        transactionType);
+  }
+
+  /**
+   * Gets the network decoder for a given transaction type. If there is no network decoder for the
+   * type, it uses the typed decoder.
+   *
+   * @param transactionType the transaction type
+   * @return the decoder
+   */
+  private static Decoder getNetworkDecoder(final TransactionType transactionType) {
+    return NETWORK_TRANSACTION_DECODERS.getOrDefault(
+        transactionType, getTypedDecoder(transactionType));
   }
 }

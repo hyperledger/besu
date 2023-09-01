@@ -15,6 +15,6 @@
 package org.hyperledger.besu.ethereum.core.encoding;
 
 enum EncodingContext {
-  INTERNAL,
+  RLP,
   NETWORK,
 }

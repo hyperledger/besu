@@ -34,7 +34,7 @@ class AccessListTransactionDecoder implements Decoder {
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   @Override
-  public Transaction decode(final RLPInput rlpInput, final EncodingContext context) {
+  public Transaction decode(final RLPInput rlpInput) {
     rlpInput.enterList();
     final Transaction.Builder preSignatureTransactionBuilder =
         Transaction.builder()

@@ -67,7 +67,7 @@ public class TransactionEncoder {
   }
 
   public static Bytes encodeOpaqueBytes(final Transaction transaction) {
-    return encodeTransaction(transaction, EncodingContext.INTERNAL);
+    return encodeTransaction(transaction, EncodingContext.RLP);
   }
 
   private static Bytes encodeTransaction(
@@ -75,7 +75,7 @@ public class TransactionEncoder {
     final TransactionType transactionType = getTransactionType(transaction);
     if (TransactionType.FRONTIER.equals(transactionType)) {
       return RLP.encode(
-          rlpOutput -> FRONTIER_ENCODER.encode(transaction, rlpOutput, EncodingContext.INTERNAL));
+          rlpOutput -> FRONTIER_ENCODER.encode(transaction, rlpOutput, EncodingContext.RLP));
     } else {
       final Encoder encoder = getEncoder(transactionType);
       final BytesValueRLPOutput out = new BytesValueRLPOutput();

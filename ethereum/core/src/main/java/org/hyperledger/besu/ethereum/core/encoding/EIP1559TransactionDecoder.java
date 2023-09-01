@@ -34,7 +34,7 @@ public class EIP1559TransactionDecoder implements Decoder {
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   @Override
-  public Transaction decode(final RLPInput input, final EncodingContext context) {
+  public Transaction decode(final RLPInput input) {
     input.enterList();
     final BigInteger chainId = input.readBigIntegerScalar();
     final Transaction.Builder builder =
