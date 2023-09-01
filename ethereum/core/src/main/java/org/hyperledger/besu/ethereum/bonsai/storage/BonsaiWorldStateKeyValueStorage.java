@@ -19,14 +19,11 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.bonsai.storage.flat.FlatDbReaderStrategy;
 import org.hyperledger.besu.ethereum.bonsai.storage.flat.FullFlatDbReaderStrategy;
 import org.hyperledger.besu.ethereum.bonsai.storage.flat.PartialFlatDbReaderStrategy;
-import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldView;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
@@ -35,7 +32,6 @@ import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
-import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -44,29 +40,21 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import org.hyperledger.besu.util.Subscribers;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.rlp.RLP;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("unused")
 public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoCloseable {
-  Bytes32 BYTES32_MAX_VALUE =
-      Bytes32.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateKeyValueStorage.class);
 
   // 0x776f726c64526f6f74
@@ -92,17 +80,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   protected final Subscribers<BonsaiStorageSubscriber> subscribers = Subscribers.create();
 
-  final BonsaiPreImageProxy preImageProxy;
-
   public BonsaiWorldStateKeyValueStorage(
       final StorageProvider provider, final ObservableMetricsSystem metricsSystem) {
-    this(provider, metricsSystem, new BonsaiPreImageProxy.NoOpPreImageProxy());
-  }
-
-  public BonsaiWorldStateKeyValueStorage(
-      final StorageProvider provider,
-      final ObservableMetricsSystem metricsSystem,
-      final BonsaiPreImageProxy preImageProxy) {
     this.composedWorldStateStorage =
         provider.getStorageBySegmentIdentifiers(
             List.of(
@@ -110,7 +89,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     this.trieLogStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
     this.metricsSystem = metricsSystem;
-    this.preImageProxy = preImageProxy;
     loadFlatDbStrategy();
   }
 
@@ -119,14 +97,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       final FlatDbReaderStrategy flatDbReaderStrategy,
       final SegmentedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage,
-      final ObservableMetricsSystem metricsSystem,
-      final BonsaiPreImageProxy preImageProxy) {
+      final ObservableMetricsSystem metricsSystem) {
     this.flatDbMode = flatDbMode;
     this.flatDbReaderStrategy = flatDbReaderStrategy;
     this.composedWorldStateStorage = composedWorldStateStorage;
     this.trieLogStorage = trieLogStorage;
     this.metricsSystem = metricsSystem;
-    this.preImageProxy = preImageProxy;
   }
 
   public void loadFlatDbStrategy() {
@@ -277,40 +253,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
       final Hash addressHash, final Bytes32 startKeyHash, final int limit) {
-    return streamFlatStorages(addressHash, startKeyHash, BYTES32_MAX_VALUE, limit)
-        .entrySet()
-        // map back to slot keys using preImage provider:
-        .stream()
-        .collect(
-            Collectors.toMap(
-                e -> e.getKey(),
-                e ->
-                    AccountStorageEntry.create(
-                        UInt256.fromBytes(RLP.decodeValue(e.getValue())),
-                        Hash.wrap(e.getKey()),
-                        preImageProxy.getStorageTrieKeyPreimage(e.getKey())),
-                (a, b) -> a,
-                TreeMap::new));
-  }
-
-  public Stream<WorldState.StreamableAccount> streamAccounts(
-      final BonsaiWorldView context, final Bytes32 startKeyHash, final int limit) {
-    return streamFlatAccounts(startKeyHash, BYTES32_MAX_VALUE, limit)
-        .entrySet()
-        // map back to addresses using preImage provider:
-        .stream()
-        .map(
-            entry ->
-                preImageProxy
-                    .getAccountTrieKeyPreimage(entry.getKey())
-                    .map(
-                        address ->
-                            new WorldState.StreamableAccount(
-                                Optional.of(address),
-                                BonsaiAccount.fromRLP(context, address, entry.getValue(), false))))
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .sorted(Comparator.comparing(account -> account.getAddress().orElse(Address.ZERO)));
+    throw new RuntimeException("Bonsai Tries does not currently support enumerating storage");
   }
 
   @Override

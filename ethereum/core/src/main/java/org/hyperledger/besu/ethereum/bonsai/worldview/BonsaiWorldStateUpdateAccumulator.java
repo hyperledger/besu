@@ -23,7 +23,6 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -67,8 +66,6 @@ public class BonsaiWorldStateUpdateAccumulator
   private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
   private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
 
-  private final BonsaiPreImageProxy preImageProxy;
-
   // storage sub mapped by _hashed_ key.  This is because in self_destruct calls we need to
   // enumerate the old storage and delete it.  Those are trie stored by hashed key by spec and the
   // alternative was to keep a giant pre-image cache of the entire trie.
@@ -80,20 +77,18 @@ public class BonsaiWorldStateUpdateAccumulator
   public BonsaiWorldStateUpdateAccumulator(
       final BonsaiWorldView world,
       final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader,
-      final Consumer<StorageSlotKey> storagePreloader,
-      final BonsaiPreImageProxy preImageProxy) {
+      final Consumer<StorageSlotKey> storagePreloader) {
     super(world);
     this.accountsToUpdate = new AccountConsumingMap<>(new ConcurrentHashMap<>(), accountPreloader);
     this.accountPreloader = accountPreloader;
     this.storagePreloader = storagePreloader;
     this.isAccumulatorStateChanged = false;
-    this.preImageProxy = preImageProxy;
   }
 
   public BonsaiWorldStateUpdateAccumulator copy() {
     final BonsaiWorldStateUpdateAccumulator copy =
         new BonsaiWorldStateUpdateAccumulator(
-            wrappedWorldView(), accountPreloader, storagePreloader, preImageProxy);
+            wrappedWorldView(), accountPreloader, storagePreloader);
     copy.cloneFromUpdater(this);
     return copy;
   }
@@ -143,7 +138,7 @@ public class BonsaiWorldStateUpdateAccumulator
         new BonsaiAccount(
             this,
             address,
-            preImageProxy.hashAndSavePreImage(address),
+            hashAndSavePreImage(address),
             nonce,
             balance,
             Hash.EMPTY_TRIE_HASH,
@@ -376,7 +371,7 @@ public class BonsaiWorldStateUpdateAccumulator
               entries.forEach(
                   storageUpdate -> {
                     final UInt256 keyUInt = storageUpdate.getKey();
-                    final Hash slotHash = preImageProxy.hashAndSavePreImage(keyUInt);
+                    final Hash slotHash = hashAndSavePreImage(keyUInt);
                     final StorageSlotKey slotKey =
                         new StorageSlotKey(slotHash, Optional.of(keyUInt));
                     final UInt256 value = storageUpdate.getValue();
@@ -421,7 +416,7 @@ public class BonsaiWorldStateUpdateAccumulator
   @Override
   public UInt256 getStorageValue(final Address address, final UInt256 slotKey) {
     StorageSlotKey storageSlotKey =
-        new StorageSlotKey(preImageProxy.hashAndSavePreImage(slotKey), Optional.of(slotKey));
+        new StorageSlotKey(hashAndSavePreImage(slotKey), Optional.of(slotKey));
     return getStorageValueByStorageSlotKey(address, storageSlotKey).orElse(UInt256.ZERO);
   }
 
@@ -465,7 +460,7 @@ public class BonsaiWorldStateUpdateAccumulator
   public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
     // TODO maybe log the read into the trie layer?
     StorageSlotKey storageSlotKey =
-        new StorageSlotKey(preImageProxy.hashAndSavePreImage(storageKey), Optional.of(storageKey));
+        new StorageSlotKey(hashAndSavePreImage(storageKey), Optional.of(storageKey));
     final Map<StorageSlotKey, BonsaiValue<UInt256>> localAccountStorage =
         storageToUpdate.get(address);
     if (localAccountStorage != null) {
@@ -837,5 +832,10 @@ public class BonsaiWorldStateUpdateAccumulator
 
   public interface Consumer<T> {
     void process(final Address address, T value);
+  }
+
+  protected Hash hashAndSavePreImage(final Bytes bytes) {
+    // by default do not save hash preImages
+    return Hash.hash(bytes);
   }
 }

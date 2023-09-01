@@ -44,15 +44,13 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final BonsaiWorldStateKeyValueStorage parentWorldStateStorage,
       final SnappedKeyValueStorage segmentedWorldStateStorage,
       final KeyValueStorage trieLogStorage,
-      final ObservableMetricsSystem metricsSystem,
-      final BonsaiPreImageProxy preImageProxy) {
+      final ObservableMetricsSystem metricsSystem) {
     super(
         parentWorldStateStorage.flatDbMode,
         parentWorldStateStorage.flatDbReaderStrategy,
         segmentedWorldStateStorage,
         trieLogStorage,
-        metricsSystem,
-        preImageProxy);
+        metricsSystem);
     this.parentWorldStateStorage = parentWorldStateStorage;
     this.subscribeParentId = parentWorldStateStorage.subscribe(this);
   }
@@ -64,8 +62,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
         worldStateStorage,
         ((SnappableKeyValueStorage) worldStateStorage.composedWorldStateStorage).takeSnapshot(),
         worldStateStorage.trieLogStorage,
-        metricsSystem,
-        worldStateStorage.preImageProxy);
+        metricsSystem);
   }
 
   private boolean isClosedGet() {

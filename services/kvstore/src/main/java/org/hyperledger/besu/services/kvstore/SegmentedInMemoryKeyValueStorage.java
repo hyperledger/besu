@@ -149,8 +149,19 @@ public class SegmentedInMemoryKeyValueStorage
   @Override
   public Stream<Pair<byte[], byte[]>> streamFromKey(
       final SegmentIdentifier segmentIdentifier, final byte[] startKey) {
+    final Bytes startKeyBytes = Bytes.wrap(startKey);
     return stream(segmentIdentifier)
-        .filter(e -> Bytes.wrap(startKey).compareTo(Bytes.wrap(e.getKey())) <= 0);
+        .filter(e -> startKeyBytes.compareTo(Bytes.wrap(e.getKey())) <= 0);
+  }
+
+  @Override
+  public Stream<Pair<byte[], byte[]>> streamFromKey(
+      final SegmentIdentifier segmentIdentifier, final byte[] startKey, final byte[] endKey) {
+    final Bytes startKeyHash = Bytes.wrap(startKey);
+    final Bytes endKeyHash = Bytes.wrap(endKey);
+    return stream(segmentIdentifier)
+        .filter(e -> startKeyHash.compareTo(Bytes.wrap(e.getKey())) <= 0)
+        .takeWhile(e -> endKeyHash.compareTo(Bytes.wrap(e.getKey())) >= 0);
   }
 
   @Override

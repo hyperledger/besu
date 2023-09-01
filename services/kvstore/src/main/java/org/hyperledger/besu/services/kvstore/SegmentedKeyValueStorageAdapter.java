@@ -94,6 +94,11 @@ public class SegmentedKeyValueStorageAdapter implements KeyValueStorage {
   }
 
   @Override
+  public Stream<Pair<byte[], byte[]>> streamFromKey(final byte[] startKey, final byte[] endKey) {
+    return storage.streamFromKey(segmentIdentifier, startKey, endKey);
+  }
+
+  @Override
   public Stream<byte[]> streamKeys() {
     throwIfClosed();
     return storage.streamKeys(segmentIdentifier);

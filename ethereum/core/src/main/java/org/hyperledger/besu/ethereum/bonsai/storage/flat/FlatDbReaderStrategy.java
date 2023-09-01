@@ -157,8 +157,8 @@ public abstract class FlatDbReaderStrategy {
         storage
             .streamFromKey(
                 ACCOUNT_STORAGE_STORAGE,
-                Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe())
-            .filter(pair -> Bytes.wrap(pair.getKey()).slice(0, Hash.SIZE).equals(accountHash))
+                Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe(),
+                Bytes.concatenate(accountHash, endKeyHash).toArrayUnsafe())
             .limit(max)
             .map(
                 pair ->

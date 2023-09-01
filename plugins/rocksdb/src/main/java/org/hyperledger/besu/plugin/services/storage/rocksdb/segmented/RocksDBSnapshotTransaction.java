@@ -28,6 +28,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.tuweni.bytes.Bytes;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.OptimisticTransactionDB;
 import org.rocksdb.ReadOptions;
@@ -164,6 +165,29 @@ public class RocksDBSnapshotTransaction
         db.newIterator(columnFamilyMapper.apply(segmentId), readOptions);
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStreamKeys();
+  }
+
+  public Stream<Pair<byte[], byte[]>> streamFromKey(
+      final SegmentIdentifier segment, final byte[] startKey) {
+    throwIfClosed();
+
+    final RocksIterator rocksIterator =
+        db.newIterator(columnFamilyMapper.apply(segment), readOptions);
+    rocksIterator.seek(startKey);
+    return RocksDbIterator.create(rocksIterator).toStream();
+  }
+
+  public Stream<Pair<byte[], byte[]>> streamFromKey(
+      final SegmentIdentifier segment, final byte[] startKey, final byte[] endKey) {
+    throwIfClosed();
+    final Bytes endKeyBytes = Bytes.wrap(endKey);
+
+    final RocksIterator rocksIterator =
+        db.newIterator(columnFamilyMapper.apply(segment), readOptions);
+    rocksIterator.seek(startKey);
+    return RocksDbIterator.create(rocksIterator)
+        .toStream()
+        .takeWhile(e -> endKeyBytes.compareTo(Bytes.wrap(e.getKey())) >= 0);
   }
 
   @Override

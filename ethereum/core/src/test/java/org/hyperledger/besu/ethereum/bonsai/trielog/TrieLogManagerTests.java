@@ -21,7 +21,6 @@ import static org.mockito.Mockito.spy;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedWorldStorageManager;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
@@ -52,12 +51,7 @@ public class TrieLogManagerTests {
   @Mock BonsaiWorldStateProvider archive;
   @Mock Blockchain blockchain;
   BonsaiWorldStateUpdateAccumulator bonsaiUpdater =
-      spy(
-          new BonsaiWorldStateUpdateAccumulator(
-              worldState,
-              (__, ___) -> {},
-              (__, ___) -> {},
-              new BonsaiPreImageProxy.NoOpPreImageProxy()));
+      spy(new BonsaiWorldStateUpdateAccumulator(worldState, (__, ___) -> {}, (__, ___) -> {}));
 
   TrieLogManager trieLogManager;
 

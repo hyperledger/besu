@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiValue;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.BonsaiStorageSubscriber;
@@ -71,46 +70,48 @@ public class BonsaiWorldState
 
   protected final CachedMerkleTrieLoader cachedMerkleTrieLoader;
   protected final TrieLogManager trieLogManager;
-  private final BonsaiWorldStateUpdateAccumulator accumulator;
+  private BonsaiWorldStateUpdateAccumulator accumulator;
 
-  private Hash worldStateRootHash;
+  protected Hash worldStateRootHash;
   Hash worldStateBlockHash;
-  public final BonsaiPreImageProxy preImageProxy;
   private boolean isFrozen;
 
   public BonsaiWorldState(
       final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateStorage) {
-    this(
-        worldStateStorage,
-        archive.getCachedMerkleTrieLoader(),
-        archive.getTrieLogManager(),
-        new BonsaiPreImageProxy.NoOpPreImageProxy());
+    this(worldStateStorage, archive.getCachedMerkleTrieLoader(), archive.getTrieLogManager());
   }
 
   protected BonsaiWorldState(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader,
-      final TrieLogManager trieLogManager,
-      final BonsaiPreImageProxy preImageProxy) {
+      final TrieLogManager trieLogManager) {
     this.worldStateStorage = worldStateStorage;
     this.worldStateRootHash =
         Hash.wrap(
             Bytes32.wrap(worldStateStorage.getWorldStateRootHash().orElse(Hash.EMPTY_TRIE_HASH)));
     this.worldStateBlockHash =
         Hash.wrap(Bytes32.wrap(worldStateStorage.getWorldStateBlockHash().orElse(Hash.ZERO)));
-    accumulator =
+    this.accumulator =
         new BonsaiWorldStateUpdateAccumulator(
             this,
             (addr, value) ->
                 cachedMerkleTrieLoader.preLoadAccount(
                     getWorldStateStorage(), worldStateRootHash, addr),
             (addr, value) ->
-                cachedMerkleTrieLoader.preLoadStorageSlot(getWorldStateStorage(), addr, value),
-            preImageProxy);
+                cachedMerkleTrieLoader.preLoadStorageSlot(getWorldStateStorage(), addr, value));
     this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
     this.trieLogManager = trieLogManager;
-    this.preImageProxy = preImageProxy;
+  }
+
+  /**
+   * Having a protected method to override the accumulator solves the chicken-egg problem of needing
+   * a worldstate reference (this) when construction the Accumulator.
+   *
+   * @param accumulator accumulator to use.
+   */
+  protected void setAccumulator(final BonsaiWorldStateUpdateAccumulator accumulator) {
+    this.accumulator = accumulator;
   }
 
   /**
@@ -218,7 +219,7 @@ public class BonsaiWorldState
       final BonsaiAccount updatedAccount = bonsaiValue.getUpdated();
       try {
         if (updatedAccount == null) {
-          final Hash addressHash = preImageProxy.hashAndSavePreImage(accountKey);
+          final Hash addressHash = hashAndSavePreImage(accountKey);
           accountTrie.remove(addressHash);
           maybeStateUpdater.ifPresent(
               bonsaiUpdater -> bonsaiUpdater.removeAccountInfoState(addressHash));
@@ -227,8 +228,7 @@ public class BonsaiWorldState
           final Bytes accountValue = updatedAccount.serializeAccount();
           maybeStateUpdater.ifPresent(
               bonsaiUpdater ->
-                  bonsaiUpdater.putAccountInfoState(
-                      preImageProxy.hashAndSavePreImage(accountKey), accountValue));
+                  bonsaiUpdater.putAccountInfoState(hashAndSavePreImage(accountKey), accountValue));
           accountTrie.put(addressHash, accountValue);
         }
       } catch (MerkleTrieException e) {
@@ -618,5 +618,10 @@ public class BonsaiWorldState
     } catch (Exception e) {
       // no op
     }
+  }
+
+  protected Hash hashAndSavePreImage(final Bytes value) {
+    // by default do not save has preImages
+    return Hash.hash(value);
   }
 }

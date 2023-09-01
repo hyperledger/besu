@@ -19,7 +19,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogAddedEvent;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
@@ -41,22 +40,37 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     implements ReferenceTestWorldState {
 
+  private final BonsaiReferenceTestWorldStateStorage refTestStorage;
+  private final BonsaiPreImageProxy preImageProxy;
+
   protected BonsaiReferenceTestWorldState(
-      final BonsaiWorldStateKeyValueStorage worldStateStorage,
+      final BonsaiReferenceTestWorldStateStorage worldStateStorage,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader,
       final TrieLogManager trieLogManager,
       final BonsaiPreImageProxy preImageProxy) {
-    super(worldStateStorage, cachedMerkleTrieLoader, trieLogManager, preImageProxy);
+    super(worldStateStorage, cachedMerkleTrieLoader, trieLogManager);
+    this.refTestStorage = worldStateStorage;
+    this.preImageProxy = preImageProxy;
+    setAccumulator(
+        new BonsaiReferenceTestUpdateAccumulator(
+            this,
+            (addr, value) ->
+                cachedMerkleTrieLoader.preLoadAccount(
+                    getWorldStateStorage(), worldStateRootHash, addr),
+            (addr, value) ->
+                cachedMerkleTrieLoader.preLoadStorageSlot(getWorldStateStorage(), addr, value),
+            preImageProxy));
   }
 
   @Override
   public ReferenceTestWorldState copy() {
-    var layerCopy = new BonsaiWorldStateLayerStorage(worldStateStorage);
+    var layerCopy = new BonsaiReferenceTestWorldStateStorage(worldStateStorage, preImageProxy);
     return new BonsaiReferenceTestWorldState(
         layerCopy, cachedMerkleTrieLoader, trieLogManager, preImageProxy);
   }
@@ -69,9 +83,13 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     final TrieLogManager trieLogManager = new NoOpTrieLogManager();
     final BonsaiPreImageProxy preImageProxy =
         new BonsaiPreImageProxy.BonsaiReferenceTestPreImageProxy();
-    final BonsaiWorldStateKeyValueStorage worldStateStorage =
-        new BonsaiWorldStateKeyValueStorage(
-            new InMemoryKeyValueStorageProvider(), metricsSystem, preImageProxy);
+
+    final BonsaiReferenceTestWorldStateStorage worldStateStorage =
+        new BonsaiReferenceTestWorldStateStorage(
+            new BonsaiWorldStateKeyValueStorage(
+                new InMemoryKeyValueStorageProvider(), metricsSystem),
+            preImageProxy);
+
     final BonsaiReferenceTestWorldState worldState =
         new BonsaiReferenceTestWorldState(
             worldStateStorage, cachedMerkleTrieLoader, trieLogManager, preImageProxy);
@@ -87,7 +105,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
 
   @Override
   public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
-    return worldStateStorage.streamAccounts(this, startKeyHash, limit);
+    return this.refTestStorage.streamAccounts(this, startKeyHash, limit);
   }
 
   static class NoOpTrieLogManager implements TrieLogManager {
@@ -154,5 +172,11 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
     public synchronized void unsubscribe(final long id) {
       trieLogObservers.unsubscribe(id);
     }
+  }
+
+  @Override
+  protected Hash hashAndSavePreImage(final Bytes value) {
+    // by default do not save has preImages
+    return preImageProxy.hashAndSavePreImage(value);
   }
 }
