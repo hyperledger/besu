@@ -167,16 +167,18 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         .andFinishWith(
             "setLastBoundHeaders",
             headers -> {
-              // update difficulty
-              final List<BlockHeader> sortedHeaders =
-                  headers.stream()
-                      .sorted(Comparator.comparingLong(BlockHeader::getNumber))
-                      .toList();
-              sortedHeaders.forEach(
-                  header -> protocolContext.getBlockchain().unsafeUpdateBlockDifficulty(header));
-              protocolContext
-                  .getBlockchain()
-                  .unsafeSetChainHead(sortedHeaders.get(headers.size() - 1));
+              if (!headers.isEmpty()) {
+                // update difficulty
+                final List<BlockHeader> sortedHeaders =
+                    headers.stream()
+                        .sorted(Comparator.comparingLong(BlockHeader::getNumber))
+                        .toList();
+                sortedHeaders.forEach(
+                    header -> protocolContext.getBlockchain().unsafeUpdateBlockDifficulty(header));
+                protocolContext
+                    .getBlockchain()
+                    .unsafeSetChainHead(sortedHeaders.get(headers.size() - 1));
+              }
             });
   }
 
