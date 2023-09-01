@@ -42,15 +42,32 @@ public class TransactionDecoder {
   public static Transaction decodeRLP(final RLPInput rlpInput) {
     return getDecoder(rlpInput).decode(rlpInput, EncodingContext.INTERNAL);
   }
-  private static Transaction decodeOpaqueBytes(final Bytes bytes, final EncodingContext context) {
-    try {
-      final TransactionType transactionType = TransactionType.of(bytes.get(0));
-      final Bytes transactionBytes = bytes.slice(1);
-      return TYPED_TRANSACTION_DECODER.decode(transactionType, transactionBytes, context);
-    } catch (final IllegalArgumentException __) {
-      return decodeRLP(RLP.input(bytes));
+
+  /**
+   * This method is responsible for decoding the opaque bytes of a transaction. Opaque bytes are the
+   * raw bytes of a transaction that need to be decoded to understand the transaction details.
+   *
+   * @param opaqueBytes The raw bytes of the transaction to be decoded.
+   * @param context The context in which the encoding is happening. This could be for internal use
+   *     or for network communication.
+   * @return The decoded transaction object which includes all the details of the transaction.
+   */
+  private static Transaction decodeOpaqueBytes(
+      final Bytes opaqueBytes, final EncodingContext context) {
+
+    // The first byte of the opaque bytes usually represents the transaction type.
+    final TransactionType transactionType = getTransactionTypeFromOpaqueBytes(opaqueBytes);
+
+    // If the transaction type is null, it is pre EIP-2718.
+    if (transactionType == null) {
+      return decodeRLP(RLP.input(opaqueBytes));
     }
+
+    // EIP-2718 - In this case, remove the first byte (the transaction type) and decode
+    final Bytes transactionBytes = opaqueBytes.slice(1);
+    return TYPED_TRANSACTION_DECODER.decode(transactionType, transactionBytes, context);
   }
+
   /**
    * Decodes the bytes into a Transaction object, considering network specifics.
    *
@@ -73,6 +90,14 @@ public class TransactionDecoder {
    */
   public static Transaction decodeOpaqueBytes(final Bytes bytes) {
     return decodeOpaqueBytes(bytes, EncodingContext.INTERNAL);
+  }
+
+  private static TransactionType getTransactionTypeFromOpaqueBytes(final Bytes opaqueBytes) {
+    try {
+      return TransactionType.of(opaqueBytes.get(0));
+    } catch (final IllegalArgumentException __) {
+      return null;
+    }
   }
 
   /**
