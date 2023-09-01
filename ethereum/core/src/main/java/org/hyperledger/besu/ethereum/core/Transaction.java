@@ -1091,10 +1091,26 @@ public class Transaction
     sb.append("value=").append(getValue()).append(", ");
     sb.append("sig=").append(getSignature()).append(", ");
     if (chainId.isPresent()) sb.append("chainId=").append(getChainId().get()).append(", ");
-    sb.append("payload=").append(getPayload());
     if (transactionType.equals(TransactionType.ACCESS_LIST)) {
-      sb.append(", ").append("accessList=").append(maybeAccessList);
+      sb.append("accessList=").append(maybeAccessList).append(", ");
     }
+    if (versionedHashes.isPresent()) {
+      final List<VersionedHash> vhs = versionedHashes.get();
+      if (!vhs.isEmpty()) {
+        sb.append("versionedHashes=[");
+        sb.append(
+            vhs.get(0)
+                .toString()); // can't be empty if present, as this is checked in the constructor
+        for (int i = 1; i < vhs.size(); i++) {
+          sb.append(", ").append(vhs.get(i).toString());
+        }
+        sb.append("], ");
+      }
+    }
+    if (transactionType.supportsBlob() && this.blobsWithCommitments.isPresent()) {
+      sb.append("numberOfBlobs=").append(blobsWithCommitments.get().getBlobs().size()).append(", ");
+    }
+    sb.append("payload=").append(getPayload());
     return sb.append("}").toString();
   }
 
