@@ -161,7 +161,7 @@ public class SegmentedInMemoryKeyValueStorage
     final Bytes endKeyHash = Bytes.wrap(endKey);
     return stream(segmentIdentifier)
         .filter(e -> startKeyHash.compareTo(Bytes.wrap(e.getKey())) <= 0)
-        .takeWhile(e -> endKeyHash.compareTo(Bytes.wrap(e.getKey())) >= 0);
+        .filter(e -> endKeyHash.compareTo(Bytes.wrap(e.getKey())) >= 0);
   }
 
   @Override

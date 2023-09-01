@@ -133,7 +133,7 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
     final Bytes endKeyBytes = Bytes.wrap(endKey);
     return stream(segmentId)
         .filter(e -> startKeyBytes.compareTo(Bytes.wrap(e.getKey())) <= 0)
-        .takeWhile(e -> endKeyBytes.compareTo(Bytes.wrap(e.getKey())) >= 0);
+        .filter(e -> endKeyBytes.compareTo(Bytes.wrap(e.getKey())) >= 0);
   }
 
   @Override
