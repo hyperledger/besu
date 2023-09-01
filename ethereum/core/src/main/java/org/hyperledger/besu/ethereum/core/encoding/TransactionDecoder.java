@@ -26,25 +26,22 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionDecoder {
 
-  private static final ImmutableMap<TransactionType, Decoder> TYPED_TRANSACTION_DECODERS =
-      ImmutableMap.of(
-          TransactionType.ACCESS_LIST,
-          new AccessListTransactionDecoder(),
-          TransactionType.EIP1559,
-          new EIP1559TransactionDecoder(),
-          TransactionType.BLOB,
-          new BlobTransactionDecoder());
-
-  private static final ImmutableMap<TransactionType, Decoder> NETWORK_TRANSACTION_DECODERS =
-      ImmutableMap.of(TransactionType.BLOB, new BlobNetworkPackageDecoder());
-
-  private static final FrontierTransactionDecoder FRONTIER_DECODER =
-      new FrontierTransactionDecoder();
-
   @FunctionalInterface
   interface Decoder {
     Transaction decode(RLPInput input);
   }
+
+  private static final ImmutableMap<TransactionType, Decoder> TYPED_TRANSACTION_DECODERS =
+      ImmutableMap.of(
+          TransactionType.ACCESS_LIST,
+          AccessListTransactionDecoder::decode,
+          TransactionType.EIP1559,
+          EIP1559TransactionDecoder::decode,
+          TransactionType.BLOB,
+          BlobTransactionDecoder::decode);
+
+  private static final ImmutableMap<TransactionType, Decoder> NETWORK_TRANSACTION_DECODERS =
+      ImmutableMap.of(TransactionType.BLOB, BlobNetworkPackageDecoder::decode);
 
   /**
    * Decodes an RLP input into a transaction. If the input represents a typed transaction, it uses
@@ -57,7 +54,7 @@ public class TransactionDecoder {
     if (isTypedTransaction(rlpInput)) {
       return decodeTypedTransaction(rlpInput);
     } else {
-      return FRONTIER_DECODER.decode(rlpInput);
+      return FrontierTransactionDecoder.decode(rlpInput);
     }
   }
 
@@ -86,16 +83,12 @@ public class TransactionDecoder {
    */
   private static Transaction decodeOpaqueBytes(
       final Bytes opaqueBytes, final EncodingContext context) {
-
-    // The first byte of the opaque bytes usually represents the transaction type.
-    final TransactionType transactionType = getTransactionType(opaqueBytes);
-
-    // If the transaction type is null, it is pre EIP-2718.
-    if (transactionType == null) {
+    final TransactionType transactionType;
+    try {
+      transactionType = getTransactionType(opaqueBytes);
+    } catch (IllegalArgumentException ex) {
       return decodeRLP(RLP.input(opaqueBytes));
     }
-
-    // EIP-2718 - In this case, remove the first byte (the transaction type) and decode
     final Bytes transactionBytes = opaqueBytes.slice(1);
     return getDecoder(transactionType, context).decode(RLP.input(transactionBytes));
   }
@@ -133,11 +126,7 @@ public class TransactionDecoder {
    * @return the transaction type, or null if the first byte does not represent a valid type
    */
   private static TransactionType getTransactionType(final Bytes opaqueBytes) {
-    try {
-      return TransactionType.of(opaqueBytes.get(0));
-    } catch (final IllegalArgumentException __) {
-      return null;
-    }
+    return TransactionType.of(opaqueBytes.get(0));
   }
 
   /**

@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder.Decoder;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
@@ -29,12 +28,11 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 
-public class EIP1559TransactionDecoder implements Decoder {
+public class EIP1559TransactionDecoder {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
-  @Override
-  public Transaction decode(final RLPInput input) {
+  public static Transaction decode(final RLPInput input) {
     input.enterList();
     final BigInteger chainId = input.readBigIntegerScalar();
     final Transaction.Builder builder =

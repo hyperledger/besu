@@ -22,14 +22,13 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder.Decoder;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 
-public class BlobTransactionDecoder implements Decoder {
+public class BlobTransactionDecoder {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
@@ -37,8 +36,7 @@ public class BlobTransactionDecoder implements Decoder {
    * [chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, to, value, data,
    * access_list, max_fee_per_blob_gas, blob_versioned_hashes, y_parity, r, s]
    */
-  @Override
-  public Transaction decode(final RLPInput input) {
+  public static Transaction decode(final RLPInput input) {
     Transaction transaction;
     input.enterList();
     transaction = readTransactionPayload(input);

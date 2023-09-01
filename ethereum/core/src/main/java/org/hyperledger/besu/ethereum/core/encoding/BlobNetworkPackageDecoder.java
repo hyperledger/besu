@@ -18,14 +18,12 @@ import org.hyperledger.besu.datatypes.Blob;
 import org.hyperledger.besu.datatypes.KZGCommitment;
 import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder.Decoder;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.List;
 
-public class BlobNetworkPackageDecoder implements Decoder {
-  @Override
-  public Transaction decode(final RLPInput input) {
+public class BlobNetworkPackageDecoder {
+  public static Transaction decode(final RLPInput input) {
     input.enterList();
     final Transaction.Builder builder = Transaction.builder();
     input.enterList();

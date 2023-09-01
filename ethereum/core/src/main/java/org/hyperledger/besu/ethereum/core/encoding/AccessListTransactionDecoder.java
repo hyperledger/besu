@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder.Decoder;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
@@ -29,12 +28,11 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 
-class AccessListTransactionDecoder implements Decoder {
+class AccessListTransactionDecoder {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
-  @Override
-  public Transaction decode(final RLPInput rlpInput) {
+  public static Transaction decode(final RLPInput rlpInput) {
     rlpInput.enterList();
     final Transaction.Builder preSignatureTransactionBuilder =
         Transaction.builder()
