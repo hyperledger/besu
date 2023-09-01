@@ -42,17 +42,15 @@ public class TransactionDecoder {
   public static Transaction decodeRLP(final RLPInput rlpInput) {
     return getDecoder(rlpInput).decode(rlpInput, EncodingContext.INTERNAL);
   }
-
-  /**
-   * Decodes the given opaque bytes into a transaction.
-   *
-   * @param bytes the bytes
-   * @return the decoded transaction
-   */
-  public static Transaction decodeOpaqueBytes(final Bytes bytes) {
-    return decodeOpaqueBytes(bytes, EncodingContext.INTERNAL);
+  private static Transaction decodeOpaqueBytes(final Bytes bytes, final EncodingContext context) {
+    try {
+      final TransactionType transactionType = TransactionType.of(bytes.get(0));
+      final Bytes transactionBytes = bytes.slice(1);
+      return TYPED_TRANSACTION_DECODER.decode(transactionType, transactionBytes, context);
+    } catch (final IllegalArgumentException __) {
+      return decodeRLP(RLP.input(bytes));
+    }
   }
-
   /**
    * Decodes the bytes into a Transaction object, considering network specifics.
    *
@@ -67,15 +65,16 @@ public class TransactionDecoder {
     return decodeOpaqueBytes(bytes, EncodingContext.NETWORK);
   }
 
-  private static Transaction decodeOpaqueBytes(final Bytes bytes, final EncodingContext context) {
-    try {
-      final TransactionType transactionType = TransactionType.of(bytes.get(0));
-      final Bytes transactionBytes = bytes.slice(1);
-      return TYPED_TRANSACTION_DECODER.decode(transactionType, transactionBytes, context);
-    } catch (final IllegalArgumentException __) {
-      return decodeRLP(RLP.input(bytes));
-    }
+  /**
+   * Decodes the given opaque bytes into a transaction.
+   *
+   * @param bytes the bytes
+   * @return the decoded transaction
+   */
+  public static Transaction decodeOpaqueBytes(final Bytes bytes) {
+    return decodeOpaqueBytes(bytes, EncodingContext.INTERNAL);
   }
+
   /**
    * Returns the appropriate decoder for the given RLP input.
    *
