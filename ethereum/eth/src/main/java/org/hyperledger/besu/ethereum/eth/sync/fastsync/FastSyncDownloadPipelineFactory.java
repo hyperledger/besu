@@ -23,7 +23,6 @@ import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.SKIP_DE
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -48,6 +47,8 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory {
@@ -163,7 +164,20 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         .thenProcessAsyncOrdered("downloadReceipts", downloadReceiptsStep, downloaderParallelism)
         .thenProcessInParallel("validateBodies", validateBodiesStep, downloaderParallelism)
         .thenProcessInParallel("importBlocks", importBlocksStep, downloaderParallelism)
-        .andFinishWith("setLastBoundHeaders", headers -> {protocolContext.getBlockchain().unsafeSetChainHead(headers.get(headers.size()-1), Difficulty.ZERO);});
+        .andFinishWith(
+            "setLastBoundHeaders",
+            headers -> {
+              // update difficulty
+              final List<BlockHeader> sortedHeaders =
+                  headers.stream()
+                      .sorted(Comparator.comparingLong(BlockHeader::getNumber))
+                      .toList();
+              sortedHeaders.forEach(
+                  header -> protocolContext.getBlockchain().unsafeUpdateBlockDifficulty(header));
+              protocolContext
+                  .getBlockchain()
+                  .unsafeSetChainHead(sortedHeaders.get(headers.size() - 1));
+            });
   }
 
   protected BlockHeader getCommonAncestor(final SyncTarget syncTarget) {

@@ -337,7 +337,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
-  public synchronized void unsafeImportBlock(
+  public void unsafeImportBlock(
       final Block block,
       final List<TransactionReceipt> transactionReceipts,
       final Optional<Difficulty> maybeTotalDifficulty) {
@@ -355,6 +355,24 @@ public class DefaultBlockchain implements MutableBlockchain {
     maybeTotalDifficulty.ifPresent(
         totalDifficulty -> updater.putTotalDifficulty(hash, totalDifficulty));
     updater.commit();
+  }
+
+  @Override
+  public synchronized void unsafeUpdateBlockDifficulty(final BlockHeader blockHeader) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    updater.putTotalDifficulty(blockHeader.getHash(), calculateTotalDifficulty(blockHeader));
+    updater.commit();
+  }
+
+  @Override
+  public void unsafeSetChainHead(final BlockHeader blockHeader) {
+    blockchainStorage
+        .getTotalDifficulty(blockHeader.getBlockHash())
+        .ifPresentOrElse(
+            difficulty -> unsafeSetChainHead(blockHeader, totalDifficulty),
+            () ->
+                System.out.println(
+                    "Failed to update total difficulty for " + blockHeader.getNumber()));
   }
 
   @Override

@@ -31,6 +31,8 @@ public class FastAndSnapImportBlocksStep
         return Collections.emptyList();
       }
     }
-    return blocksWithReceipts.stream().map(BlockWithReceipts::getHeader).collect(Collectors.toList());
+    return blocksWithReceipts.stream()
+        .map(BlockWithReceipts::getHeader)
+        .collect(Collectors.toList());
   }
 }

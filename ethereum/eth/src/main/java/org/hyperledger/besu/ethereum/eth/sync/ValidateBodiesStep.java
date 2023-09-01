@@ -9,7 +9,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 public class ValidateBodiesStep
@@ -26,15 +25,13 @@ public class ValidateBodiesStep
 
   @Override
   @SuppressWarnings("MixedMutabilityReturnType")
-  public List<BlockWithReceipts> apply(
-      final List<BlockWithReceipts> blocksWithReceipts) {
+  public List<BlockWithReceipts> apply(final List<BlockWithReceipts> blocksWithReceipts) {
     List<BlockWithReceipts> validatedBlocks = new ArrayList<>();
     for (BlockWithReceipts blockWithReceipts : blocksWithReceipts) {
-      if (isBlockBodyValid(blockWithReceipts))
-      {
+      if (isBlockBodyValid(blockWithReceipts)) {
         validatedBlocks.add(blockWithReceipts);
       } else {
-        return  Collections.emptyList();
+        return Collections.emptyList();
       }
     }
 
