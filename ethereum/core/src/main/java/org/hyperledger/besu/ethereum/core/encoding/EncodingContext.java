@@ -16,5 +16,5 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 public enum EncodingContext {
   BLOCK_BODY,
-  TRANSACTION_POOL,
+  POOLED_TRANSACTION,
 }

@@ -40,7 +40,7 @@ public class TransactionDecoder {
           TransactionType.BLOB,
           BlobTransactionDecoder::decode);
 
-  private static final ImmutableMap<TransactionType, Decoder> NETWORK_TRANSACTION_DECODERS =
+  private static final ImmutableMap<TransactionType, Decoder> POOLED_TRANSACTION_DECODERS =
       ImmutableMap.of(TransactionType.BLOB, BlobPooledTransactionDecoder::decode);
 
   /**
@@ -127,40 +127,19 @@ public class TransactionDecoder {
    * it uses the network decoder for the type. Otherwise, it uses the typed decoder.
    *
    * @param transactionType the transaction type
-   * @param context the encoding context
+   * @param encodingContext the encoding context
    * @return the decoder
    */
   private static Decoder getDecoder(
-      final TransactionType transactionType, final EncodingContext context) {
-    if (context.equals(EncodingContext.TRANSACTION_POOL)) {
-      return getNetworkDecoder(transactionType);
+      final TransactionType transactionType, final EncodingContext encodingContext) {
+    if (encodingContext.equals(EncodingContext.POOLED_TRANSACTION)) {
+      if (POOLED_TRANSACTION_DECODERS.containsKey(transactionType)) {
+        return POOLED_TRANSACTION_DECODERS.get(transactionType);
+      }
     }
-    return getTypedDecoder(transactionType);
-  }
-
-  /**
-   * Gets the typed decoder for a given transaction type. If there is no decoder for the type, it
-   * throws an exception.
-   *
-   * @param transactionType the transaction type
-   * @return the decoder
-   */
-  private static Decoder getTypedDecoder(final TransactionType transactionType) {
     return checkNotNull(
         TYPED_TRANSACTION_DECODERS.get(transactionType),
         "Developer Error. A supported transaction type %s has no associated decoding logic",
         transactionType);
-  }
-
-  /**
-   * Gets the network decoder for a given transaction type. If there is no network decoder for the
-   * type, it uses the typed decoder.
-   *
-   * @param transactionType the transaction type
-   * @return the decoder
-   */
-  private static Decoder getNetworkDecoder(final TransactionType transactionType) {
-    return NETWORK_TRANSACTION_DECODERS.getOrDefault(
-        transactionType, getTypedDecoder(transactionType));
   }
 }

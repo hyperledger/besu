@@ -48,7 +48,8 @@ import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.core.encoding.BlobTransactionEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -244,7 +245,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .createTransaction(senderKeys);
 
     final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
-    BlobTransactionEncoder.encodeForWireNetwork(blobTx, bytesValueRLPOutput);
+    TransactionEncoder.encodeOpaqueBytes(blobTx, EncodingContext.POOLED_TRANSACTION);
     Bytes encodedRLP = bytesValueRLPOutput.encoded();
     return encodedRLP.toString();
   }

@@ -20,7 +20,6 @@ import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder.Encoder;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.math.BigInteger;
@@ -29,15 +28,9 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class AccessListTransactionEncoder implements Encoder {
+public class AccessListTransactionEncoder {
 
-  @Override
-  public void encode(
-      final Transaction transaction, final RLPOutput output, final EncodingContext context) {
-    encodeAccessList(transaction, output);
-  }
-
-  private static void encodeAccessList(final Transaction transaction, final RLPOutput rlpOutput) {
+  public static void encode(final Transaction transaction, final RLPOutput rlpOutput) {
     rlpOutput.startList();
     encodeAccessListInner(
         transaction.getChainId(),

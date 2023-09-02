@@ -615,7 +615,7 @@ public class Transaction
    * @param out the output to write the transaction to
    */
   public void writeTo(final RLPOutput out) {
-    TransactionEncoder.encodeForWire(this, out);
+    TransactionEncoder.encodeRLP(this, out, EncodingContext.BLOCK_BODY);
   }
 
   @Override
@@ -678,17 +678,19 @@ public class Transaction
   }
 
   private void memoizeHashAndSize() {
-    final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this);
+    final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.BLOCK_BODY);
     hash = Hash.hash(bytes);
 
     if (transactionType.supportsBlob()) {
       if (getBlobsWithCommitments().isPresent()) {
-        size = TransactionEncoder.encodeForNetwork(this).size();
+        final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+        TransactionEncoder.encodeRLP(this, rlpOutput, EncodingContext.POOLED_TRANSACTION);
+        size = rlpOutput.encodedSize();
         return;
       }
     }
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-    TransactionEncoder.encodeForWire(transactionType, bytes, rlpOutput);
+    TransactionEncoder.encodeRLP(transactionType, bytes, rlpOutput);
     size = rlpOutput.encodedSize();
   }
 
