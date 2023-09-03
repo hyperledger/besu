@@ -52,7 +52,6 @@ import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 
 import java.math.BigInteger;
@@ -215,7 +214,13 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
 
   @Test
   public void shouldRejectTransactionsWithFullBlob() {
-    List<String> transactions = List.of(createBlobTransactionEncodedForNetwork());
+
+    Bytes transactionWithBlobsBytes =
+        TransactionEncoder.encodeOpaqueBytes(
+            createTransactionWithBlobs(), EncodingContext.POOLED_TRANSACTION);
+
+    List<String> transactions = List.of(transactionWithBlobsBytes.toString());
+
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
@@ -229,24 +234,19 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
-  private String createBlobTransactionEncodedForNetwork() {
+  private Transaction createTransactionWithBlobs() {
     BlobTestFixture blobTestFixture = new BlobTestFixture();
     BlobsWithCommitments bwc = blobTestFixture.createBlobsWithCommitments(1);
-    Transaction blobTx =
-        new TransactionTestFixture()
-            .to(Optional.of(Address.fromHexString("0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF")))
-            .type(TransactionType.BLOB)
-            .chainId(Optional.of(BigInteger.ONE))
-            .maxFeePerGas(Optional.of(Wei.of(15)))
-            .maxFeePerBlobGas(Optional.of(Wei.of(128)))
-            .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
-            .blobsWithCommitments(Optional.of(bwc))
-            .versionedHashes(Optional.of(bwc.getVersionedHashes()))
-            .createTransaction(senderKeys);
 
-    final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
-    TransactionEncoder.encodeOpaqueBytes(blobTx, EncodingContext.POOLED_TRANSACTION);
-    Bytes encodedRLP = bytesValueRLPOutput.encoded();
-    return encodedRLP.toString();
+    return new TransactionTestFixture()
+        .to(Optional.of(Address.fromHexString("0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF")))
+        .type(TransactionType.BLOB)
+        .chainId(Optional.of(BigInteger.ONE))
+        .maxFeePerGas(Optional.of(Wei.of(15)))
+        .maxFeePerBlobGas(Optional.of(Wei.of(128)))
+        .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
+        .blobsWithCommitments(Optional.of(bwc))
+        .versionedHashes(Optional.of(bwc.getVersionedHashes()))
+        .createTransaction(senderKeys);
   }
 }

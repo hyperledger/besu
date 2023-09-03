@@ -57,10 +57,13 @@ public class BlobTransactionEncodingTest {
     final Transaction transaction =
         TransactionDecoder.decodeOpaqueBytes(bytes, EncodingContext.POOLED_TRANSACTION);
 
+    final BytesValueRLPOutput output = new BytesValueRLPOutput();
+    TransactionEncoder.encodeRLP(transaction.getType(), bytes, output);
+
     final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
     TransactionEncoder.encodeRLP(
         transaction, bytesValueRLPOutput, EncodingContext.POOLED_TRANSACTION);
-    assertThat(transaction.getSize()).isEqualTo(bytes.size());
+    assertThat(transaction.getSize()).isEqualTo(output.encodedSize());
   }
 
   @ParameterizedTest(name = "{index} {0}")
@@ -72,8 +75,7 @@ public class BlobTransactionEncodingTest {
         TransactionDecoder.decodeOpaqueBytes(bytes, EncodingContext.BLOCK_BODY);
 
     // Encode the transaction for wire using the TransactionEncoder.
-    Bytes encoded =
-        TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.POOLED_TRANSACTION);
+    Bytes encoded = TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY);
     // Assert that the encoded transaction matches the original bytes.
     assertThat(encoded.toHexString()).isEqualTo(bytes.toHexString());
 
