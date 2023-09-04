@@ -15,8 +15,12 @@
 package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
+
+import java.util.List;
+import java.util.function.Consumer;
 
 /** The Trace service interface */
 @Unstable
@@ -36,4 +40,10 @@ public interface TraceService extends BesuService {
    * @param tracer the tracer (OperationTracer)
    */
   void traceBlock(Hash hash, BlockAwareOperationTracer tracer);
+
+  void trace(
+      List<Long> blocks,
+      Consumer<WorldState> beforeTracing,
+      Consumer<WorldState> afterTracing,
+      BlockAwareOperationTracer tracer);
 }
