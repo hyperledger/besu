@@ -22,7 +22,20 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.List;
 
+/**
+ * Class responsible for decoding blob transactions from the transaction pool. Blob transactions
+ * have two network representations. During transaction gossip responses (PooledTransactions), the
+ * EIP-2718 TransactionPayload of the blob transaction is wrapped to become: rlp([tx_payload_body,
+ * blobs, commitments, proofs]).
+ */
 public class BlobPooledTransactionDecoder {
+
+  /**
+   * Decodes a blob transaction from the provided RLP input.
+   *
+   * @param input the RLP input to decode
+   * @return the decoded transaction
+   */
   public static Transaction decode(final RLPInput input) {
     input.enterList();
     final Transaction.Builder builder = Transaction.builder();

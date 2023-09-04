@@ -32,9 +32,11 @@ public class BlobTransactionDecoder {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
-  /*
-   * [chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, to, value, data,
-   * access_list, max_fee_per_blob_gas, blob_versioned_hashes, y_parity, r, s]
+  /**
+   * Decodes a blob transaction from the provided RLP input.
+   *
+   * @param input the RLP input to decode
+   * @return the decoded transaction
    */
   public static Transaction decode(final RLPInput input) {
     Transaction transaction;
@@ -50,6 +52,15 @@ public class BlobTransactionDecoder {
     return builder.build();
   }
 
+  /**
+   * Reads the payload of a blob transaction from the provided RLP input.
+   *
+   * <p>[chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, to, value, data,
+   * access_list, max_fee_per_blob_gas, blob_versioned_hashes, y_parity, r, s]
+   *
+   * @param builder the transaction builder
+   * @param input the RLP input to read from
+   */
   static void readTransactionPayloadInner(final Transaction.Builder builder, final RLPInput input) {
     builder
         .type(TransactionType.BLOB)
