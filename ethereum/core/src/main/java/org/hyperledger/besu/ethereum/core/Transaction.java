@@ -189,14 +189,15 @@ public class Transaction
     if (versionedHashes.isPresent() || maxFeePerBlobGas.isPresent()) {
       checkArgument(
           transactionType.supportsBlob(),
-          "Must not specify blob versioned hashes of max fee per blob gas for transaction not supporting it");
+          "Must not specify blob versioned hashes or max fee per blob gas for transaction not supporting it");
     }
 
     if (transactionType.supportsBlob()) {
       checkArgument(
           versionedHashes.isPresent(), "Must specify blob versioned hashes for blob transaction");
       checkArgument(
-          !versionedHashes.get().isEmpty(), "Blob transaction must have at least one blob");
+          !versionedHashes.get().isEmpty(),
+          "Blob transaction must have at least one versioned hash");
       checkArgument(
           maxFeePerBlobGas.isPresent(), "Must specify max fee per blob gas for blob transaction");
     }
@@ -680,13 +681,13 @@ public class Transaction
 
     if (transactionType.supportsBlob()) {
       if (getBlobsWithCommitments().isPresent()) {
-        size = TransactionEncoder.encodeOpaqueBytes(this).size();
+        size = bytes.size();
+        return;
       }
-    } else {
-      final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-      TransactionEncoder.encodeForWire(transactionType, bytes, rlpOutput);
-      size = rlpOutput.encodedSize();
     }
+    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+    TransactionEncoder.encodeForWire(transactionType, bytes, rlpOutput);
+    size = rlpOutput.encodedSize();
   }
 
   /**
@@ -1090,10 +1091,26 @@ public class Transaction
     sb.append("value=").append(getValue()).append(", ");
     sb.append("sig=").append(getSignature()).append(", ");
     if (chainId.isPresent()) sb.append("chainId=").append(getChainId().get()).append(", ");
-    sb.append("payload=").append(getPayload());
     if (transactionType.equals(TransactionType.ACCESS_LIST)) {
-      sb.append(", ").append("accessList=").append(maybeAccessList);
+      sb.append("accessList=").append(maybeAccessList).append(", ");
     }
+    if (versionedHashes.isPresent()) {
+      final List<VersionedHash> vhs = versionedHashes.get();
+      if (!vhs.isEmpty()) {
+        sb.append("versionedHashes=[");
+        sb.append(
+            vhs.get(0)
+                .toString()); // can't be empty if present, as this is checked in the constructor
+        for (int i = 1; i < vhs.size(); i++) {
+          sb.append(", ").append(vhs.get(i).toString());
+        }
+        sb.append("], ");
+      }
+    }
+    if (transactionType.supportsBlob() && this.blobsWithCommitments.isPresent()) {
+      sb.append("numberOfBlobs=").append(blobsWithCommitments.get().getBlobs().size()).append(", ");
+    }
+    sb.append("payload=").append(getPayload());
     return sb.append("}").toString();
   }
 
