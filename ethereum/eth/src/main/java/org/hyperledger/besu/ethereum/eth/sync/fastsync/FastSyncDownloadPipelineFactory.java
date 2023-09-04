@@ -162,8 +162,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         .inBatches(headerRequestSize)
         .thenProcessAsyncOrdered("downloadBodies", downloadBodiesStep, downloaderParallelism)
         .thenProcessAsyncOrdered("downloadReceipts", downloadReceiptsStep, downloaderParallelism)
-        .thenProcessInParallel("validateBodies", validateBodiesStep, downloaderParallelism)
-        .thenProcessInParallel("importBlocks", importBlocksStep, downloaderParallelism)
+        .thenProcessAsyncOrdered("validateBodies", validateBodiesStep, downloaderParallelism)
+        .thenProcessAsyncOrdered("importBlocks", importBlocksStep, downloaderParallelism)
         .andFinishWith(
             "setLastBoundHeaders",
             headers -> {

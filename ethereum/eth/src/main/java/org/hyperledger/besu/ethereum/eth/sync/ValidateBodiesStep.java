@@ -9,10 +9,11 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 public class ValidateBodiesStep
-    implements Function<List<BlockWithReceipts>, List<BlockWithReceipts>> {
+    implements Function<List<BlockWithReceipts>, CompletableFuture<List<BlockWithReceipts>>> {
 
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
@@ -25,17 +26,18 @@ public class ValidateBodiesStep
 
   @Override
   @SuppressWarnings("MixedMutabilityReturnType")
-  public List<BlockWithReceipts> apply(final List<BlockWithReceipts> blocksWithReceipts) {
+  public CompletableFuture<List<BlockWithReceipts>> apply(
+      final List<BlockWithReceipts> blocksWithReceipts) {
     List<BlockWithReceipts> validatedBlocks = new ArrayList<>();
     for (BlockWithReceipts blockWithReceipts : blocksWithReceipts) {
       if (isBlockBodyValid(blockWithReceipts)) {
         validatedBlocks.add(blockWithReceipts);
       } else {
-        return Collections.emptyList();
+        return CompletableFuture.completedFuture(Collections.emptyList());
       }
     }
 
-    return validatedBlocks;
+    return CompletableFuture.completedFuture(validatedBlocks);
   }
 
   private boolean isBlockBodyValid(final BlockWithReceipts blockWithReceipts) {
