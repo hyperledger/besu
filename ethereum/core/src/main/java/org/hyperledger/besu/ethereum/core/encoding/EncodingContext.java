@@ -14,7 +14,28 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-enum EncodingContext {
-  INTERNAL,
-  NETWORK,
+/**
+ * Enum representing the context in which a transaction is being encoded. This context is used to
+ * determine the appropriate encoding strategy for a transaction.
+ *
+ * <p>The context can be one of the following:
+ *
+ * <ul>
+ *   <li>{@link #BLOCK_BODY}: The transaction is part of a block body. This context is used when
+ *       encoding transactions for inclusion in a block.
+ *   <li>{@link #POOLED_TRANSACTION}: The transaction is part of a transaction pool. This context is
+ *       used when encoding transactions that are currently in the transaction pool, waiting to be
+ *       included in a block. It is also used when encoding transactions for RPC calls related to
+ *       the transaction pool.
+ * </ul>
+ */
+public enum EncodingContext {
+  /** Represents the context where the transaction is part of a block body. */
+  BLOCK_BODY,
+
+  /**
+   * Represents the context where the transaction is part of a transaction pool. This context is
+   * also used when encoding transactions for RPC calls related to the transaction pool.
+   */
+  POOLED_TRANSACTION,
 }

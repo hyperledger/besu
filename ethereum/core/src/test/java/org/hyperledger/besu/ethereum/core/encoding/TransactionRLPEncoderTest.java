@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -36,19 +37,17 @@ class TransactionRLPEncoderTest {
 
   @Test
   void encodeFrontierTxNominalCase() {
-    final Transaction transaction =
-        TransactionDecoder.decodeRLP(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
+    final Transaction transaction = decodeRLP(RLP.input(Bytes.fromHexString(FRONTIER_TX_RLP)));
     final BytesValueRLPOutput output = new BytesValueRLPOutput();
-    TransactionEncoder.encodeForWire(transaction, output);
+    encodeRLP(transaction, output);
     assertThat(output.encoded().toHexString()).isEqualTo(FRONTIER_TX_RLP);
   }
 
   @Test
   void encodeEIP1559TxNominalCase() {
-    final Transaction transaction =
-        TransactionDecoder.decodeRLP(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
+    final Transaction transaction = decodeRLP(RLP.input(Bytes.fromHexString(EIP1559_TX_RLP)));
     final BytesValueRLPOutput output = new BytesValueRLPOutput();
-    TransactionEncoder.encodeForWire(transaction, output);
+    encodeRLP(transaction, output);
     assertThat(output.encoded().toHexString()).isEqualTo(EIP1559_TX_RLP);
   }
 
@@ -70,10 +69,17 @@ class TransactionRLPEncoderTest {
   @Test
   void shouldEncodeWithHighNonce() {
     final Transaction transaction =
-        TransactionDecoder.decodeRLP(
-            RLP.input(Bytes.fromHexString(NONCE_64_BIT_MAX_MINUS_2_TX_RLP)));
+        decodeRLP(RLP.input(Bytes.fromHexString(NONCE_64_BIT_MAX_MINUS_2_TX_RLP)));
     final BytesValueRLPOutput output = new BytesValueRLPOutput();
-    TransactionEncoder.encodeForWire(transaction, output);
+    encodeRLP(transaction, output);
     assertThat(output.encoded().toHexString()).isEqualTo(NONCE_64_BIT_MAX_MINUS_2_TX_RLP);
+  }
+
+  private Transaction decodeRLP(final RLPInput input) {
+    return TransactionDecoder.decodeRLP(input, EncodingContext.BLOCK_BODY);
+  }
+
+  private void encodeRLP(final Transaction transaction, final BytesValueRLPOutput output) {
+    TransactionEncoder.encodeRLP(transaction, output, EncodingContext.BLOCK_BODY);
   }
 }

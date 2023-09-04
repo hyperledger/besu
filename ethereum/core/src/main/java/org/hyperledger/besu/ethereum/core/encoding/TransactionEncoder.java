@@ -22,37 +22,52 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-import java.util.Map;
-
+import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
 public class TransactionEncoder {
 
   @FunctionalInterface
   interface Encoder {
-    void encode(Transaction transaction, RLPOutput output, EncodingContext context);
+    void encode(Transaction transaction, RLPOutput output);
   }
 
-  private static final FrontierTransactionEncoder FRONTIER_ENCODER =
-      new FrontierTransactionEncoder();
-
-  private static final Map<TransactionType, Encoder> TYPED_TRANSACTION_ENCODERS =
-      Map.of(
+  private static final ImmutableMap<TransactionType, Encoder> TYPED_TRANSACTION_ENCODERS =
+      ImmutableMap.of(
           TransactionType.ACCESS_LIST,
-          new AccessListTransactionEncoder(),
+          AccessListTransactionEncoder::encode,
           TransactionType.EIP1559,
-          new EIP1559TransactionEncoder(),
+          EIP1559TransactionEncoder::encode,
           TransactionType.BLOB,
           BlobTransactionEncoder::encode);
 
-  public static void encodeForWire(final Transaction transaction, final RLPOutput rlpOutput) {
-    final TransactionType transactionType =
-        checkNotNull(
-            transaction.getType(), "Transaction type for %s was not specified.", transaction);
-    encodeForWire(transactionType, encodeOpaqueBytes(transaction), rlpOutput);
+  private static final ImmutableMap<TransactionType, Encoder> POOLED_TRANSACTION_ENCODERS =
+      ImmutableMap.of(TransactionType.BLOB, BlobPooledTransactionEncoder::encode);
+
+  /**
+   * Encodes a transaction into RLP format.
+   *
+   * @param transaction the transaction to encode
+   * @param rlpOutput the RLP output stream
+   * @param encodingContext the encoding context
+   */
+  public static void encodeRLP(
+      final Transaction transaction,
+      final RLPOutput rlpOutput,
+      final EncodingContext encodingContext) {
+    final TransactionType transactionType = getTransactionType(transaction);
+    Bytes opaqueBytes = encodeOpaqueBytes(transaction, encodingContext);
+    encodeRLP(transactionType, opaqueBytes, rlpOutput);
   }
 
-  public static void encodeForWire(
+  /**
+   * Encodes a transaction into RLP format.
+   *
+   * @param transactionType the type of the transaction
+   * @param opaqueBytes the bytes of the transaction
+   * @param rlpOutput the RLP output stream
+   */
+  public static void encodeRLP(
       final TransactionType transactionType, final Bytes opaqueBytes, final RLPOutput rlpOutput) {
     checkNotNull(transactionType, "Transaction type was not specified.");
     if (TransactionType.FRONTIER.equals(transactionType)) {
@@ -62,39 +77,25 @@ public class TransactionEncoder {
     }
   }
 
-  public static Bytes encodeForNetwork(final Transaction transaction) {
-    return encodeTransaction(transaction, EncodingContext.NETWORK);
-  }
-
-  public static Bytes encodeOpaqueBytes(final Transaction transaction) {
-    return encodeTransaction(transaction, EncodingContext.INTERNAL);
-  }
-
-  private static Bytes encodeTransaction(
+  /**
+   * Encodes a transaction into opaque bytes.
+   *
+   * @param transaction the transaction to encode
+   * @param encodingContext the encoding context
+   * @return the encoded transaction as bytes
+   */
+  public static Bytes encodeOpaqueBytes(
       final Transaction transaction, final EncodingContext encodingContext) {
     final TransactionType transactionType = getTransactionType(transaction);
     if (TransactionType.FRONTIER.equals(transactionType)) {
-      return RLP.encode(
-          rlpOutput -> FRONTIER_ENCODER.encode(transaction, rlpOutput, EncodingContext.INTERNAL));
+      return RLP.encode(rlpOutput -> FrontierTransactionEncoder.encode(transaction, rlpOutput));
     } else {
-      final Encoder encoder = getEncoder(transactionType);
+      final Encoder encoder = getEncoder(transactionType, encodingContext);
       final BytesValueRLPOutput out = new BytesValueRLPOutput();
       out.writeByte(transaction.getType().getSerializedType());
-      encoder.encode(transaction, out, encodingContext);
+      encoder.encode(transaction, out);
       return out.encoded();
     }
-  }
-
-  private static TransactionType getTransactionType(final Transaction transaction) {
-    return checkNotNull(
-        transaction.getType(), "Transaction type for %s was not specified.", transaction);
-  }
-
-  private static Encoder getEncoder(final TransactionType transactionType) {
-    return checkNotNull(
-        TYPED_TRANSACTION_ENCODERS.get(transactionType),
-        "Developer Error. A supported transaction type %s has no associated encoding logic",
-        transactionType);
   }
 
   static void writeSignatureAndV(final Transaction transaction, final RLPOutput out) {
@@ -110,5 +111,24 @@ public class TransactionEncoder {
   static void writeSignature(final Transaction transaction, final RLPOutput out) {
     out.writeBigIntegerScalar(transaction.getSignature().getR());
     out.writeBigIntegerScalar(transaction.getSignature().getS());
+  }
+
+  private static TransactionType getTransactionType(final Transaction transaction) {
+    return checkNotNull(
+        transaction.getType(), "Transaction type for %s was not specified.", transaction);
+  }
+
+  private static Encoder getEncoder(
+      final TransactionType transactionType, final EncodingContext encodingContext) {
+
+    if (encodingContext.equals(EncodingContext.POOLED_TRANSACTION)) {
+      if (POOLED_TRANSACTION_ENCODERS.containsKey(transactionType)) {
+        return POOLED_TRANSACTION_ENCODERS.get(transactionType);
+      }
+    }
+    return checkNotNull(
+        TYPED_TRANSACTION_ENCODERS.get(transactionType),
+        "Developer Error. A supported transaction type %s has no associated encoding logic",
+        transactionType);
   }
 }

@@ -14,51 +14,34 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import static org.hyperledger.besu.ethereum.core.encoding.EncodingContext.NETWORK;
-
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Blob;
-import org.hyperledger.besu.datatypes.KZGCommitment;
-import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder.Decoder;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
-import java.util.List;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 
-public class BlobTransactionDecoder implements Decoder {
+public class BlobTransactionDecoder {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
-  @Override
-  public Transaction decode(final RLPInput input, final EncodingContext context) {
-    if (context == NETWORK) {
-      return decodeNetwork(input);
-    }
-    return decode(input);
-  }
-
-  private Transaction decode(final RLPInput input) {
+  /**
+   * Decodes a blob transaction from the provided RLP input.
+   *
+   * @param input the RLP input to decode
+   * @return the decoded transaction
+   */
+  public static Transaction decode(final RLPInput input) {
     Transaction transaction;
     input.enterList();
     transaction = readTransactionPayload(input);
-    input.leaveList();
-    return transaction;
-  }
-
-  private Transaction decodeNetwork(final RLPInput input) {
-    Transaction transaction;
-    input.enterList();
-    transaction = readNetworkWrapperInner(input);
     input.leaveList();
     return transaction;
   }
@@ -69,8 +52,16 @@ public class BlobTransactionDecoder implements Decoder {
     return builder.build();
   }
 
-  private static void readTransactionPayloadInner(
-      final Transaction.Builder builder, final RLPInput input) {
+  /**
+   * Reads the payload of a blob transaction from the provided RLP input.
+   *
+   * <p>[chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, to, value, data,
+   * access_list, max_fee_per_blob_gas, blob_versioned_hashes, y_parity, r, s]
+   *
+   * @param builder the transaction builder
+   * @param input the RLP input to read from
+   */
+  static void readTransactionPayloadInner(final Transaction.Builder builder, final RLPInput input) {
     builder
         .type(TransactionType.BLOB)
         .chainId(input.readBigIntegerScalar())
@@ -104,18 +95,5 @@ public class BlobTransactionDecoder implements Decoder {
                 input.readUInt256Scalar().toUnsignedBigInteger(),
                 input.readUInt256Scalar().toUnsignedBigInteger(),
                 recId));
-  }
-
-  private static Transaction readNetworkWrapperInner(final RLPInput input) {
-    final Transaction.Builder builder = Transaction.builder();
-    input.enterList();
-    readTransactionPayloadInner(builder, input);
-    input.leaveList();
-
-    List<Blob> blobs = input.readList(Blob::readFrom);
-    List<KZGCommitment> commitments = input.readList(KZGCommitment::readFrom);
-    List<KZGProof> proofs = input.readList(KZGProof::readFrom);
-    builder.kzgBlobs(commitments, blobs, proofs);
-    return builder.build();
   }
 }

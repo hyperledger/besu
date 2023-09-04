@@ -37,6 +37,7 @@ import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.encoding.AccessListTransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.BlobTransactionEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -127,7 +128,7 @@ public class Transaction
   }
 
   public static Transaction readFrom(final RLPInput rlpInput) {
-    return TransactionDecoder.decodeRLP(rlpInput);
+    return TransactionDecoder.decodeRLP(rlpInput, EncodingContext.BLOCK_BODY);
   }
 
   /**
@@ -614,7 +615,7 @@ public class Transaction
    * @param out the output to write the transaction to
    */
   public void writeTo(final RLPOutput out) {
-    TransactionEncoder.encodeForWire(this, out);
+    TransactionEncoder.encodeRLP(this, out, EncodingContext.BLOCK_BODY);
   }
 
   @Override
@@ -677,17 +678,19 @@ public class Transaction
   }
 
   private void memoizeHashAndSize() {
-    final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this);
+    final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.BLOCK_BODY);
     hash = Hash.hash(bytes);
 
     if (transactionType.supportsBlob()) {
       if (getBlobsWithCommitments().isPresent()) {
-        size = TransactionEncoder.encodeForNetwork(this).size();
+        final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+        TransactionEncoder.encodeRLP(this, rlpOutput, EncodingContext.POOLED_TRANSACTION);
+        size = rlpOutput.encodedSize();
         return;
       }
     }
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-    TransactionEncoder.encodeForWire(transactionType, bytes, rlpOutput);
+    TransactionEncoder.encodeRLP(transactionType, bytes, rlpOutput);
     size = rlpOutput.encodedSize();
   }
 

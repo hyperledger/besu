@@ -14,23 +14,27 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import static org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder.writeSignatureAndV;
+import static org.slf4j.LoggerFactory.getLogger;
 
+import org.hyperledger.besu.datatypes.Blob;
+import org.hyperledger.besu.datatypes.KZGCommitment;
+import org.hyperledger.besu.datatypes.KZGProof;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
 
-public class FrontierTransactionEncoder {
+public class BlobPooledTransactionEncoder {
+  private static final Logger LOG = getLogger(BlobPooledTransactionEncoder.class);
+
   public static void encode(final Transaction transaction, final RLPOutput out) {
+    LOG.trace("Encoding transaction with blobs {}", transaction);
     out.startList();
-    out.writeLongScalar(transaction.getNonce());
-    out.writeUInt256Scalar(transaction.getGasPrice().orElseThrow());
-    out.writeLongScalar(transaction.getGasLimit());
-    out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
-    out.writeUInt256Scalar(transaction.getValue());
-    out.writeBytes(transaction.getPayload());
-    writeSignatureAndV(transaction, out);
+    var blobsWithCommitments = transaction.getBlobsWithCommitments().orElseThrow();
+    BlobTransactionEncoder.encode(transaction, out);
+    out.writeList(blobsWithCommitments.getBlobs(), Blob::writeTo);
+    out.writeList(blobsWithCommitments.getKzgCommitments(), KZGCommitment::writeTo);
+    out.writeList(blobsWithCommitments.getKzgProofs(), KZGProof::writeTo);
     out.endList();
   }
 }
