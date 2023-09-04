@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.LongStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,23 +93,20 @@ public class TraceServiceImpl implements TraceService {
 
   @Override
   public void trace(
-      final List<Long> blockNumbers,
+      final long fromBlockNumber,
+      final long toBlockNumber,
       final Consumer<WorldState> beforeTracing,
       final Consumer<WorldState> afterTracing,
       final BlockAwareOperationTracer tracer) {
     checkArgument(tracer != null);
-    checkArgument(!blockNumbers.isEmpty());
-    LOG.debug(
-        "Tracing from block {} to block {}",
-        blockNumbers.get(0),
-        blockNumbers.get(blockNumbers.size() - 1));
+    LOG.debug("Tracing from block {} to block {}", fromBlockNumber, toBlockNumber);
     final Blockchain blockchain = blockchainQueries.getBlockchain();
     final List<Block> blocks =
-        blockNumbers.stream()
-            .map(
+        LongStream.rangeClosed(fromBlockNumber, toBlockNumber)
+            .mapToObj(
                 number ->
                     blockchain
-                        .getBlockByNumber(blockNumbers.get(0))
+                        .getBlockByNumber(number)
                         .orElseThrow(() -> new RuntimeException("Block not found " + number)))
             .toList();
     Tracer.processTracing(
