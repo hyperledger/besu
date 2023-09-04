@@ -21,6 +21,8 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
+import java.util.Optional;
+
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -68,16 +70,40 @@ public class TransactionDecoder {
    */
   private static Transaction decodeTypedTransaction(
       final RLPInput rlpInput, final EncodingContext context) {
+    // Read the typed transaction bytes from the RLP input
     final Bytes typedTransactionBytes = rlpInput.readBytes();
-    TransactionType transactionType = getTransactionType(typedTransactionBytes);
-    Decoder decoder = getDecoder(transactionType, context);
-    return decoder.decode(RLP.input(typedTransactionBytes.slice(1)));
+
+    // Determine the transaction type from the typed transaction bytes
+    TransactionType transactionType =
+        getTransactionType(typedTransactionBytes)
+            .orElseThrow((() -> new IllegalArgumentException("Unsupported transaction type")));
+    return decodeTypedTransaction(typedTransactionBytes, transactionType, context);
   }
 
   /**
-   * Decodes a transaction from opaque bytes. It first reads the transaction type from the bytes. If
-   * the type is null, it decodes the bytes as an RLP input. Otherwise, it uses the appropriate
-   * decoder for the type.
+   * Decodes a typed transaction. The method first slices the transaction bytes to exclude the
+   * transaction type, then uses the appropriate decoder for the transaction type to decode the
+   * remaining bytes.
+   *
+   * @param transactionBytes the transaction bytes
+   * @param transactionType the type of the transaction
+   * @param context the encoding context
+   * @return the decoded transaction
+   */
+  private static Transaction decodeTypedTransaction(
+      final Bytes transactionBytes,
+      final TransactionType transactionType,
+      final EncodingContext context) {
+    // Slice the transaction bytes to exclude the transaction type and prepare for decoding
+    final RLPInput transactionInput = RLP.input(transactionBytes.slice(1));
+    // Use the appropriate decoder for the transaction type to decode the remaining bytes
+    return getDecoder(transactionType, context).decode(transactionInput);
+  }
+
+  /**
+   * Decodes a transaction from opaque bytes. The method first determines the transaction type from
+   * the bytes. If the type is present, it delegates the decoding process to the appropriate decoder
+   * for that type. If the type is not present, it decodes the bytes as an RLP input.
    *
    * @param opaqueBytes the opaque bytes
    * @param context the encoding context
@@ -85,25 +111,31 @@ public class TransactionDecoder {
    */
   public static Transaction decodeOpaqueBytes(
       final Bytes opaqueBytes, final EncodingContext context) {
-    final TransactionType transactionType;
-    try {
-      transactionType = getTransactionType(opaqueBytes);
-    } catch (IllegalArgumentException ex) {
+    var transactionType = getTransactionType(opaqueBytes);
+    if (transactionType.isPresent()) {
+      return decodeTypedTransaction(opaqueBytes, transactionType.get(), context);
+    } else {
+      // If the transaction type is not present, decode the opaque bytes as RLP
       return decodeRLP(RLP.input(opaqueBytes), context);
     }
-    final Bytes transactionBytes = opaqueBytes.slice(1);
-    return getDecoder(transactionType, context).decode(RLP.input(transactionBytes));
   }
 
   /**
-   * Gets the transaction type from opaque bytes. The type is represented by the first byte of the
-   * data. If the byte does not represent a valid type, it returns null.
+   * Retrieves the transaction type from the provided bytes. The method attempts to extract the
+   * first byte from the input bytes and interpret it as a transaction type. If the byte does not
+   * correspond to a valid transaction type, the method returns an empty Optional.
    *
-   * @param opaqueBytes the opaque bytes
-   * @return the transaction type, or null if the first byte does not represent a valid type
+   * @param opaqueBytes the bytes from which to extract the transaction type
+   * @return an Optional containing the TransactionType if the first byte of the input corresponds
+   *     to a valid transaction type, or an empty Optional if it does not
    */
-  private static TransactionType getTransactionType(final Bytes opaqueBytes) {
-    return TransactionType.of(opaqueBytes.get(0));
+  private static Optional<TransactionType> getTransactionType(final Bytes opaqueBytes) {
+    try {
+      byte transactionTypeByte = opaqueBytes.get(0);
+      return Optional.of(TransactionType.of(transactionTypeByte));
+    } catch (IllegalArgumentException ex) {
+      return Optional.empty();
+    }
   }
 
   /**
