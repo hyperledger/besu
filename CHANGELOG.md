@@ -23,6 +23,8 @@
 - Fixing snapsync issue with forest during the heal step [#5776](https://github.com/hyperledger/besu/pull/5776)
 
 ### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.2/besu-23.7.2.tar.gz / sha256: TBA
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.2/besu-23.7.2.zip / sha256: TBA
 
 
 ## 23.7.1
