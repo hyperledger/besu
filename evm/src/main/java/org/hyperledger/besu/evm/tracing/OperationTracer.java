@@ -77,12 +77,17 @@ public interface OperationTracer {
    * Trace the end of a transaction.
    *
    * @param worldView an immutable view of the execution context
+   * @param tx the transaction that just concluded
    * @param output the bytes output from the transaction
    * @param gasUsed the gas used by the entire transaction
    * @param timeNs the time in nanoseconds it took to execute the transaction
    */
   default void traceEndTransaction(
-      final WorldView worldView, final Bytes output, final long gasUsed, final long timeNs) {}
+      final WorldView worldView,
+      final Transaction tx,
+      final Bytes output,
+      final long gasUsed,
+      final long timeNs) {}
 
   /**
    * Trace the entering of a new context
