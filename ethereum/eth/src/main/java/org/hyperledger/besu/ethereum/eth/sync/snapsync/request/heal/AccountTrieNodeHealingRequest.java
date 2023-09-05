@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -77,8 +76,7 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
 
   @Override
   public Optional<Bytes> getExistingData(
-      final SnapWorldDownloadState downloadState, final WorldStateStorage worldStateStorage)
-      throws ExecutionException {
+      final SnapWorldDownloadState downloadState, final WorldStateStorage worldStateStorage) {
     if (getLocation().isEmpty()) {
       return Optional.empty();
     }
