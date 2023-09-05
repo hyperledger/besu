@@ -254,7 +254,12 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
     final PayloadIdentifier payloadIdentifier =
         PayloadIdentifier.forPayloadParams(
-            parentHeader.getBlockHash(), timestamp, prevRandao, feeRecipient, withdrawals);
+            parentHeader.getBlockHash(),
+            timestamp,
+            prevRandao,
+            feeRecipient,
+            withdrawals,
+            parentBeaconBlockRoot);
 
     if (blockCreationTasks.containsKey(payloadIdentifier)) {
       LOG.debug(
