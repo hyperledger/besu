@@ -313,15 +313,16 @@ public class T8nExecutor {
                 .getGasCalculator()
                 .transactionIntrinsicGasCost(
                     transaction.getPayload(), transaction.getTo().isEmpty());
-        tracer.traceEndTransaction(
-            worldStateUpdater,
-            result.getOutput(),
-            gasUsed - intrinsicGas,
-            timer.elapsed(TimeUnit.NANOSECONDS));
         TransactionReceipt receipt =
             protocolSpec
                 .getTransactionReceiptFactory()
                 .create(transaction.getType(), result, worldState, gasUsed);
+        tracer.traceEndTransaction(
+            worldStateUpdater,
+            transaction,
+            result.getOutput(),
+            gasUsed - intrinsicGas,
+            timer.elapsed(TimeUnit.NANOSECONDS));
         Bytes gasUsedInTransaction = Bytes.ofUnsignedLong(transactionGasUsed);
         receipts.add(receipt);
         ObjectNode receiptObject = receiptsArray.addObject();
