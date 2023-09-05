@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -166,7 +167,8 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
   }
 
   public abstract Optional<Bytes> getExistingData(
-      final SnapWorldDownloadState downloadState, final WorldStateStorage worldStateStorage);
+      final SnapWorldDownloadState downloadState, final WorldStateStorage worldStateStorage)
+      throws ExecutionException;
 
   public abstract List<Bytes> getTrieNodePath();
 

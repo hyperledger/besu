@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal;
 
+import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.AccountTrieNodeHealingRequest.caches;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
@@ -53,6 +55,7 @@ public class StorageTrieNodeHealingRequest extends TrieNodeHealingRequest {
       final SnapWorldDownloadState downloadState,
       final SnapSyncProcessState snapSyncState,
       final SnapSyncConfiguration snapSyncConfiguration) {
+    caches.put(Bytes.concatenate(getAccountHash(), getLocation()), data);
     updater.putAccountStorageTrieNode(getAccountHash(), getLocation(), getNodeHash(), data);
     return 1;
   }
@@ -61,29 +64,47 @@ public class StorageTrieNodeHealingRequest extends TrieNodeHealingRequest {
   public Optional<Bytes> getExistingData(
       final SnapWorldDownloadState downloadState, final WorldStateStorage worldStateStorage) {
 
-    final Optional<Bytes> storageTrieNode;
-    if (worldStateStorage.getDataStorageFormat().equals(DataStorageFormat.FOREST)) {
-      storageTrieNode = worldStateStorage.getTrieNodeUnsafe(getNodeHash());
-    } else {
-      storageTrieNode =
-          worldStateStorage.getTrieNodeUnsafe(Bytes.concatenate(getAccountHash(), getLocation()));
-    }
-
-    if (storageTrieNode.isPresent()) {
-      return storageTrieNode
-          .filter(node -> Hash.hash(node).equals(getNodeHash()))
-          .or(
-              () -> { // if we have a storage in database but not the good one we will need to fix
-                // the account later
-                downloadState.addAccountsToBeRepaired(
-                    CompactEncoding.bytesToPath(getAccountHash()));
-                return Optional.empty();
-              });
-    } else {
-      if (getNodeHash().equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
-        return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
+    Optional<Bytes> ifPresent =
+        Optional.ofNullable(
+            caches.getIfPresent(Bytes.concatenate(getAccountHash(), getLocation())));
+    if (ifPresent.isPresent()) {
+      if (Hash.hash(ifPresent.get()).equals(getNodeHash())) {
+        return ifPresent;
       }
+      downloadState.addAccountsToBeRepaired(CompactEncoding.bytesToPath(getAccountHash()));
       return Optional.empty();
+    } else {
+      final Optional<Bytes> storageTrieNode;
+      if (worldStateStorage.getDataStorageFormat().equals(DataStorageFormat.FOREST)) {
+        storageTrieNode = worldStateStorage.getTrieNodeUnsafe(getNodeHash());
+      } else {
+        storageTrieNode =
+            worldStateStorage.getTrieNodeUnsafe(Bytes.concatenate(getAccountHash(), getLocation()));
+      }
+
+      if (storageTrieNode.isPresent()) {
+        return storageTrieNode
+            .filter(node -> Hash.hash(node).equals(getNodeHash()))
+            .map(
+                bytes -> {
+                  caches.put(Bytes.concatenate(getAccountHash(), getLocation()), bytes);
+                  return bytes;
+                })
+            .or(
+                () -> { // if we have a storage in database but not the good one we will need to fix
+                  // the account later
+                  downloadState.addAccountsToBeRepaired(
+                      CompactEncoding.bytesToPath(getAccountHash()));
+                  return Optional.empty();
+                });
+      } else {
+        if (getNodeHash().equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
+          caches.put(
+              Bytes.concatenate(getAccountHash(), getLocation()), MerkleTrie.EMPTY_TRIE_NODE);
+          return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
+        }
+        return Optional.empty();
+      }
     }
   }
 

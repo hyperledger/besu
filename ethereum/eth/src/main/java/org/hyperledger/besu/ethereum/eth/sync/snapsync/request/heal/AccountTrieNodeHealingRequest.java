@@ -34,9 +34,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -44,6 +47,9 @@ import org.apache.tuweni.bytes.Bytes32;
 public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
 
   private final HashSet<Bytes> inconsistentAccounts;
+
+  public static final Cache<Bytes, Bytes> caches =
+      CacheBuilder.newBuilder().recordStats().maximumSize(1_000_000).build();
 
   public AccountTrieNodeHealingRequest(
       final Hash hash,
@@ -64,16 +70,34 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
     if (isRoot()) {
       downloadState.setRootNodeData(data);
     }
+    caches.put(getLocation(), data);
     updater.putAccountStateTrieNode(getLocation(), getNodeHash(), data);
     return 1;
   }
 
   @Override
   public Optional<Bytes> getExistingData(
-      final SnapWorldDownloadState downloadState, final WorldStateStorage worldStateStorage) {
-    return worldStateStorage
-        .getAccountStateTrieNode(getLocation(), getNodeHash())
-        .filter(data -> !getLocation().isEmpty());
+      final SnapWorldDownloadState downloadState, final WorldStateStorage worldStateStorage)
+      throws ExecutionException {
+    if (getLocation().isEmpty()) {
+      return Optional.empty();
+    }
+    Optional<Bytes> ifPresent = Optional.ofNullable(caches.getIfPresent(getLocation()));
+    if (ifPresent.isPresent()) {
+      if (Hash.hash(ifPresent.get()).equals(getNodeHash())) {
+        return ifPresent;
+      }
+      return Optional.empty();
+    } else {
+      return worldStateStorage
+          .getAccountStateTrieNode(getLocation(), getNodeHash())
+          .filter(data -> !getLocation().isEmpty())
+          .map(
+              bytes -> {
+                caches.put(getLocation(), bytes);
+                return bytes;
+              });
+    }
   }
 
   @Override
