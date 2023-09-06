@@ -28,7 +28,7 @@ If you have any questions, queries or comments, [Besu channel on Hyperledger Dis
 
 ## Besu Users
 
-To install the Besu binary, follow [these instructions](https://besu.hyperledger.org/HowTo/Get-Started/Install-Binaries/).    
+To install the Besu binary, follow [these instructions](https://besu.hyperledger.org/public-networks/get-started/install/binary-distribution).    
 
 ## Besu Developers
 
