@@ -91,6 +91,15 @@ public class TraceServiceImpl implements TraceService {
     block.ifPresent(value -> trace(value, tracer));
   }
 
+  /**
+   * Traces range of blocks
+   *
+   * @param fromBlockNumber the beginning of the range (inclusive)
+   * @param toBlockNumber the end of the range (inclusive)
+   * @param beforeTracing Function which performs an operation on a MutableWorldState before tracing
+   * @param afterTracing Function which performs an operation on a MutableWorldState after tracing
+   * @param tracer an instance of OperationTracer
+   */
   @Override
   public void trace(
       final long fromBlockNumber,
