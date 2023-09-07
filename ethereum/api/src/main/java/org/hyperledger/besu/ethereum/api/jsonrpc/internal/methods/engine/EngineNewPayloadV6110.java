@@ -17,17 +17,19 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+
+import java.util.Optional;
 
 import io.vertx.core.Vertx;
 
 public class EngineNewPayloadV6110 extends EngineNewPayloadV3 {
 
-  private final ProtocolSchedule timestampSchedule;
+  private final Optional<ScheduledProtocolSpec.Hardfork> eip6110;
 
   public EngineNewPayloadV6110(
       final Vertx vertx,
@@ -38,7 +40,8 @@ public class EngineNewPayloadV6110 extends EngineNewPayloadV3 {
       final EngineCallListener engineCallListener) {
     super(
         vertx, timestampSchedule, protocolContext, mergeCoordinator, ethPeers, engineCallListener);
-    this.timestampSchedule = timestampSchedule;
+    this.eip6110 =
+        timestampSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("ExperimentalEips"));
   }
 
   @Override
@@ -47,19 +50,18 @@ public class EngineNewPayloadV6110 extends EngineNewPayloadV3 {
   }
 
   @Override
-  protected ValidationResult<RpcErrorType> validateForkSupported(
-      final Object reqId, final EnginePayloadParameter payloadParameter) {
-    var eip6110 =
-        timestampSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("ExperimentalEips"));
-
-    if (eip6110.isPresent() && payloadParameter.getTimestamp() >= eip6110.get().milestone()) {
-      if (payloadParameter.getDeposits() == null) {
-        return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing deposit receipts");
-      } else {
+  protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
+    if (protocolSchedule.isPresent()) {
+      if (eip6110.isPresent() && blockTimestamp >= eip6110.get().milestone()) {
         return ValidationResult.valid();
+      } else {
+        return ValidationResult.invalid(
+            RpcErrorType.UNSUPPORTED_FORK,
+            "EIP-6110 configured to start at timestamp: " + eip6110.get().milestone());
       }
     } else {
-      return ValidationResult.invalid(RpcErrorType.UNSUPPORTED_FORK, "Fork not supported");
+      return ValidationResult.invalid(
+          RpcErrorType.UNSUPPORTED_FORK, "Configuration error, no schedule for EIP-6110 fork set");
     }
   }
 }
