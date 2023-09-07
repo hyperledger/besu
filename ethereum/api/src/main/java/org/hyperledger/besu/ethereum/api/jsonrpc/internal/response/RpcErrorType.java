@@ -24,7 +24,6 @@ public enum RpcErrorType {
   TIMEOUT_ERROR(-32603, "Timeout expired"),
 
   METHOD_NOT_ENABLED(-32604, "Method not enabled"),
-  UNSUPPORTED_FORK(-38005, "Unsupported fork"),
 
   // Resource unavailable error
   TX_POOL_DISABLED(-32002, "Transaction pool not enabled"),
