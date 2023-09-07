@@ -15,30 +15,38 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.DataGas;
+import org.hyperledger.besu.datatypes.BlobGas;
+import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV6110;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
+import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 
+import java.math.BigInteger;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -46,13 +54,12 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(
     MockitoExtension.class) // mocks in parent class may not be used, throwing unnecessary stubbing
 public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
-
-  private static final long EIP_6110_AT = 31337L;
 
   public EngineGetPayloadV6110Test() {
     super(EngineGetPayloadV6110::new);
@@ -64,9 +71,7 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
     lenient()
         .when(mergeContext.retrieveBlockById(mockPid))
         .thenReturn(Optional.of(mockBlockWithReceiptsAndDeposits));
-    when(protocolContext.safeConsensusContext(any())).thenReturn(Optional.of(mergeContext));
-    when(protocolSchedule.hardforkFor(any()))
-        .thenReturn(Optional.of(new ScheduledProtocolSpec.Hardfork("6110", EIP_6110_AT)));
+    when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     this.method =
         new EngineGetPayloadV6110(
             vertx,
@@ -90,28 +95,44 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
     BlockHeader eip6110Header =
         new BlockHeaderTestFixture()
             .prevRandao(Bytes32.random())
-            .timestamp(EIP_6110_AT + 1)
-            .excessDataGas(DataGas.of(10L))
+            .timestamp(experimentalHardfork.milestone() + 1)
+            .excessBlobGas(BlobGas.of(10L))
             .buildHeader();
-    // should return withdrawals and excessGas for a post-eip6110 block
+    // should return withdrawals, deposits and excessGas for a post-6110 block
     PayloadIdentifier postEip6110Pid =
         PayloadIdentifier.forPayloadParams(
             Hash.ZERO,
-            EIP_6110_AT,
+            experimentalHardfork.milestone(),
             Bytes32.random(),
             Address.fromHexString("0x42"),
+            Optional.empty(),
             Optional.empty());
 
+    BlobTestFixture blobTestFixture = new BlobTestFixture();
+    BlobsWithCommitments bwc = blobTestFixture.createBlobsWithCommitments(1);
+    Transaction blobTx =
+        new TransactionTestFixture()
+            .to(Optional.of(Address.fromHexString("0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF")))
+            .type(TransactionType.BLOB)
+            .chainId(Optional.of(BigInteger.ONE))
+            .maxFeePerGas(Optional.of(Wei.of(15)))
+            .maxFeePerBlobGas(Optional.of(Wei.of(128)))
+            .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
+            .blobsWithCommitments(Optional.of(bwc))
+            .versionedHashes(Optional.of(bwc.getVersionedHashes()))
+            .createTransaction(senderKeys);
+    TransactionReceipt blobReceipt = mock(TransactionReceipt.class);
+    when(blobReceipt.getCumulativeGasUsed()).thenReturn(100L);
     BlockWithReceipts postEip6110Block =
         new BlockWithReceipts(
             new Block(
                 eip6110Header,
                 new BlockBody(
-                    Collections.emptyList(),
+                    List.of(blobTx),
                     Collections.emptyList(),
                     Optional.of(Collections.emptyList()),
-                    Optional.of(Collections.emptyList()))),
-            Collections.emptyList());
+                    Optional.empty())),
+            List.of(blobReceipt));
 
     when(mergeContext.retrieveBlockById(postEip6110Pid)).thenReturn(Optional.of(postEip6110Block));
 
@@ -130,10 +151,10 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
               assertThat(res.getBlockValue()).isEqualTo(Quantity.create(0));
               assertThat(res.getExecutionPayload().getPrevRandao())
                   .isEqualTo(eip6110Header.getPrevRandao().map(Bytes32::toString).orElse(""));
-              // excessDataGas: QUANTITY, 256 bits
+              // excessBlobGas: QUANTITY, 256 bits
               String expectedQuantityOf10 = Bytes32.leftPad(Bytes.of(10)).toQuantityHexString();
-              assertThat(res.getExecutionPayload().getExcessDataGas()).isNotEmpty();
-              assertThat(res.getExecutionPayload().getExcessDataGas())
+              assertThat(res.getExecutionPayload().getExcessBlobGas()).isNotEmpty();
+              assertThat(res.getExecutionPayload().getExcessBlobGas())
                   .isEqualTo(expectedQuantityOf10);
             });
     verify(engineCallListener, times(1)).executionEngineCalled();
