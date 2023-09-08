@@ -213,7 +213,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
   }
 
   @Test
-  public void shouldRejectTransactionsWithFullBlob() {
+  public void shouldRejectTransactionsWithFullBlobs() {
 
     Bytes transactionWithBlobsBytes =
         TransactionEncoder.encodeOpaqueBytes(
