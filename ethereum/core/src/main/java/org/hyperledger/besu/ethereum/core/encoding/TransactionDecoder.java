@@ -155,8 +155,9 @@ public class TransactionDecoder {
   }
 
   /**
-   * Gets the decoder for a given transaction type and encoding context. If the context is POOLED_TRANSACTION,
-   * it uses the network decoder for the type. Otherwise, it uses the typed decoder.
+   * Gets the decoder for a given transaction type and encoding context. If the context is
+   * POOLED_TRANSACTION, it uses the network decoder for the type. Otherwise, it uses the typed
+   * decoder.
    *
    * @param transactionType the transaction type
    * @param encodingContext the encoding context
