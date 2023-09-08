@@ -25,6 +25,10 @@ import org.hyperledger.besu.plugin.data.BlockHeader;
  */
 public interface BlockAwareOperationTracer extends OperationTracer {
 
+  /**
+   * BlockAwareOperationTracer object with no tracing functionality. This serves as a default for
+   * scenarios where no specific tracing operation is required.
+   */
   BlockAwareOperationTracer NO_TRACING = new BlockAwareOperationTracer() {};
 
   /**
