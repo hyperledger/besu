@@ -18,10 +18,8 @@ package org.hyperledger.besu.evm.fluent;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
-import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.HashMap;
@@ -35,7 +33,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Simple account. */
-public class SimpleAccount implements EvmAccount, MutableAccount {
+public class SimpleAccount implements MutableAccount {
 
   private final Account parent;
 
@@ -135,11 +133,6 @@ public class SimpleAccount implements EvmAccount, MutableAccount {
       final Bytes32 startKeyHash, final int limit) {
     throw new UnsupportedOperationException(
         "Storage iteration not supported in simple account facade");
-  }
-
-  @Override
-  public MutableAccount getMutable() throws ModificationNotAllowedException {
-    return this;
   }
 
   @Override

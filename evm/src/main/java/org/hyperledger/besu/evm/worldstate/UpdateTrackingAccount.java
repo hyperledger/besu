@@ -21,10 +21,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
-import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.Map;
@@ -47,7 +45,7 @@ import org.apache.tuweni.units.bigints.UInt256;
  *
  * @param <A> the type parameter
  */
-public class UpdateTrackingAccount<A extends Account> implements MutableAccount, EvmAccount {
+public class UpdateTrackingAccount<A extends Account> implements MutableAccount {
   private final Address address;
   private final Hash addressHash;
 
@@ -307,10 +305,5 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
     return String.format(
         "%s -> {nonce: %s, balance:%s, code:%s, storage:%s }",
         address, nonce, balance, updatedCode == null ? "[not updated]" : updatedCode, storage);
-  }
-
-  @Override
-  public MutableAccount getMutable() throws ModificationNotAllowedException {
-    return this;
   }
 }

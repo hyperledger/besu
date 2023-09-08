@@ -26,9 +26,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
-import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
@@ -41,7 +39,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
+public class BonsaiAccount implements MutableAccount, AccountValue {
   private final BonsaiWorldView context;
   private final boolean mutable;
 
@@ -257,15 +255,6 @@ public class BonsaiAccount implements MutableAccount, EvmAccount, AccountValue {
   @Override
   public Map<UInt256, UInt256> getUpdatedStorage() {
     return updatedStorage;
-  }
-
-  @Override
-  public MutableAccount getMutable() throws ModificationNotAllowedException {
-    if (mutable) {
-      return this;
-    } else {
-      throw new ModificationNotAllowedException();
-    }
   }
 
   @Override

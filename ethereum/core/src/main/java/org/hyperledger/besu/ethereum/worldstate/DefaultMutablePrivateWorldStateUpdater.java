@@ -17,9 +17,8 @@ package org.hyperledger.besu.ethereum.worldstate;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.EvmAccount;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -39,24 +38,23 @@ public class DefaultMutablePrivateWorldStateUpdater implements WorldUpdater {
   }
 
   @Override
-  public EvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
+  public MutableAccount createAccount(final Address address, final long nonce, final Wei balance) {
     return privateWorldUpdater.createAccount(address, nonce, balance);
   }
 
   @Override
-  public EvmAccount createAccount(final Address address) {
+  public MutableAccount createAccount(final Address address) {
     return privateWorldUpdater.createAccount(address);
   }
 
   @Override
-  public EvmAccount getAccount(final Address address) {
-    final EvmAccount privateAccount = privateWorldUpdater.getAccount(address);
+  public MutableAccount getAccount(final Address address) {
+    final MutableAccount privateAccount = privateWorldUpdater.getAccount(address);
     if (privateAccount != null && !privateAccount.isEmpty()) {
       return privateAccount;
     }
-    final EvmAccount publicAccount = publicWorldUpdater.getAccount(address);
+    final MutableAccount publicAccount = publicWorldUpdater.getAccount(address);
     if (publicAccount != null && !publicAccount.isEmpty()) {
-      ((WrappedEvmAccount) publicAccount).setImmutable(true); // FIXME
       return publicAccount;
     }
     return privateAccount;

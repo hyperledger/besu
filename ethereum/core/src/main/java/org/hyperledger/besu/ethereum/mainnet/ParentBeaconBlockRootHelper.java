@@ -22,14 +22,14 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** A helper class to store the parent beacon block root. */
-public class ParentBeaconBlockRootHelper {
+public interface ParentBeaconBlockRootHelper {
 
   // Modulus use to for the timestamp to store the  root
-  public static final long HISTORICAL_ROOTS_MODULUS = 98304;
-  public static final Address BEACON_ROOTS_ADDRESS =
+  long HISTORICAL_ROOTS_MODULUS = 98304;
+  Address BEACON_ROOTS_ADDRESS =
       Address.fromHexString("0xbEac00dDB15f3B6d645C48263dC93862413A222D");
 
-  public static void storeParentBeaconBlockRoot(
+  static void storeParentBeaconBlockRoot(
       final WorldUpdater worldUpdater, final long timestamp, final Bytes32 root) {
     /*
      see EIP-4788: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4788.md
@@ -40,7 +40,7 @@ public class ParentBeaconBlockRootHelper {
     final UInt256 timestampIndex = UInt256.valueOf(timestampReduced);
     final UInt256 rootIndex = UInt256.valueOf(timestampExtended);
 
-    final MutableAccount account = worldUpdater.getOrCreate(BEACON_ROOTS_ADDRESS).getMutable();
+    final MutableAccount account = worldUpdater.getOrCreate(BEACON_ROOTS_ADDRESS);
     account.setStorageValue(timestampIndex, UInt256.valueOf(timestamp));
     account.setStorageValue(rootIndex, UInt256.fromBytes(root));
     worldUpdater.commit();

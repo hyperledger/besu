@@ -20,7 +20,6 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -45,7 +44,6 @@ class ExtendedOperationTracerTest {
   @Mock EVM evm;
   @Mock MessageFrame frame;
   @Mock WorldUpdater worldUpdater;
-  @Mock EvmAccount evmAccount;
   @Mock MutableAccount mutableAccount;
 
   @BeforeEach
@@ -55,8 +53,7 @@ class ExtendedOperationTracerTest {
     when(frame.getRemainingGas()).thenReturn(1L);
 
     when(frame.getWorldUpdater()).thenReturn(worldUpdater);
-    when(worldUpdater.getOrCreate(any())).thenReturn(evmAccount);
-    when(evmAccount.getMutable()).thenReturn(mutableAccount);
+    when(worldUpdater.getOrCreate(any())).thenReturn(mutableAccount);
   }
 
   @Test
@@ -69,7 +66,6 @@ class ExtendedOperationTracerTest {
 
     // traceAccountCreationResult has been called and values have been set
     assertThat(tracer.frame).isNotNull();
-    assertThat(tracer.haltReason).isNotNull();
     assertThat(tracer.haltReason).isEmpty();
   }
 

@@ -18,10 +18,8 @@ package org.hyperledger.besu.evm.toy;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
-import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.HashMap;
@@ -34,7 +32,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class ToyAccount implements EvmAccount, MutableAccount {
+public class ToyAccount implements MutableAccount {
 
   private final Account parent;
 
@@ -115,11 +113,6 @@ public class ToyAccount implements EvmAccount, MutableAccount {
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
       final Bytes32 startKeyHash, final int limit) {
     throw new UnsupportedOperationException("Storage iteration not supported in toy evm");
-  }
-
-  @Override
-  public MutableAccount getMutable() throws ModificationNotAllowedException {
-    return this;
   }
 
   @Override
