@@ -505,7 +505,9 @@ public class BonsaiWorldState
   @Override
   public Hash frontierRootHash() {
     return calculateRootHash(
-        Optional.of(new BonsaiWorldStateKeyValueStorage.Updater(noOpSegmentedTx, noOpTx)),
+        Optional.of(
+            new BonsaiWorldStateKeyValueStorage.Updater(
+                noOpSegmentedTx, noOpTx, worldStateStorage.deriveFlatDbStrategy())),
         accumulator.copy());
   }
 

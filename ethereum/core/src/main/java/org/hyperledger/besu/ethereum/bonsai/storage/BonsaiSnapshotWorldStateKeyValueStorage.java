@@ -77,7 +77,8 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   public BonsaiUpdater updater() {
     return new Updater(
         ((SnappedKeyValueStorage) composedWorldStateStorage).getSnapshotTransaction(),
-        trieLogStorage.startTransaction());
+        trieLogStorage.startTransaction(),
+        flatDbReaderStrategy);
   }
 
   @Override

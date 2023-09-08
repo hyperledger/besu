@@ -21,9 +21,11 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.bonsai.storage.flat.FlatDbReaderStrategy;
-import org.hyperledger.besu.ethereum.bonsai.storage.flat.FullFlatDbReaderStrategy;
-import org.hyperledger.besu.ethereum.bonsai.storage.flat.PartialFlatDbReaderStrategy;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiContext;
+import org.hyperledger.besu.ethereum.bonsai.storage.flat.ArchiveFlatDbStrategy;
+import org.hyperledger.besu.ethereum.bonsai.storage.flat.FlatDbStrategy;
+import org.hyperledger.besu.ethereum.bonsai.storage.flat.FullFlatDbStrategy;
+import org.hyperledger.besu.ethereum.bonsai.storage.flat.PartialFlatDbStrategy;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
@@ -66,7 +68,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   public static final byte[] FLAT_DB_MODE = "flatDbStatus".getBytes(StandardCharsets.UTF_8);
 
   protected FlatDbMode flatDbMode;
-  protected FlatDbReaderStrategy flatDbReaderStrategy;
+  protected FlatDbStrategy flatDbReaderStrategy;
 
   protected final SegmentedKeyValueStorage composedWorldStateStorage;
   protected final KeyValueStorage trieLogStorage;
@@ -93,7 +95,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   public BonsaiWorldStateKeyValueStorage(
       final FlatDbMode flatDbMode,
-      final FlatDbReaderStrategy flatDbReaderStrategy,
+      final FlatDbStrategy flatDbReaderStrategy,
       final SegmentedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage,
       final ObservableMetricsSystem metricsSystem) {
@@ -105,6 +107,10 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   public void loadFlatDbStrategy() {
+    this.flatDbReaderStrategy = deriveFlatDbStrategy();
+  }
+
+  public FlatDbStrategy deriveFlatDbStrategy() {
     this.flatDbMode =
         FlatDbMode.fromVersion(
             composedWorldStateStorage
@@ -116,9 +122,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     // default
     LOG.info("Bonsai flat db mode found {}", flatDbMode);
     if (flatDbMode == FlatDbMode.FULL) {
-      this.flatDbReaderStrategy = new FullFlatDbReaderStrategy(metricsSystem);
+      return new FullFlatDbStrategy(metricsSystem);
+    } else if (flatDbMode == FlatDbMode.ARCHIVE) {
+      // TODO: PLUMB an actual context provider and get rid of this fake impl
+      return new ArchiveFlatDbStrategy(() -> new BonsaiContext(() -> null), metricsSystem);
     } else {
-      this.flatDbReaderStrategy = new PartialFlatDbReaderStrategy(metricsSystem);
+      return new PartialFlatDbStrategy(metricsSystem);
     }
   }
 
@@ -132,7 +141,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return flatDbMode;
   }
 
-  public FlatDbReaderStrategy getFlatDbReaderStrategy() {
+  FlatDbStrategy getFlatDbReaderStrategy() {
     return flatDbReaderStrategy;
   }
 
@@ -141,13 +150,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
-      return getFlatDbReaderStrategy().getCode(codeHash, accountHash, composedWorldStateStorage);
+      return getFlatDbReaderStrategy()
+          .getFlatCode(codeHash, accountHash, composedWorldStateStorage);
     }
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
     return getFlatDbReaderStrategy()
-        .getAccount(
+        .getFlatAccount(
             this::getWorldStateRootHash,
             this::getAccountStateTrieNode,
             accountHash,
@@ -226,7 +236,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       final Hash accountHash,
       final StorageSlotKey storageSlotKey) {
     return getFlatDbReaderStrategy()
-        .getStorageValueByStorageSlotKey(
+        .getFlatStorageValueByStorageSlotKey(
             this::getWorldStateRootHash,
             storageRootSupplier,
             (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
@@ -306,7 +316,9 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   @Override
   public BonsaiUpdater updater() {
     return new Updater(
-        composedWorldStateStorage.startTransaction(), trieLogStorage.startTransaction());
+        composedWorldStateStorage.startTransaction(),
+        trieLogStorage.startTransaction(),
+        flatDbReaderStrategy);
   }
 
   @Override
@@ -345,18 +357,21 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
     private final SegmentedKeyValueStorageTransaction composedWorldStateTransaction;
     private final KeyValueStorageTransaction trieLogStorageTransaction;
+    private final FlatDbStrategy flatDbReaderStrategy;
 
     public Updater(
         final SegmentedKeyValueStorageTransaction composedWorldStateTransaction,
-        final KeyValueStorageTransaction trieLogStorageTransaction) {
+        final KeyValueStorageTransaction trieLogStorageTransaction,
+        final FlatDbStrategy flatDbReaderStrategy) {
 
       this.composedWorldStateTransaction = composedWorldStateTransaction;
       this.trieLogStorageTransaction = trieLogStorageTransaction;
+      this.flatDbReaderStrategy = flatDbReaderStrategy;
     }
 
     @Override
     public BonsaiUpdater removeCode(final Hash accountHash) {
-      composedWorldStateTransaction.remove(CODE_STORAGE, accountHash.toArrayUnsafe());
+      flatDbReaderStrategy.removeFlatCode(composedWorldStateTransaction, accountHash);
       return this;
     }
 
@@ -366,14 +381,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         // Don't save empty values
         return this;
       }
-      composedWorldStateTransaction.put(
-          CODE_STORAGE, accountHash.toArrayUnsafe(), code.toArrayUnsafe());
+      flatDbReaderStrategy.putFlatCode(composedWorldStateTransaction, accountHash, codeHash, code);
       return this;
     }
 
     @Override
     public BonsaiUpdater removeAccountInfoState(final Hash accountHash) {
-      composedWorldStateTransaction.remove(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe());
+      flatDbReaderStrategy.removeFlatAccount(composedWorldStateTransaction, accountHash);
       return this;
     }
 
@@ -383,8 +397,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         // Don't save empty values
         return this;
       }
-      composedWorldStateTransaction.put(
-          ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe(), accountValue.toArrayUnsafe());
+      flatDbReaderStrategy.putFlatAccount(composedWorldStateTransaction, accountHash, accountValue);
       return this;
     }
 
@@ -435,18 +448,16 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     @Override
     public synchronized BonsaiUpdater putStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash, final Bytes storage) {
-      composedWorldStateTransaction.put(
-          ACCOUNT_STORAGE_STORAGE,
-          Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(),
-          storage.toArrayUnsafe());
+      flatDbReaderStrategy.putFlatAccountStorageValueByStorageSlotHash(
+          composedWorldStateTransaction, accountHash, slotHash, storage);
       return this;
     }
 
     @Override
     public synchronized void removeStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash) {
-      composedWorldStateTransaction.remove(
-          ACCOUNT_STORAGE_STORAGE, Bytes.concatenate(accountHash, slotHash).toArrayUnsafe());
+      flatDbReaderStrategy.removeFlatAccountStorageValueByStorageSlotHash(
+          composedWorldStateTransaction, accountHash, slotHash);
     }
 
     @Override

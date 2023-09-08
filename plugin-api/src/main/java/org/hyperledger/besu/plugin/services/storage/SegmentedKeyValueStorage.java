@@ -37,6 +37,9 @@ public interface SegmentedKeyValueStorage extends Closeable {
    */
   Optional<byte[]> get(SegmentIdentifier segment, byte[] key) throws StorageException;
 
+  Optional<byte[]> getNearest(final SegmentIdentifier segmentIdentifier, byte[] key)
+      throws StorageException;
+
   /**
    * Contains key.
    *
