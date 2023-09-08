@@ -178,24 +178,24 @@ public class FastSyncDownloader<REQUEST> {
         return CompletableFuture.failedFuture(
             new CancellationException("FastSyncDownloader stopped"));
       }
-      final CompletableFuture<Void> worldStateFuture =
-          worldStateDownloader.run(fastSyncActions, currentState);
+      /*final CompletableFuture<Void> worldStateFuture =
+      worldStateDownloader.run(fastSyncActions, currentState);*/
       final ChainDownloader chainDownloader = fastSyncActions.createChainDownloader(currentState);
       final CompletableFuture<Void> chainFuture = chainDownloader.start();
 
       // If either download fails, cancel the other one.
       chainFuture.exceptionally(
           error -> {
-            worldStateFuture.cancel(true);
+            // worldStateFuture.cancel(true);
             return null;
           });
-      worldStateFuture.exceptionally(
-          error -> {
-            chainDownloader.cancel();
-            return null;
-          });
+      /*worldStateFuture.exceptionally(
+      error -> {
+        chainDownloader.cancel();
+        return null;
+      });*/
 
-      return CompletableFuture.allOf(worldStateFuture, chainFuture)
+      return CompletableFuture.allOf(chainFuture)
           .thenApply(
               complete -> {
                 trailingPeerRequirements = Optional.empty();
