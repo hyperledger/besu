@@ -112,6 +112,9 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
                   account.size() - getLocation().size()))
           .map(RLP::input)
           .map(StateTrieAccountValue::readFrom)
+          .filter(
+              stateTrieAccountValue ->
+                  !stateTrieAccountValue.getStorageRoot().equals(MerkleTrie.EMPTY_TRIE_NODE_HASH))
           .ifPresent(
               stateTrieAccountValue -> {
                 // an account need a heal step
@@ -154,17 +157,17 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
     }
 
     // Retrieve the storage root from the database, if available
-    final Optional<Hash> storageRootFoundInDb =
+    final Hash storageRootFoundInDb =
         worldStateStorage
             .getTrieNodeUnsafe(Bytes.concatenate(accountHash, Bytes.EMPTY))
             .map(Hash::hash)
-            .filter(hash -> accountValue.getStorageRoot().equals(hash));
-    if (storageRootFoundInDb.isEmpty()) {
+            .orElse(Hash.wrap(MerkleTrie.EMPTY_TRIE_NODE_HASH));
+    if (!storageRootFoundInDb.equals(accountValue.getStorageRoot())) {
       // If the storage root is not found in the database, add the account to the list of accounts
       // to be repaired
-      downloadState.addAccountsToBeRepaired(CompactEncoding.bytesToPath(accountHash));
+      downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));
       // If the account's storage root is not empty,
-      // fill it with snapsync before completing with a heal
+      // fill it with trie heal before completing with a flat heal
       if (!accountValue.getStorageRoot().equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
         SnapDataRequest storageTrieRequest =
             createStorageTrieNodeDataRequest(

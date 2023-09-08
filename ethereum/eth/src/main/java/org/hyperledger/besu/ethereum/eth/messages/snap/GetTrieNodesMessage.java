@@ -28,6 +28,7 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.immutables.value.Value;
+import org.slf4j.LoggerFactory;
 
 public final class GetTrieNodesMessage extends AbstractSnapMessageData {
 
@@ -72,6 +73,8 @@ public final class GetTrieNodesMessage extends AbstractSnapMessageData {
   @Override
   protected Bytes wrap(final BigInteger requestId) {
     final TrieNodesPaths paths = paths(false);
+    LoggerFactory.getLogger(GetTrieNodesMessage.class)
+        .trace("PATH TRIE NODE " + paths.worldStateRootHash() + " " + paths.paths());
     return create(Optional.of(requestId), paths.worldStateRootHash(), paths.paths()).getData();
   }
 

@@ -42,6 +42,11 @@ public class StorageTrieNodeHealingRequest extends TrieNodeHealingRequest {
       final Hash nodeHash, final Hash accountHash, final Hash rootHash, final Bytes location) {
     super(nodeHash, rootHash, location);
     this.accountHash = accountHash;
+    if (nodeHash.equals(Hash.EMPTY_TRIE_HASH)) {
+      System.out.println(
+          "empty node " + nodeHash + " " + accountHash + " " + rootHash + " " + location);
+      new Exception().printStackTrace(System.out);
+    }
   }
 
   @Override
@@ -58,9 +63,8 @@ public class StorageTrieNodeHealingRequest extends TrieNodeHealingRequest {
   @Override
   public Optional<Bytes> getExistingData(
       final SnapWorldDownloadState downloadState, final WorldStateStorage worldStateStorage) {
-    return worldStateStorage
-        .getAccountStorageTrieNode(getAccountHash(), getLocation(), getNodeHash())
-        .filter(data -> !getLocation().isEmpty());
+    return worldStateStorage.getAccountStorageTrieNode(
+        getAccountHash(), getLocation(), getNodeHash());
   }
 
   @Override
