@@ -63,7 +63,7 @@ public class BlobTransactionEncodingTest {
     final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
     TransactionEncoder.encodeRLP(
         transaction, bytesValueRLPOutput, EncodingContext.POOLED_TRANSACTION);
-    assertThat(transaction.getSize()).isEqualTo(output.encodedSize());
+    assertThat(transaction.getSize()).isEqualTo(bytes.size());
   }
 
   @ParameterizedTest(name = "{index} {0}")
@@ -81,7 +81,7 @@ public class BlobTransactionEncodingTest {
 
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     TransactionEncoder.encodeRLP(transaction.getType(), bytes, rlpOutput);
-    assertThat(transaction.getSize()).isEqualTo(rlpOutput.encodedSize());
+    assertThat(transaction.getSize()).isEqualTo(bytes.size());
   }
 
   private static Arguments createArgumentFromFile(final String path) throws IOException {

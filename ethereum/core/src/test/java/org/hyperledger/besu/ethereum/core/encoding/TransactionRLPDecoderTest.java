@@ -94,9 +94,11 @@ class TransactionRLPDecoderTest {
     // Create bytes from String
     final Bytes bytes = Bytes.fromHexString(rlp_tx);
     // Decode bytes into a transaction
-    final Transaction transaction = decodeRLP(RLP.input(Bytes.fromHexString(rlp_tx)));
+    final Transaction transaction = decodeRLP(RLP.input(bytes));
+    Bytes transactionBytes =
+        TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.POOLED_TRANSACTION);
     // Bytes size should be equal to transaction size
-    assertThat(transaction.getSize()).isEqualTo(bytes.size());
+    assertThat(transaction.getSize()).isEqualTo(transactionBytes.size());
   }
 
   @ParameterizedTest
@@ -107,6 +109,6 @@ class TransactionRLPDecoderTest {
   }
 
   private Transaction decodeRLP(final RLPInput input) {
-    return TransactionDecoder.decodeRLP(input, EncodingContext.BLOCK_BODY);
+    return TransactionDecoder.decodeRLP(input, EncodingContext.POOLED_TRANSACTION);
   }
 }

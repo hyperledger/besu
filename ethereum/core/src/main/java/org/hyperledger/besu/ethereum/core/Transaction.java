@@ -680,18 +680,15 @@ public class Transaction
   private void memoizeHashAndSize() {
     final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.BLOCK_BODY);
     hash = Hash.hash(bytes);
-
     if (transactionType.supportsBlob()) {
       if (getBlobsWithCommitments().isPresent()) {
-        final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-        TransactionEncoder.encodeRLP(this, rlpOutput, EncodingContext.POOLED_TRANSACTION);
-        size = rlpOutput.encodedSize();
+        final Bytes pooledBytes =
+            TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.POOLED_TRANSACTION);
+        size = pooledBytes.size();
         return;
       }
     }
-    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-    TransactionEncoder.encodeRLP(transactionType, bytes, rlpOutput);
-    size = rlpOutput.encodedSize();
+    size = bytes.size();
   }
 
   /**
