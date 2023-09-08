@@ -255,7 +255,7 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
   }
 
   @Test
-  public void addRemoteTransactionsShouldNotTriggerIllegalStateException() {
+  public void addRemoteTransactionsShouldAllowDuplicates() {
     final Transaction transaction1 = createTransaction(1, Wei.of(7L));
     final Transaction transaction2 = createTransaction(2, Wei.of(7L));
     final Transaction transaction3 = createTransaction(2, Wei.of(7L));
