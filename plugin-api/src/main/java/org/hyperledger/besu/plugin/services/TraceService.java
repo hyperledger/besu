@@ -15,7 +15,7 @@
 package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.evm.worldstate.WorldState;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
@@ -52,7 +52,7 @@ public interface TraceService extends BesuService {
   void trace(
       final long fromBlockNumber,
       final long toBlockNumber,
-      final Consumer<WorldState> beforeTracing,
-      final Consumer<WorldState> afterTracing,
+      final Consumer<WorldUpdater> beforeTracing,
+      final Consumer<WorldUpdater> afterTracing,
       final BlockAwareOperationTracer tracer);
 }

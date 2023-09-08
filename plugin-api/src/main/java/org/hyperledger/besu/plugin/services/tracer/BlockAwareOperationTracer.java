@@ -24,6 +24,9 @@ import org.hyperledger.besu.plugin.data.BlockHeader;
  * <p>In both methods, the block header and body are provided.
  */
 public interface BlockAwareOperationTracer extends OperationTracer {
+
+  BlockAwareOperationTracer NO_TRACING = new BlockAwareOperationTracer() {};
+
   /**
    * Trace the start of a block.
    *

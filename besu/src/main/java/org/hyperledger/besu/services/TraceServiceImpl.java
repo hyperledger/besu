@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
-import org.hyperledger.besu.evm.worldstate.WorldState;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.services.TraceService;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
@@ -104,8 +104,8 @@ public class TraceServiceImpl implements TraceService {
   public void trace(
       final long fromBlockNumber,
       final long toBlockNumber,
-      final Consumer<WorldState> beforeTracing,
-      final Consumer<WorldState> afterTracing,
+      final Consumer<WorldUpdater> beforeTracing,
+      final Consumer<WorldUpdater> afterTracing,
       final BlockAwareOperationTracer tracer) {
     checkArgument(tracer != null);
     LOG.debug("Tracing from block {} to block {}", fromBlockNumber, toBlockNumber);
@@ -122,14 +122,16 @@ public class TraceServiceImpl implements TraceService {
         blockchainQueries,
         blocks.get(0).getHash(),
         traceableState -> {
-          beforeTracing.accept(traceableState);
+          final WorldUpdater worldStateUpdater = traceableState.updater();
+          final ChainUpdater chainUpdater = new ChainUpdater(traceableState, worldStateUpdater);
+          beforeTracing.accept(worldStateUpdater);
           final List<TransactionProcessingResult> results = new ArrayList<>();
           blocks.forEach(
               block -> {
-                results.addAll(trace(blockchain, block, traceableState, tracer));
+                results.addAll(trace(blockchain, block, chainUpdater, tracer));
                 tracer.traceEndBlock(block.getHeader(), block.getBody());
               });
-          afterTracing.accept(traceableState);
+          afterTracing.accept(chainUpdater.getNextUpdater());
           return Optional.of(results);
         });
   }
@@ -140,17 +142,17 @@ public class TraceServiceImpl implements TraceService {
     Tracer.processTracing(
         blockchainQueries,
         block.getHash(),
-        traceableState -> Optional.of(trace(blockchain, block, traceableState, tracer)));
+        traceableState ->
+            Optional.of(trace(blockchain, block, new ChainUpdater(traceableState), tracer)));
     tracer.traceEndBlock(block.getHeader(), block.getBody());
   }
 
   private List<TransactionProcessingResult> trace(
       final Blockchain blockchain,
       final Block block,
-      final Tracer.TraceableState traceableState,
+      final ChainUpdater chainUpdater,
       final BlockAwareOperationTracer tracer) {
     final List<TransactionProcessingResult> results = new ArrayList<>();
-    final ChainUpdater chainUpdater = new ChainUpdater(traceableState);
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
     final MainnetTransactionProcessor transactionProcessor = protocolSpec.getTransactionProcessor();
     final BlockHeader header = block.getHeader();
