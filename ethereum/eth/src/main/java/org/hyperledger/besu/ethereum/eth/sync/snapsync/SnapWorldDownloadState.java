@@ -417,12 +417,15 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
               foundNewPivotBlock.set(true);
             }
           });
-      // restart heal if close to head again
-      if (snapSyncState.isWaitingBlockchain() && !pivotBlockSelector.isBlockchainBehind()) {
+
+      final boolean isNewPivotBlockFound = foundNewPivotBlock.get();
+      final boolean isBlockchainCaughtUp =
+          snapSyncState.isWaitingBlockchain() && !pivotBlockSelector.isBlockchainBehind();
+
+      if (isNewPivotBlockFound
+          || isBlockchainCaughtUp) { // restart heal if we found a new pivot block or if close to
+        // head again
         snapSyncState.setWaitingBlockchain(false);
-        reloadTrieHeal();
-        // restart heal if we found a new pivot block
-      } else if (foundNewPivotBlock.get()) {
         reloadTrieHeal();
       }
     };

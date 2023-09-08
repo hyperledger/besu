@@ -389,7 +389,9 @@ public class SnapWorldDownloadStateTest {
             Collections.emptyList(),
             Collections.emptyList()));
 
+    // reload heal
     verify(snapSyncState).setWaitingBlockchain(false);
+    verify(snapSyncState).setHealTrieStatus(false);
   }
 
   @ParameterizedTest
@@ -423,6 +425,7 @@ public class SnapWorldDownloadStateTest {
             newBlock, Collections.emptyList(), Collections.emptyList()));
 
     verify(snapSyncState).setWaitingBlockchain(false);
+    verify(snapSyncState).setHealTrieStatus(false);
   }
 
   @ParameterizedTest
