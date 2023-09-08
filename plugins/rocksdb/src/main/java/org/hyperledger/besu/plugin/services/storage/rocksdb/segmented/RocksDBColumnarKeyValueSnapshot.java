@@ -34,8 +34,10 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
+import org.rocksdb.AbstractRocksIterator;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.OptimisticTransactionDB;
+import org.rocksdb.RocksIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +74,18 @@ public class RocksDBColumnarKeyValueSnapshot
       throws StorageException {
     throwIfClosed();
     return snapTx.get(segment, key);
+  }
+
+  @Override
+  public Optional<NearestKeyValue> getNearestTo(
+      final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
+
+    try (final RocksIterator rocksIterator = snapTx.getIterator(segmentIdentifier)) {
+      rocksIterator.seekForPrev(key.toArrayUnsafe());
+      return Optional.of(rocksIterator)
+          .filter(AbstractRocksIterator::isValid)
+          .map(it -> new NearestKeyValue(Bytes.of(it.key()), Optional.of(it.value())));
+    }
   }
 
   @Override

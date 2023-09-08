@@ -1,32 +1,31 @@
 package org.hyperledger.besu.ethereum.bonsai;
 
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 
-import java.util.function.Supplier;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 /** Context which holds information relevant to a bonsai archive storage query. */
 public class BonsaiContext {
 
-  private final Supplier<BlockHeader> blockHeaderSupplier;
+  private final AtomicReference<BlockHeader> blockHeader;
 
-  public BonsaiContext(Supplier<BlockHeader> blockHeaderSupplier) {
-    this.blockHeaderSupplier = blockHeaderSupplier;
+  public BonsaiContext() {
+    blockHeader = new AtomicReference<>();
   }
 
-  /**
-   * returns an empty context for non-archival bonsai queries.
-   *
-   * @return
-   */
-  public static BonsaiContext emptyContext() {
-    return new BonsaiContext(() -> null);
+  public BonsaiContext copy() {
+    var newCtx = new BonsaiContext();
+    Optional.ofNullable(blockHeader.get()).ifPresent(newCtx::setBlockHeader);
+    return newCtx;
   }
 
-  public static BonsaiContext forBlockHeader(BlockHeader forBlockHeader) {
-    return new BonsaiContext(() -> forBlockHeader);
+  public BonsaiContext setBlockHeader(final BlockHeader blockHeader) {
+    this.blockHeader.set(blockHeader);
+    return this;
   }
 
-  BlockHeader getBlockHeader() {
-    return blockHeaderSupplier.get();
+  public Optional<BlockHeader> getBlockHeader() {
+    return Optional.ofNullable(blockHeader.get());
   }
 }

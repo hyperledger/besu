@@ -31,7 +31,7 @@ import org.apache.tuweni.bytes.Bytes;
  */
 public class InMemoryKeyValueStorage extends SegmentedKeyValueStorageAdapter {
 
-  private static final SegmentIdentifier SEGMENT_IDENTIFIER =
+  static final SegmentIdentifier SEGMENT_IDENTIFIER =
       new SegmentIdentifier() {
         private static final String NAME = "SEGMENT_IDENTIFIER";
 

@@ -23,6 +23,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
@@ -232,5 +233,13 @@ public abstract class FlatDbStrategy {
             Collectors.toMap(Pair::getFirst, Pair::getSecond, (v1, v2) -> v1, TreeMap::new));
     pairStream.close();
     return collected;
+  }
+
+  public void updateBlockContext(final BlockHeader blockHeader) {
+    // default no-op.
+  }
+
+  public FlatDbStrategy contextSafeClone() {
+    return this;
   }
 }

@@ -24,6 +24,7 @@ import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.io.PrintStream;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -109,6 +110,34 @@ public class SegmentedInMemoryKeyValueStorage
     } finally {
       lock.unlock();
     }
+  }
+
+  //  @Override
+  //  public Optional<NearestKeyValue> getNearestTo(final SegmentIdentifier segmentIdentifier, final
+  // byte[] key)
+  //      throws StorageException {
+  //    // TODO: this is a naive implementation for proof-of-concept, should be revisited
+  //    var compBytes = Bytes.of(key);
+  //    return this.hashValueStore.get(segmentIdentifier)
+  //        .entrySet()
+  //        .stream()
+  //        .sorted(Comparator.comparing((a) -> a.getKey().commonPrefixLength(compBytes)))
+  //        .findFirst()
+  //        .map(z -> new NearestKeyValue(z.getKey().toArrayUnsafe(), z.getValue()));
+  //  }
+
+  // TODO: this is a naive implementation for proof-of-concept, should be revisited
+  @Override
+  public Optional<NearestKeyValue> getNearestTo(
+      final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
+    Comparator<Map.Entry<Bytes, Optional<byte[]>>> comparing =
+        Comparator.comparing(
+                (Map.Entry<Bytes, Optional<byte[]>> a) -> a.getKey().commonPrefixLength(key))
+            .thenComparing((a, b) -> a.getKey().compareTo(b.getKey()));
+    return this.hashValueStore.get(segmentIdentifier).entrySet().stream()
+        .sorted(comparing.reversed())
+        .findFirst() // TODO: not sure if we want find first or find last
+        .map(z -> new NearestKeyValue(z.getKey(), z.getValue()));
   }
 
   @Override

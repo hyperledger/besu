@@ -44,6 +44,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Streams;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
+import org.rocksdb.AbstractRocksIterator;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.BloomFilter;
 import org.rocksdb.ColumnFamilyDescriptor;
@@ -315,6 +316,19 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
       return Optional.ofNullable(getDB().get(safeColumnHandle(segment), readOptions, key));
     } catch (final RocksDBException e) {
       throw new StorageException(e);
+    }
+  }
+
+  @Override
+  public Optional<NearestKeyValue> getNearestTo(
+      final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
+
+    try (final RocksIterator rocksIterator =
+        getDB().newIterator(safeColumnHandle(segmentIdentifier))) {
+      rocksIterator.seekForPrev(key.toArrayUnsafe());
+      return Optional.of(rocksIterator)
+          .filter(AbstractRocksIterator::isValid)
+          .map(it -> new NearestKeyValue(Bytes.of(it.key()), Optional.of(it.value())));
     }
   }
 

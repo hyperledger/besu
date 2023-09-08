@@ -137,6 +137,16 @@ public class RocksDBSnapshotTransaction
   }
 
   /**
+   * get a RocksIterator that reads through the transaction to represent the current state.
+   *
+   * <p>be sure to close this iterator, like in a try-with-resources block, otherwise a native
+   * memory leak might occur.
+   */
+  public RocksIterator getIterator(final SegmentIdentifier segmentId) {
+    return snapTx.getIterator(readOptions, columnFamilyMapper.apply(segmentId));
+  }
+
+  /**
    * Stream.
    *
    * @param segmentId the segment id

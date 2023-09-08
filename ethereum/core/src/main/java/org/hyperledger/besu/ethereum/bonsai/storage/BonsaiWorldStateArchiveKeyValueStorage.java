@@ -10,9 +10,9 @@ public class BonsaiWorldStateArchiveKeyValueStorage extends BonsaiWorldStateKeyV
   Supplier<BonsaiContext> contextSupplier;
 
   public BonsaiWorldStateArchiveKeyValueStorage(
-      StorageProvider provider,
-      ObservableMetricsSystem metricsSystem,
-      Supplier<BonsaiContext> contextSupplier) {
+      final StorageProvider provider,
+      final ObservableMetricsSystem metricsSystem,
+      final Supplier<BonsaiContext> contextSupplier) {
     super(provider, metricsSystem);
     this.contextSupplier = contextSupplier;
   }

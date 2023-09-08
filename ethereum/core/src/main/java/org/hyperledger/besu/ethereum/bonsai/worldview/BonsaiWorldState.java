@@ -160,7 +160,9 @@ public class BonsaiWorldState
 
   @Override
   public BonsaiWorldStateKeyValueStorage getWorldStateStorage() {
-    return worldStateStorage;
+    // return a worldStateStorage with a clone of the bonsai context, to prevent context change side
+    // effects
+    return worldStateStorage.getContextSafeCopy();
   }
 
   private Hash calculateRootHash(
@@ -386,6 +388,7 @@ public class BonsaiWorldState
 
     boolean success = false;
 
+    this.worldStateStorage.getFlatDbStrategy().updateBlockContext(blockHeader);
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater = worldStateStorage.updater();
     Runnable saveTrieLog = () -> {};
 
@@ -507,7 +510,7 @@ public class BonsaiWorldState
     return calculateRootHash(
         Optional.of(
             new BonsaiWorldStateKeyValueStorage.Updater(
-                noOpSegmentedTx, noOpTx, worldStateStorage.deriveFlatDbStrategy())),
+                noOpSegmentedTx, noOpTx, worldStateStorage.getFlatDbStrategy())),
         accumulator.copy());
   }
 

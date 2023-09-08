@@ -23,6 +23,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.tuweni.bytes.Bytes;
 
 /** Service provided by Besu to facilitate persistent data storage. */
 public interface SegmentedKeyValueStorage extends Closeable {
@@ -37,7 +38,7 @@ public interface SegmentedKeyValueStorage extends Closeable {
    */
   Optional<byte[]> get(SegmentIdentifier segment, byte[] key) throws StorageException;
 
-  Optional<byte[]> getNearest(final SegmentIdentifier segmentIdentifier, byte[] key)
+  Optional<NearestKeyValue> getNearestTo(final SegmentIdentifier segmentIdentifier, Bytes key)
       throws StorageException;
 
   /**
@@ -134,4 +135,11 @@ public interface SegmentedKeyValueStorage extends Closeable {
    * @return boolean indicating whether the underlying storage is closed.
    */
   boolean isClosed();
+
+  record NearestKeyValue(Bytes key, Optional<byte[]> value) {
+
+    public Optional<Bytes> wrapBytes() {
+      return value.map(Bytes::wrap);
+    }
+  }
 }

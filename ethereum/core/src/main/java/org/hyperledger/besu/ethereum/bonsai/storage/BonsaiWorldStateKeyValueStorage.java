@@ -106,11 +106,29 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     this.metricsSystem = metricsSystem;
   }
 
-  public void loadFlatDbStrategy() {
-    this.flatDbReaderStrategy = deriveFlatDbStrategy();
+  public BonsaiWorldStateKeyValueStorage getContextSafeCopy() {
+    return new BonsaiWorldStateKeyValueStorage(
+        flatDbMode,
+        flatDbReaderStrategy.contextSafeClone(),
+        composedWorldStateStorage,
+        trieLogStorage,
+        metricsSystem);
   }
 
-  public FlatDbStrategy deriveFlatDbStrategy() {
+  public void loadFlatDbStrategy() {
+    if (flatDbMode == null || flatDbReaderStrategy == null) {
+      this.flatDbMode = deriveFlatDbStrategy();
+      if (flatDbMode == FlatDbMode.FULL) {
+        this.flatDbReaderStrategy = new FullFlatDbStrategy(metricsSystem);
+      } else if (flatDbMode == FlatDbMode.ARCHIVE) {
+        this.flatDbReaderStrategy = new ArchiveFlatDbStrategy(new BonsaiContext(), metricsSystem);
+      } else {
+        this.flatDbReaderStrategy = new PartialFlatDbStrategy(metricsSystem);
+      }
+    }
+  }
+
+  public FlatDbMode deriveFlatDbStrategy() {
     this.flatDbMode =
         FlatDbMode.fromVersion(
             composedWorldStateStorage
@@ -121,14 +139,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                         .getVersion())); // for backward compatibility we use partial as
     // default
     LOG.info("Bonsai flat db mode found {}", flatDbMode);
-    if (flatDbMode == FlatDbMode.FULL) {
-      return new FullFlatDbStrategy(metricsSystem);
-    } else if (flatDbMode == FlatDbMode.ARCHIVE) {
-      // TODO: PLUMB an actual context provider and get rid of this fake impl
-      return new ArchiveFlatDbStrategy(() -> new BonsaiContext(() -> null), metricsSystem);
-    } else {
-      return new PartialFlatDbStrategy(metricsSystem);
+    return flatDbMode;
+  }
+
+  public FlatDbStrategy getFlatDbStrategy() {
+    if (flatDbReaderStrategy == null) {
+      loadFlatDbStrategy();
     }
+    return flatDbReaderStrategy;
   }
 
   @Override
