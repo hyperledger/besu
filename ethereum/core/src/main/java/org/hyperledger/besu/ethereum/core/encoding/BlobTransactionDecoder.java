@@ -40,9 +40,7 @@ public class BlobTransactionDecoder {
    */
   public static Transaction decode(final RLPInput input) {
     Transaction transaction;
-    input.enterList();
     transaction = readTransactionPayload(input);
-    input.leaveList();
     return transaction;
   }
 
@@ -62,6 +60,7 @@ public class BlobTransactionDecoder {
    * @param input the RLP input to read from
    */
   static void readTransactionPayloadInner(final Transaction.Builder builder, final RLPInput input) {
+    input.enterList();
     builder
         .type(TransactionType.BLOB)
         .chainId(input.readBigIntegerScalar())
@@ -95,5 +94,6 @@ public class BlobTransactionDecoder {
                 input.readUInt256Scalar().toUnsignedBigInteger(),
                 input.readUInt256Scalar().toUnsignedBigInteger(),
                 recId));
+    input.leaveList();
   }
 }

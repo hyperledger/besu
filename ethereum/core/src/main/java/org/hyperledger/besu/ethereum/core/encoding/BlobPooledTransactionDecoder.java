@@ -39,9 +39,7 @@ public class BlobPooledTransactionDecoder {
   public static Transaction decode(final RLPInput input) {
     input.enterList();
     final Transaction.Builder builder = Transaction.builder();
-    input.enterList();
     BlobTransactionDecoder.readTransactionPayloadInner(builder, input);
-    input.leaveList();
     List<Blob> blobs = input.readList(Blob::readFrom);
     List<KZGCommitment> commitments = input.readList(KZGCommitment::readFrom);
     List<KZGProof> proofs = input.readList(KZGProof::readFrom);
