@@ -568,6 +568,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final WorldStateStorage worldStateStorage =
         storageProvider.createWorldStateStorage(dataStorageConfiguration.getDataStorageFormat());
 
+
     final BlockchainStorage blockchainStorage =
         storageProvider.createBlockchainStorage(protocolSchedule, variablesStorage);
 
@@ -1043,6 +1044,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
     switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI:
+        // just for PoC, explicitly set our bonsai context chain head:
+        ((BonsaiWorldStateKeyValueStorage) worldStateStorage).getFlatDbStrategy()
+            .updateBlockContext(blockchain.getChainHeadHeader());
+
         return new BonsaiWorldStateProvider(
             (BonsaiWorldStateKeyValueStorage) worldStateStorage,
             blockchain,
