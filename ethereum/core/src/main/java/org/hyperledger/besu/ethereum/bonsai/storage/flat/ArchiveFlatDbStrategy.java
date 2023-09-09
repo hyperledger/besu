@@ -14,6 +14,7 @@ import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.util.Arrays;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,25 +28,22 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
   }
 
   static final byte[] MAX_BLOCK_SUFFIX = Bytes.ofUnsignedLong(Long.MAX_VALUE).toArrayUnsafe();
+  static final byte[] MIN_BLOCK_SUFFIX = Bytes.ofUnsignedLong(0L).toArrayUnsafe();
 
   @Override
-  public Optional<Bytes> getFlatAccount(
-      final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
-      final NodeLoader nodeLoader,
-      final Hash accountHash,
-      final SegmentedKeyValueStorage storage) {
+  public Optional<Bytes> getFlatAccount(final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
+      final NodeLoader nodeLoader, final Hash accountHash, final SegmentedKeyValueStorage storage) {
     getAccountCounter.inc();
 
-    // keyNearest:
-    Bytes keyNearest = calculateKeyPrefix(accountHash);
+    // keyNearest, use MAX_BLOCK_SUFFIX in the absence of a block context:
+    Bytes keyNearest = calculateKeyWithMaxSuffix(accountHash);
 
     // use getNearest() with an account key that is suffixed by the block context
-    final Optional<Bytes> accountFound =
-        storage
-            .getNearestTo(ACCOUNT_INFO_STATE, keyNearest)
-            .flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes)
-            // don't return accounts that do not have a matching account hash
-            .filter(found -> accountHash.commonPrefixLength(found) >= accountHash.size());
+    final Optional<Bytes> accountFound = storage
+        .getNearestTo(ACCOUNT_INFO_STATE, keyNearest)
+        .flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes)
+        // don't return accounts that do not have a matching account hash
+        .filter(found -> accountHash.commonPrefixLength(found) >= accountHash.size());
 
     if (accountFound.isPresent()) {
       getAccountFoundInFlatDatabaseCounter.inc();
@@ -55,22 +53,39 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
     return accountFound;
   }
 
-  public Bytes calculateKeyPrefix(final Hash accountHash) {
+  /*
+   * Puts the account data for the given account hash and block context.
+   */
+  @Override
+  public void putFlatAccount(final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash, final Bytes accountValue) {
+
+    // key suffixed with block context, or MIN_BLOCK_SUFFIX if we have no context:
+    byte[] keySuffixed = calculateKeyWithMinSuffix(accountHash);
+
+    transaction.put(ACCOUNT_INFO_STATE, keySuffixed, accountValue.toArrayUnsafe());
+  }
+
+  public byte[] calculateKeyWithMinSuffix(final Hash accountHash) {
+    return calculateKeyWithSuffix(accountHash, MIN_BLOCK_SUFFIX);
+  }
+
+  public Bytes calculateKeyWithMaxSuffix(final Hash accountHash) {
+    return Bytes.of(calculateKeyWithSuffix(accountHash, MAX_BLOCK_SUFFIX));
+  }
+
+  public byte[] calculateKeyWithSuffix(final Hash accountHash, final byte[] orElseSuffix) {
     // TODO: this can be optimized, just for PoC now
-    return Bytes.of(
-        Arrays.concatenate(
-            accountHash.toArrayUnsafe(),
-            context
-                .getBlockHeader()
-                .map(BlockHeader::getNumber)
-                .map(Bytes::ofUnsignedLong)
-                .map(Bytes::toArrayUnsafe)
-                .orElseGet(
-                    () -> {
-                      // TODO: remove or rate limit these warnings
-                      LOG.atWarn().setMessage("Block context not present, using max long").log();
-                      return MAX_BLOCK_SUFFIX;
-                    })));
+    return Arrays.concatenate(accountHash.toArrayUnsafe(), context
+        .getBlockHeader()
+        .map(BlockHeader::getNumber)
+        .map(Bytes::ofUnsignedLong)
+        .map(Bytes::toArrayUnsafe)
+        .orElseGet(() -> {
+          // TODO: remove or rate limit these warnings
+          LOG.atWarn().setMessage("Block context not present, using default suffix").log();
+          return orElseSuffix;
+        }));
   }
 
   @Override
