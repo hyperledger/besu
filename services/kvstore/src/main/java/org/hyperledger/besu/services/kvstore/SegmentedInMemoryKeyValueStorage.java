@@ -126,17 +126,20 @@ public class SegmentedInMemoryKeyValueStorage
   //        .map(z -> new NearestKeyValue(z.getKey().toArrayUnsafe(), z.getValue()));
   //  }
 
-  // TODO: this is a naive implementation for proof-of-concept, should be revisited
   @Override
   public Optional<NearestKeyValue> getNearestTo(
       final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
+
+    // TODO: this is a naive implementation which should be revisited for performance
+
     Comparator<Map.Entry<Bytes, Optional<byte[]>>> comparing =
         Comparator.comparing(
                 (Map.Entry<Bytes, Optional<byte[]>> a) -> a.getKey().commonPrefixLength(key))
             .thenComparing((a, b) -> a.getKey().compareTo(b.getKey()));
-    return this.hashValueStore.get(segmentIdentifier).entrySet().stream()
+    return this.hashValueStore.computeIfAbsent(segmentIdentifier, s -> new HashMap<>())
+        .entrySet().stream()
         .sorted(comparing.reversed())
-        .findFirst() // TODO: not sure if we want find first or find last
+        .findFirst()
         .map(z -> new NearestKeyValue(z.getKey(), z.getValue()));
   }
 

@@ -95,7 +95,7 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
   @Override
   public Optional<NearestKeyValue> getNearestTo(
       final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
-    var ourNearest = this.getNearestTo(segmentIdentifier, key);
+    var ourNearest = super.getNearestTo(segmentIdentifier, key);
     var parentNearest = parent.getNearestTo(segmentIdentifier, key);
 
     if (ourNearest.isPresent() && parentNearest.isPresent()) {

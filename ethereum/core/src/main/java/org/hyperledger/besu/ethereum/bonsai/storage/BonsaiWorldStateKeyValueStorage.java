@@ -68,7 +68,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   public static final byte[] FLAT_DB_MODE = "flatDbStatus".getBytes(StandardCharsets.UTF_8);
 
   protected FlatDbMode flatDbMode;
-  protected FlatDbStrategy flatDbReaderStrategy;
+  protected FlatDbStrategy flatDbStrategy;
 
   protected final SegmentedKeyValueStorage composedWorldStateStorage;
   protected final KeyValueStorage trieLogStorage;
@@ -100,7 +100,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       final KeyValueStorage trieLogStorage,
       final ObservableMetricsSystem metricsSystem) {
     this.flatDbMode = flatDbMode;
-    this.flatDbReaderStrategy = flatDbReaderStrategy;
+    this.flatDbStrategy = flatDbReaderStrategy;
     this.composedWorldStateStorage = composedWorldStateStorage;
     this.trieLogStorage = trieLogStorage;
     this.metricsSystem = metricsSystem;
@@ -109,21 +109,21 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   public BonsaiWorldStateKeyValueStorage getContextSafeCopy() {
     return new BonsaiWorldStateKeyValueStorage(
         flatDbMode,
-        flatDbReaderStrategy.contextSafeClone(),
+        flatDbStrategy.contextSafeClone(),
         composedWorldStateStorage,
         trieLogStorage,
         metricsSystem);
   }
 
-  public void loadFlatDbStrategy() {
-    if (flatDbMode == null || flatDbReaderStrategy == null) {
+  private void loadFlatDbStrategy() {
+    if (flatDbMode == null || flatDbStrategy == null) {
       this.flatDbMode = deriveFlatDbStrategy();
       if (flatDbMode == FlatDbMode.FULL) {
-        this.flatDbReaderStrategy = new FullFlatDbStrategy(metricsSystem);
+        this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem);
       } else if (flatDbMode == FlatDbMode.ARCHIVE) {
-        this.flatDbReaderStrategy = new ArchiveFlatDbStrategy(new BonsaiContext(), metricsSystem);
+        this.flatDbStrategy = new ArchiveFlatDbStrategy(new BonsaiContext(), metricsSystem);
       } else {
-        this.flatDbReaderStrategy = new PartialFlatDbStrategy(metricsSystem);
+        this.flatDbStrategy = new PartialFlatDbStrategy(metricsSystem);
       }
     }
   }
@@ -134,19 +134,19 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
             composedWorldStateStorage
                 .get(TRIE_BRANCH_STORAGE, FLAT_DB_MODE)
                 .map(Bytes::wrap)
+                // TODO: this is for kikori testing only, remove me.
                 .orElse(
-                    FlatDbMode.PARTIAL
-                        .getVersion())); // for backward compatibility we use partial as
-    // default
+                    FlatDbMode.ARCHIVE
+                        .getVersion()));
     LOG.info("Bonsai flat db mode found {}", flatDbMode);
     return flatDbMode;
   }
 
   public FlatDbStrategy getFlatDbStrategy() {
-    if (flatDbReaderStrategy == null) {
+    if (flatDbStrategy == null) {
       loadFlatDbStrategy();
     }
-    return flatDbReaderStrategy;
+    return flatDbStrategy;
   }
 
   @Override
@@ -160,7 +160,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   }
 
   FlatDbStrategy getFlatDbReaderStrategy() {
-    return flatDbReaderStrategy;
+    return flatDbStrategy;
   }
 
   @Override
@@ -335,8 +335,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   public BonsaiUpdater updater() {
     return new Updater(
         composedWorldStateStorage.startTransaction(),
-        trieLogStorage.startTransaction(),
-        flatDbReaderStrategy);
+        trieLogStorage.startTransaction(), flatDbStrategy);
   }
 
   @Override
