@@ -135,9 +135,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
                 .get(TRIE_BRANCH_STORAGE, FLAT_DB_MODE)
                 .map(Bytes::wrap)
                 // TODO: this is for kikori testing only, remove me.
-                .orElse(
-                    FlatDbMode.ARCHIVE
-                        .getVersion()));
+                .orElse(FlatDbMode.ARCHIVE.getVersion()));
     LOG.info("Bonsai flat db mode found {}", flatDbMode);
     return flatDbMode;
   }
@@ -335,7 +333,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   public BonsaiUpdater updater() {
     return new Updater(
         composedWorldStateStorage.startTransaction(),
-        trieLogStorage.startTransaction(), flatDbStrategy);
+        trieLogStorage.startTransaction(),
+        flatDbStrategy);
   }
 
   @Override
