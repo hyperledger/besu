@@ -16,6 +16,11 @@ package org.hyperledger.besu.cli.options;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.datatypes.Wei;
+
+import java.lang.invoke.MethodType;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Iterator;
 
 import com.google.common.base.Splitter;
@@ -95,5 +100,45 @@ public class OptionParser {
    */
   public static String format(final UInt256 value) {
     return value.toBigInteger().toString(10);
+  }
+
+  /**
+   * Format Wei to string.
+   *
+   * @param value the value
+   * @return the string
+   */
+  public static String format(final Wei value) {
+    return format(value.toUInt256());
+  }
+
+  /**
+   * Format any object to string. This implementation tries to find an existing format method, in
+   * this class, that matches the type of the passed object, and if not found just invoke, to string
+   * on the passed object
+   *
+   * @param value the object
+   * @return the string
+   */
+  public static String format(final Object value) {
+    Method formatMethod;
+    try {
+      formatMethod = OptionParser.class.getMethod("format", value.getClass());
+    } catch (NoSuchMethodException e) {
+      try {
+        // maybe a primitive version of the method exists
+        formatMethod =
+            OptionParser.class.getMethod(
+                "format", MethodType.methodType(value.getClass()).unwrap().returnType());
+      } catch (NoSuchMethodException ex) {
+        return value.toString();
+      }
+    }
+
+    try {
+      return (String) formatMethod.invoke(null, value);
+    } catch (InvocationTargetException | IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

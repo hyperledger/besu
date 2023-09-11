@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.testutil.TestClock;
+import org.hyperledger.besu.util.number.Fraction;
 
 import java.math.BigInteger;
 import java.time.ZoneId;
@@ -57,7 +58,7 @@ public class TransactionPoolLegacyTest extends AbstractTransactionPoolTest {
     return new GasPricePendingTransactionsSorter(
         ImmutableTransactionPoolConfiguration.builder()
             .txPoolMaxSize(MAX_TRANSACTIONS)
-            .txPoolLimitByAccountPercentage(1)
+            .txPoolLimitByAccountPercentage(Fraction.fromFloat(1.0f))
             .build(),
         TestClock.system(ZoneId.systemDefault()),
         metricsSystem,
