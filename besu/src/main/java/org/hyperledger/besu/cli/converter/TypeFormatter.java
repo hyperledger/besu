@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,20 +14,18 @@
  */
 package org.hyperledger.besu.cli.converter;
 
-import org.hyperledger.besu.cli.converter.exception.PercentageConversionException;
-import org.hyperledger.besu.util.number.Percentage;
-
-import picocli.CommandLine;
-
-/** The Percentage Cli type converter. */
-public class PercentageConverter implements CommandLine.ITypeConverter<Percentage> {
-
-  @Override
-  public Percentage convert(final String value) throws PercentageConversionException {
-    try {
-      return Percentage.fromString(value);
-    } catch (NullPointerException | IllegalArgumentException e) {
-      throw new PercentageConversionException(value);
-    }
-  }
+/**
+ * This interface can be used to give a converter the capability to format the converted value back
+ * to its CLI form
+ *
+ * @param <V> the type of the CLI converted runtime value
+ */
+public interface TypeFormatter<V> {
+  /**
+   * Format a converted value back to its CLI form
+   *
+   * @param value the converted value
+   * @return the textual CLI form of the value
+   */
+  String format(V value);
 }

@@ -330,6 +330,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     decreaseSpaceUsed(replacedTx);
     metrics.incrementRemoved(replacedTx.isReceivedFromLocalSource(), REPLACED.label(), name());
     internalReplaced(replacedTx);
+    notifyTransactionDropped(replacedTx);
   }
 
   protected abstract void internalReplaced(final PendingTransaction replacedTx);
