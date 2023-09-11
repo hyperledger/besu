@@ -82,6 +82,14 @@ public class ForkIdsNetworkConfigTest {
                 new ForkId(Bytes.ofUnsignedInt(0xf7f9bc08L), 0L))
           },
           new Object[] {
+            NetworkName.HOLESKY,
+            List.of(
+                new ForkId(Bytes.ofUnsignedInt(0xa200f558L), 1694790240L),
+                new ForkId(Bytes.ofUnsignedInt(0x840a3b53L), 2000000000L),
+                new ForkId(Bytes.ofUnsignedInt(0x30771f90), 0L),
+                new ForkId(Bytes.ofUnsignedInt(0x30771f90), 0L))
+          },
+          new Object[] {
             NetworkName.GOERLI,
             List.of(
                 new ForkId(Bytes.ofUnsignedInt(0xa3f5ab08L), 1561651L),
@@ -122,17 +130,6 @@ public class ForkIdsNetworkConfigTest {
                 new ForkId(Bytes.ofUnsignedInt(0x92b323e0L), 5520000L),
                 new ForkId(Bytes.ofUnsignedInt(0x8c9b1797L), 0L),
                 new ForkId(Bytes.ofUnsignedInt(0x8c9b1797L), 0L))
-          },
-          new Object[] {
-            NetworkName.KOTTI,
-            List.of(
-                new ForkId(Bytes.ofUnsignedInt(0x550152eL), 716617L),
-                new ForkId(Bytes.ofUnsignedInt(0xa3270822L), 1705549L),
-                new ForkId(Bytes.ofUnsignedInt(0x8f3698e0L), 2200013L),
-                new ForkId(Bytes.ofUnsignedInt(0x6f402821L), 4368634),
-                new ForkId(Bytes.ofUnsignedInt(0xf03e54e7L), 5578000L),
-                new ForkId(Bytes.ofUnsignedInt(0xc5459816L), 0L),
-                new ForkId(Bytes.ofUnsignedInt(0xc5459816L), 0L))
           },
           new Object[] {
             NetworkName.CLASSIC,

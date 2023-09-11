@@ -81,7 +81,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   private static final Hash OMMERS_HASH_CONSTANT = Hash.EMPTY_LIST_HASH;
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineNewPayload.class);
   private static final BlockHeaderFunctions headerFunctions = new MainnetBlockHeaderFunctions();
-  private final ProtocolSchedule protocolSchedule;
   private final MergeMiningCoordinator mergeCoordinator;
   private final EthPeers ethPeers;
 
@@ -92,8 +91,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       final MergeMiningCoordinator mergeCoordinator,
       final EthPeers ethPeers,
       final EngineCallListener engineCallListener) {
-    super(vertx, protocolContext, engineCallListener);
-    this.protocolSchedule = protocolSchedule;
+    super(vertx, protocolSchedule, protocolContext, engineCallListener);
     this.mergeCoordinator = mergeCoordinator;
     this.ethPeers = ethPeers;
   }
@@ -115,9 +113,14 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     final Optional<Bytes32> maybeParentBeaconBlockRoot =
         maybeParentBeaconBlockRootParam.map(Bytes32::fromHexString);
 
-    ValidationResult<RpcErrorType> forkValidationResult =
-        validateParamsAndForkSupported(
-            reqId, blockParam, maybeVersionedHashParam, maybeParentBeaconBlockRoot);
+    final ValidationResult<RpcErrorType> parameterValidationResult =
+        validateParameters(blockParam, maybeVersionedHashParam, maybeParentBeaconBlockRootParam);
+    if (!parameterValidationResult.isValid()) {
+      return new JsonRpcErrorResponse(reqId, parameterValidationResult);
+    }
+
+    final ValidationResult<RpcErrorType> forkValidationResult =
+        validateForkSupported(blockParam.getTimestamp());
     if (!forkValidationResult.isValid()) {
       return new JsonRpcErrorResponse(reqId, forkValidationResult);
     }
@@ -142,7 +145,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             .map(ws -> ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList()));
 
     if (!getWithdrawalsValidator(
-            protocolSchedule, blockParam.getTimestamp(), blockParam.getBlockNumber())
+            protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
         .validateWithdrawals(maybeWithdrawals)) {
       return new JsonRpcErrorResponse(
           reqId, new JsonRpcError(INVALID_PARAMS, "Invalid withdrawals"));
@@ -152,7 +155,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         Optional.ofNullable(blockParam.getDeposits())
             .map(ds -> ds.stream().map(DepositParameter::toDeposit).collect(toList()));
     if (!getDepositsValidator(
-            protocolSchedule, blockParam.getTimestamp(), blockParam.getBlockNumber())
+            protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
         .validateDepositParameter(maybeDeposits)) {
       return new JsonRpcErrorResponse(reqId, new JsonRpcError(INVALID_PARAMS, "Invalid deposits"));
     }
@@ -206,7 +209,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             blockParam.getPrevRandao(),
             0,
             maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null),
-            blockParam.getBlobGasUsed() == null ? null : blockParam.getBlobGasUsed(),
+            blockParam.getBlobGasUsed(),
             blockParam.getExcessBlobGas() == null
                 ? null
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
@@ -222,12 +225,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               "Computed block hash %s does not match block hash parameter %s",
               newBlockHeader.getBlockHash(), blockParam.getBlockHash());
       LOG.debug(errorMessage);
-      return respondWithInvalid(
-          reqId,
-          blockParam,
-          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
-          getInvalidBlockHashStatus(),
-          errorMessage);
+      return respondWithInvalid(reqId, blockParam, null, getInvalidBlockHashStatus(), errorMessage);
     }
 
     ValidationResult<RpcErrorType> blobValidationResult =
@@ -236,7 +234,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             newBlockHeader,
             maybeParentHeader,
             maybeVersionedHashes,
-            protocolSchedule.getByBlockHeader(newBlockHeader));
+            protocolSchedule.get().getByBlockHeader(newBlockHeader));
     if (!blobValidationResult.isValid()) {
       return respondWithInvalid(
           reqId,
@@ -284,21 +282,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           .log();
       mergeCoordinator.appendNewPayloadToSync(block);
       return respondWith(reqId, blockParam, null, SYNCING);
-    }
-
-    // TODO: post-merge cleanup
-    if (requireTerminalPoWBlockValidation()
-        && !mergeContext.get().isCheckpointPostMergeSync()
-        && !mergeContext.get().isPostMergeAtGenesis()
-        && !mergeCoordinator.latestValidAncestorDescendsFromTerminal(newBlockHeader)
-        && !mergeContext.get().isChainPruningEnabled()) {
-      mergeCoordinator.addBadBlock(block, Optional.empty());
-      return respondWithInvalid(
-          reqId,
-          blockParam,
-          Hash.ZERO,
-          INVALID,
-          newBlockHeader.getHash() + " did not descend from terminal block");
     }
 
     final var latestValidAncestor = mergeCoordinator.getLatestValidAncestor(newBlockHeader);
@@ -398,11 +381,10 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     return INVALID;
   }
 
-  protected ValidationResult<RpcErrorType> validateParamsAndForkSupported(
-      final Object id,
-      final EnginePayloadParameter payloadParameter,
+  protected ValidationResult<RpcErrorType> validateParameters(
+      final EnginePayloadParameter parameter,
       final Optional<List<String>> maybeVersionedHashParam,
-      final Optional<Bytes32> parentBeaconBlockRoot) {
+      final Optional<String> maybeBeaconBlockRootParam) {
     return ValidationResult.valid();
   }
 

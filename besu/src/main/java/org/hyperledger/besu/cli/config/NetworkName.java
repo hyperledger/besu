@@ -27,6 +27,9 @@ public enum NetworkName {
   SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111)),
   /** Goerli network name. */
   GOERLI("/goerli.json", BigInteger.valueOf(5)),
+  /** Holešky network name. */
+  HOLESKY("/holesky.json", BigInteger.valueOf(17000)),
+
   /** Dev network name. */
   DEV("/dev.json", BigInteger.valueOf(2018), false),
   /** Future EIPs network name. */
@@ -35,8 +38,6 @@ public enum NetworkName {
   EXPERIMENTAL_EIPS("/experimental.json", BigInteger.valueOf(2023), false),
   /** Classic network name. */
   CLASSIC("/classic.json", BigInteger.valueOf(1)),
-  /** Kotti network name. */
-  KOTTI("/kotti.json", BigInteger.valueOf(6)),
   /** Mordor network name. */
   MORDOR("/mordor.json", BigInteger.valueOf(7));
 

@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,8 +38,6 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -57,7 +54,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public abstract class AbstractEngineGetPayloadTest {
+public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiTest {
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -73,22 +70,27 @@ public abstract class AbstractEngineGetPayloadTest {
         final EngineCallListener engineCallListener);
   }
 
-  private final MethodFactory methodFactory;
+  private final Optional<MethodFactory> methodFactory;
   protected AbstractEngineGetPayload method;
 
   public AbstractEngineGetPayloadTest(final MethodFactory methodFactory) {
-    this.methodFactory = methodFactory;
+    this.methodFactory = Optional.of(methodFactory);
   }
 
   public AbstractEngineGetPayloadTest() {
-    this.methodFactory = null;
+    this.methodFactory = Optional.empty();
   }
 
   protected static final Vertx vertx = Vertx.vertx();
   protected static final BlockResultFactory factory = new BlockResultFactory();
   protected static final PayloadIdentifier mockPid =
       PayloadIdentifier.forPayloadParams(
-          Hash.ZERO, 1337L, Bytes32.random(), Address.fromHexString("0x42"), Optional.empty());
+          Hash.ZERO,
+          1337L,
+          Bytes32.random(),
+          Address.fromHexString("0x42"),
+          Optional.empty(),
+          Optional.empty());
   protected static final BlockHeader mockHeader =
       new BlockHeaderTestFixture().prevRandao(Bytes32.random()).buildHeader();
   private static final Block mockBlock =
@@ -124,19 +126,18 @@ public abstract class AbstractEngineGetPayloadTest {
 
   @Mock protected EngineCallListener engineCallListener;
 
-  @Mock protected ProtocolSchedule protocolSchedule;
-
-  protected static final long SHANGHAI_AT = 1337L;
-
   @BeforeEach
+  @Override
   public void before() {
+    super.before();
     when(mergeContext.retrieveBlockById(mockPid)).thenReturn(Optional.of(mockBlockWithReceipts));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
-    when(protocolSchedule.hardforkFor(any()))
-        .thenReturn(Optional.of(new ScheduledProtocolSpec.Hardfork("shanghai", SHANGHAI_AT)));
-    this.method =
-        methodFactory.create(
-            vertx, protocolContext, mergeMiningCoordinator, factory, engineCallListener);
+    if (methodFactory.isPresent()) {
+      this.method =
+          methodFactory
+              .get()
+              .create(vertx, protocolContext, mergeMiningCoordinator, factory, engineCallListener);
+    }
   }
 
   @Test
@@ -151,7 +152,12 @@ public abstract class AbstractEngineGetPayloadTest {
         resp(
             getMethodName(),
             PayloadIdentifier.forPayloadParams(
-                Hash.ZERO, 0L, Bytes32.random(), Address.fromHexString("0x42"), Optional.empty()));
+                Hash.ZERO,
+                0L,
+                Bytes32.random(),
+                Address.fromHexString("0x42"),
+                Optional.empty(),
+                Optional.empty()));
     assertThat(resp).isInstanceOf(JsonRpcErrorResponse.class);
     verify(engineCallListener, times(1)).executionEngineCalled();
   }

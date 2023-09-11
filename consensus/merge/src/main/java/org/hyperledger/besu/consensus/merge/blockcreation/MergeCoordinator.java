@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import static java.util.stream.Collectors.joining;
-import static org.hyperledger.besu.consensus.merge.TransitionUtils.isTerminalProofOfWorkBlock;
 import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.INVALID;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
@@ -255,7 +254,12 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
     final PayloadIdentifier payloadIdentifier =
         PayloadIdentifier.forPayloadParams(
-            parentHeader.getBlockHash(), timestamp, prevRandao, feeRecipient, withdrawals);
+            parentHeader.getBlockHash(),
+            timestamp,
+            prevRandao,
+            feeRecipient,
+            withdrawals,
+            parentBeaconBlockRoot);
 
     if (blockCreationTasks.containsKey(payloadIdentifier)) {
       LOG.debug(
@@ -665,96 +669,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 newHead.getStateRoot(),
                 newHead.getHash()));
     return newWorldState.isPresent();
-  }
-
-  @Override
-  public boolean latestValidAncestorDescendsFromTerminal(final BlockHeader blockHeader) {
-    if (blockHeader.getNumber() <= 1L) {
-      // parent is a genesis block, check for merge-at-genesis
-      var blockchain = protocolContext.getBlockchain();
-
-      return blockchain
-          .getTotalDifficultyByHash(blockHeader.getBlockHash())
-          .map(Optional::of)
-          .orElse(blockchain.getTotalDifficultyByHash(blockHeader.getParentHash()))
-          .filter(
-              currDiff -> currDiff.greaterOrEqualThan(mergeContext.getTerminalTotalDifficulty()))
-          .isPresent();
-    }
-
-    Optional<Hash> validAncestorHash = this.getLatestValidAncestor(blockHeader);
-    if (validAncestorHash.isPresent()) {
-      final Optional<BlockHeader> maybeFinalized = mergeContext.getFinalized();
-      if (maybeFinalized.isPresent()) {
-        return isDescendantOf(maybeFinalized.get(), blockHeader);
-      } else {
-        Optional<BlockHeader> terminalBlockHeader = mergeContext.getTerminalPoWBlock();
-        if (terminalBlockHeader.isPresent()) {
-          return isDescendantOf(terminalBlockHeader.get(), blockHeader);
-        } else {
-          if (isTerminalProofOfWorkBlock(blockHeader, protocolContext)
-              || ancestorIsValidTerminalProofOfWork(blockHeader)) {
-            return true;
-          } else {
-            LOG.warn("Couldn't find terminal block, no blocks will be valid");
-            return false;
-          }
-        }
-      }
-    } else {
-      return false;
-    }
-  }
-
-  /**
-   * Ancestor is valid terminal proof of work boolean.
-   *
-   * @param blockheader the blockheader
-   * @return the boolean
-   */
-  // package visibility for testing
-  boolean ancestorIsValidTerminalProofOfWork(final BlockHeader blockheader) {
-    // this should only happen very close to the transition from PoW to PoS, prior to a finalized
-    // block.  For example, after a full sync of an already-merged chain which does not have
-    // terminal block info in the genesis config.
-
-    // check a 'cached' block which was determined to descend from terminal to short circuit
-    // in the case of a long period of non-finality
-    if (Optional.ofNullable(latestDescendsFromTerminal.get())
-        .map(latestDescendant -> isDescendantOf(latestDescendant, blockheader))
-        .orElse(Boolean.FALSE)) {
-      latestDescendsFromTerminal.set(blockheader);
-      return true;
-    }
-
-    var blockchain = protocolContext.getBlockchain();
-    Optional<BlockHeader> parent = blockchain.getBlockHeader(blockheader.getParentHash());
-    do {
-      LOG.debug(
-          "checking ancestor {} is valid terminal PoW for {}",
-          parent.map(BlockHeader::toLogString).orElse("empty"),
-          blockheader.toLogString());
-
-      if (parent.isPresent()) {
-        if (!parent.get().getDifficulty().equals(Difficulty.ZERO)) {
-          break;
-        }
-        parent = blockchain.getBlockHeader(parent.get().getParentHash());
-      }
-
-    } while (parent.isPresent());
-
-    boolean resp =
-        parent.filter(header -> isTerminalProofOfWorkBlock(header, protocolContext)).isPresent();
-    LOG.debug(
-        "checking ancestor {} is valid terminal PoW for {}\n {}",
-        parent.map(BlockHeader::toLogString).orElse("empty"),
-        blockheader.toLogString(),
-        resp);
-    if (resp) {
-      latestDescendsFromTerminal.set(blockheader);
-    }
-    return resp;
   }
 
   @Override

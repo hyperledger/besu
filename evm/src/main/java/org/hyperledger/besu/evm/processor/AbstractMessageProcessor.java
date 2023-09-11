@@ -184,6 +184,10 @@ public abstract class AbstractMessageProcessor {
    * @param operationTracer the operation tracer
    */
   public void process(final MessageFrame frame, final OperationTracer operationTracer) {
+    if (operationTracer != null && frame.getMessageStackSize() > 1) {
+      operationTracer.traceContextEnter(frame);
+    }
+
     if (frame.getState() == MessageFrame.State.NOT_STARTED) {
       start(frame, operationTracer);
     }
@@ -209,10 +213,15 @@ public abstract class AbstractMessageProcessor {
     }
 
     if (frame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
+      if (operationTracer != null && frame.getMessageStackSize() > 1) {
+        operationTracer.traceContextExit(frame);
+      }
       completedSuccess(frame);
     }
-
     if (frame.getState() == MessageFrame.State.COMPLETED_FAILED) {
+      if (operationTracer != null && frame.getMessageStackSize() > 1) {
+        operationTracer.traceContextExit(frame);
+      }
       completedFailed(frame);
     }
   }

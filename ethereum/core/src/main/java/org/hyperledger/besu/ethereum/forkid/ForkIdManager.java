@@ -45,7 +45,7 @@ public class ForkIdManager {
 
   private final Supplier<BlockHeader> chainHeadSupplier;
   private final long forkNext;
-  private final boolean onlyZerosForkBlocks;
+  private final boolean noForksAvailable;
   private final long highestKnownFork;
   private Bytes genesisHashCrc;
   private final boolean legacyEth64;
@@ -70,18 +70,18 @@ public class ForkIdManager {
             .collect(Collectors.toUnmodifiableList());
     this.timestampForks =
         timestampForks.stream()
-            .filter(fork -> fork > 0L)
+            .filter(fork -> fork > blockchain.getGenesisBlock().getHeader().getTimestamp())
             .distinct()
             .sorted()
             .collect(Collectors.toUnmodifiableList());
     final List<Long> allForkNumbers =
         Stream.concat(blockNumberForks.stream(), timestampForks.stream())
             .collect(Collectors.toList());
-    this.onlyZerosForkBlocks = allForkNumbers.stream().allMatch(value -> 0L == value);
     this.forkNext = createForkIds();
     this.allForkIds =
         Stream.concat(blockNumbersForkIds.stream(), timestampsForkIds.stream())
             .collect(Collectors.toList());
+    this.noForksAvailable = allForkIds.isEmpty();
     this.highestKnownFork =
         !allForkNumbers.isEmpty() ? allForkNumbers.get(allForkNumbers.size() - 1) : 0L;
   }
@@ -128,7 +128,7 @@ public class ForkIdManager {
    * @return boolean (peer valid (true) or invalid (false))
    */
   public boolean peerCheck(final ForkId forkId) {
-    if (forkId == null || onlyZerosForkBlocks) {
+    if (forkId == null || noForksAvailable) {
       return true; // Another method must be used to validate (i.e. genesis hash)
     }
     // Run the fork checksum validation rule set:

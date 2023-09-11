@@ -21,16 +21,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.forkid.ForkIdTestUtil.mockBlockchain;
 import static org.hyperledger.besu.ethereum.forkid.ForkIdTestUtil.wantPeerCheck;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.forkid.ForkIdTestUtil.ForkIds;
 import org.hyperledger.besu.ethereum.forkid.ForkIdTestUtil.GenesisHash;
 import org.hyperledger.besu.ethereum.forkid.ForkIdTestUtil.Network;
 import org.hyperledger.besu.ethereum.forkid.ForkIdTestUtil.PeerCheckCase;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -602,5 +605,32 @@ public class ForkIdTest {
                             Bytes.fromHexString(peerCheckCase.forkIdHash),
                             peerCheckCase.forkIdNext)))
                 .isEqualTo(peerCheckCase.want));
+  }
+
+  @Test
+  public void testGenesisTimestampEqualToShanghaiTimestamp() {
+    final ForkIdManager forkIdManager =
+        new ForkIdManager(
+            mockBlockchain(Hash.ZERO.toHexString(), 10L, 0L),
+            Collections.emptyList(),
+            List.of(1L, 2L),
+            false);
+    assertThat(forkIdManager.getAllForkIds().size()).isEqualTo(2);
+    assertThat(forkIdManager.getAllForkIds().get(0).getNext()).isEqualTo(2L);
+    assertThat(forkIdManager.getAllForkIds().get(1).getNext()).isEqualTo(0L);
+  }
+
+  @Test
+  public void testNoBlockNoForksAndNoTimestampForksGreaterThanGenesisTimestamp() {
+    final ForkIdManager forkIdManager =
+        new ForkIdManager(
+            mockBlockchain(Hash.ZERO.toHexString(), 10L, 1L),
+            Collections.emptyList(),
+            List.of(1L),
+            false);
+    assertThat(forkIdManager.getAllForkIds().size()).isEqualTo(0);
+    // There is no ForkId, so peerCheck always has to return true
+    assertThat(forkIdManager.peerCheck(new ForkId(Bytes.fromHexString("0xdeadbeef"), 100L)))
+        .isEqualTo(true);
   }
 }

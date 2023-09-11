@@ -24,6 +24,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
@@ -102,8 +103,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     lenient()
         .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
-    var resp =
-        resp(mockEnginePayload(mockHeader, Collections.emptyList(), withdrawals, null, null));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), withdrawals, null));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -121,11 +121,41 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
                 createBlockHeader(Optional.of(Collections.emptyList()), Optional.empty()),
                 Collections.emptyList(),
                 withdrawals,
-                null,
                 null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldValidateBlobGasUsedCorrectly() {
+    // V2 should return error if non-null blobGasUsed
+    BlockHeader blockHeader =
+        createBlockHeaderFixture(Optional.of(Collections.emptyList()), Optional.empty())
+            .blobGasUsed(100L)
+            .buildHeader();
+
+    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null));
+    final JsonRpcError jsonRpcError = fromErrorResp(resp);
+    assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
+    assertThat(jsonRpcError.getData()).isEqualTo("non-null BlobGasUsed pre-cancun");
+    verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  @Test
+  public void shouldValidateExcessBlobGasCorrectly() {
+    // V2 should return error if non-null ExcessBlobGas
+    BlockHeader blockHeader =
+        createBlockHeaderFixture(Optional.of(Collections.emptyList()), Optional.empty())
+            .excessBlobGas(BlobGas.MAX_BLOB_GAS)
+            .buildHeader();
+
+    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null));
+
+    final JsonRpcError jsonRpcError = fromErrorResp(resp);
+    assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
+    assertThat(jsonRpcError.getData()).isEqualTo("non-null ExcessBlobGas pre-cancun");
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -145,11 +175,6 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
 
     assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
     verify(engineCallListener, times(1)).executionEngineCalled();
-  }
-
-  @Override
-  protected boolean validateTerminalPoWBlock() {
-    return false;
   }
 
   @Override
