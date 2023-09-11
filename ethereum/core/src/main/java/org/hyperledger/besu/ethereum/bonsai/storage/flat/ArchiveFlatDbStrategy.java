@@ -16,9 +16,11 @@
 package org.hyperledger.besu.ethereum.bonsai.storage.flat;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.bonsai.BonsaiContext;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.plugin.data.BlockHeader;
@@ -48,6 +50,7 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
   static final byte[] MIN_BLOCK_SUFFIX = Bytes.ofUnsignedLong(0L).toArrayUnsafe();
   static final byte[] DELETED_ACCOUNT_VALUE = new byte[0];
   static final byte[] DELETED_CODE_VALUE = new byte[0];
+  static final byte[] DELETED_STORAGE_VALUE = new byte[0];
 
   @Override
   public Optional<Bytes> getFlatAccount(
@@ -58,7 +61,7 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
     getAccountCounter.inc();
 
     // keyNearest, use MAX_BLOCK_SUFFIX in the absence of a block context:
-    Bytes keyNearest = calculateKeyWithMaxSuffix(accountHash);
+    Bytes keyNearest = calculateArchiveKeyWithMaxSuffix(accountHash.toArrayUnsafe());
 
     // use getNearest() with an account key that is suffixed by the block context
     final Optional<Bytes> accountFound =
@@ -91,7 +94,7 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
       final Bytes accountValue) {
 
     // key suffixed with block context, or MIN_BLOCK_SUFFIX if we have no context:
-    byte[] keySuffixed = calculateKeyWithMinSuffix(accountHash);
+    byte[] keySuffixed = calculateArchiveKeyWithMinSuffix(accountHash.toArrayUnsafe());
 
     transaction.put(ACCOUNT_INFO_STATE, keySuffixed, accountValue.toArrayUnsafe());
   }
@@ -101,7 +104,7 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
       final SegmentedKeyValueStorageTransaction transaction, final Hash accountHash) {
 
     // insert a key suffixed with block context, with 'deleted account' value
-    byte[] keySuffixed = calculateKeyWithMinSuffix(accountHash);
+    byte[] keySuffixed = calculateArchiveKeyWithMinSuffix(accountHash.toArrayUnsafe());
 
     transaction.put(ACCOUNT_INFO_STATE, keySuffixed, DELETED_ACCOUNT_VALUE);
   }
@@ -117,7 +120,7 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
     } else {
 
       // keyNearest, use MAX_BLOCK_SUFFIX in the absence of a block context:
-      Bytes keyNearest = calculateKeyWithMaxSuffix(accountHash);
+      Bytes keyNearest = calculateArchiveKeyWithMaxSuffix(accountHash.toArrayUnsafe());
 
       // use getNearest() with an account key that is suffixed by the block context
       final Optional<Bytes> codeFound =
@@ -145,7 +148,7 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
       final SegmentedKeyValueStorageTransaction transaction, final Hash accountHash) {
 
     // insert a key suffixed with block context, with 'deleted account' value
-    byte[] keySuffixed = calculateKeyWithMinSuffix(accountHash);
+    byte[] keySuffixed = calculateArchiveKeyWithMinSuffix(accountHash.toArrayUnsafe());
 
     transaction.put(CODE_STORAGE, keySuffixed, DELETED_CODE_VALUE);
   }
@@ -161,23 +164,103 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
       final Bytes code) {
 
     // key suffixed with block context, or MIN_BLOCK_SUFFIX if we have no context:
-    byte[] keySuffixed = calculateKeyWithMinSuffix(accountHash);
+    byte[] keySuffixed = calculateArchiveKeyWithMinSuffix(accountHash.toArrayUnsafe());
 
     transaction.put(CODE_STORAGE, keySuffixed, code.toArrayUnsafe());
   }
 
-  public byte[] calculateKeyWithMinSuffix(final Hash accountHash) {
-    return calculateKeyWithSuffix(accountHash, MIN_BLOCK_SUFFIX);
+  /*
+   * Retrieves the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
+   */
+  @Override
+  public Optional<Bytes> getFlatStorageValueByStorageSlotKey(
+      final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
+      final Supplier<Optional<Hash>> storageRootSupplier,
+      final NodeLoader nodeLoader,
+      final Hash accountHash,
+      final StorageSlotKey storageSlotKey,
+      final SegmentedKeyValueStorage storage) {
+    getStorageValueCounter.inc();
+
+    // get natural key from account hash and slot key
+    byte[] naturalKey = calculateNaturalSlotKey(accountHash, storageSlotKey.getSlotHash());
+    // keyNearest, use MAX_BLOCK_SUFFIX in the absence of a block context:
+    Bytes keyNearest = calculateArchiveKeyWithMaxSuffix(naturalKey);
+
+    // use getNearest() with a key that is suffixed by the block context
+    final Optional<Bytes> storageFound =
+        storage
+            .getNearestTo(ACCOUNT_STORAGE_STORAGE, keyNearest)
+            // return empty when we find a "deleted value key"
+            .filter(
+                found ->
+                    !Arrays.areEqual(
+                        DELETED_STORAGE_VALUE, found.value().orElse(DELETED_STORAGE_VALUE)))
+            // don't return accounts that do not have a matching account hash and slotHash prefix
+            .filter(
+                found -> Bytes.of(naturalKey).commonPrefixLength(found.key()) >= naturalKey.length)
+            // map NearestKey to Bytes-wrapped value
+            .flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
+
+    if (storageFound.isPresent()) {
+      getStorageValueFlatDatabaseCounter.inc();
+    } else {
+      getStorageValueNotFoundInFlatDatabaseCounter.inc();
+    }
+    return storageFound;
   }
 
-  public Bytes calculateKeyWithMaxSuffix(final Hash accountHash) {
-    return Bytes.of(calculateKeyWithSuffix(accountHash, MAX_BLOCK_SUFFIX));
+  /*
+   * Puts the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
+   */
+  @Override
+  public void putFlatAccountStorageValueByStorageSlotHash(
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Hash slotHash,
+      final Bytes storage) {
+
+    // get natural key from account hash and slot key
+    byte[] naturalKey = calculateNaturalSlotKey(accountHash, slotHash);
+    // keyNearest, use MIN_BLOCK_SUFFIX in the absence of a block context:
+    byte[] keyNearest = calculateArchiveKeyWithMinSuffix(naturalKey);
+
+    transaction.put(ACCOUNT_STORAGE_STORAGE, keyNearest, storage.toArrayUnsafe());
   }
 
-  public byte[] calculateKeyWithSuffix(final Hash accountHash, final byte[] orElseSuffix) {
+  /*
+   * Removes the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
+   */
+  @Override
+  public void removeFlatAccountStorageValueByStorageSlotHash(
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Hash slotHash) {
+
+    // get natural key from account hash and slot key
+    byte[] naturalKey = calculateNaturalSlotKey(accountHash, slotHash);
+    // insert a key suffixed with block context, with 'deleted account' value
+    byte[] keySuffixed = calculateArchiveKeyWithMinSuffix(naturalKey);
+
+    transaction.put(ACCOUNT_STORAGE_STORAGE, keySuffixed, DELETED_STORAGE_VALUE);
+  }
+
+  public byte[] calculateNaturalSlotKey(final Hash accountHash, final Hash slotHash) {
+    return Bytes.concatenate(accountHash, slotHash).toArrayUnsafe();
+  }
+
+  public byte[] calculateArchiveKeyWithMinSuffix(final byte[] naturalKey) {
+    return calculateArchiveKeyWithSuffix(naturalKey, MIN_BLOCK_SUFFIX);
+  }
+
+  public Bytes calculateArchiveKeyWithMaxSuffix(final byte[] naturalKey) {
+    return Bytes.of(calculateArchiveKeyWithSuffix(naturalKey, MAX_BLOCK_SUFFIX));
+  }
+
+  public byte[] calculateArchiveKeyWithSuffix(final byte[] naturalKey, final byte[] orElseSuffix) {
     // TODO: this can be optimized, just for PoC now
     return Arrays.concatenate(
-        accountHash.toArrayUnsafe(),
+        naturalKey,
         context
             .getBlockHeader()
             .map(BlockHeader::getNumber)
