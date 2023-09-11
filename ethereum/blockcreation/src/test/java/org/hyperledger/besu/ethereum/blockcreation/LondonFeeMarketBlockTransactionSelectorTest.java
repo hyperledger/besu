@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.testutil.TestClock;
+import org.hyperledger.besu.util.number.Fraction;
 
 import java.time.ZoneId;
 import java.util.List;
@@ -72,7 +73,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     final TransactionPoolConfiguration poolConf =
         ImmutableTransactionPoolConfiguration.builder()
             .txPoolMaxSize(5)
-            .txPoolLimitByAccountPercentage(1)
+            .txPoolLimitByAccountPercentage(Fraction.fromFloat(1f))
             .build();
     final PendingTransactions pendingTransactions =
         new BaseFeePendingTransactionsSorter(
