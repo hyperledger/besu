@@ -13,6 +13,8 @@
 - Layered transaction pool implementation is now stable and enabled by default. If you want still to use the legacy implementation, use `--tx-pool=legacy` [#5772](https://github.com/hyperledger/besu)
 
 ### Bug Fixes
+- do not create ignorable storage on revert storage-variables subcommand [#5830](https://github.com/hyperledger/besu/pull/5830) 
+- fix duplicate key errors in EthScheduler-Transactions [#5857](https://github.com/hyperledger/besu/pull/5857)
 - do not create ignorable storage on revert storage-variables subcommand [#5830](https://github.com/hyperledger/besu/pull/5830)
 
 ### Download Links

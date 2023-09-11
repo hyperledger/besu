@@ -218,7 +218,8 @@ public class TransactionPool implements BlockAddedObserver {
                         addedTransactions.add(transaction);
                       }
                       return result;
-                    }));
+                    },
+                    (transaction1, transaction2) -> transaction1));
 
     LOG_FOR_REPLAY
         .atTrace()
