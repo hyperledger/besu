@@ -122,8 +122,10 @@ public class SegmentedInMemoryKeyValueStorage
         Comparator.comparing(
                 (Map.Entry<Bytes, Optional<byte[]>> a) -> a.getKey().commonPrefixLength(key))
             .thenComparing((a, b) -> a.getKey().compareTo(b.getKey()));
-    return this.hashValueStore.computeIfAbsent(segmentIdentifier, s -> new HashMap<>())
-        .entrySet().stream()
+    return this.hashValueStore
+        .computeIfAbsent(segmentIdentifier, s -> new HashMap<>())
+        .entrySet()
+        .stream()
         .sorted(comparing.reversed())
         .findFirst()
         .map(z -> new NearestKeyValue(z.getKey(), z.getValue()));

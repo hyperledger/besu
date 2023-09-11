@@ -2096,7 +2096,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
-        "--Xsnapsync-synchronizer-flat option can only be used when -Xsnapsync-synchronizer-flat-db-healing-enabled is true",
+        "--Xsnapsync-synchronizer-flat option can only be used when --Xsnapsync-synchronizer-flat-db-healing-enabled is true",
         unstableSynchronizerOptions.isSnapsyncFlatDbHealingEnabled(),
         asList(
             "--Xsnapsync-synchronizer-flat-account-healed-count-per-request",
