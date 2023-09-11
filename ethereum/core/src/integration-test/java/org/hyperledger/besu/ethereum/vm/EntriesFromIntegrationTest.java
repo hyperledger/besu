@@ -49,7 +49,7 @@ public class EntriesFromIntegrationTest {
       addExpectedValue(
           account,
           expectedValues,
-          UInt256.valueOf(random.nextLong()),
+          UInt256.valueOf(random.nextLong(Long.MAX_VALUE)),
           UInt256.valueOf(i * 10 + 1L));
     }
     updater.commit();
@@ -60,7 +60,7 @@ public class EntriesFromIntegrationTest {
       addExpectedValue(
           account,
           expectedValues,
-          UInt256.valueOf(random.nextLong()),
+          UInt256.valueOf(random.nextLong(Long.MAX_VALUE)),
           UInt256.valueOf(i * 10 + 1L));
     }
 
