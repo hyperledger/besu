@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -50,6 +51,8 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
   private final Hash addressHash;
 
   @Nullable private A account; // null if this is a new account.
+
+  private boolean mutable = true;
 
   private long nonce;
   private Wei balance;
@@ -170,6 +173,9 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
 
   @Override
   public void setNonce(final long value) {
+    if (!mutable) {
+      throw new ModificationNotAllowedException();
+    }
     this.nonce = value;
   }
 
@@ -180,6 +186,9 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
 
   @Override
   public void setBalance(final Wei value) {
+    if (!mutable) {
+      throw new ModificationNotAllowedException();
+    }
     this.balance = value;
   }
 
@@ -212,6 +221,9 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
 
   @Override
   public void setCode(final Bytes code) {
+    if (!mutable) {
+      throw new ModificationNotAllowedException();
+    }
     this.updatedCode = code;
     this.updatedCodeHash = null;
   }
@@ -269,13 +281,24 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
 
   @Override
   public void setStorageValue(final UInt256 key, final UInt256 value) {
+    if (!mutable) {
+      throw new ModificationNotAllowedException();
+    }
     updatedStorage.put(key, value);
   }
 
   @Override
   public void clearStorage() {
+    if (!mutable) {
+      throw new ModificationNotAllowedException();
+    }
     storageWasCleared = true;
     updatedStorage.clear();
+  }
+
+  @Override
+  public void becomeImmutable() {
+    mutable = false;
   }
 
   /**

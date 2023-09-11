@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
@@ -41,7 +42,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiAccount implements MutableAccount, AccountValue {
   private final BonsaiWorldView context;
-  private final boolean mutable;
+  private boolean mutable;
 
   private final Address address;
   private final Hash addressHash;
@@ -161,7 +162,7 @@ public class BonsaiAccount implements MutableAccount, AccountValue {
   @Override
   public void setNonce(final long value) {
     if (!mutable) {
-      throw new UnsupportedOperationException("Account is immutable");
+      throw new ModificationNotAllowedException();
     }
     nonce = value;
   }
@@ -174,7 +175,7 @@ public class BonsaiAccount implements MutableAccount, AccountValue {
   @Override
   public void setBalance(final Wei value) {
     if (!mutable) {
-      throw new UnsupportedOperationException("Account is immutable");
+      throw new ModificationNotAllowedException();
     }
     balance = value;
   }
@@ -190,7 +191,7 @@ public class BonsaiAccount implements MutableAccount, AccountValue {
   @Override
   public void setCode(final Bytes code) {
     if (!mutable) {
-      throw new UnsupportedOperationException("Account is immutable");
+      throw new ModificationNotAllowedException();
     }
     this.code = code;
     if (code == null || code.isEmpty()) {
@@ -242,7 +243,7 @@ public class BonsaiAccount implements MutableAccount, AccountValue {
   @Override
   public void setStorageValue(final UInt256 key, final UInt256 value) {
     if (!mutable) {
-      throw new UnsupportedOperationException("Account is immutable");
+      throw new ModificationNotAllowedException();
     }
     updatedStorage.put(key, value);
   }
@@ -264,9 +265,14 @@ public class BonsaiAccount implements MutableAccount, AccountValue {
 
   public void setStorageRoot(final Hash storageRoot) {
     if (!mutable) {
-      throw new UnsupportedOperationException("Account is immutable");
+      throw new ModificationNotAllowedException();
     }
     this.storageRoot = storageRoot;
+  }
+
+  @Override
+  public void becomeImmutable() {
+    mutable = false;
   }
 
   @Override

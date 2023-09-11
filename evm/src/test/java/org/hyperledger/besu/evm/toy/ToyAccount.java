@@ -18,6 +18,7 @@ package org.hyperledger.besu.evm.toy;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -35,6 +36,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class ToyAccount implements MutableAccount {
 
   private final Account parent;
+
+  private boolean mutable = true;
 
   private Address address;
   private final Supplier<Hash> addressHash =
@@ -117,32 +120,52 @@ public class ToyAccount implements MutableAccount {
 
   @Override
   public void setNonce(final long value) {
+    if (!mutable) {
+      throw new ModificationNotAllowedException();
+    }
     nonce = value;
   }
 
   @Override
   public void setBalance(final Wei value) {
+    if (!mutable) {
+      throw new ModificationNotAllowedException();
+    }
     balance = value;
   }
 
   @Override
   public void setCode(final Bytes code) {
+    if (!mutable) {
+      throw new ModificationNotAllowedException();
+    }
     this.code = code;
     codeHash = Suppliers.memoize(() -> this.code == null ? Hash.EMPTY : Hash.hash(this.code));
   }
 
   @Override
   public void setStorageValue(final UInt256 key, final UInt256 value) {
+    if (!mutable) {
+      throw new ModificationNotAllowedException();
+    }
     storage.put(key, value);
   }
 
   @Override
   public void clearStorage() {
+    if (!mutable) {
+      throw new ModificationNotAllowedException();
+    }
     storage.clear();
   }
 
   @Override
   public Map<UInt256, UInt256> getUpdatedStorage() {
     return storage;
+  }
+
+  @Override
+  public void becomeImmutable() {
+    mutable = false;
   }
 }
