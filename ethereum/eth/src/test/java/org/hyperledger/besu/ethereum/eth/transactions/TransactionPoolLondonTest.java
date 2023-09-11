@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.testutil.TestClock;
+import org.hyperledger.besu.util.number.Fraction;
 
 import java.math.BigInteger;
 import java.time.ZoneId;
@@ -63,7 +64,7 @@ public class TransactionPoolLondonTest extends AbstractTransactionPoolTest {
     return new BaseFeePendingTransactionsSorter(
         ImmutableTransactionPoolConfiguration.builder()
             .txPoolMaxSize(MAX_TRANSACTIONS)
-            .txPoolLimitByAccountPercentage(1)
+            .txPoolLimitByAccountPercentage(Fraction.fromFloat(1.0f))
             .build(),
         TestClock.system(ZoneId.systemDefault()),
         metricsSystem,
