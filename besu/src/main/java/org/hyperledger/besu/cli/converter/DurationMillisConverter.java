@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,20 +14,31 @@
  */
 package org.hyperledger.besu.cli.converter;
 
-import org.hyperledger.besu.cli.converter.exception.PercentageConversionException;
-import org.hyperledger.besu.util.number.Percentage;
+import org.hyperledger.besu.cli.converter.exception.DurationConversionException;
+
+import java.time.Duration;
 
 import picocli.CommandLine;
 
-/** The Percentage Cli type converter. */
-public class PercentageConverter implements CommandLine.ITypeConverter<Percentage> {
+/** The Duration (milliseconds) Cli type converter. */
+public class DurationMillisConverter
+    implements CommandLine.ITypeConverter<Duration>, TypeFormatter<Duration> {
 
   @Override
-  public Percentage convert(final String value) throws PercentageConversionException {
+  public Duration convert(final String value) throws DurationConversionException {
     try {
-      return Percentage.fromString(value);
+      final long millis = Long.parseLong(value);
+      if (millis < 0) {
+        throw new DurationConversionException(millis);
+      }
+      return Duration.ofMillis(Long.parseLong(value));
     } catch (NullPointerException | IllegalArgumentException e) {
-      throw new PercentageConversionException(value);
+      throw new DurationConversionException(value);
     }
+  }
+
+  @Override
+  public String format(final Duration value) {
+    return Long.toString(value.toMillis());
   }
 }

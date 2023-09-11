@@ -101,8 +101,12 @@ public class NewPooledTransactionHashesMessageProcessor {
                         .getScheduler()
                         .scheduleFutureTaskWithFixedDelay(
                             new FetcherCreatorTask(peer),
-                            transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod(),
-                            transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod());
+                            transactionPoolConfiguration
+                                .getUnstable()
+                                .getEth65TrxAnnouncedBufferingPeriod(),
+                            transactionPoolConfiguration
+                                .getUnstable()
+                                .getEth65TrxAnnouncedBufferingPeriod());
 
                 return new BufferedGetPooledTransactionsFromPeerFetcher(
                     ethContext,
