@@ -388,6 +388,7 @@ public class BonsaiWorldState
 
     boolean success = false;
 
+    // update the bonsai context with the current block before we persist to storage:
     this.worldStateStorage.getFlatDbStrategy().updateBlockContext(blockHeader);
     final BonsaiWorldStateKeyValueStorage.BonsaiUpdater stateUpdater = worldStateStorage.updater();
     Runnable saveTrieLog = () -> {};

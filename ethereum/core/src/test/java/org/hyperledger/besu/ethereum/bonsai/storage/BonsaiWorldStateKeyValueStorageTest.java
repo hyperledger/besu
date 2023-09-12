@@ -371,7 +371,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     // clear
     storage.clear();
 
-    assertThat(storage.getFlatDbReaderStrategy()).isNotNull();
+    assertThat(storage.getFlatDbStrategy()).isNotNull();
 
     assertThat(storage.getAccount(Hash.ZERO)).isEmpty();
   }

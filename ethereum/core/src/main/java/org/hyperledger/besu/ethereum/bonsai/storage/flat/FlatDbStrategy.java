@@ -236,10 +236,11 @@ public abstract class FlatDbStrategy {
   }
 
   public void updateBlockContext(final BlockHeader blockHeader) {
-    // default no-op.
+    // default no-op for strategies that do not care about bonsai context
   }
 
   public FlatDbStrategy contextSafeClone() {
+    // FlatDBStrategies that care about bonsai context changes should override this
     return this;
   }
 }

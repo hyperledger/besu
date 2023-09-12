@@ -95,12 +95,12 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
   public BonsaiWorldStateKeyValueStorage(
       final FlatDbMode flatDbMode,
-      final FlatDbStrategy flatDbReaderStrategy,
+      final FlatDbStrategy flatDbStrategy,
       final SegmentedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage,
       final ObservableMetricsSystem metricsSystem) {
     this.flatDbMode = flatDbMode;
-    this.flatDbStrategy = flatDbReaderStrategy;
+    this.flatDbStrategy = flatDbStrategy;
     this.composedWorldStateStorage = composedWorldStateStorage;
     this.trieLogStorage = trieLogStorage;
     this.metricsSystem = metricsSystem;
@@ -157,22 +157,17 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return flatDbMode;
   }
 
-  FlatDbStrategy getFlatDbReaderStrategy() {
-    return flatDbStrategy;
-  }
-
   @Override
   public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
-      return getFlatDbReaderStrategy()
-          .getFlatCode(codeHash, accountHash, composedWorldStateStorage);
+      return getFlatDbStrategy().getFlatCode(codeHash, accountHash, composedWorldStateStorage);
     }
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    return getFlatDbReaderStrategy()
+    return getFlatDbStrategy()
         .getFlatAccount(
             this::getWorldStateRootHash,
             this::getAccountStateTrieNode,
@@ -251,7 +246,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       final Supplier<Optional<Hash>> storageRootSupplier,
       final Hash accountHash,
       final StorageSlotKey storageSlotKey) {
-    return getFlatDbReaderStrategy()
+    return getFlatDbStrategy()
         .getFlatStorageValueByStorageSlotKey(
             this::getWorldStateRootHash,
             storageRootSupplier,
@@ -264,14 +259,14 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   @Override
   public Map<Bytes32, Bytes> streamFlatAccounts(
       final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
-    return getFlatDbReaderStrategy()
+    return getFlatDbStrategy()
         .streamAccountFlatDatabase(composedWorldStateStorage, startKeyHash, endKeyHash, max);
   }
 
   @Override
   public Map<Bytes32, Bytes> streamFlatStorages(
       final Hash accountHash, final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
-    return getFlatDbReaderStrategy()
+    return getFlatDbStrategy()
         .streamStorageFlatDatabase(
             composedWorldStateStorage, accountHash, startKeyHash, endKeyHash, max);
   }
@@ -311,7 +306,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   @Override
   public void clear() {
     subscribers.forEach(BonsaiStorageSubscriber::onClearStorage);
-    getFlatDbReaderStrategy().clearAll(composedWorldStateStorage);
+    getFlatDbStrategy().clearAll(composedWorldStateStorage);
     composedWorldStateStorage.clear(TRIE_BRANCH_STORAGE);
     trieLogStorage.clear();
     loadFlatDbStrategy(); // force reload of flat db reader strategy
@@ -326,7 +321,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
   @Override
   public void clearFlatDatabase() {
     subscribers.forEach(BonsaiStorageSubscriber::onClearFlatDatabaseStorage);
-    getFlatDbReaderStrategy().resetOnResync(composedWorldStateStorage);
+    getFlatDbStrategy().resetOnResync(composedWorldStateStorage);
   }
 
   @Override
@@ -373,21 +368,21 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
 
     private final SegmentedKeyValueStorageTransaction composedWorldStateTransaction;
     private final KeyValueStorageTransaction trieLogStorageTransaction;
-    private final FlatDbStrategy flatDbReaderStrategy;
+    private final FlatDbStrategy flatDbStrategy;
 
     public Updater(
         final SegmentedKeyValueStorageTransaction composedWorldStateTransaction,
         final KeyValueStorageTransaction trieLogStorageTransaction,
-        final FlatDbStrategy flatDbReaderStrategy) {
+        final FlatDbStrategy flatDbStrategy) {
 
       this.composedWorldStateTransaction = composedWorldStateTransaction;
       this.trieLogStorageTransaction = trieLogStorageTransaction;
-      this.flatDbReaderStrategy = flatDbReaderStrategy;
+      this.flatDbStrategy = flatDbStrategy;
     }
 
     @Override
     public BonsaiUpdater removeCode(final Hash accountHash) {
-      flatDbReaderStrategy.removeFlatCode(composedWorldStateTransaction, accountHash);
+      flatDbStrategy.removeFlatCode(composedWorldStateTransaction, accountHash);
       return this;
     }
 
@@ -397,13 +392,13 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         // Don't save empty values
         return this;
       }
-      flatDbReaderStrategy.putFlatCode(composedWorldStateTransaction, accountHash, codeHash, code);
+      flatDbStrategy.putFlatCode(composedWorldStateTransaction, accountHash, codeHash, code);
       return this;
     }
 
     @Override
     public BonsaiUpdater removeAccountInfoState(final Hash accountHash) {
-      flatDbReaderStrategy.removeFlatAccount(composedWorldStateTransaction, accountHash);
+      flatDbStrategy.removeFlatAccount(composedWorldStateTransaction, accountHash);
       return this;
     }
 
@@ -413,7 +408,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         // Don't save empty values
         return this;
       }
-      flatDbReaderStrategy.putFlatAccount(composedWorldStateTransaction, accountHash, accountValue);
+      flatDbStrategy.putFlatAccount(composedWorldStateTransaction, accountHash, accountValue);
       return this;
     }
 
@@ -464,7 +459,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     @Override
     public synchronized BonsaiUpdater putStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash, final Bytes storage) {
-      flatDbReaderStrategy.putFlatAccountStorageValueByStorageSlotHash(
+      flatDbStrategy.putFlatAccountStorageValueByStorageSlotHash(
           composedWorldStateTransaction, accountHash, slotHash, storage);
       return this;
     }
@@ -472,7 +467,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     @Override
     public synchronized void removeStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash) {
-      flatDbReaderStrategy.removeFlatAccountStorageValueByStorageSlotHash(
+      flatDbStrategy.removeFlatAccountStorageValueByStorageSlotHash(
           composedWorldStateTransaction, accountHash, slotHash);
     }
 
