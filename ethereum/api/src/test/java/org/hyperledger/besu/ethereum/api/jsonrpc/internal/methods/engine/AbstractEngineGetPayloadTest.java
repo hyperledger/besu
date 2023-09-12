@@ -85,7 +85,12 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
   protected static final BlockResultFactory factory = new BlockResultFactory();
   protected static final PayloadIdentifier mockPid =
       PayloadIdentifier.forPayloadParams(
-          Hash.ZERO, 1337L, Bytes32.random(), Address.fromHexString("0x42"), Optional.empty());
+          Hash.ZERO,
+          1337L,
+          Bytes32.random(),
+          Address.fromHexString("0x42"),
+          Optional.empty(),
+          Optional.empty());
   protected static final BlockHeader mockHeader =
       new BlockHeaderTestFixture().prevRandao(Bytes32.random()).buildHeader();
   private static final Block mockBlock =
@@ -147,7 +152,12 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
         resp(
             getMethodName(),
             PayloadIdentifier.forPayloadParams(
-                Hash.ZERO, 0L, Bytes32.random(), Address.fromHexString("0x42"), Optional.empty()));
+                Hash.ZERO,
+                0L,
+                Bytes32.random(),
+                Address.fromHexString("0x42"),
+                Optional.empty(),
+                Optional.empty()));
     assertThat(resp).isInstanceOf(JsonRpcErrorResponse.class);
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
