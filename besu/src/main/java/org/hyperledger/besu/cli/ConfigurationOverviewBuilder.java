@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli;
 
 import org.hyperledger.besu.BesuInfo;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.util.log.FramedLogMessage;
 import org.hyperledger.besu.util.platform.PlatformDetector;
 
@@ -47,7 +48,7 @@ public class ConfigurationOverviewBuilder {
   private Collection<String> engineApis;
   private String engineJwtFilePath;
   private boolean isHighSpec = false;
-  private boolean isLayeredTxPool = false;
+  private TransactionPoolConfiguration.Implementation txPoolImplementation;
   private Map<String, String> environment;
 
   /**
@@ -167,12 +168,14 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
-   * Sets experimental layered txpool enabled.
+   * Sets the txpool implementation in use.
    *
+   * @param implementation the txpool implementation
    * @return the builder
    */
-  public ConfigurationOverviewBuilder setLayeredTxPoolEnabled() {
-    isLayeredTxPool = true;
+  public ConfigurationOverviewBuilder setTxPoolImplementation(
+      final TransactionPoolConfiguration.Implementation implementation) {
+    txPoolImplementation = implementation;
     return this;
   }
 
@@ -251,9 +254,7 @@ public class ConfigurationOverviewBuilder {
       lines.add("Experimental high spec configuration enabled");
     }
 
-    if (isLayeredTxPool) {
-      lines.add("Experimental layered transaction pool configuration enabled");
-    }
+    lines.add("Using " + txPoolImplementation + " transaction pool implementation");
 
     lines.add("");
     lines.add("Host:");

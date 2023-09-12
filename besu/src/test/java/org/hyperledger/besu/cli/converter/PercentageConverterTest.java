@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 import org.hyperledger.besu.cli.converter.exception.PercentageConversionException;
+import org.hyperledger.besu.util.number.Percentage;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,9 +31,9 @@ public class PercentageConverterTest {
 
   @Test
   public void assertThatConvertHandlesProperlyAValidString() throws PercentageConversionException {
-    final int percentage = percentageConverter.convert("58");
+    final Percentage percentage = percentageConverter.convert("58");
     assertThat(percentage).isNotNull();
-    assertThat(percentage).isEqualTo(58);
+    assertThat(percentage.getValue()).isEqualTo(58);
   }
 
   @Test
