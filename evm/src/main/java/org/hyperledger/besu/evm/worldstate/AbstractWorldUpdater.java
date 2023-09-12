@@ -136,7 +136,8 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
    */
   @Override
   public WorldUpdater updater() {
-    return new StackedUpdater<>(this);
+    return new JournaledUpdater<>(this);
+    //    return new StackedUpdater<>(this);
   }
 
   /**
@@ -150,8 +151,8 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   @Override
   public Optional<WorldUpdater> parentUpdater() {
-    if (world instanceof WorldUpdater) {
-      return Optional.of((WorldUpdater) world);
+    if (world instanceof WorldUpdater worldUpdater) {
+      return Optional.of(worldUpdater);
     } else {
       return Optional.empty();
     }

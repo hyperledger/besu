@@ -109,6 +109,7 @@ public class StackedUpdater<W extends WorldView, A extends Account>
   }
 
   /** Mark transaction boundary. */
+  @Override
   public void markTransactionBoundary() {
     getUpdatedAccounts().forEach(UpdateTrackingAccount::markTransactionBoundary);
   }

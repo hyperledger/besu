@@ -44,6 +44,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
 import com.google.common.collect.ForwardingMap;
@@ -176,17 +177,15 @@ public class BonsaiWorldStateUpdateAccumulator
       final BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
       if (bonsaiValue == null) {
         final Account account;
-        if (wrappedWorldView() instanceof BonsaiWorldStateUpdateAccumulator) {
-          account =
-              ((BonsaiWorldStateUpdateAccumulator) wrappedWorldView())
-                  .loadAccount(address, bonsaiAccountFunction);
+        if (wrappedWorldView() instanceof BonsaiWorldStateUpdateAccumulator bonsaiAccumulator) {
+          account = bonsaiAccumulator.loadAccount(address, bonsaiAccountFunction);
         } else {
           account = wrappedWorldView().get(address);
         }
-        BonsaiAccount mutableAccount = null;
-        if (account instanceof BonsaiAccount) {
-          mutableAccount = new BonsaiAccount((BonsaiAccount) account, this, true);
-          accountsToUpdate.put(address, new BonsaiValue<>((BonsaiAccount) account, mutableAccount));
+
+        if (account instanceof BonsaiAccount bonsaiAccount) {
+          BonsaiAccount mutableAccount = new BonsaiAccount(bonsaiAccount, this, true);
+          accountsToUpdate.put(address, new BonsaiValue<>(bonsaiAccount, mutableAccount));
           return mutableAccount;
         } else {
           // add the empty read in accountsToUpdate
@@ -418,14 +417,13 @@ public class BonsaiWorldStateUpdateAccumulator
     }
     try {
       final Optional<UInt256> valueUInt =
-          (wrappedWorldView() instanceof BonsaiWorldState)
-              ? ((BonsaiWorldState) wrappedWorldView())
-                  .getStorageValueByStorageSlotKey(
-                      () ->
-                          Optional.ofNullable(loadAccount(address, BonsaiValue::getPrior))
-                              .map(BonsaiAccount::getStorageRoot),
-                      address,
-                      storageSlotKey)
+          (wrappedWorldView() instanceof BonsaiWorldState bonsaiWorldState)
+              ? bonsaiWorldState.getStorageValueByStorageSlotKey(
+                  () ->
+                      Optional.ofNullable(loadAccount(address, BonsaiValue::getPrior))
+                          .map(BonsaiAccount::getStorageRoot),
+                  address,
+                  storageSlotKey)
               : wrappedWorldView().getStorageValueByStorageSlotKey(address, storageSlotKey);
       storageToUpdate
           .computeIfAbsent(
@@ -495,53 +493,37 @@ public class BonsaiWorldStateUpdateAccumulator
   }
 
   public void rollForward(final TrieLog layer) {
-    layer.getAccountChanges().entrySet().stream()
+    layer
+        .getAccountChanges()
+        .forEach((key, value1) -> rollAccountChange(key, value1.getPrior(), value1.getUpdated()));
+    layer
+        .getCodeChanges()
+        .forEach((key, value1) -> rollCodeChange(key, value1.getPrior(), value1.getUpdated()));
+    layer
+        .getStorageChanges()
         .forEach(
-            entry ->
-                rollAccountChange(
-                    entry.getKey(), entry.getValue().getPrior(), entry.getValue().getUpdated()));
-    layer.getCodeChanges().entrySet().stream()
-        .forEach(
-            entry ->
-                rollCodeChange(
-                    entry.getKey(), entry.getValue().getPrior(), entry.getValue().getUpdated()));
-    layer.getStorageChanges().entrySet().stream()
-        .forEach(
-            entry ->
-                entry
-                    .getValue()
-                    .forEach(
-                        (storageSlotKey, value) ->
-                            rollStorageChange(
-                                entry.getKey(),
-                                storageSlotKey,
-                                value.getPrior(),
-                                value.getUpdated())));
+            (key, value1) ->
+                value1.forEach(
+                    (storageSlotKey, value) ->
+                        rollStorageChange(
+                            key, storageSlotKey, value.getPrior(), value.getUpdated())));
   }
 
   public void rollBack(final TrieLog layer) {
-    layer.getAccountChanges().entrySet().stream()
+    layer
+        .getAccountChanges()
+        .forEach((key, value1) -> rollAccountChange(key, value1.getUpdated(), value1.getPrior()));
+    layer
+        .getCodeChanges()
+        .forEach((key, value1) -> rollCodeChange(key, value1.getUpdated(), value1.getPrior()));
+    layer
+        .getStorageChanges()
         .forEach(
-            entry ->
-                rollAccountChange(
-                    entry.getKey(), entry.getValue().getUpdated(), entry.getValue().getPrior()));
-    layer.getCodeChanges().entrySet().stream()
-        .forEach(
-            entry ->
-                rollCodeChange(
-                    entry.getKey(), entry.getValue().getUpdated(), entry.getValue().getPrior()));
-    layer.getStorageChanges().entrySet().stream()
-        .forEach(
-            entry ->
-                entry
-                    .getValue()
-                    .forEach(
-                        (storageSlotKey, value) ->
-                            rollStorageChange(
-                                entry.getKey(),
-                                storageSlotKey,
-                                value.getUpdated(),
-                                value.getPrior())));
+            (key, value1) ->
+                value1.forEach(
+                    (storageSlotKey, value) ->
+                        rollStorageChange(
+                            key, storageSlotKey, value.getUpdated(), value.getPrior())));
   }
 
   private void rollAccountChange(
@@ -598,8 +580,7 @@ public class BonsaiWorldStateUpdateAccumulator
       final Address address, final BonsaiValue<BonsaiAccount> defaultValue) {
     try {
       final Account parentAccount = wrappedWorldView().get(address);
-      if (parentAccount instanceof BonsaiAccount) {
-        final BonsaiAccount account = (BonsaiAccount) parentAccount;
+      if (parentAccount instanceof BonsaiAccount account) {
         final BonsaiValue<BonsaiAccount> loadedAccountValue =
             new BonsaiValue<>(new BonsaiAccount(account), account);
         accountsToUpdate.put(address, loadedAccountValue);
@@ -634,7 +615,7 @@ public class BonsaiWorldStateUpdateAccumulator
     }
 
     if (codeValue == null) {
-      if ((expectedCode == null || expectedCode.size() == 0) && replacementCode != null) {
+      if ((expectedCode == null || expectedCode.isEmpty()) && replacementCode != null) {
         codeToUpdate.put(address, new BonsaiValue<>(null, replacementCode));
       } else {
         throw new IllegalStateException(
@@ -767,16 +748,17 @@ public class BonsaiWorldStateUpdateAccumulator
     codeToUpdate.clear();
     accountsToUpdate.clear();
     resetAccumulatorStateChanged();
-    super.reset();
+    updatedAccounts.clear();
+    deletedAccounts.clear();
   }
 
   public static class AccountConsumingMap<T> extends ForwardingMap<Address, T> {
 
-    private final ConcurrentHashMap<Address, T> accounts;
+    private final ConcurrentMap<Address, T> accounts;
     private final Consumer<T> consumer;
 
     public AccountConsumingMap(
-        final ConcurrentHashMap<Address, T> accounts, final Consumer<T> consumer) {
+        final ConcurrentMap<Address, T> accounts, final Consumer<T> consumer) {
       this.accounts = accounts;
       this.consumer = consumer;
     }
@@ -801,11 +783,11 @@ public class BonsaiWorldStateUpdateAccumulator
 
     private final Address address;
 
-    private final ConcurrentHashMap<K, T> storages;
+    private final ConcurrentMap<K, T> storages;
     private final Consumer<K> consumer;
 
     public StorageConsumingMap(
-        final Address address, final ConcurrentHashMap<K, T> storages, final Consumer<K> consumer) {
+        final Address address, final ConcurrentMap<K, T> storages, final Consumer<K> consumer) {
       this.address = address;
       this.storages = storages;
       this.consumer = consumer;

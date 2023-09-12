@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.worldstate.AbstractWorldUpdater;
 import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -114,7 +115,8 @@ public class TransactionTracer {
         .performActionWithBlock(
             blockHash,
             (body, header, blockchain, transactionProcessor, protocolSpec) -> {
-              WorldUpdater stackedUpdater = mutableWorldState.updater().updater();
+              WorldUpdater stackedUpdater =
+                  new StackedUpdater<>((AbstractWorldUpdater<?, ?>) mutableWorldState).updater();
               final List<String> traces = new ArrayList<>();
               final Wei blobGasPrice =
                   protocolSpec
@@ -125,7 +127,7 @@ public class TransactionTracer {
                               .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
                               .orElse(BlobGas.ZERO));
               for (int i = 0; i < body.getTransactions().size(); i++) {
-                ((StackedUpdater<?, ?>) stackedUpdater).markTransactionBoundary();
+                stackedUpdater.markTransactionBoundary();
                 final Transaction transaction = body.getTransactions().get(i);
                 if (selectedHash.isEmpty()
                     || selectedHash.filter(isEqual(transaction.getHash())).isPresent()) {

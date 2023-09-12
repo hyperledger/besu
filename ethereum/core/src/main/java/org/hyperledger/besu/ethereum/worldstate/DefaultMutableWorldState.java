@@ -33,7 +33,6 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -41,7 +40,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -77,11 +75,10 @@ public class DefaultMutableWorldState implements MutableWorldState {
     // TODO: this is an abstraction leak (and kind of incorrect in that we reuse the underlying
     // storage), but the reason for this is that the accounts() method is unimplemented below and
     // can't be until NC-754.
-    if (!(worldState instanceof DefaultMutableWorldState)) {
+    if (!(worldState instanceof DefaultMutableWorldState other)) {
       throw new UnsupportedOperationException();
     }
 
-    final DefaultMutableWorldState other = (DefaultMutableWorldState) worldState;
     this.worldStateStorage = other.worldStateStorage;
     this.preimageStorage = other.preimageStorage;
     this.accountStateTrie = newAccountStateTrie(other.accountStateTrie.getRootHash());
@@ -158,11 +155,10 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
   @Override
   public final boolean equals(final Object other) {
-    if (!(other instanceof DefaultMutableWorldState)) {
+    if (!(other instanceof DefaultMutableWorldState that)) {
       return false;
     }
 
-    final DefaultMutableWorldState that = (DefaultMutableWorldState) other;
     return this.rootHash().equals(that.rootHash());
   }
 
@@ -323,14 +319,24 @@ public class DefaultMutableWorldState implements MutableWorldState {
 
     @Override
     public String toString() {
-      final StringBuilder builder = new StringBuilder();
-      builder.append("AccountState").append("{");
-      builder.append("address=").append(getAddress()).append(", ");
-      builder.append("nonce=").append(getNonce()).append(", ");
-      builder.append("balance=").append(getBalance()).append(", ");
-      builder.append("storageRoot=").append(getStorageRoot()).append(", ");
-      builder.append("codeHash=").append(getCodeHash()).append(", ");
-      return builder.append("}").toString();
+      return "AccountState"
+          + "{"
+          + "address="
+          + getAddress()
+          + ", "
+          + "nonce="
+          + getNonce()
+          + ", "
+          + "balance="
+          + getBalance()
+          + ", "
+          + "storageRoot="
+          + getStorageRoot()
+          + ", "
+          + "codeHash="
+          + getCodeHash()
+          + ", "
+          + "}";
     }
   }
 
@@ -403,9 +409,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
                   : origin.storageTrie();
           wrapped.updatedStorageTries.put(updated.getAddress(), storageTrie);
           final TreeSet<Map.Entry<UInt256, UInt256>> entries =
-              new TreeSet<>(
-                  Comparator.comparing(
-                      (Function<Map.Entry<UInt256, UInt256>, UInt256>) Map.Entry::getKey));
+              new TreeSet<>(Map.Entry.comparingByKey());
           entries.addAll(updatedStorage.entrySet());
 
           for (final Map.Entry<UInt256, UInt256> entry : entries) {

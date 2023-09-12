@@ -33,15 +33,15 @@ import javax.annotation.Nonnull;
  *
  * @param <V> The type of the collection.
  */
-public class UndoSet<V> implements Set<V>, UndoableCollection {
+public class UndoSet<V> implements Set<V>, Undoable {
 
   record UndoEntry<V>(V value, boolean add, long level) {
     static <V> UndoSet.UndoEntry<V> add(final V value) {
-      return new UndoEntry<>(value, true, UndoableCollection.incrementMarkStatic());
+      return new UndoEntry<>(value, true, Undoable.incrementMarkStatic());
     }
 
     static <V> UndoSet.UndoEntry<V> remove(final V value) {
-      return new UndoEntry<>(value, false, UndoableCollection.incrementMarkStatic());
+      return new UndoEntry<>(value, false, Undoable.incrementMarkStatic());
     }
   }
 
@@ -77,6 +77,11 @@ public class UndoSet<V> implements Set<V>, UndoableCollection {
       undoLog.remove(pos);
       pos--;
     }
+  }
+
+  @Override
+  public long lastUpdate() {
+    return undoLog.get(undoLog.size() - 1).level;
   }
 
   @Override
