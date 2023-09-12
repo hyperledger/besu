@@ -23,7 +23,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.bonsai.storage.flat.ArchiveFlatDbStrategy;
 import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
@@ -157,7 +156,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
   @Override
   public Optional<MutableWorldState> getMutable(
       final BlockHeader blockHeader, final boolean shouldPersistState) {
-    if (shouldPersistState) {
+    if (shouldPersistState && blockHeader.getNumber() % trieLogManager.getMaxLayersToLoad() == 0) {
       return getMutable(blockHeader.getStateRoot(), blockHeader.getHash());
     } else {
       // TODO this needs to be better integrated && ensure block is canonical
@@ -165,13 +164,13 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
       // flatDB
       // although, in practice we can only serve canonical chain worldstates and need to fall back
       // to state rolling if the requested block is a fork.
-      if (this.worldStateStorage.getFlatDbStrategy() instanceof ArchiveFlatDbStrategy
+      /*if (this.worldStateStorage.getFlatDbStrategy() instanceof ArchiveFlatDbStrategy
           && trieLogManager.getTrieLogLayer(blockHeader.getBlockHash()).isPresent()) {
 
         var contextSafeCopy = worldStateStorage.getContextSafeCopy();
         contextSafeCopy.getFlatDbStrategy().updateBlockContext(blockHeader);
         return Optional.of(new BonsaiWorldState(this, contextSafeCopy));
-      }
+      }*/
 
       final BlockHeader chainHeadBlockHeader = blockchain.getChainHeadHeader();
       if (chainHeadBlockHeader.getNumber() - blockHeader.getNumber()
@@ -179,7 +178,12 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
         LOG.warn(
             "Exceeded the limit of back layers that can be loaded ({})",
             trieLogManager.getMaxLayersToLoad());
-        return Optional.empty();
+        return trieLogManager
+            .getCheckpointedWorldState(blockHeader, blockchain::getBlockHeader)
+            .flatMap(
+                bonsaiWorldState ->
+                    rollMutableStateToBlockHash(bonsaiWorldState, blockHeader.getHash()))
+            .map(MutableWorldState::freeze);
       }
       return trieLogManager
           .getWorldState(blockHeader.getHash())

@@ -181,7 +181,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else {
       return composedWorldStateStorage
-          .get(TRIE_BRANCH_STORAGE, location.toArrayUnsafe())
+          .get(TRIE_BRANCH_STORAGE, nodeHash.toArrayUnsafe())
           .map(Bytes::wrap)
           .filter(b -> Hash.hash(b).equals(nodeHash));
     }
@@ -194,7 +194,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else {
       return composedWorldStateStorage
-          .get(TRIE_BRANCH_STORAGE, Bytes.concatenate(accountHash, location).toArrayUnsafe())
+          .get(TRIE_BRANCH_STORAGE, nodeHash.toArrayUnsafe())
           .map(Bytes::wrap)
           .filter(b -> Hash.hash(b).equals(nodeHash));
     }
@@ -416,7 +416,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     public WorldStateStorage.Updater saveWorldState(
         final Bytes blockHash, final Bytes32 nodeHash, final Bytes node) {
       composedWorldStateTransaction.put(
-          TRIE_BRANCH_STORAGE, Bytes.EMPTY.toArrayUnsafe(), node.toArrayUnsafe());
+          TRIE_BRANCH_STORAGE, nodeHash.toArrayUnsafe(), node.toArrayUnsafe());
       composedWorldStateTransaction.put(
           TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, nodeHash.toArrayUnsafe());
       composedWorldStateTransaction.put(
@@ -432,7 +432,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         return this;
       }
       composedWorldStateTransaction.put(
-          TRIE_BRANCH_STORAGE, location.toArrayUnsafe(), node.toArrayUnsafe());
+          TRIE_BRANCH_STORAGE, nodeHash.toArrayUnsafe(), node.toArrayUnsafe());
       return this;
     }
 
@@ -450,9 +450,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
         return this;
       }
       composedWorldStateTransaction.put(
-          TRIE_BRANCH_STORAGE,
-          Bytes.concatenate(accountHash, location).toArrayUnsafe(),
-          node.toArrayUnsafe());
+          TRIE_BRANCH_STORAGE, nodeHash.toArrayUnsafe(), node.toArrayUnsafe());
       return this;
     }
 

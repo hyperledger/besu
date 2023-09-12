@@ -100,6 +100,28 @@ public class BonsaiWorldState
 
   public BonsaiWorldState(
       final BonsaiWorldStateProvider archive,
+      final Hash worldStateRootHash,
+      final Hash worldStateBlockHash,
+      final BonsaiWorldStateKeyValueStorage worldStateStorage) {
+    this.archive = archive;
+    this.worldStateStorage = worldStateStorage;
+    this.worldStateRootHash = worldStateRootHash;
+    this.worldStateBlockHash = worldStateBlockHash;
+    accumulator =
+        new BonsaiWorldStateUpdateAccumulator(
+            this,
+            (addr, value) ->
+                archive
+                    .getCachedMerkleTrieLoader()
+                    .preLoadAccount(getWorldStateStorage(), worldStateRootHash, addr),
+            (addr, value) ->
+                archive
+                    .getCachedMerkleTrieLoader()
+                    .preLoadStorageSlot(getWorldStateStorage(), addr, value));
+  }
+
+  public BonsaiWorldState(
+      final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final BonsaiWorldStateUpdateAccumulator updater) {
     this.archive = archive;

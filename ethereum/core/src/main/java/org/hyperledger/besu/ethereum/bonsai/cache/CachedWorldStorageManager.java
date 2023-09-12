@@ -204,6 +204,40 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
   }
 
   @Override
+  public Optional<BonsaiWorldState> getCheckpointedWorldState(
+      final BlockHeader blockHeader,
+      final Function<Long, Optional<BlockHeader>> checkpointedBlockHeaderFunction) {
+
+    LOG.atDebug().setMessage("getting checkpointed worldstate").log();
+
+    final long nearestCheckpointedWorldState =
+        Math.abs(blockHeader.getNumber() / getMaxLayersToLoad()) * getMaxLayersToLoad();
+    return checkpointedBlockHeaderFunction
+        .apply(nearestCheckpointedWorldState)
+        .flatMap(
+            checkpointedBlockHeader ->
+                rootWorldStateStorage
+                    .getTrieNodeUnsafe(checkpointedBlockHeader.getStateRoot())
+                    .flatMap(
+                        __ -> {
+                          addCachedLayer(
+                              blockHeader,
+                              blockHeader.getStateRoot(),
+                              new BonsaiWorldState(
+                                  archive,
+                                  checkpointedBlockHeader.getStateRoot(),
+                                  checkpointedBlockHeader.getBlockHash(),
+                                  rootWorldStateStorage));
+                          LOG.atDebug()
+                              .setMessage("found checkpointed worldstate {} for block {}")
+                              .addArgument(checkpointedBlockHeader.getNumber())
+                              .addArgument(blockHeader.getNumber())
+                              .log();
+                          return getWorldState(blockHeader.getHash());
+                        }));
+  }
+
+  @Override
   public void reset() {
     this.cachedWorldStatesByHash.clear();
   }
