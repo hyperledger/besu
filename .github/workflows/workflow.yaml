@@ -3,8 +3,10 @@ name: CI
 on:
   push:
     branches:
-      - main
+      - zkbesu
   pull_request:
+    branches:
+      - zkbesu
 
 jobs:
   all:
