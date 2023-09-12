@@ -66,12 +66,15 @@ public class LayeredPendingTransactionsLondonTest
           transactionReplacementTester) {
 
     final var txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
+    final TransactionsLayer readyLayer =
+        new ReadyTransactions(
+            poolConfig, new EndLayer(txPoolMetrics), txPoolMetrics, transactionReplacementTester);
     return new LayeredPendingTransactions(
         poolConfig,
         new BaseFeePrioritizedTransactions(
             poolConfig,
             protocolContext.getBlockchain()::getChainHeadHeader,
-            new EndLayer(txPoolMetrics),
+            readyLayer,
             txPoolMetrics,
             transactionReplacementTester,
             FeeMarket.london(0L)));
