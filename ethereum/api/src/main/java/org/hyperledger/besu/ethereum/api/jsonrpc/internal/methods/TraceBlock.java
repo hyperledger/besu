@@ -199,6 +199,11 @@ public class TraceBlock extends AbstractBlockParameterMethod {
       this.worldState = worldState;
     }
 
+    public ChainUpdater(final MutableWorldState worldState, final WorldUpdater updater) {
+      this.worldState = worldState;
+      this.updater = updater;
+    }
+
     public WorldUpdater getNextUpdater() {
       // if we have no prior updater, it must be the first TX, so use the block's initial state
       if (updater == null) {
