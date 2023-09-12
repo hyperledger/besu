@@ -519,7 +519,12 @@ public abstract class CommandTestAbstract {
       return unstableEthProtocolOptions;
     }
 
-    public TransactionPoolOptions getTransactionPoolOptions() {
+    public org.hyperledger.besu.cli.options.stable.TransactionPoolOptions
+        getStableTransactionPoolOptions() {
+      return stableTransactionPoolOptions;
+    }
+
+    public TransactionPoolOptions getUnstableTransactionPoolOptions() {
       return unstableTransactionPoolOptions;
     }
 

@@ -104,4 +104,25 @@ public class OptionParserTest {
     final String expected = "-1233";
     assertThat(OptionParser.format(input)).isEqualTo(expected);
   }
+
+  @Test
+  public void format_object_int() {
+    final Object input = 1233;
+    final String expected = "1233";
+    assertThat(OptionParser.format(input)).isEqualTo(expected);
+  }
+
+  @Test
+  public void format_object_Integer() {
+    final Object input = Integer.valueOf(1233);
+    final String expected = "1233";
+    assertThat(OptionParser.format(input)).isEqualTo(expected);
+  }
+
+  @Test
+  public void format_object_uint256() {
+    final Object input = UInt256.valueOf(new BigInteger("123456789", 10));
+    final String expected = "123456789";
+    assertThat(OptionParser.format(input)).isEqualTo(expected);
+  }
 }
