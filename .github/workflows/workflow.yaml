@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - zkbesu
+  pull_request:
+    branches:
+      - zkbesu
+
+jobs:
+  all:
+    runs-on: ubuntu-22.04-16core
+    env:
+      architecture: "amd64"
+      GRADLE_OPTS: "-Xmx6g -Dorg.gradle.parallel=true"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: 'adopt'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/versions.gradle') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/versions.gradle') }}
+            ${{ runner.os }}-gradle-
+
+      - name: Spotless
+        run: ./gradlew clean spotlessCheck
+
+      - name: Test & Build
+        run: ./gradlew build
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: JUnit Tests            # Name of the check run which will be created
+          path: '**/test-results/test/*.xml'    # Path to test results
+          reporter: java-junit        # Format of test results
+          only-summary: true
+          max-annotations: 50
+
+      - name: Store distribution artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: distributions
+          path: build/distributions
+
+      - name: Check Dockerfile syntax
+        run: |
+          docker run --rm -i hadolint/hadolint < docker/openjdk-17/Dockerfile
+      - name: Build Docker Image
+        run: |
+          ./gradlew dockerDist
+
+      - name: Login to Docker Hub for self hosted
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USER_RW }}
+          password: ${{ secrets.DOCKER_PAT_RW }}
+
+      - name: Publish Docker Image
+        run: |
+          ./gradlew dockerUpload

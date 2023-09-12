@@ -60,8 +60,8 @@ import org.slf4j.LoggerFactory;
 
 /** The Merge besu controller builder. */
 public class MergeBesuControllerBuilder extends BesuControllerBuilder {
-  private final AtomicReference<SyncState> syncState = new AtomicReference<>();
   private static final Logger LOG = LoggerFactory.getLogger(MergeBesuControllerBuilder.class);
+  private final AtomicReference<SyncState> syncState = new AtomicReference<>();
 
   @Override
   protected MiningCoordinator createMiningCoordinator(
@@ -183,7 +183,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return MergeProtocolSchedule.create(
-        configOptionsSupplier.get(), privacyParameters, isRevertReasonEnabled);
+        configOptionsSupplier.get(), privacyParameters, isRevertReasonEnabled, lineaParameters);
   }
 
   @Override

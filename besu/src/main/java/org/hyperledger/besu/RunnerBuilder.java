@@ -74,6 +74,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.FlexiblePrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
@@ -792,6 +793,8 @@ public class RunnerBuilder {
 
     Optional<JsonRpcHttpService> jsonRpcHttpService = Optional.empty();
 
+    final LineaParameters lineaParameters = besuController.getLineaParameters();
+
     if (jsonRpcConfiguration.isEnabled()) {
       final Map<String, JsonRpcMethod> nonEngineMethods =
           jsonRpcMethods(
@@ -818,7 +821,8 @@ public class RunnerBuilder {
               natService,
               besuPluginContext.getNamedPlugins(),
               dataDir,
-              rpcEndpointServiceImpl);
+              rpcEndpointServiceImpl,
+              lineaParameters);
 
       jsonRpcHttpService =
           Optional.of(
@@ -861,7 +865,8 @@ public class RunnerBuilder {
               natService,
               besuPluginContext.getNamedPlugins(),
               dataDir,
-              rpcEndpointServiceImpl);
+              rpcEndpointServiceImpl,
+              lineaParameters);
 
       final Optional<AuthenticationService> authToUse =
           engineJsonRpcConfiguration.get().isAuthenticationEnabled()
@@ -953,7 +958,8 @@ public class RunnerBuilder {
               natService,
               besuPluginContext.getNamedPlugins(),
               dataDir,
-              rpcEndpointServiceImpl);
+              rpcEndpointServiceImpl,
+              lineaParameters);
 
       createLogsSubscriptionService(
           context.getBlockchain(),
@@ -1035,7 +1041,8 @@ public class RunnerBuilder {
               natService,
               besuPluginContext.getNamedPlugins(),
               dataDir,
-              rpcEndpointServiceImpl);
+              rpcEndpointServiceImpl,
+              lineaParameters);
 
       jsonRpcIpcService =
           Optional.of(
@@ -1201,7 +1208,8 @@ public class RunnerBuilder {
       final NatService natService,
       final Map<String, BesuPlugin> namedPlugins,
       final Path dataDir,
-      final RpcEndpointServiceImpl rpcEndpointServiceImpl) {
+      final RpcEndpointServiceImpl rpcEndpointServiceImpl,
+      final LineaParameters lineaParameters) {
     // sync vertx for engine consensus API, to process requests in FIFO order;
     final Vertx consensusEngineServer = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
 
@@ -1234,7 +1242,8 @@ public class RunnerBuilder {
                 besuController.getProtocolManager().ethContext().getEthPeers(),
                 consensusEngineServer,
                 rpcMaxLogsRange,
-                enodeDnsConfiguration);
+                enodeDnsConfiguration,
+                lineaParameters);
     methods.putAll(besuController.getAdditionalJsonRpcMethods(jsonRpcApis));
 
     final var pluginMethods =

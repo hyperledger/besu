@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -40,6 +41,7 @@ public class ProtocolScheduleBuilder {
   private final PrivacyParameters privacyParameters;
   private final boolean isRevertReasonEnabled;
   private final EvmConfiguration evmConfiguration;
+  private final LineaParameters lineaParameters;
   private final BadBlockManager badBlockManager = new BadBlockManager();
 
   private DefaultProtocolSchedule protocolSchedule;
@@ -57,7 +59,26 @@ public class ProtocolScheduleBuilder {
         protocolSpecAdapters,
         privacyParameters,
         isRevertReasonEnabled,
-        evmConfiguration);
+        evmConfiguration,
+        LineaParameters.DEFAULT);
+  }
+
+  public ProtocolScheduleBuilder(
+      final GenesisConfigOptions config,
+      final BigInteger defaultChainId,
+      final ProtocolSpecAdapters protocolSpecAdapters,
+      final PrivacyParameters privacyParameters,
+      final boolean isRevertReasonEnabled,
+      final EvmConfiguration evmConfiguration,
+      final LineaParameters lineaParameters) {
+    this(
+        config,
+        Optional.of(defaultChainId),
+        protocolSpecAdapters,
+        privacyParameters,
+        isRevertReasonEnabled,
+        evmConfiguration,
+        lineaParameters);
   }
 
   public ProtocolScheduleBuilder(
@@ -68,11 +89,28 @@ public class ProtocolScheduleBuilder {
       final EvmConfiguration evmConfiguration) {
     this(
         config,
+        protocolSpecAdapters,
+        privacyParameters,
+        isRevertReasonEnabled,
+        evmConfiguration,
+        LineaParameters.DEFAULT);
+  }
+
+  public ProtocolScheduleBuilder(
+      final GenesisConfigOptions config,
+      final ProtocolSpecAdapters protocolSpecAdapters,
+      final PrivacyParameters privacyParameters,
+      final boolean isRevertReasonEnabled,
+      final EvmConfiguration evmConfiguration,
+      final LineaParameters lineaParameters) {
+    this(
+        config,
         Optional.empty(),
         protocolSpecAdapters,
         privacyParameters,
         isRevertReasonEnabled,
-        evmConfiguration);
+        evmConfiguration,
+        lineaParameters);
   }
 
   private ProtocolScheduleBuilder(
@@ -81,13 +119,15 @@ public class ProtocolScheduleBuilder {
       final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final LineaParameters lineaParameters) {
     this.config = config;
     this.protocolSpecAdapters = protocolSpecAdapters;
     this.privacyParameters = privacyParameters;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.evmConfiguration = evmConfiguration;
     this.defaultChainId = defaultChainId;
+    this.lineaParameters = lineaParameters;
   }
 
   public ProtocolSchedule createProtocolSchedule() {
@@ -205,7 +245,11 @@ public class ProtocolScheduleBuilder {
     if (config.getDaoForkBlock().isEmpty()) {
       validateClassicForkOrdering();
     } else {
-      validateEthereumForkOrdering();
+      if (config.getLineaBlockNumber().isEmpty()) {
+        validateEthereumForkOrdering();
+      } else {
+        validateLineaForkOrdering();
+      }
     }
   }
 
@@ -258,6 +302,32 @@ public class ProtocolScheduleBuilder {
     lastForkBlock = validateForkOrder("Thanos", config.getThanosBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Magneto", config.getMagnetoBlockNumber(), lastForkBlock);
     lastForkBlock = validateForkOrder("Mystique", config.getMystiqueBlockNumber(), lastForkBlock);
+    assert (lastForkBlock >= 0);
+  }
+
+  private void validateLineaForkOrdering() {
+    long lastForkBlock = 0;
+    lastForkBlock = validateForkOrder("Homestead", config.getHomesteadBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("DaoFork", config.getDaoForkBlock(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder(
+            "TangerineWhistle", config.getTangerineWhistleBlockNumber(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder("SpuriousDragon", config.getSpuriousDragonBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Byzantium", config.getByzantiumBlockNumber(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder("Constantinople", config.getConstantinopleBlockNumber(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder("Petersburg", config.getPetersburgBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Istanbul", config.getIstanbulBlockNumber(), lastForkBlock);
+    lastForkBlock =
+        validateForkOrder("MuirGlacier", config.getMuirGlacierBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Berlin", config.getBerlinBlockNumber(), lastForkBlock);
+    lastForkBlock = validateForkOrder("Linea", config.getLineaBlockNumber(), lastForkBlock);
+    if (config.getLineaOpcodesBlockNumber().isPresent()) {
+      lastForkBlock =
+          validateForkOrder("LineaOpcodes", config.getLineaOpcodesBlockNumber(), lastForkBlock);
+    }
     assert (lastForkBlock >= 0);
   }
 
@@ -329,7 +399,16 @@ public class ProtocolScheduleBuilder {
         blockNumberMilestone(config.getPhoenixBlockNumber(), specFactory.phoenixDefinition()),
         blockNumberMilestone(config.getThanosBlockNumber(), specFactory.thanosDefinition()),
         blockNumberMilestone(config.getMagnetoBlockNumber(), specFactory.magnetoDefinition()),
-        blockNumberMilestone(config.getMystiqueBlockNumber(), specFactory.mystiqueDefinition()));
+        blockNumberMilestone(config.getMystiqueBlockNumber(), specFactory.mystiqueDefinition()),
+
+        // Linea Milestones
+        blockNumberMilestone(
+            config.getLineaBlockNumber(), specFactory.lineaDefinition(config, lineaParameters)),
+
+        // Linea with the evm opcodes changes
+        blockNumberMilestone(
+            config.getLineaOpcodesBlockNumber(),
+            specFactory.lineaOpCodesDefinition(config, lineaParameters)));
   }
 
   private Optional<BuilderMapEntry> timestampMilestone(

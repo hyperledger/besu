@@ -139,7 +139,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     when(protocolContext.getWorldStateArchive().getMutable(any(), anyBoolean()))
         .thenReturn(Optional.of(worldState));
     when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
-    when(miningParameters.getMinTransactionGasPrice()).thenReturn(Wei.ONE);
+    when(miningParameters.getMinTransactionGasPrice()).thenReturn(getMinGasPrice());
 
     transactionPool = createTransactionPool();
   }
@@ -152,6 +152,10 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
   private Boolean isCancelled() {
     return false;
+  }
+
+  protected Wei getMinGasPrice() {
+    return Wei.ONE;
   }
 
   protected ProcessableBlockHeader createBlock(final long gasLimit) {

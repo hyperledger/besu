@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.linea.CalldataLimits;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.evm.EVM;
@@ -82,6 +83,8 @@ public class ProtocolSpec {
 
   private final boolean isPoS;
   private final boolean isReplayProtectionSupported;
+  private final CalldataLimits calldataLimits;
+
   /**
    * Creates a new protocol specification instance.
    *
@@ -114,6 +117,8 @@ public class ProtocolSpec {
    * @param isPoS indicates whether the current spec is PoS
    * @param isReplayProtectionSupported indicates whether the current spec supports replay
    *     protection
+   * @param calldataLimits max number of calldata bytes allowed in a single transaction and in the
+   *     block
    */
   public ProtocolSpec(
       final String name,
@@ -143,7 +148,8 @@ public class ProtocolSpec {
       final Optional<WithdrawalsProcessor> withdrawalsProcessor,
       final DepositsValidator depositsValidator,
       final boolean isPoS,
-      final boolean isReplayProtectionSupported) {
+      final boolean isReplayProtectionSupported,
+      final CalldataLimits calldataLimits) {
     this.name = name;
     this.evm = evm;
     this.transactionValidatorFactory = transactionValidatorFactory;
@@ -172,6 +178,7 @@ public class ProtocolSpec {
     this.depositsValidator = depositsValidator;
     this.isPoS = isPoS;
     this.isReplayProtectionSupported = isReplayProtectionSupported;
+    this.calldataLimits = calldataLimits;
   }
 
   /**
@@ -391,5 +398,9 @@ public class ProtocolSpec {
    */
   public boolean isPoS() {
     return isPoS;
+  }
+
+  public CalldataLimits getCalldataLimits() {
+    return calldataLimits;
   }
 }

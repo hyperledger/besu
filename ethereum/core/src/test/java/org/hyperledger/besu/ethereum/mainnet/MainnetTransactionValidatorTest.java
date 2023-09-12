@@ -70,12 +70,12 @@ public class MainnetTransactionValidatorTest {
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
-  private static final KeyPair senderKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
+  protected static final KeyPair senderKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
 
   private static final TransactionValidationParams transactionValidationParams =
       processingBlockParams;
 
-  @Mock private GasCalculator gasCalculator;
+  @Mock protected GasCalculator gasCalculator;
 
   private final Transaction basicTransaction =
       new TransactionTestFixture()

@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.linea.LineaParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -77,6 +78,7 @@ public class BesuController implements java.io.Closeable {
   private final SyncState syncState;
   private final EthPeers ethPeers;
   private final StorageProvider storageProvider;
+  private final LineaParameters lineaParameters;
 
   /**
    * Instantiates a new Besu controller.
@@ -114,7 +116,8 @@ public class BesuController implements java.io.Closeable {
       final List<Closeable> closeables,
       final PluginServiceFactory additionalPluginServices,
       final EthPeers ethPeers,
-      final StorageProvider storageProvider) {
+      final StorageProvider storageProvider,
+      final LineaParameters lineaParameters) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
@@ -132,6 +135,7 @@ public class BesuController implements java.io.Closeable {
     this.additionalPluginServices = additionalPluginServices;
     this.ethPeers = ethPeers;
     this.storageProvider = storageProvider;
+    this.lineaParameters = lineaParameters;
   }
 
   /**
@@ -293,6 +297,15 @@ public class BesuController implements java.io.Closeable {
     return additionalPluginServices;
   }
 
+  /**
+   * Gets linea-specific parameters
+   *
+   * @return configured LineaParameters
+   */
+  public LineaParameters getLineaParameters() {
+    return lineaParameters;
+  }
+
   /** The type Builder. */
   public static class Builder {
 
@@ -364,7 +377,8 @@ public class BesuController implements java.io.Closeable {
       // wrap with TransitionBesuControllerBuilder if we have a terminal total difficulty:
       if (configOptions.getTerminalTotalDifficulty().isPresent()) {
         // Enable start with vanilla MergeBesuControllerBuilder for PoS checkpoint block
-        if (isCheckpointSync(syncMode) && isCheckpointPoSBlock(configOptions)) {
+        if ((isCheckpointSync(syncMode) && isCheckpointPoSBlock(configOptions))
+            || configOptions.getLineaBlockNumber().isPresent()) {
           return new MergeBesuControllerBuilder().genesisConfigFile(genesisConfig);
         } else {
           // TODO this should be changed to vanilla MergeBesuControllerBuilder and the Transition*

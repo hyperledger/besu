@@ -117,6 +117,9 @@ import org.hyperledger.besu.evm.operation.TLoadOperation;
 import org.hyperledger.besu.evm.operation.TStoreOperation;
 import org.hyperledger.besu.evm.operation.TimestampOperation;
 import org.hyperledger.besu.evm.operation.XorOperation;
+import org.hyperledger.besu.evm.operation.linea.BlockHashNumberOperation;
+import org.hyperledger.besu.evm.operation.linea.ZeroBaseFeeOperation;
+import org.hyperledger.besu.evm.operation.linea.ZeroPrevRanDaoOperation;
 
 import java.math.BigInteger;
 
@@ -776,6 +779,56 @@ public class MainnetEVMs {
     registry.put(new Push0Operation(gasCalculator));
     registry.put(new CreateOperation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
     registry.put(new Create2Operation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
+  }
+
+  /**
+   * Linea evm.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM linea(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(
+        lineaOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.LINEA);
+  }
+
+  /**
+   * linea operations registry.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @return the operation registry
+   */
+  public static OperationRegistry lineaOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry operationRegistry = new OperationRegistry();
+    registerLineaOperations(operationRegistry, gasCalculator, chainId);
+    return operationRegistry;
+  }
+
+  /**
+   * Register Linea operations.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   * @param chainID the chain id
+   */
+  public static void registerLineaOperations(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
+    registerLondonOperations(registry, gasCalculator, chainID);
+    registry.put(new ZeroPrevRanDaoOperation(gasCalculator));
+    registry.put(new ZeroBaseFeeOperation(gasCalculator));
+    registry.put(new BlockHashNumberOperation(gasCalculator));
   }
 
   /**
