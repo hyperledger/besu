@@ -53,7 +53,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class LogRollingTests {
+class LogRollingTests {
 
   private BonsaiWorldStateProvider archive;
 
@@ -126,7 +126,7 @@ public class LogRollingTests {
           new MainnetBlockHeaderFunctions());
 
   @BeforeEach
-  public void createStorage() {
+  void createStorage() {
     provider = new InMemoryKeyValueStorageProvider();
     final CachedMerkleTrieLoader cachedMerkleTrieLoader =
         new CachedMerkleTrieLoader(new NoOpMetricsSystem());
@@ -167,15 +167,14 @@ public class LogRollingTests {
   }
 
   @Test
-  public void simpleRollForwardTest() {
+  void simpleRollForwardTest() {
 
     final BonsaiWorldState worldState =
         new BonsaiWorldState(
             archive, new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()));
     final WorldUpdater updater = worldState.updater();
 
-    final MutableAccount mutableAccount =
-        updater.createAccount(addressOne, 1, Wei.of(1L)).getMutable();
+    final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
     mutableAccount.setCode(Bytes.of(0, 1, 2));
     mutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
     updater.commit();
@@ -210,14 +209,13 @@ public class LogRollingTests {
   }
 
   @Test
-  public void rollForwardTwice() {
+  void rollForwardTwice() {
     final BonsaiWorldState worldState =
         new BonsaiWorldState(
             archive, new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()));
 
     final WorldUpdater updater = worldState.updater();
-    final MutableAccount mutableAccount =
-        updater.createAccount(addressOne, 1, Wei.of(1L)).getMutable();
+    final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
     mutableAccount.setCode(Bytes.of(0, 1, 2));
     mutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
     updater.commit();
@@ -225,7 +223,7 @@ public class LogRollingTests {
     worldState.persist(headerOne);
 
     final WorldUpdater updater2 = worldState.updater();
-    final MutableAccount mutableAccount2 = updater2.getAccount(addressOne).getMutable();
+    final MutableAccount mutableAccount2 = updater2.getAccount(addressOne);
     mutableAccount2.setStorageValue(UInt256.ONE, UInt256.valueOf(2));
     updater2.commit();
 
@@ -261,14 +259,13 @@ public class LogRollingTests {
   }
 
   @Test
-  public void rollBackOnce() {
+  void rollBackOnce() {
     final BonsaiWorldState worldState =
         new BonsaiWorldState(
             archive, new BonsaiWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()));
 
     final WorldUpdater updater = worldState.updater();
-    final MutableAccount mutableAccount =
-        updater.createAccount(addressOne, 1, Wei.of(1L)).getMutable();
+    final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
     mutableAccount.setCode(Bytes.of(0, 1, 2));
     mutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
     updater.commit();
@@ -276,7 +273,7 @@ public class LogRollingTests {
     worldState.persist(headerOne);
 
     final WorldUpdater updater2 = worldState.updater();
-    final MutableAccount mutableAccount2 = updater2.getAccount(addressOne).getMutable();
+    final MutableAccount mutableAccount2 = updater2.getAccount(addressOne);
     mutableAccount2.setStorageValue(UInt256.ONE, UInt256.valueOf(2));
     updater2.commit();
 
@@ -296,7 +293,7 @@ public class LogRollingTests {
 
     final WorldUpdater secondUpdater = secondWorldState.updater();
     final MutableAccount secondMutableAccount =
-        secondUpdater.createAccount(addressOne, 1, Wei.of(1L)).getMutable();
+        secondUpdater.createAccount(addressOne, 1, Wei.of(1L));
     secondMutableAccount.setCode(Bytes.of(0, 1, 2));
     secondMutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
     secondUpdater.commit();
