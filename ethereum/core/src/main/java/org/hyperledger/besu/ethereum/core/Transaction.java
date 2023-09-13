@@ -35,7 +35,9 @@ import org.hyperledger.besu.datatypes.Sha256Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.encoding.AccessListTransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.BlobTransactionEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -126,7 +128,7 @@ public class Transaction
   }
 
   public static Transaction readFrom(final RLPInput rlpInput) {
-    return TransactionDecoder.decodeForWire(rlpInput);
+    return TransactionDecoder.decodeRLP(rlpInput, EncodingContext.BLOCK_BODY);
   }
 
   /**
@@ -613,7 +615,7 @@ public class Transaction
    * @param out the output to write the transaction to
    */
   public void writeTo(final RLPOutput out) {
-    TransactionEncoder.encodeForWire(this, out);
+    TransactionEncoder.encodeRLP(this, out, EncodingContext.BLOCK_BODY);
   }
 
   @Override
@@ -676,18 +678,17 @@ public class Transaction
   }
 
   private void memoizeHashAndSize() {
-    final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this);
+    final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.BLOCK_BODY);
     hash = Hash.hash(bytes);
-
     if (transactionType.supportsBlob()) {
       if (getBlobsWithCommitments().isPresent()) {
-        size = bytes.size();
+        final Bytes pooledBytes =
+            TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.POOLED_TRANSACTION);
+        size = pooledBytes.size();
         return;
       }
     }
-    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-    TransactionEncoder.encodeForWire(transactionType, bytes, rlpOutput);
-    size = rlpOutput.encodedSize();
+    size = bytes.size();
   }
 
   /**
@@ -968,7 +969,7 @@ public class Transaction
     rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
     rlpOutput.writeUInt256Scalar(value);
     rlpOutput.writeBytes(payload);
-    TransactionEncoder.writeAccessList(rlpOutput, accessList);
+    AccessListTransactionEncoder.writeAccessList(rlpOutput, accessList);
   }
 
   private static Bytes blobPreimage(
@@ -1019,7 +1020,7 @@ public class Transaction
         RLP.encode(
             rlpOutput -> {
               rlpOutput.startList();
-              TransactionEncoder.encodeAccessListInner(
+              AccessListTransactionEncoder.encodeAccessListInner(
                   chainId, nonce, gasPrice, gasLimit, to, value, payload, accessList, rlpOutput);
               rlpOutput.endList();
             });
