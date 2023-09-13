@@ -81,7 +81,7 @@ public class ReferenceTestWorldState extends DefaultMutableWorldState {
 
   static void insertAccount(
       final WorldUpdater updater, final Address address, final AccountMock toCopy) {
-    final MutableAccount account = updater.getOrCreate(address).getMutable();
+    final MutableAccount account = updater.getOrCreate(address);
     account.setNonce(toCopy.getNonce());
     account.setBalance(toCopy.getBalance());
     account.setCode(toCopy.getCode());
