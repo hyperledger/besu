@@ -156,7 +156,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
   @Override
   public Optional<MutableWorldState> getMutable(
       final BlockHeader blockHeader, final boolean shouldPersistState) {
-    if (shouldPersistState) {
+    if (shouldPersistState && blockHeader.getNumber() % trieLogManager.getMaxLayersToLoad() == 0) {
       return getMutable(blockHeader.getStateRoot(), blockHeader.getHash());
     } else {
       final BlockHeader chainHeadBlockHeader = blockchain.getChainHeadHeader();
@@ -165,7 +165,12 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
         LOG.warn(
             "Exceeded the limit of back layers that can be loaded ({})",
             trieLogManager.getMaxLayersToLoad());
-        return Optional.empty();
+        return trieLogManager
+            .getCheckpointedWorldState(blockHeader, blockchain::getBlockHeader)
+            .flatMap(
+                bonsaiWorldState ->
+                    rollMutableStateToBlockHash(bonsaiWorldState, blockHeader.getHash()))
+            .map(MutableWorldState::freeze);
       }
       return trieLogManager
           .getWorldState(blockHeader.getHash())

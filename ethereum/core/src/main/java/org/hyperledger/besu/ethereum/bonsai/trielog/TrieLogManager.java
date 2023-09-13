@@ -45,6 +45,10 @@ public interface TrieLogManager {
   Optional<BonsaiWorldState> getHeadWorldState(
       final Function<Hash, Optional<BlockHeader>> hashBlockHeaderFunction);
 
+  Optional<BonsaiWorldState> getCheckpointedWorldState(
+      final BlockHeader blockHeader,
+      final Function<Long, Optional<BlockHeader>> checkPointerBlockHeaderFunction);
+
   long getMaxLayersToLoad();
 
   void reset();
