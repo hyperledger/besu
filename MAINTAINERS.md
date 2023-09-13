@@ -23,7 +23,7 @@
 | Jason Frame      | jframe           | jframe           |
 | Joshua Fernandes | joshuafernandes  | joshuafernandes  |
 | Lucas Saldanha   | lucassaldanha    | lucassaldanha    |
-| Matthew Whitehead| matthew1001      | matthew1001      |
+| Matthew Whitehead| matthew1001      | matthew.whitehead      |
 | Sally MacFarlane | macfarla         | macfarla         |
 | Karim Taam       | matkt            | matkt            |
 | Meredith Baxter  | mbaxter          | mbaxter          |
