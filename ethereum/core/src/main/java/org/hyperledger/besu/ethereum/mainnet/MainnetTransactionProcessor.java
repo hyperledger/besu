@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -285,7 +284,7 @@ public class MainnetTransactionProcessor {
 
       final Address senderAddress = transaction.getSender();
 
-      final EvmAccount sender = worldState.getOrCreateSenderAccount(senderAddress);
+      final MutableAccount sender = worldState.getOrCreateSenderAccount(senderAddress);
 
       validationResult =
           transactionValidator.validateForSender(transaction, sender, transactionValidationParams);
@@ -294,8 +293,7 @@ public class MainnetTransactionProcessor {
         return TransactionProcessingResult.invalid(validationResult);
       }
 
-      final MutableAccount senderMutableAccount = sender.getMutable();
-      final long previousNonce = senderMutableAccount.incrementNonce();
+      final long previousNonce = sender.incrementNonce();
       LOG.trace(
           "Incremented sender {} nonce ({} -> {})",
           senderAddress,
@@ -309,7 +307,7 @@ public class MainnetTransactionProcessor {
 
       final Wei upfrontGasCost =
           transaction.getUpfrontGasCost(transactionGasPrice, blobGasPrice, blobGas);
-      final Wei previousBalance = senderMutableAccount.decrementBalance(upfrontGasCost);
+      final Wei previousBalance = sender.decrementBalance(upfrontGasCost);
       LOG.trace(
           "Deducted sender {} upfront gas cost {} ({} -> {})",
           senderAddress,
@@ -386,7 +384,7 @@ public class MainnetTransactionProcessor {
       final MessageFrame initialFrame;
       if (transaction.isContractCreation()) {
         final Address contractAddress =
-            Address.contractAddress(senderAddress, senderMutableAccount.getNonce() - 1L);
+            Address.contractAddress(senderAddress, sender.getNonce() - 1L);
 
         final Bytes initCodeBytes = transaction.getPayload();
         initialFrame =
@@ -443,7 +441,7 @@ public class MainnetTransactionProcessor {
       final long refundedGas = refunded(transaction, initialFrame.getRemainingGas(), baseRefundGas);
       final Wei refundedWei = transactionGasPrice.multiply(refundedGas);
       final Wei balancePriorToRefund = sender.getBalance();
-      senderMutableAccount.incrementBalance(refundedWei);
+      sender.incrementBalance(refundedWei);
       LOG.atTrace()
           .setMessage("refunded sender {}  {} wei ({} -> {})")
           .addArgument(senderAddress)
@@ -454,7 +452,7 @@ public class MainnetTransactionProcessor {
       final long gasUsedByTransaction = transaction.getGasLimit() - initialFrame.getRemainingGas();
 
       // update the coinbase
-      final var coinbase = worldState.getOrCreate(miningBeneficiary).getMutable();
+      final var coinbase = worldState.getOrCreate(miningBeneficiary);
       final long usedGas = transaction.getGasLimit() - refundedGas;
       final CoinbaseFeePriceCalculator coinbaseCalculator;
       if (blockHeader.getBaseFee().isPresent()) {
