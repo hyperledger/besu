@@ -114,6 +114,12 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
           .map(StateTrieAccountValue::readFrom)
           .filter(
               stateTrieAccountValue ->
+                  // We need to ensure that the accounts to be healed do not have empty storage.
+                  // Therefore, it is unnecessary to create trie heal requests for storage in this
+                  // case.
+                  // If we were to do so, we would be attempting to request storage that does not
+                  // exist from our peers,
+                  // which would cause sync issues.
                   !stateTrieAccountValue.getStorageRoot().equals(MerkleTrie.EMPTY_TRIE_NODE_HASH))
           .ifPresent(
               stateTrieAccountValue -> {
