@@ -124,8 +124,10 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
 
   @Override
   public boolean enable() {
-    // Return true if we're already running, or successfully switch to running
-    if (state.get() == State.RUNNING || state.compareAndSet(State.PAUSED, State.IDLE)) {
+    // Return true if we're already running or idle, or successfully switch to idle
+    if (state.get() == State.RUNNING
+        || state.get() == State.IDLE
+        || state.compareAndSet(State.PAUSED, State.IDLE)) {
       return true;
     }
     return false;
