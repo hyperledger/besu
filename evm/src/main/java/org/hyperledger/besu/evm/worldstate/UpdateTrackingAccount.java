@@ -24,7 +24,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
-import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.Map;
@@ -47,11 +46,13 @@ import org.apache.tuweni.units.bigints.UInt256;
  *
  * @param <A> the type parameter
  */
-public class UpdateTrackingAccount<A extends Account> implements MutableAccount, EvmAccount {
+public class UpdateTrackingAccount<A extends Account> implements MutableAccount {
   private final Address address;
   private final Hash addressHash;
 
   @Nullable private A account; // null if this is a new account.
+
+  private boolean immutable;
 
   private long nonce;
   private Wei balance;
@@ -172,6 +173,9 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
 
   @Override
   public void setNonce(final long value) {
+    if (immutable) {
+      throw new ModificationNotAllowedException();
+    }
     this.nonce = value;
   }
 
@@ -182,6 +186,9 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
 
   @Override
   public void setBalance(final Wei value) {
+    if (immutable) {
+      throw new ModificationNotAllowedException();
+    }
     this.balance = value;
   }
 
@@ -214,6 +221,9 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
 
   @Override
   public void setCode(final Bytes code) {
+    if (immutable) {
+      throw new ModificationNotAllowedException();
+    }
     this.updatedCode = code;
     this.updatedCodeHash = null;
   }
@@ -271,13 +281,24 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
 
   @Override
   public void setStorageValue(final UInt256 key, final UInt256 value) {
+    if (immutable) {
+      throw new ModificationNotAllowedException();
+    }
     updatedStorage.put(key, value);
   }
 
   @Override
   public void clearStorage() {
+    if (immutable) {
+      throw new ModificationNotAllowedException();
+    }
     storageWasCleared = true;
     updatedStorage.clear();
+  }
+
+  @Override
+  public void becomeImmutable() {
+    immutable = true;
   }
 
   /**
@@ -307,10 +328,5 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount,
     return String.format(
         "%s -> {nonce: %s, balance:%s, code:%s, storage:%s }",
         address, nonce, balance, updatedCode == null ? "[not updated]" : updatedCode, storage);
-  }
-
-  @Override
-  public MutableAccount getMutable() throws ModificationNotAllowedException {
-    return this;
   }
 }

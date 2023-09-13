@@ -27,10 +27,9 @@ import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStor
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.EvmAccount;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.AbstractWorldUpdater;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
-import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogAccumulator;
 
@@ -116,12 +115,12 @@ public class BonsaiWorldStateUpdateAccumulator
   }
 
   @Override
-  public EvmAccount getAccount(final Address address) {
+  public MutableAccount getAccount(final Address address) {
     return super.getAccount(address);
   }
 
   @Override
-  public EvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
+  public MutableAccount createAccount(final Address address, final long nonce, final Wei balance) {
     BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
 
     if (bonsaiValue == null) {
@@ -142,7 +141,7 @@ public class BonsaiWorldStateUpdateAccumulator
             Hash.EMPTY,
             true);
     bonsaiValue.setUpdated(newAccount);
-    return new WrappedEvmAccount(track(new UpdateTrackingAccount<>(newAccount)));
+    return track(new UpdateTrackingAccount<>(newAccount));
   }
 
   @Override
@@ -177,12 +176,12 @@ public class BonsaiWorldStateUpdateAccumulator
       final BonsaiValue<BonsaiAccount> bonsaiValue = accountsToUpdate.get(address);
       if (bonsaiValue == null) {
         final Account account;
-        if (wrappedWorldView() instanceof BonsaiWorldStateUpdateAccumulator bonsaiAccumulator) {
-          account = bonsaiAccumulator.loadAccount(address, bonsaiAccountFunction);
+        if (wrappedWorldView()
+            instanceof BonsaiWorldStateUpdateAccumulator bonsaiWorldStateUpdateAccumulator) {
+          account = bonsaiWorldStateUpdateAccumulator.loadAccount(address, bonsaiAccountFunction);
         } else {
           account = wrappedWorldView().get(address);
         }
-
         if (account instanceof BonsaiAccount bonsaiAccount) {
           BonsaiAccount mutableAccount = new BonsaiAccount(bonsaiAccount, this, true);
           accountsToUpdate.put(address, new BonsaiValue<>(bonsaiAccount, mutableAccount));
@@ -495,35 +494,41 @@ public class BonsaiWorldStateUpdateAccumulator
   public void rollForward(final TrieLog layer) {
     layer
         .getAccountChanges()
-        .forEach((key, value1) -> rollAccountChange(key, value1.getPrior(), value1.getUpdated()));
+        .forEach(
+            (address, change) ->
+                rollAccountChange(address, change.getPrior(), change.getUpdated()));
     layer
         .getCodeChanges()
-        .forEach((key, value1) -> rollCodeChange(key, value1.getPrior(), value1.getUpdated()));
+        .forEach(
+            (address, change) -> rollCodeChange(address, change.getPrior(), change.getUpdated()));
     layer
         .getStorageChanges()
         .forEach(
-            (key, value1) ->
-                value1.forEach(
+            (address, storage) ->
+                storage.forEach(
                     (storageSlotKey, value) ->
                         rollStorageChange(
-                            key, storageSlotKey, value.getPrior(), value.getUpdated())));
+                            address, storageSlotKey, value.getPrior(), value.getUpdated())));
   }
 
   public void rollBack(final TrieLog layer) {
     layer
         .getAccountChanges()
-        .forEach((key, value1) -> rollAccountChange(key, value1.getUpdated(), value1.getPrior()));
+        .forEach(
+            (address, change) ->
+                rollAccountChange(address, change.getUpdated(), change.getPrior()));
     layer
         .getCodeChanges()
-        .forEach((key, value1) -> rollCodeChange(key, value1.getUpdated(), value1.getPrior()));
+        .forEach(
+            (address, change) -> rollCodeChange(address, change.getUpdated(), change.getPrior()));
     layer
         .getStorageChanges()
         .forEach(
-            (key, value1) ->
-                value1.forEach(
+            (address, storage) ->
+                storage.forEach(
                     (storageSlotKey, value) ->
                         rollStorageChange(
-                            key, storageSlotKey, value.getUpdated(), value.getPrior())));
+                            address, storageSlotKey, value.getUpdated(), value.getPrior())));
   }
 
   private void rollAccountChange(

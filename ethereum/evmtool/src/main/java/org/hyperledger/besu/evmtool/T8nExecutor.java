@@ -354,7 +354,6 @@ public class T8nExecutor {
               : Wei.of(Long.decode(rewardString));
       worldStateUpdater
           .getOrCreateSenderAccount(blockHeader.getCoinbase())
-          .getMutable()
           .incrementBalance(reward);
     }
 

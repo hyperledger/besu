@@ -19,7 +19,6 @@ import org.hyperledger.besu.collections.undo.UndoSet;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.ArrayList;
@@ -36,7 +35,7 @@ import java.util.Optional;
 public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
 
   final WorldUpdater parentWorld;
-  final AbstractWorldUpdater<W, ? extends EvmAccount> rootWorld;
+  final AbstractWorldUpdater<W, ? extends MutableAccount> rootWorld;
   final UndoMap<Address, JournaledAccount> accounts;
   final UndoSet<Address> deleted;
   final long undoMark;
@@ -57,7 +56,7 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     } else if (world instanceof AbstractWorldUpdater<?, ?>) {
       accounts = new UndoMap<>(new HashMap<>());
       deleted = UndoSet.of(new HashSet<>());
-      rootWorld = (AbstractWorldUpdater<W, ? extends EvmAccount>) world;
+      rootWorld = (AbstractWorldUpdater<W, ? extends MutableAccount>) world;
     } else {
       throw new IllegalArgumentException(
           "WorldUpdater must be a JournaledWorldUpdater or an AbstractWorldUpdater");
@@ -65,12 +64,12 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     undoMark = accounts.mark();
   }
 
-  protected EvmAccount getForMutation(final Address address) {
+  protected MutableAccount getForMutation(final Address address) {
     final JournaledAccount wrappedTracker = accounts.get(address);
     if (wrappedTracker != null) {
-      return wrappedTracker.getWrappedAccount();
+      return wrappedTracker;
     }
-    final EvmAccount account = rootWorld.getForMutation(address);
+    final MutableAccount account = rootWorld.getForMutation(address);
     return account == null ? null : new UpdateTrackingAccount<>(account);
   }
 
@@ -115,7 +114,7 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   }
 
   @Override
-  public EvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
+  public MutableAccount createAccount(final Address address, final long nonce, final Wei balance) {
     JournaledAccount journaledAccount =
         new JournaledAccount(rootWorld.createAccount(address, nonce, balance));
     accounts.put(address, journaledAccount);
@@ -123,7 +122,7 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   }
 
   @Override
-  public EvmAccount getAccount(final Address address) {
+  public MutableAccount getAccount(final Address address) {
     // We may have updated it already, so check that first.
     final JournaledAccount existing = accounts.get(address);
     if (existing != null) {
@@ -134,7 +133,7 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     }
 
     // Otherwise, get it from our wrapped view and create a new update tracker.
-    final EvmAccount origin = rootWorld.getAccount(address);
+    final MutableAccount origin = rootWorld.getAccount(address);
     if (origin == null) {
       return null;
     } else {

@@ -14,43 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import org.hyperledger.besu.datatypes.VersionedHash;
+import static org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder.writeSignatureAndV;
+
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-import java.util.List;
-
 import org.apache.tuweni.bytes.Bytes;
 
-public class BlobTransactionEncoder {
-
+public class FrontierTransactionEncoder {
   public static void encode(final Transaction transaction, final RLPOutput out) {
     out.startList();
-    out.writeBigIntegerScalar(transaction.getChainId().orElseThrow());
     out.writeLongScalar(transaction.getNonce());
-    out.writeUInt256Scalar(transaction.getMaxPriorityFeePerGas().orElseThrow());
-    out.writeUInt256Scalar(transaction.getMaxFeePerGas().orElseThrow());
+    out.writeUInt256Scalar(transaction.getGasPrice().orElseThrow());
     out.writeLongScalar(transaction.getGasLimit());
     out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
     out.writeUInt256Scalar(transaction.getValue());
     out.writeBytes(transaction.getPayload());
-    AccessListTransactionEncoder.writeAccessList(out, transaction.getAccessList());
-    out.writeUInt256Scalar(transaction.getMaxFeePerBlobGas().orElseThrow());
-    out.startList();
-    transaction
-        .getVersionedHashes()
-        .get()
-        .forEach(
-            vh -> {
-              out.writeBytes(vh.toBytes());
-            });
+    writeSignatureAndV(transaction, out);
     out.endList();
-    TransactionEncoder.writeSignatureAndRecoveryId(transaction, out);
-    out.endList();
-  }
-
-  public static void writeBlobVersionedHashes(
-      final RLPOutput rlpOutput, final List<VersionedHash> versionedHashes) {
-    rlpOutput.writeList(versionedHashes, (h, out) -> out.writeBytes(h.toBytes()));
   }
 }

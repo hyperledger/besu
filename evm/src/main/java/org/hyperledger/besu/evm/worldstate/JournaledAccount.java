@@ -26,7 +26,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
-import org.hyperledger.besu.evm.account.EvmAccount;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.Map;
@@ -47,11 +47,11 @@ import org.apache.tuweni.units.bigints.UInt256;
  * the underlying trie node will have to be updated, and so knowing if the nonce and balance where
  * updated or not doesn't matter, we just need their new value).
  */
-public class JournaledAccount implements MutableAccount, EvmAccount, Undoable {
+public class JournaledAccount implements MutableAccount, Undoable {
   private final Address address;
   private final Hash addressHash;
 
-  @Nullable private EvmAccount account;
+  @Nullable private MutableAccount account;
 
   private long transactionBoundaryMark;
   private final UndoScalar<Long> nonce;
@@ -64,6 +64,8 @@ public class JournaledAccount implements MutableAccount, EvmAccount, Undoable {
   // deletion.
   private final UndoNavigableMap<UInt256, UInt256> updatedStorage;
   private boolean storageWasCleared = false;
+
+  boolean immutable;
 
   /**
    * Instantiates a new Update tracking account.
@@ -91,7 +93,7 @@ public class JournaledAccount implements MutableAccount, EvmAccount, Undoable {
    *
    * @param account the account
    */
-  public JournaledAccount(final EvmAccount account) {
+  public JournaledAccount(final MutableAccount account) {
     checkNotNull(account);
 
     this.address = account.getAddress();
@@ -131,7 +133,7 @@ public class JournaledAccount implements MutableAccount, EvmAccount, Undoable {
    * @return The original account over which this tracks updates, or {@code null} if this is a newly
    *     created account.
    */
-  public EvmAccount getWrappedAccount() {
+  public MutableAccount getWrappedAccount() {
     return account;
   }
 
@@ -140,7 +142,7 @@ public class JournaledAccount implements MutableAccount, EvmAccount, Undoable {
    *
    * @param account the account
    */
-  public void setWrappedAccount(final EvmAccount account) {
+  public void setWrappedAccount(final MutableAccount account) {
     if (this.account == null) {
       this.account = account;
       storageWasCleared = false;
@@ -170,6 +172,11 @@ public class JournaledAccount implements MutableAccount, EvmAccount, Undoable {
   }
 
   @Override
+  public void becomeImmutable() {
+    immutable = true;
+  }
+
+  @Override
   public Address getAddress() {
     return address;
   }
@@ -186,6 +193,9 @@ public class JournaledAccount implements MutableAccount, EvmAccount, Undoable {
 
   @Override
   public void setNonce(final long value) {
+    if (immutable) {
+      throw new ModificationNotAllowedException();
+    }
     nonce.set(value);
   }
 
@@ -196,6 +206,9 @@ public class JournaledAccount implements MutableAccount, EvmAccount, Undoable {
 
   @Override
   public void setBalance(final Wei value) {
+    if (immutable) {
+      throw new ModificationNotAllowedException();
+    }
     balance.set(value);
   }
 
@@ -215,6 +228,9 @@ public class JournaledAccount implements MutableAccount, EvmAccount, Undoable {
   }
 
   public void setDeleted(final boolean accountDeleted) {
+    if (immutable) {
+      throw new ModificationNotAllowedException();
+    }
     deleted.set(accountDeleted);
   }
 
@@ -224,6 +240,9 @@ public class JournaledAccount implements MutableAccount, EvmAccount, Undoable {
 
   @Override
   public void setCode(final Bytes code) {
+    if (immutable) {
+      throw new ModificationNotAllowedException();
+    }
     this.code.set(code == null ? Bytes.EMPTY : code);
     this.codeHash.set(code == null ? Hash.EMPTY : Hash.hash(code));
   }
@@ -275,11 +294,17 @@ public class JournaledAccount implements MutableAccount, EvmAccount, Undoable {
 
   @Override
   public void setStorageValue(final UInt256 key, final UInt256 value) {
+    if (immutable) {
+      throw new ModificationNotAllowedException();
+    }
     updatedStorage.put(key, value);
   }
 
   @Override
   public void clearStorage() {
+    if (immutable) {
+      throw new ModificationNotAllowedException();
+    }
     storageWasCleared = true;
     updatedStorage.clear();
   }
@@ -299,6 +324,9 @@ public class JournaledAccount implements MutableAccount, EvmAccount, Undoable {
    * @param storageWasCleared the storage was cleared
    */
   public void setStorageWasCleared(final boolean storageWasCleared) {
+    if (immutable) {
+      throw new ModificationNotAllowedException();
+    }
     this.storageWasCleared = storageWasCleared;
   }
 
@@ -315,11 +343,6 @@ public class JournaledAccount implements MutableAccount, EvmAccount, Undoable {
         balance,
         code.mark() >= transactionBoundaryMark ? "[not updated]" : code.get(),
         storage);
-  }
-
-  @Override
-  public MutableAccount getMutable() throws ModificationNotAllowedException {
-    return this;
   }
 
   @Override
@@ -343,19 +366,18 @@ public class JournaledAccount implements MutableAccount, EvmAccount, Undoable {
   }
 
   public void commit() {
-    MutableAccount mutableAccount = account.getMutable();
-    if (!(mutableAccount instanceof JournaledAccount)) {
+    if (!(account instanceof JournaledAccount)) {
       if (nonce.updated()) {
-        mutableAccount.setNonce(nonce.get());
+        account.setNonce(nonce.get());
       }
       if (balance.updated()) {
-        mutableAccount.setBalance(balance.get());
+        account.setBalance(balance.get());
       }
       if (code.updated()) {
-        mutableAccount.setCode(code.get() == null ? Bytes.EMPTY : code.get());
+        account.setCode(code.get() == null ? Bytes.EMPTY : code.get());
       }
       if (updatedStorage.updated()) {
-        updatedStorage.forEach(mutableAccount::setStorageValue);
+        updatedStorage.forEach(account::setStorageValue);
       }
     }
   }
