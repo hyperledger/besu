@@ -148,8 +148,8 @@ public class EvmToyCommand implements Runnable {
   @Override
   public void run() {
     final WorldUpdater worldUpdater = new ToyWorld();
-    worldUpdater.getOrCreate(sender).getMutable().setBalance(Wei.of(BigInteger.TWO.pow(20)));
-    worldUpdater.getOrCreate(receiver).getMutable().setCode(codeBytes);
+    worldUpdater.getOrCreate(sender).setBalance(Wei.of(BigInteger.TWO.pow(20)));
+    worldUpdater.getOrCreate(receiver).setCode(codeBytes);
 
     int repeat = this.repeat;
     final EVM evm = MainnetEVMs.berlin(EvmConfiguration.DEFAULT);
