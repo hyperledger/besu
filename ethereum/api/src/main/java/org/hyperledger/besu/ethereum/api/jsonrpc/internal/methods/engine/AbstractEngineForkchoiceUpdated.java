@@ -219,9 +219,14 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
       return false;
     }
     if (payloadAttributes.getTimestamp() < cancunTimestamp) {
-      LOG.warn("Payload attributes are present before cancun hardfork");
+      if (payloadAttributes.getParentBeaconBlockRoot() != null) {
+        LOG.error(
+            "Parent beacon block root hash present in payload attributes before cancun hardfork");
+        return false;
+      }
     } else if (payloadAttributes.getParentBeaconBlockRoot() == null) {
-      LOG.warn("Parent beacon block root not present in payload attributes after cancun hardfork");
+      LOG.error(
+          "Parent beacon block root hash not present in payload attributes after cancun hardfork");
       return false;
     }
     if (!getWithdrawalsValidator(
