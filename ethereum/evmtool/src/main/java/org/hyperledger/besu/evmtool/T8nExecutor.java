@@ -320,7 +320,9 @@ public class T8nExecutor {
         tracer.traceEndTransaction(
             worldStateUpdater,
             transaction,
+            result.isSuccessful(),
             result.getOutput(),
+            result.getLogs(),
             gasUsed - intrinsicGas,
             timer.elapsed(TimeUnit.NANOSECONDS));
         Bytes gasUsedInTransaction = Bytes.ofUnsignedLong(transactionGasUsed);

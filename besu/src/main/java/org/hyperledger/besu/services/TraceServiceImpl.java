@@ -189,7 +189,13 @@ public class TraceServiceImpl implements TraceService {
 
               long transactionGasUsed = transaction.getGasLimit() - result.getGasRemaining();
               tracer.traceEndTransaction(
-                  worldUpdater, transaction, result.getOutput(), transactionGasUsed, 0);
+                  worldUpdater,
+                  transaction,
+                  result.isSuccessful(),
+                  result.getOutput(),
+                  result.getLogs(),
+                  transactionGasUsed,
+                  0);
 
               results.add(result);
             });

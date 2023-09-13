@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 
@@ -221,7 +222,9 @@ public class StandardJsonTracer implements OperationTracer {
   public void traceEndTransaction(
       final WorldView _worldView,
       final Transaction _tx,
+      final boolean _status,
       final Bytes output,
+      final List<Log> _logs,
       final long gasUsed,
       final long timeNs) {
     final StringBuilder sb = new StringBuilder(1024);
