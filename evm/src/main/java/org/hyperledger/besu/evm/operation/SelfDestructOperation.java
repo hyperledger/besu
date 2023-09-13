@@ -75,10 +75,9 @@ public class SelfDestructOperation extends AbstractOperation {
     }
 
     // We passed preliminary checks, get mutable accounts.
-    final MutableAccount originatorAccount =
-        frame.getWorldUpdater().getAccount(originatorAddress).getMutable();
+    final MutableAccount originatorAccount = frame.getWorldUpdater().getAccount(originatorAddress);
     final MutableAccount beneficiaryAccount =
-        frame.getWorldUpdater().getOrCreate(beneficiaryAddress).getMutable();
+        frame.getWorldUpdater().getOrCreate(beneficiaryAddress);
 
     // Do the "sweep," all modes send all originator balance to the beneficiary account.
     originatorAccount.decrementBalance(originatorBalance);
