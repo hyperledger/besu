@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -33,7 +32,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class BlobTransactionEncodingTest {
-  private static Stream<Arguments> provideTypedTransactionBytes() throws IOException {
+  private static Stream<Arguments> provideOpaqueBytesNoBlobsWithCommitments() {
     return Stream.of(
         createArgument(
             "0x03f89d850120b996ed3685012a1a646085012a1a64608303345094ffb38a7a99e3e2335be83fc74b7faa19d55312418308a80280c085012a1a6460e1a00153a6a1e053cf4c5a09e84088ed8ad7cb53d76c8168f1b82f7cfebfcd06da1a01a007785223eec68459d72265f10bdb30ec3415252a63100605a03142fa211ebbe9a07dbbf9e081fa7b9a01202e4d9ee0e0e513f80efbbab6c784635429905389ce86"),
@@ -45,36 +44,44 @@ public class BlobTransactionEncodingTest {
             "0x03f897850120b996ed80840bebc200843b9aca078303345094c8d369b164361a8961286cfbab3bc10f962185a88080c08411e1a300e1a0011df88a2971c8a7ac494a7ba37ec1acaa1fc1edeeb38c839b5d1693d47b69b080a032f122f06e5802224db4c8a58fd22c75173a713f63f89936f811c144b9e40129a043a2a872cbfa5727007adf6a48febe5f190d2e4cd5ed6122823fb6ff47ecda32"));
   }
 
-  private static Stream<Arguments> provideTypedTransactionBytesForNetwork() throws IOException {
-    return Stream.of(createArgumentFromFile("blob1.txt"));
+  private static Stream<Arguments> provideOpaqueBytesForNetwork() throws IOException {
+    return Stream.of(createArgumentFromFile("blob2.txt"));
   }
 
   @ParameterizedTest(name = "{index} {0}")
-  @MethodSource("provideTypedTransactionBytesForNetwork")
+  @MethodSource("provideOpaqueBytesForNetwork")
   public void blobTransactionEncodingDecodingForNetWorkTest(
       final TypedTransactionBytesArgument argument) {
     Bytes bytes = argument.bytes;
     // Decode the transaction from the wire using the TransactionDecoder.
-    final Transaction transaction = TransactionDecoder.decodeForWire(RLP.input(bytes));
+    final Transaction transaction =
+        TransactionDecoder.decodeOpaqueBytes(bytes, EncodingContext.POOLED_TRANSACTION);
+
+    final BytesValueRLPOutput output = new BytesValueRLPOutput();
+    TransactionEncoder.encodeRLP(transaction.getType(), bytes, output);
 
     final BytesValueRLPOutput bytesValueRLPOutput = new BytesValueRLPOutput();
-    BlobTransactionEncoder.encodeForWireNetwork(transaction, bytesValueRLPOutput);
-    Bytes encodedRLP = bytesValueRLPOutput.encoded();
-    assertThat(encodedRLP.size()).isEqualTo(bytes.size());
-    assertThat(encodedRLP).isEqualTo(bytes);
+    TransactionEncoder.encodeRLP(
+        transaction, bytesValueRLPOutput, EncodingContext.POOLED_TRANSACTION);
+    assertThat(transaction.getSize()).isEqualTo(bytes.size());
   }
 
   @ParameterizedTest(name = "{index} {0}")
-  @MethodSource("provideTypedTransactionBytes")
+  @MethodSource("provideOpaqueBytesNoBlobsWithCommitments")
   public void blobTransactionEncodingDecodingTest(final TypedTransactionBytesArgument argument) {
     Bytes bytes = argument.bytes;
     // Decode the transaction from the wire using the TransactionDecoder.
-    final Transaction transaction = TransactionDecoder.decodeForWire(RLP.input(bytes));
-    final BytesValueRLPOutput output = new BytesValueRLPOutput();
+    final Transaction transaction =
+        TransactionDecoder.decodeOpaqueBytes(bytes, EncodingContext.BLOCK_BODY);
+
     // Encode the transaction for wire using the TransactionEncoder.
-    TransactionEncoder.encodeForWire(transaction, output);
+    Bytes encoded = TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY);
     // Assert that the encoded transaction matches the original bytes.
-    assertThat(output.encoded().toHexString()).isEqualTo(bytes.toHexString());
+    assertThat(encoded.toHexString()).isEqualTo(bytes.toHexString());
+
+    final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+    TransactionEncoder.encodeRLP(transaction.getType(), bytes, rlpOutput);
+    assertThat(transaction.getSize()).isEqualTo(bytes.size());
   }
 
   private static Arguments createArgumentFromFile(final String path) throws IOException {
@@ -96,9 +103,7 @@ public class BlobTransactionEncodingTest {
   }
 
   private static Arguments createArgument(final String hex) {
-    BytesValueRLPOutput out = new BytesValueRLPOutput();
-    out.writeBytes(Bytes.fromHexString(hex));
-    return Arguments.of(new TypedTransactionBytesArgument(out.encoded()));
+    return Arguments.of(new TypedTransactionBytesArgument(Bytes.fromHexString(hex)));
   }
 
   @SuppressWarnings("UnusedVariable")
