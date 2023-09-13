@@ -220,11 +220,13 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     }
     if (payloadAttributes.getTimestamp() < cancunTimestamp) {
       if (payloadAttributes.getParentBeaconBlockRoot() != null) {
-        LOG.error("Parent beacon block root hash present in payload attributes before cancun hardfork");
+        LOG.error(
+            "Parent beacon block root hash present in payload attributes before cancun hardfork");
         return false;
       }
     } else if (payloadAttributes.getParentBeaconBlockRoot() == null) {
-      LOG.error("Parent beacon block root hash not present in payload attributes after cancun hardfork");
+      LOG.error(
+          "Parent beacon block root hash not present in payload attributes after cancun hardfork");
       return false;
     }
     if (!getWithdrawalsValidator(
