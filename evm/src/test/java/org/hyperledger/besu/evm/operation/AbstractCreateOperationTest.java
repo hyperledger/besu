@@ -39,7 +39,6 @@ import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
 import java.util.Deque;
 import java.util.List;
@@ -52,10 +51,8 @@ import org.junit.jupiter.api.Test;
 class AbstractCreateOperationTest {
 
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
-  private final WrappedEvmAccount account = mock(WrappedEvmAccount.class);
-  private final WrappedEvmAccount newAccount = mock(WrappedEvmAccount.class);
-  private final MutableAccount mutableAccount = mock(MutableAccount.class);
-  private final MutableAccount newMutableAccount = mock(MutableAccount.class);
+  private final MutableAccount account = mock(MutableAccount.class);
+  private final MutableAccount newAccount = mock(MutableAccount.class);
   private final FakeCreateOperation operation =
       new FakeCreateOperation(new ConstantinopleGasCalculator(), Integer.MAX_VALUE);
 
@@ -169,15 +166,13 @@ class AbstractCreateOperationTest {
     messageFrame.expandMemory(0, 500);
     messageFrame.writeMemory(memoryOffset.trimLeadingZeros().toInt(), contract.size(), contract);
 
-    when(account.getMutable()).thenReturn(mutableAccount);
     when(account.getNonce()).thenReturn(55L);
-    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
+    when(account.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);
     when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
-    when(newAccount.getMutable()).thenReturn(newMutableAccount);
-    when(newMutableAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     operation.execute(messageFrame, evm);
