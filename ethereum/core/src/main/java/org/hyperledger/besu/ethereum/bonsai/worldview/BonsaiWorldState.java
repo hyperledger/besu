@@ -78,13 +78,23 @@ public class BonsaiWorldState
   public BonsaiWorldState(
       final BonsaiWorldStateProvider archive,
       final BonsaiWorldStateKeyValueStorage worldStateStorage) {
+    this(
+        archive,
+        Hash.wrap(
+            Bytes32.wrap(worldStateStorage.getWorldStateRootHash().orElse(Hash.EMPTY_TRIE_HASH))),
+        Hash.wrap(Bytes32.wrap(worldStateStorage.getWorldStateBlockHash().orElse(Hash.ZERO))),
+        worldStateStorage);
+  }
+
+  public BonsaiWorldState(
+      final BonsaiWorldStateProvider archive,
+      final Hash worldStateRootHash,
+      final Hash worldStateBlockHash,
+      final BonsaiWorldStateKeyValueStorage worldStateStorage) {
     this.archive = archive;
     this.worldStateStorage = worldStateStorage;
-    worldStateRootHash =
-        Hash.wrap(
-            Bytes32.wrap(worldStateStorage.getWorldStateRootHash().orElse(Hash.EMPTY_TRIE_HASH)));
-    worldStateBlockHash =
-        Hash.wrap(Bytes32.wrap(worldStateStorage.getWorldStateBlockHash().orElse(Hash.ZERO)));
+    this.worldStateRootHash = worldStateRootHash;
+    this.worldStateBlockHash = worldStateBlockHash;
     accumulator =
         new BonsaiWorldStateUpdateAccumulator(
             this,
