@@ -424,7 +424,8 @@ public class EthStatsService {
     final boolean isSyncing = syncState.isInSync();
     final long gasPrice = suggestGasPrice(blockchainQueries.getBlockchain().getChainHeadBlock());
     final long hashrate = miningCoordinator.hashesPerSecond().orElse(0L);
-    final int peersNumber = protocolManager.ethContext().getEthPeers().peerCount();
+    final long peersNumber =
+        protocolManager.ethContext().getEthPeers().streamAvailablePeers().count();
 
     final NodeStatsReport nodeStatsReport =
         ImmutableNodeStatsReport.builder()
