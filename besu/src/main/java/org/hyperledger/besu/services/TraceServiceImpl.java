@@ -174,13 +174,11 @@ public class TraceServiceImpl implements TraceService {
                               .orElse(BlobGas.ZERO));
 
               final WorldUpdater worldUpdater = chainUpdater.getNextUpdater();
-
               tracer.traceStartTransaction(worldUpdater, transaction);
-
               final TransactionProcessingResult result =
                   transactionProcessor.processTransaction(
                       blockchain,
-                      chainUpdater.getNextUpdater(),
+                      worldUpdater,
                       header,
                       transaction,
                       header.getCoinbase(),
@@ -191,7 +189,13 @@ public class TraceServiceImpl implements TraceService {
 
               long transactionGasUsed = transaction.getGasLimit() - result.getGasRemaining();
               tracer.traceEndTransaction(
-                  worldUpdater, transaction, result.getOutput(), transactionGasUsed, 0);
+                  worldUpdater,
+                  transaction,
+                  result.isSuccessful(),
+                  result.getOutput(),
+                  result.getLogs(),
+                  transactionGasUsed,
+                  0);
 
               results.add(result);
             });
