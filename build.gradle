@@ -522,7 +522,10 @@ applicationDefaultJvmArgs = [
   "--add-exports",
   "java.base/jdk.internal.misc=ALL-UNNAMED",
   "--add-opens",
-  "java.base/java.nio=ALL-UNNAMED"
+  "java.base/java.nio=ALL-UNNAMED",
+  "-XX:G1ConcRefinementThreads=2",
+  "-XX:G1HeapWastePercent=15",
+  "-XX:MaxGCPauseMillis=100"
 ]
 
 run {
