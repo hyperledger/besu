@@ -83,6 +83,17 @@ public interface KeyValueStorage extends Closeable {
   Stream<Pair<byte[], byte[]>> streamFromKey(final byte[] startKey);
 
   /**
+   * Returns a stream of key-value pairs starting from the specified key, ending at the specified
+   * key. This method is used to retrieve a stream of data from the storage, starting from the given
+   * key. If no data is available from the specified key onwards, an empty stream is returned.
+   *
+   * @param startKey The key from which the stream should start.
+   * @param endKey The key at which the stream should stop.
+   * @return A stream of key-value pairs starting from the specified key.
+   */
+  Stream<Pair<byte[], byte[]>> streamFromKey(final byte[] startKey, final byte[] endKey);
+
+  /**
    * Returns a stream of all keys.
    *
    * @return A stream of all keys in storage.

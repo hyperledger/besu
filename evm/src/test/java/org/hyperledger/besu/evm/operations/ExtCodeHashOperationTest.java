@@ -69,7 +69,7 @@ class ExtCodeHashOperationTest {
 
   @Test
   void shouldReturnHashOfEmptyDataWhenAccountExistsButDoesNotHaveCode() {
-    worldStateUpdater.getOrCreate(REQUESTED_ADDRESS).getMutable().setBalance(Wei.of(1));
+    worldStateUpdater.getOrCreate(REQUESTED_ADDRESS).setBalance(Wei.of(1));
     assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(Hash.EMPTY);
   }
 
@@ -87,14 +87,14 @@ class ExtCodeHashOperationTest {
   @Test
   void shouldReturnEmptyCodeHashWhenPrecompileHasBalance() {
     // Sending money to a precompile causes it to exist in the world state archive.
-    worldStateUpdater.getOrCreate(Address.ECREC).getMutable().setBalance(Wei.of(10));
+    worldStateUpdater.getOrCreate(Address.ECREC).setBalance(Wei.of(10));
     assertThat(executeOperation(Address.ECREC)).isEqualTo(Hash.EMPTY);
   }
 
   @Test
   void shouldGetHashOfAccountCodeWhenCodeIsPresent() {
     final Bytes code = Bytes.fromHexString("0xabcdef");
-    final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS).getMutable();
+    final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
     account.setCode(code);
     assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(Hash.hash(code));
   }
@@ -103,7 +103,7 @@ class ExtCodeHashOperationTest {
   void shouldZeroOutLeftMostBitsToGetAddress() {
     // If EXTCODEHASH of A is X, then EXTCODEHASH of A + 2**160 is X.
     final Bytes code = Bytes.fromHexString("0xabcdef");
-    final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS).getMutable();
+    final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
     account.setCode(code);
     final UInt256 value =
         UInt256.fromBytes(Words.fromAddress(REQUESTED_ADDRESS))

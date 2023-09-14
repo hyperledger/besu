@@ -18,14 +18,13 @@ package org.hyperledger.besu.evm.fluent;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.EvmAccount;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /** The Simple world. */
 public class SimpleWorld implements WorldUpdater {
@@ -66,14 +65,14 @@ public class SimpleWorld implements WorldUpdater {
   }
 
   @Override
-  public EvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
+  public MutableAccount createAccount(final Address address, final long nonce, final Wei balance) {
     SimpleAccount account = new SimpleAccount(address, nonce, balance);
     accounts.put(address, account);
     return account;
   }
 
   @Override
-  public EvmAccount getAccount(final Address address) {
+  public MutableAccount getAccount(final Address address) {
     if (accounts.containsKey(address)) {
       return accounts.get(address);
     } else if (parent != null) {
@@ -98,7 +97,7 @@ public class SimpleWorld implements WorldUpdater {
     return accounts.entrySet().stream()
         .filter(e -> e.getValue() == null)
         .map(Map.Entry::getKey)
-        .collect(Collectors.toList());
+        .toList();
   }
 
   @Override
