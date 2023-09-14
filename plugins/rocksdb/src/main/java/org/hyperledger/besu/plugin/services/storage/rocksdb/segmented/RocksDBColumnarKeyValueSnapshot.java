@@ -33,7 +33,6 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.tuweni.bytes.Bytes;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.OptimisticTransactionDB;
 import org.slf4j.Logger;
@@ -83,7 +82,13 @@ public class RocksDBColumnarKeyValueSnapshot
   @Override
   public Stream<Pair<byte[], byte[]>> streamFromKey(
       final SegmentIdentifier segment, final byte[] startKey) {
-    return stream(segment).filter(e -> Bytes.wrap(startKey).compareTo(Bytes.wrap(e.getKey())) <= 0);
+    return snapTx.streamFromKey(segment, startKey);
+  }
+
+  @Override
+  public Stream<Pair<byte[], byte[]>> streamFromKey(
+      final SegmentIdentifier segment, final byte[] startKey, final byte[] endKey) {
+    return snapTx.streamFromKey(segment, startKey, endKey);
   }
 
   @Override
