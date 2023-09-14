@@ -18,6 +18,7 @@ package org.hyperledger.besu.ethereum.bonsai;
 
 import static org.hyperledger.besu.ethereum.bonsai.cache.CachedWorldStorageManager.RETAINED_LAYERS;
 
+import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.bonsai.cache.CachedMerkleTrieLoader;
@@ -51,7 +52,6 @@ import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -153,6 +153,10 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
         || worldStateStorage.isWorldStateAvailable(rootHash, blockHash);
   }
 
+  public static void main(final String[] args) {
+    System.out.println(Hash.hash(Bytes.fromHexString("0xf90171a0d8fc4210a3f970028af6da1db061693c26313fbf011344c28d7dd8a57b402f4ba02c8cf7288cd93887a9ba3fb32e5b113bc9addf1172df4dbfc75cfe27616210d0a01aa28703460e72ce3278a1c92007b0b3801b0992f2032a92438b05aecb06aea6a02d871c47b714d007db931f0952f6ce0f0826d88528ce77a1711dfd6a52991643a078c1c89686c6a1107d6bc50d3813047b650611c56cfa497bb8c8c7172b5869b880a0b65ec48351e70612f86e9574667728fec08a837c2e8134cbed5278bb0aadc729a045f551ed12d01f47c22b7b1d389c361422fcc530c570ed3fd16e9ec6dc1acf1080a0ba8ef613d3fd6e9d202ee1546225f0b6d04591363840b9c1d7baffd3984ccdc780a0ce079c346bb78005733c8d54ac13e8a369ddcec6032b71e41612a3899c6e28e9a0b2fb090bdd6c9cb01c6fe6f9f983cf3a41934d4461534773f0c62a450d4bbc238080a083ac2f93509c3d83c9c900fb20a98aa771c820cb05e154d778f77b830bead55180")));
+  }
+
   @Override
   public Optional<MutableWorldState> getMutable(
       final BlockHeader blockHeader, final boolean shouldPersistState) {
@@ -169,7 +173,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
             .getCheckpointedWorldState(blockHeader, blockchain::getBlockHeader)
             .flatMap(
                 bonsaiWorldState ->
-                    rollMutableStateToBlockHash(bonsaiWorldState, blockHeader.getHash()))
+                        rollMutableTrieToBlockHash(bonsaiWorldState, blockHeader.getHash()))
             .map(MutableWorldState::freeze);
       }
       return trieLogManager
@@ -187,6 +191,105 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
   public synchronized Optional<MutableWorldState> getMutable(
       final Hash rootHash, final Hash blockHash) {
     return rollMutableStateToBlockHash(persistedState, blockHash);
+  }
+
+  Optional<MutableWorldState> rollMutableTrieToBlockHash(
+          final BonsaiWorldState mutableState, final Hash blockHash) {
+    if (blockHash.equals(mutableState.blockHash())) {
+      return Optional.of(mutableState);
+    } else {
+      try {
+
+        final Optional<BlockHeader> maybePersistedHeader =
+                blockchain.getBlockHeader(mutableState.blockHash()).map(BlockHeader.class::cast);
+
+        final List<TrieLog> rollBacks = new ArrayList<>();
+        final List<TrieLog> rollForwards = new ArrayList<>();
+        if (maybePersistedHeader.isEmpty()) {
+          trieLogManager.getTrieLogLayer(mutableState.blockHash()).ifPresent(rollBacks::add);
+        } else {
+          BlockHeader targetHeader = blockchain.getBlockHeader(blockHash).get();
+          BlockHeader persistedHeader = maybePersistedHeader.get();
+          System.out.println("target "+targetHeader.getNumber()+" "+persistedHeader.getNumber()+" "+mutableState.blockHash()+" "+blockHash);
+          // roll back from persisted to even with target
+          Hash persistedBlockHash = persistedHeader.getBlockHash();
+          while (persistedHeader.getNumber() > targetHeader.getNumber()) {
+            LOG.debug("Rollback {}", persistedBlockHash);
+            rollBacks.add(trieLogManager.getTrieLogLayer(persistedBlockHash).get());
+            persistedHeader = blockchain.getBlockHeader(persistedHeader.getParentHash()).get();
+            persistedBlockHash = persistedHeader.getBlockHash();
+          }
+          // roll forward to target
+          Hash targetBlockHash = targetHeader.getBlockHash();
+          while (persistedHeader.getNumber() < targetHeader.getNumber()) {
+            LOG.debug("Rollforward {}", targetBlockHash);
+            rollForwards.add(trieLogManager.getTrieLogLayer(targetBlockHash).get());
+            targetHeader = blockchain.getBlockHeader(targetHeader.getParentHash()).get();
+            targetBlockHash = targetHeader.getBlockHash();
+          }
+
+          // roll back in tandem until we hit a shared state
+          while (!persistedBlockHash.equals(targetBlockHash)) {
+            LOG.debug("Paired Rollback {}", persistedBlockHash);
+            LOG.debug("Paired Rollforward {}", targetBlockHash);
+            rollForwards.add(trieLogManager.getTrieLogLayer(targetBlockHash).get());
+            targetHeader = blockchain.getBlockHeader(targetHeader.getParentHash()).get();
+
+            rollBacks.add(trieLogManager.getTrieLogLayer(persistedBlockHash).get());
+            persistedHeader = blockchain.getBlockHeader(persistedHeader.getParentHash()).get();
+
+            targetBlockHash = targetHeader.getBlockHash();
+            persistedBlockHash = persistedHeader.getBlockHash();
+          }
+        }
+
+        // attempt the state rolling
+        final BonsaiWorldStateUpdateAccumulator bonsaiUpdater =
+                (BonsaiWorldStateUpdateAccumulator) mutableState.updater();
+        try {
+          for (final TrieLog rollBack : rollBacks) {
+            LOG.debug("Attempting Rollback of {}", rollBack.getBlockHash());
+            bonsaiUpdater.rollBack(rollBack);
+          }
+          for (int i = rollForwards.size() - 1; i >= 0; i--) {
+            final var forward = rollForwards.get(i);
+            LOG.debug("Attempting Rollforward of {}", rollForwards.get(i).getBlockHash());
+            bonsaiUpdater.rollForward(forward);
+          }
+          bonsaiUpdater.commit();
+
+          mutableState.persist(blockchain.getBlockHeader(blockHash).get());
+
+          LOG.info(
+                  "Archive rolling finished, {} now at {}",
+                  mutableState.getWorldStateStorage().getClass().getSimpleName(),
+                  blockHash);
+          return Optional.of(mutableState);
+        } catch (final MerkleTrieException re) {
+          // need to throw to trigger the heal
+          throw re;
+        } catch (final Exception e) {
+          // if we fail we must clean up the updater
+          bonsaiUpdater.reset();
+          LOG.info(
+                  "State rolling failed on "
+                          + mutableState.getWorldStateStorage().getClass().getSimpleName()
+                          + " for block hash "
+                          + blockHash,
+                  e);
+
+          return Optional.empty();
+        }
+      } catch (final RuntimeException re) {
+        LOG.info("Archive rolling failed for block hash " + blockHash, re);
+        if (re instanceof MerkleTrieException) {
+          // need to throw to trigger the heal
+          throw re;
+        }
+        throw new MerkleTrieException(
+                "invalid", Optional.of(Address.ZERO), Hash.EMPTY, Bytes.EMPTY);
+      }
+    }
   }
 
   Optional<MutableWorldState> rollMutableStateToBlockHash(
@@ -266,7 +369,7 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
         } catch (final Exception e) {
           // if we fail we must clean up the updater
           bonsaiUpdater.reset();
-          LOG.debug(
+          LOG.info(
               "State rolling failed on "
                   + mutableState.getWorldStateStorage().getClass().getSimpleName()
                   + " for block hash "
@@ -372,14 +475,6 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
     return Optional.empty();
   }
 
-  @Override
-  public Optional<WorldStateProof> getAccountProof(
-      final Hash worldStateRoot,
-      final Address accountAddress,
-      final List<UInt256> accountStorageKeys) {
-    // FIXME we can do proofs for layered tries and the persisted trie
-    return Optional.empty();
-  }
 
   @Override
   public void close() {

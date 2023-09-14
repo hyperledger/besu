@@ -57,8 +57,8 @@ import org.slf4j.LoggerFactory;
 public class BonsaiWorldStateUpdateAccumulator
     extends AbstractWorldUpdater<BonsaiWorldView, BonsaiAccount>
     implements BonsaiWorldView, TrieLogAccumulator {
-  private static final Logger LOG =
-      LoggerFactory.getLogger(BonsaiWorldStateUpdateAccumulator.class);
+  //private static final Logger LOG =
+    //  LoggerFactory.getLogger(BonsaiWorldStateUpdateAccumulator.class);
   private final Consumer<BonsaiValue<BonsaiAccount>> accountPreloader;
   private final Consumer<StorageSlotKey> storagePreloader;
 
@@ -544,7 +544,7 @@ public class BonsaiWorldStateUpdateAccumulator
       accountValue = loadAccountFromParent(address, accountValue);
     }
     if (accountValue == null) {
-      if (expectedValue == null && replacementValue != null) {
+      if (replacementValue != null) {
         accountsToUpdate.put(
             address,
             new BonsaiValue<>(null, new BonsaiAccount(this, address, replacementValue, true)));
@@ -554,7 +554,7 @@ public class BonsaiWorldStateUpdateAccumulator
                 "Expected to update account, but the account does not exist. Address=%s", address));
       }
     } else {
-      if (expectedValue == null) {
+      /*if (expectedValue == null) {
         if (accountValue.getUpdated() != null) {
           throw new IllegalStateException(
               String.format(
@@ -565,7 +565,7 @@ public class BonsaiWorldStateUpdateAccumulator
             accountValue.getUpdated(),
             expectedValue,
             "Address=" + address + " Prior Value in Rolling Change");
-      }
+      }*/
       if (replacementValue == null) {
         if (accountValue.getPrior() == null) {
           // TODO: should we remove from the parent accumulated change also?  only if it is a
@@ -620,7 +620,7 @@ public class BonsaiWorldStateUpdateAccumulator
     }
 
     if (codeValue == null) {
-      if ((expectedCode == null || expectedCode.isEmpty()) && replacementCode != null) {
+      if (replacementCode != null) {
         codeToUpdate.put(address, new BonsaiValue<>(null, replacementCode));
       } else {
         throw new IllegalStateException(
@@ -628,7 +628,7 @@ public class BonsaiWorldStateUpdateAccumulator
                 "Expected to update code, but the code does not exist.  Address=%s", address));
       }
     } else {
-      final Bytes existingCode = codeValue.getUpdated();
+      /*final Bytes existingCode = codeValue.getUpdated();
       if ((expectedCode == null || expectedCode.isEmpty())
           && existingCode != null
           && !existingCode.isEmpty()) {
@@ -640,7 +640,7 @@ public class BonsaiWorldStateUpdateAccumulator
                 address,
                 expectedCode == null ? "null" : Hash.hash(expectedCode),
                 Hash.hash(codeValue.getUpdated())));
-      }
+      }*/
       if (replacementCode == null && codeValue.getPrior() == null) {
         codeToUpdate.remove(address);
       } else {
@@ -690,7 +690,7 @@ public class BonsaiWorldStateUpdateAccumulator
       }
     }
     if (slotValue == null) {
-      if ((expectedValue == null || expectedValue.isZero()) && replacementValue != null) {
+      if (replacementValue != null) {
         maybeCreateStorageMap(storageMap, address)
             .put(storageSlotKey, new BonsaiValue<>(null, replacementValue));
       } else {
@@ -700,7 +700,7 @@ public class BonsaiWorldStateUpdateAccumulator
                 address, storageSlotKey));
       }
     } else {
-      final UInt256 existingSlotValue = slotValue.getUpdated();
+      /*final UInt256 existingSlotValue = slotValue.getUpdated();
       if ((expectedValue == null || expectedValue.isZero())
           && existingSlotValue != null
           && !existingSlotValue.isZero()) {
@@ -717,7 +717,7 @@ public class BonsaiWorldStateUpdateAccumulator
                 storageSlotKey,
                 expectedValue == null ? "null" : expectedValue.toShortHexString(),
                 existingSlotValue == null ? "null" : existingSlotValue.toShortHexString()));
-      }
+      }*/
       if (replacementValue == null && slotValue.getPrior() == null) {
         final Map<StorageSlotKey, BonsaiValue<UInt256>> thisStorageUpdate =
             maybeCreateStorageMap(storageMap, address);
@@ -731,12 +731,12 @@ public class BonsaiWorldStateUpdateAccumulator
     }
   }
 
-  private boolean isSlotEquals(final UInt256 expectedValue, final UInt256 existingSlotValue) {
+  /*private boolean isSlotEquals(final UInt256 expectedValue, final UInt256 existingSlotValue) {
     final UInt256 sanitizedExpectedValue = (expectedValue == null) ? UInt256.ZERO : expectedValue;
     final UInt256 sanitizedExistingSlotValue =
         (existingSlotValue == null) ? UInt256.ZERO : existingSlotValue;
     return Objects.equals(sanitizedExpectedValue, sanitizedExistingSlotValue);
-  }
+  }*/
 
   public boolean isAccumulatorStateChanged() {
     return isAccumulatorStateChanged;

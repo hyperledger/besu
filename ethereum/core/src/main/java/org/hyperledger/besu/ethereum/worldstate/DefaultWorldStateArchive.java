@@ -33,7 +33,6 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class DefaultWorldStateArchive implements WorldStateArchive {
   private final WorldStateStorage worldStateStorage;
   private final WorldStatePreimageStorage preimageStorage;
-  private final WorldStateProofProvider worldStateProof;
 
   private static final Hash EMPTY_ROOT_HASH = Hash.wrap(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
@@ -41,7 +40,6 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
       final WorldStateStorage worldStateStorage, final WorldStatePreimageStorage preimageStorage) {
     this.worldStateStorage = worldStateStorage;
     this.preimageStorage = preimageStorage;
-    this.worldStateProof = new WorldStateProofProvider(worldStateStorage);
   }
 
   @Override
@@ -88,13 +86,6 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
     return worldStateStorage;
   }
 
-  @Override
-  public Optional<WorldStateProof> getAccountProof(
-      final Hash worldStateRoot,
-      final Address accountAddress,
-      final List<UInt256> accountStorageKeys) {
-    return worldStateProof.getAccountProof(worldStateRoot, accountAddress, accountStorageKeys);
-  }
 
   @Override
   public void close() {

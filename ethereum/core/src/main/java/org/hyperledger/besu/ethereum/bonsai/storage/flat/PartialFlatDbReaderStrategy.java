@@ -87,7 +87,7 @@ public class PartialFlatDbReaderStrategy extends FlatDbReaderStrategy {
       final SegmentedKeyValueStorage storage) {
     getAccountCounter.inc();
     Optional<Bytes> response =
-        storage.get(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe()).map(Bytes::wrap);
+        Optional.empty();
     if (response.isEmpty()) {
       // after a snapsync/fastsync we only have the trie branches.
       final Optional<Bytes> worldStateRootHash = worldStateRootHashSupplier.get();
@@ -120,11 +120,7 @@ public class PartialFlatDbReaderStrategy extends FlatDbReaderStrategy {
       final SegmentedKeyValueStorage storage) {
     getStorageValueCounter.inc();
     Optional<Bytes> response =
-        storage
-            .get(
-                ACCOUNT_STORAGE_STORAGE,
-                Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
-            .map(Bytes::wrap);
+        Optional.empty();
     if (response.isEmpty()) {
       final Optional<Hash> storageRoot = storageRootSupplier.get();
       final Optional<Bytes> worldStateRootHash = worldStateRootHashSupplier.get();

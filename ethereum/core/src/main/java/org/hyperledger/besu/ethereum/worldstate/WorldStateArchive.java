@@ -51,6 +51,4 @@ public interface WorldStateArchive extends Closeable {
 
   Optional<Bytes> getNodeData(Hash hash);
 
-  Optional<WorldStateProof> getAccountProof(
-      Hash worldStateRoot, Address accountAddress, List<UInt256> accountStorageKeys);
 }

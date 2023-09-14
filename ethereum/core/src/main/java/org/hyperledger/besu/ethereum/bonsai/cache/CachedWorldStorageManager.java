@@ -208,10 +208,10 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
       final BlockHeader blockHeader,
       final Function<Long, Optional<BlockHeader>> checkpointedBlockHeaderFunction) {
 
-    LOG.atDebug().setMessage("getting checkpointed worldstate").log();
+    LOG.atInfo().setMessage("getting checkpointed worldstate").log();
 
     final long nearestCheckpointedWorldState =
-        Math.abs(blockHeader.getNumber() / getMaxLayersToLoad()) * getMaxLayersToLoad();
+            Math.round((float) blockHeader.getNumber() / getMaxLayersToLoad()) * getMaxLayersToLoad();
     return checkpointedBlockHeaderFunction
         .apply(nearestCheckpointedWorldState)
         .flatMap(
@@ -220,20 +220,14 @@ public class CachedWorldStorageManager extends AbstractTrieLogManager
                     .getTrieNodeUnsafe(checkpointedBlockHeader.getStateRoot())
                     .flatMap(
                         __ -> {
-                          addCachedLayer(
-                              blockHeader,
-                              blockHeader.getStateRoot(),
-                              new BonsaiWorldState(
-                                  archive,
-                                  checkpointedBlockHeader.getStateRoot(),
-                                  checkpointedBlockHeader.getBlockHash(),
-                                  rootWorldStateStorage));
-                          LOG.atDebug()
+                          LOG.atInfo()
                               .setMessage("found checkpointed worldstate {} for block {}")
                               .addArgument(checkpointedBlockHeader.getNumber())
                               .addArgument(blockHeader.getNumber())
                               .log();
-                          return getWorldState(blockHeader.getHash());
+                          return Optional.of(new BonsaiWorldState(
+                                  archive,   checkpointedBlockHeader.getStateRoot(),
+                                  checkpointedBlockHeader.getBlockHash(),new BonsaiWorldStateLayerStorage(rootWorldStateStorage)));
                         }));
   }
 

@@ -14,8 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.evm.worldstate.MutableWorldView;
 import org.hyperledger.besu.evm.worldstate.WorldState;
+
+import java.util.List;
+import java.util.Optional;
 
 public interface MutableWorldState extends WorldState, MutableWorldView {
 
@@ -27,6 +34,9 @@ public interface MutableWorldState extends WorldState, MutableWorldView {
    *     `null` should be passed in.
    */
   void persist(BlockHeader blockHeader);
+
+  Optional<WorldStateProof> getAccountProof(
+          Hash worldStateRoot, Address accountAddress, List<UInt256> accountStorageKeys);
 
   default MutableWorldState freeze() {
     // no op

@@ -35,6 +35,8 @@ import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator.StorageConsumingMap;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
+import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
@@ -47,6 +49,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -69,6 +72,8 @@ public class BonsaiWorldState
 
   private final BonsaiWorldStateProvider archive;
   private final BonsaiWorldStateUpdateAccumulator accumulator;
+
+  private final WorldStateProofProvider worldStateProof;
 
   private Hash worldStateRootHash;
   Hash worldStateBlockHash;
@@ -106,6 +111,7 @@ public class BonsaiWorldState
                 archive
                     .getCachedMerkleTrieLoader()
                     .preLoadStorageSlot(getWorldStateStorage(), addr, value));
+    this.worldStateProof = new WorldStateProofProvider(worldStateStorage);
   }
 
   public BonsaiWorldState(
@@ -120,6 +126,7 @@ public class BonsaiWorldState
     this.worldStateBlockHash =
         Hash.wrap(Bytes32.wrap(worldStateStorage.getWorldStateBlockHash().orElse(Hash.ZERO)));
     this.accumulator = updater;
+    this.worldStateProof = new WorldStateProofProvider(worldStateStorage);
   }
 
   /**
@@ -216,7 +223,7 @@ public class BonsaiWorldState
                     writeTrieNode(
                         TRIE_BRANCH_STORAGE,
                         bonsaiUpdater.getWorldStateTransaction(),
-                        location,
+                            hash,
                         value)));
     final Bytes32 rootHash = accountTrie.getRootHash();
     return Hash.wrap(rootHash);
@@ -449,6 +456,16 @@ public class BonsaiWorldState
     }
   }
 
+
+  @Override
+  public Optional<WorldStateProof> getAccountProof(
+          final Hash worldStateRoot,
+          final Address accountAddress,
+          final List<UInt256> accountStorageKeys) {
+    return worldStateProof.getAccountProof(worldStateRoot, accountAddress, accountStorageKeys);
+  }
+
+
   @Override
   public WorldUpdater updater() {
     return accumulator;
@@ -543,9 +560,9 @@ public class BonsaiWorldState
   private void writeTrieNode(
       final SegmentIdentifier segmentId,
       final SegmentedKeyValueStorageTransaction tx,
-      final Bytes location,
+      final Bytes hash,
       final Bytes value) {
-    tx.put(segmentId, location.toArrayUnsafe(), value.toArrayUnsafe());
+    tx.put(segmentId, hash.toArrayUnsafe(), value.toArrayUnsafe());
   }
 
   protected Optional<Bytes> getStorageTrieNode(
@@ -598,12 +615,14 @@ public class BonsaiWorldState
     return storageTrie.entriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
   }
 
+
   @Override
   public MutableWorldState freeze() {
     this.isFrozen = true;
     this.worldStateStorage = new BonsaiWorldStateLayerStorage(worldStateStorage);
     return this;
   }
+
 
   private StoredMerklePatriciaTrie<Bytes, Bytes> createTrie(
       final NodeLoader nodeLoader, final Bytes32 rootHash) {
