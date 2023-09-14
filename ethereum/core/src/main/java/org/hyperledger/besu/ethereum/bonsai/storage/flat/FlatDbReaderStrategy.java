@@ -135,10 +135,10 @@ public abstract class FlatDbReaderStrategy {
       final long max) {
     final Stream<Pair<Bytes32, Bytes>> pairStream =
         storage
-            .streamFromKey(ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe())
+            .streamFromKey(
+                ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe(), endKeyHash.toArrayUnsafe())
             .limit(max)
-            .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())))
-            .takeWhile(pair -> pair.getFirst().compareTo(endKeyHash) <= 0);
+            .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
 
     final TreeMap<Bytes32, Bytes> collected =
         pairStream.collect(
@@ -157,15 +157,14 @@ public abstract class FlatDbReaderStrategy {
         storage
             .streamFromKey(
                 ACCOUNT_STORAGE_STORAGE,
-                Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe())
-            .takeWhile(pair -> Bytes.wrap(pair.getKey()).slice(0, Hash.SIZE).equals(accountHash))
+                Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe(),
+                Bytes.concatenate(accountHash, endKeyHash).toArrayUnsafe())
             .limit(max)
             .map(
                 pair ->
                     new Pair<>(
                         Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
-                        RLP.encodeValue(Bytes.wrap(pair.getValue()).trimLeadingZeros())))
-            .takeWhile(pair -> pair.getFirst().compareTo(endKeyHash) <= 0);
+                        RLP.encodeValue(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
 
     final TreeMap<Bytes32, Bytes> collected =
         pairStream.collect(
