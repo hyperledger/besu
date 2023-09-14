@@ -270,6 +270,7 @@ public class T8nExecutor {
       final TransactionProcessingResult result;
       try {
         tracer = tracerManager.getManagedTracer(i, transaction.getHash());
+        tracer.traceStartTransaction(worldStateUpdater, transaction);
         result =
             processor.processTransaction(
                 blockchain,
@@ -312,12 +313,18 @@ public class T8nExecutor {
                 .getGasCalculator()
                 .transactionIntrinsicGasCost(
                     transaction.getPayload(), transaction.getTo().isEmpty());
-        tracer.traceEndTransaction(
-            result.getOutput(), gasUsed - intrinsicGas, timer.elapsed(TimeUnit.NANOSECONDS));
         TransactionReceipt receipt =
             protocolSpec
                 .getTransactionReceiptFactory()
                 .create(transaction.getType(), result, worldState, gasUsed);
+        tracer.traceEndTransaction(
+            worldStateUpdater,
+            transaction,
+            result.isSuccessful(),
+            result.getOutput(),
+            result.getLogs(),
+            gasUsed - intrinsicGas,
+            timer.elapsed(TimeUnit.NANOSECONDS));
         Bytes gasUsedInTransaction = Bytes.ofUnsignedLong(transactionGasUsed);
         receipts.add(receipt);
         ObjectNode receiptObject = receiptsArray.addObject();
