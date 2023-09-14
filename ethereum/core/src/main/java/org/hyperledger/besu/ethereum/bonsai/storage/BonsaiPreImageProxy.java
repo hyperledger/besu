@@ -37,35 +37,11 @@ public interface BonsaiPreImageProxy extends WorldStatePreimageStorage {
    */
   Hash hashAndSavePreImage(Bytes value);
 
-  /** PreImageProxy which does not store or cache preImages and only implements hashing. */
-  class NoOpPreImageProxy implements BonsaiPreImageProxy {
-
-    @Override
-    public Hash hashAndSavePreImage(final Bytes value) {
-      return Hash.hash(value);
-    }
-
-    @Override
-    public Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey) {
-      return Optional.empty();
-    }
-
-    @Override
-    public Optional<Address> getAccountTrieKeyPreimage(final Bytes32 trieKey) {
-      return Optional.empty();
-    }
-
-    @Override
-    public Updater updater() {
-      throw new UnsupportedOperationException("NoOpPreImageProxy does not implement an updater");
-    }
-  }
-
   /**
    * A caching PreImageProxy suitable for ReferenceTestWorldState which saves hashes in an unbounded
    * BiMap.
    */
-  class BonsaiReferenceTestPreImageProxy extends NoOpPreImageProxy {
+  class BonsaiReferenceTestPreImageProxy implements BonsaiPreImageProxy {
     BiMap<Hash, Bytes> preImageCache = HashBiMap.create();
 
     @Override
@@ -81,6 +57,12 @@ public interface BonsaiPreImageProxy extends WorldStatePreimageStorage {
     @Override
     public Optional<Address> getAccountTrieKeyPreimage(final Bytes32 trieKey) {
       return Optional.ofNullable(preImageCache.get(trieKey)).map(Address::wrap);
+    }
+
+    @Override
+    public Updater updater() {
+      throw new UnsupportedOperationException(
+          "BonsaiReferenceTestPreImageProxy does not implement an updater");
     }
   }
 }

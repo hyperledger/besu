@@ -166,7 +166,15 @@ public class RocksDBSnapshotTransaction
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStreamKeys();
   }
-
+  /**
+   * Returns a stream of key-value pairs starting from the specified key. This method is used to
+   * retrieve a stream of data reading through the transaction, starting from the given key. If no
+   * data is available from the specified key onwards, an empty stream is returned.
+   *
+   * @param segment The segment identifier whose keys we want to stream.
+   * @param startKey The key from which the stream should start.
+   * @return A stream of key-value pairs starting from the specified key.
+   */
   public Stream<Pair<byte[], byte[]>> streamFromKey(
       final SegmentIdentifier segment, final byte[] startKey) {
     throwIfClosed();
@@ -177,6 +185,17 @@ public class RocksDBSnapshotTransaction
     return RocksDbIterator.create(rocksIterator).toStream();
   }
 
+  /**
+   * Returns a stream of key-value pairs starting from the specified key, ending at the specified
+   * key. This method is used to retrieve a stream of data reading through the transaction, starting
+   * from the given key. If no data is available from the specified key onwards, an empty stream is
+   * returned.
+   *
+   * @param segment The segment identifier whose keys we want to stream.
+   * @param startKey The key from which the stream should start.
+   * @param endKey The key at which the stream should stop.
+   * @return A stream of key-value pairs starting from the specified key.
+   */
   public Stream<Pair<byte[], byte[]>> streamFromKey(
       final SegmentIdentifier segment, final byte[] startKey, final byte[] endKey) {
     throwIfClosed();

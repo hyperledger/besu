@@ -128,7 +128,7 @@ public class BonsaiWorldStateUpdateAccumulator
       accountsToUpdate.put(address, bonsaiValue);
     } else if (bonsaiValue.getUpdated() != null) {
       if (bonsaiValue.getUpdated().isEmpty()) {
-        return new WrappedEvmAccount(track(new UpdateTrackingAccount<>(bonsaiValue.getUpdated())));
+        return track(new UpdateTrackingAccount<>(bonsaiValue.getUpdated()));
       } else {
         throw new IllegalStateException("Cannot create an account when one already exists");
       }
