@@ -25,9 +25,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 public interface ParentBeaconBlockRootHelper {
 
   // Modulus use to for the timestamp to store the  root
-  public static final long HISTORICAL_ROOTS_MODULUS = 8191;
-  public static final Address BEACON_ROOTS_ADDRESS =
-      Address.fromHexString("0xBEaC020001c6C8B69E5257f4754e46e25f5dc9cB");
+  public static final long HISTORICAL_ROOTS_MODULUS = 98304;
+  public static final Address BEACON_ROOTS_ADDRESS = Address.precompiled(0xB);
 
   static void storeParentBeaconBlockRoot(
       final WorldUpdater worldUpdater, final long timestamp, final Bytes32 root) {
