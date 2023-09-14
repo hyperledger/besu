@@ -94,6 +94,9 @@ public class MainnetBlockProcessorTest extends AbstractBlockProcessorTest {
     final BlockHeader emptyBlockHeader =
         new BlockHeaderTestFixture()
             .transactionsRoot(Hash.EMPTY_LIST_HASH)
+            .stateRoot(
+                Hash.fromHexString(
+                    "0xa6b5d50f7b3c39b969c2fe8fed091939c674fef49b4826309cb6994361e39b71"))
             .ommersHash(Hash.EMPTY_LIST_HASH)
             .buildHeader();
     blockProcessor.processBlock(blockchain, worldState, emptyBlockHeader, emptyList(), emptyList());
