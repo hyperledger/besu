@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-22.04-16core
     env:
       architecture: "amd64"
-      GRADLE_OPTS: "-Xmx6g -Dorg.gradle.parallel=true"
+      GRADLE_OPTS: "-Xmx6g -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4"
 
     steps:
       - name: Checkout
