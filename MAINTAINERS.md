@@ -15,17 +15,17 @@
 | Daniel Lehrner   | daniellehrner    | daniellehrner    |
 | Diego López León | diega            | diega            |
 | Fabio Di Fabio   | fab-10           | fab-10           |
-| Gary Schulte     | garyschulte      | GarySchulte      | 
 | Gabriel Trintinalia | gabriel-trintinalia | gabrieltrintinalia |
+| Gary Schulte     | garyschulte      | GarySchulte      | 
 | Jiri Peinlich    | gezero           | JiriPeinlich     |
 | Gabriel Fukushima| gfukushima       | gfukushima       |
 | Justin Florentine| jflo             | RoboCopsGoneMad  |
 | Jason Frame      | jframe           | jframe           |
 | Joshua Fernandes | joshuafernandes  | joshuafernandes  |
 | Lucas Saldanha   | lucassaldanha    | lucassaldanha    |
-| Matthew Whitehead| matthew1001      | matthew.whitehead      |
 | Sally MacFarlane | macfarla         | macfarla         |
 | Karim Taam       | matkt            | matkt            |
+| Matthew Whitehead| matthew1001      | matthew.whitehead      |
 | Meredith Baxter  | mbaxter          | mbaxter          |
 | Stefan Pingel    | pinges           | pinges           |
 | Danno Ferrin     | shemnon          | shemnon          |
