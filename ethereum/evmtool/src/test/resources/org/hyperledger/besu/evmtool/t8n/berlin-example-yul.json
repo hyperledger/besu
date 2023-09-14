@@ -48,6 +48,7 @@
       "currentGasLimit": "100000000000000000",
       "currentNumber": "1",
       "currentTimestamp": "1000",
+      "currentStateRoot": "0xd921e74bfe864514fa508003336b8f66eb98d748c5163749827029a1ed7db265",
       "parentDifficulty": "131072",
       "parentGasUsed": "50000000000000000",
       "parentGasLimit": "100000000000000000",
