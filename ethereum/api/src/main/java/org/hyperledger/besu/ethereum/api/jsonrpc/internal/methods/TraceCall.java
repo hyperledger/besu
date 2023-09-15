@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Optional;
@@ -95,13 +96,19 @@ public class TraceCall extends AbstractTraceByBlock implements JsonRpcMethod {
                           new TransactionTrace(
                               result.getTransaction(), result.getResult(), tracer.getTraceFrames());
 
-                      final Block block =
-                          blockchainQueriesSupplier.get().getBlockchain().getChainHeadBlock();
-
                       return getTraceCallResult(
-                          protocolSchedule, traceTypes, result, transactionTrace, block);
+                          protocolSchedule, traceTypes, result, transactionTrace);
                     }),
             maybeBlockHeader.get())
         .orElse(new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
+  }
+
+  protected Object getTraceCallResult(
+      final ProtocolSchedule protocolSchedule,
+      final Set<TraceTypeParameter.TraceType> traceTypes,
+      final TransactionSimulatorResult result,
+      final TransactionTrace transactionTrace) {
+    final Block block = blockchainQueriesSupplier.get().getBlockchain().getChainHeadBlock();
+    return getTraceCallResult(protocolSchedule, traceTypes, result, transactionTrace, block);
   }
 }

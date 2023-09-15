@@ -44,6 +44,7 @@ public enum RpcMethod {
   DEBUG_STANDARD_TRACE_BLOCK_TO_FILE("debug_standardTraceBlockToFile"),
   DEBUG_STANDARD_TRACE_BAD_BLOCK_TO_FILE("debug_standardTraceBadBlockToFile"),
   DEBUG_TRACE_TRANSACTION("debug_traceTransaction"),
+  DEBUG_TRACE_CALL("debug_traceCall"),
   DEBUG_BATCH_RAW_TRANSACTION("debug_batchSendRawTransaction"),
   DEBUG_GET_BAD_BLOCKS("debug_getBadBlocks"),
   DEBUG_GET_RAW_HEADER("debug_getRawHeader"),
