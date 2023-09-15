@@ -22,7 +22,6 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.function.Supplier;
@@ -69,15 +68,7 @@ public class BlobTransactionDecoder {
         .maxPriorityFeePerGas(Wei.of(input.readUInt256Scalar()))
         .maxFeePerGas(Wei.of(input.readUInt256Scalar()))
         .gasLimit(input.readLongScalar())
-        .to(
-            input.readBytes(
-                v -> {
-                  if (v.isEmpty()) {
-                    throw new RLPException("to field cannot be empty for blob transaction");
-                  } else {
-                    return Address.wrap(v);
-                  }
-                }))
+        .to(input.readBytes(v -> v.size() == 0 ? null : Address.wrap(v)))
         .value(Wei.of(input.readUInt256Scalar()))
         .payload(input.readBytes())
         .accessList(

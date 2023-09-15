@@ -31,8 +31,7 @@ public class BlobTransactionEncoder {
     out.writeUInt256Scalar(transaction.getMaxPriorityFeePerGas().orElseThrow());
     out.writeUInt256Scalar(transaction.getMaxFeePerGas().orElseThrow());
     out.writeLongScalar(transaction.getGasLimit());
-    out.writeBytes(
-        transaction.getTo().map(Bytes::copy).orElseThrow()); // blob tx can't have empty to field
+    out.writeBytes(transaction.getTo().map(Bytes::copy).orElse(Bytes.EMPTY));
     out.writeUInt256Scalar(transaction.getValue());
     out.writeBytes(transaction.getPayload());
     AccessListTransactionEncoder.writeAccessList(out, transaction.getAccessList());
