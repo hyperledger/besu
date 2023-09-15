@@ -985,6 +985,9 @@ public class Transaction
       final Optional<List<AccessListEntry>> accessList,
       final List<VersionedHash> versionedHashes) {
 
+    if (to.isEmpty()) {
+      throw new RuntimeException("to field cannot be empty for blob transaction");
+    }
     final Bytes encoded =
         RLP.encode(
             rlpOutput -> {

@@ -15,9 +15,11 @@
 package org.hyperledger.besu.ethereum.core.encoding;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -37,11 +39,19 @@ public class BlobTransactionEncodingTest {
         createArgument(
             "0x03f89d850120b996ed3685012a1a646085012a1a64608303345094ffb38a7a99e3e2335be83fc74b7faa19d55312418308a80280c085012a1a6460e1a00153a6a1e053cf4c5a09e84088ed8ad7cb53d76c8168f1b82f7cfebfcd06da1a01a007785223eec68459d72265f10bdb30ec3415252a63100605a03142fa211ebbe9a07dbbf9e081fa7b9a01202e4d9ee0e0e513f80efbbab6c784635429905389ce86"),
         createArgument(
-            "0x03f889850120b996ed81f0847735940084b2d05e158307a1208001855f495f4955c084b2d05e15e1a001d343d3cd62abd9c5754cbe5128c25ea90786a8ae75fb79c8cf95f4dcdd08ec80a014103732b5a9789bbf5ea859ed904155398abbef343f8fd63007efb70795d382a07272e847382789a092eadf08e2b9002e727376f8466fff0e4d4639fd60a528f2"),
+            "0x03f89d850120b996ed81f0847735940084b2d05e158307a12094000000000000000000000000000000000010101001855f495f4955c084b2d05e15e1a001d343d3cd62abd9c5754cbe5128c25ea90786a8ae75fb79c8cf95f4dcdd08ec80a014103732b5a9789bbf5ea859ed904155398abbef343f8fd63007efb70795d382a07272e847382789a092eadf08e2b9002e727376f8466fff0e4d4639fd60a528f2"),
         createArgument(
-            "0x03f889850120b996ed81f1843b9aca00847735940e8307a1208001855f495f4955c0847735940ee1a001d552e24560ec2f168be1d4a6385df61c70afe4288f00a3ad172da1a6f2b4f280a0b6690786e5fe79df67dcb60e8a9e8555142c3c96ffd5097c838717f0a7f64129a0112f01ed0cd3b86495f01736fbbc1b793f71565223aa26f093471a4d8605d198"),
+            "0x03f89d850120b996ed81f1843b9aca00847735940e8307a12094000000000000000000000000000000000010101001855f495f4955c0847735940ee1a001d552e24560ec2f168be1d4a6385df61c70afe4288f00a3ad172da1a6f2b4f280a0b6690786e5fe79df67dcb60e8a9e8555142c3c96ffd5097c838717f0a7f64129a0112f01ed0cd3b86495f01736fbbc1b793f71565223aa26f093471a4d8605d198"),
         createArgument(
             "0x03f897850120b996ed80840bebc200843b9aca078303345094c8d369b164361a8961286cfbab3bc10f962185a88080c08411e1a300e1a0011df88a2971c8a7ac494a7ba37ec1acaa1fc1edeeb38c839b5d1693d47b69b080a032f122f06e5802224db4c8a58fd22c75173a713f63f89936f811c144b9e40129a043a2a872cbfa5727007adf6a48febe5f190d2e4cd5ed6122823fb6ff47ecda32"));
+  }
+
+  private static Stream<Arguments> provideOpaqueBytesWithEmptyToField() {
+    return Stream.of(
+        createArgument(
+            "0x03f889850120b996ed81f0847735940084b2d05e158307a1208001855f495f4955c084b2d05e15e1a001d343d3cd62abd9c5754cbe5128c25ea90786a8ae75fb79c8cf95f4dcdd08ec80a014103732b5a9789bbf5ea859ed904155398abbef343f8fd63007efb70795d382a07272e847382789a092eadf08e2b9002e727376f8466fff0e4d4639fd60a528f2"),
+        createArgument(
+            "0x03f889850120b996ed81f1843b9aca00847735940e8307a1208001855f495f4955c0847735940ee1a001d552e24560ec2f168be1d4a6385df61c70afe4288f00a3ad172da1a6f2b4f280a0b6690786e5fe79df67dcb60e8a9e8555142c3c96ffd5097c838717f0a7f64129a0112f01ed0cd3b86495f01736fbbc1b793f71565223aa26f093471a4d8605d198"));
   }
 
   private static Stream<Arguments> provideOpaqueBytesForNetwork() throws IOException {
@@ -82,6 +92,18 @@ public class BlobTransactionEncodingTest {
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     TransactionEncoder.encodeRLP(transaction.getType(), bytes, rlpOutput);
     assertThat(transaction.getSize()).isEqualTo(bytes.size());
+  }
+
+  @ParameterizedTest(name = "{index} {0}")
+  @MethodSource("provideOpaqueBytesWithEmptyToField")
+  public void givenEmptyToField_whenDecoding_shouldThrowException(
+      final TypedTransactionBytesArgument argument) {
+    Bytes bytes = argument.bytes;
+    // Decode the transaction from the wire using the TransactionDecoder.
+    // expect an exception to be thrown since the to field is empty
+    assertThatThrownBy(
+            () -> TransactionDecoder.decodeOpaqueBytes(bytes, EncodingContext.BLOCK_BODY))
+        .isInstanceOf(RLPException.class);
   }
 
   private static Arguments createArgumentFromFile(final String path) throws IOException {
