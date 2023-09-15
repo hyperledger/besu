@@ -75,6 +75,7 @@ public class BftMiningCoordinatorTest {
     bftMiningCoordinator.stop();
     verify(bftProcessor, never()).stop();
 
+    bftMiningCoordinator.enable();
     bftMiningCoordinator.start();
     bftMiningCoordinator.stop();
     verify(bftProcessor).stop();
