@@ -10,7 +10,10 @@
       "value" : "0x0",
       "data" : "0x0000000000000000000000000030000000000000000000000000000000000000f000000000000000000000000000000000000000000000000000000000000001",
       "nonce" : "0x0"
-    }, [ "stateDiff" ], "latest" ],
+    }, "latest",
+    {
+      "disableStack": true
+    } ],
     "id" : 1
   },
   "response": {
@@ -27,7 +30,7 @@
         "gasCost" : 3,
         "depth" : 1,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ ],
         "storage" : { },
         "reason" : null
       }, {
@@ -37,7 +40,7 @@
         "gasCost" : 3,
         "depth" : 1,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ ],
         "storage" : { },
         "reason" : null
       }, {
@@ -47,7 +50,7 @@
         "gasCost" : 3,
         "depth" : 1,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ ],
         "storage" : { },
         "reason" : null
       }, {
@@ -57,7 +60,7 @@
         "gasCost" : 2,
         "depth" : 1,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ ],
         "storage" : { },
         "reason" : null
       }, {
@@ -67,7 +70,7 @@
         "gasCost" : 3,
         "depth" : 1,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ ],
         "storage" : { },
         "reason" : null
       }, {
@@ -77,7 +80,7 @@
         "gasCost" : 3,
         "depth" : 1,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ ],
         "storage" : { },
         "reason" : null
       }, {
@@ -87,7 +90,7 @@
         "gasCost" : 3,
         "depth" : 1,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ ],
         "storage" : { },
         "reason" : null
       }, {
@@ -97,7 +100,7 @@
         "gasCost" : 3,
         "depth" : 1,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ ],
         "storage" : { },
         "reason" : null
       }, {
@@ -107,7 +110,7 @@
         "gasCost" : 9,
         "depth" : 1,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000001" ],
         "storage" : { },
         "reason" : null
       }, {
@@ -117,7 +120,7 @@
         "gasCost" : 3,
         "depth" : 1,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000001" ],
         "storage" : { },
         "reason" : null
       }, {
@@ -127,7 +130,7 @@
         "gasCost" : 2,
         "depth" : 1,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000001" ],
         "storage" : { },
         "reason" : null
       }, {
@@ -137,7 +140,7 @@
         "gasCost" : 3,
         "depth" : 1,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000001" ],
         "storage" : { },
         "reason" : null
       }, {
@@ -147,7 +150,7 @@
         "gasCost" : 3,
         "depth" : 1,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000001" ],
         "storage" : { },
         "reason" : null
       }, {
@@ -157,7 +160,7 @@
         "gasCost" : 2,
         "depth" : 1,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000001" ],
         "storage" : { },
         "reason" : null
       }, {
@@ -167,7 +170,7 @@
         "gasCost" : 700,
         "depth" : 1,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000001" ],
         "storage" : { },
         "reason" : null
       }, {
@@ -177,7 +180,7 @@
         "gasCost" : 3,
         "depth" : 2,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ ],
         "storage" : { },
         "reason" : null
       }, {
@@ -187,7 +190,7 @@
         "gasCost" : 3,
         "depth" : 2,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ ],
         "storage" : { },
         "reason" : null
       }, {
@@ -197,7 +200,7 @@
         "gasCost" : 3,
         "depth" : 2,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ ],
         "storage" : { },
         "reason" : null
       }, {
@@ -207,7 +210,7 @@
         "gasCost" : 3,
         "depth" : 2,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ ],
         "storage" : { },
         "reason" : null
       }, {
@@ -217,7 +220,7 @@
         "gasCost" : 3,
         "depth" : 2,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ ],
         "storage" : { },
         "reason" : null
       }, {
@@ -227,7 +230,7 @@
         "gasCost" : 6,
         "depth" : 2,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000002" ],
         "storage" : { },
         "reason" : null
       }, {
@@ -237,7 +240,7 @@
         "gasCost" : 3,
         "depth" : 2,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000002" ],
         "storage" : { },
         "reason" : null
       }, {
@@ -247,7 +250,7 @@
         "gasCost" : 3,
         "depth" : 2,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000002" ],
         "storage" : { },
         "reason" : null
       }, {
@@ -257,7 +260,7 @@
         "gasCost" : 0,
         "depth" : 2,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000002" ],
         "storage" : { },
         "reason" : null
       }, {
@@ -267,7 +270,7 @@
         "gasCost" : 3,
         "depth" : 1,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000002" ],
         "storage" : { },
         "reason" : null
       }, {
@@ -277,7 +280,7 @@
         "gasCost" : 3,
         "depth" : 1,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000002" ],
         "storage" : { },
         "reason" : null
       }, {
@@ -287,7 +290,7 @@
         "gasCost" : 0,
         "depth" : 1,
         "stack" : null,
-        "memory" : null,
+        "memory" : [ "f000000000000000000000000000000000000000000000000000000000000002" ],
         "storage" : { },
         "reason" : null
       } ]

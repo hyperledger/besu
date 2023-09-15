@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErr
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -31,6 +32,8 @@ import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 public class DebugTraceCall extends AbstractTraceCall {
   private static final Logger LOG = LoggerFactory.getLogger(DebugTraceCall.class);
@@ -50,10 +53,22 @@ public class DebugTraceCall extends AbstractTraceCall {
   @Override
   protected TraceOptions getTraceOptions(final JsonRpcRequestContext requestContext) {
     return requestContext
-        .getOptionalParameter(1, TransactionTraceParams.class)
+        .getOptionalParameter(2, TransactionTraceParams.class)
         .map(TransactionTraceParams::traceOptions)
         .orElse(TraceOptions.DEFAULT);
   }
+
+    @Override
+    protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
+        final Optional<BlockParameter> maybeBlockParameter =
+                request.getOptionalParameter(1, BlockParameter.class);
+
+        if (maybeBlockParameter.isPresent()) {
+            return maybeBlockParameter.get();
+        }
+
+        return BlockParameter.LATEST;
+    }
 
   @Override
   protected PreCloseStateHandler<Object> getSimulatorResultHandler(
