@@ -14,18 +14,26 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INTERNAL_ERROR;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.transaction.PreCloseStateHandler;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
-import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
+import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
-import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class DebugTraceCall extends TraceCall {
+public class DebugTraceCall extends AbstractTraceCall {
+  private static final Logger LOG = LoggerFactory.getLogger(DebugTraceCall.class);
 
   public DebugTraceCall(
       final BlockchainQueries blockchainQueries,
@@ -40,11 +48,30 @@ public class DebugTraceCall extends TraceCall {
   }
 
   @Override
-  protected Object getTraceCallResult(
-      final ProtocolSchedule protocolSchedule,
-      final Set<TraceTypeParameter.TraceType> traceTypes,
-      final TransactionSimulatorResult result,
-      final TransactionTrace transactionTrace) {
-    return new DebugTraceTransactionResult(transactionTrace);
+  protected TraceOptions getTraceOptions(final JsonRpcRequestContext requestContext) {
+    return requestContext
+        .getOptionalParameter(1, TransactionTraceParams.class)
+        .map(TransactionTraceParams::traceOptions)
+        .orElse(TraceOptions.DEFAULT);
+  }
+
+  @Override
+  protected PreCloseStateHandler<Object> getSimulatorResultHandler(
+      final JsonRpcRequestContext requestContext, final DebugOperationTracer tracer) {
+    return (mutableWorldState, maybeSimulatorResult) ->
+        maybeSimulatorResult.map(
+            result -> {
+              if (result.isInvalid()) {
+                LOG.error(String.format("Invalid simulator result %s", result));
+                return new JsonRpcErrorResponse(
+                    requestContext.getRequest().getId(), INTERNAL_ERROR);
+              }
+
+              final TransactionTrace transactionTrace =
+                  new TransactionTrace(
+                      result.getTransaction(), result.getResult(), tracer.getTraceFrames());
+
+              return new DebugTraceTransactionResult(transactionTrace);
+            });
   }
 }
