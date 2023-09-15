@@ -1135,6 +1135,15 @@ public class MessageFrame {
   }
 
   /**
+   * Returns the current blob gas price.
+   *
+   * @return the current blob gas price
+   */
+  public Wei getBlobGasPrice() {
+    return txValues.blobGasPrice();
+  }
+
+  /**
    * Returns the recipient of the sender.
    *
    * @return the recipient of the sender
@@ -1365,6 +1374,7 @@ public class MessageFrame {
     private Address originator;
     private Address contract;
     private Wei gasPrice;
+    private Wei blobGasPrice;
     private Bytes inputData;
     private Address sender;
     private Wei value;
@@ -1469,6 +1479,17 @@ public class MessageFrame {
      */
     public Builder gasPrice(final Wei gasPrice) {
       this.gasPrice = gasPrice;
+      return this;
+    }
+
+    /**
+     * Sets Blob Gas price.
+     *
+     * @param blobGasPrice the blob gas price
+     * @return the builder
+     */
+    public Builder blobGasPrice(final Wei blobGasPrice) {
+      this.blobGasPrice = blobGasPrice;
       return this;
     }
 
@@ -1653,6 +1674,7 @@ public class MessageFrame {
         checkState(worldUpdater != null, "Missing message frame world updater");
         checkState(originator != null, "Missing message frame originator");
         checkState(gasPrice != null, "Missing message frame getGasRemaining price");
+        checkState(blobGasPrice != null, "Missing message frame blob gas price");
         checkState(blockValues != null, "Missing message frame block header");
         checkState(miningBeneficiary != null, "Missing mining beneficiary");
         checkState(blockHashLookup != null, "Missing block hash lookup");
@@ -1689,6 +1711,7 @@ public class MessageFrame {
                 UndoTable.of(HashBasedTable.create()),
                 originator,
                 gasPrice,
+                blobGasPrice,
                 blockValues,
                 new ArrayDeque<>(),
                 miningBeneficiary,

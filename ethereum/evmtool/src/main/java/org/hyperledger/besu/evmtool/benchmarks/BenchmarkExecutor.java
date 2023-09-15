@@ -63,6 +63,7 @@ public abstract class BenchmarkExecutor {
           .blockHashLookup(n -> null)
           .blockValues(new SimpleBlockValues())
           .gasPrice(Wei.ZERO)
+          .blobGasPrice(Wei.ZERO)
           .miningBeneficiary(Address.ZERO)
           .originator(Address.ZERO)
           .initialGas(100_000L)

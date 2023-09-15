@@ -117,6 +117,7 @@ public class PrivateTransactionProcessor {
               .initialGas(Long.MAX_VALUE)
               .originator(senderAddress)
               .gasPrice(transaction.getGasPrice())
+              .blobGasPrice(Wei.ZERO)
               .sender(senderAddress)
               .value(transaction.getValue())
               .apparentValue(transaction.getValue())
