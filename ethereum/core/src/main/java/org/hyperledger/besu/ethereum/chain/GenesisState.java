@@ -48,7 +48,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.base.MoreObjects;
@@ -86,8 +85,7 @@ public final class GenesisState {
    */
   public static GenesisState fromConfig(
       final GenesisConfigFile config, final ProtocolSchedule protocolSchedule) {
-    final List<GenesisAccount> genesisAccounts =
-        parseAllocations(config).collect(Collectors.toList());
+    final List<GenesisAccount> genesisAccounts = parseAllocations(config).toList();
     final Block block =
         new Block(
             buildHeader(config, calculateGenesisStateHash(genesisAccounts), protocolSchedule),
@@ -124,7 +122,7 @@ public final class GenesisState {
     final WorldUpdater updater = target.updater();
     genesisAccounts.forEach(
         genesisAccount -> {
-          final MutableAccount account = updater.getOrCreate(genesisAccount.address).getMutable();
+          final MutableAccount account = updater.getOrCreate(genesisAccount.address);
           account.setNonce(genesisAccount.nonce);
           account.setBalance(genesisAccount.balance);
           account.setCode(genesisAccount.code);

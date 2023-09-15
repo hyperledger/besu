@@ -50,10 +50,10 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
       final TransactionPoolMetrics metrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
-      final BaseFeeMarket baseFeeMarket) {
+      final FeeMarket feeMarket) {
     super(poolConfig, nextLayer, metrics, transactionReplacementTester);
     this.nextBlockBaseFee =
-        Optional.of(calculateNextBlockBaseFee(baseFeeMarket, chainHeadHeaderSupplier.get()));
+        Optional.of(calculateNextBlockBaseFee(feeMarket, chainHeadHeaderSupplier.get()));
   }
 
   @Override
@@ -71,8 +71,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
 
   @Override
   protected void internalBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {
-    final BaseFeeMarket baseFeeMarket = (BaseFeeMarket) feeMarket;
-    final Wei newNextBlockBaseFee = calculateNextBlockBaseFee(baseFeeMarket, blockHeader);
+    final Wei newNextBlockBaseFee = calculateNextBlockBaseFee(feeMarket, blockHeader);
 
     LOG.atTrace()
         .setMessage("Updating base fee from {} to {}")
@@ -85,13 +84,16 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
     orderByFee.addAll(pendingTransactions.values());
   }
 
-  private Wei calculateNextBlockBaseFee(
-      final BaseFeeMarket baseFeeMarket, final BlockHeader blockHeader) {
-    return baseFeeMarket.computeBaseFee(
-        blockHeader.getNumber() + 1,
-        blockHeader.getBaseFee().orElse(Wei.ZERO),
-        blockHeader.getGasUsed(),
-        baseFeeMarket.targetGasUsed(blockHeader));
+  private Wei calculateNextBlockBaseFee(final FeeMarket feeMarket, final BlockHeader blockHeader) {
+    if (feeMarket.implementsBaseFee()) {
+      final var baseFeeMarket = (BaseFeeMarket) feeMarket;
+      return baseFeeMarket.computeBaseFee(
+          blockHeader.getNumber() + 1,
+          blockHeader.getBaseFee().orElse(Wei.ZERO),
+          blockHeader.getGasUsed(),
+          baseFeeMarket.targetGasUsed(blockHeader));
+    }
+    return Wei.ZERO;
   }
 
   @Override

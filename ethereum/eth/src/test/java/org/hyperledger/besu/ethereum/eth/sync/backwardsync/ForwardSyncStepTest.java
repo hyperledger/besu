@@ -38,7 +38,7 @@ import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
+import org.hyperledger.besu.ethereum.referencetests.DefaultReferenceTestWorldState;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.nio.charset.StandardCharsets;
@@ -138,7 +138,8 @@ public class ForwardSyncStepTest {
               return new BlockProcessingResult(
                   Optional.of(
                       new BlockProcessingOutputs(
-                          new ReferenceTestWorldState(), blockDataGenerator.receipts(block))));
+                          DefaultReferenceTestWorldState.create(Collections.emptyMap()),
+                          blockDataGenerator.receipts(block))));
             });
   }
 

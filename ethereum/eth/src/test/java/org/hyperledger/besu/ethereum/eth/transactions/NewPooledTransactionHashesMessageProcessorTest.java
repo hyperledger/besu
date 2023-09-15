@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.encoding.TransactionAnnouncementDecoder.getDecoder;
 import static org.hyperledger.besu.ethereum.eth.encoding.TransactionAnnouncementEncoder.getEncoder;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -66,7 +67,10 @@ import org.mockito.quality.Strictness;
 public class NewPooledTransactionHashesMessageProcessorTest {
 
   @Mock private TransactionPool transactionPool;
-  @Mock private TransactionPoolConfiguration transactionPoolConfiguration;
+
+  @Mock(answer = RETURNS_DEEP_STUBS)
+  private TransactionPoolConfiguration transactionPoolConfiguration;
+
   @Mock private PeerTransactionTracker transactionTracker;
   @Mock private EthPeer peer1;
   @Mock private EthContext ethContext;
@@ -88,7 +92,7 @@ public class NewPooledTransactionHashesMessageProcessorTest {
   @BeforeEach
   public void setup() {
     metricsSystem = new StubMetricsSystem();
-    when(transactionPoolConfiguration.getEth65TrxAnnouncedBufferingPeriod())
+    when(transactionPoolConfiguration.getUnstable().getEth65TrxAnnouncedBufferingPeriod())
         .thenReturn(Duration.ofMillis(500));
     messageHandler =
         new NewPooledTransactionHashesMessageProcessor(

@@ -65,6 +65,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.util.Subscribers;
+import org.hyperledger.besu.util.number.Fraction;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -227,7 +228,7 @@ public class RetestethContext {
 
     final TransactionPoolConfiguration transactionPoolConfiguration =
         ImmutableTransactionPoolConfiguration.builder()
-            .txPoolLimitByAccountPercentage(0.004f)
+            .txPoolLimitByAccountPercentage(Fraction.fromFloat(0.004f))
             .build();
 
     transactionPool =
