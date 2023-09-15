@@ -30,10 +30,10 @@ import org.hyperledger.besu.ethereum.transaction.PreCloseStateHandler;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Optional;
 
 public class DebugTraceCall extends AbstractTraceCall {
   private static final Logger LOG = LoggerFactory.getLogger(DebugTraceCall.class);
@@ -58,17 +58,17 @@ public class DebugTraceCall extends AbstractTraceCall {
         .orElse(TraceOptions.DEFAULT);
   }
 
-    @Override
-    protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
-        final Optional<BlockParameter> maybeBlockParameter =
-                request.getOptionalParameter(1, BlockParameter.class);
+  @Override
+  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
+    final Optional<BlockParameter> maybeBlockParameter =
+        request.getOptionalParameter(1, BlockParameter.class);
 
-        if (maybeBlockParameter.isPresent()) {
-            return maybeBlockParameter.get();
-        }
-
-        return BlockParameter.LATEST;
+    if (maybeBlockParameter.isPresent()) {
+      return maybeBlockParameter.get();
     }
+
+    return BlockParameter.LATEST;
+  }
 
   @Override
   protected PreCloseStateHandler<Object> getSimulatorResultHandler(
