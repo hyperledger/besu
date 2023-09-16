@@ -17,9 +17,9 @@ package org.hyperledger.besu.ethereum.worldstate;
 import org.hyperledger.besu.datatypes.Hash;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.function.Predicate;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -61,9 +61,9 @@ public interface WorldStateStorage {
    * @param max The maximum number of entries to stream.
    * @return A map of flat accounts. (Empty map in this default implementation)
    */
-  default Map<Bytes32, Bytes> streamFlatAccounts(
+  default NavigableMap<Bytes32, Bytes> streamFlatAccounts(
       final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
-    return Collections.emptyMap();
+    return new TreeMap<>();
   }
 
   /**
@@ -75,9 +75,9 @@ public interface WorldStateStorage {
    * @param max The maximum number of entries to stream.
    * @return A map of flat storages. (Empty map in this default implementation)
    */
-  default Map<Bytes32, Bytes> streamFlatStorages(
+  default NavigableMap<Bytes32, Bytes> streamFlatStorages(
       final Hash accountHash, final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
-    return Collections.emptyMap();
+    return new TreeMap<>();
   }
 
   DataStorageFormat getDataStorageFormat();

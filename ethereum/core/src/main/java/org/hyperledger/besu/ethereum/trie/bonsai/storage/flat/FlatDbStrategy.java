@@ -28,7 +28,7 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
-import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Supplier;
@@ -188,7 +188,7 @@ public abstract class FlatDbStrategy {
     storage.clear(ACCOUNT_STORAGE_STORAGE);
   }
 
-  public Map<Bytes32, Bytes> streamAccountFlatDatabase(
+  public NavigableMap<Bytes32, Bytes> streamAccountFlatDatabase(
       final SegmentedKeyValueStorage storage,
       final Bytes startKeyHash,
       final Bytes32 endKeyHash,
@@ -207,7 +207,7 @@ public abstract class FlatDbStrategy {
     return collected;
   }
 
-  public Map<Bytes32, Bytes> streamStorageFlatDatabase(
+  public NavigableMap<Bytes32, Bytes> streamStorageFlatDatabase(
       final SegmentedKeyValueStorage storage,
       final Hash accountHash,
       final Bytes startKeyHash,
