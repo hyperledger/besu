@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
 import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule.DEFAULT_CHAIN_ID;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -41,6 +42,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredPendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
@@ -242,8 +244,11 @@ public class TransactionPoolFactoryTest {
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             ImmutableTransactionPoolConfiguration.builder()
                 .txPoolMaxSize(1)
-                .txMessageKeepAliveSeconds(1)
                 .pendingTxRetentionPeriod(1)
+                .unstable(
+                    ImmutableTransactionPoolConfiguration.Unstable.builder()
+                        .txMessageKeepAliveSeconds(1)
+                        .build())
                 .build(),
             peerTransactionTracker,
             transactionsMessageSender,
@@ -267,10 +272,12 @@ public class TransactionPoolFactoryTest {
   }
 
   @Test
-  public void createTransactionPool_shouldUseBaseFeePendingTransactionsSorter_whenLondonEnabled() {
+  public void
+      createLegacyTransactionPool_shouldUseBaseFeePendingTransactionsSorter_whenLondonEnabled() {
     setupScheduleWith(new StubGenesisConfigOptions().londonBlock(0));
 
-    final TransactionPool pool = createTransactionPool();
+    final TransactionPool pool =
+        createTransactionPool(TransactionPoolConfiguration.Implementation.LEGACY);
 
     assertThat(pool.pendingTransactionsImplementation())
         .isEqualTo(BaseFeePendingTransactionsSorter.class);
@@ -278,13 +285,40 @@ public class TransactionPoolFactoryTest {
 
   @Test
   public void
-      createTransactionPool_shouldUseGasPricePendingTransactionsSorter_whenLondonNotEnabled() {
+      createLegacyTransactionPool_shouldUseGasPricePendingTransactionsSorter_whenLondonNotEnabled() {
     setupScheduleWith(new StubGenesisConfigOptions().berlinBlock(0));
 
-    final TransactionPool pool = createTransactionPool();
+    final TransactionPool pool =
+        createTransactionPool(TransactionPoolConfiguration.Implementation.LEGACY);
 
     assertThat(pool.pendingTransactionsImplementation())
         .isEqualTo(GasPricePendingTransactionsSorter.class);
+  }
+
+  @Test
+  public void
+      createLayeredTransactionPool_shouldUseBaseFeePendingTransactionsSorter_whenLondonEnabled() {
+    setupScheduleWith(new StubGenesisConfigOptions().londonBlock(0));
+
+    final TransactionPool pool = createTransactionPool(LAYERED);
+
+    assertThat(pool.pendingTransactionsImplementation())
+        .isEqualTo(LayeredPendingTransactions.class);
+
+    assertThat(pool.logStats()).startsWith("Basefee Prioritized");
+  }
+
+  @Test
+  public void
+      createLayeredTransactionPool_shouldUseGasPricePendingTransactionsSorter_whenLondonNotEnabled() {
+    setupScheduleWith(new StubGenesisConfigOptions().berlinBlock(0));
+
+    final TransactionPool pool = createTransactionPool(LAYERED);
+
+    assertThat(pool.pendingTransactionsImplementation())
+        .isEqualTo(LayeredPendingTransactions.class);
+
+    assertThat(pool.logStats()).startsWith("GasPrice Prioritized");
   }
 
   private void setupScheduleWith(final StubGenesisConfigOptions config) {
@@ -305,7 +339,8 @@ public class TransactionPoolFactoryTest {
     syncState = new SyncState(blockchain, ethPeers, true, Optional.empty());
   }
 
-  private TransactionPool createTransactionPool() {
+  private TransactionPool createTransactionPool(
+      final TransactionPoolConfiguration.Implementation implementation) {
     final TransactionPool txPool =
         TransactionPoolFactory.createTransactionPool(
             schedule,
@@ -316,9 +351,13 @@ public class TransactionPoolFactoryTest {
             syncState,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
             ImmutableTransactionPoolConfiguration.builder()
+                .txPoolImplementation(implementation)
                 .txPoolMaxSize(1)
-                .txMessageKeepAliveSeconds(1)
                 .pendingTxRetentionPeriod(1)
+                .unstable(
+                    ImmutableTransactionPoolConfiguration.Unstable.builder()
+                        .txMessageKeepAliveSeconds(1)
+                        .build())
                 .build());
 
     txPool.setEnabled();

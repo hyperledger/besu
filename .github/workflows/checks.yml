@@ -7,7 +7,7 @@ on:
 
 jobs:
   spotless:
-    runs-on: [besu,Linux,self-hosted,X64,nodocker]
+    runs-on: [besu-research-ubuntu-16]
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout Repo
@@ -21,7 +21,7 @@ jobs:
       - name: spotless
         run: ./gradlew --no-daemon --parallel clean spotlessCheck
   javadoc_17:
-    runs-on: [besu,Linux,self-hosted,X64,nodocker]
+    runs-on: [besu-research-ubuntu-8]
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout Repo
