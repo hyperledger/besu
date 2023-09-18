@@ -83,7 +83,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
           .getAccountToRepair()
           .ifPresent(
               address ->
-                  snapContext.addAccountsToBeRepaired(
+                  snapContext.addAccountToHealingList(
                       CompactEncoding.bytesToPath(address.addressHash())));
     } else if (fastSyncState.getPivotBlockHeader().isEmpty()
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
