@@ -82,6 +82,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.HashMap;
@@ -271,7 +272,30 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
             blockCreatorFactory,
             blockchain,
             bftEventQueue);
-    miningCoordinator.enable();
+
+    if (syncState.isInitialSyncPhaseDone()) {
+      LOG.info("Starting QBFT mining coordinator");
+      miningCoordinator.enable();
+      miningCoordinator.start();
+    } else {
+      LOG.info("QBFT mining coordinator not starting while initial sync in progress");
+    }
+
+    syncState.subscribeCompletionReached(
+        new BesuEvents.InitialSyncCompletionListener() {
+          @Override
+          public void onInitialSyncCompleted() {
+            LOG.info("Starting QBFT mining coordinator following initial sync");
+            miningCoordinator.enable();
+            miningCoordinator.start();
+          }
+
+          @Override
+          public void onInitialSyncRestart() {
+            // Nothing to do. The mining coordinator won't be started until
+            // sync has completed.
+          }
+        });
 
     return miningCoordinator;
   }
