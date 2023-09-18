@@ -91,7 +91,6 @@ class CodeV0Test {
             .originator(Address.ZERO)
             .contract(Address.ZERO)
             .gasPrice(Wei.ZERO)
-            .blobGasPrice(Wei.ZERO)
             .inputData(Bytes.EMPTY)
             .sender(Address.ZERO)
             .value(Wei.ZERO)
