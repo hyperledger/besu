@@ -1674,6 +1674,7 @@ public class MessageFrame {
         checkState(worldUpdater != null, "Missing message frame world updater");
         checkState(originator != null, "Missing message frame originator");
         checkState(gasPrice != null, "Missing message frame getGasRemaining price");
+        checkState(blobGasPrice != null, "Missing message frame blob gas price");
         checkState(blockValues != null, "Missing message frame block header");
         checkState(miningBeneficiary != null, "Missing mining beneficiary");
         checkState(blockHashLookup != null, "Missing block hash lookup");
