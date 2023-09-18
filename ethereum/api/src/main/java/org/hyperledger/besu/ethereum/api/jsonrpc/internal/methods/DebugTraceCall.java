@@ -63,11 +63,7 @@ public class DebugTraceCall extends AbstractTraceCall {
     final Optional<BlockParameter> maybeBlockParameter =
         request.getOptionalParameter(1, BlockParameter.class);
 
-    if (maybeBlockParameter.isPresent()) {
-      return maybeBlockParameter.get();
-    }
-
-    return BlockParameter.LATEST;
+    return maybeBlockParameter.orElse(BlockParameter.LATEST);
   }
 
   @Override
@@ -77,7 +73,7 @@ public class DebugTraceCall extends AbstractTraceCall {
         maybeSimulatorResult.map(
             result -> {
               if (result.isInvalid()) {
-                LOG.error(String.format("Invalid simulator result %s", result));
+                LOG.error("Invalid simulator result {}", result);
                 return new JsonRpcErrorResponse(
                     requestContext.getRequest().getId(), INTERNAL_ERROR);
               }

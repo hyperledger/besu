@@ -66,7 +66,7 @@ public class TraceCall extends AbstractTraceCall {
         maybeSimulatorResult.map(
             result -> {
               if (result.isInvalid()) {
-                LOG.error(String.format("Invalid simulator result %s", result));
+                LOG.error("Invalid simulator result {}", result);
                 return new JsonRpcErrorResponse(
                     requestContext.getRequest().getId(), INTERNAL_ERROR);
               }
