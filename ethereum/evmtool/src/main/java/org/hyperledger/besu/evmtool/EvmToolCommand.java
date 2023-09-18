@@ -117,6 +117,12 @@ public class EvmToolCommand implements Runnable {
   private final Wei gasPriceGWei = Wei.ZERO;
 
   @Option(
+      names = {"--blob-price"},
+      description = "Price of blob gas for this invocation",
+      paramLabel = "<int>")
+  private final Wei blobGasPrice = Wei.ZERO;
+
+  @Option(
       names = {"--sender"},
       paramLabel = "<address>",
       description = "Calling address for this invocation.")
@@ -376,6 +382,7 @@ public class EvmToolCommand implements Runnable {
                 .originator(sender)
                 .sender(sender)
                 .gasPrice(gasPriceGWei)
+                .blobGasPrice(blobGasPrice)
                 .inputData(callData)
                 .value(ethValue)
                 .apparentValue(ethValue)
