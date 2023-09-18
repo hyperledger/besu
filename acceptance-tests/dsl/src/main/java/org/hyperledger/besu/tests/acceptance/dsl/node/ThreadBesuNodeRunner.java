@@ -46,6 +46,7 @@ import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
+import org.hyperledger.besu.plugin.services.TransactionValidatorService;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
@@ -57,6 +58,7 @@ import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
+import org.hyperledger.besu.services.TransactionValidatorServiceImpl;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -97,7 +99,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     besuPluginContext.addService(PicoCLIOptions.class, new PicoCLIOptionsImpl(commandLine));
     besuPluginContext.addService(
         TransactionSelectionService.class, new TransactionSelectionServiceImpl());
-
+    besuPluginContext.addService(
+        TransactionValidatorService.class, new TransactionValidatorServiceImpl());
     final Path pluginsPath;
     final String pluginDir = System.getProperty("besu.plugins.dir");
     if (pluginDir == null || pluginDir.isEmpty()) {

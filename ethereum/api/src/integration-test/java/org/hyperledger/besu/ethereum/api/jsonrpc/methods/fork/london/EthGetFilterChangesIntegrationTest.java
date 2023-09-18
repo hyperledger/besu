@@ -119,7 +119,8 @@ public class EthGetFilterChangesIntegrationTest {
             ethContext,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
             new TransactionPoolMetrics(metricsSystem),
-            TransactionPoolConfiguration.DEFAULT);
+            TransactionPoolConfiguration.DEFAULT,
+            null);
     transactionPool.setEnabled();
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, protocolContext.getWorldStateArchive());

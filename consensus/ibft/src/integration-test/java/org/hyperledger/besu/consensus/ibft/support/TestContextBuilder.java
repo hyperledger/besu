@@ -357,7 +357,8 @@ public class TestContextBuilder {
             ethContext,
             miningParams,
             new TransactionPoolMetrics(metricsSystem),
-            poolConf);
+            poolConf,
+            null);
 
     transactionPool.setEnabled();
 
