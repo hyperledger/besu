@@ -118,8 +118,7 @@ public class SegmentedInMemoryKeyValueStorage
   public Optional<NearestKeyValue> getNearestTo(
       final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
 
-    // TODO: this is a naive implementation which should be revisited for performance
-
+    // TODO: revisit this for sort performance
     Comparator<Map.Entry<Bytes, Optional<byte[]>>> comparing =
         Comparator.comparing(
                 (Map.Entry<Bytes, Optional<byte[]>> a) -> a.getKey().commonPrefixLength(key))

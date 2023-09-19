@@ -169,7 +169,7 @@ public interface SegmentedKeyValueStorage extends Closeable {
     /**
      * Convenience method to map the Optional value to Bytes.
      *
-     * @return Optional<Bytes>
+     * @return Optional of Bytes.
      */
     public Optional<Bytes> wrapBytes() {
       return value.map(Bytes::wrap);
