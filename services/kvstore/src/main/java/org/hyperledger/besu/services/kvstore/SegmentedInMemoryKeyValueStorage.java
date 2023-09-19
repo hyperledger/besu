@@ -118,18 +118,24 @@ public class SegmentedInMemoryKeyValueStorage
   public Optional<NearestKeyValue> getNearestTo(
       final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
 
-    // TODO: revisit this for sort performance
-    Comparator<Map.Entry<Bytes, Optional<byte[]>>> comparing =
-        Comparator.comparing(
-                (Map.Entry<Bytes, Optional<byte[]>> a) -> a.getKey().commonPrefixLength(key))
-            .thenComparing((a, b) -> a.getKey().compareTo(b.getKey()));
-    return this.hashValueStore
-        .computeIfAbsent(segmentIdentifier, s -> new HashMap<>())
-        .entrySet()
-        .stream()
-        .sorted(comparing.reversed())
-        .findFirst()
-        .map(z -> new NearestKeyValue(z.getKey(), z.getValue()));
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      // TODO: revisit this for sort performance
+      Comparator<Map.Entry<Bytes, Optional<byte[]>>> comparing =
+          Comparator.comparing(
+                  (Map.Entry<Bytes, Optional<byte[]>> a) -> a.getKey().commonPrefixLength(key))
+              .thenComparing((a, b) -> a.getKey().compareTo(b.getKey()));
+      return this.hashValueStore
+          .computeIfAbsent(segmentIdentifier, s -> new HashMap<>())
+          .entrySet()
+          .stream()
+          .sorted(comparing.reversed())
+          .findFirst()
+          .map(z -> new NearestKeyValue(z.getKey(), z.getValue()));
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override

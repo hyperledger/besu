@@ -142,6 +142,9 @@ public class RocksDBSnapshotTransaction
    *
    * <p>be sure to close this iterator, like in a try-with-resources block, otherwise a native
    * memory leak might occur.
+   *
+   * @param segmentId id for the segment to iterate over.
+   * @return RocksIterator
    */
   public RocksIterator getIterator(final SegmentIdentifier segmentId) {
     return snapTx.getIterator(readOptions, columnFamilyMapper.apply(segmentId));
