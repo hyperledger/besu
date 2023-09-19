@@ -57,7 +57,6 @@ class StorageTrieNodeHealingRequestTest {
           Address.fromHexString("0xdeadbeeb"));
 
   private WorldStateStorage worldStateStorage;
-
   private Hash account0Hash;
   private Hash account0StorageRoot;
 
@@ -81,6 +80,7 @@ class StorageTrieNodeHealingRequestTest {
         TrieGenerator.generateTrie(
             worldStateStorage,
             accounts.stream().map(Address::addressHash).collect(Collectors.toList()));
+
     account0Hash = accounts.get(0).addressHash();
     account0StorageRoot =
         trie.get(account0Hash)
@@ -94,6 +94,7 @@ class StorageTrieNodeHealingRequestTest {
   @ArgumentsSource(StorageFormatArguments.class)
   void shouldDetectExistingData(final DataStorageFormat storageFormat) {
     setup(storageFormat);
+
     final StorageTrieNodeHealingRequest request =
         new StorageTrieNodeHealingRequest(
             account0StorageRoot, account0Hash, Hash.EMPTY, Bytes.EMPTY);
