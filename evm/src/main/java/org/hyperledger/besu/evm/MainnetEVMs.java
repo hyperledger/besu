@@ -33,6 +33,7 @@ import org.hyperledger.besu.evm.operation.AddressOperation;
 import org.hyperledger.besu.evm.operation.AndOperation;
 import org.hyperledger.besu.evm.operation.BalanceOperation;
 import org.hyperledger.besu.evm.operation.BaseFeeOperation;
+import org.hyperledger.besu.evm.operation.BlobBaseFeeOperation;
 import org.hyperledger.besu.evm.operation.BlobHashOperation;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.operation.ByteOperation;
@@ -856,6 +857,9 @@ public class MainnetEVMs {
 
     // EIP-6780 nerf self destruct
     registry.put(new SelfDestructOperation(gasCalculator, true));
+
+    // EIP-7516 BLOBBASEFEE
+    registry.put(new BlobBaseFeeOperation(gasCalculator));
   }
 
   /**

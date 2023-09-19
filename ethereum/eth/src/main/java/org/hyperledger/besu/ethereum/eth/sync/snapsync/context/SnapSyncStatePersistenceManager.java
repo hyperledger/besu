@@ -41,7 +41,7 @@ import org.apache.tuweni.bytes.Bytes;
  */
 public class SnapSyncStatePersistenceManager {
 
-  private final byte[] SNAP_ACCOUNT_TO_BE_REPAIRED_INDEX =
+  private final byte[] SNAP_ACCOUNT_HEALING_LIST_INDEX =
       "snapInconsistentAccountsStorageIndex".getBytes(StandardCharsets.UTF_8);
 
   private final GenericKeyValueStorageFacade<BigInteger, AccountRangeDataRequest>
@@ -104,20 +104,20 @@ public class SnapSyncStatePersistenceManager {
   }
 
   /**
-   * Persists the current accounts to be repaired in the database.
+   * Persists the current accounts to heal in the database.
    *
-   * @param accountsToBeRepaired The current list of accounts to persist.
+   * @param accountsHealingList The current list of accounts to heal.
    */
-  public void addAccountsToBeRepaired(final Bytes accountsToBeRepaired) {
+  public void addAccountToHealingList(final Bytes accountsHealingList) {
     final BigInteger index =
         healContext
-            .get(SNAP_ACCOUNT_TO_BE_REPAIRED_INDEX)
+            .get(SNAP_ACCOUNT_HEALING_LIST_INDEX)
             .map(bytes -> new BigInteger(bytes.toArrayUnsafe()).add(BigInteger.ONE))
             .orElse(BigInteger.ZERO);
     healContext.putAll(
         keyValueStorageTransaction -> {
-          keyValueStorageTransaction.put(SNAP_ACCOUNT_TO_BE_REPAIRED_INDEX, index.toByteArray());
-          keyValueStorageTransaction.put(index.toByteArray(), accountsToBeRepaired.toArrayUnsafe());
+          keyValueStorageTransaction.put(SNAP_ACCOUNT_HEALING_LIST_INDEX, index.toByteArray());
+          keyValueStorageTransaction.put(index.toByteArray(), accountsHealingList.toArrayUnsafe());
         });
   }
 
@@ -127,9 +127,9 @@ public class SnapSyncStatePersistenceManager {
         .collect(Collectors.toList());
   }
 
-  public HashSet<Bytes> getAccountsToBeRepaired() {
+  public HashSet<Bytes> getAccountsHealingList() {
     return healContext
-        .streamValuesFromKeysThat(notEqualsTo(SNAP_ACCOUNT_TO_BE_REPAIRED_INDEX))
+        .streamValuesFromKeysThat(notEqualsTo(SNAP_ACCOUNT_HEALING_LIST_INDEX))
         .collect(Collectors.toCollection(HashSet::new));
   }
 
