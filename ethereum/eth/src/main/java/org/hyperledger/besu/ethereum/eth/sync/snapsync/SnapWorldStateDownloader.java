@@ -153,10 +153,10 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
       final List<AccountRangeDataRequest> currentAccountRange =
           snapContext.getCurrentAccountRange();
-      final HashSet<Bytes> inconsistentAccounts = snapContext.getAccountsToBeRepaired();
+      final HashSet<Bytes> inconsistentAccounts = snapContext.getAccountsHealingList();
 
       if (!currentAccountRange.isEmpty()) { // continue to download worldstate ranges
-        newDownloadState.setAccountsToBeRepaired(inconsistentAccounts);
+        newDownloadState.setAccountsHealingList(inconsistentAccounts);
         snapContext
             .getCurrentAccountRange()
             .forEach(
@@ -165,14 +165,14 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
                       DOWNLOAD, snapDataRequest.getStartKeyHash(), snapDataRequest.getEndKeyHash());
                   newDownloadState.enqueueRequest(snapDataRequest);
                 });
-      } else if (!snapContext.getAccountsToBeRepaired().isEmpty()) { // restart only the heal step
+      } else if (!snapContext.getAccountsHealingList().isEmpty()) { // restart only the heal step
         snapSyncState.setHealTrieStatus(true);
         worldStateStorage.clearFlatDatabase();
         worldStateStorage.clearTrieLog();
-        newDownloadState.setAccountsToBeRepaired(inconsistentAccounts);
+        newDownloadState.setAccountsHealingList(inconsistentAccounts);
         newDownloadState.enqueueRequest(
             SnapDataRequest.createAccountTrieNodeDataRequest(
-                stateRoot, Bytes.EMPTY, snapContext.getAccountsToBeRepaired()));
+                stateRoot, Bytes.EMPTY, snapContext.getAccountsHealingList()));
       } else {
         // start from scratch
         worldStateStorage.clear();
