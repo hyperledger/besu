@@ -127,14 +127,18 @@ public class BonsaiWorldStateUpdateAccumulator
       bonsaiValue = new BonsaiValue<>(null, null);
       accountsToUpdate.put(address, bonsaiValue);
     } else if (bonsaiValue.getUpdated() != null) {
-      throw new IllegalStateException("Cannot create an account when one already exists");
+      if (bonsaiValue.getUpdated().isEmpty()) {
+        return track(new UpdateTrackingAccount<>(bonsaiValue.getUpdated()));
+      } else {
+        throw new IllegalStateException("Cannot create an account when one already exists");
+      }
     }
 
     final BonsaiAccount newAccount =
         new BonsaiAccount(
             this,
             address,
-            address.addressHash(),
+            hashAndSavePreImage(address),
             nonce,
             balance,
             Hash.EMPTY_TRIE_HASH,
@@ -288,6 +292,19 @@ public class BonsaiWorldStateUpdateAccumulator
               final BonsaiAccount updatedAccount;
               final BonsaiValue<BonsaiAccount> updatedAccountValue =
                   accountsToUpdate.get(updatedAddress);
+
+              final Map<StorageSlotKey, BonsaiValue<UInt256>> pendingStorageUpdates =
+                  storageToUpdate.computeIfAbsent(
+                      updatedAddress,
+                      k ->
+                          new StorageConsumingMap<>(
+                              updatedAddress, new ConcurrentHashMap<>(), storagePreloader));
+
+              if (tracked.getStorageWasCleared()) {
+                storageToClear.add(updatedAddress);
+                pendingStorageUpdates.clear();
+              }
+
               if (tracked.getWrappedAccount() == null) {
                 updatedAccount = new BonsaiAccount(this, tracked);
                 tracked.setWrappedAccount(updatedAccount);
@@ -307,6 +324,17 @@ public class BonsaiWorldStateUpdateAccumulator
                 }
                 if (tracked.getStorageWasCleared()) {
                   updatedAccount.clearStorage();
+                  wrappedWorldView()
+                      .getAllAccountStorage(updatedAddress, updatedAccount.getStorageRoot())
+                      .forEach(
+                          (keyHash, entryValue) -> {
+                            final StorageSlotKey storageSlotKey =
+                                new StorageSlotKey(Hash.wrap(keyHash), Optional.empty());
+                            final UInt256 value = UInt256.fromBytes(RLP.decodeOne(entryValue));
+                            pendingStorageUpdates.put(
+                                storageSlotKey, new BonsaiValue<>(value, null, true));
+                          });
+                  updatedAccount.setStorageRoot(Hash.EMPTY_TRIE_HASH);
                 }
                 tracked.getUpdatedStorage().forEach(updatedAccount::setStorageValue);
               }
@@ -329,22 +357,10 @@ public class BonsaiWorldStateUpdateAccumulator
                 pendingCode.setUpdated(updatedAccount.getCode());
               }
 
-              // This is especially to avoid unnecessary computation for withdrawals
+              // This is especially to avoid unnecessary computation for withdrawals and
+              // self-destruct beneficiaries
               if (updatedAccount.getUpdatedStorage().isEmpty()) {
                 return;
-              }
-
-              final StorageConsumingMap<StorageSlotKey, BonsaiValue<UInt256>>
-                  pendingStorageUpdates =
-                      storageToUpdate.computeIfAbsent(
-                          updatedAddress,
-                          __ ->
-                              new StorageConsumingMap<>(
-                                  updatedAddress, new ConcurrentHashMap<>(), storagePreloader));
-
-              if (tracked.getStorageWasCleared()) {
-                storageToClear.add(updatedAddress);
-                pendingStorageUpdates.clear();
               }
 
               final TreeSet<Map.Entry<UInt256, UInt256>> entries =
@@ -355,7 +371,7 @@ public class BonsaiWorldStateUpdateAccumulator
               entries.forEach(
                   storageUpdate -> {
                     final UInt256 keyUInt = storageUpdate.getKey();
-                    final Hash slotHash = Hash.hash(keyUInt);
+                    final Hash slotHash = hashAndSavePreImage(keyUInt);
                     final StorageSlotKey slotKey =
                         new StorageSlotKey(slotHash, Optional.of(keyUInt));
                     final UInt256 value = storageUpdate.getValue();
@@ -399,7 +415,8 @@ public class BonsaiWorldStateUpdateAccumulator
 
   @Override
   public UInt256 getStorageValue(final Address address, final UInt256 slotKey) {
-    StorageSlotKey storageSlotKey = new StorageSlotKey(Hash.hash(slotKey), Optional.of(slotKey));
+    StorageSlotKey storageSlotKey =
+        new StorageSlotKey(hashAndSavePreImage(slotKey), Optional.of(slotKey));
     return getStorageValueByStorageSlotKey(address, storageSlotKey).orElse(UInt256.ZERO);
   }
 
@@ -443,7 +460,7 @@ public class BonsaiWorldStateUpdateAccumulator
   public UInt256 getPriorStorageValue(final Address address, final UInt256 storageKey) {
     // TODO maybe log the read into the trie layer?
     StorageSlotKey storageSlotKey =
-        new StorageSlotKey(Hash.hash(storageKey), Optional.of(storageKey));
+        new StorageSlotKey(hashAndSavePreImage(storageKey), Optional.of(storageKey));
     final Map<StorageSlotKey, BonsaiValue<UInt256>> localAccountStorage =
         storageToUpdate.get(address);
     if (localAccountStorage != null) {
@@ -815,5 +832,10 @@ public class BonsaiWorldStateUpdateAccumulator
 
   public interface Consumer<T> {
     void process(final Address address, T value);
+  }
+
+  protected Hash hashAndSavePreImage(final Bytes bytes) {
+    // by default do not save hash preImages
+    return Hash.hash(bytes);
   }
 }

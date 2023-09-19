@@ -48,6 +48,7 @@ public class MessageFrameTestFixture {
   private Address originator = DEFAUT_ADDRESS;
   private Address contract = DEFAUT_ADDRESS;
   private Wei gasPrice = Wei.ZERO;
+  private Wei blobGasPrice = Wei.ZERO;
   private Wei value = Wei.ZERO;
   private Bytes inputData = Bytes.EMPTY;
   private Code code = CodeV0.EMPTY_CODE;
@@ -117,6 +118,11 @@ public class MessageFrameTestFixture {
     return this;
   }
 
+  public MessageFrameTestFixture blobGasPrice(final Wei blobGasPrice) {
+    this.blobGasPrice = blobGasPrice;
+    return this;
+  }
+
   public MessageFrameTestFixture value(final Wei value) {
     this.value = value;
     return this;
@@ -160,6 +166,7 @@ public class MessageFrameTestFixture {
             .address(address)
             .originator(originator)
             .gasPrice(gasPrice)
+            .blobGasPrice(blobGasPrice)
             .inputData(inputData)
             .sender(sender)
             .value(value)

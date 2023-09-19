@@ -35,6 +35,7 @@
       "currentTimestamp": "12",
       "currentRandom": "0",
       "currentDifficulty": "0",
+      "currentStateRoot": "0x7075d070d6ec70a91216fc2dba6ceae6b8d30815166f6b7b7249776767fb9855",
       "parentDifficulty": "0",
       "parentBaseFee": "7",
       "parentGasUsed": "0",

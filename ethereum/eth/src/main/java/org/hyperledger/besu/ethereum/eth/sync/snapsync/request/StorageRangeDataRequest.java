@@ -124,6 +124,11 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     if (!slots.isEmpty() || !proofs.isEmpty()) {
       if (!worldStateProofProvider.isValidRangeProof(
           startKeyHash, endKeyHash, storageRoot, proofs, slots)) {
+        // If the proof is invalid, it means that the storage will be a mix of several blocks.
+        // Therefore, it will be necessary to heal the account's storage subsequently
+        downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));
+        // We will request the new storage root of the account because it is apparently no longer
+        // valid with the new pivot block.
         downloadState.enqueueRequest(
             createAccountDataRequest(
                 getRootHash(), Hash.wrap(accountHash), startKeyHash, endKeyHash));
@@ -173,7 +178,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
                       });
               if (startKeyHash.equals(MIN_RANGE) && endKeyHash.equals(MAX_RANGE)) {
                 // need to heal this account storage
-                downloadState.addAccountsToBeRepaired(CompactEncoding.bytesToPath(accountHash));
+                downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));
               }
             });
 
