@@ -78,8 +78,8 @@ public class SegmentedInMemoryKeyValueStorage
         segments.stream()
             .collect(
                 Collectors
-                    .<SegmentIdentifier, SegmentIdentifier, Map<Bytes, Optional<byte[]>>>toConcurrentMap(
-                        s -> s, s -> new ConcurrentHashMap<>())));
+                    .<SegmentIdentifier, SegmentIdentifier, Map<Bytes, Optional<byte[]>>>
+                        toConcurrentMap(s -> s, s -> new ConcurrentHashMap<>())));
   }
 
   @Override
@@ -216,7 +216,9 @@ public class SegmentedInMemoryKeyValueStorage
     // need to clone the submaps also:
     return new SegmentedInMemoryKeyValueStorage(
         hashValueStore.entrySet().stream()
-            .collect(Collectors.toConcurrentMap(Map.Entry::getKey, e -> new ConcurrentHashMap<>(e.getValue()))));
+            .collect(
+                Collectors.toConcurrentMap(
+                    Map.Entry::getKey, e -> new ConcurrentHashMap<>(e.getValue()))));
   }
 
   @Override

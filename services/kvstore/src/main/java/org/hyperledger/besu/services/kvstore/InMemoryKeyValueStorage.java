@@ -54,7 +54,8 @@ public class InMemoryKeyValueStorage extends SegmentedKeyValueStorageAdapter {
 
   private static ConcurrentMap<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> asSegmentMap(
       final Map<Bytes, Optional<byte[]>> initialMap) {
-    final ConcurrentMap<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> segmentMap = new ConcurrentHashMap<>();
+    final ConcurrentMap<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> segmentMap =
+        new ConcurrentHashMap<>();
     segmentMap.put(SEGMENT_IDENTIFIER, initialMap);
     return segmentMap;
   }
