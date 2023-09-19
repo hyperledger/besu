@@ -123,6 +123,12 @@ public class EvmToyCommand implements Runnable {
   final Boolean showReturnData = false;
 
   @CommandLine.Option(
+      names = {"--trace.storage"},
+      description = "When tracing, show the updated storage contents.",
+      scope = ScopeType.INHERIT)
+  final Boolean showStorage = false;
+
+  @CommandLine.Option(
       names = {"--repeat"},
       description = "Number of times to repeat for benchmarking.")
   private final Integer repeat = 0;
@@ -164,7 +170,8 @@ public class EvmToyCommand implements Runnable {
 
       final OperationTracer tracer = // You should have picked Mercy.
           lastLoop && showJsonResults
-              ? new StandardJsonTracer(System.out, showMemory, showStack, showReturnData)
+              ? new StandardJsonTracer(
+                  System.out, showMemory, showStack, showReturnData, showStorage)
               : OperationTracer.NO_TRACING;
 
       MessageFrame initialMessageFrame =

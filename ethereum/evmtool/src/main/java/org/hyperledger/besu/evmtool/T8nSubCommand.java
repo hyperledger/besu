@@ -254,7 +254,8 @@ public class T8nSubCommand implements Runnable {
                       new PrintStream(traceDest),
                       parentCommand.showMemory,
                       !parentCommand.hideStack,
-                      parentCommand.showReturnData);
+                      parentCommand.showReturnData,
+                      parentCommand.showStorage);
               outputStreams.put(jsonTracer, traceDest);
               return jsonTracer;
             }
