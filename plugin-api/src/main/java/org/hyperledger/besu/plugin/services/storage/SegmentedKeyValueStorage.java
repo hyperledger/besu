@@ -23,6 +23,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.tuweni.bytes.Bytes;
 
 /** Service provided by Besu to facilitate persistent data storage. */
 public interface SegmentedKeyValueStorage extends Closeable {
@@ -36,6 +37,18 @@ public interface SegmentedKeyValueStorage extends Closeable {
    * @throws StorageException the storage exception
    */
   Optional<byte[]> get(SegmentIdentifier segment, byte[] key) throws StorageException;
+
+  /**
+   * Find the key and corresponding value "nearest to" the specified key. Nearest is defined as
+   * either matching the supplied key or the key lexicographically prior to it.
+   *
+   * @param segmentIdentifier segment to scan
+   * @param key key for which we are searching for the nearest match.
+   * @return Optional of NearestKeyValue-wrapped matched key and corresponding value.
+   * @throws StorageException the storage exception
+   */
+  Optional<NearestKeyValue> getNearestTo(final SegmentIdentifier segmentIdentifier, Bytes key)
+      throws StorageException;
 
   /**
    * Contains key.
@@ -144,4 +157,22 @@ public interface SegmentedKeyValueStorage extends Closeable {
    * @return boolean indicating whether the underlying storage is closed.
    */
   boolean isClosed();
+
+  /**
+   * record type used to wrap responses from getNearestTo, includes the matched key and the value.
+   *
+   * @param key the matched (nearest) key
+   * @param value the corresponding value
+   */
+  record NearestKeyValue(Bytes key, Optional<byte[]> value) {
+
+    /**
+     * Convenience method to map the Optional value to Bytes.
+     *
+     * @return Optional<Bytes>
+     */
+    public Optional<Bytes> wrapBytes() {
+      return value.map(Bytes::wrap);
+    }
+  }
 }

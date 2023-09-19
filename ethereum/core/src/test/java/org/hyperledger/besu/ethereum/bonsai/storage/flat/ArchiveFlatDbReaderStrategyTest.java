@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,21 +11,8 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.services.kvstore;
+package org.hyperledger.besu.ethereum.bonsai.storage.flat;
 
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
-
-public class InMemoryKeyValueStorageTest extends AbstractSegmentedKeyValueStorageTest {
-
-  @Override
-  protected KeyValueStorage createStore() {
-    return new InMemoryKeyValueStorage();
-  }
-
-  @Override
-  public SegmentedKeyValueStorage createSegmentedStore() {
-    return new SegmentedInMemoryKeyValueStorage();
-  }
-}
+public class ArchiveFlatDbReaderStrategyTest {}
