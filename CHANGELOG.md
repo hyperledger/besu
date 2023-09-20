@@ -1,5 +1,13 @@
 # Changelog
 
+## 23.7.3
+
+### Additions and Improvements
+- Update Holesky config for re-launch [#5890](https://github.com/hyperledger/besu/pull/5890)
+
+### Download Links
+
+
 ## 23.7.2
 
 ### Additions and Improvements
