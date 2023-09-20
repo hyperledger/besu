@@ -36,14 +36,14 @@ public abstract class AbstractSegmentedKeyValueStorageTest extends AbstractKeyVa
 
       // create 10 entries
       final SegmentedKeyValueStorageTransaction tx = store.startTransaction();
-      IntStream.range(0, 10)
+      IntStream.range(1, 10)
           .forEach(
               i -> {
                 final byte[] key = bytesFromHexString("000" + i);
                 final byte[] value = bytesFromHexString("0FFF");
                 tx.put(SEGMENT_IDENTIFIER, key, value);
                 // different common prefix, and reversed order of bytes:
-                final byte[] key2 = bytesFromHexString("010" + (9 - i));
+                final byte[] key2 = bytesFromHexString("010" + (10 - i));
                 final byte[] value2 = bytesFromHexString("0FFF");
                 tx.put(SEGMENT_IDENTIFIER, key2, value2);
               });
@@ -69,10 +69,14 @@ public abstract class AbstractSegmentedKeyValueStorageTest extends AbstractKeyVa
       assertThat(val4).isPresent();
       assertThat(val4.get().key()).isEqualTo(Bytes.fromHexString("0003"));
 
-      // assert 0000 is closest to 0000
-      var val5 = store.getNearestTo(SEGMENT_IDENTIFIER, Bytes.fromHexString("0000"));
+      // assert 0001 is closest to 0001
+      var val5 = store.getNearestTo(SEGMENT_IDENTIFIER, Bytes.fromHexString("0001"));
       assertThat(val5).isPresent();
-      assertThat(val5.get().key()).isEqualTo(Bytes.fromHexString("0000"));
+      assertThat(val5.get().key()).isEqualTo(Bytes.fromHexString("0001"));
+
+      // assert 0000 is not present
+      var val6 = store.getNearestTo(SEGMENT_IDENTIFIER, Bytes.fromHexString("0000"));
+      assertThat(val6).isNotPresent();
     }
   }
 }

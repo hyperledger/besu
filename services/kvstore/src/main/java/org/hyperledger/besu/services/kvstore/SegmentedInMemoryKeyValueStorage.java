@@ -130,6 +130,8 @@ public class SegmentedInMemoryKeyValueStorage
           .computeIfAbsent(segmentIdentifier, s -> new HashMap<>())
           .entrySet()
           .stream()
+          // only return keys equal to or less than
+          .filter(e -> e.getKey().compareTo(key) <= 0)
           .sorted(comparing.reversed())
           .findFirst()
           .map(z -> new NearestKeyValue(z.getKey(), z.getValue()));
