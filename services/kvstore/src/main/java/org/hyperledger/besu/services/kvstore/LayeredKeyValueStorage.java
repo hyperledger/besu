@@ -122,8 +122,18 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
   @Override
   public Stream<Pair<byte[], byte[]>> streamFromKey(
       final SegmentIdentifier segmentId, final byte[] startKey) {
+    final Bytes startKeyBytes = Bytes.wrap(startKey);
+    return stream(segmentId).filter(e -> startKeyBytes.compareTo(Bytes.wrap(e.getKey())) <= 0);
+  }
+
+  @Override
+  public Stream<Pair<byte[], byte[]>> streamFromKey(
+      final SegmentIdentifier segmentId, final byte[] startKey, final byte[] endKey) {
+    final Bytes startKeyBytes = Bytes.wrap(startKey);
+    final Bytes endKeyBytes = Bytes.wrap(endKey);
     return stream(segmentId)
-        .filter(e -> Bytes.wrap(startKey).compareTo(Bytes.wrap(e.getKey())) <= 0);
+        .filter(e -> startKeyBytes.compareTo(Bytes.wrap(e.getKey())) <= 0)
+        .filter(e -> endKeyBytes.compareTo(Bytes.wrap(e.getKey())) >= 0);
   }
 
   @Override
