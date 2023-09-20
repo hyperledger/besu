@@ -125,7 +125,7 @@ public class SegmentedInMemoryKeyValueStorage
       Comparator<Map.Entry<Bytes, Optional<byte[]>>> comparing =
           Comparator.comparing(
                   (Map.Entry<Bytes, Optional<byte[]>> a) -> a.getKey().commonPrefixLength(key))
-              .thenComparing((a, b) -> a.getKey().compareTo(b.getKey()));
+              .thenComparing(Map.Entry.comparingByKey());
       return this.hashValueStore
           .computeIfAbsent(segmentIdentifier, s -> new HashMap<>())
           .entrySet()
