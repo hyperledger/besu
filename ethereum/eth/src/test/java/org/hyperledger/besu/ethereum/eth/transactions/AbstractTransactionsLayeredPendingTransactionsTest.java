@@ -29,6 +29,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -76,6 +77,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -153,6 +155,9 @@ public abstract class AbstractTransactionsLayeredPendingTransactionsTest {
     final EthScheduler ethScheduler = mock(EthScheduler.class);
     syncTaskCapture = ArgumentCaptor.forClass(Runnable.class);
     doNothing().when(ethScheduler).scheduleSyncWorkerTask(syncTaskCapture.capture());
+    doAnswer(invocation -> ((Supplier<Void>) invocation.getArguments()[0]).get())
+        .when(ethScheduler)
+        .scheduleServiceTask(any(Supplier.class));
     doReturn(ethScheduler).when(ethContext).getScheduler();
 
     peerTransactionTracker = new PeerTransactionTracker();
