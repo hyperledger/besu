@@ -1,5 +1,15 @@
 # Changelog
 
+## Next release
+### Additions and Improvements
+- Reduce `engine_forkchoiceUpdatedV?` response time by asynchronously process block added events in the transaction pool [#5909](https://github.com/hyperledger/besu/pull/5909)
+
+### Breaking Changes
+
+### Bug Fixes
+
+### Download Links
+
 ## 23.7.3
 
 ### Breaking Changes

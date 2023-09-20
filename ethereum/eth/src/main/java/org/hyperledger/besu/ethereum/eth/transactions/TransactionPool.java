@@ -345,7 +345,7 @@ public class TransactionPool implements BlockAddedObserver {
                                   .getByBlockHeader(e.getBlock().getHeader())
                                   .getFeeMarket());
                           reAddTransactions(e.getRemovedTransactions());
-                          LOG.atInfo()
+                          LOG.atDebug()
                               .setMessage("Block added event {} processed in {}ms")
                               .addArgument(e)
                               .addArgument(() -> System.currentTimeMillis() - started)
