@@ -82,9 +82,9 @@ public class EthGetBlockByNumberTest {
       blockchain.appendBlock(block, receipts);
     }
 
-    BlockHeader lastestHeader = blockchain.getChainHeadBlock().getHeader();
+    BlockHeader latestHeader = blockchain.getChainHeadBlock().getHeader();
     when(worldStateArchive.isWorldStateAvailable(
-            lastestHeader.getStateRoot(), lastestHeader.getHash()))
+            latestHeader.getStateRoot(), latestHeader.getHash()))
         .thenReturn(Boolean.TRUE);
 
     blockchainQueries = spy(new BlockchainQueries(blockchain, worldStateArchive));
