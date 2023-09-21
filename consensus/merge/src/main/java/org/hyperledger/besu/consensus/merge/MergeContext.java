@@ -159,7 +159,10 @@ public interface MergeContext extends ConsensusContext {
    *
    * @param payload the payload
    */
-  default void putPayload(final PayloadWithExtra payload) {putPayloadById(payload.payloadIdentifier, payload.blockWithReceipts);};
+  default void putPayload(final PayloadWithExtra payload) {
+    putPayloadById(payload.payloadIdentifier, payload.blockWithReceipts);
+  }
+  ;
 
   /**
    * Put payload by Identifier.
