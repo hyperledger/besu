@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLContextType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -119,17 +120,16 @@ public class TransactionAdapter extends AdapterBase {
     return transactionWithMetadata.getTransaction().getGasPrice().orElse(Wei.ZERO);
   }
 
-  public Optional<Wei> getMaxPriorityFeePerGas() {
-    return transactionWithMetadata.getTransaction().getMaxPriorityFeePerGas();
-  }
-
   public Optional<Wei> getMaxFeePerGas() {
     return transactionWithMetadata.getTransaction().getMaxFeePerGas();
   }
 
-  public Optional<Wei> getEffectiveGasPrice(final DataFetchingEnvironment environment) {
-    return getReceipt(environment)
-        .map(rwm -> rwm.getTransaction().getEffectiveGasPrice(rwm.getBaseFee()));
+  public Optional<Wei> getMaxPriorityFeePerGas() {
+    return transactionWithMetadata.getTransaction().getMaxPriorityFeePerGas();
+  }
+
+  public Optional<Wei> getMaxFeePerBlobGas() {
+    return transactionWithMetadata.getTransaction().getMaxFeePerBlobGas();
   }
 
   public Optional<Wei> getEffectiveTip(final DataFetchingEnvironment environment) {
@@ -168,6 +168,19 @@ public class TransactionAdapter extends AdapterBase {
 
   public Optional<Long> getCumulativeGasUsed(final DataFetchingEnvironment environment) {
     return getReceipt(environment).map(rpt -> rpt.getReceipt().getCumulativeGasUsed());
+  }
+
+  public Optional<Wei> getEffectiveGasPrice(final DataFetchingEnvironment environment) {
+    return getReceipt(environment)
+        .map(rwm -> rwm.getTransaction().getEffectiveGasPrice(rwm.getBaseFee()));
+  }
+
+  public Optional<Long> getBlobGasUsed(final DataFetchingEnvironment environment) {
+    return getReceipt(environment).flatMap(TransactionReceiptWithMetadata::getBlobGasUsed);
+  }
+
+  public Optional<Wei> getBlobGasPrice(final DataFetchingEnvironment environment) {
+    return getReceipt(environment).flatMap(TransactionReceiptWithMetadata::getBlobGasPrice);
   }
 
   public Optional<AccountAdapter> getCreatedContract(final DataFetchingEnvironment environment) {
@@ -244,5 +257,9 @@ public class TransactionAdapter extends AdapterBase {
               receipt.getReceipt().writeTo(rlpOutput);
               return rlpOutput.encoded();
             });
+  }
+
+  public List<VersionedHash> getBlobVersionedHashes(final DataFetchingEnvironment environment) {
+    return transactionWithMetadata.getTransaction().getVersionedHashes().orElse(List.of());
   }
 }
