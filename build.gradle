@@ -213,6 +213,13 @@ allprojects {
     options.encoding = 'UTF-8'
   }
 
+  // IntelliJ workaround to allow repeated debugging of unchanged code
+  tasks.withType(JavaExec) {
+    if (it.name.contains(".")) {
+      outputs.upToDateWhen { false }
+    }
+  }
+
   /*
    * Pass some system properties provided on the gradle command line to test executions for
    * convenience.

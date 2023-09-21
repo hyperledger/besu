@@ -37,7 +37,7 @@ public class ToyAccount implements MutableAccount {
 
   private final Account parent;
 
-  private boolean mutable = true;
+  private boolean immutable = false;
 
   private Address address;
   private final Supplier<Hash> addressHash =
@@ -166,6 +166,6 @@ public class ToyAccount implements MutableAccount {
 
   @Override
   public void becomeImmutable() {
-    mutable = false;
+    immutable = true;
   }
 }

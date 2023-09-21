@@ -21,7 +21,6 @@ public final class EvmTool {
 
   public static void main(final String... args) {
     LogConfigurator.setLevel("", "DEBUG");
-    System.out.println(";/");
     final EvmToolCommand evmToolCommand = new EvmToolCommand();
 
     evmToolCommand.execute(args);

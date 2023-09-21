@@ -466,10 +466,10 @@ public class EvmToolCommand implements Runnable {
                                     "   \""
                                         + accountStorageEntry
                                             .getKey()
-                                            .map(UInt256::toHexString)
+                                            .map(UInt256::toQuantityHexString)
                                             .orElse("-")
                                         + "\": \""
-                                        + accountStorageEntry.getValue().toHexString()
+                                        + accountStorageEntry.getValue().toQuantityHexString()
                                         + "\"")
                             .toList()));
                 out.println("  },");

@@ -27,7 +27,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.Map;
 import java.util.NavigableMap;
@@ -269,7 +268,11 @@ public class JournaledAccount implements MutableAccount, Undoable {
 
   @Override
   public UInt256 getOriginalStorageValue(final UInt256 key) {
-    return account.getOriginalStorageValue(key);
+    if (storageWasCleared) {
+      return getStorageValue(key);
+    } else {
+      return account.getOriginalStorageValue(key);
+    }
   }
 
   @Override
