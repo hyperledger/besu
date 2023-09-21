@@ -81,7 +81,7 @@ class TransactionDataFetcherTest extends AbstractDataFetcherTest {
 
     var transactionData = fetcher.get(environment);
     assertThat(transactionData).isPresent();
-    assertThat(transactionData.get().getBlobVersionedHashes(environment)).isEmpty();
+    assertThat(transactionData.get().getBlobVersionedHashes()).isEmpty();
     assertThat(transactionData.get().getBlobGasUsed(environment)).isEmpty();
     assertThat(transactionData.get().getBlobGasPrice(environment)).isEmpty();
     assertThat(transactionData.get().getMaxFeePerBlobGas()).isEmpty();
@@ -115,7 +115,7 @@ class TransactionDataFetcherTest extends AbstractDataFetcherTest {
 
     var transactionData = fetcher.get(environment);
     assertThat(transactionData).isPresent();
-    assertThat(transactionData.get().getBlobVersionedHashes(environment)).isEmpty();
+    assertThat(transactionData.get().getBlobVersionedHashes()).isEmpty();
     assertThat(transactionData.get().getBlobGasUsed(environment)).contains(0L);
     assertThat(transactionData.get().getBlobGasPrice(environment)).contains(Wei.ZERO);
     assertThat(transactionData.get().getMaxFeePerBlobGas()).contains(Wei.ZERO);
@@ -149,7 +149,7 @@ class TransactionDataFetcherTest extends AbstractDataFetcherTest {
 
     var transactionData = fetcher.get(environment);
     assertThat(transactionData).isPresent();
-    assertThat(transactionData.get().getBlobVersionedHashes(environment))
+    assertThat(transactionData.get().getBlobVersionedHashes())
         .containsExactly(fakeVersionedHash);
     assertThat(transactionData.get().getBlobGasUsed(environment)).contains(blobGasUsed);
     assertThat(transactionData.get().getBlobGasPrice(environment)).contains(blobGasPrice);

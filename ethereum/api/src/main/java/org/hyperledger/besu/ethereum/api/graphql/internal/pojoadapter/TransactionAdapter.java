@@ -259,7 +259,7 @@ public class TransactionAdapter extends AdapterBase {
             });
   }
 
-  public List<VersionedHash> getBlobVersionedHashes(final DataFetchingEnvironment environment) {
+  public List<VersionedHash> getBlobVersionedHashes() {
     return transactionWithMetadata.getTransaction().getVersionedHashes().orElse(List.of());
   }
 }

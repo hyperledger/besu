@@ -110,7 +110,7 @@ class BlockDataFetcherTest extends AbstractDataFetcherTest {
 
     final Optional<NormalBlockAdapter> maybeBlock = fetcher.get(environment);
     assertThat(maybeBlock).isPresent();
-    assertThat(maybeBlock.get().getBlobGasUsed(environment)).contains(blobGasUsed);
-    assertThat(maybeBlock.get().getExcessBlobGas(environment)).contains(excessBlobGas);
+    assertThat(maybeBlock.get().getBlobGasUsed()).contains(blobGasUsed);
+    assertThat(maybeBlock.get().getExcessBlobGas()).contains(excessBlobGas);
   }
 }

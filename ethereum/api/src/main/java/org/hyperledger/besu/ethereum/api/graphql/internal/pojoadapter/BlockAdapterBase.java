@@ -295,11 +295,11 @@ public class BlockAdapterBase extends AdapterBase {
                     .map(wl -> wl.stream().map(WithdrawalAdapter::new).toList()));
   }
 
-  public Optional<Long> getBlobGasUsed(final DataFetchingEnvironment environment) {
+  public Optional<Long> getBlobGasUsed() {
     return header.getBlobGasUsed();
   }
 
-  public Optional<Long> getExcessBlobGas(final DataFetchingEnvironment environment) {
+  public Optional<Long> getExcessBlobGas() {
     return header.getExcessBlobGas().map(BlobGas::toLong);
   }
 }
