@@ -61,7 +61,7 @@ public class PostMergeContext implements MergeContext {
   private final Subscribers<UnverifiedForkchoiceListener>
       newUnverifiedForkchoiceCallbackSubscribers = Subscribers.create();
 
-  private final EvictingQueue<PayloadWithExtra> blocksInProgress =
+  private final EvictingQueue<PayloadWrapper> blocksInProgress =
       EvictingQueue.create(MAX_BLOCKS_IN_PROGRESS);
 
   // latest finalized block
@@ -248,11 +248,11 @@ public class PostMergeContext implements MergeContext {
                   .log();
               blocksInProgress.removeAll(
                   retrievePayloadsById(payloadId).collect(Collectors.toUnmodifiableList()));
-              blocksInProgress.add(new PayloadWithExtra(payloadId, newBlockWithReceipts));
+              blocksInProgress.add(new PayloadWrapper(payloadId, newBlockWithReceipts));
               logCurrentBestBlock(newBlockWithReceipts);
             }
           },
-          () -> blocksInProgress.add(new PayloadWithExtra(payloadId, newBlockWithReceipts)));
+          () -> blocksInProgress.add(new PayloadWrapper(payloadId, newBlockWithReceipts)));
     }
   }
 
@@ -283,7 +283,7 @@ public class PostMergeContext implements MergeContext {
     }
   }
 
-  private Stream<PayloadWithExtra> retrievePayloadsById(final PayloadIdentifier payloadId) {
+  private Stream<PayloadWrapper> retrievePayloadsById(final PayloadIdentifier payloadId) {
     return blocksInProgress.stream().filter(z -> z.payloadIdentifier.equals(payloadId));
   }
 
