@@ -62,9 +62,7 @@ public class EthGetProof extends AbstractBlockParameterOrBlockHashMethod {
             blockHash,
             worldState -> {
               Optional<WorldStateProof> proofOptional =
-                  getBlockchainQueries()
-                      .getWorldStateArchive()
-                      .getAccountProof(worldState.rootHash(), address, storageKeys);
+                  worldState.getAccountProof(worldState.rootHash(), address, storageKeys);
               return proofOptional
                   .map(
                       proof ->

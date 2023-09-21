@@ -19,6 +19,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.proof.WorldStateProof;
+import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -35,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Objects;
@@ -58,6 +61,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
   private final Map<Address, Bytes> updatedAccountCode = new HashMap<>();
   private final Map<Bytes32, UInt256> newStorageKeyPreimages = new HashMap<>();
   private final Map<Bytes32, Address> newAccountKeyPreimages = new HashMap<>();
+  private final WorldStateProofProvider worldStateProof;
 
   public DefaultMutableWorldState(
       final WorldStateStorage storage, final WorldStatePreimageStorage preimageStorage) {
@@ -71,6 +75,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
     this.worldStateStorage = worldStateStorage;
     this.accountStateTrie = newAccountStateTrie(rootHash);
     this.preimageStorage = preimageStorage;
+    this.worldStateProof = new WorldStateProofProvider(worldStateStorage);
   }
 
   public DefaultMutableWorldState(final WorldState worldState) {
@@ -85,6 +90,7 @@ public class DefaultMutableWorldState implements MutableWorldState {
     this.worldStateStorage = other.worldStateStorage;
     this.preimageStorage = other.preimageStorage;
     this.accountStateTrie = newAccountStateTrie(other.accountStateTrie.getRootHash());
+    this.worldStateProof = new WorldStateProofProvider(worldStateStorage);
   }
 
   private MerkleTrie<Bytes32, Bytes> newAccountStateTrie(final Bytes32 rootHash) {
@@ -195,6 +201,14 @@ public class DefaultMutableWorldState implements MutableWorldState {
     // Push changes to underlying storage
     preimageUpdater.commit();
     stateUpdater.commit();
+  }
+
+  @Override
+  public Optional<WorldStateProof> getAccountProof(
+      final Hash worldStateRoot,
+      final Address accountAddress,
+      final List<UInt256> accountStorageKeys) {
+    return worldStateProof.getAccountProof(worldStateRoot, accountAddress, accountStorageKeys);
   }
 
   private Optional<UInt256> getStorageTrieKeyPreimage(final Bytes32 trieKey) {

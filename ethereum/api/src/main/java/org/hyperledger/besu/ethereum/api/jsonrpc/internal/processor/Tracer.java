@@ -20,14 +20,17 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class Tracer {
 
@@ -66,6 +69,14 @@ public class Tracer {
     @Override
     public void persist(final BlockHeader blockHeader) {
       mutableWorldState.persist(blockHeader);
+    }
+
+    @Override
+    public Optional<WorldStateProof> getAccountProof(
+        final Hash worldStateRoot,
+        final Address accountAddress,
+        final List<UInt256> accountStorageKeys) {
+      return mutableWorldState.getAccountProof(worldStateRoot, accountAddress, accountStorageKeys);
     }
 
     @Override

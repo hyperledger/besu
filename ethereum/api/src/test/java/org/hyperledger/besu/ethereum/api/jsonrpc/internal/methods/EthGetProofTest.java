@@ -130,7 +130,7 @@ class EthGetProofTest {
   @Test
   void errorWhenAccountNotFound() {
     generateWorldState();
-    when(archive.getAccountProof(any(Hash.class), any(Address.class), any()))
+    when(archive.getMutable().getAccountProof(any(Hash.class), any(Address.class), any()))
         .thenReturn(Optional.empty());
     final JsonRpcErrorResponse expectedResponse =
         new JsonRpcErrorResponse(null, RpcErrorType.NO_ACCOUNT_FOUND);
@@ -222,9 +222,6 @@ class EthGetProofTest {
                     "0x2222222222222222222222222222222222222222222222222222222222222222")));
     when(worldStateProof.getStorageValue(storageKey)).thenReturn(UInt256.ZERO);
 
-    when(archive.getAccountProof(eq(rootHash), eq(address), anyList()))
-        .thenReturn(Optional.of(worldStateProof));
-
     final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
     when(mutableWorldState.rootHash()).thenReturn(rootHash);
     doAnswer(
@@ -235,6 +232,10 @@ class EthGetProofTest {
                     .apply(mutableWorldState))
         .when(blockchainQueries)
         .getAndMapWorldState(any(), any());
+
+    when(archive.getMutable()).thenReturn(mutableWorldState);
+    when(mutableWorldState.getAccountProof(eq(rootHash), eq(address), anyList()))
+        .thenReturn(Optional.of(worldStateProof));
 
     return GetProofResult.buildGetProofResult(address, worldStateProof);
   }

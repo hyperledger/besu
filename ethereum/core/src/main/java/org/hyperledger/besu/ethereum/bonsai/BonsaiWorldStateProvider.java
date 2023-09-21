@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccu
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -51,7 +50,6 @@ import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -364,15 +362,6 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
 
   @Override
   public Optional<Bytes> getNodeData(final Hash hash) {
-    return Optional.empty();
-  }
-
-  @Override
-  public Optional<WorldStateProof> getAccountProof(
-      final Hash worldStateRoot,
-      final Address accountAddress,
-      final List<UInt256> accountStorageKeys) {
-    // FIXME we can do proofs for layered tries and the persisted trie
     return Optional.empty();
   }
 
