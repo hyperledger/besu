@@ -115,6 +115,34 @@ public class BlockParameterTest {
   }
 
   @Test
+  public void numberStringShouldReturnLongNumberValue() {
+    final BlockParameter blockParameter = new BlockParameter("55");
+    assertThat(blockParameter.getNumber()).isPresent();
+    assertThat(blockParameter.getNumber().get()).isEqualTo(55L);
+
+    assertThat(blockParameter.isNumeric()).isTrue();
+    assertThat(blockParameter.isEarliest()).isFalse();
+    assertThat(blockParameter.isFinalized()).isFalse();
+    assertThat(blockParameter.isLatest()).isFalse();
+    assertThat(blockParameter.isPending()).isFalse();
+    assertThat(blockParameter.isSafe()).isFalse();
+  }
+
+  @Test
+  public void hexShouldReturnLongNumberValue() {
+    final BlockParameter blockParameter = new BlockParameter("0x55");
+    assertThat(blockParameter.getNumber()).isPresent();
+    assertThat(blockParameter.getNumber().get()).isEqualTo(85L);
+
+    assertThat(blockParameter.isNumeric()).isTrue();
+    assertThat(blockParameter.isEarliest()).isFalse();
+    assertThat(blockParameter.isFinalized()).isFalse();
+    assertThat(blockParameter.isLatest()).isFalse();
+    assertThat(blockParameter.isPending()).isFalse();
+    assertThat(blockParameter.isSafe()).isFalse();
+  }
+
+  @Test
   public void upperCaseStringShouldBeHandled() {
     final BlockParameter blockParameter = new BlockParameter("LATEST");
     assertThat(blockParameter.getNumber()).isEmpty();
