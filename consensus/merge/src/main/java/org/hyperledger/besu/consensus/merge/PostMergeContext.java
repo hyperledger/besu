@@ -61,7 +61,7 @@ public class PostMergeContext implements MergeContext {
   private final Subscribers<UnverifiedForkchoiceListener>
       newUnverifiedForkchoiceCallbackSubscribers = Subscribers.create();
 
-  private final EvictingQueue<PayloadTuple> blocksInProgress =
+  private final EvictingQueue<PayloadWithExtra> blocksInProgress =
       EvictingQueue.create(MAX_BLOCKS_IN_PROGRESS);
 
   // latest finalized block
@@ -247,12 +247,12 @@ public class PostMergeContext implements MergeContext {
                   .addArgument(() -> logBlockProposal(currBestBlock.getBlock()))
                   .log();
               blocksInProgress.removeAll(
-                  retrieveTuplesById(payloadId).collect(Collectors.toUnmodifiableList()));
-              blocksInProgress.add(new PayloadTuple(payloadId, newBlockWithReceipts));
+                  retrievePayloadsById(payloadId).collect(Collectors.toUnmodifiableList()));
+              blocksInProgress.add(new PayloadWithExtra(payloadId, newBlockWithReceipts));
               logCurrentBestBlock(newBlockWithReceipts);
             }
           },
-          () -> blocksInProgress.add(new PayloadTuple(payloadId, newBlockWithReceipts)));
+          () -> blocksInProgress.add(new PayloadWithExtra(payloadId, newBlockWithReceipts)));
     }
   }
 
@@ -276,14 +276,14 @@ public class PostMergeContext implements MergeContext {
   @Override
   public Optional<BlockWithReceipts> retrieveBlockById(final PayloadIdentifier payloadId) {
     synchronized (blocksInProgress) {
-      return retrieveTuplesById(payloadId)
+      return retrievePayloadsById(payloadId)
           .map(tuple -> tuple.blockWithReceipts)
           .sorted(compareByGasUsedDesc)
           .findFirst();
     }
   }
 
-  private Stream<PayloadTuple> retrieveTuplesById(final PayloadIdentifier payloadId) {
+  private Stream<PayloadWithExtra> retrievePayloadsById(final PayloadIdentifier payloadId) {
     return blocksInProgress.stream().filter(z -> z.payloadIdentifier.equals(payloadId));
   }
 
@@ -294,25 +294,6 @@ public class PostMergeContext implements MergeContext {
         + block.getHeader().getGasUsed()
         + " transactions "
         + block.getBody().getTransactions().size();
-  }
-
-  private static class PayloadTuple {
-    /** The Payload identifier. */
-    final PayloadIdentifier payloadIdentifier;
-    /** The Block with receipts. */
-    final BlockWithReceipts blockWithReceipts;
-
-    /**
-     * Instantiates a new Payload tuple.
-     *
-     * @param payloadIdentifier the payload identifier
-     * @param blockWithReceipts the block with receipts
-     */
-    PayloadTuple(
-        final PayloadIdentifier payloadIdentifier, final BlockWithReceipts blockWithReceipts) {
-      this.payloadIdentifier = payloadIdentifier;
-      this.blockWithReceipts = blockWithReceipts;
-    }
   }
 
   @Override
