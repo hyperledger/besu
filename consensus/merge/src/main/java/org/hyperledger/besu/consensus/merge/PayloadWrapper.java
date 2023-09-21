@@ -24,7 +24,7 @@ class PayloadWrapper {
   final BlockWithReceipts blockWithReceipts;
 
   /**
-   * Instantiates a new Payload.
+   * Instantiates a new PayloadWrapper.
    *
    * @param payloadIdentifier the payload identifier
    * @param blockWithReceipts the block with receipts
