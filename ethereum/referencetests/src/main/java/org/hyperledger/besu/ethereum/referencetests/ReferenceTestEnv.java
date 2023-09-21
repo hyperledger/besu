@@ -97,33 +97,35 @@ public class ReferenceTestEnv extends BlockHeader {
    */
   @JsonCreator
   public ReferenceTestEnv(
+      @JsonProperty("beaconRoot") final String beaconRoot,
+      @JsonProperty("blockHashes") final Map<String, String> blockHashes,
+      @JsonProperty("ommers") final List<String> _ommers,
+      @JsonProperty("previousHash") final String previousHash,
+      @JsonProperty("withdrawals") final List<EnvWithdrawal> withdrawals,
+      @JsonProperty("currentBaseFee") final String baseFee,
+      @JsonProperty("currentBeaconRoot") final String currentBeaconRoot,
+      @JsonProperty("currentBlobGasUsed") final String currentBlobGasUsed,
       @JsonProperty("currentCoinbase") final String coinbase,
+      @JsonProperty("currentDataGasUsed") final String currentDataGasUsed,
       @JsonProperty("currentDifficulty") final String difficulty,
+      @JsonProperty("currentExcessBlobGas") final String currentExcessBlobGas,
+      @JsonProperty("currentExcessDataGas") final String currentExcessDataGas,
       @JsonProperty("currentGasLimit") final String gasLimit,
       @JsonProperty("currentNumber") final String number,
-      @JsonProperty("currentBaseFee") final String baseFee,
-      @JsonProperty("currentTimestamp") final String timestamp,
       @JsonProperty("currentRandom") final String random,
       @JsonProperty("currentStateRoot") final String stateRoot,
-      @JsonProperty("previousHash") final String previousHash,
-      @JsonProperty("parentDifficulty") final String parentDifficulty,
+      @JsonProperty("currentTimestamp") final String timestamp,
+      @JsonProperty("currentWithdrawalsRoot") final String currentWithdrawalsRoot,
       @JsonProperty("parentBaseFee") final String parentBaseFee,
-      @JsonProperty("parentGasUsed") final String parentGasUsed,
-      @JsonProperty("parentGasLimit") final String parentGasLimit,
-      @JsonProperty("parentTimestamp") final String parentTimestamp,
-      @JsonProperty("ommers") final List<String> _ommers,
-      @JsonProperty("parentUncleHash") final String _parentUncleHash,
-      @JsonProperty("withdrawals") final List<EnvWithdrawal> withdrawals,
-      @JsonProperty("blockHashes") final Map<String, String> blockHashes,
-      @JsonProperty("currentExcessBlobGas") final String currentExcessBlobGas,
-      @JsonProperty("currentBlobGasUsed") final String currentBlobGasUsed,
-      @JsonProperty("currentExcessDataGas") final String currentExcessDataGas,
-      @JsonProperty("currentDataGasUsed") final String currentDataGasUsed,
-      @JsonProperty("parentExcessBlobGas") final String parentExcessBlobGas,
       @JsonProperty("parentBlobGasUsed") final String parentBlobGasUsed,
-      @JsonProperty("parentExcessDataGas") final String parentExcessDataGas,
       @JsonProperty("parentDataGasUsed") final String parentDataGasUsed,
-      @JsonProperty("beaconRoot") final String beaconRoot) {
+      @JsonProperty("parentDifficulty") final String parentDifficulty,
+      @JsonProperty("parentExcessBlobGas") final String parentExcessBlobGas,
+      @JsonProperty("parentExcessDataGas") final String parentExcessDataGas,
+      @JsonProperty("parentGasLimit") final String parentGasLimit,
+      @JsonProperty("parentGasUsed") final String parentGasUsed,
+      @JsonProperty("parentTimestamp") final String parentTimestamp,
+      @JsonProperty("parentUncleHash") final String _parentUncleHash) {
     super(
         generateTestBlockHash(previousHash, number),
         Hash.EMPTY_LIST_HASH, // ommersHash
@@ -141,7 +143,7 @@ public class ReferenceTestEnv extends BlockHeader {
         Optional.ofNullable(baseFee).map(Wei::fromHexString).orElse(null),
         Optional.ofNullable(random).map(Difficulty::fromHexString).orElse(Difficulty.ZERO),
         0L,
-        null, // withdrawalsRoot
+        currentWithdrawalsRoot == null ? null : Hash.fromHexString(currentWithdrawalsRoot),
         currentBlobGasUsed == null
             ? currentDataGasUsed == null ? null : Long.decode(currentDataGasUsed)
             : Long.decode(currentBlobGasUsed),
@@ -172,7 +174,10 @@ public class ReferenceTestEnv extends BlockHeader {
                         Map.entry(
                             Long.decode(entry.getKey()), Hash.fromHexString(entry.getValue())))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    this.beaconRoot = beaconRoot == null ? null : Hash.fromHexString(beaconRoot);
+    this.beaconRoot =
+        beaconRoot == null
+            ? (currentBeaconRoot == null ? null : Hash.fromHexString(currentBeaconRoot))
+            : Hash.fromHexString(beaconRoot);
   }
 
   @Override

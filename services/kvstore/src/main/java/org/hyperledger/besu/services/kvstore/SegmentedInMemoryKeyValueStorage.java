@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -46,14 +48,14 @@ import org.apache.tuweni.bytes.Bytes;
 public class SegmentedInMemoryKeyValueStorage
     implements SnappedKeyValueStorage, SnappableKeyValueStorage, SegmentedKeyValueStorage {
   /** protected access for the backing hash map. */
-  final Map<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> hashValueStore;
+  final ConcurrentMap<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> hashValueStore;
 
   /** protected access to the rw lock. */
   protected final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
   /** Instantiates a new In memory key value storage. */
   public SegmentedInMemoryKeyValueStorage() {
-    this(new HashMap<>());
+    this(new ConcurrentHashMap<>());
   }
 
   /**
@@ -62,7 +64,7 @@ public class SegmentedInMemoryKeyValueStorage
    * @param hashValueStore the hash value store
    */
   protected SegmentedInMemoryKeyValueStorage(
-      final Map<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> hashValueStore) {
+      final ConcurrentMap<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> hashValueStore) {
     this.hashValueStore = hashValueStore;
   }
 
@@ -76,8 +78,8 @@ public class SegmentedInMemoryKeyValueStorage
         segments.stream()
             .collect(
                 Collectors
-                    .<SegmentIdentifier, SegmentIdentifier, Map<Bytes, Optional<byte[]>>>toMap(
-                        s -> s, s -> new HashMap<>())));
+                    .<SegmentIdentifier, SegmentIdentifier, Map<Bytes, Optional<byte[]>>>
+                        toConcurrentMap(s -> s, s -> new ConcurrentHashMap<>())));
   }
 
   @Override
@@ -214,7 +216,9 @@ public class SegmentedInMemoryKeyValueStorage
     // need to clone the submaps also:
     return new SegmentedInMemoryKeyValueStorage(
         hashValueStore.entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, e -> new HashMap<>(e.getValue()))));
+            .collect(
+                Collectors.toConcurrentMap(
+                    Map.Entry::getKey, e -> new ConcurrentHashMap<>(e.getValue()))));
   }
 
   @Override
