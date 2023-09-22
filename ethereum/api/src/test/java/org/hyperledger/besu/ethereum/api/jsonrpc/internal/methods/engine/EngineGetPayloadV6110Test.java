@@ -68,7 +68,7 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
   @BeforeEach
   @Override
   public void before() {
-      super.before();
+    super.before();
     lenient()
         .when(mergeContext.retrieveBlockById(mockPid))
         .thenReturn(Optional.of(mockBlockWithReceiptsAndDeposits));
@@ -169,8 +169,6 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
     assertThat(((JsonRpcErrorResponse) resp).getErrorType())
         .isEqualTo(RpcErrorType.UNSUPPORTED_FORK);
   }
-
-
 
   @Override
   protected String getMethodName() {
