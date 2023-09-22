@@ -87,7 +87,7 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
       return false;
     }
 
-    // if there is space add it, otherwise check if it has move value than the last one
+    // if there is space add it, otherwise check if it has more value than the last one
     if (orderByFee.size() < poolConfig.getMaxPrioritizedTransactions()) {
       return true;
     }
