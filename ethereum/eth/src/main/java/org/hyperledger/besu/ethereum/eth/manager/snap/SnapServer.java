@@ -14,8 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.snap;
 
+import kotlin.collections.ArrayDeque;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.bonsai.storage.flat.FlatDbReaderStrategy;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.ByteCodesMessage;
@@ -27,31 +30,37 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-
-import java.util.HashMap;
-import java.util.function.Function;
-
-import kotlin.collections.ArrayDeque;
-import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** TODO: See https://github.com/ethereum/devp2p/blob/master/caps/snap.md */
+import java.util.HashMap;
+import java.util.NavigableMap;
+import java.util.Optional;
+import java.util.function.Function;
+
+/** See https://github.com/ethereum/devp2p/blob/master/caps/snap.md */
 @SuppressWarnings("unused")
 class SnapServer {
   private static final Logger LOGGER = LoggerFactory.getLogger(SnapServer.class);
   private static final int MAX_ENTRIES_PER_REQUEST = 100000;
-
   private static final int MAX_RESPONSE_SIZE = 2 * 1024 * 1024;
+  private static final AccountRangeMessage EMPTY_ACCOUNT_RANGE = AccountRangeMessage.create(
+      new HashMap<>(), new ArrayDeque<>());
+
   private final EthMessages snapMessages;
-  private final FlatDbReaderStrategy flatDbStrategy;
-  private final Function<Hash, WorldStateStorage> worldStateStorageProvider;
+  private final Function<Hash, Optional<WorldStateStorage>> worldStateStorageProvider;
 
   SnapServer(final EthMessages snapMessages, final WorldStateArchive archive) {
     this.snapMessages = snapMessages;
-    // TODO get these from worldstate archive:
-    this.flatDbStrategy = null;
+    // TODO implement worldstate storage retrieval by root hash in WorldStateArchive:
     this.worldStateStorageProvider = __ -> null;
+  }
+
+  SnapServer(
+      final EthMessages snapMessages,
+      final Function<Hash, Optional<WorldStateStorage>> worldStateStorageProvider) {
+    this.snapMessages = snapMessages;
+    this.worldStateStorageProvider = worldStateStorageProvider;
   }
 
   private void registerResponseConstructors() {
@@ -65,42 +74,41 @@ class SnapServer {
         SnapV1.GET_TRIE_NODES, messageData -> constructGetTrieNodesResponse(messageData));
   }
 
-  private MessageData constructGetAccountRangeResponse(final MessageData message) {
-    if (flatDbStrategy == null) {
-      // TODO, remove this empty fallback
-      return AccountRangeMessage.create(new HashMap<>(), new ArrayDeque<>());
-    }
-
+  MessageData constructGetAccountRangeResponse(final MessageData message) {
     final GetAccountRangeMessage getAccountRangeMessage = GetAccountRangeMessage.readFrom(message);
     final GetAccountRangeMessage.Range range = getAccountRangeMessage.range(true);
 
     final int maxResponseBytes = Math.min(range.responseBytes().intValue(), MAX_RESPONSE_SIZE);
 
-    LOGGER.info(
-        "Receive get account range message from {} to {}",
-        range.startKeyHash().toHexString(),
-        range.endKeyHash().toHexString());
+    LOGGER.info("Receive get account range message from {} to {}",
+        range.startKeyHash().toHexString(), range.endKeyHash().toHexString());
 
-    final var storage =
-        worldStateStorageProvider.apply(getAccountRangeMessage.getRootHash().orElseThrow());
+    var worldStateHash = getAccountRangeMessage
+        .range(true).worldStateRootHash();
 
-    final var accounts =
-        storage.streamFlatAccounts(
-            range.startKeyHash(), range.endKeyHash(), MAX_ENTRIES_PER_REQUEST);
-    // TODO if accounts is empty we need to return the first hash after the requested endHash
+    return worldStateStorageProvider.apply(worldStateHash)
+        .map(storage -> {
+          NavigableMap<Bytes32, Bytes>
+              accounts = storage.streamFlatAccounts(range.startKeyHash(), range.endKeyHash(),
+              MAX_ENTRIES_PER_REQUEST);
 
-    final var worldStateProof = new WorldStateProofProvider(storage);
-    final ArrayDeque<Bytes> proof =
-        new ArrayDeque<>(
-            worldStateProof.getAccountProofRelatedNodes(
-                range.worldStateRootHash(), Hash.wrap(range.startKeyHash())));
-    if (!accounts.isEmpty()) {
-      proof.addAll(
-          worldStateProof.getAccountProofRelatedNodes(
-              range.worldStateRootHash(), Hash.wrap(accounts.lastKey())));
-    }
+          if (accounts.isEmpty()) {
+            // fetch next account after range, if it exists
+            accounts = storage.streamFlatAccounts(range.endKeyHash(), UInt256.MAX_VALUE, 1L);
+          }
 
-    return AccountRangeMessage.create(accounts, proof);
+          final var worldStateProof = new WorldStateProofProvider(storage);
+          final ArrayDeque<Bytes> proof = new ArrayDeque<>(
+              worldStateProof.getAccountProofRelatedNodes(range.worldStateRootHash(),
+                  Hash.wrap(range.startKeyHash())));
+          if (!accounts.isEmpty()) {
+            proof.addAll(worldStateProof.getAccountProofRelatedNodes(range.worldStateRootHash(),
+                Hash.wrap(accounts.lastKey())));
+          }
+          return AccountRangeMessage.create(accounts, proof);
+
+        })
+        .orElse(EMPTY_ACCOUNT_RANGE);
   }
 
   private MessageData constructGetStorageRangeResponse(final MessageData message) {

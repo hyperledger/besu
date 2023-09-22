@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -94,6 +95,8 @@ public final class GetAccountRangeMessage extends AbstractSnapMessageData {
 
   @Value.Immutable
   public interface Range {
+
+    Optional<BigInteger> requestId();
 
     Hash worldStateRootHash();
 
