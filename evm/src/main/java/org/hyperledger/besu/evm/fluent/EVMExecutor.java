@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.contractvalidation.ContractValidationRule;
@@ -37,6 +38,7 @@ import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
@@ -87,7 +89,83 @@ public class EVMExecutor {
   }
 
   /**
-   * Instandiate Evm executor.
+   * Create an EVM with the most current activated fork on chain ID 1.
+   *
+   * <p>Note, this will change across versions
+   *
+   * @return executor builder
+   */
+  public static EVMExecutor evm() {
+    return evm(EvmSpecVersion.mostRecent());
+  }
+
+  /**
+   * Create an EVM at the specified version with chain ID 1.
+   *
+   * @param fork the EVM spec version to use
+   * @return executor builder
+   */
+  public static EVMExecutor evm(final EvmSpecVersion fork) {
+    return evm(fork, BigInteger.ONE);
+  }
+
+  /**
+   * Create an EVM at the specified version and chain ID
+   *
+   * @param fork the EVM spec version to use
+   * @param chainId the chain ID to use
+   * @return executor builder
+   */
+  public static EVMExecutor evm(final EvmSpecVersion fork, final BigInteger chainId) {
+    return evm(fork, chainId, EvmConfiguration.DEFAULT);
+  }
+
+  /**
+   * Create an EVM at the specified version and chain ID
+   *
+   * @param fork the EVM spec version to use
+   * @param chainId the chain ID to use
+   * @return executor builder
+   */
+  public static EVMExecutor evm(final EvmSpecVersion fork, final Bytes chainId) {
+    return evm(fork, new BigInteger(1, chainId.toArrayUnsafe()), EvmConfiguration.DEFAULT);
+  }
+
+  /**
+   * Create an EVM at the specified version and chain ID
+   *
+   * @param fork the EVM spec version to use
+   * @param chainId the chain ID to use
+   * @param evmConfiguration system configuration options.
+   * @return executor builder
+   */
+  public static EVMExecutor evm(
+      final EvmSpecVersion fork,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVMExecutor(
+        switch (fork) {
+          case FRONTIER -> MainnetEVMs.frontier(evmConfiguration);
+          case HOMESTEAD -> MainnetEVMs.homestead(evmConfiguration);
+          case BYZANTIUM -> MainnetEVMs.byzantium(evmConfiguration);
+          case CONSTANTINOPLE -> MainnetEVMs.constantinople(evmConfiguration);
+          case PETERSBURG -> MainnetEVMs.petersburg(evmConfiguration);
+          case ISTANBUL -> MainnetEVMs.istanbul(chainId, evmConfiguration);
+          case BERLIN -> MainnetEVMs.berlin(chainId, evmConfiguration);
+          case LONDON -> MainnetEVMs.london(chainId, evmConfiguration);
+          case PARIS -> MainnetEVMs.paris(chainId, evmConfiguration);
+          case SHANGHAI -> MainnetEVMs.shanghai(chainId, evmConfiguration);
+          case CANCUN -> MainnetEVMs.cancun(chainId, evmConfiguration);
+          case PRAGUE -> MainnetEVMs.prague(chainId, evmConfiguration);
+          case OSAKA -> MainnetEVMs.osaka(chainId, evmConfiguration);
+          case BOGOTA -> MainnetEVMs.bogota(chainId, evmConfiguration);
+          case FUTURE_EIPS -> MainnetEVMs.futureEips(chainId, evmConfiguration);
+          case EXPERIMENTAL_EIPS -> MainnetEVMs.experimentalEips(chainId, evmConfiguration);
+        });
+  }
+
+  /**
+   * Instantiate Evm executor.
    *
    * @param evm the evm
    * @return the evm executor

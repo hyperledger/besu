@@ -15,6 +15,9 @@
  */
 package org.hyperledger.besu.evm;
 
+import java.util.Comparator;
+import java.util.stream.Stream;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -144,5 +147,12 @@ public enum EvmSpecVersion {
       }
     }
     return null;
+  }
+
+  public static EvmSpecVersion mostRecent() {
+    return Stream.of(EvmSpecVersion.values())
+        .filter(v -> v.specFinalized)
+        .max(Comparator.naturalOrder())
+        .orElseThrow();
   }
 }
