@@ -363,6 +363,7 @@ public class MainnetTransactionProcessor {
               .initialGas(gasAvailable)
               .originator(senderAddress)
               .gasPrice(transactionGasPrice)
+              .blobGasPrice(blobGasPrice)
               .sender(senderAddress)
               .value(transaction.getValue())
               .apparentValue(transaction.getValue())
