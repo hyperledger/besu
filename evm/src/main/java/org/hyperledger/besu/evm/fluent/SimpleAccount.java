@@ -188,4 +188,15 @@ public class SimpleAccount implements MutableAccount {
   public void becomeImmutable() {
     mutable = false;
   }
+
+  public boolean commit() {
+    if (parent instanceof SimpleAccount simpleAccount) {
+      simpleAccount.balance = balance;
+      simpleAccount.nonce = nonce;
+      simpleAccount.storage.putAll(storage);
+      return true;
+    } else {
+      return false;
+    }
+  }
 }
