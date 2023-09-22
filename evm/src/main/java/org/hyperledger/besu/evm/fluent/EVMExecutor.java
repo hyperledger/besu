@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
@@ -40,7 +41,9 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -57,12 +60,16 @@ public class EVMExecutor {
   private long gas = Long.MAX_VALUE;
   private Address receiver = Address.ZERO;
   private Address sender = Address.ZERO;
+  private Address contract = Address.ZERO;
+  private Address coinbase = Address.ZERO;
   private Wei gasPriceGWei = Wei.ZERO;
   private Wei blobGasPrice = Wei.ZERO;
   private Bytes callData = Bytes.EMPTY;
   private Wei ethValue = Wei.ZERO;
   private Code code = CodeV0.EMPTY_CODE;
   private BlockValues blockValues = new SimpleBlockValues();
+  private Function<Long, Hash> blockHashLookup = h -> null;
+  private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
   private OperationTracer tracer = OperationTracer.NO_TRACING;
   private boolean requireDeposit = true;
   private List<ContractValidationRule> contractValidationRules =
@@ -350,7 +357,7 @@ public class EVMExecutor {
             .type(MessageFrame.Type.MESSAGE_CALL)
             .worldUpdater(worldUpdater.updater())
             .initialGas(gas)
-            .contract(Address.ZERO)
+            .contract(contract)
             .address(receiver)
             .originator(sender)
             .sender(sender)
@@ -361,11 +368,12 @@ public class EVMExecutor {
             .apparentValue(ethValue)
             .code(code)
             .blockValues(blockValues)
-            .completer(c -> {})
-            .miningBeneficiary(Address.ZERO)
-            .blockHashLookup(h -> null)
+            .miningBeneficiary(coinbase)
+            .blockHashLookup(blockHashLookup)
             .accessListWarmAddresses(accessListWarmAddresses)
             .accessListWarmStorage(accessListWarmStorage)
+            .versionedHashes(versionedHashes)
+            .completer(c -> {})
             .build();
 
     final Deque<MessageFrame> messageFrameStack = initialMessageFrame.getMessageFrameStack();
@@ -449,6 +457,28 @@ public class EVMExecutor {
   }
 
   /**
+   * Sets the address of the executing contract
+   *
+   * @param contract the contract
+   * @return the evm executor
+   */
+  public EVMExecutor contract(final Address contract) {
+    this.contract = contract;
+    return this;
+  }
+
+  /**
+   * Sets the address of the coinbase aka mining beneficiary
+   *
+   * @param coinbase the coinbase
+   * @return the evm executor
+   */
+  public EVMExecutor coinbase(final Address coinbase) {
+    this.coinbase = coinbase;
+    return this;
+  }
+
+  /**
    * Sets Gas price GWei.
    *
    * @param gasPriceGWei the gas price g wei
@@ -523,6 +553,132 @@ public class EVMExecutor {
    */
   public EVMExecutor blockValues(final BlockValues blockValues) {
     this.blockValues = blockValues;
+    return this;
+  }
+
+  /**
+   * Sets the difficulty bytes on a SimpleBlockValues object
+   *
+   * @param difficulty the difficulty
+   * @return the evm executor
+   * @throws ClassCastException if the blockValues was set with a value that is not a {@link
+   *     SimpleBlockValues}
+   */
+  public EVMExecutor difficulty(final Bytes difficulty) {
+    ((SimpleBlockValues) this.blockValues).setDifficultyBytes(difficulty);
+    return this;
+  }
+
+  /**
+   * Sets the mix hash bytes on a SimpleBlockValues object
+   *
+   * @param mixHash the mix hash
+   * @return the evm executor
+   * @throws ClassCastException if the blockValues was set with a value that is not a {@link
+   *     SimpleBlockValues}
+   */
+  public EVMExecutor mixHash(final Bytes32 mixHash) {
+    ((SimpleBlockValues) this.blockValues).setMixHasOrPrevRandao(mixHash);
+    return this;
+  }
+
+  /**
+   * Sets the prev randao bytes on a SimpleBlockValues object
+   *
+   * @param prevRandao the prev randao
+   * @return the evm executor
+   * @throws ClassCastException if the blockValues was set with a value that is not a {@link
+   *     SimpleBlockValues}
+   */
+  public EVMExecutor prevRandao(final Bytes32 prevRandao) {
+    ((SimpleBlockValues) this.blockValues).setMixHasOrPrevRandao(prevRandao);
+    return this;
+  }
+
+  /**
+   * Sets the baseFee for the block, directly.
+   *
+   * @param baseFee the baseFee
+   * @return the evm executor
+   * @throws ClassCastException if the blockValues was set with a value that is not a {@link
+   *     SimpleBlockValues}
+   */
+  public EVMExecutor baseFee(final Wei baseFee) {
+    ((SimpleBlockValues) this.blockValues).setBaseFee(Optional.ofNullable(baseFee));
+    return this;
+  }
+
+  /**
+   * Sets the baseFee for the block, as an Optional.
+   *
+   * @param baseFee the baseFee
+   * @return the evm executor
+   * @throws ClassCastException if the blockValues was set with a value that is not a {@link
+   *     SimpleBlockValues}
+   */
+  public EVMExecutor baseFee(final Optional<Wei> baseFee) {
+    ((SimpleBlockValues) this.blockValues).setBaseFee(baseFee);
+    return this;
+  }
+
+  /**
+   * Sets the block number for the block.
+   *
+   * @param number the block number
+   * @return the evm executor
+   * @throws ClassCastException if the blockValues was set with a value that is not a {@link
+   *     SimpleBlockValues}
+   */
+  public EVMExecutor number(final long number) {
+    ((SimpleBlockValues) this.blockValues).setNumber(number);
+    return this;
+  }
+
+  /**
+   * Sets the timestamp for the block.
+   *
+   * @param timestamp the block timestamp
+   * @return the evm executor
+   * @throws ClassCastException if the blockValues was set with a value that is not a {@link
+   *     SimpleBlockValues}
+   */
+  public EVMExecutor timestamp(final long timestamp) {
+    ((SimpleBlockValues) this.blockValues).setNumber(timestamp);
+    return this;
+  }
+
+  /**
+   * Sets the gas limit for the block.
+   *
+   * @param gasLimit the block gas limit
+   * @return the evm executor
+   * @throws ClassCastException if the blockValues was set with a value that is not a {@link
+   *     SimpleBlockValues}
+   */
+  public EVMExecutor gasLimit(final long gasLimit) {
+    ((SimpleBlockValues) this.blockValues).setGasLimit(gasLimit);
+    return this;
+  }
+
+  /**
+   * Sets the block hash lookup function
+   *
+   * @param blockHashLookup the block hash lookup function
+   * @return the evm executor
+   */
+  public EVMExecutor blockHashLookup(final Function<Long, Hash> blockHashLookup) {
+    this.blockHashLookup = blockHashLookup;
+    return this;
+  }
+
+  /**
+   * Sets Version Hashes for blobs. The blobs themselves are not accessible.
+   *
+   * @param versionedHashes the versioned hashes
+   * @return the evm executor
+   */
+  public EVMExecutor versionedHashes(final Optional<List<VersionedHash>> versionedHashes) {
+    this.versionedHashes = versionedHashes;
     return this;
   }
 
