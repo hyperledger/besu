@@ -47,7 +47,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final ObservableMetricsSystem metricsSystem) {
     super(
         parentWorldStateStorage.flatDbMode,
-        parentWorldStateStorage.flatDbReaderStrategy,
+        parentWorldStateStorage.flatDbStrategy,
         segmentedWorldStateStorage,
         trieLogStorage,
         metricsSystem);
@@ -77,7 +77,8 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   public BonsaiUpdater updater() {
     return new Updater(
         ((SnappedKeyValueStorage) composedWorldStateStorage).getSnapshotTransaction(),
-        trieLogStorage.startTransaction());
+        trieLogStorage.startTransaction(),
+        flatDbStrategy);
   }
 
   @Override
