@@ -240,7 +240,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return respondWithInvalid(
           reqId,
           blockParam,
-          null,
+          mergeCoordinator
+              .getLatestValidHashOfBadBlock(blockParam.getBlockHash())
+              .orElse(Hash.ZERO),
           getInvalidBlockHashStatus(),
           blobValidationResult.getErrorMessage());
     }
