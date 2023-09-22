@@ -74,7 +74,7 @@ public class EVMExecutor {
   private boolean requireDeposit = true;
   private List<ContractValidationRule> contractValidationRules =
       List.of(MaxCodeSizeRule.of(0x6000), PrefixCodeRule.of());
-  private long initialNonce = 0;
+  private long initialNonce = 1;
   private Collection<Address> forceCommitAddresses = List.of(Address.fromHexString("0x03"));
   private Set<Address> accessListWarmAddresses = Set.of();
   private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
