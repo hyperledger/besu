@@ -62,12 +62,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
 
   public EngineGetPayloadV6110Test() {
-    super(EngineGetPayloadV6110::new);
+    super();
   }
 
   @BeforeEach
   @Override
   public void before() {
+      super.before();
     lenient()
         .when(mergeContext.retrieveBlockById(mockPid))
         .thenReturn(Optional.of(mockBlockWithReceiptsAndDeposits));
@@ -131,7 +132,7 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
                     List.of(blobTx),
                     Collections.emptyList(),
                     Optional.of(Collections.emptyList()),
-                    Optional.empty())),
+                    Optional.of(Collections.emptyList()))),
             List.of(blobReceipt));
 
     when(mergeContext.retrieveBlockById(postEip6110Pid)).thenReturn(Optional.of(postEip6110Block));
@@ -168,6 +169,8 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
     assertThat(((JsonRpcErrorResponse) resp).getErrorType())
         .isEqualTo(RpcErrorType.UNSUPPORTED_FORK);
   }
+
+
 
   @Override
   protected String getMethodName() {
