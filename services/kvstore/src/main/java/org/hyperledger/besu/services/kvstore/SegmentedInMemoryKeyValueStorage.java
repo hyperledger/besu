@@ -167,6 +167,7 @@ public class SegmentedInMemoryKeyValueStorage
               hashValueStore.computeIfAbsent(segmentIdentifier, s -> new HashMap<>()).entrySet())
           .stream()
           .filter(bytesEntry -> bytesEntry.getValue().isPresent())
+          .sorted(Map.Entry.comparingByKey())
           .map(
               bytesEntry ->
                   Pair.of(bytesEntry.getKey().toArrayUnsafe(), bytesEntry.getValue().get()));

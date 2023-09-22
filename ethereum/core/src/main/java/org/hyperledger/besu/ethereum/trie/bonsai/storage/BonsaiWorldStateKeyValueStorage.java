@@ -49,13 +49,15 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("unused")
-public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, FlatWorldStateStorage, AutoCloseable {
+public class BonsaiWorldStateKeyValueStorage
+    implements WorldStateStorage, FlatWorldStateStorage, AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateKeyValueStorage.class);
 
   // 0x776f726c64526f6f74
@@ -222,6 +224,15 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, FlatW
     return flatDbStrategyProvider
         .getFlatDbStrategy(composedWorldStateStorage)
         .streamAccountFlatDatabase(composedWorldStateStorage, startKeyHash, endKeyHash, max);
+  }
+
+  @Override
+  public NavigableMap<Bytes32, Bytes> streamFlatAccounts(
+      final Bytes startKeyHash,
+      final Bytes32 endKeyHash,
+      final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
+    return getFlatDbStrategy()
+        .streamAccountFlatDatabase(composedWorldStateStorage, startKeyHash, endKeyHash, takeWhile);
   }
 
   @Override

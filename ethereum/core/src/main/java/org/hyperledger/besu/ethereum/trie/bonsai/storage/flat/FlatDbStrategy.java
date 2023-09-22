@@ -31,6 +31,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -193,18 +194,18 @@ public abstract class FlatDbStrategy {
       final Bytes startKeyHash,
       final Bytes32 endKeyHash,
       final long max) {
-    final Stream<Pair<Bytes32, Bytes>> pairStream =
-        storage
-            .streamFromKey(
-                ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe(), endKeyHash.toArrayUnsafe())
-            .limit(max)
-            .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
 
-    final TreeMap<Bytes32, Bytes> collected =
-        pairStream.collect(
-            Collectors.toMap(Pair::getFirst, Pair::getSecond, (v1, v2) -> v1, TreeMap::new));
-    pairStream.close();
-    return collected;
+    return toNavigableMap(accountsToPairStream(storage, startKeyHash, endKeyHash).limit(max));
+  }
+
+  public NavigableMap<Bytes32, Bytes> streamAccountFlatDatabase(
+      final SegmentedKeyValueStorage storage,
+      final Bytes startKeyHash,
+      final Bytes32 endKeyHash,
+      final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
+
+    return toNavigableMap(
+        accountsToPairStream(storage, startKeyHash, endKeyHash).takeWhile(takeWhile));
   }
 
   public NavigableMap<Bytes32, Bytes> streamStorageFlatDatabase(
@@ -213,19 +214,49 @@ public abstract class FlatDbStrategy {
       final Bytes startKeyHash,
       final Bytes32 endKeyHash,
       final long max) {
-    final Stream<Pair<Bytes32, Bytes>> pairStream =
-        storage
-            .streamFromKey(
-                ACCOUNT_STORAGE_STORAGE,
-                Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe(),
-                Bytes.concatenate(accountHash, endKeyHash).toArrayUnsafe())
-            .limit(max)
-            .map(
-                pair ->
-                    new Pair<>(
-                        Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
-                        RLP.encodeValue(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
 
+    return toNavigableMap(
+        storageToPairStream(storage, accountHash, startKeyHash, endKeyHash).limit(max));
+  }
+
+  public NavigableMap<Bytes32, Bytes> streamStorageFlatDatabase(
+      final SegmentedKeyValueStorage storage,
+      final Hash accountHash,
+      final Bytes startKeyHash,
+      final Bytes32 endKeyHash,
+      final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
+
+    return toNavigableMap(
+        storageToPairStream(storage, accountHash, startKeyHash, endKeyHash).takeWhile(takeWhile));
+  }
+
+  private static Stream<Pair<Bytes32, Bytes>> storageToPairStream(
+      final SegmentedKeyValueStorage storage,
+      final Hash accountHash,
+      final Bytes startKeyHash,
+      final Bytes32 endKeyHash) {
+
+    return storage
+        .streamFromKey(
+            ACCOUNT_STORAGE_STORAGE,
+            Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe(),
+            Bytes.concatenate(accountHash, endKeyHash).toArrayUnsafe())
+        .map(
+            pair ->
+                new Pair<>(
+                    Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
+                    RLP.encodeValue(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
+  }
+
+  private static Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
+      final SegmentedKeyValueStorage storage, final Bytes startKeyHash, final Bytes32 endKeyHash) {
+    return storage
+        .streamFromKey(ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe(), endKeyHash.toArrayUnsafe())
+        .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
+  }
+
+  private static NavigableMap<Bytes32, Bytes> toNavigableMap(
+      final Stream<Pair<Bytes32, Bytes>> pairStream) {
     final TreeMap<Bytes32, Bytes> collected =
         pairStream.collect(
             Collectors.toMap(Pair::getFirst, Pair::getSecond, (v1, v2) -> v1, TreeMap::new));

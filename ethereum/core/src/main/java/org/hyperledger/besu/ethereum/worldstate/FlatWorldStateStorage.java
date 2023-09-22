@@ -22,5 +22,4 @@ public interface FlatWorldStateStorage {
   FlatDbMode getFlatDbMode();
 
   FlatDbStrategy getFlatDbStrategy();
-
 }
