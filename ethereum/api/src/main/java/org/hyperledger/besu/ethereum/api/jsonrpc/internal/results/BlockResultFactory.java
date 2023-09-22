@@ -158,7 +158,9 @@ public class BlockResultFactory {
       final BlockWithReceipts blockWithReceipts) {
     final List<String> txs =
         blockWithReceipts.getBlock().getBody().getTransactions().stream()
-            .map(TransactionEncoder::encodeOpaqueBytes)
+            .map(
+                transaction ->
+                    TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
