@@ -24,6 +24,7 @@ import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.io.PrintStream;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -108,6 +109,32 @@ public class SegmentedInMemoryKeyValueStorage
       return hashValueStore
           .computeIfAbsent(segmentIdentifier, s -> new HashMap<>())
           .getOrDefault(Bytes.wrap(key), Optional.empty());
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
+  public Optional<NearestKeyValue> getNearestTo(
+      final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
+
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      // TODO: revisit this for sort performance
+      Comparator<Map.Entry<Bytes, Optional<byte[]>>> comparing =
+          Comparator.comparing(
+                  (Map.Entry<Bytes, Optional<byte[]>> a) -> a.getKey().commonPrefixLength(key))
+              .thenComparing(Map.Entry.comparingByKey());
+      return this.hashValueStore
+          .computeIfAbsent(segmentIdentifier, s -> new HashMap<>())
+          .entrySet()
+          .stream()
+          // only return keys equal to or less than
+          .filter(e -> e.getKey().compareTo(key) <= 0)
+          .sorted(comparing.reversed())
+          .findFirst()
+          .map(z -> new NearestKeyValue(z.getKey(), z.getValue()));
     } finally {
       lock.unlock();
     }

@@ -44,7 +44,7 @@ import org.apache.tuweni.rlp.RLP;
  * methods, which checks if the data is present in the flat database, and if not, queries the merkle
  * trie
  */
-public class PartialFlatDbReaderStrategy extends FlatDbReaderStrategy {
+public class PartialFlatDbStrategy extends FlatDbStrategy {
 
   protected final Counter getAccountMerkleTrieCounter;
   protected final Counter getAccountMissingMerkleTrieCounter;
@@ -52,7 +52,7 @@ public class PartialFlatDbReaderStrategy extends FlatDbReaderStrategy {
   protected final Counter getStorageValueMerkleTrieCounter;
   protected final Counter getStorageValueMissingMerkleTrieCounter;
 
-  public PartialFlatDbReaderStrategy(final MetricsSystem metricsSystem) {
+  public PartialFlatDbStrategy(final MetricsSystem metricsSystem) {
     super(metricsSystem);
     getAccountMerkleTrieCounter =
         metricsSystem.createCounter(
@@ -80,7 +80,7 @@ public class PartialFlatDbReaderStrategy extends FlatDbReaderStrategy {
   }
 
   @Override
-  public Optional<Bytes> getAccount(
+  public Optional<Bytes> getFlatAccount(
       final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
       final NodeLoader nodeLoader,
       final Hash accountHash,
@@ -111,7 +111,7 @@ public class PartialFlatDbReaderStrategy extends FlatDbReaderStrategy {
   }
 
   @Override
-  public Optional<Bytes> getStorageValueByStorageSlotKey(
+  public Optional<Bytes> getFlatStorageValueByStorageSlotKey(
       final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
       final Supplier<Optional<Hash>> storageRootSupplier,
       final NodeLoader nodeLoader,
