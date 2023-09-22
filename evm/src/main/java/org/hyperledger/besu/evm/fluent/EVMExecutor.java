@@ -643,7 +643,7 @@ public class EVMExecutor {
    *     SimpleBlockValues}
    */
   public EVMExecutor timestamp(final long timestamp) {
-    ((SimpleBlockValues) this.blockValues).setNumber(timestamp);
+    ((SimpleBlockValues) this.blockValues).setTimeStamp(timestamp);
     return this;
   }
 
