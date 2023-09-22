@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.services;
 
-import org.hyperledger.besu.plugin.services.TransactionValidatorService;
+import org.hyperledger.besu.plugin.services.PluginTransactionValidatorService;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 
 /** The Transaction Selection service implementation. */
-public class TransactionValidatorServiceImpl implements TransactionValidatorService {
+public class PluginTransactionValidatorServiceImpl implements PluginTransactionValidatorService {
 
   private PluginTransactionValidatorFactory factory;
 

@@ -540,7 +540,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return this;
   }
 
-  public BesuControllerBuilder pluginTransactionSelectorFactory(
+  /**
+   * sets the pluginTransactionValidatorFactory
+   *
+   * @param pluginTransactionValidatorFactory factory that creates plugin transaction Validators
+   * @return the besu controller builder
+   */
+  public BesuControllerBuilder pluginTransactionValidatorFactory(
       final PluginTransactionValidatorFactory pluginTransactionValidatorFactory) {
     this.pluginTransactionValidatorFactory = pluginTransactionValidatorFactory;
     return this;

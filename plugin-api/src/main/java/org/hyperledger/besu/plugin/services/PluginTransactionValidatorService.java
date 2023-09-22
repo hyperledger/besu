@@ -20,7 +20,7 @@ import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidat
 
 /** Transaction validator for addition of transactions to the transaction pool */
 @Unstable
-public interface TransactionValidatorService extends BesuService {
+public interface PluginTransactionValidatorService extends BesuService {
 
   /**
    * Returns the transaction validator factory

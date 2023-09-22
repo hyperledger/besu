@@ -29,5 +29,4 @@ public interface PluginTransactionValidator {
    * @return true if the transaction can be added, false otherwise
    */
   boolean validateTransaction(final Transaction transaction);
-  ;
 }
