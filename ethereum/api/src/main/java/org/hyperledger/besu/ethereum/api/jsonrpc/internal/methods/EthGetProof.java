@@ -60,12 +60,10 @@ public class EthGetProof extends AbstractBlockParameterOrBlockHashMethod {
 
     final Blockchain blockchain = getBlockchainQueries().getBlockchain();
     final WorldStateArchive worldStateArchive = getBlockchainQueries().getWorldStateArchive();
-    System.out.println("akakak " + blockHash);
     return blockchain
         .getBlockHeader(blockHash)
         .flatMap(
             blockHeader -> {
-              System.out.println("icici");
               return worldStateArchive.getAccountProof(
                   blockHeader,
                   address,
