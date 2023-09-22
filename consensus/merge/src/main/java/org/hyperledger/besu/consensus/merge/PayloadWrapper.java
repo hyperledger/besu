@@ -16,15 +16,13 @@ package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
 
+/** Wrapper for payload plus extra info. */
 public class PayloadWrapper {
   /** The Payload identifier. */
   final PayloadIdentifier payloadIdentifier;
   /** The Block with receipts. */
   final BlockWithReceipts blockWithReceipts;
-  /** Tracer */
-  OperationTracer operationTracer = OperationTracer.NO_TRACING;
 
   /**
    * Instantiates a new PayloadWrapper.
@@ -36,19 +34,5 @@ public class PayloadWrapper {
       final PayloadIdentifier payloadIdentifier, final BlockWithReceipts blockWithReceipts) {
     this.payloadIdentifier = payloadIdentifier;
     this.blockWithReceipts = blockWithReceipts;
-  }
-  /**
-   * Instantiates a new PayloadWrapper.
-   *
-   * @param payloadIdentifier the payload identifier
-   * @param blockWithReceipts the block with receipts
-   */
-  public PayloadWrapper(
-      final PayloadIdentifier payloadIdentifier,
-      final BlockWithReceipts blockWithReceipts,
-      final OperationTracer operationTracer) {
-    this.payloadIdentifier = payloadIdentifier;
-    this.blockWithReceipts = blockWithReceipts;
-    this.operationTracer = operationTracer;
   }
 }
