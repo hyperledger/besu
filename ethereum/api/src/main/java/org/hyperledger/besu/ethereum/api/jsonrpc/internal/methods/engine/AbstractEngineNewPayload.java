@@ -130,7 +130,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     try {
       maybeVersionedHashes = extractVersionedHashes(maybeVersionedHashParam);
     } catch (RuntimeException ex) {
-      return respondWithInvalid(reqId, blockParam, null, INVALID, "Invalid versionedHash");
+      return respondWithInvalid(
+          reqId,
+          blockParam,
+          mergeCoordinator.getLatestValidAncestor(blockParam.getParentHash()).orElse(null),
+          INVALID,
+          "Invalid versionedHash");
     }
 
     final Optional<BlockHeader> maybeParentHeader =
