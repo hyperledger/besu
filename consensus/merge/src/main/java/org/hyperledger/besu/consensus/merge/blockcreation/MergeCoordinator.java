@@ -18,6 +18,7 @@ import static java.util.stream.Collectors.joining;
 import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.INVALID;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
+import org.hyperledger.besu.consensus.merge.PayloadWrapper;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -288,8 +289,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
     BlockProcessingResult result = validateProposedBlock(emptyBlock);
     if (result.isSuccessful()) {
-      mergeContext.putPayloadById(
-          payloadIdentifier, new BlockWithReceipts(emptyBlock, result.getReceipts()));
+      mergeContext.putPayload(new PayloadWrapper(
+          payloadIdentifier, new BlockWithReceipts(emptyBlock, result.getReceipts())));
       LOG.info(
           "Start building proposals for block {} identified by {}",
           emptyBlock.getHeader().getNumber(),
@@ -443,8 +444,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
       if (isBlockCreationCancelled(payloadIdentifier)) return;
 
-      mergeContext.putPayloadById(
-          payloadIdentifier, new BlockWithReceipts(bestBlock, resultBest.getReceipts()));
+      mergeContext.putPayload(new PayloadWrapper(
+          payloadIdentifier, new BlockWithReceipts(bestBlock, resultBest.getReceipts())));
       LOG.atDebug()
           .setMessage(
               "Successfully built block {} for proposal identified by {}, with {} transactions, in {}ms")

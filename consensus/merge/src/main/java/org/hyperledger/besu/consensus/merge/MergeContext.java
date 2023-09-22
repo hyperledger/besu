@@ -182,7 +182,7 @@ public interface MergeContext extends ConsensusContext {
   /**
    * Sets is chain pruning enabled.
    *
-   * @param isChainPruningEnabled the is chain pruning enabled
+   * @param isChainPruningEnabled whether chain pruning is enabled
    */
   default void setIsChainPruningEnabled(final boolean isChainPruningEnabled) {}
 
