@@ -17,7 +17,7 @@ package org.hyperledger.besu.services;
 import org.hyperledger.besu.plugin.services.PluginTransactionValidatorService;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 
-/** The Transaction Selection service implementation. */
+/** The Transaction Validation service implementation. */
 public class PluginTransactionValidatorServiceImpl implements PluginTransactionValidatorService {
 
   private PluginTransactionValidatorFactory factory;

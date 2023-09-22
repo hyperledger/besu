@@ -32,8 +32,8 @@ public interface PluginTransactionValidatorService extends BesuService {
   /**
    * Registers the transaction validator factory with the service
    *
-   * @param transactionPoolFilterFactory transaction validator factory to be used
+   * @param transactionValidatorFactory transaction validator factory to be used
    */
   void registerTransactionValidatorFactory(
-      PluginTransactionValidatorFactory transactionPoolFilterFactory);
+      PluginTransactionValidatorFactory transactionValidatorFactory);
 }
