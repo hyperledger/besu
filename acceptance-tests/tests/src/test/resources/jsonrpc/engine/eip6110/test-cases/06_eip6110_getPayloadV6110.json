@@ -3,7 +3,7 @@
     "jsonrpc": "2.0",
     "method": "engine_getPayloadV6110",
     "params": [
-      "0x0065bd13a5f68adf"
+      "0x282643c1a76ef021"
     ],
     "id": 67
   },
@@ -12,9 +12,9 @@
     "id": 67,
     "result": {
       "executionPayload": {
-        "parentHash": "0xd7b9bdb295332fab111b36605fc59b57146e3fd22d970a6e147c193c74e0bc1b",
+        "parentHash": "0xb9203a1bb9ed08e8160522c78039f4b83c7c932012fc3068db7dc9be537f1673",
         "feeRecipient": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
-        "stateRoot": "0x9b8c4a9a86cb49252075c0db2f0e72fb1e49350a0f70ea36f26f700201961e62",
+        "stateRoot": "0xf9a161f9c492e21bb58308b06a9135106aa366ffd780854cac6166fe896f7006",
         "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
         "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "gasLimit": "0x1c9c380",
@@ -22,21 +22,23 @@
         "timestamp": "0x20",
         "extraData": "0x",
         "baseFeePerGas": "0x7",
-        "excessDataGas" : "0x0",
+        "excessBlobGas" : "0x0",
+        "parentBeaconBlockRoot" : "0x0000000000000000000000000000000000000000000000000000000000000000",
         "transactions": [],
         "withdrawals": [],
         "depositReceipts" : [],
         "blockNumber": "0x2",
-        "blockHash": "0xdc9071c29433b9fa11729e745edf225ed470207e1b9e520505cf9f42de8ccb65",
+        "blockHash": "0xea5ba94ce019a6bd3315857e855cdab6a7a9bd80e8c1f47a472135e5c07a40e5",
         "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
-        "dataGasUsed" : "0x0"
+        "blobGasUsed" : "0x0"
       },
       "blockValue": "0x0",
       "blobsBundle" : {
         "commitments" : [],
         "proofs" : [],
         "blobs" : []
-      }
+      },
+      "shouldOverrideBuilder" : false
     }
   },
   "statusCode": 200
