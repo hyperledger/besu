@@ -36,8 +36,6 @@ import org.hyperledger.besu.ethereum.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.bonsai.worldview.BonsaiWorldStateUpdateAccumulator.StorageConsumingMap;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.proof.WorldStateProof;
-import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
@@ -50,7 +48,6 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -71,8 +68,6 @@ public class BonsaiWorldState
 
   protected BonsaiWorldStateKeyValueStorage worldStateStorage;
 
-  private final WorldStateProofProvider worldStateProof;
-
   protected final CachedMerkleTrieLoader cachedMerkleTrieLoader;
   protected final TrieLogManager trieLogManager;
   private BonsaiWorldStateUpdateAccumulator accumulator;
@@ -92,7 +87,6 @@ public class BonsaiWorldState
       final CachedMerkleTrieLoader cachedMerkleTrieLoader,
       final TrieLogManager trieLogManager) {
     this.worldStateStorage = worldStateStorage;
-    this.worldStateProof = new WorldStateProofProvider(worldStateStorage);
     this.worldStateRootHash =
         Hash.wrap(
             Bytes32.wrap(worldStateStorage.getWorldStateRootHash().orElse(Hash.EMPTY_TRIE_HASH)));
@@ -118,14 +112,6 @@ public class BonsaiWorldState
    */
   protected void setAccumulator(final BonsaiWorldStateUpdateAccumulator accumulator) {
     this.accumulator = accumulator;
-  }
-
-  @Override
-  public Optional<WorldStateProof> getAccountProof(
-      final Hash worldStateRoot,
-      final Address accountAddress,
-      final List<UInt256> accountStorageKeys) {
-    return worldStateProof.getAccountProof(worldStateRoot, accountAddress, accountStorageKeys);
   }
 
   /**

@@ -14,16 +14,21 @@
  */
 package org.hyperledger.besu.ethereum.worldstate;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.io.Closeable;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public interface WorldStateArchive extends Closeable {
   Hash EMPTY_ROOT_HASH = Hash.wrap(MerkleTrie.EMPTY_TRIE_NODE_HASH);
@@ -46,4 +51,20 @@ public interface WorldStateArchive extends Closeable {
   void resetArchiveStateTo(BlockHeader blockHeader);
 
   Optional<Bytes> getNodeData(Hash hash);
+
+  /**
+   * Retrieves an account proof based on the provided parameters.
+   *
+   * @param blockHeader The header of the block for which to retrieve the account proof.
+   * @param accountAddress The address of the account for which to retrieve the proof.
+   * @param accountStorageKeys The storage keys of the account for which to retrieve the proof.
+   * @param mapper A function to map the retrieved WorldStateProof to a desired type.
+   * @return An Optional containing the mapped result if the account proof is successfully retrieved
+   *     and mapped, or an empty Optional otherwise.
+   */
+  <U> Optional<U> getAccountProof(
+      final BlockHeader blockHeader,
+      final Address accountAddress,
+      final List<UInt256> accountStorageKeys,
+      final Function<Optional<WorldStateProof>, ? extends Optional<U>> mapper);
 }
