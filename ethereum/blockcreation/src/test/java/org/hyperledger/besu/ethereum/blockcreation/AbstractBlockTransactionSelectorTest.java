@@ -30,6 +30,8 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.evaluation.BlockTransactionSelector;
+import org.hyperledger.besu.ethereum.blockcreation.evaluation.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -192,8 +194,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             Wei.ZERO,
             MIN_OCCUPANCY_80_PERCENT);
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
     assertThat(results.getSelectedTransactions()).isEmpty();
     assertThat(results.getNotSelectedTransactions()).isEmpty();
@@ -221,8 +222,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             Wei.ZERO,
             MIN_OCCUPANCY_80_PERCENT);
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
     assertThat(results.getSelectedTransactions()).containsExactly(transaction);
     assertThat(results.getNotSelectedTransactions()).isEmpty();
@@ -258,8 +258,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             Wei.ZERO,
             MIN_OCCUPANCY_80_PERCENT);
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
     final Transaction invalidTx = transactionsToInject.get(1);
 
@@ -298,8 +297,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             Wei.ZERO,
             MIN_OCCUPANCY_80_PERCENT);
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
     assertThat(results.getSelectedTransactions().size()).isEqualTo(3);
 
@@ -348,8 +346,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     }
     transactionPool.addRemoteTransactions(Arrays.stream(txs).toList());
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
     assertThat(results.getSelectedTransactions()).containsExactly(txs[0], txs[2]);
     assertThat(results.getNotSelectedTransactions())
@@ -387,8 +384,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     }
     transactionPool.addRemoteTransactions(Arrays.stream(txs).toList());
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
     assertThat(results.getSelectedTransactions()).containsExactly(txs[0], txs[1]);
     assertThat(results.getNotSelectedTransactions())
@@ -437,8 +433,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     }
     transactionPool.addRemoteTransactions(transactionsToInject);
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
     assertThat(results.getSelectedTransactions())
         .containsExactly(
@@ -493,8 +488,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     }
     transactionPool.addRemoteTransactions(transactionsToInject);
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
     assertThat(results.getSelectedTransactions())
         .containsExactly(transactionsToInject.get(0), transactionsToInject.get(2));
@@ -530,8 +524,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     transactionPool.addRemoteTransactions(List.of(validTransaction, invalidTransaction));
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
     assertThat(transactionPool.getTransactionByHash(validTransaction.getHash())).isPresent();
     assertThat(transactionPool.getTransactionByHash(invalidTransaction.getHash())).isNotPresent();
@@ -581,7 +574,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     transactionPool.addRemoteTransactions(
         List.of(selected, notSelectedInvalid, notSelectedTransient));
 
-    final BlockTransactionSelector.TransactionSelectionResults transactionSelectionResults =
+    final TransactionSelectionResults transactionSelectionResults =
         selector.buildTransactionListForBlock();
 
     assertThat(transactionPool.getTransactionByHash(notSelectedTransient.getHash())).isPresent();
@@ -612,8 +605,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             Wei.ZERO,
             MIN_OCCUPANCY_80_PERCENT);
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
     assertThat(transactionPool.getTransactionByHash(futureTransaction.getHash())).isPresent();
     assertThat(results.getSelectedTransactions()).isEmpty();

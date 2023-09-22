@@ -26,19 +26,7 @@ import java.util.List;
 @Unstable
 public interface TransactionSelector {
 
-  /**
-   * Method called to decide whether a transaction is added to a block. The method can also indicate
-   * that no further transactions can be added to the block.
-   *
-   * @param transaction candidate transaction
-   * @param success true, if the transaction executed successfully
-   * @param logs the logs created by this transaction
-   * @param cumulativeGasUsed gas used by this and all previous transaction in the block
-   * @return TransactionSelectionResult that indicates whether to include the transaction
-   */
-  TransactionSelectionResult selectTransaction(
-      final Transaction transaction,
-      final boolean success,
-      final List<Log> logs,
-      final long cumulativeGasUsed);
+  TransactionSelectionResult evaluate(
+          Transaction transaction);
+
 }

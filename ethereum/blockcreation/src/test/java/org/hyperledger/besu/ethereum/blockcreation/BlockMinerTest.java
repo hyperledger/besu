@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
-import org.hyperledger.besu.ethereum.blockcreation.BlockTransactionSelector.TransactionSelectionResults;
+import org.hyperledger.besu.ethereum.blockcreation.evaluation.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.chain.MinedBlockObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;

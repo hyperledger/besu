@@ -40,6 +40,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
+import org.hyperledger.besu.ethereum.blockcreation.evaluation.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -100,8 +101,7 @@ abstract class AbstractBlockCreatorTest {
   void findDepositsFromReceipts() {
     final AbstractBlockCreator blockCreator =
         blockCreatorWithAllowedDeposits(Optional.of(DEFAULT_DEPOSIT_CONTRACT_ADDRESS));
-    final BlockTransactionSelector.TransactionSelectionResults transactionResults =
-        mock(BlockTransactionSelector.TransactionSelectionResults.class);
+    final TransactionSelectionResults transactionResults = mock(TransactionSelectionResults.class);
     BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
     TransactionReceipt receiptWithoutDeposit1 = blockDataGenerator.receipt();
     TransactionReceipt receiptWithoutDeposit2 = blockDataGenerator.receipt();
