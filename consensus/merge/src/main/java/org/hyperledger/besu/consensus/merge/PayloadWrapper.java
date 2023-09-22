@@ -44,7 +44,9 @@ public class PayloadWrapper {
    * @param blockWithReceipts the block with receipts
    */
   public PayloadWrapper(
-          final PayloadIdentifier payloadIdentifier, final BlockWithReceipts blockWithReceipts, final OperationTracer operationTracer) {
+      final PayloadIdentifier payloadIdentifier,
+      final BlockWithReceipts blockWithReceipts,
+      final OperationTracer operationTracer) {
     this.payloadIdentifier = payloadIdentifier;
     this.blockWithReceipts = blockWithReceipts;
     this.operationTracer = operationTracer;
