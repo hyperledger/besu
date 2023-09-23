@@ -96,6 +96,23 @@ public interface WorldStateStorage {
     return new TreeMap<>();
   }
 
+  /**
+   * Streams flat storages within a specified range.
+   *
+   * @param accountHash The account hash.
+   * @param startKeyHash The start key hash of the range.
+   * @param endKeyHash The end key hash of the range.
+   * @param takeWhile predicate to limit storage streaming
+   * @return A map of flat storages. (Empty map in this default implementation)
+   */
+  default NavigableMap<Bytes32, Bytes> streamFlatStorages(
+      final Hash accountHash,
+      final Bytes startKeyHash,
+      final Bytes32 endKeyHash,
+      final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
+    return new TreeMap<>();
+  }
+
   DataStorageFormat getDataStorageFormat();
 
   void clear();

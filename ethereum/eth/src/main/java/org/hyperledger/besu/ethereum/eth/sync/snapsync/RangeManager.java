@@ -121,7 +121,7 @@ public class RangeManager {
   public static Optional<Bytes32> findNewBeginElementInRange(
       final Bytes32 worldstateRootHash,
       final List<Bytes> proofs,
-      final TreeMap<Bytes32, Bytes> receivedKeys,
+      final NavigableMap<Bytes32, Bytes> receivedKeys,
       final Bytes32 endKeyHash) {
     if (receivedKeys.isEmpty() || receivedKeys.lastKey().compareTo(endKeyHash) >= 0) {
       return Optional.empty();

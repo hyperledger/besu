@@ -29,10 +29,12 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.NavigableMap;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -105,7 +107,7 @@ class SnapServer {
                   storage.streamFlatAccounts(
                       range.startKeyHash(),
                       range.endKeyHash(),
-                      takeWhilePredicate(maxResponseBytes));
+                      new StatefulPredicate(maxResponseBytes));
 
               if (accounts.isEmpty()) {
                 // fetch next account after range, if it exists
@@ -127,7 +129,7 @@ class SnapServer {
         .orElse(EMPTY_ACCOUNT_RANGE);
   }
 
-  private MessageData constructGetStorageRangeResponse(final MessageData message) {
+  MessageData constructGetStorageRangeResponse(final MessageData message) {
     final GetStorageRangeMessage getStorageRangeMessage = GetStorageRangeMessage.readFrom(message);
     final GetStorageRangeMessage.StorageRange range = getStorageRangeMessage.range(true);
     final int maxResponseBytes = Math.min(range.responseBytes().intValue(), MAX_RESPONSE_SIZE);
@@ -145,43 +147,52 @@ class SnapServer {
                     .collect(Collectors.joining(",", "[", "]")))
         .log();
 
-    return EMPTY_STORAGE_RANGE;
-    //    return worldStateStorageProvider
-    //        .apply(range.worldStateRootHash())
-    //        .map(
-    //            storage -> {
-    //              NavigableMap<Bytes32, Bytes> accounts =
-    //                  storage.streamFlatAccounts(
-    //                      range.startKeyHash(), range.endKeyHash(), MAX_ENTRIES_PER_REQUEST);
-    //
-    //              // for the first account, honor startHash
-    //              Bytes32 startKeyBytes = range.startKeyHash();
-    //              Bytes32 endKeyBytes = range.endKeyHash();
-    //              NavigableMap<Bytes32, Bytes> collectedStorages = new TreeMap<>();
-    //              ArrayList<Bytes> collectedProofs = new ArrayList<>();
-    //              for (var forAccountHash : range.hashes()) {
-    //                var accountStorages =
-    //                    storage.streamFlatStorages(
-    //                        Hash.wrap(forAccountHash),
-    //                        startKeyBytes,
-    //                        endKeyBytes,
-    //                        MAX_ENTRIES_PER_REQUEST);
-    //                boolean shouldGetMore = false;
-    ////                    visitCollectedStorage(collectedStorages, collectedProofs,
-    // accountStorages, maxResponseBytes);
-    //                // todo proofs for this accountHash
-    //
-    //                if (shouldGetMore) {
-    //                  // reset startkeyBytes for subsequent accounts
-    //                  startKeyBytes = Bytes32.ZERO;
-    //                } else {
-    //                  break;
-    //                }
-    //              }
-    //
-    //              return StorageRangeMessage.create(new ArrayDeque<>(), Collections.emptyList());
-    //            })
-    //        .orElse(EMPTY_STORAGE_RANGE);
+    return worldStateStorageProvider
+        .apply(range.worldStateRootHash())
+        .map(
+            storage -> {
+              // reusable predicate to limit by rec count and bytes:
+              var statefulPredicate = new StatefulPredicate(maxResponseBytes);
+              // for the first account, honor startHash
+              Bytes32 startKeyBytes = range.startKeyHash();
+              Bytes32 endKeyBytes = range.endKeyHash();
+
+              ArrayDeque<NavigableMap<Bytes32, Bytes>> collectedStorages = new ArrayDeque<>();
+              ArrayList<Bytes> collectedProofs = new ArrayList<>();
+              final var worldStateProof = new WorldStateProofProvider(storage);
+
+              for (var forAccountHash : range.hashes()) {
+                // start key proof
+
+                // collectedProofs.addAll(
+                //     worldStateProof.getStorageProofRelatedNodes(
+                //         /* TODO: need account root hash here, not worldstate root hash */
+                //         range.worldStateRootHash(), forAccountHash, Hash.wrap(startKeyBytes)));
+
+                var accountStorages =
+                    storage.streamFlatStorages(
+                        Hash.wrap(forAccountHash), startKeyBytes, endKeyBytes, statefulPredicate);
+                collectedStorages.add(accountStorages);
+
+                // last key proof
+
+                // collectedProofs.addAll(
+                //     worldStateProof.getStorageProofRelatedNodes(
+                //         /* TODO: need account root hash here, not worldstate root hash */
+                //         range.worldStateRootHash(), forAccountHash,
+                //         Hash.wrap(accountStorages.lastKey())));
+
+                if (statefulPredicate.shouldGetMore()) {
+                  // reset startkeyBytes for subsequent accounts
+                  startKeyBytes = Bytes32.ZERO;
+                } else {
+                  break;
+                }
+              }
+
+              return StorageRangeMessage.create(collectedStorages, collectedProofs);
+            })
+        .orElse(EMPTY_STORAGE_RANGE);
   }
 
   private MessageData constructGetBytecodesResponse(final MessageData message) {
@@ -194,21 +205,42 @@ class SnapServer {
     return TrieNodesMessage.create(new ArrayDeque<>());
   }
 
-  private static Predicate<Pair<Bytes32, Bytes>> takeWhilePredicate(final int maxResponseBytes) {
+  static class StatefulPredicate implements Predicate<Pair<Bytes32, Bytes>> {
+
     final AtomicInteger byteLimit = new AtomicInteger(0);
     final AtomicInteger recordLimit = new AtomicInteger(0);
-    return pair ->
-        recordLimit.addAndGet(1) < MAX_ENTRIES_PER_REQUEST
-            && byteLimit.accumulateAndGet(
-                    0,
-                    (cur, __) -> {
-                      var rlpOutput = new BytesValueRLPOutput();
-                      rlpOutput.startList();
-                      rlpOutput.writeBytes(pair.getFirst());
-                      rlpOutput.writeRLPBytes(pair.getSecond());
-                      rlpOutput.endList();
-                      return cur + rlpOutput.encoded().size();
-                    })
-                < maxResponseBytes;
+    final AtomicBoolean shouldContinue = new AtomicBoolean(true);
+    final int maxResponseBytes;
+
+    StatefulPredicate(final int maxResponseBytes) {
+      this.maxResponseBytes = maxResponseBytes;
+    }
+
+    public boolean shouldGetMore() {
+      return shouldContinue.get();
+    }
+
+    @Override
+    public boolean test(final Pair<Bytes32, Bytes> pair) {
+      var underRecordLimit = recordLimit.addAndGet(1) < MAX_ENTRIES_PER_REQUEST;
+      var underByteLimit =
+          byteLimit.accumulateAndGet(
+                  0,
+                  (cur, __) -> {
+                    var rlpOutput = new BytesValueRLPOutput();
+                    rlpOutput.startList();
+                    rlpOutput.writeBytes(pair.getFirst());
+                    rlpOutput.writeRLPBytes(pair.getSecond());
+                    rlpOutput.endList();
+                    return cur + rlpOutput.encoded().size();
+                  })
+              < maxResponseBytes;
+      if (underRecordLimit && underByteLimit) {
+        return true;
+      } else {
+        shouldContinue.set(false);
+        return false;
+      }
+    }
   }
 }
