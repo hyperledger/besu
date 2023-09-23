@@ -87,15 +87,15 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
 
     LOG.debug("Forkchoice parameters {}", forkChoice);
     mergeContext
-        .get()
-        .fireNewUnverifiedForkchoiceEvent(
-            forkChoice.getHeadBlockHash(),
-            forkChoice.getSafeBlockHash(),
-            forkChoice.getFinalizedBlockHash());
+            .get()
+            .fireNewUnverifiedForkchoiceEvent(
+                    forkChoice.getHeadBlockHash(),
+                    forkChoice.getSafeBlockHash(),
+                    forkChoice.getFinalizedBlockHash());
 
     final Optional<BlockHeader> maybeNewHead =
-        mergeCoordinator.getOrSyncHeadByHash(
-            forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());
+            mergeCoordinator.getOrSyncHeadByHash(
+                    forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());
 
     if (maybeNewHead.isEmpty()) {
       return syncingResponse(requestId, forkChoice);
@@ -104,24 +104,22 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     final BlockHeader newHead = maybeNewHead.get();
     if (maybePayloadAttributes.isPresent()) {
       final EnginePayloadAttributesParameter payloadAttributes = maybePayloadAttributes.get();
-      withdrawals =
-          maybePayloadAttributes.flatMap(
-              pa ->
-                  Optional.ofNullable(pa.getWithdrawals())
-                      .map(
-                          ws ->
-                              ws.stream()
-                                  .map(WithdrawalParameter::toWithdrawal)
-                                  .collect(toList())));
+       withdrawals =
+              maybePayloadAttributes.flatMap(
+                      pa ->
+                              Optional.ofNullable(pa.getWithdrawals())
+                                      .map(
+                                              ws ->
+                                                      ws.stream().map(WithdrawalParameter::toWithdrawal).collect(toList())));
       if (!isPayloadAttributesValid(maybePayloadAttributes.get(), withdrawals, newHead)) {
         LOG.atWarn()
-            .setMessage("Invalid payload attributes: {}")
-            .addArgument(
-                () ->
-                    maybePayloadAttributes
-                        .map(EnginePayloadAttributesParameter::serialize)
-                        .orElse(null))
-            .log();
+                .setMessage("Invalid payload attributes: {}")
+                .addArgument(
+                        () ->
+                                maybePayloadAttributes
+                                        .map(EnginePayloadAttributesParameter::serialize)
+                                        .orElse(null))
+                .log();
         return new JsonRpcErrorResponse(requestId, getInvalidPayloadError());
       }
       ValidationResult<RpcErrorType> forkValidationResult =
@@ -131,11 +129,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
       }
     }
 
-    ValidationResult<RpcErrorType> parameterValidationResult =
-        validateParameter(forkChoice, maybePayloadAttributes);
-    if (!parameterValidationResult.isValid()) {
-      return new JsonRpcSuccessResponse(requestId, parameterValidationResult);
-    }
+
 
     if (mergeContext.get().isSyncing()) {
       return syncingResponse(requestId, forkChoice);
@@ -154,6 +148,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
               Optional.of(forkChoice.getHeadBlockHash() + " is an invalid block")));
     }
 
+
+
     if (!isValidForkchoiceState(
         forkChoice.getSafeBlockHash(), forkChoice.getFinalizedBlockHash(), newHead)) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
@@ -163,9 +159,13 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     maybePayloadAttributes.ifPresentOrElse(
         this::logPayload, () -> LOG.debug("Payload attributes are null"));
 
+
+
     ForkchoiceResult result =
         mergeCoordinator.updateForkChoice(
             newHead, forkChoice.getFinalizedBlockHash(), forkChoice.getSafeBlockHash());
+
+
 
     if (result.shouldNotProceedToPayloadBuildProcess()) {
       if (ForkchoiceResult.Status.IGNORE_UPDATE_TO_OLD_HEAD.equals(result.getStatus())) {

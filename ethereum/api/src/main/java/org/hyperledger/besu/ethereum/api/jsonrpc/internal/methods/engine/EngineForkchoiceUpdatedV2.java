@@ -22,10 +22,10 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
+import io.vertx.core.Vertx;
+
 import java.util.List;
 import java.util.Optional;
-
-import io.vertx.core.Vertx;
 
 // TODO Withdrawals use composition instead? Want to make it more obvious that there is no
 // difference between V1/V2 code other than the method name
@@ -47,10 +47,10 @@ public class EngineForkchoiceUpdatedV2 extends AbstractEngineForkchoiceUpdated {
 
   @Override
   protected boolean isPayloadAttributesValid(
-      final EnginePayloadAttributesParameter payloadAttributes,
-      final Optional<List<Withdrawal>> maybeWithdrawals,
-      final BlockHeader headBlockHeader) {
-    if (payloadAttributes.getTimestamp() >= cancunTimestamp) {
+          final EnginePayloadAttributesParameter payloadAttributes,
+          final Optional<List<Withdrawal>> maybeWithdrawals,
+          final BlockHeader headBlockHeader) {
+    if(payloadAttributes.getTimestamp() >= cancunTimestamp) {
       return false;
     } else {
       return super.isPayloadAttributesValid(payloadAttributes, maybeWithdrawals, headBlockHeader);
