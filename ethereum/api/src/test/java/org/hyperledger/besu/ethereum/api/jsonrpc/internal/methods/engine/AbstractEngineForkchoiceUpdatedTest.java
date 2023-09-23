@@ -143,6 +143,8 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
   public void shouldReturnInvalidWithLatestValidHashOnBadBlock() {
     BlockHeader mockHeader = blockHeaderBuilder.buildHeader();
     Hash latestValidHash = Hash.hash(Bytes32.fromHexStringLenient("0xcafebabe"));
+    when(mergeCoordinator.getOrSyncHeadByHash(any(), any()))
+        .thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.isBadBlock(mockHeader.getHash())).thenReturn(true);
     when(mergeCoordinator.getLatestValidHashOfBadBlock(mockHeader.getHash()))
         .thenReturn(Optional.of(latestValidHash));
