@@ -31,13 +31,13 @@ import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class FullFlatDbReaderStrategy extends FlatDbReaderStrategy {
+public class FullFlatDbStrategy extends FlatDbStrategy {
 
   protected final Counter getAccountNotFoundInFlatDatabaseCounter;
 
   protected final Counter getStorageValueNotFoundInFlatDatabaseCounter;
 
-  public FullFlatDbReaderStrategy(final MetricsSystem metricsSystem) {
+  public FullFlatDbStrategy(final MetricsSystem metricsSystem) {
     super(metricsSystem);
 
     getAccountNotFoundInFlatDatabaseCounter =
@@ -54,7 +54,7 @@ public class FullFlatDbReaderStrategy extends FlatDbReaderStrategy {
   }
 
   @Override
-  public Optional<Bytes> getAccount(
+  public Optional<Bytes> getFlatAccount(
       final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
       final NodeLoader nodeLoader,
       final Hash accountHash,
@@ -71,7 +71,7 @@ public class FullFlatDbReaderStrategy extends FlatDbReaderStrategy {
   }
 
   @Override
-  public Optional<Bytes> getStorageValueByStorageSlotKey(
+  public Optional<Bytes> getFlatStorageValueByStorageSlotKey(
       final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
       final Supplier<Optional<Hash>> storageRootSupplier,
       final NodeLoader nodeLoader,
