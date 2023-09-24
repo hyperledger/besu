@@ -277,14 +277,14 @@ public class PostMergeContext implements MergeContext {
   public Optional<BlockWithReceipts> retrieveBlockById(final PayloadIdentifier payloadId) {
     synchronized (blocksInProgress) {
       return retrievePayloadsById(payloadId)
-          .map(tuple -> tuple.blockWithReceipts)
+          .map(payloadWrapper -> payloadWrapper.blockWithReceipts())
           .sorted(compareByGasUsedDesc)
           .findFirst();
     }
   }
 
   private Stream<PayloadWrapper> retrievePayloadsById(final PayloadIdentifier payloadId) {
-    return blocksInProgress.stream().filter(z -> z.payloadIdentifier.equals(payloadId));
+    return blocksInProgress.stream().filter(z -> z.payloadIdentifier().equals(payloadId));
   }
 
   private String logBlockProposal(final Block block) {

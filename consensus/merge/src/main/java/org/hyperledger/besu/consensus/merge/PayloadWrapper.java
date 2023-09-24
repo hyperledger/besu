@@ -18,21 +18,6 @@ import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 
 /** Wrapper for payload plus extra info. */
-public class PayloadWrapper {
-  /** The Payload identifier. */
-  final PayloadIdentifier payloadIdentifier;
-  /** The Block with receipts. */
-  final BlockWithReceipts blockWithReceipts;
-
-  /**
-   * Instantiates a new PayloadWrapper.
-   *
-   * @param payloadIdentifier the payload identifier
-   * @param blockWithReceipts the block with receipts
-   */
-  public PayloadWrapper(
-      final PayloadIdentifier payloadIdentifier, final BlockWithReceipts blockWithReceipts) {
-    this.payloadIdentifier = payloadIdentifier;
-    this.blockWithReceipts = blockWithReceipts;
-  }
+public record PayloadWrapper(
+    PayloadIdentifier payloadIdentifier, BlockWithReceipts blockWithReceipts) {
 }
