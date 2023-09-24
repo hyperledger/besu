@@ -26,6 +26,7 @@ import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -89,11 +90,14 @@ public class DefaultWorldStateArchive implements WorldStateArchive {
   }
 
   @Override
-  public Optional<WorldStateProof> getAccountProof(
-      final Hash worldStateRoot,
+  public <U> Optional<U> getAccountProof(
+      final BlockHeader blockHeader,
       final Address accountAddress,
-      final List<UInt256> accountStorageKeys) {
-    return worldStateProof.getAccountProof(worldStateRoot, accountAddress, accountStorageKeys);
+      final List<UInt256> accountStorageKeys,
+      final Function<Optional<WorldStateProof>, ? extends Optional<U>> mapper) {
+    return mapper.apply(
+        worldStateProof.getAccountProof(
+            blockHeader.getStateRoot(), accountAddress, accountStorageKeys));
   }
 
   @Override
