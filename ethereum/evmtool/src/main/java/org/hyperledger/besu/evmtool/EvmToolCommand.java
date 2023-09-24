@@ -182,6 +182,14 @@ public class EvmToolCommand implements Runnable {
   final Boolean showReturnData = false;
 
   @Option(
+      names = {"--trace.storage"},
+      description =
+          "Show the updated storage slots for the current account. Default is to not show updated storage.",
+      scope = INHERIT,
+      negatable = true)
+  final Boolean showStorage = false;
+
+  @Option(
       names = {"--notime"},
       description = "Don't include time data in summary output.",
       scope = INHERIT,
@@ -365,7 +373,7 @@ public class EvmToolCommand implements Runnable {
 
         final OperationTracer tracer = // You should have picked Mercy.
             lastLoop && showJsonResults
-                ? new StandardJsonTracer(out, showMemory, !hideStack, showReturnData)
+                ? new StandardJsonTracer(out, showMemory, !hideStack, showReturnData, showStorage)
                 : OperationTracer.NO_TRACING;
 
         WorldUpdater updater = component.getWorldUpdater();

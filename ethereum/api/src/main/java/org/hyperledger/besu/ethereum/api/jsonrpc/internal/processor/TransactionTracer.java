@@ -70,24 +70,22 @@ public class TransactionTracer {
       final Hash blockHash,
       final Hash transactionHash,
       final DebugOperationTracer tracer) {
-    Optional<TransactionTrace> transactionTrace =
-        blockReplay.beforeTransactionInBlock(
-            mutableWorldState,
-            blockHash,
-            transactionHash,
-            (transaction, header, blockchain, transactionProcessor, blobGasPrice) -> {
-              final TransactionProcessingResult result =
-                  processTransaction(
-                      header,
-                      blockchain,
-                      mutableWorldState.updater(),
-                      transaction,
-                      transactionProcessor,
-                      tracer,
-                      blobGasPrice);
-              return new TransactionTrace(transaction, result, tracer.getTraceFrames());
-            });
-    return transactionTrace;
+    return blockReplay.beforeTransactionInBlock(
+        mutableWorldState,
+        blockHash,
+        transactionHash,
+        (transaction, header, blockchain, transactionProcessor, blobGasPrice) -> {
+          final TransactionProcessingResult result =
+              processTransaction(
+                  header,
+                  blockchain,
+                  mutableWorldState.updater(),
+                  transaction,
+                  transactionProcessor,
+                  tracer,
+                  blobGasPrice);
+          return new TransactionTrace(transaction, result, tracer.getTraceFrames());
+        });
   }
 
   public List<String> traceTransactionToFile(
@@ -141,7 +139,7 @@ public class TransactionTracer {
                             stackedUpdater,
                             transaction,
                             transactionProcessor,
-                            new StandardJsonTracer(out, showMemory, true, true),
+                            new StandardJsonTracer(out, showMemory, true, true, false),
                             blobGasPrice);
                     out.println(
                         summaryTrace(

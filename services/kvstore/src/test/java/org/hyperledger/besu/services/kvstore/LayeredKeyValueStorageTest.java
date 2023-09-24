@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,21 +11,23 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
 package org.hyperledger.besu.services.kvstore;
+
+import static org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage.SEGMENT_IDENTIFIER;
 
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 
-public class InMemoryKeyValueStorageTest extends AbstractSegmentedKeyValueStorageTest {
-
+public class LayeredKeyValueStorageTest extends AbstractSegmentedKeyValueStorageTest {
   @Override
   protected KeyValueStorage createStore() {
-    return new InMemoryKeyValueStorage();
+    return new SegmentedKeyValueStorageAdapter(SEGMENT_IDENTIFIER, createSegmentedStore());
   }
 
   @Override
   public SegmentedKeyValueStorage createSegmentedStore() {
-    return new SegmentedInMemoryKeyValueStorage();
+    return new LayeredKeyValueStorage(new SegmentedInMemoryKeyValueStorage());
   }
 }
