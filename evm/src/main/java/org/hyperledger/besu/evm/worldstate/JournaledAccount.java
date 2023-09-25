@@ -226,6 +226,10 @@ public class JournaledAccount implements MutableAccount, Undoable {
     return !code.get().isEmpty();
   }
 
+  /**
+   * Mark the account as deleted/not deleted
+   * @param accountDeleted delete or don't delete this account.
+   */
   public void setDeleted(final boolean accountDeleted) {
     if (immutable) {
       throw new ModificationNotAllowedException();
@@ -233,6 +237,10 @@ public class JournaledAccount implements MutableAccount, Undoable {
     deleted.set(accountDeleted);
   }
 
+  /**
+   * Is the account marked as deleted?
+   * @return is the account deleted?
+   */
   public Boolean getDeleted() {
     return deleted.get();
   }
@@ -368,6 +376,7 @@ public class JournaledAccount implements MutableAccount, Undoable {
     updatedStorage.undo(mark);
   }
 
+  /** Commit this journaled account entry to the parent, if it is not a journaled account. */
   public void commit() {
     if (!(account instanceof JournaledAccount)) {
       if (nonce.updated()) {

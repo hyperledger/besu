@@ -75,6 +75,11 @@ public class UndoMap<K, V> implements Map<K, V>, Undoable {
     return undoLog.get(undoLog.size() - 1).level;
   }
 
+
+  /**
+   * Has the map been changed
+   * @return true if there are any undo entries in the log
+   */
   public boolean updated() {
     return !undoLog.isEmpty();
   }

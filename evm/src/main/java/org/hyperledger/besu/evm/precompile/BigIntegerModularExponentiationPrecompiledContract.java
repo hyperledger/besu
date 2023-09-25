@@ -126,6 +126,10 @@ public class BigIntegerModularExponentiationPrecompiledContract
    * Compute default precompile contract.
    *
    * @param input the input
+   * @param base base of the exponent
+   * @param exp the exponent
+   * @param mod the modulus
+   * @param modulusLength the length of the modulus, in bytes
    * @return the precompile contract result
    */
   @Nonnull

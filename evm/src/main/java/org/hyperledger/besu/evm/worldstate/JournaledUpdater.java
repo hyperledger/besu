@@ -64,6 +64,12 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     undoMark = accounts.mark();
   }
 
+  /**
+   * Get an account suitable for mutation. Defer to parent if not tracked locally.
+   *
+   * @param address the account at the address, for mutaton.
+   * @return the mutable account
+   */
   protected MutableAccount getForMutation(final Address address) {
     final JournaledAccount wrappedTracker = accounts.get(address);
     if (wrappedTracker != null) {
@@ -83,6 +89,9 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     return new ArrayList<>(deleted);
   }
 
+  /**
+   * Remove all changes done by this layer. Rollback to the state prior to the updater's changes.
+   */
   protected void reset() {
     accounts.values().forEach(a -> a.undo(undoMark));
     accounts.undo(undoMark);

@@ -19,6 +19,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * An undoable value that tracks the value across time.
+ *
+ * @param <T> The type of the scaler.
+ */
 public class UndoScalar<T> implements Undoable {
   record UndoEntry<T>(T value, long level) {
     UndoEntry(final T value) {
@@ -29,10 +34,22 @@ public class UndoScalar<T> implements Undoable {
   T value;
   final List<UndoEntry<T>> undoLog;
 
+  /**
+   * Create an undoable scalar with an initial value
+   *
+   * @param value the initial value
+   * @return the undoable scalar
+   * @param <T> the type of the scalar
+   */
   public static <T> UndoScalar<T> of(final T value) {
     return new UndoScalar<>(value);
   }
 
+  /**
+   * Create an undo scalar with an initial value
+   *
+   * @param value the initial value
+   */
   public UndoScalar(final T value) {
     undoLog = new ArrayList<>();
     this.value = value;
@@ -43,14 +60,29 @@ public class UndoScalar<T> implements Undoable {
     return undoLog.isEmpty() ? 0L : undoLog.get(undoLog.size() - 1).level;
   }
 
+  /**
+   * Has this scalar had any change since the inital value
+   *
+   * @return true if there are any changes to undo
+   */
   public boolean updated() {
     return !undoLog.isEmpty();
   }
 
+  /**
+   * Get the current value of the scalar.
+   *
+   * @return the current value
+   */
   public T get() {
     return value;
   }
 
+  /**
+   * Set a new value in the scalar.
+   *
+   * @param value new value
+   */
   public void set(final T value) {
     if (!Objects.equals(this.value, value)) {
       undoLog.add(new UndoEntry<>(this.value));

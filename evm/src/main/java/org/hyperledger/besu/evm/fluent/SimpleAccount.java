@@ -188,4 +188,20 @@ public class SimpleAccount implements MutableAccount {
   public void becomeImmutable() {
     immutable = true;
   }
+
+  /**
+   * Commit this simple account entry to the parent.
+   *
+   * @return true if there was a parent account that was committed to
+   */
+  public boolean commit() {
+    if (parent instanceof SimpleAccount simpleAccount) {
+      simpleAccount.balance = balance;
+      simpleAccount.nonce = nonce;
+      simpleAccount.storage.putAll(storage);
+      return true;
+    } else {
+      return false;
+    }
+  }
 }
