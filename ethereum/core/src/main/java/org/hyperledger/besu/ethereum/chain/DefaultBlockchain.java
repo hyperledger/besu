@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.Subscribers;
@@ -49,8 +50,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
+import io.prometheus.client.guava.cache.CacheMetricsCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +76,20 @@ public class DefaultBlockchain implements MutableBlockchain {
   private volatile int chainHeadOmmerCount;
 
   private Comparator<BlockHeader> blockChoiceRule;
+
+  private static final int BLOCK_HEADERS_CACHE_SIZE = 512;
+  private static final int BLOCK_BODIES_CACHE_SIZE = 512;
+  private static final int TRX_RECEIPTS_CACHE_SIZE = 512;
+  private static final int TOTAL_DIFFICULTY_CACHE_SIZE = 512;
+
+  private final Cache<Hash, BlockHeader> blockHeadersCache =
+      CacheBuilder.newBuilder().recordStats().maximumSize(BLOCK_HEADERS_CACHE_SIZE).build();
+  private final Cache<Hash, BlockBody> blockBodiesCache =
+      CacheBuilder.newBuilder().recordStats().maximumSize(BLOCK_BODIES_CACHE_SIZE).build();
+  private final Cache<Hash, List<TransactionReceipt>> transactionReceiptsCache =
+      CacheBuilder.newBuilder().recordStats().maximumSize(TRX_RECEIPTS_CACHE_SIZE).build();
+  private final Cache<Hash, Difficulty> totalDifficultyCache =
+      CacheBuilder.newBuilder().recordStats().maximumSize(TOTAL_DIFFICULTY_CACHE_SIZE).build();
 
   private DefaultBlockchain(
       final Optional<Block> genesisBlock,
@@ -144,6 +162,14 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     this.reorgLoggingThreshold = reorgLoggingThreshold;
     this.blockChoiceRule = heaviestChainBlockChoiceRule;
+
+    CacheMetricsCollector cacheMetrics = new CacheMetricsCollector();
+    cacheMetrics.addCache("blockHeaders", blockHeadersCache);
+    cacheMetrics.addCache("blockBodies", blockBodiesCache);
+    cacheMetrics.addCache("transactionReceipts", transactionReceiptsCache);
+    cacheMetrics.addCache("totalDifficulty", totalDifficultyCache);
+    if (metricsSystem instanceof PrometheusMetricsSystem prometheusMetricsSystem)
+      prometheusMetricsSystem.addCollector(BesuMetricCategory.BLOCKCHAIN, () -> cacheMetrics);
   }
 
   public static MutableBlockchain createMutable(
@@ -232,17 +258,23 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public Optional<BlockHeader> getBlockHeader(final Hash blockHeaderHash) {
-    return blockchainStorage.getBlockHeader(blockHeaderHash);
+    return blockHeadersCache.getIfPresent(blockHeaderHash) != null
+        ? Optional.ofNullable(blockHeadersCache.getIfPresent(blockHeaderHash))
+        : blockchainStorage.getBlockHeader(blockHeaderHash);
   }
 
   @Override
   public Optional<BlockBody> getBlockBody(final Hash blockHeaderHash) {
-    return blockchainStorage.getBlockBody(blockHeaderHash);
+    return blockHeadersCache.getIfPresent(blockHeaderHash) != null
+        ? Optional.ofNullable(blockBodiesCache.getIfPresent(blockHeaderHash))
+        : blockchainStorage.getBlockBody(blockHeaderHash);
   }
 
   @Override
   public Optional<List<TransactionReceipt>> getTxReceipts(final Hash blockHeaderHash) {
-    return blockchainStorage.getTransactionReceipts(blockHeaderHash);
+    return transactionReceiptsCache.getIfPresent(blockHeaderHash) != null
+        ? Optional.ofNullable(transactionReceiptsCache.getIfPresent(blockHeaderHash))
+        : blockchainStorage.getTransactionReceipts(blockHeaderHash);
   }
 
   @Override
@@ -252,7 +284,9 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public Optional<Difficulty> getTotalDifficultyByHash(final Hash blockHeaderHash) {
-    return blockchainStorage.getTotalDifficulty(blockHeaderHash);
+    return totalDifficultyCache.getIfPresent(blockHeaderHash) != null
+        ? Optional.ofNullable(totalDifficultyCache.getIfPresent(blockHeaderHash))
+        : blockchainStorage.getTotalDifficulty(blockHeaderHash);
   }
 
   @Override
@@ -283,12 +317,21 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public synchronized void appendBlock(final Block block, final List<TransactionReceipt> receipts) {
+    cacheBlockData(block, receipts);
     appendBlockHelper(new BlockWithReceipts(block, receipts), false);
   }
 
   @Override
   public synchronized void storeBlock(final Block block, final List<TransactionReceipt> receipts) {
+    cacheBlockData(block, receipts);
     appendBlockHelper(new BlockWithReceipts(block, receipts), true);
+  }
+
+  private void cacheBlockData(final Block block, final List<TransactionReceipt> receipts) {
+    blockHeadersCache.put(block.getHash(), block.getHeader());
+    blockBodiesCache.put(block.getHash(), block.getBody());
+    transactionReceiptsCache.put(block.getHash(), receipts);
+    totalDifficultyCache.put(block.getHash(), block.getHeader().getDifficulty());
   }
 
   private boolean blockShouldBeProcessed(
