@@ -30,7 +30,7 @@ public class SimpleBlockValues implements BlockValues {
   Bytes32 mixHasOrPrevRandao = Bytes32.ZERO;
   Optional<Wei> baseFee = Optional.empty();
   long number = 1;
-  long timeStamp = 1;
+  long timestamp = 1;
   long gasLimit = Long.MAX_VALUE;
 
   @Override
@@ -68,12 +68,13 @@ public class SimpleBlockValues implements BlockValues {
     this.number = number;
   }
 
-  public long getTimeStamp() {
-    return timeStamp;
+  @Override
+  public long getTimestamp() {
+    return timestamp;
   }
 
-  public void setTimeStamp(final long timeStamp) {
-    this.timeStamp = timeStamp;
+  public void setTimestamp(final long timestamp) {
+    this.timestamp = timestamp;
   }
 
   @Override

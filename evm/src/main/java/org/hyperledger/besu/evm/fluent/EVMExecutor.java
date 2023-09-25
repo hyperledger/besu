@@ -868,7 +868,7 @@ public class EVMExecutor {
    *     SimpleBlockValues}
    */
   public EVMExecutor timestamp(final long timestamp) {
-    ((SimpleBlockValues) this.blockValues).setTimeStamp(timestamp);
+    ((SimpleBlockValues) this.blockValues).setTimestamp(timestamp);
     return this;
   }
 
