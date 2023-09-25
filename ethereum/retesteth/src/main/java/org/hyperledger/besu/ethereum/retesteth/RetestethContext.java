@@ -240,7 +240,8 @@ public class RetestethContext {
             metricsSystem,
             syncState,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
-            transactionPoolConfiguration);
+            transactionPoolConfiguration,
+            null);
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("Genesis Block {} ", genesisState.getBlock());

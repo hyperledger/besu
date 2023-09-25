@@ -34,7 +34,7 @@ public class PermissioningConfigurationValidator {
    * @param permissioningConfiguration the permissioning configuration
    * @throws Exception In case of nodes are not in allow list
    */
-  public static void areAllNodesAreInAllowlist(
+  public static void areAllNodesInAllowlist(
       final Collection<EnodeURL> nodeURIs,
       final LocalPermissioningConfiguration permissioningConfiguration)
       throws Exception {

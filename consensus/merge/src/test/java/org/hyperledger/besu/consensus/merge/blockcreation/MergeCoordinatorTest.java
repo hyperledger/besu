@@ -222,7 +222,8 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             ethContext,
             miningParameters,
             new TransactionPoolMetrics(metricsSystem),
-            poolConf);
+            poolConf,
+            null);
 
     this.transactionPool.setEnabled();
 
