@@ -19,5 +19,4 @@ import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 
 /** Wrapper for payload plus extra info. */
 public record PayloadWrapper(
-    PayloadIdentifier payloadIdentifier, BlockWithReceipts blockWithReceipts) {
-}
+    PayloadIdentifier payloadIdentifier, BlockWithReceipts blockWithReceipts) {}
