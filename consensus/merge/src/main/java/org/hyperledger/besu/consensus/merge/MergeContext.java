@@ -155,21 +155,11 @@ public interface MergeContext extends ConsensusContext {
   boolean validateCandidateHead(final BlockHeader candidateHeader);
 
   /**
-   * Put payloadWrapper containing Identifier.
-   *
-   * @param payload the payload
-   */
-  default void putPayload(final PayloadWrapper payload) {
-    putPayloadById(payload.payloadIdentifier(), payload.blockWithReceipts());
-  }
-
-  /**
    * Put payload by Identifier.
    *
-   * @param payloadId the payload identifier
-   * @param blockWithReceipts the block with receipts
+   * @param payloadWrapper payload wrapper
    */
-  void putPayloadById(final PayloadIdentifier payloadId, final BlockWithReceipts blockWithReceipts);
+  void putPayloadById(final PayloadWrapper payloadWrapper);
 
   /**
    * Retrieve block by id.

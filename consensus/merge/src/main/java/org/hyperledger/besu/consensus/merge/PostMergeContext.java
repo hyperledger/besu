@@ -232,27 +232,35 @@ public class PostMergeContext implements MergeContext {
   }
 
   @Override
-  public void putPayloadById(
-      final PayloadIdentifier payloadId, final BlockWithReceipts newBlockWithReceipts) {
+  public void putPayloadById(final PayloadWrapper payloadWrapper) {
     synchronized (blocksInProgress) {
-      final Optional<BlockWithReceipts> maybeCurrBestBlock = retrieveBlockById(payloadId);
+      final Optional<BlockWithReceipts> maybeCurrBestBlock =
+          retrieveBlockById(payloadWrapper.payloadIdentifier());
 
       maybeCurrBestBlock.ifPresentOrElse(
           currBestBlock -> {
-            if (compareByGasUsedDesc.compare(newBlockWithReceipts, currBestBlock) < 0) {
+            if (compareByGasUsedDesc.compare(payloadWrapper.blockWithReceipts(), currBestBlock)
+                < 0) {
               LOG.atDebug()
                   .setMessage("New proposal for payloadId {} {} is better than the previous one {}")
-                  .addArgument(payloadId)
-                  .addArgument(() -> logBlockProposal(newBlockWithReceipts.getBlock()))
+                  .addArgument(payloadWrapper.payloadIdentifier())
+                  .addArgument(
+                      () -> logBlockProposal(payloadWrapper.blockWithReceipts().getBlock()))
                   .addArgument(() -> logBlockProposal(currBestBlock.getBlock()))
                   .log();
               blocksInProgress.removeAll(
-                  retrievePayloadsById(payloadId).collect(Collectors.toUnmodifiableList()));
-              blocksInProgress.add(new PayloadWrapper(payloadId, newBlockWithReceipts));
-              logCurrentBestBlock(newBlockWithReceipts);
+                  retrievePayloadsById(payloadWrapper.payloadIdentifier())
+                      .collect(Collectors.toUnmodifiableList()));
+              blocksInProgress.add(
+                  new PayloadWrapper(
+                      payloadWrapper.payloadIdentifier(), payloadWrapper.blockWithReceipts()));
+              logCurrentBestBlock(payloadWrapper.blockWithReceipts());
             }
           },
-          () -> blocksInProgress.add(new PayloadWrapper(payloadId, newBlockWithReceipts)));
+          () ->
+              blocksInProgress.add(
+                  new PayloadWrapper(
+                      payloadWrapper.payloadIdentifier(), payloadWrapper.blockWithReceipts())));
     }
   }
 
