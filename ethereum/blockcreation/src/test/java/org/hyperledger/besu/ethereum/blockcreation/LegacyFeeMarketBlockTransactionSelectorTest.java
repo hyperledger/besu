@@ -87,7 +87,8 @@ public class LegacyFeeMarketBlockTransactionSelectorTest
             ethContext,
             miningParameters,
             new TransactionPoolMetrics(metricsSystem),
-            poolConf);
+            poolConf,
+            null);
     transactionPool.setEnabled();
     return transactionPool;
   }

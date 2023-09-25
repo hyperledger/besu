@@ -137,7 +137,8 @@ public abstract class AbstractMessageTaskTest<T, R> {
             metricsSystem,
             syncState,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ONE).build(),
-            TransactionPoolConfiguration.DEFAULT);
+            TransactionPoolConfiguration.DEFAULT,
+            null);
     transactionPool.setEnabled();
 
     ethProtocolManager =
