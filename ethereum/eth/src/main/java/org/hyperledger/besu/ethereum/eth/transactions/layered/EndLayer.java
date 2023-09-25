@@ -100,6 +100,11 @@ public class EndLayer implements TransactionsLayer {
   }
 
   @Override
+  public List<Transaction> getAllPriority() {
+    return List.of();
+  }
+
+  @Override
   public int count() {
     return 0;
   }

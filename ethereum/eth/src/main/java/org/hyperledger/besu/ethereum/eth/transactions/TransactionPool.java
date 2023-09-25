@@ -55,6 +55,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.IntSummaryStatistics;
@@ -62,7 +63,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -104,6 +107,8 @@ public class TransactionPool implements BlockAddedObserver {
       new PendingTransactionsListenersProxy();
   private volatile OptionalLong subscribeConnectId = OptionalLong.empty();
   private final SaveRestoreManager saveRestoreManager = new SaveRestoreManager();
+  private final Set<Address> localSenders = ConcurrentHashMap.newKeySet();
+  ;
 
   public TransactionPool(
       final Supplier<PendingTransactions> pendingTransactionsSupplier,
@@ -155,58 +160,53 @@ public class TransactionPool implements BlockAddedObserver {
   public ValidationResult<TransactionInvalidReason> addTransactionViaApi(
       final Transaction transaction) {
 
-    if (configuration.getDisableLocalTransactions()) {
-      final var result = addRemoteTransaction(transaction);
-      if (result.isValid()) {
-        transactionBroadcaster.onTransactionsAdded(List.of(transaction));
-      }
-      return result;
-    }
-    return addLocalTransaction(transaction);
-  }
-
-  ValidationResult<TransactionInvalidReason> addLocalTransaction(final Transaction transaction) {
-    final ValidationResultAndAccount validationResult = validateLocalTransaction(transaction);
-
-    if (validationResult.result.isValid()) {
-
-      final TransactionAddedResult transactionAddedResult =
-          pendingTransactions.addLocalTransaction(transaction, validationResult.maybeAccount);
-
-      if (transactionAddedResult.isRejected()) {
-        final var rejectReason =
-            transactionAddedResult
-                .maybeInvalidReason()
-                .orElseGet(
-                    () -> {
-                      LOG.warn("Missing invalid reason for status {}", transactionAddedResult);
-                      return INTERNAL_ERROR;
-                    });
-        return ValidationResult.invalid(rejectReason);
-      }
-
+    //    if (configuration.getDisableLocalTransactions() && notPrioritySender) {
+    //      final var result = addRemoteTransaction(transaction);
+    //      if (result.isValid()) {
+    //        transactionBroadcaster.onTransactionsAdded(List.of(transaction));
+    //      }
+    //      return result;
+    //      return addTransaction(transaction, true, false);
+    //    }
+    final var result = addTransaction(transaction, true);
+    if (result.isValid()) {
+      localSenders.add(transaction.getSender());
       transactionBroadcaster.onTransactionsAdded(List.of(transaction));
-    } else {
-      metrics.incrementRejected(true, validationResult.result.getInvalidReason(), "txpool");
     }
-
-    return validationResult.result;
+    return result;
   }
 
-  private Optional<Wei> getMaxGasPrice(final Transaction transaction) {
-    return transaction.getGasPrice().map(Optional::of).orElse(transaction.getMaxFeePerGas());
-  }
-
-  private boolean isMaxGasPriceBelowConfiguredMinGasPrice(final Transaction transaction) {
-    return getMaxGasPrice(transaction)
-        .map(g -> g.lessThan(miningParameters.getMinTransactionGasPrice()))
-        .orElse(true);
-  }
-
-  private Stream<Transaction> sortedBySenderAndNonce(final Collection<Transaction> transactions) {
-    return transactions.stream()
-        .sorted(Comparator.comparing(Transaction::getSender).thenComparing(Transaction::getNonce));
-  }
+  //  ValidationResult<TransactionInvalidReason> addTransaction(final Transaction transaction, final
+  // boolean isLocal, final boolean hasPriority) {
+  //    final ValidationResultAndAccount validationResult = validateTransaction(transaction,
+  // hasPriority);
+  //
+  //    if (validationResult.result.isValid()) {
+  //
+  //      final TransactionAddedResult transactionAddedResult =
+  //
+  // pendingTransactions.addLocalTransaction(PendingTransaction.newPendingTransaction(transaction,
+  // isLocal, hasPriority), validationResult.maybeAccount);
+  //
+  //      if (transactionAddedResult.isRejected()) {
+  //        final var rejectReason =
+  //            transactionAddedResult
+  //                .maybeInvalidReason()
+  //                .orElseGet(
+  //                    () -> {
+  //                      LOG.warn("Missing invalid reason for status {}", transactionAddedResult);
+  //                      return INTERNAL_ERROR;
+  //                    });
+  //        return ValidationResult.invalid(rejectReason);
+  //      }
+  //
+  ////      transactionBroadcaster.onTransactionsAdded(List.of(transaction));
+  //    } else {
+  //      metrics.incrementRejected(isLocal, validationResult.result.getInvalidReason(), "txpool");
+  //    }
+  //
+  //    return validationResult.result;
+  //  }
 
   public Map<Hash, ValidationResult<TransactionInvalidReason>> addRemoteTransactions(
       final Collection<Transaction> transactions) {
@@ -221,7 +221,7 @@ public class TransactionPool implements BlockAddedObserver {
                 Collectors.toMap(
                     Transaction::getHash,
                     transaction -> {
-                      final var result = addRemoteTransaction(transaction);
+                      final var result = addTransaction(transaction, false);
                       if (result.isValid()) {
                         addedTransactions.add(transaction);
                       }
@@ -250,26 +250,32 @@ public class TransactionPool implements BlockAddedObserver {
     return validationResults;
   }
 
-  private ValidationResult<TransactionInvalidReason> addRemoteTransaction(
-      final Transaction transaction) {
+  private ValidationResult<TransactionInvalidReason> addTransaction(
+      final Transaction transaction, final boolean isLocal) {
     if (pendingTransactions.containsTransaction(transaction)) {
       LOG.atTrace()
           .setMessage("Discard already present transaction {}")
           .addArgument(transaction::toTraceLog)
           .log();
       // We already have this transaction, don't even validate it.
-      metrics.incrementRejected(false, TRANSACTION_ALREADY_KNOWN, "txpool");
+      metrics.incrementRejected(isLocal, TRANSACTION_ALREADY_KNOWN, "txpool");
       return ValidationResult.invalid(TRANSACTION_ALREADY_KNOWN);
     }
 
-    final ValidationResultAndAccount validationResult = validateRemoteTransaction(transaction);
+    final boolean hasPriority = isPriorityTransaction(transaction, isLocal);
+
+    final ValidationResultAndAccount validationResult =
+        validateTransaction(transaction, hasPriority);
 
     if (validationResult.result.isValid()) {
       final TransactionAddedResult status =
-          pendingTransactions.addRemoteTransaction(transaction, validationResult.maybeAccount);
+          pendingTransactions.addTransaction(
+              PendingTransaction.newPendingTransaction(transaction, isLocal, hasPriority),
+              validationResult.maybeAccount);
       if (status.isSuccess()) {
         LOG.atTrace()
-            .setMessage("Added remote transaction {}")
+            .setMessage("Added {} transaction {}")
+            .addArgument(() -> isLocal ? "local" : "remote")
             .addArgument(transaction::toTraceLog)
             .log();
       } else {
@@ -286,7 +292,7 @@ public class TransactionPool implements BlockAddedObserver {
             .addArgument(transaction::toTraceLog)
             .addArgument(rejectReason)
             .log();
-        metrics.incrementRejected(false, rejectReason, "txpool");
+        metrics.incrementRejected(isLocal, rejectReason, "txpool");
         return ValidationResult.invalid(rejectReason);
       }
     } else {
@@ -295,11 +301,42 @@ public class TransactionPool implements BlockAddedObserver {
           .addArgument(transaction::toTraceLog)
           .addArgument(validationResult.result::getInvalidReason)
           .log();
-      metrics.incrementRejected(false, validationResult.result.getInvalidReason(), "txpool");
-      pendingTransactions.signalInvalidAndRemoveDependentTransactions(transaction);
+      metrics.incrementRejected(isLocal, validationResult.result.getInvalidReason(), "txpool");
+      if (!isLocal) {
+        pendingTransactions.signalInvalidAndRemoveDependentTransactions(transaction);
+      }
     }
 
     return validationResult.result;
+  }
+
+  private Optional<Wei> getMaxGasPrice(final Transaction transaction) {
+    return transaction.getGasPrice().map(Optional::of).orElse(transaction.getMaxFeePerGas());
+  }
+
+  private boolean isMaxGasPriceBelowConfiguredMinGasPrice(final Transaction transaction) {
+    return getMaxGasPrice(transaction)
+        .map(g -> g.lessThan(miningParameters.getMinTransactionGasPrice()))
+        .orElse(true);
+  }
+
+  private Stream<Transaction> sortedBySenderAndNonce(final Collection<Transaction> transactions) {
+    return transactions.stream()
+        .sorted(Comparator.comparing(Transaction::getSender).thenComparing(Transaction::getNonce));
+  }
+
+  private boolean isPrioritySender(final Address sender) {
+    return configuration.getSortedPrioritySenders().length > 0
+        && Arrays.binarySearch(configuration.getSortedPrioritySenders(), sender) >= 0;
+  }
+
+  private boolean isPriorityTransaction(final Transaction transaction, final boolean isLocal) {
+    if (isLocal && !configuration.getDisableLocalTransactions()) {
+      // unless nolocals option is specified senders of local sent txs are prioritized
+      return true;
+    }
+    // otherwise check if the sender belogns to the priority list
+    return isPrioritySender(transaction.getSender());
   }
 
   public long subscribePendingTransactions(final PendingTransactionAddedListener listener) {
@@ -339,17 +376,12 @@ public class TransactionPool implements BlockAddedObserver {
     if (!reAddTransactions.isEmpty()) {
       var txsByOrigin =
           reAddTransactions.stream()
-              .collect(
-                  Collectors.partitioningBy(
-                      tx ->
-                          configuration.getDisableLocalTransactions()
-                              ? false
-                              : pendingTransactions.isLocalSender(tx.getSender())));
+              .collect(Collectors.partitioningBy(tx -> isLocalSender(tx.getSender())));
       var reAddLocalTxs = txsByOrigin.get(true);
       var reAddRemoteTxs = txsByOrigin.get(false);
       if (!reAddLocalTxs.isEmpty()) {
         logReAddedTransactions(reAddLocalTxs, "local");
-        sortedBySenderAndNonce(reAddLocalTxs).forEach(this::addLocalTransaction);
+        sortedBySenderAndNonce(reAddLocalTxs).forEach(this::addTransactionViaApi);
       }
       if (!reAddRemoteTxs.isEmpty()) {
         logReAddedTransactions(reAddRemoteTxs, "remote");
@@ -377,16 +409,17 @@ public class TransactionPool implements BlockAddedObserver {
         .get();
   }
 
-  private ValidationResultAndAccount validateLocalTransaction(final Transaction transaction) {
-    return validateTransaction(transaction, true);
-  }
+  /*
+    private ValidationResultAndAccount validateLocalTransaction(final Transaction transaction) {
+      return validateTransaction(transaction, true);
+    }
 
-  private ValidationResultAndAccount validateRemoteTransaction(final Transaction transaction) {
-    return validateTransaction(transaction, false);
-  }
-
+    private ValidationResultAndAccount validateRemoteTransaction(final Transaction transaction) {
+      return validateTransaction(transaction, false);
+    }
+  */
   private ValidationResultAndAccount validateTransaction(
-      final Transaction transaction, final boolean isLocal) {
+      final Transaction transaction, final boolean hasPriority) {
 
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader().orElse(null);
     if (chainHeadBlockHeader == null) {
@@ -401,7 +434,7 @@ public class TransactionPool implements BlockAddedObserver {
         protocolSchedule.getByBlockHeader(chainHeadBlockHeader).getFeeMarket();
 
     final TransactionInvalidReason priceInvalidReason =
-        validatePrice(transaction, isLocal, feeMarket);
+        validatePrice(transaction, hasPriority, feeMarket);
     if (priceInvalidReason != null) {
       return ValidationResultAndAccount.invalid(priceInvalidReason);
     }
@@ -416,7 +449,7 @@ public class TransactionPool implements BlockAddedObserver {
       return new ValidationResultAndAccount(basicValidationResult);
     }
 
-    if (isLocal
+    if (hasPriority
         && strictReplayProtectionShouldBeEnforcedLocally(chainHeadBlockHeader)
         && transaction.getChainId().isEmpty()) {
       // Strict replay protection is enabled but the tx is not replay-protected
@@ -514,7 +547,7 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   public boolean isLocalSender(final Address sender) {
-    return pendingTransactions.isLocalSender(sender);
+    return configuration.getDisableLocalTransactions() ? false : localSenders.contains(sender);
   }
 
   public int count() {
@@ -763,12 +796,10 @@ public class TransactionPool implements BlockAddedObserver {
                           final Transaction tx =
                               Transaction.readFrom(Bytes.fromBase64String(line.substring(1)));
 
-                          final ValidationResult<TransactionInvalidReason> result;
-                          if (isLocal && !configuration.getDisableLocalTransactions()) {
-                            result = addLocalTransaction(tx);
-                          } else {
-                            result = addRemoteTransaction(tx);
-                          }
+                          final ValidationResult<TransactionInvalidReason> result =
+                              addTransaction(tx, isLocal);
+                          //                          = isLocal ? addTransactionViaApi(tx) :
+                          // addRemoteTransaction(tx);
 
                           return result.isValid() ? 1 : 0;
                         })

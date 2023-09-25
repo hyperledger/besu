@@ -482,6 +482,17 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     return localTxs;
   }
 
+  @Override
+  public List<Transaction> getAllPriority() {
+    final var priorityTxs =
+        pendingTransactions.values().stream()
+            .filter(PendingTransaction::hasPriority)
+            .map(PendingTransaction::getTransaction)
+            .collect(Collectors.toCollection(ArrayList::new));
+    priorityTxs.addAll(nextLayer.getAllPriority());
+    return priorityTxs;
+  }
+
   Stream<PendingTransaction> stream(final Address sender) {
     return txsBySender.getOrDefault(sender, EMPTY_SENDER_TXS).values().stream();
   }

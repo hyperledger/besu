@@ -163,7 +163,8 @@ public class BaseTransactionPoolTest {
   protected void addLocalTransactions(
       final PendingTransactions sorter, final Account sender, final long... nonces) {
     for (final long nonce : nonces) {
-      sorter.addLocalTransaction(createTransaction(nonce), Optional.of(sender));
+      sorter.addTransaction(
+          createLocalPendingTransaction(createTransaction(nonce)), Optional.of(sender));
     }
   }
 

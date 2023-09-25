@@ -35,11 +35,13 @@ public interface PendingTransactions {
 
   List<Transaction> getLocalTransactions();
 
-  TransactionAddedResult addRemoteTransaction(
-      Transaction transaction, Optional<Account> maybeSenderAccount);
+  List<Transaction> getPriorityTransactions();
 
-  TransactionAddedResult addLocalTransaction(
-      Transaction transaction, Optional<Account> maybeSenderAccount);
+  TransactionAddedResult addTransaction(
+      PendingTransaction transaction, Optional<Account> maybeSenderAccount);
+
+  //  TransactionAddedResult addLocalTransaction(
+  //          PendingTransaction transaction, Optional<Account> maybeSenderAccount);
 
   void selectTransactions(TransactionSelector selector);
 
@@ -84,7 +86,7 @@ public interface PendingTransactions {
     // no-op
   }
 
-  boolean isLocalSender(Address sender);
+  //  boolean isLocalSender(Address sender);
 
   @FunctionalInterface
   interface TransactionSelector {

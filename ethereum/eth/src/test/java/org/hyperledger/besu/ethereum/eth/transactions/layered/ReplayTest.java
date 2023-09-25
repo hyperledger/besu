@@ -261,7 +261,10 @@ public class ReplayTest {
           tx.getNonce(),
           prioritizedTransactions.logSender(senderToLog));
     }
-    assertThat(pendingTransactions.addRemoteTransaction(tx, Optional.of(mockAccount)))
+    assertThat(
+            pendingTransactions.addTransaction(
+                PendingTransaction.newPendingTransaction(tx, false, false),
+                Optional.of(mockAccount)))
         .isNotEqualTo(TransactionAddedResult.INTERNAL_ERROR);
     if (tx.getSender().equals(senderToLog)) {
       LOG.warn("After {}", prioritizedTransactions.logSender(senderToLog));
