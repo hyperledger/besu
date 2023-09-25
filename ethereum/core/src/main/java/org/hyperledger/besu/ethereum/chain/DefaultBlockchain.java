@@ -77,10 +77,10 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private Comparator<BlockHeader> blockChoiceRule;
 
-  private static final int BLOCK_HEADERS_CACHE_SIZE = 1024;
-  private static final int BLOCK_BODIES_CACHE_SIZE = 1024;
-  private static final int TRX_RECEIPTS_CACHE_SIZE = 1024;
-  private static final int TOTAL_DIFFICULTY_CACHE_SIZE = 1024;
+  private static final int BLOCK_HEADERS_CACHE_SIZE = 2048;
+  private static final int BLOCK_BODIES_CACHE_SIZE = 2048;
+  private static final int TRX_RECEIPTS_CACHE_SIZE = 2048;
+  private static final int TOTAL_DIFFICULTY_CACHE_SIZE = 2048;
 
   private final Cache<Hash, BlockHeader> blockHeadersCache =
       CacheBuilder.newBuilder().recordStats().maximumSize(BLOCK_HEADERS_CACHE_SIZE).build();
