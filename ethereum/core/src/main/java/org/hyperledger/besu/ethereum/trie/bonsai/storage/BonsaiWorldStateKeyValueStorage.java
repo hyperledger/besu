@@ -56,8 +56,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("unused")
-public class BonsaiWorldStateKeyValueStorage
-    implements WorldStateStorage, FlatWorldStateStorage, AutoCloseable {
+public class BonsaiWorldStateKeyValueStorage implements FlatWorldStateStorage, AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateKeyValueStorage.class);
 
   // 0x776f726c64526f6f74

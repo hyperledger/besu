@@ -17,9 +17,7 @@ package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.flat.FlatDbStrategy;
 
-public interface FlatWorldStateStorage {
-
-  FlatDbMode getFlatDbMode();
+public interface FlatWorldStateStorage extends WorldStateStorage {
 
   FlatDbStrategy getFlatDbStrategy();
 }

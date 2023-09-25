@@ -20,12 +20,14 @@ import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.ByteCodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetAccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetStorageRangeMessage;
+import org.hyperledger.besu.ethereum.eth.messages.snap.GetTrieNodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV1;
 import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.TrieNodesMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.worldstate.FlatWorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 
@@ -39,6 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import kotlin.Pair;
 import kotlin.collections.ArrayDeque;
@@ -58,9 +61,11 @@ class SnapServer {
       AccountRangeMessage.create(new HashMap<>(), new ArrayDeque<>());
   private static final StorageRangeMessage EMPTY_STORAGE_RANGE =
       StorageRangeMessage.create(new ArrayDeque<>(), Collections.emptyList());
+  private static final TrieNodesMessage EMPTY_TRIE_NODES_MESSAGE =
+      TrieNodesMessage.create(new ArrayList<>());
 
   private final EthMessages snapMessages;
-  private final Function<Hash, Optional<WorldStateStorage>> worldStateStorageProvider;
+  private final Function<Hash, Optional<FlatWorldStateStorage>> worldStateStorageProvider;
 
   SnapServer(final EthMessages snapMessages, final WorldStateArchive archive) {
     this.snapMessages = snapMessages;
@@ -70,7 +75,7 @@ class SnapServer {
 
   SnapServer(
       final EthMessages snapMessages,
-      final Function<Hash, Optional<WorldStateStorage>> worldStateStorageProvider) {
+      final Function<Hash, Optional<FlatWorldStateStorage>> worldStateStorageProvider) {
     this.snapMessages = snapMessages;
     this.worldStateStorageProvider = worldStateStorageProvider;
   }
@@ -163,11 +168,11 @@ class SnapServer {
 
               for (var forAccountHash : range.hashes()) {
                 // start key proof
-
-                // collectedProofs.addAll(
-                //     worldStateProof.getStorageProofRelatedNodes(
-                //         /* TODO: need account root hash here, not worldstate root hash */
-                //         range.worldStateRootHash(), forAccountHash, Hash.wrap(startKeyBytes)));
+                collectedProofs.addAll(
+                    worldStateProof.getStorageProofRelatedNodes(
+                        getAccountStorageRoot(forAccountHash, storage),
+                        forAccountHash,
+                        Hash.wrap(startKeyBytes)));
 
                 var accountStorages =
                     storage.streamFlatStorages(
@@ -175,12 +180,11 @@ class SnapServer {
                 collectedStorages.add(accountStorages);
 
                 // last key proof
-
-                // collectedProofs.addAll(
-                //     worldStateProof.getStorageProofRelatedNodes(
-                //         /* TODO: need account root hash here, not worldstate root hash */
-                //         range.worldStateRootHash(), forAccountHash,
-                //         Hash.wrap(accountStorages.lastKey())));
+                collectedProofs.addAll(
+                    worldStateProof.getStorageProofRelatedNodes(
+                        getAccountStorageRoot(forAccountHash, storage),
+                        forAccountHash,
+                        Hash.wrap(accountStorages.lastKey())));
 
                 if (statefulPredicate.shouldGetMore()) {
                   // reset startkeyBytes for subsequent accounts
@@ -201,8 +205,47 @@ class SnapServer {
   }
 
   private MessageData constructGetTrieNodesResponse(final MessageData message) {
-    // TODO: what is this expecting?  account state tries or storage tries?
-    return TrieNodesMessage.create(new ArrayDeque<>());
+    final GetTrieNodesMessage getTrieNodesMessage = GetTrieNodesMessage.readFrom(message);
+    final GetTrieNodesMessage.TrieNodesPaths triePaths = getTrieNodesMessage.paths(true);
+    // TODO: drop to TRACE
+    LOGGER
+        .atInfo()
+        .setMessage("Receive get trie nodes message of size {}")
+        .addArgument(() -> triePaths.paths().size())
+        .log();
+
+    return worldStateStorageProvider
+        .apply(triePaths.worldStateRootHash())
+        .map(
+            storage -> {
+              ArrayList<Bytes> trieNodes = new ArrayList<>();
+              for (var triePath : triePaths.paths()) {
+
+                // first element is path in account trie
+                final Stream<Bytes> pathStream = triePath.stream();
+                final Optional<Bytes> accountPath = pathStream.findFirst();
+
+                if (triePaths.paths().size() == 1) {
+                  // if we are only requesting the account node, return it
+                  // TODO: confirm whether this is binary or compact encoding for account
+                  accountPath.flatMap(storage::getTrieNodeUnsafe).ifPresent(trieNodes::add);
+                } else {
+                  // otherwise return the storage from this account from the subsequent paths:
+                  pathStream
+                      .map(this::applyPathMagic)
+                      .forEach(
+                          pathPair -> {
+                            // then return it:
+                            storage.getAccountStorageTrieNode(
+                                null, // TODO: get accountHash
+                                pathPair.getSecond(),
+                                pathPair.getFirst());
+                          });
+                }
+              }
+              return TrieNodesMessage.create(trieNodes);
+            })
+        .orElse(EMPTY_TRIE_NODES_MESSAGE);
   }
 
   static class StatefulPredicate implements Predicate<Pair<Bytes32, Bytes>> {
@@ -242,5 +285,20 @@ class SnapServer {
         return false;
       }
     }
+  }
+
+  Hash getAccountStorageRoot(final Bytes32 accountHash, final WorldStateStorage storage) {
+    return storage
+        .getTrieNodeUnsafe(Bytes.concatenate(accountHash, Bytes.EMPTY))
+        .map(Hash::hash)
+        .orElse(Hash.EMPTY_TRIE_HASH);
+  }
+
+  Pair<Bytes32, Bytes> applyPathMagic(Bytes path) {
+    // TODO: write me.  Determine whether we have a partial path with compact encoding
+    //  or full path binary encoded. return location and hash pair
+
+    // !!this impl 100% broken!!
+    return new Pair(Bytes32.wrap(path), path);
   }
 }

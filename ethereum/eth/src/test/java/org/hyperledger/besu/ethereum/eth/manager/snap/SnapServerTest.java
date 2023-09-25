@@ -82,11 +82,12 @@ public class SnapServerTest {
   final SnapTestAccount acct3 = createTestContractAccount("30", inMemoryStorage);
   final SnapTestAccount acct4 = createTestContractAccount("40", inMemoryStorage);
 
+  // TODO: add requestID assertions (and implementations in their corresponding message parsing)
+
   @Test
   public void assertEmptyRangeLeftProofOfExclusionAndNextAccount() {
     // for a range request that returns empty, we should return just a proof of exclusion on the
-    // left
-    // and the next account after the limit hash
+    // left and the next account after the limit hash
     insertTestAccounts(acct1, acct4);
 
     var rangeData =
@@ -159,9 +160,11 @@ public class SnapServerTest {
     var firstAccountStorages = slotsData.slots().first();
     assertThat(firstAccountStorages.size()).isEqualTo(10);
 
-    // TODO: proving is not working yet
-    //    assertThat(assertIsValidStorageProof(acct3, Hash.ZERO, firstAccountStorages,
-    // slotsData.proofs())).isTrue();
+    // TODO: figure out why storage proofs are failing validation:
+    // assertThat(
+    //         assertIsValidStorageProof(acct3, Hash.ZERO, firstAccountStorages,
+    // slotsData.proofs()))
+    //     .isTrue();
   }
 
   static SnapTestAccount createTestAccount(final String hexAddr) {
@@ -192,14 +195,16 @@ public class SnapServerTest {
         .forEach(
             i -> {
               Bytes32 mockBytes32 = Bytes32.fromHexStringLenient(i.toString());
-              updater.putAccountStateTrieNode(
-                  Bytes.concatenate(acctHash, mockBytes32), Hash.hash(mockBytes32), mockBytes32);
+              trie.put(mockBytes32, mockBytes32);
               flatdb.putFlatAccountStorageValueByStorageSlotHash(
                   updater.getWorldStateTransaction(),
                   acctHash,
                   Hash.wrap(mockBytes32),
                   mockBytes32);
             });
+    trie.commit(
+        (location, key, value) ->
+            updater.putAccountStorageTrieNode(acctHash, location, key, value));
     updater.commit();
     return new SnapTestAccount(
         acctHash,
@@ -228,7 +233,7 @@ public class SnapServerTest {
             .orElse(startHash);
 
     return proofProvider.isValidRangeProof(
-        acct2.addressHash, // TODO: this should be parameterized.  why does this even work??
+        startHash,
         lastKey,
         storageTrie.getRootHash(),
         accountRange.proofs(),
