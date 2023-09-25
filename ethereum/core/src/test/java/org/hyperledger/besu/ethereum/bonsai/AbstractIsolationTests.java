@@ -162,7 +162,8 @@ public abstract class AbstractIsolationTests {
             ethContext,
             mock(MiningParameters.class),
             txPoolMetrics,
-            poolConfiguration);
+            poolConfiguration,
+            null);
     transactionPool.setEnabled();
   }
 
