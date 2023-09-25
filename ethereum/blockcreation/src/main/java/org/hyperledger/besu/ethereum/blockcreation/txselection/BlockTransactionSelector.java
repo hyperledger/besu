@@ -239,7 +239,7 @@ public class BlockTransactionSelector {
     // Create transaction selectors
     var selectors = blockTransactionSelectorFactory.createTransactionSelectors(context);
     var result = evaluateSelectors(transaction, selectors, null);
-    if (result.selected()) {
+    if (!result.selected()) {
       return result;
     }
 
