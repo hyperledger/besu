@@ -91,7 +91,8 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             ethContext,
             miningParameters,
             new TransactionPoolMetrics(metricsSystem),
-            poolConf);
+            poolConf,
+            null);
     transactionPool.setEnabled();
     return transactionPool;
   }

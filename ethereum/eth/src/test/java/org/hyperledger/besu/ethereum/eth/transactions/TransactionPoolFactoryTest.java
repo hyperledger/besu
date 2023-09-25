@@ -252,7 +252,8 @@ public class TransactionPoolFactoryTest {
                 .build(),
             peerTransactionTracker,
             transactionsMessageSender,
-            newPooledTransactionHashesMessageSender);
+            newPooledTransactionHashesMessageSender,
+            null);
 
     ethProtocolManager =
         new EthProtocolManager(
@@ -358,7 +359,8 @@ public class TransactionPoolFactoryTest {
                     ImmutableTransactionPoolConfiguration.Unstable.builder()
                         .txMessageKeepAliveSeconds(1)
                         .build())
-                .build());
+                .build(),
+            null);
 
     txPool.setEnabled();
     return txPool;

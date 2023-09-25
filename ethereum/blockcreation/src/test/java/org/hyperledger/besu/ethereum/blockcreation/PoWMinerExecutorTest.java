@@ -119,7 +119,8 @@ public class PoWMinerExecutorTest {
             ethContext,
             miningParameters,
             new TransactionPoolMetrics(new NoOpMetricsSystem()),
-            poolConf);
+            poolConf,
+            null);
     transactionPool.setEnabled();
 
     return transactionPool;
