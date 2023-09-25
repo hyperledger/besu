@@ -97,6 +97,7 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.plugin.services.txselection.TransactionSelectorFactory;
+import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 
 import java.io.Closeable;
 import java.math.BigInteger;
@@ -187,6 +188,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   private Optional<TransactionSelectorFactory> transactionSelectorFactory = Optional.empty();
   /** the Dagger configured context that can provide dependencies */
   protected Optional<BesuComponent> besuComponent = Optional.empty();
+
+  private PluginTransactionValidatorFactory pluginTransactionValidatorFactory;
 
   /**
    * Provide a BesuComponent which can be used to get other dependencies
@@ -541,6 +544,18 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
+   * sets the pluginTransactionValidatorFactory
+   *
+   * @param pluginTransactionValidatorFactory factory that creates plugin transaction Validators
+   * @return the besu controller builder
+   */
+  public BesuControllerBuilder pluginTransactionValidatorFactory(
+      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory) {
+    this.pluginTransactionValidatorFactory = pluginTransactionValidatorFactory;
+    return this;
+  }
+
+  /**
    * Build besu controller.
    *
    * @return the besu controller
@@ -699,7 +714,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             metricsSystem,
             syncState,
             miningParameters,
-            transactionPoolConfiguration);
+            transactionPoolConfiguration,
+            pluginTransactionValidatorFactory);
 
     final List<PeerValidator> peerValidators = createPeerValidators(protocolSchedule);
 

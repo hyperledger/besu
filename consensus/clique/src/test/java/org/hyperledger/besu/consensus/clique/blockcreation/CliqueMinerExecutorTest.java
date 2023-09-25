@@ -222,7 +222,8 @@ public class CliqueMinerExecutorTest {
             cliqueEthContext,
             mock(MiningParameters.class),
             new TransactionPoolMetrics(metricsSystem),
-            conf);
+            conf,
+            null);
 
     transactionPool.setEnabled();
     return transactionPool;

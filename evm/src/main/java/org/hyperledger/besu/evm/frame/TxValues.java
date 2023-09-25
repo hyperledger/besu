@@ -40,6 +40,7 @@ public record TxValues(
     UndoTable<Address, Bytes32, Boolean> warmedUpStorage,
     Address originator,
     Wei gasPrice,
+    Wei blobGasPrice,
     BlockValues blockValues,
     Deque<MessageFrame> messageFrameStack,
     Address miningBeneficiary,

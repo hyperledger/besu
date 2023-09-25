@@ -45,6 +45,7 @@ public class StandardJsonTracer implements OperationTracer {
   private final boolean showMemory;
   private final boolean showStack;
   private final boolean showReturnData;
+  private final boolean showStorage;
   private int pc;
   private int section;
   private List<String> stack;
@@ -52,6 +53,7 @@ public class StandardJsonTracer implements OperationTracer {
   private Bytes memory;
   private int memorySize;
   private int depth;
+  private String storageString;
 
   /**
    * Instantiates a new Standard json tracer.
@@ -60,16 +62,19 @@ public class StandardJsonTracer implements OperationTracer {
    * @param showMemory show memory in trace lines
    * @param showStack show the stack in trace lines
    * @param showReturnData show return data in trace lines
+   * @param showStorage show the updated storage
    */
   public StandardJsonTracer(
       final PrintWriter out,
       final boolean showMemory,
       final boolean showStack,
-      final boolean showReturnData) {
+      final boolean showReturnData,
+      final boolean showStorage) {
     this.out = out;
     this.showMemory = showMemory;
     this.showStack = showStack;
     this.showReturnData = showReturnData;
+    this.showStorage = showStorage;
   }
 
   /**
@@ -79,13 +84,20 @@ public class StandardJsonTracer implements OperationTracer {
    * @param showMemory show memory in trace lines
    * @param showStack show the stack in trace lines
    * @param showReturnData show return data in trace lines
+   * @param showStorage show updated storage
    */
   public StandardJsonTracer(
       final PrintStream out,
       final boolean showMemory,
       final boolean showStack,
-      final boolean showReturnData) {
-    this(new PrintWriter(out, true, StandardCharsets.UTF_8), showMemory, showStack, showReturnData);
+      final boolean showReturnData,
+      final boolean showStorage) {
+    this(
+        new PrintWriter(out, true, StandardCharsets.UTF_8),
+        showMemory,
+        showStack,
+        showReturnData,
+        showStorage);
   }
 
   /**
@@ -130,6 +142,33 @@ public class StandardJsonTracer implements OperationTracer {
       memory = null;
     }
     depth = messageFrame.getMessageStackSize();
+
+    StringBuilder sb = new StringBuilder();
+    if (showStorage) {
+      var updater = messageFrame.getWorldUpdater();
+      var account = updater.getAccount(messageFrame.getRecipientAddress());
+      if (account != null && !account.getUpdatedStorage().isEmpty()) {
+        boolean[] shownEntry = {false};
+        sb.append(",\"storage\":{");
+        account
+            .getUpdatedStorage()
+            .forEach(
+                (k, v) -> {
+                  if (shownEntry[0]) {
+                    sb.append(",");
+                  } else {
+                    shownEntry[0] = true;
+                  }
+                  sb.append("\"")
+                      .append(k.toQuantityHexString())
+                      .append("\":\"")
+                      .append(v.toQuantityHexString())
+                      .append("\"");
+                });
+        sb.append("}");
+      }
+    }
+    storageString = sb.toString();
   }
 
   @Override
@@ -155,7 +194,7 @@ public class StandardJsonTracer implements OperationTracer {
     if (showStack) {
       sb.append("\"stack\":[").append(commaJoiner.join(stack)).append("],");
     }
-    if (showReturnData && returnData.size() > 0) {
+    if (showReturnData && !returnData.isEmpty()) {
       sb.append("\"returnData\":\"").append(returnData.toHexString()).append("\",");
     }
     sb.append("\"depth\":").append(depth).append(",");
@@ -164,14 +203,14 @@ public class StandardJsonTracer implements OperationTracer {
     if (executeResult.getHaltReason() != null) {
       sb.append(",\"error\":\"")
           .append(executeResult.getHaltReason().getDescription())
-          .append("\"}");
+          .append("\"");
     } else if (messageFrame.getRevertReason().isPresent()) {
       sb.append(",\"error\":\"")
           .append(quoteEscape(messageFrame.getRevertReason().orElse(Bytes.EMPTY)))
-          .append("\"}");
-    } else {
-      sb.append("}");
+          .append("\"");
     }
+
+    sb.append(storageString).append("}");
     out.println(sb);
   }
 
@@ -229,7 +268,7 @@ public class StandardJsonTracer implements OperationTracer {
       final long timeNs) {
     final StringBuilder sb = new StringBuilder(1024);
     sb.append("{");
-    if (output.size() > 0) {
+    if (!output.isEmpty()) {
       sb.append("\"output\":\"").append(output.toShortHexString()).append("\",");
     } else {
       sb.append("\"output\":\"\",");

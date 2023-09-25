@@ -47,6 +47,7 @@ public class TestMessageFrameBuilder {
   private Address originator = DEFAUT_ADDRESS;
   private Address contract = DEFAUT_ADDRESS;
   private Wei gasPrice = Wei.ZERO;
+  private Wei blobGasPrice = Wei.ZERO;
   private Wei value = Wei.ZERO;
   private Bytes inputData = Bytes.EMPTY;
   private Code code = CodeV0.EMPTY_CODE;
@@ -88,6 +89,11 @@ public class TestMessageFrameBuilder {
 
   public TestMessageFrameBuilder gasPrice(final Wei gasPrice) {
     this.gasPrice = gasPrice;
+    return this;
+  }
+
+  public TestMessageFrameBuilder blobGasPrice(final Wei blobGasPrice) {
+    this.blobGasPrice = blobGasPrice;
     return this;
   }
 
@@ -145,6 +151,7 @@ public class TestMessageFrameBuilder {
             .address(address)
             .originator(originator)
             .gasPrice(gasPrice)
+            .blobGasPrice(blobGasPrice)
             .inputData(inputData)
             .sender(sender)
             .value(value)

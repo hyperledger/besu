@@ -76,6 +76,7 @@ import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactor
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
+import org.hyperledger.besu.services.PluginTransactionValidatorServiceImpl;
 import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
@@ -240,6 +241,8 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.maxRemotelyInitiatedPeers(anyInt()))
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.transactionSelectorFactory(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.pluginTransactionValidatorFactory(any()))
+        .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.lineaParameters(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.besuComponent(any(BesuComponent.class)))
         .thenReturn(mockControllerBuilder);
@@ -490,7 +493,8 @@ public abstract class CommandTestAbstract {
           privacyPluginService,
           pkiBlockCreationConfigProvider,
           rpcEndpointServiceImpl,
-          new TransactionSelectionServiceImpl());
+          new TransactionSelectionServiceImpl(),
+          new PluginTransactionValidatorServiceImpl());
     }
 
     @Override

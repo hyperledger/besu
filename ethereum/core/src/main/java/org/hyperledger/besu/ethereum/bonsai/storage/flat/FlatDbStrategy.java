@@ -26,6 +26,7 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.Map;
 import java.util.Optional;
@@ -40,11 +41,11 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
 
 /**
- * This class represents a FlatDbReaderStrategy, which is responsible for reading data from flat
- * databases. It implements various methods for retrieving account data, code data, and storage data
- * from the corresponding KeyValueStorage.
+ * This class represents a FlatDbReaderStrategy, which is responsible for reading and writing data
+ * from flat databases. It implements various methods for storing and retrieving account data, code
+ * data, and storage data from the corresponding KeyValueStorage.
  */
-public abstract class FlatDbReaderStrategy {
+public abstract class FlatDbStrategy {
 
   protected final MetricsSystem metricsSystem;
   protected final Counter getAccountCounter;
@@ -53,7 +54,7 @@ public abstract class FlatDbReaderStrategy {
   protected final Counter getStorageValueCounter;
   protected final Counter getStorageValueFlatDatabaseCounter;
 
-  public FlatDbReaderStrategy(final MetricsSystem metricsSystem) {
+  public FlatDbStrategy(final MetricsSystem metricsSystem) {
     this.metricsSystem = metricsSystem;
 
     getAccountCounter =
@@ -84,7 +85,7 @@ public abstract class FlatDbReaderStrategy {
   /*
    * Retrieves the account data for the given account hash, using the world state root hash supplier and node loader.
    */
-  public abstract Optional<Bytes> getAccount(
+  public abstract Optional<Bytes> getFlatAccount(
       Supplier<Optional<Bytes>> worldStateRootHashSupplier,
       NodeLoader nodeLoader,
       Hash accountHash,
@@ -94,7 +95,7 @@ public abstract class FlatDbReaderStrategy {
    * Retrieves the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
    */
 
-  public abstract Optional<Bytes> getStorageValueByStorageSlotKey(
+  public abstract Optional<Bytes> getFlatStorageValueByStorageSlotKey(
       Supplier<Optional<Bytes>> worldStateRootHashSupplier,
       Supplier<Optional<Hash>> storageRootSupplier,
       NodeLoader nodeLoader,
@@ -105,7 +106,7 @@ public abstract class FlatDbReaderStrategy {
   /*
    * Retrieves the code data for the given code hash and account hash.
    */
-  public Optional<Bytes> getCode(
+  public Optional<Bytes> getFlatCode(
       final Bytes32 codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
@@ -115,6 +116,65 @@ public abstract class FlatDbReaderStrategy {
           .map(Bytes::wrap)
           .filter(b -> Hash.hash(b).equals(codeHash));
     }
+  }
+
+  /*
+   * Puts the account data for the given account hash, using the world state root hash supplier and node loader.
+   */
+  public void putFlatAccount(
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Bytes accountValue) {
+    transaction.put(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe(), accountValue.toArrayUnsafe());
+  }
+
+  public void removeFlatAccount(
+      final SegmentedKeyValueStorageTransaction transaction, final Hash accountHash) {
+    transaction.remove(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe());
+  }
+
+  /*
+   * Puts the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
+   */
+  public void putFlatAccountStorageValueByStorageSlotHash(
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Hash slotHash,
+      final Bytes storage) {
+    transaction.put(
+        ACCOUNT_STORAGE_STORAGE,
+        Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(),
+        storage.toArrayUnsafe());
+  }
+
+  /*
+   * Removes the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
+   */
+  public void removeFlatAccountStorageValueByStorageSlotHash(
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Hash slotHash) {
+    transaction.remove(
+        ACCOUNT_STORAGE_STORAGE, Bytes.concatenate(accountHash, slotHash).toArrayUnsafe());
+  }
+
+  /*
+   * Removes code for the given account hash.
+   */
+  public void removeFlatCode(
+      final SegmentedKeyValueStorageTransaction transaction, final Hash accountHash) {
+    transaction.remove(CODE_STORAGE, accountHash.toArrayUnsafe());
+  }
+
+  /*
+   * Puts the code data for the given code hash and account hash.
+   */
+  public void putFlatCode(
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Bytes32 codeHash,
+      final Bytes code) {
+    transaction.put(CODE_STORAGE, accountHash.toArrayUnsafe(), code.toArrayUnsafe());
   }
 
   public void clearAll(final SegmentedKeyValueStorage storage) {

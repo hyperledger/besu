@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
+import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -64,7 +65,6 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
   private final TrieLogManager trieLogManager;
   private final BonsaiWorldState persistedState;
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
-
   private final CachedMerkleTrieLoader cachedMerkleTrieLoader;
 
   public BonsaiWorldStateProvider(
@@ -363,16 +363,27 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
   }
 
   @Override
-  public Optional<Bytes> getNodeData(final Hash hash) {
+  public <U> Optional<U> getAccountProof(
+      final BlockHeader blockHeader,
+      final Address accountAddress,
+      final List<UInt256> accountStorageKeys,
+      final Function<Optional<WorldStateProof>, ? extends Optional<U>> mapper) {
+    try (BonsaiWorldState ws = (BonsaiWorldState) getMutable(blockHeader, false).orElse(null)) {
+      if (ws != null) {
+        final WorldStateProofProvider worldStateProofProvider =
+            new WorldStateProofProvider(ws.getWorldStateStorage());
+        return mapper.apply(
+            worldStateProofProvider.getAccountProof(
+                ws.getWorldStateRootHash(), accountAddress, accountStorageKeys));
+      }
+    } catch (Exception ex) {
+      LOG.error("failed proof query for " + blockHeader.getBlockHash().toShortHexString(), ex);
+    }
     return Optional.empty();
   }
 
   @Override
-  public Optional<WorldStateProof> getAccountProof(
-      final Hash worldStateRoot,
-      final Address accountAddress,
-      final List<UInt256> accountStorageKeys) {
-    // FIXME we can do proofs for layered tries and the persisted trie
+  public Optional<Bytes> getNodeData(final Hash hash) {
     return Optional.empty();
   }
 

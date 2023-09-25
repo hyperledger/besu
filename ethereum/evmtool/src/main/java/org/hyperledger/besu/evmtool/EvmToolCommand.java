@@ -117,6 +117,12 @@ public class EvmToolCommand implements Runnable {
   private final Wei gasPriceGWei = Wei.ZERO;
 
   @Option(
+      names = {"--blob-price"},
+      description = "Price of blob gas for this invocation",
+      paramLabel = "<int>")
+  private final Wei blobGasPrice = Wei.ZERO;
+
+  @Option(
       names = {"--sender"},
       paramLabel = "<address>",
       description = "Calling address for this invocation.")
@@ -174,6 +180,14 @@ public class EvmToolCommand implements Runnable {
       scope = INHERIT,
       negatable = true)
   final Boolean showReturnData = false;
+
+  @Option(
+      names = {"--trace.storage"},
+      description =
+          "Show the updated storage slots for the current account. Default is to not show updated storage.",
+      scope = INHERIT,
+      negatable = true)
+  final Boolean showStorage = false;
 
   @Option(
       names = {"--notime"},
@@ -359,7 +373,7 @@ public class EvmToolCommand implements Runnable {
 
         final OperationTracer tracer = // You should have picked Mercy.
             lastLoop && showJsonResults
-                ? new StandardJsonTracer(out, showMemory, !hideStack, showReturnData)
+                ? new StandardJsonTracer(out, showMemory, !hideStack, showReturnData, showStorage)
                 : OperationTracer.NO_TRACING;
 
         WorldUpdater updater = component.getWorldUpdater();
@@ -376,6 +390,7 @@ public class EvmToolCommand implements Runnable {
                 .originator(sender)
                 .sender(sender)
                 .gasPrice(gasPriceGWei)
+                .blobGasPrice(blobGasPrice)
                 .inputData(callData)
                 .value(ethValue)
                 .apparentValue(ethValue)
@@ -459,10 +474,10 @@ public class EvmToolCommand implements Runnable {
                                     "   \""
                                         + accountStorageEntry
                                             .getKey()
-                                            .map(UInt256::toHexString)
+                                            .map(UInt256::toQuantityHexString)
                                             .orElse("-")
                                         + "\": \""
-                                        + accountStorageEntry.getValue().toHexString()
+                                        + accountStorageEntry.getValue().toQuantityHexString()
                                         + "\"")
                             .toList()));
                 out.println("  },");

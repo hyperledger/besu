@@ -24,12 +24,15 @@ import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.io.PrintStream;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -46,14 +49,14 @@ import org.apache.tuweni.bytes.Bytes;
 public class SegmentedInMemoryKeyValueStorage
     implements SnappedKeyValueStorage, SnappableKeyValueStorage, SegmentedKeyValueStorage {
   /** protected access for the backing hash map. */
-  final Map<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> hashValueStore;
+  final ConcurrentMap<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> hashValueStore;
 
   /** protected access to the rw lock. */
   protected final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
   /** Instantiates a new In memory key value storage. */
   public SegmentedInMemoryKeyValueStorage() {
-    this(new HashMap<>());
+    this(new ConcurrentHashMap<>());
   }
 
   /**
@@ -62,7 +65,7 @@ public class SegmentedInMemoryKeyValueStorage
    * @param hashValueStore the hash value store
    */
   protected SegmentedInMemoryKeyValueStorage(
-      final Map<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> hashValueStore) {
+      final ConcurrentMap<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> hashValueStore) {
     this.hashValueStore = hashValueStore;
   }
 
@@ -76,8 +79,8 @@ public class SegmentedInMemoryKeyValueStorage
         segments.stream()
             .collect(
                 Collectors
-                    .<SegmentIdentifier, SegmentIdentifier, Map<Bytes, Optional<byte[]>>>toMap(
-                        s -> s, s -> new HashMap<>())));
+                    .<SegmentIdentifier, SegmentIdentifier, Map<Bytes, Optional<byte[]>>>
+                        toConcurrentMap(s -> s, s -> new ConcurrentHashMap<>())));
   }
 
   @Override
@@ -106,6 +109,32 @@ public class SegmentedInMemoryKeyValueStorage
       return hashValueStore
           .computeIfAbsent(segmentIdentifier, s -> new HashMap<>())
           .getOrDefault(Bytes.wrap(key), Optional.empty());
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
+  public Optional<NearestKeyValue> getNearestTo(
+      final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
+
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      // TODO: revisit this for sort performance
+      Comparator<Map.Entry<Bytes, Optional<byte[]>>> comparing =
+          Comparator.comparing(
+                  (Map.Entry<Bytes, Optional<byte[]>> a) -> a.getKey().commonPrefixLength(key))
+              .thenComparing(Map.Entry.comparingByKey());
+      return this.hashValueStore
+          .computeIfAbsent(segmentIdentifier, s -> new HashMap<>())
+          .entrySet()
+          .stream()
+          // only return keys equal to or less than
+          .filter(e -> e.getKey().compareTo(key) <= 0)
+          .sorted(comparing.reversed())
+          .findFirst()
+          .map(z -> new NearestKeyValue(z.getKey(), z.getValue()));
     } finally {
       lock.unlock();
     }
@@ -214,7 +243,9 @@ public class SegmentedInMemoryKeyValueStorage
     // need to clone the submaps also:
     return new SegmentedInMemoryKeyValueStorage(
         hashValueStore.entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, e -> new HashMap<>(e.getValue()))));
+            .collect(
+                Collectors.toConcurrentMap(
+                    Map.Entry::getKey, e -> new ConcurrentHashMap<>(e.getValue()))));
   }
 
   @Override
