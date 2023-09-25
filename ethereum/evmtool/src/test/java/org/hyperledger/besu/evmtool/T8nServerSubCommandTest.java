@@ -38,8 +38,6 @@ class T8nServerSubCommandTest {
     verify(httpServerResponse).setStatusCode(responseCodeCaptor.capture());
     verify(httpServerResponse).end(responseStringCaptor.capture());
 
-    System.out.println(responseCodeCaptor.getValue());
-    System.out.println(responseStringCaptor.getValue());
     assertThat(responseCodeCaptor.getValue()).isEqualTo(500);
     assertThat(responseStringCaptor.getValue()).doesNotContain("\\t");
   }
