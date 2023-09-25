@@ -297,7 +297,8 @@ public class BlockTransactionSelector {
 
     // TODO: External selectors are not used here because TransactionProcessingResult is not
     //  exposed to the Plugin API yet.
-    //  If the transaction is selected by all selectors, return SELECTED
+
+    // If the transaction is selected by all selectors, return SELECTED
     return TransactionSelectionResult.SELECTED;
   }
 
