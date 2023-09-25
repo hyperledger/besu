@@ -258,23 +258,20 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public Optional<BlockHeader> getBlockHeader(final Hash blockHeaderHash) {
-    return blockHeadersCache.getIfPresent(blockHeaderHash) != null
-        ? Optional.ofNullable(blockHeadersCache.getIfPresent(blockHeaderHash))
-        : blockchainStorage.getBlockHeader(blockHeaderHash);
+    return Optional.ofNullable(blockHeadersCache.getIfPresent(blockHeaderHash))
+        .or(() -> blockchainStorage.getBlockHeader(blockHeaderHash));
   }
 
   @Override
   public Optional<BlockBody> getBlockBody(final Hash blockHeaderHash) {
-    return blockHeadersCache.getIfPresent(blockHeaderHash) != null
-        ? Optional.ofNullable(blockBodiesCache.getIfPresent(blockHeaderHash))
-        : blockchainStorage.getBlockBody(blockHeaderHash);
+    return Optional.ofNullable(blockBodiesCache.getIfPresent(blockHeaderHash))
+        .or(() -> blockchainStorage.getBlockBody(blockHeaderHash));
   }
 
   @Override
   public Optional<List<TransactionReceipt>> getTxReceipts(final Hash blockHeaderHash) {
-    return transactionReceiptsCache.getIfPresent(blockHeaderHash) != null
-        ? Optional.ofNullable(transactionReceiptsCache.getIfPresent(blockHeaderHash))
-        : blockchainStorage.getTransactionReceipts(blockHeaderHash);
+    return Optional.ofNullable(transactionReceiptsCache.getIfPresent(blockHeaderHash))
+        .or(() -> blockchainStorage.getTransactionReceipts(blockHeaderHash));
   }
 
   @Override
@@ -284,9 +281,8 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public Optional<Difficulty> getTotalDifficultyByHash(final Hash blockHeaderHash) {
-    return totalDifficultyCache.getIfPresent(blockHeaderHash) != null
-        ? Optional.ofNullable(totalDifficultyCache.getIfPresent(blockHeaderHash))
-        : blockchainStorage.getTotalDifficulty(blockHeaderHash);
+    return Optional.ofNullable(totalDifficultyCache.getIfPresent(blockHeaderHash))
+        .or(() -> blockchainStorage.getTotalDifficulty(blockHeaderHash));
   }
 
   @Override
