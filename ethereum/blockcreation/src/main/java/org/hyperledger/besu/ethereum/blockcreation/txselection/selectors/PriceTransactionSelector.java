@@ -25,8 +25,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This class extends AbstractTransactionSelector and provides a specific implementation for
- * evaluating transactions based on transaction price. It checks if a transaction's current price or
- * blob price is below the minimum and determines the selection result accordingly.
+ * evaluating transactions based on transaction price. It checks if a transaction's current price is
+ * below the minimum and determines the selection result accordingly.
  */
 public class PriceTransactionSelector extends AbstractTransactionSelector {
   private static final Logger LOG = LoggerFactory.getLogger(PriceTransactionSelector.class);
@@ -36,8 +36,8 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
   }
 
   /**
-   * Evaluates a transaction considering its price. If the transaction's current price or blob price
-   * is below the minimum, it returns a selection result indicating the reason.
+   * Evaluates a transaction considering its price. If the transaction's current price is below the
+   * minimum, it returns a selection result indicating the reason.
    *
    * @param transaction The transaction to be evaluated.
    * @param ignored The results of other transaction evaluations in the same block.

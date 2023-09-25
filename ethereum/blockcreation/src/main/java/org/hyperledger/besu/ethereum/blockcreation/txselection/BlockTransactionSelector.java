@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -142,7 +142,7 @@ public class BlockTransactionSelector {
               return res;
             });
     LOG.atTrace()
-        .setMessage("Transaction selection result result {}")
+        .setMessage("Transaction selection result {}")
         .addArgument(transactionSelectionResults::toTraceLog)
         .log();
     return transactionSelectionResults;
@@ -238,14 +238,14 @@ public class BlockTransactionSelector {
 
     // Create transaction selectors
     var selectors = blockTransactionSelectorFactory.createTransactionSelectors(context);
-    var result = evaluateSelectors(transaction, selectors, null);
+    var result = evaluateTransactionWithSelectors(transaction, selectors, null);
     if (!result.selected()) {
       return result;
     }
 
     // Create the plugin selectors
     var externalSelectors = blockTransactionSelectorFactory.createPluginTransactionSelectors();
-    var externalResult = evaluateSelectors(transaction, externalSelectors);
+    var externalResult = evaluateTransactionWithSelectors(transaction, externalSelectors);
     if (!externalResult.selected()) {
       return externalResult;
     }
@@ -259,7 +259,7 @@ public class BlockTransactionSelector {
       final TransactionProcessingResult effectiveResult) {
     List<AbstractTransactionSelector> selectors =
         blockTransactionSelectorFactory.createTransactionSelectors(context);
-    var result = evaluateSelectors(transaction, selectors, effectiveResult);
+    var result = evaluateTransactionWithSelectors(transaction, selectors, effectiveResult);
     if (!result.selected()) {
       return result;
     }
@@ -267,7 +267,7 @@ public class BlockTransactionSelector {
     return TransactionSelectionResult.SELECTED;
   }
 
-  private TransactionSelectionResult evaluateSelectors(
+  private TransactionSelectionResult evaluateTransactionWithSelectors(
       final Transaction transaction,
       final List<AbstractTransactionSelector> selectors,
       final TransactionProcessingResult effectiveResult) {
@@ -287,7 +287,7 @@ public class BlockTransactionSelector {
     return TransactionSelectionResult.SELECTED;
   }
 
-  private TransactionSelectionResult evaluateSelectors(
+  private TransactionSelectionResult evaluateTransactionWithSelectors(
       final Transaction transaction, final List<TransactionSelector> selectors) {
     for (var selector : selectors) {
       TransactionSelectionResult result = selector.selectTransaction(transaction);
