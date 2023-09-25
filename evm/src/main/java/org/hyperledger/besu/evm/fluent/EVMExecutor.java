@@ -803,7 +803,7 @@ public class EVMExecutor {
    *     SimpleBlockValues}
    */
   public EVMExecutor mixHash(final Bytes32 mixHash) {
-    ((SimpleBlockValues) this.blockValues).setMixHasOrPrevRandao(mixHash);
+    ((SimpleBlockValues) this.blockValues).setMixHashOrPrevRandao(mixHash);
     return this;
   }
 
@@ -816,7 +816,7 @@ public class EVMExecutor {
    *     SimpleBlockValues}
    */
   public EVMExecutor prevRandao(final Bytes32 prevRandao) {
-    ((SimpleBlockValues) this.blockValues).setMixHasOrPrevRandao(prevRandao);
+    ((SimpleBlockValues) this.blockValues).setMixHashOrPrevRandao(prevRandao);
     return this;
   }
 

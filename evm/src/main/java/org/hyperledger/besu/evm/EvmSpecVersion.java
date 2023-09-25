@@ -50,7 +50,7 @@ public enum EvmSpecVersion {
   /** Osaka evm spec version. */
   OSAKA(0, false, "Osaka", "Placeholder"),
   /** Bogota evm spec version. */
-  BOGOTA(0, false, "Bogata", "Placeholder"),
+  BOGOTA(0, false, "Bogota", "Placeholder"),
   /** Development fork for unscheduled EIPs */
   FUTURE_EIPS(1, false, "Future_EIPs", "Development, for accepted and unscheduled EIPs"),
   /** Development fork for EIPs not accepted to Mainnet */
@@ -137,7 +137,7 @@ public enum EvmSpecVersion {
   /**
    * Calculate a spec version from a text fork name.
    *
-   * @param name The name of the fork, such as "shahghai" or "berlin"
+   * @param name The name of the fork, such as "jshanghai" or "berlin"
    * @return the EVM spec version for that fork, or null if no fork matched.
    */
   public static EvmSpecVersion fromName(final String name) {
@@ -149,6 +149,12 @@ public enum EvmSpecVersion {
     return null;
   }
 
+  /**
+   * The most recent deployed evm supported by the library. This will change across versions and
+   * will be updated after mainnet activations.
+   *
+   * @return the most recently activated mainnet spec.
+   */
   public static EvmSpecVersion mostRecent() {
     return Stream.of(EvmSpecVersion.values())
         .filter(v -> v.specFinalized)

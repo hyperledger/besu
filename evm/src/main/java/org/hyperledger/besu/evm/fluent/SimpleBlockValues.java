@@ -27,7 +27,7 @@ import org.apache.tuweni.bytes.Bytes32;
 public class SimpleBlockValues implements BlockValues {
 
   Bytes difficultyBytes = Bytes32.ZERO;
-  Bytes32 mixHasOrPrevRandao = Bytes32.ZERO;
+  Bytes32 mixHashOrPrevRandao = Bytes32.ZERO;
   Optional<Wei> baseFee = Optional.empty();
   long number = 1;
   long timestamp = 1;
@@ -38,16 +38,27 @@ public class SimpleBlockValues implements BlockValues {
     return difficultyBytes;
   }
 
+  /**
+   * Sets teh difficulty of the block
+   *
+   * @param difficultyBytes the difficulty
+   */
   public void setDifficultyBytes(final Bytes difficultyBytes) {
     this.difficultyBytes = difficultyBytes;
   }
 
-  public Bytes32 getMixHasOrPrevRandao() {
-    return mixHasOrPrevRandao;
+  @Override
+  public Bytes32 getMixHashOrPrevRandao() {
+    return mixHashOrPrevRandao;
   }
 
-  public void setMixHasOrPrevRandao(final Bytes32 mixHasOrPrevRandao) {
-    this.mixHasOrPrevRandao = mixHasOrPrevRandao;
+  /**
+   * sets the mix hash or prevRandao
+   *
+   * @param mixHashOrPrevRandao new mixHash or prevRandao
+   */
+  public void setMixHashOrPrevRandao(final Bytes32 mixHashOrPrevRandao) {
+    this.mixHashOrPrevRandao = mixHashOrPrevRandao;
   }
 
   @Override
@@ -55,6 +66,11 @@ public class SimpleBlockValues implements BlockValues {
     return baseFee;
   }
 
+  /**
+   * Sets the base fee
+   *
+   * @param baseFee new base fee, or empty if not in a fee market fork.
+   */
   public void setBaseFee(final Optional<Wei> baseFee) {
     this.baseFee = baseFee;
   }
@@ -64,6 +80,11 @@ public class SimpleBlockValues implements BlockValues {
     return number;
   }
 
+  /**
+   * Sets the block number
+   *
+   * @param number the block number
+   */
   public void setNumber(final long number) {
     this.number = number;
   }
@@ -73,6 +94,11 @@ public class SimpleBlockValues implements BlockValues {
     return timestamp;
   }
 
+  /**
+   * Sets the block timestamp
+   *
+   * @param timestamp the timestamp, in seconds past the unix epoch
+   */
   public void setTimestamp(final long timestamp) {
     this.timestamp = timestamp;
   }
@@ -82,6 +108,11 @@ public class SimpleBlockValues implements BlockValues {
     return gasLimit;
   }
 
+  /**
+   * Sets the gas limit
+   *
+   * @param gasLimit the gas limit for the block
+   */
   public void setGasLimit(final long gasLimit) {
     this.gasLimit = gasLimit;
   }

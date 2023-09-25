@@ -189,6 +189,12 @@ public class SimpleAccount implements MutableAccount {
     mutable = false;
   }
 
+  /**
+   * Push changes into the parent account, if one exists
+   *
+   * @return true if a parent account was updated, false if not (this indicates the account should
+   *     be inserted into the parent contact).
+   */
   public boolean commit() {
     if (parent instanceof SimpleAccount simpleAccount) {
       simpleAccount.balance = balance;
