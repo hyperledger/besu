@@ -164,7 +164,8 @@ public class TestNode implements Closeable {
             metricsSystem,
             syncState,
             new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
-            TransactionPoolConfiguration.DEFAULT);
+            TransactionPoolConfiguration.DEFAULT,
+            null);
 
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(
