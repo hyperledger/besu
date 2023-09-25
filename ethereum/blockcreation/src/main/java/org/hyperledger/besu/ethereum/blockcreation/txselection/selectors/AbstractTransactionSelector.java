@@ -38,10 +38,8 @@ public abstract class AbstractTransactionSelector {
    * @param blockTransactionResults The results of other transaction evaluations in the same block.
    * @return The result of the transaction evaluation
    */
-  public TransactionSelectionResult selectTransaction(
-      final Transaction transaction, final TransactionSelectionResults blockTransactionResults) {
-    return TransactionSelectionResult.SELECTED;
-  }
+  public abstract TransactionSelectionResult selectTransactionPreProcessing(
+      final Transaction transaction, final TransactionSelectionResults blockTransactionResults);
 
   /**
    * Evaluates a transaction considering other transactions in the same block and a transaction
@@ -52,10 +50,8 @@ public abstract class AbstractTransactionSelector {
    * @param processingResult The result of transaction processing.
    * @return The result of the transaction evaluation
    */
-  public TransactionSelectionResult selectTransaction(
+  public abstract TransactionSelectionResult selectTransactionPostProcessing(
       final Transaction transaction,
       final TransactionSelectionResults blockTransactionResults,
-      final TransactionProcessingResult processingResult) {
-    return TransactionSelectionResult.SELECTED;
-  }
+      final TransactionProcessingResult processingResult);
 }

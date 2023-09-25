@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import org.slf4j.Logger;
@@ -44,11 +45,20 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
    * @return The result of the transaction selection.
    */
   @Override
-  public TransactionSelectionResult selectTransaction(
+  public TransactionSelectionResult selectTransactionPreProcessing(
       final Transaction transaction, final TransactionSelectionResults ignored) {
     if (transactionCurrentPriceBelowMin(transaction)) {
       return TransactionSelectionResult.CURRENT_TX_PRICE_BELOW_MIN;
     }
+    return TransactionSelectionResult.SELECTED;
+  }
+
+  @Override
+  public TransactionSelectionResult selectTransactionPostProcessing(
+      final Transaction transaction,
+      final TransactionSelectionResults blockTransactionResults,
+      final TransactionProcessingResult processingResult) {
+    // All necessary checks were done in the pre-processing method, so nothing to do here.
     return TransactionSelectionResult.SELECTED;
   }
 

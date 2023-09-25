@@ -31,12 +31,19 @@ import org.slf4j.LoggerFactory;
  * determines the selection result accordingly.
  */
 public class ProcessingResultTransactionSelector extends AbstractTransactionSelector {
-
   private static final Logger LOG =
       LoggerFactory.getLogger(ProcessingResultTransactionSelector.class);
 
   public ProcessingResultTransactionSelector(final BlockSelectionContext context) {
     super(context);
+  }
+
+  @Override
+  public TransactionSelectionResult selectTransactionPreProcessing(
+      final Transaction transaction, final TransactionSelectionResults blockTransactionResults) {
+    // All checks depend on processingResult and will be done in the post-processing method, so
+    // nothing to do here.
+    return TransactionSelectionResult.SELECTED;
   }
 
   /**
@@ -50,7 +57,7 @@ public class ProcessingResultTransactionSelector extends AbstractTransactionSele
    * @return The result of the transaction selection.
    */
   @Override
-  public TransactionSelectionResult selectTransaction(
+  public TransactionSelectionResult selectTransactionPostProcessing(
       final Transaction transaction,
       final TransactionSelectionResults blockTransactionResults,
       final TransactionProcessingResult processingResult) {

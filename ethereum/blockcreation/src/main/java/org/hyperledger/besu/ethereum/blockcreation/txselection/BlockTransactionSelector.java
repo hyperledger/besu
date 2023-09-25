@@ -18,7 +18,10 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.AbstractTransactionSelector;
-import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlockTransactionSelectorFactory;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlobPriceTransactionSelector;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlockSizeTransactionSelector;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.PriceTransactionSelector;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.ProcessingResultTransactionSelector;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -42,6 +45,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,8 +81,8 @@ public class BlockTransactionSelector {
   private final BlockSelectionContext blockSelectionContext;
   private final TransactionSelectionResults transactionSelectionResults =
       new TransactionSelectionResults();
-
-  private final BlockTransactionSelectorFactory blockTransactionSelectorFactory;
+  private final List<AbstractTransactionSelector> transactionSelectors;
+  private final List<TransactionSelector> externalTransactionSelectors;
 
   public BlockTransactionSelector(
       final MainnetTransactionProcessor transactionProcessor,
@@ -112,8 +116,9 @@ public class BlockTransactionSelector {
             blobGasPrice,
             miningBeneficiary,
             transactionPool);
-    this.blockTransactionSelectorFactory =
-        new BlockTransactionSelectorFactory(
+    transactionSelectors = createTransactionSelectors(blockSelectionContext);
+    externalTransactionSelectors =
+        createExternalTransactionSelectors(
             transactionSelectorFactory.map(List::of).orElseGet(List::of));
   }
 
@@ -182,8 +187,7 @@ public class BlockTransactionSelector {
       throw new CancellationException("Cancelled during transaction selection.");
     }
 
-    TransactionSelectionResult selectionResult =
-        evaluateTransaction(transaction, blockSelectionContext);
+    TransactionSelectionResult selectionResult = evaluateTransactionPreProcessing(transaction);
     if (!selectionResult.selected()) {
       return selectionResult;
     }
@@ -205,7 +209,7 @@ public class BlockTransactionSelector {
             blockSelectionContext.blobGasPrice());
 
     var transactionWithProcessingContextResult =
-        evaluateTransaction(transaction, blockSelectionContext, effectiveResult);
+        evaluateTransactionPostProcessing(transaction, effectiveResult);
     if (!transactionWithProcessingContextResult.selected()) {
       return transactionWithProcessingContextResult;
     }
@@ -233,52 +237,32 @@ public class BlockTransactionSelector {
     return TransactionSelectionResult.SELECTED;
   }
 
-  public TransactionSelectionResult evaluateTransaction(
-      final Transaction transaction, final BlockSelectionContext context) {
+  /**
+   * This method evaluates a transaction by pre-processing it through a series of selectors. It
+   * first processes the transaction through internal selectors, and if the transaction is selected,
+   * it then processes it through external selectors. If the transaction is selected by all
+   * selectors, it returns SELECTED.
+   *
+   * @param transaction The transaction to be evaluated.
+   * @return The result of the transaction selection process.
+   */
+  private TransactionSelectionResult evaluateTransactionPreProcessing(
+      final Transaction transaction) {
 
-    // Create transaction selectors
-    var selectors = blockTransactionSelectorFactory.createTransactionSelectors(context);
-    var result = evaluateTransactionWithSelectors(transaction, selectors, null);
-    if (!result.selected()) {
-      return result;
-    }
-
-    // Create the plugin selectors
-    var externalSelectors = blockTransactionSelectorFactory.createPluginTransactionSelectors();
-    var externalResult = evaluateTransactionWithSelectors(transaction, externalSelectors);
-    if (!externalResult.selected()) {
-      return externalResult;
-    }
-    // If the transaction is selected by all selectors, return SELECTED
-    return TransactionSelectionResult.SELECTED;
-  }
-
-  public TransactionSelectionResult evaluateTransaction(
-      final Transaction transaction,
-      final BlockSelectionContext context,
-      final TransactionProcessingResult effectiveResult) {
-    List<AbstractTransactionSelector> selectors =
-        blockTransactionSelectorFactory.createTransactionSelectors(context);
-    var result = evaluateTransactionWithSelectors(transaction, selectors, effectiveResult);
-    if (!result.selected()) {
-      return result;
-    }
-    // If the transaction is selected by all selectors, return SELECTED
-    return TransactionSelectionResult.SELECTED;
-  }
-
-  private TransactionSelectionResult evaluateTransactionWithSelectors(
-      final Transaction transaction,
-      final List<AbstractTransactionSelector> selectors,
-      final TransactionProcessingResult effectiveResult) {
-
-    for (var selector : selectors) {
+    // Process the transaction through internal selectors
+    for (var selector : transactionSelectors) {
       TransactionSelectionResult result =
-          effectiveResult == null
-              ? selector.selectTransaction(transaction, transactionSelectionResults)
-              : selector.selectTransaction(
-                  transaction, transactionSelectionResults, effectiveResult);
+          selector.selectTransactionPreProcessing(transaction, transactionSelectionResults);
+      // If the transaction is not selected by any internal selector, return the result
+      if (!result.equals(TransactionSelectionResult.SELECTED)) {
+        return result;
+      }
+    }
 
+    // Process the transaction through external selectors
+    for (var selector : externalTransactionSelectors) {
+      TransactionSelectionResult result = selector.evaluateTransactionPreProcessing(transaction);
+      // If the transaction is not selected by any external selector, return the result
       if (!result.equals(TransactionSelectionResult.SELECTED)) {
         return result;
       }
@@ -287,15 +271,49 @@ public class BlockTransactionSelector {
     return TransactionSelectionResult.SELECTED;
   }
 
-  private TransactionSelectionResult evaluateTransactionWithSelectors(
-      final Transaction transaction, final List<TransactionSelector> selectors) {
-    for (var selector : selectors) {
-      TransactionSelectionResult result = selector.selectTransaction(transaction);
+  /**
+   * This method evaluates a transaction by processing it through a series of selectors. Each
+   * selector may use the transaction and/or the result of the transaction processing to decide
+   * whether the transaction should be included in a block. If the transaction is selected by all
+   * selectors, it returns SELECTED.
+   *
+   * @param transaction The transaction to be evaluated.
+   * @param processingResult The result of the transaction processing.
+   * @return The result of the transaction selection process.
+   */
+  private TransactionSelectionResult evaluateTransactionPostProcessing(
+      final Transaction transaction, final TransactionProcessingResult processingResult) {
+
+    // Process the transaction through internal selectors
+    for (var selector : transactionSelectors) {
+      TransactionSelectionResult result =
+          selector.selectTransactionPostProcessing(
+              transaction, transactionSelectionResults, processingResult);
+      // If the transaction is not selected by any selector, return the result
       if (!result.equals(TransactionSelectionResult.SELECTED)) {
         return result;
       }
     }
-    // If the transaction is selected by all selectors, return SELECTED
+
+    // TODO: External selectors are not used here because TransactionProcessingResult is not
+    //  exposed to the Plugin API yet.
+    //  If the transaction is selected by all selectors, return SELECTED
     return TransactionSelectionResult.SELECTED;
+  }
+
+  private List<AbstractTransactionSelector> createTransactionSelectors(
+      final BlockSelectionContext context) {
+    return List.of(
+        new BlockSizeTransactionSelector(context),
+        new PriceTransactionSelector(context),
+        new BlobPriceTransactionSelector(context),
+        new ProcessingResultTransactionSelector(context));
+  }
+
+  private List<TransactionSelector> createExternalTransactionSelectors(
+      final List<TransactionSelectorFactory> transactionSelectorFactory) {
+    return transactionSelectorFactory.stream()
+        .map(TransactionSelectorFactory::create)
+        .collect(Collectors.toList());
   }
 }

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import org.slf4j.Logger;
@@ -44,7 +45,7 @@ public class BlockSizeTransactionSelector extends AbstractTransactionSelector {
    * @return The result of the transaction selection.
    */
   @Override
-  public TransactionSelectionResult selectTransaction(
+  public TransactionSelectionResult selectTransactionPreProcessing(
       final Transaction transaction,
       final TransactionSelectionResults transactionSelectionResults) {
     if (transactionTooLargeForBlock(transaction, transactionSelectionResults)) {
@@ -62,6 +63,15 @@ public class BlockSizeTransactionSelector extends AbstractTransactionSelector {
         return TransactionSelectionResult.TX_TOO_LARGE_FOR_REMAINING_GAS;
       }
     }
+    return TransactionSelectionResult.SELECTED;
+  }
+
+  @Override
+  public TransactionSelectionResult selectTransactionPostProcessing(
+      final Transaction transaction,
+      final TransactionSelectionResults blockTransactionResults,
+      final TransactionProcessingResult processingResult) {
+    // All necessary checks were done in the pre-processing method, so nothing to do here.
     return TransactionSelectionResult.SELECTED;
   }
 
