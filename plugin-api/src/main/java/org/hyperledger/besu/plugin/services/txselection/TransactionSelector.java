@@ -29,5 +29,5 @@ public interface TransactionSelector {
    * @param transaction candidate transaction
    * @return TransactionSelectionResult that indicates whether to include the transaction
    */
-  TransactionSelectionResult evaluateTransactionPreProcessing(Transaction transaction);
+  TransactionSelectionResult selectTransactionPreProcessing(Transaction transaction);
 }

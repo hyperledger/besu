@@ -261,7 +261,7 @@ public class BlockTransactionSelector {
 
     // Process the transaction through external selectors
     for (var selector : externalTransactionSelectors) {
-      TransactionSelectionResult result = selector.evaluateTransactionPreProcessing(transaction);
+      TransactionSelectionResult result = selector.selectTransactionPreProcessing(transaction);
       // If the transaction is not selected by any external selector, return the result
       if (!result.equals(TransactionSelectionResult.SELECTED)) {
         return result;
