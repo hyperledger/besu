@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,20 +12,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.services.kvstore;
 
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+package org.hyperledger.besu.plugin.services.txvalidator;
 
-public class InMemoryKeyValueStorageTest extends AbstractSegmentedKeyValueStorageTest {
+import org.hyperledger.besu.datatypes.Transaction;
+import org.hyperledger.besu.plugin.Unstable;
 
-  @Override
-  protected KeyValueStorage createStore() {
-    return new InMemoryKeyValueStorage();
-  }
+/** Interface for the transaction validator */
+@Unstable
+public interface PluginTransactionValidator {
 
-  @Override
-  public SegmentedKeyValueStorage createSegmentedStore() {
-    return new SegmentedInMemoryKeyValueStorage();
-  }
+  /**
+   * Method called to decide whether a transaction can be added to the transaction pool.
+   *
+   * @param transaction candidate transaction
+   * @return true if the transaction can be added, false otherwise
+   */
+  boolean validateTransaction(final Transaction transaction);
 }

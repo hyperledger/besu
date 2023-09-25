@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,20 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.services.kvstore;
 
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+package org.hyperledger.besu.plugin.services.txvalidator;
 
-public class InMemoryKeyValueStorageTest extends AbstractSegmentedKeyValueStorageTest {
+import org.hyperledger.besu.plugin.Unstable;
 
-  @Override
-  protected KeyValueStorage createStore() {
-    return new InMemoryKeyValueStorage();
-  }
+/** Interface for a factory that creates transaction validators */
+@Unstable
+public interface PluginTransactionValidatorFactory {
 
-  @Override
-  public SegmentedKeyValueStorage createSegmentedStore() {
-    return new SegmentedInMemoryKeyValueStorage();
-  }
+  /**
+   * Create a transaction validator
+   *
+   * @return the transaction validator
+   */
+  PluginTransactionValidator create();
 }
