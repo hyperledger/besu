@@ -68,6 +68,8 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidator;
+import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -76,6 +78,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -173,6 +176,12 @@ public abstract class AbstractTransactionPoolTest {
 
   protected TransactionPool createTransactionPool(
       final Consumer<ImmutableTransactionPoolConfiguration.Builder> configConsumer) {
+    return createTransactionPool(configConsumer, null);
+  }
+
+  protected TransactionPool createTransactionPool(
+      final Consumer<ImmutableTransactionPoolConfiguration.Builder> configConsumer,
+      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory) {
     final ImmutableTransactionPoolConfiguration.Builder configBuilder =
         ImmutableTransactionPoolConfiguration.builder();
     configConsumer.accept(configBuilder);
@@ -187,7 +196,8 @@ public abstract class AbstractTransactionPoolTest {
             ethContext,
             miningParameters,
             new TransactionPoolMetrics(metricsSystem),
-            config);
+            config,
+            pluginTransactionValidatorFactory);
 
     txPool.setEnabled();
     return txPool;
@@ -645,6 +655,59 @@ public abstract class AbstractTransactionPoolTest {
     givenTransactionIsValid(transaction);
 
     assertTransactionViaApiInvalid(transaction, GAS_PRICE_TOO_LOW);
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void transactionNotRejectedByPluginShouldBeAdded(final boolean disableLocalTxs) {
+    final PluginTransactionValidatorFactory pluginTransactionValidatorFactory =
+        getPluginTransactionValidatorFactoryReturning(true);
+    this.transactionPool =
+        createTransactionPool(
+            b -> b.disableLocalTransactions(disableLocalTxs), pluginTransactionValidatorFactory);
+
+    final Transaction transaction = createTransaction(0);
+
+    givenTransactionIsValid(transaction);
+
+    assertTransactionViaApiValid(transaction, disableLocalTxs);
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  public void transactionRejectedByPluginShouldNotBeAdded(final boolean disableLocalTxs) {
+    final PluginTransactionValidatorFactory pluginTransactionValidatorFactory =
+        getPluginTransactionValidatorFactoryReturning(false);
+    this.transactionPool =
+        createTransactionPool(
+            b -> b.disableLocalTransactions(disableLocalTxs), pluginTransactionValidatorFactory);
+
+    final Transaction transaction = createTransaction(0);
+
+    givenTransactionIsValid(transaction);
+
+    assertTransactionViaApiInvalid(
+        transaction, TransactionInvalidReason.PLUGIN_TX_VALIDATOR_INVALIDATED);
+  }
+
+  @Test
+  public void remoteTransactionRejectedByPluginShouldNotBeAdded() {
+    final PluginTransactionValidatorFactory pluginTransactionValidatorFactory =
+        getPluginTransactionValidatorFactoryReturning(false);
+    this.transactionPool = createTransactionPool(b -> {}, pluginTransactionValidatorFactory);
+
+    final Transaction transaction = createTransaction(0);
+
+    givenTransactionIsValid(transaction);
+
+    assertRemoteTransactionInvalid(transaction);
+  }
+
+  @NotNull
+  private static PluginTransactionValidatorFactory getPluginTransactionValidatorFactoryReturning(
+      final boolean b) {
+    final PluginTransactionValidator pluginTransactionValidator = transaction -> b;
+    return () -> pluginTransactionValidator;
   }
 
   private void assertTransactionPending(final Transaction t) {

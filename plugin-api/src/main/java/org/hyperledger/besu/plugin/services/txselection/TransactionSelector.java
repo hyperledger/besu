@@ -17,16 +17,17 @@ package org.hyperledger.besu.plugin.services.txselection;
 
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.plugin.Unstable;
-import org.hyperledger.besu.plugin.data.Log;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
-
-import java.util.List;
 
 /** Interface for the transaction selector */
 @Unstable
 public interface TransactionSelector {
-
-  TransactionSelectionResult evaluate(
-          Transaction transaction);
-
+  /**
+   * Method called to decide whether a transaction is added to a block. The result can also indicate
+   * that no further transactions can be added to the block.
+   *
+   * @param transaction candidate transaction
+   * @return TransactionSelectionResult that indicates whether to include the transaction
+   */
+  TransactionSelectionResult selectTransaction(Transaction transaction);
 }

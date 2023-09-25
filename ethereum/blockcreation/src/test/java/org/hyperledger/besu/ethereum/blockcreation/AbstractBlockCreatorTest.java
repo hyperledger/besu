@@ -40,7 +40,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
-import org.hyperledger.besu.ethereum.blockcreation.evaluation.TransactionSelectionResults;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -381,7 +381,8 @@ abstract class AbstractBlockCreatorTest {
             ethContext,
             mock(MiningParameters.class),
             new TransactionPoolMetrics(new NoOpMetricsSystem()),
-            poolConf);
+            poolConf,
+            null);
     transactionPool.setEnabled();
 
     return new TestBlockCreator(

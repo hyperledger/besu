@@ -200,7 +200,8 @@ public abstract class AbstractTransactionsLayeredPendingTransactionsTest {
             ethContext,
             miningParameters,
             new TransactionPoolMetrics(metricsSystem),
-            poolConfig);
+            poolConfig,
+            null);
     txPool.setEnabled();
     return txPool;
   }

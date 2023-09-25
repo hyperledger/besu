@@ -30,8 +30,8 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.blockcreation.evaluation.BlockTransactionSelector;
-import org.hyperledger.besu.ethereum.blockcreation.evaluation.TransactionSelectionResults;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockTransactionSelector;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -552,7 +552,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final TransactionSelectorFactory transactionSelectorFactory =
         () ->
-            (tx, s, logs, cg) -> {
+            (tx) -> {
               if (tx.equals(notSelectedTransient))
                 return TransactionSelectionResult.invalidTransient("transient");
               if (tx.equals(notSelectedInvalid))

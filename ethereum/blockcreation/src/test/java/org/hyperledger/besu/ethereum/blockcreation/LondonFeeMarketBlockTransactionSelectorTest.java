@@ -21,8 +21,8 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.blockcreation.evaluation.BlockTransactionSelector;
-import org.hyperledger.besu.ethereum.blockcreation.evaluation.TransactionSelectionResults;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockTransactionSelector;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -93,7 +93,8 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             ethContext,
             miningParameters,
             new TransactionPoolMetrics(metricsSystem),
-            poolConf);
+            poolConf,
+            null);
     transactionPool.setEnabled();
     return transactionPool;
   }

@@ -213,9 +213,6 @@ public interface Transaction {
    */
   Optional<List<AccessListEntry>> getAccessList();
 
-  int getBlobCount();
-
-
   /**
    * Returns the transaction with the proper encoding
    *
