@@ -157,10 +157,9 @@ public interface MergeContext extends ConsensusContext {
   /**
    * Put payload by Identifier.
    *
-   * @param payloadId the payload identifier
-   * @param blockWithReceipts the block with receipts
+   * @param payloadWrapper payload wrapper
    */
-  void putPayloadById(final PayloadIdentifier payloadId, final BlockWithReceipts blockWithReceipts);
+  void putPayloadById(final PayloadWrapper payloadWrapper);
 
   /**
    * Retrieve block by id.
@@ -173,7 +172,7 @@ public interface MergeContext extends ConsensusContext {
   /**
    * Sets is chain pruning enabled.
    *
-   * @param isChainPruningEnabled the is chain pruning enabled
+   * @param isChainPruningEnabled whether chain pruning is enabled
    */
   default void setIsChainPruningEnabled(final boolean isChainPruningEnabled) {}
 

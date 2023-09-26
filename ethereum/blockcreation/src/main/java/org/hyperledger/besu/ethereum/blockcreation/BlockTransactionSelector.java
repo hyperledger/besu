@@ -264,7 +264,7 @@ public class BlockTransactionSelector {
   /*
   This function iterates over (potentially) all transactions in the PendingTransactions, this is a
   long-running process. If running in a thread, it can be cancelled via the isCancelled supplier (which will result
-  in this throwing an CancellationException).
+  in this throwing a CancellationException).
    */
   public TransactionSelectionResults buildTransactionListForBlock() {
     LOG.atDebug()
@@ -280,7 +280,7 @@ public class BlockTransactionSelector {
           return res;
         });
     LOG.atTrace()
-        .setMessage("Transaction selection result result {}")
+        .setMessage("Transaction selection result {}")
         .addArgument(transactionSelectionResults::toTraceLog)
         .log();
     return transactionSelectionResults;
