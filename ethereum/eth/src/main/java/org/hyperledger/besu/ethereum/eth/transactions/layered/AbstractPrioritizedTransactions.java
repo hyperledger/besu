@@ -106,7 +106,7 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
 
   @Override
   public List<PendingTransaction> promote(
-      final Predicate<PendingTransaction> promotionFilter, final long l, final int freeSlots) {
+      final Predicate<PendingTransaction> promotionFilter, final long freeSpace, final int freeSlots) {
     return List.of();
   }
 
