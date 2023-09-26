@@ -58,7 +58,6 @@ public class EVMExecutor {
   private Address receiver = Address.ZERO;
   private Address sender = Address.ZERO;
   private Wei gasPriceGWei = Wei.ZERO;
-  private Wei blobGasPrice = Wei.ZERO;
   private Bytes callData = Bytes.EMPTY;
   private Wei ethValue = Wei.ZERO;
   private Code code = CodeV0.EMPTY_CODE;
@@ -355,7 +354,6 @@ public class EVMExecutor {
             .originator(sender)
             .sender(sender)
             .gasPrice(gasPriceGWei)
-            .blobGasPrice(blobGasPrice)
             .inputData(callData)
             .value(ethValue)
             .apparentValue(ethValue)
@@ -456,17 +454,6 @@ public class EVMExecutor {
    */
   public EVMExecutor gasPriceGWei(final Wei gasPriceGWei) {
     this.gasPriceGWei = gasPriceGWei;
-    return this;
-  }
-
-  /**
-   * Sets Blob Gas price.
-   *
-   * @param blobGasPrice the blob gas price g wei
-   * @return the evm executor
-   */
-  public EVMExecutor blobGasPrice(final Wei blobGasPrice) {
-    this.blobGasPrice = blobGasPrice;
     return this;
   }
 

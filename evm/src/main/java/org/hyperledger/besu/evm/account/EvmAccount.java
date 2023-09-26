@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,20 +12,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.cli.converter;
+package org.hyperledger.besu.evm.account;
 
-/**
- * This interface can be used to give a converter the capability to format the converted value back
- * to its CLI form
- *
- * @param <V> the type of the CLI converted runtime value
- */
-public interface TypeFormatter<V> {
+import org.hyperledger.besu.evm.ModificationNotAllowedException;
+
+/** The interface Evm account. */
+public interface EvmAccount extends Account {
   /**
-   * Format a converted value back to its CLI form
+   * Gets mutable account.
    *
-   * @param value the converted value
-   * @return the textual CLI form of the value
+   * @return the mutable account
+   * @throws ModificationNotAllowedException the modification not allowed exception
    */
-  String format(V value);
+  public MutableAccount getMutable() throws ModificationNotAllowedException;
 }

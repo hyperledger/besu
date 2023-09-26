@@ -551,22 +551,6 @@ def tweakStartScript(createScriptTask) {
 }
 
 startScripts {
-  defaultJvmOpts = applicationDefaultJvmArgs + [
-    "-XX:G1ConcRefinementThreads=2",
-    "-XX:G1HeapWastePercent=15",
-    "-XX:MaxGCPauseMillis=100"
-  ]
-  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
-  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
-  doLast { tweakStartScript(startScripts) }
-}
-
-task untunedStartScripts(type: CreateStartScripts) {
-  mainClass = 'org.hyperledger.besu.Besu'
-  classpath = startScripts.classpath
-  outputDir = startScripts.outputDir
-  applicationName = 'besu-untuned'
-  defaultJvmOpts = applicationDefaultJvmArgs
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
   doLast { tweakStartScript(startScripts) }
@@ -603,10 +587,10 @@ task autocomplete(type: JavaExec) {
   }
 }
 
-installDist { dependsOn checkLicenses, untunedStartScripts, evmToolStartScripts }
+installDist { dependsOn checkLicenses, evmToolStartScripts }
 
 distTar {
-  dependsOn checkLicenses, autocomplete, untunedStartScripts, evmToolStartScripts
+  dependsOn checkLicenses, autocomplete, evmToolStartScripts
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
   }
@@ -615,7 +599,7 @@ distTar {
 }
 
 distZip {
-  dependsOn checkLicenses, autocomplete, untunedStartScripts, evmToolStartScripts
+  dependsOn checkLicenses, autocomplete, evmToolStartScripts
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }

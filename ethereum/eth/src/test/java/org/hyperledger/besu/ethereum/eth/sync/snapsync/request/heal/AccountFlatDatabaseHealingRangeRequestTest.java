@@ -67,7 +67,7 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
   public void setup() {
     Mockito.when(downloadState.getMetricsManager())
         .thenReturn(Mockito.mock(SnapsyncMetricsManager.class));
-    Mockito.when(downloadState.getAccountsHealingList()).thenReturn(new HashSet<>());
+    Mockito.when(downloadState.getAccountsToBeRepaired()).thenReturn(new HashSet<>());
   }
 
   @Test
@@ -120,7 +120,7 @@ public class AccountFlatDatabaseHealingRangeRequestTest {
     Assertions.assertThat(snapDataRequest.getStartKeyHash()).isGreaterThan(accounts.lastKey());
 
     // Verify that we have storage healing request when the account need to be repaired
-    Mockito.when(downloadState.getAccountsHealingList())
+    Mockito.when(downloadState.getAccountsToBeRepaired())
         .thenReturn(
             new HashSet<>(
                 accounts.keySet().stream()

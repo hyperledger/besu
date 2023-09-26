@@ -63,7 +63,7 @@ public class OptimisticRocksDBColumnarKeyValueStorage extends RocksDBColumnarKey
       initColumnHandles();
 
     } catch (final RocksDBException e) {
-      throw parseRocksDBException(e, segments, ignorableSegments);
+      throw new StorageException(e);
     }
   }
 

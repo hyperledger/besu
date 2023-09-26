@@ -105,9 +105,4 @@ public interface MutableAccount extends Account {
    * @return a map of storage that has been modified.
    */
   Map<UInt256, UInt256> getUpdatedStorage();
-
-  /**
-   * Make this instance immutable. Used for private world state interactions with public contracts.
-   */
-  void becomeImmutable();
 }

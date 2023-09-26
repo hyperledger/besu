@@ -45,7 +45,6 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.testutil.TestClock;
-import org.hyperledger.besu.util.number.Fraction;
 
 import java.time.Clock;
 import java.time.temporal.ChronoUnit;
@@ -81,14 +80,13 @@ public abstract class AbstractPendingTransactionsTestBase {
       getPendingTransactions(
           ImmutableTransactionPoolConfiguration.builder()
               .txPoolMaxSize(MAX_TRANSACTIONS)
-              .txPoolLimitByAccountPercentage(Fraction.fromFloat(1.0f))
+              .txPoolLimitByAccountPercentage(1.0f)
               .build(),
           Optional.empty());
   private final TransactionPoolConfiguration senderLimitedConfig =
       ImmutableTransactionPoolConfiguration.builder()
           .txPoolMaxSize(MAX_TRANSACTIONS)
-          .txPoolLimitByAccountPercentage(
-              Fraction.fromFloat(LIMITED_TRANSACTIONS_BY_SENDER_PERCENTAGE))
+          .txPoolLimitByAccountPercentage(LIMITED_TRANSACTIONS_BY_SENDER_PERCENTAGE)
           .build();
   protected PendingTransactions senderLimitedTransactions =
       getPendingTransactions(senderLimitedConfig, Optional.empty());
@@ -624,7 +622,7 @@ public abstract class AbstractPendingTransactionsTestBase {
             ImmutableTransactionPoolConfiguration.builder()
                 .pendingTxRetentionPeriod(maxTransactionRetentionHours)
                 .txPoolMaxSize(MAX_TRANSACTIONS)
-                .txPoolLimitByAccountPercentage(Fraction.fromFloat(1.0f))
+                .txPoolLimitByAccountPercentage(1)
                 .build(),
             Optional.of(clock));
 
@@ -646,7 +644,7 @@ public abstract class AbstractPendingTransactionsTestBase {
             ImmutableTransactionPoolConfiguration.builder()
                 .pendingTxRetentionPeriod(1)
                 .txPoolMaxSize(MAX_TRANSACTIONS)
-                .txPoolLimitByAccountPercentage(Fraction.fromFloat(1.0f))
+                .txPoolLimitByAccountPercentage(1.0f)
                 .build(),
             Optional.of(clock));
     evictSingleTransactions.addRemoteTransaction(transaction1, Optional.empty());
@@ -664,7 +662,7 @@ public abstract class AbstractPendingTransactionsTestBase {
             ImmutableTransactionPoolConfiguration.builder()
                 .pendingTxRetentionPeriod(2)
                 .txPoolMaxSize(MAX_TRANSACTIONS)
-                .txPoolLimitByAccountPercentage(Fraction.fromFloat(1.0f))
+                .txPoolLimitByAccountPercentage(1.0f)
                 .build(),
             Optional.of(clock));
 

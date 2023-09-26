@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.core;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 
@@ -57,6 +58,7 @@ import java.util.OptionalLong;
 import java.util.Random;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -139,7 +141,7 @@ public class BlockDataGenerator {
         // Mutate accounts
         accountsToSetup.forEach(
             hash -> {
-              final MutableAccount a = stateUpdater.getAccount(hash);
+              final MutableAccount a = stateUpdater.getAccount(hash).getMutable();
               a.incrementNonce();
               a.setBalance(Wei.of(positiveLong()));
               storageKeys.forEach(key -> a.setStorageValue(key, UInt256.ONE));
@@ -179,7 +181,7 @@ public class BlockDataGenerator {
     final WorldUpdater updater = worldState.updater();
     final List<Account> accounts = new ArrayList<>(count);
     for (int i = 0; i < count; i++) {
-      final MutableAccount account = updater.getOrCreate(address());
+      final MutableAccount account = updater.getOrCreate(address()).getMutable();
       if (random.nextFloat() < percentContractAccounts) {
         // Some percentage of accounts are contract accounts
         account.setCode(bytesValue(5, 50));
@@ -371,13 +373,21 @@ public class BlockDataGenerator {
 
   public Transaction transaction(
       final TransactionType transactionType, final Bytes payload, final Address to) {
-    return switch (transactionType) {
-      case FRONTIER -> frontierTransaction(payload, to);
-      case EIP1559 -> eip1559Transaction(payload, to);
-      case ACCESS_LIST -> accessListTransaction(payload, to);
-      case BLOB -> blobTransaction(payload, to);
-        // no default, all types accounted for.
-    };
+    switch (transactionType) {
+      case FRONTIER:
+        return frontierTransaction(payload, to);
+      case EIP1559:
+        return eip1559Transaction(payload, to);
+      case ACCESS_LIST:
+        return accessListTransaction(payload, to);
+      case BLOB:
+        return blobTransaction(payload, to);
+      default:
+        throw new RuntimeException(
+            String.format(
+                "Developer Error. No random transaction generator defined for %s",
+                transactionType));
+    }
   }
 
   private Transaction accessListTransaction(final Bytes payload, final Address to) {
@@ -396,12 +406,13 @@ public class BlockDataGenerator {
 
   private List<AccessListEntry> accessList() {
     final List<Address> accessedAddresses =
-        Stream.generate(this::address).limit(1L + random.nextInt(3)).toList();
+        Stream.generate(this::address).limit(1L + random.nextInt(3)).collect(toUnmodifiableList());
     final List<AccessListEntry> accessedStorage = new ArrayList<>();
     for (int i = 0; i < accessedAddresses.size(); ++i) {
       accessedStorage.add(
           new AccessListEntry(
-              accessedAddresses.get(i), Stream.generate(this::bytes32).limit(2L * i).toList()));
+              accessedAddresses.get(i),
+              Stream.generate(this::bytes32).limit(2L * i).collect(toUnmodifiableList())));
     }
     return accessedStorage;
   }
@@ -458,7 +469,10 @@ public class BlockDataGenerator {
 
   public Set<Transaction> transactions(final int n) {
     return transactions(
-        n, TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559);
+        n,
+        new TransactionType[] {
+          TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
+        });
   }
 
   public Set<Transaction> transactionsWithAllTypes() {
@@ -469,7 +483,10 @@ public class BlockDataGenerator {
     checkArgument(atLeast >= 0);
     final HashSet<TransactionType> remainingTransactionTypes =
         new HashSet<>(
-            Set.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559));
+            Set.of(
+                new TransactionType[] {
+                  TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
+                }));
     final HashSet<Transaction> transactions = new HashSet<>();
     while (transactions.size() < atLeast || !remainingTransactionTypes.isEmpty()) {
       final Transaction newTransaction = transaction();
@@ -523,7 +540,7 @@ public class BlockDataGenerator {
   }
 
   public List<Log> logs(final int logsCount, final int topicsPerLog) {
-    return Stream.generate(() -> log(topicsPerLog)).limit(logsCount).toList();
+    return Stream.generate(() -> log(topicsPerLog)).limit(logsCount).collect(Collectors.toList());
   }
 
   public Log log() {
@@ -531,7 +548,8 @@ public class BlockDataGenerator {
   }
 
   public Log log(final int topicCount) {
-    final List<LogTopic> topics = Stream.generate(this::logTopic).limit(topicCount).toList();
+    final List<LogTopic> topics =
+        Stream.generate(this::logTopic).limit(topicCount).collect(Collectors.toList());
     return new Log(address(), bytesValue(5, 15), topics);
   }
 

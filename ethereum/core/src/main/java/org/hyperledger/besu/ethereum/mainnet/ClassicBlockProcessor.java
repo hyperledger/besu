@@ -64,7 +64,7 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
     }
     final Wei coinbaseReward = getCoinbaseReward(blockReward, header.getNumber(), ommers.size());
     final WorldUpdater updater = worldState.updater();
-    final MutableAccount coinbase = updater.getOrCreate(header.getCoinbase());
+    final MutableAccount coinbase = updater.getOrCreate(header.getCoinbase()).getMutable();
 
     coinbase.incrementBalance(coinbaseReward);
     for (final BlockHeader ommerHeader : ommers) {
@@ -77,7 +77,8 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
         return false;
       }
 
-      final MutableAccount ommerCoinbase = updater.getOrCreate(ommerHeader.getCoinbase());
+      final MutableAccount ommerCoinbase =
+          updater.getOrCreate(ommerHeader.getCoinbase()).getMutable();
       final Wei ommerReward =
           getOmmerReward(blockReward, header.getNumber(), ommerHeader.getNumber());
       ommerCoinbase.incrementBalance(ommerReward);

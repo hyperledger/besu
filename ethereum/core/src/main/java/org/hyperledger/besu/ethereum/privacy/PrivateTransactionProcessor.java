@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutablePrivateWorldStateUpdater;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -89,11 +90,11 @@ public class PrivateTransactionProcessor {
       LOG.trace("Starting private execution of {}", transaction);
 
       final Address senderAddress = transaction.getSender();
-      final MutableAccount maybePrivateSender = privateWorldState.getAccount(senderAddress);
+      final EvmAccount maybePrivateSender = privateWorldState.getAccount(senderAddress);
       final MutableAccount sender =
           maybePrivateSender != null
-              ? maybePrivateSender
-              : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO);
+              ? maybePrivateSender.getMutable()
+              : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO).getMutable();
 
       final ValidationResult<TransactionInvalidReason> validationResult =
           privateTransactionValidator.validate(transaction, sender.getNonce(), false);

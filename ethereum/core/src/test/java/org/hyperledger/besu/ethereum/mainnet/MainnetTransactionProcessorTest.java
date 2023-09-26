@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -48,7 +49,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class MainnetTransactionProcessorTest {
+public class MainnetTransactionProcessorTest {
 
   private static final int MAX_STACK_SIZE = 1024;
 
@@ -66,7 +67,8 @@ class MainnetTransactionProcessorTest {
   @Mock private Transaction transaction;
   @Mock private BlockHashLookup blockHashLookup;
 
-  @Mock private MutableAccount senderAccount;
+  @Mock private EvmAccount senderAccount;
+  @Mock private MutableAccount mutableSenderAccount;
 
   MainnetTransactionProcessor createTransactionProcessor(final boolean warmCoinbase) {
     return new MainnetTransactionProcessor(
@@ -82,13 +84,14 @@ class MainnetTransactionProcessorTest {
   }
 
   @Test
-  void shouldWarmCoinbaseIfRequested() {
+  public void shouldWarmCoinbaseIfRequested() {
     Optional<Address> toAddresss =
         Optional.of(Address.fromHexString("0x2222222222222222222222222222222222222222"));
     when(transaction.getTo()).thenReturn(toAddresss);
     Address senderAddress = Address.fromHexString("0x5555555555555555555555555555555555555555");
     Address coinbaseAddress = Address.fromHexString("0x4242424242424242424242424242424242424242");
 
+    when(senderAccount.getMutable()).thenReturn(mutableSenderAccount);
     when(transaction.getHash()).thenReturn(Hash.EMPTY);
     when(transaction.getPayload()).thenReturn(Bytes.EMPTY);
     when(transaction.getSender()).thenReturn(senderAddress);
@@ -142,7 +145,7 @@ class MainnetTransactionProcessorTest {
   }
 
   @Test
-  void shouldCallTransactionValidatorWithExpectedTransactionValidationParams() {
+  public void shouldCallTransactionValidatorWithExpectedTransactionValidationParams() {
     final ArgumentCaptor<TransactionValidationParams> txValidationParamCaptor =
         transactionValidationParamCaptor();
 

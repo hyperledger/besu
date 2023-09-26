@@ -59,7 +59,7 @@ public class TransientStorageOperationBenchmark {
             .blockHeader(blockHeader)
             .blockchain(blockchain)
             .build();
-    worldStateUpdater.getOrCreate(address).setBalance(Wei.of(1));
+    worldStateUpdater.getOrCreate(address).getMutable().setBalance(Wei.of(1));
     worldStateUpdater.commit();
 
     return benchmarkFrame;

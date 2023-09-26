@@ -15,8 +15,6 @@
 package org.hyperledger.besu.cli;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LAYERED;
-import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration.Implementation.LEGACY;
 import static org.mockito.Mockito.mock;
 
 import java.math.BigInteger;
@@ -147,16 +145,14 @@ class ConfigurationOverviewBuilderTest {
   }
 
   @Test
-  void setTxPoolImplementationLayered() {
-    builder.setTxPoolImplementation(LAYERED);
-    final String layeredTxPoolSelected = builder.build();
-    assertThat(layeredTxPoolSelected).contains("Using LAYERED transaction pool implementation");
-  }
+  void setLayeredTxPoolEnabled() {
+    final String layeredTxPoolDisabled = builder.build();
+    assertThat(layeredTxPoolDisabled)
+        .doesNotContain("Experimental layered transaction pool configuration enabled");
 
-  @Test
-  void setTxPoolImplementationLegacy() {
-    builder.setTxPoolImplementation(LEGACY);
-    final String legacyTxPoolSelected = builder.build();
-    assertThat(legacyTxPoolSelected).contains("Using LEGACY transaction pool implementation");
+    builder.setLayeredTxPoolEnabled();
+    final String layeredTxPoolEnabled = builder.build();
+    assertThat(layeredTxPoolEnabled)
+        .contains("Experimental layered transaction pool configuration enabled");
   }
 }

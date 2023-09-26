@@ -21,7 +21,6 @@ import org.hyperledger.besu.cli.CommandTestAbstract;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 
 import org.junit.Test;
 
@@ -88,9 +87,9 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
         .isEqualTo(defaultOptions);
   }
 
-  protected abstract D createDefaultDomainObject();
+  abstract D createDefaultDomainObject();
 
-  protected abstract D createCustomizedDomainObject();
+  abstract D createCustomizedDomainObject();
 
   protected List<String> getFieldsWithComputedDefaults() {
     return Collections.emptyList();
@@ -100,25 +99,7 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
     return Collections.emptyList();
   }
 
-  protected abstract T optionsFromDomainObject(D domainObject);
+  abstract T optionsFromDomainObject(D domainObject);
 
-  protected abstract T getOptionsFromBesuCommand(final TestBesuCommand besuCommand);
-
-  protected void internalTestSuccess(final Consumer<D> assertion, final String... args) {
-    final TestBesuCommand cmd = parseCommand(args);
-
-    final T options = getOptionsFromBesuCommand(cmd);
-    final D config = options.toDomainObject();
-    assertion.accept(config);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  protected void internalTestFailure(final String errorMsg, final String... args) {
-    parseCommand(args);
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).contains(errorMsg);
-  }
+  abstract T getOptionsFromBesuCommand(final TestBesuCommand besuCommand);
 }

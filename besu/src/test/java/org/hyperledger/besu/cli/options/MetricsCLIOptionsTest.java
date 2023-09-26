@@ -25,25 +25,24 @@ public class MetricsCLIOptionsTest
     extends AbstractCLIOptionsTest<MetricsConfiguration.Builder, MetricsCLIOptions> {
 
   @Override
-  protected MetricsConfiguration.Builder createDefaultDomainObject() {
+  MetricsConfiguration.Builder createDefaultDomainObject() {
     return MetricsConfiguration.builder();
   }
 
   @Override
-  protected MetricsConfiguration.Builder createCustomizedDomainObject() {
+  MetricsConfiguration.Builder createCustomizedDomainObject() {
     return MetricsConfiguration.builder()
         .timersEnabled(!MetricsConfiguration.DEFAULT_METRICS_TIMERS_ENABLED)
         .idleTimeout(MetricsConfiguration.DEFAULT_METRICS_IDLE_TIMEOUT_SECONDS);
   }
 
   @Override
-  protected MetricsCLIOptions optionsFromDomainObject(
-      final MetricsConfiguration.Builder domainObject) {
+  MetricsCLIOptions optionsFromDomainObject(final MetricsConfiguration.Builder domainObject) {
     return MetricsCLIOptions.fromConfiguration(domainObject.build());
   }
 
   @Override
-  protected MetricsCLIOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
+  MetricsCLIOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
     return besuCommand.getMetricsCLIOptions();
   }
 }

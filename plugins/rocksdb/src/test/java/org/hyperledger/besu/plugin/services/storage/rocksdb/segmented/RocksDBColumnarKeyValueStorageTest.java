@@ -222,7 +222,7 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
       createSegmentedStore(testPath, Arrays.asList(TestSegment.FOO, TestSegment.BAR), List.of());
       fail("DB without knowledge of experimental column family should fail");
     } catch (StorageException e) {
-      assertThat(e.getMessage()).contains("Unhandled column families");
+      assertThat(e.getMessage()).contains("Column families not opened");
     }
 
     // Even if the column family is marked as ignored, as long as it exists, it will not be ignored
@@ -265,7 +265,7 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
       createSegmentedStore(testPath, Arrays.asList(TestSegment.FOO, TestSegment.BAR), List.of());
       fail("DB without knowledge of experimental column family should fail");
     } catch (StorageException e) {
-      assertThat(e.getMessage()).contains("Unhandled column families");
+      assertThat(e.getMessage()).contains("Column families not opened");
     }
   }
 

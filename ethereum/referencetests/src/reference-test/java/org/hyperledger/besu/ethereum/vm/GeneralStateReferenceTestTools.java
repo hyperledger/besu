@@ -21,10 +21,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
-import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
@@ -33,7 +31,6 @@ import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseEipSpec;
 import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
-import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.evm.account.Account;
@@ -126,7 +123,7 @@ public class GeneralStateReferenceTestTools {
 
   public static void executeTest(final GeneralStateTestCaseEipSpec spec) {
     final BlockHeader blockHeader = spec.getBlockHeader();
-    final ReferenceTestWorldState initialWorldState = spec.getInitialWorldState();
+    final WorldState initialWorldState = spec.getInitialWorldState();
     final Transaction transaction = spec.getTransaction();
 
     // Sometimes the tests ask us assemble an invalid transaction.  If we have
@@ -139,7 +136,7 @@ public class GeneralStateReferenceTestTools {
       return;
     }
 
-    final MutableWorldState worldState = initialWorldState.copy();
+    final MutableWorldState worldState = new DefaultMutableWorldState(initialWorldState);
     // Several of the GeneralStateTests check if the transaction could potentially
     // consume more gas than is left for the block it's attempted to be included in.
     // This check is performed within the `BlockImporter` rather than inside the
@@ -181,7 +178,6 @@ public class GeneralStateReferenceTestTools {
       worldStateUpdater.deleteAccount(coinbase.getAddress());
     }
     worldStateUpdater.commit();
-    worldState.persist(blockHeader);
 
     // Check the world state root hash.
     final Hash expectedRootHash = spec.getExpectedRootHash();

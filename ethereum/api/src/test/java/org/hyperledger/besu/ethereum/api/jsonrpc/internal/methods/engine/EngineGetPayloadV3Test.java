@@ -104,7 +104,6 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
             cancunHardfork.milestone(),
             Bytes32.random(),
             Address.fromHexString("0x42"),
-            Optional.empty(),
             Optional.empty());
 
     BlobTestFixture blobTestFixture = new BlobTestFixture();

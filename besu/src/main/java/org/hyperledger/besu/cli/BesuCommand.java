@@ -46,6 +46,7 @@ import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.cli.converter.FractionConverter;
 import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.custom.CorsAllowedOriginsProperty;
@@ -58,7 +59,6 @@ import org.hyperledger.besu.cli.options.stable.EthstatsOptions;
 import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
 import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.options.stable.P2PTLSConfigOptions;
-import org.hyperledger.besu.cli.options.stable.TransactionPoolOptions;
 import org.hyperledger.besu.cli.options.unstable.ChainPruningOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
@@ -73,6 +73,7 @@ import org.hyperledger.besu.cli.options.unstable.PkiBlockCreationOptions;
 import org.hyperledger.besu.cli.options.unstable.PrivacyPluginOptions;
 import org.hyperledger.besu.cli.options.unstable.RPCOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
+import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
 import org.hyperledger.besu.cli.presynctasks.PreSynchronizationTaskRunner;
 import org.hyperledger.besu.cli.presynctasks.PrivateDatabaseMigrationPreSyncTask;
 import org.hyperledger.besu.cli.subcommands.PasswordSubCommand;
@@ -126,7 +127,6 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.FrontierTargetingGasLimitCalculator;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
@@ -280,9 +280,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   final SynchronizerOptions unstableSynchronizerOptions = SynchronizerOptions.create();
   final EthProtocolOptions unstableEthProtocolOptions = EthProtocolOptions.create();
   final MetricsCLIOptions unstableMetricsCLIOptions = MetricsCLIOptions.create();
-  final org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions
-      unstableTransactionPoolOptions =
-          org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions.create();
+  final TransactionPoolOptions unstableTransactionPoolOptions = TransactionPoolOptions.create();
   private final DnsOptions unstableDnsOptions = DnsOptions.create();
   private final MiningOptions unstableMiningOptions = MiningOptions.create();
   private final NatOptions unstableNatOptions = NatOptions.create();
@@ -299,10 +297,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final NodePrivateKeyFileOption nodePrivateKeyFileOption =
       NodePrivateKeyFileOption.create();
   private final LoggingLevelOption loggingLevelOption = LoggingLevelOption.create();
-
-  @CommandLine.ArgGroup(validate = false, heading = "@|bold Tx Pool Common Options|@%n")
-  final org.hyperledger.besu.cli.options.stable.TransactionPoolOptions
-      stableTransactionPoolOptions = TransactionPoolOptions.create();
 
   private final RunnerBuilder runnerBuilder;
   private final BesuController.Builder controllerBuilderFactory;
@@ -460,8 +454,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "The maximum percentage of P2P connections that can be initiated remotely. Must be between 0 and 100 inclusive. (default: ${DEFAULT-VALUE})",
         arity = "1",
         converter = PercentageConverter.class)
-    private final Percentage maxRemoteConnectionsPercentage =
-        Fraction.fromFloat(DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED).toPercentage();
+    private final Integer maxRemoteConnectionsPercentage =
+        Fraction.fromFloat(DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED)
+            .toPercentage()
+            .getValue();
 
     @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
     @CommandLine.Option(
@@ -1116,6 +1112,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final Wei minTransactionGasPrice = DEFAULT_MIN_TRANSACTION_GAS_PRICE;
 
   @Option(
+      names = {"--rpc-tx-feecap"},
+      description =
+          "Maximum transaction fees (in Wei) accepted for transaction submitted through RPC (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Wei txFeeCap = DEFAULT_RPC_TX_FEE_CAP;
+
+  @Option(
       names = {"--min-block-occupancy-ratio"},
       description = "Minimum occupancy ratio for a mined block (default: ${DEFAULT-VALUE})",
       arity = "1")
@@ -1205,6 +1208,75 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "Sets target gas limit per block. If set, each block's gas limit will approach this setting over time if the current gas limit is different.")
   private final Long targetGasLimit = null;
+
+  // Tx Pool Option Group
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold Tx Pool Options|@%n")
+  TxPoolOptionGroup txPoolOptionGroup = new TxPoolOptionGroup();
+
+  static class TxPoolOptionGroup {
+    @CommandLine.Option(
+        names = {"--tx-pool-disable-locals"},
+        paramLabel = "<Boolean>",
+        description =
+            "Set to true if transactions sent via RPC should have the same checks and not be prioritized over remote ones (default: ${DEFAULT-VALUE})",
+        fallbackValue = "true",
+        arity = "0..1")
+    private Boolean disableLocalTxs = TransactionPoolConfiguration.DEFAULT_DISABLE_LOCAL_TXS;
+
+    @CommandLine.Option(
+        names = {"--tx-pool-enable-save-restore"},
+        paramLabel = "<Boolean>",
+        description =
+            "Set to true to enable saving the txpool content to file on shutdown and reloading it on startup (default: ${DEFAULT-VALUE})",
+        fallbackValue = "true",
+        arity = "0..1")
+    private Boolean saveRestoreEnabled = TransactionPoolConfiguration.DEFAULT_ENABLE_SAVE_RESTORE;
+
+    @CommandLine.Option(
+        names = {"--tx-pool-limit-by-account-percentage"},
+        paramLabel = "<DOUBLE>",
+        converter = FractionConverter.class,
+        description =
+            "Maximum portion of the transaction pool which a single account may occupy with future transactions (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private Float txPoolLimitByAccountPercentage =
+        TransactionPoolConfiguration.DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE;
+
+    @CommandLine.Option(
+        names = {"--tx-pool-save-file"},
+        paramLabel = "<STRING>",
+        description =
+            "If saving the txpool content is enabled, define a custom path for the save file (default: ${DEFAULT-VALUE} in the data-dir)",
+        arity = "1")
+    private File saveFile = TransactionPoolConfiguration.DEFAULT_SAVE_FILE;
+
+    @Option(
+        names = {"--tx-pool-max-size"},
+        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+        description =
+            "Maximum number of pending transactions that will be kept in the transaction pool (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer txPoolMaxSize =
+        TransactionPoolConfiguration.DEFAULT_MAX_PENDING_TRANSACTIONS;
+
+    @Option(
+        names = {"--tx-pool-retention-hours"},
+        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+        description =
+            "Maximum retention period of pending transactions in hours (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer pendingTxRetentionPeriod =
+        TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
+
+    @Option(
+        names = {"--tx-pool-price-bump"},
+        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+        converter = PercentageConverter.class,
+        description =
+            "Price bump percentage to replace an already existing transaction  (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Integer priceBump = TransactionPoolConfiguration.DEFAULT_PRICE_BUMP.getValue();
+  }
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
@@ -1834,13 +1906,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateRpcOptionsParams();
     validateChainDataPruningParams();
     validatePostMergeCheckpointBlockRequirements();
-    validateTransactionPoolOptions();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
     pkiBlockCreationOptions.checkPkiBlockCreationOptionsDependencies(logger, commandLine);
-  }
-
-  private void validateTransactionPoolOptions() {
-    stableTransactionPoolOptions.validate(commandLine);
   }
 
   private void validateRequiredOptions() {
@@ -2920,12 +2987,26 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private TransactionPoolConfiguration buildTransactionPoolConfiguration() {
-    final var stableTxPoolOption = stableTransactionPoolOptions.toDomainObject();
-    return ImmutableTransactionPoolConfiguration.builder()
-        .from(stableTxPoolOption)
-        .unstable(unstableTransactionPoolOptions.toDomainObject())
-        .saveFile((dataPath.resolve(stableTxPoolOption.getSaveFile().getPath()).toFile()))
+    return unstableTransactionPoolOptions
+        .toDomainObject()
+        .enableSaveRestore(txPoolOptionGroup.saveRestoreEnabled)
+        .disableLocalTransactions(txPoolOptionGroup.disableLocalTxs)
+        .txPoolLimitByAccountPercentage(txPoolOptionGroup.txPoolLimitByAccountPercentage)
+        .txPoolMaxSize(txPoolOptionGroup.txPoolMaxSize)
+        .pendingTxRetentionPeriod(txPoolOptionGroup.pendingTxRetentionPeriod)
+        .priceBump(Percentage.fromInt(txPoolOptionGroup.priceBump))
+        .txFeeCap(txFeeCap)
+        .saveFile(dataPath.resolve(txPoolOptionGroup.saveFile.getPath()).toFile())
         .build();
+  }
+
+  /**
+   * Return the file where to save txpool content if the relative option is enabled.
+   *
+   * @return the save file
+   */
+  public File getSaveFile() {
+    return txPoolOptionGroup.saveFile;
   }
 
   private boolean isPruningEnabled() {
@@ -3408,8 +3489,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         getActualGenesisConfigOptions().getTerminalTotalDifficulty().isPresent());
   }
 
-  /** Set ignorable segments in RocksDB Storage Provider plugin. */
-  public void setIgnorableStorageSegments() {
+  private void setIgnorableStorageSegments() {
     if (!unstableChainPruningOptions.getChainDataPruningEnabled()) {
       rocksDBPlugin.addIgnorableSegmentIdentifier(KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE);
     }
@@ -3532,7 +3612,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setHighSpecEnabled();
     }
 
-    builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
+    if (buildTransactionPoolConfiguration().getLayeredTxPoolEnabled()) {
+      builder.setLayeredTxPoolEnabled();
+    }
 
     return builder.build();
   }

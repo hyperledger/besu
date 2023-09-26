@@ -40,6 +40,7 @@ import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
 import java.util.Deque;
 import java.util.List;
@@ -52,8 +53,10 @@ import org.junit.jupiter.api.Test;
 class CreateOperationTest {
 
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
-  private final MutableAccount account = mock(MutableAccount.class);
-  private final MutableAccount newAccount = mock(MutableAccount.class);
+  private final WrappedEvmAccount account = mock(WrappedEvmAccount.class);
+  private final WrappedEvmAccount newAccount = mock(WrappedEvmAccount.class);
+  private final MutableAccount mutableAccount = mock(MutableAccount.class);
+  private final MutableAccount newMutableAccount = mock(MutableAccount.class);
   private final CreateOperation operation =
       new CreateOperation(new ConstantinopleGasCalculator(), Integer.MAX_VALUE);
   private final CreateOperation maxInitCodeOperation =
@@ -88,13 +91,15 @@ class CreateOperationTest {
     final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
     final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
 
+    when(account.getMutable()).thenReturn(mutableAccount);
     when(account.getNonce()).thenReturn(55L);
-    when(account.getBalance()).thenReturn(Wei.ZERO);
+    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);
     when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
-    when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(newAccount.getMutable()).thenReturn(newMutableAccount);
+    when(newMutableAccount.getCode()).thenReturn(Bytes.EMPTY);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     final EVM evm = MainnetEVMs.london(EvmConfiguration.DEFAULT);
@@ -126,8 +131,9 @@ class CreateOperationTest {
     final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
 
     when(worldUpdater.getAccount(any())).thenReturn(account);
-    when(account.getBalance()).thenReturn(Wei.ZERO);
-    when(account.getNonce()).thenReturn(-1L);
+    when(account.getMutable()).thenReturn(mutableAccount);
+    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
+    when(mutableAccount.getNonce()).thenReturn(-1L);
 
     final EVM evm = MainnetEVMs.london(EvmConfiguration.DEFAULT);
     operation.execute(messageFrame, evm);
@@ -143,8 +149,9 @@ class CreateOperationTest {
         testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1025);
 
     when(worldUpdater.getAccount(any())).thenReturn(account);
-    when(account.getBalance()).thenReturn(Wei.ZERO);
-    when(account.getNonce()).thenReturn(55L);
+    when(account.getMutable()).thenReturn(mutableAccount);
+    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
+    when(mutableAccount.getNonce()).thenReturn(55L);
 
     final EVM evm = MainnetEVMs.london(EvmConfiguration.DEFAULT);
     operation.execute(messageFrame, evm);
@@ -164,8 +171,9 @@ class CreateOperationTest {
     }
 
     when(worldUpdater.getAccount(any())).thenReturn(account);
-    when(account.getBalance()).thenReturn(Wei.ZERO);
-    when(account.getNonce()).thenReturn(55L);
+    when(account.getMutable()).thenReturn(mutableAccount);
+    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
+    when(mutableAccount.getNonce()).thenReturn(55L);
 
     final EVM evm = MainnetEVMs.london(EvmConfiguration.DEFAULT);
     operation.execute(messageFrame, evm);
@@ -179,13 +187,15 @@ class CreateOperationTest {
     final UInt256 memoryLength = UInt256.fromHexString("0xc000");
     final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
 
+    when(account.getMutable()).thenReturn(mutableAccount);
     when(account.getNonce()).thenReturn(55L);
-    when(account.getBalance()).thenReturn(Wei.ZERO);
+    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);
     when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
-    when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(newAccount.getMutable()).thenReturn(newMutableAccount);
+    when(newMutableAccount.getCode()).thenReturn(Bytes.EMPTY);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
@@ -207,13 +217,15 @@ class CreateOperationTest {
     final UInt256 memoryLength = UInt256.fromHexString("0xc001");
     final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
 
+    when(account.getMutable()).thenReturn(mutableAccount);
     when(account.getNonce()).thenReturn(55L);
-    when(account.getBalance()).thenReturn(Wei.ZERO);
+    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);
     when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
-    when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(newAccount.getMutable()).thenReturn(newMutableAccount);
+    when(newMutableAccount.getCode()).thenReturn(Bytes.EMPTY);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
@@ -235,7 +247,8 @@ class CreateOperationTest {
             .build();
     messageFrame.writeMemory(memoryOffset.toLong(), memoryLength.toLong(), SIMPLE_CREATE);
 
-    when(account.getBalance()).thenReturn(Wei.ZERO);
+    when(account.getMutable()).thenReturn(mutableAccount);
+    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
 
     final EVM evm = MainnetEVMs.cancun(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
@@ -258,8 +271,9 @@ class CreateOperationTest {
             .build();
     messageFrame.writeMemory(memoryOffset.toLong(), memoryLength.toLong(), SIMPLE_EOF);
 
+    when(account.getMutable()).thenReturn(mutableAccount);
     when(account.getNonce()).thenReturn(55L);
-    when(account.getBalance()).thenReturn(Wei.ZERO);
+    when(mutableAccount.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);

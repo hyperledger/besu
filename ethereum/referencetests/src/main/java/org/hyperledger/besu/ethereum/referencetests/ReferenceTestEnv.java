@@ -104,7 +104,6 @@ public class ReferenceTestEnv extends BlockHeader {
       @JsonProperty("currentBaseFee") final String baseFee,
       @JsonProperty("currentTimestamp") final String timestamp,
       @JsonProperty("currentRandom") final String random,
-      @JsonProperty("currentStateRoot") final String stateRoot,
       @JsonProperty("previousHash") final String previousHash,
       @JsonProperty("parentDifficulty") final String parentDifficulty,
       @JsonProperty("parentBaseFee") final String parentBaseFee,
@@ -128,7 +127,7 @@ public class ReferenceTestEnv extends BlockHeader {
         generateTestBlockHash(previousHash, number),
         Hash.EMPTY_LIST_HASH, // ommersHash
         Address.fromHexString(coinbase),
-        Optional.ofNullable(stateRoot).map(Hash::fromHexString).orElse(Hash.EMPTY), // stateRoot
+        Hash.EMPTY, // stateRoot
         Hash.EMPTY, // transactionsRoot
         Hash.EMPTY, // receiptsRoot
         new LogsBloomFilter(),

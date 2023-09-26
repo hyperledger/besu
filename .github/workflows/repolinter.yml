@@ -15,7 +15,7 @@ on:
 
 jobs:
   build:
-    runs-on: [besu-research-ubuntu-16]
+    runs-on: [besu,Linux,self-hosted,X64,docker]
     container: ghcr.io/todogroup/repolinter:v0.10.1
     steps:
       - name: Checkout Code

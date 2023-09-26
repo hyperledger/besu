@@ -35,9 +35,7 @@ import org.hyperledger.besu.datatypes.Sha256Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.encoding.AccessListTransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.BlobTransactionEncoder;
-import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -128,7 +126,7 @@ public class Transaction
   }
 
   public static Transaction readFrom(final RLPInput rlpInput) {
-    return TransactionDecoder.decodeRLP(rlpInput, EncodingContext.BLOCK_BODY);
+    return TransactionDecoder.decodeForWire(rlpInput);
   }
 
   /**
@@ -191,15 +189,14 @@ public class Transaction
     if (versionedHashes.isPresent() || maxFeePerBlobGas.isPresent()) {
       checkArgument(
           transactionType.supportsBlob(),
-          "Must not specify blob versioned hashes or max fee per blob gas for transaction not supporting it");
+          "Must not specify blob versioned hashes of max fee per blob gas for transaction not supporting it");
     }
 
     if (transactionType.supportsBlob()) {
       checkArgument(
           versionedHashes.isPresent(), "Must specify blob versioned hashes for blob transaction");
       checkArgument(
-          !versionedHashes.get().isEmpty(),
-          "Blob transaction must have at least one versioned hash");
+          !versionedHashes.get().isEmpty(), "Blob transaction must have at least one blob");
       checkArgument(
           maxFeePerBlobGas.isPresent(), "Must specify max fee per blob gas for blob transaction");
     }
@@ -615,7 +612,7 @@ public class Transaction
    * @param out the output to write the transaction to
    */
   public void writeTo(final RLPOutput out) {
-    TransactionEncoder.encodeRLP(this, out, EncodingContext.BLOCK_BODY);
+    TransactionEncoder.encodeForWire(this, out);
   }
 
   @Override
@@ -678,17 +675,18 @@ public class Transaction
   }
 
   private void memoizeHashAndSize() {
-    final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.BLOCK_BODY);
+    final Bytes bytes = TransactionEncoder.encodeOpaqueBytes(this);
     hash = Hash.hash(bytes);
+
     if (transactionType.supportsBlob()) {
       if (getBlobsWithCommitments().isPresent()) {
-        final Bytes pooledBytes =
-            TransactionEncoder.encodeOpaqueBytes(this, EncodingContext.POOLED_TRANSACTION);
-        size = pooledBytes.size();
-        return;
+        size = TransactionEncoder.encodeOpaqueBytes(this).size();
       }
+    } else {
+      final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
+      TransactionEncoder.encodeForWire(transactionType, bytes, rlpOutput);
+      size = rlpOutput.encodedSize();
     }
-    size = bytes.size();
   }
 
   /**
@@ -969,7 +967,7 @@ public class Transaction
     rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
     rlpOutput.writeUInt256Scalar(value);
     rlpOutput.writeBytes(payload);
-    AccessListTransactionEncoder.writeAccessList(rlpOutput, accessList);
+    TransactionEncoder.writeAccessList(rlpOutput, accessList);
   }
 
   private static Bytes blobPreimage(
@@ -1020,7 +1018,7 @@ public class Transaction
         RLP.encode(
             rlpOutput -> {
               rlpOutput.startList();
-              AccessListTransactionEncoder.encodeAccessListInner(
+              TransactionEncoder.encodeAccessListInner(
                   chainId, nonce, gasPrice, gasLimit, to, value, payload, accessList, rlpOutput);
               rlpOutput.endList();
             });
@@ -1092,26 +1090,10 @@ public class Transaction
     sb.append("value=").append(getValue()).append(", ");
     sb.append("sig=").append(getSignature()).append(", ");
     if (chainId.isPresent()) sb.append("chainId=").append(getChainId().get()).append(", ");
-    if (transactionType.equals(TransactionType.ACCESS_LIST)) {
-      sb.append("accessList=").append(maybeAccessList).append(", ");
-    }
-    if (versionedHashes.isPresent()) {
-      final List<VersionedHash> vhs = versionedHashes.get();
-      if (!vhs.isEmpty()) {
-        sb.append("versionedHashes=[");
-        sb.append(
-            vhs.get(0)
-                .toString()); // can't be empty if present, as this is checked in the constructor
-        for (int i = 1; i < vhs.size(); i++) {
-          sb.append(", ").append(vhs.get(i).toString());
-        }
-        sb.append("], ");
-      }
-    }
-    if (transactionType.supportsBlob() && this.blobsWithCommitments.isPresent()) {
-      sb.append("numberOfBlobs=").append(blobsWithCommitments.get().getBlobs().size()).append(", ");
-    }
     sb.append("payload=").append(getPayload());
+    if (transactionType.equals(TransactionType.ACCESS_LIST)) {
+      sb.append(", ").append("accessList=").append(maybeAccessList);
+    }
     return sb.append("}").toString();
   }
 

@@ -33,6 +33,7 @@ import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.SelfDestructOperation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.worldstate.WrappedEvmAccount;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,8 +54,10 @@ public class SelfDestructOperationTest {
 
   private MessageFrame messageFrame;
   @Mock private WorldUpdater worldUpdater;
-  @Mock private MutableAccount accountOriginator;
-  @Mock private MutableAccount accountBeneficiary;
+  @Mock private WrappedEvmAccount accountOriginator;
+  @Mock private WrappedEvmAccount accountBeneficiary;
+  @Mock private MutableAccount mutableAccountOriginator;
+  @Mock private MutableAccount mutableAccountBeneficiary;
   @Mock private EVM evm;
 
   private final SelfDestructOperation frontierOperation =
@@ -101,7 +104,9 @@ public class SelfDestructOperationTest {
       when(worldUpdater.get(beneficiaryAddress)).thenReturn(accountBeneficiary);
     }
     when(worldUpdater.getOrCreate(beneficiaryAddress)).thenReturn(accountBeneficiary);
+    when(accountOriginator.getMutable()).thenReturn(mutableAccountOriginator);
     when(accountOriginator.getBalance()).thenReturn(Wei.fromHexString(balanceHex));
+    when(accountBeneficiary.getMutable()).thenReturn(mutableAccountBeneficiary);
 
     final Operation.OperationResult operationResult = operation.execute(messageFrame, evm);
     assertThat(operationResult).isNotNull();
@@ -110,10 +115,10 @@ public class SelfDestructOperationTest {
     // some subset of these calls.
     verify(accountOriginator, atLeast(0)).getBalance();
     verify(accountBeneficiary, atLeast(0)).getBalance();
-    verify(accountOriginator, atLeast(0)).getBalance();
-    verify(accountOriginator).decrementBalance(Wei.fromHexString(balanceHex));
-    verify(accountOriginator, atLeast(0)).setBalance(Wei.ZERO);
-    verify(accountBeneficiary).incrementBalance(Wei.fromHexString(balanceHex));
+    verify(mutableAccountOriginator, atLeast(0)).getBalance();
+    verify(mutableAccountOriginator).decrementBalance(Wei.fromHexString(balanceHex));
+    verify(mutableAccountOriginator, atLeast(0)).setBalance(Wei.ZERO);
+    verify(mutableAccountBeneficiary).incrementBalance(Wei.fromHexString(balanceHex));
   }
 
   public static Object[][] params() {

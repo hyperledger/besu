@@ -870,9 +870,9 @@ public abstract class MainnetProtocolSpecs {
                 .toList();
         final WorldUpdater worldUpdater = worldState.updater();
         final MutableAccount daoRefundContract =
-            worldUpdater.getOrCreate(DAO_REFUND_CONTRACT_ADDRESS);
+            worldUpdater.getOrCreate(DAO_REFUND_CONTRACT_ADDRESS).getMutable();
         for (final Address address : addresses) {
-          final MutableAccount account = worldUpdater.getOrCreate(address);
+          final MutableAccount account = worldUpdater.getOrCreate(address).getMutable();
           final Wei balance = account.getBalance();
           account.decrementBalance(balance);
           daoRefundContract.incrementBalance(balance);

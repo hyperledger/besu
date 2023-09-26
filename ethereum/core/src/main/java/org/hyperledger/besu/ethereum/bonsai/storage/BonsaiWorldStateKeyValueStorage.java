@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -42,7 +41,6 @@ import org.hyperledger.besu.util.Subscribers;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
@@ -55,6 +53,7 @@ import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("unused")
 public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoCloseable {
+
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateKeyValueStorage.class);
 
   // 0x776f726c64526f6f74
@@ -249,11 +248,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateStorage, AutoC
     return getFlatDbReaderStrategy()
         .streamStorageFlatDatabase(
             composedWorldStateStorage, accountHash, startKeyHash, endKeyHash, max);
-  }
-
-  public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
-      final Hash addressHash, final Bytes32 startKeyHash, final int limit) {
-    throw new RuntimeException("Bonsai Tries does not currently support enumerating storage");
   }
 
   @Override

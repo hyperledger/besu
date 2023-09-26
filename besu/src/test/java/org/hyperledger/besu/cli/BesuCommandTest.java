@@ -25,6 +25,7 @@ import static org.hyperledger.besu.cli.config.NetworkName.EXPERIMENTAL_EIPS;
 import static org.hyperledger.besu.cli.config.NetworkName.FUTURE_EIPS;
 import static org.hyperledger.besu.cli.config.NetworkName.GOERLI;
 import static org.hyperledger.besu.cli.config.NetworkName.HOLESKY;
+import static org.hyperledger.besu.cli.config.NetworkName.KOTTI;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
@@ -58,6 +59,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.cli.options.unstable.TransactionPoolOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -4108,6 +4110,22 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void kottiValuesAreUsed() throws Exception {
+    parseCommand("--network", "kotti");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any(), any());
+    verify(mockControllerBuilder).build();
+
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(KOTTI));
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void mordorValuesAreUsed() throws Exception {
     parseCommand("--network", "mordor");
 
@@ -4146,6 +4164,11 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void classicValuesCanBeOverridden() throws Exception {
     networkValuesCanBeOverridden("classic");
+  }
+
+  @Test
+  public void kottiValuesCanBeOverridden() throws Exception {
+    networkValuesCanBeOverridden("kotti");
   }
 
   @Test
@@ -4594,6 +4617,192 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--permissions-nodes-config-file=" + permissioningConfig.getPath());
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(staticNodeURI.toString(), "not in nodes-allowlist");
+  }
+
+  @Test
+  public void disableLocalsDefault() {
+    parseCommand();
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getDisableLocalTransactions()).isFalse();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void disableLocalsOn() {
+    parseCommand("--tx-pool-disable-locals=true");
+
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getDisableLocalTransactions()).isTrue();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void disableLocalsOff() {
+    parseCommand("--tx-pool-disable-locals=false");
+
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getDisableLocalTransactions()).isFalse();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void saveToFileDisabledByDefault() {
+    parseCommand();
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getEnableSaveRestore()).isFalse();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void saveToFileEnabledDefaultPath() {
+    parseCommand("--tx-pool-enable-save-restore=true");
+
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getEnableSaveRestore()).isTrue();
+    assertThat(transactionPoolConfigCaptor.getValue().getSaveFile())
+        .hasName(TransactionPoolConfiguration.DEFAULT_SAVE_FILE_NAME);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void saveToFileEnabledCustomPath() {
+    parseCommand("--tx-pool-enable-save-restore=true", "--tx-pool-save-file=my.save.file");
+
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getEnableSaveRestore()).isTrue();
+    assertThat(transactionPoolConfigCaptor.getValue().getSaveFile()).hasName("my.save.file");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void senderLimitedTxPool_derived() {
+    parseCommand("--tx-pool-limit-by-account-percentage=0.002");
+
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getTxPoolMaxFutureTransactionByAccount())
+        .isEqualTo(9);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void senderLimitedTxPoolFloor_derived() {
+    parseCommand("--tx-pool-limit-by-account-percentage=0.0001");
+
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getTxPoolMaxFutureTransactionByAccount())
+        .isEqualTo(1);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void senderLimitedTxPoolCeiling_violated() {
+    TestBesuCommand commandTest = parseCommand("--tx-pool-limit-by-account-percentage=1.00002341");
+
+    TransactionPoolOptions txPoolOption = commandTest.getTransactionPoolOptions();
+
+    final TransactionPoolConfiguration config = txPoolOption.toDomainObject().build();
+    assertThat(config.getTxPoolLimitByAccountPercentage())
+        .isEqualTo(TransactionPoolConfiguration.DEFAULT_LIMIT_TX_POOL_BY_ACCOUNT_PERCENTAGE);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Invalid value for option '--tx-pool-limit-by-account-percentage'");
+  }
+
+  @Test
+  public void pendingTransactionRetentionPeriod() {
+    final int pendingTxRetentionHours = 999;
+    parseCommand("--tx-pool-retention-hours", String.valueOf(pendingTxRetentionHours));
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getPendingTxRetentionPeriod())
+        .isEqualTo(pendingTxRetentionHours);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void transactionPoolPriceBump() {
+    final Percentage priceBump = Percentage.fromInt(13);
+    parseCommand("--tx-pool-price-bump", priceBump.toString());
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getPriceBump()).isEqualTo(priceBump);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void invalidTansactionPoolPriceBumpShouldFail() {
+    parseCommand("--tx-pool-price-bump", "101");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "Invalid value for option '--tx-pool-price-bump'",
+            "should be a number between 0 and 100 inclusive");
+  }
+
+  @Test
+  public void transactionPoolTxFeeCap() {
+    final Wei txFeeCap = Wei.fromEth(2);
+    parseCommand("--rpc-tx-feecap", txFeeCap.toDecimalString());
+    verify(mockControllerBuilder)
+        .transactionPoolConfiguration(transactionPoolConfigCaptor.capture());
+    assertThat(transactionPoolConfigCaptor.getValue().getTxFeeCap()).isEqualTo(txFeeCap);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void invalidTansactionPoolTxFeeCapShouldFail() {
+    parseCommand("--rpc-tx-feecap", "abcd");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Invalid value for option '--rpc-tx-feecap'", "cannot convert 'abcd' to Wei");
+  }
+
+  @Test
+  public void txMessageKeepAliveSecondsWithInvalidInputShouldFail() {
+    parseCommand("--Xincoming-tx-messages-keep-alive-seconds", "acbd");
+
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "Invalid value for option '--Xincoming-tx-messages-keep-alive-seconds': 'acbd' is not an int");
+  }
+
+  @Test
+  public void eth65TrxAnnouncedBufferingPeriodWithInvalidInputShouldFail() {
+    parseCommand("--Xeth65-tx-announced-buffering-period-milliseconds", "acbd");
+
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "Invalid value for option '--Xeth65-tx-announced-buffering-period-milliseconds': 'acbd' is not a long");
   }
 
   @Test

@@ -59,7 +59,7 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
   private final Bytes32 endKeyHash;
   private TreeMap<Bytes32, Bytes> existingAccounts;
 
-  private TreeMap<Bytes32, Bytes> flatDbAccounts;
+  private TreeMap<Bytes32, Bytes> removedAccounts;
   private boolean isProofValid;
 
   public AccountFlatDatabaseHealingRangeRequest(
@@ -68,7 +68,7 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
     this.startKeyHash = startKeyHash;
     this.endKeyHash = endKeyHash;
     this.existingAccounts = new TreeMap<>();
-    this.flatDbAccounts = new TreeMap<>();
+    this.removedAccounts = new TreeMap<>();
     this.isProofValid = false;
   }
 
@@ -95,12 +95,12 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       downloadState.getMetricsManager().notifyRangeProgress(HEAL_FLAT, endKeyHash, endKeyHash);
     }
 
-    Stream.of(existingAccounts.entrySet(), flatDbAccounts.entrySet())
+    Stream.of(existingAccounts.entrySet(), removedAccounts.entrySet())
         .flatMap(Collection::stream)
         .forEach(
             account -> {
               if (downloadState
-                  .getAccountsHealingList()
+                  .getAccountsToBeRepaired()
                   .contains(CompactEncoding.bytesToPath(account.getKey()))) {
                 final StateTrieAccountValue accountValue =
                     StateTrieAccountValue.readFrom(RLP.input(account.getValue()));
@@ -174,7 +174,7 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
       // put all flat accounts in the list, and gradually keep only those that are not in the trie
       // to remove and heal them.
-      flatDbAccounts = new TreeMap<>(existingAccounts);
+      removedAccounts = new TreeMap<>(existingAccounts);
 
       final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
       existingAccounts =
@@ -184,33 +184,27 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
                       RangeStorageEntriesCollector.collectEntries(
                           collector, visitor, root, startKeyHash));
 
-      // Process each existing account
+      // doing the fix
       existingAccounts.forEach(
           (key, value) -> {
-            // Remove the key from the flat db list and get its associated value
-            Bytes flatDbEntry = flatDbAccounts.remove(key);
-            // If the key was in flat db and its associated value is different from the
-            // current value
-            if (!value.equals(flatDbEntry)) {
-              Hash accountHash = Hash.wrap(key);
-              // Add the account to the list of accounts to be repaired
-              downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));
-              // Update the account info state
+            if (removedAccounts.containsKey(key)) {
+              removedAccounts.remove(key);
+            } else {
+              final Hash accountHash = Hash.wrap(key);
+              // if the account was missing in the flat db we need to heal the storage
+              downloadState.addAccountsToBeRepaired(CompactEncoding.bytesToPath(accountHash));
               bonsaiUpdater.putAccountInfoState(accountHash, value);
             }
           });
 
-      // For each remaining account in flat db list, remove the account info state and add it to
-      // the list of accounts to be repaired
-      flatDbAccounts
-          .keySet()
-          .forEach(
-              key -> {
-                Hash accountHash = Hash.wrap(key);
-                downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));
-                bonsaiUpdater.removeAccountInfoState(accountHash);
-              });
+      removedAccounts.forEach(
+          (key, value) -> {
+            final Hash accountHash = Hash.wrap(key);
+            // if the account was removed we will have to heal the storage
+            downloadState.addAccountsToBeRepaired(CompactEncoding.bytesToPath(accountHash));
+            bonsaiUpdater.removeAccountInfoState(accountHash);
+          });
     }
-    return existingAccounts.size() + flatDbAccounts.size();
+    return existingAccounts.size() + removedAccounts.size();
   }
 }

@@ -48,7 +48,6 @@
       "currentNumber": "0x1",
       "currentTimestamp": "0x0",
       "currentGasLimit": "0xff112233445566",
-      "currentStateRoot": "0x5775e461ac316f8c02466d23e4492d24bbe546336f6fc632dd1311d6a5b67b22",
       "previousHash": "0xb271e9e5796d0ff5a2fd519ba666393e42d4f38680854761121d84a7a96ff017",
       "parentTimestamp": "0x00",
       "parentDifficulty": "0x00",
