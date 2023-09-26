@@ -199,8 +199,11 @@ public class DebugOperationTracer implements OperationTracer {
     try {
       final Map<UInt256, UInt256> storageContents =
           new TreeMap<>(
-              frame.getWorldUpdater().getAccount(frame.getRecipientAddress()).getUpdatedStorage());
-
+              frame
+                  .getWorldUpdater()
+                  .getAccount(frame.getRecipientAddress())
+                  .getMutable()
+                  .getUpdatedStorage());
       return Optional.of(storageContents);
     } catch (final ModificationNotAllowedException e) {
       return Optional.of(new TreeMap<>());

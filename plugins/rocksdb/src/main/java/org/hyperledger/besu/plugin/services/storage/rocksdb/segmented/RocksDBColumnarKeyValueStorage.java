@@ -40,10 +40,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.Streams;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.tuweni.bytes.Bytes;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.BloomFilter;
 import org.rocksdb.ColumnFamilyDescriptor;
@@ -164,52 +161,7 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
       txOptions = new TransactionDBOptions();
       columnHandles = new ArrayList<>(columnDescriptors.size());
     } catch (RocksDBException e) {
-      throw parseRocksDBException(e, defaultSegments, ignorableSegments);
-    }
-  }
-
-  /**
-   * Parse RocksDBException and wrap in StorageException
-   *
-   * @param ex RocksDBException
-   * @param defaultSegments segments requested to open
-   * @param ignorableSegments segments which are ignorable if not present
-   * @return StorageException wrapping the RocksDB Exception
-   */
-  protected static StorageException parseRocksDBException(
-      final RocksDBException ex,
-      final List<SegmentIdentifier> defaultSegments,
-      final List<SegmentIdentifier> ignorableSegments) {
-    String message = ex.getMessage();
-    List<SegmentIdentifier> knownSegments =
-        Streams.concat(defaultSegments.stream(), ignorableSegments.stream()).distinct().toList();
-
-    // parse out unprintable segment names for a more useful exception:
-    String columnExceptionMessagePrefix = "Column families not opened: ";
-    if (message.contains(columnExceptionMessagePrefix)) {
-      String substring = message.substring(message.indexOf(": ") + 2);
-
-      List<String> unHandledSegments = new ArrayList<>();
-      Splitter.on(", ")
-          .splitToStream(substring)
-          .forEach(
-              part -> {
-                byte[] bytes = part.getBytes(StandardCharsets.UTF_8);
-                unHandledSegments.add(
-                    knownSegments.stream()
-                        .filter(seg -> Arrays.equals(seg.getId(), bytes))
-                        .findFirst()
-                        .map(seg -> new SegmentRecord(seg.getName(), seg.getId()))
-                        .orElse(new SegmentRecord(part, bytes))
-                        .forDisplay());
-              });
-
-      return new StorageException(
-          "RocksDBException: Unhandled column families: ["
-              + unHandledSegments.stream().collect(Collectors.joining(", "))
-              + "]");
-    } else {
-      return new StorageException(ex);
+      throw new StorageException(e);
     }
   }
 
@@ -334,17 +286,6 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
   }
 
   @Override
-  public Stream<Pair<byte[], byte[]>> streamFromKey(
-      final SegmentIdentifier segmentIdentifier, final byte[] startKey, final byte[] endKey) {
-    final Bytes endKeyBytes = Bytes.wrap(endKey);
-    final RocksIterator rocksIterator = getDB().newIterator(safeColumnHandle(segmentIdentifier));
-    rocksIterator.seek(startKey);
-    return RocksDbIterator.create(rocksIterator)
-        .toStream()
-        .takeWhile(e -> endKeyBytes.compareTo(Bytes.wrap(e.getKey())) >= 0);
-  }
-
-  @Override
   public Stream<byte[]> streamKeys(final SegmentIdentifier segmentIdentifier) {
     final RocksIterator rocksIterator = getDB().newIterator(safeColumnHandle(segmentIdentifier));
     rocksIterator.seekToFirst();
@@ -415,10 +356,4 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
   }
 
   abstract RocksDB getDB();
-
-  record SegmentRecord(String name, byte[] id) {
-    public String forDisplay() {
-      return String.format("'%s'(%s)", name, Bytes.of(id).toHexString());
-    }
-  }
 }

@@ -21,6 +21,7 @@ import static org.hyperledger.besu.evmtool.T8nSubCommand.COMMAND_NAME;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
@@ -174,7 +175,7 @@ public class T8nSubCommand implements Runnable {
     final ObjectMapper objectMapper = JsonUtils.createObjectMapper();
     final ObjectReader t8nReader = objectMapper.reader();
 
-    ReferenceTestWorldState initialWorldState;
+    MutableWorldState initialWorldState;
     ReferenceTestEnv referenceTestEnv;
     List<Transaction> transactions = new ArrayList<>();
     List<RejectedTransaction> rejections = new ArrayList<>();
@@ -254,8 +255,7 @@ public class T8nSubCommand implements Runnable {
                       new PrintStream(traceDest),
                       parentCommand.showMemory,
                       !parentCommand.hideStack,
-                      parentCommand.showReturnData,
-                      parentCommand.showStorage);
+                      parentCommand.showReturnData);
               outputStreams.put(jsonTracer, traceDest);
               return jsonTracer;
             }

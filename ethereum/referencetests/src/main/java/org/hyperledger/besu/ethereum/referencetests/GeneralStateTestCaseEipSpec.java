@@ -18,6 +18,7 @@ package org.hyperledger.besu.ethereum.referencetests;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.util.function.Supplier;
 
@@ -36,7 +37,7 @@ public class GeneralStateTestCaseEipSpec {
   // is why this is a supplier: calling get() actually does the signing.
   private final Supplier<Transaction> transactionSupplier;
 
-  private final ReferenceTestWorldState initialWorldState;
+  private final WorldState initialWorldState;
 
   private final Hash expectedRootHash;
 
@@ -53,7 +54,7 @@ public class GeneralStateTestCaseEipSpec {
   GeneralStateTestCaseEipSpec(
       final String fork,
       final Supplier<Transaction> transactionSupplier,
-      final ReferenceTestWorldState initialWorldState,
+      final WorldState initialWorldState,
       final Hash expectedRootHash,
       final Hash expectedLogsHash,
       final BlockHeader blockHeader,
@@ -77,7 +78,7 @@ public class GeneralStateTestCaseEipSpec {
     return fork;
   }
 
-  public ReferenceTestWorldState getInitialWorldState() {
+  public WorldState getInitialWorldState() {
     return initialWorldState;
   }
 

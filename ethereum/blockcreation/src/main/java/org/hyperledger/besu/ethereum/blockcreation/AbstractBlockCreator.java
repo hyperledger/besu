@@ -50,7 +50,7 @@ import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
@@ -190,10 +190,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       final List<BlockHeader> ommers = maybeOmmers.orElse(selectOmmers());
 
-      maybeParentBeaconBlockRoot.ifPresent(
-          bytes32 ->
-              ParentBeaconBlockRootHelper.storeParentBeaconBlockRoot(
-                  disposableWorldState.updater(), timestamp, bytes32));
+      if (maybeParentBeaconBlockRoot.isPresent()) {
+        ParentBeaconBlockRootHelper.storeParentBeaconBlockRoot(
+            disposableWorldState.updater(), timestamp, maybeParentBeaconBlockRoot.get());
+      }
 
       throwIfStopped();
       final TransactionSelectionResults transactionResults =
@@ -466,9 +466,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             .getBlockProcessor()
             .getCoinbaseReward(blockReward, header.getNumber(), ommers.size());
     final WorldUpdater updater = worldState.updater();
-    final MutableAccount beneficiary = updater.getOrCreate(miningBeneficiary);
+    final EvmAccount beneficiary = updater.getOrCreate(miningBeneficiary);
 
-    beneficiary.incrementBalance(coinbaseReward);
+    beneficiary.getMutable().incrementBalance(coinbaseReward);
     for (final BlockHeader ommerHeader : ommers) {
       if (ommerHeader.getNumber() - header.getNumber() > MAX_GENERATION) {
         LOG.trace(
@@ -479,12 +479,12 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         return false;
       }
 
-      final MutableAccount ommerCoinbase = updater.getOrCreate(ommerHeader.getCoinbase());
+      final EvmAccount ommerCoinbase = updater.getOrCreate(ommerHeader.getCoinbase());
       final Wei ommerReward =
           protocolSpec
               .getBlockProcessor()
               .getOmmerReward(blockReward, header.getNumber(), ommerHeader.getNumber());
-      ommerCoinbase.incrementBalance(ommerReward);
+      ommerCoinbase.getMutable().incrementBalance(ommerReward);
     }
 
     updater.commit();

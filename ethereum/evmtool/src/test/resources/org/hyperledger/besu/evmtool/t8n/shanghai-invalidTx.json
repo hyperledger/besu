@@ -42,7 +42,6 @@
       "currentNumber": "1",
       "currentTimestamp": "1000",
       "currentDifficulty": "0x20000",
-      "currentStateRoot": "0xec92f4c572101075d17eb5aaf15c33df92b6d5519cbed635fc53353b99e8e6da",
       "currentBaseFee": "0xa",
       "blockHashes": {
         "0": "0x5e20a0453cecd065ea59c37ac63e079ee08998b6045136a8ce6635c7912ec0b6"

@@ -39,7 +39,7 @@ class NetworkDeprecationMessageTest {
   @EnumSource(
       value = NetworkName.class,
       names = {
-        "MAINNET", "SEPOLIA", "GOERLI", "DEV", "CLASSIC", "MORDOR", "HOLESKY",
+        "MAINNET", "SEPOLIA", "GOERLI", "DEV", "CLASSIC", "KOTTI", "MORDOR", "HOLESKY",
       })
   void shouldThrowErrorForNonDeprecatedNetworks(final NetworkName network) {
     assertThatThrownBy(() -> NetworkDeprecationMessage.generate(network))

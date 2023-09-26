@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.DepositEncoder;
-import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.WithdrawalEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -63,11 +62,7 @@ public final class BodyValidation {
 
     IntStream.range(0, transactions.size())
         .forEach(
-            i ->
-                trie.put(
-                    indexKey(i),
-                    TransactionEncoder.encodeOpaqueBytes(
-                        transactions.get(i), EncodingContext.BLOCK_BODY)));
+            i -> trie.put(indexKey(i), TransactionEncoder.encodeOpaqueBytes(transactions.get(i))));
 
     return Hash.wrap(trie.getRootHash());
   }

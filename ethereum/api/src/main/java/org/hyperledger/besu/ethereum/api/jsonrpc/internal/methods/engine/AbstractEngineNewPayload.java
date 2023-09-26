@@ -50,7 +50,6 @@ import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
@@ -171,7 +170,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       transactions =
           blockParam.getTransactions().stream()
               .map(Bytes::fromHexString)
-              .map(in -> TransactionDecoder.decodeOpaqueBytes(in, EncodingContext.BLOCK_BODY))
+              .map(TransactionDecoder::decodeOpaqueBytes)
               .collect(Collectors.toList());
     } catch (final RLPException | IllegalArgumentException e) {
       return respondWithInvalid(
@@ -210,7 +209,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             blockParam.getPrevRandao(),
             0,
             maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null),
-            blockParam.getBlobGasUsed(),
+            blockParam.getBlobGasUsed() == null ? null : blockParam.getBlobGasUsed(),
             blockParam.getExcessBlobGas() == null
                 ? null
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),

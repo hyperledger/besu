@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 import org.hyperledger.besu.cli.converter.exception.FractionConversionException;
-import org.hyperledger.besu.util.number.Fraction;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,9 +30,9 @@ public class FractionConverterTest {
 
   @Test
   public void assertThatConvertHandlesProperlyAValidString() throws FractionConversionException {
-    final Fraction fraction = fractionConverter.convert("0.58");
+    final float fraction = fractionConverter.convert("0.58");
     assertThat(fraction).isNotNull();
-    assertThat(fraction.getValue()).isEqualTo(0.58f);
+    assertThat(fraction).isEqualTo(0.58f);
   }
 
   @Test

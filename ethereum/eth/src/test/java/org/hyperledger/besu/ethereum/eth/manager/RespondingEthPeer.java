@@ -307,7 +307,7 @@ public class RespondingEthPeer {
       final TransactionPool transactionPool,
       final ProtocolSchedule protocolSchedule,
       final float portion) {
-    checkArgument(portion >= 0.0 && portion <= 1.0, "Portion is not in the range [0.0..1.0]");
+    checkArgument(portion >= 0.0 && portion <= 1.0, "Portion is in the range [0.0..1.0]");
 
     final Responder fullResponder =
         blockchainResponder(blockchain, worldStateArchive, transactionPool);

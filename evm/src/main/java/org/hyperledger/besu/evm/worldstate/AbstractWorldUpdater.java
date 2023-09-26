@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.worldstate;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.Collection;
@@ -77,11 +78,11 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   }
 
   @Override
-  public MutableAccount createAccount(final Address address, final long nonce, final Wei balance) {
+  public EvmAccount createAccount(final Address address, final long nonce, final Wei balance) {
     final UpdateTrackingAccount<A> account = new UpdateTrackingAccount<>(address);
     account.setNonce(nonce);
     account.setBalance(balance);
-    return track(account);
+    return new WrappedEvmAccount(track(account));
   }
 
   @Override
@@ -98,11 +99,11 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   }
 
   @Override
-  public MutableAccount getAccount(final Address address) {
+  public EvmAccount getAccount(final Address address) {
     // We may have updated it already, so check that first.
     final MutableAccount existing = updatedAccounts.get(address);
     if (existing != null) {
-      return existing;
+      return new WrappedEvmAccount(existing);
     }
     if (deletedAccounts.contains(address)) {
       return null;
@@ -113,7 +114,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     if (origin == null) {
       return null;
     } else {
-      return track(new UpdateTrackingAccount<>(origin));
+      return new WrappedEvmAccount(track(new UpdateTrackingAccount<>(origin)));
     }
   }
 
@@ -149,8 +150,8 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   @Override
   public Optional<WorldUpdater> parentUpdater() {
-    if (world instanceof WorldUpdater worldUpdater) {
-      return Optional.of(worldUpdater);
+    if (world instanceof WorldUpdater) {
+      return Optional.of((WorldUpdater) world);
     } else {
       return Optional.empty();
     }

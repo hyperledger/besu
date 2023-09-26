@@ -4,7 +4,7 @@ on:
 
 jobs:
   dco:
-    runs-on: [besu-research-ubuntu-8]
+    runs-on: [besu,Linux,self-hosted,nodocker]
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - run: echo "This DCO job runs on merge_queue event and doesn't check PR contents"

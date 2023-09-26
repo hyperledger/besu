@@ -56,7 +56,7 @@ public class PrivateStateGenesisAllocator {
     final PrivacyGenesis genesis =
         privacyGroupGenesisProvider.getPrivacyGenesis(privacyGroupId, blockNumber);
 
-    if (!genesis.getAccounts().isEmpty()) {
+    if (genesis.getAccounts().size() > 0) {
 
       LOG.debug(
           "Applying {} privacy accounts onto {} private state genesis at {}",
@@ -67,14 +67,15 @@ public class PrivateStateGenesisAllocator {
       genesis
           .getAccounts()
           .forEach(
-              genesisAccount -> {
+              (genesisAccount) -> {
                 final Address address = genesisAccount.getAddress();
                 if (address.toBigInteger().compareTo(BigInteger.valueOf(Byte.MAX_VALUE)) < 0) {
                   LOG.warn(
                       "Genesis address {} is in reserved range and may be overwritten", address);
                 }
 
-                final MutableAccount account = privateWorldStateUpdater.createAccount(address);
+                final MutableAccount account =
+                    privateWorldStateUpdater.createAccount(address).getMutable();
 
                 LOG.debug("{} applied to genesis", address.toHexString());
 
@@ -89,14 +90,14 @@ public class PrivateStateGenesisAllocator {
     if (isFlexiblePrivacyEnabled) {
       // inject management
       final MutableAccount managementContract =
-          privateWorldStateUpdater.createAccount(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT);
+          privateWorldStateUpdater.createAccount(DEFAULT_FLEXIBLE_PRIVACY_MANAGEMENT).getMutable();
 
       // this is the code for the simple management contract
       managementContract.setCode(FlexibleGroupManagement.DEFAULT_GROUP_MANAGEMENT_RUNTIME_BYTECODE);
 
       // inject proxy
       final MutableAccount procyContract =
-          privateWorldStateUpdater.createAccount(FLEXIBLE_PRIVACY_PROXY);
+          privateWorldStateUpdater.createAccount(FLEXIBLE_PRIVACY_PROXY).getMutable();
 
       // this is the code for the proxy contract
       procyContract.setCode(FlexibleGroupManagement.PROXY_RUNTIME_BYTECODE);

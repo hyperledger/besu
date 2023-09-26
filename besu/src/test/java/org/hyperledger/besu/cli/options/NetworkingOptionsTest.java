@@ -165,12 +165,12 @@ public class NetworkingOptionsTest
   }
 
   @Override
-  protected NetworkingConfiguration createDefaultDomainObject() {
+  NetworkingConfiguration createDefaultDomainObject() {
     return NetworkingConfiguration.create();
   }
 
   @Override
-  protected NetworkingConfiguration createCustomizedDomainObject() {
+  NetworkingConfiguration createCustomizedDomainObject() {
     final NetworkingConfiguration config = NetworkingConfiguration.create();
     config.setInitiateConnectionsFrequency(
         NetworkingConfiguration.DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC + 10);
@@ -181,12 +181,12 @@ public class NetworkingOptionsTest
   }
 
   @Override
-  protected NetworkingOptions optionsFromDomainObject(final NetworkingConfiguration domainObject) {
+  NetworkingOptions optionsFromDomainObject(final NetworkingConfiguration domainObject) {
     return NetworkingOptions.fromConfig(domainObject);
   }
 
   @Override
-  protected NetworkingOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
+  NetworkingOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
     return besuCommand.getNetworkingOptions();
   }
 

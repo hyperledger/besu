@@ -64,7 +64,7 @@ class SStoreOperationTest {
             .blockValues(blockHeader)
             .initialGas(initialGas)
             .build();
-    worldStateUpdater.getOrCreate(address).setBalance(Wei.of(1));
+    worldStateUpdater.getOrCreate(address).getMutable().setBalance(Wei.of(1));
     worldStateUpdater.commit();
     frame.setGasRemaining(remainingGas);
 

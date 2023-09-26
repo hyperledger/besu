@@ -14,17 +14,10 @@
  */
 package org.hyperledger.besu.cli.util;
 
-import org.hyperledger.besu.cli.converter.TypeFormatter;
-import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.util.StringUtils;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Strings;
@@ -129,103 +122,6 @@ public class CommandLineUtils {
         throw new CommandLine.ParameterException(commandLine, errorMessage);
       }
     }
-  }
-
-  /**
-   * Return all the option names declared in a class. Note this will recursively check in any inner
-   * option class if present.
-   *
-   * @param optClass the class to look for options
-   * @return a list of option names found in the class
-   */
-  public static List<String> getCLIOptionNames(final Class<?> optClass) {
-    final List<String> cliOpts = new ArrayList<>();
-    final Field[] fields = optClass.getDeclaredFields();
-    for (Field field : fields) {
-      field.setAccessible(true);
-      Annotation ann = field.getAnnotation(CommandLine.Option.class);
-      if (ann != null) {
-        final var optAnn = CommandLine.Option.class.cast(ann);
-        cliOpts.add(optAnn.names()[0]);
-      } else {
-        ann = field.getAnnotation(CommandLine.ArgGroup.class);
-        if (ann != null) {
-          cliOpts.addAll(getCLIOptionNames(field.getType()));
-        }
-      }
-    }
-    return cliOpts;
-  }
-
-  /**
-   * Converts the runtime options into their CLI representation. Options with a value equals to its
-   * default are not included in the result since redundant. Note this will recursively check in any
-   * inner option class if present.
-   *
-   * @param currOptions the actual runtime options
-   * @param defaults the default option values
-   * @return a list of CLI arguments
-   */
-  public static List<String> getCLIOptions(final Object currOptions, final Object defaults) {
-    final List<String> cliOpts = new ArrayList<>();
-    final Field[] fields = currOptions.getClass().getDeclaredFields();
-    for (Field field : fields) {
-      field.setAccessible(true);
-      Annotation ann = field.getAnnotation(CommandLine.Option.class);
-      if (ann != null) {
-        try {
-          var optVal = field.get(currOptions);
-          if (!Objects.equals(optVal, field.get(defaults))) {
-            var optAnn = CommandLine.Option.class.cast(ann);
-            cliOpts.add(optAnn.names()[0]);
-            final var optConverter = optAnn.converter();
-            cliOpts.add(formatValue(optConverter, optVal));
-          }
-        } catch (IllegalAccessException e) {
-          throw new RuntimeException(e);
-        }
-      } else {
-        ann = field.getAnnotation(CommandLine.ArgGroup.class);
-        if (ann != null) {
-          try {
-            cliOpts.addAll(getCLIOptions(field.get(currOptions), field.get(defaults)));
-          } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-          }
-        }
-      }
-    }
-    return cliOpts;
-  }
-
-  /**
-   * There are different ways to format an option value back to its CLI form, the first is to use a
-   * {@link TypeFormatter} if present, otherwise the formatting it is delegated to {@link
-   * OptionParser#format(Object)}
-   *
-   * @param optConverter the list of converter types for the option
-   * @param optVal the value of the options
-   * @return a string with the CLI form of the value
-   */
-  @SuppressWarnings("unchecked")
-  private static String formatValue(
-      final Class<? extends CommandLine.ITypeConverter<?>>[] optConverter, final Object optVal) {
-    return Arrays.stream(optConverter)
-        .filter(c -> Arrays.stream(c.getInterfaces()).anyMatch(i -> i.equals(TypeFormatter.class)))
-        .findFirst()
-        .map(
-            ctf -> {
-              try {
-                return (TypeFormatter) ctf.getDeclaredConstructor().newInstance();
-              } catch (InstantiationException
-                  | IllegalAccessException
-                  | InvocationTargetException
-                  | NoSuchMethodException e) {
-                throw new RuntimeException(e);
-              }
-            })
-        .map(tf -> tf.format(optVal))
-        .orElseGet(() -> OptionParser.format(optVal));
   }
 
   private static String getAffectedOptions(

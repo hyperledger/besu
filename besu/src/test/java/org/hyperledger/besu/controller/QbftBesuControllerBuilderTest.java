@@ -17,6 +17,7 @@ package org.hyperledger.besu.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -52,7 +53,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
@@ -80,17 +80,16 @@ public class QbftBesuControllerBuilderTest {
   @Mock private EthProtocolConfiguration ethProtocolConfiguration;
   @Mock CheckpointConfigOptions checkpointConfigOptions;
   @Mock private MiningParameters miningParameters;
+  @Mock private ObservableMetricsSystem observableMetricsSystem;
   @Mock private PrivacyParameters privacyParameters;
   @Mock private Clock clock;
+  @Mock private TransactionPoolConfiguration poolConfiguration;
   @Mock private StorageProvider storageProvider;
   @Mock private GasLimitCalculator gasLimitCalculator;
   @Mock private WorldStateStorage worldStateStorage;
   @Mock private WorldStatePreimageStorage worldStatePreimageStorage;
   private static final BigInteger networkId = BigInteger.ONE;
   private static final NodeKey nodeKey = NodeKeyUtils.generate();
-  private final TransactionPoolConfiguration poolConfiguration =
-      TransactionPoolConfiguration.DEFAULT;
-  private final ObservableMetricsSystem observableMetricsSystem = new NoOpMetricsSystem();
 
   @Rule public final TemporaryFolder tempDirRule = new TemporaryFolder();
 
@@ -121,7 +120,9 @@ public class QbftBesuControllerBuilderTest {
     when(synchronizerConfiguration.getDownloaderParallelism()).thenReturn(1);
     when(synchronizerConfiguration.getTransactionsParallelism()).thenReturn(1);
     when(synchronizerConfiguration.getComputationParallelism()).thenReturn(1);
-
+    when(observableMetricsSystem.createLabelledCounter(
+            any(), anyString(), anyString(), anyString()))
+        .thenReturn(labels -> null);
     when(synchronizerConfiguration.getBlockPropagationRange()).thenReturn(Range.closed(1L, 2L));
 
     // qbft prepForBuild setup

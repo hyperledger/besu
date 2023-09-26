@@ -23,7 +23,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
@@ -60,7 +59,7 @@ public class DomainObjectDecodeUtilsTest {
   @Test
   public void testAccessListRLPSerDes() {
     final BytesValueRLPOutput encoded = new BytesValueRLPOutput();
-    TransactionEncoder.encodeRLP(accessListTxn, encoded, EncodingContext.POOLED_TRANSACTION);
+    TransactionEncoder.encodeForWire(accessListTxn, encoded);
     Transaction decoded =
         DomainObjectDecodeUtils.decodeRawTransaction(encoded.encoded().toHexString());
     Assertions.assertThat(decoded.getAccessList().isPresent()).isTrue();
@@ -69,8 +68,7 @@ public class DomainObjectDecodeUtilsTest {
 
   @Test
   public void testAccessList2718OpaqueSerDes() {
-    final Bytes encoded =
-        TransactionEncoder.encodeOpaqueBytes(accessListTxn, EncodingContext.POOLED_TRANSACTION);
+    final Bytes encoded = TransactionEncoder.encodeOpaqueBytes(accessListTxn);
     Transaction decoded = DomainObjectDecodeUtils.decodeRawTransaction(encoded.toString());
     Assertions.assertThat(decoded.getAccessList().isPresent()).isTrue();
     Assertions.assertThat(decoded.getAccessList().map(List::size).get()).isEqualTo(1);

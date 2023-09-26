@@ -30,7 +30,6 @@
     "env": {
       "currentCoinbase": "0x0000000000000000000000000000000000000000",
       "currentDifficulty": "0x0",
-      "currentStateRoot": "0x369ba8b2e5b32d675d07933d6fb851d97d3ca66c60a829f7356163d92ae0439a",
       "currentGasLimit": "0x0",
       "currentNumber": "0",
       "currentTimestamp": "0"

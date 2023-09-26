@@ -102,8 +102,8 @@ public class BonsaiWorldStateProvider implements WorldStateArchive {
             pluginContext);
     this.blockchain = blockchain;
     this.worldStateStorage = worldStateStorage;
-    this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
     this.persistedState = new BonsaiWorldState(this, worldStateStorage);
+    this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
     blockchain
         .getBlockHeader(persistedState.getWorldStateBlockHash())
         .ifPresent(

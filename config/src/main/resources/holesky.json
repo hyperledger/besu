@@ -13,8 +13,9 @@
     "londonBlock": 0,
     "preMergeForkBlock": 0,
     "terminalTotalDifficulty": 0,
-    "shanghaiTime": 1696000704,
+    "shanghaiTime": 1694790240,
     "ethash": {},
+    "cancunTime": 2000000000,
     "discovery": {
       "bootnodes": [
         "enode://ac906289e4b7f12df423d654c5a962b6ebe5b3a74cc9e06292a85221f9a64a6f1cfdd6b714ed6dacef51578f92b34c60ee91e9ede9c7f8fadc4d347326d95e2b@146.190.13.128:30303",
@@ -826,196 +827,196 @@
         "0x000000000000000000000000000000000000000000000000000000000000003e": "0x8869ff2c22b28cc10510d9853292803328be4fb0e80495e8bb8d271f5b889636",
         "0x000000000000000000000000000000000000000000000000000000000000003f": "0xb5fe28e79f1b850f8658246ce9b6a1e7b49fc06db7143e8fe0b4f2b0c5523a5c",
         "0x0000000000000000000000000000000000000000000000000000000000000040": "0x985e929f70af28d0bdd1a90a808f977f597c7c778c489e98d3bd8910d31ac0f7"
+      },
+      "0x0000006916a87b82333f4245046623b23794C65C": {
+        "balance": "0x52b7d2dcc80cd2e4000000"
+      },
+      "0x0be949928Ff199c9EBA9E110db210AA5C94EFAd0": {
+        "balance": "0x7c13bc4b2c133c56000000"
+      },
+      "0x0C100000006d7b5e23a1eAEE637f28cA32Cd5b31": {
+        "balance": "0x52b7d2dcc80cd2e4000000"
+      },
+      "0x0C35317B7a96C454E2CB3d1A255D775Ab112cCc8": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x0d731cfabC5574329823F26d488416451d2ea376": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x0e79065B5F11b5BD1e62B935A600976ffF3754B9": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x105083929bF9bb22C26cB1777Ec92661170D4285": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x10F5d45854e038071485AC9e402308cF80D2d2fE": {
+        "balance": "0x52b7d2dcc80cd2e4000000"
+      },
+      "0x1268AD189526AC0b386faF06eFfC46779c340eE6": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x12Cba59f5A74DB81a12ff63C349Bd82CBF6007C2": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x1446D7f6dF00380F246d8211dE7f0FaBC4Fd248C": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x164e38a375247A784A81d420201AA8fe4E513921": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x1B7aA44088a0eA95bdc65fef6E5071E946Bf7d8f": {
+        "balance": "0x52b7d2dcc80cd2e4000000"
+      },
+      "0x222222222222cF64a76AE3d36859958c864fDA2c": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x2f14582947E292a2eCd20C430B46f2d27CFE213c": {
+        "balance": "0x52b7d2dcc80cd2e4000000"
+      },
+      "0x2f2c75B5Dd5D246194812b00eEb3B09c2c66e2eE": {
+        "balance": "0x52b7d2dcc80cd2e4000000"
+      },
+      "0x341c40b94bf2afbfa42573cb78f16ee15a056238": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x34f845773D4364999f2fbC7AA26ABDeE902cBb46": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x3C75594181e03E8ECD8468A0037F058a9dAfad79": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x462396E69dBfa455F405f4DD82F3014Af8003B72": {
+        "balance": "0xa56fa5b99019a5c8000000"
+      },
+      "0x49Df3CCa2670eB0D591146B16359fe336e476F29": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x4D0b04b405c6b62C7cFC3aE54759747e2C0b4662": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x4D496CcC28058B1D74B7a19541663E21154f9c84": {
+        "balance": "0x52b7d2dcc80cd2e4000000"
+      },
+      "0x509a7667aC8D0320e36172c192506a6188aA84f6": {
+        "balance": "0x7c13bc4b2c133c56000000"
+      },
+      "0x5180db0237291A6449DdA9ed33aD90a38787621c": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x52730f347dEf6BA09adfF62EaC60D5fEe8205BC4": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x5EAC0fBd3dfef8aE3efa3c5dc1aa193bc6033dFd": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x6a7aA9b882d50Bb7bc5Da1a244719C99f12F06a3": {
+        "balance": "0x52b7d2dcc80cd2e4000000"
+      },
+      "0x6Cc9397c3B38739daCbfaA68EaD5F5D77Ba5F455": {
+        "balance": "0x52b7d2dcc80cd2e4000000"
+      },
+      "0x762cA62ca2549ad806763B3Aa1eA317c429bDBDa": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x778F5F13C4Be78A3a4d7141BCB26999702f407CF": {
+        "balance": "0x52b7d2dcc80cd2e4000000"
+      },
+      "0x875D25Ee4bC604C71BaF6236a8488F22399BED4b": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x8dF7878d3571BEF5e5a744F96287C8D20386d75A": {
+        "balance": "0x52b7d2dcc80cd2e4000000"
+      },
+      "0x9E415A096fF77650dc925dEA546585B4adB322B6": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0xA0766B65A4f7B1da79a1AF79aC695456eFa28644": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0xA29B144A449E414A472c60C7AAf1aaFfE329021D": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0xa55395566b0b54395B3246f96A0bDc4b8a483df9": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0xAC9ba72fb61aA7c31A95df0A8b6ebA6f41EF875e": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0xB0498C15879db2eE5471d4926c5fAA25C9a09683": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0xB19Fb4c1f280327e60Ed37b1Dc6EE77533539314": {
+        "balance": "0x52b7d2dcc80cd2e4000000"
+      },
+      "0xC21cB9C99C316d1863142F7dD86dd5496D81A8D6": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0xc473d412dc52e349862209924c8981b2ee420768": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0xC48E23C5F6e1eA0BaEf6530734edC3968f79Af2e": {
+        "balance": "0x52b7d2dcc80cd2e4000000"
+      },
+      "0xc6e2459991BfE27cca6d86722F35da23A1E4Cb97": {
+        "balance": "0x52b7d2dcc80cd2e4000000"
+      },
+      "0xD3994e4d3202dD23c8497d7F75bF1647d1DA1bb1": {
+        "balance": "0x19D971E4FE8401E74000000"
+      },
+      "0xDCA6e9B48Ea86AeBFDf9929949124042296b6e34": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0xe0a2Bd4258D2768837BAa26A28fE71Dc079f84c7": {
+        "balance": "0x52b7d2dcc80cd2e4000000"
+      },
+      "0xEA28d002042fd9898D0Db016be9758eeAFE35C1E": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0xEfA7454f1116807975A4750B46695E967850de5D": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0xFBFd6Fa9F73Ac6A058E01259034C28001BEf8247": {
+        "balance": "0x52b7d2dcc80cd2e4000000"
+      },
+      "0xe0991E844041bE6F11B99da5b114b6bCf84EBd57": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x15E719b6AcAf1E4411Bf0f9576CB1D0dB161DdFc": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x346D827a75F98F0A7a324Ff80b7C3F90252E8baC": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x73b2e0E54510239E22cC936F0b4a6dE1acf0AbdE": {
+        "balance": "0x52b7d2dcc80cd2e4000000"
+      },
+      "0xBb977B2EE8a111D788B3477D242078d0B837E72b": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x834Dbf5A03e29c25bc55459cCe9c021EeBE676Ad": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0xD1F77E4C1C45186e8653C489F90e008a73597296": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0xb04aeF2a3d2D86B01006cCD4339A2e943d9c6480": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0xC9CA2bA9A27De1Db589d8c33Ab8EDFa2111b31fb": {
+        "balance": "0xd3c21bcecceda1000000"
+      },
+      "0x4BC656B34De23896fa6069C9862F355b740401aF": {
+        "balance": "0x084595161401484a000000"
       }
-    },
-    "0x0000006916a87b82333f4245046623b23794C65C": {
-      "balance": "0x52b7d2dcc80cd2e4000000"
-    },
-    "0x0be949928Ff199c9EBA9E110db210AA5C94EFAd0": {
-      "balance": "0x7c13bc4b2c133c56000000"
-    },
-    "0x0C100000006d7b5e23a1eAEE637f28cA32Cd5b31": {
-      "balance": "0x52b7d2dcc80cd2e4000000"
-    },
-    "0x0C35317B7a96C454E2CB3d1A255D775Ab112cCc8": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x0d731cfabC5574329823F26d488416451d2ea376": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x0e79065B5F11b5BD1e62B935A600976ffF3754B9": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x105083929bF9bb22C26cB1777Ec92661170D4285": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x10F5d45854e038071485AC9e402308cF80D2d2fE": {
-      "balance": "0x52b7d2dcc80cd2e4000000"
-    },
-    "0x1268AD189526AC0b386faF06eFfC46779c340eE6": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x12Cba59f5A74DB81a12ff63C349Bd82CBF6007C2": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x1446D7f6dF00380F246d8211dE7f0FaBC4Fd248C": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x164e38a375247A784A81d420201AA8fe4E513921": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x1B7aA44088a0eA95bdc65fef6E5071E946Bf7d8f": {
-      "balance": "0x52b7d2dcc80cd2e4000000"
-    },
-    "0x222222222222cF64a76AE3d36859958c864fDA2c": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x2f14582947E292a2eCd20C430B46f2d27CFE213c": {
-      "balance": "0x52b7d2dcc80cd2e4000000"
-    },
-    "0x2f2c75B5Dd5D246194812b00eEb3B09c2c66e2eE": {
-      "balance": "0x52b7d2dcc80cd2e4000000"
-    },
-    "0x341c40b94bf2afbfa42573cb78f16ee15a056238": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x34f845773D4364999f2fbC7AA26ABDeE902cBb46": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x3C75594181e03E8ECD8468A0037F058a9dAfad79": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x462396E69dBfa455F405f4DD82F3014Af8003B72": {
-      "balance": "0xa56fa5b99019a5c8000000"
-    },
-    "0x49Df3CCa2670eB0D591146B16359fe336e476F29": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x4D0b04b405c6b62C7cFC3aE54759747e2C0b4662": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x4D496CcC28058B1D74B7a19541663E21154f9c84": {
-      "balance": "0x52b7d2dcc80cd2e4000000"
-    },
-    "0x509a7667aC8D0320e36172c192506a6188aA84f6": {
-      "balance": "0x7c13bc4b2c133c56000000"
-    },
-    "0x5180db0237291A6449DdA9ed33aD90a38787621c": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x52730f347dEf6BA09adfF62EaC60D5fEe8205BC4": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x5EAC0fBd3dfef8aE3efa3c5dc1aa193bc6033dFd": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x6a7aA9b882d50Bb7bc5Da1a244719C99f12F06a3": {
-      "balance": "0x52b7d2dcc80cd2e4000000"
-    },
-    "0x6Cc9397c3B38739daCbfaA68EaD5F5D77Ba5F455": {
-      "balance": "0x52b7d2dcc80cd2e4000000"
-    },
-    "0x762cA62ca2549ad806763B3Aa1eA317c429bDBDa": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x778F5F13C4Be78A3a4d7141BCB26999702f407CF": {
-      "balance": "0x52b7d2dcc80cd2e4000000"
-    },
-    "0x875D25Ee4bC604C71BaF6236a8488F22399BED4b": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x8dF7878d3571BEF5e5a744F96287C8D20386d75A": {
-      "balance": "0x52b7d2dcc80cd2e4000000"
-    },
-    "0x9E415A096fF77650dc925dEA546585B4adB322B6": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0xA0766B65A4f7B1da79a1AF79aC695456eFa28644": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0xA29B144A449E414A472c60C7AAf1aaFfE329021D": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0xa55395566b0b54395B3246f96A0bDc4b8a483df9": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0xAC9ba72fb61aA7c31A95df0A8b6ebA6f41EF875e": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0xB0498C15879db2eE5471d4926c5fAA25C9a09683": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0xB19Fb4c1f280327e60Ed37b1Dc6EE77533539314": {
-      "balance": "0x52b7d2dcc80cd2e4000000"
-    },
-    "0xC21cB9C99C316d1863142F7dD86dd5496D81A8D6": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0xc473d412dc52e349862209924c8981b2ee420768": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0xC48E23C5F6e1eA0BaEf6530734edC3968f79Af2e": {
-      "balance": "0x52b7d2dcc80cd2e4000000"
-    },
-    "0xc6e2459991BfE27cca6d86722F35da23A1E4Cb97": {
-      "balance": "0x52b7d2dcc80cd2e4000000"
-    },
-    "0xD3994e4d3202dD23c8497d7F75bF1647d1DA1bb1": {
-      "balance": "0x19D971E4FE8401E74000000"
-    },
-    "0xDCA6e9B48Ea86AeBFDf9929949124042296b6e34": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0xe0a2Bd4258D2768837BAa26A28fE71Dc079f84c7": {
-      "balance": "0x52b7d2dcc80cd2e4000000"
-    },
-    "0xEA28d002042fd9898D0Db016be9758eeAFE35C1E": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0xEfA7454f1116807975A4750B46695E967850de5D": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0xFBFd6Fa9F73Ac6A058E01259034C28001BEf8247": {
-      "balance": "0x52b7d2dcc80cd2e4000000"
-    },
-    "0xe0991E844041bE6F11B99da5b114b6bCf84EBd57": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x15E719b6AcAf1E4411Bf0f9576CB1D0dB161DdFc": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x346D827a75F98F0A7a324Ff80b7C3F90252E8baC": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x73b2e0E54510239E22cC936F0b4a6dE1acf0AbdE": {
-      "balance": "0x52b7d2dcc80cd2e4000000"
-    },
-    "0xBb977B2EE8a111D788B3477D242078d0B837E72b": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x834Dbf5A03e29c25bc55459cCe9c021EeBE676Ad": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0xD1F77E4C1C45186e8653C489F90e008a73597296": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0xb04aeF2a3d2D86B01006cCD4339A2e943d9c6480": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0xC9CA2bA9A27De1Db589d8c33Ab8EDFa2111b31fb": {
-      "balance": "0xd3c21bcecceda1000000"
-    },
-    "0x4BC656B34De23896fa6069C9862F355b740401aF": {
-      "balance": "0x084595161401484a000000"
     }
   },
   "coinbase": "0x0000000000000000000000000000000000000000",
   "baseFeePerGas": "0x3B9ACA00",
   "difficulty": "0x01",
-  "extraData": "",
+  "extraData": "0x686f77206d7563682069732074686520666973683f",
   "gasLimit": "0x17D7840",
   "nonce": "0x1234",
   "mixhash": "0x0000000000000000000000000000000000000000000000000000000000000000",
   "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-  "timestamp": "1695902100"
+  "timestamp": "1694786100"
 }

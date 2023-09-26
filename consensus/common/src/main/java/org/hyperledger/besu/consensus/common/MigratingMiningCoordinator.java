@@ -65,7 +65,6 @@ public class MigratingMiningCoordinator implements MiningCoordinator, BlockAdded
   }
 
   private void startActiveMiningCoordinator() {
-    activeMiningCoordinator.enable();
     activeMiningCoordinator.start();
     if (activeMiningCoordinator instanceof BlockAddedObserver) {
       ((BlockAddedObserver) activeMiningCoordinator).removeObserver();

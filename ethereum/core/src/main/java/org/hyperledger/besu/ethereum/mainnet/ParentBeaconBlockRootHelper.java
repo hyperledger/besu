@@ -22,17 +22,28 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** A helper class to store the parent beacon block root. */
-public interface ParentBeaconBlockRootHelper {
+public class ParentBeaconBlockRootHelper {
 
   // Modulus use to for the timestamp to store the  root
-  public static final long HISTORICAL_ROOTS_MODULUS = 8191;
-  public static final Address BEACON_ROOTS_ADDRESS =
-      Address.fromHexString("0xBEaC020001c6C8B69E5257f4754e46e25f5dc9cB");
+  public static final long HISTORICAL_ROOTS_MODULUS = 98304;
 
-  static void storeParentBeaconBlockRoot(
+  // Address of the system user, that is used to call the contract for storing the root
+  // public static final Address SYSTEM_ADDRESS =
+  // Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe");
+
+  // The address of the contract that stores the roots
+  // public static final Address BEACON_ROOTS_ADDRESS =
+  // Address.fromHexString("0x89e64Be8700cC37EB34f9209c96466DEEDc0d8a6");
+
+  public static void storeParentBeaconBlockRoot(
       final WorldUpdater worldUpdater, final long timestamp, final Bytes32 root) {
     /*
-     see EIP-4788: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4788.md
+     pseudo code from EIP 4788:
+     timestamp_as_uint256 = to_uint256_be(block_header.timestamp)
+     parent_beacon_block_root = block_header.parent_beacon_block_root
+
+     sstore(HISTORY_STORAGE_ADDRESS, timestamp_index, timestamp_as_uint256)
+     sstore(HISTORY_STORAGE_ADDRESS, root_index, parent_beacon_block_root)
     */
     final long timestampReduced = timestamp % HISTORICAL_ROOTS_MODULUS;
     final long timestampExtended = timestampReduced + HISTORICAL_ROOTS_MODULUS;
@@ -40,7 +51,8 @@ public interface ParentBeaconBlockRootHelper {
     final UInt256 timestampIndex = UInt256.valueOf(timestampReduced);
     final UInt256 rootIndex = UInt256.valueOf(timestampExtended);
 
-    final MutableAccount account = worldUpdater.getOrCreate(BEACON_ROOTS_ADDRESS);
+    final MutableAccount account =
+        worldUpdater.getOrCreate(Address.PARENT_BEACON_BLOCK_ROOT_REGISTRY).getMutable();
     account.setStorageValue(timestampIndex, UInt256.valueOf(timestamp));
     account.setStorageValue(rootIndex, UInt256.fromBytes(root));
     worldUpdater.commit();

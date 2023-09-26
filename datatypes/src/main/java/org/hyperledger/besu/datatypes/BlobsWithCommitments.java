@@ -38,15 +38,11 @@ public class BlobsWithCommitments {
       final List<Blob> blobs,
       final List<KZGProof> kzgProofs,
       final List<VersionedHash> versionedHashes) {
-    if (blobs.size() == 0) {
-      throw new InvalidParameterException(
-          "There needs to be a minimum of one blob in a blob transaction with commitments");
-    }
     if (blobs.size() != kzgCommitments.size()
         || blobs.size() != kzgProofs.size()
-        || blobs.size() != versionedHashes.size()) {
+        || kzgCommitments.size() != versionedHashes.size()) {
       throw new InvalidParameterException(
-          "There must be an equal number of blobs, commitments, proofs, and versioned hashes");
+          "There must be an equal number of blobs, commitments and proofs");
     }
     this.kzgCommitments = kzgCommitments;
     this.blobs = blobs;

@@ -37,10 +37,12 @@ import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
+import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
 import org.hyperledger.besu.util.LogConfigurator;
@@ -182,8 +184,7 @@ public class StateTestSubCommand implements Runnable {
                 parentCommand.out,
                 parentCommand.showMemory,
                 !parentCommand.hideStack,
-                parentCommand.showReturnData,
-                parentCommand.showStorage)
+                parentCommand.showReturnData)
             : OperationTracer.NO_TRACING;
 
     final ObjectMapper objectMapper = JsonUtils.createObjectMapper();
@@ -199,7 +200,9 @@ public class StateTestSubCommand implements Runnable {
       }
 
       final BlockHeader blockHeader = spec.getBlockHeader();
+      final WorldState initialWorldState = spec.getInitialWorldState();
       final Transaction transaction = spec.getTransaction();
+
       final ObjectNode summaryLine = objectMapper.createObjectNode();
       if (transaction == null) {
         if (parentCommand.showJsonAlloc || parentCommand.showJsonResults) {
@@ -214,7 +217,7 @@ public class StateTestSubCommand implements Runnable {
         summaryLine.put("pass", spec.getExpectException() != null);
         summaryLine.put("validationError", "Transaction had out-of-bounds parameters");
       } else {
-        final MutableWorldState worldState = spec.getInitialWorldState().copy();
+        final MutableWorldState worldState = new DefaultMutableWorldState(initialWorldState);
         // Several of the GeneralStateTests check if the transaction could potentially
         // consume more gas than is left for the block it's attempted to be included in.
         // This check is performed within the `BlockImporter` rather than inside the
@@ -263,7 +266,6 @@ public class StateTestSubCommand implements Runnable {
           }
         }
         worldStateUpdater.commit();
-        worldState.persist(blockHeader);
 
         summaryLine.put("output", result.getOutput().toUnprefixedHexString());
         final long gasUsed = transaction.getGasLimit() - result.getGasRemaining();

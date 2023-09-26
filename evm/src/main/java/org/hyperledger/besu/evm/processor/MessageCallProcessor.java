@@ -18,7 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
-import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.account.EvmAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
@@ -28,8 +28,8 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
+import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +61,7 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
    * @param precompiles the precompiles
    */
   public MessageCallProcessor(final EVM evm, final PrecompileContractRegistry precompiles) {
-    super(evm, Set.of());
+    super(evm, ImmutableSet.of());
     this.precompiles = precompiles;
   }
 
@@ -102,11 +102,11 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
    * of the world state of this executor.
    */
   private void transferValue(final MessageFrame frame) {
-    final MutableAccount senderAccount = frame.getWorldUpdater().getSenderAccount(frame);
+    final EvmAccount senderAccount = frame.getWorldUpdater().getSenderAccount(frame);
 
     // The yellow paper explicitly states that if the recipient account doesn't exist at this
     // point, it is created. Even if the value is zero we are still creating an account with 0x!
-    final MutableAccount recipientAccount =
+    final EvmAccount recipientAccount =
         frame.getWorldUpdater().getOrCreate(frame.getRecipientAddress());
 
     if (Objects.equals(frame.getValue(), Wei.ZERO)) {
@@ -125,8 +125,9 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
     if (frame.getRecipientAddress().equals(frame.getSenderAddress())) {
       LOG.trace("Message call of {} to itself: no fund transferred", frame.getSenderAddress());
     } else {
-      final Wei prevSenderBalance = senderAccount.decrementBalance(frame.getValue());
-      final Wei prevRecipientBalance = recipientAccount.incrementBalance(frame.getValue());
+      final Wei prevSenderBalance = senderAccount.getMutable().decrementBalance(frame.getValue());
+      final Wei prevRecipientBalance =
+          recipientAccount.getMutable().incrementBalance(frame.getValue());
 
       LOG.trace(
           "Transferred value {} for message call from {} ({} -> {}) to {} ({} -> {})",

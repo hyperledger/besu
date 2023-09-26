@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockValueCalculator;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 
 import java.util.ArrayList;
@@ -96,9 +95,7 @@ public class BlockResultFactory {
   public EngineGetPayloadResultV1 payloadTransactionCompleteV1(final Block block) {
     final List<String> txs =
         block.getBody().getTransactions().stream()
-            .map(
-                transaction ->
-                    TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
+            .map(TransactionEncoder::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
@@ -109,9 +106,7 @@ public class BlockResultFactory {
       final BlockWithReceipts blockWithReceipts) {
     final List<String> txs =
         blockWithReceipts.getBlock().getBody().getTransactions().stream()
-            .map(
-                transaction ->
-                    TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
+            .map(TransactionEncoder::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 
@@ -137,9 +132,7 @@ public class BlockResultFactory {
       final BlockWithReceipts blockWithReceipts) {
     final List<String> txs =
         blockWithReceipts.getBlock().getBody().getTransactions().stream()
-            .map(
-                transaction ->
-                    TransactionEncoder.encodeOpaqueBytes(transaction, EncodingContext.BLOCK_BODY))
+            .map(TransactionEncoder::encodeOpaqueBytes)
             .map(Bytes::toHexString)
             .collect(Collectors.toList());
 

@@ -46,9 +46,7 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
     /** Running state. */
     RUNNING,
     /** Stopped state. */
-    STOPPED,
-    /** Paused state. */
-    PAUSED,
+    STOPPED
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(BftMiningCoordinator.class);
@@ -63,7 +61,7 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
   private final BftExecutors bftExecutors;
 
   private long blockAddedObserverId;
-  private final AtomicReference<State> state = new AtomicReference<>(State.PAUSED);
+  private final AtomicReference<State> state = new AtomicReference<>(State.IDLE);
 
   /**
    * Instantiates a new Bft mining coordinator.
@@ -124,13 +122,7 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
 
   @Override
   public boolean enable() {
-    // Return true if we're already running or idle, or successfully switch to idle
-    if (state.get() == State.RUNNING
-        || state.get() == State.IDLE
-        || state.compareAndSet(State.PAUSED, State.IDLE)) {
-      return true;
-    }
-    return false;
+    return true;
   }
 
   @Override

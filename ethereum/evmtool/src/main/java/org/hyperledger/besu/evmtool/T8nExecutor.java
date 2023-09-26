@@ -45,10 +45,10 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
-import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.worldstate.DefaultMutableWorldState;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.log.Log;
@@ -229,7 +229,7 @@ public class T8nExecutor {
       final String rewardString,
       final ObjectMapper objectMapper,
       final ReferenceTestEnv referenceTestEnv,
-      final ReferenceTestWorldState initialWorldState,
+      final MutableWorldState initialWorldState,
       final List<Transaction> transactions,
       final List<RejectedTransaction> rejections,
       final TracerManager tracerManager) {
@@ -238,7 +238,7 @@ public class T8nExecutor {
         ReferenceTestProtocolSchedules.create(
             new StubGenesisConfigOptions().chainId(BigInteger.valueOf(chainId)));
 
-    final MutableWorldState worldState = initialWorldState.copy();
+    final MutableWorldState worldState = new DefaultMutableWorldState(initialWorldState);
 
     final ProtocolSchedule protocolSchedule = referenceTestProtocolSchedules.getByName(fork);
     if (protocolSchedule == null) {
@@ -270,7 +270,6 @@ public class T8nExecutor {
       final TransactionProcessingResult result;
       try {
         tracer = tracerManager.getManagedTracer(i, transaction.getHash());
-        tracer.traceStartTransaction(worldStateUpdater, transaction);
         result =
             processor.processTransaction(
                 blockchain,
@@ -313,18 +312,12 @@ public class T8nExecutor {
                 .getGasCalculator()
                 .transactionIntrinsicGasCost(
                     transaction.getPayload(), transaction.getTo().isEmpty());
+        tracer.traceEndTransaction(
+            result.getOutput(), gasUsed - intrinsicGas, timer.elapsed(TimeUnit.NANOSECONDS));
         TransactionReceipt receipt =
             protocolSpec
                 .getTransactionReceiptFactory()
                 .create(transaction.getType(), result, worldState, gasUsed);
-        tracer.traceEndTransaction(
-            worldStateUpdater,
-            transaction,
-            result.isSuccessful(),
-            result.getOutput(),
-            result.getLogs(),
-            gasUsed - intrinsicGas,
-            timer.elapsed(TimeUnit.NANOSECONDS));
         Bytes gasUsedInTransaction = Bytes.ofUnsignedLong(transactionGasUsed);
         receipts.add(receipt);
         ObjectNode receiptObject = receiptsArray.addObject();
@@ -361,6 +354,7 @@ public class T8nExecutor {
               : Wei.of(Long.decode(rewardString));
       worldStateUpdater
           .getOrCreateSenderAccount(blockHeader.getCoinbase())
+          .getMutable()
           .incrementBalance(reward);
     }
 

@@ -47,7 +47,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.referencetests.DefaultReferenceTestWorldState;
+import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -149,10 +149,7 @@ public class BackwardSyncContextTest {
               return new BlockProcessingResult(
                   Optional.of(
                       new BlockProcessingOutputs(
-                          // use forest-based worldstate since it does not require
-                          // blockheader stateroot to match actual worldstate root
-                          DefaultReferenceTestWorldState.create(Collections.emptyMap()),
-                          blockDataGenerator.receipts(block))));
+                          new ReferenceTestWorldState(), blockDataGenerator.receipts(block))));
             });
 
     backwardChain = inMemoryBackwardChain();

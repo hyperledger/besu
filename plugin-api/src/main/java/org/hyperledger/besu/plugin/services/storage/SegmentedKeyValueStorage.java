@@ -79,19 +79,6 @@ public interface SegmentedKeyValueStorage extends Closeable {
       final SegmentIdentifier segmentIdentifier, final byte[] startKey);
 
   /**
-   * Returns a stream of key-value pairs starting from the specified key, ending at the specified
-   * key. This method is used to retrieve a stream of data from the storage, starting from the given
-   * key. If no data is available from the specified key onwards, an empty stream is returned.
-   *
-   * @param segmentIdentifier The segment identifier whose keys we want to stream.
-   * @param startKey The key from which the stream should start.
-   * @param endKey The key at which the stream should stop.
-   * @return A stream of key-value pairs starting from the specified key.
-   */
-  Stream<Pair<byte[], byte[]>> streamFromKey(
-      final SegmentIdentifier segmentIdentifier, final byte[] startKey, final byte[] endKey);
-
-  /**
    * Stream keys.
    *
    * @param segmentIdentifier the segment identifier

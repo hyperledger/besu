@@ -170,21 +170,16 @@ privacy-onchain-groups-enabled=false
 privacy-flexible-groups-enabled=false
 
 # Transaction Pool
-tx-pool="layered"
+tx-pool-retention-hours=999
 tx-pool-price-bump=13
+tx-pool-max-size=1234
+tx-pool-limit-by-account-percentage=0.017
+Xincoming-tx-messages-keep-alive-seconds=60
 rpc-tx-feecap=2000000000000000000
 strict-tx-replay-protection-enabled=true
 tx-pool-disable-locals=false
 tx-pool-enable-save-restore=true
 tx-pool-save-file="txpool.dump"
-## Layered
-tx-pool-layer-max-capacity=12345678
-tx-pool-max-prioritized=9876
-tx-pool-max-future-by-sender=321
-## Legacy
-tx-pool-retention-hours=999
-tx-pool-max-size=1234
-tx-pool-limit-by-account-percentage=0.017
 
 # Revert Reason
 revert-reason-enabled=false

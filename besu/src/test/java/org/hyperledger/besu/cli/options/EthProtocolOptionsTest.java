@@ -165,12 +165,12 @@ public class EthProtocolOptionsTest
   }
 
   @Override
-  protected EthProtocolConfiguration createDefaultDomainObject() {
+  EthProtocolConfiguration createDefaultDomainObject() {
     return EthProtocolConfiguration.builder().build();
   }
 
   @Override
-  protected EthProtocolConfiguration createCustomizedDomainObject() {
+  EthProtocolConfiguration createCustomizedDomainObject() {
     return EthProtocolConfiguration.builder()
         .maxMessageSize(EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE * 2)
         .maxGetBlockHeaders(EthProtocolConfiguration.DEFAULT_MAX_GET_BLOCK_HEADERS + 2)
@@ -184,13 +184,12 @@ public class EthProtocolOptionsTest
   }
 
   @Override
-  protected EthProtocolOptions optionsFromDomainObject(
-      final EthProtocolConfiguration domainObject) {
+  EthProtocolOptions optionsFromDomainObject(final EthProtocolConfiguration domainObject) {
     return EthProtocolOptions.fromConfig(domainObject);
   }
 
   @Override
-  protected EthProtocolOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
+  EthProtocolOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
     return besuCommand.getEthProtocolOptions();
   }
 }

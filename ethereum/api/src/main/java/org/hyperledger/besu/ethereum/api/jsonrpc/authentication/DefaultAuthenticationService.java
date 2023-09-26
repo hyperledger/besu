@@ -33,9 +33,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
-import io.vertx.ext.auth.authentication.Credentials;
-import io.vertx.ext.auth.authentication.TokenCredentials;
-import io.vertx.ext.auth.authentication.UsernamePasswordCredentials;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.web.RoutingContext;
@@ -169,7 +166,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
   private void login(
       final RoutingContext routingContext, final AuthenticationProvider credentialAuthProvider) {
-    final JsonObject requestBody = routingContext.body().asJsonObject();
+    final JsonObject requestBody = routingContext.getBodyAsJson();
 
     if (requestBody == null) {
       routingContext
@@ -184,10 +181,8 @@ public class DefaultAuthenticationService implements AuthenticationService {
     final JsonObject authParams = new JsonObject();
     authParams.put(USERNAME, requestBody.getValue(USERNAME));
     authParams.put("password", requestBody.getValue("password"));
-    final Credentials credentials = new UsernamePasswordCredentials(authParams);
-
     credentialAuthProvider.authenticate(
-        credentials,
+        authParams,
         r -> {
           if (r.failed()) {
             routingContext
@@ -232,7 +227,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
     try {
       getJwtAuthProvider()
           .authenticate(
-              new TokenCredentials(new JsonObject().put("token", token)),
+              new JsonObject().put("token", token),
               r -> {
                 if (r.succeeded()) {
                   final Optional<User> user = Optional.ofNullable(r.result());

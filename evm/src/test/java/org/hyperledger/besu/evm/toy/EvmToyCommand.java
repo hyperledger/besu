@@ -123,12 +123,6 @@ public class EvmToyCommand implements Runnable {
   final Boolean showReturnData = false;
 
   @CommandLine.Option(
-      names = {"--trace.storage"},
-      description = "When tracing, show the updated storage contents.",
-      scope = ScopeType.INHERIT)
-  final Boolean showStorage = false;
-
-  @CommandLine.Option(
       names = {"--repeat"},
       description = "Number of times to repeat for benchmarking.")
   private final Integer repeat = 0;
@@ -154,8 +148,8 @@ public class EvmToyCommand implements Runnable {
   @Override
   public void run() {
     final WorldUpdater worldUpdater = new ToyWorld();
-    worldUpdater.getOrCreate(sender).setBalance(Wei.of(BigInteger.TWO.pow(20)));
-    worldUpdater.getOrCreate(receiver).setCode(codeBytes);
+    worldUpdater.getOrCreate(sender).getMutable().setBalance(Wei.of(BigInteger.TWO.pow(20)));
+    worldUpdater.getOrCreate(receiver).getMutable().setCode(codeBytes);
 
     int repeat = this.repeat;
     final EVM evm = MainnetEVMs.berlin(EvmConfiguration.DEFAULT);
@@ -170,8 +164,7 @@ public class EvmToyCommand implements Runnable {
 
       final OperationTracer tracer = // You should have picked Mercy.
           lastLoop && showJsonResults
-              ? new StandardJsonTracer(
-                  System.out, showMemory, showStack, showReturnData, showStorage)
+              ? new StandardJsonTracer(System.out, showMemory, showStack, showReturnData)
               : OperationTracer.NO_TRACING;
 
       MessageFrame initialMessageFrame =
