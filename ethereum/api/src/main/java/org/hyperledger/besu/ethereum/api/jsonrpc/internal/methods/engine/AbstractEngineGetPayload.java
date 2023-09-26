@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -79,7 +78,7 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
       ValidationResult<RpcErrorType> forkValidationResult =
           validateForkSupported(proposal.getHeader().getTimestamp());
       if (!forkValidationResult.isValid()) {
-        return new JsonRpcSuccessResponse(request.getRequest().getId(), forkValidationResult);
+        return new JsonRpcErrorResponse(request.getRequest().getId(), forkValidationResult);
       }
       return createResponse(request, payloadId, proposal);
     }

@@ -140,7 +140,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
       final Predicate<PendingTransaction> promotionFilter,
       final long freeSpace,
       final int freeSlots) {
-    long accSpace = 0;
+    long accumulatedSpace = 0;
     final List<PendingTransaction> promotedTxs = new ArrayList<>();
 
     final var zeroGapSenders = orderByGap.get(0);
@@ -152,8 +152,8 @@ public class SparseTransactions extends AbstractTransactionsLayer {
       for (final var candidateTx : senderSeqTxs.values()) {
 
         if (promotionFilter.test(candidateTx)) {
-          accSpace += candidateTx.memorySize();
-          if (promotedTxs.size() < freeSlots && accSpace <= freeSpace) {
+          accumulatedSpace += candidateTx.memorySize();
+          if (promotedTxs.size() < freeSlots && accumulatedSpace <= freeSpace) {
             promotedTxs.add(candidateTx);
           } else {
             // no room for more txs the search is over exit the loops

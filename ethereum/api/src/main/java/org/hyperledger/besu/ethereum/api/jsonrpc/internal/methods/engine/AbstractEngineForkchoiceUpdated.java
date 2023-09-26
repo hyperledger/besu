@@ -69,7 +69,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
   }
 
   protected ValidationResult<RpcErrorType> validateParameter(
-      final EngineForkchoiceUpdatedParameter forkchoiceUpdatedParameter) {
+      final EngineForkchoiceUpdatedParameter forkchoiceUpdatedParameter,
+      final Optional<EnginePayloadAttributesParameter> maybePayloadAttributes) {
     return ValidationResult.valid();
   }
 
@@ -85,19 +86,19 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
         requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
 
     LOG.debug("Forkchoice parameters {}", forkChoice);
+    ValidationResult<RpcErrorType> parameterValidationResult =
+        validateParameter(forkChoice, maybePayloadAttributes);
+    if (!parameterValidationResult.isValid()) {
+      return new JsonRpcErrorResponse(requestId, parameterValidationResult);
+    }
 
     if (maybePayloadAttributes.isPresent()) {
       final EnginePayloadAttributesParameter payloadAttributes = maybePayloadAttributes.get();
       ValidationResult<RpcErrorType> forkValidationResult =
           validateForkSupported(payloadAttributes.getTimestamp());
       if (!forkValidationResult.isValid()) {
-        return new JsonRpcSuccessResponse(requestId, forkValidationResult);
+        return new JsonRpcErrorResponse(requestId, forkValidationResult);
       }
-    }
-
-    ValidationResult<RpcErrorType> parameterValidationResult = validateParameter(forkChoice);
-    if (!parameterValidationResult.isValid()) {
-      return new JsonRpcSuccessResponse(requestId, parameterValidationResult);
     }
 
     mergeContext
