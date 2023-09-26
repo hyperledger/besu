@@ -19,6 +19,7 @@
 | Gary Schulte     | garyschulte      | GarySchulte      | 
 | Jiri Peinlich    | gezero           | JiriPeinlich     |
 | Gabriel Fukushima| gfukushima       | gfukushima       |
+| George Tebrean   | gtebrean         | gtebrean         |
 | Justin Florentine| jflo             | RoboCopsGoneMad  |
 | Jason Frame      | jframe           | jframe           |
 | Joshua Fernandes | joshuafernandes  | joshuafernandes  |
@@ -27,6 +28,7 @@
 | Karim Taam       | matkt            | matkt            |
 | Matthew Whitehead| matthew1001      | matthew.whitehead      |
 | Meredith Baxter  | mbaxter          | mbaxter          |
+| Nischal Sharma   | nicksneo         | nicks1106        |
 | Stefan Pingel    | pinges           | pinges           |
 | Danno Ferrin     | shemnon          | shemnon          |
 | Simon Dudley     | siladu           | siladu           |
