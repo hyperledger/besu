@@ -131,7 +131,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
       }
     }
 
-    ValidationResult<RpcErrorType> parameterValidationResult = validateParameter(forkChoice);
+    ValidationResult<RpcErrorType> parameterValidationResult =
+        validateParameter(forkChoice, maybePayloadAttributes);
     if (!parameterValidationResult.isValid()) {
       return new JsonRpcSuccessResponse(requestId, parameterValidationResult);
     }
