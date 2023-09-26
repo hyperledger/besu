@@ -79,7 +79,7 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
       ValidationResult<RpcErrorType> forkValidationResult =
           validateForkSupported(proposal.getHeader().getTimestamp());
       if (!forkValidationResult.isValid()) {
-        return new JsonRpcSuccessResponse(request.getRequest().getId(), forkValidationResult);
+        return new JsonRpcErrorResponse(request.getRequest().getId(), forkValidationResult);
       }
       return createResponse(request, payloadId, proposal);
     }

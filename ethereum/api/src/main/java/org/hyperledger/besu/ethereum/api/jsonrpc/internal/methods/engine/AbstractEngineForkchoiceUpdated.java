@@ -91,13 +91,13 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
       ValidationResult<RpcErrorType> forkValidationResult =
           validateForkSupported(payloadAttributes.getTimestamp());
       if (!forkValidationResult.isValid()) {
-        return new JsonRpcSuccessResponse(requestId, forkValidationResult);
+        return new JsonRpcErrorResponse(requestId, forkValidationResult);
       }
     }
 
     ValidationResult<RpcErrorType> parameterValidationResult = validateParameter(forkChoice);
     if (!parameterValidationResult.isValid()) {
-      return new JsonRpcSuccessResponse(requestId, parameterValidationResult);
+      return new JsonRpcErrorResponse(requestId, parameterValidationResult);
     }
 
     mergeContext
