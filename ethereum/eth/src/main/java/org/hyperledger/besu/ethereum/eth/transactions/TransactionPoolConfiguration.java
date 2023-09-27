@@ -61,7 +61,7 @@ public interface TransactionPoolConfiguration {
   boolean DEFAULT_STRICT_TX_REPLAY_PROTECTION_ENABLED = false;
   Percentage DEFAULT_PRICE_BUMP = Percentage.fromInt(10);
   Wei DEFAULT_RPC_TX_FEE_CAP = Wei.fromEth(1);
-  boolean DEFAULT_DISABLE_LOCAL_TXS = false;
+  boolean DEFAULT_NO_LOCAL_PRIORITY = false;
   boolean DEFAULT_ENABLE_SAVE_RESTORE = false;
   File DEFAULT_SAVE_FILE = new File(DEFAULT_SAVE_FILE_NAME);
   long DEFAULT_PENDING_TRANSACTIONS_LAYER_MAX_CAPACITY_BYTES = 50_000_000L;
@@ -108,8 +108,8 @@ public interface TransactionPoolConfiguration {
   }
 
   @Value.Default
-  default Boolean getDisableLocalTransactions() {
-    return DEFAULT_DISABLE_LOCAL_TXS;
+  default Boolean getNoLocalPriority() {
+    return DEFAULT_NO_LOCAL_PRIORITY;
   }
 
   @Value.Default

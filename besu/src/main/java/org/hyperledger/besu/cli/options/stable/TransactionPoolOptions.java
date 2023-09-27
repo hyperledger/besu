@@ -40,7 +40,11 @@ import picocli.CommandLine;
 /** The Transaction pool Cli stable options. */
 public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfiguration> {
   private static final String TX_POOL_IMPLEMENTATION = "--tx-pool";
+  /** Use TX_POOL_NO_LOCAL_PRIORITY instead */
+  @Deprecated(forRemoval = true)
   private static final String TX_POOL_DISABLE_LOCALS = "--tx-pool-disable-locals";
+
+  private static final String TX_POOL_NO_LOCAL_PRIORITY = "--tx-pool-no-local-priority";
   private static final String TX_POOL_ENABLE_SAVE_RESTORE = "--tx-pool-enable-save-restore";
   private static final String TX_POOL_SAVE_FILE = "--tx-pool-save-file";
   private static final String TX_POOL_PRICE_BUMP = "--tx-pool-price-bump";
@@ -57,13 +61,13 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   private TransactionPoolConfiguration.Implementation txPoolImplementation = LAYERED;
 
   @CommandLine.Option(
-      names = {TX_POOL_DISABLE_LOCALS},
+      names = {TX_POOL_NO_LOCAL_PRIORITY, TX_POOL_DISABLE_LOCALS},
       paramLabel = "<Boolean>",
       description =
-          "Set to true if transactions sent via RPC should have the same checks and not be prioritized over remote ones (default: ${DEFAULT-VALUE})",
+          "Set to true if senders of transactions sent via RPC should not have priority (default: ${DEFAULT-VALUE})",
       fallbackValue = "true",
       arity = "0..1")
-  private Boolean disableLocalTxs = TransactionPoolConfiguration.DEFAULT_DISABLE_LOCAL_TXS;
+  private Boolean noLocalPriority = TransactionPoolConfiguration.DEFAULT_NO_LOCAL_PRIORITY;
 
   @CommandLine.Option(
       names = {TX_POOL_ENABLE_SAVE_RESTORE},
@@ -212,7 +216,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
     final TransactionPoolOptions options = TransactionPoolOptions.create();
     options.txPoolImplementation = config.getTxPoolImplementation();
     options.saveRestoreEnabled = config.getEnableSaveRestore();
-    options.disableLocalTxs = config.getDisableLocalTransactions();
+    options.noLocalPriority = config.getNoLocalPriority();
     options.priceBump = config.getPriceBump();
     options.txFeeCap = config.getTxFeeCap();
     options.saveFile = config.getSaveFile();
@@ -255,7 +259,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
     return ImmutableTransactionPoolConfiguration.builder()
         .txPoolImplementation(txPoolImplementation)
         .enableSaveRestore(saveRestoreEnabled)
-        .disableLocalTransactions(disableLocalTxs)
+        .noLocalPriority(noLocalPriority)
         .priceBump(priceBump)
         .txFeeCap(txFeeCap)
         .saveFile(saveFile)

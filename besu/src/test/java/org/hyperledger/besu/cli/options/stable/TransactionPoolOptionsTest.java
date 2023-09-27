@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConf
 
 import org.hyperledger.besu.cli.options.AbstractCLIOptionsTest;
 import org.hyperledger.besu.cli.options.OptionParser;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -73,20 +74,20 @@ public class TransactionPoolOptionsTest
 
   @Test
   public void disableLocalsDefault() {
-    internalTestSuccess(config -> assertThat(config.getDisableLocalTransactions()).isFalse());
+    internalTestSuccess(config -> assertThat(config.getNoLocalPriority()).isFalse());
   }
 
   @Test
   public void disableLocalsOn() {
     internalTestSuccess(
-        config -> assertThat(config.getDisableLocalTransactions()).isTrue(),
+        config -> assertThat(config.getNoLocalPriority()).isTrue(),
         "--tx-pool-disable-locals=true");
   }
 
   @Test
   public void disableLocalsOff() {
     internalTestSuccess(
-        config -> assertThat(config.getDisableLocalTransactions()).isFalse(),
+        config -> assertThat(config.getNoLocalPriority()).isFalse(),
         "--tx-pool-disable-locals=false");
   }
 
@@ -212,6 +213,59 @@ public class TransactionPoolOptionsTest
         "Could not use layered transaction pool options with legacy implementation",
         "--tx-pool=legacy",
         "--tx-pool-max-prioritized=1000");
+  }
+
+  @Test
+  public void byDefaultNoPrioritySenders() {
+    internalTestSuccess(config -> assertThat(config.getPrioritySenders()).isEmpty());
+  }
+
+  @Test
+  public void onePrioritySenderWorks() {
+    final Address prioritySender = Address.fromHexString("0xABC123");
+    internalTestSuccess(
+        config -> assertThat(config.getPrioritySenders()).containsExactly(prioritySender),
+        "--tx-pool-priority-senders",
+        prioritySender.toHexString());
+  }
+
+  @Test
+  public void morePrioritySendersWorks() {
+    final Address prioritySender1 = Address.fromHexString("0xABC123");
+    final Address prioritySender2 = Address.fromHexString("0xDEF456");
+    final Address prioritySender3 = Address.fromHexString("0x789000");
+    internalTestSuccess(
+        config ->
+            assertThat(config.getPrioritySenders())
+                .containsExactly(prioritySender1, prioritySender2, prioritySender3),
+        "--tx-pool-priority-senders",
+        prioritySender1.toHexString()
+            + ","
+            + prioritySender2.toHexString()
+            + ","
+            + prioritySender3.toHexString());
+  }
+
+  @Test
+  public void atLeastOnePrioritySenders() {
+    internalTestFailure(
+        "Missing required parameter for option '--tx-pool-priority-senders' at index 0 (Command separated list of addresses)",
+        "--tx-pool-priority-senders");
+  }
+
+  @Test
+  public void malformedListOfPrioritySenders() {
+    final Address prioritySender1 = Address.fromHexString("0xABC123");
+    final Address prioritySender2 = Address.fromHexString("0xDEF456");
+    final Address prioritySender3 = Address.fromHexString("0x789000");
+    internalTestFailure(
+        "Invalid value for option '--tx-pool-priority-senders' at index 0 (Command separated list of addresses): cannot convert '0x0000000000000000000000000000000000abc123;0x0000000000000000000000000000000000def456' to Address (java.lang.IllegalArgumentException: Invalid odd-length hex binary representation)",
+        "--tx-pool-priority-senders",
+        prioritySender1.toHexString()
+            + ";"
+            + prioritySender2.toHexString()
+            + ","
+            + prioritySender3.toHexString());
   }
 
   @Override

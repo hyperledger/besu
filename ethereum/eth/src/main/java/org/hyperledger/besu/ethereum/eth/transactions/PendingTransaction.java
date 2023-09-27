@@ -254,10 +254,6 @@ public abstract class PendingTransaction {
         super(transaction, addedAt);
       }
 
-      public Priority(final Transaction transaction) {
-        this(transaction, System.currentTimeMillis());
-      }
-
       @Override
       public boolean hasPriority() {
         return true;
@@ -285,13 +281,9 @@ public abstract class PendingTransaction {
       return false;
     }
 
-    public static class Priority extends Local {
+    public static class Priority extends Remote {
       public Priority(final Transaction transaction, final long addedAt) {
         super(transaction, addedAt);
-      }
-
-      public Priority(final Transaction transaction) {
-        this(transaction, System.currentTimeMillis());
       }
 
       @Override

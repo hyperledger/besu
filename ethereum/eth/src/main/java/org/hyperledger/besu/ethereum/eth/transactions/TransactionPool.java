@@ -227,7 +227,7 @@ public class TransactionPool implements BlockAddedObserver {
     final boolean hasPriority = isPriorityTransaction(transaction, isLocal);
 
     final ValidationResultAndAccount validationResult =
-        validateTransaction(transaction, hasPriority);
+        validateTransaction(transaction, isLocal, hasPriority);
 
     if (validationResult.result.isValid()) {
       final TransactionAddedResult status =
@@ -288,8 +288,8 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   private boolean isPriorityTransaction(final Transaction transaction, final boolean isLocal) {
-    if (isLocal && !configuration.getDisableLocalTransactions()) {
-      // unless nolocals option is specified, senders of local sent txs are prioritized
+    if (isLocal && !configuration.getNoLocalPriority()) {
+      // unless no-local-priority option is specified, senders of local sent txs are prioritized
       return true;
     }
     // otherwise check if the sender belongs to the priority list
@@ -398,7 +398,7 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   private ValidationResultAndAccount validateTransaction(
-      final Transaction transaction, final boolean hasPriority) {
+      final Transaction transaction, final boolean isLocal, final boolean hasPriority) {
 
     final BlockHeader chainHeadBlockHeader = getChainHeadBlockHeader().orElse(null);
     if (chainHeadBlockHeader == null) {
@@ -413,7 +413,7 @@ public class TransactionPool implements BlockAddedObserver {
         protocolSchedule.getByBlockHeader(chainHeadBlockHeader).getFeeMarket();
 
     final TransactionInvalidReason priceInvalidReason =
-        validatePrice(transaction, hasPriority, feeMarket);
+        validatePrice(transaction, isLocal, hasPriority, feeMarket);
     if (priceInvalidReason != null) {
       return ValidationResultAndAccount.invalid(priceInvalidReason);
     }
@@ -478,14 +478,19 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   private TransactionInvalidReason validatePrice(
-      final Transaction transaction, final boolean isLocal, final FeeMarket feeMarket) {
+      final Transaction transaction,
+      final boolean isLocal,
+      final boolean hasPriority,
+      final FeeMarket feeMarket) {
 
     if (isLocal) {
       if (!configuration.getTxFeeCap().isZero()
           && getMaxGasPrice(transaction).get().greaterThan(configuration.getTxFeeCap())) {
         return TransactionInvalidReason.TX_FEECAP_EXCEEDED;
       }
-      // allow local transactions to be below minGas as long as we are mining
+    }
+    if (hasPriority) {
+      // allow priority transactions to be below minGas as long as we are mining
       // or at least gas price is above the configured floor
       if ((!miningParameters.isMiningEnabled()
               && isMaxGasPriceBelowConfiguredMinGasPrice(transaction))
