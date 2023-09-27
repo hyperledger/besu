@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -104,8 +105,11 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
   }
 
   @Override
-  public PendingTransaction promote(final Predicate<PendingTransaction> promotionFilter) {
-    return null;
+  public List<PendingTransaction> promote(
+      final Predicate<PendingTransaction> promotionFilter,
+      final long freeSpace,
+      final int freeSlots) {
+    return List.of();
   }
 
   @Override
