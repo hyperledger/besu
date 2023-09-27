@@ -41,6 +41,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -78,7 +79,7 @@ public class EVMExecutor {
       List.of(MaxCodeSizeRule.of(0x6000), PrefixCodeRule.of());
   private long initialNonce = 1;
   private Collection<Address> forceCommitAddresses = List.of(Address.fromHexString("0x03"));
-  private Set<Address> accessListWarmAddresses = Set.of();
+  private Set<Address> accessListWarmAddresses = new HashSet<>();
   private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
   private MessageCallProcessor messageCallProcessor = null;
   private ContractCreationProcessor contractCreationProcessor = null;
@@ -700,6 +701,10 @@ public class EVMExecutor {
    */
   public EVMExecutor coinbase(final Address coinbase) {
     this.coinbase = coinbase;
+    // EIP-3651
+    if (EvmSpecVersion.SHANGHAI.compareTo(evm.getEvmVersion()) >= 0) {
+      this.warmAddress(coinbase);
+    }
     return this;
   }
 

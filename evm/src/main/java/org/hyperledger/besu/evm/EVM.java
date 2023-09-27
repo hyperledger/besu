@@ -131,6 +131,15 @@ public class EVM {
   }
 
   /**
+   * Returns the configured EVM spec version for this EVM
+   *
+   * @return the evm spec version
+   */
+  public EvmSpecVersion getEvmVersion() {
+    return evmSpecVersion;
+  }
+
+  /**
    * Run to halt.
    *
    * @param frame the frame
