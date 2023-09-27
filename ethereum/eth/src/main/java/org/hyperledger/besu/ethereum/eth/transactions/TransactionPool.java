@@ -525,8 +525,8 @@ public class TransactionPool implements BlockAddedObserver {
     return blockchain.getBlockHeader(blockchain.getChainHeadHash());
   }
 
-  public boolean isLocalSender(final Address sender) {
-    return configuration.getDisableLocalTransactions() ? false : localSenders.contains(sender);
+  private boolean isLocalSender(final Address sender) {
+    return localSenders.contains(sender);
   }
 
   public int count() {

@@ -323,8 +323,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     final List<Transaction> parsedTransactions = new ArrayList<>();
     pendingTransactions.selectTransactions(
-        transaction -> {
-          parsedTransactions.add(transaction);
+        pendingTx -> {
+          parsedTransactions.add(pendingTx.getTransaction());
           return selectionResult;
         });
 
@@ -345,8 +345,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     final List<Transaction> parsedTransactions = new ArrayList<>();
     pendingTransactions.selectTransactions(
-        transaction -> {
-          parsedTransactions.add(transaction);
+        pendingTx -> {
+          parsedTransactions.add(pendingTx.getTransaction());
           return SELECTED;
         });
 
@@ -367,8 +367,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     final List<Transaction> parsedTransactions = new ArrayList<>();
     pendingTransactions.selectTransactions(
-        transaction -> {
-          parsedTransactions.add(transaction);
+        pendingTx -> {
+          parsedTransactions.add(pendingTx.getTransaction());
           return SELECTED;
         });
 
@@ -391,8 +391,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     final List<Transaction> iterationOrder = new ArrayList<>(3);
     pendingTransactions.selectTransactions(
-        transaction -> {
-          iterationOrder.add(transaction);
+        pendingTx -> {
+          iterationOrder.add(pendingTx.getTransaction());
           return SELECTED;
         });
 
@@ -419,10 +419,10 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     final List<Transaction> iterationOrder = new ArrayList<>(3);
     pendingTransactions.selectTransactions(
-        transaction -> {
-          iterationOrder.add(transaction);
+        pendingTx -> {
+          iterationOrder.add(pendingTx.getTransaction());
           // pretending that the 2nd tx of the 1st sender is not selected
-          return transaction.getNonce() == 1 ? skipSelectionResult : SELECTED;
+          return pendingTx.getNonce() == 1 ? skipSelectionResult : SELECTED;
         });
 
     // the 3rd tx of the 1st must not be processed, since the 2nd is skipped
@@ -454,8 +454,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     final List<Transaction> iterationOrder = new ArrayList<>(2);
     pendingTransactions.selectTransactions(
-        transaction -> {
-          iterationOrder.add(transaction);
+        pendingTx -> {
+          iterationOrder.add(pendingTx.getTransaction());
           return SELECTED;
         });
 
@@ -464,12 +464,12 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
   @Test
   public void invalidTransactionIsDeletedFromPendingTransactions() {
-    pendingTransactions.addTransaction(
-        createRemotePendingTransaction(transaction0), Optional.empty());
-    pendingTransactions.addTransaction(
-        createRemotePendingTransaction(transaction1), Optional.empty());
+    final var pendingTx0 = createRemotePendingTransaction(transaction0);
+    final var pendingTx1 = createRemotePendingTransaction(transaction1);
+    pendingTransactions.addTransaction(pendingTx0, Optional.empty());
+    pendingTransactions.addTransaction(pendingTx1, Optional.empty());
 
-    final List<Transaction> parsedTransactions = new ArrayList<>(1);
+    final List<PendingTransaction> parsedTransactions = new ArrayList<>(1);
     pendingTransactions.selectTransactions(
         transaction -> {
           parsedTransactions.add(transaction);
@@ -479,18 +479,16 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     // only the first is processed since not being selected will automatically skip the processing
     // all the other txs from the same sender
 
-    assertThat(parsedTransactions).containsExactly(transaction0);
-    assertThat(pendingTransactions.getPendingTransactions())
-        .map(PendingTransaction::getTransaction)
-        .containsExactly(transaction1);
+    assertThat(parsedTransactions).containsExactly(pendingTx0);
+    assertThat(pendingTransactions.getPendingTransactions()).containsExactly(pendingTx1);
   }
 
   @Test
   public void temporarilyInvalidTransactionIsKeptInPendingTransactions() {
-    pendingTransactions.addTransaction(
-        createRemotePendingTransaction(transaction0), Optional.empty());
+    final var pendingTx0 = createRemotePendingTransaction(transaction0);
+    pendingTransactions.addTransaction(pendingTx0, Optional.empty());
 
-    final List<Transaction> parsedTransactions = new ArrayList<>(1);
+    final List<PendingTransaction> parsedTransactions = new ArrayList<>(1);
     pendingTransactions.selectTransactions(
         transaction -> {
           parsedTransactions.add(transaction);
@@ -498,7 +496,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
               GAS_PRICE_BELOW_CURRENT_BASE_FEE.name());
         });
 
-    assertThat(parsedTransactions).containsExactly(transaction0);
+    assertThat(parsedTransactions).containsExactly(pendingTx0);
     assertThat(pendingTransactions.getPendingTransactions())
         .map(PendingTransaction::getTransaction)
         .containsExactly(transaction0);

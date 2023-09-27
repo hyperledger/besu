@@ -85,6 +85,6 @@ public interface PendingTransactions {
 
   @FunctionalInterface
   interface TransactionSelector {
-    TransactionSelectionResult evaluateTransaction(Transaction transaction);
+    TransactionSelectionResult evaluateTransaction(PendingTransaction pendingTransaction);
   }
 }

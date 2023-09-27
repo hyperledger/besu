@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
@@ -275,7 +276,7 @@ public class BlockTransactionSelector {
         pendingTransaction -> {
           final var res = evaluateTransaction(pendingTransaction);
           if (!res.selected()) {
-            transactionSelectionResults.updateNotSelected(pendingTransaction, res);
+            transactionSelectionResults.updateNotSelected(pendingTransaction.getTransaction(), res);
           }
           return res;
         });
@@ -295,7 +296,10 @@ public class BlockTransactionSelector {
   public TransactionSelectionResults evaluateTransactions(final List<Transaction> transactions) {
     transactions.forEach(
         transaction -> {
-          final var res = evaluateTransaction(transaction);
+          // wrap in a generic local and priority pending transaction
+          final var res =
+              evaluateTransaction(
+                  PendingTransaction.newPendingTransaction(transaction, true, true));
           if (!res.selected()) {
             transactionSelectionResults.updateNotSelected(transaction, res);
           }
@@ -312,15 +316,18 @@ public class BlockTransactionSelector {
    * the space remaining in the block.
    *
    */
-  private TransactionSelectionResult evaluateTransaction(final Transaction transaction) {
+  private TransactionSelectionResult evaluateTransaction(
+      final PendingTransaction pendingTransaction) {
     if (isCancelled.get()) {
       throw new CancellationException("Cancelled during transaction selection.");
     }
 
+    final Transaction transaction = pendingTransaction.getTransaction();
+
     if (transactionTooLargeForBlock(transaction)) {
       LOG.atTrace()
           .setMessage("Transaction {} too large to select for block creation")
-          .addArgument(transaction::toTraceLog)
+          .addArgument(pendingTransaction::toTraceLog)
           .log();
       if (blockOccupancyAboveThreshold()) {
         LOG.trace("Block occupancy above threshold, completing operation");
@@ -333,7 +340,7 @@ public class BlockTransactionSelector {
       }
     }
 
-    if (transactionCurrentPriceBelowMin(transaction)) {
+    if (transactionCurrentPriceBelowMin(pendingTransaction)) {
       return TransactionSelectionResult.CURRENT_TX_PRICE_BELOW_MIN;
     }
     if (transactionDataPriceBelowMin(transaction)) {
@@ -386,7 +393,7 @@ public class BlockTransactionSelector {
 
         LOG.atTrace()
             .setMessage("Selected {} for block creation")
-            .addArgument(transaction::toTraceLog)
+            .addArgument(pendingTransaction::toTraceLog)
             .log();
 
         return TransactionSelectionResult.SELECTED;
@@ -413,11 +420,11 @@ public class BlockTransactionSelector {
     return false;
   }
 
-  private boolean transactionCurrentPriceBelowMin(final Transaction transaction) {
-    // Here we only care about EIP1159 since for Frontier and local transactions the checks
+  private boolean transactionCurrentPriceBelowMin(final PendingTransaction pendingTransaction) {
+    final Transaction transaction = pendingTransaction.getTransaction();
+    // Here we only care about EIP1159, since for Frontier and priority transactions, the checks
     // that we do when accepting them in the pool are enough
-    if (transaction.getType().supports1559FeeMarket()
-        && !transactionPool.isLocalSender(transaction.getSender())) {
+    if (transaction.getType().supports1559FeeMarket() && !pendingTransaction.hasPriority()) {
 
       // For EIP1559 transactions, the price is dynamic and depends on network conditions, so we can
       // only calculate at this time the current minimum price the transaction is willing to pay

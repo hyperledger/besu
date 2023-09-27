@@ -12,12 +12,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.core;
+package org.hyperledger.besu.ethereum.eth.transactions.sorter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 
 import java.util.stream.Stream;
 
@@ -27,10 +30,14 @@ public class AccountTransactionOrderTest {
 
   private static final KeyPair KEYS = SignatureAlgorithmFactory.getInstance().generateKeyPair();
 
-  private final Transaction transaction1 = transaction(1);
-  private final Transaction transaction2 = transaction(2);
-  private final Transaction transaction3 = transaction(3);
-  private final Transaction transaction4 = transaction(4);
+  private final PendingTransaction transaction1 =
+      PendingTransaction.newPendingTransaction(transaction(1), false, false);
+  private final PendingTransaction transaction2 =
+      PendingTransaction.newPendingTransaction(transaction(2), false, false);
+  private final PendingTransaction transaction3 =
+      PendingTransaction.newPendingTransaction(transaction(3), false, false);
+  private final PendingTransaction transaction4 =
+      PendingTransaction.newPendingTransaction(transaction(4), false, false);
   private final AccountTransactionOrder accountTransactionOrder =
       new AccountTransactionOrder(
           Stream.of(transaction1, transaction2, transaction3, transaction4));

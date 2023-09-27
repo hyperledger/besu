@@ -323,8 +323,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
                     .forEach(
                         candidatePendingTx -> {
                           alreadyChecked.add(candidatePendingTx.getHash());
-                          final var res =
-                              selector.evaluateTransaction(candidatePendingTx.getTransaction());
+                          final var res = selector.evaluateTransaction(candidatePendingTx);
 
                           LOG.atTrace()
                               .setMessage("Selection result {} for transaction {}")

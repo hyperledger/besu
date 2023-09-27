@@ -220,6 +220,10 @@ public abstract class PendingTransaction {
         + sequence
         + ", addedAt: "
         + addedAt
+        + ", isLocal="
+        + isReceivedFromLocalSource()
+        + ", hasPriority="
+        + hasPriority()
         + ", "
         + transaction.toTraceLog()
         + "}";
