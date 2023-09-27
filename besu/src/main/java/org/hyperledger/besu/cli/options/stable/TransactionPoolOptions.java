@@ -32,8 +32,8 @@ import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import picocli.CommandLine;
 
@@ -110,11 +110,11 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   @CommandLine.Option(
       names = {TX_POOL_PRIORITY_SENDERS},
       split = ",",
-      paramLabel = "List of addresses",
+      paramLabel = "Command separated list of addresses",
       description =
           "Pending transactions sent exclusively by these addresses, from any source, are prioritized and evicted only after the others. If not specified, then only the senders submitting transactions via RPC have priority (default: ${DEFAULT-VALUE})",
       arity = "1..*")
-  private Address[] prioritySenders = new Address[0];
+  private Set<Address> prioritySenders = TransactionPoolConfiguration.DEFAULT_PRIORITY_SENDERS;
 
   @CommandLine.ArgGroup(
       validate = false,
@@ -217,7 +217,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
     options.txFeeCap = config.getTxFeeCap();
     options.saveFile = config.getSaveFile();
     options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
-    options.prioritySenders = config.getSortedPrioritySenders();
+    options.prioritySenders = config.getPrioritySenders();
     options.layeredOptions.txPoolLayerMaxCapacity =
         config.getPendingTransactionsLayerMaxCapacityBytes();
     options.layeredOptions.txPoolMaxPrioritized = config.getMaxPrioritizedTransactions();
@@ -252,8 +252,6 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
 
   @Override
   public TransactionPoolConfiguration toDomainObject() {
-    Arrays.sort(prioritySenders);
-
     return ImmutableTransactionPoolConfiguration.builder()
         .txPoolImplementation(txPoolImplementation)
         .enableSaveRestore(saveRestoreEnabled)
@@ -262,7 +260,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         .txFeeCap(txFeeCap)
         .saveFile(saveFile)
         .strictTransactionReplayProtectionEnabled(strictTxReplayProtectionEnabled)
-        .sortedPrioritySenders(prioritySenders)
+        .prioritySenders(prioritySenders)
         .pendingTransactionsLayerMaxCapacityBytes(layeredOptions.txPoolLayerMaxCapacity)
         .maxPrioritizedTransactions(layeredOptions.txPoolMaxPrioritized)
         .maxFutureBySender(layeredOptions.txPoolMaxFutureBySender)

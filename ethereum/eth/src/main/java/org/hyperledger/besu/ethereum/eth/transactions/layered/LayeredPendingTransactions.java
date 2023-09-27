@@ -58,7 +58,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
   private static final Logger LOG = LoggerFactory.getLogger(LayeredPendingTransactions.class);
   private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
   private final TransactionPoolConfiguration poolConfig;
-  //  private final Set<Address> localSenders = new HashSet<>();
   private final AbstractPrioritizedTransactions prioritizedTransactions;
 
   public LayeredPendingTransactions(
@@ -72,25 +71,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
   public synchronized void reset() {
     prioritizedTransactions.reset();
   }
-  //
-  //  @Override
-  //  public synchronized TransactionAddedResult addTransaction(
-  //      final PendingTransaction transaction, final Optional<Account> maybeSenderAccount) {
-  //
-  //    return addTransaction(transaction, maybeSenderAccount);
-  //  }
-  //
-  //  @Override
-  //  public synchronized TransactionAddedResult addLocalTransaction(
-  //      final PendingTransaction transaction, final Optional<Account> maybeSenderAccount) {
-  //
-  //    final TransactionAddedResult addedResult =
-  //        addTransaction(transaction, maybeSenderAccount);
-  //    if (addedResult.isSuccess()) {
-  //      localSenders.add(transaction.getSender());
-  //    }
-  //    return addedResult;
-  //  }
 
   @Override
   public synchronized TransactionAddedResult addTransaction(
@@ -309,10 +289,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
   public synchronized List<Transaction> getPriorityTransactions() {
     return prioritizedTransactions.getAllPriority();
   }
-  //  @Override
-  //  public synchronized boolean isLocalSender(final Address sender) {
-  //    return localSenders.contains(sender);
-  //  }
 
   @Override
   // There's a small edge case here we could encounter.

@@ -50,12 +50,6 @@ public class DisabledPendingTransactions implements PendingTransactions {
       final PendingTransaction transaction, final Optional<Account> maybeSenderAccount) {
     return TransactionAddedResult.DISABLED;
   }
-  //
-  //  @Override
-  //  public TransactionAddedResult addLocalTransaction(
-  //      final PendingTransaction transaction, final Optional<Account> maybeSenderAccount) {
-  //    return TransactionAddedResult.DISABLED;
-  //  }
 
   @Override
   public void selectTransactions(final TransactionSelector selector) {}
@@ -122,9 +116,4 @@ public class DisabledPendingTransactions implements PendingTransactions {
   public String logStats() {
     return "Disabled";
   }
-  //
-  //  @Override
-  //  public boolean isLocalSender(final Address sender) {
-  //    return false;
-  //  }
 }

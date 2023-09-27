@@ -21,6 +21,7 @@ import org.hyperledger.besu.util.number.Percentage;
 
 import java.io.File;
 import java.time.Duration;
+import java.util.Set;
 
 import org.immutables.value.Value;
 
@@ -67,7 +68,7 @@ public interface TransactionPoolConfiguration {
   int DEFAULT_MAX_PRIORITIZED_TRANSACTIONS = 2000;
   int DEFAULT_MAX_FUTURE_BY_SENDER = 200;
   Implementation DEFAULT_TX_POOL_IMPLEMENTATION = Implementation.LAYERED;
-  Address[] DEFAULT_SORTED_PRIORITY_SENDERS = new Address[0];
+  Set<Address> DEFAULT_PRIORITY_SENDERS = Set.of();
 
   TransactionPoolConfiguration DEFAULT = ImmutableTransactionPoolConfiguration.builder().build();
 
@@ -142,8 +143,8 @@ public interface TransactionPoolConfiguration {
   }
 
   @Value.Default
-  default Address[] getSortedPrioritySenders() {
-    return DEFAULT_SORTED_PRIORITY_SENDERS;
+  default Set<Address> getPrioritySenders() {
+    return DEFAULT_PRIORITY_SENDERS;
   }
 
   @Value.Default

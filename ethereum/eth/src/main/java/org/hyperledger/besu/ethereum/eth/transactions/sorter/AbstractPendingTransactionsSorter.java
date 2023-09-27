@@ -98,8 +98,6 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
   protected final TransactionPoolReplacementHandler transactionReplacementHandler;
   protected final Supplier<BlockHeader> chainHeadHeaderSupplier;
 
-  //  private final Set<Address> localSenders;
-
   public AbstractPendingTransactionsSorter(
       final TransactionPoolConfiguration poolConfig,
       final Clock clock,
@@ -107,8 +105,6 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
       final Supplier<BlockHeader> chainHeadHeaderSupplier) {
     this.poolConfig = poolConfig;
     this.pendingTransactions = new ConcurrentHashMap<>(poolConfig.getTxPoolMaxSize());
-    //    this.localSenders =
-    //        poolConfig.getDisableLocalTransactions() ? Set.of() : ConcurrentHashMap.newKeySet();
     this.clock = clock;
     this.chainHeadHeaderSupplier = chainHeadHeaderSupplier;
     this.transactionReplacementHandler =
@@ -194,8 +190,6 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
       return LOWER_NONCE_INVALID_TRANSACTION_KNOWN;
     }
 
-    //    final PendingTransaction pendingTransaction =
-    //        new PendingTransaction.Remote(transaction, clock.millis());
     final TransactionAddedResult transactionAddedStatus =
         internalAddTransaction(transaction, maybeSenderAccount);
     if (transactionAddedStatus.equals(ADDED)) {
@@ -208,18 +202,6 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
     }
     return transactionAddedStatus;
   }
-  //
-  //  @Override
-  //  public TransactionAddedResult addLocalTransaction(
-  //      final PendingTransaction transaction, final Optional<Account> maybeSenderAccount) {
-  //    final TransactionAddedResult transactionAdded =
-  //        addTransaction(transaction, maybeSenderAccount);
-  //    if (transactionAdded.equals(ADDED)) {
-  //      localSenders.add(transaction.getSender());
-  //      localTransactionAddedCounter.inc();
-  //    }
-  //    return transactionAdded;
-  //  }
 
   void removeTransaction(final Transaction transaction) {
     removeTransaction(transaction, false);
@@ -557,9 +539,4 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
       signalInvalidAndGetDependentTransactions(transaction).forEach(this::removeTransaction);
     }
   }
-  //
-  //  @Override
-  //  public boolean isLocalSender(final Address sender) {
-  //    return poolConfig.getDisableLocalTransactions() ? false : localSenders.contains(sender);
-  //  }
 }
