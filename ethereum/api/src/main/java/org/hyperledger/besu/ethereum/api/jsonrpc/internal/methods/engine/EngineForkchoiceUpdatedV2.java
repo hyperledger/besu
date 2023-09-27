@@ -17,7 +17,13 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+
+import java.util.List;
+import java.util.Optional;
 
 import io.vertx.core.Vertx;
 
@@ -37,5 +43,17 @@ public class EngineForkchoiceUpdatedV2 extends AbstractEngineForkchoiceUpdated {
   @Override
   public String getName() {
     return RpcMethod.ENGINE_FORKCHOICE_UPDATED_V2.getMethodName();
+  }
+
+  @Override
+  protected boolean isPayloadAttributesValid(
+      final EnginePayloadAttributesParameter payloadAttributes,
+      final Optional<List<Withdrawal>> maybeWithdrawals,
+      final BlockHeader headBlockHeader) {
+    if (payloadAttributes.getTimestamp() >= cancunTimestamp) {
+      return false;
+    } else {
+      return super.isPayloadAttributesValid(payloadAttributes, maybeWithdrawals, headBlockHeader);
+    }
   }
 }
