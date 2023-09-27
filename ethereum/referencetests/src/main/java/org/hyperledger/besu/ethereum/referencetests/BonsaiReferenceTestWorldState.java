@@ -75,6 +75,14 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
         layerCopy, cachedMerkleTrieLoader, trieLogManager, preImageProxy);
   }
 
+  @Override
+  protected void verifyWorldStateRoot(final Hash calculatedStateRoot, final BlockHeader header) {
+    // if the supplied header has a non-zero state root, verify.  Else bypass
+    if (!header.getStateRoot().equals(Hash.ZERO)) {
+      super.verifyWorldStateRoot(calculatedStateRoot, header);
+    }
+  }
+
   @JsonCreator
   public static BonsaiReferenceTestWorldState create(
       final Map<String, ReferenceTestWorldState.AccountMock> accounts) {
