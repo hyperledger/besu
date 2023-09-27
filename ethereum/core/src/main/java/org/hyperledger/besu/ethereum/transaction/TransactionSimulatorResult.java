@@ -79,4 +79,12 @@ public class TransactionSimulatorResult {
   public int hashCode() {
     return Objects.hash(transaction, result);
   }
+
+  @Override
+  public String toString() {
+    return "TransactionSimulatorResult{" +
+            "transaction=" + transaction + ", " +
+            "result=" + result +
+            "}";
+  }
 }
