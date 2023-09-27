@@ -264,7 +264,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
         distance);
   }
 
-  private TransactionAddedResult addToNextLayer(
+  protected TransactionAddedResult addToNextLayer(
       final NavigableMap<Long, PendingTransaction> senderTxs,
       final PendingTransaction pendingTransaction,
       final int distance) {
@@ -304,7 +304,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       while ((evictedSize < spaceToFree || txsToEvict > evictedCount)
           && !lessReadySenderTxs.isEmpty()) {
         lastTx = lessReadySenderTxs.pollLastEntry().getValue();
-        processEvict(lessReadySenderTxs, lastTx);
+        processEvict(lessReadySenderTxs, lastTx, EVICTED);
         ++evictedCount;
         evictedSize += lastTx.memorySize();
         // evicted can always be added to the next layer
@@ -371,11 +371,13 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   }
 
   protected PendingTransaction processEvict(
-      final NavigableMap<Long, PendingTransaction> senderTxs, final PendingTransaction evictedTx) {
+      final NavigableMap<Long, PendingTransaction> senderTxs,
+      final PendingTransaction evictedTx,
+      final RemovalReason reason) {
     final PendingTransaction removedTx = pendingTransactions.remove(evictedTx.getHash());
     if (removedTx != null) {
       decreaseSpaceUsed(evictedTx);
-      metrics.incrementRemoved(evictedTx.isReceivedFromLocalSource(), EVICTED.label(), name());
+      metrics.incrementRemoved(evictedTx.isReceivedFromLocalSource(), reason.label(), name());
       internalEvict(senderTxs, removedTx);
     }
     return removedTx;
