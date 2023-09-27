@@ -42,6 +42,8 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.fluent.SimpleAccount;
+import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidator;
+import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.io.BufferedReader;
@@ -90,6 +92,7 @@ public class TransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPool.class);
   private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
   private final Supplier<PendingTransactions> pendingTransactionsSupplier;
+  private final PluginTransactionValidator pluginTransactionValidator;
   private volatile PendingTransactions pendingTransactions;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
@@ -114,7 +117,8 @@ public class TransactionPool implements BlockAddedObserver {
       final EthContext ethContext,
       final MiningParameters miningParameters,
       final TransactionPoolMetrics metrics,
-      final TransactionPoolConfiguration configuration) {
+      final TransactionPoolConfiguration configuration,
+      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory) {
     this.pendingTransactionsSupplier = pendingTransactionsSupplier;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -123,6 +127,10 @@ public class TransactionPool implements BlockAddedObserver {
     this.miningParameters = miningParameters;
     this.metrics = metrics;
     this.configuration = configuration;
+    this.pluginTransactionValidator =
+        pluginTransactionValidatorFactory == null
+            ? null
+            : pluginTransactionValidatorFactory.create();
     initLogForReplay();
   }
 
@@ -444,7 +452,7 @@ public class TransactionPool implements BlockAddedObserver {
     }
 
     if (isLocal
-        && strictReplayProtectionShouldBeEnforceLocally(chainHeadBlockHeader)
+        && strictReplayProtectionShouldBeEnforcedLocally(chainHeadBlockHeader)
         && transaction.getChainId().isEmpty()) {
       // Strict replay protection is enabled but the tx is not replay-protected
       return ValidationResultAndAccount.invalid(
@@ -461,6 +469,14 @@ public class TransactionPool implements BlockAddedObserver {
       return ValidationResultAndAccount.invalid(
           TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
           "EIP-1559 transaction are not allowed yet");
+    }
+
+    // Call the transaction validator plugin if one is available
+    if (pluginTransactionValidator != null
+        && !pluginTransactionValidator.validateTransaction(transaction)) {
+      return ValidationResultAndAccount.invalid(
+          TransactionInvalidReason.PLUGIN_TX_VALIDATOR_INVALIDATED,
+          "Plugin transaction vaildator returned false");
     }
 
     try (final var worldState =
@@ -512,7 +528,7 @@ public class TransactionPool implements BlockAddedObserver {
     return null;
   }
 
-  private boolean strictReplayProtectionShouldBeEnforceLocally(
+  private boolean strictReplayProtectionShouldBeEnforcedLocally(
       final BlockHeader chainHeadBlockHeader) {
     return configuration.getStrictTransactionReplayProtectionEnabled()
         && protocolSchedule.getChainId().isPresent()

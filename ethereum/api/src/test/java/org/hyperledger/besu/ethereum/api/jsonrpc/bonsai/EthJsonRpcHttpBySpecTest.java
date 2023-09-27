@@ -28,7 +28,6 @@ public class EthJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
   }
 
   public static Object[][] specs() {
-    return findSpecFiles(
-        new String[] {"eth"}, "getProof"); // getProof is not working with bonsai trie
+    return findSpecFiles(new String[] {"eth"});
   }
 }
