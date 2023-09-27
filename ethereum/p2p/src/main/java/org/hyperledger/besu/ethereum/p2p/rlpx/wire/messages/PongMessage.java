@@ -14,15 +14,28 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages;
 
-public final class PongMessage extends EmptyMessage {
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
-  private static final PongMessage INSTANCE = new PongMessage();
+import org.apache.tuweni.bytes.Bytes;
+
+public final class PongMessage extends AbstractMessageData {
+
+  private static final PongMessage INSTANCE = PongMessage.create();
 
   public static PongMessage get() {
     return INSTANCE;
   }
 
-  private PongMessage() {}
+  private PongMessage(final Bytes data) {
+    super(data);
+  }
+
+  public static PongMessage create() {
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.writeEmptyList();
+    return new PongMessage(out.encoded());
+  }
 
   @Override
   public int getCode() {
