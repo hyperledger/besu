@@ -67,6 +67,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
   protected static final int MAX_TRANSACTIONS = 5;
   protected static final int MAX_CAPACITY_BYTES = 10_000;
+  protected static final Wei DEFAULT_BASE_FEE = Wei.of(100);
   protected static final int LIMITED_TRANSACTIONS_BY_SENDER = 4;
   protected static final String REMOTE = "remote";
   protected static final String LOCAL = "local";
@@ -96,7 +97,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
   private static BlockHeader mockBlockHeader() {
     final BlockHeader blockHeader = mock(BlockHeader.class);
-    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.of(100)));
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(DEFAULT_BASE_FEE));
     return blockHeader;
   }
 
@@ -374,10 +375,10 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   @MethodSource
   public void ignoreSenderTransactionsAfterASkippedOne(
       final TransactionSelectionResult skipSelectionResult) {
-    final Transaction transaction0a = createTransaction(0, Wei.of(20), KEYS1);
-    final Transaction transaction1a = createTransaction(1, Wei.of(20), KEYS1);
-    final Transaction transaction2a = createTransaction(2, Wei.of(20), KEYS1);
-    final Transaction transaction0b = createTransaction(0, Wei.of(10), KEYS2);
+    final Transaction transaction0a = createTransaction(0, DEFAULT_BASE_FEE.add(Wei.of(20)), KEYS1);
+    final Transaction transaction1a = createTransaction(1, DEFAULT_BASE_FEE.add(Wei.of(20)), KEYS1);
+    final Transaction transaction2a = createTransaction(2, DEFAULT_BASE_FEE.add(Wei.of(20)), KEYS1);
+    final Transaction transaction0b = createTransaction(0, DEFAULT_BASE_FEE.add(Wei.of(10)), KEYS2);
 
     pendingTransactions.addLocalTransaction(transaction0a, Optional.empty());
     pendingTransactions.addLocalTransaction(transaction1a, Optional.empty());
@@ -411,7 +412,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     final Account sender2 = mock(Account.class);
     when(sender2.getNonce()).thenReturn(1L);
 
-    final Transaction transactionSender1 = createTransaction(0, Wei.of(10), KEYS1);
+    final Transaction transactionSender1 = createTransaction(0, Wei.of(100), KEYS1);
     final Transaction transactionSender2 = createTransaction(1, Wei.of(200), KEYS2);
 
     pendingTransactions.addLocalTransaction(transactionSender1, Optional.empty());
@@ -473,9 +474,9 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
   @Test
   public void replaceTransactionWithSameSenderAndNonce() {
-    final Transaction transaction1 = createTransaction(0, Wei.of(20), KEYS1);
+    final Transaction transaction1 = createTransaction(0, Wei.of(200), KEYS1);
     final Transaction transaction1b = createTransactionReplacement(transaction1, KEYS1);
-    final Transaction transaction2 = createTransaction(1, Wei.of(10), KEYS1);
+    final Transaction transaction2 = createTransaction(1, Wei.of(100), KEYS1);
     assertThat(pendingTransactions.addRemoteTransaction(transaction1, Optional.empty()))
         .isEqualTo(ADDED);
     assertThat(pendingTransactions.addRemoteTransaction(transaction2, Optional.empty()))
@@ -499,14 +500,14 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   public void replaceTransactionWithSameSenderAndNonce_multipleReplacements() {
     final int replacedTxCount = 5;
     final List<Transaction> replacedTransactions = new ArrayList<>(replacedTxCount);
-    Transaction duplicateTx = createTransaction(0, Wei.of(50), KEYS1);
+    Transaction duplicateTx = createTransaction(0, DEFAULT_BASE_FEE.add(Wei.of(50)), KEYS1);
     for (int i = 0; i < replacedTxCount; i++) {
       replacedTransactions.add(duplicateTx);
       pendingTransactions.addRemoteTransaction(duplicateTx, Optional.empty());
       duplicateTx = createTransactionReplacement(duplicateTx, KEYS1);
     }
 
-    final Transaction independentTx = createTransaction(1, Wei.ONE, KEYS1);
+    final Transaction independentTx = createTransaction(1, DEFAULT_BASE_FEE.add(Wei.ONE), KEYS1);
     assertThat(pendingTransactions.addRemoteTransaction(independentTx, Optional.empty()))
         .isEqualTo(ADDED);
     assertThat(
