@@ -46,7 +46,9 @@ import java.util.stream.Stream;
 
 public class SparseTransactions extends AbstractTransactionsLayer {
   private final NavigableSet<PendingTransaction> sparseEvictionOrder =
-      new TreeSet<>(Comparator.comparing(PendingTransaction::getSequence));
+      new TreeSet<>(
+          Comparator.comparing(PendingTransaction::hasPriority)
+              .thenComparing(PendingTransaction::getSequence));
   private final Map<Address, Integer> gapBySender = new HashMap<>();
   private final List<Set<Address>> orderByGap;
 
