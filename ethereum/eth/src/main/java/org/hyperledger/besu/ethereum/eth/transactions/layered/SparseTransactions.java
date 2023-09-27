@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -126,36 +125,86 @@ public class SparseTransactions extends AbstractTransactionsLayer {
   @Override
   protected void internalBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {}
 
+  /**
+   * We only want to promote transactions that have gap == 0, so there will be no gap in the prev
+   * layers. A promoted transaction is removed from this layer, and the gap data is updated for its
+   * sender.
+   *
+   * @param promotionFilter the prev layer's promotion filter
+   * @param freeSpace max amount of memory promoted txs can occupy
+   * @param freeSlots max number of promoted txs
+   * @return a list of transactions promoted to the prev layer
+   */
   @Override
-  public PendingTransaction promote(final Predicate<PendingTransaction> promotionFilter) {
-    final PendingTransaction promotedTx =
-        orderByGap.get(0).stream()
-            .map(txsBySender::get)
-            .map(NavigableMap::values)
-            .flatMap(Collection::stream)
-            .filter(promotionFilter)
-            .findFirst()
-            .orElse(null);
+  public List<PendingTransaction> promote(
+      final Predicate<PendingTransaction> promotionFilter,
+      final long freeSpace,
+      final int freeSlots) {
+    long accumulatedSpace = 0;
+    final List<PendingTransaction> promotedTxs = new ArrayList<>();
 
-    if (promotedTx != null) {
-      final Address sender = promotedTx.getSender();
-      final var senderTxs = txsBySender.get(sender);
-      senderTxs.pollFirstEntry();
-      processRemove(senderTxs, promotedTx.getTransaction(), PROMOTED);
-      if (senderTxs.isEmpty()) {
-        txsBySender.remove(sender);
-        orderByGap.get(0).remove(sender);
-        gapBySender.remove(sender);
-      } else {
-        final long firstNonce = senderTxs.firstKey();
-        final int newGap = (int) (firstNonce - (promotedTx.getNonce() + 1));
-        if (newGap != 0) {
-          updateGap(sender, 0, newGap);
+    final var zeroGapSenders = orderByGap.get(0);
+
+    search:
+    for (final var sender : zeroGapSenders) {
+      final var senderSeqTxs = getSequentialSubset(txsBySender.get(sender));
+
+      for (final var candidateTx : senderSeqTxs.values()) {
+
+        if (promotionFilter.test(candidateTx)) {
+          accumulatedSpace += candidateTx.memorySize();
+          if (promotedTxs.size() < freeSlots && accumulatedSpace <= freeSpace) {
+            promotedTxs.add(candidateTx);
+          } else {
+            // no room for more txs the search is over exit the loops
+            break search;
+          }
+        } else {
+          // skip remaining txs for this sender
+          break;
         }
       }
     }
 
-    return promotedTx;
+    // remove promoted txs from this layer
+    promotedTxs.forEach(
+        promotedTx -> {
+          final var sender = promotedTx.getSender();
+          final var senderTxs = txsBySender.get(sender);
+          senderTxs.remove(promotedTx.getNonce());
+          processRemove(senderTxs, promotedTx.getTransaction(), PROMOTED);
+          if (senderTxs.isEmpty()) {
+            txsBySender.remove(sender);
+            orderByGap.get(0).remove(sender);
+            gapBySender.remove(sender);
+          } else {
+            final long firstNonce = senderTxs.firstKey();
+            final int newGap = (int) (firstNonce - (promotedTx.getNonce() + 1));
+            if (newGap != 0) {
+              updateGap(sender, 0, newGap);
+            }
+          }
+        });
+
+    if (!promotedTxs.isEmpty()) {
+      // since we removed some txs we can try to promote from next layer
+      promoteTransactions();
+    }
+
+    return promotedTxs;
+  }
+
+  private NavigableMap<Long, PendingTransaction> getSequentialSubset(
+      final NavigableMap<Long, PendingTransaction> senderTxs) {
+    long lastSequentialNonce = senderTxs.firstKey();
+    for (final long nonce : senderTxs.tailMap(lastSequentialNonce, false).keySet()) {
+      if (nonce == lastSequentialNonce + 1) {
+        ++lastSequentialNonce;
+      } else {
+        break;
+      }
+    }
+    return senderTxs.headMap(lastSequentialNonce, true);
   }
 
   @Override

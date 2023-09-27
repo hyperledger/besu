@@ -398,22 +398,20 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     nextLayer.blockAdded(feeMarket, blockHeader, maxConfirmedNonceBySender);
     maxConfirmedNonceBySender.forEach(this::confirmed);
     internalBlockAdded(blockHeader, feeMarket);
+    promoteTransactions();
   }
 
   protected abstract void internalBlockAdded(
       final BlockHeader blockHeader, final FeeMarket feeMarket);
 
   final void promoteTransactions() {
-    int freeSlots = maxTransactionsNumber() - pendingTransactions.size();
+    final int freeSlots = maxTransactionsNumber() - pendingTransactions.size();
+    final long freeSpace = cacheFreeSpace();
 
-    while (cacheFreeSpace() > 0 && freeSlots > 0) {
-      final var promotedTx = nextLayer.promote(this::promotionFilter);
-      if (promotedTx != null) {
-        processAdded(promotedTx);
-        --freeSlots;
-      } else {
-        break;
-      }
+    if (freeSlots > 0 && freeSpace > 0) {
+      nextLayer
+          .promote(this::promotionFilter, cacheFreeSpace(), freeSlots)
+          .forEach(this::processAdded);
     }
   }
 
@@ -444,8 +442,6 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
         internalConfirmed(senderTxs, sender, maxConfirmedNonce, highestNonceRemovedTx);
       }
     }
-
-    promoteTransactions();
   }
 
   protected abstract void internalConfirmed(

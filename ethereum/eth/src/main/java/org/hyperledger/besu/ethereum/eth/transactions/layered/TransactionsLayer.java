@@ -66,7 +66,8 @@ public interface TransactionsLayer {
    */
   OptionalLong getCurrentNonceFor(Address sender);
 
-  PendingTransaction promote(Predicate<PendingTransaction> promotionFilter);
+  List<PendingTransaction> promote(
+      Predicate<PendingTransaction> promotionFilter, final long freeSpace, final int freeSlots);
 
   long subscribeToAdded(PendingTransactionAddedListener listener);
 
