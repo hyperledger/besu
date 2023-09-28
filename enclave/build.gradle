@@ -1,3 +1,7 @@
+configurations {
+  tessera.extendsFrom integrationTestRuntimeOnly
+}
+
 dependencies {
   api project(':util')
   api project(':crypto:algorithms')
@@ -24,5 +28,25 @@ dependencies {
   integrationTestImplementation 'org.awaitility:awaitility'
   integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   integrationTestImplementation 'org.mockito:mockito-core'
-  integrationTestImplementation 'org.testcontainers:testcontainers'
+  tessera 'net.consensys.quorum.tessera:tessera-dist:23.4.0@tar'
 }
+
+def tesseraDist = '23.4.0'
+integrationTest {
+  useJUnitPlatform()
+  systemProperty "tessera-dist", "${buildDir}/tessera/dist/tessera-${tesseraDist}/bin/tessera"
+}
+
+task copyDependencies(type: Copy) {
+  def outputDir = file("${buildDir}/tessera/dist")
+  from configurations.tessera
+  into outputDir
+}
+task unzipTessera(type: Copy) {
+  def zipFile = file("${buildDir}/tessera/dist/tessera-dist-${tesseraDist}.tar")
+  def outputDir = file("${buildDir}/tessera/dist")
+  from tarTree(zipFile)
+  into outputDir
+}
+unzipTessera.dependsOn copyDependencies
+integrationTest.dependsOn unzipTessera
