@@ -14,13 +14,18 @@
  */
 package org.hyperledger.besu.services.kvstore;
 
-import org.hyperledger.besu.kvstore.AbstractKeyValueStorageTest;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 
-public class InMemoryKeyValueStorageTest extends AbstractKeyValueStorageTest {
+public class InMemoryKeyValueStorageTest extends AbstractSegmentedKeyValueStorageTest {
 
   @Override
   protected KeyValueStorage createStore() {
     return new InMemoryKeyValueStorage();
+  }
+
+  @Override
+  public SegmentedKeyValueStorage createSegmentedStore() {
+    return new SegmentedInMemoryKeyValueStorage();
   }
 }

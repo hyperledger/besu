@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.bonsai;
+package org.hyperledger.besu.ethereum.bonsai.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
@@ -26,7 +26,6 @@ import static org.mockito.Mockito.verify;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -372,7 +371,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     // clear
     storage.clear();
 
-    assertThat(storage.getFlatDbReaderStrategy()).isNotNull();
+    assertThat(storage.getFlatDbStrategy()).isNotNull();
 
     assertThat(storage.getAccount(Hash.ZERO)).isEmpty();
   }
