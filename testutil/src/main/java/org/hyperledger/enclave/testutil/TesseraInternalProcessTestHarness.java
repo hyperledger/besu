@@ -1,3 +1,17 @@
+/*
+ * Copyright Hyperledger Besu Contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.hyperledger.enclave.testutil;
 
 import static com.google.common.io.Files.readLines;
@@ -18,10 +32,12 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,6 +53,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 
+/** The Tessera Test Harnes as Java internal process */
 public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
   private static final Logger LOG =
       LoggerFactory.getLogger(TesseraInternalProcessTestHarness.class);
@@ -49,13 +66,19 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
   private final Map<String, Process> tesseraProcesses = new HashMap<>();
 
   private final ExecutorService executorService = Executors.newCachedThreadPool();
+  private final ExecutorService outputProcessorExecutor = Executors.newCachedThreadPool();
 
   private URI q2TUri;
   private URI nodeURI;
 
-  protected TesseraInternalProcessTestHarness(final EnclaveConfiguration enclaveConfiguration) {
+  /**
+   * Instantiates a news Tessera test harness as internal process.
+   *
+   * @param enclaveConfiguration the enclave configuration
+   */
+  TesseraInternalProcessTestHarness(final EnclaveConfiguration enclaveConfiguration) {
     this.enclaveConfiguration = enclaveConfiguration;
-    Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
+    Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
   }
 
   @Override
@@ -81,7 +104,7 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
     }
   }
 
-  public void startTessera(final List<String> args, final List<String> jvmArgs) throws Exception {
+  private void startTessera(final List<String> args, final List<String> jvmArgs) throws Exception {
 
     final ProcessBuilder processBuilder = new ProcessBuilder(args);
     processBuilder.environment().put("JAVA_OPTS", String.join(" ", jvmArgs));
@@ -194,6 +217,49 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
       } catch (final IOException e) {
         LOG.info("Temporary directory not deleted");
       }
+    }
+  }
+
+  public synchronized void shutdown() {
+    final Set<String> localMap = new HashSet<>(tesseraProcesses.keySet());
+    localMap.forEach(this::killTesseraProcess);
+    outputProcessorExecutor.shutdown();
+    try {
+      if (!outputProcessorExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+        LOG.error("Output processor executor did not shutdown cleanly.");
+      }
+    } catch (final InterruptedException e) {
+      LOG.error("Interrupted while already shutting down", e);
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  private void killTesseraProcess(final String name) {
+    final Process process = tesseraProcesses.remove(name);
+    if (process == null) {
+      LOG.error("Process {} wasn't in our list", name);
+      return;
+    }
+    if (!process.isAlive()) {
+      LOG.info("Process {} already exited, pid {}", name, process.pid());
+      return;
+    }
+    LOG.info("Killing {} process, pid {}", name, process.pid());
+    process.destroy();
+    try {
+      process.waitFor(30, TimeUnit.SECONDS);
+    } catch (final InterruptedException e) {
+      LOG.warn("Wait for death of process {} was interrupted", name, e);
+    }
+
+    if (process.isAlive()) {
+      LOG.warn("Process {} still alive, destroying forcibly now, pid {}", name, process.pid());
+      try {
+        process.destroyForcibly().waitFor(30, TimeUnit.SECONDS);
+      } catch (final Exception e) {
+        // just die already
+      }
+      LOG.info("Process exited with code {}", process.exitValue());
     }
   }
 
