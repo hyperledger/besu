@@ -624,7 +624,8 @@ public abstract class MainnetProtocolSpecs {
                     Set.of(
                         TransactionType.FRONTIER,
                         TransactionType.ACCESS_LIST,
-                        TransactionType.EIP1559),
+                        TransactionType.EIP1559,
+                        TransactionType.BLOB),
                     SHANGHAI_INIT_CODE_SIZE_LIMIT))
         .withdrawalsProcessor(new WithdrawalsProcessor())
         .withdrawalsValidator(new WithdrawalsValidator.AllowedWithdrawals())
