@@ -250,7 +250,7 @@ public abstract class PendingTransaction
 
     public static class Priority extends Local {
       public Priority(final Transaction transaction) {
-        super(transaction, System.currentTimeMillis());
+        this(transaction, System.currentTimeMillis());
       }
 
       public Priority(final Transaction transaction, final long addedAt) {
@@ -285,6 +285,10 @@ public abstract class PendingTransaction
     }
 
     public static class Priority extends Remote {
+      public Priority(final Transaction transaction) {
+        this(transaction, System.currentTimeMillis());
+      }
+
       public Priority(final Transaction transaction, final long addedAt) {
         super(transaction, addedAt);
       }

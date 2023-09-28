@@ -136,6 +136,11 @@ public class BaseTransactionPoolTest {
     return new PendingTransaction.Remote(transaction);
   }
 
+  protected PendingTransaction createRemotePendingTransaction(
+      final Transaction transaction, final boolean hasPriority) {
+    return PendingTransaction.newPendingTransaction(transaction, false, hasPriority);
+  }
+
   protected PendingTransaction createLocalPendingTransaction(final Transaction transaction) {
     return new PendingTransaction.Local(transaction);
   }
