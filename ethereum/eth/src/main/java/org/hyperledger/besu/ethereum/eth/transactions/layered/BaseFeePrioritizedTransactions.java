@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.BELOW_BASE_FEE;
+
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -27,17 +29,10 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Holds the current set of pending transactions with the ability to iterate them based on priority
- * for mining or look-up by hash.
- *
- * <p>This class is safe for use across multiple threads.
- */
 public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransactions {
 
   private static final Logger LOG = LoggerFactory.getLogger(BaseFeePrioritizedTransactions.class);
@@ -69,6 +64,15 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
         .compare(pt1, pt2);
   }
 
+  /**
+   * On base fee markets when a new block is added we can calculate the base fee for the next block
+   * and use it to keep only pending transactions willing to pay at least that fee in the
+   * prioritized layer, since only these transactions are executable, while all the other can be
+   * demoted to the next layer.
+   *
+   * @param blockHeader the header of the added block
+   * @param feeMarket the fee market
+   */
   @Override
   protected void internalBlockAdded(final BlockHeader blockHeader, final FeeMarket feeMarket) {
     final Wei newNextBlockBaseFee = calculateNextBlockBaseFee(feeMarket, blockHeader);
@@ -81,7 +85,48 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
 
     nextBlockBaseFee = Optional.of(newNextBlockBaseFee);
     orderByFee.clear();
-    orderByFee.addAll(pendingTransactions.values());
+
+    final var itTxsBySender = txsBySender.entrySet().iterator();
+    while (itTxsBySender.hasNext()) {
+      final var senderTxs = itTxsBySender.next().getValue();
+
+      Optional<Long> maybeFirstUnderpricedNonce = Optional.empty();
+
+      for (final var e : senderTxs.entrySet()) {
+        final PendingTransaction tx = e.getValue();
+        // it must pass the promotion filter to be prioritized
+        if (promotionFilter(tx)) {
+          orderByFee.add(tx);
+        } else {
+          // otherwise sender txs starting from this nonce need to be demoted to next layer,
+          // and we can go to next sender
+          maybeFirstUnderpricedNonce = Optional.of(e.getKey());
+          break;
+        }
+      }
+
+      maybeFirstUnderpricedNonce.ifPresent(
+          nonce -> {
+            // demote all txs after the first underpriced to the next layer, because none of them is
+            // executable now, and we can avoid sorting them until they are candidate for execution
+            // again
+            final var demoteTxs = senderTxs.tailMap(nonce, true);
+            while (!demoteTxs.isEmpty()) {
+              final PendingTransaction demoteTx = demoteTxs.pollLastEntry().getValue();
+              LOG.atTrace()
+                  .setMessage("Demoting tx {} with max gas price below next block base fee {}")
+                  .addArgument(demoteTx::toTraceLog)
+                  .addArgument(newNextBlockBaseFee::toHumanReadableString)
+                  .log();
+              processEvict(senderTxs, demoteTx, BELOW_BASE_FEE);
+              addToNextLayer(senderTxs, demoteTx, 0);
+            }
+          });
+
+      if (senderTxs.isEmpty()) {
+        itTxsBySender.remove();
+      }
+    }
   }
 
   private Wei calculateNextBlockBaseFee(final FeeMarket feeMarket, final BlockHeader blockHeader) {
@@ -101,10 +146,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
     return nextBlockBaseFee
         .map(
             baseFee ->
-                pendingTransaction
-                    .getTransaction()
-                    .getEffectiveGasPrice(nextBlockBaseFee)
-                    .greaterOrEqualThan(baseFee))
+                pendingTransaction.getTransaction().getMaxGasPrice().greaterOrEqualThan(baseFee))
         .orElse(false);
   }
 
@@ -115,13 +157,6 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
       return "Basefee Prioritized: Empty";
     }
 
-    final var baseFeePartition =
-        stream()
-            .map(PendingTransaction::getTransaction)
-            .collect(
-                Collectors.partitioningBy(
-                    tx -> tx.getMaxGasPrice().greaterOrEqualThan(nextBlockBaseFee.get()),
-                    Collectors.counting()));
     final Transaction highest = orderByFee.last().getTransaction();
     final Transaction lowest = orderByFee.first().getTransaction();
 
@@ -145,10 +180,6 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
         + ", hash: "
         + lowest.getHash()
         + "], next block base fee: "
-        + nextBlockBaseFee.get().toHumanReadableString()
-        + ", above next base fee: "
-        + baseFeePartition.get(true)
-        + ", below next base fee: "
-        + baseFeePartition.get(false);
+        + nextBlockBaseFee.get().toHumanReadableString();
   }
 }

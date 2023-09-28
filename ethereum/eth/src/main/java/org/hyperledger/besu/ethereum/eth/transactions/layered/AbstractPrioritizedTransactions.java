@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -28,6 +29,10 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+/**
+ * Holds the current set of executable pending transactions, that are candidate for inclusion on
+ * next block. The pending transactions are kept sorted by paid fee descending.
+ */
 public abstract class AbstractPrioritizedTransactions extends AbstractSequentialTransactionsLayer {
   protected final TreeSet<PendingTransaction> orderByFee;
 
@@ -77,6 +82,12 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
   }
 
   private boolean hasPriority(final PendingTransaction pendingTransaction) {
+    // if it does not pass the promotion filter, then has not priority
+    if (!promotionFilter(pendingTransaction)) {
+      return false;
+    }
+
+    // if there is space add it, otherwise check if it has more value than the last one
     if (orderByFee.size() < poolConfig.getMaxPrioritizedTransactions()) {
       return true;
     }
@@ -104,8 +115,11 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
   }
 
   @Override
-  public PendingTransaction promote(final Predicate<PendingTransaction> promotionFilter) {
-    return null;
+  public List<PendingTransaction> promote(
+      final Predicate<PendingTransaction> promotionFilter,
+      final long freeSpace,
+      final int freeSlots) {
+    return List.of();
   }
 
   @Override
