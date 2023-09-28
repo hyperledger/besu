@@ -23,10 +23,10 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.Transaction
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.REPLACED;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOB_PRICE_BELOW_CURRENT_MIN;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_FULL;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.CURRENT_TX_PRICE_BELOW_MIN;
-import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.DATA_PRICE_BELOW_CURRENT_MIN;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_TOO_LARGE_FOR_REMAINING_GAS;
 import static org.mockito.Mockito.mock;
@@ -401,7 +401,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   static Stream<TransactionSelectionResult> ignoreSenderTransactionsAfterASkippedOne() {
     return Stream.of(
         CURRENT_TX_PRICE_BELOW_MIN,
-        DATA_PRICE_BELOW_CURRENT_MIN,
+        BLOB_PRICE_BELOW_CURRENT_MIN,
         TX_TOO_LARGE_FOR_REMAINING_GAS,
         TransactionSelectionResult.invalidTransient(GAS_PRICE_BELOW_CURRENT_BASE_FEE.name()),
         TransactionSelectionResult.invalid(UPFRONT_COST_EXCEEDS_BALANCE.name()));
