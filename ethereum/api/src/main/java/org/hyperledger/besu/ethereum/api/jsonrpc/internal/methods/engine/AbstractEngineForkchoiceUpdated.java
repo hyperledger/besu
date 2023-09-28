@@ -103,14 +103,13 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     Optional<List<Withdrawal>> withdrawals = Optional.empty();
     final BlockHeader newHead = maybeNewHead.get();
     if (!isValidForkchoiceState(
-            forkChoice.getSafeBlockHash(), forkChoice.getFinalizedBlockHash(), newHead)) {
+        forkChoice.getSafeBlockHash(), forkChoice.getFinalizedBlockHash(), newHead)) {
       logForkchoiceUpdatedCall(INVALID, forkChoice);
       return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_FORKCHOICE_STATE);
     }
     ForkchoiceResult result =
-            mergeCoordinator.updateForkChoice(
-                    newHead, forkChoice.getFinalizedBlockHash(), forkChoice.getSafeBlockHash());
-
+        mergeCoordinator.updateForkChoice(
+            newHead, forkChoice.getFinalizedBlockHash(), forkChoice.getSafeBlockHash());
 
     if (maybePayloadAttributes.isPresent()) {
       final EnginePayloadAttributesParameter payloadAttributes = maybePayloadAttributes.get();
@@ -164,11 +163,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
               Optional.of(forkChoice.getHeadBlockHash() + " is an invalid block")));
     }
 
-
     maybePayloadAttributes.ifPresentOrElse(
         this::logPayload, () -> LOG.debug("Payload attributes are null"));
-
-
 
     if (result.shouldNotProceedToPayloadBuildProcess()) {
       if (ForkchoiceResult.Status.IGNORE_UPDATE_TO_OLD_HEAD.equals(result.getStatus())) {
