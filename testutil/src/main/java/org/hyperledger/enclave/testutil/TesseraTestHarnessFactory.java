@@ -40,18 +40,18 @@ public class TesseraTestHarnessFactory {
    * @return the tessera test harness
    */
   public static EnclaveTestHarness create(
-          final String name,
-          final Path tempDir,
-          final EnclaveKeyConfiguration enclaveConfig,
-          final Optional<Network> containerNetwork) {
+      final String name,
+      final Path tempDir,
+      final EnclaveKeyConfiguration enclaveConfig,
+      final Optional<Network> containerNetwork) {
     return create(
-            name,
-            tempDir,
-            enclaveConfig.getPubKeyPaths(),
-            enclaveConfig.getPrivKeyPaths(),
-            enclaveConfig.getEnclaveEncryptorType(),
-            Collections.emptyList(),
-            containerNetwork);
+        name,
+        tempDir,
+        enclaveConfig.getPubKeyPaths(),
+        enclaveConfig.getPrivKeyPaths(),
+        enclaveConfig.getEnclaveEncryptorType(),
+        Collections.emptyList(),
+        containerNetwork);
   }
 
   /**
@@ -67,18 +67,18 @@ public class TesseraTestHarnessFactory {
    * @return the tessera test harness
    */
   public static EnclaveTestHarness create(
-          final String name,
-          final Path tempDir,
-          final String[] pubKeyPaths,
-          final String[] privKeyPaths,
-          final EnclaveEncryptorType enclaveEncryptorType,
-          final List<String> othernodes,
-          final Optional<Network> containerNetwork) {
+      final String name,
+      final Path tempDir,
+      final String[] pubKeyPaths,
+      final String[] privKeyPaths,
+      final EnclaveEncryptorType enclaveEncryptorType,
+      final List<String> othernodes,
+      final Optional<Network> containerNetwork) {
     final Path[] pubKeys = stringArrayToPathArray(tempDir, pubKeyPaths);
     final Path[] privKeys = stringArrayToPathArray(tempDir, privKeyPaths);
 
     return create(
-            name, tempDir, pubKeys, privKeys, enclaveEncryptorType, othernodes, containerNetwork);
+        name, tempDir, pubKeys, privKeys, enclaveEncryptorType, othernodes, containerNetwork);
   }
 
   /**
@@ -94,29 +94,29 @@ public class TesseraTestHarnessFactory {
    * @return the tessera test harness
    */
   public static EnclaveTestHarness create(
-          final String name,
-          final Path tempDir,
-          final Path[] key1pubs,
-          final Path[] key1keys,
-          final EnclaveEncryptorType enclaveEncryptorType,
-          final List<String> othernodes,
-          final Optional<Network> containerNetwork) {
+      final String name,
+      final Path tempDir,
+      final Path[] key1pubs,
+      final Path[] key1keys,
+      final EnclaveEncryptorType enclaveEncryptorType,
+      final List<String> othernodes,
+      final Optional<Network> containerNetwork) {
     return new TesseraInternalProcessTestHarness(
-            new EnclaveConfiguration(
-                    name, key1pubs, key1keys, enclaveEncryptorType, tempDir, othernodes, false, storage));
+        new EnclaveConfiguration(
+            name, key1pubs, key1keys, enclaveEncryptorType, tempDir, othernodes, false, storage));
   }
 
   @Nonnull
   private static Path[] stringArrayToPathArray(final Path tempDir, final String[] privKeyPaths) {
     return Arrays.stream(privKeyPaths)
-            .map(
-                    (pk) -> {
-                      try {
-                        return copyResource(pk, tempDir.resolve(pk));
-                      } catch (final IOException e) {
-                        throw new RuntimeException(e);
-                      }
-                    })
-            .toArray(Path[]::new);
+        .map(
+            (pk) -> {
+              try {
+                return copyResource(pk, tempDir.resolve(pk));
+              } catch (final IOException e) {
+                throw new RuntimeException(e);
+              }
+            })
+        .toArray(Path[]::new);
   }
 }
