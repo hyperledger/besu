@@ -702,7 +702,7 @@ public class EVMExecutor {
   public EVMExecutor coinbase(final Address coinbase) {
     this.coinbase = coinbase;
     // EIP-3651
-    if (EvmSpecVersion.SHANGHAI.compareTo(evm.getEvmVersion()) >= 0) {
+    if (EvmSpecVersion.SHANGHAI.compareTo(evm.getEvmVersion()) <= 0) {
       this.warmAddress(coinbase);
     }
     return this;

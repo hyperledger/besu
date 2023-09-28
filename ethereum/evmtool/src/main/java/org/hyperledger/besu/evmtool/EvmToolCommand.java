@@ -407,7 +407,7 @@ public class EvmToolCommand implements Runnable {
                 .miningBeneficiary(blockHeader.getCoinbase())
                 .blockHashLookup(new CachingBlockHashLookup(blockHeader, component.getBlockchain()))
                 .accessListWarmAddresses(
-                    EvmSpecVersion.SHANGHAI.compareTo(evm.getEvmVersion()) >= 0
+                    EvmSpecVersion.SHANGHAI.compareTo(evm.getEvmVersion()) <= 0
                         ? Set.of(coinbase)
                         : Set.of())
                 .build();
