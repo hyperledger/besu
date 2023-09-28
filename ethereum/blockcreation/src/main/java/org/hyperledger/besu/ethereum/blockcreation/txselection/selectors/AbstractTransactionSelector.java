@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
-import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
@@ -34,24 +34,25 @@ public abstract class AbstractTransactionSelector {
   /**
    * Evaluates a transaction in the context of other transactions in the same block.
    *
-   * @param transaction The transaction to be evaluated within a block.
+   * @param pendingTransaction The transaction to be evaluated within a block.
    * @param blockTransactionResults The results of other transaction evaluations in the same block.
    * @return The result of the transaction evaluation
    */
   public abstract TransactionSelectionResult evaluateTransactionPreProcessing(
-      final Transaction transaction, final TransactionSelectionResults blockTransactionResults);
+      final PendingTransaction pendingTransaction,
+      final TransactionSelectionResults blockTransactionResults);
 
   /**
    * Evaluates a transaction considering other transactions in the same block and a transaction
    * processing result.
    *
-   * @param transaction The transaction to be evaluated.
+   * @param pendingTransaction The transaction to be evaluated.
    * @param blockTransactionResults The results of other transaction evaluations in the same block.
    * @param processingResult The result of transaction processing.
    * @return The result of the transaction evaluation
    */
   public abstract TransactionSelectionResult evaluateTransactionPostProcessing(
-      final Transaction transaction,
+      final PendingTransaction pendingTransaction,
       final TransactionSelectionResults blockTransactionResults,
       final TransactionProcessingResult processingResult);
 }

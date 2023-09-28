@@ -22,7 +22,6 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedRes
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.AccountTransactionOrder;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
@@ -259,16 +258,15 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
             accountTransactions.computeIfAbsent(
                 highestPriorityPendingTransaction.getSender(), this::createSenderTransactionOrder);
 
-        for (final Transaction transactionToProcess :
-            accountTransactionOrder.transactionsToProcess(
-                highestPriorityPendingTransaction.getTransaction())) {
+        for (final PendingTransaction transactionToProcess :
+            accountTransactionOrder.transactionsToProcess(highestPriorityPendingTransaction)) {
           final TransactionSelectionResult result =
               selector.evaluateTransaction(transactionToProcess);
 
           if (result.discard()) {
-            transactionsToRemove.add(transactionToProcess);
+            transactionsToRemove.add(transactionToProcess.getTransaction());
             transactionsToRemove.addAll(
-                signalInvalidAndGetDependentTransactions(transactionToProcess));
+                signalInvalidAndGetDependentTransactions(transactionToProcess.getTransaction()));
           }
 
           if (result.stop()) {
@@ -283,10 +281,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
 
   private AccountTransactionOrder createSenderTransactionOrder(final Address address) {
     return new AccountTransactionOrder(
-        transactionsBySender
-            .get(address)
-            .streamPendingTransactions()
-            .map(PendingTransaction::getTransaction));
+        transactionsBySender.get(address).streamPendingTransactions());
   }
 
   private TransactionAddedResult addTransactionForSenderAndNonce(
