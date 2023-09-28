@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -149,8 +149,7 @@ class TransactionDataFetcherTest extends AbstractDataFetcherTest {
 
     var transactionData = fetcher.get(environment);
     assertThat(transactionData).isPresent();
-    assertThat(transactionData.get().getBlobVersionedHashes())
-        .containsExactly(fakeVersionedHash);
+    assertThat(transactionData.get().getBlobVersionedHashes()).containsExactly(fakeVersionedHash);
     assertThat(transactionData.get().getBlobGasUsed(environment)).contains(blobGasUsed);
     assertThat(transactionData.get().getBlobGasPrice(environment)).contains(blobGasPrice);
     assertThat(transactionData.get().getMaxFeePerBlobGas()).contains(maxFeePerBlobGas);
