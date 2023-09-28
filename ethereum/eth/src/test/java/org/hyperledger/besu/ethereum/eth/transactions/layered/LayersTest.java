@@ -1120,7 +1120,50 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .confirmedForSenders(
                     SP2, 0) // asap there is new space the priority tx is promoted first
                 .expectedPrioritizedForSenders(SP2, 1, SP2, 2, SP1, 0)
-                .expectedReadyForSender(S2, 0)));
+                .expectedReadyForSender(S2, 0)),
+        Arguments.of(
+            new Scenario("priority first overflow to sparse")
+                .addForSender(SP2, 0, 1, 2)
+                .addForSender(S3, 0)
+                .expectedPrioritizedForSender(SP2, 0, 1, 2)
+                .expectedReadyForSender(S3, 0)
+                .addForSender(SP1, 0, 1, 2)
+                .expectedPrioritizedForSender(SP2, 0, 1, 2)
+                .expectedReadyForSender(SP1, 0, 1, 2)
+                .expectedSparseForSender(S3, 0)),
+        Arguments.of(
+            new Scenario("priority first overflow to sparse 2")
+                .addForSender(S2, 0, 1, 2)
+                .addForSender(S3, 0, 1, 2)
+                .expectedPrioritizedForSender(S3, 0, 1, 2)
+                .expectedReadyForSender(S2, 0, 1, 2)
+                .addForSender(SP1, 0)
+                .expectedPrioritizedForSenders(SP1, 0, S3, 0, S3, 1)
+                .expectedReadyForSenders(S3, 2, S2, 0, S2, 1)
+                .expectedSparseForSender(S2, 2)),
+        Arguments.of(
+            new Scenario("overflow to sparse promote priority first")
+                .addForSender(SP2, 0, 1, 2, 3, 4, 5)
+                .expectedPrioritizedForSender(SP2, 0, 1, 2)
+                .expectedReadyForSender(SP2, 3, 4, 5)
+                .addForSender(S3, 0)
+                .expectedSparseForSender(S3, 0)
+                .addForSender(SP1, 0)
+                .expectedSparseForSenders(S3, 0, SP1, 0)
+                .confirmedForSenders(SP2, 0)
+                .expectedPrioritizedForSender(SP2, 1, 2, 3)
+                .expectedReadyForSenders(SP2, 4, SP2, 5, SP1, 0)
+                .expectedSparseForSender(S3, 0)),
+        Arguments.of(
+            new Scenario("discard priority as last")
+                .addForSender(SP2, 0, 1, 2, 3, 4, 5)
+                .expectedPrioritizedForSender(SP2, 0, 1, 2)
+                .expectedReadyForSender(SP2, 3, 4, 5)
+                .addForSender(S3, 0)
+                .expectedSparseForSender(S3, 0)
+                .addForSender(SP1, 0, 1, 2)
+                .expectedSparseForSender(SP1, 0, 1, 2)
+                .expectedDroppedForSender(S3, 0)));
   }
 
   private static BlockHeader mockBlockHeader() {
