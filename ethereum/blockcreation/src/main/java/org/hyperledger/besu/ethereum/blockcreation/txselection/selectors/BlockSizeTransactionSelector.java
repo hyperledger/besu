@@ -45,7 +45,7 @@ public class BlockSizeTransactionSelector extends AbstractTransactionSelector {
    * @return The result of the transaction selection.
    */
   @Override
-  public TransactionSelectionResult selectTransactionPreProcessing(
+  public TransactionSelectionResult evaluateTransactionPreProcessing(
       final Transaction transaction,
       final TransactionSelectionResults transactionSelectionResults) {
     if (transactionTooLargeForBlock(transaction, transactionSelectionResults)) {
@@ -67,7 +67,7 @@ public class BlockSizeTransactionSelector extends AbstractTransactionSelector {
   }
 
   @Override
-  public TransactionSelectionResult selectTransactionPostProcessing(
+  public TransactionSelectionResult evaluateTransactionPostProcessing(
       final Transaction transaction,
       final TransactionSelectionResults blockTransactionResults,
       final TransactionProcessingResult processingResult) {

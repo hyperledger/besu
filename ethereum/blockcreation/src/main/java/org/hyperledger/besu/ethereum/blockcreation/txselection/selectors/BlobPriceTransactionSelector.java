@@ -43,7 +43,7 @@ public class BlobPriceTransactionSelector extends AbstractTransactionSelector {
    * @return The result of the transaction selection.
    */
   @Override
-  public TransactionSelectionResult selectTransactionPreProcessing(
+  public TransactionSelectionResult evaluateTransactionPreProcessing(
       final Transaction transaction, final TransactionSelectionResults ignored) {
     if (transactionBlobPriceBelowMin(transaction)) {
       return TransactionSelectionResult.BLOB_PRICE_BELOW_CURRENT_MIN;
@@ -52,7 +52,7 @@ public class BlobPriceTransactionSelector extends AbstractTransactionSelector {
   }
 
   @Override
-  public TransactionSelectionResult selectTransactionPostProcessing(
+  public TransactionSelectionResult evaluateTransactionPostProcessing(
       final Transaction transaction,
       final TransactionSelectionResults blockTransactionResults,
       final TransactionProcessingResult processingResult) {

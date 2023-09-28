@@ -45,7 +45,7 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
    * @return The result of the transaction selection.
    */
   @Override
-  public TransactionSelectionResult selectTransactionPreProcessing(
+  public TransactionSelectionResult evaluateTransactionPreProcessing(
       final Transaction transaction, final TransactionSelectionResults ignored) {
     if (transactionCurrentPriceBelowMin(transaction)) {
       return TransactionSelectionResult.CURRENT_TX_PRICE_BELOW_MIN;
@@ -54,7 +54,7 @@ public class PriceTransactionSelector extends AbstractTransactionSelector {
   }
 
   @Override
-  public TransactionSelectionResult selectTransactionPostProcessing(
+  public TransactionSelectionResult evaluateTransactionPostProcessing(
       final Transaction transaction,
       final TransactionSelectionResults blockTransactionResults,
       final TransactionProcessingResult processingResult) {

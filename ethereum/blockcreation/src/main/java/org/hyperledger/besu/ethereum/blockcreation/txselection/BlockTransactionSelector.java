@@ -252,7 +252,7 @@ public class BlockTransactionSelector {
     // Process the transaction through internal selectors
     for (var selector : transactionSelectors) {
       TransactionSelectionResult result =
-          selector.selectTransactionPreProcessing(transaction, transactionSelectionResults);
+          selector.evaluateTransactionPreProcessing(transaction, transactionSelectionResults);
       // If the transaction is not selected by any internal selector, return the result
       if (!result.equals(TransactionSelectionResult.SELECTED)) {
         return result;
@@ -261,7 +261,7 @@ public class BlockTransactionSelector {
 
     // Process the transaction through external selectors
     for (var selector : externalTransactionSelectors) {
-      TransactionSelectionResult result = selector.selectTransactionPreProcessing(transaction);
+      TransactionSelectionResult result = selector.evaluateTransactionPreProcessing(transaction);
       // If the transaction is not selected by any external selector, return the result
       if (!result.equals(TransactionSelectionResult.SELECTED)) {
         return result;
@@ -287,7 +287,7 @@ public class BlockTransactionSelector {
     // Process the transaction through internal selectors
     for (var selector : transactionSelectors) {
       TransactionSelectionResult result =
-          selector.selectTransactionPostProcessing(
+          selector.evaluateTransactionPostProcessing(
               transaction, transactionSelectionResults, processingResult);
       // If the transaction is not selected by any selector, return the result
       if (!result.equals(TransactionSelectionResult.SELECTED)) {

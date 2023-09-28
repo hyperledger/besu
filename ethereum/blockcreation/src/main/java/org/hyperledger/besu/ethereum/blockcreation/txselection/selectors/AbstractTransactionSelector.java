@@ -38,7 +38,7 @@ public abstract class AbstractTransactionSelector {
    * @param blockTransactionResults The results of other transaction evaluations in the same block.
    * @return The result of the transaction evaluation
    */
-  public abstract TransactionSelectionResult selectTransactionPreProcessing(
+  public abstract TransactionSelectionResult evaluateTransactionPreProcessing(
       final Transaction transaction, final TransactionSelectionResults blockTransactionResults);
 
   /**
@@ -50,7 +50,7 @@ public abstract class AbstractTransactionSelector {
    * @param processingResult The result of transaction processing.
    * @return The result of the transaction evaluation
    */
-  public abstract TransactionSelectionResult selectTransactionPostProcessing(
+  public abstract TransactionSelectionResult evaluateTransactionPostProcessing(
       final Transaction transaction,
       final TransactionSelectionResults blockTransactionResults,
       final TransactionProcessingResult processingResult);

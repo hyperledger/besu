@@ -39,7 +39,7 @@ public class ProcessingResultTransactionSelector extends AbstractTransactionSele
   }
 
   @Override
-  public TransactionSelectionResult selectTransactionPreProcessing(
+  public TransactionSelectionResult evaluateTransactionPreProcessing(
       final Transaction transaction, final TransactionSelectionResults blockTransactionResults) {
     // All checks depend on processingResult and will be done in the post-processing method, so
     // nothing to do here.
@@ -57,7 +57,7 @@ public class ProcessingResultTransactionSelector extends AbstractTransactionSele
    * @return The result of the transaction selection.
    */
   @Override
-  public TransactionSelectionResult selectTransactionPostProcessing(
+  public TransactionSelectionResult evaluateTransactionPostProcessing(
       final Transaction transaction,
       final TransactionSelectionResults blockTransactionResults,
       final TransactionProcessingResult processingResult) {
