@@ -196,6 +196,10 @@ public class CachedWorldStorageManager
     return cachedWorldStatesByHash.containsKey(blockHash);
   }
 
+  public Optional<CachedBonsaiWorldView> getStorageByRootHash(final Hash rootHash) {
+    return Optional.ofNullable(cachedWorldStatesByHash.get(rootHash));
+  }
+
   public void reset() {
     this.cachedWorldStatesByHash.clear();
   }

@@ -27,6 +27,8 @@ import org.hyperledger.besu.ethereum.eth.messages.snap.TrieNodesMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedBonsaiWorldView;
 import org.hyperledger.besu.ethereum.worldstate.FlatWorldStateStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
@@ -41,7 +43,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import kotlin.Pair;
 import kotlin.collections.ArrayDeque;
@@ -69,8 +70,13 @@ class SnapServer {
 
   SnapServer(final EthMessages snapMessages, final WorldStateArchive archive) {
     this.snapMessages = snapMessages;
-    // TODO implement worldstate storage retrieval by root hash in WorldStateArchive:
-    this.worldStateStorageProvider = __ -> null;
+    // TODO remove dirty bonsai cast:
+    this.worldStateStorageProvider =
+        rootHash ->
+            ((BonsaiWorldStateProvider) archive)
+                .getCachedWorldStorageManager()
+                .getStorageByRootHash(rootHash)
+                .map(CachedBonsaiWorldView::getWorldStateStorage);
   }
 
   SnapServer(
@@ -204,7 +210,7 @@ class SnapServer {
     return ByteCodesMessage.create(new ArrayDeque<>());
   }
 
-  private MessageData constructGetTrieNodesResponse(final MessageData message) {
+  MessageData constructGetTrieNodesResponse(final MessageData message) {
     final GetTrieNodesMessage getTrieNodesMessage = GetTrieNodesMessage.readFrom(message);
     final GetTrieNodesMessage.TrieNodesPaths triePaths = getTrieNodesMessage.paths(true);
     // TODO: drop to TRACE
@@ -214,33 +220,29 @@ class SnapServer {
         .addArgument(() -> triePaths.paths().size())
         .log();
 
+    //TODO: implement limits
     return worldStateStorageProvider
         .apply(triePaths.worldStateRootHash())
         .map(
             storage -> {
               ArrayList<Bytes> trieNodes = new ArrayList<>();
               for (var triePath : triePaths.paths()) {
-
-                // first element is path in account trie
-                final Stream<Bytes> pathStream = triePath.stream();
-                final Optional<Bytes> accountPath = pathStream.findFirst();
-
-                if (triePaths.paths().size() == 1) {
-                  // if we are only requesting the account node, return it
-                  // TODO: confirm whether this is binary or compact encoding for account
-                  accountPath.flatMap(storage::getTrieNodeUnsafe).ifPresent(trieNodes::add);
+                // first element is paths is account
+                if (triePath.size() == 1) {
+                  // if there is only one path, presume it should be compact encoded account path
+                  storage.getTrieNodeUnsafe(triePath.get(0)).ifPresent(trieNodes::add);
                 } else {
-                  // otherwise return the storage from this account from the subsequent paths:
-                  pathStream
-                      .map(this::applyPathMagic)
+                  // otherwise the first element should be account hash, and subsequent paths
+                  // are compact encoded account storage paths
+
+                  final Bytes accountPrefix = triePath.get(0);
+
+                  triePath.subList(1, triePath.size()).stream()
                       .forEach(
-                          pathPair -> {
-                            // then return it:
-                            storage.getAccountStorageTrieNode(
-                                null, // TODO: get accountHash
-                                pathPair.getSecond(),
-                                pathPair.getFirst());
-                          });
+                          path ->
+                              storage
+                                  .getTrieNodeUnsafe(Bytes.concatenate(accountPrefix, path))
+                                  .ifPresent(trieNodes::add));
                 }
               }
               return TrieNodesMessage.create(trieNodes);
@@ -292,13 +294,5 @@ class SnapServer {
         .getTrieNodeUnsafe(Bytes.concatenate(accountHash, Bytes.EMPTY))
         .map(Hash::hash)
         .orElse(Hash.EMPTY_TRIE_HASH);
-  }
-
-  Pair<Bytes32, Bytes> applyPathMagic(Bytes path) {
-    // TODO: write me.  Determine whether we have a partial path with compact encoding
-    //  or full path binary encoded. return location and hash pair
-
-    // !!this impl 100% broken!!
-    return new Pair(Bytes32.wrap(path), path);
   }
 }

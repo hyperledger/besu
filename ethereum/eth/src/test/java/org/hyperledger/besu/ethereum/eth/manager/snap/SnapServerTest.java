@@ -23,12 +23,15 @@ import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetAccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetStorageRangeMessage;
+import org.hyperledger.besu.ethereum.eth.messages.snap.GetTrieNodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
+import org.hyperledger.besu.ethereum.eth.messages.snap.TrieNodesMessage;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
@@ -167,6 +170,39 @@ public class SnapServerTest {
     //     .isTrue();
   }
 
+  @Test
+  public void assertAccountTriePathRequest() {
+    insertTestAccounts(acct1, acct2, acct3, acct4);
+    var partialPathToAcct2 = CompactEncoding.bytesToPath(acct2.addressHash).slice(0, 1);
+    var partialPathToAcct1 = Bytes.fromHexString("0x01"); // first nibble is 1
+    var trieNodeRequest =
+        requestTrieNodes(
+            storageTrie.getRootHash(),
+            List.of(List.of(partialPathToAcct2), List.of(partialPathToAcct1)));
+    assertThat(trieNodeRequest).isNotNull();
+    List<Bytes> trieNodes = trieNodeRequest.nodes(false);
+    assertThat(trieNodes).isNotNull();
+    assertThat(trieNodes.size()).isEqualTo(2);
+  }
+
+  @Test
+  public void assertStorageTriePathRequest() {
+    insertTestAccounts(acct1, acct2, acct3, acct4);
+    var pathToSlot11 = Bytes.fromHexStringLenient("0x0101");
+    var pathToSlot12 = Bytes.fromHexStringLenient("0x0102");
+    var pathToSlot1a = Bytes.fromHexStringLenient("0x010A"); // not present
+    var trieNodeRequest =
+        requestTrieNodes(
+            storageTrie.getRootHash(),
+            List.of(
+                List.of(acct3.addressHash, pathToSlot11, pathToSlot12, pathToSlot1a),
+                List.of(acct4.addressHash, pathToSlot11, pathToSlot12, pathToSlot1a)));
+    assertThat(trieNodeRequest).isNotNull();
+    List<Bytes> trieNodes = trieNodeRequest.nodes(false);
+    assertThat(trieNodes).isNotNull();
+    assertThat(trieNodes.size()).isEqualTo(4);
+  }
+
   static SnapTestAccount createTestAccount(final String hexAddr) {
     return new SnapTestAccount(
         Hash.wrap(Bytes32.rightPad(Bytes.fromHexString(hexAddr))),
@@ -194,7 +230,7 @@ public class SnapServerTest {
         .boxed()
         .forEach(
             i -> {
-              Bytes32 mockBytes32 = Bytes32.fromHexStringLenient(i.toString());
+              Bytes32 mockBytes32 = Bytes32.rightPad(Bytes.fromHexString(i.toString()));
               trie.put(mockBytes32, mockBytes32);
               flatdb.putFlatAccountStorageValueByStorageSlotHash(
                   updater.getWorldStateTransaction(),
@@ -269,6 +305,13 @@ public class SnapServerTest {
         snapServer.constructGetStorageRangeResponse(
             GetStorageRangeMessage.create(
                     Hash.wrap(storageTrie.getRootHash()), accountHashes, startHash, limitHash)
+                .wrapMessageData(BigInteger.ONE));
+  }
+
+  TrieNodesMessage requestTrieNodes(final Bytes32 rootHash, final List<List<Bytes>> trieNodesList) {
+    return (TrieNodesMessage)
+        snapServer.constructGetTrieNodesResponse(
+            GetTrieNodesMessage.create(Hash.wrap(rootHash), trieNodesList)
                 .wrapMessageData(BigInteger.ONE));
   }
 
