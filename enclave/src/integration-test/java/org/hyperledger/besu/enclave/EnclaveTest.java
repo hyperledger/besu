@@ -31,7 +31,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Lists;
@@ -66,8 +65,7 @@ public class EnclaveTest {
             new EnclaveKeyConfiguration(
                 new String[] {"enclave_key_0.pub"},
                 new String[] {"enclave_key_0.key"},
-                EnclaveEncryptorType.NOOP),
-            Optional.empty());
+                EnclaveEncryptorType.NOOP));
 
     testHarness.start();
 

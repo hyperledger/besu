@@ -110,7 +110,7 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
     processBuilder.environment().put("JAVA_OPTS", String.join(" ", jvmArgs));
 
     final String path =
-        String.format("build/acceptanceTestLogs/%s-tessera-output.txt", System.currentTimeMillis());
+        String.format("build/tessera/%s-tessera-output.txt", System.currentTimeMillis());
     processBuilder.redirectOutput(new File(path));
 
     try {
@@ -220,7 +220,7 @@ public class TesseraInternalProcessTestHarness implements EnclaveTestHarness {
     }
   }
 
-  public synchronized void shutdown() {
+  private synchronized void shutdown() {
     final Set<String> localMap = new HashSet<>(tesseraProcesses.keySet());
     localMap.forEach(this::killTesseraProcess);
     outputProcessorExecutor.shutdown();

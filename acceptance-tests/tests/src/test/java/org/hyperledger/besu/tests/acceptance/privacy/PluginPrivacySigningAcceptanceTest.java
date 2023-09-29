@@ -33,7 +33,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.junit.Before;
@@ -89,8 +88,7 @@ public class PluginPrivacySigningAcceptanceTest extends PrivacyAcceptanceTestBas
                     BOB.getEnclaveKeyPaths(),
                     BOB.getEnclavePrivateKeyPaths(),
                     BOB.getEnclaveEncryptorType())),
-            EnclaveType.NOOP,
-            Optional.empty());
+            EnclaveType.NOOP);
 
     privacyCluster.start(minerNode);
   }

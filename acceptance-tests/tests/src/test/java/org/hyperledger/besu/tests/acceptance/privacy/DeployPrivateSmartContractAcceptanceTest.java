@@ -24,7 +24,6 @@ import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import org.junit.Test;
 import org.web3j.utils.Restriction;
@@ -45,7 +44,6 @@ public class DeployPrivateSmartContractAcceptanceTest extends ParameterizedEncla
             restriction + "-node",
             PrivacyAccountResolver.ALICE.resolve(enclaveEncryptorType),
             enclaveType,
-            Optional.empty(),
             false,
             false,
             restriction == UNRESTRICTED);

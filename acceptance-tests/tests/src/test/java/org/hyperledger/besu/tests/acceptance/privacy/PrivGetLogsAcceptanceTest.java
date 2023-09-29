@@ -28,7 +28,6 @@ import org.hyperledger.enclave.testutil.EnclaveType;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.Test;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
@@ -59,7 +58,6 @@ public class PrivGetLogsAcceptanceTest extends ParameterizedEnclaveTestBase {
             restriction + "-node",
             PrivacyAccountResolver.ALICE.resolve(enclaveEncryptorType),
             enclaveType,
-            Optional.empty(),
             false,
             false,
             restriction == UNRESTRICTED);

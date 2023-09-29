@@ -32,7 +32,6 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import org.bouncycastle.util.encoders.Hex;
@@ -70,7 +69,6 @@ public class PrivCallAcceptanceTest extends ParameterizedEnclaveTestBase {
             restriction + "-node",
             PrivacyAccountResolver.ALICE.resolve(enclaveEncryptorType),
             enclaveType,
-            Optional.empty(),
             false,
             false,
             restriction == UNRESTRICTED);

@@ -31,10 +31,8 @@ import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.Optional;
 
 import org.junit.Test;
-import org.testcontainers.containers.Network;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.protocol.core.RemoteFunctionCall;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
@@ -52,14 +50,12 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
       final EnclaveEncryptorType enclaveEncryptorType)
       throws IOException {
     super(restriction, enclaveType, enclaveEncryptorType);
-    final Network containerNetwork = Network.newNetwork();
 
     final PrivacyNode minerNode =
         privacyBesu.createPrivateTransactionEnabledMinerNode(
             restriction + "-miner-node",
             PrivacyAccountResolver.ALICE.resolve(enclaveEncryptorType),
             enclaveType,
-            Optional.of(containerNetwork),
             false,
             false,
             restriction == UNRESTRICTED);
@@ -69,7 +65,6 @@ public class PrivateContractPublicStateAcceptanceTest extends ParameterizedEncla
             restriction + "-transaction-node",
             PrivacyAccountResolver.BOB.resolve(enclaveEncryptorType),
             enclaveType,
-            Optional.of(containerNetwork),
             false,
             false,
             restriction == UNRESTRICTED);

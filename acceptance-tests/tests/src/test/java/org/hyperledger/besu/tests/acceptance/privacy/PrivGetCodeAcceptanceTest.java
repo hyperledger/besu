@@ -26,7 +26,6 @@ import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
@@ -49,7 +48,6 @@ public class PrivGetCodeAcceptanceTest extends ParameterizedEnclaveTestBase {
             restriction + "-node",
             PrivacyAccountResolver.ALICE.resolve(enclaveEncryptorType),
             enclaveType,
-            Optional.empty(),
             false,
             false,
             restriction == UNRESTRICTED);

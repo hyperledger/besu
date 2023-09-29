@@ -64,7 +64,6 @@ import io.vertx.core.Vertx;
 import org.awaitility.Awaitility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.Network;
 
 public class PrivacyNode implements AutoCloseable {
 
@@ -80,13 +79,11 @@ public class PrivacyNode implements AutoCloseable {
   public PrivacyNode(
       final PrivacyNodeConfiguration privacyConfiguration,
       final Vertx vertx,
-      final EnclaveType enclaveType,
-      final Optional<Network> containerNetwork)
+      final EnclaveType enclaveType)
       throws IOException {
     final Path enclaveDir = Files.createTempDirectory("acctest-orion");
     final BesuNodeConfiguration config = privacyConfiguration.getBesuConfig();
-    this.enclave =
-        selectEnclave(enclaveType, enclaveDir, config, privacyConfiguration, containerNetwork);
+    this.enclave = selectEnclave(enclaveType, enclaveDir, config, privacyConfiguration);
     this.vertx = vertx;
 
     final BesuNodeConfiguration besuConfig = config;
@@ -291,15 +288,14 @@ public class PrivacyNode implements AutoCloseable {
       final EnclaveType enclaveType,
       final Path tempDir,
       final BesuNodeConfiguration config,
-      final PrivacyNodeConfiguration privacyConfiguration,
-      final Optional<Network> containerNetwork) {
+      final PrivacyNodeConfiguration privacyConfiguration) {
 
     switch (enclaveType) {
       case ORION:
         throw new UnsupportedOperationException("The Orion tests are getting deprecated");
       case TESSERA:
         return TesseraTestHarnessFactory.create(
-            config.getName(), tempDir, privacyConfiguration.getKeyConfig(), containerNetwork);
+            config.getName(), tempDir, privacyConfiguration.getKeyConfig());
       default:
         return new NoopEnclaveTestHarness(tempDir, privacyConfiguration.getKeyConfig());
     }

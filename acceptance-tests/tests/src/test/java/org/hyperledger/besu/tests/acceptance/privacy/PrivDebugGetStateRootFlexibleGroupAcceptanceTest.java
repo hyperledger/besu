@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
 import java.util.Collection;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.Before;
@@ -36,7 +35,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
-import org.testcontainers.containers.Network;
 
 @RunWith(Parameterized.class)
 public class PrivDebugGetStateRootFlexibleGroupAcceptanceTest
@@ -58,22 +56,19 @@ public class PrivDebugGetStateRootFlexibleGroupAcceptanceTest
 
   @Before
   public void setUp() throws IOException, URISyntaxException {
-    final Network containerNetwork = Network.newNetwork();
 
     aliceNode =
         privacyBesu.createFlexiblePrivacyGroupEnabledMinerNode(
             "alice-node",
             PrivacyAccountResolver.ALICE.resolve(EnclaveEncryptorType.NACL),
             false,
-            enclaveType,
-            Optional.of(containerNetwork));
+            enclaveType);
     bobNode =
         privacyBesu.createFlexiblePrivacyGroupEnabledNode(
             "bob-node",
             PrivacyAccountResolver.BOB.resolve(EnclaveEncryptorType.NACL),
             false,
-            enclaveType,
-            Optional.of(containerNetwork));
+            enclaveType);
 
     privacyCluster.start(aliceNode, bobNode);
   }

@@ -35,7 +35,6 @@ import java.security.spec.ECGenParameterSpec;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
-import java.util.Optional;
 
 import org.apache.tuweni.crypto.sodium.Box;
 import org.assertj.core.api.Condition;
@@ -44,7 +43,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
-import org.testcontainers.containers.Network;
 import org.web3j.protocol.besu.response.privacy.PrivateTransactionReceipt;
 import org.web3j.utils.Restriction;
 
@@ -68,15 +66,12 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
       final EnclaveType enclaveType, final EnclaveEncryptorType enclaveEncryptorType)
       throws IOException {
 
-    final Network containerNetwork = Network.newNetwork();
-
     alice =
         privacyBesu.createIbft2NodePrivacyEnabled(
             "node1",
             PrivacyAccountResolver.ALICE.resolve(enclaveEncryptorType),
             false,
             enclaveType,
-            Optional.of(containerNetwork),
             false,
             false,
             false,
@@ -87,7 +82,6 @@ public class EnclaveErrorAcceptanceTest extends PrivacyAcceptanceTestBase {
             PrivacyAccountResolver.BOB.resolve(enclaveEncryptorType),
             false,
             enclaveType,
-            Optional.of(containerNetwork),
             false,
             false,
             false,

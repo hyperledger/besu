@@ -29,11 +29,9 @@ import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveType;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.Test;
-import org.testcontainers.containers.Network;
 import org.web3j.utils.Restriction;
 
 public class PrivGetPrivateTransactionAcceptanceTest extends ParameterizedEnclaveTestBase {
@@ -49,15 +47,12 @@ public class PrivGetPrivateTransactionAcceptanceTest extends ParameterizedEnclav
 
     super(restriction, enclaveType, enclaveEncryptorType);
 
-    final Network containerNetwork = Network.newNetwork();
-
     alice =
         privacyBesu.createIbft2NodePrivacyEnabled(
             "node1",
             PrivacyAccountResolver.ALICE.resolve(enclaveEncryptorType),
             false,
             enclaveType,
-            Optional.of(containerNetwork),
             false,
             false,
             restriction == UNRESTRICTED,
@@ -68,7 +63,6 @@ public class PrivGetPrivateTransactionAcceptanceTest extends ParameterizedEnclav
             PrivacyAccountResolver.BOB.resolve(enclaveEncryptorType),
             false,
             enclaveType,
-            Optional.of(containerNetwork),
             false,
             false,
             restriction == UNRESTRICTED,
