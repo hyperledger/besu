@@ -141,16 +141,21 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidWithLatestValidHashOnBadBlock() {
+    BlockHeader mockParent = blockHeaderBuilder.buildHeader();
+    blockHeaderBuilder.parentHash(mockParent.getHash());
     BlockHeader mockHeader = blockHeaderBuilder.buildHeader();
     Hash latestValidHash = Hash.hash(Bytes32.fromHexStringLenient("0xcafebabe"));
+    when(blockchain.getBlockHeader(mockHeader.getHash())).thenReturn(Optional.of(mockHeader));
+    when(blockchain.getBlockHeader(mockHeader.getParentHash())).thenReturn(Optional.of(mockParent));
     when(mergeCoordinator.getOrSyncHeadByHash(any(), any())).thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.isBadBlock(mockHeader.getHash())).thenReturn(true);
+    when(mergeCoordinator.isDescendantOf(any(), any())).thenReturn(true);
     when(mergeCoordinator.getLatestValidHashOfBadBlock(mockHeader.getHash()))
         .thenReturn(Optional.of(latestValidHash));
 
     assertSuccessWithPayloadForForkchoiceResult(
         new EngineForkchoiceUpdatedParameter(
-            mockHeader.getHash(), Hash.ZERO, mockHeader.getParentHash()),
+            mockHeader.getHash(), mockHeader.getParentHash(), mockHeader.getParentHash()),
         Optional.empty(),
         mock(ForkchoiceResult.class),
         INVALID,
