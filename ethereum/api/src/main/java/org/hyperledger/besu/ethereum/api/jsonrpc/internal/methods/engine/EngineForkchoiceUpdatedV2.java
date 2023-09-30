@@ -18,6 +18,9 @@ import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -26,11 +29,14 @@ import java.util.List;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // TODO Withdrawals use composition instead? Want to make it more obvious that there is no
 // difference between V1/V2 code other than the method name
 public class EngineForkchoiceUpdatedV2 extends AbstractEngineForkchoiceUpdated {
 
+  private static final Logger LOG = LoggerFactory.getLogger(EngineForkchoiceUpdatedV2.class);
   public EngineForkchoiceUpdatedV2(
       final Vertx vertx,
       final ProtocolSchedule protocolSchedule,
@@ -46,14 +52,20 @@ public class EngineForkchoiceUpdatedV2 extends AbstractEngineForkchoiceUpdated {
   }
 
   @Override
-  protected boolean isPayloadAttributesValid(
+  protected Optional<JsonRpcErrorResponse> isPayloadAttributesValid(
+          final Object requestId,
       final EnginePayloadAttributesParameter payloadAttributes,
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final BlockHeader headBlockHeader) {
     if (payloadAttributes.getTimestamp() >= cancunTimestamp) {
-      return false;
-    } else {
-      return super.isPayloadAttributesValid(payloadAttributes, maybeWithdrawals, headBlockHeader);
+      return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS));
+    } else if (payloadAttributes.getParentBeaconBlockRoot() != null) {
+      LOG.error(
+              "Parent beacon block root hash present in payload attributes before cancun hardfork");
+      return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS));
+    }
+    else {
+      return super.isPayloadAttributesValid(requestId, payloadAttributes, maybeWithdrawals, headBlockHeader);
     }
   }
 }

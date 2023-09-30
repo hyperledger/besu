@@ -19,18 +19,25 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
+import java.util.List;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
 
   private final Optional<ScheduledProtocolSpec.Hardfork> cancun;
+  private final static Logger LOG = LoggerFactory.getLogger(EngineForkchoiceUpdatedV3.class);
 
   public EngineForkchoiceUpdatedV3(
       final Vertx vertx,
@@ -80,6 +87,28 @@ public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
     } else {
       return ValidationResult.invalid(
           RpcErrorType.UNSUPPORTED_FORK, "Configuration error, no schedule for Cancun fork set");
+    }
+  }
+
+  @Override
+  protected Optional<JsonRpcErrorResponse> isPayloadAttributesValid(
+          final Object requestId,
+          final EnginePayloadAttributesParameter payloadAttributes,
+          final Optional<List<Withdrawal>> maybeWithdrawals,
+          final BlockHeader headBlockHeader) {
+    Optional<JsonRpcErrorResponse> maybeError = super.isPayloadAttributesValid(requestId, payloadAttributes, maybeWithdrawals, headBlockHeader);
+    if (maybeError.isPresent()) {
+      return maybeError;
+    } else if(payloadAttributes.getTimestamp() < cancun.get().milestone()) {
+      return Optional.of(new JsonRpcErrorResponse(
+              requestId, RpcErrorType.UNSUPPORTED_FORK));
+    } else if (payloadAttributes.getParentBeaconBlockRoot() == null) {
+      LOG.error(
+              "Parent beacon block root hash not present in payload attributes after cancun hardfork");
+      return Optional.of(new JsonRpcErrorResponse(
+              requestId, RpcErrorType.INVALID_PARAMS));
+    } else {
+        return Optional.empty();
     }
   }
 }
