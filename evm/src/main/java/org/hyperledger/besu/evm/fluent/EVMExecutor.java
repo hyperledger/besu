@@ -1130,6 +1130,7 @@ public class EVMExecutor {
    * Sets the message frame type
    *
    * @param messageFrameType message frame type
+   * @return the builder
    */
   public EVMExecutor messageFrameType(final MessageFrame.Type messageFrameType) {
     this.messageFrameType = messageFrameType;

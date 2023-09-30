@@ -24,6 +24,7 @@ import org.apache.tuweni.bytes.Bytes32;
 /** The Chain id operation. */
 public class ChainIdOperation extends AbstractFixedCostOperation {
 
+  /** The CHAINID Opcode number */
   public static final int OPCODE = 0x46;
   private final Bytes32 chainId;
 
