@@ -50,6 +50,7 @@ import java.util.function.Function;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.errorprone.annotations.InlineMe;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -83,6 +84,7 @@ public class EVMExecutor {
   private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
   private MessageCallProcessor messageCallProcessor = null;
   private ContractCreationProcessor contractCreationProcessor = null;
+  private MessageFrame.Type messageFrameType = MessageFrame.Type.MESSAGE_CALL;
 
   private EVMExecutor(final EVM evm) {
     checkNotNull(evm, "evm must not be null");
@@ -147,6 +149,8 @@ public class EVMExecutor {
     return switch (fork) {
       case FRONTIER -> frontier(evmConfiguration);
       case HOMESTEAD -> homestead(evmConfiguration);
+      case TANGERINE_WHISTLE -> tangerineWhistle(evmConfiguration);
+      case SPURIOUS_DRAGON -> spuriousDragon(evmConfiguration);
       case BYZANTIUM -> byzantium(evmConfiguration);
       case CONSTANTINOPLE -> constantinople(evmConfiguration);
       case PETERSBURG -> petersburg(evmConfiguration);
@@ -283,9 +287,18 @@ public class EVMExecutor {
    *
    * @param evmConfiguration the evm configuration
    * @return the evm executor
+   * @deprecated Migrate to use {@link EVMExecutor#evm(EvmSpecVersion)}.
    */
+  @InlineMe(
+      replacement = "EVMExecutor.evm(EvmSpecVersion.ISTANBUL, BigInteger.ONE, evmConfiguration)",
+      imports = {
+        "java.math.BigInteger",
+        "org.hyperledger.besu.evm.EvmSpecVersion",
+        "org.hyperledger.besu.evm.fluent.EVMExecutor"
+      })
+  @Deprecated(forRemoval = true)
   public static EVMExecutor istanbul(final EvmConfiguration evmConfiguration) {
-    return istanbul(BigInteger.ONE, evmConfiguration);
+    return evm(EvmSpecVersion.ISTANBUL, BigInteger.ONE, evmConfiguration);
   }
 
   /**
@@ -309,9 +322,18 @@ public class EVMExecutor {
    *
    * @param evmConfiguration the evm configuration
    * @return the evm executor
+   * @deprecated Migrate to use {@link EVMExecutor#evm(EvmSpecVersion)}.
    */
+  @InlineMe(
+      replacement = "EVMExecutor.evm(EvmSpecVersion.BERLIN, BigInteger.ONE, evmConfiguration)",
+      imports = {
+        "java.math.BigInteger",
+        "org.hyperledger.besu.evm.EvmSpecVersion",
+        "org.hyperledger.besu.evm.fluent.EVMExecutor"
+      })
+  @Deprecated(forRemoval = true)
   public static EVMExecutor berlin(final EvmConfiguration evmConfiguration) {
-    return berlin(BigInteger.ONE, evmConfiguration);
+    return evm(EvmSpecVersion.BERLIN, BigInteger.ONE, evmConfiguration);
   }
 
   /**
@@ -335,9 +357,18 @@ public class EVMExecutor {
    *
    * @param evmConfiguration the evm configuration
    * @return the evm executor
+   * @deprecated Migrate to use {@link EVMExecutor#evm(EvmSpecVersion)}.
    */
+  @InlineMe(
+      replacement = "EVMExecutor.evm(EvmSpecVersion.LONDON, BigInteger.ONE, evmConfiguration)",
+      imports = {
+        "java.math.BigInteger",
+        "org.hyperledger.besu.evm.EvmSpecVersion",
+        "org.hyperledger.besu.evm.fluent.EVMExecutor"
+      })
+  @Deprecated(forRemoval = true)
   public static EVMExecutor london(final EvmConfiguration evmConfiguration) {
-    return london(BigInteger.ONE, evmConfiguration);
+    return evm(EvmSpecVersion.LONDON, BigInteger.ONE, evmConfiguration);
   }
 
   /**
@@ -360,9 +391,18 @@ public class EVMExecutor {
    *
    * @param evmConfiguration the evm configuration
    * @return the evm executor
+   * @deprecated Migrate to use {@link EVMExecutor#evm(EvmSpecVersion)}.
    */
+  @InlineMe(
+      replacement = "EVMExecutor.evm(EvmSpecVersion.PARIS, BigInteger.ONE, evmConfiguration)",
+      imports = {
+        "java.math.BigInteger",
+        "org.hyperledger.besu.evm.EvmSpecVersion",
+        "org.hyperledger.besu.evm.fluent.EVMExecutor"
+      })
+  @Deprecated(forRemoval = true)
   public static EVMExecutor paris(final EvmConfiguration evmConfiguration) {
-    return paris(BigInteger.ONE, evmConfiguration);
+    return evm(EvmSpecVersion.PARIS, BigInteger.ONE, evmConfiguration);
   }
 
   /**
@@ -385,9 +425,18 @@ public class EVMExecutor {
    *
    * @param evmConfiguration the evm configuration
    * @return the evm executor
+   * @deprecated Migrate to use {@link EVMExecutor#evm(EvmSpecVersion)}.
    */
+  @InlineMe(
+      replacement = "EVMExecutor.evm(EvmSpecVersion.SHANGHAI, BigInteger.ONE, evmConfiguration)",
+      imports = {
+        "java.math.BigInteger",
+        "org.hyperledger.besu.evm.EvmSpecVersion",
+        "org.hyperledger.besu.evm.fluent.EVMExecutor"
+      })
+  @Deprecated(forRemoval = true)
   public static EVMExecutor shanghai(final EvmConfiguration evmConfiguration) {
-    return shanghai(BigInteger.ONE, evmConfiguration);
+    return evm(EvmSpecVersion.SHANGHAI, BigInteger.ONE, evmConfiguration);
   }
 
   /**
@@ -410,9 +459,18 @@ public class EVMExecutor {
    *
    * @param evmConfiguration the evm configuration
    * @return the evm executor
+   * @deprecated Migrate to use {@link EVMExecutor#evm(EvmSpecVersion)}.
    */
+  @InlineMe(
+      replacement = "EVMExecutor.evm(EvmSpecVersion.CANCUN, BigInteger.ONE, evmConfiguration)",
+      imports = {
+        "java.math.BigInteger",
+        "org.hyperledger.besu.evm.EvmSpecVersion",
+        "org.hyperledger.besu.evm.fluent.EVMExecutor"
+      })
+  @Deprecated(forRemoval = true)
   public static EVMExecutor cancun(final EvmConfiguration evmConfiguration) {
-    return cancun(BigInteger.ONE, evmConfiguration);
+    return evm(EvmSpecVersion.CANCUN, BigInteger.ONE, evmConfiguration);
   }
 
   /**
@@ -480,9 +538,18 @@ public class EVMExecutor {
    *
    * @param evmConfiguration the evm configuration
    * @return the evm executor
+   * @deprecated Migrate to use {@link EVMExecutor#evm(EvmSpecVersion)}.
    */
+  @InlineMe(
+      replacement = "EVMExecutor.evm(EvmSpecVersion.FUTURE_EIPS, BigInteger.ONE, evmConfiguration)",
+      imports = {
+        "java.math.BigInteger",
+        "org.hyperledger.besu.evm.EvmSpecVersion",
+        "org.hyperledger.besu.evm.fluent.EVMExecutor"
+      })
+  @Deprecated(forRemoval = true)
   public static EVMExecutor futureEips(final EvmConfiguration evmConfiguration) {
-    return futureEips(BigInteger.ONE, evmConfiguration);
+    return evm(EvmSpecVersion.FUTURE_EIPS, BigInteger.ONE, evmConfiguration);
   }
 
   /**
@@ -580,7 +647,7 @@ public class EVMExecutor {
     final ContractCreationProcessor ccp = thisContractCreationProcessor();
     final MessageFrame initialMessageFrame =
         MessageFrame.builder()
-            .type(MessageFrame.Type.MESSAGE_CALL)
+            .type(messageFrameType)
             .worldUpdater(worldUpdater.updater())
             .initialGas(gas)
             .contract(contract)
@@ -623,8 +690,7 @@ public class EVMExecutor {
    * @return the evm executor
    */
   public EVMExecutor commitWorldState() {
-    this.commitWorldState = true;
-    return this;
+    return commitWorldState(true);
   }
 
   /**
@@ -767,6 +833,16 @@ public class EVMExecutor {
    * Sets Code.
    *
    * @param codeBytes the code bytes
+   * @return the evm executor
+   */
+  public EVMExecutor code(final Bytes codeBytes) {
+    return code(codeBytes, Hash.hash(codeBytes));
+  }
+
+  /**
+   * Sets Code.
+   *
+   * @param codeBytes the code bytes
    * @param hash the hash
    * @return the evm executor
    */
@@ -834,8 +910,7 @@ public class EVMExecutor {
    *     SimpleBlockValues}
    */
   public EVMExecutor baseFee(final Wei baseFee) {
-    ((SimpleBlockValues) this.blockValues).setBaseFee(Optional.ofNullable(baseFee));
-    return this;
+    return baseFee(Optional.ofNullable(baseFee));
   }
 
   /**
@@ -1049,5 +1124,33 @@ public class EVMExecutor {
       final ContractCreationProcessor contractCreationProcessor) {
     this.contractCreationProcessor = contractCreationProcessor;
     return this;
+  }
+
+  /**
+   * Sets the message frame type
+   *
+   * @param messageFrameType message frame type
+   */
+  public EVMExecutor messageFrameType(final MessageFrame.Type messageFrameType) {
+    this.messageFrameType = messageFrameType;
+    return this;
+  }
+
+  /**
+   * Returns the EVM version this executor is using
+   *
+   * @return the current EVM version
+   */
+  public EvmSpecVersion getEVMVersion() {
+    return evm.getEvmVersion();
+  }
+
+  /**
+   * Returns the ChaindD this executor is using
+   *
+   * @return the current chain ID
+   */
+  public Optional<Bytes> getChainId() {
+    return evm.getChainId();
   }
 }

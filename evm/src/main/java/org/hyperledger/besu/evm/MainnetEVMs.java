@@ -328,7 +328,12 @@ public class MainnetEVMs {
    * @return the evm
    */
   public static EVM spuriousDragon(final EvmConfiguration evmConfiguration) {
-    return homestead(new SpuriousDragonGasCalculator(), evmConfiguration);
+    GasCalculator gasCalculator = new SpuriousDragonGasCalculator();
+    return new EVM(
+        homesteadOperations(gasCalculator),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.SPURIOUS_DRAGON);
   }
 
   /**
@@ -338,7 +343,12 @@ public class MainnetEVMs {
    * @return the evm
    */
   public static EVM tangerineWhistle(final EvmConfiguration evmConfiguration) {
-    return homestead(new TangerineWhistleGasCalculator(), evmConfiguration);
+    GasCalculator gasCalculator = new TangerineWhistleGasCalculator();
+    return new EVM(
+        homesteadOperations(gasCalculator),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.TANGERINE_WHISTLE);
   }
 
   /**
@@ -413,11 +423,16 @@ public class MainnetEVMs {
    */
   public static EVM constantinople(
       final GasCalculator gasCalculator, final EvmConfiguration evmConfiguration) {
+    var version = EvmSpecVersion.CONSTANTINOPLE;
+    return constantiNOPEl(gasCalculator, evmConfiguration, version);
+  }
+
+  private static EVM constantiNOPEl(
+      final GasCalculator gasCalculator,
+      final EvmConfiguration evmConfiguration,
+      final EvmSpecVersion version) {
     return new EVM(
-        constantinopleOperations(gasCalculator),
-        gasCalculator,
-        evmConfiguration,
-        EvmSpecVersion.CONSTANTINOPLE);
+        constantinopleOperations(gasCalculator), gasCalculator, evmConfiguration, version);
   }
 
   /**
@@ -455,7 +470,8 @@ public class MainnetEVMs {
    * @return the evm
    */
   public static EVM petersburg(final EvmConfiguration evmConfiguration) {
-    return constantinople(new PetersburgGasCalculator(), evmConfiguration);
+    return constantiNOPEl(
+        new PetersburgGasCalculator(), evmConfiguration, EvmSpecVersion.PETERSBURG);
   }
 
   /**
@@ -1145,7 +1161,7 @@ public class MainnetEVMs {
    * @return the evm
    */
   public static EVM experimentalEips(final EvmConfiguration evmConfiguration) {
-    return futureEips(DEV_NET_CHAIN_ID, evmConfiguration);
+    return experimentalEips(DEV_NET_CHAIN_ID, evmConfiguration);
   }
 
   /**
@@ -1157,7 +1173,7 @@ public class MainnetEVMs {
    */
   public static EVM experimentalEips(
       final BigInteger chainId, final EvmConfiguration evmConfiguration) {
-    return futureEips(chainId, evmConfiguration);
+    return experimentalEips(new CancunGasCalculator(), chainId, evmConfiguration);
   }
 
   /**
@@ -1176,7 +1192,7 @@ public class MainnetEVMs {
         experimentalEipsOperations(gasCalculator, chainId),
         gasCalculator,
         evmConfiguration,
-        EvmSpecVersion.FUTURE_EIPS);
+        EvmSpecVersion.EXPERIMENTAL_EIPS);
   }
 
   /**

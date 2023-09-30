@@ -27,6 +27,10 @@ public enum EvmSpecVersion {
   FRONTIER(0, true, "Frontier", "Finalized"),
   /** Homestead evm spec version. */
   HOMESTEAD(0, true, "Homestead", "Finalized"),
+  /** Tangerine Whistle evm spec version. */
+  TANGERINE_WHISTLE(0, true, "Tangerine Whistle", "Finalized"),
+  /** Spurious Dragon evm spec version. */
+  SPURIOUS_DRAGON(0, true, "Spuruous Dragon", "Finalized"),
   /** Byzantium evm spec version. */
   BYZANTIUM(0, true, "Byzantium", "Finalized"),
   /** Constantinople evm spec version. */

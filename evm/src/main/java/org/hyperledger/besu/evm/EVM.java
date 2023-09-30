@@ -31,6 +31,7 @@ import org.hyperledger.besu.evm.operation.AddModOperation;
 import org.hyperledger.besu.evm.operation.AddOperation;
 import org.hyperledger.besu.evm.operation.AndOperation;
 import org.hyperledger.besu.evm.operation.ByteOperation;
+import org.hyperledger.besu.evm.operation.ChainIdOperation;
 import org.hyperledger.besu.evm.operation.DivOperation;
 import org.hyperledger.besu.evm.operation.DupOperation;
 import org.hyperledger.besu.evm.operation.ExpOperation;
@@ -137,6 +138,21 @@ public class EVM {
    */
   public EvmSpecVersion getEvmVersion() {
     return evmSpecVersion;
+  }
+
+  /**
+   * Return the ChainId this Executor is using, or empty if the EVM version does not expose chain
+   * ID.
+   *
+   * @return the ChainId, or empty if not exposed.
+   */
+  public Optional<Bytes> getChainId() {
+    Operation op = operations.get(ChainIdOperation.OPCODE);
+    if (op instanceof ChainIdOperation chainIdOperation) {
+      return Optional.of(chainIdOperation.getChainId());
+    } else {
+      return Optional.empty();
+    }
   }
 
   /**
