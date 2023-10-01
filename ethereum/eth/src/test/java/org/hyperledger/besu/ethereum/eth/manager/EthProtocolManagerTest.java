@@ -1117,7 +1117,8 @@ public final class EthProtocolManagerTest {
               metricsSystem,
               new SyncState(blockchain, ethManager.ethContext().getEthPeers()),
               new MiningParameters.Builder().minTransactionGasPrice(Wei.ZERO).build(),
-              TransactionPoolConfiguration.DEFAULT)
+              TransactionPoolConfiguration.DEFAULT,
+              null)
           .setEnabled();
 
       // Send just a transaction message.

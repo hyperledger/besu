@@ -21,6 +21,8 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockTransactionSelector;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -91,7 +93,8 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             ethContext,
             miningParameters,
             new TransactionPoolMetrics(metricsSystem),
-            poolConf);
+            poolConf,
+            null);
     transactionPool.setEnabled();
     return transactionPool;
   }
@@ -116,8 +119,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     final var addResults = transactionPool.addRemoteTransactions(List.of(tx));
     assertThat(addResults).extractingByKey(tx.getHash()).isEqualTo(ValidationResult.valid());
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
     assertThat(results.getSelectedTransactions()).isEmpty();
     assertThat(results.getNotSelectedTransactions())
@@ -146,8 +148,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
 
     ensureTransactionIsValid(tx);
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
     assertThat(results.getSelectedTransactions()).containsExactly(tx);
     assertThat(results.getNotSelectedTransactions()).isEmpty();
@@ -176,8 +177,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
 
     ensureTransactionIsValid(tx);
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
     assertThat(results.getSelectedTransactions()).containsExactly(tx);
     assertThat(results.getNotSelectedTransactions()).isEmpty();
@@ -209,8 +209,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             Wei.ZERO,
             MIN_OCCUPANCY_80_PERCENT);
 
-    final BlockTransactionSelector.TransactionSelectionResults results =
-        selector.buildTransactionListForBlock();
+    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
 
     assertThat(results.getSelectedTransactions())
         .containsExactly(txFrontier1, txLondon1, txFrontier2, txLondon2);

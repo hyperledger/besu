@@ -68,7 +68,7 @@ public class LocalPermissioningConfigurationValidatorTest {
             toml.toAbsolutePath().toString());
 
     final List<EnodeURL> enodeURIs = ethNetworkConfig.getBootNodes();
-    PermissioningConfigurationValidator.areAllNodesAreInAllowlist(
+    PermissioningConfigurationValidator.areAllNodesInAllowlist(
         enodeURIs, permissioningConfiguration);
   }
 
@@ -92,7 +92,7 @@ public class LocalPermissioningConfigurationValidatorTest {
 
     try {
       final List<EnodeURL> enodeURIs = ethNetworkConfig.getBootNodes();
-      PermissioningConfigurationValidator.areAllNodesAreInAllowlist(
+      PermissioningConfigurationValidator.areAllNodesInAllowlist(
           enodeURIs, permissioningConfiguration);
       fail("expected exception because sepolia bootnodes are not in node-allowlist");
     } catch (Exception e) {
@@ -142,7 +142,7 @@ public class LocalPermissioningConfigurationValidatorTest {
     // However, for the allowlist validation, we should ignore the discovery port and don't throw an
     // error
     try {
-      PermissioningConfigurationValidator.areAllNodesAreInAllowlist(
+      PermissioningConfigurationValidator.areAllNodesInAllowlist(
           Lists.newArrayList(enodeURL), permissioningConfiguration);
     } catch (Exception e) {
       fail(
@@ -180,7 +180,7 @@ public class LocalPermissioningConfigurationValidatorTest {
     // However, for the allowlist validation, we should ignore the discovery port and don't throw an
     // error
     try {
-      PermissioningConfigurationValidator.areAllNodesAreInAllowlist(
+      PermissioningConfigurationValidator.areAllNodesInAllowlist(
           Lists.newArrayList(enodeURL), permissioningConfiguration);
     } catch (Exception e) {
       fail(

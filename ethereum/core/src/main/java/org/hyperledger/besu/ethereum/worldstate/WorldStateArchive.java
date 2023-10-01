@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.worldstate.WorldState;
 import java.io.Closeable;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -51,6 +52,19 @@ public interface WorldStateArchive extends Closeable {
 
   Optional<Bytes> getNodeData(Hash hash);
 
-  Optional<WorldStateProof> getAccountProof(
-      Hash worldStateRoot, Address accountAddress, List<UInt256> accountStorageKeys);
+  /**
+   * Retrieves an account proof based on the provided parameters.
+   *
+   * @param blockHeader The header of the block for which to retrieve the account proof.
+   * @param accountAddress The address of the account for which to retrieve the proof.
+   * @param accountStorageKeys The storage keys of the account for which to retrieve the proof.
+   * @param mapper A function to map the retrieved WorldStateProof to a desired type.
+   * @return An Optional containing the mapped result if the account proof is successfully retrieved
+   *     and mapped, or an empty Optional otherwise.
+   */
+  <U> Optional<U> getAccountProof(
+      final BlockHeader blockHeader,
+      final Address accountAddress,
+      final List<UInt256> accountStorageKeys,
+      final Function<Optional<WorldStateProof>, ? extends Optional<U>> mapper);
 }
