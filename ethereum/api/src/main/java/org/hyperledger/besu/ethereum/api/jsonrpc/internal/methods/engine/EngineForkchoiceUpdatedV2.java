@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
@@ -37,6 +36,7 @@ import org.slf4j.LoggerFactory;
 public class EngineForkchoiceUpdatedV2 extends AbstractEngineForkchoiceUpdated {
 
   private static final Logger LOG = LoggerFactory.getLogger(EngineForkchoiceUpdatedV2.class);
+
   public EngineForkchoiceUpdatedV2(
       final Vertx vertx,
       final ProtocolSchedule protocolSchedule,
@@ -53,7 +53,7 @@ public class EngineForkchoiceUpdatedV2 extends AbstractEngineForkchoiceUpdated {
 
   @Override
   protected Optional<JsonRpcErrorResponse> isPayloadAttributesValid(
-          final Object requestId,
+      final Object requestId,
       final EnginePayloadAttributesParameter payloadAttributes,
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final BlockHeader headBlockHeader) {
@@ -61,11 +61,11 @@ public class EngineForkchoiceUpdatedV2 extends AbstractEngineForkchoiceUpdated {
       return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS));
     } else if (payloadAttributes.getParentBeaconBlockRoot() != null) {
       LOG.error(
-              "Parent beacon block root hash present in payload attributes before cancun hardfork");
+          "Parent beacon block root hash present in payload attributes before cancun hardfork");
       return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS));
-    }
-    else {
-      return super.isPayloadAttributesValid(requestId, payloadAttributes, maybeWithdrawals, headBlockHeader);
+    } else {
+      return super.isPayloadAttributesValid(
+          requestId, payloadAttributes, maybeWithdrawals, headBlockHeader);
     }
   }
 }

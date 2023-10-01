@@ -136,12 +136,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
                                   .map(WithdrawalParameter::toWithdrawal)
                                   .collect(toList())));
       Optional<JsonRpcErrorResponse> maybeError =
-          isPayloadAttributesValid(requestId,payloadAttributes, withdrawals, newHead);
+          isPayloadAttributesValid(requestId, payloadAttributes, withdrawals, newHead);
       if (maybeError.isPresent()) {
-        if(maybePayloadAttributes.get().getTimestamp() >= cancunTimestamp && !"engine_forkchoiceUpdatedV3".equals(requestContext.getRequest().getMethod())) {
-          LOG.info("Client is using an outdated version of engine_forkchoiceUpdated");
-          return maybeError.get();
-        }
         LOG.atWarn()
             .setMessage("RpcError {}: {}")
             .addArgument(maybeError.get().getErrorType())
@@ -215,7 +211,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
   }
 
   protected Optional<JsonRpcErrorResponse> isPayloadAttributesValid(
-          final Object requestId,
+      final Object requestId,
       final EnginePayloadAttributesParameter payloadAttributes,
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final BlockHeader headBlockHeader) {
@@ -223,14 +219,12 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     if (payloadAttributes.getTimestamp() <= headBlockHeader.getTimestamp()) {
       LOG.warn(
           "Payload attributes timestamp is smaller than timestamp of header in fork choice update");
-      return Optional.of(new JsonRpcErrorResponse(
-              requestId, RpcErrorType.INVALID_PARAMS));
+      return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadError()));
     }
     if (!getWithdrawalsValidator(
             protocolSchedule.get(), headBlockHeader, payloadAttributes.getTimestamp())
         .validateWithdrawals(maybeWithdrawals)) {
-      return Optional.of(new JsonRpcErrorResponse(
-              requestId, RpcErrorType.INVALID_PARAMS));
+      return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadError()));
     }
 
     return Optional.empty();
