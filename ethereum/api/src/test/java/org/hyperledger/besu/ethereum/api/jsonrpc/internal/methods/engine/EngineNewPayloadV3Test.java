@@ -51,6 +51,7 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
+import org.hyperledger.besu.ethereum.mainnet.CancunTargetingGasLimitCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 
@@ -96,6 +97,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             ethPeers,
             engineCallListener);
     lenient().when(protocolSpec.getGasCalculator()).thenReturn(new CancunGasCalculator());
+    lenient().when(protocolSpec.getGasLimitCalculator()).thenReturn(mock(CancunTargetingGasLimitCalculator.class));
   }
 
   @Test
