@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockSelectionContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
@@ -38,14 +39,14 @@ public class BlobPriceTransactionSelector extends AbstractTransactionSelector {
   /**
    * Evaluates a transaction considering its blob price.
    *
-   * @param transaction The transaction to be evaluated.
+   * @param pendingTransaction The transaction to be evaluated.
    * @param ignored The results of other transaction evaluations in the same block.
    * @return The result of the transaction selection.
    */
   @Override
   public TransactionSelectionResult evaluateTransactionPreProcessing(
-      final Transaction transaction, final TransactionSelectionResults ignored) {
-    if (transactionBlobPriceBelowMin(transaction)) {
+      final PendingTransaction pendingTransaction, final TransactionSelectionResults ignored) {
+    if (transactionBlobPriceBelowMin(pendingTransaction.getTransaction())) {
       return TransactionSelectionResult.BLOB_PRICE_BELOW_CURRENT_MIN;
     }
     return TransactionSelectionResult.SELECTED;
@@ -53,7 +54,7 @@ public class BlobPriceTransactionSelector extends AbstractTransactionSelector {
 
   @Override
   public TransactionSelectionResult evaluateTransactionPostProcessing(
-      final Transaction transaction,
+      final PendingTransaction pendingTransaction,
       final TransactionSelectionResults blockTransactionResults,
       final TransactionProcessingResult processingResult) {
     // All necessary checks were done in the pre-processing method, so nothing to do here.

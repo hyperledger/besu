@@ -552,10 +552,10 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final TransactionSelectorFactory transactionSelectorFactory =
         () ->
-            (tx) -> {
-              if (tx.equals(notSelectedTransient))
+            pendingTx -> {
+              if (pendingTx.getTransaction().equals(notSelectedTransient))
                 return TransactionSelectionResult.invalidTransient("transient");
-              if (tx.equals(notSelectedInvalid))
+              if (pendingTx.getTransaction().equals(notSelectedInvalid))
                 return TransactionSelectionResult.invalid("invalid");
               return TransactionSelectionResult.SELECTED;
             };
@@ -572,7 +572,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             transactionSelectorFactory);
 
     transactionPool.addRemoteTransactions(
-        List.of(selected, notSelectedInvalid, notSelectedTransient));
+        List.of(selected, notSelectedTransient, notSelectedInvalid));
 
     final TransactionSelectionResults transactionSelectionResults =
         selector.buildTransactionListForBlock();
