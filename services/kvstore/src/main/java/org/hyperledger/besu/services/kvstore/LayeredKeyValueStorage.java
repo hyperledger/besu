@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -59,7 +60,7 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
    * @param parent the parent key value storage for this layered storage.
    */
   public LayeredKeyValueStorage(
-      final Map<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> map,
+      final ConcurrentMap<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> map,
       final SegmentedKeyValueStorage parent) {
     super(map);
     this.parent = parent;
@@ -89,6 +90,26 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
       }
     } finally {
       lock.unlock();
+    }
+  }
+
+  @Override
+  public Optional<NearestKeyValue> getNearestTo(
+      final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
+    Optional<NearestKeyValue> ourNearest = super.getNearestTo(segmentIdentifier, key);
+    Optional<NearestKeyValue> parentNearest = parent.getNearestTo(segmentIdentifier, key);
+
+    if (ourNearest.isPresent() && parentNearest.isPresent()) {
+      // Both are present, return the one closer to the key
+      int ourDistance = ourNearest.get().key().commonPrefixLength(key);
+      int parentDistance = parentNearest.get().key().commonPrefixLength(key);
+      return (ourDistance <= parentDistance) ? ourNearest : parentNearest;
+    } else if (ourNearest.isPresent()) {
+      // Only ourNearest is present
+      return ourNearest;
+    } else {
+      // return parentNearest, which may be an empty Optional
+      return parentNearest;
     }
   }
 

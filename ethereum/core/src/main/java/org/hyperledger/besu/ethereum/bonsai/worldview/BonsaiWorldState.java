@@ -390,13 +390,7 @@ public class BonsaiWorldState
       // then persist the TrieLog for that transition.
       // If specified but not a direct descendant simply store the new block hash.
       if (blockHeader != null) {
-        if (!newWorldStateRootHash.equals(blockHeader.getStateRoot())) {
-          throw new RuntimeException(
-              "World State Root does not match expected value, header "
-                  + blockHeader.getStateRoot().toHexString()
-                  + " calculated "
-                  + newWorldStateRootHash.toHexString());
-        }
+        verifyWorldStateRoot(newWorldStateRootHash, blockHeader);
         saveTrieLog =
             () -> {
               trieLogManager.saveTrieLog(localCopy, newWorldStateRootHash, blockHeader, this);
@@ -429,6 +423,16 @@ public class BonsaiWorldState
         stateUpdater.rollback();
         accumulator.reset();
       }
+    }
+  }
+
+  protected void verifyWorldStateRoot(final Hash calculatedStateRoot, final BlockHeader header) {
+    if (!calculatedStateRoot.equals(header.getStateRoot())) {
+      throw new RuntimeException(
+          "World State Root does not match expected value, header "
+              + header.getStateRoot().toHexString()
+              + " calculated "
+              + calculatedStateRoot.toHexString());
     }
   }
 
@@ -498,7 +502,9 @@ public class BonsaiWorldState
   @Override
   public Hash frontierRootHash() {
     return calculateRootHash(
-        Optional.of(new BonsaiWorldStateKeyValueStorage.Updater(noOpSegmentedTx, noOpTx)),
+        Optional.of(
+            new BonsaiWorldStateKeyValueStorage.Updater(
+                noOpSegmentedTx, noOpTx, worldStateStorage.getFlatDbStrategy())),
         accumulator.copy());
   }
 

@@ -1,6 +1,7 @@
 # Changelog
 
-## 23.7.3
+## Next release
+
 ### Breaking Changes
 - Removed support for Kotti network (ETC) [#5816](https://github.com/hyperledger/besu/pull/5816)
 - Layered transaction pool implementation is now stable and enabled by default, so the following changes to experimental options have been done [#5772](https://github.com/hyperledger/besu):
@@ -10,14 +11,25 @@
 ### Additions and Improvements
 - Add access to an immutable world view to start/end transaction hooks in the tracing API[#5836](https://github.com/hyperledger/besu/pull/5836)
 - Layered transaction pool implementation is now stable and enabled by default. If you want still to use the legacy implementation, use `--tx-pool=legacy` [#5772](https://github.com/hyperledger/besu)
-- Implement debug_traceCall [#5885](https://github.com/hyperledger/besu/pull/5885)
+- Tune G1GC to reduce Besu memory footprint, and new `besu-untuned` start scripts to run without any specific G1GC flags [#5879](https://github.com/hyperledger/besu/pull/5879)
+- Reduce `engine_forkchoiceUpdatedV?` response time by asynchronously process block added events in the transaction pool [#5909](https://github.com/hyperledger/besu/pull/5909) 
 
 ### Bug Fixes
 - do not create ignorable storage on revert storage-variables subcommand [#5830](https://github.com/hyperledger/besu/pull/5830) 
 - fix duplicate key errors in EthScheduler-Transactions [#5857](https://github.com/hyperledger/besu/pull/5857)
-- do not create ignorable storage on revert storage-variables subcommand [#5830](https://github.com/hyperledger/besu/pull/5830)
+- Don't put control characters, escaped or otherwise, in t8n stacktraces [#5910](https://github.com/hyperledger/besu/pull/5910)
 
 ### Download Links
+
+
+## 23.7.3
+
+### Additions and Improvements
+- Update Holešky config for re-launch [#5890](https://github.com/hyperledger/besu/pull/5890)
+
+### Download Links
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.3/besu-23.7.3.tar.gz / sha256: c12ca6a9861557e0bf8f27076f8c8afcce6f1564687e5f02bfdc96c2b18846ff
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.3/besu-23.7.3.zip / sha256: 136596454f647c706130e3e2983bdbb4a1cbfaf2bbf6e999466754f9213c11f6
 
 
 ## 23.7.2
@@ -43,7 +55,8 @@
 - Fixing snapsync issue with forest during the heal step [#5776](https://github.com/hyperledger/besu/pull/5776)
 
 ### Download Links
-
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.2/besu-23.7.2.tar.gz / sha256: f74b32c1a343cbad90a88aa59276b4c5eefea4643ee542aba2bbf898f85ae242
+https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/23.7.2/besu-23.7.2.zip / sha256: a233c83591fc277e3d1530c84bb5ea896abad717d796b5e3b856c79199132b75
 
 ## 23.7.1
 

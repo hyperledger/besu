@@ -51,6 +51,10 @@ public class SegmentedKeyValueStorageAdapter implements KeyValueStorage {
     this.storage = storage;
   }
 
+  SegmentedKeyValueStorage getSegmentedStore() {
+    return this.storage;
+  }
+
   @Override
   public void clear() {
     throwIfClosed();
