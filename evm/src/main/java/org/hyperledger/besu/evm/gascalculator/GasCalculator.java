@@ -34,6 +34,7 @@ import org.hyperledger.besu.evm.operation.MStoreOperation;
 import org.hyperledger.besu.evm.operation.SLoadOperation;
 import org.hyperledger.besu.evm.operation.SelfDestructOperation;
 import org.hyperledger.besu.evm.precompile.ECRECPrecompiledContract;
+import org.hyperledger.besu.evm.precompile.FalconPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.IDPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.RIPEMD160PrecompiledContract;
 import org.hyperledger.besu.evm.precompile.SHA256PrecompiledContract;
@@ -78,6 +79,7 @@ public interface GasCalculator {
   /**
    * Returns the gas cost to execute the {@link FalconPrecompiledContract}.
    *
+   * @param input The input representing the message, signature and the correspondent public key
    * @return the gas cost to execute the Falcon Signature verification precompiled contract
    */
   long falconVerifyPrecompiledContractGasCost(Bytes input);

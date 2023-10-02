@@ -401,6 +401,11 @@ public interface GenesisConfigOptions {
    */
   OptionalLong getThanosBlockNumber();
 
+  /**
+   * Block number to enable Falcon signature verifier precompiled feature.
+   *
+   * @return block number of falcon signature precompiled verifier
+   */
   OptionalLong getLacchainPostQuantumBlockNumber();
 
   /**

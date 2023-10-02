@@ -32,6 +32,7 @@ import org.bouncycastle.pqc.crypto.falcon.FalconSigner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The Falcon precompiled contract. */
 public class FalconPrecompiledContract extends AbstractPrecompiledContract {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractBLS12PrecompiledContract.class);
@@ -42,6 +43,11 @@ public class FalconPrecompiledContract extends AbstractPrecompiledContract {
 
   private final FalconSigner falconSigner = new FalconSigner();
 
+  /**
+   * Instantiates a new Falcon precompiled contract.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public FalconPrecompiledContract(final GasCalculator gasCalculator) {
     super("Falcon", gasCalculator);
   }
